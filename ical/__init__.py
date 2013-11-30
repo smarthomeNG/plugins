@@ -34,8 +34,12 @@ class iCal():
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
     PROPERTIES = ("SUMMARY", "DESCRIPTION", "LOCATION", "CATEGORIES")
 
-    def __init__(self, smarthome):
+    def __init__(self, smarthome, cycle=3600):
         self._sh = smarthome
+        self._items = []
+        self._icals = {}
+        smarthome.scheduler.add('iCalUpdate', self._update_items, cron='* * * *', prio=5)
+        smarthome.scheduler.add('iCalRefresh', self._update_calendars, cycle=int(cycle), prio=5)
 
     def run(self):
         self.alive = True
@@ -44,7 +48,12 @@ class iCal():
         self.alive = False
 
     def parse_item(self, item):
-        pass
+        if 'ical' in item.conf:
+          uri = item.conf['ical']
+          if uri not in self._icals:
+            self._icals[uri] = self._read_events(uri)
+
+          self._items.append(item)
 
     def parse_logic(self, logic):
         pass
@@ -54,6 +63,28 @@ class iCal():
 
     def __call__(self, ics, delta=1, offset=0):
         return self._filter_events(self._read_events(ics), delta, offset)
+
+    def _update_items(self):
+        now = self._sh.now()
+
+        events = {}
+        for calendar in self._icals:
+          events[calendar] = self._filter_events(self._icals[calendar], 0, 0)
+
+        for item in self._items:
+          calendar = item.conf['ical']
+
+          val = False
+          if now.date() in events[calendar]:
+            for event in events[calendar][now.date()]:
+              if event['Start'] <= now <= event['End'] or (event['Start'] == event['End'] and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)):
+                val = True
+                break
+          item(val)
+
+    def _update_calendars(self):
+        for uri in self._icals:
+          self._icals[uri] = self._read_events(uri)
 
     def _filter_events(self, events, delta=1, offset=0):
         now = self._sh.now()
