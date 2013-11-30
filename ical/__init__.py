@@ -53,24 +53,14 @@ class iCal():
         pass
 
     def __call__(self, ics, delta=1, offset=0):
-        if ics.startswith('http'):
-            ical = self._sh.tools.fetch_url(ics)
-            if ical is False:
-                return {}
-            ical = ical.decode()
-        else:
-            try:
-                with open(ics, 'r') as f:
-                    ical = f.read()
-            except IOError as e:
-                logger.error('Could not open ics file {0}: {1}'.format(ics, e))
-                return {}
+        return self._filter_events(self._read_events(ics), delta, offset)
+
+    def _filter_events(self, events, delta=1, offset=0):
         now = self._sh.now()
         offset = offset - 1  # start at 23:59:59 the day before
         delta += 1  # extend delta for negetiv offset
         start = now.replace(hour=23, minute=59, second=59, microsecond=0) + datetime.timedelta(days=offset)
         end = start + datetime.timedelta(days=delta)
-        events = self._parse_ical(ical, ics)
         revents = {}
         for event in events:
             event = events[event]
@@ -101,6 +91,22 @@ class iCal():
                     else:
                         revents[date].append(revent)
         return revents
+
+    def _read_events(self, ics):
+        if ics.startswith('http'):
+            ical = self._sh.tools.fetch_url(ics)
+            if ical is False:
+                return {}
+            ical = ical.decode()
+        else:
+            try:
+                with open(ics, 'r') as f:
+                    ical = f.read()
+            except IOError as e:
+                logger.error('Could not open ics file {0}: {1}'.format(ics, e))
+                return {}
+
+        return self._parse_ical(ical, ics)
 
     def _parse_date(self, val, dtzinfo, par=''):
         if par.startswith('TZID='):
