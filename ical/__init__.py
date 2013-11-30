@@ -85,6 +85,7 @@ class iCal():
     def _update_calendars(self):
         for uri in self._icals:
           self._icals[uri] = self._read_events(uri)
+          logger.debug('iCal: Updated calendar {0}'.format(uri))
 
     def _filter_events(self, events, delta=1, offset=0):
         now = self._sh.now()
