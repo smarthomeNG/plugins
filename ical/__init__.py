@@ -91,31 +91,35 @@ class iCal():
         return self._filter_events(self._read_events(ics), delta, offset)
 
     def _update_items(self):
-        now = self._sh.now()
+        if len(self._items):
+            now = self._sh.now()
 
-        events = {}
-        for calendar in self._icals:
-          events[calendar] = self._filter_events(self._icals[calendar], 0, 0)
+            events = {}
+            for calendar in self._icals:
+              events[calendar] = self._filter_events(self._icals[calendar], 0, 0)
 
-        for item in self._items:
-          calendar = item.conf['ical_calendar']
+            for item in self._items:
+              calendar = item.conf['ical_calendar']
 
-          if calendar in self._ical_aliases:
-            calendar = self._ical_aliases[calendar]
+              if calendar in self._ical_aliases:
+                calendar = self._ical_aliases[calendar]
 
-          val = False
-          if now.date() in events[calendar]:
-            for event in events[calendar][now.date()]:
-              if event['Start'] <= now <= event['End'] or (event['Start'] == event['End'] and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)):
-                val = True
-                break
+              val = False
+              if now.date() in events[calendar]:
+                for event in events[calendar][now.date()]:
+                  if event['Start'] <= now <= event['End'] or (event['Start'] == event['End'] and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)):
+                    val = True
+                    break
 
-          item(val)
+              item(val)
 
     def _update_calendars(self):
         for uri in self._icals:
           self._icals[uri] = self._read_events(uri)
           logger.debug('iCal: Updated calendar {0}'.format(uri))
+
+        if len(self._icals):
+          self._update_items()
 
     def _filter_events(self, events, delta=1, offset=0):
         now = self._sh.now()
