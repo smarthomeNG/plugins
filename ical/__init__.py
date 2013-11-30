@@ -34,10 +34,23 @@ class iCal():
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
     PROPERTIES = ("SUMMARY", "DESCRIPTION", "LOCATION", "CATEGORIES")
 
-    def __init__(self, smarthome, cycle=3600):
+    def __init__(self, smarthome, cycle=3600, calendars = []):
         self._sh = smarthome
         self._items = []
         self._icals = {}
+        self._ical_aliases = {}
+
+        for calendar in calendars:
+          if ':' in calendar:
+            name, sep, cal = calendar.partition(':')
+            logger.info('iCal: Registering calendar {0} ({1})'.format(name, cal))
+            self._ical_aliases[name] = cal
+            calendar = cal
+          else:
+            logger.info('iCal: Registering calendar {1}'.format(calendar))
+
+          self._icals[calendar] = self._read_events(calendar)
+
         smarthome.scheduler.add('iCalUpdate', self._update_items, cron='* * * *', prio=5)
         smarthome.scheduler.add('iCalRefresh', self._update_calendars, cycle=int(cycle), prio=5)
 
@@ -48,8 +61,12 @@ class iCal():
         self.alive = False
 
     def parse_item(self, item):
-        if 'ical' in item.conf:
-          uri = item.conf['ical']
+        if 'ical_calendar' in item.conf:
+          uri = item.conf['ical_calendar']
+
+          if uri in self._ical_aliases:
+            uri = self._ical_aliases[uri]
+
           if uri not in self._icals:
             self._icals[uri] = self._read_events(uri)
 
@@ -62,6 +79,15 @@ class iCal():
         pass
 
     def __call__(self, ics, delta=1, offset=0):
+        if ics in self._ical_aliases:
+          logger.debug('iCal retrieve events by alias {0} -> {1}'.format(ics, self._ical_aliases[ics]))
+          return self._filter_events(self._icals[self._ical_aliases[ics]], delta, offset)
+
+        if ics in self._icals:
+          logger.debug('iCal retrieve cached events {0}'.format(ics))
+          return self._filter_events(self._icals[ics], delta, offset)
+
+        logger.debug('iCal retrieve events {0}'.format(ics))
         return self._filter_events(self._read_events(ics), delta, offset)
 
     def _update_items(self):
@@ -72,7 +98,10 @@ class iCal():
           events[calendar] = self._filter_events(self._icals[calendar], 0, 0)
 
         for item in self._items:
-          calendar = item.conf['ical']
+          calendar = item.conf['ical_calendar']
+
+          if calendar in self._ical_aliases:
+            calendar = self._ical_aliases[calendar]
 
           val = False
           if now.date() in events[calendar]:
@@ -80,6 +109,7 @@ class iCal():
               if event['Start'] <= now <= event['End'] or (event['Start'] == event['End'] and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)):
                 val = True
                 break
+
           item(val)
 
     def _update_calendars(self):
