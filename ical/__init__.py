@@ -41,13 +41,13 @@ class iCal():
         self._ical_aliases = {}
 
         for calendar in calendars:
-            if ':' in calendar:
+            if ':' in calendar and 'http' != calendar[:4]:
                 name, sep, cal = calendar.partition(':')
                 logger.info('iCal: Registering calendar {0} ({1})'.format(name, cal))
                 self._ical_aliases[name] = cal
                 calendar = cal
             else:
-                logger.info('iCal: Registering calendar {1}'.format(calendar))
+                logger.info('iCal: Registering calendar {0}'.format(calendar))
 
             self._icals[calendar] = self._read_events(calendar)
 
@@ -105,11 +105,11 @@ class iCal():
                     calendar = self._ical_aliases[calendar]
 
                 val = False
-                if now.date() in events[calendar]:
-                    for event in events[calendar][now.date()]:
-                      if event['Start'] <= now <= event['End'] or (event['Start'] == event['End'] and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)):
-                          val = True
-                          break
+                for date in events[calendar]:
+                    for event in events[calendar][date]:
+                        if event['Start'] <= now <= event['End'] or (event['Start'] == event['End'] and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)):
+                            val = True
+                            break
 
                 item(val)
 
