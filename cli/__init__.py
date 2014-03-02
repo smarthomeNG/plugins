@@ -48,6 +48,8 @@ class CLIHandler(lib.connection.Stream):
             self.ls(cmd.lstrip('ls').strip())
         elif cmd == 'la':
             self.la()
+        elif cmd == 'ld':
+            self.ld()
         elif cmd == 'lo':
             self.lo()
         elif cmd == 'll':
@@ -100,6 +102,12 @@ class CLIHandler(lib.connection.Stream):
                 self.push("{0} = {1}\n".format(item.id(), item()))
             else:
                 self.push("{0}\n".format(item.id()))
+
+    def ld(self, name = None):
+        for entry in self.sh.log.last(10):
+            values = [str(value) for value in entry]
+            self.push(str(values))
+            self.push("\n")
 
     def update(self, data):
         if not self.updates_allowed:
@@ -168,6 +176,7 @@ class CLIHandler(lib.connection.Stream):
 
     def usage(self):
         self.push('cl: clean (memory) log\n')
+        self.push('ld: log dump of (memory) log\n')
         self.push('ls: list the first level items\n')
         self.push('ls item: list item and every child item (with values)\n')
         self.push('la: list all items (with values)\n')
