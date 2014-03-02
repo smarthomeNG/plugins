@@ -50,6 +50,8 @@ class CLIHandler(lib.connection.Stream):
             self.la()
         elif cmd == 'ld':
             self.ld()
+        elif cmd.startswith('ld '):
+            self.ld(cmd.lstrip('ld ').strip())
         elif cmd == 'lo':
             self.lo()
         elif cmd == 'll':
@@ -104,10 +106,22 @@ class CLIHandler(lib.connection.Stream):
                 self.push("{0}\n".format(item.id()))
 
     def ld(self, name = None):
-        for entry in self.sh.log.last(10):
-            values = [str(value) for value in entry]
-            self.push(str(values))
-            self.push("\n")
+        if name == None or name == "":
+            log = self.sh.log
+        else:
+            logs = self.sh.return_logs()
+            if name not in logs:
+                self.push("Log '{0}' does not exist\n".format(name))
+                log = None
+            else:
+                log = logs[name]
+
+        if log != None:
+            self.push("Log dump of '{0}':\n".format(log._name))
+            for entry in log.last(10):
+                values = [str(value) for value in entry]
+                self.push(str(values))
+                self.push("\n")
 
     def update(self, data):
         if not self.updates_allowed:
@@ -176,7 +190,7 @@ class CLIHandler(lib.connection.Stream):
 
     def usage(self):
         self.push('cl: clean (memory) log\n')
-        self.push('ld: log dump of (memory) log\n')
+        self.push('ld: log dump of (memory) logs\n')
         self.push('ls: list the first level items\n')
         self.push('ls item: list item and every child item (with values)\n')
         self.push('la: list all items (with values)\n')
