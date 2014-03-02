@@ -60,6 +60,8 @@ class CLIHandler(lib.connection.Stream):
             self.lt()
         elif cmd == 'cl':
             self.cl()
+        elif cmd.startswith('cl '):
+            self.cl(cmd.lstrip('cl ').strip())
         elif cmd.startswith('update ') or cmd.startswith('up '):
             self.update(cmd.lstrip('update').strip())
         elif cmd.startswith('tr'):
@@ -78,8 +80,19 @@ class CLIHandler(lib.connection.Stream):
             return
         self.push("> ")
 
-    def cl(self):
-        self.sh.log.clean(self.sh.now())
+    def cl(self, name = None):
+        if name == None or name == "":
+            log = self.sh.log
+        else:
+            logs = self.sh.return_logs()
+            if name not in logs:
+                self.push("Log '{0}' does not exist\n".format(name))
+                log = None
+            else:
+                log = logs[name]
+
+        if log != None:
+            log.clean(self.sh.now())
 
     def ls(self, path):
         if not path:
