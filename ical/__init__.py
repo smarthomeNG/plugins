@@ -78,7 +78,7 @@ class iCal():
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
 
-    def __call__(self, ics, delta=1, offset=0):
+    def __call__(self, ics, delta=1, offset=0, username=None, password=None):
         if ics in self._ical_aliases:
             logger.debug('iCal retrieve events by alias {0} -> {1}'.format(ics, self._ical_aliases[ics]))
             return self._filter_events(self._icals[self._ical_aliases[ics]], delta, offset)
@@ -88,7 +88,7 @@ class iCal():
             return self._filter_events(self._icals[ics], delta, offset)
 
         logger.debug('iCal retrieve events {0}'.format(ics))
-        return self._filter_events(self._read_events(ics), delta, offset)
+        return self._filter_events(self._read_events(ics, username=username, password=password), delta, offset)
 
     def _update_items(self):
         if len(self._items):
@@ -158,9 +158,9 @@ class iCal():
                         revents[date].append(revent)
         return revents
 
-    def _read_events(self, ics):
+    def _read_events(self, ics, username=None, password=None):
         if ics.startswith('http'):
-            ical = self._sh.tools.fetch_url(ics)
+            ical = self._sh.tools.fetch_url(ics, username=username, password=password)
             if ical is False:
                 return {}
             ical = ical.decode()
