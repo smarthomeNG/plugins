@@ -34,6 +34,8 @@ lt: list current thread names
 update item = value: update the specified item with the specified value
 up: alias for update
 tr logic: trigger logic
+el logic: enables logic
+dl logic: disables logic
 rl logic: reload logic
 rr logic: reload and run logic
 quit: quit the session

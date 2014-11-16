@@ -60,6 +60,10 @@ class CLIHandler(lib.connection.Stream):
             self.update(cmd.lstrip('update').strip())
         elif cmd.startswith('tr'):
             self.tr(cmd.lstrip('tr').strip())
+        elif cmd.startswith('el'):
+            self.el(cmd.lstrip('el').strip())
+        elif cmd.startswith('dl'):
+            self.dl(cmd.lstrip('dl').strip())
         elif cmd.startswith('rl'):
             self.rl(cmd.lstrip('rl').strip())
         elif cmd.startswith('rr'):
@@ -126,6 +130,24 @@ class CLIHandler(lib.connection.Stream):
         else:
             self.push("Logic '{0}' not found.\n".format(logic))
 
+    def el(self, logic):
+        if not self.updates_allowed:
+            self.push("Logic triggering is not allowed.\n")
+            return
+        if logic in self.sh.return_logics():
+            self.sh.return_logic(logic).enable()
+        else:
+            self.push("Logic '{0}' not found.\n".format(logic))
+
+    def dl(self, logic):
+        if not self.updates_allowed:
+            self.push("Logic triggering is not allowed.\n")
+            return
+        if logic in self.sh.return_logics():
+            self.sh.return_logic(logic).disable()
+        else:
+            self.push("Logic '{0}' not found.\n".format(logic))
+
     def rl(self, name):
         if not self.updates_allowed:
             self.push("Logic triggering is not allowed.\n")
@@ -149,12 +171,21 @@ class CLIHandler(lib.connection.Stream):
 
     def lo(self):
         self.push("Logics:\n")
-        for logic in sorted(self.sh.return_logics()):
+        try:
+         for logic in sorted(self.sh.return_logics()):
+            data = []
+            lo = self.sh.return_logic(logic)
             nt = self.sh.scheduler.return_next(logic)
+            if lo.enabled == False:
+                data.append("disabled")
             if nt is not None:
-                self.push("{0} (scheduled for {1})\n".format(logic, nt.strftime('%Y-%m-%d %H:%M:%S%z')))
-            else:
-                self.push("{0}\n".format(logic))
+                data.append("scheduled for {0}".format(nt.strftime('%Y-%m-%d %H:%M:%S%z')))
+            self.push("{0}".format(logic))
+            if len(data):
+                self.push(" ({0})".format(", ".join(data)))
+            self.push("\n")
+        except Exception as e:
+            self.push("{}\n".format(e))
 
     def lt(self):
         # list all threads with names
@@ -176,6 +207,8 @@ class CLIHandler(lib.connection.Stream):
         self.push('update item = value: update the specified item with the specified value\n')
         self.push('up: alias for update\n')
         self.push('tr logic: trigger logic\n')
+        self.push('el logic: enables logic\n')
+        self.push('dl logic: disables logic\n')
         self.push('rl logic: reload logic\n')
         self.push('rr logic: reload and run logic\n')
         self.push('rt: return runtime\n')
