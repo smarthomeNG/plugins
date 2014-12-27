@@ -171,8 +171,7 @@ class CLIHandler(lib.connection.Stream):
 
     def lo(self):
         self.push("Logics:\n")
-        try:
-         for logic in sorted(self.sh.return_logics()):
+        for logic in sorted(self.sh.return_logics()):
             data = []
             lo = self.sh.return_logic(logic)
             nt = self.sh.scheduler.return_next(logic)
@@ -184,8 +183,6 @@ class CLIHandler(lib.connection.Stream):
             if len(data):
                 self.push(" ({0})".format(", ".join(data)))
             self.push("\n")
-        except Exception as e:
-            self.push("{}\n".format(e))
 
     def lt(self):
         # list all threads with names
