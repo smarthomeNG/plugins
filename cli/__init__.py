@@ -66,6 +66,10 @@ class CLIHandler(lib.connection.Stream):
             self.rr(cmd.lstrip('rr').strip())
         elif cmd == 'rt' or cmd == 'runtime':
             self.rt()
+        elif cmd == 'sl':
+            self.sl()
+        elif cmd == 'st':
+            self.st()
         elif cmd == 'help' or cmd == 'h':
             self.usage()
         elif cmd in ('quit', 'q', 'exit', 'x'):
@@ -162,6 +166,33 @@ class CLIHandler(lib.connection.Stream):
         for t in threading.enumerate():
             self.push("{0}\n".format(t.name))
 
+    def sl(self):
+        logics = sorted(self.sh.return_logics())
+        self.push("Scheduler tasks:\n")
+        for task in sorted(self.sh.scheduler):
+            if task not in logics:
+                nt = self.sh.scheduler.return_next(task)
+                if nt is not None:
+                    self.push("{0} (scheduled for {1})\n".format(task, nt.strftime('%Y-%m-%d %H:%M:%S%z')))
+
+    def st(self):
+        logics = sorted(self.sh.return_logics())
+        tasks = []
+        for name in sorted(self.sh.scheduler):
+            nt = self.sh.scheduler.return_next(name)
+            if name not in logics and nt is not None:
+                task = { 'nt' : nt, 'name' : name }
+                p = len(tasks)
+                for i in range(0, len(tasks)):
+                    if nt < tasks[i]['nt']:
+                        p = i
+                        break
+                tasks.insert(p, task)
+
+        self.push("Scheduler tasks by time:\n")
+        for task in tasks:
+            self.push("{0} {1}\n".format(task['nt'].strftime('%Y-%m-%d %H:%M:%S%z'), task['name']))
+
     def rt(self):
         # return SH.py runtime
         self.push("Runtime: {}\n".format(self.sh.runtime()))
@@ -179,6 +210,8 @@ class CLIHandler(lib.connection.Stream):
         self.push('rl logic: reload logic\n')
         self.push('rr logic: reload and run logic\n')
         self.push('rt: return runtime\n')
+        self.push('sl: list all scheduler tasks by name\n')
+        self.push('st: list all scheduler tasks by execution time\n')
         self.push('quit: quit the session\n')
         self.push('q: alias for quit\n')
 
