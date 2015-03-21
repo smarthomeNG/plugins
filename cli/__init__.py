@@ -168,12 +168,16 @@ class CLIHandler(lib.connection.Stream):
 
     def sl(self):
         logics = sorted(self.sh.return_logics())
-        self.push("Scheduler tasks:\n")
-        for task in sorted(self.sh.scheduler):
-            if task not in logics:
-                nt = self.sh.scheduler.return_next(task)
-                if nt is not None:
-                    self.push("{0} (scheduled for {1})\n".format(task, nt.strftime('%Y-%m-%d %H:%M:%S%z')))
+        tasks = []
+        for name in sorted(self.sh.scheduler):
+            nt = self.sh.scheduler.return_next(name)
+            if name not in logics and nt is not None:
+                task = { 'nt' : nt, 'name' : name }
+                tasks.append(task)
+
+        self.push("{} scheduler tasks:\n".format(len(tasks)))
+        for task in tasks:
+            self.push("{0} (scheduled for {1})\n".format(task['name'], task['nt'].strftime('%Y-%m-%d %H:%M:%S%z')))
 
     def st(self):
         logics = sorted(self.sh.return_logics())
@@ -189,7 +193,7 @@ class CLIHandler(lib.connection.Stream):
                         break
                 tasks.insert(p, task)
 
-        self.push("Scheduler tasks by time:\n")
+        self.push("{} scheduler tasks by time:\n".format(len(tasks)))
         for task in tasks:
             self.push("{0} {1}\n".format(task['nt'].strftime('%Y-%m-%d %H:%M:%S%z'), task['name']))
 
