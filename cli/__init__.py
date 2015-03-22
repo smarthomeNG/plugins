@@ -66,6 +66,8 @@ class CLIHandler(lib.connection.Stream):
             self.rr(cmd.lstrip('rr').strip())
         elif cmd == 'rt' or cmd == 'runtime':
             self.rt()
+        elif cmd.startswith('si'):
+            self.si(cmd.lstrip('si').strip())
         elif cmd == 'sl':
             self.sl()
         elif cmd == 'st':
@@ -166,6 +168,17 @@ class CLIHandler(lib.connection.Stream):
         for t in threading.enumerate():
             self.push("{0}\n".format(t.name))
 
+    def si(self, name):
+        if name not in self.sh.scheduler._scheduler:
+            self.push("Scheduler task '{}' not found\n".format(name))
+        else:
+            task = self.sh.scheduler._scheduler[name]
+            self.push("Task {} ".format(name))
+            self.push("{\n")
+            for key in task:
+                self.push("  {} = {}\n".format(key, task[key]))
+            self.push("}\n")
+
     def sl(self):
         logics = sorted(self.sh.return_logics())
         tasks = []
@@ -214,6 +227,7 @@ class CLIHandler(lib.connection.Stream):
         self.push('rl logic: reload logic\n')
         self.push('rr logic: reload and run logic\n')
         self.push('rt: return runtime\n')
+        self.push('si task: show details for given task\n')
         self.push('sl: list all scheduler tasks by name\n')
         self.push('st: list all scheduler tasks by execution time\n')
         self.push('quit: quit the session\n')
