@@ -114,7 +114,7 @@ class DWD():
         return filelist
 
     def warnings(self, region, location):
-        directory = 'gds/specials/warnings'
+        directory = 'gds/specials/alerts/txt'
         warnings = []
         filepath = "{0}/{1}/W*_{2}_*".format(directory, region, location)
         files = self._retr_list(filepath)
@@ -142,24 +142,34 @@ class DWD():
 
     def current(self, location):
         directory = 'gds/specials/observations/tables/germany'
+        cleanr =re.compile('<.*?>') #clean html tags
         files = self._retr_list(directory)
         if files == []:
             return {}
         last = sorted(files)[-1]
         fb = self._retr_file(last)
+
+        matchObj = re.findall(r'<tr>(.*?)</tr>', fb, re.M|re.I|re.S)   
+        legend = re.sub(cleanr,'', matchObj[0])
+        legend = list(filter(None, [s.strip() for s in legend.splitlines()]))  #filter empty lines
+ 
         fb = fb.splitlines()
         if len(fb) < 8:
             logger.info("problem fetching {0}".format(last))
             return {}
-        header = fb[4]
-        legend = fb[8].split()
+        header = fb[3] # index angepasst
         date = re.findall(r"\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')
-        date = "{}-{}-{}".format(date[2], date[1], date[0])
-        for line in fb:
-            if line.count(location):
-                space = re.compile(r'  +')
-                line = space.split(line)
-                return dict(zip(legend, line))
+        date = "{}-{}-{}".format(date[2], date[1], date[0])      
+        
+        for element in matchObj:                   
+            if element.count(location):                 
+                data_string = re.sub(cleanr,'', element)               
+                data = list(filter(None, [s.strip() for s in data_string.splitlines()]))   #filter empty lines
+                if len(data) == len(legend):                  
+                    return dict(zip(legend, data))
+                else:
+                    logger.error('Number of elements in legend does not match data {} : {}'.format(str(len(legend)), str(len(data))))
+                
         return {}
 
     def forecast(self, region, location):
@@ -189,17 +199,16 @@ class DWD():
                 elif line.startswith('Vorhersage'):
                     header = line
                 elif line.count(location):
+                    header = re.sub(r"/\d\d?", '', header)
                     day, month, year = re.findall(r"\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')
                     date = datetime.datetime(int(year), int(month), int(day), hour, tzinfo=self.tz)
-                    if re.search("\d\d\/\d\d", header):
-                        date = date + datetime.timedelta(days=-1)
                     space = re.compile(r'  +')
                     fc = space.split(line)
                     forecast[date] = fc[1:]
         return forecast
 
     def uvi(self, location):
-        directory = 'gds/specials/warnings/FG'
+        directory = 'gds/specials/alerts/health'
         forecast = {}
         for frame in ['12', '36', '60']:
             filename = "{0}/u_vindex{1}.xml".format(directory, frame)
@@ -215,7 +224,7 @@ class DWD():
         return forecast
 
     def pollen(self, region):
-        filename = 'gds/specials/warnings/FG/s_b31fg.xml'
+        filename = 'gds/specials/alerts/health/s_b31fg.xml'
         filexml = self._retr_file(filename)
         if filexml == '':
             return {}
@@ -235,8 +244,6 @@ class DWD():
                                 forecast[day0][kind.tag] = value
                             elif day.tag == 'tomorrow':
                                 forecast[day1][kind.tag] = value
-                            elif day.tag == 'dayafter_to':
-                                forecast[day2][kind.tag] = value
                             else:
                                 logger.debug("unknown day: {0}".format(day.tag))
         fxp.clear()
