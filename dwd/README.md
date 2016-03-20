@@ -35,10 +35,10 @@ This function returns a dictonary with the values for the availabe information.
 See the `gds/specials/forecasts/tables/germany/` for the available areas (e.g. Deutschland, Mitte, Nordost ...) and locations.
 
 ## pollen(Area)
-See `gds/specials/warnings/FG/s_b31fg.xml` for available areas.
+See `gds/specials/alerts/health/s_b31fg.xml` for available areas.
 
 ## uvi(Location)
-See `gds/specials/warnings/FG/sb31fg.xml` for available locations.
+See `gds/specials/alerts/health/s_b31fg.xml` for available locations.
 
 ## warnings(Issuer, LocationCode)
 See `/gds/specials/warnings/legend_warnings.pdf` for possible issuers and Locations.
