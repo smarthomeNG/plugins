@@ -20,79 +20,79 @@ class EEP_Parser():
         return results
 
     def _parse_eep_A5_02_01(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) - 40.0}
+        return {'TMP': (0 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_02(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) - 30.0}
+        return {'TMP': (10 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_03(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) - 20.0}
+        return {'TMP': (20 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_04(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) - 10.0}
+        return {'TMP': (30 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_05(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0)}
+        return {'TMP': (40 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_06(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) + 10.0}
+        return {'TMP': (50 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_07(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) + 20.0}
+        return {'TMP': (60 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_08(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) + 30.0}
+        return {'TMP': (70 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_09(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) + 40.0}
+        return {'TMP': (80 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_0A(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) + 50.0}
+        return {'TMP': (90 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_0B(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 40.0) + 60.0}
+        return {'TMP': (100 - (payload[2] * 40 / 255))}
 
     def _parse_eep_A5_02_10(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) - 60.0}
+        return {'TMP': (20 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_11(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) - 50.0}
+        return {'TMP': (30 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_12(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) - 40.0}
+        return {'TMP': (40 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_13(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) - 30.0}
+        return {'TMP': (50 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_14(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) - 20.0}
+        return {'TMP': (60 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_15(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) - 10.0}
+        return {'TMP': (70 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_16(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0)}
+        return {'TMP': (80 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_17(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) + 10.0}
+        return {'TMP': (90 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_18(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) + 20.0}
+        return {'TMP': (100 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_19(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) + 30.0}
+        return {'TMP': (110 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_1A(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) + 40.0}
+        return {'TMP': (120 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_1B(self, payload, status):
-        return {'TMP': (payload[2] / 255.0 * 80.0) + 50.0}
+        return {'TMP': (130 - (payload[2] * 80 / 255))}
 
     def _parse_eep_A5_02_20(self, payload, status):
-        return {'TMP': (((payload[1] & 0x03) * 256.0 + payload[2]) / 20.0) - 10.0}
+        return {'TMP': (41.2 - (((payload[1] & 0x03) * 256.0 + payload[2]) * 51.2 / 1023))}
 
     def _parse_eep_A5_02_30(self, payload, status):
-        return {'TMP': (((payload[1] & 0x03) * 256.0 + payload[2]) / 10.0) - 40.0}
+        return {'TMP': (62.3 - (((payload[1] & 0x03) * 256.0 + payload[2]) * 102.3 / 1023))}
 
     def _parse_eep_A5_04_01(self, payload, status):
         result = {}
@@ -230,7 +230,7 @@ class EEP_Parser():
             results['STATUS'] = 0
         elif ((payload[0]) == 0xE0) or ((payload[0]) == 0xC0):
             results['STATUS'] = 1
-        # Typo error in Eltako Datasheet for 0x0D instead of the right 0xD0
+        # Typo error in older Eltako Datasheet for 0x0D instead of the right 0xD0
         elif (payload[0] == 0xD0):
             results['STATUS'] = 2
         else:
