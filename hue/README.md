@@ -1,7 +1,8 @@
 # Phillips HUE
 
-###New development of Hue plugin for use in smarthome.py (C) Michael Würtenberger 2014, 2015
-version 1.5 develop
+###New development of Hue plugin for use in smarthome.py (C) Michael Würtenberger 2014, 2015, 2016
+version 1.8 develop
+Development Repo and examples for smartvisu widget under https://github.com/mworion/hue.git
 
 ## Supported Hardware
 Philips hue bridge, multiple bridges allowed
@@ -13,9 +14,9 @@ Typical configuration for 3 bridges
 [HUE]
     class_name = HUE
     class_path = plugins.hue
-    hue_user = 38f625a739562a8bd261ab9c7f5e62c8, 38f625a739562a8bd261ab9c7f5e62c8, 38f625a739562a8bd261ab9c7f5e62c8
-    hue_ip = 192.168.2.2,192.168.2.3,192.168.2.4
-    hue_port = 80,80,80
+    hue_user = 38f625a739562a8bd261ab9c7f5e62c8|38f625a739562a8bd261ab9c7f5e62c8|38f625a739562a8bd261ab9c7f5e62c8
+    hue_ip = 192.168.2.2|192.168.2.3|192.168.2.4
+    hue_port = 80|80|80
     cycle_lamps = 3
     cycle_bridges = 30
     default_transitionTime = 0.4
@@ -32,20 +33,20 @@ Minimal configuration for single bridge an default settings
 ### hue_user
 A user name for the hue bridge. Usually this is a hash value of 32 hexadecimal digits.
 If you would like to use more than on bridge, you have to specify all ip addresses, ports and users accordingly.
-All users are separated with comma (',') !
+All users are separated with pipe ('|') !
 If the user/hash is not yet authorized, you can use sh.hue.authorizeuser() (via interactive shell or via logic)
 to authorize it. The link button must be pressed before.
 
 ### hue_ip
 IP or host name of the hue bridge. There is no default, please us a valid ip address.
 If you would like to use more than on bridge, you have to specify all ip addresses, ports and users accordingly.
-All ip's are separated with comma (',') !
+All ip's are separated with pipe ('|') !
 
 ### hue_port
 Port number of the hue bridge. 
 Default 80. Normally there is no need to change that.
 If you would like to use more than on bridge, you have to specify all ip addresses, ports and users accordingly.
-All ports are separated with comma (',') !
+All ports are separated with pipe ('|') !
 
 ### cycle_lamps
 Cycle in seconds to how often update the state of the lights in smarthome.

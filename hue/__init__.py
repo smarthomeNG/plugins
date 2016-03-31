@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #
-#  Copyright (C) 2014,2015 Michael Würtenberger
+#  Copyright (C) 2014,2015,2016 Michael Würtenberger
 #
-#  Version 1.71 develop
+#  Version 1.8 develop
 #
 #  Erstanlage mit ersten Tests
 #  Basiert auf den Ueberlegungen des verhandenen Hue Plugins.
@@ -30,9 +30,11 @@ from collections import namedtuple
 import http.client
 import time
 import threading
+from lib.tools import Tools
 
 XY = namedtuple('XY', ['x', 'y'])
 logger = logging.getLogger('HUE:')
+client = Tools()
 
 class HUE():
 
@@ -41,9 +43,9 @@ class HUE():
         # parameter zu übergabe aus der konfiguration pulgin.conf
         self._sh = smarthome
         # parmeter übernehmen, aufteilen und leerzeichen herausnehmen
-        self._hue_ip = hue_ip.replace(' ','').split(',')
-        self._hue_user = hue_user.replace(' ','').split(',')
-        self._hue_port = hue_port.replace(' ','').split(',')
+        self._hue_ip = [hue_ip]
+        self._hue_user = [hue_user]
+        self._hue_port = [hue_port]
         # verabreitung der parameter aus der plugin.conf
         self._numberHueBridges = len(self._hue_ip)
         if len(self._hue_port) != self._numberHueBridges or len(self._hue_user) != self._numberHueBridges:
@@ -533,62 +535,6 @@ class HUE():
                 item.return_parent()(int(item.return_parent()() + 1), 'HUE_FADE')
                 item.return_parent()(int(item.return_parent()() - 1), 'HUE_FADE')
                 
-    def _fetch_url_v2(self, url, auth=None, username=None, password=None, timeout=2, method='GET', headers={}, body=None, errorItem=None):
-        # im vergleich zu fetch_url habe ich einen error item, den ich setzen bei bekannten durch den user herbeigeführten connection fehlern
-        # und die entsprechende fehlerabfragen, damit ich das log nicht voll schreibe
-        plain = True
-        if url.startswith('https'):
-            plain = False
-        lurl = url.split('/')
-        host = lurl[2]
-        purl = '/' + '/'.join(lurl[3:])
-        path = host + purl
-        if plain:
-            conn = http.client.HTTPConnection(host, timeout=timeout)
-        else:
-            conn = http.client.HTTPSConnection(host, timeout=timeout)
-        if auth == 'basic':
-            headers['Authorization'] = self.basic_auth(username, password)
-        elif auth == 'digest' and path in self.__paths:
-            headers['Authorization'] = self.digest_auth(host, purl, {}, username, password, method)
-        try:
-            conn.request(method, purl, body, headers)
-            resp = conn.getresponse()
-        except Exception as e:
-            # jetzt suchen wir nach bekannten, definierten fehlern
-            if format(e) in self._connErrors:
-                # diese fehler bekommen einen status, der in der visu oder sonst genutzt werden kann
-                # wenn der item abgelegt ist, dann kann er auch gesetzt werden, wenn nicht schreiben wir halt ins log !
-                if errorItem != None:
-                    errorItem(True,'_request')
-                else:
-                    logger.warning('_request: error status set, not status item defined')
-            else:
-                logger.error('_request: problem in http.client exception : [{0}]'.format(e))
-            if conn:
-                conn.close()
-                return None
-        # ansonsten ist alles gut durchgelaufen, dann wird das item zurückgesetzt
-        if errorItem != None:
-            # wenn der item abgelegt ist, dann kann er auch rückgesetzt werden
-            errorItem(False,'_request')
-        # jetzt geht es an die auswertung der rueckmeldungen
-        # rückmeldung 200 ist OK
-        if resp.status == 200:
-            content = resp.read()
-        elif resp.status == 401 and auth == 'digest':
-            content = resp.read()
-            rheaders = self.parse_headers(resp.getheaders())
-            headers['Authorization'] = self.digest_auth(host, purl, rheaders, username, password, method)
-            conn.request(method, purl, body, headers)
-            resp = conn.getresponse()
-            content = resp.read()
-        else:
-            logger.warning("Problem fetching {0}: {1} {2}".format(url, resp.status, resp.reason))
-            content = None
-        conn.close()
-        return content
-
     def  _get_web_content(self, hueBridgeId='0', path='', method='GET', body=None):
         # in dieser routine erfolgt der umbau und die speziellen themen zur auswertung der verbindung, die speziell für das plugin ist
         # der rest sollte standard in der routine fetch_url() enthalten sein. leider fehlt dort aber die auswertung der fehllerconditions
@@ -600,9 +546,9 @@ class HUE():
         else:
             errorItem = None
             logger.warning(hueBridgeId)
-        # dann der aufruf kompatibel, aber inhaltlich nicht identisch fetch_url aus lib.www
-        response = self._fetch_url_v2(url, None, None, None, 2, method, {}, body, errorItem)
-        if response != None:
+        # dann der aufruf kompatibel, aber inhaltlich nicht identisch fetch_url aus lib.tools, daher erst eimal das fehlerobjekt nicht mehr da
+        response = client.fetch_url(url, None, None, 2, 1, method, body, errorItem)
+        if response:
             # und jetzt der anteil der decodierung, der nicht in der fetch_url drin ist
             # lesen, decodieren nach utf-8 (ist pflicht nach der api definition philips) und in ein python objekt umwandeln
             responseJson = response.decode('utf-8')
