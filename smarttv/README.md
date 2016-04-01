@@ -42,12 +42,12 @@ With this attribute you can define to which smarttv device you want to send the 
         smarttv = KEY_MUTE
         smarttv_id = 1
         enforce_updates = true
-  
+
     [[KIKA]]
         name = KIKATV
         type = bool
-        visu = yes
-        smarttv = KEY_1, KEY_0, KEY_6, KEY_ENTER
+        visu_acl = rw
+        smarttv = KEY_1 | KEY_0 | KEY_6 | KEY_ENTER
         smarttv_id = 2
         enforce_updates = true
         knx_dpt = 1
