@@ -24,6 +24,7 @@ import datetime
 import hashlib
 import json
 import logging
+import struct
 import ssl
 import struct
 import threading
@@ -37,6 +38,8 @@ class JSONEncoder(json.JSONEncoder):
 
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        elif isinstance(obj, datetime.date):
             return obj.isoformat()
         elif isinstance(obj, datetime.timedelta):
             return int(obj.total_seconds())
@@ -287,13 +290,18 @@ class WebSocketHandler(lib.connection.Stream):
         elif command == 'monitor':
             if data['items'] == [None]:
                 return
-            for path in list(set(data['items']).difference(set(self.monitor['item']))):
+            items = []
+#           for path in list(set(data['items']).difference(set(self.monitor['item']))):
+            for path in list(data['items']):
                 if path in self.items:
-                    self.json_send({'cmd': 'item', 'items': [[path, self.items[path]['item']()]]})
+                    items.append([path, self.items[path]['item']()])
                 else:
                     logger.warning("Client {0} requested invalid item: {1}".format(self.addr, path))
+            self.json_send({'cmd': 'item', 'items': items})
             self.monitor['item'] = data['items']
-        elif command == 'logic':  # logic
+        elif command == 'ping':
+            self.json_send({'cmd': 'pong'})
+        elif command == 'logic':
             if 'name' not in data or 'val' not in data:
                 return
             name = data['name']
@@ -381,6 +389,7 @@ class WebSocketHandler(lib.connection.Stream):
         return not 0 == (byte & (1 << bit))
 
     def rfc6455_handshake(self):
+        logger.debug("rfc6455 Handshake")
         self.terminator = 8
         self.found_terminator = self.rfc6455_parse
         self.json_send = self.rfc6455_send

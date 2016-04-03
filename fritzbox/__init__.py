@@ -50,19 +50,38 @@ class FritzBoxBase():
         return res
 
     def _login(self):
-        uri = "http://" + self._host + "/login_sid.lua"
-        req = urllib.request.urlopen(uri)
-        data = req.read()
-        xml = parseString(data)
-        self._sid = xml.getElementsByTagName("SID").item(0).firstChild.data
-        logger.debug("sid = {0}".format(self._sid))
-        if self._sid == '0000000000000000':
+
+        params = urllib.parse.urlencode(
+            {'getpage': '../html/login_sid.xml', 'sid': self._sid})
+        headers = {"Content-type":
+                   "application/x-www-form-urlencoded", "Accept": "text/plain"}
+        con = http.client.HTTPConnection(self._host)
+        con.request("POST", "/cgi-bin/webcm", params, headers)
+        resp = con.getresponse()
+        con.close()
+        if resp.status != 200:
+            raise fbex("no connection to fritzbox.")
+        data = resp.read().decode('iso-8859-1')
+        logger.debug("data = {0}".format(data))
+        sid = re.search('<SID>(.*?)</SID>', data).group(1)
+        logger.debug("sid = {0}".format(sid))
+        if sid == '0000000000000000':
             logger.debug("invalid sid, starting challenge/response")
-            challenge = xml.getElementsByTagName("Challenge").item(0).firstChild.data
-            req = urllib.request.urlopen(uri + "?username=" + self._username + "&response=" + self.createResponse(challenge))
-            data = req.read()
-            xml = parseString(data)
-            self._sid = xml.getElementsByTagName("SID").item(0).firstChild.data
+            challenge = re.search('<Challenge>(.*?)</Challenge>', data).group(1)
+            challenge_resp = challenge + '-' + self._password
+            m = hashlib.md5()
+            m.update(challenge_resp)
+            challenge_resp = challenge + '-' + m.hexdigest().lower()
+            params = urllib.parse.urlencode(
+                {'login:command/response': challenge_resp, 'getpage': '../html/login_sid.xml'})
+            con = http.client.HTTPConnection(self._host)
+            con.request("POST", "/cgi-bin/webcm", params, headers)
+            resp = con.getresponse()
+            con.close()
+            if resp.status != 200:
+                raise fbex("challenge/response failed")
+            data = resp.read().decode('iso-8859-1')
+            self._sid = re.search('<SID>(.*?)</SID>', data).group(1)
             logger.debug('session id = {0}'.format(self._sid))
 
     def execute(self, cmd_dict, return_resp=False):
@@ -85,7 +104,7 @@ class FritzBoxBase():
     def call(self, call_from, call_to):
         logger.debug(
             "initiate call from {0} to {1}".format(call_from, call_to))
-        resp = self.execute({
+        self.execute({
             'telcfg:settings/UseClickToDial': 1,
             'telcfg:command/Dial': call_to,
             'telcfg:settings/DialPort': call_from

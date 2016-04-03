@@ -36,6 +36,11 @@ events = sh.ical('http://cal.server/events.ical')
 for day in events:
     print("Date: {0}".format(day))
     for event in events[day]:
-        time, summary = event
-        print("Time: {0} {1}".format(time, summary))
+        start = event['Start']
+        summary = event['Summary']
+        print("Time: {0} {1}".format(start, summary))
+        if 'testword' in str(summary).lower():
+            print 'calendar entry with testword found'
+            if start.date() == tomorrow:
+                print 'Textword calendar entry starts tommorrow')
 </pre>
