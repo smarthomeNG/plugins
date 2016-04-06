@@ -2,8 +2,11 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
+#  Copyright 2016- Christian Strassburg               c.strassburg@gmx.de
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHome.py.  
+#  Visit:  https://github.com/smarthomeNG/
+#          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
 #  SmartHome.py is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -36,7 +39,7 @@ logger = logging.getLogger('')
 
 class KNX(lib.connection.Client):
 
-    def __init__(self, smarthome, time_ga=None, date_ga=None, send_time=False, busmonitor=False, host='127.0.0.1', port=6720):
+    def __init__(self, smarthome, time_ga=None, date_ga=None, send_time=False, busmonitor=False, host='127.0.0.1', port=6720, readonly=False):
         lib.connection.Client.__init__(self, host, port, monitor=True)
         self._sh = smarthome
         self.gal = {}
@@ -52,6 +55,9 @@ class KNX(lib.connection.Client):
             self._busmonitor = logger.debug
         if send_time:
             self._sh.scheduler.add('KNX time', self._send_time, prio=5, cycle=int(send_time))
+        if readonly: 
+            logger.warning("!!! KNX Plugin in READONLY mode !!! ") 
+        self.readonly = readonly
 
     def _send(self, data):
         if len(data) < 2 or len(data) > 0xffff:
@@ -79,7 +85,10 @@ class KNX(lib.connection.Client):
             logger.warning("KNX: groupwrite telegram for {0} with unknown flag: {1}. Please choose beetween write and response.".format(ga, flag))
             return
         pkt[5] = flag | pkt[5]
-        self._send(pkt)
+        if self.readonly:
+            logger.info("KNX: groupwrite telegram for: {0} - Value: {1} not send. Plugin in READONLY mode. ".format(ga,payload))
+        else:
+            self._send(pkt)
 
     def _cacheread(self, ga):
         pkt = bytearray([0, 116])
