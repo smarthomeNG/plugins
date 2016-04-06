@@ -38,7 +38,7 @@ import threading
 from xml.dom import minidom
 import urllib.parse
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 
 __AVM__ = 'avm'
@@ -58,9 +58,16 @@ class MonitoringService():
         self._avm_identifier = avm_identifier
         self._callback = callback
         self._items = []
-        self._duration_item = None
-        self._old_event = ""
-        self._event = ""
+        self._items_incoming = []
+        self._items_outgoing = []
+        self._call_active = dict()
+        self._call_active['incoming'] = False
+        self._call_active['outgoing'] = False
+        self._duration_item = dict()
+        self._call_incoming_cid = dict()
+        self._call_outgoing_cid = dict()
+        self._old_event = dict()
+        self._event = dict()
         self.conn = None
     
     def connect(self):
@@ -81,10 +88,15 @@ class MonitoringService():
         self.conn.shutdown(2)
     
     def register_item(self, item):
-        self._items.append(item)
-    
+        if item.conf['avm_data_type'] in ['is_call_incoming', 'last_caller_incoming', 'last_call_date_incoming', 'call_event_incoming']:
+            self._items_incoming.append(item)
+        elif item.conf['avm_data_type'] in ['is_call_outgoing', 'last_caller_outgoing', 'last_call_date_outgoing', 'call_event_outgoing']:
+            self._items_outgoing.append(item)
+        else:
+            self._items.append(item)
+
     def set_duration_item(self, item):
-        self._duration_item = item
+        self._duration_item[item.conf['avm_data_type']] = item
 
     def _listen(self, recv_buffer=4096):
         """
@@ -114,84 +126,159 @@ class MonitoringService():
         """
         call_from = ''
         call_to = ''
+        logger.debug(line)
         line = line.split(";")
-        self._old_event = self._event
-        self._event = line[1]
-        if (self._event == "RING"):
+        if not line[2] in self._old_event:
+            self._old_event[line[2]] = ""
+        if not line[2] in self._event:
+            self._event[line[2]] = line[1]
+        self._old_event[line[2]] = self._event[line[2]] # save event depending on connection id
+        self._event[line[2]] = line[1]
+
+        if (self._event[line[2]] == "RING"):
             call_from = line[3]
             call_to = line[4]
-            self._trigger(call_from, call_to, line[0], self._event)
-        elif (self._event == "CALL"):
+            self._trigger(call_from, call_to, line[0], line[2], '')
+        elif (self._event[line[2]] == "CALL"):
             call_from = line[4]
             call_to = line[5]
-            self._trigger(call_from, call_to, line[0], self._event)
-        elif (self._event == "CONNECT"):
-            if self._old_event == "CALL" and self._duration_item != None: #start counter thread only if duration item set and call is outgoing
-                self._start_counter(line[0])
-            self._trigger('', '', '', self._event)
-        elif (self._event == "DISCONNECT"):
-            if self._duration_item != None:
-                self._stop_counter()
-            self._trigger('', '', '', self._event)
+            self._trigger(call_from, call_to, line[0], line[2], line[3])
+        elif (self._event[line[2]] == "CONNECT"):
+            self._trigger('', '', line[0], line[2], line[3])
+        elif (self._event[line[2]] == "DISCONNECT"):
+            self._trigger('', '', '', line[2], '')
 
-    def _start_counter(self, timestamp):
-        self._call_connect_timestamp = time.mktime(datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
-        self._duration_counter_thread = threading.Thread(target=self._count_duration, name="MonitoringService_Duration_%s" % self._avm_identifier).start()
+    def _start_counter(self, timestamp, direction, connection_id):
+        if direction == 'incoming':
+            self._call_connect_timestamp = time.mktime(
+                datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
+            self._duration_counter_thread_incoming = threading.Thread(target=self._count_duration_incoming, name="MonitoringService_Duration_Incoming_%s" % self._avm_identifier).start()
+        elif direction == 'outgoing':
+            self._call_connect_timestamp = time.mktime(
+                datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
+            self._duration_counter_thread_outgoing = threading.Thread(target=self._count_duration_outgoing, name="MonitoringService_Duration_Outgoing_%s" % self._avm_identifier).start()
     
-    def _stop_counter(self):
-        self._call_active = False
+    def _stop_counter(self, direction):
+        self._call_active[direction] = False
         try:
-            self._duration_counter_thread.join(1)
+            if direction == 'incoming':
+                self._duration_counter_thread_incoming.join(1)
+            else:
+                self._duration_counter_thread_outgoing.join(1)
         except:
             pass
-    
-    def _count_duration(self):
-        self._call_active = True
-        while (self._call_active == True):
-            if self._duration_item.conf['avm_data_type'] in ['call_duration' ]:
+
+    def _count_duration_incoming(self):
+        self._call_active['incoming'] = True
+        while (self._call_active['incoming'] == True):
+            if self._duration_item['call_duration_incoming'] != None:
                 duration = time.time() - self._call_connect_timestamp
-                self._duration_item(int(duration))
+                self._duration_item['call_duration_incoming'](int(duration))
             time.sleep(1)
 
-    def _trigger(self, call_from, call_to, time, event):
+    def _count_duration_outgoing(self):
+        self._call_active['outgoing'] = True
+        while (self._call_active['outgoing'] == True):
+            if self._duration_item['call_duration_outgoing'] != None:
+                duration = time.time() - self._call_connect_timestamp
+                logger.debug("setting duration outgoing")
+                self._duration_item['call_duration_outgoing'](int(duration))
+            time.sleep(1)
+
+    def _trigger(self, call_from, call_to, time, callid, branch):
         """
         Triggers the event: sets item values and looks up numbers in the phone book.
         """
+        event = self._event[callid]
+
         if event == 'RING':
-            for item in self._items:
-                if item.conf['avm_data_type'] in ['is_call_incoming' ]:
+            self._call_incoming_cid = callid # set call id for incoming call
+            self._duration_item['call_duration_incoming'](0) # reset duration for incoming calls
+            for item in self._items_incoming:  # update items for incoming calls
+                if item.conf['avm_data_type'] in ['is_call_incoming']:
                     item(1)
-                if item.conf['avm_data_type'] in ['is_call_outgoing' ]:
+                if item.conf['avm_data_type'] in ['is_call_outgoing']:
                     item(0)
-                elif item.conf['avm_data_type'] in ['last_caller']:
+                elif item.conf['avm_data_type'] in ['last_caller_incoming']:
                     item(self._callback(call_from))
-                elif item.conf['avm_data_type'] in ['last_call_date']:
+                elif item.conf['avm_data_type'] in ['last_call_date_incoming']:
                     item(time)
-                elif item.conf['avm_data_type'] in ['call_event']:
+                elif item.conf['avm_data_type'] in ['call_event_incoming']:
+                    item(event.lower())
+            for item in self._items: # update generic items
+                if item.conf['avm_data_type'] in ['call_event']:
                     item(event.lower())
                 elif item.conf['avm_data_type'] in ['call_direction']:
                     item("incoming")
         elif event == 'CALL':
-            for item in self._items:
-                if item.conf['avm_data_type'] in ['is_call_incoming' ]:
+            self._call_outgoing_cid = callid # set call id for outgoing call
+            self._duration_item['call_duration_outgoing'](0) # reset duration for outgoing calls
+            for item in self._items_outgoing:  # update items for outgoing calls
+                if item.conf['avm_data_type'] in ['is_call_incoming']:
                     item(0)
-                elif item.conf['avm_data_type'] in ['is_call_outgoing' ]:
+                elif item.conf['avm_data_type'] in ['is_call_outgoing']:
                     item(1)
-                elif item.conf['avm_data_type'] in ['call_event']:
+                elif item.conf['avm_data_type'] in ['last_caller_outgoing']:
+                    item(self._callback(call_to))
+                elif item.conf['avm_data_type'] in ['last_call_date_outgoing']:
+                    item(time)
+                elif item.conf['avm_data_type'] in ['call_event_outgoing']:
+                    item(event.lower())
+            for item in self._items:  # update generic items
+                if item.conf['avm_data_type'] in ['call_event']:
                     item(event.lower())
                 elif item.conf['avm_data_type'] in ['call_direction']:
                     item("outgoing")
         else: #connect und disconnect
             if event == 'CONNECT':
-                pass
+                # start counter thread
+                if self._old_event[callid] == "CALL":  # start counter thread only if duration item set and call is outgoing
+                    if self._duration_item['call_duration_outgoing'] != None:
+                        self._start_counter(time, 'outgoing', callid)
+                elif self._old_event[callid] == "RING":  # start counter thread only if duration item set and call is incoming
+                    if self._duration_item['call_duration_incoming'] != None:
+                        self._start_counter(time, 'incoming', callid)
+                # set item attributes
+                if self._old_event[callid] == "CALL":
+                    for item in self._items_outgoing:
+                        if item.conf['avm_data_type'] in ['call_event_outgoing']:
+                            item(event.lower())
+                elif self._old_event[callid] == "RING":
+                    for item in self._items_incoming:
+                        if item.conf['avm_data_type'] in ['call_event_incoming']:
+                            item(event.lower())
             elif event == 'DISCONNECT':
-                pass
+                # stop counter threads
+                if callid == self._call_incoming_cid:
+                    for item in self._items_incoming:
+                        if item.conf['avm_data_type'] in ['call_event_incoming']:
+                            item(event.lower())
+                        elif item.conf['avm_data_type'] in['is_call_incoming']:
+                            item(0)
+                    if self._duration_item['call_duration_incoming'] != None:
+                        self._stop_counter('incoming')
+                        self._call_incoming_cid = None
+                elif callid == self._call_outgoing_cid:
+                    for item in self._items_outgoing:
+                        if item.conf['avm_data_type'] in ['call_event_outgoing']:
+                            item(event.lower())
+                        elif item.conf['avm_data_type'] in ['is_call_outgoing']:
+                            item(0)
+                    if self._duration_item['call_duration_outgoing'] != None:
+                        self._stop_counter('outgoing')
+                        self._call_outgoing_cid = None
+
+                # set item attributes
+                if self._old_event[callid] == "CALL":
+                    for item in self._items_outgoing:
+                        if item.conf['avm_data_type'] in ['call_event_outgoing']:
+                            item(event.lower())
+                elif self._old_event[callid] == "RING":
+                    for item in self._items_incoming:
+                        if item.conf['avm_data_type'] in ['call_event_incoming']:
+                            item(event.lower())
             for item in self._items:
-                if item.conf['avm_data_type'] in ['is_call_incoming' ]:
-                    item(0)
-                if item.conf['avm_data_type'] in ['is_call_outgoing' ]:
-                    item(0)
-                elif item.conf['avm_data_type'] in ['call_event']:
+                if item.conf['avm_data_type'] in ['call_event']:
                     item(event.lower())
 
 class FritzDevice():
@@ -206,7 +293,6 @@ class FritzDevice():
         self._password = password
         self._identifier = identifier
         self._items = []
-        self._auth = self.set_auth()
 
     def get_identifier(self):
         """
@@ -256,19 +342,6 @@ class FritzDevice():
         """
         return self._password
 
-    def set_auth(self):
-        """
-        Sets authentication information for the FritzDevice
-        """
-        auth=HTTPDigestAuth(self.get_user(), self.get_password())
-        return auth
-
-    def get_auth(self):
-        """
-        Returns the HTTPDigestAuth authentication information for the FritzDevice
-        """
-        return self._auth
-
 class AVM():
     """
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
@@ -317,8 +390,16 @@ class AVM():
         """
         logger.info('Init AVM Plugin with identifier %s' % avm_identifier)
 
+
+        if verify == 'False':
+            self._verify = False
+        else:
+            self._verify = True
+
         if ssl == 'True':
             ssl = True
+            if not self._verify:
+                urllib3.disable_warnings()
         else:
             ssl = False
 
@@ -327,13 +408,6 @@ class AVM():
         if call_monitor == 'True':
             self._monitoring_service = MonitoringService(self._fritz_device.get_host(), 1012, avm_identifier, self.get_contact_name_by_phone_number)
             self._monitoring_service.connect()
-
-        if verify == 'False':
-            self._verify = False
-        else:
-            self._verify = True
-        if not self._verify:
-            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
         self._cycle = int(cycle)
         self._sh = smarthome
@@ -416,10 +490,13 @@ class AVM():
         if 'avm_identifier' in item.conf:
             value = item.conf['avm_identifier']
             if value == self._fritz_device.get_identifier():
-                if item.conf['avm_data_type']  in ['is_call_incoming','is_call_outgoing','last_caller','last_call_date','call_event','call_direction']:
+                if item.conf['avm_data_type']  in ['is_call_incoming','is_call_outgoing',
+                                                   'last_caller_incoming', 'last_call_date_incoming', 'call_event_incoming',
+                                                   'last_caller_outgoing', 'last_call_date_outgoing', 'call_event_outgoing',
+                                                   'call_event', 'call_direction']:
                     # items specific to call monitor
                     self._monitoring_service.register_item(item)
-                elif item.conf['avm_data_type'] == 'call_duration':
+                elif item.conf['avm_data_type'] in ['call_duration_incoming', 'call_duration_outgoing']:
                     # items specific to call monitor duration calculation
                     self._monitoring_service.set_duration_item(item)
                 else:
@@ -473,11 +550,12 @@ class AVM():
                 url = self._build_url("/upnp/control/x_tam")
             elif item.conf['avm_data_type'] == 'aha_device':
                 url = self._build_url("/upnp/control/x_homeauto")
-                
+
             try:
-                requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+                requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % e.strerror)
+                logger.error("Exception when sending POST request: %s" % str(e))
+                return
 
     def get_contact_name_by_phone_number(self, phone_number=''):
         """
@@ -495,10 +573,11 @@ class AVM():
         soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'],{'NewPhonebookID':0})
 
         try:
-            response = requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            response = requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request or parsing response: %s" % e.strerror)
+            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            return
 
         pb_url_xml = xml.getElementsByTagName('NewPhonebookURL')
         if (len(pb_url_xml) > 0):
@@ -507,13 +586,18 @@ class AVM():
                 pb_result = requests.get(pb_url, verify=self._verify)
                 pb_xml = minidom.parseString(pb_result.content)
             except Exception as e:            
-                logger.error("Exception when sending GET request or parsing response: %s" % e.strerror)
+                logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                return
             contacts = pb_xml.getElementsByTagName('contact')
             if (len(contacts) > 0):
                 for contact in contacts:
                     phone_numbers = contact.getElementsByTagName('number')
-                    if phone_number in phone_numbers[0].firstChild.data:
-                        return contact.getElementsByTagName('realName')[0].firstChild.data.strip()                    
+                    if (phone_numbers.length > 0):
+                        i = phone_numbers.length
+                        while (i >= 0):
+                            i -= 1
+                            if phone_number in phone_numbers[i].firstChild.data:
+                                return contact.getElementsByTagName('realName')[0].firstChild.data.strip()
                 # no contact with phone number found, return number only
                 return phone_number
         else: 
@@ -535,10 +619,11 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['OnTel'],action)
         soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'],{'NewPhonebookID':0})
         try:
-            response = requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            response = requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request or parsing response: %s" % e.strerror)
+            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            return
 
         calllist_url_xml = xml.getElementsByTagName('NewCallListURL')
         if (len(calllist_url_xml) > 0):
@@ -548,7 +633,8 @@ class AVM():
                 calllist_result = requests.get(calllist_url, verify=self._verify)
                 calllist_xml = minidom.parseString(calllist_result.content)
             except Exception as e:            
-                logger.error("Exception when sending GET request or parsing response: %s" % e.strerror)
+                logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                return
 
             calllist_entries = calllist_xml.getElementsByTagName('Call')
             result_entries = []
@@ -587,9 +673,10 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['DeviceConfig'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['DeviceConfig'])
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % e.strerror)
+            logger.error("Exception when sending POST request: %s" % str(e))
+            return
 
     def reconnect(self):
         """
@@ -603,9 +690,10 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WANIPConnection'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['WANIPConnection'])
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % e.strerror)
+            logger.error("Exception when sending POST request: %s" % str(e))
+            return
 
     def set_call_origin(self, phone_name):
         """
@@ -621,9 +709,10 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['X_VoIP'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'],{'NewX_AVM-DE_PhoneName':phone_name.strip()})
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % e.strerror)
+            logger.error("Exception when sending POST request: %s" % str(e))
+            return
 
     def start_call(self, phone_number):
         """
@@ -639,9 +728,10 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['X_VoIP'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'],{'NewX_AVM-DE_PhoneNumber':phone_number.strip()})
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % e.strerror)
+            logger.error("Exception when sending POST request: %s" % str(e))
+            return
 
     def cancel_call(self):
         """
@@ -655,9 +745,10 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['X_VoIP'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'])
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % e.strerror)
+            logger.error("Exception when sending POST request: %s" % str(e))
+            return
 
     def is_host_active(self, mac_address):
         """
@@ -673,7 +764,7 @@ class AVM():
         action = 'GetSpecificHostEntry'
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],{'NewMACAddress':mac_address})
-        response = requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+        response = requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         
         xml = minidom.parseString(response.content)
         tag_content = xml.getElementsByTagName('NewActive')
@@ -703,10 +794,11 @@ class AVM():
             return
 
         try:
-            response= requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:
-            logger.error("Exception when sending POST request or parsing response: %s" % e.strerror)
+            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            return
         
         tag_content = xml.getElementsByTagName('NewEnabled')
         if (len(tag_content) > 0):
@@ -732,10 +824,11 @@ class AVM():
             return
 
         try:
-            response= requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % e.strerror)
+            logger.error("Exception when sending POST request: %s" % str(e))
+            return
 
         tag_content = xml.getElementsByTagName('NewActive')
         if (len(tag_content) > 0):
@@ -782,10 +875,11 @@ class AVM():
             return
 
         try:
-            response= requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request or parsing response: %s" % e.strerror)
+            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            return
 
         if item.conf['avm_data_type'] == 'aha_device':
             element_xml = xml.getElementsByTagName('NewSwitchState')
@@ -834,9 +928,10 @@ class AVM():
 
         if not "dev_info_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % e.strerror)
+                logger.error("Exception when sending POST request: %s" % str(e))
+                return
             self._response_cache["dev_info_"+action] = response.content
         else:
             logger.debug("Accessing DeviceInfo reponse cache for action %s!" % action)
@@ -844,7 +939,8 @@ class AVM():
         try:
             xml = minidom.parseString(self._response_cache["dev_info_"+action])
         except Exception as e:            
-                logger.error("Exception when parsing response: %s" % e.strerror)
+            logger.error("Exception when parsing response: %s" % str(e))
+            return
 
         if item.conf['avm_data_type'] == 'uptime':
             element_xml = xml.getElementsByTagName('NewUpTime')
@@ -894,9 +990,10 @@ class AVM():
 
         if not "tam_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % e.strerror)
+                logger.error("Exception when sending POST request: %s" % str(e))
+                return
             self._response_cache["tam_"+action] = response.content
         else:
             logger.debug("Accessing TAM reponse cache for action %s!" % action)
@@ -904,8 +1001,9 @@ class AVM():
         try:
             xml = minidom.parseString(self._response_cache["tam_"+action])
         except Exception as e:            
-            logger.error("Exception when parsing response: %s" % e.strerror)
-                
+            logger.error("Exception when parsing response: %s" % str(e))
+            return
+
         if item.conf['avm_data_type'] == 'tam':
             element_xml = xml.getElementsByTagName('NewEnable')
             if (len(element_xml) > 0):
@@ -927,7 +1025,8 @@ class AVM():
                     try:
                         message_result = requests.get(message_url, verify=self._verify)
                     except Exception as e:            
-                        logger.error("Exception when sending GET request: %s" % e.strerror)
+                        logger.error("Exception when sending GET request: %s" % str(e))
+                        return
                     self._response_cache["tam_messages"] = message_result.content
                 else:
                     logger.debug("Accessing TAM reponse cache for action %s!" % action)
@@ -935,7 +1034,8 @@ class AVM():
                 try:
                     message_xml = minidom.parseString(self._response_cache["tam_messages"])
                 except Exception as e:            
-                    logger.error("Exception when parsing response: %s" % e.strerror)
+                    logger.error("Exception when parsing response: %s" % str(e))
+                    return
 
                 messages = message_xml.getElementsByTagName('Message')
                 message_count = 0
@@ -977,10 +1077,11 @@ class AVM():
         soap_data = self._assemble_soap_data(action,self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']))
 
         try:
-            response= requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+            response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request or parsing response: %s" % e.strerror)
+            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            return
 
         if item.conf['avm_data_type'] == 'wlanconfig':
             element_xml = xml.getElementsByTagName('NewEnable')
@@ -1017,9 +1118,10 @@ class AVM():
         # if action has not been called in a cycle so far, request it and cache response
         if not "wan_dsl_interface_config_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % e.strerror)
+                logger.error("Exception when sending POST request: %s" % str(e))
+                return
             self._response_cache["wan_dsl_interface_config_"+action] = response.content
         else:
             logger.debug("Accessing TAM reponse cache for action %s!" % action)
@@ -1027,7 +1129,8 @@ class AVM():
         try:
             xml = minidom.parseString(self._response_cache["wan_dsl_interface_config_"+action])
         except Exception as e:            
-                logger.error("Exception when parsing response: %s" % e.strerror)
+            logger.error("Exception when parsing response: %s" % str(e))
+            return
 
         if item.conf['avm_data_type'] == 'wan_upstream':
             element_xml = xml.getElementsByTagName('NewUpstreamCurrRate')
@@ -1072,9 +1175,10 @@ class AVM():
         # if action has not been called in a cycle so far, request it and cache response
         if not "wan_common_interface_configuration_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % e.strerror)
+                logger.error("Exception when sending POST request: %s" % str(e))
+                return
             self._response_cache["wan_common_interface_configuration_"+action] = response.content
         else:
             logger.debug("Accessing TAM reponse cache for action %s!" % action)
@@ -1082,7 +1186,8 @@ class AVM():
         try:
             xml = minidom.parseString(self._response_cache["wan_common_interface_configuration_"+action])
         except Exception as e:            
-                logger.error("Exception when parsing response: %s" % e.strerror)
+            logger.error("Exception when parsing response: %s" % str(e))
+            return
 
         if item.conf['avm_data_type'] == 'wan_total_packets_sent':
             element_xml = xml.getElementsByTagName('NewTotalPacketsSent')
@@ -1142,9 +1247,9 @@ class AVM():
         # if action has not been called in a cycle so far, request it and cache response
         if not "wan_ip_connection_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=self._fritz_device.get_auth(), verify=self._verify)
+                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % e.strerror)
+                logger.error("Exception when sending POST request: %s" % str(e))
             self._response_cache["wan_ip_connection_"+action] = response.content
         else:
             logger.debug("Accessing TAM reponse cache for action %s!" % action)
@@ -1152,7 +1257,8 @@ class AVM():
         try:
             xml = minidom.parseString(self._response_cache["wan_ip_connection_"+action])
         except Exception as e:            
-                logger.error("Exception when parsing response: %s" % e.strerror)
+            logger.error("Exception when parsing response: %s" % str(e))
+            return
 
         if item.conf['avm_data_type'] in ['wan_connection_status','wan_is_connected']:
             element_xml = xml.getElementsByTagName('NewConnectionStatus')
