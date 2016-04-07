@@ -417,7 +417,7 @@ This attribute defines supported functions that can be set for an item. Full set
 ## set_call_origin(phone_name)
 Sets the origin of a call. E.g. an internal number associated to a phone. Typically set before using "start_call".
 <pre>
-sh.fritzbox_1.set_call_origin("**610")
+sh.fb1.set_call_origin("**610")
 </pre>       
 
 ## start_call()
@@ -426,8 +426,8 @@ This function returns a list of all calls.
 ## start_call(phone_number)
 This function starts a call. Parameter can be an external or internal number.
 <pre>
-sh.fritzbox_1.start_call('0891234567')
-sh.fritzbox_1.start_call('**9')
+sh.fb1.start_call('0891234567')
+sh.fb1.start_call('**9')
 </pre>
 
 ## cancel_call()
