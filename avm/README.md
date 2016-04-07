@@ -4,7 +4,7 @@
 This plugin has no requirements or dependencies.
 It is completely based on the TR-064 interface from AVM (http://avm.de/service/schnittstellen/)
 
-Alpha version 0.9 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
+Alpha version 0.91 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
 WLAN Repeater 300E (FRITZ!OS 06.30).
 
 The MonitoringService currently does not support parallel incoming or outgoing calls.
@@ -107,38 +107,69 @@ This attribute defines supported functions that can be set for an item. Full set
         avm_identifier = fritzbox_1
         avm_data_type = myfritz_status
 	[[monitor]]
-	    [[[is_call_incoming]]]
-	        type = bool
-	        avm_identifier = fritzbox_1
-	        avm_data_type = is_call_incoming
-	        cache = yes
-	    [[[is_call_outgoing]]]
-	        type = bool
-	        avm_identifier = fritzbox_1
-	        avm_data_type = is_call_outgoing
-	        cache = yes
-        [[[duration]]]
-	        type = num
-	        avm_identifier = fritzbox_1
-	        avm_data_type = call_duration
-	    [[[direction]]]
-	        type = str
-	        avm_identifier = fritzbox_1
-	        avm_data_type = call_direction
-	    [[[event]]]
-	        type = str
-	        avm_identifier = fritzbox_1
-	        avm_data_type = call_event
-	    [[[last_caller]]]
-	        type = str
-	        avm_identifier = fritzbox_1
-	        avm_data_type = last_caller
-	        cache = yes
-	    [[[last_call_date]]]
-	        type = str
-	        avm_identifier = fritzbox_1
-	        avm_data_type = last_call_date	        
-	        cache = yes
+	    [[[incoming]]]
+            [[[[is_call_incoming]]]]
+                type = bool
+                avm_identifier = fritzbox_1
+                avm_data_type = is_call_incoming
+                cache = yes
+            [[[[duration]]]]
+                type = num
+                avm_identifier = fritzbox_1
+                avm_data_type = call_duration_incoming
+                cache = yes
+            [[[[last_caller]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = last_caller_incoming
+                cache = yes
+            [[[[last_call_date]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = last_call_date_incoming
+                cache = yes
+            [[[[event]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = call_event_incoming
+                cache = yes
+	    [[[outgoing]]]
+	        [[[[is_call_outgoing]]]]
+                type = bool
+                avm_identifier = fritzbox_1
+                avm_data_type = is_call_outgoing
+                cache = yes
+            [[[[duration]]]]
+                type = num
+                avm_identifier = fritzbox_1
+                avm_data_type = call_duration_outgoing
+                cache = yes
+            [[[[last_caller]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = last_caller_outgoing
+                cache = yes
+            [[[[last_call_date]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = last_call_date_outgoing
+                cache = yes
+            [[[[event]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = call_event_outgoing
+                cache = yes
+        [[[newest]]]
+            [[[[direction]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = call_direction
+                cache = yes
+            [[[[event]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = call_event
+                cache = yes
     [[tam]]        
         index = 1
         type = bool
