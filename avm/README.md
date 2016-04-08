@@ -7,7 +7,8 @@ It is completely based on the TR-064 interface from AVM (http://avm.de/service/s
 Alpha version 0.91 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
 WLAN Repeater 300E (FRITZ!OS 06.30).
 
-The MonitoringService currently does not support parallel incoming or outgoing calls.
+The MonitoringService currently does not support parallel incoming or outgoing calls. For being able to connect to
+the FritzDevice's CallMonitor, you have to activate it, by typing #96*5* on a directly connected phone.
 
 # Configuration
 
@@ -20,7 +21,7 @@ The MonitoringService currently does not support parallel incoming or outgoing c
     password = ...
     host = fritz.box
     port = 49443
-    cycle = 240
+    cycle = 300
     ssl = True     # use https or not
     verify = False # verify ssl certificate
     call_monitor = True
@@ -32,13 +33,16 @@ The MonitoringService currently does not support parallel incoming or outgoing c
     password = ...
     host = ...
     port = 49443
-    cycle = 240
+    cycle = 300
     ssl = True     # use https or not
     verify = False # verify ssl certificate
     call_monitor = True
     avm_identifier = fritzbox_2
 [...]    
 </pre>
+
+Note: Depending on the FritzDevice a shorter cycle time can result in problems with CPU rating and, in consequence with the accessibility of the webservices on the device.
+If cycle time is reduced, please carefully watch your device and your sh.log. In the development process, 120 Seconds also worked worked fine on the used devices.
 
 ### Attributes
   * `username`: Optional login information

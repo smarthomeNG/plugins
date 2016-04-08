@@ -75,9 +75,10 @@ class MonitoringService():
         try:
             self.conn.connect((self._host, self._port))
             self._listen_thread = threading.Thread(target=self._listen, name="MonitoringService_%s" % self._avm_identifier).start()
-        except socket.error as e:
+        except Exception as e:
             self.conn = None
-            logger.error("Cannot connect to", self._host,"on port:",str(self._port),"\nError:",e)
+            logger.error("MonitoringService: Cannot connect to "+self._host+" on port: "+str(self._port)+", CallMonitor activated by #96*5*? - Error: "+str(e))
+            return
 
     def disconnect(self):
         self._listen_active = False
@@ -124,9 +125,6 @@ class MonitoringService():
         Zustandegekommene Verbindung: datum;CONNECT;ConnectionID;Nebenstelle;Nummer;
         Ende der Verbindung: datum;DISCONNECT;ConnectionID;dauerInSekunden;
         """
-        call_from = ''
-        call_to = ''
-        logger.debug(line)
         line = line.split(";")
         if not line[2] in self._old_event:
             self._old_event[line[2]] = ""
@@ -181,7 +179,6 @@ class MonitoringService():
         while (self._call_active['outgoing'] == True):
             if self._duration_item['call_duration_outgoing'] != None:
                 duration = time.time() - self._call_connect_timestamp
-                logger.debug("setting duration outgoing")
                 self._duration_item['call_duration_outgoing'](int(duration))
             time.sleep(1)
 
@@ -554,7 +551,7 @@ class AVM():
             try:
                 requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % str(e))
+                logger.error("Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
                 return
 
     def get_contact_name_by_phone_number(self, phone_number=''):
