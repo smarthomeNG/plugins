@@ -146,7 +146,7 @@ class MonitoringService():
         elif (self._event[line[2]] == "DISCONNECT"):
             self._trigger('', '', '', line[2], '')
 
-    def _start_counter(self, timestamp, direction, connection_id):
+    def _start_counter(self, timestamp, direction):
         if direction == 'incoming':
             self._call_connect_timestamp = time.mktime(
                 datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())

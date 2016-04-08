@@ -8,7 +8,7 @@ Alpha version 0.91 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN R
 WLAN Repeater 300E (FRITZ!OS 06.30).
 
 The MonitoringService currently does not support parallel incoming or outgoing calls. For being able to connect to
-the FritzDevice's CallMonitor, you have to activate it, by typing #96*5* on a directly connected phone.
+the FritzDevice's CallMonitor, you have to activate it, by typing `#96*5*` on a directly connected phone.
 
 # Configuration
 
@@ -423,9 +423,6 @@ Sets the origin of a call. E.g. an internal number associated to a phone. Typica
 <pre>
 sh.fb1.set_call_origin("**610")
 </pre>       
-
-## start_call()
-This function returns a list of all calls.
 
 ## start_call(phone_number)
 This function starts a call. Parameter can be an external or internal number.
