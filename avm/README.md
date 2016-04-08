@@ -4,7 +4,7 @@
 This plugin has no requirements or dependencies.
 It is completely based on the TR-064 interface from AVM (http://avm.de/service/schnittstellen/)
 
-Alpha version 0.91 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
+Alpha version 0.911 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
 WLAN Repeater 300E (FRITZ!OS 06.30).
 
 The MonitoringService currently does not support parallel incoming or outgoing calls. For being able to connect to
