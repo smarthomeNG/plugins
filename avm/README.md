@@ -4,7 +4,7 @@
 This plugin requires lib requests. You can install this lib with: 
 <pre>
 sudo pip3 install requests --upgrade
-</pre>Â
+</pre>
 
 It is completely based on the TR-064 interface from AVM (http://avm.de/service/schnittstellen/)
 
@@ -439,7 +439,7 @@ sh.fb1.start_call('**9')
 This function cancels a running call.
 
 ## reconnect()
-This function reconnect the upstream connection.
+This function reconnects the WAN (=internet) connection.
 
 ## reboot()
 This function reboots the FritzDevice.
