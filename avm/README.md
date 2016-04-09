@@ -1,7 +1,11 @@
 # AVM
 
 # Requirements
-This plugin has no requirements or dependencies.
+This plugin requires lib requests. You can install this lib with: 
+<pre>
+sudo pip3 install requests --upgrade
+</pre>Â
+
 It is completely based on the TR-064 interface from AVM (http://avm.de/service/schnittstellen/)
 
 Alpha version 0.911 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a

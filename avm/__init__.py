@@ -43,7 +43,6 @@ from requests.auth import HTTPDigestAuth
 
 __AVM__ = 'avm'
 logger = logging.getLogger(__AVM__)
-
 class MonitoringService():
     """
     Class which connects to the FritzBox service of the Callmonitor: http://www.wehavemorefun.de/fritzbox/Callmonitor
@@ -386,7 +385,7 @@ class AVM():
         @param avm_identifier:     Internal identifier of the FritzDevice
         """
         logger.info('Init AVM Plugin with identifier %s' % avm_identifier)
-
+        self._session = requests.Session()
 
         if verify == 'False':
             self._verify = False
@@ -549,7 +548,7 @@ class AVM():
                 url = self._build_url("/upnp/control/x_homeauto")
 
             try:
-                requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 logger.error("Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
                 return
@@ -570,7 +569,7 @@ class AVM():
         soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'],{'NewPhonebookID':0})
 
         try:
-            response = requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            response = self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
             logger.error("Exception when sending POST request or parsing response: %s" % str(e))
@@ -580,7 +579,7 @@ class AVM():
         if (len(pb_url_xml) > 0):
             pb_url = pb_url_xml[0].firstChild.data
             try:
-                pb_result = requests.get(pb_url, verify=self._verify)
+                pb_result = self._session.get(pb_url, verify=self._verify)
                 pb_xml = minidom.parseString(pb_result.content)
             except Exception as e:            
                 logger.error("Exception when sending GET request or parsing response: %s" % str(e))
@@ -616,7 +615,7 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['OnTel'],action)
         soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'],{'NewPhonebookID':0})
         try:
-            response = requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            response = self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
             logger.error("Exception when sending POST request or parsing response: %s" % str(e))
@@ -627,7 +626,7 @@ class AVM():
             calllist_url = calllist_url_xml[0].firstChild.data
 
             try:
-                calllist_result = requests.get(calllist_url, verify=self._verify)
+                calllist_result = self._session.get(calllist_url, verify=self._verify)
                 calllist_xml = minidom.parseString(calllist_result.content)
             except Exception as e:            
                 logger.error("Exception when sending GET request or parsing response: %s" % str(e))
@@ -670,7 +669,7 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['DeviceConfig'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['DeviceConfig'])
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
             logger.error("Exception when sending POST request: %s" % str(e))
             return
@@ -687,7 +686,7 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WANIPConnection'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['WANIPConnection'])
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
             logger.error("Exception when sending POST request: %s" % str(e))
             return
@@ -706,7 +705,7 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['X_VoIP'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'],{'NewX_AVM-DE_PhoneName':phone_name.strip()})
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
             logger.error("Exception when sending POST request: %s" % str(e))
             return
@@ -725,7 +724,7 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['X_VoIP'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'],{'NewX_AVM-DE_PhoneNumber':phone_number.strip()})
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
             logger.error("Exception when sending POST request: %s" % str(e))
             return
@@ -742,7 +741,7 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['X_VoIP'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'])
         try:
-            requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
             logger.error("Exception when sending POST request: %s" % str(e))
             return
@@ -761,7 +760,7 @@ class AVM():
         action = 'GetSpecificHostEntry'
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],{'NewMACAddress':mac_address})
-        response = requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+        response = self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         
         xml = minidom.parseString(response.content)
         tag_content = xml.getElementsByTagName('NewActive')
@@ -791,7 +790,7 @@ class AVM():
             return
 
         try:
-            response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            response= self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:
             logger.error("Exception when sending POST request or parsing response: %s" % str(e))
@@ -821,7 +820,7 @@ class AVM():
             return
 
         try:
-            response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            response= self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
             logger.error("Exception when sending POST request: %s" % str(e))
@@ -872,7 +871,7 @@ class AVM():
             return
 
         try:
-            response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            response= self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
             logger.error("Exception when sending POST request or parsing response: %s" % str(e))
@@ -925,7 +924,7 @@ class AVM():
 
         if not "dev_info_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response= self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 logger.error("Exception when sending POST request: %s" % str(e))
                 return
@@ -987,7 +986,7 @@ class AVM():
 
         if not "tam_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response= self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 logger.error("Exception when sending POST request: %s" % str(e))
                 return
@@ -1020,7 +1019,7 @@ class AVM():
 
                 if not "tam_messages" in self._response_cache:
                     try:
-                        message_result = requests.get(message_url, verify=self._verify)
+                        message_result = self._session.get(message_url, verify=self._verify)
                     except Exception as e:            
                         logger.error("Exception when sending GET request: %s" % str(e))
                         return
@@ -1074,7 +1073,7 @@ class AVM():
         soap_data = self._assemble_soap_data(action,self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']))
 
         try:
-            response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            response= self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
             logger.error("Exception when sending POST request or parsing response: %s" % str(e))
@@ -1115,7 +1114,7 @@ class AVM():
         # if action has not been called in a cycle so far, request it and cache response
         if not "wan_dsl_interface_config_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response= self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 logger.error("Exception when sending POST request: %s" % str(e))
                 return
@@ -1172,7 +1171,7 @@ class AVM():
         # if action has not been called in a cycle so far, request it and cache response
         if not "wan_common_interface_configuration_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response= self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 logger.error("Exception when sending POST request: %s" % str(e))
                 return
@@ -1244,7 +1243,7 @@ class AVM():
         # if action has not been called in a cycle so far, request it and cache response
         if not "wan_ip_connection_"+action in self._response_cache:
             try:
-                response= requests.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response= self._session.post(url, data=soap_data, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 logger.error("Exception when sending POST request: %s" % str(e))
             self._response_cache["wan_ip_connection_"+action] = response.content
