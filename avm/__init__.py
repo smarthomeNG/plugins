@@ -387,7 +387,7 @@ class AVM():
         logger.info('Init AVM Plugin with identifier %s' % avm_identifier)
 
         self._session = requests.Session()
-        self._timeout = (3, 10)
+        self._timeout = 10
 
         if verify == 'False':
             self._verify = False
