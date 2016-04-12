@@ -313,7 +313,7 @@ class FritzDevice():
         Returns added items
         """
         return self._items
-#
+
     def get_item_count(self):
         """
         Returns number of added items
@@ -544,6 +544,7 @@ class AVM():
             if item.conf['avm_data_type'] == 'wlanconfig':
                 param = "%s%s%s" % ("/upnp/control/", item.conf['avm_data_type'], item.conf['avm_wlan_index'])
                 url = self._build_url(param)
+
             elif item.conf['avm_data_type'] == 'tam':
                 url = self._build_url("/upnp/control/x_tam")
             elif item.conf['avm_data_type'] == 'aha_device':
@@ -554,6 +555,12 @@ class AVM():
             except Exception as e:            
                 logger.error("Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
                 return
+
+            if item.conf['avm_data_type'] == 'wlanconfig': # check if item was guest wifi item and remaining time is set as item..
+                for citem in self._fritz_device.get_items():  # search for guest time remaining item.
+                    if citem.conf['avm_data_type'] == 'wlan_guest_time_remaining' and citem.conf['avm_wlan_index'] == item.conf[
+                        'avm_wlan_index']:
+                        self._update_wlan_config(citem) #immediately update remaining guest time
 
     def get_contact_name_by_phone_number(self, phone_number=''):
         """
