@@ -48,7 +48,8 @@ class JSONEncoder(json.JSONEncoder):
 
 class WebSocket(lib.connection.Server):
 
-    def __init__(self, smarthome, visu_dir=False, generator_dir=False, ip='0.0.0.0', port=2424, tls='no', smartvisu_dir=False, acl='ro'):
+#    def __init__(self, smarthome, visu_dir=False, generator_dir=False, ip='0.0.0.0', port=2424, tls='no', smartvisu_dir=False, acl='ro'):
+    def __init__(self, smarthome, visu_dir=False, generator_dir=False, ip='0.0.0.0', port=2424, tls='no', smartvisu_dir=False, acl='ro', wsproto=3):	#MSinn
         lib.connection.Server.__init__(self, ip, port)
         self._sh = smarthome
         self.__acl = acl
@@ -56,6 +57,12 @@ class WebSocket(lib.connection.Server):
         self.clients = []
         self.visu_items = {}
         self.visu_logics = {}
+        try:								# MSinn
+            self.proto = int(wsproto)		# MSinn
+        except:								# MSinn
+            self.proto = 3					# MSinn
+            logger.warning("VISU: Invalid wsproto specified in plugin.conf, using protocol version {0} instead".format(self.proto))		# MSinn
+
         if tls == 'no':
             self.tls = False
         else:
@@ -124,7 +131,8 @@ class WebSocket(lib.connection.Server):
             except Exception as e:
                 logger.exception(e)
                 return
-        client = WebSocketHandler(self._sh, self, sock, address, self.visu_items, self.visu_logics)
+#        client = WebSocketHandler(self._sh, self, sock, address, self.visu_items, self.visu_logics)			# MSinn
+        client = WebSocketHandler(self._sh, self, sock, address, self.visu_items, self.visu_logics, self.proto)
         self.clients.append(client)
 
     def run(self):
@@ -202,7 +210,8 @@ class WebSocket(lib.connection.Server):
 
 class WebSocketHandler(lib.connection.Stream):
 
-    def __init__(self, smarthome, dispatcher, sock, addr, items, logics):
+#    def __init__(self, smarthome, dispatcher, sock, addr, items, logics):		# MSinn
+    def __init__(self, smarthome, dispatcher, sock, addr, items, logics, proto=4):
         lib.connection.Stream.__init__(self, sock, addr)
         self.terminator = b"\r\n\r\n"
         self._sh = smarthome
@@ -219,7 +228,9 @@ class WebSocketHandler(lib.connection.Stream):
         self.logs = smarthome.return_logs()
         self._series_lock = threading.Lock()
         self.logics = logics
-        self.proto = 3
+#		self.proto = 3					# MSinn
+        self.proto = proto				# MSinn
+        logger.warning("VISU: WebSocketHandler uses protocol version {0}".format(self.proto))		# MSinn
 
     def send_event(self, event, data):
         data = data.copy()  # don't filter the orignal data dict
@@ -243,6 +254,7 @@ class WebSocketHandler(lib.connection.Stream):
     def update(self, path, data, source):
         if path in self.monitor['item']:
             if self.addr != source:
+                logger.warning("Visu: update send to {0}: {1}, path={2}, source={3}".format(self.addr, data, path, source))
                 self.json_send(data)
 
     def update_series(self):
@@ -261,6 +273,7 @@ class WebSocketHandler(lib.connection.Stream):
                 del(reply['update'])
                 del(reply['params'])
                 if reply['series'] is not None:
+                    logger.warning("Visu: update send to {0}: {1}".format(self.addr, reply))
                     self.json_send(reply)
         for sid in remove:
             del(self._update_series[sid])
@@ -270,7 +283,8 @@ class WebSocketHandler(lib.connection.Stream):
         return list(set(b).difference(set(a)))
 
     def json_parse(self, data):
-        logger.debug("{0} sent {1}".format(self.addr, repr(data)))
+#        logger.debug("{0} sent {1}".format(self.addr, repr(data)))			# MSinn
+        logger.warning("{0} sent {1}".format(self.addr, repr(data)))		# MSinn
         try:
             data = json.loads(data)
         except Exception as e:
@@ -297,9 +311,11 @@ class WebSocketHandler(lib.connection.Stream):
                     items.append([path, self.items[path]['item']()])
                 else:
                     logger.warning("Client {0} requested invalid item: {1}".format(self.addr, path))
+            logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'item', 'items': items})))	# MSinn
             self.json_send({'cmd': 'item', 'items': items})
             self.monitor['item'] = data['items']
         elif command == 'ping':
+            logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))	# MSinn
             self.json_send({'cmd': 'pong'})
         elif command == 'logic':
             if 'name' not in data or 'val' not in data:
@@ -327,6 +343,7 @@ class WebSocketHandler(lib.connection.Stream):
                 if hasattr(self.items[path]['item'], 'series'):
                     try:
                         reply = self.items[path]['item'].series(series, start, end, count)
+                        logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, reply))	# MSinn
                     except Exception as e:
                         logger.exception("Problem fetching series for {0}: {1}".format(path, e))
                     else:
@@ -361,6 +378,7 @@ class WebSocketHandler(lib.connection.Stream):
             elif proto < self.proto:
                 logger.warning("WebSocket: protocol mismatch. Update your client: {0}".format(self.addr))
             self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()})
+            logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, {'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()}))	# MSinn
 
     def parse_header(self, data):
         data = bytes(data)
