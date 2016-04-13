@@ -13,49 +13,99 @@ None.
 [visu]
     class_name = WebSocket
     class_path = plugins.visu
+#	visu_dir = False
+#	generator_dir = False
 #   ip='0.0.0.0'
 #   port=2424
+#	tls = no
+#	wsproto = 3
 #   acl = ro
 #   smartvisu_dir = False
 </pre>
 
-This plugins listens by default on every IP address of the host on the TCP port 2424.
-It provides read only access to every item. By changing the `acl` attribute to `rw` or `no` you could modify this default 
-The `smartvisu_dir` attribute is described in the smartVISU section.
+### visu_dir ###
+** Only used for **old visu** (not for smartVISU) **
 
-## items.conf
+ Directory in which the generated web pages of the old visa are stored
 
-Simply set the visu_acl attribute to something to allow read/write access to the item.
+### generator_dir
+** Only used for **old visu** (not for smartVISU) **
 
+Source directory of the templates for generating web pages
 
-<pre>
-[example]
-    [[toggle]]
-        value = True
-        type = bool
-        visu_acl = rw
-</pre>
+### ip
+This plugins listens by default on every IP address of the host.
 
-## logic.conf
-You could specify the `visu_acl` attribute to every logic in your logic.conf. This way you could trigger the logic via the interface.
-<pre>
-[dialog]
-    filename = 'dialog.py'
-    visu_acl = true
-</pre>
+### port
+This plugins listens by default  on the TCP port 2424.
 
+### tls
+Encryption can be turned on by this parameter. 
 
-# smartVISU
+??? Details unknown ???
 
-You could generate pages for the [smartVISU](http://code.google.com/p/smartvisu/) visualisation if you specify the `smartvisu_dir` which should be set to the root directory of your smartVISU installation.
+### wsproto
+The version of the web socket protocol can be specified. By default the plugin uses version 3. For smartVISU version > v2.7 the web socket protocol has to be set to 4.
+
+### acl
+The plugin provides by default read only access to every item. By changing the **`acl`** attribute to `rw` or `no` you could modify this behaviour to gain write access or no access to the items in smarthome.py.
+
+### smartvisu_dir
+You could generate pages for the smartVISU visualisation if you specify the **`smartvisu_dir`** which should be set to the root directory of your smartVISU installation.
+
 In the examples directory you could find a configuration with every supported element. `examples/items/smartvisu.conf` 
 
-The attribute keywords are:
 
-   * sv_page: to generate a page for this item. You have to specify `sv_page = room` to activate it. Every widget beneath this item will be included in the page.
-   * sv_img: with this attribute you could assign an icon or picture for a page or widget.
-   * sv_widget: This has to be a double quoted encapsulated string with the smartVISU widget. You could define multiple widgets by separating them by a comma. See the example below:
+## items.conf
+Most of the entries in item.conf are specific to smartVISU. These parameters beginn with **`sv_`**.
 
+### visu_acl
+Simply set the **`visu_acl`** attribute to something to allow read/write access to the item.
+
+### sv_page
+ Set **`sv_page`** to to one of the following values generate a page for this item. Every widget beneath this item will be included in the page.
+
+Valid values are:
+
+| value              | description                                                                 |  
+| :----------- | :--------------------------------------------  |  
+|  **room**      |  The page appears in the room view of smartVISU    	|  
+|  **category** | The page appears in the category view of smartVISU   |  
+| **overview**  | ???              |
+[values for **`sv_page`**]
+
+--> In dict room.conf
+
+
+### sv_img
+By setting **`sv_img`** you could assign an icon or picture for a page or widget.
+
+--> In dict room.conf
+
+
+### sv_widget
+**`sv_widget`** has to be a double quoted encapsulated string with the smartVISU widget. You could define multiple widgets by separating them by a comma. See the example below:
+
+--> In dict room.conf
+
+### sv_heading_right
+--> In dict room.conf
+
+### sv_heading_center
+--> In dict room.conf
+
+### sv_heading_left
+--> In dict room.conf
+
+### sv_item_type
+--> In dict item.conf
+
+If one of the **`sv_heading_...`** parameters is defined, heading.html from the template directory ?tpldir? is added to the page.
+
+--> tpldir = directory + '/pages/base/tpl'
+--> directory = parameter to pages() in smartvisu.py -> self.smartvisu_dir
+
+### Example
 <pre>
 [second]
     [[sleeping]]
@@ -78,8 +128,10 @@ The attribute keywords are:
                 knx_send = 3/2/14
 </pre>
 
-But instead of giving the widget distinct options you could use `item` as a keyword.
+But instead of giving the widget distinct options you could use **`item`** as a keyword.
+
 The page generator will replace it with the current path. This way you could easily copy widget calls and don't type the item path every time.
+
 <pre>
 [second]
     [[sleeping]]
@@ -102,3 +154,83 @@ The page generator will replace it with the current path. This way you could eas
                 knx_send = 3/2/14
 </pre>
 
+
+
+## logic.conf
+You could specify the **`visu_acl`** attribute to every logic in your logic.conf. This way you could trigger the logic via the interface.
+
+<pre>
+[dialog]
+    filename = 'dialog.py'
+    visu_acl = true
+</pre>
+
+.
+
+# Files of the Plugin
+The plugin is made up by several files, which are described below.
+
+
+## __ init __.py
+Main file of the plugin
+
+## smartvisu.py
+This file contains the code for interfacing with smartVISU
+
+## generator.py
+This file contains code for generating a visu, if not using smartVISU. The was the way to create a visualization before the Interfacing with smartVISU was done.
+
+It is unknown it the code is functional, because it hasn't been tested.
+
+.
+
+# WebSocket Interface
+
+The visa plugin implements a WebSocket server. This section describes the implemented WebSocket command, which the visu plugin handles. 
+
+## item
+With the **`item`** command a client requests to change the value of an item. 
+
+.
+
+## monitor
+With the **`monitor`** command a client requests the actual value of an item.
+
+.
+
+## ping
+With the **`ping`** command a client checks if the connection to the plugin is alive.
+
+.
+
+## logic
+With the **`logic`** command a client requests a logic to be triggered.
+
+.
+
+## series
+With the **`series`** command a client requests a series of values for an item. The values which are requested are stored in a database using the sqlite plugin. 
+
+.
+
+## log
+With the **`log`** command a client requests the last entries of a specified log. The example command requests the last 10 log entries of the core log:
+
+```
+	{"cmd":"log","name":"env.core.log","max":"10"}
+```
+
+.
+
+## proto
+With the **`proto`** command a client requests the WebSocket protocol version, it wants to use for communication:
+
+```
+	{"cmd":"proto","ver":4}
+```
+
+The plugin answers with the protocol version it supports. Additionally it sends the actual date time and timezone:
+
+```
+	{'cmd': 'proto', 'ver': 4, 'time': datetime.datetime(2016, 4, 13, 21, 43, 12, 934553, tzinfo=tzfile('/usr/share/zoneinfo/Europe/Berlin'))}
+```
