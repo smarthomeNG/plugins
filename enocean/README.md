@@ -48,6 +48,9 @@ last state of right rocker = B
 Mechanical handle example:
 handle_status = STATUS
 
+An Enocean item must specify at minimum an enocean_rx_id and an enocean_rx_eep. Send items additionally hold an enocean_tx_id_offset.
+
+
 Example item.conf
 =
 <pre>
@@ -147,7 +150,7 @@ You have to know about the EnOcean RORG of your device (please search the intern
 * D5_00_01    Door/Window Contact, e.g. Eltako FTK, FTKB
 * F6_02_01/F6_02_02    2-Button-Rocker
 * F6_02_03    2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V or Gira switches.
-* F6_10_00    Mechanical Handle
+* F6_10_00    Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
 
 Send commands: Tx EEPs
 =
