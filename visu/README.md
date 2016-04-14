@@ -1,4 +1,15 @@
-# Visualisation
+# Visualisation plugin
+
+```
+ 
+Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
+Copyright 2016- Martin Sinn                      m.sinn@gmx.de
+
+This plugin is part of SmartHome.py.  
+Visit:  https://github.com/smarthomeNG/
+        https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+```
 
 This plugin provides an WebSocket interface for the smartVISU visualisation framework.
 Right now the WebSocket interface only supports unencrypted connections. Please use a internal network or VPN to connect to the service.
@@ -7,6 +18,7 @@ Right now the WebSocket interface only supports unencrypted connections. Please 
 None.
 
 # Configuration
+The configuration of the plugin itself is done in the file **`etc/plugin.conf`**. The configuration of the visualization of the items is done by defining additional attributes of the item in the file **`items/*.conf`**.
 
 ## plugin.conf
 <pre>
@@ -23,15 +35,15 @@ None.
 #   smartvisu_dir = False
 </pre>
 
-### visu_dir ###
+### visu_dir
 ** Only used for **old visu** (not for smartVISU) **
 
- Directory in which the generated web pages of the old visa are stored
+ Directory in which the generated web pages of the old visa are stored.
 
 ### generator_dir
 ** Only used for **old visu** (not for smartVISU) **
 
-Source directory of the templates for generating web pages
+Source directory of the templates for generating web pages.
 
 ### ip
 This plugins listens by default on every IP address of the host.
@@ -186,10 +198,21 @@ It is unknown it the code is functional, because it hasn't been tested.
 
 # WebSocket Interface
 
-The visa plugin implements a WebSocket server. This section describes the implemented WebSocket command, which the visu plugin handles. 
+The visa plugin implements a WebSocket server. This section describes the implemented protocol. The messages of the protocol consist of data in jason format. Following are the request commands which the visu plugin handles. 
+
 
 ## item
-With the **`item`** command a client requests to change the value of an item. 
+With the **`item`** command a client requests to change the value of an item. The example requests the item with the id "wohnung.buero.schreibtischleuchte.onoff" to be turned off:
+
+```
+	{
+	 "cmd":"item",
+	 "id":"wohnung.buero.schreibtischleuchte.onoff",
+	 "val":"0"
+	}
+```
+
+The plugin does not send an answer to the **`item`** command.
 
 .
 
@@ -201,6 +224,15 @@ With the **`monitor`** command a client requests the actual value of an item.
 ## ping
 With the **`ping`** command a client checks if the connection to the plugin is alive.
 
+```
+	{"cmd":"ping"}
+```
+
+The plugin answers with
+
+```
+	{"cmd":"ping"}
+```
 .
 
 ## logic
@@ -220,6 +252,19 @@ With the **`log`** command a client requests the last entries of a specified log
 	{"cmd":"log","name":"env.core.log","max":"10"}
 ```
 
+The plugin answers with a message like this:
+
+{==To be completed==}
+
+```
+	{
+	 "init":"y",
+	 "cmd":"log",
+	 "name":"env.core.log","log":[
+	 	{"message":"10.0.0.173:56619 sent '{\"cmd\":\"log\",\"name\":\"env.core.log\",\"max\":\"10\"}'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.249440+02:00"},{"message":"VISU json_parse: send to 10.0.0.173:56619: {'cmd': 'proto', 'ver': 4, 'time': datetime.datetime(2016, 4, 14, 21, 23, 20, 248522, tzinfo=tzfile('/usr/share/zoneinfo/Europe/Berlin'))}","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.248741+02:00"},{"message":"10.0.0.173:56619 sent '{\"cmd\":\"proto\",\"ver\":4}'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.247570+02:00"},{"message":"10.0.0.173:56619 sent 'WebSocket rocks'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.246697+02:00"},{"message":"VISU: WebSocketHandler uses protocol version 
+
+```
+
 .
 
 ## proto
@@ -232,5 +277,9 @@ With the **`proto`** command a client requests the WebSocket protocol version, i
 The plugin answers with the protocol version it supports. Additionally it sends the actual date time and timezone:
 
 ```
-	{'cmd': 'proto', 'ver': 4, 'time': datetime.datetime(2016, 4, 13, 21, 43, 12, 934553, tzinfo=tzfile('/usr/share/zoneinfo/Europe/Berlin'))}
+	{
+	 "cmd": "proto", 
+	 "ver": 4, 
+	 "time":"2016-04-14T21:23:20.248227+02:00"
+	}
 ```
