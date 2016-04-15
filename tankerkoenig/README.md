@@ -38,17 +38,17 @@ All mappings to items need to be done via your own logic.
         [[[price]]]
             type=num
             visu_acl = ro
-        [[DemoBavariaPetrol]]
-            tankerkoenig_id = a07b7f50-6e6f-4e6e-9bce-17d79bf0778c
-            [[[diesel]]]
-                type=num
-                visu_acl = ro
-            [[[name]]]
-                type=str
-                visu_acl = ro
-            [[[isOpen]]]
-                type=bool
-                visu_acl = ro
+    [[DemoBavariaPetrol]]
+        tankerkoenig_id = a07b7f50-6e6f-4e6e-9bce-17d79bf0778c
+        [[[diesel]]]
+            type=num
+            visu_acl = ro
+        [[[name]]]
+            type=str
+            visu_acl = ro
+        [[[isOpen]]]
+            type=bool
+            visu_acl = ro
 </pre>
 
 # Functions
@@ -71,7 +71,9 @@ Returned keys are 'e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'p
 # Logics
 
 ## Fill items with cheapest petrol station data
+<pre>
 cheapest = sh.tankerkoenig.get_petrol_stations(sh._lat, sh._lon, 'diesel', 'price', rad='10')
 sh.petrol_station.cheapest.name(cheapest[0]['name'])
 sh.petrol_station.cheapest.isOpen(cheapest[0]['isOpen'])
 sh.petrol_station.cheapest.price(cheapest[0]['price'])
+</pre>
