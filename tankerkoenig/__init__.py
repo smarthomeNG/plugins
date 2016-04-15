@@ -11,8 +11,8 @@
 #  The data provided by the api is under a Creative-Commons license “CC BY 4.0”
 #  Also regard: https://creativecommons.tankerkoenig.de/#usage
 #
-# For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
-# api key. For your own key register to https://creativecommons.tankerkoenig.de
+#  For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
+#  api key. For your own key register to https://creativecommons.tankerkoenig.de
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -43,8 +43,8 @@ class TankerKoenig():
     def __init__(self, smarthome, apikey):
         """
         Initializes the plugin
-        @param apikey: apikey: Key für den Zugriff auf die freie Tankerkönig-Spritpreis-API
-        Für eigenen Key bitte hier https://creativecommons.tankerkoenig.de registrieren.
+        @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
+        api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
         logger.info('Init TankerKoenigPlugin')
         self._sh = smarthome
@@ -54,7 +54,6 @@ class TankerKoenig():
 
     def run(self):
         self.alive = True
-        #self._sh.scheduler.add(__TANKKOENIG__, self._update_loop, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
@@ -74,6 +73,7 @@ class TankerKoenig():
         return result_stations
 
     def get_petrol_station_detail(self, id):
+        #  https://creativecommons.tankerkoenig.de/#techInfo
         response = self._session.get(self._build_url("%s?id=%s&apikey=%s" % (self._detail_url_suffix, id, self._apikey)))
         json_obj = response.json()
         keys = ['e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen',
