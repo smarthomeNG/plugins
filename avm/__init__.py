@@ -493,9 +493,78 @@ class AVM():
                                                    'last_caller_outgoing', 'last_call_date_outgoing', 'call_event_outgoing',
                                                    'call_event', 'call_direction']:
                     # items specific to call monitor
+                    # initally get data from calllist
+                    if item.conf['avm_data_type'] == 'last_caller_incoming' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '1':
+                                item(element['Name'])
+                                break
+                    elif item.conf['avm_data_type'] == 'last_call_date_incoming' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '1':
+                                date = str(element['Date'])
+                                date = date[8:10]+"."+date[5:7]+"."+date[2:4]+" "+date[11:19]
+                                item(date)
+                                break
+                    elif item.conf['avm_data_type'] == 'call_event_incoming' and item._value == '':
+                        item('disconnect')
+                    elif item.conf['avm_data_type'] == 'is_call_incoming' and item._value == '':
+                        item(0)
+                    elif item.conf['avm_data_type'] == 'last_caller_outgoing' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '3':
+                                item(element['Name'])
+                                break
+                    elif item.conf['avm_data_type'] == 'last_call_date_outgoing' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '3':
+                                date = str(element['Date'])
+                                date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
+                                item(date)
+                                break
+                    elif item.conf['avm_data_type'] == 'call_event_outgoing' and item._value == '':
+                        item('disconnect')
+                    elif item.conf['avm_data_type'] == 'is_call_outgoing' and item._value == '':
+                        item(0)
+                    elif item.conf['avm_data_type'] == 'call_event' and item._value == '':
+                        item('disconnect')
+                    elif item.conf['avm_data_type'] == 'call_direction' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '1':
+                                item('incoming')
+                                break
+                            if element['Type'] == '3':
+                                item('outgoing')
+                                break
+
                     self._monitoring_service.register_item(item)
                 elif item.conf['avm_data_type'] in ['call_duration_incoming', 'call_duration_outgoing']:
                     # items specific to call monitor duration calculation
+                    # initally get data from calllist
+                    if item.conf['avm_data_type'] == 'call_duration_incoming' and item._value == 0:
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '1':
+                                duration = element['Duration']
+                                logger.debug(duration)
+                                duration = int(duration[0:1])*60+int(duration[2:4])
+                                item(duration)
+                                break
+                    elif item.conf['avm_data_type'] == 'call_duration_outgoing' and item._value == 0:
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '3':
+                                duration = element['Duration']
+                                logger.debug(duration)
+                                duration = int(duration[0:1]) * 60 + int(duration[2:4])
+                                item(duration)
+                                break
+
                     self._monitoring_service.set_duration_item(item)
                 else:
                     # normal items
