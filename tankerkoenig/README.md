@@ -58,12 +58,15 @@ Gets a list of petrol stations around provided coordinates, depending on a provi
 <pre>
 cheapest = sh.tankerkoenig.get_petrol_stations(sh._lat, sh._lon, 'diesel', 'price', rad='10')
 </pre>
+Returned is an array of petrol station data, with the following available keys:
+'place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode'
 
 ## get_petrol_station_detail(id)
 This funktion gets the details of a petrol station, identified by their internal TankerKoenig ID.
 <pre>
 detail = sh.tankerkoenig.get_petrol_station_detail(sh.petrol_station.DemoBavariaPetrol.conf['tankerkoenig_id'])
 </pre>
+Returned keys are 'e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen', 'postCode'
 
 # Logics
 

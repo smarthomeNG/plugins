@@ -14,7 +14,7 @@
 #  - http://avm.de/service/schnittstellen/
 #  - http://www.fhemwiki.de/wiki/FRITZBOX
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
@@ -488,7 +488,7 @@ class AVM():
         if 'avm_identifier' in item.conf:
             value = item.conf['avm_identifier']
             if value == self._fritz_device.get_identifier():
-                if item.conf['avm_data_type']  in ['is_call_incoming','is_call_outgoing',
+                if item.conf['avm_data_type'] in ['is_call_incoming','is_call_outgoing',
                                                    'last_caller_incoming', 'last_call_date_incoming', 'call_event_incoming',
                                                    'last_caller_outgoing', 'last_call_date_outgoing', 'call_event_outgoing',
                                                    'call_event', 'call_direction']:
