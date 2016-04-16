@@ -250,6 +250,7 @@ The plugin answers with a list of of pairs. Each pair consists of an item name a
 	 	
 ```
 
+
 Additionally, the plugin initiates an update routine, which sends updates for item values, if the item in smarthome.py has changed. For example:
 
 ```
@@ -319,6 +320,7 @@ With the **`proto`** command a client requests the WebSocket protocol version, i
 ```
 
 The plugin answers with the protocol version it supports. Additionally it sends the actual date time and timezone:
+
 
 ```
 	{
