@@ -2,8 +2,11 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
+#  Copyright 2016- Martin Sinn                              m.sinn@gmx.de
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHome.py.  
+#  Visit:  https://github.com/smarthomeNG/
+#          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
 #  SmartHome.py is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -238,10 +241,11 @@ class WebSocketHandler(lib.connection.Stream):
             return
         if data[self.monitor_id[event]] in self.monitor[event]:
             data['cmd'] = event
+            logger.warning("VISU: send_event send to {0}: {1}".format(self.addr, data))
             self.json_send(data)
 
     def json_send(self, data):
-        logger.debug("Visu: DUMMY send to {0}: {1}".format(self.addr, data))
+        logger.warning("Visu: DUMMY send to {0}: {1}".format(self.addr, data))
 
     def handle_close(self):
         # remove circular references
@@ -378,7 +382,7 @@ class WebSocketHandler(lib.connection.Stream):
             elif proto < self.proto:
                 logger.warning("WebSocket: protocol mismatch. Update your client: {0}".format(self.addr))
             self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()})
-            logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, {'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()}))	# MSinn
+            logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, "{'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()}"))	# MSinn
 
     def parse_header(self, data):
         data = bytes(data)

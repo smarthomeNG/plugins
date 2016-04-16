@@ -177,7 +177,7 @@ You could specify the **`visu_acl`** attribute to every logic in your logic.conf
     visu_acl = true
 </pre>
 
-.
+
 
 # Files of the Plugin
 The plugin is made up by several files, which are described below.
@@ -194,7 +194,6 @@ This file contains code for generating a visu, if not using smartVISU. The was t
 
 It is unknown it the code is functional, because it hasn't been tested.
 
-.
 
 # WebSocket Interface
 
@@ -214,12 +213,54 @@ With the **`item`** command a client requests to change the value of an item. Th
 
 The plugin does not send an answer to the **`item`** command.
 
-.
 
 ## monitor
-With the **`monitor`** command a client requests the actual value of an item.
+With the **`monitor`** command a client requests the actual value of a list of items. The list of the requested item names has to be comma seperated. Take a look at the following example:
 
-.
+```
+	{
+	 "cmd":"monitor",
+	 "items":[
+		"wohnung.hauswirtschaft.deckenlicht",
+		"wohnung.hauswirtschaft.waschmaschine",
+		"wohnung.hauswirtschaft.waschmaschine.status",
+		"wohnung.hauswirtschaft.waschmaschine.ma",
+		"wohnung.hauswirtschaft.trockner",
+		"wohnung.hauswirtschaft.trockner.status",
+		"wohnung.hauswirtschaft.trockner.ma",
+	 ]
+	}
+```	 
+
+The plugin answers with a list of of pairs. Each pair consists of an item name and the corresponding value. This list is followed by the command-type which initiated this response. The answer to the request above could look like this:
+
+```
+	{
+	 'items': [
+	 	['wohnung.hauswirtschaft.deckenlicht', False], 
+	 	['wohnung.hauswirtschaft.waschmaschine', True], 
+	 	['wohnung.hauswirtschaft.waschmaschine.status', 1], 
+	 	['wohnung.hauswirtschaft.waschmaschine.ma', 37], 
+	 	['wohnung.hauswirtschaft.trockner', True], 
+	 	['wohnung.hauswirtschaft.trockner.status', 1], 
+	 	['wohnung.hauswirtschaft.trockner.ma', 0], 
+	 ], 
+	 'cmd': 'item'
+	}
+	 	
+```
+
+Additionally, the plugin initiates an update routine, which sends updates for item values, if the item in smarthome.py has changed. For example:
+
+```
+	{
+	 'items': [
+			['wohnung.hauswirtschaft.waschmaschine.ma', 36]
+	 ], 
+	 'cmd': 'item'
+	}
+```
+
 
 ## ping
 With the **`ping`** command a client checks if the connection to the plugin is alive.
@@ -228,22 +269,22 @@ With the **`ping`** command a client checks if the connection to the plugin is a
 	{"cmd":"ping"}
 ```
 
-The plugin answers with
+The plugin answers with:
 
 ```
 	{"cmd":"ping"}
 ```
-.
+
 
 ## logic
 With the **`logic`** command a client requests a logic to be triggered.
 
-.
+-->
 
 ## series
 With the **`series`** command a client requests a series of values for an item. The values which are requested are stored in a database using the sqlite plugin. 
 
-.
+-->
 
 ## log
 With the **`log`** command a client requests the last entries of a specified log. The example command requests the last 10 log entries of the core log:
@@ -254,18 +295,21 @@ With the **`log`** command a client requests the last entries of a specified log
 
 The plugin answers with a message like this:
 
-{==To be completed==}
+-->
 
 ```
 	{
 	 "init":"y",
 	 "cmd":"log",
 	 "name":"env.core.log","log":[
-	 	{"message":"10.0.0.173:56619 sent '{\"cmd\":\"log\",\"name\":\"env.core.log\",\"max\":\"10\"}'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.249440+02:00"},{"message":"VISU json_parse: send to 10.0.0.173:56619: {'cmd': 'proto', 'ver': 4, 'time': datetime.datetime(2016, 4, 14, 21, 23, 20, 248522, tzinfo=tzfile('/usr/share/zoneinfo/Europe/Berlin'))}","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.248741+02:00"},{"message":"10.0.0.173:56619 sent '{\"cmd\":\"proto\",\"ver\":4}'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.247570+02:00"},{"message":"10.0.0.173:56619 sent 'WebSocket rocks'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.246697+02:00"},{"message":"VISU: WebSocketHandler uses protocol version 
+	 	{"message":"10.0.0.173:56619 sent '{\"cmd\":\"log\",\"name\":\"env.core.log\",\"max\":\"10\"}'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.249440+02:00"},
+	 	{"message":"VISU json_parse: send to 10.0.0.173:56619: {'cmd': 'proto', 'ver': 4, 'time': datetime.datetime(2016, 4, 14, 21, 23, 20, 248522, tzinfo=tzfile('/usr/share/zoneinfo/Europe/Berlin'))}","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.248741+02:00"},
+	 	{"message":"10.0.0.173:56619 sent '{\"cmd\":\"proto\",\"ver\":4}'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.247570+02:00"},
+	 	{"message":"10.0.0.173:56619 sent 'WebSocket rocks'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.246697+02:00"},
+	 	{"message":"VISU: WebSocketHandler uses protocol version 
 
 ```
 
-.
 
 ## proto
 With the **`proto`** command a client requests the WebSocket protocol version, it wants to use for communication:
@@ -283,3 +327,4 @@ The plugin answers with the protocol version it supports. Additionally it sends 
 	 "time":"2016-04-14T21:23:20.248227+02:00"
 	}
 ```
+
