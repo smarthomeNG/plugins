@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 0.912
+#  Version 0.914
 #########################################################################
 #  Free for non-commercial use
 #  
@@ -911,13 +911,19 @@ class AVM():
                     if child.conf['avm_data_type'] == 'device_ip':
                         device_ip = xml.getElementsByTagName('NewIPAddress')
                         if (len(device_ip) > 0):
-                            child(device_ip[0].firstChild.data)
+                            if not device_ip[0].firstChild is None:
+                                child(device_ip[0].firstChild.data)
+                            else:
+                                child('')
                         else:
                             logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
                     elif child.conf['avm_data_type'] == 'device_connection_type':
                         device_connection_type = xml.getElementsByTagName('NewInterfaceType')
                         if (len(device_connection_type) > 0):
-                            child(device_connection_type[0].firstChild.data)
+                            if not device_connection_type[0].firstChild is None:
+                                child(device_connection_type[0].firstChild.data)
+                            else:
+                                child('')
                         else:
                             logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
                     elif child.conf['avm_data_type'] == 'device_hostname':
