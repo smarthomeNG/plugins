@@ -5,7 +5,8 @@
 Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
 
-This plugin is part of SmartHome.py.  
+This plugin is part of SmartHome.py.
+  
 Visit:  https://github.com/smarthomeNG/
         https://knx-user-forum.de/forum/supportforen/smarthome-py
 
@@ -83,25 +84,31 @@ Valid values are:
 | :----------- | :--------------------------------------------  |  
 |  **room**      |  The page appears in the room view of smartVISU    	|  
 |  **category** | The page appears in the category view of smartVISU   |  
-| **overview**  | ???              |
+| **overview**  | ???                                                                             |  
+| **seperator** | ???                                                                             |
 [values for **`sv_page`**]
 
---> In dict room.conf
+--> Beschreibung für overview und separater vervollständigen
+--> seperator benötigt **``tpldir + '/navi_sep.html'``**
 
 
 ### sv_img
 By setting **`sv_img`** you could assign an icon or picture for a page or widget.
 
---> In dict room.conf
+--> In dict room.conf  ( in smartvisu.py room() )   
+> --> room.conf item.conf für items, in denen sv_page definiert ist
 
 
 ### sv_widget
 **`sv_widget`** has to be a double quoted encapsulated string with the smartVISU widget. You could define multiple widgets by separating them by a comma. See the example below:
 
 --> In dict room.conf
+--> benötigt tpldir + '/widget.html'  (ist smartVISU standard)
+
 
 ### sv_heading_right
 --> In dict room.conf
+--> benötigt tpldir + '/heading.html'
 
 ### sv_heading_center
 --> In dict room.conf
@@ -111,6 +118,8 @@ By setting **`sv_img`** you could assign an icon or picture for a page or widget
 
 ### sv_item_type
 --> In dict item.conf
+--> ???
+
 
 If one of the **`sv_heading_...`** parameters is defined, heading.html from the template directory ?tpldir? is added to the page.
 
@@ -278,36 +287,119 @@ The plugin answers with:
 
 
 ## logic
-With the **`logic`** command a client requests a logic to be triggered.
-
--->
-
-## series
-With the **`series`** command a client requests a series of values for an item. The values which are requested are stored in a database using the sqlite plugin. 
-
--->
-
-## log
-With the **`log`** command a client requests the last entries of a specified log. The example command requests the last 10 log entries of the core log:
+With the **`logic`** command a client requests a logic to be triggered. **`name`** is the name of the logic, as defined in **`etc/logic.conf`**. Furthermore, in **`etc/logic.conf`** the attribute **`visu_acl`** for that logic has to be set to **True**.
 
 ```
-	{"cmd":"log","name":"env.core.log","max":"10"}
+	{"cmd":"logic",  "name":"az_licht",  "val":0}
+```
+
+Following information is passed to the logic via the trigger variable:
+
+```
+	trigger[source] = <ip:port of the client (visu)>
+	trigger[by]     = 'Visu'
+	trigger[value]  = <value, as defined in the logic-command>
+```
+
+The plugin does not send an answer to the **`logic`** command.
+
+
+## series
+With the **`series`** command a client requests a series of values for an item. The values which are requested are stored in a database using the sqlite plugin. The **`series`** command only returns data for items which are configured to store data via the **sqlite** plugin. 
+
+SmartVISU uses the series command to get data for the plot widget. The following example requests a series of the average values of the last 48 hours:
+
+```
+	{
+	 "cmd":"series",
+	 "item":"wohnung.verteilung.zaehler.wirkleistung",
+	 "series":"avg",
+	 "start":"48h",
+	 "end":"now",
+	 "count":100
+	}
+```
+
+The attribute **`series`** defines which function is used to return the values for the series. The possible functions are **min**, **max**, **avg** and **sum**. These functions are implemented in the **sqlite** plugin v1.0. The new sqlite plugin (v2.8) implements the functions **min**, **max**, **avg** and **on**. **on** returns the percentage (as float from 0.00 to 1.00) where the value has been greater than 0.
+
+If the **`end`** attribute is ommitted, **"end":"now"** is assumed by the plugin.
+If the **`count`** attribute is ommitted, **"count":100** is assumed by the plugin.
+
+The answer to the request above could look like this:
+ 
+```
+
+	{
+	 'series': [
+	 	(1460636598495, 1831.97), 
+	 	(1460637648422, 1458.14), 
+	 	(1460639298307, 757.22), 
+	 	(1460641098243, 577.38), 
+	 	... (102 values in total)
+	 	(1460802051217, 740.61), 
+	 	(1460803884973, 637.61), 
+	 	(1460805521319, 744.41), 
+	 	(1460807229532, 718.03), 
+	 	(1460808823757, 681.25), 
+	 	(1460809294663, 681.25)
+	 ], 
+	 'cmd': 'series', 
+	 'params': {
+	 	'end': 'now', 
+	 	'start': 1460809294663, 
+	 	'update': True, 
+	 	'item': 'wohnung.verteilung.zaehler.wirkleistung', 
+	 	'step': 1728000.01, 
+	 	'func': 'avg', 
+	 	'sid': 'wohnung.verteilung.zaehler.wirkleistung|avg|48h|now'
+	 }, 
+	 'update': "2016-04-16T21:14:50.20.8227+02:00",
+	 'sid': 'wohnung.verteilung.zaehler.wirkleistung|avg|48h|now'
+	}
+
+```
+
+The plugin answers with a list of of pairs. Each pair consists of a timestamp and the corresponding value. This list is followed by the command-type which initiated this response and the parameters used to produce the series of data.
+
+The last two attributes define an identifier for this series and a time at which an update is sent by the plugin.
+
+Additionally, the plugin initiates an update routine, which sends updates for series values after a defined period of time. For example:
+
+```
+	{
+	 'series': [
+	 	(1460810141323, 711.25), 
+	 	(1460811024119, 711.25)
+	 ], 
+	 'cmd': 'series', 
+	 'sid': 'wohnung.verteilung.zaehler.wirkleistung|avg|48h|now'
+	}
+```
+
+
+## log
+With the **`log`** command a client requests the last entries of a specified log. The example command requests the last 5 log entries of the core log:
+
+```
+	{"cmd":"log","name":"env.core.log","max":"5"}
 ```
 
 The plugin answers with a message like this:
 
--->
 
 ```
 	{
 	 "init":"y",
 	 "cmd":"log",
-	 "name":"env.core.log","log":[
-	 	{"message":"10.0.0.173:56619 sent '{\"cmd\":\"log\",\"name\":\"env.core.log\",\"max\":\"10\"}'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.249440+02:00"},
-	 	{"message":"VISU json_parse: send to 10.0.0.173:56619: {'cmd': 'proto', 'ver': 4, 'time': datetime.datetime(2016, 4, 14, 21, 23, 20, 248522, tzinfo=tzfile('/usr/share/zoneinfo/Europe/Berlin'))}","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.248741+02:00"},
-	 	{"message":"10.0.0.173:56619 sent '{\"cmd\":\"proto\",\"ver\":4}'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.247570+02:00"},
-	 	{"message":"10.0.0.173:56619 sent 'WebSocket rocks'","level":"WARNING","thread":"Main","time":"2016-04-14T21:23:20.246697+02:00"},
-	 	{"message":"VISU: WebSocketHandler uses protocol version 
+	 "name":"env.core.log",
+	 "log":[
+	 	{"message":"VISU: WebSocketHandler uses protocol version 4","level":"WARNING","thread":"Main","time":"2016-04-16T15:53:21.354815+02:00"},
+	 	{"message":"Using sonos section [sonos_bo], sonos_uid = RINCON_B8E93792D35401400","level":"WARNING","thread":"myradio","time":"2016-04-16T15:52:28.980100+02:00"},
+	 	{"message":"Mondaufgang um 15:26:50 bei Azimuth 76.9 und Monduntergang um 04:39:55 bei Azimuth 285.5","level":"WARNING","thread":"mysunmoon","time":"2016-04-16T15:52:27.678330+02:00"},
+	 	{"message":"No broker url given, assuming current ip and default broker port: http://10.0.0.182:12900","level":"WARNING","thread":"Main","time":"2016-04-16T15:52:14.006478+02:00"},
+	 	{"message":"mlgw: Serial number of ML Gateway is 22804066","level":"WARNING","thread":"Main","time":"2016-04-16T15:52:13.869275+02:00"}
+	 ]
+	}
 
 ```
 
