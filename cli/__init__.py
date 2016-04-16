@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHome.py.    
 #
 #  SmartHome.py is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import logging
 import threading
 import lib.connection
 
-logger = logging.getLogger('')
 
 
 class CLIHandler(lib.connection.Stream):
@@ -186,6 +185,7 @@ class CLIHandler(lib.connection.Stream):
 class CLI(lib.connection.Server):
 
     def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323):
+        self.logger = logging.getLogger(__name__)
         lib.connection.Server.__init__(self, ip, port)
         self.sh = smarthome
         self.updates_allowed = smarthome.string2bool(update)
@@ -194,7 +194,7 @@ class CLI(lib.connection.Server):
         sock, address = self.accept()
         if sock is None:
             return
-        logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
+        self.logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
         CLIHandler(self.sh, sock, address, self.updates_allowed)
 
     def run(self):
