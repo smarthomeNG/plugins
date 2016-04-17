@@ -25,7 +25,7 @@ All mappings to items need to be done via your own logic.
 
 ## items.conf
 
-### Example (for cheapest station):
+### Example (for cheapest station and for one station that is requested via its id):
 <pre>
 [petrol_station]
     [[cheapest]]
