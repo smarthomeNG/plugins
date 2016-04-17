@@ -55,6 +55,8 @@ All mappings to items need to be done via your own logic.
 
 ## get_petrol_stations(lat, lon, type, sort, rad):
 Gets a list of petrol stations around provided coordinates, depending on a provided type, sort order and radius.
+In the example, sh._lat and sh.._long are the geocoordinates configured for smarthome in etc/smarthome.conf. You
+can also set your own coordinates!
 <pre>
 cheapest = sh.tankerkoenig.get_petrol_stations(sh._lat, sh._lon, 'diesel', 'price', rad='10')
 </pre>
@@ -62,7 +64,7 @@ Returned is an array of petrol station data, with the following available keys:
 'place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode'
 
 ## get_petrol_station_detail(id)
-This funktion gets the details of a petrol station, identified by their internal TankerKoenig ID.
+This funktion gets the details of one petrol station, identified by its internal TankerKoenig ID.
 <pre>
 detail = sh.tankerkoenig.get_petrol_station_detail(sh.petrol_station.DemoBavariaPetrol.conf['tankerkoenig_id'])
 </pre>
@@ -76,4 +78,12 @@ cheapest = sh.tankerkoenig.get_petrol_stations(sh._lat, sh._lon, 'diesel', 'pric
 sh.petrol_station.cheapest.name(cheapest[0]['name'])
 sh.petrol_station.cheapest.isOpen(cheapest[0]['isOpen'])
 sh.petrol_station.cheapest.price(cheapest[0]['price'])
+</pre>
+
+## Get data of one petrol station
+<pre>
+detail = sh.tankerkoenig.get_petrol_station_detail(sh.petrol_station.DemoBavariaPetrol.conf['tankerkoenig_id'])
+sh.petrol_station.DemoBavariaPetrol.name(detail['name'])
+sh.petrol_station.DemoBavariaPetrol.isOpen(detail['isOpen'])
+sh.petrol_station.DemoBavariaPetrol.diesel(detail['diesel'])
 </pre>
