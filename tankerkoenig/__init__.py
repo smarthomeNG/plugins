@@ -76,8 +76,7 @@ class TankerKoenig():
         #  https://creativecommons.tankerkoenig.de/#techInfo
         response = self._session.get(self._build_url("%s?id=%s&apikey=%s" % (self._detail_url_suffix, id, self._apikey)))
         json_obj = response.json()
-        keys = ['e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen',
-                'postCode']
+        keys = ['e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen']
         i = json_obj['station']
         result_station = {}
         for key in keys:
