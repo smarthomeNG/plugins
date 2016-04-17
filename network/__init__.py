@@ -131,7 +131,7 @@ class Network():
         if udp == 'yes':
             self.add_listener('udp', ip, port, udp_acl, generic=True)
         if http != 'no':
-            self.add_listener('http', ip, http, http_acl, generic=True)
+            self.add_listener('http', ip, port, http_acl, generic=True)
 
     def udp(self, host, port, data):
         try:
