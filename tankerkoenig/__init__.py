@@ -32,9 +32,6 @@
 import logging
 import requests
 
-__TANKERKOENIG__ = 'tankerkoenig'
-logger = logging.getLogger(__TANKERKOENIG__)
-
 class TankerKoenig():
     _base_url = 'https://creativecommons.tankerkoenig.de/json/'
     _detail_url_suffix = 'detail.php'
@@ -46,7 +43,7 @@ class TankerKoenig():
         @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
         api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
-        logger.info('Init TankerKoenigPlugin')
+        self.logger = logging.getLogger(__name__)
         self._sh = smarthome
         self._sh=smarthome
         self._apikey = apikey
@@ -62,7 +59,7 @@ class TankerKoenig():
         #  https://creativecommons.tankerkoenig.de/#techInfo
         result_stations = []
         response = self._session.get(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
-        logger.debug(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
+        self.logger.debug(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
         json_obj = response.json()
         keys = ['place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode']
         for i in json_obj['stations']:
