@@ -45,12 +45,10 @@ import socket
 
 item_tag = ['wol_mac']
 
-logger = logging.getLogger('')
-
-
 class WakeOnLan():
     def __init__(self, sh):
         self._sh = sh
+        self.logger = logging.getLogger(__name__)
 
     def __call__(self, mac_adr):
         self.wake_on_lan(mac_adr)
@@ -62,7 +60,7 @@ class WakeOnLan():
         self.alive = False
 
     def parse_item(self, item):
-        logger.debug("wol parse item" )
+        self.logger.debug("wol parse item" )
         if item_tag[0] in item.conf:
             return self.update_item
 
@@ -70,16 +68,16 @@ class WakeOnLan():
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        logger.debug("wol update item" )
+        self.logger.debug("wol update item" )
         if item():
-            logger.debug("wol update item item" )
+            self.logger.debug("wol update item item" )
             if item_tag[0] in item.conf:
-                logger.debug("wol update item tag" )
+                self.logger.debug("wol update item tag" )
                 self.wake_on_lan(item.conf[item_tag[0]])
 
     def wake_on_lan(self, mac_adr):
         data = ''
-        logger.debug("WakeOnLan: send magic paket to {}".format(mac_adr))
+        self.logger.debug("WakeOnLan: send magic paket to {}".format(mac_adr))
         # prüfung auf länge und format
         if len(mac_adr) == 12:
             pass
@@ -87,12 +85,12 @@ class WakeOnLan():
             sep = mac_adr[2]
             mac_adr = mac_adr.replace(sep, '')
         else:
-            logger.warning("WakeOnLan: invalid mac address {}!".format(mac_adr))
+            self.logger.warning("WakeOnLan: invalid mac address {}!".format(mac_adr))
             return
         # Magic packet erstellen
         data = ''.join(['FF' * 6, mac_adr * 20])
         # Broadcast
-        logger.debug("WakeOnLan: send magic paket " + data)
+        self.logger.debug("WakeOnLan: send magic paket " + data)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.sendto(bytearray.fromhex(data), ('<broadcast>', 7))
