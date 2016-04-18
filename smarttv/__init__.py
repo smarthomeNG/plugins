@@ -32,6 +32,7 @@ logger = logging.getLogger('')
 class SmartTV():
 
     def __init__(self, smarthome, host, port=55000, tvid=1):
+        self.logger = logging.getLogger(__name__)
         self._sh = smarthome
         self._host = host
         self._port = port
@@ -41,9 +42,9 @@ class SmartTV():
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self._host, int(self._port)))
-            logger.debug("Connected to {0}:{1}".format(self._host, self._port))
+            self.logger.debug("Connected to {0}:{1}".format(self._host, self._port))
         except Exception:
-            logger.warning("Could not connect to %s:%s, to send key: %s." %
+            self.logger.warning("Could not connect to %s:%s, to send key: %s." %
                            (self._host, self._port, key))
             return
 
@@ -54,7 +55,7 @@ class SmartTV():
         app = b'python'                      # iphone..iapp.samsung
         tv = b'UE32ES6300'                   # iphone.UE32ES6300.iapp.samsung
 
-        logger.debug("src = {0}, mac = {1}, remote = {2}, dst = {3}, app = {4}, tv = {5}".format(
+        self.logger.debug("src = {0}, mac = {1}, remote = {2}, dst = {3}, app = {4}, tv = {5}".format(
             src, mac, remote, dst, app, tv))
 
         src = base64.b64encode(src.encode())
@@ -104,7 +105,7 @@ class SmartTV():
                 s.close()
             except:
                 pass
-        logger.debug("Send {0} to Smart TV".format(key))
+        self.logger.debug("Send {0} to Smart TV".format(key))
         time.sleep(0.1)
 
     def parse_item(self, item):
@@ -117,7 +118,7 @@ class SmartTV():
             return None
 
         if 'smarttv' in item.conf:
-            logger.debug("Smart TV Item {0} with value {1} for TV ID {2} found!".format(
+            self.logger.debug("Smart TV Item {0} with value {1} for TV ID {2} found!".format(
                 item, item.conf['smarttv'], tvid))
             return self.update_item
         else:
