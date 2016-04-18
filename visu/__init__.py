@@ -34,6 +34,7 @@ import threading
 
 import lib.connection
 
+
 logger = logging.getLogger()
 
 
@@ -52,7 +53,7 @@ class JSONEncoder(json.JSONEncoder):
 class WebSocket(lib.connection.Server):
 
 #    def __init__(self, smarthome, visu_dir=False, generator_dir=False, ip='0.0.0.0', port=2424, tls='no', smartvisu_dir=False, acl='ro'):
-    def __init__(self, smarthome, visu_dir=False, generator_dir=False, ip='0.0.0.0', port=2424, tls='no', smartvisu_dir=False, acl='ro', wsproto=3):	#MSinn
+    def __init__(self, smarthome, visu_dir=False, generator_dir=False, ip='0.0.0.0', port=2424, tls='no', smartvisu_dir=False, acl='ro', wsproto=3, handle_widgets=True ):	#MSinn
         lib.connection.Server.__init__(self, ip, port)
         self._sh = smarthome
         self.__acl = acl
@@ -77,11 +78,19 @@ class WebSocket(lib.connection.Server):
         if generator_dir:  # transition feature
             self.generator_dir = generator_dir
         self.smartvisu_dir = smartvisu_dir
+        self._handle_widgets = True
+        if isinstance(handle_widgets, str) and handle_widgets.upper() in ['FALSE', 'NO']:
+            self._handle_widgets = False
 
     def _smartvisu_pages(self, directory):
         from . import smartvisu
         smartvisu.pages(self._sh, directory)
 
+    def _smartvisu_install_widgets(self, directory):
+        from . import sv_widgets
+        sv_widgets.install_widgets(self._sh, directory)
+
+	# Old generator for visu pages (non smartVISU)
     def _generate_pages(self, directory):
         from . import generator
         header_file = directory + '/tpl/header.html'
@@ -144,6 +153,8 @@ class WebSocket(lib.connection.Server):
             self._generate_pages(self.generator_dir)
         if self.smartvisu_dir:
             self._smartvisu_pages(self.smartvisu_dir)
+            if self._handle_widgets:
+                self._smartvisu_install_widgets(self.smartvisu_dir)
         self._sh.scheduler.add('series', self._update_series, cycle=10, prio=5)
 
     def stop(self):
@@ -233,7 +244,7 @@ class WebSocketHandler(lib.connection.Stream):
         self.logics = logics
 #		self.proto = 3					# MSinn
         self.proto = proto				# MSinn
-        logger.warning("VISU: WebSocketHandler uses protocol version {0}".format(self.proto))		# MSinn
+        logger.info("VISU: WebSocketHandler uses protocol version {0}".format(self.proto))		# MSinn
 
     def send_event(self, event, data):
         data = data.copy()  # don't filter the orignal data dict
@@ -241,11 +252,11 @@ class WebSocketHandler(lib.connection.Stream):
             return
         if data[self.monitor_id[event]] in self.monitor[event]:
             data['cmd'] = event
-            logger.warning("VISU: send_event send to {0}: {1}".format(self.addr, data))
+#            logger.warning("VISU: send_event send to {0}: {1}".format(self.addr, data))		# MSinn
             self.json_send(data)
 
     def json_send(self, data):
-        logger.warning("Visu: DUMMY send to {0}: {1}".format(self.addr, data))
+        logger.debug("Visu: DUMMY send to {0}: {1}".format(self.addr, data))
 
     def handle_close(self):
         # remove circular references
@@ -258,7 +269,7 @@ class WebSocketHandler(lib.connection.Stream):
     def update(self, path, data, source):
         if path in self.monitor['item']:
             if self.addr != source:
-                logger.warning("Visu: update send to {0}: {1}, path={2}, source={3}".format(self.addr, data, path, source))
+#                logger.warning("VISU: update send to {0}: {1}, path={2}, source={3}".format(self.addr, data, path, source))
                 self.json_send(data)
 
     def update_series(self):
@@ -277,7 +288,7 @@ class WebSocketHandler(lib.connection.Stream):
                 del(reply['update'])
                 del(reply['params'])
                 if reply['series'] is not None:
-                    logger.warning("Visu: update send to {0}: {1}".format(self.addr, reply))
+#                    logger.warning("Visu: update send to {0}: {1}".format(self.addr, reply))
                     self.json_send(reply)
         for sid in remove:
             del(self._update_series[sid])
@@ -287,8 +298,7 @@ class WebSocketHandler(lib.connection.Stream):
         return list(set(b).difference(set(a)))
 
     def json_parse(self, data):
-#        logger.debug("{0} sent {1}".format(self.addr, repr(data)))			# MSinn
-        logger.warning("{0} sent {1}".format(self.addr, repr(data)))		# MSinn
+        logger.debug("{0} sent {1}".format(self.addr, repr(data)))
         try:
             data = json.loads(data)
         except Exception as e:
@@ -315,11 +325,11 @@ class WebSocketHandler(lib.connection.Stream):
                     items.append([path, self.items[path]['item']()])
                 else:
                     logger.warning("Client {0} requested invalid item: {1}".format(self.addr, path))
-            logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'item', 'items': items})))	# MSinn
+            logger.debug("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'item', 'items': items})))	# MSinn
             self.json_send({'cmd': 'item', 'items': items})
             self.monitor['item'] = data['items']
         elif command == 'ping':
-            logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))	# MSinn
+            logger.debug("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))	# MSinn
             self.json_send({'cmd': 'pong'})
         elif command == 'logic':
             if 'name' not in data or 'val' not in data:
@@ -330,6 +340,7 @@ class WebSocketHandler(lib.connection.Stream):
                 logger.info("Client {0} triggerd logic {1} with '{2}'".format(self.addr, name, value))
                 self.logics[name].trigger(by='Visu', value=value, source=self.addr)
             else:
+#                logger.warning("VISU: Defined logics {0}".format(self.logics))
                 logger.warning("Client {0} requested invalid logic: {1}".format(self.addr, name))
         elif command == 'series':
             path = data['item']
@@ -347,7 +358,7 @@ class WebSocketHandler(lib.connection.Stream):
                 if hasattr(self.items[path]['item'], 'series'):
                     try:
                         reply = self.items[path]['item'].series(series, start, end, count)
-                        logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, reply))	# MSinn
+#                        logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, reply))	# MSinn
                     except Exception as e:
                         logger.exception("Problem fetching series for {0}: {1}".format(path, e))
                     else:
@@ -382,7 +393,7 @@ class WebSocketHandler(lib.connection.Stream):
             elif proto < self.proto:
                 logger.warning("WebSocket: protocol mismatch. Update your client: {0}".format(self.addr))
             self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()})
-            logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, "{'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()}"))	# MSinn
+#            logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, "{'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()}"))	# MSinn
 
     def parse_header(self, data):
         data = bytes(data)
@@ -510,3 +521,4 @@ class WebSocketHandler(lib.connection.Stream):
         self.found_terminator = self.hixie76_parse
         self.json_send = self.hixie76_send
         self.terminator = b"\xff"
+
