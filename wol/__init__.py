@@ -60,7 +60,6 @@ class WakeOnLan():
         self.alive = False
 
     def parse_item(self, item):
-        self.logger.debug("wol parse item" )
         if item_tag[0] in item.conf:
             return self.update_item
 
@@ -68,11 +67,8 @@ class WakeOnLan():
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        self.logger.debug("wol update item" )
         if item():
-            self.logger.debug("wol update item item" )
             if item_tag[0] in item.conf:
-                self.logger.debug("wol update item tag" )
                 self.wake_on_lan(item.conf[item_tag[0]])
 
     def wake_on_lan(self, mac_adr):
