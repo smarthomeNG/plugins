@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 0.912
+#  Version 0.914
 #########################################################################
 #  Free for non-commercial use
 #  
@@ -14,7 +14,7 @@
 #  - http://avm.de/service/schnittstellen/
 #  - http://www.fhemwiki.de/wiki/FRITZBOX
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
@@ -41,8 +41,6 @@ import requests
 from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 
-__AVM__ = 'avm'
-logger = logging.getLogger(__AVM__)
 class MonitoringService():
     """
     Class which connects to the FritzBox service of the Callmonitor: http://www.wehavemorefun.de/fritzbox/Callmonitor
@@ -52,6 +50,7 @@ class MonitoringService():
     - last_call_date:      avm_data_type = last_call_date, type = str
     """
     def __init__(self, host, port, avm_identifier, callback):
+        self.logger = logging.getLogger(__name__)
         self._host = host
         self._port = port
         self._avm_identifier = avm_identifier
@@ -76,7 +75,7 @@ class MonitoringService():
             self._listen_thread = threading.Thread(target=self._listen, name="MonitoringService_%s" % self._avm_identifier).start()
         except Exception as e:
             self.conn = None
-            logger.error("MonitoringService: Cannot connect to "+self._host+" on port: "+str(self._port)+", CallMonitor activated by #96*5*? - Error: "+str(e))
+            self.logger.error("MonitoringService: Cannot connect to "+self._host+" on port: "+str(self._port)+", CallMonitor activated by #96*5*? - Error: "+str(e))
             return
 
     def disconnect(self):
@@ -282,6 +281,7 @@ class FritzDevice():
     This class encapsulates information related to a specific FritzDevice, such has host, port, ssl, username, password, or related items
     """
     def __init__(self, host, port, ssl, username, password, identifier):
+        self.logger = logging.getLogger(__name__)
         self._host = host
         self._port = port
         self._ssl = ssl
@@ -384,7 +384,8 @@ class AVM():
         @param cycle:              Update cycle in seconds
         @param avm_identifier:     Internal identifier of the FritzDevice
         """
-        logger.info('Init AVM Plugin with identifier %s' % avm_identifier)
+        self.logger = logging.getLogger(__name__)
+        self.logger.info('Init AVM Plugin with identifier %s' % avm_identifier)
 
         self._session = requests.Session()
         self._timeout = 10
@@ -413,7 +414,7 @@ class AVM():
         self._response_cache = dict()
 
     def run(self):
-        self._sh.scheduler.add(__AVM__+"_"+self._fritz_device.get_identifier(), self._update_loop, prio=5, cycle=self._cycle, offset=2)
+        self._sh.scheduler.add(__name__+"_"+self._fritz_device.get_identifier(), self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
     def stop(self):
@@ -456,7 +457,7 @@ class AVM():
         """
         Starts the update loop for all known items.
         """
-        logger.debug('Starting update loop for identifier %s' % self._fritz_device.get_identifier())
+        self.logger.debug('Starting update loop for identifier %s' % self._fritz_device.get_identifier())
         for item in self._fritz_device.get_items():
             if not self.alive:
                 return
@@ -488,14 +489,83 @@ class AVM():
         if 'avm_identifier' in item.conf:
             value = item.conf['avm_identifier']
             if value == self._fritz_device.get_identifier():
-                if item.conf['avm_data_type']  in ['is_call_incoming','is_call_outgoing',
+                if item.conf['avm_data_type'] in ['is_call_incoming','is_call_outgoing',
                                                    'last_caller_incoming', 'last_call_date_incoming', 'call_event_incoming',
                                                    'last_caller_outgoing', 'last_call_date_outgoing', 'call_event_outgoing',
                                                    'call_event', 'call_direction']:
                     # items specific to call monitor
+                    # initally get data from calllist
+                    if item.conf['avm_data_type'] == 'last_caller_incoming' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '1':
+                                item(element['Name'])
+                                break
+                    elif item.conf['avm_data_type'] == 'last_call_date_incoming' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '1':
+                                date = str(element['Date'])
+                                date = date[8:10]+"."+date[5:7]+"."+date[2:4]+" "+date[11:19]
+                                item(date)
+                                break
+                    elif item.conf['avm_data_type'] == 'call_event_incoming' and item._value == '':
+                        item('disconnect')
+                    elif item.conf['avm_data_type'] == 'is_call_incoming' and item._value == '':
+                        item(0)
+                    elif item.conf['avm_data_type'] == 'last_caller_outgoing' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '3':
+                                item(element['Name'])
+                                break
+                    elif item.conf['avm_data_type'] == 'last_call_date_outgoing' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '3':
+                                date = str(element['Date'])
+                                date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
+                                item(date)
+                                break
+                    elif item.conf['avm_data_type'] == 'call_event_outgoing' and item._value == '':
+                        item('disconnect')
+                    elif item.conf['avm_data_type'] == 'is_call_outgoing' and item._value == '':
+                        item(0)
+                    elif item.conf['avm_data_type'] == 'call_event' and item._value == '':
+                        item('disconnect')
+                    elif item.conf['avm_data_type'] == 'call_direction' and item._value == '':
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '1':
+                                item('incoming')
+                                break
+                            if element['Type'] == '3':
+                                item('outgoing')
+                                break
+
                     self._monitoring_service.register_item(item)
                 elif item.conf['avm_data_type'] in ['call_duration_incoming', 'call_duration_outgoing']:
                     # items specific to call monitor duration calculation
+                    # initally get data from calllist
+                    if item.conf['avm_data_type'] == 'call_duration_incoming' and item._value == 0:
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '1':
+                                duration = element['Duration']
+                                self.logger.debug(duration)
+                                duration = int(duration[0:1])*60+int(duration[2:4])
+                                item(duration)
+                                break
+                    elif item.conf['avm_data_type'] == 'call_duration_outgoing' and item._value == 0:
+                        calllist = self.get_calllist()
+                        for element in calllist:
+                            if element['Type'] == '3':
+                                duration = element['Duration']
+                                self.logger.debug(duration)
+                                duration = int(duration[0:1]) * 60 + int(duration[2:4])
+                                item(duration)
+                                break
+
                     self._monitoring_service.set_duration_item(item)
                 else:
                     # normal items
@@ -519,7 +589,7 @@ class AVM():
             elif item.conf['avm_data_type'] == 'aha_device':
                 action = 'SetSwitch'
             else:
-                logger.error("%s is not defined to be updated." % item.conf['avm_data_type'])
+                self.logger.error("%s is not defined to be updated." % item.conf['avm_data_type'])
                 return
             
             headers = self._header.copy()
@@ -528,7 +598,7 @@ class AVM():
                     headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
                     soap_data = self._assemble_soap_data(action, self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']),{'NewEnable':int(item())})
                 else:
-                    logger.error('No wlan_index attribute provided')
+                    self.logger.error('No wlan_index attribute provided')
             elif item.conf['avm_data_type'] == 'tam':
                 headers['SOAPACTION'] = "%s#%s" % (self._urn_map['TAM'], action)
                 soap_data = self._assemble_soap_data(action, self._urn_map['TAM'],{'NewIndex':0,'NewEnable':int(item())})
@@ -553,7 +623,7 @@ class AVM():
             try:
                 self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
+                self.logger.error("Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
                 return
 
             if item.conf['avm_data_type'] == 'wlanconfig': # check if item was guest wifi item and remaining time is set as item..
@@ -581,7 +651,7 @@ class AVM():
             response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
             return
 
         pb_url_xml = xml.getElementsByTagName('NewPhonebookURL')
@@ -591,7 +661,7 @@ class AVM():
                 pb_result = self._session.get(pb_url, timeout=self._timeout, verify=self._verify)
                 pb_xml = minidom.parseString(pb_result.content)
             except Exception as e:            
-                logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
                 return
             contacts = pb_xml.getElementsByTagName('contact')
             if (len(contacts) > 0):
@@ -606,7 +676,7 @@ class AVM():
                 # no contact with phone number found, return number only
                 return phone_number
         else: 
-            logger.error("Phonebook not available on the FritzDevice")
+            self.logger.error("Phonebook not available on the FritzDevice")
 
         return
 
@@ -627,7 +697,7 @@ class AVM():
             response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
             return
 
         calllist_url_xml = xml.getElementsByTagName('NewCallListURL')
@@ -638,7 +708,7 @@ class AVM():
                 calllist_result = self._session.get(calllist_url, timeout=self._timeout, verify=self._verify)
                 calllist_xml = minidom.parseString(calllist_result.content)
             except Exception as e:            
-                logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
                 return
 
             calllist_entries = calllist_xml.getElementsByTagName('Call')
@@ -660,9 +730,9 @@ class AVM():
                     result_entries.append(result_entry)
                 return result_entries
             else: 
-                logger.debug("No calllist entries on the FritzDevice")
+                self.logger.debug("No calllist entries on the FritzDevice")
         else: 
-            logger.error("Calllist not available on the FritzDevice")
+            self.logger.error("Calllist not available on the FritzDevice")
 
         return
 
@@ -680,7 +750,7 @@ class AVM():
         try:
             self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % str(e))
+            self.logger.error("Exception when sending POST request: %s" % str(e))
             return
 
     def reconnect(self):
@@ -697,7 +767,7 @@ class AVM():
         try:
             self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % str(e))
+            self.logger.error("Exception when sending POST request: %s" % str(e))
             return
 
     def set_call_origin(self, phone_name):
@@ -716,7 +786,7 @@ class AVM():
         try:
             self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % str(e))
+            self.logger.error("Exception when sending POST request: %s" % str(e))
             return
 
     def start_call(self, phone_number):
@@ -735,7 +805,7 @@ class AVM():
         try:
             self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % str(e))
+            self.logger.error("Exception when sending POST request: %s" % str(e))
             return
 
     def cancel_call(self):
@@ -752,7 +822,7 @@ class AVM():
         try:
             self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % str(e))
+            self.logger.error("Exception when sending POST request: %s" % str(e))
             return
 
     def is_host_active(self, mac_address):
@@ -777,7 +847,7 @@ class AVM():
             is_active = tag_content[0].firstChild.data
         else:
             is_active = False
-            logger.debug("MAC Address not available on the FritzDevice - ID: %s" % self._fritz_device.get_identifier())
+            self.logger.debug("MAC Address not available on the FritzDevice - ID: %s" % self._fritz_device.get_identifier())
         return bool(is_active)
 
     def _update_myfritz(self, item):
@@ -795,14 +865,14 @@ class AVM():
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['MyFritz'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['MyFritz'])
         else:
-            logger.error("Attribute %s not supported by plugin method" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin method" % item.conf['avm_data_type'])
             return
 
         try:
             response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:
-            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
             return
         
         tag_content = xml.getElementsByTagName('NewEnabled')
@@ -825,14 +895,14 @@ class AVM():
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],{'NewMACAddress':item.conf['mac']})
         else:
-            logger.error("Attribute %s not supported by plugin method" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin method" % item.conf['avm_data_type'])
             return
 
         try:
             response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request: %s" % str(e))
+            self.logger.error("Exception when sending POST request: %s" % str(e))
             return
 
         tag_content = xml.getElementsByTagName('NewActive')
@@ -842,24 +912,30 @@ class AVM():
                     if child.conf['avm_data_type'] == 'device_ip':
                         device_ip = xml.getElementsByTagName('NewIPAddress')
                         if (len(device_ip) > 0):
-                            child(device_ip[0].firstChild.data)
+                            if not device_ip[0].firstChild is None:
+                                child(device_ip[0].firstChild.data)
+                            else:
+                                child('')
                         else:
-                            logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
                     elif child.conf['avm_data_type'] == 'device_connection_type':
                         device_connection_type = xml.getElementsByTagName('NewInterfaceType')
                         if (len(device_connection_type) > 0):
-                            child(device_connection_type[0].firstChild.data)
+                            if not device_connection_type[0].firstChild is None:
+                                child(device_connection_type[0].firstChild.data)
+                            else:
+                                child('')
                         else:
-                            logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
                     elif child.conf['avm_data_type'] == 'device_hostname':
                         device_hostname = xml.getElementsByTagName('NewHostName')
                         if (len(device_hostname) > 0):
                             child(device_hostname[0].firstChild.data)
                         else:
-                            logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         else:
             item(0)
-            logger.debug("MAC Address not available on the FritzDevice - ID: %s" % self._fritz_device.get_identifier())
+            self.logger.debug("MAC Address not available on the FritzDevice - ID: %s" % self._fritz_device.get_identifier())
 
     def _update_home_automation(self, item):
         """
@@ -876,14 +952,14 @@ class AVM():
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Homeauto'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],{'NewAIN':item.conf['ain'].strip()})
         else:
-            logger.error("Attribute %s not supported by plugin method" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin method" % item.conf['avm_data_type'])
             return
 
         try:
             response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
             return
 
         if item.conf['avm_data_type'] == 'aha_device':
@@ -896,21 +972,21 @@ class AVM():
                         if (len(temp) > 0):
                             child(int(temp[0].firstChild.data))
                         else: 
-                            logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
                     elif child.conf['avm_data_type'] == 'power':
                         power = xml.getElementsByTagName('NewMultimeterPower')
                         if (len(power) > 0):
                             child(int(power[0].firstChild.data))
                         else: 
-                            logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
                     elif child.conf['avm_data_type'] == 'energy':
                         energy = xml.getElementsByTagName('NewMultimeterEnergy')
                         if (len(energy) > 0):
                             child(int(energy[0].firstChild.data))
                         else: 
-                            logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
 
     def _update_fritz_device_info(self, item):
         """
@@ -925,7 +1001,7 @@ class AVM():
         if item.conf['avm_data_type'] in ['uptime', 'software_version', 'hardware_version', 'serial_number']:
             action = 'GetInfo'
         else:
-            logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
             return
 
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['DeviceInfo'], action)
@@ -935,16 +1011,16 @@ class AVM():
             try:
                 response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request: %s" % str(e))
                 return
             self._response_cache["dev_info_"+action] = response.content
         else:
-            logger.debug("Accessing DeviceInfo reponse cache for action %s!" % action)
+            self.logger.debug("Accessing DeviceInfo reponse cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["dev_info_"+action])
         except Exception as e:            
-            logger.error("Exception when parsing response: %s" % str(e))
+            self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
         if item.conf['avm_data_type'] == 'uptime':
@@ -952,25 +1028,25 @@ class AVM():
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'software_version':
             element_xml = xml.getElementsByTagName('NewSoftwareVersion')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'hardware_version':
             element_xml = xml.getElementsByTagName('NewHardwareVersion')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'serial_number':
             element_xml = xml.getElementsByTagName('NewSerialNumber')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
     
     def _update_tam(self, item):
         """
@@ -987,7 +1063,7 @@ class AVM():
         elif item.conf['avm_data_type'] in ['tam_new_message_number', 'tam_total_message_number']:
             action = 'GetMessageList'
         else:
-            logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
             return
 
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['TAM'], action)
@@ -997,16 +1073,16 @@ class AVM():
             try:
                 response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request: %s" % str(e))
                 return
             self._response_cache["tam_"+action] = response.content
         else:
-            logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
         
         try:
             xml = minidom.parseString(self._response_cache["tam_"+action])
         except Exception as e:            
-            logger.error("Exception when parsing response: %s" % str(e))
+            self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
         if item.conf['avm_data_type'] == 'tam':
@@ -1014,13 +1090,13 @@ class AVM():
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'tam_name':
             element_xml = xml.getElementsByTagName('NewName')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] in ['tam_new_message_number', 'tam_total_message_number']:
             message_url_xml = xml.getElementsByTagName('NewURL')
             if (len(message_url_xml) > 0):
@@ -1030,16 +1106,16 @@ class AVM():
                     try:
                         message_result = self._session.get(message_url, timeout=self._timeout, verify=self._verify)
                     except Exception as e:            
-                        logger.error("Exception when sending GET request: %s" % str(e))
+                        self.logger.error("Exception when sending GET request: %s" % str(e))
                         return
                     self._response_cache["tam_messages"] = message_result.content
                 else:
-                    logger.debug("Accessing TAM reponse cache for action %s!" % action)
+                    self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
                 
                 try:
                     message_xml = minidom.parseString(self._response_cache["tam_messages"])
                 except Exception as e:            
-                    logger.error("Exception when parsing response: %s" % str(e))
+                    self.logger.error("Exception when parsing response: %s" % str(e))
                     return
 
                 messages = message_xml.getElementsByTagName('Message')
@@ -1054,7 +1130,7 @@ class AVM():
                                 message_count = message_count+1
                 item(message_count)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
 
     def _update_wlan_config(self, item):
         """
@@ -1066,7 +1142,7 @@ class AVM():
         if int(item.conf['avm_wlan_index']) > 0:
             url = self._build_url("/upnp/control/wlanconfig%s" % item.conf['avm_wlan_index'])
         else:
-            logger.error('No wlan_index attribute provided')
+            self.logger.error('No wlan_index attribute provided')
 
         headers = self._header.copy()
 
@@ -1075,7 +1151,7 @@ class AVM():
         elif item.conf['avm_data_type'] == 'wlan_guest_time_remaining':
             action = 'X_AVM-DE_GetWLANExtInfo'
         else:
-            logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
             return
 
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
@@ -1085,7 +1161,7 @@ class AVM():
             response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
-            logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
             return
 
         if item.conf['avm_data_type'] == 'wlanconfig':
@@ -1093,13 +1169,13 @@ class AVM():
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wlan_guest_time_remaining':
             element_xml = xml.getElementsByTagName('NewX_AVM-DE_TimeRemain')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
 
     def _update_wan_dsl_interface_config(self, item):
         """
@@ -1111,7 +1187,7 @@ class AVM():
         if item.conf['avm_data_type'] in ['wan_upstream', 'wan_downstream']:
             action = 'GetInfo'
         else:
-            logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
             return
         
         url = self._build_url("/upnp/control/wandslifconfig1")
@@ -1125,16 +1201,16 @@ class AVM():
             try:
                 response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request: %s" % str(e))
                 return
             self._response_cache["wan_dsl_interface_config_"+action] = response.content
         else:
-            logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wan_dsl_interface_config_"+action])
         except Exception as e:            
-            logger.error("Exception when parsing response: %s" % str(e))
+            self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
         if item.conf['avm_data_type'] == 'wan_upstream':
@@ -1142,13 +1218,13 @@ class AVM():
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_downstream':
             element_xml = xml.getElementsByTagName('NewDownstreamCurrRate')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         
     def _update_wan_common_interface_configuration(self, item):
         """
@@ -1170,7 +1246,7 @@ class AVM():
         elif item.conf['avm_data_type'] == 'wan_link':
             action = 'GetCommonLinkProperties'
         else:
-            logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
             return
         
         headers = self._header.copy()
@@ -1182,16 +1258,16 @@ class AVM():
             try:
                 response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request: %s" % str(e))
                 return
             self._response_cache["wan_common_interface_configuration_"+action] = response.content
         else:
-            logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wan_common_interface_configuration_"+action])
         except Exception as e:            
-            logger.error("Exception when parsing response: %s" % str(e))
+            self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
         if item.conf['avm_data_type'] == 'wan_total_packets_sent':
@@ -1199,25 +1275,25 @@ class AVM():
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_total_packets_received':
             element_xml = xml.getElementsByTagName('NewTotalPacketsReceived')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_total_bytes_sent':
             element_xml = xml.getElementsByTagName('NewTotalBytesSent')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_total_bytes_received':
             element_xml = xml.getElementsByTagName('NewTotalBytesReceived')
             if (len(element_xml) > 0):                
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_link':
             element_xml = xml.getElementsByTagName('NewPhysicalLinkStatus')
             if (len(element_xml) > 0):                
@@ -1226,7 +1302,7 @@ class AVM():
                 else:
                     item(False)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
 
     def _update_wan_ip_connection(self, item):
         """
@@ -1242,7 +1318,7 @@ class AVM():
         elif item.conf['avm_data_type'] == 'wan_ip':
             action = 'GetExternalIPAddress'
         else:
-            logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
             return
 
         headers = self._header.copy()
@@ -1254,15 +1330,15 @@ class AVM():
             try:
                 response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
-                logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request: %s" % str(e))
             self._response_cache["wan_ip_connection_"+action] = response.content
         else:
-            logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wan_ip_connection_"+action])
         except Exception as e:            
-            logger.error("Exception when parsing response: %s" % str(e))
+            self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
         if item.conf['avm_data_type'] in ['wan_connection_status','wan_is_connected']:
@@ -1276,23 +1352,23 @@ class AVM():
                     else:
                         item(False)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_uptime':
             element_xml = xml.getElementsByTagName('NewUptime')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_connection_error':
             element_xml = xml.getElementsByTagName('NewLastConnectionError')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
                 
         elif item.conf['avm_data_type'] == 'wan_ip':
             element_xml = xml.getElementsByTagName('NewExternalIPAddress')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
