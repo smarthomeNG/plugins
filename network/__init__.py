@@ -73,8 +73,10 @@ class HTTPHandler(lib.connection.Stream):
                 request = line.split(' ')[1].strip('/')
                 if self.parser(self.source, self.dest, urllib.parse.unquote(request)) is not False:
                     self.send(b'HTTP/1.1 200 OK\r\n\r\n', close=True)
+                    
                 else:
                     self.send(b'HTTP/1.1 400 Bad Request\r\n\r\n', close=True)
+                   
                 break
 
 
@@ -131,7 +133,7 @@ class Network():
         if udp == 'yes':
             self.add_listener('udp', ip, port, udp_acl, generic=True)
         if http != 'no':
-            self.add_listener('http', ip, port, http_acl, generic=True)
+            self.add_listener('http', ip, http, http_acl, generic=True)
 
     def udp(self, host, port, data):
         try:
