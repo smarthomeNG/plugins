@@ -67,6 +67,8 @@ def room(smarthome, room, tpldir):
         items = []
     if room.conf['sv_page'] == 'room':
         items.extend(smarthome.find_children(room, 'sv_widget'))
+    elif room.conf['sv_page'] == 'category':							# MSinn
+        items.extend(smarthome.find_children(room, 'sv_widget'))		# MSinn
     elif room.conf['sv_page'] == 'overview':
         items.extend(smarthome.find_items('sv_item_type'))
     for item in items:
@@ -152,3 +154,4 @@ def pages(smarthome, directory):
         logger.warning("Could not write to {0}/navigation.html".format(outdir))
     shutil.copy(tpldir + '/rooms.html', outdir + '/')
     shutil.copy(tpldir + '/index.html', outdir + '/')
+
