@@ -78,6 +78,8 @@ class WebSocket(lib.connection.Server):
         if generator_dir:  # transition feature
             self.generator_dir = generator_dir
         self.smartvisu_dir = smartvisu_dir
+        if isinstance(smartvisu_dir, str) and smartvisu_dir.upper() in ['FALSE', 'NO']:
+            self.smartvisu_dir = False
         self._handle_widgets = True
         if isinstance(handle_widgets, str) and handle_widgets.upper() in ['FALSE', 'NO']:
             self._handle_widgets = False
