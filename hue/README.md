@@ -2,6 +2,9 @@
 
 ###New development of Hue plugin for use in smarthome.py (C) Michael Würtenberger 2014, 2015, 2016
 version 1.83 developNG
+
+This plugin comes with widgets for smartVISU. For information how to use the widgets look into section **smartVISU Widgets** at the bottom of this document.
+
 Development Repo and examples for smartvisu widget under https://github.com/mworion/hue.git
 
 ## Supported Hardware
@@ -369,5 +372,53 @@ Authorizes the user configured by hue_user config property. You have to press th
 sh.hue.authorizeuser()
 </pre>
 
+
+# smartVISU Widgets
+The following widgets come with this plugin.
+
+## hue.control
+With this widget you can ...
+
+To call the widget in smartVISU enter the following statement:
+
+```
+	{{ hue.control(id, g_power, g_reach, g_r, g_g, g_b, g_alert, g_effect, g_bri, g_sat, g_hue) }}
+```
+
+The parameters for **`hue.control`** are the following:
+
+| parameter      | description                                             |
+| :----------- | :--------------------------------- |  
+| **id**             | unique id for this widget                        |
+| **g_power**   |    the gad/item for the power (optional) |
+| **g_reach**    |   the gad/item for the volume (optional) |  
+| **g_r**           | ...                                                          |  
+| **g_g**           | ...                                                          |  
+| **g_b**           | ...                                                          |  
+| **g_alert**      | ...                                                          |  
+| **g_effect**    | ...                                                          |  
+| **g_bri**         | ...                                                          |  
+| **g_sat**         | ...                                                          |  
+| **g_hue**        | ...                                                          |  
+[parameters for **`hue.control`**]
+
+
+## hue.control_group
+With this widget you can ...
+
+To call the widget in smartVISU enter the following statement:
+
+```
+	{{ hue.control_group(id, g_power, g_alert, g_effect, g_bri, g_sat, g_hue) }}
+```
+
+
+The parameters for **`hue.control`** are the following:
+
+| parameter      | description                                             |
+| :----------- | :--------------------------------- |  
+| **id**             | unique id for this widget                        |
+| **g_power**   |    the gad/item for the power (optional) |
+| **...**              | ...                                                          |
 
 
