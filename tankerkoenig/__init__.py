@@ -58,7 +58,12 @@ class TankerKoenig():
     def get_petrol_stations(self, lat, lon, type='diesel', sort='price', rad='4'):
         #  https://creativecommons.tankerkoenig.de/#techInfo
         result_stations = []
-        response = self._session.get(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
+        try:
+            response = self._session.get(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
+        except Exception as e:
+            self.logger.error(
+                "Exception when sending GET request for get_petrol_stations: %s" % str(e))
+            return
         self.logger.debug(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
         json_obj = response.json()
         keys = ['place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode']
@@ -71,7 +76,12 @@ class TankerKoenig():
 
     def get_petrol_station_detail(self, id):
         #  https://creativecommons.tankerkoenig.de/#techInfo
-        response = self._session.get(self._build_url("%s?id=%s&apikey=%s" % (self._detail_url_suffix, id, self._apikey)))
+        try:
+            response = self._session.get(self._build_url("%s?id=%s&apikey=%s" % (self._detail_url_suffix, id, self._apikey)))
+        except Exception as e:
+            self.logger.error(
+                "Exception when sending GET request for get_petrol_station_detail: %s" % str(e))
+            return
         json_obj = response.json()
         keys = ['e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen']
         i = json_obj['station']
