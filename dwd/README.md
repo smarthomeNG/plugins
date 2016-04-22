@@ -25,7 +25,7 @@ There are no dwd specific item options.
 # Functions
 
 I'm sorry but this plugin return a _lot_ of information. See the Wiki for a item configuration and two logics using this plugin.
-(DWD Logic)[https://github.com/smarthomeNG/smarthome/wiki/DWD]
+[DWD Logic](https://github.com/smarthomeNG/smarthome/wiki/DWD)
 
 ## current(Location)
 Have a look at one file in the `gds/specials/observations/tables/germany` directory for the available locations.
