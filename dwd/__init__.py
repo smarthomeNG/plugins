@@ -147,28 +147,30 @@ class DWD():
         last = sorted(files)[-1]
         fb = self._retr_file(last)
 
-        matchObj = re.findall(r'<tr>(.*?)</tr>', fb, re.M|re.I|re.S)   
-        legend = re.sub(cleanr,'', matchObj[0])
-        legend = list(filter(None, [s.strip() for s in legend.splitlines()]))  #filter empty lines
- 
-        fb = fb.splitlines()
-        if len(fb) < 8:
-            self.logger.info("problem fetching {0}".format(last))
-            return {}
-        header = fb[3] # index angepasst
-        if "Messwerte" in header:
-            return {}
-        date = re.findall(r"\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')
-        date = "{}-{}-{}".format(date[2], date[1], date[0])      
-        
-        for element in matchObj:                   
-            if element.count(location):                 
-                data_string = re.sub(cleanr,'', element)               
-                data = list(filter(None, [s.strip() for s in data_string.splitlines()]))   #filter empty lines
-                if len(data) == len(legend):                  
-                    return dict(zip(legend, data))
-                else:
-                    self.logger.error('Number of elements in legend does not match data {} : {}'.format(str(len(legend)), str(len(data))))
+        matchObj = re.findall(r'<tr>(.*?)</tr>', fb, re.M|re.I|re.S)
+        if not matchObj is None:
+            if len(matchObj) > 0:
+                legend = re.sub(cleanr,'', matchObj[0])
+                legend = list(filter(None, [s.strip() for s in legend.splitlines()]))  #filter empty lines
+
+                fb = fb.splitlines()
+                if len(fb) < 8:
+                    self.logger.info("problem fetching {0}".format(last))
+                    return {}
+                header = fb[3] # index angepasst
+                if "Messwerte" in header:
+                    return {}
+                date = re.findall(r"\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')
+                date = "{}-{}-{}".format(date[2], date[1], date[0])
+
+                for element in matchObj:
+                    if element.count(location):
+                        data_string = re.sub(cleanr,'', element)
+                        data = list(filter(None, [s.strip() for s in data_string.splitlines()]))   #filter empty lines
+                        if len(data) == len(legend):
+                            return dict(zip(legend, data))
+                        else:
+                            self.logger.error('Number of elements in legend does not match data {} : {}'.format(str(len(legend)), str(len(data))))
                 
         return {}
 
