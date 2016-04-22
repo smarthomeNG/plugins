@@ -1,5 +1,7 @@
 # DWD
 
+Thread for the Plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/34390-dwd-plugin
+
 Requirements
 ============
 This plugin needs an FTP account from the Deutscher Wetterdienst.
