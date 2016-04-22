@@ -156,6 +156,8 @@ class DWD():
             self.logger.info("problem fetching {0}".format(last))
             return {}
         header = fb[3] # index angepasst
+        if "Messwerte" in header:
+            return {}
         date = re.findall(r"\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')
         date = "{}-{}-{}".format(date[2], date[1], date[0])      
         
