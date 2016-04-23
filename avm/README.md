@@ -8,7 +8,7 @@ sudo pip3 install requests --upgrade
 
 It is completely based on the TR-064 interface from AVM (http://avm.de/service/schnittstellen/)
 
-Version 0.914 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
+Version 0.92 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
 WLAN Repeater 300E (FRITZ!OS 06.30).
 
 The MonitoringService currently does not support parallel incoming or outgoing calls. For being able to connect to
@@ -29,6 +29,7 @@ the FritzDevice's CallMonitor, you have to activate it, by typing `#96*5*` on a 
     ssl = True     # use https or not
     verify = False # verify ssl certificate
     call_monitor = True
+    call_monitor_incoming_filter = ... #optional, don't set if you don't want to watch only one specific number with your call monitor
     avm_identifier = fritzbox_1
 [fb2]
     class_name = AVM
@@ -115,6 +116,18 @@ This attribute defines supported functions that can be set for an item. Full set
         avm_identifier = fritzbox_1
         avm_data_type = myfritz_status
 	[[monitor]]
+	    [[[trigger1]]]
+            type = bool
+            avm_identifier = fritzbox_1
+            avm_data_type = monitor_trigger
+            avm_incoming_allowed = ...
+            avm_target_number = ...
+        [[[trigger2]]]
+            type = bool
+            avm_identifier = fritzbox_1
+            avm_data_type = monitor_trigger
+            avm_incoming_allowed = ...
+            avm_target_number = ...
 	    [[[incoming]]]
             [[[[is_call_incoming]]]]
                 type = bool
