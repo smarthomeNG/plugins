@@ -60,15 +60,16 @@
  * @param       the gad/item for the uptime of the fritzdevice (not the wan uptime!)
  * @param       the gad/item for the firmware of the fritzdevice
  * @param       the gad/item for the hardware version of the fritzdevice
- *
+ * @param       the gad/item for the serial number of the fritzdevice
  */
-{% macro system_info(id, gad_uptime, gad_firmware, gad_hardware_version) %}
+{% macro system_info(id, gad_uptime, gad_firmware, gad_hardware_version, gad_serial_number) %}
     {% import "basic.html" as basic %}
     {% set uid = uid(page, id) %}
     <div id="{{ uid }}">        
         {% if gad_uptime %}Uptime: {{ basic.formula(id~'uptime', gad_uptime, 'hour', 'VAR / 3600') }}<br/>{% endif %}
         {% if gad_firmware %}Firmware: {{ basic.value(id~'firmware', gad_firmware) }}<br/>{% endif %}
         {% if gad_hardware_version %}Gerätetyp: {{ basic.value(id~'hardware_version', gad_hardware_version) }}{% endif %}
+        {% if gad_serial_number %}Seriennummer: {{ basic.value(id~'serial_number', gad_serial_number) }}{% endif %}
     </div>
 {% endmacro %}
 

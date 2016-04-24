@@ -531,7 +531,7 @@ class AVM():
                 self._update_tam(item)
             elif item.conf['avm_data_type'] == 'aha_device':
                 self._update_home_automation(item)
-            elif item.conf['avm_data_type'] in ['wlanconfig', 'wlan_guest_time_remaining']:
+            elif item.conf['avm_data_type'] in ['wlanconfig', 'wlanconfig_ssid', 'wlan_guest_time_remaining']:
                 self._update_wlan_config(item)
             elif item.conf['avm_data_type'] in ['wan_total_packets_sent', 'wan_total_packets_received', 'wan_total_bytes_sent', 'wan_total_bytes_received', 'wan_link']:
                 self._update_wan_common_interface_configuration(item)
@@ -1249,7 +1249,7 @@ class AVM():
 
         headers = self._header.copy()
 
-        if item.conf['avm_data_type']  == 'wlanconfig':
+        if item.conf['avm_data_type'] in ['wlanconfig', 'wlanconfig_ssid']:
             action = 'GetInfo'
         elif item.conf['avm_data_type'] == 'wlan_guest_time_remaining':
             action = 'X_AVM-DE_GetWLANExtInfo'
@@ -1260,11 +1260,24 @@ class AVM():
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
         soap_data = self._assemble_soap_data(action,self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']))
 
+        if not "wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action) in self._response_cache:
+            try:
+                response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                              auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                                  self._fritz_device.get_password()),
+                                              verify=self._verify)
+
+            except Exception as e:
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                return
+            self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)] = response.content
+        else:
+            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+
         try:
-            response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
-            xml = minidom.parseString(response.content)
-        except Exception as e:            
-            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            xml = minidom.parseString(self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)])
+        except Exception as e:
+            self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
         if item.conf['avm_data_type'] == 'wlanconfig':
@@ -1272,6 +1285,12 @@ class AVM():
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
+                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+        elif  item.conf['avm_data_type'] == 'wlanconfig_ssid':
+            element_xml = xml.getElementsByTagName('NewSSID')
+            if (len(element_xml) > 0):
+                item(element_xml[0].firstChild.data)
+            else:
                 self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wlan_guest_time_remaining':
             element_xml = xml.getElementsByTagName('NewX_AVM-DE_TimeRemain')

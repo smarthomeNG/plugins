@@ -8,8 +8,8 @@ sudo pip3 install requests --upgrade
 
 It is completely based on the TR-064 interface from AVM (http://avm.de/service/schnittstellen/)
 
-Version 0.92 tested with a FritzBox 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
-WLAN Repeater 300E (FRITZ!OS 06.30).
+Version 0.92 tested with a FRITZ!Box 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
+WLAN Repeater 300E (FRITZ!OS 06.30). It was also tested with a FRITZ!Box 7390 with FW 84.06.36.
 
 The MonitoringService currently does not support parallel incoming or outgoing calls. For being able to connect to
 the FritzDevice's CallMonitor, you have to activate it, by typing `#96*5*` on a directly connected phone.
@@ -286,7 +286,13 @@ This attribute defines supported functions that can be set for an item. Full set
             visu_acl = rw
             avm_data_type = wlanconfig #2,4ghz
             avm_wlan_index = 1
-            avm_identifier = fritzbox_1 
+            avm_identifier = fritzbox_1
+        [[[gf_wlan_1_ssid]]]
+            type = str
+            visu_acl = ro
+            avm_data_type = wlanconfig_ssid #sid of gf_wlan_1
+            avm_wlan_index = 1
+            avm_identifier = fritzbox_1
         [[[gf_wlan_2]]]
             type = bool
             visu_acl = rw
