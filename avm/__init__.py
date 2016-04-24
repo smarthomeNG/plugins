@@ -596,13 +596,13 @@ class AVM():
                     elif item.conf['avm_data_type'] == 'last_caller_outgoing' and item._value == '':
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
-                                if element['Type'] == '3':
+                                if element['Type'] in ['3', '4']:
                                     item(element['Name'])
                                     break
                     elif item.conf['avm_data_type'] == 'last_call_date_outgoing' and item._value == '':
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
-                                if element['Type'] == '3':
+                                if element['Type'] in ['3', '4']:
                                     date = str(element['Date'])
                                     date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
                                     item(date)
@@ -616,10 +616,10 @@ class AVM():
                     elif item.conf['avm_data_type'] == 'call_direction' and item._value == '':
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['1','2']:
+                                if element['Type'] in ['1', '2']:
                                     item('incoming')
                                     break
-                                if element['Type'] == '3':
+                                if element['Type'] in ['3', '4']:
                                     item('outgoing')
                                     break
                     if not self._monitoring_service is None:
@@ -639,7 +639,7 @@ class AVM():
                     elif item.conf['avm_data_type'] == 'call_duration_outgoing' and item._value == 0:
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
-                                if element['Type'] == '3':
+                                if element['Type'] in ['3', '4']:
                                     duration = element['Duration']
                                     self.logger.debug(duration)
                                     duration = int(duration[0:1]) * 60 + int(duration[2:4])
