@@ -8,7 +8,7 @@ sudo pip3 install requests --upgrade
 
 It is completely based on the TR-064 interface from AVM (http://avm.de/service/schnittstellen/)
 
-Version 0.92 tested with a FRITZ!Box 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
+Version 0.95 tested with a FRITZ!Box 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
 WLAN Repeater 300E (FRITZ!OS 06.30). It was also tested with a FRITZ!Box 7390 with FW 84.06.36.
 
 The MonitoringService currently does not support parallel incoming or outgoing calls. For being able to connect to
