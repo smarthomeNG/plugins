@@ -74,6 +74,10 @@ In the examples directory you could find a configuration with every supported el
 
 By default, the visu plugin handles smartVISU widgets. If your run into problems, you can disable the widget handling by setting this attribute to **`False`**.
 
+Widgets that come with a plugin are stored in in a subdirectory to the plugin folder. These widgets are installed into smartVISU upon start of smarthomeNG. These widgets can be used in smartVISU without manually adding include startements to smartVISU.
+
+These widgets can be used in auto-generation of visu pages. Therefor they can be included in the **`sv_widget`** attribute of an item.
+
 
 ## items.conf
 Most of the entries in item.conf are specific to smartVISU. These parameters beginn with **`sv_`**.

@@ -52,8 +52,7 @@ class JSONEncoder(json.JSONEncoder):
 
 class WebSocket(lib.connection.Server):
 
-#    def __init__(self, smarthome, visu_dir=False, generator_dir=False, ip='0.0.0.0', port=2424, tls='no', smartvisu_dir=False, acl='ro'):
-    def __init__(self, smarthome, visu_dir=False, generator_dir=False, ip='0.0.0.0', port=2424, tls='no', smartvisu_dir=False, acl='ro', wsproto=3, handle_widgets=True ):	#MSinn
+    def __init__(self, smarthome, visu_dir=False, generator_dir=False, ip='0.0.0.0', port=2424, tls='no', smartvisu_dir=False, acl='ro', wsproto=3, handle_widgets=True ):
         lib.connection.Server.__init__(self, ip, port)
         self._sh = smarthome
         self.__acl = acl
@@ -61,10 +60,10 @@ class WebSocket(lib.connection.Server):
         self.clients = []
         self.visu_items = {}
         self.visu_logics = {}
-        try:								# MSinn
-            self.proto = int(wsproto)		# MSinn
-        except:								# MSinn
-            self.proto = 3					# MSinn
+        try:
+            self.proto = int(wsproto)
+        except:
+            self.proto = 3
             logger.warning("VISU: Invalid wsproto specified in plugin.conf, using protocol version {0} instead".format(self.proto))		# MSinn
 
         if tls == 'no':
@@ -74,14 +73,20 @@ class WebSocket(lib.connection.Server):
         self.tls_crt = '/usr/local/smarthome/etc/home.crt'
         self.tls_key = '/usr/local/smarthome/etc/home.key'
         self.tls_ca = '/usr/local/smarthome/etc/ca.crt'
-        self.generator_dir = visu_dir
+        
+        if isinstance(visu_dir, str) and visu_dir.lower() in ['false', 'no']:
+            self.generator_dir = False
+        else:
+            self.generator_dir = visu_dir
         if generator_dir:  # transition feature
             self.generator_dir = generator_dir
+        if isinstance(generator_dir, str) and generator_dir.lower() in ['false', 'no']:
+            self.generator_dir = False
         self.smartvisu_dir = smartvisu_dir
-        if isinstance(smartvisu_dir, str) and smartvisu_dir.upper() in ['FALSE', 'NO']:
+        if isinstance(smartvisu_dir, str) and smartvisu_dir.lower() in ['false', 'no']:
             self.smartvisu_dir = False
         self._handle_widgets = True
-        if isinstance(handle_widgets, str) and handle_widgets.upper() in ['FALSE', 'NO']:
+        if isinstance(handle_widgets, str) and handle_widgets.lower() in ['false', 'no']:
             self._handle_widgets = False
 
     def _smartvisu_pages(self, directory):
@@ -226,7 +231,6 @@ class WebSocket(lib.connection.Server):
 
 class WebSocketHandler(lib.connection.Stream):
 
-#    def __init__(self, smarthome, dispatcher, sock, addr, items, logics):		# MSinn
     def __init__(self, smarthome, dispatcher, sock, addr, items, logics, proto=4):
         lib.connection.Stream.__init__(self, sock, addr)
         self.terminator = b"\r\n\r\n"
@@ -244,9 +248,8 @@ class WebSocketHandler(lib.connection.Stream):
         self.logs = smarthome.return_logs()
         self._series_lock = threading.Lock()
         self.logics = logics
-#		self.proto = 3					# MSinn
-        self.proto = proto				# MSinn
-        logger.info("VISU: WebSocketHandler uses protocol version {0}".format(self.proto))		# MSinn
+        self.proto = proto
+        logger.info("VISU: WebSocketHandler uses protocol version {0}".format(self.proto))
 
     def send_event(self, event, data):
         data = data.copy()  # don't filter the orignal data dict
@@ -254,7 +257,7 @@ class WebSocketHandler(lib.connection.Stream):
             return
         if data[self.monitor_id[event]] in self.monitor[event]:
             data['cmd'] = event
-#            logger.warning("VISU: send_event send to {0}: {1}".format(self.addr, data))		# MSinn
+#            logger.warning("VISU: send_event send to {0}: {1}".format(self.addr, data))
             self.json_send(data)
 
     def json_send(self, data):

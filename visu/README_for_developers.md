@@ -39,7 +39,7 @@ It is unknown if the code is functional, because it hasn't been tested.
 # Handling of smartVISU widgets
 The visu plugin handles widgets, which a plugin developer delivers with the plugin he has written. For this to wirk, the attribute **`smartvisu_dir`** in the visu section of **`plugin.conf`** must be set. 
 
-At this stage the visu plugin doesn't handle widgets that define their own Javascript or css. It copies the files to smartVISU but it doesn't install the Javascript or css code in smartVISU.
+It handles widgets that define their own Javascript or css. The Javascript and css files must follow the same naming convention as the html file.
 
 ## Add a widget to a plugin
 A developer of a plugin can add widgets to the plugin. He has to create a directory named **sv_widgets** in his plugin directory and add the file(s) of the widget to that directory.
@@ -56,7 +56,7 @@ For further automatic integration the widget must follow a name convention. It m
 is generated. 
 
 **Example**:
->For a file widget_hue.html the statement
+>For a file **`widget_hue.html`** the statement
 
 >```
 	{% import "widget_hue.html" as hue %}
@@ -69,6 +69,15 @@ The widgets in that file can be called by the directives
  or
 	{{ hue.control_group( ... ) }}
 ```
+
+If a Javascript file would exist for the hue widget, it would have to have the name  **`widget_hue.js`**. To include this file in smartVISU, the following lines are added to root.html:
+>
+>```
+{% if isfile('widgets/sh_widgets/widget_hue.js') %}
+	<script type="text/javascript" src="widgets/sh_widgets/widget_hue.js"></script>{% endif %}
+```
+
+The handling of a css file is analog to the Javascript handling.
 
 
 ## Modifications to smartVISU made by the visu plugin

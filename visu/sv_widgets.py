@@ -30,6 +30,79 @@ import lib.config
 logger = logging.getLogger('')
 
 
+def findinsertline( root_contents, searchstring ):
+    # look for insert point in root.html: find and return line that contains the searchstring
+    iln = ''
+    for ln in root_contents:
+        if ln.find( searchstring ) != -1:
+            iln = ln
+    if iln == '':
+        logger.warning("findinsertline: No insert point for pattern {0}".format(searchstring))
+    return( iln )
+    
+
+def create_htmlinclude(filename, classname, shwdgdir, root_contents, iln_html, plgdir):
+    insertln = root_contents.index(iln_html) +1
+    # Insert widget statements to root_contents
+    if insertln != 0:
+        logger.debug( "create_htmlinclude: Inserting in root.html at line {0} after '{1}'".format(insertln, iln_html) )
+        twig_statement = '\t{% import "' + shwdgdir + '/' + filename + '" as ' + classname + ' %}'
+        logger.warning("create_htmlinclude: From '{0}': {1}".format(plgdir, twig_statement))
+        root_contents.insert(insertln, twig_statement+'\n')
+
+
+def create_jsinclude(filename, classname, shwdgdir, root_contents, iln_js):
+    insertln = root_contents.index(iln_js)
+    # Insert widget statements to root_contents
+    if insertln > -1:
+        logger.debug( "create_jsinclude: Inserting in root.html at line {0} before '{1}'".format(insertln, iln_js) )
+        twig_statement1 = "\t{% if isfile('widgets/sh_widgets/" + filename + "') %}"
+        twig_statement2 = '\t\t<script type="text/javascript" src="widgets/sh_widgets/widget_' + classname + '.js"></script>{% endif %}'
+        logger.debug('create_jsinclude: {0}'.format(twig_statement1))
+        logger.debug('create_jsinclude: {0}'.format(twig_statement2))
+        root_contents.insert(insertln, twig_statement2+'\n')
+        root_contents.insert(insertln, twig_statement1+'\n')
+
+
+def create_cssinclude(filename, classname, shwdgdir, root_contents, iln_css):
+    insertln = root_contents.index(iln_css)
+    # Insert widget statements to root_contents
+    if insertln > -1:
+        logger.debug( "create_jsinclude: Inserting in root.html at line {0} before '{1}'".format(insertln, iln_css) )
+        twig_statement1 = "\t{% if isfile('widgets/sh_widgets/" + filename + "') %}"
+        twig_statement2 = '\t\t<script type="text/javascript" src="widgets/sh_widgets/widget_' + classname + '.css"></script>{% endif %}'
+        logger.debug('create_cssinclude: {0}'.format(twig_statement1))
+        logger.debug('create_cssinclude: {0}'.format(twig_statement2))
+        root_contents.insert(insertln, twig_statement2+'\n')
+        root_contents.insert(insertln, twig_statement1+'\n')
+
+
+def copy_widgets(smarthome, plgdir, wdgdir, destdir, shwdgdir, root_contents, iln_html, iln_js, iln_css):
+    # copy widgets from the sv_widget(s) subdir of a plugin
+    srcdir = smarthome.base_dir + '/' + plgdir + '/' + wdgdir
+    if not os.path.isdir(srcdir):
+        logger.info("copy_widgets: Could not find source directory {0} in {1}".format(wdgdir, plgdir))
+        return
+    logger.debug("copy_widgets: Copying widgets from plugin '{0}'".format(srcdir))
+
+    # Open file for twig import statements (for root.html)
+    for fn in os.listdir(srcdir):
+        if (fn[-3:] != ".md"):
+            logger.info("copy_widgets: Copying widget-file: {0}".format(fn))
+            shutil.copy2( srcdir + '/' + fn, destdir )
+            if (fn[0:7] == "widget_") and (fn[-5:] == ".html"):
+                if iln_html != '':
+                    create_htmlinclude(fn, fn[7:-5] , shwdgdir, root_contents, iln_html, plgdir)
+
+            if (fn[0:7] == "widget_") and (fn[-3:] == ".js"):
+                if iln_js != '':
+                    create_jsinclude(fn, fn[7:-3] , shwdgdir, root_contents, iln_js)
+
+            if (fn[0:7] == "widget_") and (fn[-4:] == ".css"):
+                if iln_css != '':
+                    create_cssinclude(fn, fn[7:-4] , shwdgdir, root_contents, iln_css)
+
+
 def install_widgets(smarthome, directory):
     logger.info("install_widgets; Installing to {0}".format(directory))
     logger.info("install_widgets: Installing from {0}".format(smarthome.base_dir))
@@ -40,7 +113,7 @@ def install_widgets(smarthome, directory):
     outdir = directory + '/widgets/' + shwdgdir
     tpldir = directory + '/pages/base/tpl'
     tmpdir = directory + '/temp'
-    pgbdir = directory + '/pages/base'			# pages/base directory
+    pgbdir = directory + '/pages/base'          # pages/base directory
     
     # clear temp directory
     if not os.path.isdir(tmpdir):
@@ -82,69 +155,34 @@ def install_widgets(smarthome, directory):
         logger.warning( "install_widgets: Creating a copy of root.html" )
         shutil.copy2( pgbdir + '/root.html', pgbdir + '/root_master.html' )
 
-	# read the unmodified root.html (from root_master.html)
+    # read the unmodified root.html (from root_master.html)
     f_root = open(pgbdir + '/root_master.html', "r")
     root_contents = f_root.readlines()
     f_root.close()
     logger.debug( "root_contents: {0}".format(root_contents) )
-    
-    # look for insert point
-    searchstring = '{% import "plot.html" as plot %}'
-    iln = 'xyz'
-    for ln in root_contents:
-        if ln.find( searchstring ) != -1:
-            iln = ln
-    try:
-        insertln = root_contents.index(iln) +1
-    except:
-        insertln = 0
 
+    iln_html = findinsertline( root_contents, '{% import "plot.html" as plot %}' )
+    iln_js = findinsertline( root_contents, "{% if isfile('pages/'~config_pages~'/visu.js') %}" )
+    iln_css = findinsertline( root_contents, "{% if isfile('pages/'~config_pages~'/visu.css') %}" )
+    mypluginlist = []
     # copy GLOBAL widgets from _sv_widgets
-    copy_widgets( smarthome.base_dir + '/plugins', '_sv_widgets', outdir, shwdgdir, root_contents, insertln )
+    copy_widgets( smarthome, '/plugins', '_sv_widgets', outdir, shwdgdir, root_contents, iln_html, iln_js, iln_css )
     
     # copy widgets from plugin directories
-    # read plunginn.conf
+    # read plungin.conf
     _conf = lib.config.parse(smarthome._plugin_conf)
     for plugin in _conf:
 #        logger.warning("install_widgets: Plugin class {0}, path {1}".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
         plgdir = _conf[plugin]['class_path']
-        copy_widgets( smarthome.base_dir + '/' + plgdir.replace('.', '/'), 'sv_widgets', outdir, shwdgdir, root_contents, insertln )
-
-    # Insert widget statements to root_contents
-    if insertln != 0:
-        logger.warning( "install_widgets: Inserting in root.html at line {0} after '{1}'".format(insertln, searchstring) )
-    else:
-        logger.error( "install_widgets: Cannot find insert point in root.html (file=root_master.html)" )
-    
-	# write root.html with additions for widgets
+        if plgdir not in mypluginlist:
+            # process each plugin only once
+            mypluginlist.append( plgdir )
+            copy_widgets( smarthome, plgdir.replace('.', '/'), 'sv_widgets', outdir, shwdgdir, root_contents, iln_html, iln_js, iln_css )
+    # write root.html with additions for widgets
     f_root = open(pgbdir + '/root.html', "w")
     root_contents = "".join(root_contents)
     f_root.write(root_contents)
+    logger.warning( "install_widgets: Writing root.html" )
     f_root.close()
 
 
-def copy_widgets(plgdir, wdgdir, destdir, shwdgdir, root_contents, insertln):
-    # copy widgets from _sv_widgets
-    srcdir = plgdir + '/' + wdgdir
-    if not os.path.isdir(srcdir):
-        logger.info("copy_widgets: Could not find source directory {0} in {1}".format(wdgdir, plgdir))
-        return
-    logger.warning("copy_widgets: Copying widgets from plugin '{0}'".format(srcdir))
-
-    # Open file for twig import statements (for root.html)
-    fh = open(destdir + "/_sh_widgets.html", "w")
-    for fn in os.listdir(srcdir):
-        logger.info("copy_widgets: Copying widget-file: {0}".format(fn))
-        shutil.copy2( srcdir + '/' + fn, destdir )
-        if (fn[0:7] == "widget_") and (fn[-5:] == ".html"):
-            create_widget_twig(fn, fn[7:-5] , fh, shwdgdir, root_contents, insertln)
-    fh.close()
-
-
-def create_widget_twig(filename, classname, twig_fh, shwdgdir, root_contents, insertln):
-    twig_statement = '\t{% import "' + shwdgdir + '/' + filename + '" as ' + classname + ' %}'
-    logger.warning('create_widget_twig: {0}'.format(twig_statement))
-    
-    twig_fh.write(twig_statement+'\n')
-    if insertln > 0:
-        root_contents.insert(insertln, twig_statement+'\n')
