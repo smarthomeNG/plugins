@@ -711,7 +711,7 @@ class AVM():
             if item.conf['avm_data_type'] == 'wlanconfig': # check if item was guest wifi item and remaining time is set as item..
                 for citem in self._fritz_device.get_items():  # search for guest time remaining item.
                     if citem.conf['avm_data_type'] == 'wlan_guest_time_remaining' and citem.conf['avm_wlan_index'] == item.conf['avm_wlan_index']:
-                        self._response_cache = dict() # reset response cache
+                        self._response_cache.pop("wlanconfig_%s_%s" % (citem.conf['avm_wlan_index'], "X_AVM-DE_GetWLANExtInfo"), None) # reset response cache
                         self._update_wlan_config(citem) #immediately update remaining guest time
 
     def get_contact_name_by_phone_number(self, phone_number=''):
