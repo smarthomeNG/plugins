@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 0.95
+#  Version 0.96
 #########################################################################
 #  Free for non-commercial use
 #  
@@ -31,6 +31,7 @@
 
 import datetime
 import logging
+import re
 import hashlib
 import socket
 import time
@@ -106,9 +107,9 @@ class MonitoringService():
 
         :param item: item to register
         """
-        if item.conf['avm_data_type'] in ['is_call_incoming', 'last_caller_incoming', 'last_call_date_incoming', 'call_event_incoming']:
+        if item.conf['avm_data_type'] in ['is_call_incoming', 'last_caller_incoming', 'last_number_incoming', 'last_called_number_incoming', 'last_call_date_incoming', 'call_event_incoming']:
             self._items_incoming.append(item)
-        elif item.conf['avm_data_type'] in ['is_call_outgoing', 'last_caller_outgoing', 'last_call_date_outgoing', 'call_event_outgoing']:
+        elif item.conf['avm_data_type'] in ['is_call_outgoing', 'last_caller_outgoing', 'last_number_outgoing', 'last_called_number_outgoing', 'last_call_date_outgoing', 'call_event_outgoing']:
             self._items_outgoing.append(item)
         elif item.conf['avm_data_type'] == 'monitor_trigger':
             self._trigger_items.append(item)
@@ -245,6 +246,10 @@ class MonitoringService():
                         item(time)
                     elif item.conf['avm_data_type'] in ['call_event_incoming']:
                         item(event.lower())
+                    elif item.conf['avm_data_type'] in ['last_number_incoming']:
+                        item(call_from)
+                    elif item.conf['avm_data_type'] in ['last_called_number_incoming']:
+                        item(call_to)
 
         # call is outgoing
         elif event == 'CALL':
@@ -264,13 +269,17 @@ class MonitoringService():
                     item(time)
                 elif item.conf['avm_data_type'] in ['call_event_outgoing']:
                     item(event.lower())
+                elif item.conf['avm_data_type'] in ['last_number_outgoing']:
+                    item(call_from)
+                elif item.conf['avm_data_type'] in ['last_called_number_outgoing']:
+                    item(call_to)
 
         # connection established
         elif event == 'CONNECT':
             # handle OUTGOING calls
             if callid == self._call_outgoing_cid:
-                if not self._duration_item['call_duration_outgoing'] is None:            # start counter thread only if duration item set and call is outgoing
-                    self._stop_counter('outgoing')                                   # stop potential running counter for parallel (older) outgoing call
+                if not self._duration_item['call_duration_outgoing'] is None:           # start counter thread only if duration item set and call is outgoing
+                    self._stop_counter('outgoing')                                      # stop potential running counter for parallel (older) outgoing call
                     self._start_counter(time, 'outgoing')
                 for item in self._items_outgoing:
                     if item.conf['avm_data_type'] in ['call_event_outgoing']:
@@ -278,8 +287,8 @@ class MonitoringService():
 
             # handle INCOMING calls
             elif callid == self._call_incoming_cid:
-                if not self._duration_item['call_duration_incoming'] is None:            # start counter thread only if duration item set and call is incoming
-                    self._stop_counter('incoming')                                   # stop potential running counter for parallel (older) incoming call
+                if not self._duration_item['call_duration_incoming'] is None:           # start counter thread only if duration item set and call is incoming
+                    self._stop_counter('incoming')                                      # stop potential running counter for parallel (older) incoming call
                     self._start_counter(time, 'incoming')
                 for item in self._items_incoming:
                     if item.conf['avm_data_type'] in ['call_event_incoming']:
@@ -568,20 +577,32 @@ class AVM():
         if 'avm_identifier' in item.conf:
             value = item.conf['avm_identifier']
             if value == self._fritz_device.get_identifier():
-
-                if item.conf['avm_data_type'] in ['is_call_incoming','is_call_outgoing',
-                                                   'last_caller_incoming', 'last_call_date_incoming', 'call_event_incoming',
-                                                   'last_caller_outgoing', 'last_call_date_outgoing', 'call_event_outgoing',
-                                                   'call_event', 'call_direction', 'monitor_trigger']:
-                    # items specific to call monitor
+                # items specific to call monitor
+                if item.conf['avm_data_type'] in ['is_call_incoming', 'last_caller_incoming', 'last_call_date_incoming',
+                                                  'call_event_incoming', 'last_number_incoming', 'last_called_number_incoming',
+                                                  'is_call_outgoing', 'last_caller_outgoing', 'last_call_date_outgoing',
+                                                  'call_event_outgoing', 'last_number_outgoing', 'last_called_number_outgoing',
+                                                  'call_event', 'call_direction', 'monitor_trigger']:
                     # initally - if item empty - get data from calllist
-                    if item.conf['avm_data_type'] == 'last_caller_incoming' and item._value == '':
+                    if item.conf['avm_data_type'] == 'last_caller_incoming' and item() == '':
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['1', '2']:
                                     item(element['Name'])
                                     break
-                    elif item.conf['avm_data_type'] == 'last_call_date_incoming' and item._value == '':
+                    elif item.conf['avm_data_type'] == 'last_number_incoming' and item() == '':
+                        if not self.get_calllist_from_cache() is None:
+                            for element in self.get_calllist_from_cache():
+                                if element['Type'] in ['1', '2']:
+                                    item(element['Caller'])
+                                    break
+                    elif item.conf['avm_data_type'] == 'last_called_number_incoming' and item() == '':
+                        if not self.get_calllist_from_cache() is None:
+                            for element in self.get_calllist_from_cache():
+                                if element['Type'] in ['1', '2']:
+                                    item(element['CalledNumber'])
+                                    break
+                    elif item.conf['avm_data_type'] == 'last_call_date_incoming' and item() == '':
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['1', '2']:
@@ -589,17 +610,29 @@ class AVM():
                                     date = date[8:10]+"."+date[5:7]+"."+date[2:4]+" "+date[11:19]
                                     item(date)
                                     break
-                    elif item.conf['avm_data_type'] == 'call_event_incoming' and item._value == '':
+                    elif item.conf['avm_data_type'] == 'call_event_incoming' and item() == '':
                         item('disconnect')
-                    elif item.conf['avm_data_type'] == 'is_call_incoming' and item._value == '':
+                    elif item.conf['avm_data_type'] == 'is_call_incoming' and item() == '':
                         item(0)
-                    elif item.conf['avm_data_type'] == 'last_caller_outgoing' and item._value == '':
+                    elif item.conf['avm_data_type'] == 'last_caller_outgoing' and item() == '':
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['3', '4']:
                                     item(element['Name'])
                                     break
-                    elif item.conf['avm_data_type'] == 'last_call_date_outgoing' and item._value == '':
+                    elif item.conf['avm_data_type'] == 'last_number_outgoing' and item() == '':
+                        if not self.get_calllist_from_cache() is None:
+                            for element in self.get_calllist_from_cache():
+                                if element['Type'] in ['3', '4']:
+                                    item(re.sub("\D", "", element['Caller']))
+                                    break
+                    elif item.conf['avm_data_type'] == 'last_called_number_outgoing' and item() == '':
+                        if not self.get_calllist_from_cache() is None:
+                            for element in self.get_calllist_from_cache():
+                                if element['Type'] in ['3', '4']:
+                                    item(element['Called'])
+                                    break
+                    elif item.conf['avm_data_type'] == 'last_call_date_outgoing' and item() == '':
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['3', '4']:
@@ -607,13 +640,13 @@ class AVM():
                                     date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
                                     item(date)
                                     break
-                    elif item.conf['avm_data_type'] == 'call_event_outgoing' and item._value == '':
+                    elif item.conf['avm_data_type'] == 'call_event_outgoing' and item() == '':
                         item('disconnect')
-                    elif item.conf['avm_data_type'] == 'is_call_outgoing' and item._value == '':
+                    elif item.conf['avm_data_type'] == 'is_call_outgoing' and item() == '':
                         item(0)
-                    elif item.conf['avm_data_type'] == 'call_event' and item._value == '':
+                    elif item.conf['avm_data_type'] == 'call_event' and item() == '':
                         item('disconnect')
-                    elif item.conf['avm_data_type'] == 'call_direction' and item._value == '':
+                    elif item.conf['avm_data_type'] == 'call_direction' and item() == '':
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['1', '2']:
@@ -627,22 +660,20 @@ class AVM():
                 elif item.conf['avm_data_type'] in ['call_duration_incoming', 'call_duration_outgoing']:
                     # items specific to call monitor duration calculation
                     # initally get data from calllist
-                    if item.conf['avm_data_type'] == 'call_duration_incoming' and item._value == 0:
+                    if item.conf['avm_data_type'] == 'call_duration_incoming' and item() == 0:
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['1', '2']:
                                     duration = element['Duration']
-                                    self.logger.debug(duration)
-                                    duration = int(duration[0:1])*60+int(duration[2:4])
+                                    duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
                                     item(duration)
                                     break
-                    elif item.conf['avm_data_type'] == 'call_duration_outgoing' and item._value == 0:
+                    elif item.conf['avm_data_type'] == 'call_duration_outgoing' and item() == 0:
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['3', '4']:
                                     duration = element['Duration']
-                                    self.logger.debug(duration)
-                                    duration = int(duration[0:1]) * 60 + int(duration[2:4])
+                                    duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
                                     item(duration)
                                     break
                     if not self._monitoring_service is None:

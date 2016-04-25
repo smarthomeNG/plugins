@@ -8,7 +8,7 @@ sudo pip3 install requests --upgrade
 
 It is completely based on the TR-064 interface from AVM (http://avm.de/service/schnittstellen/)
 
-Version 0.95 tested with a FRITZ!Box 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
+Version 0.96 tested with a FRITZ!Box 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
 WLAN Repeater 300E (FRITZ!OS 06.30). It was also tested with a FRITZ!Box 7390 with FW 84.06.36.
 
 The MonitoringService currently does not support parallel incoming or outgoing calls. For being able to connect to
@@ -133,53 +133,59 @@ This attribute defines supported functions that can be set for an item. Full set
                 type = bool
                 avm_identifier = fritzbox_1
                 avm_data_type = is_call_incoming
-                cache = yes
             [[[[duration]]]]
                 type = num
                 avm_identifier = fritzbox_1
                 avm_data_type = call_duration_incoming
-                cache = yes
             [[[[last_caller]]]]
                 type = str
                 avm_identifier = fritzbox_1
                 avm_data_type = last_caller_incoming
-                cache = yes
+            [[[[last_calling_number]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = last_number_incoming
+            [[[[last_called_number]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = last_called_number_incoming
             [[[[last_call_date]]]]
                 type = str
                 avm_identifier = fritzbox_1
                 avm_data_type = last_call_date_incoming
-                cache = yes
             [[[[event]]]]
                 type = str
                 avm_identifier = fritzbox_1
                 avm_data_type = call_event_incoming
-                cache = yes
 	    [[[outgoing]]]
 	        [[[[is_call_outgoing]]]]
                 type = bool
                 avm_identifier = fritzbox_1
                 avm_data_type = is_call_outgoing
-                cache = yes
             [[[[duration]]]]
                 type = num
                 avm_identifier = fritzbox_1
                 avm_data_type = call_duration_outgoing
-                cache = yes
             [[[[last_caller]]]]
                 type = str
                 avm_identifier = fritzbox_1
                 avm_data_type = last_caller_outgoing
-                cache = yes
+            [[[[last_calling_number]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = last_number_outgoing
+            [[[[last_called_number]]]]
+                type = str
+                avm_identifier = fritzbox_1
+                avm_data_type = last_called_number_outgoing
             [[[[last_call_date]]]]
                 type = str
                 avm_identifier = fritzbox_1
                 avm_data_type = last_call_date_outgoing
-                cache = yes
             [[[[event]]]]
                 type = str
                 avm_identifier = fritzbox_1
                 avm_data_type = call_event_outgoing
-                cache = yes
         [[[newest]]]
             [[[[direction]]]]
                 type = str
