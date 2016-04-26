@@ -1,4 +1,5 @@
-Simulation
+Simulation Plugin
+==========
 
 Description:
 The simulation plugin allows simulating presence in case none is at home.
@@ -12,16 +13,17 @@ This plugins has no requirements.
 
 Configuration:
 plugin.conf
-
+```
 [simulation]
    class_name = Simulation
    class_path = plugins.simulation
    data_file = /usr/smarthome/var/db/simulation.txt
-
-data_file: This is the file where all recorded events are stored.
+```
+`data_file`: This is the file where all recorded events are stored.
 
 items.conf:
- "sim = track" attribute : Add sim = track to each item that want to be included in the simulation
+
+ `sim = track` attribute : Add sim = track to each item that want to be included in the simulation
 
 Example:
 ```
@@ -135,11 +137,11 @@ Control:
 The plugin needs certain control items to exist. They can be integrated in
 smartvisu. I created a block the looks like in the following picture:
 
-Screenshot
+![screenshot](screenshot.png)
 
 The code is here. Replace the item names with yours from the item.conf file. 
 The png files for the lamps are in the package. 
-
+```HTML
 <h1><img class="icon" src='{{ icon0 }}time_clock.png' />Simulation</h1>
 <div class="block">
   <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
@@ -193,15 +195,16 @@ The png files for the lamps are in the package.
   </div>
 </div>
 
+```
 
 Internals
 ---------
 Event file format:
 Each event is stored in one line in the following format:
-
+```
 Day;Time;Item;Value;Trigger e.g:
 
 Tue;06:05:27;OG.Tobias.Deckenlicht;True;KNX
-
+```
 At 00:00 the string "NextDay" is put into one line. Day and Trigger
 are ignored for the time being and might be used later. 
