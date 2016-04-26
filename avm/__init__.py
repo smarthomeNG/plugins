@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 0.96
+#  Version 0.961
 #########################################################################
 #  Free for non-commercial use
 #  
@@ -31,13 +31,10 @@
 
 import datetime
 import logging
-import re
-import hashlib
 import socket
 import time
 import threading
 from xml.dom import minidom
-import urllib.parse
 import requests
 from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
@@ -53,6 +50,7 @@ class MonitoringService():
     """
     def __init__(self, host, port, avm_identifier, callback, call_monitor_incoming_filter):
         self.logger = logging.getLogger(__name__)
+        self.logger.debug("starting monitoring service")
         self._host = host
         self._port = port
         self._avm_identifier = avm_identifier
@@ -144,26 +142,30 @@ class MonitoringService():
             self._call_connect_timestamp = time.mktime(
                 datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_incoming = threading.Thread(target=self._count_duration_incoming, name="MonitoringService_Duration_Incoming_%s" % self._avm_identifier).start()
+            self.logger.debug('Counter incoming - STARTED')
         elif direction == 'outgoing':
             self._call_connect_timestamp = time.mktime(
                 datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_outgoing = threading.Thread(target=self._count_duration_outgoing, name="MonitoringService_Duration_Outgoing_%s" % self._avm_identifier).start()
+            self.logger.debug('Counter outgoing - STARTED')
     
     def _stop_counter(self, direction):
         # only stop of thread is active
+
         if self._call_active[direction]:
             self._call_active[direction] = False
+            self.logger.debug('STOPPING ' + direction)
             try:
                 if direction == 'incoming':
                     self._duration_counter_thread_incoming.join(1)
-                else:
+                elif direction == 'outgoing':
                     self._duration_counter_thread_outgoing.join(1)
             except:
                 pass
 
     def _count_duration_incoming(self):
         self._call_active['incoming'] = True
-        while (self._call_active['incoming'] == True):
+        while (self._call_active['incoming']):
             if not self._duration_item['call_duration_incoming'] is None:
                 duration = time.time() - self._call_connect_timestamp
                 self._duration_item['call_duration_incoming'](int(duration))
@@ -171,7 +173,7 @@ class MonitoringService():
 
     def _count_duration_outgoing(self):
         self._call_active['outgoing'] = True
-        while (self._call_active['outgoing'] == True):
+        while (self._call_active['outgoing']):
             if not self._duration_item['call_duration_outgoing'] is None:
                 duration = time.time() - self._call_connect_timestamp
                 self._duration_item['call_duration_outgoing'](int(duration))
@@ -624,7 +626,7 @@ class AVM():
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['3', '4']:
-                                    item(re.sub("\D", "", element['Caller']))
+                                    item(''.join(filter(lambda x: x.isdigit(), element['Caller'])))
                                     break
                     elif item.conf['avm_data_type'] == 'last_called_number_outgoing' and item() == '':
                         if not self.get_calllist_from_cache() is None:
@@ -886,6 +888,24 @@ class AVM():
         except Exception as e:            
             self.logger.error("Exception when sending POST request: %s" % str(e))
             return
+
+    def wol(self, mac_address):
+        """
+        Sends a WOL (WakeOnLAN) command to a MAC address
+
+        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+
+        :param mac_address: MAC address of the device to wake up
+        """
+        url = self._build_url("/upnp/control/hosts")
+        headers = self._header.copy()
+        action = 'X_AVM-DE_WakeOnLANByMACAddress'
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'], {'NewMACAddress': mac_address})
+        self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                      auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                          self._fritz_device.get_password()), verify=self._verify)
+        return
 
     def reconnect(self):
         """

@@ -8,7 +8,7 @@ sudo pip3 install requests --upgrade
 
 It is completely based on the TR-064 interface from AVM (http://avm.de/service/schnittstellen/)
 
-Version 0.96 tested with a FRITZ!Box 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
+Version 0.961 tested with a FRITZ!Box 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
 WLAN Repeater 300E (FRITZ!OS 06.30). It was also tested with a FRITZ!Box 7390 with FW 84.06.36.
 
 The MonitoringService currently does not support parallel incoming or outgoing calls. For being able to connect to
@@ -462,6 +462,9 @@ sh.fb1.start_call('**9')
 
 ## cancel_call()
 This function cancels a running call.
+
+## wol(mac_address)
+This function executes a wake on lan command to the specified MAC address
 
 ## reconnect()
 This function reconnects the WAN (=internet) connection.
