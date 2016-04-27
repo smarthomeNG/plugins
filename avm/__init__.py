@@ -1002,7 +1002,7 @@ class AVM():
             is_active = tag_content[0].firstChild.data
         else:
             is_active = False
-            self.logger.debug("MAC Address not available on the FritzDevice - ID: %s" % self._fritz_device.get_identifier())
+            self.logger.debug("MAC Address %s not available on the FritzDevice - ID: %s" % (mac_address, self._fritz_device.get_identifier()))
         return bool(is_active)
 
     def _update_myfritz(self, item):
@@ -1125,24 +1125,25 @@ class AVM():
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
                 for child in item.return_children():
-                    if child.conf['avm_data_type'] == 'temperature':
-                        temp = xml.getElementsByTagName('NewTemperatureCelsius')
-                        if (len(temp) > 0):
-                            child(int(temp[0].firstChild.data))
-                        else: 
-                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-                    elif child.conf['avm_data_type'] == 'power':
-                        power = xml.getElementsByTagName('NewMultimeterPower')
-                        if (len(power) > 0):
-                            child(int(power[0].firstChild.data))
-                        else: 
-                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-                    elif child.conf['avm_data_type'] == 'energy':
-                        energy = xml.getElementsByTagName('NewMultimeterEnergy')
-                        if (len(energy) > 0):
-                            child(int(energy[0].firstChild.data))
-                        else: 
-                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                    if 'avm_data_type' in child.conf:
+                        if child.conf['avm_data_type'] == 'temperature':
+                            temp = xml.getElementsByTagName('NewTemperatureCelsius')
+                            if (len(temp) > 0):
+                                child(int(temp[0].firstChild.data))
+                            else:
+                                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                        elif child.conf['avm_data_type'] == 'power':
+                            power = xml.getElementsByTagName('NewMultimeterPower')
+                            if (len(power) > 0):
+                                child(int(power[0].firstChild.data))
+                            else:
+                                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                        elif child.conf['avm_data_type'] == 'energy':
+                            energy = xml.getElementsByTagName('NewMultimeterEnergy')
+                            if (len(energy) > 0):
+                                child(int(energy[0].firstChild.data))
+                            else:
+                                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
 
