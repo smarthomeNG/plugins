@@ -125,7 +125,8 @@ class Enigma2():
                             ('remotecontrol','/web/remotecontrol'),
                             ('message', '/web/message'),
                             ('messageanswer','/web/messageanswer'),
-                            ('getaudiotracks', '/web/getaudiotracks')])
+                            ('getaudiotracks', '/web/getaudiotracks'),
+                            ('epgservice', '/web/epgservice')])
 
     def __init__(self, smarthome, username='', password='', host='fritz.box', port='49443', ssl='True', verify='False', cycle=300, device_id='enigma2'):
         """
@@ -202,8 +203,11 @@ class Enigma2():
         for item in self._enigma2_device.get_items():
             if not self.alive:
                 return
-            if item.conf['enigma2_page'] in ['about', 'powerstate', 'subservices']:
-                self._update(item)
+            if 'enigma2_page' in item.conf:
+                if item.conf['enigma2_page'] in ['about', 'powerstate', 'subservices']:
+                    self._update(item)
+            elif item.conf['enigma2_data_type'] in ['current_eventtitle', 'current_eventdescription']:
+                self._update_current_event(item)
 
         #empty response cache
         self._response_cache = dict()
@@ -222,6 +226,8 @@ class Enigma2():
                 if 'enigma2_page' in item.conf:
                     if item.conf['enigma2_page'] in ['about', 'powerstate', 'subservices']:
                         self._enigma2_device._items.append(item)
+                elif 'enigma2_data_type' in item.conf:
+                    self._enigma2_device._items.append(item)
                 elif 'enigma2_remote_command_id' in item.conf:                                    # items for TV remote
                     #self._enigma2_device._remote_items.append(item)
                     return self.execute_item
@@ -341,11 +347,83 @@ class Enigma2():
             if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
                 self.logger.debug(e2resulttext_xml[0].firstChild.data)
                 if e2result_xml[0].firstChild.data == 'True':                    
-                    return e2resulttext_xml[0].firstChild.data               
-                     
+                    return e2resulttext_xml[0].firstChild.data
+
+    def _update_current_event(self, item):
+        """
+        Updates information on the current event
+
+        :param item: item to be updated
+        """
+        url = self._build_url(self._url_suffix_map['subservices'])
+
+        if not 'enigma2_data_type' in item.conf:
+            self.logger.error("No enigma2_data_type set in item!")
+            return
+
+        if not 'subservices' in self._response_cache:
+            try:
+                response = self._session.get(url, timeout=self._timeout,
+                                             auth=HTTPDigestAuth(self._enigma2_device.get_user(),
+                                                                 self._enigma2_device.get_password()),
+                                             verify=self._verify)
+            except Exception as e:
+                self.logger.error("Exception when sending GET request: %s" % str(e))
+                return
+            self._response_cache['subservices'] = response.content
+        else:
+            self.logger.debug("Accessing reponse cache for %s!" % self._url_suffix_map['subservices'])
+
+        try:
+            xml = minidom.parseString(self._response_cache['subservices'])
+        except Exception as e:
+            self.logger.error("Exception when parsing response: %s" % str(e))
+            return
+
+        element_xml = xml.getElementsByTagName('e2servicereference')
+        if (len(element_xml) > 0):
+            e2servicereference = element_xml[0].firstChild.data
+        else:
+            self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
+
+        current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference)
+
+        if item.conf['enigma2_data_type'] == 'current_eventtitle':
+            item(current_epgservice['e2eventtitle'])
+        elif item.conf['enigma2_data_type'] == 'current_eventdescription':
+            item(current_epgservice['e2eventdescription'])
+
+    def get_current_epgservice_for_service_reference(self, service_reference):
+        url = self._build_url(self._url_suffix_map['epgservice'], 'sRef=%s' % (service_reference))
+
+        try:
+            response = self._session.get(url, timeout=self._timeout,
+                                         auth=HTTPDigestAuth(self._enigma2_device.get_user(),
+                                                             self._enigma2_device.get_password()),
+                                         verify=self._verify)
+        except Exception as e:
+            self.logger.error("Exception when sending GET request: %s" % str(e))
+            return
+
+        try:
+            xml = minidom.parseString(response.content)
+        except Exception as e:
+            self.logger.error("Exception when parsing response: %s" % str(e))
+            return
+
+        e2event_list_xml = xml.getElementsByTagName('e2event')
+        result_entry = {}
+        if (len(e2event_list_xml) > 0):
+            e2eventdescription_xml = e2event_list_xml[0].getElementsByTagName('e2eventdescription')
+            result_entry['e2eventdescription'] = e2eventdescription_xml[0].firstChild.data
+            e2eventtitle_xml = e2event_list_xml[0].getElementsByTagName('e2eventtitle')
+            result_entry['e2eventtitle'] = e2eventtitle_xml[0].firstChild.data
+
+        return result_entry
+
     def _update(self, item):
         """
-        Updates information found on about page of openwebif
+        Updates information on diverse items
 
         :param item: item to be updated
         """
@@ -357,10 +435,12 @@ class Enigma2():
 
         if not item.conf['enigma2_page'] in self._response_cache:
             try:
-                response = self._session.get(url, timeout=self._timeout, auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                                  self._enigma2_device.get_password()), verify=self._verify)
+                response = self._session.get(url, timeout=self._timeout,
+                                             auth=HTTPDigestAuth(self._enigma2_device.get_user(),
+                                                                 self._enigma2_device.get_password()),
+                                             verify=self._verify)
             except Exception as e:
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending GET request: %s" % str(e))
                 return
             self._response_cache[item.conf['enigma2_page']] = response.content
         else:
@@ -374,7 +454,7 @@ class Enigma2():
 
         element_xml = xml.getElementsByTagName(item.conf['enigma2_data_type'])
         if (len(element_xml) > 0):
-            #self.logger.debug(element_xml[0].firstChild.data)
+            # self.logger.debug(element_xml[0].firstChild.data)
             if item.type() == 'bool':
                 if element_xml[0].firstChild.data == 'true':
                     item(1)

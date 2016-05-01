@@ -139,12 +139,23 @@ This attribute defines supported functions that can be set for an item. Full set
             enigma2_page = powerstate
             device_id = vusolo4k
             visu_acl = ro
-        [[[e2servicename]]]
-            type = str
-            enigma2_data_type = e2servicename
-            enigma2_page = subservices
-            device_id = vusolo4k
-            visu_acl = ro
+        [[[current]]]
+            [[[[eventtitle]]]] # more complex logic behind that data type
+                type = str
+                enigma2_data_type = current_eventtitle
+                device_id = vusolo4k
+                visu_acl = ro
+            [[[[eventdescription]]]] # more complex logic behind that data type
+                type = str
+                enigma2_data_type = current_eventdescription
+                device_id = vusolo4k
+                visu_acl = ro
+            [[[[e2servicename]]]]
+                type = str
+                enigma2_data_type = e2servicename
+                enigma2_page = subservices
+                device_id = vusolo4k
+                visu_acl = ro
         [[[remote]]] # see http://dream.reichholf.net/wiki/Enigma2:WebInterface#RemoteControl
             [[[[POWER]]]]
                 type = bool
