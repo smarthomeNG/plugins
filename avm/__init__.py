@@ -1086,11 +1086,12 @@ class AVM():
                         else:
                             self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
                     elif child.conf['avm_data_type'] == 'device_hostname':
-                        device_hostname = xml.getElementsByTagName('NewHostName')
-                        if (len(device_hostname) > 0):
-                            child(device_hostname[0].firstChild.data)
+                        data = self._get_value_from_xml_node(xml, 'NewHostName')
+                        if not data is None:
+                            child(data)
                         else:
-                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                            self.logger.error(
+                                "Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         else:
             item(0)
             self.logger.debug("MAC Address not available on the FritzDevice - ID: %s" % self._fritz_device.get_identifier())
