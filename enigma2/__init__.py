@@ -166,8 +166,6 @@ class Enigma2():
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
 
-        self.get_audio_tracks()
-
     def run(self):
         """
         Run method for the plugin
@@ -283,15 +281,15 @@ class Enigma2():
 
                 e2audiotrackid_xml = audiotrack_entry_xml.getElementsByTagName('e2audiotrackid')
                 if (len(e2audiotrackid_xml)) > 0:
-                    result_entry['e2audiotrackid'] = int(e2audiotrackdescription_xml[0].firstChild.data)
+                    result_entry['e2audiotrackid'] = int(e2audiotrackid_xml[0].firstChild.data)
 
                 e2audiotrackpid_xml = audiotrack_entry_xml.getElementsByTagName('e2audiotrackpid')
                 if (len(e2audiotrackpid_xml)) > 0:
-                    result_entry['e2audiotrackpid'] = int(e2audiotrackdescription_xml[0].firstChild.data)
+                    result_entry['e2audiotrackpid'] = int(e2audiotrackpid_xml[0].firstChild.data)
 
                 e2audiotrackactive_xml = audiotrack_entry_xml.getElementsByTagName('e2audiotrackactive')
                 if (len(e2audiotrackactive_xml)) > 0:
-                    if e2audiotrackdescription_xml[0].firstChild.data in 'True':
+                    if e2audiotrackactive_xml[0].firstChild.data in 'True':
                         result_entry['e2audiotrackactive'] = True
                     else:
                         result_entry['e2audiotrackactive'] = False

@@ -850,7 +850,7 @@ class AVM():
                                             called_number = called_number_element[0].firstChild.data
                                             #self.logger.debug(called_number+" "+filter_incoming)
                                             if not filter_incoming in called_number:
-                                                progress = False;
+                                                progress = False
                     if progress:
                         attributes = ['Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device',
                                       'Port', 'Date', 'Duration']
