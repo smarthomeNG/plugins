@@ -123,7 +123,7 @@ This attribute defines supported functions that can be set for an item. Full set
             visu_acl = ro
         [[[e2videoheight]]]
             type = num
-            enigma2_data_type = e2videowidth
+            enigma2_data_type = e2videoheight
             enigma2_page = about
             device_id = vusolo4k
             visu_acl = ro
@@ -317,6 +317,12 @@ This attribute defines supported functions that can be set for an item. Full set
 </pre>
 
 # Functions
+
+## get_audio_tracks()
+This function returns an array of dicts with the following keys: "e2audiotrackdescription" (string), "e2audiotrackid" (int), "e2audiotrackpid" (int), "e2audiotrackactive" (bool)
+<pre>
+sh.vusolo4k.get_audio_tracks()
+</pre>
 
 ## send_message(messagetext, messagetype=1, timeout=10)
 Sets a message to the device

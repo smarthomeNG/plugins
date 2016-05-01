@@ -124,7 +124,8 @@ class Enigma2():
                             ('subservices', '/web/subservices'),
                             ('remotecontrol','/web/remotecontrol'),
                             ('message', '/web/message'),
-                            ('messageanswer','/web/messageanswer')])
+                            ('messageanswer','/web/messageanswer'),
+                            ('getaudiotracks', '/web/getaudiotracks')])
 
     def __init__(self, smarthome, username='', password='', host='fritz.box', port='49443', ssl='True', verify='False', cycle=300, device_id='enigma2'):
         """
@@ -164,6 +165,8 @@ class Enigma2():
 
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
+
+        self.get_audio_tracks()
 
     def run(self):
         """
@@ -253,7 +256,50 @@ class Enigma2():
                             self.send_message("Test", 0)
                             time.sleep(10)
                             self.get_answer()
-      
+
+    def get_audio_tracks(self):
+        """
+        Retrieves an array of all available audio tracks
+        """
+        result = []
+        url = self._build_url(self._url_suffix_map['getaudiotracks'])
+        try:
+            response = self._session.get(url, timeout=self._timeout, auth=HTTPDigestAuth(self._enigma2_device.get_user(),
+                                                                                         self._enigma2_device.get_password()),
+                                         verify=self._verify)
+            xml = minidom.parseString(response.content)
+        except Exception as e:
+            self.logger.error("Exception when sending GET request: %s" % str(e))
+            return
+
+        e2audiotrack_xml = xml.getElementsByTagName('e2audiotrack')
+        if (len(e2audiotrack_xml)) > 0:
+            for audiotrack_entry_xml in e2audiotrack_xml:
+                result_entry = {}
+                e2audiotrackdescription_xml = audiotrack_entry_xml.getElementsByTagName('e2audiotrackdescription')
+
+                if (len(e2audiotrackdescription_xml)) > 0:
+                    result_entry['e2audiotrackdescription'] = e2audiotrackdescription_xml[0].firstChild.data
+
+                e2audiotrackid_xml = audiotrack_entry_xml.getElementsByTagName('e2audiotrackid')
+                if (len(e2audiotrackid_xml)) > 0:
+                    result_entry['e2audiotrackid'] = int(e2audiotrackdescription_xml[0].firstChild.data)
+
+                e2audiotrackpid_xml = audiotrack_entry_xml.getElementsByTagName('e2audiotrackpid')
+                if (len(e2audiotrackpid_xml)) > 0:
+                    result_entry['e2audiotrackpid'] = int(e2audiotrackdescription_xml[0].firstChild.data)
+
+                e2audiotrackactive_xml = audiotrack_entry_xml.getElementsByTagName('e2audiotrackactive')
+                if (len(e2audiotrackactive_xml)) > 0:
+                    if e2audiotrackdescription_xml[0].firstChild.data in 'True':
+                        result_entry['e2audiotrackactive'] = True
+                    else:
+                        result_entry['e2audiotrackactive'] = False
+
+                result.append(result_entry)
+
+        return result
+
     def send_message(self, messagetext, messagetype=1, timeout=10):
         """
         Sends a message to the Enigma2 Device
@@ -286,11 +332,11 @@ class Enigma2():
         try:
             response = self._session.get(url, timeout=self._timeout, auth=HTTPDigestAuth(self._enigma2_device.get_user(),
                                                           self._enigma2_device.get_password()), verify=self._verify)
+            xml = minidom.parseString(response.content)
         except Exception as e:
             self.logger.error("Exception when sending GET request: %s" % str(e))
             return
-        
-        xml = minidom.parseString(response.content)
+
         e2result_xml = xml.getElementsByTagName('e2state')
         e2resulttext_xml = xml.getElementsByTagName('e2statetext')
         if (len(e2resulttext_xml) > 0 and len(e2result_xml) >0):
