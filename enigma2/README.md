@@ -8,6 +8,8 @@ sudo pip3 install requests --upgrade
 
 It is completely based on the openwebif interface for Enigma2 devices
 
+Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
+
 Version 0.1 tested with a VUSolo2 and a VUSolo4k with newest VTI Image
 The version is pre alpha and continously under development.
 
