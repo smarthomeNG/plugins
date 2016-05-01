@@ -293,7 +293,7 @@ Sets a message to the device
 messagetype: Number from 0 to 3, 0= Yes/No, 1= Info, 2=Message, 3=Attention
 timeout: Number of seconds the message should stay on the device, default: 10
 <pre>
-sh.vusolo4k.send_message("**610")
+sh.vusolo4k.send_message("Testnachricht",1,10)
 </pre>       
 
 ## get_answer()
