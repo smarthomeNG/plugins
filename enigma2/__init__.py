@@ -257,9 +257,9 @@ class Enigma2():
                     if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
                         if e2result_xml[0].firstChild.data == 'True':
                             self.logger.debug(e2resulttext_xml[0].firstChild.data)
-                            self.send_message("Test", 0)
-                            time.sleep(10)
-                            self.get_answer()
+
+                if item.conf['enigma2_remote_command_id'] == '116': #box was switched to or from standby, auto update
+                    self._update_loop()
 
     def get_audio_tracks(self):
         """
@@ -386,7 +386,12 @@ class Enigma2():
         else:
             self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
 
-        current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference)
+        if not e2servicereference == 'N/A':
+            current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference)
+        else:
+            current_epgservice = {}
+            current_epgservice['e2eventtitle'] = 'N/A'
+            current_epgservice['e2eventdescription'] = 'N/A'
 
         if item.conf['enigma2_data_type'] == 'current_eventtitle':
             item(current_epgservice['e2eventtitle'])
@@ -456,17 +461,21 @@ class Enigma2():
         if (len(element_xml) > 0):
             # self.logger.debug(element_xml[0].firstChild.data)
             if item.type() == 'bool':
-                if element_xml[0].firstChild.data == 'true':
-                    item(1)
-                else:
-                    item(0)
+                if not element_xml[0].firstChild is None:
+                    if element_xml[0].firstChild.data == 'true' or element_xml[0].firstChild.data == 'True':
+                        item(1)
+                    else:
+                        item(0)
             elif item.type() == 'num':
-                if (self._represents_int(element_xml[0].firstChild.data)):
-                    item(int(element_xml[0].firstChild.data))
-                elif (self._represents_float(element_xml[0].firstChild.data)):
-                    item(float(element_xml[0].firstChild.data))
+                if not element_xml[0].firstChild is None:
+                    if (self._represents_int(element_xml[0].firstChild.data)):
+                        item(int(element_xml[0].firstChild.data))
+                    elif (self._represents_float(element_xml[0].firstChild.data)):
+                        item(float(element_xml[0].firstChild.data))
+                # todo: evtl alten item wert clearen?
             else:
-                item(element_xml[0].firstChild.data)
+                if not element_xml[0].firstChild is None:
+                    item(element_xml[0].firstChild.data)
         else:
             self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
 
