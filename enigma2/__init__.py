@@ -419,10 +419,10 @@ class Enigma2():
         e2event_list_xml = xml.getElementsByTagName('e2event')
         result_entry = {}
         if (len(e2event_list_xml) > 0):
-            e2eventdescription_xml = e2event_list_xml[0].getElementsByTagName('e2eventdescription')
-            result_entry['e2eventdescription'] = e2eventdescription_xml[0].firstChild.data
-            e2eventtitle_xml = e2event_list_xml[0].getElementsByTagName('e2eventtitle')
-            result_entry['e2eventtitle'] = e2eventtitle_xml[0].firstChild.data
+            e2eventdescription = self._get_value_from_xml_node(e2event_list_xml[0], 'e2eventdescription')
+            result_entry['e2eventdescription'] = e2eventdescription
+            e2eventtitle = self._get_value_from_xml_node(e2event_list_xml[0], 'e2eventtitle')
+            result_entry['e2eventtitle'] = e2eventtitle
 
         return result_entry
 
@@ -478,6 +478,14 @@ class Enigma2():
                     item(element_xml[0].firstChild.data)
         else:
             self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
+
+    def _get_value_from_xml_node(self, node, tag_name):
+        data = None
+        xml = node.getElementsByTagName(tag_name)
+        if (len(xml) > 0):
+            if not xml[0].firstChild is None:
+                data = xml[0].firstChild.data
+        return data
 
     def _represents_int(self, string):
         try:
