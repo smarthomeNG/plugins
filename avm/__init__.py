@@ -1066,6 +1066,7 @@ class AVM():
         if (len(tag_content) > 0):
             item(tag_content[0].firstChild.data)
             for child in item.return_children():
+                if 'avm_data_type' in child.conf:
                     if child.conf['avm_data_type'] == 'device_ip':
                         device_ip = xml.getElementsByTagName('NewIPAddress')
                         if (len(device_ip) > 0):
