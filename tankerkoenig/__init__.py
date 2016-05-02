@@ -45,7 +45,6 @@ class TankerKoenig():
         """
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
-        self._sh=smarthome
         self._apikey = apikey
         self._session = requests.Session()
 

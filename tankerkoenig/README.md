@@ -10,6 +10,8 @@ sudo pip3 install requests --upgrade
 
 All mappings to items need to be done via your own logic.
 
+Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/938924-benzinpreis-plugin
+
 # Configuration
 
 ## plugin.conf
