@@ -390,15 +390,24 @@ class Enigma2():
             current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference)
         else:
             current_epgservice = {}
-            current_epgservice['e2eventtitle'] = 'N/A'
-            current_epgservice['e2eventdescription'] = 'N/A'
+            current_epgservice['e2eventtitle'] = '-'
+            current_epgservice['e2eventdescription'] = '-'
+            current_epgservice['e2eventdescriptionextended'] = '-'
 
         if item.conf['enigma2_data_type'] == 'current_eventtitle':
             item(current_epgservice['e2eventtitle'])
         elif item.conf['enigma2_data_type'] == 'current_eventdescription':
             item(current_epgservice['e2eventdescription'])
+        elif item.conf['enigma2_data_type'] == 'current_eventdescriptionextended':
+            item(current_epgservice['e2eventdescriptionextended'])
 
     def get_current_epgservice_for_service_reference(self, service_reference):
+        """
+        Retrieves event information for a given service reference id
+
+        :param referece of the service to retrieve data for:
+        :return: dict of result data
+        """
         url = self._build_url(self._url_suffix_map['epgservice'], 'sRef=%s' % (service_reference))
 
         try:
@@ -421,6 +430,8 @@ class Enigma2():
         if (len(e2event_list_xml) > 0):
             e2eventdescription = self._get_value_from_xml_node(e2event_list_xml[0], 'e2eventdescription')
             result_entry['e2eventdescription'] = e2eventdescription
+            e2eventdescriptionextended = self._get_value_from_xml_node(e2event_list_xml[0], 'e2eventdescriptionextended')
+            result_entry['e2eventdescriptionextended'] = e2eventdescriptionextended
             e2eventtitle = self._get_value_from_xml_node(e2event_list_xml[0], 'e2eventtitle')
             result_entry['e2eventtitle'] = e2eventtitle
 
@@ -475,7 +486,10 @@ class Enigma2():
                 # todo: evtl alten item wert clearen?
             else:
                 if not element_xml[0].firstChild is None:
-                    item(element_xml[0].firstChild.data)
+                    if element_xml[0].firstChild.data == "N/A":
+                        item("-")
+                    else:
+                        item(element_xml[0].firstChild.data)
         else:
             self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
 

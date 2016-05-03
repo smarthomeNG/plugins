@@ -119,13 +119,13 @@ This attribute defines supported functions that can be set for an item. Full set
             device_id = vusolo4k
             visu_acl = ro
         [[[e2videowidth]]]
-            type = num
+            type = str
             enigma2_data_type = e2videowidth
             enigma2_page = about
             device_id = vusolo4k
             visu_acl = ro
         [[[e2videoheight]]]
-            type = num
+            type = str
             enigma2_data_type = e2videoheight
             enigma2_page = about
             device_id = vusolo4k
@@ -151,6 +151,11 @@ This attribute defines supported functions that can be set for an item. Full set
             [[[[eventdescription]]]] # more complex logic behind that data type
                 type = str
                 enigma2_data_type = current_eventdescription
+                device_id = vusolo4k
+                visu_acl = ro
+            [[[[e2eventdescriptionextended]]]] # more complex logic behind that data type
+                type = str
+                enigma2_data_type = current_eventdescriptionextended
                 device_id = vusolo4k
                 visu_acl = ro
             [[[[e2servicename]]]]
