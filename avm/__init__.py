@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 0.962
+#  Version 0.963
 #########################################################################
 #  Free for non-commercial use
 #  
@@ -243,7 +243,11 @@ class MonitoringService():
                     if item.conf['avm_data_type'] in ['is_call_incoming']:
                         item(1)
                     elif item.conf['avm_data_type'] in ['last_caller_incoming']:
-                        item(self._callback(call_from))
+                        name = self._callback(call_from)
+                        if name != '' and not name is None:
+                            item(name)
+                        else:
+                            item(call_from)
                     elif item.conf['avm_data_type'] in ['last_call_date_incoming']:
                         item(time)
                     elif item.conf['avm_data_type'] in ['call_event_incoming']:
@@ -266,7 +270,11 @@ class MonitoringService():
                 if item.conf['avm_data_type'] in ['is_call_outgoing']:
                     item(1)
                 elif item.conf['avm_data_type'] in ['last_caller_outgoing']:
-                    item(self._callback(call_to))
+                    name = self._callback(call_to)
+                    if name != '' and not name is None:
+                        item(name)
+                    else:
+                        item(call_to)
                 elif item.conf['avm_data_type'] in ['last_call_date_outgoing']:
                     item(time)
                 elif item.conf['avm_data_type'] in ['call_event_outgoing']:
@@ -590,7 +598,10 @@ class AVM():
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['1', '2']:
-                                    item(element['Name'])
+                                    if element['Name'] != '' and not element['Name'] is None:
+                                        item(element['Name'])
+                                    else:
+                                        item(element['Caller'])
                                     break
                     elif item.conf['avm_data_type'] == 'last_number_incoming' and item() == '':
                         if not self.get_calllist_from_cache() is None:
@@ -620,7 +631,10 @@ class AVM():
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['3', '4']:
-                                    item(element['Name'])
+                                    if element['Name'] != '' and not element['Name'] is None:
+                                        item(element['Name'])
+                                    else:
+                                        item(element['Called'])
                                     break
                     elif item.conf['avm_data_type'] == 'last_number_outgoing' and item() == '':
                         if not self.get_calllist_from_cache() is None:
@@ -790,11 +804,11 @@ class AVM():
                             if phone_number in phone_numbers[i].firstChild.data:
                                 return contact.getElementsByTagName('realName')[0].firstChild.data.strip()
                 # no contact with phone number found, return number only
-                return phone_number
+            return phone_number
         else: 
             self.logger.error("Phonebook not available on the FritzDevice")
 
-        return
+        return phone_number
 
     def get_calllist(self, filter_incoming=''):
         """
@@ -999,7 +1013,10 @@ class AVM():
         xml = minidom.parseString(response.content)
         tag_content = xml.getElementsByTagName('NewActive')
         if (len(tag_content) > 0):
-            is_active = tag_content[0].firstChild.data
+            if (tag_content[0].firstChild.data == "1"):
+                is_active = True
+            else:
+                is_active = False
         else:
             is_active = False
             self.logger.debug("MAC Address %s not available on the FritzDevice - ID: %s" % (mac_address, self._fritz_device.get_identifier()))
