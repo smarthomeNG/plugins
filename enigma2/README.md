@@ -24,6 +24,7 @@ The version is pre alpha and continously under development.
     host = xxx.xxx.xxx.xxx
     port = 81 # 81 for "vu"-boxes, it may be port 80 for a dreambox
     cycle = 240
+    fast_cycle = 10
     ssl = False    # use https or not
     verify = False # verify ssl certificate
     device_id = vusolo4k
@@ -33,6 +34,7 @@ The version is pre alpha and continously under development.
     host = xxx.xxx.xxx.xxx
     port = 81 # 81 for "vu"-boxes, it may be port 80 for a dreambox
     cycle = 240
+    fast_cycle = 10
     ssl = False    # use https or not
     verify = False # verify ssl certificate
     device_id = vusolo2
