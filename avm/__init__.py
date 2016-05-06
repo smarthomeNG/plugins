@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 0.963
+#  Version 0.964
 #########################################################################
 #  Free for non-commercial use
 #  
@@ -598,7 +598,7 @@ class AVM():
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['1', '2']:
-                                    if element['Name'] != '' and not element['Name'] is None:
+                                    if 'Name' in element:
                                         item(element['Name'])
                                     else:
                                         item(element['Caller'])
@@ -631,7 +631,7 @@ class AVM():
                         if not self.get_calllist_from_cache() is None:
                             for element in self.get_calllist_from_cache():
                                 if element['Type'] in ['3', '4']:
-                                    if element['Name'] != '' and not element['Name'] is None:
+                                    if 'Name' in element:
                                         item(element['Name'])
                                     else:
                                         item(element['Called'])
@@ -1065,6 +1065,9 @@ class AVM():
         headers = self._header.copy()
         
         if item.conf['avm_data_type'] == 'network_device':
+            if not 'mac' in item.conf:
+                self.logger.error("No mac attribute provided in network_device item")
+                return
             action = 'GetSpecificHostEntry'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],{'NewMACAddress':item.conf['mac']})
