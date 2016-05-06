@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 0.1
+#  Version 0.11
 #########################################################################
 #  Free for non-commercial use
 #
@@ -184,8 +184,8 @@ class Enigma2():
         """
         Run method for the plugin
         """
-        self._sh.scheduler.add(__name__+"_"+self._enigma2_device.get_identifier(), self._update_loop, cycle=self._cycle)
-        self._sh.scheduler.add(__name__ + "_" + self._enigma2_device.get_identifier(), self._update_loop_fast, cycle=self._fast_cycle)
+        self._sh.scheduler.add(__name__ + "_" + self._enigma2_device.get_identifier(), self._update_loop, cycle=self._cycle)
+        self._sh.scheduler.add(__name__ + "_" + self._enigma2_device.get_identifier() + "_fast", self._update_loop_fast, cycle=self._fast_cycle)
         self.alive = True
 
     def stop(self):
@@ -408,7 +408,7 @@ class Enigma2():
         element_xml = xml.getElementsByTagName('e2servicereference')
         if (len(element_xml) > 0):
             e2servicereference = element_xml[0].firstChild.data
-            self.logger.debug(e2servicereference)
+            #self.logger.debug(e2servicereference)
         else:
             self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
 
