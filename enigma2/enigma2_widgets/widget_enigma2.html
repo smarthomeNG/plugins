@@ -1,0 +1,134 @@
+/**
+ * Enigma2 ConfigurationInfo Widget
+ * 
+ * @param       unique id for this widget
+ * @param       the gad/item for the receiver model
+ * @param       the gad/item for the webinterface version
+ * @param       the gad/item for the enigma version (firmware)
+ * @param       the gad/item for the image version (firmware)
+ * @param       the gad/item for dhcp (LAN config)
+ * @param       the gad/item for the ip address (LAN config)
+ * @param       the gad/item for the gateway adress (LAN config)
+ * @param       the gad/item for the network mask (LAN config)
+ * @param       the gad/item for the MAC adress (LAN config)
+ *
+ */
+
+{% macro config_info(id, gad_model, gad_webif, gad_enigma, gad_image, gad_dhcp, gad_ip, gad_gw, gad_mask, gad_mac) %}
+	{% import "basic.html" as basic %}
+	{% set uid = uid(page, id) %}
+
+	<div id="{{ uid }}">
+		<table width=90%> 
+			{% if gad_model or gad_webif %} <tr><td align=left style="padding-left: 15px;">Modell / Web-IF:</td> <td align=right> {{ basic.value(id~'model', gad_model) }} / v{{ basic.value(id~'webif', gad_webif) }}</td></tr>{% endif %}
+			{% if gad_dhcp or gad_ip or gad_gw or gad_mask %}<tr><td align=left style="padding-left: 15px;"><strong>LAN Config</strong></td> <td></td></tr>{% endif %}
+			{% if gad_dhcp or gad_ip %}<tr><td align=left style="padding-left: 30px;">DHCP / IP Addr.:</td> <td align=right> {{ basic.value(id~'dhcp', gad_dhcp) }} / {{ basic.value(id~'ip', gad_ip) }}</td></tr>{% endif %}
+			{% if gad_gw or gad_mask %}<tr><td align=left style="padding-left: 30px;">GW / Mask:</td> <td align=right> {{ basic.value(id~'gw', gad_gw) }} / {{ basic.value(id~'mask', gad_mask) }}</td></tr>{% endif %}
+			{% if gad_mac %}   <tr><td align=left style="padding-left: 30px;">MAC:</td> <td align=right> {{ basic.value(id~'mac', gad_mac) }}</td></tr>{% endif %}
+			{% if gad_enigma or gad_image %}<tr><td align=left style="padding-left: 15px;"><strong>Firmware</strong></td> <td></td></tr>{% endif %}
+			{% if gad_enigma %}<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'enigma', gad_enigma) }}</td></tr>{% endif %}
+			{% if gad_image %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'image', gad_image) }}</td></tr>{% endif %}
+		</table>
+
+	</div>
+
+{% endmacro %}
+
+
+/**
+ * Enigma2 ConfigurationInfo Widget (for standardconfiguration)
+ *
+ * This widget can be used, if the items for the enigma2 box are defined  
+ * following the naming conventions as defined in the README of the plugin
+ * 
+ * @param       unique id for this widget 
+ * @param       the gad/item for the receiver (parent item of the enigma2 item definition tree)
+ *
+ */
+
+{% macro config_info2(id, gad_box) %}
+	{% import "basic.html" as basic %}
+	{% set uid = uid(page, id) %}
+
+	<div id="{{ uid }}">
+		<table width=90%> 
+			<tr><td align=left style="padding-left: 15px;">Modell / Web-IF:</td> <td align=right> {{ basic.value(id~'2model', gad_box~'.e2model') }} / v{{ basic.value(id~'2webif', gad_box~'.e2webifversion') }}</td></tr>
+			<tr><td align=left style="padding-left: 15px;"><strong>LAN Config</strong></td></tr>
+			<tr><td align=left style="padding-left: 30px;">DHCP / IP Addr.:</td> <td align=right> {{ basic.value(id~'2dhcp', gad_box~'.e2landhcp') }} / {{ basic.value(id~'2ip', gad_box~'.e2lanip') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">GW / Mask:</td> <td align=right> {{ basic.value(id~'2gw', gad_box~'.e2langw') }} / {{ basic.value(id~'2mask', gad_box~'.e2lanmask') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">MAC:</td> <td align=right> {{ basic.value(id~'2mac', gad_box~'.e2lanmac') }}</td></tr>
+			<tr><td align=left style="padding-left: 15px;"><strong>Firmware</strong></td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;">{{ basic.value(id~'2enigma', gad_box~'.e2enigmaversion') }}</td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2image', gad_box~'.e2imageversion') }}</td></tr>
+		</table>
+	</div>
+
+{% endmacro %}
+
+
+/**
+ * Enigma2 StatusInfo Widget
+ * 
+ * @param       unique id for this widget
+ * @param       the gad/item for standby status
+ * @param       the gad/item for servicename
+ * @param       the gad/item for event title
+ * @param       the gad/item for event description
+ * @param       the gad/item for video width
+ * @param       the gad/item for video height
+ * @param       the gad/item for audio pid
+ *
+ */
+
+{% macro status_info(id, gad_standby, gad_servicename, gad_eventtitle, gad_eventdesc, gad_vwidth, gad_vheight, gad_apid) %}
+	{% import "basic.html" as basic %}
+	{% set uid = uid(page, id) %}
+
+	<div id="{{ uid }}">
+		<table width=90%> 
+			{% if gad_servicename %} <tr><td align=left style="padding-left: 15px;">Sender:</td> <td align=right> {{ basic.value(id~'servicename', gad_servicename) }} </td></tr>{% endif %}
+			{% if gad_eventtitle or gad_eventdesc %} <tr><td align=left style="padding-left: 15px;"><strong>Sendung</strong></td></tr>{% endif %}
+			{% if gad_eventtitle %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'eventtitle', gad_eventtitle) }} </td></tr>{% endif %}
+			{% if gad_eventdesc %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'eventdesc', gad_eventdesc) }} </td></tr>{% endif %}
+			{% if gad_vwidth or gad_vheight or gad_apid %}<tr><td><br></td></tr>{% endif %}
+			{% if gad_vwidth or gad_vheight %}<tr><td align=left style="padding-left: 30px;">Auflösung:</td> <td align=right> {{ basic.value(id~'vwidth', gad_vwidth) }} x {{ basic.value(id~'vheight', gad_vheight) }}</td></tr>{% endif %}
+			{% if gad_apid %} <tr><td align=left style="padding-left: 30px;">Audio-Pid:</td> <td align=right> {{ basic.value(id~'apid', gad_apid) }} </td></tr>{% endif %}
+			{% if gad_standby %} <tr><td align=left style="padding-left: 30px;">Standby:</td> <td align=right> {{ basic.value(id~'standby', gad_standby) }} </td></tr>{% endif %}
+		</table>
+
+	</div>
+
+{% endmacro %}
+
+
+/**
+ * Enigma2 StatusInfo Widget (for standardconfiguration)
+ *
+ * This widget can be used, if the items for the enigma2 box are defined  
+ * following the naming conventions as defined in the README of the plugin
+ * 
+ * @param       unique id for this widget 
+ * @param       the gad/item for the receiver (parent item of the enigma2 item definition tree)
+ *
+ */
+
+{% macro status_info2(id, gad_box) %}
+	{% import "basic.html" as basic %}
+	{% set uid = uid(page, id) %}
+
+	<div id="{{ uid }}">
+		<table width=90%> 
+			<tr><td align=left style="padding-left: 15px;">Sender:</td> <td align=right> {{ basic.value(id~'2servicename', gad_box~'.current.e2servicename') }} </td></tr>
+			<tr><td align=left style="padding-left: 15px;"><strong>Sendung</strong></td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventtitle', gad_box~'.current.eventtitle') }} </td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventdesc', gad_box~'.current.eventdescription') }} </td></tr>
+			<tr><td><br></td></tr>
+			<tr><td align=left style="padding-left: 30px;">Auflösung:</td> <td align=right> {{ basic.value(id~'2vwidth', gad_box~'.e2videowidth') }} x {{ basic.value(id~'2vheight', gad_box~'.e2videoheight') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">Audio-Pid:</td> <td align=right> {{ basic.value(id~'2apid', gad_box~'.e2apid') }} </td></tr>
+			<tr><td align=left style="padding-left: 30px;">Standby:</td> <td align=right> {{ basic.value(id~'2standby', gad_box~'.e2instandby') }} </td></tr>
+		</table>
+
+	</div>
+
+{% endmacro %}
+
