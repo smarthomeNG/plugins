@@ -173,7 +173,7 @@ This attribute defines supported functions that can be set for an item. Full set
                 enigma2_data_type = current_eventdescription
                 device_id = vusolo4k
                 visu_acl = ro
-            [[[[e2eventdescriptionextended]]]] # more complex logic behind that data type
+            [[[[eventdescriptionextended]]]] # more complex logic behind that data type
                 type = str
                 enigma2_data_type = current_eventdescriptionextended
                 device_id = vusolo4k
@@ -183,7 +183,7 @@ This attribute defines supported functions that can be set for an item. Full set
                 enigma2_data_type = current_volume
                 device_id = vusolo4k
                 visu_acl = rw
-            [[[[e2servicename]]]]
+            [[[[servicename]]]]
                 type = str
                 enigma2_data_type = e2servicename
                 enigma2_page = subservices
