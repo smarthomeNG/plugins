@@ -124,12 +124,14 @@ This attribute defines supported functions that can be set for an item. Full set
             avm_data_type = monitor_trigger
             avm_incoming_allowed = ...
             avm_target_number = ...
+            enforce_updates = yes
         [[[trigger2]]]
             type = bool
             avm_identifier = fritzbox_1
             avm_data_type = monitor_trigger
             avm_incoming_allowed = ...
             avm_target_number = ...
+            enforce_updates = yes
 	    [[[incoming]]]
             [[[[is_call_incoming]]]]
                 type = bool
