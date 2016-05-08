@@ -10,7 +10,7 @@ It is completely based on the openwebif interface for Enigma2 devices
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
-Version 1.1.3 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
+Version 1.1.4 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
 It is currently also tested with a Dreambox 8000 and Dreambox 7020hd.
 The version is pre alpha and continously under development.
 
@@ -66,6 +66,24 @@ This attribute defines supported functions that can be set for an item. Full set
 <pre>
 [enigma2]
     [[vusolo4k]]
+        [[[disc_model]]]
+            type = str
+            enigma2_data_type = e2model
+            enigma2_page = deviceinfo
+            device_id = vusolo4k
+            visu_acl = ro
+        [[[disc_capacity]]]
+            type = num
+            enigma2_data_type = e2capacity
+            enigma2_page = deviceinfo
+            device_id = vusolo4k
+            visu_acl = ro
+        [[[disc_free_space]]]
+            type = num
+            enigma2_data_type = e2free
+            enigma2_page = deviceinfo
+            device_id = vusolo4k
+            visu_acl = ro
         [[[e2ip]]]
             type = str
             enigma2_data_type = e2ip
@@ -78,69 +96,39 @@ This attribute defines supported functions that can be set for an item. Full set
             enigma2_page = deviceinfo
             device_id = vusolo4k
             visu_acl = ro
-        [[[e2lanmac]]]
+        [[[e2gateway]]]
             type = str
-            enigma2_data_type = e2lanmac
-            enigma2_page = about
-            device_id = vusolo4k
-            visu_acl = ro
-        [[[e2landhcp]]]
-            type = str
-            enigma2_data_type = e2landhcp
+            enigma2_data_type = e2gateway
             enigma2_page = deviceinfo
             device_id = vusolo4k
             visu_acl = ro
-        [[[e2langw]]]
+        [[[e2netmask]]]
             type = str
-            enigma2_data_type = e2langw
-            enigma2_page = about
-            device_id = vusolo4k
-            visu_acl = ro
-        [[[e2lanmask]]]
-            type = str
-            enigma2_data_type = e2lanmask
-            enigma2_page = about
-            device_id = vusolo4k
-            visu_acl = ro
-        [[[e2lanip]]]
-            type = str
-            enigma2_data_type = e2lanip
-            enigma2_page = about
+            enigma2_data_type = e2netmask
+            enigma2_page = deviceinfo
             device_id = vusolo4k
             visu_acl = ro
         [[[e2enigmaversion]]]
             type = str
             enigma2_data_type = e2enigmaversion
-            enigma2_page = about
+            enigma2_page = deviceinfo
             device_id = vusolo4k
             visu_acl = ro
         [[[e2imageversion]]]
             type = str
             enigma2_data_type = e2imageversion
-            enigma2_page = about
+            enigma2_page = deviceinfo
             device_id = vusolo4k
             visu_acl = ro
         [[[e2webifversion]]]
             type = str
             enigma2_data_type = e2webifversion
-            enigma2_page = about
+            enigma2_page = deviceinfo
             device_id = vusolo4k
             visu_acl = ro
         [[[e2model]]]
             type = str
             enigma2_data_type = e2model
-            enigma2_page = about
-            device_id = vusolo4k
-            visu_acl = ro
-        [[[e2videowidth]]]
-            type = str
-            enigma2_data_type = e2videowidth
-            enigma2_page = about
-            device_id = vusolo4k
-            visu_acl = ro
-        [[[e2videoheight]]]
-            type = str
-            enigma2_data_type = e2videoheight
             enigma2_page = about
             device_id = vusolo4k
             visu_acl = ro
@@ -163,6 +151,18 @@ This attribute defines supported functions that can be set for an item. Full set
             device_id = vusolo4k
             visu_acl = ro
         [[[current]]]
+            [[[[e2videowidth]]]]
+                type = str
+                enigma2_data_type = e2videowidth
+                enigma2_page = about
+                device_id = vusolo4k
+                visu_acl = ro
+            [[[[e2videoheight]]]]
+                type = str
+                enigma2_data_type = e2videoheight
+                enigma2_page = about
+                device_id = vusolo4k
+                visu_acl = ro
             [[[[eventtitle]]]] # more complex logic behind that data type
                 type = str
                 enigma2_data_type = current_eventtitle

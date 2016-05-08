@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 1.1.3
+#  Version 1.1.4
 #########################################################################
 #  Free for non-commercial use
 #
@@ -580,6 +580,9 @@ class Enigma2():
                         item(int(element_xml[0].firstChild.data))
                     elif (self._represents_float(element_xml[0].firstChild.data)):
                         item(float(element_xml[0].firstChild.data))
+                    elif item.conf['enigma2_data_type'] in ['e2capacity', 'e2free']:
+                        self.logger.debug(element_xml[0].firstChild.data)
+                        item(int(''.join(filter(lambda x: x.isdigit(), element_xml[0].firstChild.data))))  # remove "GB" String and convert to int
                 # todo: evtl alten item wert clearen?
             else:
                 if not element_xml[0].firstChild is None:

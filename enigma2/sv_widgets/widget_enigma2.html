@@ -54,9 +54,9 @@
 		<table width=90%> 
 			<tr><td align=left style="padding-left: 15px;">Modell / Web-IF:</td> <td align=right> {{ basic.value(id~'2model', gad_box~'.e2model') }} / v{{ basic.value(id~'2webif', gad_box~'.e2webifversion') }}</td></tr>
 			<tr><td align=left style="padding-left: 15px;"><strong>LAN Config</strong></td></tr>
-			<tr><td align=left style="padding-left: 30px;">DHCP / IP Addr.:</td> <td align=right> {{ basic.value(id~'2dhcp', gad_box~'.e2landhcp') }} / {{ basic.value(id~'2ip', gad_box~'.e2lanip') }}</td></tr>
-			<tr><td align=left style="padding-left: 30px;">GW / Mask:</td> <td align=right> {{ basic.value(id~'2gw', gad_box~'.e2langw') }} / {{ basic.value(id~'2mask', gad_box~'.e2lanmask') }}</td></tr>
-			<tr><td align=left style="padding-left: 30px;">MAC:</td> <td align=right> {{ basic.value(id~'2mac', gad_box~'.e2lanmac') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">DHCP / IP Addr.:</td> <td align=right> {{ basic.value(id~'2dhcp', gad_box~'.e2dhcp') }} / {{ basic.value(id~'2ip', gad_box~'.e2lanip') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">GW / Mask:</td> <td align=right> {{ basic.value(id~'2gw', gad_box~'.e2gateway') }} / {{ basic.value(id~'2mask', gad_box~'.e2lanmask') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">MAC:</td> <td align=right> {{ basic.value(id~'2mac', gad_box~'.e2mac') }}</td></tr>
 			<tr><td align=left style="padding-left: 15px;"><strong>Firmware</strong></td></tr>
 			<tr><td colspan="2" align=left style="padding-left: 30px;">{{ basic.value(id~'2enigma', gad_box~'.e2enigmaversion') }}</td></tr>
 			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2image', gad_box~'.e2imageversion') }}</td></tr>
@@ -123,7 +123,7 @@
 			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventtitle', gad_box~'.current.eventtitle') }} </td></tr>
 			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventdesc', gad_box~'.current.eventdescription') }} </td></tr>
 			<tr><td><br></td></tr>
-			<tr><td align=left style="padding-left: 30px;">Auflösung:</td> <td align=right> {{ basic.value(id~'2vwidth', gad_box~'.e2videowidth') }} x {{ basic.value(id~'2vheight', gad_box~'.e2videoheight') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">Auflösung:</td> <td align=right> {{ basic.value(id~'2vwidth', gad_box~'.current.e2videowidth') }} x {{ basic.value(id~'2vheight', gad_box~'.current.e2videoheight') }}</td></tr>
 			<tr><td align=left style="padding-left: 30px;">Audio-Pid:</td> <td align=right> {{ basic.value(id~'2apid', gad_box~'.e2apid') }} </td></tr>
 			<tr><td align=left style="padding-left: 30px;">Standby:</td> <td align=right> {{ basic.value(id~'2standby', gad_box~'.e2instandby') }} </td></tr>
 		</table>
