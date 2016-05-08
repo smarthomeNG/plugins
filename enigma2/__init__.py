@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 0.12
+#  Version 1.1.1
 #########################################################################
 #  Free for non-commercial use
 #
@@ -137,7 +137,8 @@ class Enigma2():
                             ('getaudiotracks', '/web/getaudiotracks'),
                             ('epgservice', '/web/epgservice')])
 
-    _keys_fast_refresh = ['current_eventtitle','current_eventdescription','current_eventdescriptionextended','e2servicename','e2videoheight','e2videowidth']
+    _keys_fast_refresh = ['current_eventtitle','current_eventdescription','current_eventdescriptionextended',
+                          'e2servicename','e2videoheight','e2videowidth','e2apid','e2vpid', 'e2instandby']
     _key_event_information = ['current_eventtitle','current_eventdescription','current_eventdescriptionextended']
 
     def __init__(self, smarthome, username='', password='', host='fritz.box', port='49443', ssl='True', verify='False', cycle=300, fast_cycle=10, device_id='enigma2'):
