@@ -251,7 +251,7 @@ class Enigma2():
             if value == self._enigma2_device.get_identifier():
                 # normal items
                 if 'enigma2_page' in item.conf:
-                    if item.conf['enigma2_page'] in ['about', 'powerstate', 'subservices']:
+                    if item.conf['enigma2_page'] in ['about', 'powerstate', 'subservices', 'deviceinfo']:
                         if item.conf['enigma2_data_type'] in self._keys_fast_refresh:
                             self._enigma2_device._items_fast.append(item)
                         else:

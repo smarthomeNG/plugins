@@ -66,6 +66,18 @@ This attribute defines supported functions that can be set for an item. Full set
 <pre>
 [enigma2]
     [[vusolo4k]]
+        [[[e2ip]]]
+            type = str
+            enigma2_data_type = e2ip
+            enigma2_page = deviceinfo
+            device_id = vusolo4k
+            visu_acl = ro
+        [[[e2mac]]]
+            type = str
+            enigma2_data_type = e2mac
+            enigma2_page = deviceinfo
+            device_id = vusolo4k
+            visu_acl = ro
         [[[e2lanmac]]]
             type = str
             enigma2_data_type = e2lanmac
@@ -75,7 +87,7 @@ This attribute defines supported functions that can be set for an item. Full set
         [[[e2landhcp]]]
             type = str
             enigma2_data_type = e2landhcp
-            enigma2_page = about
+            enigma2_page = deviceinfo
             device_id = vusolo4k
             visu_acl = ro
         [[[e2langw]]]
