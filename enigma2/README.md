@@ -10,7 +10,7 @@ It is completely based on the openwebif interface for Enigma2 devices
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
-Version 1.1.2 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
+Version 1.1.3 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
 It is currently also tested with a Dreambox 8000 and Dreambox 7020hd.
 The version is pre alpha and continously under development.
 
@@ -178,6 +178,11 @@ This attribute defines supported functions that can be set for an item. Full set
                 enigma2_data_type = current_eventdescriptionextended
                 device_id = vusolo4k
                 visu_acl = ro
+            [[[[currentvolume]]]] # more complex logic behind that data type
+                type = num
+                enigma2_data_type = current_volume
+                device_id = vusolo4k
+                visu_acl = rw
             [[[[e2servicename]]]]
                 type = str
                 enigma2_data_type = e2servicename
