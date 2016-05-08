@@ -10,7 +10,7 @@ It is completely based on the openwebif interface for Enigma2 devices
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
-Version 1.1.1 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
+Version 1.1.2 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
 It is currently also tested with a Dreambox 8000 and Dreambox 7020hd.
 The version is pre alpha and continously under development.
 
@@ -184,6 +184,19 @@ This attribute defines supported functions that can be set for an item. Full set
                 enigma2_page = subservices
                 device_id = vusolo4k
                 visu_acl = ro
+        [[[services]]]
+            [[[[DasErste_HD]]]]
+                type = bool
+                sref = 1:0:19:283D:3FB:1:C00000:0:0:0:  # could be different on other boxes, open /web/getservices in browser and follow URL with sref=<serviceid>
+                device_id = vusolo4k
+                enforce_updates = true
+                visu_acl = rw
+            [[[[ZDF_HD]]]]
+                type = bool
+                sref = 1:0:19:2B66:3F3:1:C00000:0:0:0:  # could be different on other boxes, open /web/getservices in browser and follow URL with sref=<serviceid>
+                device_id = vusolo4k
+                enforce_updates = true
+                visu_acl = rw
         [[[remote]]] # see http://dream.reichholf.net/wiki/Enigma2:WebInterface#RemoteControl
             [[[[PAUSE]]]]
                 type = bool

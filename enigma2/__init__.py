@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 1.1.1
+#  Version 1.1.2
 #########################################################################
 #  Free for non-commercial use
 #
@@ -135,7 +135,8 @@ class Enigma2():
                             ('message', '/web/message'),
                             ('messageanswer','/web/messageanswer'),
                             ('getaudiotracks', '/web/getaudiotracks'),
-                            ('epgservice', '/web/epgservice')])
+                            ('epgservice', '/web/epgservice'),
+                            ('zap', '/web/zap')])
 
     _keys_fast_refresh = ['current_eventtitle','current_eventdescription','current_eventdescriptionextended',
                           'e2servicename','e2videoheight','e2videowidth','e2apid','e2vpid', 'e2instandby']
@@ -241,7 +242,8 @@ class Enigma2():
 
     def parse_item(self, item):
         """
-        Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to the Enigma2 device id and adds it to an internal array
+        Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to
+        the Enigma2 device id and adds it to an internal array
 
         :param item: The item to process.
         """
@@ -261,38 +263,46 @@ class Enigma2():
                         self._enigma2_device._items_fast.append(item)
                     else:
                         self._enigma2_device._items.append(item)
-                elif 'enigma2_remote_command_id' in item.conf:                                    # items for TV remote
+                elif 'enigma2_remote_command_id' in item.conf or 'sref' in item.conf:    # items for TV remote and direct service access
                     return self.execute_item
 
     def execute_item(self, item, caller=None, source=None, dest=None):
         """
-        | Write items values - in case they were changed from somewhere else than the Enigma2 plugin (=the Enigma2Device) to the Enigma2Device.
+        | Write items values - in case they were changed from somewhere else than the Enigma2 plugin
+        | (=the Enigma2Device) to the Enigma2Device.
 
         :param item: item to be updated towards the Enigma2Device
         """
         if caller != 'Enigma2':
             # enigma2 remote control
             if 'enigma2_remote_command_id' in item.conf:
-                
-                url = self._build_url(self._url_suffix_map['remotecontrol'],'command=%s' % item.conf['enigma2_remote_command_id'])
-                try:
-                    response = self._session.get(url, timeout=self._timeout, auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                                  self._enigma2_device.get_password()), verify=self._verify)
-                except Exception as e:
-                    self.logger.error("Exception when sending GET request: %s" % str(e))
-                    return
-                
-                xml = minidom.parseString(response.content)
-                e2result_xml = xml.getElementsByTagName('e2result')
-                e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
-                if (len(e2resulttext_xml) > 0 and len(e2result_xml) >0):
-                    if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
-                        if e2result_xml[0].firstChild.data == 'True':
-                            self.logger.debug(e2resulttext_xml[0].firstChild.data)
-
+                self.remote_control_command(item.conf['enigma2_remote_command_id'])
                 if item.conf['enigma2_remote_command_id'] in ['105','106','116']: #box was switched to or from standby, auto update
                     self._update_event_items()
                     self._update_loop_fast()
+            elif 'sref' in item.conf:
+                self.zap(item.conf['sref'])
+                self._update_event_items()
+                self._update_loop_fast()
+
+    def remote_control_command(self, command_id):
+        url = self._build_url(self._url_suffix_map['remotecontrol'],
+                              'command=%s' % command_id)
+        try:
+            response = self._session.get(url, timeout=self._timeout,
+                                         auth=HTTPDigestAuth(self._enigma2_device.get_user(),
+                                                             self._enigma2_device.get_password()), verify=self._verify)
+        except Exception as e:
+            self.logger.error("Exception when sending GET request: %s" % str(e))
+            return
+
+        xml = minidom.parseString(response.content)
+        e2result_xml = xml.getElementsByTagName('e2result')
+        e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
+        if (len(e2resulttext_xml) > 0 and len(e2result_xml) > 0):
+            if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
+                if e2result_xml[0].firstChild.data == 'True':
+                    self.logger.debug(e2resulttext_xml[0].firstChild.data)
 
     def get_audio_tracks(self):
         """
@@ -336,6 +346,31 @@ class Enigma2():
                 result.append(result_entry)
 
         return result
+
+    def zap(self, e2servicereference, title=''):
+        """
+        Zaps to another service by a given e2servicereference
+
+        :param e2servicereference: reference to the service
+        :param title: optional title of "zap" action
+        """
+        url = self._build_url(self._url_suffix_map['zap'],
+                              'sRef=%s&title=%s' % (e2servicereference, title))
+        try:
+            response = self._session.get(url, timeout=self._timeout,
+                                         auth=HTTPDigestAuth(self._enigma2_device.get_user(),
+                                                             self._enigma2_device.get_password()), verify=self._verify)
+        except Exception as e:
+            self.logger.error("Exception when sending GET request: %s" % str(e))
+            return
+
+        xml = minidom.parseString(response.content)
+        e2state_xml = xml.getElementsByTagName('e2state')
+        e2statetext_xml = xml.getElementsByTagName('e2statetext')
+        if (len(e2statetext_xml) > 0 and len(e2state_xml) > 0):
+            if not e2statetext_xml[0].firstChild is None and not e2state_xml[0].firstChild is None:
+                if e2state_xml[0].firstChild.data == 'True':
+                    self.logger.debug(e2statetext_xml[0].firstChild.data)
 
     def send_message(self, messagetext, messagetype=1, timeout=10):
         """
