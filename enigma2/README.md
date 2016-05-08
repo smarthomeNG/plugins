@@ -68,7 +68,7 @@ This attribute defines supported functions that can be set for an item. Full set
     [[vusolo4k]]
         [[[disc_model]]]
             type = str
-            enigma2_data_type = e2model
+            enigma2_data_type = e2hdd/e2model
             enigma2_page = deviceinfo
             device_id = vusolo4k
             visu_acl = ro
