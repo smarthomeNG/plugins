@@ -3,22 +3,22 @@
 #########################################################################
 # Copyright 2016-     Christian Strassburg            c.strassburg@gmx.de
 #########################################################################
-#  This file is part of SmartHome.py.
+#  This file is part of SmartHomeNG
 #  https://github.com/smarthomeNG/smarthome
 #  http://knx-user-forum.de/
 
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 #  Usage:
 #
@@ -42,10 +42,11 @@
 
 import logging
 import socket
+from lib.utils import Utils
 
-item_tag = ['wol_mac']
+ITEM_TAG = ['wol_mac']
 
-class WakeOnLan():
+class WakeOnLan(object):
     def __init__(self, sh):
         self._sh = sh
         self.logger = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ class WakeOnLan():
         self.alive = False
 
     def parse_item(self, item):
-        if item_tag[0] in item.conf:
+        if ITEM_TAG[0] in item.conf:
             return self.update_item
 
     def parse_logic(self, logic):
@@ -68,25 +69,28 @@ class WakeOnLan():
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if item():
-            if item_tag[0] in item.conf:
-                self.wake_on_lan(item.conf[item_tag[0]])
+            if ITEM_TAG[0] in item.conf:
+                self.wake_on_lan(item.conf[ITEM_TAG[0]])
 
     def wake_on_lan(self, mac_adr):
-        data = ''
         self.logger.debug("WakeOnLan: send magic paket to {}".format(mac_adr))
-        # prüfung auf länge und format
-        if len(mac_adr) == 12:
-            pass
-        elif (len(mac_adr) == 12 + 5):
-            sep = mac_adr[2]
-            mac_adr = mac_adr.replace(sep, '')
-        else:
+        # check length and format 
+        if Utils.isMAC(mac_adr) != True:
             self.logger.warning("WakeOnLan: invalid mac address {}!".format(mac_adr))
             return
-        # Magic packet erstellen
+        if len(mac_adr) == 12 + 5:
+            sep = mac_adr[2]
+            mac_adr = mac_adr.replace(sep, '')
+        # create magic packet 
         data = ''.join(['FF' * 6, mac_adr * 20])
         # Broadcast
         self.logger.debug("WakeOnLan: send magic paket " + data)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.sendto(bytearray.fromhex(data), ('<broadcast>', 7))
+
+if __name__ == '__main__':
+    myplugin = WakeOnLan('smarthome-dummy')
+    logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+    myplugin.wake_on_lan('01:02:03:04:05:06')
+
