@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 1.1.5
+#  Version 1.1.6
 #########################################################################
 #  Free for non-commercial use
 #
@@ -283,13 +283,13 @@ class Enigma2():
                 self.remote_control_command(item.conf['enigma2_remote_command_id'])
                 if item.conf['enigma2_remote_command_id'] in ['105','106','116']: #box was switched to or from standby, auto update
                     self._update_event_items(cache = False)
-                    self._update_loop_fast(cache = False)
-                elif item.conf['enigma2_remote_command_id'] in ['114','115']: #volume changed, auto update
-                    self._update_loop_fast(cache = False)
+                    #self._update_loop_fast(cache = False)
+                #elif item.conf['enigma2_remote_command_id'] in ['114','115']: #volume changed, auto update
+                    #self._update_loop_fast(cache = False)
             elif 'sref' in item.conf:
                 self.zap(item.conf['sref'])
                 self._update_event_items(cache = False)
-                self._update_loop_fast(cache = False)
+                #self._update_loop_fast(cache = False)
 
     def remote_control_command(self, command_id):
         url = self._build_url(self._url_suffix_map['remotecontrol'],
@@ -569,7 +569,10 @@ class Enigma2():
         if "/" in item.conf['enigma2_data_type']:
             strings = item.conf['enigma2_data_type'].split('/')
             parent_element_xml = xml.getElementsByTagName(strings[0])
-            element_xml = parent_element_xml[0].getElementsByTagName(strings[1])
+            if len(parent_element_xml) > 0:
+                element_xml = parent_element_xml[0].getElementsByTagName(strings[1])
+            else:
+                self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
         else:
             element_xml = xml.getElementsByTagName(item.conf['enigma2_data_type'])
 
@@ -590,7 +593,8 @@ class Enigma2():
                     elif item.conf['enigma2_data_type'] in ['e2capacity', 'e2free']:
                         #self.logger.debug(element_xml[0].firstChild.data)
                         item(int(''.join(filter(lambda x: x.isdigit(), element_xml[0].firstChild.data))))  # remove "GB" String and convert to int
-                # todo: evtl alten item wert clearen?
+                else:
+                    item(0) # 0 if no value is provided
             else:
                 if not element_xml[0].firstChild is None:
                     if element_xml[0].firstChild.data == "N/A":
