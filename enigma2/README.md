@@ -10,7 +10,7 @@ It is completely based on the openwebif interface for Enigma2 devices
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
-Version 1.1.4 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
+Version 1.1.5 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
 It is currently also tested with a Dreambox 8000 and Dreambox 7020hd.
 The version is pre alpha and continously under development.
 
