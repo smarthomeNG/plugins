@@ -592,7 +592,7 @@ class Enigma2():
                         item(float(element_xml[0].firstChild.data))
                     elif item.conf['enigma2_data_type'] in ['e2capacity', 'e2free']:
                         #self.logger.debug(element_xml[0].firstChild.data)
-                        item(int(''.join(filter(lambda x: x.isdigit(), element_xml[0].firstChild.data))))  # remove "GB" String and convert to int
+                        item(int(''.join(filter(lambda s: s.isdigit() or (s.startswith('-') and s[1:].isdigit()), element_xml[0].firstChild.data))))  # remove "GB" String and convert to int
                 else:
                     item(0) # 0 if no value is provided
             else:
