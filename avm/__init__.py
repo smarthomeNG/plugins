@@ -228,7 +228,9 @@ class MonitoringService():
             for trigger_item in self._trigger_items:
                 trigger_item(0)
                 if trigger_item.conf['avm_data_type'] == 'monitor_trigger':
-                    if trigger_item.conf['avm_incoming_allowed'] == call_from and trigger_item.conf['avm_target_number'] == call_to:
+                    if not 'avm_incoming_allowed' in trigger_item.conf or not 'avm_target_number' in trigger_item.conf:
+                        self.logger.error("both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes in a trigger item.")
+                    elif trigger_item.conf['avm_incoming_allowed'] == call_from and trigger_item.conf['avm_target_number'] == call_to:
                         trigger_item(1)
 
             if self._call_monitor_incoming_filter in call_to:
