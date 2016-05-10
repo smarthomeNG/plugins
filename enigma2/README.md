@@ -203,6 +203,36 @@ This attribute defines supported functions that can be set for an item. Full set
                 enforce_updates = true
                 visu_acl = rw
         [[[remote]]] # see http://dream.reichholf.net/wiki/Enigma2:WebInterface#RemoteControl
+            [[[[TEXT]]]]
+				type = bool
+				visu_acl = rw
+				enigma2_remote_command_id = 388
+				device_id = db_az
+				enforce_updates = true
+			[[[[RED]]]]
+				type = bool
+				visu_acl = rw
+				enigma2_remote_command_id = 398
+				device_id = db_az
+				enforce_updates = true
+			[[[[GREEN]]]]
+				type = bool
+				visu_acl = rw
+				enigma2_remote_command_id = 399
+				device_id = db_az
+				enforce_updates = true
+			[[[[YELLOW]]]]
+				type = bool
+				visu_acl = rw
+				enigma2_remote_command_id = 400
+				device_id = db_az
+				enforce_updates = true
+			[[[[BLUE]]]]
+				type = bool
+				visu_acl = rw
+				enigma2_remote_command_id = 401
+				device_id = db_az
+				enforce_updates = true
             [[[[PAUSE]]]]
                 type = bool
                 visu_acl = rw
