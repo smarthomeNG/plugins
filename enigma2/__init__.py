@@ -573,6 +573,7 @@ class Enigma2():
                 element_xml = parent_element_xml[0].getElementsByTagName(strings[1])
             else:
                 self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
+                return
         else:
             element_xml = xml.getElementsByTagName(item.conf['enigma2_data_type'])
 
