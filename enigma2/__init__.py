@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 1.1.7
+#  Version 1.1.8
 #########################################################################
 #  Free for non-commercial use
 #
@@ -142,8 +142,8 @@ class Enigma2():
 
     _keys_fast_refresh = ['current_eventtitle','current_eventdescription','current_eventdescriptionextended',
                           'current_volume', 'e2servicename','e2videoheight','e2videowidth','e2apid','e2vpid',
-                          'e2instandby']
-    _key_event_information = ['current_eventtitle','current_eventdescription','current_eventdescriptionextended']
+                          'e2instandby', 'e2servicereference']
+    _key_event_information = ['current_eventtitle','current_eventdescription','current_eventdescriptionextended','e2servicereference', 'e2servicename']
 
     def __init__(self, smarthome, username='', password='', host='dreambox', port='80', ssl='True', verify='False', cycle=300, fast_cycle=10, device_id='enigma2'):
         """
@@ -235,10 +235,10 @@ class Enigma2():
         for item in self._enigma2_device.get_fast_items():
             if not self.alive:
                 return
-            if 'enigma2_page' in item.conf:
-                self._update(item)
-            elif item.conf['enigma2_data_type'] in self._key_event_information:
+            if item.conf['enigma2_data_type'] in self._key_event_information:
                 self._update_event_items(cache)
+            elif 'enigma2_page' in item.conf:
+                self._update(item)
             elif item.conf['enigma2_data_type'] == 'current_volume':
                 self._update_volume(item, cache)
 
@@ -268,7 +268,7 @@ class Enigma2():
                         self._enigma2_device._items_fast.append(item)
                     else:
                         self._enigma2_device._items.append(item)
-                    if item.conf['enigma2_data_type'] == 'current_volume':
+                    if item.conf['enigma2_data_type'] in ['current_volume', 'e2servicereference']:
                         return self.execute_item
                 elif 'enigma2_remote_command_id' in item.conf or 'sref' in item.conf:
                     return self.execute_item
@@ -296,6 +296,8 @@ class Enigma2():
             elif 'enigma2_data_type' in item.conf:
                 if item.conf['enigma2_data_type'] == 'current_volume':
                     self.set_volume(item())
+                elif item.conf['enigma2_data_type'] == 'e2servicereference':
+                    self.zap(item())
 
     def remote_control_command(self, command_id):
         url = self._build_url(self._url_suffix_map['remotecontrol'],
@@ -455,7 +457,7 @@ class Enigma2():
 
     def _update_event_items(self, cache = True):
         for item in self._enigma2_device.get_fast_items():
-            if item.conf['enigma2_data_type'] in ['current_eventtitle', 'current_eventdescription','current_eventdescriptionextended','e2servicename']:
+            if item.conf['enigma2_data_type'] in self._key_event_information:
                 self._update_current_event(item, cache)
 
     def _update_volume(self, item, cache = True):
@@ -479,8 +481,7 @@ class Enigma2():
 
     def _update_event_items(self, cache=True):
         for item in self._enigma2_device.get_fast_items():
-            if item.conf['enigma2_data_type'] in ['current_eventtitle', 'current_eventdescription',
-                                                  'current_eventdescriptionextended', 'e2servicename']:
+            if item.conf['enigma2_data_type'] in self._key_event_information:
                 self._update_current_event(item, cache)
 
     def _update_current_event(self, item, cache = True):
@@ -523,7 +524,11 @@ class Enigma2():
             if e2servicename is None or e2servicename == 'N/A':
                 e2servicename = '-'
             item(e2servicename)
-        if item.conf['enigma2_data_type'] == 'current_eventtitle':
+        elif item.conf['enigma2_data_type'] == 'e2servicereference':
+            if e2servicereference is None or e2servicereference == 'N/A':
+                e2servicereference = '-'
+            item(e2servicereference)
+        elif item.conf['enigma2_data_type'] == 'current_eventtitle':
             item(current_epgservice['e2eventtitle'])
         elif item.conf['enigma2_data_type'] == 'current_eventdescription':
             item(current_epgservice['e2eventdescription'])

@@ -10,7 +10,7 @@ It is completely based on the openwebif interface for Enigma2 devices
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
-Version 1.1.7 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
+Version 1.1.8 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
 It is currently also tested with a Dreambox 8000 and Dreambox 7020hd.
 The version is pre alpha and continously under development.
 
@@ -163,22 +163,22 @@ This attribute defines supported functions that can be set for an item. Full set
                 enigma2_page = about
                 device_id = vusolo4k
                 visu_acl = ro
-            [[[[eventtitle]]]] # more complex logic behind that data type
+            [[[[eventtitle]]]]                          # more complex logic behind that data type
                 type = str
                 enigma2_data_type = current_eventtitle
                 device_id = vusolo4k
                 visu_acl = ro
-            [[[[eventdescription]]]] # more complex logic behind that data type
+            [[[[eventdescription]]]]                    # more complex logic behind that data type
                 type = str
                 enigma2_data_type = current_eventdescription
                 device_id = vusolo4k
                 visu_acl = ro
-            [[[[eventdescriptionextended]]]] # more complex logic behind that data type
+            [[[[eventdescriptionextended]]]]            # more complex logic behind that data type
                 type = str
                 enigma2_data_type = current_eventdescriptionextended
                 device_id = vusolo4k
                 visu_acl = ro
-            [[[[currentvolume]]]] # more complex logic behind that data type
+            [[[[currentvolume]]]]                       # more complex logic behind that data type
                 type = num
                 enigma2_data_type = current_volume
                 device_id = vusolo4k
@@ -189,6 +189,12 @@ This attribute defines supported functions that can be set for an item. Full set
                 enigma2_page = subservices
                 device_id = vusolo4k
                 visu_acl = ro
+            [[[[servicereference]]]]                    # changes channel if set e.g. by visu
+                type = str
+                enigma2_data_type = e2servicereference
+                enigma2_page = subservices
+                device_id = vusolo4k
+                visu_acl = rw
         [[[services]]]
             [[[[DasErste_HD]]]]
                 type = bool
@@ -202,7 +208,7 @@ This attribute defines supported functions that can be set for an item. Full set
                 device_id = vusolo4k
                 enforce_updates = true
                 visu_acl = rw
-        [[[remote]]] # see http://dream.reichholf.net/wiki/Enigma2:WebInterface#RemoteControl
+        [[[remote]]]                                    # see http://dream.reichholf.net/wiki/Enigma2:WebInterface#RemoteControl
             [[[[TEXT]]]]
 				type = bool
 				visu_acl = rw
