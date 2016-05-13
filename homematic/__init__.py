@@ -66,7 +66,6 @@ class Homematic():
                     logger.error("Could not connect to Homematic Device: " + hm_devices.conf['hm_address'])
 
     def stop(self):
-        self.server. 
         self.alive = False
 
     def parse_item(self, item):
