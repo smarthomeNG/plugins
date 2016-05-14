@@ -141,8 +141,8 @@ class Enigma2():
                             ('vol', '/web/vol')])
 
     _keys_fast_refresh = ['current_eventtitle','current_eventdescription','current_eventdescriptionextended',
-                          'current_volume', 'e2servicename','e2videoheight','e2videowidth','e2apid','e2vpid',
-                          'e2instandby', 'e2servicereference']
+                          'current_volume','e2servicename','e2videoheight','e2videowidth','e2apid','e2vpid',
+                          'e2instandby','e2servicereference']
     _key_event_information = ['current_eventtitle','current_eventdescription','current_eventdescriptionextended','e2servicereference', 'e2servicename']
 
     def __init__(self, smarthome, username='', password='', host='dreambox', port='80', ssl='True', verify='False', cycle=300, fast_cycle=10, device_id='enigma2'):
@@ -184,6 +184,7 @@ class Enigma2():
 
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
+        self._requestLock = threading.Lock()
 
     def run(self):
         """
@@ -218,6 +219,7 @@ class Enigma2():
         """
         Starts the update loop for all known items.
         """
+        self._requestLock.acquire()
         self.logger.debug('Starting update loop for identifier %s' % self._enigma2_device.get_identifier())
         for item in self._enigma2_device.get_items():
             if not self.alive:
@@ -226,11 +228,13 @@ class Enigma2():
 
         #empty response cache
         self._response_cache = dict()
+        self._requestLock.release()
 
     def _update_loop_fast(self, cache=True):
         """
         Starts the fast update loop for all known items.
         """
+        self._requestLock.acquire()
         self.logger.debug('Starting update loop for identifier %s' % self._enigma2_device.get_identifier())
         for item in self._enigma2_device.get_fast_items():
             if not self.alive:
@@ -244,6 +248,7 @@ class Enigma2():
 
         # empty response cache
         self._response_cache = dict()
+        self._requestLock.release()
 
     def parse_item(self, item):
         """
@@ -321,6 +326,8 @@ class Enigma2():
     def get_audio_tracks(self):
         """
         Retrieves an array of all available audio tracks
+        
+        :param result: Array of audiotracks with keys: 'e2audiotrackdescription', 'e2audiotrackid', 'e2audiotrackpid', 'e2audiotrackactive'
         """
         result = []
         url = self._build_url(self._url_suffix_map['getaudiotracks'])
@@ -462,10 +469,11 @@ class Enigma2():
 
     def _update_volume(self, item, cache = True):
         """
-        Retrieves the answer to a currently sent message, take care to take the timeout into account in which the answer can be given and start a thread which is polling the answer for that period.
+        Retrieves the current volume value and sets it to an item.
+        
+        :param item: item to be updated
         """
         url = self._build_url(self._url_suffix_map['getcurrent'])
-        self.logger.debug("Getting Volume")
         try:
             response = self._session.get(url, timeout=self._timeout,
                                          auth=HTTPDigestAuth(self._enigma2_device.get_user(),
@@ -476,13 +484,8 @@ class Enigma2():
             return
 
         volume = self._get_value_from_xml_node(xml, 'e2current')
-        self.logger.debug("Volume "+volume)
+        #self.logger.debug("Volume "+volume)
         item(volume)
-
-    def _update_event_items(self, cache=True):
-        for item in self._enigma2_device.get_fast_items():
-            if item.conf['enigma2_data_type'] in self._key_event_information:
-                self._update_current_event(item, cache)
 
     def _update_current_event(self, item, cache = True):
         """
@@ -496,11 +499,11 @@ class Enigma2():
             self.logger.error("No enigma2_data_type set in item!")
             return
 
-        self._cached_get_request('subservices', url, cache)
+        result = self._cached_get_request('subservices', url, cache)
 
         try:
-            xml = minidom.parseString(self._response_cache['subservices'])
-        except xml.parsers.expat.ExpatError as e:
+            xml = minidom.parseString(result)
+        except Exception as e:
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
@@ -526,8 +529,10 @@ class Enigma2():
             item(e2servicename)
         elif item.conf['enigma2_data_type'] == 'e2servicereference':
             if e2servicereference is None or e2servicereference == 'N/A':
-                e2servicereference = '-'
-            item(e2servicereference)
+                servicereference = '-'
+            else:
+                servicereference = e2servicereference
+            item(servicereference)
         elif item.conf['enigma2_data_type'] == 'current_eventtitle':
             item(current_epgservice['e2eventtitle'])
         elif item.conf['enigma2_data_type'] == 'current_eventdescription':
@@ -593,10 +598,10 @@ class Enigma2():
 
         url = self._build_url(self._url_suffix_map[item.conf['enigma2_page']])
 
-        self._cached_get_request(item.conf['enigma2_page'], url, cache)
+        result = self._cached_get_request(item.conf['enigma2_page'], url, cache)
 
         try:
-            xml = minidom.parseString(self._response_cache[item.conf['enigma2_page']])
+            xml = minidom.parseString(result)
         except Exception as e:
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
@@ -654,9 +659,12 @@ class Enigma2():
             except Exception as e:
                 self.logger.error("Exception when sending GET request: %s" % str(e))
                 return
+            self.logger.debug("Filling reponse cache for %s!" % url)
             self._response_cache[cache_key] = response.content
+            return response.content
         else:
             self.logger.debug("Accessing reponse cache for %s!" % url)
+            return self._response_cache[cache_key]
 
     def _get_value_from_xml_node(self, node, tag_name):
         data = None
