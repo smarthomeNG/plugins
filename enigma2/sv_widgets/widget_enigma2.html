@@ -92,7 +92,7 @@
 			{% if gad_eventdesc %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'eventdesc', gad_eventdesc) }} </td></tr>{% endif %}
 			{% if gad_vwidth or gad_vheight or gad_apid %}<tr><td><br></td></tr>{% endif %}
 			{% if gad_vwidth or gad_vheight %}<tr><td align=left style="padding-left: 30px;">Auflösung:</td> <td align=right> {{ basic.value(id~'vwidth', gad_vwidth) }} x {{ basic.value(id~'vheight', gad_vheight) }}</td></tr>{% endif %}
-			{% if gad_apid %} <tr><td align=left style="padding-left: 30px;">Video-/Audio-Pid:</td> <td align=right> {{ basic.value(id~'apid', gad_vpid) }} / {{ basic.value(id~'apid', gad_apid) }} </td></tr>{% endif %}
+			{% if gad_apid %} <tr><td align=left style="padding-left: 30px;">Video-/Audio-Pid:</td> <td align=right> {{ basic.value(id~'vpid', gad_vpid) }} / {{ basic.value(id~'apid', gad_apid) }} </td></tr>{% endif %}
 			{% if gad_standby %} <tr><td align=left style="padding-left: 30px;">Standby:</td> <td align=right> {{ basic.value(id~'standby', gad_standby) }} </td></tr>{% endif %}
 		</table>
 
