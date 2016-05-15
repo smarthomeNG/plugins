@@ -184,7 +184,6 @@ class Enigma2():
 
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
-        self._requestLock = threading.Lock()
 
     def run(self):
         """
@@ -219,7 +218,6 @@ class Enigma2():
         """
         Starts the update loop for all known items.
         """
-        self._requestLock.acquire()
         self.logger.debug('Starting update loop for identifier %s' % self._enigma2_device.get_identifier())
         for item in self._enigma2_device.get_items():
             if not self.alive:
@@ -228,13 +226,11 @@ class Enigma2():
 
         #empty response cache
         self._response_cache = dict()
-        self._requestLock.release()
 
     def _update_loop_fast(self, cache=True):
         """
         Starts the fast update loop for all known items.
         """
-        self._requestLock.acquire()
         self.logger.debug('Starting update loop for identifier %s' % self._enigma2_device.get_identifier())
         for item in self._enigma2_device.get_fast_items():
             if not self.alive:
@@ -248,7 +244,6 @@ class Enigma2():
 
         # empty response cache
         self._response_cache = dict()
-        self._requestLock.release()
 
     def parse_item(self, item):
         """
