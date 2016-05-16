@@ -66,9 +66,9 @@
     {% import "basic.html" as basic %}
     {% set uid = uid(page, id) %}
     <div id="{{ uid }}">        
-        {% if gad_uptime %}Uptime: {{ basic.formula(id~'uptime', gad_uptime, 'hour', 'VAR / 3600') }}<br/>{% endif %}
+        {% if gad_uptime %}Uptime: {{ basic.formula(id~'uptime', gad_uptime, 'float', 'VAR / 3600') }} hours<br/>{% endif %}
         {% if gad_firmware %}Firmware: {{ basic.value(id~'firmware', gad_firmware) }}<br/>{% endif %}
-        {% if gad_hardware_version %}Gerätetyp: {{ basic.value(id~'hardware_version', gad_hardware_version) }}{% endif %}
+        {% if gad_hardware_version %}Gerätetyp: {{ basic.value(id~'hardware_version', gad_hardware_version) }}<br/>{% endif %}
         {% if gad_serial_number %}Seriennummer: {{ basic.value(id~'serial_number', gad_serial_number) }}{% endif %}
     </div>
 {% endmacro %}
@@ -94,14 +94,14 @@
     {% set uid = uid(page, id) %}
     <div id="{{ uid }}">        
         {% if gad_ip %}Internet-IP: {{ basic.value(id~'ip', gad_ip) }}<br/> {% endif %}
-        {% if gad_uptime %}WAN-Uptime: {{ basic.formula(id~'wan_uptime', gad_uptime, 'hour', 'VAR / 3600') }}<br/>{% endif %}
+        {% if gad_uptime %}WAN-Uptime: {{ basic.formula(id~'wan_uptime', gad_uptime, 'float', 'VAR / 3600') }} hours<br/>{% endif %}
         {% if gad_connection_status %}Verbindungsstatus: {{ basic.value(id~'connection_status', gad_connection_status) }}<br/>{% endif %}
         {% if gad_connection_error %}Letzter Fehler: {{ basic.value(id~'wan_connection_error', gad_connection_error) }}<br/>{% endif %}
         {% if gad_total_packets_sent %}Gesendete Pakete: {{ basic.value(id~'total_packets_sent', gad_total_packets_sent) }}<br/>{% endif %}
         {% if gad_total_packets_received %}Empfangene Pakete: {{ basic.value(id~'total_packets_rcv', gad_total_packets_received) }}<br/>{% endif %}
-        {% if gad_total_bytes_sent %}Gesendetes Bytes: {{ basic.formula(id~'total_bytes_sent', gad_total_bytes_sent, 'mb', 'VAR / (1024*1024)') }}<br/>{% endif %}
-        {% if gad_total_bytes_received %}Empfangene Bytes: {{ basic.formula(id~'total_bytes_received', gad_total_bytes_received, 'mb', 'VAR / (1024*1024)') }}<br/>{% endif %}
-        {% if gad_upstream %}Upstream: {{ basic.formula(id~'upstream', gad_upstream, 'mbit', 'VAR / (1000)') }} <br/>{% endif %}
-        {% if gad_downstream %}Downstream: {{ basic.formula(id~'downstream', gad_downstream, 'mbit', 'VAR / (1000)') }}{% endif %}
+        {% if gad_total_bytes_sent %}Gesendetes Bytes: {{ basic.formula(id~'total_bytes_sent', gad_total_bytes_sent, 'float', 'VAR / (1024*1024)') }} mb<br/>{% endif %}
+        {% if gad_total_bytes_received %}Empfangene Bytes: {{ basic.formula(id~'total_bytes_received', gad_total_bytes_received, 'float', 'VAR / (1024*1024)') }} mb<br/>{% endif %}
+        {% if gad_upstream %}Upstream: {{ basic.formula(id~'upstream', gad_upstream, 'float', 'VAR / (1000)') }} mbit<br/>{% endif %}
+        {% if gad_downstream %}Downstream: {{ basic.formula(id~'downstream', gad_downstream, 'float', 'VAR / (1000)') }} mbit{% endif %}
     </div>
 {% endmacro %}
