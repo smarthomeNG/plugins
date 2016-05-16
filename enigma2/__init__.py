@@ -184,6 +184,7 @@ class Enigma2():
 
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
+        self._response_cache_fast = dict()
 
     def run(self):
         """
@@ -222,28 +223,26 @@ class Enigma2():
         for item in self._enigma2_device.get_items():
             if not self.alive:
                 return
-            self._update(item)
+            self._update(item, cache = True, fast = False)
 
-        #empty response cache
-        self._response_cache = dict()
-
-    def _update_loop_fast(self, cache=True):
+    def _update_loop_fast(self, cache = True, fast = True):
         """
         Starts the fast update loop for all known items.
         """
+        self._requestLock = threading.Lock()
         self.logger.debug('Starting update loop for identifier %s' % self._enigma2_device.get_identifier())
         for item in self._enigma2_device.get_fast_items():
             if not self.alive:
                 return
             if item.conf['enigma2_data_type'] in self._key_event_information:
-                self._update_event_items(cache)
+                self._update_event_items(cache, fast)
             elif 'enigma2_page' in item.conf:
-                self._update(item)
+                self._update(item, fast)
             elif item.conf['enigma2_data_type'] == 'current_volume':
-                self._update_volume(item, cache)
+                self._update_volume(item, cache, fast)
 
         # empty response cache
-        self._response_cache = dict()
+        self._response_cache_fast = dict()
 
     def parse_item(self, item):
         """
@@ -284,15 +283,11 @@ class Enigma2():
             # enigma2 remote control
             if 'enigma2_remote_command_id' in item.conf:
                 self.remote_control_command(item.conf['enigma2_remote_command_id'])
-                if item.conf['enigma2_remote_command_id'] in ['105','106','116']: #box was switched to or from standby, auto update
+                if item.conf['enigma2_remote_command_id'] in ['105','106','116']:
                     self._update_event_items(cache = False)
-                    #self._update_loop_fast(cache = False)
-                #elif item.conf['enigma2_remote_command_id'] in ['114','115']: #volume changed, auto update
-                    #self._update_loop_fast(cache = False)
             elif 'sref' in item.conf:
                 self.zap(item.conf['sref'])
                 self._update_event_items(cache = False)
-                #self._update_loop_fast(cache = False)
             elif 'enigma2_data_type' in item.conf:
                 if item.conf['enigma2_data_type'] == 'current_volume':
                     self.set_volume(item())
@@ -457,12 +452,12 @@ class Enigma2():
                 if e2result_xml[0].firstChild.data == 'True':                    
                     return e2resulttext_xml[0].firstChild.data
 
-    def _update_event_items(self, cache = True):
+    def _update_event_items(self, cache = True, fast = False):
         for item in self._enigma2_device.get_fast_items():
             if item.conf['enigma2_data_type'] in self._key_event_information:
-                self._update_current_event(item, cache)
+                self._update_current_event(item, cache, fast)
 
-    def _update_volume(self, item, cache = True):
+    def _update_volume(self, item, cache = True, fast = False): #todo add cache
         """
         Retrieves the current volume value and sets it to an item.
         
@@ -482,7 +477,7 @@ class Enigma2():
         #self.logger.debug("Volume "+volume)
         item(volume)
 
-    def _update_current_event(self, item, cache = True):
+    def _update_current_event(self, item, cache = True, fast = False):
         """
         Updates information on the current event
 
@@ -494,7 +489,7 @@ class Enigma2():
             self.logger.error("No enigma2_data_type set in item!")
             return
 
-        result = self._cached_get_request('subservices', url, cache)
+        result = self._cached_get_request('subservices', url, cache, fast)
 
         try:
             xml = minidom.parseString(result)
@@ -513,9 +508,6 @@ class Enigma2():
             current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference)
         else:
             current_epgservice = {}
-            current_epgservice['e2eventtitle'] = '-'
-            current_epgservice['e2eventdescription'] = '-'
-            current_epgservice['e2eventdescriptionextended'] = '-'
 
         if item.conf['enigma2_data_type'] == 'e2servicename':
             e2servicename = self._get_value_from_xml_node(xml, 'e2servicename')
@@ -529,11 +521,20 @@ class Enigma2():
                 servicereference = e2servicereference
             item(servicereference)
         elif item.conf['enigma2_data_type'] == 'current_eventtitle':
-            item(current_epgservice['e2eventtitle'])
+            if 'e2eventtitle' in current_epgservice:
+               item(current_epgservice['e2eventtitle'])
+            else:
+                item('-')
         elif item.conf['enigma2_data_type'] == 'current_eventdescription':
-            item(current_epgservice['e2eventdescription'])
+            if 'e2eventdescription' in current_epgservice:
+                item(current_epgservice['e2eventdescription'])
+            else:
+                item('-')
         elif item.conf['enigma2_data_type'] == 'current_eventdescriptionextended':
-            item(current_epgservice['e2eventdescriptionextended'])
+            if 'e2eventdescriptionextended' in current_epgservice:
+                item(current_epgservice['e2eventdescriptionextended'])
+            else:
+                item('-')
 
     def get_current_epgservice_for_service_reference(self, service_reference):
         """
@@ -579,7 +580,7 @@ class Enigma2():
 
         return result_entry
 
-    def _update(self, item, cache = True):
+    def _update(self, item, cache = True, fast = True):
         """
         Updates information on diverse items
 
@@ -593,7 +594,7 @@ class Enigma2():
 
         url = self._build_url(self._url_suffix_map[item.conf['enigma2_page']])
 
-        result = self._cached_get_request(item.conf['enigma2_page'], url, cache)
+        result = self._cached_get_request(item.conf['enigma2_page'], url, cache, fast)
 
         try:
             xml = minidom.parseString(result)
@@ -644,8 +645,13 @@ class Enigma2():
 
     #helper functions below
 
-    def _cached_get_request(self, cache_key, url, cache=True):
-        if not cache_key in self._response_cache or not cache:
+    def _cached_get_request(self, cache_key, url, cache=True, fast=False):
+        if not fast:
+            response_cache = self._response_cache
+        else:
+            response_cache = self._response_cache_fast
+
+        if not cache_key in response_cache or not cache:
             try:
                 response = self._session.get(url, timeout=self._timeout,
                                              auth=HTTPDigestAuth(self._enigma2_device.get_user(),
@@ -654,12 +660,20 @@ class Enigma2():
             except Exception as e:
                 self.logger.error("Exception when sending GET request: %s" % str(e))
                 return
-            self.logger.debug("Filling reponse cache for %s!" % url)
-            self._response_cache[cache_key] = response.content
+
+            if not fast:
+                self.logger.debug("Filling reponse cache for %s!" % url)
+            else:
+                self.logger.debug("Filling fast reponse cache for %s!" % url)
+
+            response_cache[cache_key] = response.content
             return response.content
         else:
-            self.logger.debug("Accessing reponse cache for %s!" % url)
-            return self._response_cache[cache_key]
+            if not fast:
+                self.logger.debug("Accessing reponse cache for %s!" % url)
+            else:
+                self.logger.debug("Accessing fast reponse cache for %s!" % url)
+            return response_cache[cache_key]
 
     def _get_value_from_xml_node(self, node, tag_name):
         data = None
