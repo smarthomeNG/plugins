@@ -1480,25 +1480,25 @@ class AVM():
         if item.conf['avm_data_type'] == 'wan_total_packets_sent':
             element_xml = xml.getElementsByTagName('NewTotalPacketsSent')
             if (len(element_xml) > 0):
-                item(element_xml[0].firstChild.data)
+                item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_total_packets_received':
             element_xml = xml.getElementsByTagName('NewTotalPacketsReceived')
             if (len(element_xml) > 0):
-                item(element_xml[0].firstChild.data)
+                item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_total_bytes_sent':
             element_xml = xml.getElementsByTagName('NewTotalBytesSent')
             if (len(element_xml) > 0):
-                item(element_xml[0].firstChild.data)
+                item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_total_bytes_received':
             element_xml = xml.getElementsByTagName('NewTotalBytesReceived')
             if (len(element_xml) > 0):                
-                item(element_xml[0].firstChild.data)
+                item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
         elif item.conf['avm_data_type'] == 'wan_link':
