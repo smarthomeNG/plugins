@@ -43,11 +43,12 @@
 import logging
 import socket
 from lib.utils import Utils
+from lib.model.smartplugin import SmartPlugin
 
 ITEM_TAG = ['wol_mac']
-
-class WakeOnLan(object):
-    def __init__(self, sh):
+class WakeOnLan(SmartPlugin):
+    PLUGIN_VERSION = "1.1.2"
+    def __init__(self, sh,**kwargs):
         self._sh = sh
         self.logger = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ class WakeOnLan(object):
         self.alive = False
 
     def parse_item(self, item):
-        if ITEM_TAG[0] in item.conf:
+        if self.has_iattr(item.conf, ITEM_TAG[0]):
             return self.update_item
 
     def parse_logic(self, logic):
@@ -69,7 +70,7 @@ class WakeOnLan(object):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if item():
-            if ITEM_TAG[0] in item.conf:
+            if self.has_iattr(item.conf, ITEM_TAG[0]):
                 self.wake_on_lan(item.conf[ITEM_TAG[0]])
 
     def wake_on_lan(self, mac_adr):
@@ -88,7 +89,10 @@ class WakeOnLan(object):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.sendto(bytearray.fromhex(data), ('<broadcast>', 7))
-
+    def testprint(self):
+        print(self.get_version())
+        print(self.get_instance_name())
+        print(Utils.to_bool("yes"))
 if __name__ == '__main__':
     myplugin = WakeOnLan('smarthome-dummy')
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
