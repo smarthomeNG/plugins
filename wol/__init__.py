@@ -71,7 +71,7 @@ class WakeOnLan(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         if item():
             if self.has_iattr(item.conf, ITEM_TAG[0]):
-                self.wake_on_lan(item.conf[ITEM_TAG[0]])
+                self.wake_on_lan(self.get_iattr_value(item.conf,ITEM_TAG[0]))
 
     def wake_on_lan(self, mac_adr):
         self.logger.debug("WakeOnLan: send magic paket to {}".format(mac_adr))
