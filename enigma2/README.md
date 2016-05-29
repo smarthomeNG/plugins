@@ -12,6 +12,7 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 
 Version 1.1.10 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
 It is currently also tested with a Dreambox 8000 and Dreambox 7020hd.
+
 The version is tested with new multi-instance functionality of SmartHomeNG.
 
 # Configuration

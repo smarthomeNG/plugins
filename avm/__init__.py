@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 1.1.1
+#  Version 1.1.2
 #########################################################################
 #  Free for non-commercial use
 #  
@@ -38,6 +38,7 @@ from xml.dom import minidom
 import requests
 from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
+from lib.model.smartplugin import SmartPlugin
 
 class MonitoringService():
     """
@@ -48,12 +49,12 @@ class MonitoringService():
     | - avm_data_type = last_caller, type = str
     | - avm_data_type = last_call_date, type = str
     """
-    def __init__(self, host, port, avm_identifier, callback, call_monitor_incoming_filter):
+    def __init__(self, host, port, callback, call_monitor_incoming_filter, plugin_instance):
         self.logger = logging.getLogger(__name__)
         self.logger.debug("starting monitoring service")
         self._host = host
         self._port = port
-        self._avm_identifier = avm_identifier
+        self._plugin_instance = plugin_instance
         self._callback = callback
         self._trigger_items = []        # items which can be used to trigger sth, e.g. a logic
         self._items = []                # more general items for the call monitor
@@ -67,7 +68,7 @@ class MonitoringService():
         self._call_outgoing_cid = dict()
         self._call_monitor_incoming_filter = call_monitor_incoming_filter
         self.conn = None
-    
+
     def connect(self):
         """
         Connects to the call monitor of the AVM device
@@ -75,7 +76,7 @@ class MonitoringService():
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.conn.connect((self._host, self._port))
-            self._listen_thread = threading.Thread(target=self._listen, name="MonitoringService_%s" % self._avm_identifier).start()
+            self._listen_thread = threading.Thread(target=self._listen, name="MonitoringService_%s" % self._plugin_instance.get_instance_name()).start()
         except Exception as e:
             self.conn = None
             self.logger.error("MonitoringService: Cannot connect to "+self._host+" on port: "+str(self._port)+", CallMonitor activated by #96*5*? - Error: "+str(e))
@@ -105,11 +106,11 @@ class MonitoringService():
 
         :param item: item to register
         """
-        if item.conf['avm_data_type'] in ['is_call_incoming', 'last_caller_incoming', 'last_number_incoming', 'last_called_number_incoming', 'last_call_date_incoming', 'call_event_incoming']:
+        if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_incoming', 'last_caller_incoming', 'last_number_incoming', 'last_called_number_incoming', 'last_call_date_incoming', 'call_event_incoming']:
             self._items_incoming.append(item)
-        elif item.conf['avm_data_type'] in ['is_call_outgoing', 'last_caller_outgoing', 'last_number_outgoing', 'last_called_number_outgoing', 'last_call_date_outgoing', 'call_event_outgoing']:
+        elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_outgoing', 'last_caller_outgoing', 'last_number_outgoing', 'last_called_number_outgoing', 'last_call_date_outgoing', 'call_event_outgoing']:
             self._items_outgoing.append(item)
-        elif item.conf['avm_data_type'] == 'monitor_trigger':
+        elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'monitor_trigger':
             self._trigger_items.append(item)
         else:
             self._items.append(item)
@@ -118,7 +119,7 @@ class MonitoringService():
         """
         Sets specific items which count the duration of an incoming or outgoing call
         """
-        self._duration_item[item.conf['avm_data_type']] = item
+        self._duration_item[self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type').split("@")[0]] = item
 
     def _listen(self, recv_buffer=4096):
         """
@@ -141,12 +142,12 @@ class MonitoringService():
         if direction == 'incoming':
             self._call_connect_timestamp = time.mktime(
                 datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
-            self._duration_counter_thread_incoming = threading.Thread(target=self._count_duration_incoming, name="MonitoringService_Duration_Incoming_%s" % self._avm_identifier).start()
+            self._duration_counter_thread_incoming = threading.Thread(target=self._count_duration_incoming, name="MonitoringService_Duration_Incoming_%s" % self._plugin_instance.get_instance_name()).start()
             self.logger.debug('Counter incoming - STARTED')
         elif direction == 'outgoing':
             self._call_connect_timestamp = time.mktime(
                 datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
-            self._duration_counter_thread_outgoing = threading.Thread(target=self._count_duration_outgoing, name="MonitoringService_Duration_Outgoing_%s" % self._avm_identifier).start()
+            self._duration_counter_thread_outgoing = threading.Thread(target=self._count_duration_outgoing, name="MonitoringService_Duration_Outgoing_%s" % self._plugin_instance.get_instance_name()).start()
             self.logger.debug('Counter outgoing - STARTED')
     
     def _stop_counter(self, direction):
@@ -214,9 +215,9 @@ class MonitoringService():
 
         # in each case set current call event and direction
         for item in self._items:
-            if item.conf['avm_data_type'] == 'call_event':
+            if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event':
                 item(event.lower())
-            if item.conf['avm_data_type'] == 'call_direction':
+            if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_direction':
                 if event == 'RING':
                     item("incoming")
                 else:
@@ -226,9 +227,10 @@ class MonitoringService():
         if event == 'RING':
             # process "trigger items"
             for trigger_item in self._trigger_items:
-                trigger_item(0)
-                if trigger_item.conf['avm_data_type'] == 'monitor_trigger':
-                    if not 'avm_incoming_allowed' in trigger_item.conf or not 'avm_target_number' in trigger_item.conf:
+                if self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') == 'monitor_trigger':
+                    trigger_item(0)
+                    #self.logger.debug(self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +trigger_item.conf['avm_incoming_allowed']+" "+trigger_item.conf['avm_target_number'])
+                    if 'avm_incoming_allowed' not in trigger_item.conf or 'avm_target_number' not in trigger_item.conf:
                         self.logger.error("both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes in a trigger item.")
                     elif trigger_item.conf['avm_incoming_allowed'] == call_from and trigger_item.conf['avm_target_number'] == call_to:
                         trigger_item(1)
@@ -242,21 +244,21 @@ class MonitoringService():
 
                 # process items specific to incoming calls
                 for item in self._items_incoming:  # update items for incoming calls
-                    if item.conf['avm_data_type'] in ['is_call_incoming']:
+                    if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_incoming']:
                         item(1)
-                    elif item.conf['avm_data_type'] in ['last_caller_incoming']:
+                    elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_caller_incoming']:
                         name = self._callback(call_from)
                         if name != '' and not name is None:
                             item(name)
                         else:
                             item(call_from)
-                    elif item.conf['avm_data_type'] in ['last_call_date_incoming']:
+                    elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_call_date_incoming']:
                         item(time)
-                    elif item.conf['avm_data_type'] in ['call_event_incoming']:
+                    elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
                         item(event.lower())
-                    elif item.conf['avm_data_type'] in ['last_number_incoming']:
+                    elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_number_incoming']:
                         item(call_from)
-                    elif item.conf['avm_data_type'] in ['last_called_number_incoming']:
+                    elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_called_number_incoming']:
                         item(call_to)
 
         # call is outgoing
@@ -269,21 +271,21 @@ class MonitoringService():
 
             # process items specific to outgoing calls
             for item in self._items_outgoing:
-                if item.conf['avm_data_type'] in ['is_call_outgoing']:
+                if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_outgoing']:
                     item(1)
-                elif item.conf['avm_data_type'] in ['last_caller_outgoing']:
+                elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_caller_outgoing']:
                     name = self._callback(call_to)
                     if name != '' and not name is None:
                         item(name)
                     else:
                         item(call_to)
-                elif item.conf['avm_data_type'] in ['last_call_date_outgoing']:
+                elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_call_date_outgoing']:
                     item(time)
-                elif item.conf['avm_data_type'] in ['call_event_outgoing']:
+                elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_outgoing']:
                     item(event.lower())
-                elif item.conf['avm_data_type'] in ['last_number_outgoing']:
+                elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_number_outgoing']:
                     item(call_from)
-                elif item.conf['avm_data_type'] in ['last_called_number_outgoing']:
+                elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_called_number_outgoing']:
                     item(call_to)
 
         # connection established
@@ -294,7 +296,7 @@ class MonitoringService():
                     self._stop_counter('outgoing')                                      # stop potential running counter for parallel (older) outgoing call
                     self._start_counter(time, 'outgoing')
                 for item in self._items_outgoing:
-                    if item.conf['avm_data_type'] in ['call_event_outgoing']:
+                    if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_outgoing']:
                         item(event.lower())
 
             # handle INCOMING calls
@@ -303,7 +305,7 @@ class MonitoringService():
                     self._stop_counter('incoming')                                      # stop potential running counter for parallel (older) incoming call
                     self._start_counter(time, 'incoming')
                 for item in self._items_incoming:
-                    if item.conf['avm_data_type'] in ['call_event_incoming']:
+                    if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
                         item(event.lower())
 
         # connection ended
@@ -311,9 +313,9 @@ class MonitoringService():
             # handle OUTGOING calls
             if callid == self._call_outgoing_cid:
                 for item in self._items_outgoing:
-                    if item.conf['avm_data_type'] == 'call_event_outgoing':
+                    if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_outgoing':
                         item(event.lower())
-                    elif item.conf['avm_data_type'] == 'is_call_outgoing':
+                    elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_outgoing':
                         item(0)
                 if not self._duration_item['call_duration_outgoing'] is None:            # stop counter threads
                     self._stop_counter('outgoing')
@@ -322,9 +324,9 @@ class MonitoringService():
             # handle INCOMING calls
             elif callid == self._call_incoming_cid:
                 for item in self._items_incoming:
-                    if item.conf['avm_data_type'] == 'call_event_incoming':
+                    if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_incoming':
                         item(event.lower())
-                    elif item.conf['avm_data_type'] == 'is_call_incoming':
+                    elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_incoming':
                         item(0)
                 if not self._duration_item['call_duration_incoming'] is None:            # stop counter threads
                     self._stop_counter('incoming')
@@ -334,7 +336,7 @@ class FritzDevice():
     """
     This class encapsulates information related to a specific FritzDevice, such has host, port, ssl, username, password, or related items
     """
-    def __init__(self, host, port, ssl, username, password, identifier):
+    def __init__(self, host, port, ssl, username, password, identifier = 'default'):
         self.logger = logging.getLogger(__name__)
         self._host = host
         self._port = port
@@ -408,10 +410,12 @@ class FritzDevice():
         """
         return self._password
 
-class AVM():
+class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
+
+    PLUGIN_VERSION = "1.1.2"
 
     _header = {'SOAPACTION': '','CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -442,7 +446,7 @@ class AVM():
                      ('WANDSLInterfaceConfig','urn:dslforum-org:service:WANDSLInterfaceConfig:1'),
                      ('MyFritz', 'urn:dslforum-org:service:X_AVM-DE_MyFritz:1')])
 
-    def __init__(self, smarthome, username='', password='', host='fritz.box', port='49443', ssl='True', verify='False', cycle=300, avm_identifier='fritzbox', call_monitor='False', call_monitor_incoming_filter=''):
+    def __init__(self, smarthome, username='', password='', host='fritz.box', port='49443', ssl='True', verify='False', cycle=300, call_monitor='False', call_monitor_incoming_filter=''):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
@@ -453,12 +457,11 @@ class AVM():
         :param ssl:                True or False => https or http in URLs
         :param verify:             True or False => verification of SSL certificate
         :param cycle:              Update cycle in seconds
-        :param avm_identifier:     Internal identifier of the FritzDevice
         :param call_monitor:       bool: Shall the MonitoringService for the CallMonitor be started?
         :param call_monitor_incoming_filter:    Filter only specific numbers to be watched by call monitor
         """
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Init AVM Plugin with identifier %s' % avm_identifier)
+        self.logger.info('Init AVM Plugin with instance %s' % self.get_instance_name())
 
         self._session = requests.Session()
         self._timeout = 10
@@ -475,10 +478,10 @@ class AVM():
         else:
             ssl = False
 
-        self._fritz_device = FritzDevice(host, port, ssl, username, password, avm_identifier)
+        self._fritz_device = FritzDevice(host, port, ssl, username, password, self.get_instance_name())
         
         if call_monitor == 'True':
-            self._monitoring_service = MonitoringService(self._fritz_device.get_host(), 1012, avm_identifier, self.get_contact_name_by_phone_number, call_monitor_incoming_filter)
+            self._monitoring_service = MonitoringService(self._fritz_device.get_host(), 1012, self.get_contact_name_by_phone_number, call_monitor_incoming_filter, self)
             self._monitoring_service.connect()
 
         self._call_monitor_incoming_filter = call_monitor_incoming_filter
@@ -542,27 +545,27 @@ class AVM():
         """
         Starts the update loop for all known items.
         """
-        self.logger.debug('Starting update loop for identifier %s' % self._fritz_device.get_identifier())
+        self.logger.debug('Starting update loop for instance %s' % self._fritz_device.get_identifier())
         for item in self._fritz_device.get_items():
             if not self.alive:
                 return
-            if item.conf['avm_data_type'] in ['wan_connection_status', 'wan_connection_error', 'wan_is_connected', 'wan_uptime', 'wan_ip']:
+            if self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_connection_status', 'wan_connection_error', 'wan_is_connected', 'wan_uptime', 'wan_ip']:
                 self._update_wan_ip_connection(item)
-            elif item.conf['avm_data_type'] in ['tam', 'tam_name', 'tam_new_message_number', 'tam_total_message_number']:
+            elif self.get_iattr_value(item.conf, 'avm_data_type') in ['tam', 'tam_name', 'tam_new_message_number', 'tam_total_message_number']:
                 self._update_tam(item)
-            elif item.conf['avm_data_type'] == 'aha_device':
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 self._update_home_automation(item)
-            elif item.conf['avm_data_type'] in ['wlanconfig', 'wlanconfig_ssid', 'wlan_guest_time_remaining']:
+            elif self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'wlanconfig_ssid', 'wlan_guest_time_remaining']:
                 self._update_wlan_config(item)
-            elif item.conf['avm_data_type'] in ['wan_total_packets_sent', 'wan_total_packets_received', 'wan_total_bytes_sent', 'wan_total_bytes_received', 'wan_link']:
+            elif self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_total_packets_sent', 'wan_total_packets_received', 'wan_total_bytes_sent', 'wan_total_bytes_received', 'wan_link']:
                 self._update_wan_common_interface_configuration(item)
-            elif item.conf['avm_data_type'] in ['network_device']:
+            elif self.get_iattr_value(item.conf, 'avm_data_type') in ['network_device']:
                 self._update_host(item)
-            elif item.conf['avm_data_type'] in ['uptime', 'software_version', 'hardware_version', 'serial_number']:
+            elif self.get_iattr_value(item.conf, 'avm_data_type') in ['uptime', 'software_version', 'hardware_version', 'serial_number']:
                 self._update_fritz_device_info(item)
-            elif item.conf['avm_data_type'] in ['wan_upstream', 'wan_downstream']:
+            elif self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_upstream', 'wan_downstream']:
                 self._update_wan_dsl_interface_config(item)
-            elif item.conf['avm_data_type'] == 'myfritz_status':
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'myfritz_status':
                 self._update_myfritz(item)
         #empty response cache
         self._response_cache = dict()
@@ -586,122 +589,123 @@ class AVM():
 
         :param item: The item to process.
         """
-        if 'avm_identifier' in item.conf:
-            value = item.conf['avm_identifier']
-            if value == self._fritz_device.get_identifier():
-                # items specific to call monitor
-                if item.conf['avm_data_type'] in ['is_call_incoming', 'last_caller_incoming', 'last_call_date_incoming',
-                                                  'call_event_incoming', 'last_number_incoming', 'last_called_number_incoming',
-                                                  'is_call_outgoing', 'last_caller_outgoing', 'last_call_date_outgoing',
-                                                  'call_event_outgoing', 'last_number_outgoing', 'last_called_number_outgoing',
-                                                  'call_event', 'call_direction', 'monitor_trigger']:
-                    # initally - if item empty - get data from calllist
-                    if item.conf['avm_data_type'] == 'last_caller_incoming' and item() == '':
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['1', '2']:
-                                    if 'Name' in element:
-                                        item(element['Name'])
-                                    else:
-                                        item(element['Caller'])
-                                    break
-                    elif item.conf['avm_data_type'] == 'last_number_incoming' and item() == '':
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['1', '2']:
-                                    item(element['Caller'])
-                                    break
-                    elif item.conf['avm_data_type'] == 'last_called_number_incoming' and item() == '':
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['1', '2']:
-                                    item(element['CalledNumber'])
-                                    break
-                    elif item.conf['avm_data_type'] == 'last_call_date_incoming' and item() == '':
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['1', '2']:
-                                    date = str(element['Date'])
-                                    date = date[8:10]+"."+date[5:7]+"."+date[2:4]+" "+date[11:19]
-                                    item(date)
-                                    break
-                    elif item.conf['avm_data_type'] == 'call_event_incoming' and item() == '':
-                        item('disconnect')
-                    elif item.conf['avm_data_type'] == 'is_call_incoming' and item() == '':
-                        item(0)
-                    elif item.conf['avm_data_type'] == 'last_caller_outgoing' and item() == '':
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['3', '4']:
-                                    if 'Name' in element:
-                                        item(element['Name'])
-                                    else:
-                                        item(element['Called'])
-                                    break
-                    elif item.conf['avm_data_type'] == 'last_number_outgoing' and item() == '':
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['3', '4']:
-                                    item(''.join(filter(lambda x: x.isdigit(), element['Caller'])))
-                                    break
-                    elif item.conf['avm_data_type'] == 'last_called_number_outgoing' and item() == '':
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['3', '4']:
-                                    item(element['Called'])
-                                    break
-                    elif item.conf['avm_data_type'] == 'last_call_date_outgoing' and item() == '':
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['3', '4']:
-                                    date = str(element['Date'])
-                                    date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                                    item(date)
-                                    break
-                    elif item.conf['avm_data_type'] == 'call_event_outgoing' and item() == '':
-                        item('disconnect')
-                    elif item.conf['avm_data_type'] == 'is_call_outgoing' and item() == '':
-                        item(0)
-                    elif item.conf['avm_data_type'] == 'call_event' and item() == '':
-                        item('disconnect')
-                    elif item.conf['avm_data_type'] == 'call_direction' and item() == '':
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['1', '2']:
-                                    item('incoming')
-                                    break
-                                if element['Type'] in ['3', '4']:
-                                    item('outgoing')
-                                    break
-                    if not self._monitoring_service is None:
-                        self._monitoring_service.register_item(item)
-                elif item.conf['avm_data_type'] in ['call_duration_incoming', 'call_duration_outgoing']:
-                    # items specific to call monitor duration calculation
-                    # initally get data from calllist
-                    if item.conf['avm_data_type'] == 'call_duration_incoming' and item() == 0:
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['1', '2']:
-                                    duration = element['Duration']
-                                    duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
-                                    item(duration)
-                                    break
-                    elif item.conf['avm_data_type'] == 'call_duration_outgoing' and item() == 0:
-                        if not self.get_calllist_from_cache() is None:
-                            for element in self.get_calllist_from_cache():
-                                if element['Type'] in ['3', '4']:
-                                    duration = element['Duration']
-                                    duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
-                                    item(duration)
-                                    break
-                    if not self._monitoring_service is None:
-                        self._monitoring_service.set_duration_item(item)
-                else:
-                    # normal items
-                    self._fritz_device._items.append(item)                
-                if item.conf['avm_data_type']  in ['wlanconfig','tam','aha_device']:
-                    # special items which can be changed outside the plugin context and need to be submitted to the FritzDevice
-                    return self.update_item
+        #if 'avm_identifier' in item.conf:
+        #    value = item.conf['avm_identifier']
+        #    if value == self._fritz_device.get_identifier():
+
+        # items specific to call monitor
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_incoming', 'last_caller_incoming', 'last_call_date_incoming',
+                                          'call_event_incoming', 'last_number_incoming', 'last_called_number_incoming',
+                                          'is_call_outgoing', 'last_caller_outgoing', 'last_call_date_outgoing',
+                                          'call_event_outgoing', 'last_number_outgoing', 'last_called_number_outgoing',
+                                          'call_event', 'call_direction', 'monitor_trigger']:
+            # initally - if item empty - get data from calllist
+            if self.get_iattr_value(item.conf, 'avm_data_type') == 'last_caller_incoming' and item() == '':
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['1', '2']:
+                            if 'Name' in element:
+                                item(element['Name'])
+                            else:
+                                item(element['Caller'])
+                            break
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_number_incoming' and item() == '':
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['1', '2']:
+                            item(element['Caller'])
+                            break
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_called_number_incoming' and item() == '':
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['1', '2']:
+                            item(element['CalledNumber'])
+                            break
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_call_date_incoming' and item() == '':
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['1', '2']:
+                            date = str(element['Date'])
+                            date = date[8:10]+"."+date[5:7]+"."+date[2:4]+" "+date[11:19]
+                            item(date)
+                            break
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_incoming' and item() == '':
+                item('disconnect')
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_incoming' and item() == '':
+                item(0)
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_caller_outgoing' and item() == '':
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['3', '4']:
+                            if 'Name' in element:
+                                item(element['Name'])
+                            else:
+                                item(element['Called'])
+                            break
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_number_outgoing' and item() == '':
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['3', '4']:
+                            item(''.join(filter(lambda x: x.isdigit(), element['Caller'])))
+                            break
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_called_number_outgoing' and item() == '':
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['3', '4']:
+                            item(element['Called'])
+                            break
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_call_date_outgoing' and item() == '':
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['3', '4']:
+                            date = str(element['Date'])
+                            date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
+                            item(date)
+                            break
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_outgoing' and item() == '':
+                item('disconnect')
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_outgoing' and item() == '':
+                item(0)
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_event' and item() == '':
+                item('disconnect')
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_direction' and item() == '':
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['1', '2']:
+                            item('incoming')
+                            break
+                        if element['Type'] in ['3', '4']:
+                            item('outgoing')
+                            break
+            if not self._monitoring_service is None:
+                self._monitoring_service.register_item(item)
+        elif self.get_iattr_value(item.conf, 'avm_data_type') in ['call_duration_incoming', 'call_duration_outgoing']:
+            # items specific to call monitor duration calculation
+            # initally get data from calllist
+            if self.get_iattr_value(item.conf, 'avm_data_type') == 'call_duration_incoming' and item() == 0:
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['1', '2']:
+                            duration = element['Duration']
+                            duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
+                            item(duration)
+                            break
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_duration_outgoing' and item() == 0:
+                if not self.get_calllist_from_cache() is None:
+                    for element in self.get_calllist_from_cache():
+                        if element['Type'] in ['3', '4']:
+                            duration = element['Duration']
+                            duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
+                            item(duration)
+                            break
+            if not self._monitoring_service is None:
+                self._monitoring_service.set_duration_item(item)
+        else:
+            # normal items
+            self._fritz_device._items.append(item)
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig','tam','aha_device']:
+            # special items which can be changed outside the plugin context and need to be submitted to the FritzDevice
+            return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -715,40 +719,40 @@ class AVM():
         :param item: item to be updated towards the FritzDevice (Supported item avm_data_types: wlanconfig, tam, aha_device)
         """
         if caller != 'AVM':
-            if item.conf['avm_data_type']  in ['wlanconfig','tam']:
+            if self.get_iattr_value(item.conf, 'avm_data_type')  in ['wlanconfig','tam']:
                 action = 'SetEnable'
-            elif item.conf['avm_data_type'] == 'aha_device':
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 action = 'SetSwitch'
             else:
-                self.logger.error("%s is not defined to be updated." % item.conf['avm_data_type'])
+                self.logger.error("%s is not defined to be updated." % self.get_iattr_value(item.conf, 'avm_data_type'))
                 return
             
             headers = self._header.copy()
-            if item.conf['avm_data_type']  == 'wlanconfig':
+            if self.get_iattr_value(item.conf, 'avm_data_type')  == 'wlanconfig':
                 if int(item.conf['avm_wlan_index']) > 0:
                     headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
                     soap_data = self._assemble_soap_data(action, self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']),{'NewEnable':int(item())})
                 else:
                     self.logger.error('No wlan_index attribute provided')
-            elif item.conf['avm_data_type'] == 'tam':
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
                 headers['SOAPACTION'] = "%s#%s" % (self._urn_map['TAM'], action)
                 soap_data = self._assemble_soap_data(action, self._urn_map['TAM'],{'NewIndex':0,'NewEnable':int(item())})
-            elif item.conf['avm_data_type'] == 'aha_device':
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Homeauto'], action)
                 # SwitchState: OFF, ON, TOGGLE, UNDEFINED
                 if int(item()) == 1:
                     switch_state = "ON"
                 else:
                     switch_state = "OFF"
-                soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],{'NewAIN':item.conf['ain'].strip(),'NewSwitchState':switch_state})
+                soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],{'NewAIN':self.get_iattr_value(item.conf, 'ain').strip(),'NewSwitchState':switch_state})
             
-            if item.conf['avm_data_type'] == 'wlanconfig':
-                param = "%s%s%s" % ("/upnp/control/", item.conf['avm_data_type'], item.conf['avm_wlan_index'])
+            if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
+                param = "%s%s%s" % ("/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['avm_wlan_index'])
                 url = self._build_url(param)
 
-            elif item.conf['avm_data_type'] == 'tam':
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
                 url = self._build_url("/upnp/control/x_tam")
-            elif item.conf['avm_data_type'] == 'aha_device':
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 url = self._build_url("/upnp/control/x_homeauto")
 
             try:
@@ -757,10 +761,10 @@ class AVM():
                 self.logger.error("Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
                 return
 
-            if item.conf['avm_data_type'] == 'wlanconfig': # check if item was guest wifi item and remaining time is set as item..
+            if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig': # check if item was guest wifi item and remaining time is set as item..
                 for citem in self._fritz_device.get_items():  # search for guest time remaining item.
-                    if citem.conf['avm_data_type'] == 'wlan_guest_time_remaining' and citem.conf['avm_wlan_index'] == item.conf['avm_wlan_index']:
-                        self._response_cache.pop("wlanconfig_%s_%s" % (citem.conf['avm_wlan_index'], "X_AVM-DE_GetWLANExtInfo"), None) # reset response cache
+                    if self.get_iattr_value(citem.conf, 'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(citem.conf, 'avm_wlan_index') == item.conf['avm_wlan_index'] :
+                        self._response_cache.pop("wlanconfig_%s_%s" % (self.get_iattr_value(citem.conf, 'avm_wlan_index') , "X_AVM-DE_GetWLANExtInfo"), None) # reset response cache
                         self._update_wlan_config(citem) #immediately update remaining guest time
 
     def get_contact_name_by_phone_number(self, phone_number=''):
@@ -1035,12 +1039,12 @@ class AVM():
         url = self._build_url("/upnp/control/x_myfritz")
         headers = self._header.copy()
 
-        if item.conf['avm_data_type'] == 'myfritz_status':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'myfritz_status':
             action = 'GetInfo'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['MyFritz'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['MyFritz'])
         else:
-            self.logger.error("Attribute %s not supported by plugin method" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin method" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         try:
@@ -1066,7 +1070,7 @@ class AVM():
         url = self._build_url("/upnp/control/hosts")
         headers = self._header.copy()
         
-        if item.conf['avm_data_type'] == 'network_device':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'network_device':
             if not 'mac' in item.conf:
                 self.logger.error("No mac attribute provided in network_device item")
                 return
@@ -1074,7 +1078,7 @@ class AVM():
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],{'NewMACAddress':item.conf['mac']})
         else:
-            self.logger.error("Attribute %s not supported by plugin method" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin method" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         try:
@@ -1097,7 +1101,7 @@ class AVM():
                             else:
                                 child('')
                         else:
-                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                            self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
                     elif child.conf['avm_data_type'] == 'device_connection_type':
                         device_connection_type = xml.getElementsByTagName('NewInterfaceType')
                         if (len(device_connection_type) > 0):
@@ -1106,14 +1110,14 @@ class AVM():
                             else:
                                 child('')
                         else:
-                            self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                            self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
                     elif child.conf['avm_data_type'] == 'device_hostname':
                         data = self._get_value_from_xml_node(xml, 'NewHostName')
                         if not data is None:
                             child(data)
                         else:
                             self.logger.error(
-                                "Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                                "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         else:
             item(0)
             self.logger.debug("MAC Address not available on the FritzDevice - ID: %s" % self._fritz_device.get_identifier())
@@ -1129,12 +1133,12 @@ class AVM():
         url = self._build_url("/upnp/control/x_homeauto")
         headers = self._header.copy()
         
-        if item.conf['avm_data_type'] == 'aha_device':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
             action = 'GetSpecificDeviceInfos'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Homeauto'], action)
-            soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],{'NewAIN':item.conf['ain'].strip()})
+            soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],{'NewAIN':self.get_iattr_value(item.conf, 'ain').strip()})
         else:
-            self.logger.error("Attribute %s not supported by plugin method" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin method" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         try:
@@ -1144,7 +1148,7 @@ class AVM():
             self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
             return
 
-        if item.conf['avm_data_type'] == 'aha_device':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
             element_xml = xml.getElementsByTagName('NewSwitchState')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
@@ -1155,21 +1159,21 @@ class AVM():
                             if (len(temp) > 0):
                                 child(int(temp[0].firstChild.data))
                             else:
-                                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
                         elif child.conf['avm_data_type'] == 'power':
                             power = xml.getElementsByTagName('NewMultimeterPower')
                             if (len(power) > 0):
                                 child(int(power[0].firstChild.data))
                             else:
-                                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
                         elif child.conf['avm_data_type'] == 'energy':
                             energy = xml.getElementsByTagName('NewMultimeterEnergy')
                             if (len(energy) > 0):
                                 child(int(energy[0].firstChild.data))
                             else:
-                                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
 
     def _update_fritz_device_info(self, item):
         """
@@ -1182,10 +1186,10 @@ class AVM():
         url = self._build_url("/upnp/control/deviceinfo")
         headers = self._header.copy()
 
-        if item.conf['avm_data_type'] in ['uptime', 'software_version', 'hardware_version', 'serial_number']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['uptime', 'software_version', 'hardware_version', 'serial_number']:
             action = 'GetInfo'
         else:
-            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['DeviceInfo'], action)
@@ -1207,30 +1211,30 @@ class AVM():
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
-        if item.conf['avm_data_type'] == 'uptime':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'uptime':
             element_xml = xml.getElementsByTagName('NewUpTime')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'software_version':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'software_version':
             element_xml = xml.getElementsByTagName('NewSoftwareVersion')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'hardware_version':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'hardware_version':
             element_xml = xml.getElementsByTagName('NewHardwareVersion')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'serial_number':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'serial_number':
             element_xml = xml.getElementsByTagName('NewSerialNumber')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
     
     def _update_tam(self, item):
         """
@@ -1243,12 +1247,12 @@ class AVM():
         url = self._build_url("/upnp/control/x_tam")
         headers = self._header.copy()
 
-        if item.conf['avm_data_type'] in ['tam', 'tam_name']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['tam', 'tam_name']:
             action = 'GetInfo'
-        elif item.conf['avm_data_type'] in ['tam_new_message_number', 'tam_total_message_number']:
+        elif self.get_iattr_value(item.conf, 'avm_data_type') in ['tam_new_message_number', 'tam_total_message_number']:
             action = 'GetMessageList'
         else:
-            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['TAM'], action)
@@ -1270,19 +1274,19 @@ class AVM():
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
-        if item.conf['avm_data_type'] == 'tam':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
             element_xml = xml.getElementsByTagName('NewEnable')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'tam_name':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam_name':
             element_xml = xml.getElementsByTagName('NewName')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] in ['tam_new_message_number', 'tam_total_message_number']:
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') in ['tam_new_message_number', 'tam_total_message_number']:
             message_url_xml = xml.getElementsByTagName('NewURL')
             if (len(message_url_xml) > 0):
                 message_url = message_url_xml[0].firstChild.data
@@ -1306,16 +1310,16 @@ class AVM():
                 messages = message_xml.getElementsByTagName('Message')
                 message_count = 0
                 if (len(messages) > 0):
-                    if item.conf['avm_data_type'] == 'tam_total_message_number':
+                    if self.get_iattr_value(item.conf, 'avm_data_type') == 'tam_total_message_number':
                         message_count = len(messages)
-                    elif item.conf['avm_data_type'] == 'tam_new_message_number':
+                    elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam_new_message_number':
                         for message in messages:
                             is_new = message.getElementsByTagName('New')
                             if int(is_new[0].firstChild.data) == 1:
                                 message_count = message_count+1
                 item(message_count)
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
 
     def _update_wlan_config(self, item):
         """
@@ -1325,19 +1329,22 @@ class AVM():
 
         :param item: item to be updated (Supported item avm_data_types: wlanconfig, wlan_guest_time_remaining
         """
-        if int(item.conf['avm_wlan_index']) > 0:
-            url = self._build_url("/upnp/control/wlanconfig%s" % item.conf['avm_wlan_index'])
+        if self.has_iattr(item.conf, 'avm_wlan_index'):
+            if int(item.conf['avm_wlan_index']) > 0:
+                url = self._build_url("/upnp/control/wlanconfig%s" % item.conf['avm_wlan_index'])
+            else:
+                self.logger.error('No wlan_index attribute provided')
         else:
             self.logger.error('No wlan_index attribute provided')
 
         headers = self._header.copy()
 
-        if item.conf['avm_data_type'] in ['wlanconfig', 'wlanconfig_ssid']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'wlanconfig_ssid']:
             action = 'GetInfo'
-        elif item.conf['avm_data_type'] == 'wlan_guest_time_remaining':
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wlan_guest_time_remaining':
             action = 'X_AVM-DE_GetWLANExtInfo'
         else:
-            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
@@ -1363,24 +1370,24 @@ class AVM():
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
-        if item.conf['avm_data_type'] == 'wlanconfig':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
             element_xml = xml.getElementsByTagName('NewEnable')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif  item.conf['avm_data_type'] == 'wlanconfig_ssid':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif  self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig_ssid':
             element_xml = xml.getElementsByTagName('NewSSID')
             if (len(element_xml) > 0):
                 item(element_xml[0].firstChild.data)
             else:
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'wlan_guest_time_remaining':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wlan_guest_time_remaining':
             element_xml = xml.getElementsByTagName('NewX_AVM-DE_TimeRemain')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
 
     def _update_wan_dsl_interface_config(self, item):
         """
@@ -1390,10 +1397,10 @@ class AVM():
 
         :param item: item to be updated (Supported item avm_data_types: wan_upstream, wan_downstream)
         """
-        if item.conf['avm_data_type'] in ['wan_upstream', 'wan_downstream']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_upstream', 'wan_downstream']:
             action = 'GetInfo'
         else:
-            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
         
         url = self._build_url("/upnp/control/wandslifconfig1")
@@ -1419,18 +1426,18 @@ class AVM():
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
-        if item.conf['avm_data_type'] == 'wan_upstream':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_upstream':
             element_xml = xml.getElementsByTagName('NewUpstreamCurrRate')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'wan_downstream':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_downstream':
             element_xml = xml.getElementsByTagName('NewDownstreamCurrRate')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         
     def _update_wan_common_interface_configuration(self, item):
         """
@@ -1442,18 +1449,18 @@ class AVM():
         """
         url = self._build_url("/upnp/control/wancommonifconfig1")
 
-        if item.conf['avm_data_type']  == 'wan_total_packets_sent':
+        if self.get_iattr_value(item.conf, 'avm_data_type')  == 'wan_total_packets_sent':
             action = 'GetTotalPacketsSent'
-        elif item.conf['avm_data_type'] == 'wan_total_packets_received':
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_received':
             action = 'GetTotalPacketsReceived'
-        elif item.conf['avm_data_type'] == 'wan_total_bytes_sent':
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_sent':
             action = 'GetTotalBytesSent'
-        elif item.conf['avm_data_type'] == 'wan_total_bytes_received':
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_received':
             action = 'GetTotalBytesReceived'
-        elif item.conf['avm_data_type'] == 'wan_link':
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_link':
             action = 'GetCommonLinkProperties'
         else:
-            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
         
         headers = self._header.copy()
@@ -1477,31 +1484,31 @@ class AVM():
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
-        if item.conf['avm_data_type'] == 'wan_total_packets_sent':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_sent':
             element_xml = xml.getElementsByTagName('NewTotalPacketsSent')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'wan_total_packets_received':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_received':
             element_xml = xml.getElementsByTagName('NewTotalPacketsReceived')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'wan_total_bytes_sent':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_sent':
             element_xml = xml.getElementsByTagName('NewTotalBytesSent')
             if (len(element_xml) > 0):
                 item(int(element_xml[0].firstChild.data))
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'wan_total_bytes_received':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_received':
             element_xml = xml.getElementsByTagName('NewTotalBytesReceived')
             if (len(element_xml) > 0):                
                 item(int(element_xml[0].firstChild.data))
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'wan_link':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_link':
             element_xml = xml.getElementsByTagName('NewPhysicalLinkStatus')
             if (len(element_xml) > 0):                
                 if element_xml[0].firstChild.data == 'Up':
@@ -1509,7 +1516,7 @@ class AVM():
                 else:
                     item(False)
             else: 
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
 
     def _update_wan_ip_connection(self, item):
         """
@@ -1521,12 +1528,12 @@ class AVM():
         """
         url = self._build_url("/igdupnp/control/WANIPConn1")
 
-        if item.conf['avm_data_type'] in ['wan_connection_status','wan_is_connected','wan_uptime','wan_connection_error']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_connection_status','wan_is_connected','wan_uptime','wan_connection_error']:
             action = 'GetStatusInfo'
-        elif item.conf['avm_data_type'] == 'wan_ip':
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_ip':
             action = 'GetExternalIPAddress'
         else:
-            self.logger.error("Attribute %s not supported by plugin" % item.conf['avm_data_type'])
+            self.logger.error("Attribute %s not supported by plugin" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         headers = self._header.copy()
@@ -1549,36 +1556,36 @@ class AVM():
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
-        if item.conf['avm_data_type'] in ['wan_connection_status','wan_is_connected']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_connection_status','wan_is_connected']:
             data = self._get_value_from_xml_node(xml, 'NewConnectionStatus')
             if (not data is None):
-                if item.conf['avm_data_type'] == 'wan_connection_status':
+                if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_connection_status':
                     item(data)
-                elif item.conf['avm_data_type'] == 'wan_is_connected':
+                elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_is_connected':
                     if data == 'Connected':
                         item(True)
                     else:
                         item(False)
             else:
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'wan_uptime':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_uptime':
             data = self._get_value_from_xml_node(xml, 'NewUptime')
             if (not data is None):
                 item(int(data))
             else:
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'wan_connection_error':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_connection_error':
             data = self._get_value_from_xml_node(xml, 'NewLastConnectionError')
             if (not data is None):
                 item(data)
             else:
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
-        elif item.conf['avm_data_type'] == 'wan_ip':
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_ip':
             data = self._get_value_from_xml_node(xml, 'NewExternalIPAddress')
             if (not data is None):
                 item(data)
             else:
-                self.logger.error("Attribute %s not available on the FritzDevice" % item.conf['avm_data_type'])
+                self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
 
 
     def _get_value_from_xml_node(self, node, tag_name):
