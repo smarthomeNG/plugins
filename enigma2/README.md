@@ -10,13 +10,13 @@ It is completely based on the openwebif interface for Enigma2 devices
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
-Version 1.1.9 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
+Version 1.1.10 tested with a VUSolo2 and a VUSolo4k with newest VTI Image.
 It is currently also tested with a Dreambox 8000 and Dreambox 7020hd.
 The version is tested with new multi-instance functionality of SmartHomeNG.
 
 # Configuration
 
-## plugin.conf (uses multi-instance feature of SmartHomeNG
+## plugin.conf (uses multi-instance feature of SmartHomeNG)
 <pre>
 [vusolo4k]
     class_name = Enigma2

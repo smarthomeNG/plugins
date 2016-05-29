@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 1.1.9
+#  Version 1.1.10
 #########################################################################
 #  Free for non-commercial use
 #
@@ -124,7 +124,7 @@ class Enigma2(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the Enigma2Device
     """
 
-    PLUGIN_VERSION = "1.1.9"
+    PLUGIN_VERSION = "1.1.10"
 
     _url_suffix_map = dict([('about','/web/about'),
                             ('deviceinfo', '/web/deviceinfo'),
@@ -233,11 +233,11 @@ class Enigma2(SmartPlugin):
         for item in self._enigma2_device.get_fast_items():
             if not self.alive:
                 return
-            if item.conf['enigma2_data_type@%s' %self.get_instance_name()] in self._key_event_information:
+            if self.get_iattr_value(item.conf, 'enigma2_data_type') in self._key_event_information:
                 self._update_event_items(cache, fast)
-            elif 'enigma2_page@%s' %self.get_instance_name() in item.conf:
+            elif not self.get_iattr_value(item.conf, 'enigma2_page') is None:
                 self._update(item, fast)
-            elif item.conf['enigma2_data_type@%s' %self.get_instance_name()] == 'current_volume':
+            elif self.get_iattr_value(item.conf, 'enigma2_data_type') == 'current_volume':
                 self._update_volume(item, cache, fast)
 
         # empty response cache
@@ -253,17 +253,17 @@ class Enigma2(SmartPlugin):
 
         # normal items
         if self.has_iattr(item.conf, "enigma2_page"):
-            if item.conf['enigma2_page@%s' %self.get_instance_name()] in ['about', 'powerstate', 'subservices', 'deviceinfo']:
-                if item.conf['enigma2_data_type@%s' %self.get_instance_name()] in self._keys_fast_refresh:
+            if self.get_iattr_value(item.conf, 'enigma2_page') in ['about', 'powerstate', 'subservices', 'deviceinfo']:
+                if self.get_iattr_value(item.conf, 'enigma2_data_type') in self._keys_fast_refresh:
                     self._enigma2_device._items_fast.append(item)
                 else:
                     self._enigma2_device._items.append(item)
         elif self.has_iattr(item.conf, "enigma2_data_type"):
-            if item.conf['enigma2_data_type@%s' %self.get_instance_name()] in self._keys_fast_refresh:
+            if self.get_iattr_value(item.conf, 'enigma2_data_type') in self._keys_fast_refresh:
                 self._enigma2_device._items_fast.append(item)
             else:
                 self._enigma2_device._items.append(item)
-            if item.conf['enigma2_data_type@%s' %self.get_instance_name()] in ['current_volume', 'e2servicereference']:
+            if self.get_iattr_value(item.conf, 'enigma2_data_type') in ['current_volume', 'e2servicereference']:
                 return self.execute_item
         elif self.has_iattr(item.conf, "enigma2_remote_command_id") or self.has_iattr(item.conf, "sref"):
             return self.execute_item
@@ -278,16 +278,16 @@ class Enigma2(SmartPlugin):
         if caller != 'Enigma2':
             # enigma2 remote control
             if self.has_iattr(item.conf, 'enigma2_remote_command_id'):
-                self.remote_control_command(item.conf['enigma2_remote_command_id@%s' % self.get_instance_name()])
-                if item.conf['enigma2_remote_command_id@%s' % self.get_instance_name()] in ['105','106','116']:
+                self.remote_control_command(self.get_iattr_value(item.conf, 'enigma2_remote_command_id'))
+                if self.get_iattr_value(item.conf, 'enigma2_remote_command_id') in ['105','106','116']:
                     self._update_event_items(cache = False)
             elif self.has_iattr(item.conf, 'sref'):
-                self.zap(item.conf['sref@%s' %self.get_instance_name()])
+                self.zap(self.get_iattr_value(item.conf, 'sref'))
                 self._update_event_items(cache = False)
             elif self.has_iattr(item.conf, 'enigma2_data_type'):
-                if item.conf['enigma2_data_type@%s' %self.get_instance_name()] == 'current_volume':
+                if self.get_iattr_value(item.conf, 'enigma2_data_type') == 'current_volume':
                     self.set_volume(item())
-                elif item.conf['enigma2_data_type@%s' %self.get_instance_name()] == 'e2servicereference':
+                elif self.get_iattr_value(item.conf, 'enigma2_data_type') == 'e2servicereference':
                     self.zap(item())
 
     def remote_control_command(self, command_id):
@@ -462,7 +462,7 @@ class Enigma2(SmartPlugin):
 
     def _update_event_items(self, cache = True, fast = False):
         for item in self._enigma2_device.get_fast_items():
-            if item.conf['enigma2_data_type@%s' %self.get_instance_name()] in self._key_event_information:
+            if self.get_iattr_value(item.conf, 'enigma2_data_type') in self._key_event_information:
                 self._update_current_event(item, cache, fast)
 
     def _update_volume(self, item, cache = True, fast = False): #todo add cache
@@ -495,7 +495,7 @@ class Enigma2(SmartPlugin):
         """
         url = self._build_url(self._url_suffix_map['subservices'])
 
-        if not 'enigma2_data_type@%s' %self.get_instance_name() in item.conf:
+        if self.get_iattr_value(item.conf, 'enigma2_data_type') is None:
             self.logger.error("No enigma2_data_type set in item!")
             return
 
@@ -512,35 +512,35 @@ class Enigma2(SmartPlugin):
             e2servicereference = element_xml[0].firstChild.data
             #self.logger.debug(e2servicereference)
         else:
-            self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
+            self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
 
         if not e2servicereference == 'N/A' and not '1:0:0:0:0:0:0:0:0:0' in e2servicereference:
             current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference)
         else:
             current_epgservice = {}
 
-        if item.conf['enigma2_data_type@%s' %self.get_instance_name()] == 'e2servicename':
+        if self.get_iattr_value(item.conf, 'enigma2_data_type') == 'e2servicename':
             e2servicename = self._get_value_from_xml_node(xml, 'e2servicename')
             if e2servicename is None or e2servicename == 'N/A':
                 e2servicename = '-'
             item(e2servicename)
-        elif item.conf['enigma2_data_type@%s' %self.get_instance_name()] == 'e2servicereference':
+        elif self.get_iattr_value(item.conf, 'enigma2_data_type') == 'e2servicereference':
             if e2servicereference is None or e2servicereference == 'N/A':
                 servicereference = '-'
             else:
                 servicereference = e2servicereference
             item(servicereference)
-        elif item.conf['enigma2_data_type@%s' %self.get_instance_name()] == 'current_eventtitle':
+        elif self.get_iattr_value(item.conf, 'enigma2_data_type') == 'current_eventtitle':
             if 'e2eventtitle' in current_epgservice:
                item(current_epgservice['e2eventtitle'])
             else:
                 item('-')
-        elif item.conf['enigma2_data_type@%s' %self.get_instance_name()] == 'current_eventdescription':
+        elif self.get_iattr_value(item.conf, 'enigma2_data_type') == 'current_eventdescription':
             if 'e2eventdescription' in current_epgservice:
                 item(current_epgservice['e2eventdescription'])
             else:
                 item('-')
-        elif item.conf['enigma2_data_type@%s' %self.get_instance_name()] == 'current_eventdescriptionextended':
+        elif self.get_iattr_value(item.conf, 'enigma2_data_type') == 'current_eventdescriptionextended':
             if 'e2eventdescriptionextended' in current_epgservice:
                 item(current_epgservice['e2eventdescriptionextended'])
             else:
@@ -600,13 +600,13 @@ class Enigma2(SmartPlugin):
         :param cache: cache for request true or false
         """
 
-        if not 'enigma2_data_type@%s' %self.get_instance_name() in item.conf:
+        if self.get_iattr_value(item.conf, 'enigma2_data_type') is None:
             self.logger.error("No enigma2_data_type set in item!")
             return
 
-        url = self._build_url(self._url_suffix_map[item.conf['enigma2_page@%s' %self.get_instance_name()]])
+        url = self._build_url(self._url_suffix_map[self.get_iattr_value(item.conf, 'enigma2_page')])
 
-        result = self._cached_get_request(item.conf['enigma2_page@%s' %self.get_instance_name()], url, cache, fast)
+        result = self._cached_get_request(self.get_iattr_value(item.conf, 'enigma2_page'), url, cache, fast)
 
         try:
             xml = minidom.parseString(result)
@@ -614,16 +614,16 @@ class Enigma2(SmartPlugin):
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
 
-        if "/" in item.conf['enigma2_data_type@%s' %self.get_instance_name()]:
-            strings = item.conf['enigma2_data_type@%s' %self.get_instance_name()].split('/')
+        if "/" in self.get_iattr_value(item.conf, 'enigma2_data_type'):
+            strings = self.get_iattr_value(item.conf, 'enigma2_data_type').split('/')
             parent_element_xml = xml.getElementsByTagName(strings[0])
             if len(parent_element_xml) > 0:
                 element_xml = parent_element_xml[0].getElementsByTagName(strings[1])
             else:
-                self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type@%s' %self.get_instance_name()])
+                self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
                 return
         else:
-            element_xml = xml.getElementsByTagName(item.conf['enigma2_data_type@%s' %self.get_instance_name()])
+            element_xml = xml.getElementsByTagName(self.get_iattr_value(item.conf, 'enigma2_data_type'))
 
         if (len(element_xml) > 0):
             # self.logger.debug(element_xml[0].firstChild.data)
@@ -639,7 +639,7 @@ class Enigma2(SmartPlugin):
                         item(int(element_xml[0].firstChild.data))
                     elif (self._represents_float(element_xml[0].firstChild.data)):
                         item(float(element_xml[0].firstChild.data))
-                    elif item.conf['enigma2_data_type@%s' %self.get_instance_name()] in ['e2capacity', 'e2free']:
+                    elif self.get_iattr_value(item.conf, 'enigma2_data_type') in ['e2capacity', 'e2free']:
                         #self.logger.debug(element_xml[0].firstChild.data)
                         item(int(''.join(filter(lambda s: s.isdigit() or (s.startswith('-') and s[1:].isdigit()), element_xml[0].firstChild.data))))  # remove "GB" String and convert to int
                 else:
@@ -653,7 +653,7 @@ class Enigma2(SmartPlugin):
                 else:
                     item("-")
         else:
-            self.logger.error("Attribute %s not available on the Enigma2Device" % item.conf['enigma2_data_type'])
+            self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
 
     #helper functions below
 
