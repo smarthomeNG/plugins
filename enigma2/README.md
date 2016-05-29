@@ -48,20 +48,14 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
 ### Attributes
   * `username`: Optional login information #not tested so far
   * `password`: Optional login information #not tested so far
-  * `host`: Hostname or ip address of the FritzDevice.
-  * `port`: Port of the FritzDevice, typically 49433 for https or 49000 for http
+  * `host`: Hostname or ip address of the Enigma2 Device.
+  * `port`: Port of the Enigma2 Device, typically 80 or 81
   * `cycle`: timeperiod between two update cycles. Default is 240 seconds.
   * `ssl`: True or False => True will add "https", False "http" to the URLs in the plugin
   * `verify`: True or False => Turns certificate verification on or off. Typically False
   * `instance`: Unique identifier for each Enigma2Device / each instance of the plugin
 
 ## items.conf
-
-### avm_identifier
-This attribute defines to which instance of the plugin the item is related to. See avm_identifier above.
-
-### avm_data_type
-This attribute defines supported functions that can be set for an item. Full set see example below.
 
 ### Example:
 <pre>
