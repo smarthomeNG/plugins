@@ -446,7 +446,7 @@ This attribute defines supported functions that can be set for an item. Full set
         [[[socket_living]]]
             type = bool
             avm_data_type@fritzbox_7490 = aha_device
-            ain@fritzbox_7490 = 14324 0432601 # has to be identical to id in fritzbox (also with spaces!)
+            ain = 14324 0432601 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl = rw
             [[[[energy]]]]
                 avm_data_type = energy
@@ -466,7 +466,7 @@ This attribute defines supported functions that can be set for an item. Full set
         [[[socket_office]]]
             type = bool
             avm_data_type@fritzbox_7490 = aha_device
-            ain@fritzbox_7490 = 03456 0221393 # has to be identical to id in fritzbox (also with spaces!)
+            ain = 03456 0221393 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl = rw
             [[[[energy]]]]
                 avm_data_type = energy

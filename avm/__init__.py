@@ -744,7 +744,7 @@ class AVM(SmartPlugin):
                     switch_state = "ON"
                 else:
                     switch_state = "OFF"
-                soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],{'NewAIN':self.get_iattr_value(item.conf, 'ain').strip(),'NewSwitchState':switch_state})
+                soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],{'NewAIN':item.conf['ain'].strip(),'NewSwitchState':switch_state})
             
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 param = "%s%s%s" % ("/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['avm_wlan_index'])
@@ -1136,7 +1136,7 @@ class AVM(SmartPlugin):
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
             action = 'GetSpecificDeviceInfos'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Homeauto'], action)
-            soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],{'NewAIN':self.get_iattr_value(item.conf, 'ain').strip()})
+            soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],{'NewAIN':item.conf['ain'].strip()})
         else:
             self.logger.error("Attribute %s not supported by plugin method" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
