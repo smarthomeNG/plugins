@@ -278,8 +278,8 @@ class Enigma2(SmartPlugin):
         if caller != 'Enigma2':
             # enigma2 remote control
             if self.has_iattr(item.conf, 'enigma2_remote_command_id'):
-                self.remote_control_command(item.conf['enigma2_remote_command_id'])
-                if item.conf['enigma2_remote_command_id'] in ['105','106','116']:
+                self.remote_control_command(item.conf['enigma2_remote_command_id@%s' % self.get_instance_name()])
+                if item.conf['enigma2_remote_command_id@%s' % self.get_instance_name()] in ['105','106','116']:
                     self._update_event_items(cache = False)
             elif self.has_iattr(item.conf, 'sref'):
                 self.zap(item.conf['sref@%s' %self.get_instance_name()])
