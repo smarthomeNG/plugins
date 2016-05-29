@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 0.1
+#  Version 1.1.1
 #########################################################################
 #  Free for non-commercial use
 #
@@ -31,8 +31,10 @@
 
 import logging
 import requests
+from lib.model.smartplugin import SmartPlugin
 
-class TankerKoenig():
+class TankerKoenig(SmartPlugin):
+    PLUGIN_VERSION = "1.1.1"
     _base_url = 'https://creativecommons.tankerkoenig.de/json/'
     _detail_url_suffix = 'detail.php'
     _list_url_suffix = 'list.php'

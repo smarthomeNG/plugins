@@ -32,6 +32,7 @@ import requests
 from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 from lib.model.smartplugin import SmartPlugin
+from lib.utils import Utils
 
 class Enigma2Device():
     """
@@ -635,9 +636,9 @@ class Enigma2(SmartPlugin):
                         item(0)
             elif item.type() == 'num':
                 if not element_xml[0].firstChild is None:
-                    if (self._represents_int(element_xml[0].firstChild.data)):
+                    if (Utils.is_int(element_xml[0].firstChild.data)):
                         item(int(element_xml[0].firstChild.data))
-                    elif (self._represents_float(element_xml[0].firstChild.data)):
+                    elif (Utils.is_float(element_xml[0].firstChild.data)):
                         item(float(element_xml[0].firstChild.data))
                     elif self.get_iattr_value(item.conf, 'enigma2_data_type') in ['e2capacity', 'e2free']:
                         #self.logger.debug(element_xml[0].firstChild.data)
@@ -696,17 +697,3 @@ class Enigma2(SmartPlugin):
             if not xml[0].firstChild is None:
                 data = xml[0].firstChild.data
         return data
-
-    def _represents_int(self, string):
-        try:
-            int(string)
-            return True
-        except ValueError:
-            return False
-
-    def _represents_float(self, string):
-        try:
-            float(string)
-            return True
-        except ValueError:
-            return False
