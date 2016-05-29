@@ -30,8 +30,10 @@ import dateutil.tz
 import dateutil.relativedelta
 import xml.etree.cElementTree
 import threading
+from lib.model.smartplugin import SmartPlugin
 
-class DWD():
+class DWD(SmartPlugin):
+    PLUGIN_VERSION = "1.1.1"
     _dwd_host = 'ftp-outgoing2.dwd.de'
     _warning_cat = {}
 

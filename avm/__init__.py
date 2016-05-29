@@ -728,12 +728,12 @@ class AVM(SmartPlugin):
                 return
             
             headers = self._header.copy()
-            if self.get_iattr_value(item.conf, 'avm_data_type')  == 'wlanconfig':
+            if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 if int(item.conf['avm_wlan_index']) > 0:
                     headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
                     soap_data = self._assemble_soap_data(action, self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']),{'NewEnable':int(item())})
                 else:
-                    self.logger.error('No wlan_index attribute provided')
+                    self.logger.error('No wlan_index attribute provided: %s'%self.get_iattr_value(item.conf, 'avm_data_type'))
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
                 headers['SOAPACTION'] = "%s#%s" % (self._urn_map['TAM'], action)
                 soap_data = self._assemble_soap_data(action, self._urn_map['TAM'],{'NewIndex':0,'NewEnable':int(item())})
@@ -1329,7 +1329,7 @@ class AVM(SmartPlugin):
 
         :param item: item to be updated (Supported item avm_data_types: wlanconfig, wlan_guest_time_remaining
         """
-        if self.has_iattr(item.conf, 'avm_wlan_index'):
+        if item.conf['avm_wlan_index']:
             if int(item.conf['avm_wlan_index']) > 0:
                 url = self._build_url("/upnp/control/wlanconfig%s" % item.conf['avm_wlan_index'])
             else:
