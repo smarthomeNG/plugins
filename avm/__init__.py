@@ -130,7 +130,7 @@ class MonitoringService():
         self._listen_active = True
         buffer = ""
         data = True
-        while (self._listen_active == True):
+        while self._listen_active == True:
             data = self.conn.recv(recv_buffer)
             buffer += data.decode("utf-8")
             while buffer.find("\n") != -1:
@@ -465,7 +465,7 @@ class AVM(SmartPlugin):
         :param call_monitor_incoming_filter:    Filter only specific numbers to be watched by call monitor
         """
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Init AVM Plugin with instance %s' % self.get_instance_name())
+        self.logger.info('Init AVM Plugin')
 
         self._session = requests.Session()
         self._timeout = 10
@@ -478,10 +478,9 @@ class AVM(SmartPlugin):
 
         self._fritz_device = FritzDevice(host, port, ssl, username, password, self.get_instance_name())
 
-        call_monitor = Utils.to_bool(call_monitor)
-        if call_monitor:
+        self._call_monitor = Utils.to_bool(call_monitor)
+        if self._call_monitor :
             self._monitoring_service = MonitoringService(self._fritz_device.get_host(), 1012, self.get_contact_name_by_phone_number, call_monitor_incoming_filter, self)
-            self._monitoring_service.connect()
 
         self._call_monitor_incoming_filter = call_monitor_incoming_filter
 
@@ -495,6 +494,8 @@ class AVM(SmartPlugin):
         """
         Run method for the plugin
         """
+        if self._call_monitor:
+            self._monitoring_service.connect()
         self._sh.scheduler.add(__name__+"_"+self._fritz_device.get_identifier(), self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
@@ -502,7 +503,7 @@ class AVM(SmartPlugin):
         """
         Stop method for the plugin
         """
-        if not self._monitoring_service is None:
+        if self._call_monitor:
             self._monitoring_service.disconnect()
         self.alive = False
 
