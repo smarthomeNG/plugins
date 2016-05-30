@@ -162,20 +162,11 @@ class Enigma2(SmartPlugin):
 
         self._session = requests.Session()
         self._timeout = 10
+        self._verify = Utils.to_bool(verify)
 
-        if verify == 'False':
-            self._verify = False
-        else:
-            self._verify = True
-
-        if ssl == 'True':
-            ssl = True
-            if not self._verify:
-                urllib3.disable_warnings()
-        else:
-            ssl = False
-            self._session.mount("http://", requests.adapters.HTTPAdapter(max_retries=1))
-
+        ssl = Utils.to_bool(ssl)
+        if ssl and not self._verify:
+            urllib3.disable_warnings()
 
         self._enigma2_device = Enigma2Device(host, port, ssl, username, password)
 
@@ -327,7 +318,7 @@ class Enigma2(SmartPlugin):
             xml = minidom.parseString(response.content)
         except Exception as e:
             self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while (not self._sh.tools.ping(self._enigma2_device.get_host())):
+            while not self._sh.tools.ping(self._enigma2_device.get_host()):
                 time.sleep(10)
             return
 
@@ -374,7 +365,7 @@ class Enigma2(SmartPlugin):
                                                              self._enigma2_device.get_password()), verify=self._verify)
         except Exception as e:
             self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while (not self._sh.tools.ping(self._enigma2_device.get_host())):
+            while not self._sh.tools.ping(self._enigma2_device.get_host()):
                 time.sleep(10)
             return
 
@@ -400,14 +391,14 @@ class Enigma2(SmartPlugin):
                                                              self._enigma2_device.get_password()), verify=self._verify)
         except Exception as e:
             self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while (not self._sh.tools.ping(self._enigma2_device.get_host())):
+            while not self._sh.tools.ping(self._enigma2_device.get_host()):
                 time.sleep(10)
             return
 
         xml = minidom.parseString(response.content)
         e2result_xml = xml.getElementsByTagName('e2result')
         e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
-        if (len(e2resulttext_xml) > 0 and len(e2result_xml) > 0):
+        if len(e2resulttext_xml) > 0 and len(e2result_xml) > 0:
             if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
                 if e2result_xml[0].firstChild.data == 'True':
                     self.logger.debug(e2resulttext_xml[0].firstChild.data)
@@ -426,14 +417,14 @@ class Enigma2(SmartPlugin):
                                                           self._enigma2_device.get_password()), verify=self._verify)
         except Exception as e:
             self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while (not self._sh.tools.ping(self._enigma2_device.get_host())):
+            while not self._sh.tools.ping(self._enigma2_device.get_host()):
                 time.sleep(10)
             return
         
         xml = minidom.parseString(response.content)
         e2result_xml = xml.getElementsByTagName('e2result')
         e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
-        if (len(e2resulttext_xml) > 0 and len(e2result_xml) >0):
+        if len(e2resulttext_xml) > 0 and len(e2result_xml) >0:
             if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
                 if e2result_xml[0].firstChild.data == 'True':
                     self.logger.debug(e2resulttext_xml[0].firstChild.data)
@@ -449,7 +440,7 @@ class Enigma2(SmartPlugin):
             xml = minidom.parseString(response.content)
         except Exception as e:
             self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while (not self._sh.tools.ping(self._enigma2_device.get_host())):
+            while not self._sh.tools.ping(self._enigma2_device.get_host()):
                 time.sleep(10)
             return
 
@@ -480,7 +471,7 @@ class Enigma2(SmartPlugin):
             xml = minidom.parseString(response.content)
         except Exception as e:
             self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while (not self._sh.tools.ping(self._enigma2_device.get_host())):
+            while not self._sh.tools.ping(self._enigma2_device.get_host()):
                 time.sleep(10)
             return
 
@@ -509,13 +500,13 @@ class Enigma2(SmartPlugin):
             return
 
         element_xml = xml.getElementsByTagName('e2servicereference')
-        if (len(element_xml) > 0):
+        if len(element_xml) > 0:
             e2servicereference = element_xml[0].firstChild.data
             #self.logger.debug(e2servicereference)
         else:
             self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
 
-        if not e2servicereference == 'N/A' and not '1:0:0:0:0:0:0:0:0:0' in e2servicereference:
+        if not e2servicereference == 'N/A' and '1:0:0:0:0:0:0:0:0:0' not in e2servicereference:
             current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference)
         else:
             current_epgservice = {}
@@ -554,7 +545,7 @@ class Enigma2(SmartPlugin):
         :param referece of the service to retrieve data for:
         :return: dict of result data
         """
-        url = self._build_url(self._url_suffix_map['epgservice'], 'sRef=%s' % (service_reference))
+        url = self._build_url(self._url_suffix_map['epgservice'], 'sRef=%s' % service_reference)
 
         try:
             response = self._session.get(url, timeout=self._timeout,
@@ -563,7 +554,7 @@ class Enigma2(SmartPlugin):
                                          verify=self._verify)
         except Exception as e:
             self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while (not self._sh.tools.ping(self._enigma2_device.get_host())):
+            while not self._sh.tools.ping(self._enigma2_device.get_host()):
                 time.sleep(10)
             return
 
@@ -636,9 +627,9 @@ class Enigma2(SmartPlugin):
                         item(0)
             elif item.type() == 'num':
                 if not element_xml[0].firstChild is None:
-                    if (Utils.is_int(element_xml[0].firstChild.data)):
+                    if Utils.is_int(element_xml[0].firstChild.data):
                         item(int(element_xml[0].firstChild.data))
-                    elif (Utils.is_float(element_xml[0].firstChild.data)):
+                    elif Utils.is_float(element_xml[0].firstChild.data):
                         item(float(element_xml[0].firstChild.data))
                     elif self.get_iattr_value(item.conf, 'enigma2_data_type') in ['e2capacity', 'e2free']:
                         #self.logger.debug(element_xml[0].firstChild.data)
@@ -664,7 +655,7 @@ class Enigma2(SmartPlugin):
         else:
             response_cache = self._response_cache_fast
 
-        if not cache_key in response_cache or not cache:
+        if cache_key not in response_cache or not cache:
             try:
                 response = self._session.get(url, timeout=self._timeout,
                                              auth=HTTPDigestAuth(self._enigma2_device.get_user(),
@@ -672,7 +663,7 @@ class Enigma2(SmartPlugin):
                                              verify=self._verify)
             except Exception as e:
                 self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-                while (not self._sh.tools.ping(self._enigma2_device.get_host())):
+                while not self._sh.tools.ping(self._enigma2_device.get_host()):
                     time.sleep(10)
                 return
 

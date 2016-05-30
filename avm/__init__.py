@@ -39,6 +39,8 @@ import requests
 from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 from lib.model.smartplugin import SmartPlugin
+from lib.utils import Utils
+
 
 class MonitoringService():
     """
@@ -332,6 +334,7 @@ class MonitoringService():
                     self._stop_counter('incoming')
                 self._call_incoming_cid = None
 
+
 class FritzDevice():
     """
     This class encapsulates information related to a specific FritzDevice, such has host, port, ssl, username, password, or related items
@@ -410,6 +413,7 @@ class FritzDevice():
         """
         return self._password
 
+
 class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
@@ -466,21 +470,16 @@ class AVM(SmartPlugin):
         self._session = requests.Session()
         self._timeout = 10
 
-        if verify == 'False':
-            self._verify = False
-        else:
-            self._verify = True
+        self._verify = Utils.to_bool(verify)
+        ssl = Utils.to_bool(ssl)
 
-        if ssl == 'True':
-            ssl = True
-            if not self._verify:
-                urllib3.disable_warnings()
-        else:
-            ssl = False
+        if ssl and not self._verify:
+            urllib3.disable_warnings()
 
         self._fritz_device = FritzDevice(host, port, ssl, username, password, self.get_instance_name())
-        
-        if call_monitor == 'True':
+
+        call_monitor = Utils.to_bool(call_monitor)
+        if call_monitor:
             self._monitoring_service = MonitoringService(self._fritz_device.get_host(), 1012, self.get_contact_name_by_phone_number, call_monitor_incoming_filter, self)
             self._monitoring_service.connect()
 
@@ -589,10 +588,6 @@ class AVM(SmartPlugin):
 
         :param item: The item to process.
         """
-        #if 'avm_identifier' in item.conf:
-        #    value = item.conf['avm_identifier']
-        #    if value == self._fritz_device.get_identifier():
-
         # items specific to call monitor
         if self.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_incoming', 'last_caller_incoming', 'last_call_date_incoming',
                                           'call_event_incoming', 'last_number_incoming', 'last_called_number_incoming',
@@ -677,7 +672,7 @@ class AVM(SmartPlugin):
                         if element['Type'] in ['3', '4']:
                             item('outgoing')
                             break
-            if not self._monitoring_service is None:
+            if self._monitoring_service is not None:
                 self._monitoring_service.register_item(item)
         elif self.get_iattr_value(item.conf, 'avm_data_type') in ['call_duration_incoming', 'call_duration_outgoing']:
             # items specific to call monitor duration calculation
@@ -1048,14 +1043,14 @@ class AVM(SmartPlugin):
             return
 
         try:
-            response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:
             self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
             return
         
         tag_content = xml.getElementsByTagName('NewEnabled')
-        if (len(tag_content) > 0):
+        if len(tag_content) > 0:
             item(tag_content[0].firstChild.data)
 
     def _update_host(self, item):
@@ -1071,7 +1066,7 @@ class AVM(SmartPlugin):
         headers = self._header.copy()
         
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'network_device':
-            if not 'mac' in item.conf:
+            if 'mac' not in item.conf:
                 self.logger.error("No mac attribute provided in network_device item")
                 return
             action = 'GetSpecificHostEntry'
@@ -1082,20 +1077,20 @@ class AVM(SmartPlugin):
             return
 
         try:
-            response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
             self.logger.error("Exception when sending POST request: %s" % str(e))
             return
 
         tag_content = xml.getElementsByTagName('NewActive')
-        if (len(tag_content) > 0):
+        if len(tag_content) > 0:
             item(tag_content[0].firstChild.data)
             for child in item.return_children():
                 if 'avm_data_type' in child.conf:
                     if child.conf['avm_data_type'] == 'device_ip':
                         device_ip = xml.getElementsByTagName('NewIPAddress')
-                        if (len(device_ip) > 0):
+                        if len(device_ip) > 0:
                             if not device_ip[0].firstChild is None:
                                 child(device_ip[0].firstChild.data)
                             else:
@@ -1104,7 +1099,7 @@ class AVM(SmartPlugin):
                             self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
                     elif child.conf['avm_data_type'] == 'device_connection_type':
                         device_connection_type = xml.getElementsByTagName('NewInterfaceType')
-                        if (len(device_connection_type) > 0):
+                        if len(device_connection_type) > 0:
                             if not device_connection_type[0].firstChild is None:
                                 child(device_connection_type[0].firstChild.data)
                             else:
@@ -1142,7 +1137,7 @@ class AVM(SmartPlugin):
             return
 
         try:
-            response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:            
             self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
@@ -1150,25 +1145,25 @@ class AVM(SmartPlugin):
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
             element_xml = xml.getElementsByTagName('NewSwitchState')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
                 for child in item.return_children():
                     if 'avm_data_type' in child.conf:
                         if child.conf['avm_data_type'] == 'temperature':
                             temp = xml.getElementsByTagName('NewTemperatureCelsius')
-                            if (len(temp) > 0):
+                            if len(temp) > 0:
                                 child(int(temp[0].firstChild.data))
                             else:
                                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
                         elif child.conf['avm_data_type'] == 'power':
                             power = xml.getElementsByTagName('NewMultimeterPower')
-                            if (len(power) > 0):
+                            if len(power) > 0:
                                 child(int(power[0].firstChild.data))
                             else:
                                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
                         elif child.conf['avm_data_type'] == 'energy':
                             energy = xml.getElementsByTagName('NewMultimeterEnergy')
-                            if (len(energy) > 0):
+                            if len(energy) > 0:
                                 child(int(energy[0].firstChild.data))
                             else:
                                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -1195,9 +1190,9 @@ class AVM(SmartPlugin):
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['DeviceInfo'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['DeviceInfo'])
 
-        if not "dev_info_"+action in self._response_cache:
+        if "dev_info_"+action not in self._response_cache:
             try:
-                response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 self.logger.error("Exception when sending POST request: %s" % str(e))
                 return
@@ -1213,25 +1208,25 @@ class AVM(SmartPlugin):
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'uptime':
             element_xml = xml.getElementsByTagName('NewUpTime')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'software_version':
             element_xml = xml.getElementsByTagName('NewSoftwareVersion')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'hardware_version':
             element_xml = xml.getElementsByTagName('NewHardwareVersion')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'serial_number':
             element_xml = xml.getElementsByTagName('NewSerialNumber')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -1258,9 +1253,9 @@ class AVM(SmartPlugin):
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['TAM'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['TAM'],{'NewIndex':0})
 
-        if not "tam_"+action in self._response_cache:
+        if "tam_"+action not in self._response_cache:
             try:
-                response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 self.logger.error("Exception when sending POST request: %s" % str(e))
                 return
@@ -1276,19 +1271,19 @@ class AVM(SmartPlugin):
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
             element_xml = xml.getElementsByTagName('NewEnable')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam_name':
             element_xml = xml.getElementsByTagName('NewName')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') in ['tam_new_message_number', 'tam_total_message_number']:
             message_url_xml = xml.getElementsByTagName('NewURL')
-            if (len(message_url_xml) > 0):
+            if len(message_url_xml) > 0:
                 message_url = message_url_xml[0].firstChild.data
 
                 if not "tam_messages" in self._response_cache:
@@ -1309,7 +1304,7 @@ class AVM(SmartPlugin):
 
                 messages = message_xml.getElementsByTagName('Message')
                 message_count = 0
-                if (len(messages) > 0):
+                if len(messages) > 0:
                     if self.get_iattr_value(item.conf, 'avm_data_type') == 'tam_total_message_number':
                         message_count = len(messages)
                     elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam_new_message_number':
@@ -1372,19 +1367,19 @@ class AVM(SmartPlugin):
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
             element_xml = xml.getElementsByTagName('NewEnable')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
-        elif  self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig_ssid':
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig_ssid':
             element_xml = xml.getElementsByTagName('NewSSID')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
             else:
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wlan_guest_time_remaining':
             element_xml = xml.getElementsByTagName('NewX_AVM-DE_TimeRemain')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -1410,9 +1405,9 @@ class AVM(SmartPlugin):
         soap_data = self._assemble_soap_data(action, self._urn_map['WANDSLInterfaceConfig'])
 
         # if action has not been called in a cycle so far, request it and cache response
-        if not "wan_dsl_interface_config_"+action in self._response_cache:
+        if "wan_dsl_interface_config_"+action not in self._response_cache:
             try:
-                response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 self.logger.error("Exception when sending POST request: %s" % str(e))
                 return
@@ -1428,13 +1423,13 @@ class AVM(SmartPlugin):
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_upstream':
             element_xml = xml.getElementsByTagName('NewUpstreamCurrRate')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_downstream':
             element_xml = xml.getElementsByTagName('NewDownstreamCurrRate')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -1468,9 +1463,9 @@ class AVM(SmartPlugin):
         soap_data = self._assemble_soap_data(action, self._urn_map['WANCommonInterfaceConfig'])
 
         # if action has not been called in a cycle so far, request it and cache response
-        if not "wan_common_interface_configuration_"+action in self._response_cache:
+        if "wan_common_interface_configuration_"+action not in self._response_cache:
             try:
-                response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 self.logger.error("Exception when sending POST request: %s" % str(e))
                 return
@@ -1486,31 +1481,31 @@ class AVM(SmartPlugin):
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_sent':
             element_xml = xml.getElementsByTagName('NewTotalPacketsSent')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_received':
             element_xml = xml.getElementsByTagName('NewTotalPacketsReceived')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_sent':
             element_xml = xml.getElementsByTagName('NewTotalBytesSent')
-            if (len(element_xml) > 0):
+            if len(element_xml) > 0:
                 item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_received':
             element_xml = xml.getElementsByTagName('NewTotalBytesReceived')
-            if (len(element_xml) > 0):                
+            if len(element_xml) > 0:
                 item(int(element_xml[0].firstChild.data))
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_link':
             element_xml = xml.getElementsByTagName('NewPhysicalLinkStatus')
-            if (len(element_xml) > 0):                
+            if len(element_xml) > 0:
                 if element_xml[0].firstChild.data == 'Up':
                     item(True)
                 else:
@@ -1541,9 +1536,9 @@ class AVM(SmartPlugin):
         soap_data = self._assemble_soap_data(action, self._urn_map['WANIPConnection'])
 
         # if action has not been called in a cycle so far, request it and cache response
-        if not "wan_ip_connection_"+action in self._response_cache:
+        if "wan_ip_connection_"+action not in self._response_cache:
             try:
-                response= self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
+                response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers, auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:            
                 self.logger.error("Exception when sending POST request: %s" % str(e))
             self._response_cache["wan_ip_connection_"+action] = response.content
@@ -1558,7 +1553,7 @@ class AVM(SmartPlugin):
 
         if self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_connection_status','wan_is_connected']:
             data = self._get_value_from_xml_node(xml, 'NewConnectionStatus')
-            if (not data is None):
+            if data is not None:
                 if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_connection_status':
                     item(data)
                 elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_is_connected':
@@ -1570,19 +1565,19 @@ class AVM(SmartPlugin):
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_uptime':
             data = self._get_value_from_xml_node(xml, 'NewUptime')
-            if (not data is None):
+            if data is not None:
                 item(int(data))
             else:
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_connection_error':
             data = self._get_value_from_xml_node(xml, 'NewLastConnectionError')
-            if (not data is None):
+            if data is not None:
                 item(data)
             else:
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_ip':
             data = self._get_value_from_xml_node(xml, 'NewExternalIPAddress')
-            if (not data is None):
+            if data is not None:
                 item(data)
             else:
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -1591,7 +1586,7 @@ class AVM(SmartPlugin):
     def _get_value_from_xml_node(self, node, tag_name):
         data = None
         xml = node.getElementsByTagName(tag_name)
-        if (len(xml) > 0):
+        if len(xml) > 0:
             if not xml[0].firstChild is None:
                 data = xml[0].firstChild.data
         return data
