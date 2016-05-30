@@ -73,7 +73,7 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
 
 ### avm_data_type
 This attribute defines supported functions that can be set for an item. Full set see example below.
-For most items, the avm_data_type can be bound to an instance via @<instance_name>. Only in some points the items
+For most items, the avm_data_type can be bound to an instance via @... . Only in some points the items
 are parsed as child items. In the example below there is a comment in the respective spots.
 
 ### Example:
