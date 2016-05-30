@@ -89,6 +89,8 @@ class MonitoringService():
         Disconnects from the call monitor of the AVM device
         """
         self._listen_active = False
+        self._stop_counter('incoming')
+        self._stop_counter('outgoing')
         try:
             self._listen_thread.join(1)
         except:
