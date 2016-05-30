@@ -42,15 +42,16 @@
 
 import logging
 import socket
-from lib.utils import Utils
 from lib.model.smartplugin import SmartPlugin
 
 ITEM_TAG = ['wol_mac']
 class WakeOnLan(SmartPlugin):
     PLUGIN_VERSION = "1.1.2"
-    def __init__(self, sh,**kwargs):
+    ALLOW_MULTIINSTANCE = True
+    def __init__(self, sh,*args, **kwargs):
         self._sh = sh
         self.logger = logging.getLogger(__name__)
+        print("###"+self.get_instance_name())
 
     def __call__(self, mac_adr):
         self.wake_on_lan(mac_adr)
@@ -76,7 +77,7 @@ class WakeOnLan(SmartPlugin):
     def wake_on_lan(self, mac_adr):
         self.logger.debug("WakeOnLan: send magic paket to {}".format(mac_adr))
         # check length and format 
-        if Utils.isMAC(mac_adr) != True:
+        if self.is_mac(mac_adr) != True:
             self.logger.warning("WakeOnLan: invalid mac address {}!".format(mac_adr))
             return
         if len(mac_adr) == 12 + 5:
@@ -92,7 +93,7 @@ class WakeOnLan(SmartPlugin):
     def testprint(self):
         print(self.get_version())
         print(self.get_instance_name())
-        print(Utils.to_bool("yes"))
+        print(self.to_bool("yes"))
 if __name__ == '__main__':
     myplugin = WakeOnLan('smarthome-dummy')
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
