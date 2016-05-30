@@ -71,11 +71,10 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
 
 ## items.conf
 
-### avm_identifier
-This attribute defines to which instance of the plugin the item is related to. See avm_identifier above.
-
 ### avm_data_type
 This attribute defines supported functions that can be set for an item. Full set see example below.
+For most items, the avm_data_type can be bound to an instance via @<instance_name>. Only in some points the items
+are parsed as child items. In the example below there is a comment in the respective spots.
 
 ### Example:
 <pre>
@@ -324,15 +323,15 @@ This attribute defines supported functions that can be set for an item. Full set
 	            type = bool
 	            cache = yes
 	            visu_acl = ro
-	            [[[[[ip]]]]]
+	            [[[[[ip]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_ip
 	                visu_acl = ro
-	            [[[[[connection_type]]]]]
+	            [[[[[connection_type]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_connection_type
 	                visu_acl = ro
-	            [[[[[hostname]]]]]
+	            [[[[[hostname]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_hostname
 	                visu_acl = ro
@@ -342,15 +341,15 @@ This attribute defines supported functions that can be set for an item. Full set
 	            type = bool
 	            cache = yes
 	            visu_acl = ro
-	            [[[[[ip]]]]]
+	            [[[[[ip]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_ip
 	                visu_acl = ro
-	            [[[[[connection_type]]]]]
+	            [[[[[connection_type]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_connection_type
 	                visu_acl = ro
-	            [[[[[hostname]]]]]
+	            [[[[[hostname]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_hostname
 	                visu_acl = ro
@@ -360,15 +359,15 @@ This attribute defines supported functions that can be set for an item. Full set
 	            avm_data_type@fritzbox_7490 = network_device
 	            type = bool
 	            visu_acl = ro
-	            [[[[[ip]]]]] # no avm_identifier necessary, attributes are parsed via child items
+	            [[[[[ip]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_ip
 	                visu_acl = ro
-	            [[[[[connection_type]]]]]
+	            [[[[[connection_type]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_connection_type
 	                visu_acl = ro
-	            [[[[[hostname]]]]]
+	            [[[[[hostname]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_hostname
 	                visu_acl = ro
@@ -377,15 +376,15 @@ This attribute defines supported functions that can be set for an item. Full set
 	            avm_data_type@fritzbox_7490 = network_device
 	            type = bool
 	            visu_acl = ro
-	            [[[[[ip]]]]] # no avm_identifier necessary, attributes are parsed via child items
+	            [[[[[ip]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_ip
 	                visu_acl = ro
-	            [[[[[connection_type]]]]]
+	            [[[[[connection_type]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_connection_type
 	                visu_acl = ro
-	            [[[[[hostname]]]]]
+	            [[[[[hostname]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_hostname
 	                visu_acl = ro
@@ -395,15 +394,15 @@ This attribute defines supported functions that can be set for an item. Full set
 	            type = bool
 	            cache = yes
 	            visu_acl = ro
-	            [[[[[ip]]]]]
+	            [[[[[ip]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_ip
 	                visu_acl = ro
-	            [[[[[connection_type]]]]]
+	            [[[[[connection_type]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_connection_type
 	                visu_acl = ro
-	            [[[[[hostname]]]]]
+	            [[[[[hostname]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_hostname
 	                visu_acl = ro
@@ -412,15 +411,15 @@ This attribute defines supported functions that can be set for an item. Full set
 	            avm_data_type@fritzbox_7490 = network_device
 	            type = bool
 	            visu_acl = ro
-	            [[[[[ip]]]]]
+	            [[[[[ip]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_ip
 	                visu_acl = ro
-	            [[[[[connection_type]]]]]
+	            [[[[[connection_type]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_connection_type
 	                visu_acl = ro
-	            [[[[[hostname]]]]]
+	            [[[[[hostname]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_hostname
 	                visu_acl = ro
@@ -430,15 +429,15 @@ This attribute defines supported functions that can be set for an item. Full set
 	            type = bool
 	            cache = yes
 	            visu_acl = ro
-	            [[[[[ip]]]]]
+	            [[[[[ip]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_ip
 	                visu_acl = ro
-	            [[[[[connection_type]]]]]
+	            [[[[[connection_type]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_connection_type
 	                visu_acl = ro
-	            [[[[[hostname]]]]]
+	            [[[[[hostname]]]]] # these items need to be child items from network_device, an @... must not be set
 	                type = str
 	                avm_data_type = device_hostname
 	                visu_acl = ro
@@ -448,18 +447,18 @@ This attribute defines supported functions that can be set for an item. Full set
             avm_data_type@fritzbox_7490 = aha_device
             ain = 14324 0432601 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl = rw
-            [[[[energy]]]]
+            [[[[energy]]]] # these items need to be child items from aha_device, an @... must not be set
                 avm_data_type = energy
                 type = num
                 visu_acl = ro
-            [[[[power]]]]
+            [[[[power]]]] # these items need to be child items from aha_device, an @... must not be set
                 avm_data_type = power
                 type = num
                 sqlite = yes
                 enforce_updates=true
                 visu_acl = ro
                 eval = value / 100
-            [[[[temperature]]]]
+            [[[[temperature]]]] # these items need to be child items from aha_device, an @... must not be set
                 avm_data_type = temperature
                 type = num
                 visu_acl = ro
@@ -468,18 +467,18 @@ This attribute defines supported functions that can be set for an item. Full set
             avm_data_type@fritzbox_7490 = aha_device
             ain = 03456 0221393 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl = rw
-            [[[[energy]]]]
+            [[[[energy]]]] # these items need to be child items from aha_device, an @... must not be set
                 avm_data_type = energy
                 type = num
                 visu_acl = ro
-            [[[[power]]]]
+            [[[[power]]]] # these items need to be child items from aha_device, an @... must not be set
                 avm_data_type = power
                 type = num
                 sqlite = yes
                 enforce_updates=true
                 visu_acl = ro
                 eval = value / 100
-            [[[[temperature]]]]
+            [[[[temperature]]]] # these items need to be child items from aha_device, an @... must not be set
                 avm_data_type = temperature
                 type = num
                 visu_acl = ro
