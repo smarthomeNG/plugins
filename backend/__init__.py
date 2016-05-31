@@ -185,7 +185,15 @@ class Backend:
         tmpl = self.env.get_template('services.html')
         return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, python_packages=python_packages)
 
-        
+    @cherrypy.expose
+    def disclosure_html(self):
+        """
+        display a list of items
+        """
+
+        tmpl = self.env.get_template('disclosure.html')
+        return tmpl.render(smarthome=self._sh)
+
     @cherrypy.expose
     def items_html(self):
         """
