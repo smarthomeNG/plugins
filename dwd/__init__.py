@@ -207,8 +207,23 @@ class DWD(SmartPlugin):
                 elif line.startswith('Vorhersage'):
                     header = line
                 elif line.count(location):
-                    header = re.sub(r"/\d\d?", '', header)
-                    day, month, year = re.findall(r"\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')
+                    if frame == 'nacht':
+                        #header = re.sub(r"/\d\d?", '', header)
+                        day, month, year = re.findall(r"\d\d\D\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')  #31/01.06.2016
+                        day1, day2 = day.split("/")
+                        if day2 == "01":
+                            if 1 < int(month) < 10:
+                                month = "0%s"%str(int(month)-1)
+                            elif int(month) == 1: #next day of night in new year, reset to last year
+                                month = "12"
+                                year = str(int(year)-1)
+                            else:
+                                month = str(int(month)-1)
+                        day = day1
+                    else:
+                        header = re.sub(r"/\d\d?", '', header)
+                        day, month, year = re.findall(r"\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')
+                    #self.logger.debug(day+" "+month+" "+year)
                     date = datetime.datetime(int(year), int(month), int(day), hour, tzinfo=self.tz)
                     if re.search("\d\d\/\d\d", header):
                         date = date + datetime.timedelta(days=-1)
