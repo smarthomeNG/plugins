@@ -35,7 +35,10 @@ function setVisibility(rowName) {
                     {% for item in smarthome.return_items() %}
                     <tr onclick="setVisibility('{{ item }}')" style="cursor: pointer;">
                         <td>
-                           <span id="span_{{ item }}">+</span>&nbsp;{{ item }}
+                           <span id="span_{{ item }}">+</span>&nbsp;{{ item._path }}<br/>
+                            {% if item._path != item._name %}
+                            (<strong>Item-Name:</strong> {{ item._name }})
+                            {%endif%}
                         </td>
                         <td>{{ item() }}</td>
                     </tr>

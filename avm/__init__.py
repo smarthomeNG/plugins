@@ -480,8 +480,9 @@ class AVM(SmartPlugin):
         self._fritz_device = FritzDevice(host, port, ssl, username, password, self.get_instance_name())
 
         self._call_monitor = self.to_bool(call_monitor)
-        if self._call_monitor :
+        if self._call_monitor:
             self._monitoring_service = MonitoringService(self._fritz_device.get_host(), 1012, self.get_contact_name_by_phone_number, call_monitor_incoming_filter, self)
+            self._monitoring_service.connect()
 
         self._call_monitor_incoming_filter = call_monitor_incoming_filter
 
@@ -495,8 +496,6 @@ class AVM(SmartPlugin):
         """
         Run method for the plugin
         """
-        if self._call_monitor:
-            self._monitoring_service.connect()
         self._sh.scheduler.add(__name__+"_"+self._fritz_device.get_identifier(), self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
