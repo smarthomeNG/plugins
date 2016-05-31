@@ -254,8 +254,20 @@ class Backend:
         """
         display a list of all known plugins
         """
+        plugins = []
+        for x in self._sh._plugins:
+            plugin = dict()
+            plugin['classname'] = x.__class__.__name__
+            if isinstance(x, SmartPlugin):
+                plugin['smartplugin'] = True
+                plugin['instancename'] = x.get_instance_name()
+                plugin['version'] = x.get_version()
+            else:
+                plugin['smartplugin'] = False
+            plugins.append(plugin)
+
         tmpl = self.env.get_template('plugins.html')
-        return tmpl.render( smarthome = self._sh )
+        return tmpl.render( smarthome = self._sh, plugins = plugins )
         
     @cherrypy.expose
     def reboot(self):

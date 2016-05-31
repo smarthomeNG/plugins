@@ -10,23 +10,29 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
+                    <th>Nr.</th>
+                    <th>Type</th>
                     <th>Plugin</th>
+                    <th>Instanz</th>
+                    <th>Version</th>
                 </tr>
             </thead>
             <tbody>
-                {% if smarthome %}
-                    {% for p in smarthome._plugins  %}
-                    <tr>
-                        <td>{{ loop.index }}. Plugin: {{ p.name }}</td>
-                        <td>{{ smarthome._plugins[p] }}</td>
-                        <td>{{ p.classpath }}</td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td>no data available</td>
-                    </tr>
-                {% endif %}
+                {% for p in plugins  %}
+                <tr>
+                    <td width="30px">{{ loop.index }}</td>
+                    <td width="30px">{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}
+                    <td width="200px">{{ p.classname }}</td>
+                    {% if p.smartplugin %}
+                        <td width="200px">
+                        {% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
+                        </td>
+                        <td>{{ p.version }}</td>
+                    {% else %}
+                        <td colspan="2"></td>
+                    {%endif%}
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
