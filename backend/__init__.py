@@ -26,6 +26,7 @@ import logging
 import platform
 import datetime
 import pwd
+import dbm
 import os
 import subprocess
 import socket
@@ -116,7 +117,7 @@ class Backend:
 
     @cherrypy.expose
     def system_html(self):
-        today = datetime.date.today()
+        now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
         system = platform.system()
         node = platform.node()
         arch = platform.machine()
@@ -132,14 +133,13 @@ class Backend:
             ip = "IP nicht erkannt"
 
         space = os.statvfs(self._sh_dir)
-        freespace = (space.f_frsize * space.f_bavail)/1024/1024
+        freespace = space.f_frsize * space.f_bavail/1024/1024
 
         get_uptime = subprocess.Popen('uptime', stdout=subprocess.PIPE)
         uptime = get_uptime.stdout.read()
 
         tmpl = self.env.get_template('system.html')
-        return tmpl.render( today=today, system= \
-                                system, node=node, arch=arch, user=user, \
+        return tmpl.render( now=now, system=system, node=node, arch=arch, user=user,
                                 freespace=freespace, uptime=uptime,
                                 ip=ip, python_packages=python_packages)
 

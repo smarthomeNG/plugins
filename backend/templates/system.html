@@ -44,12 +44,12 @@
                 <tr>
                     <td><img src="/static/img/hd.svg" width="48" height="48"></td>
                     <td>Freier Speicher:</td>
-                    <td>{{ freespace }} MByte</td>
+                    <td>{{ (freespace)|round|int }} MByte</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/clock.svg" width="48" height="48"></td>
-                    <td>Datum:</td>
-                    <td>{{ today }}</td>
+                    <td>Datum / Zeit:</td>
+                    <td>{{ now }}</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/preferences.svg" width="48" height="48"></td>
