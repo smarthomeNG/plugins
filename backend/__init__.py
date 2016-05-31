@@ -25,6 +25,7 @@ import cherrypy
 import logging
 import platform
 import datetime
+import pwd
 import os
 import subprocess
 import socket
@@ -119,7 +120,7 @@ class Backend:
         system = platform.system()
         node = platform.node()
         arch = platform.machine()
-        user = os.getlogin()
+        user = pwd.getpwuid(os.geteuid()).pw_name  #os.getlogin()
         node = platform.node()
         python_packages = self.getpackages()
         try:
