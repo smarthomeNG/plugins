@@ -4,8 +4,24 @@
 {% block navbar %}
     {{ nav }}
 {% endblock navbar %}
-
 {% block content %}
+ <script type="text/javascript" language="javascript">
+function setVisibility(rowName) {
+    // Tabellenzelle ermitteln
+
+    var actualVisibility=document.getElementById(rowName).style.visibility;
+
+    if(actualVisibility=='' || actualVisibility=='visible') {
+        document.getElementById(rowName).style.visibility = "hidden";
+        document.getElementById(rowName).style.display = "none";
+        document.getElementById('span_'+rowName).innerHTML = "+";
+    } else {
+        document.getElementById(rowName).style.visibility = "visible";
+        document.getElementById(rowName).style.display = "block";
+        document.getElementById('span_'+rowName).innerHTML = "-";
+    }
+}
+</script>
 <div class="table-responsive">
         <table class="table table-striped table-hover">
             <thead>
@@ -17,19 +33,33 @@
             <tbody>
                 {% if smarthome %}
                     {% for item in smarthome.return_items() %}
-                    <tr>
+                    <tr onclick="setVisibility('{{ item }}')" style="cursor: pointer;">
                         <td>
-                           {{ item }}
+                           <span id="span_{{ item }}">+</span>&nbsp;{{ item }}
                         </td>
                         <td>{{ item() }}</td>
                     </tr>
-                    {% for attribute in item.__dict__.keys() %}
-                    <tr>
-                        <td>{{ attribute }}
+                    <tr id="{{ item }}" style="visibility: hidden; display: none;">
+                        <td colspan="2">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                <tr>
+                                    <th>Attribut:</th>
+                                    <th>Wert:</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for attribute in item.__dict__.keys() %}
+                                <tr>
+                                    <td>{{ attribute }}
+                                    </td>
+                                    <td>{{ item[attribute] }}</td>
+                                </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
                         </td>
-                        <td>{{ item[attribute] }}</td>
                     </tr>
-                    {% endfor %}
                     {% endfor %}
                 {% else %}
                     <tr>
