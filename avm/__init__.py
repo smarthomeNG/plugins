@@ -39,7 +39,6 @@ import requests
 from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 from lib.model.smartplugin import SmartPlugin
-from lib.utils import Utils
 
 
 class MonitoringService():
@@ -420,7 +419,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
-
+    ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.1.2"
 
     _header = {'SOAPACTION': '','CONTENT-TYPE': 'text/xml; charset="utf-8"'}
@@ -472,15 +471,15 @@ class AVM(SmartPlugin):
         self._session = requests.Session()
         self._timeout = 10
 
-        self._verify = Utils.to_bool(verify)
-        ssl = Utils.to_bool(ssl)
+        self._verify = self.to_bool(verify)
+        ssl = self.to_bool(ssl)
 
         if ssl and not self._verify:
             urllib3.disable_warnings()
 
         self._fritz_device = FritzDevice(host, port, ssl, username, password, self.get_instance_name())
 
-        self._call_monitor = Utils.to_bool(call_monitor)
+        self._call_monitor = self.to_bool(call_monitor)
         if self._call_monitor :
             self._monitoring_service = MonitoringService(self._fritz_device.get_host(), 1012, self.get_contact_name_by_phone_number, call_monitor_incoming_filter, self)
 

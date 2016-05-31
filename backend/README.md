@@ -18,6 +18,7 @@ sudo pip-3.2 install jinja2
 [BackendServer]
    class_name = BackendServer
    class_path = plugins.backend
+   sh_dir = /volume1/python/smarthome
    #ip = xxx.xxx.xxx.xxx
    #port = xxxx
 </pre>
@@ -25,3 +26,4 @@ sudo pip-3.2 install jinja2
 ### Attributes
   * `ip`: IP address to start the backend server (default localhost).
   * `port`: Port of the backend server (default 8080).
+  * `sh_dir`: Directory, where smarthomeNG is installed to.

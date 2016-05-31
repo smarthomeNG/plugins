@@ -32,8 +32,12 @@ import xml.etree.cElementTree
 import threading
 from lib.model.smartplugin import SmartPlugin
 
+
 class DWD(SmartPlugin):
+
+    ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.1.1"
+
     _dwd_host = 'ftp-outgoing2.dwd.de'
     _warning_cat = {}
 
