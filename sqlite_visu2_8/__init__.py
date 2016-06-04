@@ -28,6 +28,7 @@ import threading
 from lib.model.smartplugin import SmartPlugin
 
 class SQL(SmartPlugin):
+
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.1.1"
     _version = 3
