@@ -195,6 +195,15 @@ class Backend:
         return tmpl.render(smarthome=self._sh)
 
     @cherrypy.expose
+    def db_dump_html(self):
+        """
+        returns the smarthome.py sqlite database as download
+        """
+        mime = 'application/octet-stream'
+        return cherrypy.lib.static.serve_file("%s/var/db/smarthome.db"%self._sh_dir, mime, "%s/var/db/"%self._sh_dir)
+        return db_file_value
+
+    @cherrypy.expose
     def items_html(self):
         """
         display a list of items
