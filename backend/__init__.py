@@ -26,7 +26,6 @@ import logging
 import platform
 import datetime
 import pwd
-import dbm
 import os
 import subprocess
 import socket
@@ -124,6 +123,7 @@ class Backend:
         user = pwd.getpwuid(os.geteuid()).pw_name  #os.getlogin()
         node = platform.node()
         python_packages = self.getpackages()
+
         try:
             myip = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             myip.connect(('8.8.8.8', 80))
@@ -167,9 +167,20 @@ class Backend:
         returns a list with the installed python packages and its versions
         """
         import pip
+        import xmlrpc
         installed_packages = pip.get_installed_distributions()
-        sorted_installed_packages = sorted([(i.key, i.version) for i in installed_packages])
-        return sorted_installed_packages
+        pypi = xmlrpc.client.ServerProxy('http://pypi.python.org/pypi')
+        packages = []
+        for dist in installed_packages:
+            package = {}
+            available = pypi.package_releases(dist.project_name)
+            package['key'] = dist.key
+            package['version_installed'] = dist.version
+            package['version_available'] = available[0]
+            packages.append(package)
+
+        sorted_packages = sorted([(i['key'], i['version_installed'], i['version_available']) for i in packages])
+        return sorted_packages
 
 
     @cherrypy.expose
@@ -180,7 +191,6 @@ class Backend:
         knxd_service = self.get_process_info("systemctl status knxd.service")
         smarthome_service = self.get_process_info("systemctl status smarthome.service")
         knxd_socket = self.get_process_info("systemctl status knxd.socket")
-        python_packages = self.getpackages()
 
         sql_plugin = False
         for x in self._sh._plugins:
@@ -189,7 +199,7 @@ class Backend:
                 break
 
         tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, python_packages=python_packages, sql_plugin=sql_plugin)
+        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin)
 
     @cherrypy.expose
     def disclosure_html(self):

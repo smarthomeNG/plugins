@@ -68,6 +68,7 @@
                     <th></th>
                     <th>Python Package</th>
                     <th>installierte Version</th>
+                    <th>Neuste Version (PyPI)</th>
                 </tr>
             </thead>
             <tbody>
@@ -75,7 +76,8 @@
                 <tr>
                     <td></td>
                     <td>{{ pack[0] }}</td>
-                    <td>{{ pack[1] }}</td>
+                    <td>{% if pack[1] != pack[2] %}<span style="font-weight:bold; color: red;">{% else %}<span style="font-weight:bold; color: green;">{% endif %}{{ pack[1] }}<span></td>
+                    <td>{{ pack[2] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
