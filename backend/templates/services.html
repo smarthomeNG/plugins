@@ -74,11 +74,13 @@
 
                         {% endif %}</td>
                 </tr>
+                {% if sql_plugin %}
                 <tr>
                     <td><img src="/static/img/db_backup.svg" width="48" height="48"></td>
                     <td><div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/db_dump.html')">Datenbank-Dump</span></div></td>
                     <td></td>
                 </tr>
+                {% endif %}
             </tbody>
         </table>
 

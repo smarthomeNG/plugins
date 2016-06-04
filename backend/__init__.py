@@ -182,8 +182,14 @@ class Backend:
         knxd_socket = self.get_process_info("systemctl status knxd.socket")
         python_packages = self.getpackages()
 
+        sql_plugin = False
+        for x in self._sh._plugins:
+            if x.__class__.__name__ == "SQL":
+                sql_plugin = True
+                break
+
         tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, python_packages=python_packages)
+        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, python_packages=python_packages, sql_plugin=sql_plugin)
 
     @cherrypy.expose
     def disclosure_html(self):
