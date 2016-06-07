@@ -38,14 +38,10 @@ class BackendServer(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION='1.1.1'
 
-    def __init__(self, sh, port=8080, threads=8, ip='127.0.0.1', sh_dir='/home/'):
+    def __init__(self, sh, port=8080, threads=8, ip='127.0.0.1'):
         self.logger = logging.getLogger(__name__)
         self._sh = sh
-        #if self.to_bool(sh_dir):
-        #    self._sh_dir = "/home/"
-        #else:
-        self._sh_dir = sh_dir
-
+        
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.logger.debug("BackendServer running from '{}'".format(current_dir))
         config = {'global' : {
@@ -70,7 +66,7 @@ class BackendServer(SmartPlugin):
             }
         self._cherrypy = cherrypy
         self._cherrypy.config.update(config)
-        self._cherrypy.tree.mount(Backend(self._sh_dir, sh), '/', config = config)
+        self._cherrypy.tree.mount(Backend(self._sh), '/', config = config)
 
     def run(self):
         self.logger.debug("rest run")
@@ -100,9 +96,9 @@ class Backend:
     logger = logging.getLogger(__name__)
     env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))+'/templates'))
 
-    def __init__(self, sh_dir, sh=None):
+    def __init__(self, sh=None):
         self._sh = sh
-        self._sh_dir = sh_dir
+        self._sh_dir = self._sh.base_dir
     
     @cherrypy.expose
     def index(self):

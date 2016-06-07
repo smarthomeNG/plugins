@@ -31,7 +31,6 @@ And please pay attention that the libs are installed for Python3 and not an olde
 [BackendServer]
    class_name = BackendServer
    class_path = plugins.backend
-   sh_dir = /volume1/python/smarthome
    #ip = xxx.xxx.xxx.xxx
    #port = xxxx
 </pre>
@@ -39,4 +38,3 @@ And please pay attention that the libs are installed for Python3 and not an olde
 ### Attributes
   * `ip`: IP address to start the backend server (default localhost).
   * `port`: Port of the backend server (default 8080).
-  * `sh_dir`: Directory, where smarthomeNG is installed to.
