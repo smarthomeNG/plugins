@@ -4,6 +4,7 @@
 #  Copyright 2016 Bernd Meiners, 
 #                 Christian Strassburg            c.strassburg@gmx.de
 #                 René Frieß                      rene.friess@gmail.com
+#                 Martin Sinn                     m.sinn@gmx.de
 #########################################################################
 #  Backend plugin for SmartHomeNG
 #
@@ -29,6 +30,7 @@ import pwd
 import os
 import subprocess
 import socket
+import sys
 from lib.model.smartplugin import SmartPlugin
 
 from jinja2 import Environment, FileSystemLoader
@@ -132,11 +134,12 @@ class Backend:
         freespace = space.f_frsize * space.f_bavail/1024/1024
 
         get_uptime = subprocess.Popen('uptime', stdout=subprocess.PIPE)
-        uptime = get_uptime.stdout.read()
+        uptime = get_uptime.stdout.read().decode()
+        pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
         return tmpl.render( now=now, system=system, node=node, arch=arch, user=user,
-                                freespace=freespace, uptime=uptime,
+                                freespace=freespace, uptime=uptime, pyversion=pyversion,
                                 ip=ip, python_packages=python_packages)
 
     def get_process_info(self, command):
