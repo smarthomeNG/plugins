@@ -6,6 +6,7 @@ This plugin delivers information about the current SmarthomeNG installation. Rig
 * a list of items and their attributes is shown
 * a list of logics and their next execution time
 * a list of current schedulers and their next execution time
+* direct download of sqlite database (if plugin is used) and smarthome.log
 * some information about frequently used daemons like knxd is included
 
 There is however no protection for unauthorized access or use of the plugin so be careful when enabling it with your network.
