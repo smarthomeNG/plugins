@@ -251,7 +251,15 @@ class Backend:
         """
         mime = 'application/octet-stream'
         return cherrypy.lib.static.serve_file("%s/var/db/smarthome.db"%self._sh_dir, mime, "%s/var/db/"%self._sh_dir)
-        return db_file_value
+
+    @cherrypy.expose
+    def log_dump_html(self):
+        """
+        returns the smarthome.py sqlite database as download
+        """
+        mime = 'application/octet-stream'
+        return cherrypy.lib.static.serve_file("%s/var/log/smarthome.log" % self._sh_dir, mime,
+                                              "%s/var/log/" % self._sh_dir)
 
     @cherrypy.expose
     def items_html(self):
