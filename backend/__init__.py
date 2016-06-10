@@ -32,7 +32,6 @@ import subprocess
 import socket
 import sys
 from lib.model.smartplugin import SmartPlugin
-import plugins.visu_websocket as Visu
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -121,7 +120,7 @@ class Backend:
             try:
                 vers = self.visu_plugin.get_version()
             except:
-                vers = '0.0.0'
+                vers = '1.0.0'
             if vers < '1.1.2':
                 self.visu_plugin = None
                 self.logger.warning("Backend: visu plugin v{0} is too old to support BackendServer, please update".format(vers))
@@ -173,6 +172,7 @@ class Backend:
                                 freespace=freespace, uptime=uptime, pyversion=pyversion,
                                 ip=ip, python_packages=python_packages)
 
+
     def get_process_info(self, command):
         """
         returns output from executing a given command via the shell.
@@ -208,7 +208,10 @@ class Backend:
             available = pypi.package_releases(dist.project_name)
             package['key'] = dist.key
             package['version_installed'] = dist.version
-            package['version_available'] = available[0]
+            try:
+                package['version_available'] = available[0]
+            except:
+                package['version_available'] = '-'
             packages.append(package)
 
         sorted_packages = sorted([(i['key'], i['version_installed'], i['version_available']) for i in packages])

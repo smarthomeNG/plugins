@@ -11,8 +11,10 @@
 			<thead>
 				<tr>
 					<th>Visu Client</th>
-					<th>IP Adresse</th>
-					<th>Port</th>
+					{% if visu_plugin %}
+						<th>IP Adresse</th>
+						<th>Port</th>
+					{% endif %}
 				</tr>
 			</thead>
 			<tbody>

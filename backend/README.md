@@ -25,6 +25,14 @@ sudo pip install jinja2
 </pre>
 And please pay attention that the libs are installed for Python3 and not an older Python 2.7 that is probably installed on your system.
 
+## Running this plugin under Python 3.2
+If you really need to run this plugin under Python 3.2 you may not use the newest version of all packages. Make sure to install the following versions into your Phython3.2 environment, as newer versions are not compatible with Python 3.2 any more:
+
+<pre>
+- Jinja2	v2.6
+- MarkupSafe	v0.15
+</pre>
+
 .
 
 To support visualization, the visu_websocket plugin has to be used. It has to be PLUGIN_VERSION >= "1.1.2".
