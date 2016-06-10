@@ -43,7 +43,7 @@ class WebSocket(SmartPlugin):
     """
     Main class of the Plugin. Does the plugin specific stuff.
     """
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.1.2"
     ALLOW_MULTIINSTANCE = False
 
     def my_to_bool(self, value, attr='', default=False):
@@ -121,6 +121,11 @@ class WebSocket(SmartPlugin):
                 self.websocket.visu_logics[logic.name] = logic
 
 
+    def return_clients(self):
+        for client in self.websocket.clients:
+            yield client.addr
+
+
 #########################################################################
 
 class _websocket(lib.connection.Server):
@@ -144,6 +149,11 @@ class _websocket(lib.connection.Server):
         self.tls_ca = '/usr/local/smarthome/etc/ca.crt'
 
 
+    def return_clients(self):
+        for client in self.clients:
+            yield client.addr
+
+
     def handle_connection(self):
         sock, address = self.accept()
         if sock is None:
@@ -160,6 +170,9 @@ class _websocket(lib.connection.Server):
                 return
         client = websockethandler(self._sh, self, sock, address, self.visu_items, self.visu_logics, self.proto)
         self.clients.append(client)
+        self.logger.warning("WebSocket: handle_connection - Active clients")
+        for client_addr in self.return_clients():
+            self.logger.warning("WebSocket: handle_connection client = {0}".format(client_addr))
 
     def stop(self):
         for client in self.clients:
@@ -180,6 +193,9 @@ class _websocket(lib.connection.Server):
 
     def remove_client(self, client):
         self.clients.remove(client)
+        self.logger.warning("WebSocket: remove_client - Active clients")
+        for client_addr in self.return_clients():
+            self.logger.warning("WebSocket: remove_client client = {0}".format(client_addr))
 
 
     def _send_event(self, event, data):

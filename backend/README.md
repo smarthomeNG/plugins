@@ -24,6 +24,11 @@ sudo pip install jinja2
 </pre>
 And please pay attention that the libs are installed for Python3 and not an older Python 2.7 that is probably installed on your system.
 
+.
+
+To support visualization, the visu_websocket plugin has to be used. It has to be PLUGIN_VERSION >= "1.1.2".
+
+
 # Configuration
 
 ## plugin.conf

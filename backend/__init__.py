@@ -32,6 +32,7 @@ import subprocess
 import socket
 import sys
 from lib.model.smartplugin import SmartPlugin
+import plugins.visu_websocket as Visu
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -68,7 +69,7 @@ class BackendServer(SmartPlugin):
             }
         self._cherrypy = cherrypy
         self._cherrypy.config.update(config)
-        self._cherrypy.tree.mount(Backend(self._sh), '/', config = config)
+        self._cherrypy.tree.mount(Backend(self._sh), '/', config = config )
 
     def run(self):
         self.logger.debug("rest run")
@@ -95,27 +96,59 @@ class BackendServer(SmartPlugin):
 
 
 class Backend:
-    logger = logging.getLogger(__name__)
+#    logger = logging.getLogger(__name__)
     env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))+'/templates'))
 
     def __init__(self, sh=None):
+        self.logger = logging.getLogger(__name__)
         self._sh = sh
         self._sh_dir = self._sh.base_dir
+
+        self.visu_plugin = None
+    
+    
+    def find_visu_plugin(self):
+        """
+        look for the configured instance of the visu protocol plugin.
+        """
+        if self.visu_plugin != None:
+            return
+            
+        for p in self._sh._plugins:
+            if p.__class__.__name__ == "WebSocket":
+                self.visu_plugin = p
+        if self.visu_plugin != None:
+            self.logger.warning("Backend.find_visu_plugin found visu plugin = '{}'".format(self.visu_plugin))
+            try:
+                vers = self.visu_plugin.get_version()
+            except:
+                vers = '0.0.0'
+            self.logger.warning("Backend.find_visu_plugin plugin version = '{}'".format(vers))
+            if vers < '1.1.2':
+                self.visu_plugin = None
+                self.logger.warning("Backend: visu plugin is too old to support BackendServer, please update")
+                
     
     @cherrypy.expose
     def index(self):
+        self.find_visu_plugin()
+
         tmpl = self.env.get_template('main.html')
         return tmpl.render()
 
     @cherrypy.expose
     def main_html(self):
+        self.find_visu_plugin()
+
         tmpl = self.env.get_template('main.html')
         return tmpl.render()
 
     @cherrypy.expose
     def system_html(self):
+        self.find_visu_plugin()
         now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
         system = platform.system()
+        vers = platform.version()
         node = platform.node()
         arch = platform.machine()
         user = pwd.getpwuid(os.geteuid()).pw_name  #os.getlogin()
@@ -138,7 +171,7 @@ class Backend:
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
-        return tmpl.render( now=now, system=system, node=node, arch=arch, user=user,
+        return tmpl.render( now=now, system=system, vers=vers, node=node, arch=arch, user=user,
                                 freespace=freespace, uptime=uptime, pyversion=pyversion,
                                 ip=ip, python_packages=python_packages)
 
@@ -146,6 +179,7 @@ class Backend:
         """
         returns output from executing a given command via the shell.
         """
+        self.find_visu_plugin()
         ## get subprocess module
         import subprocess
 
@@ -165,6 +199,7 @@ class Backend:
         """
         returns a list with the installed python packages and its versions
         """
+        self.find_visu_plugin()
         import pip
         import xmlrpc
         installed_packages = pip.get_installed_distributions()
@@ -187,6 +222,7 @@ class Backend:
         """
         shows a page with info about some services needed by smarthome
         """
+        self.find_visu_plugin()
         knxd_service = self.get_process_info("systemctl status knxd.service")
         smarthome_service = self.get_process_info("systemctl status smarthome.service")
         knxd_socket = self.get_process_info("systemctl status knxd.socket")
@@ -203,8 +239,9 @@ class Backend:
     @cherrypy.expose
     def disclosure_html(self):
         """
-        display a list of items
+        display disclosure
         """
+        self.find_visu_plugin()
 
         tmpl = self.env.get_template('disclosure.html')
         return tmpl.render(smarthome=self._sh)
@@ -223,8 +260,10 @@ class Backend:
         """
         display a list of items
         """
+        self.find_visu_plugin()
         
         tmpl = self.env.get_template('items.html')
+        self.logger.warning("backend items_html: self._sh.return_items() = {0}".format(self._sh.return_items()))
         return tmpl.render( smarthome = self._sh )
 
     #def dump(self, path, match=True):
@@ -267,6 +306,7 @@ class Backend:
         """
         display a list of all known logics
         """
+        self.find_visu_plugin()
         
         tmpl = self.env.get_template('logics.html')
         return tmpl.render( smarthome = self._sh )
@@ -277,6 +317,7 @@ class Backend:
         """
         display a list of all known schedules
         """
+        self.find_visu_plugin()
         
         tmpl = self.env.get_template('schedules.html')
         return tmpl.render( smarthome = self._sh )
@@ -286,6 +327,7 @@ class Backend:
         """
         display a list of all known plugins
         """
+        self.find_visu_plugin()
         plugins = []
         for x in self._sh._plugins:
             plugin = dict()
@@ -302,6 +344,31 @@ class Backend:
         tmpl = self.env.get_template('plugins.html')
         return tmpl.render( smarthome = self._sh, plugins = plugins )
         
+        
+    @cherrypy.expose
+    def visu_html(self):
+        """
+        display a list of all connected visu clients
+        """
+        self.find_visu_plugin()
+            
+        clients = []
+        if self.visu_plugin != None:
+            for c in self.visu_plugin.return_clients():
+                client = dict()
+                deli = c.find(':')
+                client['ip'] = c[0:c.find(':')]
+                client['port'] = c[c.find(':')+1:]
+                client['name'] = socket.gethostbyaddr(client['ip'])[0]
+                self.logger.warning("BackendServer ip = '{0}', port = '{1}', deli = '{2}', name = '{3}'".format(client['ip'], client['port'], deli, client['name']))
+                clients.append(client)
+            self.logger.warning("BackendServer clients = '{0}'".format(clients))
+        clients_sorted = sorted(clients, key=lambda k: k['name']) 
+        
+        tmpl = self.env.get_template('visu.html')
+        return tmpl.render( visu_plugin = self.visu_plugin, clients = clients_sorted )
+
+
     @cherrypy.expose
     def reboot(self):
         passwd = request.form['password']

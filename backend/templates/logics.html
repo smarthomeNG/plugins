@@ -16,7 +16,7 @@
             </thead>
             <tbody>
                 {% if smarthome %}
-                    {% for logic in smarthome.return_logics() %}
+                    {% for logic in smarthome.return_logics()|sort %}
                     <tr>
                         <td>{{ logic }}</td>
                         {% if smarthome.scheduler.return_next(logic) %}
