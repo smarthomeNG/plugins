@@ -36,7 +36,6 @@ import lib.connection
 from lib.model.smartplugin import SmartPlugin
 
 
-
 #########################################################################
 
 class WebSocket(SmartPlugin):
@@ -170,9 +169,6 @@ class _websocket(lib.connection.Server):
                 return
         client = websockethandler(self._sh, self, sock, address, self.visu_items, self.visu_logics, self.proto)
         self.clients.append(client)
-        self.logger.warning("WebSocket: handle_connection - Active clients")
-        for client_addr in self.return_clients():
-            self.logger.warning("WebSocket: handle_connection client = {0}".format(client_addr))
 
     def stop(self):
         for client in self.clients:
@@ -193,9 +189,6 @@ class _websocket(lib.connection.Server):
 
     def remove_client(self, client):
         self.clients.remove(client)
-        self.logger.warning("WebSocket: remove_client - Active clients")
-        for client_addr in self.return_clients():
-            self.logger.warning("WebSocket: remove_client client = {0}".format(client_addr))
 
 
     def _send_event(self, event, data):
@@ -338,7 +331,7 @@ class websockethandler(lib.connection.Stream):
             self.json_send({'cmd': 'item', 'items': items})
             self.monitor['item'] = data['items']
         elif command == 'ping':
-            self.logger.debug("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))	# MSinn
+            self.logger.debug("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))
             self.json_send({'cmd': 'pong'})
         elif command == 'logic':
             if 'name' not in data or 'val' not in data:

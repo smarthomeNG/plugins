@@ -96,7 +96,7 @@ With the **`ping`** command a client checks if the connection to the plugin is a
 The plugin answers with:
 
 ```
-	{"cmd":"ping"}
+	{"cmd":"pong"}
 ```
 
 
