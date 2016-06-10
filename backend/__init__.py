@@ -118,15 +118,13 @@ class Backend:
             if p.__class__.__name__ == "WebSocket":
                 self.visu_plugin = p
         if self.visu_plugin != None:
-            self.logger.warning("Backend.find_visu_plugin found visu plugin = '{}'".format(self.visu_plugin))
             try:
                 vers = self.visu_plugin.get_version()
             except:
                 vers = '0.0.0'
-            self.logger.warning("Backend.find_visu_plugin plugin version = '{}'".format(vers))
             if vers < '1.1.2':
                 self.visu_plugin = None
-                self.logger.warning("Backend: visu plugin is too old to support BackendServer, please update")
+                self.logger.warning("Backend: visu plugin v{0} is too old to support BackendServer, please update".format(vers))
                 
     
     @cherrypy.expose
@@ -263,7 +261,6 @@ class Backend:
         self.find_visu_plugin()
         
         tmpl = self.env.get_template('items.html')
-        self.logger.warning("backend items_html: self._sh.return_items() = {0}".format(self._sh.return_items()))
         return tmpl.render( smarthome = self._sh )
 
     #def dump(self, path, match=True):
@@ -360,9 +357,7 @@ class Backend:
                 client['ip'] = c[0:c.find(':')]
                 client['port'] = c[c.find(':')+1:]
                 client['name'] = socket.gethostbyaddr(client['ip'])[0]
-                self.logger.warning("BackendServer ip = '{0}', port = '{1}', deli = '{2}', name = '{3}'".format(client['ip'], client['port'], deli, client['name']))
                 clients.append(client)
-            self.logger.warning("BackendServer clients = '{0}'".format(clients))
         clients_sorted = sorted(clients, key=lambda k: k['name']) 
         
         tmpl = self.env.get_template('visu.html')
