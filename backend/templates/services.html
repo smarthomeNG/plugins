@@ -76,7 +76,11 @@
                 </tr>
                 <tr>
                     <td><img src="/static/img/logfile.svg" width="48" height="48"></td>
-                    <td><div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/log_dump.html')">Logfile</span></div></td>
+
+                    <td>
+                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/log_dump.html')">Logfile speichern</span></div>
+                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/log_view.html'">Logfile ansehen</span></div>
+                    </td>
                     <td></td>
                 </tr>
                 {% if sql_plugin %}

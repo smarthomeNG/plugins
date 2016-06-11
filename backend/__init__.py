@@ -328,6 +328,22 @@ class Backend:
                                               "%s/var/log/" % self._sh_dir)
 
     @cherrypy.expose
+    def log_view_html(self):
+        """
+        returns the smarthomeNG logfile as view
+        """
+        self.find_visu_plugin()
+
+        fobj = open("%s/var/log/smarthome.log" % self._sh_dir)
+        log_lines = []
+        for line in fobj:
+            log_lines.append(line.rstrip())
+        fobj.close()
+        tmpl = self.env.get_template('log_view.html')
+        return tmpl.render(smarthome=self._sh, log_lines=log_lines )
+
+
+    @cherrypy.expose
     def items_html(self):
         """
         display a list of items

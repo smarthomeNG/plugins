@@ -1,0 +1,22 @@
+ <!DOCTYPE html>
+{% extends "base.html" %}
+{% import "navbar.html" as nav with context %}
+{% block navbar %}
+	{{ nav }}
+{% endblock navbar %}
+
+{% block content %}
+	<div class="container">
+    <h3>SmartHomeNG Logfile:</h3><br/>
+    </div>
+    <div class="container" style="border: 1px solid #ccc; padding: 5px; height: 700px; width: 90%; overflow-y: scroll;">
+    {% if log_lines %}
+        {% for line in log_lines %}
+        {{ line }}<br/>
+        {% endfor %}
+    {% else %}
+    no data available
+    {% endif %}
+	</div>
+{% endblock %}
+
