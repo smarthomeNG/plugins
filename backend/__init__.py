@@ -207,11 +207,19 @@ class Backend:
 
         get_uptime = subprocess.Popen('uptime', stdout=subprocess.PIPE)
         uptime = get_uptime.stdout.read().decode()
+        # return SmarthomeNG runtime
+        hours, minutes, seconds = [float(val) for val in str(self._sh.runtime()).split(':')]
+        if hours > 0:
+            sh_uptime = str(int(hours))+" Stunden, "+str(int(minutes))+" Minuten, "+str(seconds)+" Sekunden"
+        elif minutes > 0:
+            sh_uptime = str(int(minutes))+" Minuten, "+str(seconds)+" Sekunden"
+        else:
+            sh_uptime = str(seconds)+" Sekunden"
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
         return tmpl.render( now=now, system=system, vers=vers, node=node, arch=arch, user=user,
-                                freespace=freespace, uptime=uptime, pyversion=pyversion,
+                                freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
                                 ip=ip, python_packages=python_packages, visu_plugin=(self.visu_plugin != None))
 
 
