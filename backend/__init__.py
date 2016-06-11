@@ -53,10 +53,15 @@ class BackendServer(SmartPlugin):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("10.10.10.10", 80))
         return s.getsockname()[0]
-    
-    
-    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True'):
+
+    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password=""):
         self.logger = logging.getLogger(__name__)
+        self._user = user
+        self._password = password
+        if self._password is not None and self._password != "":
+            self._basic_auth = True
+        else:
+            self._basic_auth = False
         self._sh = sh
 
         if self.is_int(port):
@@ -85,6 +90,10 @@ class BackendServer(SmartPlugin):
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.logger.debug("BackendServer running from '{}'".format(current_dir))
+
+        userpassdict = {self._user : self._password}
+        checkpassword = cherrypy.lib.auth_basic.checkpassword_dict(userpassdict)
+
         config = {'global' : {
             'server.socket_host' : ip,
             'server.socket_port' : self.port,
@@ -96,9 +105,12 @@ class BackendServer(SmartPlugin):
             'tools.trailing_slash.on' : False
               },
              '/':
-                        {
-                            'tools.staticdir.root' : current_dir,
-                        },
+                {
+                    'tools.auth_basic.on': self._basic_auth,
+                    'tools.auth_basic.realm': 'earth',
+                    'tools.auth_basic.checkpassword': checkpassword,
+                    'tools.staticdir.root' : current_dir,
+                },
                     '/static':
                         {
                             'tools.staticdir.on': True,

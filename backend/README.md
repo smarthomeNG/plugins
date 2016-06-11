@@ -48,6 +48,8 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#ip = xxx.xxx.xxx.xxx
 	#port = 8383
 	#updates_allowed = True
+    #user = admin
+    #password = very_secure_password
 </pre>
 
 ### ip
@@ -61,3 +63,9 @@ The port on which the backend server listens. By default port **`8383`** is used
 ###    updates_allowed
 
 By default, the backend server allows updates to the running smarthomeNG instance. For instance, it is possible to trigger or to reload a logic. Setting **`updates_allowed`** to **`False`**, you can disable these features.
+
+### user (optional)
+The user for basic authentication. If left out, the user name is set as "admin"
+
+### password (optional)
+The password for basic authentication. If left out, basic authentication is disabled.
