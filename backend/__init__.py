@@ -222,12 +222,16 @@ class Backend:
         uptime = get_uptime.stdout.read().decode()
         # return SmarthomeNG runtime
         hours, minutes, seconds = [float(val) for val in str(self._sh.runtime()).split(':')]
-        if hours > 0:
-            sh_uptime = str(int(hours))+" Stunden, "+str(int(minutes))+" Minuten, "+str(seconds)+" Sekunden"
+        if hours > 23:
+            days = int(hours / 24)
+            hours = hours - 24 * days
+            sh_uptime = str(int(days))+" Tage, "+str(int(hours))+" Stunden, "+str(int(minutes))+" Minuten, "+str("%.2f" % seconds)+" Sekunden"
+        elif hours > 0:
+            sh_uptime = str(int(hours))+" Stunden, "+str(int(minutes))+" Minuten, "+str("%.2f" % seconds)+" Sekunden"
         elif minutes > 0:
-            sh_uptime = str(int(minutes))+" Minuten, "+str(seconds)+" Sekunden"
+            sh_uptime = str(int(minutes))+" Minuten, "+str("%.2f" % seconds)+" Sekunden"
         else:
-            sh_uptime = str(seconds)+" Sekunden"
+            sh_uptime = str("%.2f" % seconds)+" Sekunden"
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
@@ -467,14 +471,16 @@ class Backend:
         threads = []
         for t in threading.enumerate():
             thread = dict()
+            thread['sort'] = str(t.name).lower()
             thread['name'] = t.name
             thread['id'] = t.ident
             thread['alive'] = t.is_alive()
             threads.append(thread)
-        threads_sorted = sorted(threads, key=lambda k: k['name']) 
+        threads_sorted = sorted(threads, key=lambda k: k['sort']) 
+        threads_count = len(threads_sorted)
             
         tmpl = self.env.get_template('threads.html')
-        return tmpl.render( smarthome = self._sh, threads=threads_sorted, visu_plugin=(self.visu_plugin != None),  )
+        return tmpl.render( smarthome = self._sh, threads=threads_sorted, threads_count=threads_count, visu_plugin=(self.visu_plugin != None),  )
 
 
     @cherrypy.expose
