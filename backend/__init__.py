@@ -31,6 +31,7 @@ import os
 import subprocess
 import socket
 import sys
+import threading
 from lib.model.smartplugin import SmartPlugin
 
 from jinja2 import Environment, FileSystemLoader
@@ -340,7 +341,7 @@ class Backend:
             log_lines.append(line.rstrip())
         fobj.close()
         tmpl = self.env.get_template('log_view.html')
-        return tmpl.render(smarthome=self._sh, log_lines=log_lines )
+        return tmpl.render(smarthome=self._sh, log_lines=log_lines, visu_plugin=(self.visu_plugin != None) )
 
 
     @cherrypy.expose
@@ -438,6 +439,7 @@ class Backend:
         display a list of all known plugins
         """
         self.find_visu_plugin()
+        
         plugins = []
         for x in self._sh._plugins:
             plugin = dict()
@@ -452,9 +454,29 @@ class Backend:
             plugins.append(plugin)
 
         tmpl = self.env.get_template('plugins.html')
-        return tmpl.render( smarthome = self._sh, plugins = plugins, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render( smarthome = self._sh, plugins=plugins, visu_plugin=(self.visu_plugin != None) )
         
         
+    @cherrypy.expose
+    def threads_html(self):
+        """
+        display a list of all threads
+        """
+        self.find_visu_plugin()
+        
+        threads = []
+        for t in threading.enumerate():
+            thread = dict()
+            thread['name'] = t.name
+            thread['id'] = t.ident
+            thread['alive'] = t.is_alive()
+            threads.append(thread)
+        threads_sorted = sorted(threads, key=lambda k: k['name']) 
+            
+        tmpl = self.env.get_template('threads.html')
+        return tmpl.render( smarthome = self._sh, threads=threads_sorted, visu_plugin=(self.visu_plugin != None),  )
+
+
     @cherrypy.expose
     def visu_html(self):
         """

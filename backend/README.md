@@ -48,8 +48,8 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#ip = xxx.xxx.xxx.xxx
 	#port = 8383
 	#updates_allowed = True
-    #user = admin
-    #password = very_secure_password
+	#user = admin
+	#password = very_secure_password
 </pre>
 
 ### ip
