@@ -19,9 +19,9 @@ It is still in early development so please give feedback to the community.
 This plugin requires Python >= 3.4 as well as the libs cherrypy and jinja2. You can install them with:
 <pre>
 (sudo apt-get install python-cherrypy)
-sudo pip install cherrypy
+sudo pip3 install cherrypy
 (sudo apt-get install python-jinja2)
-sudo pip install jinja2
+sudo pip3 install jinja2
 </pre>
 And please pay attention that the libs are installed for Python3 and not an older Python 2.7 that is probably installed on your system.
 
@@ -43,12 +43,21 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 ## plugin.conf
 <pre>
 [BackendServer]
-   class_name = BackendServer
-   class_path = plugins.backend
-   #ip = xxx.xxx.xxx.xxx
-   #port = xxxx
+	class_name = BackendServer
+	class_path = plugins.backend
+	#ip = xxx.xxx.xxx.xxx
+	#port = 8383
+	#updates_allowed = True
 </pre>
 
-### Attributes
-  * `ip`: IP address to start the backend server (default localhost).
-  * `port`: Port of the backend server (default 8080).
+### ip
+IP address to start the backend server. Usually it doesnot need to be configured.
+
+If not configured the standard ip address of the system is used. If you like to restrict the usage of the BackendServer to the system itself (the browser ist running on the smarthomeNG system itself), you can configure the ip to 127.0.0.1. In this case, the BackendServer is only available through the localhost address.
+
+### port
+The port on which the backend server listens. By default port **`8383`** is used.
+
+###    updates_allowed
+
+By default, the backend server allows updates to the running smarthomeNG instance. For instance, it is possible to trigger or to reload a logic. Setting **`updates_allowed`** to **`False`**, you can disable these features.

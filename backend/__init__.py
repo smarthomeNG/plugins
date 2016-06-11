@@ -38,18 +38,57 @@ from jinja2 import Environment, FileSystemLoader
 
 class BackendServer(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.1.1'
+    PLUGIN_VERSION='1.1.2'
 
-    def __init__(self, sh, port=8080, threads=8, ip='127.0.0.1'):
+    def my_to_bool(self, value, attr='', default=False):
+        try:
+            result = self.to_bool(value)
+        except:
+            result = default
+            self.logger.error("BackendServer: Invalid value '"+str(value)+"' configured for attribute "+attr+" in plugin.conf, using '"+str(result)+"' instead")
+        return result
+
+
+    def get_local_ip_address(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("10.10.10.10", 80))
+        return s.getsockname()[0]
+    
+    
+    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True'):
         self.logger = logging.getLogger(__name__)
         self._sh = sh
-        
+
+        if self.is_int(port):
+        	self.port = int(port)
+        else:
+            self.port = 8383
+            if port != None:
+                self.logger.error("BackendServer: Invalid value '"+str(port)+"' configured for attribute 'port' in plugin.conf, using '"+str(self.port)+"' instead")
+
+        if self.is_int(threads):
+        	self.threads = int(threads)
+        else:
+            self.threads = 8
+            self.logger.error("BackendServer: Invalid value '"+str(threads)+"' configured for attribute 'thread' in plugin.conf, using '"+str(self.threads)+"' instead")
+
+        if ip == '':
+            ip = self.get_local_ip_address()
+            self.logger.debug("BackendServer: Using local ip address '{0}'".format(ip))
+        else:
+            pass
+#        if not self.is_ip(ip):
+#            self.logger.error("BackendServer: Invalid value '"+str(ip)+"' configured for attribute ip in plugin.conf, using '"+str('0.0.0.0')+"' instead")
+#            ip = '0.0.0.0'
+
+        self.updates_allowed = self.my_to_bool(updates_allowed, 'updates_allowed', True)
+
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.logger.debug("BackendServer running from '{}'".format(current_dir))
         config = {'global' : {
             'server.socket_host' : ip,
-            'server.socket_port' : int(port),
-            'server.thread_pool' : threads,
+            'server.socket_port' : self.port,
+            'server.thread_pool' : self.threads,
     
             'engine.autoreload.on' : False,
         
@@ -68,20 +107,21 @@ class BackendServer(SmartPlugin):
             }
         self._cherrypy = cherrypy
         self._cherrypy.config.update(config)
-        self._cherrypy.tree.mount(Backend(self._sh), '/', config = config )
+        self._cherrypy.tree.mount(Backend(self, self.updates_allowed), '/', config = config )
+
 
     def run(self):
-        self.logger.debug("rest run")
+        self.logger.debug("BackendServer: rest run")
         #server.start()
         self._cherrypy.engine.start()
-        self.logger.debug("engine started")
+        self.logger.debug("BackendServer: engine started")
         #cherrypy.engine.block()
         self.alive = True
 
     def stop(self):
-        self.logger.debug("shutting down")
+        self.logger.debug("BackendServer: shutting down")
         self._cherrypy.engine.exit()
-        self.logger.debug("engine exited")
+        self.logger.debug("BackendServer: engine exited")
         self.alive = False
 
     def parse_item(self, item):
@@ -95,14 +135,15 @@ class BackendServer(SmartPlugin):
 
 
 class Backend:
-#    logger = logging.getLogger(__name__)
     env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))+'/templates'))
 
-    def __init__(self, sh=None):
+    def __init__(self, backendserver=None, updates_allowed=True):
         self.logger = logging.getLogger(__name__)
-        self._sh = sh
-        self._sh_dir = self._sh.base_dir
+        self._bs = backendserver
+        self._sh = backendserver._sh
+        self.updates_allowed = updates_allowed
 
+        self._sh_dir = self._sh.base_dir
         self.visu_plugin = None
     
     
@@ -131,14 +172,14 @@ class Backend:
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render()
+        return tmpl.render( visu_plugin=(self.visu_plugin != None) )
 
     @cherrypy.expose
     def main_html(self):
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render()
+        return tmpl.render( visu_plugin=(self.visu_plugin != None) )
 
     @cherrypy.expose
     def system_html(self):
@@ -152,14 +193,15 @@ class Backend:
         node = platform.node()
         python_packages = self.getpackages()
 
-        try:
-            myip = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            myip.connect(('8.8.8.8', 80))
-            ip = myip.getsockname()[0]
-            myip.close()
-        except StandardError:
-            ip = "IP nicht erkannt"
-
+#        try:
+#            myip = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#            myip.connect(('8.8.8.8', 80))
+#            ip = myip.getsockname()[0]
+#            myip.close()
+#        except StandardError:
+#            ip = "IP nicht erkannt"
+        ip = self._bs.get_local_ip_address()
+        
         space = os.statvfs(self._sh_dir)
         freespace = space.f_frsize * space.f_bavail/1024/1024
 
@@ -170,7 +212,7 @@ class Backend:
         tmpl = self.env.get_template('system.html')
         return tmpl.render( now=now, system=system, vers=vers, node=node, arch=arch, user=user,
                                 freespace=freespace, uptime=uptime, pyversion=pyversion,
-                                ip=ip, python_packages=python_packages)
+                                ip=ip, python_packages=python_packages, visu_plugin=(self.visu_plugin != None))
 
 
     def get_process_info(self, command):
@@ -192,6 +234,7 @@ class Backend:
         ## Wait for date to terminate. Get return returncode ##
         p_status = p.wait()
         return str(result, encoding='utf-8', errors='strict')
+
 
     def getpackages(self):
         """
@@ -235,7 +278,7 @@ class Backend:
                 break
 
         tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin)
+        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin != None))
 
     @cherrypy.expose
     def disclosure_html(self):
@@ -245,12 +288,12 @@ class Backend:
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('disclosure.html')
-        return tmpl.render(smarthome=self._sh)
+        return tmpl.render(smarthome=self._sh, visu_plugin=(self.visu_plugin != None))
 
     @cherrypy.expose
     def db_dump_html(self):
         """
-        returns the smarthome.py sqlite database as download
+        returns the smarthomeNG sqlite database as download
         """
         mime = 'application/octet-stream'
         return cherrypy.lib.static.serve_file("%s/var/db/smarthome.db"%self._sh_dir, mime, "%s/var/db/"%self._sh_dir)
@@ -258,7 +301,7 @@ class Backend:
     @cherrypy.expose
     def log_dump_html(self):
         """
-        returns the smarthome.py sqlite database as download
+        returns the smarthomeNG logfile as download
         """
         mime = 'application/octet-stream'
         return cherrypy.lib.static.serve_file("%s/var/log/smarthome.log" % self._sh_dir, mime,
@@ -272,7 +315,7 @@ class Backend:
         self.find_visu_plugin()
         
         tmpl = self.env.get_template('items.html')
-        return tmpl.render( smarthome = self._sh )
+        return tmpl.render( smarthome = self._sh, visu_plugin=(self.visu_plugin != None) )
 
     #def dump(self, path, match=True):
     #    if match:
@@ -310,14 +353,37 @@ class Backend:
     #        self.push("Nothing found\n")        
         
     @cherrypy.expose
-    def logics_html(self):
+    def logics_html(self, logic=None, trigger=None, reload=None):
         """
         display a list of all known logics
         """
         self.find_visu_plugin()
-        
+
+        self.logger.warning("Backend: logics_html: trigger = '{0}', reload = '{1}'".format(trigger, reload))
+        if trigger != None:
+            self.logger.warning("Backend: logics_html: Trigger logic = '{0}'".format(logic))
+            if self.updates_allowed:
+                if logic in self._sh.return_logics():
+                    self._sh.trigger(logic, by='Backend')
+                else:
+                    self.logger.warning("Backend: Logic '{0}' not found".format(logic))
+            else:
+                self.logger.warning("Backend: Logic triggering is not allowed. (Change 'updates_allowed' in plugin.conf")
+
+        if reload != None:
+            self.logger.warning("Backend: logics_html: Reload logic = '{0}'".format(logic))
+            if self.updates_allowed:
+                if logic in self._sh.return_logics():
+                    mylogic = self._sh.return_logic(logic)
+                    mylogic.generate_bytecode()
+                    self._sh.trigger(logic, by='Backend', value="Init")
+                else:
+                    self.logger.warning("Backend: Logic '{0}' not found".format(logic))
+            else:
+                self.logger.warning("Backend: Logic reloads are not allowed. (Change 'updates_allowed' in plugin.conf")
+
         tmpl = self.env.get_template('logics.html')
-        return tmpl.render( smarthome = self._sh )
+        return tmpl.render( smarthome = self._sh, updates = self.updates_allowed, visu_plugin=(self.visu_plugin != None) )
 
 
     @cherrypy.expose
@@ -328,7 +394,7 @@ class Backend:
         self.find_visu_plugin()
         
         tmpl = self.env.get_template('schedules.html')
-        return tmpl.render( smarthome = self._sh )
+        return tmpl.render( smarthome = self._sh, visu_plugin=(self.visu_plugin != None) )
 
     @cherrypy.expose
     def plugins_html(self):
@@ -350,7 +416,7 @@ class Backend:
             plugins.append(plugin)
 
         tmpl = self.env.get_template('plugins.html')
-        return tmpl.render( smarthome = self._sh, plugins = plugins )
+        return tmpl.render( smarthome = self._sh, plugins = plugins, visu_plugin=(self.visu_plugin != None) )
         
         
     @cherrypy.expose
@@ -372,7 +438,7 @@ class Backend:
         clients_sorted = sorted(clients, key=lambda k: k['name']) 
         
         tmpl = self.env.get_template('visu.html')
-        return tmpl.render( visu_plugin = self.visu_plugin, clients = clients_sorted )
+        return tmpl.render( visu_plugin=(self.visu_plugin != None), clients = clients_sorted )
 
 
     @cherrypy.expose
