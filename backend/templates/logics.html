@@ -22,7 +22,7 @@
 					{% for logic in smarthome.return_logics()|sort %}
 					<tr>
 						<form name="input" action="logics.html" method="POST" enctype="multipart/form-data"> 
-						<td><input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic }}" type="text"></td>
+						<td><input style="border:none; background-color:transparent" name="logic" readonly="true" value="{{ logic }}" type="text"></td>
 						{% if smarthome.scheduler.return_next(logic) %}
 							<td>{{ smarthome.scheduler.return_next(logic).strftime('%Y-%m-%d %H:%M:%S%z') }}</td>
 						{% else %}
