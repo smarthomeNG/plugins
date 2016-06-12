@@ -411,7 +411,10 @@ class Backend:
         item_data = []
 
         for item in parent_items_sorted:
-            item_data.append({'path': item._path, 'name': item._name, 'nodes': self._build_item_tree(item.return_children())})
+            nodes = self._build_item_tree(item.return_children())
+            tags = []
+            tags.append(len(nodes))
+            item_data.append({'path': item._path, 'name': item._name, 'tags': tags, 'nodes': nodes})
 
         return item_data
 

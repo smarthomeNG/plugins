@@ -55,6 +55,7 @@ function build_item_subtree_recursive(data) {
             var new_child_node = build_item_subtree_recursive(data.nodes[i]);
             child_nodes.push(new_child_node);
         }
+        tree_element['tags'] = data.tags;
         tree_element['nodes'] = child_nodes;
     }
 
@@ -70,6 +71,7 @@ function getTree() {
         });
         $('#tree').treeview({
             data: item_tree,
+            showTags: true,
             onNodeSelected: function(event, data) {
                 item_info = getDetailInfo(data.text);
 
