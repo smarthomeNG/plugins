@@ -28,6 +28,7 @@ import platform
 import datetime
 import pwd
 import os
+import json
 import subprocess
 import socket
 import sys
@@ -356,7 +357,21 @@ class Backend:
         self.find_visu_plugin()
         
         tmpl = self.env.get_template('items.html')
-        return tmpl.render( smarthome = self._sh, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render( smarthome = self._sh, items=sorted(self._sh.return_items(),key=lambda k: str.lower(k['_path']), reverse=False), visu_plugin=(self.visu_plugin != None) )
+
+    @cherrypy.expose
+    def items_json_html(self):
+        """
+        returns a list of items as json structure
+        """
+        item_data = []
+        items_sorted = sorted(self._sh.return_items(),key=lambda k: str.lower(k['_path']), reverse=False)
+
+        for item in items_sorted:
+
+            item_data.append({ 'path' : item._path, 'name': item._name})
+
+        return json.dumps(item_data)
 
     #def dump(self, path, match=True):
     #    if match:
