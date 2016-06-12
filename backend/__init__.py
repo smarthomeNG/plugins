@@ -384,6 +384,11 @@ class Backend:
 
         item_data = []
         item = self._sh.return_item(item_path)
+        if item.type() == None or item.type() is '':
+            prev_value = ''
+        else:
+            prev_value = item.prev_value()
+
         item_data.append({'path': item._path,
                           'name': item._name,
                           'type': item.type(),
@@ -391,7 +396,7 @@ class Backend:
                           'age ': str(item.age()),
                           'last_change ': str(item.last_change()),
                           'changed_by ': item.changed_by(),
-                          'previous_value': item.prev_value(),
+                          'previous_value': prev_value,
                           'previous_age': str(item.prev_age()),
                           'previous_change': str(item.prev_change()),
                           'enforce_updates': str(item._enforce_updates),
