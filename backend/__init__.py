@@ -372,7 +372,7 @@ class Backend:
                 parent_items_sorted.append(item)
                 last_parent_item = item
 
-        item_data = self._build_item_tree(items_sorted)
+        item_data = self._build_item_tree(parent_items_sorted)
 
         return json.dumps(item_data)
 
