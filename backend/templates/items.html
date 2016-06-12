@@ -9,7 +9,7 @@
  <div class="container">
      Item (gesamt: {{ smarthome.item_count }})<br/><br/>
       <div id="tree" style="float:left; width: 600px;"></div>
-      <div style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; width: 400px; height: 450px;">
+      <div style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; width: 400px; height: 500px;">
         <strong>Item-Informationen:</strong><br/><br/>
         <div id="tree_detail">
 
@@ -26,7 +26,8 @@ function getDetailInfo(item_path) {
     $.getJSON('/item_detail_json.html?item_path='+item_path, function(result) {
         $.each(result, function(index, element) {
             $('#tree_detail').html('<p> Itempath: ' + element.path + '</p>');
-            $('#tree_detail').append('<p>Name : ' + element.name + '</p>');
+            $('#tree_detail').append('<p>Name: ' + element.name + '</p>');
+            $('#tree_detail').append('<p>Typ: ' + element.type + '</p>');
             $('#tree_detail').append('<p>Wert (aktueller): ' + element.value + '</p>');
             $('#tree_detail').append('<p>Wert (vorheriger): ' + element.previous_value + '</p>');
             $('#tree_detail').append('<p>Geändert von : ' + element.changed_by + '</p>');
