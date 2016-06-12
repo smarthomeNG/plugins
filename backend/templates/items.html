@@ -7,7 +7,17 @@
 {% block content %}
 
  <div class="container">
-     Item (gesamt: {{ smarthome.item_count }})<br/><br/>
+      <strong>Items (gesamt: {{ smarthome.item_count }})</strong><span id="search-results"></span><br/><br/>
+      <div class="form-group">
+          <input type="input" class="form-control" id="input-search" placeholder="Itempfad suchen..." value=""><br/>
+          <button type="button" class="btn btn-success" id="btn-search">Suchen</button>
+          <button type="button" class="btn btn-success expand-node" id="btn-expand-node">Ergebnisse aufklappen</button>
+
+          <button type="button" class="btn btn-default" id="btn-clear-search">Zur&uuml;cksetzen</button>
+          <button type="button" class="btn btn-success" id="btn-expand-all">Alle aufklappen</button>
+          <button type="button" class="btn btn-danger" id="btn-collapse-all">Alle zuklappen</button>
+      </div>
+
       <div class="pre-scrollable" id="tree" style="float:left; border: 1px solid #ccc; height:650px; max-height:650px; width:600px;"></div>
       <div class="pre-scrollable" style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; height:650px; max-height:650px; width:500px;">
         <strong>Item-Informationen:</strong><br/><br/>
@@ -19,8 +29,6 @@
 
 
  <script type="text/javascript" language="javascript">
-
-
 function getDetailInfo(item_path) {
     var item = [];
     $.getJSON('/item_detail_json.html?item_path='+item_path, function(result) {
@@ -117,10 +125,54 @@ function getTree() {
 
             }
         });
-     });
+    });
+    var search = function(e) {
+          results = [];
+          var pattern = $('#input-search').val();
+          var options = {
+            ignoreCase: true,
+            exactMatch: false,
+            revealResults: false
+          };
+          var results = $('#tree').treeview('search', [ pattern, options ]);
+          $('#search-results').html(' - Treffer: '+results.length);
+          $('#btn-expand-node').on('click', function (e) {
+              for (var i = 0; i < results.length; i++) {
+                if ( i == 0) {
+                    $('#tree').treeview('revealNode', [ results[i].nodeId, { silent: true } ]);
+                }
+                $('#tree').treeview('expandNode', [ results[i].nodeId, { levels: 10, silent: true }]);
+              }
+          });
+
+          $('#btn-clear-search').on('click', function (e) {
+            $('#tree').treeview('clearSearch');
+            $('#input-search').val('');
+            $('#search-output').html('');
+            results = [];
+            $('#search-results').html('');
+          });
+    }
+
+    $('#btn-search').on('click', search);
+    $('#input-search').on('keyup', search);
+
+    // Expand/collapse all
+    $('#btn-expand-all').on('click', function (e) {
+      var levels = $('#select-expand-all-levels').val();
+      $('#tree').treeview('expandAll', { levels: levels, silent: false });
+    });
+    $('#btn-collapse-all').on('click', function (e) {
+      $('#tree').treeview('collapseAll', { silent: false });
+    });
+
+
+
 }
 
 getTree();
+
+
 
 </script>
 {% endblock %}
