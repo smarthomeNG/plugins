@@ -138,9 +138,6 @@ function getTree() {
           $('#search-results').html(' - Treffer: '+results.length);
           $('#btn-expand-node').on('click', function (e) {
               for (var i = 0; i < results.length; i++) {
-                if ( i == 0) {
-                    $('#tree').treeview('revealNode', [ results[i].nodeId, { silent: true } ]);
-                }
                 $('#tree').treeview('expandNode', [ results[i].nodeId, { levels: 10, silent: true }]);
               }
           });
