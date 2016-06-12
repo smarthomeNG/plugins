@@ -376,6 +376,35 @@ class Backend:
 
         return json.dumps(item_data)
 
+    @cherrypy.expose
+    def item_detail_json_html(self, item_path):
+        """
+        returns a list of items as json structure
+        """
+
+        item_data = []
+        item = self._sh.return_item(item_path)
+        item_data.append({'path': item._path, 'name': item._name, 'value': item._value})
+        #items_sorted = sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+        #parent_items_sorted = []
+        #last_parent_item = None
+        #for item in items_sorted:
+        #    if last_parent_item is None or last_parent_item._path not in item._path:
+        #        parent_items_sorted.append(item)
+        #        last_parent_item = item
+
+#        item_data = self._build_item_tree(parent_items_sorted)
+
+
+        #for attribute in item.__dict__.keys() %}
+        #< tr >
+        #< td > {{attribute}}
+        #< / td >
+        #< td > {{item[attribute]}} < / td >
+
+
+        return json.dumps(item_data)
+
     def _build_item_tree(self, parent_items_sorted):
         item_data = []
 

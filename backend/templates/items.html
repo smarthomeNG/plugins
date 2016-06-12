@@ -7,12 +7,31 @@
 {% block content %}
 
  <div class="container">
-     Item (gesamt: {{ smarthome.item_count }})
-     <div id="tree"></div>
+     Item (gesamt: {{ smarthome.item_count }})<br/><br/>
+      <div id="tree" style="float:left; width: 600px;"></div>
+      <div style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; width: 400px; height: 300px;">
+        <strong>Item-Informationen:</strong><br/><br/>
+        <div id="tree_detail">
+
+        </div>
+     </div>
  </div>
 
 
  <script type="text/javascript" language="javascript">
+
+
+function getDetailInfo(item_path) {
+    var item = [];
+    $.getJSON('/item_detail_json.html?item_path='+item_path, function(result) {
+        $.each(result, function(index, element) {
+            $('#tree_detail').html('<p> Itempath: ' + element.path + '</p>');
+            $('#tree_detail').append('<p>Name : ' + element.name + '</p>');
+            $('#tree_detail').append('<p>Wert : ' + element.value + '</p>');
+        });
+
+    });
+}
 
 function build_item_subtree_recursive(data) {
     var result = [];
@@ -38,27 +57,17 @@ function getTree() {
         $.each(result, function(index, element) {
             item_tree.push(build_item_subtree_recursive(element));
         });
-        $('#tree').treeview({data: item_tree});
-    });
+        $('#tree').treeview({
+            data: item_tree,
+            onNodeSelected: function(event, data) {
+                item_info = getDetailInfo(data.text);
+
+            }
+        });
+     });
 }
+
 getTree();
 
-
-
-function setVisibility(rowName) {
-    // Tabellenzelle ermitteln
-
-    var actualVisibility=document.getElementById(rowName).style.visibility;
-
-    if(actualVisibility=='' || actualVisibility=='visible') {
-        document.getElementById(rowName).style.visibility = "hidden";
-        document.getElementById(rowName).style.display = "none";
-        document.getElementById('span_'+rowName).innerHTML = "+";
-    } else {
-        document.getElementById(rowName).style.visibility = "visible";
-        document.getElementById(rowName).style.display = "block";
-        document.getElementById('span_'+rowName).innerHTML = "-";
-    }
-}
 </script>
 {% endblock %}
