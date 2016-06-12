@@ -612,7 +612,7 @@ class Enigma2(SmartPlugin):
             if len(parent_element_xml) > 0:
                 element_xml = parent_element_xml[0].getElementsByTagName(strings[1])
             else:
-                self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
+                self.logger.info("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
                 return
         else:
             element_xml = xml.getElementsByTagName(self.get_iattr_value(item.conf, 'enigma2_data_type'))
@@ -645,7 +645,7 @@ class Enigma2(SmartPlugin):
                 else:
                     item("-")
         else:
-            self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
+            self.logger.info("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
 
     #helper functions below
 
