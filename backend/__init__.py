@@ -364,14 +364,25 @@ class Backend:
         """
         returns a list of items as json structure
         """
-        item_data = []
         items_sorted = sorted(self._sh.return_items(),key=lambda k: str.lower(k['_path']), reverse=False)
-
+        parent_items_sorted = []
+        last_parent_item = None
         for item in items_sorted:
+            if last_parent_item is None or last_parent_item._path not in item._path:
+                parent_items_sorted.append(item)
+                last_parent_item = item
 
-            item_data.append({ 'path' : item._path, 'name': item._name})
+        item_data = self._build_item_tree(items_sorted)
 
         return json.dumps(item_data)
+
+    def _build_item_tree(self, parent_items_sorted):
+        item_data = []
+
+        for item in parent_items_sorted:
+            item_data.append({'path': item._path, 'name': item._name, 'nodes': self._build_item_tree(item.return_children())})
+
+        return item_data
 
     #def dump(self, path, match=True):
     #    if match:
