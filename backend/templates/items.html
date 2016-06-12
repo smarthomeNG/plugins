@@ -8,8 +8,8 @@
 
  <div class="container">
      Item (gesamt: {{ smarthome.item_count }})<br/><br/>
-      <div id="tree" style="float:left; width: 600px;"></div>
-      <div style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; width: 400px; height: 500px;">
+      <div class="pre-scrollable" id="tree" style="float:left; border: 1px solid #ccc; height:650px; max-height:650px; width:600px;"></div>
+      <div class="pre-scrollable" style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; height:650px; max-height:650px; width:500px;">
         <strong>Item-Informationen:</strong><br/><br/>
         <div id="tree_detail">
 
@@ -39,6 +39,45 @@ function getDetailInfo(item_path) {
             $('#tree_detail').append('<p>eval: ' + element.eval + '</p>');
             $('#tree_detail').append('<p>eval_trigger: ' + element.eval_trigger + '</p>');
             $('#tree_detail').append('<p>threshold: ' + element.threshold + '</p>');
+            $('#tree_detail').append('<p>config: ' + element.config + '</p>');
+            $('#tree_detail').append('<p>logics: ' + element.logics + '</p>');
+            $('#tree_detail').append('<p>triggers: ' + element.triggers + '</p>');
+        });
+
+    });
+}
+
+function getDetailInfo2(item_path) {
+    var item = [];
+    var temp ='';
+    $.getJSON('/item_detail_json.html?item_path='+item_path, function(result) {
+        $.each(result, function(index, element) {
+            temp = '<div class="table-responsive"><table class="table table-striped table-hover">';
+			temp = temp + '<thead><tr><th>Attribut</th><th>Wert</th></tr></thead><tbody>';
+			temp = temp + '<tr><th>Pfad</th><td>'+element.path+'</td></tr>';
+			temp = temp + '<tr><th>Name</th><td>'+element.name+'</td></tr>';
+			temp = temp + '<tr><th>Typ</th><td>'+element.type+'</td></tr>';
+			temp = temp + '<tr><th>Wert (aktueller)</th><td>'+element.value+'</td></tr>';
+			temp = temp + '<tr><th>Wert (vorheriger)</th><td>'+element.previous_value+'</td></tr>';
+			temp = temp + '<tr><th>Geändert durch</th><td>'+element.changed_by+'</td></tr>';
+			temp = temp + '<tr><th>previous_age</th><td>'+element.previous_age+'</td></tr>';
+			temp = temp + '<tr><th>age</th><td>'+element.age+'</td></tr>';
+			temp = temp + '<tr><th>Letzte Änderung</th><td>'+element.last_change+'</td></tr>';
+			temp = temp + '<tr><th>previous_change</th><td>'+element.previous_change+'</td></tr>';
+			temp = temp + '<tr><th>enforce_updates</th><td>'+element.enforce_updates+'</td></tr>';
+			temp = temp + '<tr><th>eval</th><td>'+element.eval+'</td></tr>';
+			temp = temp + '<tr><th>eval_trigger</th><td>'+element.eval_trigger+'</td></tr>';
+			temp = temp + '<tr><th>threshold</th><td>'+element.threshold+'</td></tr>';
+
+			temp = temp + '<tr><th></th><td></td></tr>';
+			temp = temp + '<tr><th colspan="2">Noch aufzubereitende Daten:</th></tr>';
+			temp = temp + '<tr><th>config</th><td>'+element.config+'</td></tr>';
+			temp = temp + '<tr><th>logics</th><td>'+element.logics+'</td></tr>';
+			temp = temp + '<tr><th>triggers</th><td>'+element.triggers+'</td></tr>';
+			
+			temp = temp + '</tbody></table></div>';
+
+            $('#tree_detail').html(temp);
         });
 
     });
@@ -71,9 +110,10 @@ function getTree() {
         });
         $('#tree').treeview({
             data: item_tree,
+			levels: 1,
             showTags: true,
             onNodeSelected: function(event, data) {
-                item_info = getDetailInfo(data.text);
+                item_info = getDetailInfo2(data.text);
 
             }
         });

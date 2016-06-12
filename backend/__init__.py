@@ -389,13 +389,24 @@ class Backend:
         else:
             prev_value = item.prev_value()
 
+
+        logics = []
+        for trigger in item.get_logic_triggers():
+            logics.append(format(trigger).replace('<','&lt;').replace('>','&gt;'))
+        triggers = []
+        for trigger in item.get_method_triggers():
+            triggers.append(format(trigger).replace('<','&lt;').replace('>','&gt;'))
+
+        self.logger.warning("Backend: item_detail_json_html logics='{0}'".format(logics))
+        self.logger.warning("Backend: item_detail_json_html triggers='{0}'".format(triggers))
+            
         item_data.append({'path': item._path,
                           'name': item._name,
                           'type': item.type(),
                           'value': item._value,
-                          'age ': str(item.age()),
-                          'last_change ': str(item.last_change()),
-                          'changed_by ': item.changed_by(),
+                          'age': str(item.age()),
+                          'last_change': str(item.last_change()),
+                          'changed_by': item.changed_by(),
                           'previous_value': prev_value,
                           'previous_age': str(item.prev_age()),
                           'previous_change': str(item.prev_change()),
@@ -403,6 +414,9 @@ class Backend:
                           'eval': str(item._eval),
                           'eval_trigger': str(item._eval_trigger),
                           'threshold': str(item._threshold),
+                          'config' : str(item.conf),
+                          'logics' : logics,
+                          'triggers' : triggers,
                           })
 
         return json.dumps(item_data)
