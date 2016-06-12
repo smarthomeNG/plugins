@@ -9,7 +9,7 @@
  <div class="container">
      Item (gesamt: {{ smarthome.item_count }})<br/><br/>
       <div id="tree" style="float:left; width: 600px;"></div>
-      <div style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; width: 400px; height: 300px;">
+      <div style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; width: 400px; height: 400px;">
         <strong>Item-Informationen:</strong><br/><br/>
         <div id="tree_detail">
 
@@ -27,7 +27,13 @@ function getDetailInfo(item_path) {
         $.each(result, function(index, element) {
             $('#tree_detail').html('<p> Itempath: ' + element.path + '</p>');
             $('#tree_detail').append('<p>Name : ' + element.name + '</p>');
-            $('#tree_detail').append('<p>Wert : ' + element.value + '</p>');
+            $('#tree_detail').append('<p>Wert (aktueller): ' + element.value + '</p>');
+            $('#tree_detail').append('<p>Wert (vorheriger): ' + element.previous_value + '</p>');
+            $('#tree_detail').append('<p>Geändert von : ' + element.changed_by + '</p>');
+            $('#tree_detail').append('<p>previous_age: ' + element.previous_age + '</p>');
+            $('#tree_detail').append('<p>age: ' + element.age + '</p>');
+            $('#tree_detail').append('<p>Letzte Änderung: ' + element.last_change  + '</p>');
+            $('#tree_detail').append('<p>previous_change: ' + element.previous_change + '</p>');
         });
 
     });

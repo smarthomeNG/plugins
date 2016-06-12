@@ -384,24 +384,16 @@ class Backend:
 
         item_data = []
         item = self._sh.return_item(item_path)
-        item_data.append({'path': item._path, 'name': item._name, 'value': item._value})
-        #items_sorted = sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
-        #parent_items_sorted = []
-        #last_parent_item = None
-        #for item in items_sorted:
-        #    if last_parent_item is None or last_parent_item._path not in item._path:
-        #        parent_items_sorted.append(item)
-        #        last_parent_item = item
-
-#        item_data = self._build_item_tree(parent_items_sorted)
-
-
-        #for attribute in item.__dict__.keys() %}
-        #< tr >
-        #< td > {{attribute}}
-        #< / td >
-        #< td > {{item[attribute]}} < / td >
-
+        item_data.append({'path': item._path,
+                          'name': item._name,
+                          'value': item._value,
+                          'age ': str(item.age()),
+                          'last_change ': str(item.last_change()),
+                          'changed_by ': item.changed_by(),
+                          'previous_value': item.prev_value(),
+                          'previous_age': str(item.prev_age()),
+                          'previous_change': str(item.prev_change())
+                          })
 
         return json.dumps(item_data)
 
