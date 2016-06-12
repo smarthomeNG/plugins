@@ -386,13 +386,18 @@ class Backend:
         item = self._sh.return_item(item_path)
         item_data.append({'path': item._path,
                           'name': item._name,
+                          'type': item.type(),
                           'value': item._value,
                           'age ': str(item.age()),
                           'last_change ': str(item.last_change()),
                           'changed_by ': item.changed_by(),
                           'previous_value': item.prev_value(),
                           'previous_age': str(item.prev_age()),
-                          'previous_change': str(item.prev_change())
+                          'previous_change': str(item.prev_change()),
+                          'enforce_updates': str(item._enforce_updates),
+                          'eval': str(item._eval),
+                          'eval_trigger': str(item._eval_trigger),
+                          'threshold': str(item._threshold),
                           })
 
         return json.dumps(item_data)

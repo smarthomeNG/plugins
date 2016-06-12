@@ -9,7 +9,7 @@
  <div class="container">
      Item (gesamt: {{ smarthome.item_count }})<br/><br/>
       <div id="tree" style="float:left; width: 600px;"></div>
-      <div style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; width: 400px; height: 400px;">
+      <div style="float:left; padding: 10px; margin-left: 5px; border: 1px solid #ccc; width: 400px; height: 450px;">
         <strong>Item-Informationen:</strong><br/><br/>
         <div id="tree_detail">
 
@@ -34,6 +34,10 @@ function getDetailInfo(item_path) {
             $('#tree_detail').append('<p>age: ' + element.age + '</p>');
             $('#tree_detail').append('<p>Letzte Änderung: ' + element.last_change  + '</p>');
             $('#tree_detail').append('<p>previous_change: ' + element.previous_change + '</p>');
+            $('#tree_detail').append('<p>enforce_updates: ' + element.enforce_updates + '</p>');
+            $('#tree_detail').append('<p>eval: ' + element.eval + '</p>');
+            $('#tree_detail').append('<p>eval_trigger: ' + element.eval_trigger + '</p>');
+            $('#tree_detail').append('<p>threshold: ' + element.threshold + '</p>');
         });
 
     });
