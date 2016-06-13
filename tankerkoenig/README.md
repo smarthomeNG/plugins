@@ -64,10 +64,11 @@ Gets a list of petrol stations around provided coordinates, depending on a provi
 In the example, sh._lat and sh.._long are the geocoordinates configured for smarthome in etc/smarthome.conf. You
 can also set your own coordinates!
 <pre>
-cheapest = sh.tankerkoenig.get_petrol_stations(sh._lat, sh._lon, 'diesel', 'price', rad='10')
+cheapest = sh.tankerkoenig.get_petrol_stations(sh._lat, sh._lon, 'diesel', 'price', rad='2')
 </pre>
 Returned is an array of petrol station data, with the following available keys:
 'place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode'
+Note: Take care with too high rad values, as this also increases load on tankerkoenig interface.
 
 ## get_petrol_station_detail(id)
 This funktion gets the details of one petrol station, identified by its internal TankerKoenig ID.

@@ -135,7 +135,7 @@ class TankerKoenig(SmartPlugin):
                     result_station[key] = json_obj['prices'][id][key]
                 else:
                     result_station[key] = ""
-                result_station_prices.append(result_station)
+            result_station_prices.append(result_station)
 
         return result_station_prices
 
