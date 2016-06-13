@@ -12,6 +12,10 @@ All mappings to items need to be done via your own logic.
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/938924-benzinpreis-plugin
 
+Take care not to request the interface too often or for too many petrol stations. Please follow instructions given on
+https://creativecommons.tankerkoenig.de/#techInfo and e.g. use prices function for price retrieval. Static information
+such as name or location can be directly set in your python logics.
+
 # Configuration
 
 ## plugin.conf
@@ -88,4 +92,9 @@ detail = sh.tankerkoenig.get_petrol_station_detail(sh.petrol_station.DemoBavaria
 sh.petrol_station.DemoBavariaPetrol.name(detail['name'])
 sh.petrol_station.DemoBavariaPetrol.isOpen(detail['isOpen'])
 sh.petrol_station.DemoBavariaPetrol.diesel(detail['diesel'])
+</pre>
+
+## Get prices of two petrol stations
+<pre>
+prices = sh.tankerkoenig.get_petrol_station_prices(['6437ff91-823c-40c6-b556-42553056f7cd','56e30926-02dd-41aa-9e05-1120cbafe34f'])
 </pre>
