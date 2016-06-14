@@ -16,6 +16,12 @@ Take care not to request the interface too often or for too many petrol stations
 https://creativecommons.tankerkoenig.de/#techInfo and e.g. use prices function for price retrieval. Static information
 such as name or location can be directly set in your python logics.
 
+Recommended by tankerkoenig is to store meta data (Name, Address etc.) statically in your code, db, file cache etc and
+just request / update prices via get_petrol_station_prices.
+Other ways of using the interface may result in mail communication with responsibles of tankerkoenig, telling you
+of using the interface in the way described above (static storage of meta data). Please take this into account when
+integrating it..
+
 # Configuration
 
 ## plugin.conf
