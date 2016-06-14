@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess@gmail.com
-#  Version 1.1.10
+#  Version 1.1.11
 #########################################################################
 #  Free for non-commercial use
 #
@@ -125,7 +125,7 @@ class Enigma2(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the Enigma2Device
     """
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.1.10"
+    PLUGIN_VERSION = "1.1.11"
 
     _url_suffix_map = dict([('about','/web/about'),
                             ('deviceinfo', '/web/deviceinfo'),
@@ -162,6 +162,7 @@ class Enigma2(SmartPlugin):
 
         self._session = requests.Session()
         self._timeout = 10
+        self._error_sleeptime = 60
         self._verify = self.to_bool(verify)
 
         ssl = self.to_bool(ssl)
@@ -192,20 +193,6 @@ class Enigma2(SmartPlugin):
         """
         self.alive = False
 
-
-    def _build_url(self, suffix, parameter=''):
-        """
-        Builds a request url
-
-        :param suffix: url suffix, e.g. "/upnp/control/x_tam"
-        :return: string of the url, dependent on settings of the Enigma2Device
-        """
-        if self._enigma2_device.is_ssl():
-            url_prefix = "https"
-        else:
-            url_prefix = "http"
-        url = "%s://%s:%s%s?%s" % (url_prefix, self._enigma2_device.get_host(), self._enigma2_device.get_port(), suffix, parameter)
-        return url
 
     def _update_loop(self):
         """
@@ -282,20 +269,41 @@ class Enigma2(SmartPlugin):
                 elif self.get_iattr_value(item.conf, 'enigma2_data_type') == 'e2servicereference':
                     self.zap(item())
 
-    def remote_control_command(self, command_id):
-        url = self._build_url(self._url_suffix_map['remotecontrol'],
-                              'command=%s' % command_id)
+    def box_request(self, suffix, parameter=''):
+        """
+        Send request to Enigma2 box, ret the answer and parse it
+
+        :param suffix: url suffix, e.g. "/upnp/control/x_tam"
+        :param parameter: optional parameter for the url
+        :return: parsed xml result string
+        """
+        if self._enigma2_device.is_ssl():
+            url = "https"
+        else:
+            url = "http"
+        url += "://%s:%s%s?%s" % (self._enigma2_device.get_host(), self._enigma2_device.get_port(), suffix, parameter)
+
         try:
             response = self._session.get(url, timeout=self._timeout,
                                          auth=HTTPDigestAuth(self._enigma2_device.get_user(),
                                                              self._enigma2_device.get_password()), verify=self._verify)
-        except Exception as e:
-            self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while (not self._sh.tools.ping(self._enigma2_device.get_host())):
-                time.sleep(10)
-            return
 
-        xml = minidom.parseString(response.content)
+        except Exception as e:
+            self.logger.error("Exception when sending GET request: {0} - sleeping for {1} seconds".format(str(e), self._error_sleeptime))
+#            while (not self._sh.tools.ping(self._enigma2_device.get_host())):      # Kein while, weil der Thread sonst nicht endet wenn die Box stromlos ist
+            time.sleep(self._error_sleeptime)
+            return minidom.parseString('<noanswer/>')
+
+        try:
+            xml = minidom.parseString(response.content)
+        except Exception as e:
+            self.logger.error("Exception when parsing response: %s" % str(e))
+            xml = minidom.parseString('<noanswer/>')
+        return xml
+    
+    def remote_control_command(self, command_id):
+        xml = self.box_request(self._url_suffix_map['remotecontrol'], 'command=%s' % command_id)
+
         e2result_xml = xml.getElementsByTagName('e2result')
         e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
         if (len(e2resulttext_xml) > 0 and len(e2result_xml) > 0):
@@ -310,17 +318,7 @@ class Enigma2(SmartPlugin):
         :param result: Array of audiotracks with keys: 'e2audiotrackdescription', 'e2audiotrackid', 'e2audiotrackpid', 'e2audiotrackactive'
         """
         result = []
-        url = self._build_url(self._url_suffix_map['getaudiotracks'])
-        try:
-            response = self._session.get(url, timeout=self._timeout, auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                                                         self._enigma2_device.get_password()),
-                                         verify=self._verify)
-            xml = minidom.parseString(response.content)
-        except Exception as e:
-            self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while not self._sh.tools.ping(self._enigma2_device.get_host()):
-                time.sleep(10)
-            return
+        xml = self.box_request(self._url_suffix_map['getaudiotracks'])
 
         e2audiotrack_xml = xml.getElementsByTagName('e2audiotrack')
         if (len(e2audiotrack_xml)) > 0:
@@ -357,19 +355,8 @@ class Enigma2(SmartPlugin):
         :param e2servicereference: reference to the service
         :param title: optional title of "zap" action
         """
-        url = self._build_url(self._url_suffix_map['zap'],
-                              'sRef=%s&title=%s' % (e2servicereference, title))
-        try:
-            response = self._session.get(url, timeout=self._timeout,
-                                         auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                             self._enigma2_device.get_password()), verify=self._verify)
-        except Exception as e:
-            self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while not self._sh.tools.ping(self._enigma2_device.get_host()):
-                time.sleep(10)
-            return
+        xml = self.box_request(self._url_suffix_map['zap'], 'sRef=%s&title=%s' % (e2servicereference, title))
 
-        xml = minidom.parseString(response.content)
         e2state_xml = xml.getElementsByTagName('e2state')
         e2statetext_xml = xml.getElementsByTagName('e2statetext')
         if (len(e2statetext_xml) > 0 and len(e2state_xml) > 0):
@@ -383,19 +370,8 @@ class Enigma2(SmartPlugin):
 
         :param value: value of the volume (int from 0 to 100)
         """
-        url = self._build_url(self._url_suffix_map['vol'],
-                              'set=set%s' % (value))
-        try:
-            response = self._session.get(url, timeout=self._timeout,
-                                         auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                             self._enigma2_device.get_password()), verify=self._verify)
-        except Exception as e:
-            self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while not self._sh.tools.ping(self._enigma2_device.get_host()):
-                time.sleep(10)
-            return
+        xml = self.box_request(self._url_suffix_map['vol'], 'set=set%s' % (value))
 
-        xml = minidom.parseString(response.content)
         e2result_xml = xml.getElementsByTagName('e2result')
         e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
         if len(e2resulttext_xml) > 0 and len(e2result_xml) > 0:
@@ -411,17 +387,8 @@ class Enigma2(SmartPlugin):
         messagetype=Number from 0 to 3, 0= Yes/No, 1= Info, 2=Message, 3=Attention
         timeout=Can be empty or the Number of seconds the Message should disappear after.
         """
-        url = self._build_url(self._url_suffix_map['message'],'text=%s&type=%s&timeout=%s' % (messagetext, messagetype, timeout))
-        try:
-            response = self._session.get(url, timeout=self._timeout, auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                          self._enigma2_device.get_password()), verify=self._verify)
-        except Exception as e:
-            self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while not self._sh.tools.ping(self._enigma2_device.get_host()):
-                time.sleep(10)
-            return
-        
-        xml = minidom.parseString(response.content)
+        xml = self.box_request(self._url_suffix_map['message'],'text=%s&type=%s&timeout=%s' % (messagetext, messagetype, timeout))
+
         e2result_xml = xml.getElementsByTagName('e2result')
         e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
         if len(e2resulttext_xml) > 0 and len(e2result_xml) >0:
@@ -433,16 +400,7 @@ class Enigma2(SmartPlugin):
         """
         Retrieves the answer to a currently sent message, take care to take the timeout into account in which the answer can be given and start a thread which is polling the answer for that period.
         """
-        url = self._build_url(self._url_suffix_map['message'],'getanswer=now')
-        try:
-            response = self._session.get(url, timeout=self._timeout, auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                          self._enigma2_device.get_password()), verify=self._verify)
-            xml = minidom.parseString(response.content)
-        except Exception as e:
-            self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while not self._sh.tools.ping(self._enigma2_device.get_host()):
-                time.sleep(10)
-            return
+        xml = self.box_request(self._url_suffix_map['message'],'getanswer=now')
 
         e2result_xml = xml.getElementsByTagName('e2state')
         e2resulttext_xml = xml.getElementsByTagName('e2statetext')
@@ -463,17 +421,7 @@ class Enigma2(SmartPlugin):
         
         :param item: item to be updated
         """
-        url = self._build_url(self._url_suffix_map['getcurrent'])
-        try:
-            response = self._session.get(url, timeout=self._timeout,
-                                         auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                             self._enigma2_device.get_password()), verify=self._verify)
-            xml = minidom.parseString(response.content)
-        except Exception as e:
-            self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while not self._sh.tools.ping(self._enigma2_device.get_host()):
-                time.sleep(10)
-            return
+        xml = self.box_request(self._url_suffix_map['getcurrent'])
 
         volume = self._get_value_from_xml_node(xml, 'e2current')
         #self.logger.debug("Volume "+volume)
@@ -485,29 +433,24 @@ class Enigma2(SmartPlugin):
 
         :param item: item to be updated
         """
-        url = self._build_url(self._url_suffix_map['subservices'])
-
         if self.get_iattr_value(item.conf, 'enigma2_data_type') is None:
             self.logger.error("No enigma2_data_type set in item!")
             return
 
-        result = self._cached_get_request('subservices', url, cache, fast)
+        xml = self._cached_get_request('subservices', self._url_suffix_map['subservices'], '', cache, fast)
 
-        try:
-            xml = minidom.parseString(result)
-        except Exception as e:
-            self.logger.error("Exception when parsing response: %s" % str(e))
-            return
-
-        element_xml = xml.getElementsByTagName('e2servicereference')
-        if len(element_xml) > 0:
-            e2servicereference = element_xml[0].firstChild.data
-            #self.logger.debug(e2servicereference)
-        else:
-            self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
+        e2servicereference = 'N/A'
+        test_xml = xml.getElementsByTagName('noanswer')
+        if len(test_xml) == 0:
+            element_xml = xml.getElementsByTagName('e2servicereference')
+            if len(element_xml) > 0:
+                e2servicereference = element_xml[0].firstChild.data
+            else:
+                e2servicereference = ''
+                self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
 
         if not e2servicereference == 'N/A' and '1:0:0:0:0:0:0:0:0:0' not in e2servicereference:
-            current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference)
+            current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference, cache=True, fast=False)
         else:
             current_epgservice = {}
 
@@ -538,32 +481,16 @@ class Enigma2(SmartPlugin):
             else:
                 item('-')
 
-    def get_current_epgservice_for_service_reference(self, service_reference):
+    def get_current_epgservice_for_service_reference(self, service_reference, cache=True, fast=False):
         """
         Retrieves event information for a given service reference id
 
         :param referece of the service to retrieve data for:
         :return: dict of result data
         """
-        url = self._build_url(self._url_suffix_map['epgservice'], 'sRef=%s' % service_reference)
-
-        try:
-            response = self._session.get(url, timeout=self._timeout,
-                                         auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                             self._enigma2_device.get_password()),
-                                         verify=self._verify)
-        except Exception as e:
-            self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-            while not self._sh.tools.ping(self._enigma2_device.get_host()):
-                time.sleep(10)
-            return
-
-        try:
-            xml = minidom.parseString(response.content)
-        except Exception as e:
-            self.logger.error("Exception when parsing response: %s" % str(e))
-            return
-
+#        xml = self.box_request(self._url_suffix_map['epgservice'], 'sRef=%s' % service_reference)
+        xml = self._cached_get_request('epgservice', self._url_suffix_map['epgservice'], 'sRef=%s' % service_reference, cache, fast)
+            
         e2event_list_xml = xml.getElementsByTagName('e2event')
         result_entry = {}
         if (len(e2event_list_xml) > 0):
@@ -596,15 +523,7 @@ class Enigma2(SmartPlugin):
             self.logger.error("No enigma2_data_type set in item!")
             return
 
-        url = self._build_url(self._url_suffix_map[self.get_iattr_value(item.conf, 'enigma2_page')])
-
-        result = self._cached_get_request(self.get_iattr_value(item.conf, 'enigma2_page'), url, cache, fast)
-
-        try:
-            xml = minidom.parseString(result)
-        except Exception as e:
-            self.logger.error("Exception when parsing response: %s" % str(e))
-            return
+        xml = self._cached_get_request(self.get_iattr_value(item.conf, 'enigma2_page'), self._url_suffix_map[self.get_iattr_value(item.conf, 'enigma2_page')], '', cache, fast)
 
         if "/" in self.get_iattr_value(item.conf, 'enigma2_data_type'):
             strings = self.get_iattr_value(item.conf, 'enigma2_data_type').split('/')
@@ -649,36 +568,27 @@ class Enigma2(SmartPlugin):
 
     #helper functions below
 
-    def _cached_get_request(self, cache_key, url, cache=True, fast=False):
+    def _cached_get_request(self, cache_key, urlpart, parameter='', cache=True, fast=False):
         if not fast:
             response_cache = self._response_cache
         else:
             response_cache = self._response_cache_fast
 
         if cache_key not in response_cache or not cache:
-            try:
-                response = self._session.get(url, timeout=self._timeout,
-                                             auth=HTTPDigestAuth(self._enigma2_device.get_user(),
-                                                                 self._enigma2_device.get_password()),
-                                             verify=self._verify)
-            except Exception as e:
-                self.logger.error("Exception when sending GET request: %s - sleeping for 10 seconds" % str(e))
-                while not self._sh.tools.ping(self._enigma2_device.get_host()):
-                    time.sleep(10)
-                return
+            xml = self.box_request(urlpart, parameter)
 
             if not fast:
-                self.logger.debug("Filling reponse cache for %s!" % url)
+                self.logger.debug("Filling reponse cache for %s!" % urlpart)
             else:
-                self.logger.debug("Filling fast reponse cache for %s!" % url)
+                self.logger.debug("Filling fast reponse cache for %s!" % urlpart)
 
-            response_cache[cache_key] = response.content
-            return response.content
+            response_cache[cache_key] = xml
+            return xml
         else:
             if not fast:
-                self.logger.debug("Accessing reponse cache for %s!" % url)
+                self.logger.debug("Accessing reponse cache for %s!" % urlpart)
             else:
-                self.logger.debug("Accessing fast reponse cache for %s!" % url)
+                self.logger.debug("Accessing fast reponse cache for %s!" % urlpart)
             return response_cache[cache_key]
 
     def _get_value_from_xml_node(self, node, tag_name):
