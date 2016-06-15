@@ -132,15 +132,11 @@ function getTree() {
           var options = {
             ignoreCase: true,
             exactMatch: false,
-            revealResults: false
+            revealResults: true
           };
           var results = $('#tree').treeview('search', [ pattern, options ]);
           $('#search-results').html(' - Treffer: '+results.length);
-          $('#btn-expand-node').on('click', function (e) {
-              for (var i = 0; i < results.length; i++) {
-                $('#tree').treeview('expandNode', [ results[i].nodeId, { levels: 10, silent: true }]);
-              }
-          });
+
 
           $('#btn-clear-search').on('click', function (e) {
             $('#tree').treeview('clearSearch');
@@ -152,7 +148,6 @@ function getTree() {
     }
 
     $('#btn-search').on('click', search);
-    $('#input-search').on('keyup', search);
 
     // Expand/collapse all
     $('#btn-expand-all').on('click', function (e) {
@@ -162,14 +157,9 @@ function getTree() {
     $('#btn-collapse-all').on('click', function (e) {
       $('#tree').treeview('collapseAll', { silent: false });
     });
-
-
-
 }
 
 getTree();
-
-
 
 </script>
 {% endblock %}
