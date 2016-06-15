@@ -162,7 +162,6 @@ class Enigma2(SmartPlugin):
 
         self._session = requests.Session()
         self._timeout = 10
-        self._error_sleeptime = 60
         self._verify = self.to_bool(verify)
 
         ssl = self.to_bool(ssl)
@@ -289,9 +288,7 @@ class Enigma2(SmartPlugin):
                                                              self._enigma2_device.get_password()), verify=self._verify)
 
         except Exception as e:
-            self.logger.error("Exception when sending GET request: {0} - sleeping for {1} seconds".format(str(e), self._error_sleeptime))
-#            while (not self._sh.tools.ping(self._enigma2_device.get_host())):      # Kein while, weil der Thread sonst nicht endet wenn die Box stromlos ist
-            time.sleep(self._error_sleeptime)
+            self.logger.error("Exception when sending GET request: {0}".format(str(e)))
             return minidom.parseString('<noanswer/>')
 
         try:
@@ -450,7 +447,7 @@ class Enigma2(SmartPlugin):
                 self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf, 'enigma2_data_type'))
 
         if not e2servicereference == 'N/A' and '1:0:0:0:0:0:0:0:0:0' not in e2servicereference:
-            current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference, cache=True, fast=False)
+            current_epgservice = self.get_current_epgservice_for_service_reference(e2servicereference, cache, fast)
         else:
             current_epgservice = {}
 
@@ -488,7 +485,6 @@ class Enigma2(SmartPlugin):
         :param referece of the service to retrieve data for:
         :return: dict of result data
         """
-#        xml = self.box_request(self._url_suffix_map['epgservice'], 'sRef=%s' % service_reference)
         xml = self._cached_get_request('epgservice', self._url_suffix_map['epgservice'], 'sRef=%s' % service_reference, cache, fast)
             
         e2event_list_xml = xml.getElementsByTagName('e2event')
