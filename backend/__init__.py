@@ -270,7 +270,7 @@ class Backend:
         import pip
         import xmlrpc
         installed_packages = pip.get_installed_distributions()
-        pypi = xmlrpc.client.ServerProxy('http://pypi.python.org/pypi')
+        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
         packages = []
         for dist in installed_packages:
             package = {}
