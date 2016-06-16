@@ -21,11 +21,11 @@
       <div class="pre-scrollable" id="tree" style="float:left; border: 1px solid #ccc; height:650px; max-height:650px; width:600px;"></div>
       <div class=container" style="float:left; margin-left: 5px;">
         <!--refresh widget-->
-        <div class="panel panel-default" data-url="/fetch-data">
-          <div class="panel-heading"><a class="pull-right" href="#"><span class="fa fa-refresh"></span></a> Item-Informationen</div>
+        <div class="panel panel-default" data-url="/item_detail_json.html?item_path=" data-item="child1">
+          <div class="panel-heading"><a class="pull-right" href="#"><span id="refresh-element" class="fa fa-refresh"></span></a> Item-Informationen</div>
           <div class="panel-body panel-refresh">
             <div class="refresh-container"><i class="refresh-spinner fa fa-spinner fa-spin fa-5x"></i></div>
-            <div id="tree_detail" class="refresh-data pre-scrollable" style="height:575px; max-height:575px; width:500px;">
+            <div id="tree_detail" class="data-container refresh-data pre-scrollable" style="height:575px; max-height:575px; width:500px;">
                 Item im Baum auswählen um Details einzusehen!
             </div>
           </div>
@@ -36,67 +36,35 @@
 
 
  <script type="text/javascript" language="javascript">
- 
-
-function getDetailInfo(item_path) {
-    var item = [];
-    $.getJSON('/item_detail_json.html?item_path='+item_path, function(result) {
-        $.each(result, function(index, element) {
-            $('#tree_detail').html('<p> Itempath: ' + element.path + '</p>');
-            $('#tree_detail').append('<p>Name: ' + element.name + '</p>');
-            $('#tree_detail').append('<p>Typ: ' + element.type + '</p>');
-            $('#tree_detail').append('<p>Wert (aktueller): ' + element.value + '</p>');
-            $('#tree_detail').append('<p>Wert (vorheriger): ' + element.previous_value + '</p>');
-            $('#tree_detail').append('<p>Geändert von : ' + element.changed_by + '</p>');
-            $('#tree_detail').append('<p>previous_age: ' + element.previous_age + '</p>');
-            $('#tree_detail').append('<p>age: ' + element.age + '</p>');
-            $('#tree_detail').append('<p>Letzte Änderung: ' + element.last_change  + '</p>');
-            $('#tree_detail').append('<p>previous_change: ' + element.previous_change + '</p>');
-            $('#tree_detail').append('<p>enforce_updates: ' + element.enforce_updates + '</p>');
-            $('#tree_detail').append('<p>eval: ' + element.eval + '</p>');
-            $('#tree_detail').append('<p>eval_trigger: ' + element.eval_trigger + '</p>');
-            $('#tree_detail').append('<p>threshold: ' + element.threshold + '</p>');
-            $('#tree_detail').append('<p>config: ' + element.config + '</p>');
-            $('#tree_detail').append('<p>logics: ' + element.logics + '</p>');
-            $('#tree_detail').append('<p>triggers: ' + element.triggers + '</p>');
-        });
-
-    });
-}
-
-function getDetailInfo2(item_path) {
-    var item = [];
+function getDetailInfo(result) {
     var temp ='';
-    $.getJSON('/item_detail_json.html?item_path='+item_path, function(result) {
-        $.each(result, function(index, element) {
-            temp = '<div class="table-responsive"><table class="table table-striped table-hover">';
-			temp = temp + '<thead><tr><th>Attribut</th><th>Wert</th></tr></thead><tbody>';
-			temp = temp + '<tr><th>Pfad</th><td>'+element.path+'</td></tr>';
-			temp = temp + '<tr><th>Name</th><td>'+element.name+'</td></tr>';
-			temp = temp + '<tr><th>Typ</th><td>'+element.type+'</td></tr>';
-			temp = temp + '<tr><th>Wert (aktueller)</th><td>'+element.value+'</td></tr>';
-			temp = temp + '<tr><th>Wert (vorheriger)</th><td>'+element.previous_value+'</td></tr>';
-			temp = temp + '<tr><th>Geändert durch</th><td>'+element.changed_by+'</td></tr>';
-			temp = temp + '<tr><th>previous_age</th><td>'+element.previous_age+'</td></tr>';
-			temp = temp + '<tr><th>age</th><td>'+element.age+'</td></tr>';
-			temp = temp + '<tr><th>Letzte Änderung</th><td>'+element.last_change+'</td></tr>';
-			temp = temp + '<tr><th>previous_change</th><td>'+element.previous_change+'</td></tr>';
-			temp = temp + '<tr><th>enforce_updates</th><td>'+element.enforce_updates+'</td></tr>';
-			temp = temp + '<tr><th>eval</th><td>'+element.eval+'</td></tr>';
-			temp = temp + '<tr><th>eval_trigger</th><td>'+element.eval_trigger+'</td></tr>';
-			temp = temp + '<tr><th>threshold</th><td>'+element.threshold+'</td></tr>';
+    $.each(result, function(index, element) {
+        temp = '<div class="table-responsive"><table class="table table-striped table-hover">';
+        temp = temp + '<thead><tr><th>Attribut</th><th>Wert</th></tr></thead><tbody>';
+        temp = temp + '<tr><th>Pfad</th><td>'+element.path+'</td></tr>';
+        temp = temp + '<tr><th>Name</th><td>'+element.name+'</td></tr>';
+        temp = temp + '<tr><th>Typ</th><td>'+element.type+'</td></tr>';
+        temp = temp + '<tr><th>Wert (aktueller)</th><td>'+element.value+'</td></tr>';
+        temp = temp + '<tr><th>Wert (vorheriger)</th><td>'+element.previous_value+'</td></tr>';
+        temp = temp + '<tr><th>Geändert durch</th><td>'+element.changed_by+'</td></tr>';
+        temp = temp + '<tr><th>previous_age</th><td>'+element.previous_age+'</td></tr>';
+        temp = temp + '<tr><th>age</th><td>'+element.age+'</td></tr>';
+        temp = temp + '<tr><th>Letzte Änderung</th><td>'+element.last_change+'</td></tr>';
+        temp = temp + '<tr><th>previous_change</th><td>'+element.previous_change+'</td></tr>';
+        temp = temp + '<tr><th>enforce_updates</th><td>'+element.enforce_updates+'</td></tr>';
+        temp = temp + '<tr><th>eval</th><td>'+element.eval+'</td></tr>';
+        temp = temp + '<tr><th>eval_trigger</th><td>'+element.eval_trigger+'</td></tr>';
+        temp = temp + '<tr><th>threshold</th><td>'+element.threshold+'</td></tr>';
 
-			temp = temp + '<tr><th></th><td></td></tr>';
-			temp = temp + '<tr><th colspan="2">Noch aufzubereitende Daten:</th></tr>';
-			temp = temp + '<tr><th>config</th><td>'+element.config+'</td></tr>';
-			temp = temp + '<tr><th>logics</th><td>'+element.logics+'</td></tr>';
-			temp = temp + '<tr><th>triggers</th><td>'+element.triggers+'</td></tr>';
-			
-			temp = temp + '</tbody></table></div>';
+        temp = temp + '<tr><th></th><td></td></tr>';
+        temp = temp + '<tr><th colspan="2">Noch aufzubereitende Daten:</th></tr>';
+        temp = temp + '<tr><th>config</th><td>'+element.config+'</td></tr>';
+        temp = temp + '<tr><th>logics</th><td>'+element.logics+'</td></tr>';
+        temp = temp + '<tr><th>triggers</th><td>'+element.triggers+'</td></tr>';
 
-            $('#tree_detail').html(temp);
-        });
+        temp = temp + '</tbody></table></div>';
 
+        $('#tree_detail').html(temp);
     });
 }
 
@@ -118,6 +86,19 @@ function build_item_subtree_recursive(data) {
     return tree_element;
 }
 
+function reload(data) {
+    var reloadPanel = $(".panel").reload({
+        autoReload: false,
+        time: 3000,
+        refreshContainer: '.refresh-container',
+        dataContainer: '#tree_detail',
+        beforeReload: function() {},
+        afterReload: function() {},
+        parseData: getDetailInfo,
+        parameterString: data.text
+    });
+}
+
 function getTree() {
     var item_tree = [];
 
@@ -130,8 +111,7 @@ function getTree() {
 			levels: 1,
             showTags: true,
             onNodeSelected: function(event, data) {
-                item_info = getDetailInfo2(data.text);
-
+                reload(data)
             }
         });
     });

@@ -7,8 +7,10 @@
 	Reload.prototype.defaults = {
 		time: 3000,
 		autoReload: false,
-		beforeReload: function(){},
-		afterReload: function(){}
+		//beforeReload: function(){},
+		//afterReload: function(){},
+		parameterString: '',
+		parseData: function(){}
 	};
 
 	Reload.prototype.init = function() {
@@ -22,11 +24,12 @@
 
 		// Set the container to update the data with
 		self.config.dataContainer = $(self.config.dataContainer) || self.$elem.find('.data-container');
-		
+
 		self.$elem.find('.fa-refresh').click(self.reload());
 
 		if(self.config.autoReload) {
 			setInterval(self.reload,self.config.time);
+			_self.$elem.find('.fa-refresh').addClass('fa-spin');
 		}
 
 		return self;
@@ -34,21 +37,17 @@
 
 	Reload.prototype.reload = function(){
 		var _self = this;
-		_self.$elem.find('.fa-refresh').addClass('fa-spin');
+        _self.$elem.find('.fa-refresh').addClass('fa-spin');
 		_self.config.refreshContainer.fadeIn();
-
-		// Send the AJAX request to fetch the data
-		$.ajax({
-			url: _self.$elem.data('url'),
-			async: true,
-			beforeSend: _self.config.beforeReload,
-			success: function(data) {
-				_self.config.dataContainer.html(data);
-				_self.config.afterReload();
-			}
-
+  		// Send the AJAX request to fetch the data
+  		$.getJSON(_self.$elem.data('url')+_self.config.parameterString, function(result) {
+		    _self.config.parseData(result);
+		    if(_self.config.autoReload) {
+		        _self.config.refreshContainer.fadeOut("done", function() {});
+		    } else {
+                _self.config.refreshContainer.fadeOut("done", function() {_self.$elem.find('.fa-refresh').removeClass('fa-spin');});
+		    }
 		});
-
 	};
 
 	// Register the plugin to JQuery
