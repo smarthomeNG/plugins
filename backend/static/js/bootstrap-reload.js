@@ -26,6 +26,9 @@
 		self.config.dataContainer = $(self.config.dataContainer) || self.$elem.find('.data-container');
 
 		self.$elem.find('.fa-refresh').click(self.reload());
+		self.$elem.find('.fa-refresh').on('click', function() {
+            self.reload()
+        });
 
 		if(self.config.autoReload) {
 			setInterval(self.reload,self.config.time);

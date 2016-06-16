@@ -87,7 +87,7 @@ function build_item_subtree_recursive(data) {
 }
 
 function reload(data) {
-    var reloadPanel = $(".panel").reload({
+    $(".panel").reload({
         autoReload: false,
         time: 3000,
         refreshContainer: '.refresh-container',
