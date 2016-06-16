@@ -148,9 +148,14 @@ class BackendServer(SmartPlugin):
         pass
 
 
+def get_basename(p):
+    return os.path.basename(p)
+    
+    
 class Backend:
     env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))+'/templates'))
-
+    env.globals['get_basename'] = get_basename
+    
     def __init__(self, backendserver=None, updates_allowed=True):
         self.logger = logging.getLogger(__name__)
         self._bs = backendserver
@@ -490,6 +495,7 @@ class Backend:
             if self.updates_allowed:
                 if logic in self._sh.return_logics():
                     mylogic = self._sh.return_logic(logic)
+                    self.logger.warning("Backend: logics_html: Reload logic='{0}', filename = '{1}'".format(logic, os.path.basename(mylogic.filename)))
                     mylogic.generate_bytecode()
                     self._sh.trigger(logic, by='Backend', value="Init")
                 else:
