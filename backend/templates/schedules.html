@@ -12,6 +12,8 @@
                 <tr>
                     <th>Scheduler</th>
                     <th>nächste Ausführung</th>
+                    <th>Cycle</th>
+                    <th>Cron</th>
                 </tr>
             </thead>
             <tbody>
@@ -21,6 +23,16 @@
                         <td>{{ entry }}</td>
                         {% if smarthome.scheduler._scheduler[entry]['next'] %}
                             <td>{{ smarthome.scheduler._scheduler[entry]['next'].strftime('%Y-%m-%d %H:%M:%S%z') }}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if smarthome.scheduler._scheduler[entry]['cycle'] %}
+                            <td>{{ smarthome.scheduler._scheduler[entry]['cycle'] }}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if smarthome.scheduler._scheduler[entry]['cron'] %}
+                            <td>{{ smarthome.scheduler._scheduler[entry]['cron'] }}</td>
                         {% else %}
                             <td></td>
                         {% endif %}
