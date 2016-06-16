@@ -19,7 +19,7 @@
       </div>
 
       <div class="pre-scrollable" id="tree" style="float:left; border: 1px solid #ccc; height:650px; max-height:650px; width:600px;"></div>
-      <div class=container" style="float:left; margin-left: 5px; ">
+      <div class=container" style="float:left; margin-left: 5px;">
         <!--refresh widget-->
         <div class="panel panel-default" data-url="/fetch-data">
           <div class="panel-heading"><a class="pull-right" href="#"><span class="fa fa-refresh"></span></a> Item-Informationen</div>
@@ -36,6 +36,8 @@
 
 
  <script type="text/javascript" language="javascript">
+ 
+
 function getDetailInfo(item_path) {
     var item = [];
     $.getJSON('/item_detail_json.html?item_path='+item_path, function(result) {
