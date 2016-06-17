@@ -7,7 +7,11 @@
     <title>{% block title %}{% endblock title %}</title>
 
     {%- block metas %}
+    <meta name="viewport" content="width=1200">
+    {#
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+	#}
     {%- endblock metas %}
 
     {%- block styles %}
@@ -24,7 +28,7 @@
     <script src="../static/js/jquery-2.2.3.min.js"></script>
     <script src="../static/js/bootstrap.min.js"></script>
     <script src="../static/js/bootstrap-treeview.min.js"></script>
-    <script src="../static/js/bootstrap-reload.min.js"></script>
+    <script src="../static/js/bootstrap-reload.js"></script>
     <script src="../static/js/google-prettify/run_prettify.js"></script>
     {%- endblock scripts %}
     {%- endblock head %}
