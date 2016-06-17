@@ -276,6 +276,11 @@ class Backend:
         return tmpl.render( visu_plugin=(self.visu_plugin != None) )
 
     @cherrypy.expose
+    def reload_translation_html(self):
+        load_translation(translation_lang)
+        return self.index()
+
+    @cherrypy.expose
     def system_html(self):
         self.find_visu_plugin()
         now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
