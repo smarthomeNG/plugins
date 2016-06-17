@@ -42,7 +42,7 @@
 	Reload.prototype.reload = function(){
 		var _self = this;
         _self.$elem.find('.fa-refresh').addClass('fa-spin');
-		_self.config.refreshContainer.fadeIn();
+		_self.config.refreshContainer.fadeIn('fast');
   		// Send the AJAX request to fetch the data
   		$.getJSON(_self.$elem.data('url')+_self.config.parameterString, function(result) {
 		    _self.config.parseData(result);
