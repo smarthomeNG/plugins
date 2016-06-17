@@ -33,6 +33,7 @@ import subprocess
 import socket
 import sys
 import threading
+import lib.config
 from lib.model.smartplugin import SmartPlugin
 
 from jinja2 import Environment, FileSystemLoader
@@ -518,10 +519,18 @@ class Backend:
         """
         self.find_visu_plugin()
         
+        conf_plugins = {}
+        _conf = lib.config.parse(self._sh._plugin_conf)
+        for plugin in _conf:
+#            self.logger.warning("plugins_html: class_name='{0}', class_path='{1}'".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
+            conf_plugins[_conf[plugin]['class_name']] =  _conf[plugin]['class_path']
+#        self.logger.warning("plugins_html: conf_plugins='{0}'".format(conf_plugins))
+        
         plugins = []
         for x in self._sh._plugins:
             plugin = dict()
             plugin['classname'] = x.__class__.__name__
+            plugin['classpath'] = conf_plugins[x.__class__.__name__]
             if isinstance(x, SmartPlugin):
                 plugin['smartplugin'] = True
                 plugin['instancename'] = x.get_instance_name()
@@ -530,10 +539,13 @@ class Backend:
             else:
                 plugin['smartplugin'] = False
             plugins.append(plugin)
+        plugins_sorted = sorted(plugins, key=lambda k: k['classpath']) 
 
         tmpl = self.env.get_template('plugins.html')
-        return tmpl.render( smarthome = self._sh, plugins=plugins, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render( smarthome = self._sh, plugins=plugins_sorted, visu_plugin=(self.visu_plugin != None) )
         
+        
+       
         
     @cherrypy.expose
     def threads_html(self):
