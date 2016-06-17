@@ -353,6 +353,22 @@ class Backend:
         tmpl = self.env.get_template('log_view.html')
         return tmpl.render(smarthome=self._sh, log_lines=log_lines, visu_plugin=(self.visu_plugin != None) )
 
+    @cherrypy.expose
+    def logics_view_html(self, filename):
+        """
+        returns the smarthomeNG logfile as view
+        """
+        self.find_visu_plugin()
+
+        fobj = open("%s/logics/%s" % (self._sh_dir, filename))
+        file_lines = []
+        for line in fobj:
+            file_lines.append(line.rstrip())
+        fobj.close()
+        tmpl = self.env.get_template('log_view.html')
+        return tmpl.render(smarthome=self._sh, log_lines=file_lines, visu_plugin=(self.visu_plugin != None) )
+
+
 
     @cherrypy.expose
     def items_html(self):
@@ -386,10 +402,9 @@ class Backend:
         """
         returns a list of items as json structure
         """
-
         item_data = []
         item = self._sh.return_item(item_path)
-        if item.type() == None or item.type() is '':
+        if item.type() is None or item.type() is '':
             prev_value = ''
         else:
             prev_value = item.prev_value()
@@ -437,41 +452,6 @@ class Backend:
 
         return item_data
 
-    #def dump(self, path, match=True):
-    #    if match:
-    #        items = self.sh.match_items(path)
-    #    else:
-    #        items = [self.sh.return_item(path)]
-    #    if len(items):
-    #        for item in items:
-    #            if hasattr(item, 'id') and item._type:
-    #                self.push("Item {} ".format(item.id()))
-    #                self.push("{\n")
-    #                self.push("  type = {}\n".format(item.type()))
-    #                self.push("  value = {}\n".format(item()))
-    #                self.push("  age = {}\n".format(item.age()))
-    #                self.push("  last_change = {}\n".format(item.last_change()))
-    #                self.push("  changed_by = {}\n".format(item.changed_by()))
-    #                self.push("  previous_value = {}\n".format(item.prev_value()))
-    #                self.push("  previous_age = {}\n".format(item.prev_age()))
-    #                self.push("  previous_change = {}\n".format(item.prev_change()))
-    #                if hasattr(item, 'conf'):
-    #                    self.push("  config = {\n")
-    #                    for name in item.conf:
-    #                        self.push("    {} = {}\n".format(name, item.conf[name]))
-    #                    self.push("  }\n")
-    #                self.push("  logics = [\n")
-    #                for trigger in item.get_logic_triggers():
-    #                    self.push("    {}\n".format(trigger))
-    #                self.push("  ]\n")
-    #                self.push("  triggers = [\n")
-    #                for trigger in item.get_method_triggers():
-    #                    self.push("    {}\n".format(trigger))
-    #                self.push("  ]\n")
-    #                self.push("}\n")
-    #    else:
-    #        self.push("Nothing found\n")        
-        
     @cherrypy.expose
     def logics_html(self, logic=None, trigger=None, reload=None):
         """

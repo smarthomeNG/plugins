@@ -29,7 +29,7 @@
 						{% else %}
 							<td></td>
 						{% endif %}
-						<td>{{ get_basename(smarthome.return_logic(logic).filename) }}</th>
+						<td><a href="/logics_view.html?filename={{ get_basename(smarthome.return_logic(logic).filename) }}">{{ get_basename(smarthome.return_logic(logic).filename) }}</a></th>
 						{% if updates %}
 							<td>
 							<input name="trigger" value="Trigger" type="submit" class="btn btn-default btn-xs">
