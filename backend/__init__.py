@@ -381,7 +381,7 @@ class Backend:
             file_lines.append(line.rstrip())
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
-        return tmpl.render(smarthome=self._sh, logic_lines=file_lines, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin != None) )
 
 
 
