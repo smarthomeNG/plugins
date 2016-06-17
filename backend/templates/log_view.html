@@ -14,7 +14,7 @@
 	<div class="container" style="width: 90%;">
     <h3>SmarthomeNG Logfile:</h3><br/>
     </div>
-    <div class="container"><pre class="prettyprint linenums" style="height: 600px;">
+    <div class="container"><pre class="prettyprint linenums" style="max-height: 600px;">
 {% if log_lines %}{% for line in log_lines %}{{ line }}
 {% endfor %}{% else %}no data available{% endif %}</pre></div>
 {% endblock %}
