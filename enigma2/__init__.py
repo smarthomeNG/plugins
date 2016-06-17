@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 #########################################################################
-#  Copyright 2016 René Frieß                        rene.friess@gmail.com
+#  Copyright 2016 René Frieß                        rene.friess(a)gmail.com
 #  Version 1.1.11
 #########################################################################
 #  Free for non-commercial use
