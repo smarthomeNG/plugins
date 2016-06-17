@@ -33,8 +33,8 @@
 							<td><a href="/logics_view.html?file_path={{ smarthome.return_logic(logic).filename }}">{{ get_basename(smarthome.return_logic(logic).filename) }}</a></th>
 							{% if updates %}
 								<td>
-								<input name="trigger" value="Trigger" type="submit" class="btn btn-default btn-xs">
-								<input name="reload" value="Reload" type="submit" class="btn btn-default btn-xs">
+								<input name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs">
+								<input name="reload" value="{{ _('Neu Laden','button') }}" type="submit" class="btn btn-default btn-xs">
 								</form>
 								</td>
 							{% endif %}
@@ -57,7 +57,7 @@
 							{% if updates %}
 								 {% if (1==2) %}
 									<td>
-									<input name="trigger" value="Trigger" type="submit" class="btn btn-default btn-xs">
+									<input name="trigger" value="Auslösen" type="submit" class="btn btn-default btn-xs">
 									<input name="reload" value="Reload" type="submit" class="btn btn-default btn-xs">
 									</form>
 									</td>

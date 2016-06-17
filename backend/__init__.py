@@ -57,7 +57,7 @@ class BackendServer(SmartPlugin):
         s.connect(("10.10.10.10", 80))
         return s.getsockname()[0]
 
-    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password=""):
+    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", language=""):
         self.logger = logging.getLogger(__name__)
         self._user = user
         self._password = password
@@ -88,6 +88,10 @@ class BackendServer(SmartPlugin):
 #        if not self.is_ip(ip):
 #            self.logger.error("BackendServer: Invalid value '"+str(ip)+"' configured for attribute ip in plugin.conf, using '"+str('0.0.0.0')+"' instead")
 #            ip = '0.0.0.0'
+        language = language.lower()
+        if language != '':
+            if not load_translation(language):
+                self.logger.warning("BackendServer: Language '{0}' not found, using standard language instead".format(language))
 
         self.updates_allowed = self.my_to_bool(updates_allowed, 'updates_allowed', True)
 
@@ -149,6 +153,8 @@ class BackendServer(SmartPlugin):
         pass
 
 
+# Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
+# Methoden einer Klasse zum laufen bekam
 def get_basename(p):
     """
     returns the filename of a full pathname
@@ -167,20 +173,55 @@ def is_userlogic(sh, logic):
     return (os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics')
     
     
-def translate(txt):
+translation_dict = {}
+translation_lang = ''
+
+def load_translation(language):
+    global translation_dict    # Needed to modify global copy of translation_dict
+    global translation_lang    # Needed to modify global copy of translation_lang
+    
+    logger = logging.getLogger(__name__)
+    
+    translation_lang = language.lower()
+    if translation_lang == '':
+        translation_dict = {}
+    else:
+        lang_filename = os.path.dirname(os.path.abspath(__file__))+'/locale/' + translation_lang + '.json'
+        try:
+            f=open(lang_filename,'r')
+        except:
+            translation_lang = ''
+            return False
+        try:
+            translation_dict=json.load(f)
+        except Exception as e:
+            logger.error("Backend: load_translation language='{0}': Error '{1}'".format(translation_lang, e))
+            return False
+    logger.warning("Backend: translation_dict='{0}'".format(translation_dict))
+    return True
+
+def translate(txt, block=''):
     """
     returns translated text
     
     This function extends the jinja2 template engine
     """
     logger = logging.getLogger(__name__)
-    language = 'en'
-    if language == 'en':
-        en = {'Dateiname': 'filename' }
-        tr = en.get(txt,'')
-    if tr == '':
-        logger.warning("Backend: Language '{0}': Translation for '{1}' is missing".format(language, txt))
+
+    if translation_lang == '':
         tr = txt
+    else:
+        if block != '':
+#            tr = translation_dict.get(block+':'+txt,'')
+#            if tr == '':
+#                tr = translation_dict.get(txt,'')
+            blockdict = translation_dict.get('_'+block,{})
+            tr = blockdict.get(txt,'')
+        else:
+            tr = translation_dict.get(txt,'')
+        if tr == '':
+            logger.warning("Backend: Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
+            tr = txt
     return tr
     
     
