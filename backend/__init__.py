@@ -149,12 +149,27 @@ class BackendServer(SmartPlugin):
 
 
 def get_basename(p):
+    """
+    returns the filename of a full pathname
+
+    This function extends the jinja2 template engine
+    """
     return os.path.basename(p)
+
+
+def is_userlogic(sh, logic):
+    """
+    returns True if userlogic and False if system logic
+    
+    This function extends the jinja2 template engine
+    """
+    return (os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics')
     
     
 class Backend:
     env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))+'/templates'))
     env.globals['get_basename'] = get_basename
+    env.globals['is_userlogic'] = is_userlogic
     
     def __init__(self, backendserver=None, updates_allowed=True):
         self.logger = logging.getLogger(__name__)
@@ -366,7 +381,7 @@ class Backend:
             file_lines.append(line.rstrip())
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
-        return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render(smarthome=self._sh, logic_lines=file_lines, visu_plugin=(self.visu_plugin != None) )
 
 
 

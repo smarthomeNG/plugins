@@ -21,24 +21,50 @@
 			<tbody>
 				{% if smarthome %}
 					{% for logic in smarthome.return_logics()|sort %}
-					<tr>
-						<form name="input" action="logics.html" method="POST" enctype="multipart/form-data"> 
-						<td><input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic }}" type="text"></td>
-						{% if smarthome.scheduler.return_next(logic) %}
-							<td>{{ smarthome.scheduler.return_next(logic).strftime('%Y-%m-%d %H:%M:%S%z') }}</td>
-						{% else %}
-							<td></td>
+						{% if is_userlogic(smarthome, logic) %}
+						<tr>
+							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data"> 
+							<td><input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic }}" type="text"></td>
+							{% if smarthome.scheduler.return_next(logic) %}
+								<td>{{ smarthome.scheduler.return_next(logic).strftime('%Y-%m-%d %H:%M:%S%z') }}</td>
+							{% else %}
+								<td></td>
+							{% endif %}
+							<td><a href="/logics_view.html?file_path={{ smarthome.return_logic(logic).filename }}">{{ get_basename(smarthome.return_logic(logic).filename) }}</a></th>
+							{% if updates %}
+								<td>
+								<input name="trigger" value="Trigger" type="submit" class="btn btn-default btn-xs">
+								<input name="reload" value="Reload" type="submit" class="btn btn-default btn-xs">
+								</form>
+								</td>
+							{% endif %}
+						</tr>
 						{% endif %}
-						<td><a href="/logics_view.html?file_path={{ smarthome.return_logic(logic).filename }}">{{ get_basename(smarthome.return_logic(logic).filename) }}</a></th>
-						{% if updates %}
-							<td>
-							<input name="trigger" value="Trigger" type="submit" class="btn btn-default btn-xs">
-							<input name="reload" value="Reload" type="submit" class="btn btn-default btn-xs">
-							</form>
-							</td>
-						{% endif %}
-					</tr>
 					{% endfor %}
+
+					<tr><th colspan="4">Systemlogiken</th><tr>
+					{% for logic in smarthome.return_logics()|sort %}
+						{% if not is_userlogic(smarthome, logic) %}
+						<tr>
+							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data"> 
+							<td><input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic }}" type="text"></td>
+							{% if smarthome.scheduler.return_next(logic) %}
+								<td>{{ smarthome.scheduler.return_next(logic).strftime('%Y-%m-%d %H:%M:%S%z') }}</td>
+							{% else %}
+								<td></td>
+							{% endif %}
+							<td><a href="/logics_view.html?file_path={{ smarthome.return_logic(logic).filename }}">{{ get_basename(smarthome.return_logic(logic).filename) }}</a></th>
+							{% if updates %}
+								<td>
+								<input name="trigger" value="Trigger" type="submit" class="btn btn-default btn-xs">
+								<input name="reload" value="Reload" type="submit" class="btn btn-default btn-xs">
+								</form>
+								</td>
+							{% endif %}
+						</tr>
+						{% endif %}
+					{% endfor %}
+
 				{% else %}
 					<tr>
 						<td>no data available</td>
