@@ -3,6 +3,14 @@
 	"nächste Ausführung": "next execution",
 	"Dateiname": "filename",
 	"Aktionen": "Actions",
+	"Items": "Items",
+	"gesamt": "total",
+	"Suchen": "Search",
+	"Ergebnisse aufklappen": "Unfold Results",
+	"Zurücksetzen": "Reset",
+	"Alle aufklappen": "Unfold All",
+	"Alle zuklappen": "Fold All",
+	"Itempfad suchen...": "Search Itempath...",
 
 	"_button": {
 		"Auslösen": "Trigger",

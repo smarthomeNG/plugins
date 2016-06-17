@@ -1,0 +1,31 @@
+{
+	"Logik": "Logik",
+	"nächste Ausführung": "nächste Ausführung",
+	"Dateiname": "Dateiname",
+	"Aktionen": "Aktionen",
+	"Items": "Items",
+	"gesamt": "gesamt",
+	"Suchen": "Suchen",
+	"Ergebnisse aufklappen": "Ergebnisse aufklappen",
+	"Zurücksetzen": "Zurücksetzen",
+	"Alle aufklappen": "Alle aufklappen",
+	"Alle zuklappen": "Alle zuklappen",
+	"Itempfad suchen...": "Itempfad suchen...",
+
+	"_button": {
+		"Auslösen": "Auslösen",
+		"Neu Laden": "Neu Laden"
+	},
+
+	"_menu": {
+		"Systeminfo": "Systeminfo",
+		"Dienste": "Dienste",
+		"Items": "Items",
+		"Logiken": "Logiken",
+		"Scheduler": "Scheduler",
+		"Plugins": "Plugins",
+		"Threads": "Threads",
+		"Visu": "Visu",
+		"Disclosure": "Disclosure"
+	}
+}
