@@ -25,6 +25,14 @@
 	"Letzte Änderung": "Last change",
 	"Noch aufzubereitende Daten": "Noch aufzubereitende Daten",
 
+	"_disclosure": {
+		"Lizenz": "Lizenz",
+		"Link": "Link",
+		"Name": "Name",
+		"disclosure_title": "Offenlegung von Open Source Software Komponenten die im SmartHomeNG BackendServer Plugin verwendet werden",
+		"Open Source Software Components used for the Plugin": "Verwendete Open Source Software Komponenten"
+	},
+
 	"_button": {
 		"Auslösen": "Auslösen",
 		"Neu Laden": "Neu Laden"
