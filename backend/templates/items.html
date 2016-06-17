@@ -22,11 +22,11 @@
       <div class=container" style="float:left; margin-left: 5px;">
         <!--refresh widget-->
         <div class="panel panel-default" data-url="/item_detail_json.html?item_path=" data-item="child1">
-          <div class="panel-heading"><a class="pull-right" href="#"><span id="refresh-element" class="fa fa-refresh"></span></a> Item-Informationen</div>
+          <div class="panel-heading"><a class="pull-right" href="#"><span id="refresh-element" class="fa fa-refresh"></span></a> {{ _('Item-Informationen') }}</div>
           <div class="panel-body panel-refresh">
-            <div class="refresh-container"><i class="refresh-spinner fa fa-spinner fa-spin fa-5x"></i></div>
+            <div class="refresh-container" style="padding-top: 220px;"><i class="refresh-spinner fa fa-spinner fa-spin fa-5x"></i></div>
             <div id="tree_detail" class="data-container refresh-data pre-scrollable" style="height:575px; max-height:575px; width:500px;">
-                Item im Baum auswählen um Details einzusehen!
+                {{ _('Item im Baum auswählen um Details einzusehen!') }}
             </div>
           </div>
         </div>
@@ -40,24 +40,24 @@ function getDetailInfo(result) {
     var temp ='';
     $.each(result, function(index, element) {
         temp = '<div class="table-responsive"><table class="table table-striped table-hover">';
-        temp = temp + '<thead><tr><th>Attribut</th><th>Wert</th></tr></thead><tbody>';
-        temp = temp + '<tr><th>Pfad</th><td>'+element.path+'</td></tr>';
-        temp = temp + '<tr><th>Name</th><td>'+element.name+'</td></tr>';
-        temp = temp + '<tr><th>Typ</th><td>'+element.type+'</td></tr>';
-        temp = temp + '<tr><th>Wert (aktueller)</th><td>'+element.value+'</td></tr>';
-        temp = temp + '<tr><th>Wert (vorheriger)</th><td>'+element.previous_value+'</td></tr>';
-        temp = temp + '<tr><th>Geändert durch</th><td>'+element.changed_by+'</td></tr>';
-        temp = temp + '<tr><th>previous_age</th><td>'+element.previous_age+'</td></tr>';
-        temp = temp + '<tr><th>age</th><td>'+element.age+'</td></tr>';
-        temp = temp + '<tr><th>Letzte Änderung</th><td>'+element.last_change+'</td></tr>';
-        temp = temp + '<tr><th>previous_change</th><td>'+element.previous_change+'</td></tr>';
-        temp = temp + '<tr><th>enforce_updates</th><td>'+element.enforce_updates+'</td></tr>';
-        temp = temp + '<tr><th>eval</th><td>'+element.eval+'</td></tr>';
-        temp = temp + '<tr><th>eval_trigger</th><td>'+element.eval_trigger+'</td></tr>';
-        temp = temp + '<tr><th>threshold</th><td>'+element.threshold+'</td></tr>';
+        temp = temp + '<thead><tr><th>{{ _('Attribut') }}</th><th>{{ _('Wert') }}</th></tr></thead><tbody>';
+        temp = temp + '<tr><th>{{ _('Pfad') }}</th><td>'+element.path+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Name') }}</th><td>'+element.name+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Typ') }}</th><td>'+element.type+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('aktueller') }})</th><td>'+element.value+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('vorheriger') }})</th><td>'+element.previous_value+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Geändert durch') }}</th><td>'+element.changed_by+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('previous_age') }}</th><td>'+element.previous_age+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('age') }}</th><td>'+element.age+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Letzte Änderung') }}</th><td>'+element.last_change+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('previous_change') }}</th><td>'+element.previous_change+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('enforce_updates') }}</th><td>'+element.enforce_updates+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('eval') }}</th><td>'+element.eval+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('eval_trigger') }}</th><td>'+element.eval_trigger+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('threshold') }}</th><td>'+element.threshold+'</td></tr>';
 
         temp = temp + '<tr><th></th><td></td></tr>';
-        temp = temp + '<tr><th colspan="2">Noch aufzubereitende Daten:</th></tr>';
+        temp = temp + '<tr><th colspan="2">{{ _('Noch aufzubereitende Daten') }}:</th></tr>';
         temp = temp + '<tr><th>config</th><td>'+element.config+'</td></tr>';
         temp = temp + '<tr><th>logics</th><td>'+element.logics+'</td></tr>';
         temp = temp + '<tr><th>triggers</th><td>'+element.triggers+'</td></tr>';
