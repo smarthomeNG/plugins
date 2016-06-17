@@ -1,0 +1,23 @@
+{
+	"Logik": "Logic",
+	"nächste Ausführung": "next execution",
+	"Dateiname": "filename",
+	"Aktionen": "Actions",
+
+	"_button": {
+		"Auslösen": "Trigger",
+		"Neu Laden": "Reload"
+	},
+	
+	"_menu": {
+		"Systeminfo": "Systeminfo",
+		"Dienste": "Services",
+		"Items": "Items",
+		"Logiken": "Logics",
+		"Scheduler": "Scheduler",
+		"Plugins": "Plugins",
+		"Threads": "Threads",
+		"Visu": "Visu",
+		"Disclosure": "Disclosure"
+	}
+}
