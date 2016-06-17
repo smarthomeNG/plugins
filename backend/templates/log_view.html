@@ -6,17 +6,16 @@
 {% endblock navbar %}
 
 {% block content %}
+    <style>
+    li.L0, li.L1, li.L2, li.L3,
+    li.L5, li.L6, li.L7, li.L8
+    { list-style-type: decimal !important }
+    </style>
 	<div class="container" style="width: 90%;">
     <h3>SmarthomeNG Logfile:</h3><br/>
     </div>
-    <div class="container" style="border: 1px solid #ccc; padding: 5px; height: 700px; width: 90%; overflow-y: scroll;">
-    {% if log_lines %}
-        {% for line in log_lines %}
-        {{ line }}<br/>
-        {% endfor %}
-    {% else %}
-    no data available
-    {% endif %}
-	</div>
+    <div class="container"><pre class="prettyprint linenums" style="height: 600px;">
+{% if log_lines %}{% for line in log_lines %}{{ line }}
+{% endfor %}{% else %}no data available{% endif %}</pre></div>
 {% endblock %}
 
