@@ -167,10 +167,28 @@ def is_userlogic(sh, logic):
     return (os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics')
     
     
+def translate(txt):
+    """
+    returns translated text
+    
+    This function extends the jinja2 template engine
+    """
+    logger = logging.getLogger(__name__)
+    language = 'en'
+    if language == 'en':
+        en = {'Dateiname': 'filename' }
+        tr = en.get(txt,'')
+    if tr == '':
+        logger.warning("Backend: Language '{0}': Translation for '{1}' is missing".format(language, txt))
+        tr = txt
+    return tr
+    
+    
 class Backend:
     env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))+'/templates'))
     env.globals['get_basename'] = get_basename
     env.globals['is_userlogic'] = is_userlogic
+    env.globals['_'] = translate
     
     def __init__(self, backendserver=None, updates_allowed=True):
         self.logger = logging.getLogger(__name__)
