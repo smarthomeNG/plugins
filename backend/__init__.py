@@ -363,7 +363,7 @@ class Backend:
         fobj = open("%s/var/log/smarthome.log" % self._sh_dir)
         log_lines = []
         for line in fobj:
-            log_lines.append(line.rstrip())
+            log_lines.append(line.rstrip().replace('<','&lt;').replace('>','&gt;'))
         fobj.close()
         tmpl = self.env.get_template('log_view.html')
         return tmpl.render(smarthome=self._sh, log_lines=log_lines, visu_plugin=(self.visu_plugin != None) )
@@ -378,7 +378,7 @@ class Backend:
         fobj = open(file_path)
         file_lines = []
         for line in fobj:
-            file_lines.append(line.rstrip())
+            file_lines.append(line.rstrip().replace('<','&lt;').replace('>','&gt;'))
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
         return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin != None) )
