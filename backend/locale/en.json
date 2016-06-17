@@ -31,6 +31,8 @@
 		"Name": "name",
 		"disclosure_title": "Disclosure of Open Source Software Components deployed in SmartHomeNG BackendServer Plugin",
 		"Open Source Software Components used for the Plugin": "Open Source Software Components used for the Plugin"
+		"Icons/Bilder": "Icons/Images",
+		"Alle Icons und Bilder kommen von": "All icons and images are taken from "
 	},
 
 	"_button": {

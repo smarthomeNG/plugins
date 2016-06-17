@@ -29,8 +29,10 @@
 		"Lizenz": "Lizenz",
 		"Link": "Link",
 		"Name": "Name",
-		"disclosure_title": "Offenlegung von Open Source Software Komponenten die im SmartHomeNG BackendServer Plugin verwendet werden",
-		"Open Source Software Components used for the Plugin": "Verwendete Open Source Software Komponenten"
+		"disclosure_title": "Offenlegung von Open Source Software Komponenten des SmartHomeNG BackendServer Plugins",
+		"Verwendete Open Source Software Komponente": "Verwendete Open Source Software Komponenten",
+		"Icons/Bilder": "Icons/Bilder",
+		"Alle Icons und Bilder kommen von": "Alle Icons und Bilder kommen von "
 	},
 
 	"_button": {
