@@ -492,7 +492,8 @@ class Backend:
         """
         item_data = []
         item = self._sh.return_item(item_path)
-        item(value, caller='Backend')
+        if self.updates_allowed:
+            item(value, caller='Backend')
         return
 
 
@@ -569,29 +570,33 @@ class Backend:
             trig = trig[1:len(trig)-27]
             triggers.append(self.html_escape(format(trig.replace("<",""))))
 
-        item_data.append({'path': item._path,
-                          'name': item._name,
-                          'type': item.type(),
-                          'value': item._value,
-                          'age': self.disp_age(item.age()),
-                          'last_change': str(item.last_change()),
-                          'changed_by': changed_by,
-                          'previous_value': prev_value,
-                          'previous_age': prev_age,
-                          'previous_change': str(item.prev_change()),
-                          'enforce_updates': enforce_updates,
-                          'cache': cache,
-                          'eval': self.disp_str(item._eval),
-                          'eval_trigger': self.disp_str(item._eval_trigger),
-                          'cycle': str(cycle),
-                          'crontab': str(crontab),
-                          'autotimer': self.disp_str(item._autotimer),
-                          'threshold': self.disp_str(item._threshold),
-                          'config' : json.dumps(item_conf_sorted),
-                          'logics' : json.dumps(logics),
-                          'triggers' : json.dumps(triggers),
-                          })
+        data_dict = {'path': item._path,
+                     'name': item._name,
+                     'type': item.type(),
+                     'value': item._value,
+                     'age': self.disp_age(item.age()),
+                     'last_change': str(item.last_change()),
+                     'changed_by': changed_by,
+                     'previous_value': prev_value,
+                     'previous_age': prev_age,
+                     'previous_change': str(item.prev_change()),
+                     'enforce_updates': enforce_updates,
+                     'cache': cache,
+                     'eval': self.disp_str(item._eval),
+                     'eval_trigger': self.disp_str(item._eval_trigger),
+                     'cycle': str(cycle),
+                     'crontab': str(crontab),
+                     'autotimer': self.disp_str(item._autotimer),
+                     'threshold': self.disp_str(item._threshold),
+                     'config' : json.dumps(item_conf_sorted),
+                     'logics' : json.dumps(logics),
+                     'triggers' : json.dumps(triggers),
+                    }
 
+        if item.type() == 'foo':
+            data_dict['value'] = str(item._value)
+            
+        item_data.append(data_dict)
         return json.dumps(item_data)
 
     def _build_item_tree(self, parent_items_sorted):
