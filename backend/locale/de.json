@@ -62,6 +62,7 @@
 	"Visu Client": "Visu Client",
 	"Port": "Port",
 	"No active clients": "Keine aktiven Clients",
+	"Die eingegebenen Daten sind kein numerischer Wert": "Die eingegebenen Daten sind kein numerischer Wert",
 	
 	"_threads": {
 		"True": "Ja",
