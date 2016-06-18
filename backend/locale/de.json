@@ -78,9 +78,9 @@
 
 	"_items": {
 		"path": "Pfad",
-		"name": "name",
-		"type": "type",
-		"value": "value",
+		"name": "Name",
+		"type": "Typ",
+		"value": "Wert",
 		"cache": "cache",
 		"enforce_updates": "enforce_updates",
 		"eval": "eval",

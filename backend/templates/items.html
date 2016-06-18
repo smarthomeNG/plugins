@@ -211,6 +211,11 @@ function getTree() {
         $('#btn-search').addClass("btn-primary");
     }
     $('#btn-search').on('click', search);
+    $("#input-search").keyup(function(event){
+        if(event.keyCode == 13){
+            $("#btn-search").click();
+        }
+    });
     $('#input-search').keypress( function() {
         $('#btn-search').removeClass("btn-default");
         $('#btn-search').addClass("btn-primary");
