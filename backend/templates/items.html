@@ -34,17 +34,31 @@
      </div>
  </div>
 
+  <div class="form-group"><select class="form-control" id="sel1">
+      <option>true</option><option>false</option>
+
 
 <script type="text/javascript" language="javascript">
 function getDetailInfo(result) {
     var temp ='';
     $.each(result, function(index, element) {
+        if (element.type == 'bool') {
+            var select = '<select class="form-control" id="item_value">';
+            if (element.value == true) {
+                select = select + '<option selected>true</option><option>false</option></select>';
+            } else {
+                select = select + '<option>true</option><option selected>false</option></select>';
+            }
+        } else {
+            select = element.value;
+        }
+
         temp = '<div class="table-responsive"><table class="table table-striped table-hover">';
         temp = temp + '<thead><tr><th>{{ _('Attribut') }}</th><th>{{ _('Wert') }}</th></tr></thead><tbody>';
         temp = temp + '<tr><th>{{ _('Pfad') }}</th><td>'+element.path+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Name') }}</th><td>'+element.name+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Typ') }}</th><td>'+element.type+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('aktueller') }})</th><td>'+element.value+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('aktueller') }})</th><td>'+select+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('vorheriger') }})</th><td>'+element.previous_value+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Geändert durch') }}</th><td>'+element.changed_by+'</td></tr>';
         temp = temp + '<tr><th>{{ _('previous_age') }}</th><td>'+element.previous_age+'</td></tr>';
@@ -88,6 +102,21 @@ function getDetailInfo(result) {
         temp = temp + '</tbody></table></div>';
 
         $('#tree_detail').html(temp);
+
+        $(".form-control" ).change(function() {
+            $.ajax({
+                url: '/item_change_value.html',
+                type: 'GET',
+                data: { item_path: element.path, value: $("#item_value" ).val()} ,
+                contentType: 'application/json; charset=utf-8',
+                success: function (response) {
+                    //your success code
+                },
+                error: function () {
+                    //your error code
+                }
+            });
+        });
     });
 }
 

@@ -480,6 +480,16 @@ class Backend:
         return json.dumps(item_data)
 
     @cherrypy.expose
+    def item_change_value_html(self, item_path, value):
+        """
+        returns a list of items as json structure
+        """
+        item_data = []
+        item = self._sh.return_item(item_path)
+        item(value)
+        return
+
+    @cherrypy.expose
     def item_detail_json_html(self, item_path):
         """
         returns a list of items as json structure
