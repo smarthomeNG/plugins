@@ -19,11 +19,18 @@
 	"Pfad": "Pfad",
 	"Name": "Name",
 	"Typ": "Typ",
+
+	"Änderungsinformationen": "Änderungsinformationen",
+	"Letzte Änderung": "Letzte Änderung",
+	"Geändert durch": "Geändert durch",
+	"age": "Alter",
 	"aktueller": "aktueller",
 	"vorheriger": "vorheriger",
-	"Geändert durch": "Geändert durch",
-	"Letzte Änderung": "Last change",
-	"Plugin spezifische Attribute": "Plugin spezifische Attribute",
+	"previous change": "vorherige Änderung",
+	"previous age": "vorheriges Alter",
+	
+	"Evaluation und Trigger": "Initialisierungs-, Evaluations- und Trigger-Konfiguration",
+	"Plugin spezifische Attribute": "Plugin spezifische Konfigurationen",
 	"Verbundene Logiken": "Verbundene Logiken",
 	"Verbundene Trigger": "Verbundene Trigger",
 	"Willkommen im Backend von SmarthomeNG": "Willkommen im Backend von SmarthomeNG",
@@ -34,6 +41,10 @@
 	"Freier Speicher": "Freier Speicher",
 	"Datum": "Datum",
 	"Zeit": "Zeit",
+	"Tage": "Tage",
+	"Stunden": "Stunden",
+	"Minuten": "Minuten",
+	"Sekunden": "Sekunden",
 	"Betriebszeit": "Betriebszeit",
 	"installierte Version": "installierte Version",
 	"Neuste Version": "Neuste Version",
@@ -66,6 +77,21 @@
 	"Filter": "Filter",
 	"Logfile": "Log-Datei",
 
+	"_items": {
+		"path": "Pfad",
+		"name": "name",
+		"type": "type",
+		"value": "value",
+		"cache": "cache",
+		"enforce_updates": "enforce_updates",
+		"eval": "eval",
+		"eval_trigger": "eval_trigger",
+		"cycle": "cycle",
+		"crontab": "crontab",
+		"autotimer": "autotimer",
+		"threshold": "threshold"
+	},
+	
 	"_threads": {
 		"True": "Ja",
 		"False": "Nein"

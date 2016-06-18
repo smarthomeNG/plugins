@@ -439,7 +439,6 @@ class Backend:
         fobj.close()
         tmpl = self.env.get_template('log_view.html')
         return tmpl.render(smarthome=self._sh, log_lines=log_lines, text_filter=text_filter, log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin != None) )
-
     @cherrypy.expose
     def logics_view_html(self, file_path):
         """
@@ -491,8 +490,17 @@ class Backend:
         """
         item_data = []
         item = self._sh.return_item(item_path)
-        item(value)
+        item(value, caller='Backend')
         return
+
+
+    def disp_str(self, val):
+        s = str(val)
+        if s == 'False':
+            s = '-'
+        elif s == 'None':
+            s = '-'
+        return s
 
     @cherrypy.expose
     def item_detail_json_html(self, item_path):
@@ -515,6 +523,15 @@ class Backend:
                 if self._sh.scheduler._scheduler[entry]['cron']:
                     crontab = self._sh.scheduler._scheduler[entry]['cron']
                 break
+        
+        if str(item._cache) == 'False':
+        	cache = 'off'
+        else:
+            cache = 'on'
+        if str(item._enforce_updates) == 'False':
+        	enforce_updates = 'off'
+        else:
+            enforce_updates = 'on'
 
         item_conf_sorted = collections.OrderedDict(sorted(item.conf.items(), key=lambda t: str.lower(t[0])))
         if item_conf_sorted.get('sv_widget','') != '':
@@ -536,18 +553,20 @@ class Backend:
                           'name': item._name,
                           'type': item.type(),
                           'value': item._value,
-                          'age': str(item.age()),
+                          'age': str("%.2f" % item.age()),
                           'last_change': str(item.last_change()),
                           'changed_by': item.changed_by(),
                           'previous_value': prev_value,
-                          'previous_age': str(item.prev_age()),
+                          'previous_age': str("%.2f" % item.prev_age()),
                           'previous_change': str(item.prev_change()),
-                          'enforce_updates': str(item._enforce_updates),
-                          'eval': str(item._eval),
-                          'eval_trigger': str(item._eval_trigger),
+                          'enforce_updates': enforce_updates,
+                          'cache': cache,
+                          'eval': self.disp_str(item._eval),
+                          'eval_trigger': self.disp_str(item._eval_trigger),
                           'cycle': str(cycle),
                           'crontab': str(crontab),
-                          'threshold': str(item._threshold),
+                          'autotimer': self.disp_str(item._autotimer),
+                          'threshold': self.disp_str(item._threshold),
                           'config' : json.dumps(item_conf_sorted),
                           'logics' : json.dumps(logics),
                           'triggers' : json.dumps(triggers),

@@ -59,21 +59,29 @@ function getDetailInfo(result) {
 
         temp = '<div class="table-responsive"><table class="table table-striped table-hover">';
         temp = temp + '<thead><tr><th>{{ _('Attribut') }}</th><th>{{ _('Wert') }}</th></tr></thead><tbody>';
-        temp = temp + '<tr><th>{{ _('Pfad') }}</th><td>'+element.path+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Name') }}</th><td>'+element.name+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Typ') }}</th><td>'+element.type+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('aktueller') }})</th><td>'+input+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('vorheriger') }})</th><td>'+element.previous_value+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Geändert durch') }}</th><td>'+element.changed_by+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('previous_age') }}</th><td>'+element.previous_age+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('age') }}</th><td>'+element.age+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('path', 'items') }}</th><td>'+element.path+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('name', 'items') }}</th><td>'+element.name+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('type', 'items') }}</th><td>'+element.type+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('value', 'items') }}</th><td>'+input+'</td></tr>';
+
+        temp = temp + '<tr><th></th><td></td></tr>';
+	    temp = temp + '<tr><th colspan="2">{{ _('Änderungsinformationen') }}:</th></tr>';
         temp = temp + '<tr><th>{{ _('Letzte Änderung') }}</th><td>'+element.last_change+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('previous_change') }}</th><td>'+element.previous_change+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('enforce_updates') }}</th><td>'+element.enforce_updates+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('eval') }}</th><td>'+element.eval+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('eval_trigger') }}</th><td>'+element.eval_trigger+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('cycle') }}</th><td>'+element.cycle+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('crontab') }}</th><td>'+element.crontab+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Geändert durch') }}</th><td>'+element.changed_by+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('age') }}</th><td>'+element.age+' {{ _('Sekunden') }}</td></tr>';
+        temp = temp + '<tr><th>{{ _('vorheriger') }} {{ _('Wert') }}</th><td>'+element.previous_value+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('previous change') }}</th><td>'+element.previous_change+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('previous age') }}</th><td>'+element.previous_age+' {{ _('Sekunden') }}</td></tr>';
+
+        temp = temp + '<tr><th></th><td></td></tr>';
+	    temp = temp + '<tr><th colspan="2">{{ _('Evaluation und Trigger') }}:</th></tr>';
+        temp = temp + '<tr><th>{{ _('cache', 'items') }}</th><td>'+element.cache+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('enforce_updates', 'items') }}</th><td>'+element.enforce_updates+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('eval', 'items') }}</th><td>'+element.eval+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('eval_trigger', 'items') }}</th><td>'+element.eval_trigger+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('cycle', 'items') }}</th><td>'+element.cycle+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('crontab', 'items') }}</th><td>'+element.crontab+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('autotimer') }}</th><td>'+element.autotimer+'</td></tr>';
         temp = temp + '<tr><th>{{ _('threshold') }}</th><td>'+element.threshold+'</td></tr>';
 
         config = JSON.parse(element.config);
