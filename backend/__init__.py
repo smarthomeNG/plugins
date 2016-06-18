@@ -408,8 +408,9 @@ class Backend:
         """
         returns the smarthomeNG sqlite database as download
         """
+        self._sh.sql.dump('%s/var/db/smarthomedb.dump'%self._sh_dir)
         mime = 'application/octet-stream'
-        return cherrypy.lib.static.serve_file("%s/var/db/smarthome.db"%self._sh_dir, mime, "%s/var/db/"%self._sh_dir)
+        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump"%self._sh_dir, mime, "%s/var/db/"%self._sh_dir)
 
     @cherrypy.expose
     def log_dump_html(self):
