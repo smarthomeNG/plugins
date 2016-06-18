@@ -8,10 +8,10 @@ This plugin delivers information about the current SmarthomeNG installation. Rig
 * a list of current schedulers and their next execution time
 * direct download of sqlite database (if plugin is used) and smarthome.log
 * some information about frequently used daemons like knxd is included
+* supports basic authentication
+* multi-language support
 
-There is however no protection for unauthorized access or use of the plugin so be careful when enabling it with your network.
-
-The plugin might be used standalone as well.
+There is however only basic protection against unauthorized access or use of the plugin so be careful when enabling it with your network.
 
 It is still in early development so please give feedback to the community.
 
@@ -50,6 +50,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#updates_allowed = True
 	#user = admin
 	#password = very_secure_password
+	#language = en
 </pre>
 
 ### ip
@@ -69,3 +70,6 @@ The user for basic authentication. If left out, the user name is set as "admin"
 
 ### password (optional)
 The password for basic authentication. If left out, basic authentication is disabled.
+
+### language (optional)
+You can specify a language to use for the plugin. Besides the standard language (german) which is used, if this parameter isn't set, you can specify english (for the time being). The language is specified by  **`en`**

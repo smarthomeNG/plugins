@@ -10,13 +10,13 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Nr.</th>
-                    <th>Type</th>
-                    <th>Plugin</th>
-                    <th>Classname</th>
-                    <th>Instanz</th>
-                    <th>Version</th>
-                    <th>Mehrere Instanzen möglich</th>
+                    <th>{{ _('Nr.') }}</th>
+                    <th>{{ _('Type') }}</th>
+                    <th>{{ _('Plugin') }}</th>
+                    <th>{{ _('Classname') }}</th>
+                    <th>{{ _('Instanz') }}</th>
+                    <th>{{ _('Version') }}</th>
+                    <th>{{ _('Mehrere Instanzen möglich') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,7 +31,7 @@
                         {% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
                         </td>
                         <td width="150px">{{ p.version }}</td>
-                        <td width="160px">{% if p.multiinstance %}Ja{%else%}Nein{%endif%}</td>
+                        <td width="160px">{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
                     {% else %}
                         <td>-</td>
                         <td>-</td>

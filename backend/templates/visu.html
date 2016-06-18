@@ -10,10 +10,10 @@
 		<table class="table table-striped table-hover">
 			<thead>
 				<tr>
-					<th>Visu Client</th>
+					<th>{{ _('Visu Client') }}</th>
 					{% if visu_plugin %}
-						<th>IP Adresse</th>
-						<th>Port</th>
+						<th>{{ _('IP') }}</th>
+						<th>{{ _('Port') }}</th>
 					{% endif %}
 				</tr>
 			</thead>
@@ -30,7 +30,7 @@
 						{% endfor %}
 					{% else %}
 						<tr>
-							<td>No active clients</td>
+							<td>{{ _('No active clients') }}</td>
 						</tr>
 					{% endif %}
 				{% else %}

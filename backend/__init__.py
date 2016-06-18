@@ -25,6 +25,7 @@
 import cherrypy
 import logging
 import platform
+import collections
 import datetime
 import pwd
 import os
@@ -208,15 +209,15 @@ def translate(txt, block=''):
     """
     logger = logging.getLogger(__name__)
 
+    txt = str(txt)
     if translation_lang == '':
         tr = txt
     else:
         if block != '':
-#            tr = translation_dict.get(block+':'+txt,'')
-#            if tr == '':
-#                tr = translation_dict.get(txt,'')
             blockdict = translation_dict.get('_'+block,{})
             tr = blockdict.get(txt,'')
+            if tr == '':
+                tr = translation_dict.get(txt,'')
         else:
             tr = translation_dict.get(txt,'')
         if tr == '':
@@ -261,6 +262,11 @@ class Backend:
                 self.logger.warning("Backend: visu plugin v{0} is too old to support BackendServer, please update".format(vers))
                 
     
+    def html_escape(self, str):
+        html = str.rstrip().replace('<','&lt;').replace('>','&gt;')
+        return html
+        
+
     @cherrypy.expose
     def index(self):
         self.find_visu_plugin()
@@ -276,8 +282,11 @@ class Backend:
         return tmpl.render( visu_plugin=(self.visu_plugin != None) )
 
     @cherrypy.expose
-    def reload_translation_html(self):
-        load_translation(translation_lang)
+    def reload_translation_html(self, lang=''):
+        if lang != '':
+            load_translation(lang)
+        else:
+            load_translation(translation_lang)
         return self.index()
 
     @cherrypy.expose
@@ -292,13 +301,6 @@ class Backend:
         node = platform.node()
         python_packages = self.getpackages()
 
-#        try:
-#            myip = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#            myip.connect(('8.8.8.8', 80))
-#            ip = myip.getsockname()[0]
-#            myip.close()
-#        except StandardError:
-#            ip = "IP nicht erkannt"
         ip = self._bs.get_local_ip_address()
         
         space = os.statvfs(self._sh_dir)
@@ -389,7 +391,7 @@ class Backend:
                 break
 
         tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin != None))
+        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin != None), lang=translation_lang)
 
     @cherrypy.expose
     def disclosure_html(self):
@@ -428,7 +430,7 @@ class Backend:
         fobj = open("%s/var/log/smarthome.log" % self._sh_dir)
         log_lines = []
         for line in fobj:
-            log_lines.append(line.rstrip().replace('<','&lt;').replace('>','&gt;'))
+            log_lines.append(self.html_escape(line))
         fobj.close()
         tmpl = self.env.get_template('log_view.html')
         return tmpl.render(smarthome=self._sh, log_lines=log_lines, visu_plugin=(self.visu_plugin != None) )
@@ -443,7 +445,7 @@ class Backend:
         fobj = open(file_path)
         file_lines = []
         for line in fobj:
-            file_lines.append(line.rstrip().replace('<','&lt;').replace('>','&gt;'))
+            file_lines.append(self.html_escape(line))
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
         return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin != None) )
@@ -489,16 +491,32 @@ class Backend:
         else:
             prev_value = item.prev_value()
 
+        cycle = ''
+        crontab = ''
+        for entry in self._sh.scheduler._scheduler:
+            if entry == item._path:
+                if self._sh.scheduler._scheduler[entry]['cycle']:
+                    cycle = self._sh.scheduler._scheduler[entry]['cycle']
+                if self._sh.scheduler._scheduler[entry]['cron']:
+                    crontab = self._sh.scheduler._scheduler[entry]['cron']
+                break
+
+        item_conf_sorted = collections.OrderedDict(sorted(item.conf.items(), key=lambda t: str.lower(t[0])))
+        if item_conf_sorted.get('sv_widget','') != '':
+            item_conf_sorted['sv_widget'] = self.html_escape(item_conf_sorted['sv_widget'])
+
         logics = []
         for trigger in item.get_logic_triggers():
-            logics.append(format(trigger).replace('<','&lt;').replace('>','&gt;'))
+            logics.append(self.html_escape(format(trigger)))
         triggers = []
         for trigger in item.get_method_triggers():
-            triggers.append(format(trigger).replace('<','&lt;').replace('>','&gt;'))
+            trig = format(trigger)
+            trig = trig[1:len(trig)-27]
+            triggers.append(self.html_escape(format(trig.replace("<",""))))
 
         self.logger.warning("Backend: item_detail_json_html logics='{0}'".format(logics))
         self.logger.warning("Backend: item_detail_json_html triggers='{0}'".format(triggers))
-            
+
         item_data.append({'path': item._path,
                           'name': item._name,
                           'type': item.type(),
@@ -512,10 +530,12 @@ class Backend:
                           'enforce_updates': str(item._enforce_updates),
                           'eval': str(item._eval),
                           'eval_trigger': str(item._eval_trigger),
+                          'cycle': str(cycle),
+                          'crontab': str(crontab),
                           'threshold': str(item._threshold),
-                          'config' : str(item.conf),
-                          'logics' : logics,
-                          'triggers' : triggers,
+                          'config' : json.dumps(item_conf_sorted),
+                          'logics' : json.dumps(logics),
+                          'triggers' : json.dumps(triggers),
                           })
 
         return json.dumps(item_data)

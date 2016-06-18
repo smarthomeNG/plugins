@@ -23,43 +23,43 @@
                 </tr>
                 <tr>
                     <td><img src="/static/img/NIC.svg" width="48" height="48"></td>
-                    <td>IP (v4)</td>
+                    <td>{{ _('IP') }} (v4)</td>
                     <td>{{ ip }}</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/tux_hdd.svg" width="48" height="48"></td>
-                    <td>Betriebssystem:</td>
+                    <td>{{ _('Betriebssystem') }}:</td>
                     <td>{{ system }}<br/>
                     {{ vers }}</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/cpu.svg" width="48" height="48"></td>
-                    <td>Architektur:</td>
+                    <td>{{ _('Architektur') }}:</td>
                     <td>{{ arch }}</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/user.svg" width="48" height="48"></td>
-                    <td>Benutzer:</td>
+                    <td>{{ _('Benutzer') }}:</td>
                     <td>{{ user }}</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/hd.svg" width="48" height="48"></td>
-                    <td>Freier Speicher:</td>
+                    <td>{{ _('Freier Speicher') }}:</td>
                     <td>{{ (freespace)|round|int }} MByte</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/clock.svg" width="48" height="48"></td>
-                    <td>Datum / Zeit:</td>
+                    <td>{{ _('Datum') }} / {{ _('Zeit') }}:</td>
                     <td>{{ now }}</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/preferences.svg" width="48" height="48"></td>
-                    <td>Uptime:</td>
+                    <td>{{ _('Betriebszeit') }} (Host):</td>
                     <td>{{ uptime }}</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/home.svg" width="48" height="48"></td>
-                    <td>SmarthomeNG Uptime:</td>
+                    <td>{{ _('Betriebszeit') }} (SmarthomeNG):</td>
                     <td>{{ sh_uptime }}</td>
                 </tr>
                 <tr>
@@ -78,8 +78,8 @@
                 <tr>
                     <th></th>
                     <th>Python Package</th>
-                    <th>installierte Version</th>
-                    <th>Neuste Version (PyPI)</th>
+                    <th>{{ _('installierte Version') }}</th>
+                    <th>{{ _('Neuste Version') }} (PyPI)</th>
                 </tr>
             </thead>
             <tbody>

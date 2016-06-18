@@ -10,9 +10,9 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Thread (gesamt: {{ threads_count }})</th>
-                    <th>Id</th>
-                    <th>Alive</th>
+                    <th>{{ _('Thread') }} ({{ _('gesamt') }}: {{ threads_count }})</th>
+                    <th>{{ _('Thread-Id') }}</th>
+                    <th>{{ _('Aktiv') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -21,7 +21,7 @@
                     <tr>
                         <td>{{ t.name }}</td>
                         <td>{{ t.id }}</td>
-                        <td>{{ t.alive }}</td>
+                        <td>{{ _(t.alive, 'threads') }}</td>
                         <td width="200px"></td>
                     </tr>
                     {% endfor %}

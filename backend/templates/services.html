@@ -10,23 +10,23 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Dienst</th>
-                    <th>Status</th>
-                    <th>Aktion</th>
+                    <th>{{ _('Dienst') }}</th>
+                    <th>{{ _('Status') }}</th>
+                    <th>{{ _('Aktion') }}</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td><img src="/static/img/shNG.png" width="48" height="48"></td>
+                    <td><img src="/static/img/home.svg" width="48" height="48"></td>
                     <td><pre>{{ smarthome_service }}</pre>
                     </td>
                     <td>{% if knxd_active %}
                             <form class="navbar-form navbar-left" action="/stop_smarthome" method="post">
-                            <input type="submit" class="btn btn-default" value="smarthome beenden"></input>
+                            <input type="submit" class="btn btn-default" value="{{ _('smarthomeNG beenden','button') }}"></input>
                             </form>
                         {% else %}
                             <form class="navbar-form navbar-left" action="/start_smarthome" method="post">
-                            <input type="submit" class="btn btn-default" value="smarthome starten"></input>
+                            <input type="submit" class="btn btn-default" value="{{ _('smarthomeNG starten','button') }}"></input>
                             </form>
                         {% endif %}</td>
                 </tr>
@@ -37,11 +37,11 @@
                     </td>
                     <td>{% if knxd_active %}
                             <form class="navbar-form navbar-left" action="/stop_knxd_service" method="post">
-                            <input type="submit" class="btn btn-default" value="knxd.service beenden"></input>
+                            <input type="submit" class="btn btn-default" value="{{ _('knxd service beenden','button') }}"></input>
                             </form>
                         {% else %}
                             <form class="navbar-form navbar-left" action="/start_knxd" method="post">
-                            <input type="submit" class="btn btn-default" value="knxd.service starten"></input>
+                            <input type="submit" class="btn btn-default" value="{{ _('knxd service starten','button') }}"></input>
                             </form>
                         {% endif %}</td>
                 </tr>
@@ -51,11 +51,11 @@
                     </td>
                     <td>{% if knxd_active %}
                             <form class="navbar-form navbar-left" action="/stop_knxd" method="post">
-                            <input type="submit" class="btn btn-default" value="knxd socket beenden"></input>
+                            <input type="submit" class="btn btn-default" value="{{ _('knxd socket beenden','button') }}"></input>
                             </form>
                         {% else %}
                             <form class="navbar-form navbar-left" action="/start_knxd" method="post">
-                            <input type="submit" class="btn btn-default" value="knxd socket starten"></input>
+                            <input type="submit" class="btn btn-default" value="{{ _('knxd socket starten','button') }}"></input>
                             </form>
                         {% endif %}</td>
                 </tr>
@@ -63,9 +63,9 @@
                     <td><img src="/static/img/reboot.svg" width="48" height="48"></td>
                     <td><form class="navbar-form navbar-left" action="/reboot" method="post">
                         <div class="form-group">
-                            <input type="password" class="form-control" name="password" maxlength="128" placeholder="Root-Passwort"></input>
+                            <input type="password" class="form-control" name="password" maxlength="128" placeholder="{{ _('Root-Passwort') }}"></input>
                         </div>
-                            <input type="submit" class="btn btn-default" value="Neu starten"></input>
+                            <input type="submit" class="btn btn-default" value="{{ _('Neu starten','button') }}"></input>
                         </form>
                     </td>
                     <td>{% if rbt1 %}
@@ -78,23 +78,25 @@
                     <td><img src="/static/img/logfile.svg" width="48" height="48"></td>
 
                     <td>
-                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/log_dump.html')">Logfile speichern</span></div>
-                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/log_view.html'">Logfile ansehen</span></div>
+                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/log_dump.html')">{{ _('Logfile speichern','button') }}</span></div>
+                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/log_view.html'">{{ _('Logfile ansehen','button') }}</span></div>
                     </td>
                     <td></td>
                 </tr>
                 {% if sql_plugin %}
                 <tr>
                     <td><img src="/static/img/db_backup.svg" width="48" height="48"></td>
-                    <td><div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/db_dump.html')">Datenbank-Dump</span></div></td>
+                    <td><div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/db_dump.html')">{{ _('Datenbank-Dump','button') }}</span></div></td>
                     <td></td>
                 </tr>
                 {% endif %}
                 <tr>
-                    <td><img src="/static/img/logfile.svg" width="48" height="48"></td>
+                    <td><img src="/static/img/translation.svg" width="48" height="48"></td>
 
                     <td>
-                        <div class="navbar-form navbar-left"><span class="btn btn-default"><a href="reload_translation.html">Übersetzung neu laden</a></span></div>
+                        <div class="navbar-form navbar-left"><span class="btn btn-default"><a href="reload_translation.html">{{ _('Übersetzung neu laden','button') }}</a></span></div>
+                        {% if lang != 'de' %}<div class="navbar-form navbar-left"><span class="btn btn-default"><a href="reload_translation.html?lang=de">{{ _('Auf Deutsch wechseln','button') }}</a></span></div>{% endif %}
+                        {% if lang != 'en' %}<div class="navbar-form navbar-left"><span class="btn btn-default"><a href="reload_translation.html?lang=en">{{ _('Auf Englisch wechseln','button') }}</a></span></div>{% endif %}
                     </td>
                     <td></td>
                 </tr>

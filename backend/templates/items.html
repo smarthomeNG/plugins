@@ -10,11 +10,11 @@
       <strong>{{ _('Items') }} ({{ _('gesamt') }}: {{ smarthome.item_count }})</strong><span id="search-results"></span><br/><br/>
       <div class="form-group">
           <input type="input" class="form-control" id="input-search" placeholder="{{ _('Itempfad suchen...') }}" value=""><br/>
-          <button type="button" class="btn btn-success" id="btn-search">{{ _('Suchen') }}</button>
-          <button type="button" class="btn btn-success expand-node" id="btn-expand-node">{{ _('Ergebnisse aufklappen') }}</button>
+          <button type="button" class="btn btn-primary" id="btn-search">{{ _('Suchen') }}</button>
+          <button type="button" class="btn btn-primary expand-node" id="btn-expand-node">{{ _('Ergebnisse aufklappen') }}</button>
 
-          <button type="button" class="btn btn-default" id="btn-clear-search">{{ _('Zurücksetzen') }}</button>
-          <button type="button" class="btn btn-success" id="btn-expand-all">{{ _('Alle aufklappen') }}</button>
+          <button type="button" class="btn btn-warning" id="btn-clear-search">{{ _('Suche zurücksetzen') }}</button>
+          <button type="button" class="btn btn-danger" id="btn-expand-all">{{ _('Alle aufklappen') }}</button>
           <button type="button" class="btn btn-danger" id="btn-collapse-all">{{ _('Alle zuklappen') }}</button>
       </div>
 
@@ -35,7 +35,7 @@
  </div>
 
 
- <script type="text/javascript" language="javascript">
+<script type="text/javascript" language="javascript">
 function getDetailInfo(result) {
     var temp ='';
     $.each(result, function(index, element) {
@@ -54,14 +54,37 @@ function getDetailInfo(result) {
         temp = temp + '<tr><th>{{ _('enforce_updates') }}</th><td>'+element.enforce_updates+'</td></tr>';
         temp = temp + '<tr><th>{{ _('eval') }}</th><td>'+element.eval+'</td></tr>';
         temp = temp + '<tr><th>{{ _('eval_trigger') }}</th><td>'+element.eval_trigger+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('cycle') }}</th><td>'+element.cycle+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('crontab') }}</th><td>'+element.crontab+'</td></tr>';
         temp = temp + '<tr><th>{{ _('threshold') }}</th><td>'+element.threshold+'</td></tr>';
-
-        temp = temp + '<tr><th></th><td></td></tr>';
-        temp = temp + '<tr><th colspan="2">{{ _('Noch aufzubereitende Daten') }}:</th></tr>';
-        temp = temp + '<tr><th>config</th><td>'+element.config+'</td></tr>';
-        temp = temp + '<tr><th>logics</th><td>'+element.logics+'</td></tr>';
-        temp = temp + '<tr><th>triggers</th><td>'+element.triggers+'</td></tr>';
-
+        
+        config = JSON.parse(element.config);
+		if (Object.keys(config).length > 0) {
+    	    temp = temp + '<tr><th></th><td></td></tr>';
+	        temp = temp + '<tr><th colspan="2">{{ _('Plugin spezifische Attribute') }}:</th></tr>';
+	        for(key in config){
+    	        temp = temp + '<tr><th>' + key + '</th><td>' + config[key] + '</td></tr>';
+			};
+        };
+        
+        logics = JSON.parse(element.logics);
+		if (logics.length > 0) {
+	        temp = temp + '<tr><th></th><td></td></tr>';
+    	    temp = temp + '<tr><th colspan="2">{{ _('Verbundene Logiken') }}:</th></tr>';
+        	for(i in logics){
+	        	temp = temp + '<tr><td colspan="2">'+logics[i]+'</td></tr>';
+			};
+		};
+			
+        triggers = JSON.parse(element.triggers);
+		if (triggers.length > 0) {
+	        temp = temp + '<tr><th></th><td></td></tr>';
+    	    temp = temp + '<tr><th colspan="2">{{ _('Verbundene Trigger') }}:</th></tr>';
+        	for(i in triggers){
+	        	temp = temp + '<tr><td colspan="2">'+triggers[i]+'</td></tr>';
+			};
+		};
+		
         temp = temp + '</tbody></table></div>';
 
         $('#tree_detail').html(temp);
