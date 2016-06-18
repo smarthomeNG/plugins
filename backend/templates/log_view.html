@@ -12,9 +12,24 @@
     { list-style-type: decimal !important }
     </style>
 	<div class="container" style="width: 90%;">
-    <h3>SmarthomeNG Logfile:</h3><br/>
+    <h3>SmarthomeNG {{ _('Logfile') }}:</h3><br/>
     </div>
-    <div class="container"><pre class="prettyprint linenums" style="max-height: 600px;">
+    <div class="container" style="width: 90%;">
+        <div class="form-group" style="display:inline;">
+            <div style="float:left; font-size: 20px;">{{ _('Filter') }}:</div>
+            <input type="text" class="form-control" id="text_filter" style= "margin-left: 10px; width: 400px; float:left;"/>
+            <select class="form-control" id="log_level_filter" style="margin-left: 10px; width: 200px; float:left;">
+                <option value="ALL">ALL</option>
+                <option value="INFO">INFO</option>
+                <option value="DEBUG">DEBUG</option>
+                <option value="ERROR">ERROR</option>
+            </select>
+        </div>
+        <span class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()">{{ _('Filter anwenden','button') }}</span>
+    </div>
+    <br style="clear:both;"/>
+    <div class="container" style="width: 90%;">
+<pre class="prettyprint linenums" style="max-height: 700px;">
 {% if log_lines %}{% for line in log_lines %}{{ line }}
 {% endfor %}{% else %}no data available{% endif %}</pre></div>
 {% endblock %}

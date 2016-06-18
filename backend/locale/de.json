@@ -63,7 +63,9 @@
 	"Port": "Port",
 	"No active clients": "Keine aktiven Clients",
 	"Die eingegebenen Daten sind kein numerischer Wert": "Die eingegebenen Daten sind kein numerischer Wert",
-	
+	"Filter": "Filter",
+	"Logfile": "Log-Datei",
+
 	"_threads": {
 		"True": "Ja",
 		"False": "Nein"
@@ -87,7 +89,8 @@
 		"knxd socket starten": "knxd socket starten",
 		"smarthomeNG beenden": "smarthomeNG beenden",
 		"knxd service beenden": "knxd service beenden",
-		"knxd socket beenden": "knxd socket beenden"
+		"knxd socket beenden": "knxd socket beenden",
+		"Filter anwenden": "Filter anwenden"
 	},
 
 	"_menu": {
