@@ -20,7 +20,7 @@ For information about the configuration of the plugin refer to **README.md**.
 
 # WebSocket Interface
 
-The visa plugin implements a WebSocket server. This section describes the implemented protocol. The messages of the protocol consist of data in json format. Following are the request commands which the visu plugin handles.
+The visa plugin implements a WebSocket server. This section describes the implemented protocol. The messages of the protocol consist of data in json format. Following are the request commands which the visu plugin handles. 
 
 
 ## item

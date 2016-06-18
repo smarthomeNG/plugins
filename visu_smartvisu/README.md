@@ -1,4 +1,4 @@
-# Visualisation plugin
+# Visualisation plugin (smartVISU support)
 
 ```
  
@@ -12,8 +12,12 @@ Visit:  https://github.com/smarthomeNG/
 
 ```
 
-This plugin provides an WebSocket interface for the smartVISU visualisation framework.
-Right now the WebSocket interface only supports unencrypted connections. Please use a internal network or VPN to connect to the service.
+This plugin does the smartVISU specific handling. It installs widgets from the plugin directories to smartVISU and it auto-generates pages for smartVISU.
+
+This plugin (**```visu_websocket```**) does not do the communication with the browser. The websocket protocol for the browser communication is implemented in **```visu_websocket```**.
+
+The plugins **```visu_websocket```** and **```visu_websocket```** replace the old visu plugin.
+
 
 # Requirements
 None.
