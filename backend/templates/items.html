@@ -10,10 +10,10 @@
       <strong>{{ _('Items') }} ({{ _('gesamt') }}: {{ smarthome.item_count }})</strong><span id="search-results"></span><br/><br/>
       <div class="form-group">
           <input type="input" class="form-control" id="input-search" placeholder="{{ _('Itempfad suchen...') }}" value=""><br/>
-          <button type="button" class="btn btn-primary" id="btn-search">{{ _('Suchen') }}</button>
-          <button type="button" class="btn btn-warning" id="btn-clear-search">{{ _('Suche zurücksetzen') }}</button>
-          <button type="button" class="btn btn-danger" id="btn-expand-all">{{ _('Alle aufklappen') }}</button>
-          <button type="button" class="btn btn-danger" id="btn-collapse-all">{{ _('Alle zuklappen') }}</button>
+          <button type="button" class="btn btn-default" id="btn-search">{{ _('Suchen') }}</button>
+          <button type="button" class="btn btn-default" id="btn-clear-search">{{ _('Suche zurücksetzen') }}</button>
+          <button type="button" class="btn btn-default" id="btn-expand-all">{{ _('Alle aufklappen') }}</button>
+          <button type="button" class="btn btn-default" id="btn-collapse-all">{{ _('Alle zuklappen') }}</button>
       </div>
 
       <div class="pre-scrollable" id="tree" style="float:left; border: 1px solid #ccc; height:650px; max-height:650px; width:600px;"></div>
@@ -197,14 +197,24 @@ function getTree() {
 
           $('#btn-clear-search').on('click', function (e) {
             $('#tree').treeview('clearSearch');
+            $('#tree').treeview('collapseAll', { silent: false });
+            $('#btn-search').removeClass("btn-primary");
+            $('#btn-search').addClass("btn-default");
             $('#input-search').val('');
             $('#search-output').html('');
             results = [];
             $('#search-results').html('');
           });
     }
-
+    if ($('#input-search').val() != '') {
+        $('#btn-search').removeClass("btn-default");
+        $('#btn-search').addClass("btn-primary");
+    }
     $('#btn-search').on('click', search);
+    $('#input-search').keypress( function() {
+        $('#btn-search').removeClass("btn-default");
+        $('#btn-search').addClass("btn-primary");
+    });
 
     // Expand/collapse all
     $('#btn-expand-all').on('click', function (e) {
