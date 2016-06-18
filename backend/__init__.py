@@ -127,7 +127,7 @@ class BackendServer(SmartPlugin):
             }
         self._cherrypy = cherrypy
         self._cherrypy.config.update(config)
-        self._cherrypy.tree.mount(Backend(self, self.updates_allowed), '/', config = config )
+        self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language), '/', config = config )
 
 
     def run(self):
@@ -232,10 +232,11 @@ class Backend:
     env.globals['is_userlogic'] = is_userlogic
     env.globals['_'] = translate
     
-    def __init__(self, backendserver=None, updates_allowed=True):
+    def __init__(self, backendserver=None, updates_allowed=True, language=''):
         self.logger = logging.getLogger(__name__)
         self._bs = backendserver
         self._sh = backendserver._sh
+        self.language = language
         self.updates_allowed = updates_allowed
 
         self._sh_dir = self._sh.base_dir
@@ -310,16 +311,17 @@ class Backend:
         uptime = get_uptime.stdout.read().decode()
         # return SmarthomeNG runtime
         hours, minutes, seconds = [float(val) for val in str(self._sh.runtime()).split(':')]
+        sh_uptime = ''
         if hours > 23:
             days = int(hours / 24)
             hours = hours - 24 * days
-            sh_uptime = str(int(days))+" Tage, "+str(int(hours))+" Stunden, "+str(int(minutes))+" Minuten, "+str("%.2f" % seconds)+" Sekunden"
+            sh_uptime = str(int(days))+" "+translate('Tage')+", "+str(int(hours))+" "+translate('Stunden')+", "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
         elif hours > 0:
-            sh_uptime = str(int(hours))+" Stunden, "+str(int(minutes))+" Minuten, "+str("%.2f" % seconds)+" Sekunden"
+            sh_uptime = str(int(hours))+" Stunden, "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "++translate('Sekunden')
         elif minutes > 0:
-            sh_uptime = str(int(minutes))+" Minuten, "+str("%.2f" % seconds)+" Sekunden"
+            sh_uptime = str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
         else:
-            sh_uptime = str("%.2f" % seconds)+" Sekunden"
+            sh_uptime = str("%.2f" % seconds)+" "+translate('Sekunden')
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
@@ -433,7 +435,7 @@ class Backend:
 
         for line in fobj:
             line_text = self.html_escape(line)
-            if text_filter in line_text and (log_level_filter == "ALL" or line_text.find(log_level_filter) == 21):
+            if text_filter in line_text and (log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22, 23]):
                 log_lines.append(line_text)
 
         fobj.close()
@@ -502,6 +504,17 @@ class Backend:
             s = '-'
         return s
 
+    def disp_age(self, age):
+        seconds = age
+        minutes = 0
+        s = ''
+        if seconds > 59:
+            minutes = int(seconds / 60)
+            seconds = seconds - 60 * minutes
+            s = str(int(minutes))+" "+translate('Minuten')+", "
+        s =  s+str("%.2f" % seconds)+" "+translate('Sekunden')
+        return s
+
     @cherrypy.expose
     def item_detail_json_html(self, item_path):
         """
@@ -524,6 +537,10 @@ class Backend:
                     crontab = self._sh.scheduler._scheduler[entry]['cron']
                 break
         
+        if item.prev_age() < 0:
+        	prev_age = ''
+        else:
+            prev_age = self.disp_age(item.prev_age())
         if str(item._cache) == 'False':
         	cache = 'off'
         else:
@@ -546,18 +563,15 @@ class Backend:
             trig = trig[1:len(trig)-27]
             triggers.append(self.html_escape(format(trig.replace("<",""))))
 
-        self.logger.warning("Backend: item_detail_json_html logics='{0}'".format(logics))
-        self.logger.warning("Backend: item_detail_json_html triggers='{0}'".format(triggers))
-
         item_data.append({'path': item._path,
                           'name': item._name,
                           'type': item.type(),
                           'value': item._value,
-                          'age': str("%.2f" % item.age()),
+                          'age': self.disp_age(item.age()),
                           'last_change': str(item.last_change()),
                           'changed_by': item.changed_by(),
                           'previous_value': prev_value,
-                          'previous_age': str("%.2f" % item.prev_age()),
+                          'previous_age': prev_age,
                           'previous_change': str(item.prev_change()),
                           'enforce_updates': enforce_updates,
                           'cache': cache,
