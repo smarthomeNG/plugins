@@ -69,14 +69,14 @@ class BackendServer(SmartPlugin):
         self._sh = sh
 
         if self.is_int(port):
-        	self.port = int(port)
+            self.port = int(port)
         else:
             self.port = 8383
             if port != None:
                 self.logger.error("BackendServer: Invalid value '"+str(port)+"' configured for attribute 'port' in plugin.conf, using '"+str(self.port)+"' instead")
 
         if self.is_int(threads):
-        	self.threads = int(threads)
+            self.threads = int(threads)
         else:
             self.threads = 8
             self.logger.error("BackendServer: Invalid value '"+str(threads)+"' configured for attribute 'thread' in plugin.conf, using '"+str(self.threads)+"' instead")
