@@ -91,12 +91,12 @@
                 </tr>
                 {% endif %}
                 <tr>
-                    <td><img src="/static/img/translation.svg" width="48" height="48"></td>
+                    <td><img src="/static/img/languages.svg" width="48" height="48"></td>
 
                     <td>
-                        <div class="navbar-form navbar-left"><span class="btn btn-default"><a href="reload_translation.html">{{ _('Übersetzung neu laden','button') }}</a></span></div>
-                        {% if lang != 'de' %}<div class="navbar-form navbar-left"><span class="btn btn-default"><a href="reload_translation.html?lang=de">{{ _('Auf Deutsch wechseln','button') }}</a></span></div>{% endif %}
-                        {% if lang != 'en' %}<div class="navbar-form navbar-left"><span class="btn btn-default"><a href="reload_translation.html?lang=en">{{ _('Auf Englisch wechseln','button') }}</a></span></div>{% endif %}
+                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html'">{{ _('Übersetzung neu laden','button') }}</span></div>
+                        {% if lang != 'de' %}<div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html?lang=de'">{{ _('Auf Deutsch wechseln','button') }}</span></div>{% endif %}
+                        {% if lang != 'en' %}<div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html?lang=en'">{{ _('Auf Englisch wechseln','button') }}</span></div>{% endif %}
                     </td>
                     <td></td>
                 </tr>
