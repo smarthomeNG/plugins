@@ -427,16 +427,13 @@ class Backend:
         returns the smarthomeNG logfile as view
         """
         self.find_visu_plugin()
-        if log_level_filter == "ALL":
-            effective_log_level_filter = ""
-        else:
-            effective_log_level_filter = log_level_filter
 
         fobj = open("%s/var/log/smarthome.log" % self._sh_dir)
         log_lines = []
+
         for line in fobj:
             line_text = self.html_escape(line)
-            if text_filter in line_text and effective_log_level_filter in line_text:
+            if text_filter in line_text and (log_level_filter == "ALL" or line_text.find(log_level_filter) == 21):
                 log_lines.append(line_text)
 
         fobj.close()
