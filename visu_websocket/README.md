@@ -1,4 +1,4 @@
-# Visualisation plugin
+# Visualisation plugin (Websocket Protocol)
 
 ```
  
