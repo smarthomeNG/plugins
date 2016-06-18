@@ -33,11 +33,7 @@
     <!--refresh widget-->
      </div>
  </div>
-
-  <div class="form-group"><select class="form-control" id="sel1">
-      <option>true</option><option>false</option>
-
-
+ 
 <script type="text/javascript" language="javascript">
 function getDetailInfo(result) {
     var temp ='';
@@ -79,7 +75,7 @@ function getDetailInfo(result) {
         temp = temp + '<tr><th>{{ _('cycle') }}</th><td>'+element.cycle+'</td></tr>';
         temp = temp + '<tr><th>{{ _('crontab') }}</th><td>'+element.crontab+'</td></tr>';
         temp = temp + '<tr><th>{{ _('threshold') }}</th><td>'+element.threshold+'</td></tr>';
-        
+
         config = JSON.parse(element.config);
 		if (Object.keys(config).length > 0) {
     	    temp = temp + '<tr><th></th><td></td></tr>';
@@ -88,7 +84,7 @@ function getDetailInfo(result) {
     	        temp = temp + '<tr><th>' + key + '</th><td>' + config[key] + '</td></tr>';
 			};
         };
-        
+
         logics = JSON.parse(element.logics);
 		if (logics.length > 0) {
 	        temp = temp + '<tr><th></th><td></td></tr>';
@@ -97,7 +93,7 @@ function getDetailInfo(result) {
 	        	temp = temp + '<tr><td colspan="2">'+logics[i]+'</td></tr>';
 			};
 		};
-			
+
         triggers = JSON.parse(element.triggers);
 		if (triggers.length > 0) {
 	        temp = temp + '<tr><th></th><td></td></tr>';
@@ -106,7 +102,7 @@ function getDetailInfo(result) {
 	        	temp = temp + '<tr><td colspan="2">'+triggers[i]+'</td></tr>';
 			};
 		};
-		
+
         temp = temp + '</tbody></table></div>';
 
         $('#tree_detail').html(temp);
