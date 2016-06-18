@@ -428,18 +428,20 @@ class Backend:
         """
         self.find_visu_plugin()
         if log_level_filter == "ALL":
-            log_level_filter = ""
+            effective_log_level_filter = ""
+        else:
+            effective_log_level_filter = log_level_filter
 
         fobj = open("%s/var/log/smarthome.log" % self._sh_dir)
         log_lines = []
         for line in fobj:
             line_text = self.html_escape(line)
-            if text_filter in line_text and log_level_filter in line_text:
+            if text_filter in line_text and effective_log_level_filter in line_text:
                 log_lines.append(line_text)
 
         fobj.close()
         tmpl = self.env.get_template('log_view.html')
-        return tmpl.render(smarthome=self._sh, log_lines=log_lines, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render(smarthome=self._sh, log_lines=log_lines, text_filter=text_filter, log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin != None) )
 
     @cherrypy.expose
     def logics_view_html(self, file_path):
