@@ -126,7 +126,7 @@ function getDetailInfo(result) {
                 data: { item_path: element.path, value: $("#item_value" ).val()} ,
                 contentType: 'application/json; charset=utf-8',
                 success: function (response) {
-                    //your success code
+                    $( ".fa-refresh" ).trigger( "click" );
                 },
                 error: function () {
                     //your error code
