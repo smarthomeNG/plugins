@@ -506,11 +506,14 @@ class Backend:
 
     def disp_age(self, age):
         seconds = age
-        minutes = 0
         s = ''
         if seconds > 59:
             minutes = int(seconds / 60)
             seconds = seconds - 60 * minutes
+            if minutes > 59:
+                hours = int(minutes / 60)
+                minutes = minutes - 60 * hours
+                s = str(int(hours))+" "+translate('Stunden')+", "
             s = str(int(minutes))+" "+translate('Minuten')+", "
         s =  s+str("%.2f" % seconds)+" "+translate('Sekunden')
         return s
@@ -537,6 +540,9 @@ class Backend:
                     crontab = self._sh.scheduler._scheduler[entry]['cron']
                 break
         
+        changed_by = item.changed_by()
+        if changed_by[-5:] == ':None':
+            changed_by = changed_by[:-5]
         if item.prev_age() < 0:
         	prev_age = ''
         else:
@@ -569,7 +575,7 @@ class Backend:
                           'value': item._value,
                           'age': self.disp_age(item.age()),
                           'last_change': str(item.last_change()),
-                          'changed_by': item.changed_by(),
+                          'changed_by': changed_by,
                           'previous_value': prev_value,
                           'previous_age': prev_age,
                           'previous_change': str(item.prev_change()),
