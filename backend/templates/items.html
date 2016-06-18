@@ -42,15 +42,20 @@
 function getDetailInfo(result) {
     var temp ='';
     $.each(result, function(index, element) {
-        if (element.type == 'bool') {
-            var select = '<select class="form-control" id="item_value">';
-            if (element.value == true) {
-                select = select + '<option selected>true</option><option>false</option></select>';
-            } else {
-                select = select + '<option>true</option><option selected>false</option></select>';
-            }
-        } else {
-            select = element.value;
+        switch (element.type) {
+            case 'bool':
+                var input = '<select class="form-control" id="item_value">';
+                if (element.value == true) {
+                    input = input + '<option selected>true</option><option>false</option></select>';
+                } else {
+                    input = input + '<option>true</option><option selected>false</option></select>';
+                }
+                break;
+            case 'str':
+                var input = '<input type="text" class="form-control" value="'+element.value+'" id="item_value"/>';
+                break;
+            default:
+                input = element.value;
         }
 
         temp = '<div class="table-responsive"><table class="table table-striped table-hover">';
@@ -58,7 +63,7 @@ function getDetailInfo(result) {
         temp = temp + '<tr><th>{{ _('Pfad') }}</th><td>'+element.path+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Name') }}</th><td>'+element.name+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Typ') }}</th><td>'+element.type+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('aktueller') }})</th><td>'+select+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('aktueller') }})</th><td>'+input+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Wert') }} ({{ _('vorheriger') }})</th><td>'+element.previous_value+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Geändert durch') }}</th><td>'+element.changed_by+'</td></tr>';
         temp = temp + '<tr><th>{{ _('previous_age') }}</th><td>'+element.previous_age+'</td></tr>';
@@ -103,7 +108,7 @@ function getDetailInfo(result) {
 
         $('#tree_detail').html(temp);
 
-        $(".form-control" ).change(function() {
+        $("#item_value" ).change(function() {
             $.ajax({
                 url: '/item_change_value.html',
                 type: 'GET',
