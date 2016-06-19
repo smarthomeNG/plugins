@@ -2,13 +2,14 @@
 
 Version 1.1.1
 
-Changed to SmartPlugin for smarthomeNG
-
-Version 0.5 beta
-
 This plugin can send commands to all Bang & Olufsen audio- and video systems which are connected to a Masterlink Gateway. Supported commands are the commands, a B&O remote can produce.
 
 This plugin can receive telegrams, which are send by an B&O audio- or video system. These commands are the **LIGHT** and **CONTROL** commands, which originate from a B&O remote control (e.g. Beo4).
+
+# Changes Since version 0.5
+
+- Changed to SmartPlugin for smarthomeNG
+
 
 # Changes Since version 0.4 
 
@@ -199,15 +200,3 @@ Please provide an item configuration with every attribute and usefull settings.
 </pre>
 The attribute **name** has not to be specified. It serves in this example as a remark only.
 
-## logic.conf
-If your plugin support item triggers as well, please describe the attributes like the item attributes.
-
-
-# Methodes
-If your plugin provides methods for logics. List and describe them here...
-
-## method1(param1, param2)
-This method enables the logic to send param1 and param2 to the device. You could call it with `sh.my.method1('String', 2)`.
-
-## method2()
-This method does nothing.
