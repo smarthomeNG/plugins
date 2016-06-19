@@ -75,7 +75,7 @@
 	"Die eingegebenen Daten sind kein numerischer Wert": "Die eingegebenen Daten sind kein numerischer Wert",
 	"Filter": "Filter",
 	"Logfile": "Logfile",
-	"Files ohne zugehöriges Item im /var/cache Verzeichnis": "Files without corresponding item in /var/cache folder",
+	"Dateien ohne zugehöriges Item im /var/cache Verzeichnis": "Files without corresponding item in /var/cache folder",
 	"Dateiname": "Filename",
 	"Letzte Modifikation": "Last Modification",
 	"Erstellungsdatum": "Created",
