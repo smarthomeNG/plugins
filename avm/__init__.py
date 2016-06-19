@@ -340,7 +340,7 @@ class FritzDevice():
     """
     This class encapsulates information related to a specific FritzDevice, such has host, port, ssl, username, password, or related items
     """
-    def __init__(self, host, port, ssl, username, password, identifier = 'default'):
+    def __init__(self, host, port, ssl, username, password, identifier='default'):
         self.logger = logging.getLogger(__name__)
         self._host = host
         self._port = port
@@ -496,7 +496,7 @@ class AVM(SmartPlugin):
         """
         Run method for the plugin
         """
-        self._sh.scheduler.add(__name__+"_"+self._fritz_device.get_identifier(), self._update_loop, prio=5, cycle=self._cycle, offset=2)
+        self._sh.scheduler.add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
     def stop(self):
