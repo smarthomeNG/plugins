@@ -52,7 +52,6 @@ class BackendServer(SmartPlugin):
             self.logger.error("BackendServer: Invalid value '"+str(value)+"' configured for attribute "+attr+" in plugin.conf, using '"+str(result)+"' instead")
         return result
 
-
     def get_local_ip_address(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("10.10.10.10", 80))
@@ -124,7 +123,6 @@ class BackendServer(SmartPlugin):
         self._cherrypy = cherrypy
         self._cherrypy.config.update(config)
         self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language), '/', config = config)
-
 
     def run(self):
         self.logger.debug("BackendServer: rest run")
@@ -477,6 +475,23 @@ class Backend:
         return json.dumps(item_data)
 
     @cherrypy.expose
+    def cache_check_json_html(self):
+        """
+        returns a list of items as json structure
+        """
+        cache_path = "%s/var/cache"%self._sh_dir
+        from os import listdir
+        from os.path import isfile, join
+        onlyfiles = [f for f in listdir(cache_path) if isfile(join(cache_path, f))]
+        not_item_related_cache_files = []
+        for file in onlyfiles:
+            item = self._sh.return_item(file)
+            if item is None:
+                not_item_related_cache_files.append(file)
+
+        return json.dumps(not_item_related_cache_files)
+
+    @cherrypy.expose
     def item_change_value_html(self, item_path, value):
         """
         returns a list of items as json structure
@@ -578,9 +593,9 @@ class Backend:
                      'crontab': str(crontab),
                      'autotimer': self.disp_str(item._autotimer),
                      'threshold': self.disp_str(item._threshold),
-                     'config' : json.dumps(item_conf_sorted),
-                     'logics' : json.dumps(logics),
-                     'triggers' : json.dumps(triggers),
+                     'config': json.dumps(item_conf_sorted),
+                     'logics': json.dumps(logics),
+                     'triggers': json.dumps(triggers),
                     }
 
         if item.type() == 'foo':
