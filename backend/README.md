@@ -48,6 +48,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#ip = xxx.xxx.xxx.xxx
 	#port = 8383
 	#updates_allowed = True
+	#threads = 8
 	#user = admin
 	#password = very_secure_password
 	#language = en
@@ -61,9 +62,13 @@ If not configured the standard ip address of the system is used. If you like to 
 ### port
 The port on which the backend server listens. By default port **`8383`** is used.
 
-###    updates_allowed
+### updates_allowed
 
 By default, the backend server allows updates to the running smarthomeNG instance. For instance, it is possible to trigger or to reload a logic. Setting **`updates_allowed`** to **`False`**, you can disable these features.
+
+###  threads
+
+Number of worker threads to start by cherrypy (default 8, which may be too much for slow CPUs)
 
 ### user (optional)
 The user for basic authentication. If left out, the user name is set as "admin"
