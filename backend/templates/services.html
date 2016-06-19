@@ -100,8 +100,31 @@
                     </td>
                     <td></td>
                 </tr>
+                <tr>
+                    <td><img src="/static/img/cache.svg" width="48" height="48"></td>
+
+                    <td>
+                        <div class="navbar-form navbar-left">
+                            <span class="btn btn-default" onclick="checkCache()">{{ _('Cacheprüfung','button') }}</span>
+                            <div id="cache_check" style="margin-top: 5px;"></div>
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
             </tbody>
         </table>
-
     </div>
+<script type="text/javascript" language="javascript">
+function checkCache() {
+    $.getJSON("/cache_check_json.html", function(result) {
+        var temp = '<div class="table-responsive"><table class="table table-striped" style="border: 1px solid #ccc;">'
+        temp = temp+'<thead><tr><th>{{ _('Files ohne zugehöriges Item im /var/cache Verzeichnis') }}: '+result.length+'</th></td></thead><tbody>';
+        $.each(result, function(index, element) {
+            temp = temp + '<tr><td>'+element+'</td></tr>';
+        });
+        temp = temp + '</tbody></table></div>';
+        $('#cache_check').html(temp);
+    });
+}
+</script>
 {% endblock %}

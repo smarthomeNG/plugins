@@ -75,6 +75,7 @@
 	"Die eingegebenen Daten sind kein numerischer Wert": "Die eingegebenen Daten sind kein numerischer Wert",
 	"Filter": "Filter",
 	"Logfile": "Logfile",
+	"Files ohne zugehöriges Item im /var/cache Verzeichnis": "Files without corresponding item in /var/cache folder",
 
 	"_items": {
 		"path": "Pfad",
@@ -116,7 +117,8 @@
 		"smarthomeNG beenden": "Stop smarthomeNG",
 		"knxd service beenden": "Stop knxd service",
 		"knxd socket beenden": "Stop knxd socket",
-		"Filter anwenden": "Apply Filter"
+		"Filter anwenden": "Apply Filter",
+		"Cacheprüfung": "Cache Check"
 	},
 	
 	"_menu": {
