@@ -479,7 +479,7 @@ class Backend:
         """
         returns a list of items as json structure
         """
-        cache_path = "%s/var/cache"%self._sh_dir
+        cache_path = "%s/var/cache/"%self._sh_dir
         from os import listdir
         from os.path import isfile, join
         onlyfiles = [f for f in listdir(cache_path) if isfile(join(cache_path, f))]
@@ -487,7 +487,15 @@ class Backend:
         for file in onlyfiles:
             item = self._sh.return_item(file)
             if item is None:
-                not_item_related_cache_files.append(file)
+                file_data = {}
+                file_data['last_modified']= datetime.datetime.fromtimestamp(
+                    int(os.path.getmtime(cache_path+file))
+                ).strftime('%Y-%m-%d %H:%M:%S')
+                file_data['created'] = datetime.datetime.fromtimestamp(
+                    int(os.path.getctime(cache_path + file))
+                ).strftime('%Y-%m-%d %H:%M:%S')
+                file_data['filename'] = file
+                not_item_related_cache_files.append(file_data)
 
         return json.dumps(not_item_related_cache_files)
 

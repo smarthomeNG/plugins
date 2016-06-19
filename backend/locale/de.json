@@ -76,6 +76,9 @@
 	"Filter": "Filter",
 	"Logfile": "Log-Datei",
 	"Files ohne zugehöriges Item im /var/cache Verzeichnis": "Files ohne zugehöriges Item im /var/cache Verzeichnis",
+	"Dateiname": "Dateiname",
+	"Letzte Modifikation": "Letzte Modifikation",
+	"Erstellungsdatum": "Erstellungsdatum",
 
 	"_items": {
 		"path": "Pfad",
