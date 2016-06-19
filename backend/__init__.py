@@ -310,7 +310,7 @@ class Backend:
             hours = hours - 24 * days
             sh_uptime = str(int(days))+" "+translate('Tage')+", "+str(int(hours))+" "+translate('Stunden')+", "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
         elif hours > 0:
-            sh_uptime = str(int(hours))+" Stunden, "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "++translate('Sekunden')
+            sh_uptime = str(int(hours))+" Stunden, "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
         elif minutes > 0:
             sh_uptime = str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
         else:
