@@ -46,7 +46,7 @@ Encryption can be turned on by this parameter.
 --> Details are documented later
 
 ### wsproto
-The version of the web socket protocol can be specified. By default the plugin uses version 3. For smartVISU version > v2.7 the web socket protocol has to be set to 4.
+The version of the web socket protocol can be specified. By default the plugin uses version 3. For smartVISU version > v2.7 the web socket protocol has to be set to 0 or 4 (depending on the time the v2.8 pre-release of smartVISU was checked out of github).
 
 ### acl
 The plugin provides by default read only (**`ro`**) access to every item. By changing the **`acl`** attribute to **`rw`** you could modify this default behaviour to gain write access to the items in smarthomeNG.
