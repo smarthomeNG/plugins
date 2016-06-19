@@ -127,7 +127,7 @@ class BackendServer(SmartPlugin):
             }
         self._cherrypy = cherrypy
         self._cherrypy.config.update(config)
-        self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language), '/', config = config )
+        self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language), '/', config = config)
 
 
     def run(self):
@@ -171,7 +171,7 @@ def is_userlogic(sh, logic):
     
     This function extends the jinja2 template engine
     """
-    return (os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics')
+    return os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics'
     
     
 translation_dict = {}
@@ -270,14 +270,14 @@ class Backend:
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render( visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render( visu_plugin=(self.visu_plugin != None))
 
     @cherrypy.expose
     def main_html(self):
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render( visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render( visu_plugin=(self.visu_plugin != None))
 
     @cherrypy.expose
     def reload_translation_html(self, lang=''):
@@ -324,7 +324,7 @@ class Backend:
         tmpl = self.env.get_template('system.html')
         return tmpl.render( now=now, system=system, vers=vers, node=node, arch=arch, user=user,
                                 freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
-                                ip=ip, python_packages=python_packages, visu_plugin=(self.visu_plugin != None))
+                                ip=ip, python_packages=python_packages, visu_plugin=(self.visu_plugin is not None))
 
     def get_process_info(self, command):
         """
@@ -434,7 +434,7 @@ class Backend:
 
         fobj.close()
         tmpl = self.env.get_template('log_view.html')
-        return tmpl.render(smarthome=self._sh, log_lines=log_lines, text_filter=text_filter, log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin is not None) )
+        return tmpl.render(smarthome=self._sh, log_lines=log_lines, text_filter=text_filter, log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def logics_view_html(self, file_path):
@@ -449,7 +449,7 @@ class Backend:
             file_lines.append(self.html_escape(line))
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
-        return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin != None))
 
     @cherrypy.expose
     def items_html(self):
@@ -459,7 +459,7 @@ class Backend:
         self.find_visu_plugin()
         
         tmpl = self.env.get_template('items.html')
-        return tmpl.render( smarthome = self._sh, items=sorted(self._sh.return_items(),key=lambda k: str.lower(k['_path']), reverse=False), visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render( smarthome = self._sh, items=sorted(self._sh.return_items(),key=lambda k: str.lower(k['_path']), reverse=False), visu_plugin=(self.visu_plugin != None))
 
     @cherrypy.expose
     def items_json_html(self):
@@ -506,9 +506,9 @@ class Backend:
             if minutes > 59:
                 hours = int(minutes / 60)
                 minutes = minutes - 60 * hours
-                s = str(int(hours))+" "+translate('Stunden')+", "
-            s = str(int(minutes))+" "+translate('Minuten')+", "
-        s =  s+str("%.2f" % seconds)+" "+translate('Sekunden')
+                s = "%s %s, " % (str(int(hours)), translate('Stunden'))
+            s = "%s %s, " % (str(int(minutes)), translate('Minuten'))
+        s = "%s%s %s" % (s, str("%.2f" % seconds), translate('Sekunden'))
         return s
 
     @cherrypy.expose
@@ -634,7 +634,7 @@ class Backend:
                 self.logger.warning("Backend: Logic reloads are not allowed. (Change 'updates_allowed' in plugin.conf")
 
         tmpl = self.env.get_template('logics.html')
-        return tmpl.render( smarthome = self._sh, updates = self.updates_allowed, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render( smarthome = self._sh, updates = self.updates_allowed, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def schedules_html(self):
@@ -644,7 +644,7 @@ class Backend:
         self.find_visu_plugin()
         
         tmpl = self.env.get_template('schedules.html')
-        return tmpl.render( smarthome = self._sh, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render( smarthome = self._sh, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def plugins_html(self):
@@ -676,7 +676,7 @@ class Backend:
         plugins_sorted = sorted(plugins, key=lambda k: k['classpath']) 
 
         tmpl = self.env.get_template('plugins.html')
-        return tmpl.render( smarthome = self._sh, plugins=plugins_sorted, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render( smarthome = self._sh, plugins=plugins_sorted, visu_plugin=(self.visu_plugin is not None))
         
         
        
@@ -700,7 +700,7 @@ class Backend:
         threads_count = len(threads_sorted)
             
         tmpl = self.env.get_template('threads.html')
-        return tmpl.render( smarthome = self._sh, threads=threads_sorted, threads_count=threads_count, visu_plugin=(self.visu_plugin != None),  )
+        return tmpl.render( smarthome = self._sh, threads=threads_sorted, threads_count=threads_count, visu_plugin=(self.visu_plugin is not None))
 
 
     @cherrypy.expose
@@ -711,7 +711,7 @@ class Backend:
         self.find_visu_plugin()
             
         clients = []
-        if self.visu_plugin != None:
+        if self.visu_plugin is not None:
             for c in self.visu_plugin.return_clients():
                 client = dict()
                 deli = c.find(':')
@@ -722,7 +722,7 @@ class Backend:
         clients_sorted = sorted(clients, key=lambda k: k['name']) 
         
         tmpl = self.env.get_template('visu.html')
-        return tmpl.render( visu_plugin=(self.visu_plugin != None), clients = clients_sorted )
+        return tmpl.render( visu_plugin=(self.visu_plugin is not None), clients=clients_sorted )
 
 
     @cherrypy.expose
