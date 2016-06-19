@@ -167,6 +167,16 @@ function reload(data) {
     });
 }
 
+function changeSearchButtonColor(active) {
+    if (active) {
+        $('#btn-search').removeClass("btn-default");
+        $('#btn-search').addClass("btn-primary");
+    } else {
+        $('#btn-search').removeClass("btn-primary");
+        $('#btn-search').addClass("btn-default");
+    }
+}
+
 function getTree() {
     var item_tree = [];
 
@@ -207,18 +217,18 @@ function getTree() {
           });
     }
     if ($('#input-search').val() != '') {
-        $('#btn-search').removeClass("btn-default");
-        $('#btn-search').addClass("btn-primary");
+        changeSearchButtonColor(true);
     }
     $('#btn-search').on('click', search);
-    $("#input-search").keyup(function(event){
+    $("#input-search").keypress(function(event){
         if(event.keyCode == 13){
             $("#btn-search").click();
         }
-    });
-    $('#input-search').keypress( function() {
-        $('#btn-search').removeClass("btn-default");
-        $('#btn-search').addClass("btn-primary");
+        if ($('#input-search').val() == '') {
+            changeSearchButtonColor(false);
+        } else {
+            changeSearchButtonColor(true);
+        }
     });
 
     // Expand/collapse all
