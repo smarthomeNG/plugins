@@ -72,7 +72,7 @@ class BackendServer(SmartPlugin):
             self.port = int(port)
         else:
             self.port = 8383
-            if port != None:
+            if port is not None:
                 self.logger.error("BackendServer: Invalid value '"+str(port)+"' configured for attribute 'port' in plugin.conf, using '"+str(self.port)+"' instead")
 
         if self.is_int(threads):
@@ -102,29 +102,25 @@ class BackendServer(SmartPlugin):
         userpassdict = {self._user : self._password}
         checkpassword = cherrypy.lib.auth_basic.checkpassword_dict(userpassdict)
 
-        config = {'global' : {
-            'server.socket_host' : ip,
-            'server.socket_port' : self.port,
-            'server.thread_pool' : self.threads,
-    
-            'engine.autoreload.on' : False,
-        
-            'tools.staticdir.debug' : True,
-            'tools.trailing_slash.on' : False
-              },
-             '/':
-                {
-                    'tools.auth_basic.on': self._basic_auth,
-                    'tools.auth_basic.realm': 'earth',
-                    'tools.auth_basic.checkpassword': checkpassword,
-                    'tools.staticdir.root' : current_dir,
-                },
-                    '/static':
-                        {
-                            'tools.staticdir.on': True,
-                            'tools.staticdir.dir': os.path.join(current_dir, 'static')
-                        }
+        config = {'global': {
+            'server.socket_host': ip,
+            'server.socket_port': self.port,
+            'server.thread_pool': self.threads,
+            'engine.autoreload.on': False,
+            'tools.staticdir.debug': True,
+            'tools.trailing_slash.on': False
+            },
+            '/': {
+                'tools.auth_basic.on': self._basic_auth,
+                'tools.auth_basic.realm': 'earth',
+                'tools.auth_basic.checkpassword': checkpassword,
+                'tools.staticdir.root': current_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': os.path.join(current_dir, 'static')
             }
+        }
         self._cherrypy = cherrypy
         self._cherrypy.config.update(config)
         self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language), '/', config = config)
@@ -177,6 +173,7 @@ def is_userlogic(sh, logic):
 translation_dict = {}
 translation_lang = ''
 
+
 def load_translation(language):
     global translation_dict    # Needed to modify global copy of translation_dict
     global translation_lang    # Needed to modify global copy of translation_lang
@@ -200,6 +197,7 @@ def load_translation(language):
             return False
     logger.warning("Backend: translation_dict='{0}'".format(translation_dict))
     return True
+
 
 def translate(txt, block=''):
     """
@@ -246,13 +244,13 @@ class Backend:
         """
         look for the configured instance of the visu protocol plugin.
         """
-        if self.visu_plugin != None:
+        if self.visu_plugin is not None:
             return
             
         for p in self._sh._plugins:
             if p.__class__.__name__ == "WebSocket":
                 self.visu_plugin = p
-        if self.visu_plugin != None:
+        if self.visu_plugin is not None:
             try:
                 vers = self.visu_plugin.get_version()
             except:
@@ -270,14 +268,14 @@ class Backend:
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render( visu_plugin=(self.visu_plugin != None))
+        return tmpl.render( visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def main_html(self):
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render( visu_plugin=(self.visu_plugin != None))
+        return tmpl.render( visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def reload_translation_html(self, lang=''):
@@ -387,7 +385,7 @@ class Backend:
                 break
 
         tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin != None), lang=translation_lang)
+        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=translation_lang)
 
     @cherrypy.expose
     def disclosure_html(self):
@@ -397,7 +395,7 @@ class Backend:
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('disclosure.html')
-        return tmpl.render(smarthome=self._sh, visu_plugin=(self.visu_plugin != None))
+        return tmpl.render(smarthome=self._sh, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def db_dump_html(self):
@@ -449,7 +447,7 @@ class Backend:
             file_lines.append(self.html_escape(line))
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
-        return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin != None))
+        return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def items_html(self):
@@ -459,7 +457,7 @@ class Backend:
         self.find_visu_plugin()
         
         tmpl = self.env.get_template('items.html')
-        return tmpl.render( smarthome = self._sh, items=sorted(self._sh.return_items(),key=lambda k: str.lower(k['_path']), reverse=False), visu_plugin=(self.visu_plugin != None))
+        return tmpl.render( smarthome = self._sh, items=sorted(self._sh.return_items(),key=lambda k: str.lower(k['_path']), reverse=False), visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def items_json_html(self):
@@ -550,7 +548,7 @@ class Backend:
             enforce_updates = 'on'
 
         item_conf_sorted = collections.OrderedDict(sorted(item.conf.items(), key=lambda t: str.lower(t[0])))
-        if item_conf_sorted.get('sv_widget','') != '':
+        if item_conf_sorted.get('sv_widget', '') != '':
             item_conf_sorted['sv_widget'] = self.html_escape(item_conf_sorted['sv_widget'])
 
         logics = []
@@ -560,7 +558,7 @@ class Backend:
         for trigger in item.get_method_triggers():
             trig = format(trigger)
             trig = trig[1:len(trig)-27]
-            triggers.append(self.html_escape(format(trig.replace("<",""))))
+            triggers.append(self.html_escape(format(trig.replace("<", ""))))
 
         data_dict = {'path': item._path,
                      'name': item._name,
@@ -610,7 +608,7 @@ class Backend:
         self.find_visu_plugin()
 
         self.logger.warning("Backend: logics_html: trigger = '{0}', reload = '{1}'".format(trigger, reload))
-        if trigger != None:
+        if trigger is not None:
             self.logger.warning("Backend: logics_html: Trigger logic = '{0}'".format(logic))
             if self.updates_allowed:
                 if logic in self._sh.return_logics():
@@ -620,7 +618,7 @@ class Backend:
             else:
                 self.logger.warning("Backend: Logic triggering is not allowed. (Change 'updates_allowed' in plugin.conf")
 
-        if reload != None:
+        if reload is not None:
             self.logger.warning("Backend: logics_html: Reload logic = '{0}'".format(logic))
             if self.updates_allowed:
                 if logic in self._sh.return_logics():
