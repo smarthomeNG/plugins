@@ -241,8 +241,7 @@ class Backend:
 
         self._sh_dir = self._sh.base_dir
         self.visu_plugin = None
-    
-    
+
     def find_visu_plugin(self):
         """
         look for the configured instance of the visu protocol plugin.
@@ -261,12 +260,10 @@ class Backend:
             if vers < '1.1.2':
                 self.visu_plugin = None
                 self.logger.warning("Backend: visu plugin v{0} is too old to support BackendServer, please update".format(vers))
-                
-    
+
     def html_escape(self, str):
         html = str.rstrip().replace('<','&lt;').replace('>','&gt;')
         return html
-        
 
     @cherrypy.expose
     def index(self):
@@ -329,7 +326,6 @@ class Backend:
                                 freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
                                 ip=ip, python_packages=python_packages, visu_plugin=(self.visu_plugin != None))
 
-
     def get_process_info(self, command):
         """
         returns output from executing a given command via the shell.
@@ -349,7 +345,6 @@ class Backend:
         ## Wait for date to terminate. Get return returncode ##
         p_status = p.wait()
         return str(result, encoding='utf-8', errors='strict')
-
 
     def getpackages(self):
         """
@@ -374,7 +369,6 @@ class Backend:
 
         sorted_packages = sorted([(i['key'], i['version_installed'], i['version_available']) for i in packages])
         return sorted_packages
-
 
     @cherrypy.expose
     def services_html(self):
@@ -440,7 +434,8 @@ class Backend:
 
         fobj.close()
         tmpl = self.env.get_template('log_view.html')
-        return tmpl.render(smarthome=self._sh, log_lines=log_lines, text_filter=text_filter, log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin != None) )
+        return tmpl.render(smarthome=self._sh, log_lines=log_lines, text_filter=text_filter, log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin is not None) )
+
     @cherrypy.expose
     def logics_view_html(self, file_path):
         """
@@ -455,8 +450,6 @@ class Backend:
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
         return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin != None) )
-
-
 
     @cherrypy.expose
     def items_html(self):
@@ -495,7 +488,6 @@ class Backend:
         if self.updates_allowed:
             item(value, caller='Backend')
         return
-
 
     def disp_str(self, val):
         s = str(val)
@@ -545,15 +537,15 @@ class Backend:
         if changed_by[-5:] == ':None':
             changed_by = changed_by[:-5]
         if item.prev_age() < 0:
-        	prev_age = ''
+            prev_age = ''
         else:
             prev_age = self.disp_age(item.prev_age())
         if str(item._cache) == 'False':
-        	cache = 'off'
+            cache = 'off'
         else:
             cache = 'on'
         if str(item._enforce_updates) == 'False':
-        	enforce_updates = 'off'
+            enforce_updates = 'off'
         else:
             enforce_updates = 'on'
 
@@ -644,7 +636,6 @@ class Backend:
         tmpl = self.env.get_template('logics.html')
         return tmpl.render( smarthome = self._sh, updates = self.updates_allowed, visu_plugin=(self.visu_plugin != None) )
 
-
     @cherrypy.expose
     def schedules_html(self):
         """
@@ -665,9 +656,9 @@ class Backend:
         conf_plugins = {}
         _conf = lib.config.parse(self._sh._plugin_conf)
         for plugin in _conf:
-#            self.logger.warning("plugins_html: class_name='{0}', class_path='{1}'".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
+            #self.logger.warning("plugins_html: class_name='{0}', class_path='{1}'".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
             conf_plugins[_conf[plugin]['class_name']] =  _conf[plugin]['class_path']
-#        self.logger.warning("plugins_html: conf_plugins='{0}'".format(conf_plugins))
+            #self.logger.warning("plugins_html: conf_plugins='{0}'".format(conf_plugins))
         
         plugins = []
         for x in self._sh._plugins:
