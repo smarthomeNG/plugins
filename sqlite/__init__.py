@@ -153,6 +153,18 @@ class SQL(SmartPlugin):
     def _datetime(self, ts):
         return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
 
+    def dump(self, dumpfile):
+        self.logger.info("SQLite: dumping database to {}".format(dumpfile))
+        self._fdb_lock.acquire()
+        try:
+            with open(dumpfile, 'w') as f:
+                for line in self._fdb.iterdump():
+                    f.write('{}\n'.format(line))
+        except Exception as e:
+            self.logger.warning("SQLite: Problem dumping to '{0}': {1}".format(dumpfile, e))
+        finally:
+            self._fdb_lock.release()
+            
     def _dump(self):
         for item in self._buffer:
             self._buffer_lock.acquire()
