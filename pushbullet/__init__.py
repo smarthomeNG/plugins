@@ -27,13 +27,14 @@ import magic
 import os
 import re
 
+logger = logging.getLogger("Pushbullet")
 
 class Pushbullet(object):
     _apiurl = "https://api.pushbullet.com/v2/pushes"
     _upload_apiurl = "https://api.pushbullet.com/v2/upload-request"
 
     def __init__(self, smarthome, apikey=None, deviceid=None, debug=False):
-        self.logger = logging.getLogger(__name__)
+        logging.getLogger("requests").setLevel(logging.WARNING)
         self._apikey = apikey
         self._deviceid = deviceid
         self._sh = smarthome
@@ -54,9 +55,9 @@ class Pushbullet(object):
             if self._is_response_ok(response):
                 return response.json()
 
-            self.logger.error("Could not delete Pushbullet notification. Error: {0}".format(response.text))
+            logger.error("Could not delete Pushbullet notification. Error: {0}".format(response.text))
         except Exception as exception:
-            self.logger.error("Could not delete Pushbullet notification. Error: {0}".format(exception))
+            logger.error("Could not delete Pushbullet notification. Error: {0}".format(exception))
 
         return False
 
@@ -74,7 +75,7 @@ class Pushbullet(object):
 
     def file(self, filepath, deviceid=None, apikey=None, body=None):
         if os.path.exists(filepath) == False:
-            self.logger.error("Trying to push non existing file: {0}".format(filepath))
+            logger.error("Trying to push non existing file: {0}".format(filepath))
             return False
 
         return self._upload_and_push_file(filepath, body, deviceid, apikey)
@@ -98,11 +99,11 @@ class Pushbullet(object):
 
                     return self._push(data={"type": "file", "file_name": data["file_name"], "file_type": data["file_type"], "file_url": data["file_url"], "body": body}, deviceid=deviceid, apikey=apikey)
                 else:
-                    self.logger.error("Error while uploading file: {0}".format(upload_response.text))
+                    logger.error("Error while uploading file: {0}".format(upload_response.text))
             else:
-                self.logger.error("Error while requesting upload: {0}".format(upload_request_response.text))
+                logger.error("Error while requesting upload: {0}".format(upload_request_response.text))
         except Exception as exception:
-            self.logger.error("Could not send file to Pushbullet notification. Error: {0}".format(exception))
+            logger.error("Could not send file to Pushbullet notification. Error: {0}".format(exception))
 
         return False
 
@@ -123,33 +124,33 @@ class Pushbullet(object):
             if self._is_response_ok(response):
                 return response.json()
 
-            self.logger.error("Could not send Pushbullet notification. Error: {0}".format(response.text))
+            logger.error("Could not send Pushbullet notification. Error: {0}".format(response.text))
         except Exception as exception:
-            self.logger.error("Could not send Pushbullet notification. Error: {0}".format(exception))
+            logger.error("Could not send Pushbullet notification. Error: {0}".format(exception))
 
         return False
 
     def _is_response_ok(self, response):
         if response.status_code == 200 or response.status_code == 204:
-            self.logger.debug("Pushbullet returns: Notification submitted.")
+            logger.debug("Pushbullet returns: Notification submitted.")
 
             return True
         elif response.status_code == 400:
-            self.logger.warning("Pushbullet returns: Bad Request - Often missing a required parameter.")
+            logger.warning("Pushbullet returns: Bad Request - Often missing a required parameter.")
         elif response.status_code == 401:
-            self.logger.warning("Pushbullet returns: Unauthorized - No valid API key provided.")
+            logger.warning("Pushbullet returns: Unauthorized - No valid API key provided.")
         elif response.status_code == 402:
-            self.logger.warning("Pushbullet returns: Request Failed - Parameters were valid but the request failed.")
+            logger.warning("Pushbullet returns: Request Failed - Parameters were valid but the request failed.")
         elif response.status_code == 403:
-            self.logger.warning("Pushbullet returns: Forbidden - The API key is not valid for that request.")
+            logger.warning("Pushbullet returns: Forbidden - The API key is not valid for that request.")
         elif response.status_code == 404:
-            self.logger.warning("Pushbullet returns: Not Found - The requested item doesn't exist.")
+            logger.warning("Pushbullet returns: Not Found - The requested item doesn't exist.")
         elif response.status_code >= 500:
-            self.logger.warning("Pushbullet returns: Server errors - something went wrong on PushBullet's side.")
+            logger.warning("Pushbullet returns: Server errors - something went wrong on PushBullet's side.")
         else:
-            self.logger.error("Pushbullet returns unknown HTTP status code = {0}".format(response.status_code))
+            logger.error("Pushbullet returns unknown HTTP status code = {0}".format(response.status_code))
 
         if self._debug:
-            self.logger.warning("Response was: {}".format(response.text))
+            logger.warning("Response was: {}".format(response.text))
 
         return False
