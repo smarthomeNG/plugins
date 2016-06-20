@@ -492,7 +492,7 @@ class Backend:
                     int(os.path.getmtime(cache_path+file))
                 ).strftime('%Y-%m-%d %H:%M:%S')
                 file_data['created'] = datetime.datetime.fromtimestamp(
-                    int(os.path.getctime(cache_path + file))
+                    int(os.path.getctime(cache_path+file))
                 ).strftime('%Y-%m-%d %H:%M:%S')
                 file_data['filename'] = file
                 not_item_related_cache_files.append(file_data)
