@@ -23,8 +23,7 @@
 	"Letzte Änderung": "last change",
 	"Geändert durch": "changed by",
 	"age": "age",
-	"aktueller": "recent",
-	"vorheriger": "previous",
+	"vorheriger Wert": "previous value",
 	"previous change": "previous change",
 	"previous age": "previous age",
 	
@@ -76,7 +75,6 @@
 	"Filter": "Filter",
 	"Logfile": "Logfile",
 	"Dateien ohne zugehöriges Item im /var/cache Verzeichnis": "Files without corresponding item in /var/cache folder",
-	"Dateiname": "Filename",
 	"Letzte Modifikation": "Last Modification",
 	"Erstellungsdatum": "Created",
 
