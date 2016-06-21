@@ -13,7 +13,12 @@ This plugin delivers information about the current SmarthomeNG installation. Rig
 
 There is however only basic protection against unauthorized access or use of the plugin so be careful when enabling it with your network.
 
-It is still in early development so please give feedback to the community.
+It is still in development so please give feedback to the community.
+
+Support is provided trough the support thread within the smarthomeNG forum: 
+
+[knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-f%C3%BCr-das-backend-plugin](https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin)
+
 
 # Requirements
 This plugin requires Python >= 3.4 as well as the libs cherrypy and jinja2. You can install them with:
