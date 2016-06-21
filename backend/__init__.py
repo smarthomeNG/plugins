@@ -197,6 +197,13 @@ def load_translation(language):
     return True
 
 
+def html_escape(str):
+    str = str.rstrip().replace('<','&lt;').replace('>','&gt;')
+    str = str.rstrip().replace('(','&#40;').replace(')','&#41;')
+    html = str.rstrip().replace("'",'&#39;').replace('"','&quot;')
+    return html
+
+
 def translate(txt, block=''):
     """
     returns translated text
@@ -219,7 +226,7 @@ def translate(txt, block=''):
         if tr == '':
             logger.warning("Backend: Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
             tr = txt
-    return tr
+    return html_escape(tr)
     
     
 class Backend:
@@ -258,8 +265,7 @@ class Backend:
                 self.logger.warning("Backend: visu plugin v{0} is too old to support BackendServer, please update".format(vers))
 
     def html_escape(self, str):
-        html = str.rstrip().replace('<','&lt;').replace('>','&gt;')
-        return html
+        return html_escape(str)
 
     @cherrypy.expose
     def index(self):
