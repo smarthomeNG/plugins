@@ -123,7 +123,7 @@ class BackendServer(SmartPlugin):
         }
         self._cherrypy = cherrypy
         self._cherrypy.config.update(config)
-        self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language, developer_mode), '/', config = config)
+        self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language, self.developer_mode), '/', config = config)
 
     def run(self):
         self.logger.debug("BackendServer: rest run")
