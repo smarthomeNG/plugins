@@ -52,6 +52,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#user = admin
 	#password = very_secure_password
 	#language = en
+	#developer_mode = on
 </pre>
 
 ### ip
@@ -78,3 +79,6 @@ The password for basic authentication. If left out, basic authentication is disa
 
 ### language (optional)
 You can specify a language to use for the plugin. Besides the standard language (german) which is used, if this parameter isn't set, you can specify english (for the time being). The language is specified by  **`en`**
+
+### developer_mode (optional)
+You may specify develper_mode = on, if you are developiing within the backend plugin. At the moment, the only thing that changes is an additional button **``relaod translation``** on the services page

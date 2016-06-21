@@ -1,5 +1,7 @@
 {
+	"Scheduler": "Planificateur",
 	"Logik": "Logique",
+	"Systemlogiken": "Logiques du système",
 	"nächste Ausführung": "Prochaine exécution",
 	"Dateiname": "Nom du fichier",
 	"Aktionen": "Actions",
@@ -46,7 +48,7 @@
 	"Minuten": "minutes",
 	"Sekunden": "secondes",
 	"Betriebszeit": "Temps en services",
-	"installierte Version": "version installée",
+	"installierte Version": "Version installée",
 	"Neuste Version": "Dernière version",
 	"Dienst": "Service",
 	"Status": "Etat",

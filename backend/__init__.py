@@ -57,7 +57,7 @@ class BackendServer(SmartPlugin):
         s.connect(("10.10.10.10", 80))
         return s.getsockname()[0]
 
-    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", language=""):
+    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", language="", developer_mode="no"):
         self.logger = logging.getLogger(__name__)
         self._user = user
         self._password = password
@@ -92,6 +92,7 @@ class BackendServer(SmartPlugin):
         if language != '':
             if not load_translation(language):
                 self.logger.warning("BackendServer: Language '{0}' not found, using standard language instead".format(language))
+        self.developer_mode =  self.my_to_bool(developer_mode, 'developer_mode', False)
 
         self.updates_allowed = self.my_to_bool(updates_allowed, 'updates_allowed', True)
 
@@ -122,7 +123,7 @@ class BackendServer(SmartPlugin):
         }
         self._cherrypy = cherrypy
         self._cherrypy.config.update(config)
-        self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language), '/', config = config)
+        self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language, developer_mode), '/', config = config)
 
     def run(self):
         self.logger.debug("BackendServer: rest run")
@@ -235,12 +236,13 @@ class Backend:
     env.globals['is_userlogic'] = is_userlogic
     env.globals['_'] = translate
     
-    def __init__(self, backendserver=None, updates_allowed=True, language=''):
+    def __init__(self, backendserver=None, updates_allowed=True, language='', developer_mode=False):
         self.logger = logging.getLogger(__name__)
         self._bs = backendserver
         self._sh = backendserver._sh
         self.language = language
         self.updates_allowed = updates_allowed
+        self.developer_mode = developer_mode
 
         self._sh_dir = self._sh.base_dir
         self.visu_plugin = None
@@ -389,7 +391,7 @@ class Backend:
                 break
 
         tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=translation_lang)
+        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=translation_lang, develop=self.developer_mode)
 
     @cherrypy.expose
     def disclosure_html(self):

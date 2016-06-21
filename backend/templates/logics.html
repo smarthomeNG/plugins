@@ -42,7 +42,7 @@
 						{% endif %}
 					{% endfor %}
 
-					<tr><th colspan="4">Systemlogiken</th><tr>
+					<tr><th colspan="4">{{ _('Systemlogiken') }}</th><tr>
 					{% for logic in smarthome.return_logics()|sort %}
 						{% if not is_userlogic(smarthome, logic) %}
 						<tr>
