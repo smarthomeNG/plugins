@@ -95,7 +95,7 @@
 
                     <td>
                           <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html'">{{ _('Übersetzung neu laden','button') }}</span></div>
-                          <select id="language" class="form-control" onChange="location.href='/reload_translation.html?lang='+$('#language').val()" style="width: 250px; margin-top: 7px;">
+                          <select id="language" class="form-control" onChange="location.href='/reload_translation.html?lang='+$('#language').val()" style="width: 250px; margin-top: 8px;">
                             <option {% if lang=='de' %}selected{% endif %} value="de">{% if lang!='de' %}{{ _('Auf Deutsch wechseln') }}{% else %}{{ _('Deutsch','button') }}{% endif %}</option>
                             <option {% if lang=='en' %}selected{% endif %} value="en">{% if lang!='en' %}{{ _('Auf Englisch wechseln') }}{% else %}{{ _('Englisch','button') }}{% endif %}</option>
                             <option {% if lang=='fr' %}selected{% endif %} value="fr">{% if lang!='fr' %}{{ _('Auf Französisch wechseln') }}{% else %}{{ _('Französisch','button') }}{% endif %}</option>
