@@ -57,6 +57,7 @@
 	"Übersetzung neu laden": "Reload translation",
 	"Auf Deutsch wechseln": "Switch to German",
 	"Auf Englisch wechseln": "Switch to English",
+	"Auf Französisch wechseln": "Switch to French",
 	"Nr.": "No.",
 	"Plugin": "Plugin",
 	"Classname": "Classname",
@@ -119,7 +120,10 @@
 		"knxd service beenden": "Stop knxd service",
 		"knxd socket beenden": "Stop knxd socket",
 		"Filter anwenden": "Apply Filter",
-		"Cacheprüfung": "Cache Check"
+		"Cacheprüfung": "Cache Check",
+		"Englisch": "English",
+		"Deutsch": "Deutsch",
+		"Französisch": "French"
 	},
 	
 	"_menu": {
