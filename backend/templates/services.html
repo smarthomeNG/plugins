@@ -94,9 +94,12 @@
                     <td><img src="/static/img/languages.svg" width="48" height="48"></td>
 
                     <td>
-                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html'">{{ _('Übersetzung neu laden','button') }}</span></div>
-                        {% if lang != 'de' %}<div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html?lang=de'">{{ _('Auf Deutsch wechseln','button') }}</span></div>{% endif %}
-                        {% if lang != 'en' %}<div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html?lang=en'">{{ _('Auf Englisch wechseln','button') }}</span></div>{% endif %}
+                          <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html'">{{ _('Übersetzung neu laden','button') }}</span></div>
+                          <select id="language" class="form-control" onChange="location.href='/reload_translation.html?lang='+$('#language').val()" style="width: 250px; margin-top: 7px;">
+                            <option {% if lang=='de' %}selected{% endif %} value="de">{% if lang!='de' %}{{ _('Auf Deutsch wechseln','button') }}{% else %}{{ _('Deutsch','button') }}{% endif %}</option>
+                            <option {% if lang=='en' %}selected{% endif %} value="en">{% if lang!='en' %}{{ _('Auf Englisch wechseln','button') }}{% else %}{{ _('Englisch','button') }}{% endif %}</option>
+                            <option {% if lang=='fr' %}selected{% endif %} value="fr">{% if lang!='fr' %}{{ _('Auf Französisch wechseln','button') }}{% else %}{{ _('Französisch','button') }}{% endif %}</option>
+                          </select>
                     </td>
                     <td></td>
                 </tr>
