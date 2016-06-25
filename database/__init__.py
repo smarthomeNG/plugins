@@ -64,7 +64,7 @@ class Database(SmartPlugin):
         _start = Column(BigInteger)
         _value = Column(Float)
 
-    def __init__(self, smarthome, engine="sqlite", database="smarthome.db", host=None, port=None, username=None, password=None):
+    def __init__(self, smarthome, engine="sqlite", database="var/db/smarthome.db", host=None, port=None, username=None, password=None):
         self._sh = smarthome
         self.connected = False
         self._buffer = {}
@@ -202,7 +202,8 @@ class Database(SmartPlugin):
         self._buffer[item].append((_start, _dur, _avg, _on))
         if _end - item._database_last > self._buffer_time:
             self._insert(item)
-        # update cache with current value
+        if not self._fdb_lock.acquire(timeout=2):
+            return        # update cache with current value
         itemForUpdate = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
         if itemForUpdate is not None:
             try:
@@ -212,6 +213,7 @@ class Database(SmartPlugin):
             except Exception as e:
                 self.logger.debug("Database: Error updating cache for item {}: {}".format(item.id(), e))
                 self.session.rollback()
+        self._fdb_lock.release()
 
     def _datetime(self, ts):
         return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
