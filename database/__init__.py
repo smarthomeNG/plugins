@@ -90,7 +90,7 @@ class Database(SmartPlugin):
         # Assemble URI
         self._uri = self._engine + "://" + self._credentials + self._host + "/" + self._database
         if self._engine == 'sqlite':
-            self._uri += 'from sqlalchemy.pool import StaticPool'
+            self._uri += '?check_same_thread=False'
         self.logger.info("Database: SqlAlchemy {0} using {1} database '{2}'".format(__version__, self._engine, self._database))
         self.logger.debug("Database: URI " + self._uri)
         try:
@@ -116,6 +116,9 @@ class Database(SmartPlugin):
         self._times = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
 
     def cleanup(self):
+        """
+        Clean history and cache from items that do no longer exist
+        """
         current_items = [item.id() for item in self._buffer]
         db_items = self.session.query(self.ItemStore).group_by(self.ItemStore._item).all()
         # Clear orphans from num table
@@ -135,9 +138,15 @@ class Database(SmartPlugin):
                     self.session.commit()
 
     def dump(self, dumpfile):
+        """
+        dump database into file (TODO)
+        """
         pass
 
     def move(self, old, new):
+        """
+        rename / move item including history and cache
+        """
         self.logger.info("Database: renaming {0} to {1}".format(old, new))
         self.session.query(self.ItemStore).filter(self.ItemStore._item == old).update({self.ItemStore._item: new})
         self.session.query(self.ItemCache).filter(self.ItemCache._item == old).update({self.ItemCache._item: new})
