@@ -175,7 +175,7 @@ class Database(SmartPlugin):
                 last_change = self._datetime(last_change)
                 storedItem = self.session.query(self.ItemStore).filter_by(_item=item.id()).order_by(self.ItemStore._start.desc()).first()
                 if storedItem is not None:
-                    prev_change = storedItem._start
+                    prev_change = self._datetime(storedItem._start)
                     item.set(value, 'Database', prev_change=prev_change, last_change=last_change)
             self._buffer[item] = []
             item.series = functools.partial(self._series, item=item.id())
