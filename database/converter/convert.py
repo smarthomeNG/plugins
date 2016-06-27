@@ -25,6 +25,8 @@ import sqlite3
 import os.path
 import warnings
 import subprocess
+import time
+import sys
 
 loglevel = 0  # 0 = debug, 1 = info, 2 = warning, 3 = error
 tmysql = True
@@ -39,7 +41,7 @@ except:
 try:
     import psycopg2
 except:
-    print("Psycopg2 not installed, please run 'apt-get install python3-psycopg2' if you want to use postgres as target")
+    print("Psycopg2 not installed, please run 'pip3 install psycopg2' if you want to use postgres as target")
     tpostgres = False
 
 
@@ -123,6 +125,7 @@ def _convert_postgres(args):
 
 def _convert_mysql(args):
     print("Converting sqlite3 '{0}' -> mysql '{1}'.".format(args.source, args.database))
+    start = time.time()
     try:
         _log(1, "Connecting to mysql server.")
         con = pymysql.connect(host=args.host,
@@ -195,12 +198,19 @@ def _convert_mysql(args):
             cur.execute("INSERT INTO cache (_item, _start, _value) VALUES ('{0}', {1}, {2});".format(row[0], row[1], row[2]))
         con.commit()
         # Converting num table
-        _log(0, "Converting num table.")
+        _log(0, "Converting num table (prints a dot every 1000 rows).")
         sql3cur.execute('SELECT _start, _item, _dur, _avg, _min, _max, _on FROM num')
         rows = sql3cur.fetchall()
+        con.autocommit(False)
+        count = 0
         for row in rows:
             cur.execute("INSERT INTO num (_start, _item, _dur, _avg, _min, _max, _on) VALUES ({0},'{1}',{2},{3},{4},{5},{6});"
                         .format(row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
+            count += 1
+            if count % 1000 == 0:
+                print('.', end='')
+                sys.stdout.flush()
+        print('')
         con.commit()
         sql3con.close()
     except pymysql.err.OperationalError as e:
@@ -208,6 +218,8 @@ def _convert_mysql(args):
         con.close()
         return False
     con.close()
+    end = time.time()
+    _log(1, "Conversion took {0} seconds".format(end-start))
     return True
 
 
@@ -224,13 +236,13 @@ def main():
     parser.add_argument('-p', '--password', default='smarthome', help='destination database smarthome username, default is \'smarthome\'.')
 
     args = parser.parse_args()
-    _log(0, args)
+    #_log(0, args)
 
     if not os.path.isfile(args.source):
         _log(3, "SQLite3 database {0} not found".format(args.source))
         return False
     # Prompt user for confirmation before doing anything
-    answer = input("Are you sure you want to run conversion to {0} database {1}. CAUTION: DESTINATION DATABASE WILL BE OVERWRITTEN !! Enter (y)es or (n)o: ".format(args.engine, args.database))
+    answer = input("Are you sure you want to run conversion to {0} database '{1}'. CAUTION: DESTINATION DATABASE WILL BE OVERWRITTEN !! Enter (y)es or (n)o: ".format(args.engine, args.database))
     if answer != "yes" and answer != "y":
         return
 
