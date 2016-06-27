@@ -26,6 +26,7 @@ import threading
 import time
 import datetime
 import functools
+from importlib.util import find_spec
 
 from lib.model.smartplugin import SmartPlugin
 
@@ -75,13 +76,18 @@ class Database(SmartPlugin):
         self._database = database
         self.logger = logging.getLogger(__name__)
 
+        # if engine = mysql then force use of PyMySql driver. If module does not exist instruct user to install it.
+        if self._engine == 'mysql':
+            if find_spec('pymysql') is None:
+                self.logger.error("Database: PyMySql not found. run 'pip3 install pymysql' if you plan to use MySQL or MariaDB !")
+            self._engine += '+pymysql'
         # If credentials in config concatenate them for URI use
         if (username is not None) and (password is not None):
             self._credentials = username + ":" + password
         else:
             self._credentials = ""
-        # If host and port in config concatenate them for URI use
-        if (host is not None):
+        # If host and port in config concatenate them for URI use, ignore them if engine = sqlite
+        if (host is not None) and (self._engine != 'sqlite'):
             self._host = "@" + host
             if (port is not None):
                 self._host += ":" + port
@@ -103,7 +109,8 @@ class Database(SmartPlugin):
             self.Base.metadata.bind = db
             self.Base.metadata.create_all()
         except Exception as e:
-            self.logger.debug("Database: Error while establishing database connection: {}".format(e))
+            self.logger.error("Database: Error while establishing database connection: {}".format(e))
+            self.connected = False
         finally:
             self._fdb_lock.release()
         minute = 60 * 1000
@@ -154,6 +161,9 @@ class Database(SmartPlugin):
 
     def parse_item(self, item):
         if 'database' in item.conf:
+            # ignore items with database parameter if no database connected
+            if not self.connected:
+                return None
             # Check if item type is supported by this plugin
             if item.type() not in ['num', 'bool']:
                 self.logger.warning("Database: only 'num' and 'bool' currently supported. Item: {} ".format(item.id()))
@@ -161,14 +171,14 @@ class Database(SmartPlugin):
             # If item exists in cache load last value, if not create it
             cache = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
             if cache is None:
-                self.logger.debug("Database: Items does not exist in cache, creating it")
+                self.logger.debug("Database: Items {0} does not exist in cache, creating it".format(item.id()))
                 last_change = self._timestamp(self._sh.now())
                 item._database_last = last_change
                 newItem = self.ItemCache(_item=item.id(), _start=last_change, _value=float(item()))
                 self.session.add(newItem)
                 self.session.commit()
             else:
-                self.logger.debug("Database: Loading item last value from cache")
+                self.logger.debug("Database: Loading last value for item {0} from cache".format(item.id()))
                 last_change = cache._start
                 value = cache._value
                 item._database_last = last_change
