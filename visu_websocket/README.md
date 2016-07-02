@@ -25,7 +25,7 @@ The configuration of the plugin itself is done in the file **`etc/plugin.conf`**
 <pre>
 [visu]
     class_name = WebSocket
-    class_path = plugins.visu
+    class_path = plugins.visu_websocket
 #    ip='0.0.0.0'
 #    port=2424
 #    tls = no
