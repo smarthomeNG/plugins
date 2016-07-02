@@ -32,7 +32,7 @@ The configuration of the plugin itself is done in the file **`etc/plugin.conf`**
 <pre>
 [visu]
     class_name = SmartVisu
-    class_path = plugins.visu_sv
+    class_path = plugins.visu_smartvisu
 #    smartvisu_dir = False
 #    handle_widgets = True
 </pre>
