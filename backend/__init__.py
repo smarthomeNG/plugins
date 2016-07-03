@@ -647,9 +647,9 @@ class Backend:
         """
         self.find_visu_plugin()
 
-        self.logger.warning("Backend: logics_html: trigger = '{0}', reload = '{1}'".format(trigger, reload))
+        self.logger.debug("Backend: logics_html: trigger = '{0}', reload = '{1}'".format(trigger, reload))
         if trigger is not None:
-            self.logger.warning("Backend: logics_html: Trigger logic = '{0}'".format(logic))
+            self.logger.debug("Backend: logics_html: Trigger logic = '{0}'".format(logic))
             if self.updates_allowed:
                 if logic in self._sh.return_logics():
                     self._sh.trigger(logic, by='Backend')
@@ -659,11 +659,11 @@ class Backend:
                 self.logger.warning("Backend: Logic triggering is not allowed. (Change 'updates_allowed' in plugin.conf")
 
         if reload is not None:
-            self.logger.warning("Backend: logics_html: Reload logic = '{0}'".format(logic))
+            self.logger.debug("Backend: logics_html: Reload logic = '{0}'".format(logic))
             if self.updates_allowed:
                 if logic in self._sh.return_logics():
                     mylogic = self._sh.return_logic(logic)
-                    self.logger.warning("Backend: logics_html: Reload logic='{0}', filename = '{1}'".format(logic, os.path.basename(mylogic.filename)))
+                    self.logger.info("Backend: logics_html: Reload logic='{0}', filename = '{1}'".format(logic, os.path.basename(mylogic.filename)))
                     mylogic.generate_bytecode()
                     self._sh.trigger(logic, by='Backend', value="Init")
                 else:
