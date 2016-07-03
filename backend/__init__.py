@@ -384,6 +384,14 @@ class Backend:
         smarthome_service = self.get_process_info("systemctl status smarthome.service")
         knxd_socket = self.get_process_info("systemctl status knxd.socket")
 
+        knxdeamon = ''
+        if self.get_process_info("ps cax|grep eibd") != '':
+            knxdeamon = 'eibd'
+        if self.get_process_info("ps cax|grep knxd") != '':
+            if knxdeamon != '':
+                knxdeamon += ' and '
+            knxdeamon += 'knxd'
+        
         sql_plugin = False
         for x in self._sh._plugins:
             if x.__class__.__name__ == "SQL":
@@ -391,7 +399,7 @@ class Backend:
                 break
 
         tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=translation_lang, develop=self.developer_mode)
+        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=translation_lang, develop=self.developer_mode, knxdeamon=knxdeamon)
 
     @cherrypy.expose
     def disclosure_html(self):
