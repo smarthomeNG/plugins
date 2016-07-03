@@ -7,6 +7,7 @@
 
 {% block content %}
 <div class="table-responsive">
+		{% if develop %}
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -74,25 +75,38 @@
 
                         {% endif %}</td>
                 </tr>
+            </tbody>
+        </table>
+		{% endif %}
+				
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td><img src="/static/img/logfile.svg" width="48" height="48"></td>
-
-                    <td>
-                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/log_dump.html')">{{ _('Logfile speichern','button') }}</span></div>
-                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/log_view.html'">{{ _('Logfile ansehen','button') }}</span></div>
-                    </td>
-                    <td></td>
+                	<th width="100"></th>
+                    <th width="350">{{ _('Dienst') }}</th>
+                    <th>{{ _('Status') }}</th>
+                    <th></th>
+                    <th></th>
                 </tr>
-                {% if sql_plugin %}
+            </thead>
+            <tbody>
                 <tr>
-                    <td><img src="/static/img/db_backup.svg" width="48" height="48"></td>
-                    <td><div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/db_dump.html')">{{ _('Datenbank-Dump','button') }}</span></div></td>
+                    <td><img src="/static/img/knxd_service.png" width="48" height="48"></td>
+                    <td><br>{{ _('Dienst für die KNX Unterstützung') }}</td>
+					{% if knxdeamon %}
+                    <td><br>{{ knxdeamon }}</td>
+					{% else %}
+                    <td><br>{{ _('Nicht aktiv') }}</td>
                     <td></td>
-                </tr>
-                {% endif %}
+					{% endif %}
+                    <td></td>
+                    <td></td>
+				</tr>
                 <tr>
                     <td><img src="/static/img/languages.svg" width="48" height="48"></td>
 
+                    <td><br><p>{{ _('Sprache des Backends') }}</p>
+                    </td>
                     <td>
 						  {% if develop %}
                           <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html'">{{ _('Übersetzung neu laden','button') }}</span></div>
@@ -102,18 +116,40 @@
                             <option {% if lang=='en' %}selected{% endif %} value="en">{% if lang!='en' %}{{ _('Auf Englisch wechseln') }}{% else %}{{ _('Englisch','button') }}{% endif %}</option>
                             <option {% if lang=='fr' %}selected{% endif %} value="fr">{% if lang!='fr' %}{{ _('Auf Französisch wechseln') }}{% else %}{{ _('Französisch','button') }}{% endif %}</option>
                           </select>
+                    <td>
                     </td>
                     <td></td>
                 </tr>
                 <tr>
-                    <td><img src="/static/img/cache.svg" width="48" height="48"></td>
+                    <td><img src="/static/img/logfile.svg" width="48" height="48"></td>
 
                     <td>
+                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/log_dump.html')">{{ _('Logfile speichern','button') }}</span></div>
+                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/log_view.html'">{{ _('Logfile ansehen','button') }}</span></div>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% if sql_plugin %}
+                <tr>
+                    <td><img src="/static/img/db_backup.svg" width="48" height="48"></td>
+                    <td><div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/db_dump.html')">{{ _('Datenbank-Dump','button') }}</span></div></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td><img src="/static/img/cache.svg" width="48" height="48"></td>
+
+                    <td colspan="2">
                         <div class="navbar-form navbar-left">
                             <span class="btn btn-default" onclick="checkCache()">{{ _('Cacheprüfung','button') }}</span>
                             <div id="cache_check" style="margin-top: 5px; width: 900px;"></div>
                         </div>
                     </td>
+                    <td></td>
                     <td></td>
                 </tr>
             </tbody>
