@@ -747,7 +747,10 @@ class Backend:
                 deli = c.find(':')
                 client['ip'] = c[0:c.find(':')]
                 client['port'] = c[c.find(':')+1:]
-                client['name'] = socket.gethostbyaddr(client['ip'])[0]
+                try:
+                    client['name'] = socket.gethostbyaddr(client['ip'])[0]
+                except:
+                    client['name'] = client['ip']
                 clients.append(client)
         clients_sorted = sorted(clients, key=lambda k: k['name']) 
         
