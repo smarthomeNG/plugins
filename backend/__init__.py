@@ -194,7 +194,7 @@ def load_translation(language):
         except Exception as e:
             logger.error("Backend: load_translation language='{0}': Error '{1}'".format(translation_lang, e))
             return False
-    logger.warning("Backend: translation_dict='{0}'".format(translation_dict))
+    logger.debug("Backend: translation_dict='{0}'".format(translation_dict))
     return True
 
 
