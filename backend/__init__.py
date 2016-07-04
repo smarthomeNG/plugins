@@ -246,6 +246,7 @@ class Backend:
 
         self._sh_dir = self._sh.base_dir
         self.visu_plugin = None
+        self.visu_plugin_version = '1.0.0'
 
     def find_visu_plugin(self):
         """
@@ -259,10 +260,11 @@ class Backend:
                 self.visu_plugin = p
         if self.visu_plugin is not None:
             try:
-                vers = self.visu_plugin.get_version()
+                self.visu_plugin_version = self.visu_plugin.get_version()
             except:
-                vers = '1.0.0'
-            if vers < '1.1.2':
+                self.visu_plugin_version = '1.0.0'
+            self.visu_plugin_build = self.visu_plugin_version[4:]
+            if self.visu_plugin_build < '2':
                 self.visu_plugin = None
                 self.logger.warning("Backend: visu plugin v{0} is too old to support BackendServer, please update".format(vers))
 
@@ -311,14 +313,19 @@ class Backend:
         get_uptime = subprocess.Popen('uptime', stdout=subprocess.PIPE)
         uptime = get_uptime.stdout.read().decode()
         # return SmarthomeNG runtime
-        hours, minutes, seconds = [float(val) for val in str(self._sh.runtime()).split(':')]
+        rt = str(self._sh.runtime())
+        daytest = rt.split(' ')
+        if len(daytest) == 3:
+            days = int(test[0])
+            hours, minutes, seconds = [float(val) for val in str(daytest[2]).split(':')]
+        else:
+            days = 0
+            hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
         sh_uptime = ''
-        if hours > 23:
-            days = int(hours / 24)
-            hours = hours - 24 * days
+        if days > 0:
             sh_uptime = str(int(days))+" "+translate('Tage')+", "+str(int(hours))+" "+translate('Stunden')+", "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
         elif hours > 0:
-            sh_uptime = str(int(hours))+" Stunden, "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
+            sh_uptime = str(int(hours))+" "+translate('Stunden')+", "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
         elif minutes > 0:
             sh_uptime = str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
         else:
@@ -362,7 +369,10 @@ class Backend:
         packages = []
         for dist in installed_packages:
             package = {}
-            available = pypi.package_releases(dist.project_name)
+            try:
+                available = pypi.package_releases(dist.project_name)
+            except:
+                availabe = [translate('Keine Antwort von PyPI')]
             package['key'] = dist.key
             package['version_installed'] = dist.version
             try:
@@ -750,20 +760,37 @@ class Backend:
             
         clients = []
         if self.visu_plugin is not None:
-            for c in self.visu_plugin.return_clients():
-                client = dict()
-                deli = c.find(':')
-                client['ip'] = c[0:c.find(':')]
-                client['port'] = c[c.find(':')+1:]
-                try:
-                    client['name'] = socket.gethostbyaddr(client['ip'])[0]
-                except:
-                    client['name'] = client['ip']
-                clients.append(client)
+            if self.visu_plugin_build == '2':
+                for c in self.visu_plugin.return_clients():
+                    client = dict()
+                    deli = c.find(':')
+                    client['ip'] = c[0:c.find(':')]
+                    client['port'] = c[c.find(':')+1:]
+                    try:
+                        client['name'] = socket.gethostbyaddr(client['ip'])[0]
+                    except:
+                        client['name'] = client['ip']
+                    clients.append(client)
+
+            if self.visu_plugin_build > '2':
+                for c, sw, swv, ch in self.visu_plugin.return_clients():
+                    client = dict()
+                    deli = c.find(':')
+                    client['ip'] = c[0:c.find(':')]
+                    client['port'] = c[c.find(':')+1:]
+                    try:
+                        client['name'] = socket.gethostbyaddr(client['ip'])[0]
+                    except:
+                        client['name'] = client['ip']
+                    client['sw'] = sw
+                    client['swversion'] = swv
+                    client['hostname'] = ch
+                    clients.append(client)
+                    
         clients_sorted = sorted(clients, key=lambda k: k['name']) 
         
         tmpl = self.env.get_template('visu.html')
-        return tmpl.render( visu_plugin=(self.visu_plugin is not None), clients=clients_sorted )
+        return tmpl.render( visu_plugin=(self.visu_plugin is not None), visu_plugin_build=self.visu_plugin_build, clients=clients_sorted )
 
 
     @cherrypy.expose
