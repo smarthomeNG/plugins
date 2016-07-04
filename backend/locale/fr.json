@@ -57,9 +57,9 @@
 	"Aktion": "Action",
 	"Root-Passwort": "Mot de passe 'root'",
 	"Neu starten": "Redémarrer le système",
-	"Dienst für die KNX Unterstützung": "Dienst für die KNX Unterstützung",
-	"Nicht aktiv": "Nicht aktiv",
-	"Sprache des Backends": "Sprache des Backends",
+	"Dienst für die KNX Unterstützung": "Service pour le support du KNX",
+	"Nicht aktiv": "Inactif",
+	"Sprache des Backends": "Langue du backend",
 	"Logfile speichern": "Sauvegarder fichier log",
 	"Logfile ansehen": "Afficher log",
 	"Datenbank-Dump": "Dump de la base de données",
@@ -112,7 +112,7 @@
 		"Lizenz": "Licence",
 		"Link": "Lien",
 		"Name": "Nom",
-		"disclosure_title": "Divulgation des composantes Open Source utilisées dans le serveur Backend de SmartHomeNG",
+		"disclosure_title": "Déclaration des composantes Open Source utilisées dans le serveur Backend de SmartHomeNG",
 		"Verwendete Open Source Software Komponenten": "Composantes Open Source utilisées",
 		"Icons/Bilder": "Icônes/Images",
 		"Alle Icons und Bilder kommen von": "Toutes les images et icônes parviennent de"
@@ -143,6 +143,6 @@
 		"Plugins": "Extensions",
 		"Threads": "Tâches",
 		"Visu": "Visu",
-		"Disclosure": "Disclosure"
+		"Disclosure": "Déclaration"
 	}
 }
