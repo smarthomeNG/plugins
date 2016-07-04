@@ -11,8 +11,8 @@
             <thead>
                 <tr>
                     <th></th>
-                    <th>Eigenschaft</th>
-                    <th>Status</th>
+                    <th>{{ _('Eigenschaft') }}</th>
+                    <th>{{ _('Status') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,12 +59,12 @@
                 </tr>
                 <tr>
                     <td><img src="/static/img/home.svg" width="48" height="48"></td>
-                    <td>{{ _('Betriebszeit') }} (SmarthomeNG):</td>
+                    <td>{{ _('Betriebszeit') }} (smarthomeNG):</td>
                     <td>{{ sh_uptime }}</td>
                 </tr>
                 <tr>
                     <td><img src="/static/img/python.png" width="48" height="48"></td>
-                    <td>Python Version:</td>
+                    <td>{{ _('Python Version') }}:</td>
                     <td>{{ pyversion }}</td>
                 </tr>
             </tbody>

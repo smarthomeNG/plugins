@@ -10,10 +10,20 @@
 		<table class="table table-striped table-hover">
 			<thead>
 				<tr>
-					<th>{{ _('Visu Client') }}</th>
+					<th width="180px">{{ _('Visu Client') }}</th>
 					{% if visu_plugin %}
-						<th>{{ _('IP') }}</th>
-						<th>{{ _('Port') }}</th>
+						<th width="80px">{{ _('IP') }}</th>
+						<th width="50px">{{ _('Port') }}</th>
+						{% if visu_plugin_build > '2' %}
+							<th width="50px">{{ _('Client Software') }}</th>
+							<th width="50px">{{ _('Version') }}</th>
+							<th  width="50px">{{ _('') }}</th>
+						{% else %}
+							<th  width="50px"></th>
+							<th  width="50px"></th>
+							<th  width="50px"></th>
+						{% endif %}
+						<th width="150px"></th>
 					{% endif %}
 				</tr>
 			</thead>
@@ -22,10 +32,13 @@
 					{% if clients %}
 						{% for client in clients %}
 						<tr>
-							<td width="180px">{{ client.name }}</td>
-							<td width="80px">{{ client.ip }}</td>
-							<td width="50px">{{ client.port }}</td>
-							<td width="300px"></td>
+							<td>{{ client.name }}</td>
+							<td>{{ client.ip }}</td>
+							<td>{{ client.port }}</td>
+							<td>{{ client.sw }}</td>
+							<td>{{ client.swversion }}</td>
+							<td>{{ client.hostname }}</td>
+							<td></td>
 						</tr>
 						{% endfor %}
 					{% else %}
