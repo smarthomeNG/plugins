@@ -320,14 +320,14 @@ class Database(SmartPlugin):
                     .order_by(self.ItemStore._start.asc()) \
                     .all()
             elif func == 'min':
-                items = self.session.query(sqlfunc.min(self.ItemStore._start), sqlfunc.min(_min)) \
+                items = self.session.query(sqlfunc.min(self.ItemStore._start), sqlfunc.min(self.ItemStore._min)) \
                     .filter(self.ItemStore._item == item) \
                     .filter(self.ItemStore._start + self.ItemStore._dur >= istart) \
                     .filter(self.ItemStore._start <= iend) \
                     .group_by(cast(self.ItemStore._start / 864000, Integer)) \
                     .all()
             elif func == 'max':
-                items = self.session.query(sqlfunc.min(self.ItemStore._start), sqlfunc.max(_max)) \
+                items = self.session.query(sqlfunc.min(self.ItemStore._start), sqlfunc.max(self.ItemStore._max)) \
                     .filter(self.ItemStore._item == item) \
                     .filter(self.ItemStore._start + self.ItemStore._dur >= istart) \
                     .filter(self.ItemStore._start <= iend) \
@@ -344,7 +344,8 @@ class Database(SmartPlugin):
             else:
                 raise NotImplementedError
         except Exception as e:
-            self.logger.warning("Database: Error {0}".format(e))
+            self.logger.error("Database: Error {0}".format(e))
+            raise
             reply = None
             return reply
         finally:
