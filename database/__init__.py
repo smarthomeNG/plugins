@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+ #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
@@ -345,7 +345,6 @@ class Database(SmartPlugin):
                 raise NotImplementedError
         except Exception as e:
             self.logger.error("Database: Error {0}".format(e))
-            raise
             reply = None
             return reply
         finally:
