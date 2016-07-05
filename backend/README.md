@@ -1,19 +1,19 @@
 # Backend GUI
 
-This plugin delivers information about the current SmarthomeNG installation. Right now it serves as a support tool for helping other users with an installation that does not run properly. Some highlights:
+This plugin delivers information about the current SmartHomeNG installation. Right now it serves as a support tool for helping other users with an installation that does not run properly. Some highlights:
 
 * a list of installed python modules is shown versus the available versions from PyPI
 * a list of items and their attributes is shown
 * a list of logics and their next execution time
 * a list of current schedulers and their next execution time
 * direct download of sqlite database (if plugin is used) and smarthome.log
-* some information about frequently used daemons like knxd is included
+* some information about frequently used daemons like knxd/eibd is included
 * supports basic authentication
 * multi-language support
 
 There is however only basic protection against unauthorized access or use of the plugin so be careful when enabling it with your network.
 
-It is still in development so please give feedback to the community.
+Call the backend-webserver: **```http://<ip of your SmartHomeNG server>:8383```**
 
 Support is provided trough the support thread within the smarthomeNG forum: 
 
@@ -21,7 +21,7 @@ Support is provided trough the support thread within the smarthomeNG forum:
 
 
 # Requirements
-This plugin requires Python >= 3.4 as well as the libs cherrypy and jinja2. You can install them with:
+This plugin is running under Python >= 3.4 as well as the libs cherrypy and jinja2. You can install them with:
 <pre>
 (sudo apt-get install python-cherrypy)
 sudo pip3 install cherrypy
@@ -31,7 +31,7 @@ sudo pip3 install jinja2
 And please pay attention that the libs are installed for Python3 and not an older Python 2.7 that is probably installed on your system.
 
 ## Running this plugin under Python 3.2
-If you really need to run this plugin under Python 3.2 you may not use the newest version of all packages. Make sure to install the following versions into your Phython3.2 environment, as newer versions are not compatible with Python 3.2 any more:
+If you really need to run this plugin under Python 3.2 you may not use the newest version of all packages. The packages **Jinja2** and **MarkupSafe** have dropped support for Python 3.2. Make sure to install the following older versions into your Phython3.2 environment, as newer versions are not compatible with Python 3.2 any more:
 
 <pre>
 - Jinja2	v2.6
