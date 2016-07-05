@@ -116,13 +116,14 @@ class WebSocket(SmartPlugin):
 
     def parse_logic(self, logic):
         if hasattr(logic, 'visu_acl'):
-            if item.conf['visu_acl'].lower() in ('true', 'yes', 'rw'):
+            if logic.conf['visu_acl'].lower() in ('true', 'yes', 'rw'):
                 self.websocket.visu_logics[logic.name] = logic
 
 
     def return_clients(self):
         for client in self.websocket.clients:
-            yield client.addr
+            yield client.addr			# v1.1.2
+#            yield client.addr, client.sw, client.swversion, client.hostname          # v1.1.3
 
 
 #########################################################################
@@ -248,6 +249,10 @@ class websockethandler(lib.connection.Stream):
         self.logics = logics
         self.proto = proto
         self.logger.info("VISU: Websocket handler uses protocol version {0}".format(self.proto))
+        self.sw = ''
+        self.swversion = ''
+        self.hostname = ''
+        
 
     def send_event(self, event, data):
         data = data.copy()  # don't filter the orignal data dict
@@ -391,11 +396,16 @@ class websockethandler(lib.connection.Stream):
         elif command == 'proto':  # protocol version
             proto = data['ver']
             if proto > self.proto:
-                self.logger.warning("WebSocket: protocol mismatch. Update SmartHome.py")
+                self.logger.warning("WebSocket: protocol mismatch. SmartHomeNG protocol version={0}, visu protocol version={1}".format(self.proto, proto))
             elif proto < self.proto:
                 self.logger.warning("WebSocket: protocol mismatch. Update your client: {0}".format(self.addr))
             self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()})
-#            self.logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, "{'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()}"))	# MSinn
+#            self.logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, "{'cmd': 'proto', 'ver': " + str(self.proto) + ", 'time': " + str(self._sh.now()) + "}"))
+        elif command == 'identity':  # identify client
+            self.sw = data.get('sw','')
+            self.swversion = data.get('ver','')
+            self.hostname = data.get('hostname','')
+#            self.logger.warning("VISU json_parse: received from {0}: {1}".format(self.addr, "{'cmd': 'identity', 'sw': "+self.sw+", 'ver': "+self.swversion+"}"))	# MSinn
 
     def parse_header(self, data):
         data = bytes(data)
