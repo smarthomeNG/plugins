@@ -369,16 +369,16 @@ class Backend:
         packages = []
         for dist in installed_packages:
             package = {}
-            try:
-                available = pypi.package_releases(dist.project_name)
-            except:
-                availabe = [translate('Keine Antwort von PyPI')]
             package['key'] = dist.key
             package['version_installed'] = dist.version
             try:
-                package['version_available'] = available[0]
+                available = pypi.package_releases(dist.project_name)
+                try:
+                    package['version_available'] = available[0]
+                except:
+                    package['version_available'] = '-'
             except:
-                package['version_available'] = '-'
+                package['version_available'] = [translate('Keine Antwort von PyPI')]
             packages.append(package)
 
         sorted_packages = sorted([(i['key'], i['version_installed'], i['version_available']) for i in packages])
