@@ -84,7 +84,7 @@ class SmartVisu(SmartPlugin):
 
     def stop(self):
         self.alive = False
-        self.close()
+
 
 #########################################################################
 #       Visu page generator
