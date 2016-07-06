@@ -497,7 +497,7 @@ class mlgwBase():
                 self.logger.error("mlgw: Login not successful, user / password combination is not valid!")
                 self.CloseConnection()
             else:
-              self.logger.info("mlgw: Login successful, connection established")
+                self.logger.info("mlgw: Login successful, connection established")
         else:
             self.logger.info("mlgw: Connection established")
         return
@@ -541,6 +541,8 @@ class mlgwlistener(threading.Thread):
                 self._mlgwdata = self._mlgwbase._mysocket.recv(self._mlgwbase.buffersize)
             except socket.timeout:
                 timeoutcount += 1
+            except e:
+                self.logger.info("mlgw: mlgwlistener error '{0}'"format(e))
             else:
                 timeoutcount = 0
                 self._payloadstr = _getpayloadstr( self._mlgwdata )
@@ -766,8 +768,9 @@ class mlgw(SmartPlugin):
         self.logger.debug("mlgw.stop()")
         self._mlgwbase.CloseConnection()
         if self.alive:
-            self.logger.info("mlgw: Waiting for threads to stop")
+            self.logger.info("mlgw: Waiting for listener-thread to stop")
             self.listener.join()
+            self.logger.info("mlgw: Listener-threads stopped")
         self.alive = False
 
 
