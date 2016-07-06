@@ -187,6 +187,7 @@ class SmartVisuGenerator:
         elif room.conf['sv_page'] == 'overview':
             items.extend(self._sh.find_items('sv_item_type'))
 
+        r = ''
         for item in items:
             if room.conf['sv_page'] == 'overview' and not item.conf['sv_item_type'] == room.conf['sv_overview']:
                 continue
@@ -219,8 +220,6 @@ class SmartVisuGenerator:
                 r = self.parse_tpl('category_page.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
             elif room.conf['sv_page'] == 'room_lite':
                 r = self.parse_tpl('roomlite.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
-            else:
-                r = ''
         return r
 
 
