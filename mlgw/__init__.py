@@ -542,7 +542,7 @@ class mlgwlistener(threading.Thread):
             except socket.timeout:
                 timeoutcount += 1
             except e:
-                self.logger.info("mlgw: mlgwlistener error '{0}'"format(e))
+                self.logger.info("mlgw: mlgwlistener error '{0}'".format(e))
             else:
                 timeoutcount = 0
                 self._payloadstr = _getpayloadstr( self._mlgwdata )
