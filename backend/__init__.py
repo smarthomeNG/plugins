@@ -266,7 +266,7 @@ class Backend:
             self.visu_plugin_build = self.visu_plugin_version[4:]
             if self.visu_plugin_build < '2':
                 self.visu_plugin = None
-                self.logger.warning("Backend: visu plugin v{0} is too old to support BackendServer, please update".format(vers))
+                self.logger.warning("Backend: visu protocol plugin v{0} is too old to support BackendServer, please update".format(self.visu_plugin_version))
 
     def html_escape(self, str):
         return html_escape(str)
