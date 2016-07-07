@@ -609,7 +609,10 @@ class AVM(SmartPlugin):
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
                         if element['Type'] in ['1', '2']:
-                            item(element['Caller'])
+                            if 'Caller' in element:
+                                item(element['Caller'])
+                            else:
+                                item("")
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_called_number_incoming' and item() == '':
                 if not self.get_calllist_from_cache() is None:
@@ -642,7 +645,10 @@ class AVM(SmartPlugin):
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
                         if element['Type'] in ['3', '4']:
-                            item(''.join(filter(lambda x: x.isdigit(), element['Caller'])))
+                            if 'Caller' in element:
+                                item(''.join(filter(lambda x: x.isdigit(), element['Caller'])))
+                            else:
+                                item("")
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_called_number_outgoing' and item() == '':
                 if not self.get_calllist_from_cache() is None:
