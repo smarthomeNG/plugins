@@ -374,8 +374,8 @@ class Database(SmartPlugin):
         return reply
 
     def _single(self, func, start, end='now', item=None):
-        start = self._get_timestamp(start)
-        end = self._get_timestamp(end)
+        istart = self._get_timestamp(start)
+        iend = self._get_timestamp(end)
         if func == 'avg':
             items = self.session.query(sqlfunc.round(sqlfunc.sum(self.ItemStore._avg * self.ItemStore._dur) / sqlfunc.sum(self.ItemStore._dur), 2)) \
                 .filter(self.ItemStore._item == item) \
