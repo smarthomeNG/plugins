@@ -1373,17 +1373,18 @@ class AVM(SmartPlugin):
             return
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
-            element_xml = xml.getElementsByTagName('NewEnable')
-            if len(element_xml) > 0:
-                item(element_xml[0].firstChild.data)
+            newEnable = self._get_value_from_xml_node(xml, 'NewEnable')
+            if newEnable is not None:
+                item(newEnable)
             else: 
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig_ssid':
-            element_xml = xml.getElementsByTagName('NewSSID')
-            if len(element_xml) > 0:
-                item(element_xml[0].firstChild.data)
+            newSSID = self._get_value_from_xml_node(xml, 'NewSSID')
+            if newSSID is not None:
+                item(newSSID)
             else:
                 self.logger.error("Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wlan_guest_time_remaining':
             element_xml = xml.getElementsByTagName('NewX_AVM-DE_TimeRemain')
             if len(element_xml) > 0:
