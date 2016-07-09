@@ -316,7 +316,7 @@ class Backend:
         rt = str(self._sh.runtime())
         daytest = rt.split(' ')
         if len(daytest) == 3:
-            days = int(test[0])
+            days = int(daytest[0])
             hours, minutes, seconds = [float(val) for val in str(daytest[2]).split(':')]
         else:
             days = 0
