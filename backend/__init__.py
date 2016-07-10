@@ -321,15 +321,8 @@ class Backend:
         else:
             days = 0
             hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
-        sh_uptime = ''
-        if days > 0:
-            sh_uptime = str(int(days))+" "+translate('Tage')+", "+str(int(hours))+" "+translate('Stunden')+", "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
-        elif hours > 0:
-            sh_uptime = str(int(hours))+" "+translate('Stunden')+", "+str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
-        elif minutes > 0:
-            sh_uptime = str(int(minutes))+" "+translate('Minuten')+", "+str("%.2f" % seconds)+" "+translate('Sekunden')
-        else:
-            sh_uptime = str("%.2f" % seconds)+" "+translate('Sekunden')
+        sh_uptime = self.age_to_string(days, hours, minutes, seconds)
+        
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
@@ -545,19 +538,51 @@ class Backend:
             s = '-'
         return s
 
-    def disp_age(self, age):
-        seconds = age
+    def age_to_string(self, days, hours, minutes, seconds):
         s = ''
-        if seconds > 59:
+        if days > 0:
+            s += str(int(days)) + ' '
+            if days == 1:
+                s += translate('Tag')
+            else:
+                s += translate('Tage')
+            s += ', '
+        if (hours > 0) or (s != ''):
+            s += str(int(hours)) + ' '
+            if hours == 1:
+                s += translate('Stunde')
+            else:
+                s += translate('Stunden')
+            s += ', '
+        if (minutes > 0) or (s != ''):
+            s += str(int(minutes)) + ' '
+            if minutes == 1:
+                s += translate('Minute')
+            else:
+                s += translate('Minuten')
+            s += ', '
+        if days > 0:
+            s += str(int(seconds))
+        else:
+            s += str("%.2f" % seconds)
+        s += ' ' + translate('Sekunden')
+        return s
+            
+    def disp_age(self, age):
+        days = 0
+        hours = 0
+        minutes = 0
+        seconds = age
+        if seconds >= 60:
             minutes = int(seconds / 60)
             seconds = seconds - 60 * minutes
             if minutes > 59:
                 hours = int(minutes / 60)
                 minutes = minutes - 60 * hours
-                s = "%s %s, " % (str(int(hours)), translate('Stunden'))
-            s = "%s %s, " % (str(int(minutes)), translate('Minuten'))
-        s = "%s%s %s" % (s, str("%.2f" % seconds), translate('Sekunden'))
-        return s
+                if hours > 23:
+                    days = int(hours / 24)
+                    hours = hours - 24 * days
+        return self.age_to_string(days, hours, minutes, seconds)
 
     @cherrypy.expose
     def item_detail_json_html(self, item_path):
