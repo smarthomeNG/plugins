@@ -18,7 +18,7 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><img src="/static/img/logo_small_76x76.png" width="48" height="48"></td>
+                    <td><img src="/static/img/logo_small_76x76.png" alt="SmartHomeNG logo small" width="48" height="48"></td>
                     <td><pre>{{ smarthome_service }}</pre>
                     </td>
                     <td>{% if knxd_active %}
@@ -33,7 +33,7 @@
                 </tr>
 
                 <tr>
-                    <td><img src="/static/img/knxd_service.png" width="48" height="48"></td>
+                    <td><img src="/static/img/knxd_service.png" alt="Icon KNXD service" width="48" height="48"></td>
                     <td><pre>{{ knxd_service }}</pre>
                     </td>
                     <td>{% if knxd_active %}
@@ -47,7 +47,7 @@
                         {% endif %}</td>
                 </tr>
                 <tr>
-                    <td><img src="/static/img/knxd_socket.png" width="48" height="48"></td>
+                    <td><img src="/static/img/knxd_socket.png" alt="Icon KNXD socket" width="48" height="48"></td>
                     <td><pre>{{ knxd_socket }}</pre>
                     </td>
                     <td>{% if knxd_active %}
@@ -61,7 +61,7 @@
                         {% endif %}</td>
                 </tr>
                 <tr>
-                    <td><img src="/static/img/reboot.svg" width="48" height="48"></td>
+                    <td><img src="/static/img/reboot.svg" alt="Icon Reboot" width="48" height="48"></td>
                     <td><form class="navbar-form navbar-left" action="/reboot" method="post">
                         <div class="form-group">
                             <input type="password" class="form-control" name="password" maxlength="128" placeholder="{{ _('Root-Passwort') }}"></input>
@@ -91,7 +91,7 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><img src="/static/img/knxd_service.png" width="48" height="48"></td>
+                    <td><img src="/static/img/knxd_service.png" alt="Icon knxd service" width="48" height="48"></td>
                     <td><br>{{ _('Dienst für die KNX Unterstützung') }}</td>
 					{% if knxdeamon %}
                     <td><br>{{ knxdeamon }}</td>
@@ -103,7 +103,7 @@
                     <td></td>
 				</tr>
                 <tr>
-                    <td><img src="/static/img/languages.svg" width="48" height="48"></td>
+                    <td><img src="/static/img/languages.svg" alt="Icon languages" width="48" height="48"></td>
 
                     <td><br><p>{{ _('Sprache des Backends') }}</p>
                     </td>
@@ -121,7 +121,7 @@
                     <td></td>
                 </tr>
                 <tr>
-                    <td><img src="/static/img/logfile.svg" width="48" height="48"></td>
+                    <td><img src="/static/img/logfile.svg" alt="Icon logfile" width="48" height="48"></td>
 
                     <td>
                         <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/log_dump.html')">{{ _('Logfile speichern','button') }}</span></div>
@@ -133,7 +133,7 @@
                 </tr>
                 {% if sql_plugin %}
                 <tr>
-                    <td><img src="/static/img/db_backup.svg" width="48" height="48"></td>
+                    <td><img src="/static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>
                     <td><div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/db_dump.html')">{{ _('Datenbank-Dump','button') }}</span></div></td>
                     <td></td>
                     <td></td>
@@ -141,7 +141,7 @@
                 </tr>
                 {% endif %}
                 <tr>
-                    <td><img src="/static/img/cache.svg" width="48" height="48"></td>
+                    <td><img src="/static/img/cache.svg" alt="Icon cache" width="48" height="48"></td>
 
                     <td colspan="2">
                         <div class="navbar-form navbar-left">
