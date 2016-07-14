@@ -777,6 +777,20 @@ class Backend:
 
 
     @cherrypy.expose
+    def logging_html(self):
+        """
+        display a list of all loggers
+        """
+        self.find_visu_plugin()
+        
+        loggerDict = logging.Logger.manager.loggerDict
+        loggerDict_sorted = sorted(loggerDict)
+        
+        tmpl = self.env.get_template('logging.html')
+        return tmpl.render( smarthome = self._sh, loggerDict_sorted=loggerDict_sorted, logging=logging, visu_plugin=(self.visu_plugin is not None))
+
+
+    @cherrypy.expose
     def visu_html(self):
         """
         display a list of all connected visu clients
