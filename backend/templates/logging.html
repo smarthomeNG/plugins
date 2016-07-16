@@ -10,19 +10,22 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>{{ _('Thread') }} ({{ _('gesamt') }}: {{ threads_count }})</th>
-                    <th>{{ _('Thread-Id') }}</th>
-                    <th>{{ _('Aktiv') }}</th>
+                    <th>{{ _('Logger Name') }}</th>
+                    <th>{{ _('disabled') }}</th>
+                    <th>{{ _('Level') }}</th>
+                    <th>{{ _('filters') }}</th>
+                    <th>{{ _('handlers') }}</th>
                 </tr>
             </thead>
             <tbody>
                 {% if smarthome %}
-                    {% for t in threads  %}
+                    {% for l in loggerDict_sorted  %}
                     <tr>
-                        <td>{{ t.name }}</td>
-                        <td>{{ t.id }}</td>
-                        <td>{{ _(t.alive, 'threads') }}</td>
-                        <td width="200px"></td>
+                        <td>{{ logging.getLogger(l).name }}</td>
+                        <td>{{ logging.getLogger(l).disabled }}</td>
+                        <td>{{ logging.getLogger(l).level }}</td>
+                        <td>{{ logging.getLogger(l).filters }}</td>
+                        <td>{{ logging.getLogger(l).handlers }}</td>
                     </tr>
                     {% endfor %}
                 {% else %}

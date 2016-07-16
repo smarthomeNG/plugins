@@ -42,7 +42,7 @@ from jinja2 import Environment, FileSystemLoader
 
 class BackendServer(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.1.2'
+    PLUGIN_VERSION='1.1.3'
 
     def my_to_bool(self, value, attr='', default=False):
         try:
@@ -640,6 +640,7 @@ class Backend:
                      'type': item.type(),
                      'value': item._value,
                      'age': self.disp_age(item.age()),
+                     'last_update': str(item.last_update()),
                      'last_change': str(item.last_change()),
                      'changed_by': changed_by,
                      'previous_value': prev_value,
@@ -774,6 +775,20 @@ class Backend:
             
         tmpl = self.env.get_template('threads.html')
         return tmpl.render( smarthome = self._sh, threads=threads_sorted, threads_count=threads_count, visu_plugin=(self.visu_plugin is not None))
+
+
+    @cherrypy.expose
+    def logging_html(self):
+        """
+        display a list of all loggers
+        """
+        self.find_visu_plugin()
+        
+        loggerDict = logging.Logger.manager.loggerDict
+        loggerDict_sorted = sorted(loggerDict)
+        
+        tmpl = self.env.get_template('logging.html')
+        return tmpl.render( smarthome = self._sh, loggerDict_sorted=loggerDict_sorted, logging=logging, visu_plugin=(self.visu_plugin is not None))
 
 
     @cherrypy.expose
