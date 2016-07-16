@@ -41,7 +41,6 @@ class IMAP():
         self._mail_sub = {}
         self._mail_to = {}
         self._mail = False
-        self._sh.scheduler.add('IMAP', self._cycle, cycle=int(cycle))
 
     def _connect(self):
         if self._ssl:
@@ -116,6 +115,7 @@ class IMAP():
 
     def run(self):
         self.alive = True
+        self._sh.scheduler.add('IMAP', self._cycle, cycle=int(cycle))
 
     def stop(self):
         self.alive = False
