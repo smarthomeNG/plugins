@@ -42,7 +42,7 @@ from jinja2 import Environment, FileSystemLoader
 
 class BackendServer(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.1.2'
+    PLUGIN_VERSION='1.1.3'
 
     def my_to_bool(self, value, attr='', default=False):
         try:
@@ -640,6 +640,7 @@ class Backend:
                      'type': item.type(),
                      'value': item._value,
                      'age': self.disp_age(item.age()),
+                     'last_update': str(item.last_update()),
                      'last_change': str(item.last_change()),
                      'changed_by': changed_by,
                      'previous_value': prev_value,

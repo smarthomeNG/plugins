@@ -64,6 +64,7 @@ function getDetailInfo(result) {
 
         temp = temp + '<tr><th></th><td></td></tr>';
 	    temp = temp + '<tr><th colspan="2">{{ _('Änderungsinformationen') }}:</th></tr>';
+        temp = temp + '<tr><th>{{ _('Letztes Update') }}</th><td>'+element.last_update+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Letzte Änderung') }}</th><td>'+element.last_change+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Geändert durch') }}</th><td>'+element.changed_by+'</td></tr>';
         temp = temp + '<tr><th>{{ _('age') }}</th><td>'+element.age+'</td></tr>';
