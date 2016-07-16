@@ -67,6 +67,7 @@
 	"Sprache des Backends": "Language of Backend",
 	"Logfile speichern": "Save logfile",
 	"Logfile ansehen": "View logfile",
+	"Logger ansehen": "View loggers",
 	"Datenbank-Dump": "Dump database",
 	"Übersetzung neu laden": "Reload translation",
 	"Auf Deutsch wechseln": "Switch to German",
@@ -155,7 +156,6 @@
 		"Scheduler": "Scheduler",
 		"Plugins": "Plugins",
 		"Threads": "Threads",
-		"Logging": "Logging",
 		"Visu": "Visu",
 		"Disclosure": "Disclosure"
 	}

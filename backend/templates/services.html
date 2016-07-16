@@ -2,170 +2,174 @@
 {% extends "base.html" %}
 {% import "navbar.html" as nav with context %}
 {% block navbar %}
-    {{ nav }}
+	{{ nav }}
 {% endblock navbar %}
 
 {% block content %}
 <div class="table-responsive">
 		{% if develop %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>{{ _('Dienst') }}</th>
-                    <th>{{ _('Status') }}</th>
-                    <th>{{ _('Aktion') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><img src="/static/img/logo_small_76x76.png" alt="SmartHomeNG logo small" width="48" height="48"></td>
-                    <td><pre>{{ smarthome_service }}</pre>
-                    </td>
-                    <td>{% if knxd_active %}
-                            <form class="navbar-form navbar-left" action="/stop_smarthome" method="post">
-                            <input type="submit" class="btn btn-default" value="{{ _('smarthomeNG beenden','button') }}"></input>
-                            </form>
-                        {% else %}
-                            <form class="navbar-form navbar-left" action="/start_smarthome" method="post">
-                            <input type="submit" class="btn btn-default" value="{{ _('smarthomeNG starten','button') }}"></input>
-                            </form>
-                        {% endif %}</td>
-                </tr>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>{{ _('Dienst') }}</th>
+					<th>{{ _('Status') }}</th>
+					<th>{{ _('Aktion') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><img src="/static/img/logo_small_76x76.png" alt="SmartHomeNG logo small" width="48" height="48"></td>
+					<td><pre>{{ smarthome_service }}</pre>
+					</td>
+					<td>{% if knxd_active %}
+							<form class="navbar-form navbar-left" action="/stop_smarthome" method="post">
+							<input type="submit" class="btn btn-default" value="{{ _('smarthomeNG beenden','button') }}"></input>
+							</form>
+						{% else %}
+							<form class="navbar-form navbar-left" action="/start_smarthome" method="post">
+							<input type="submit" class="btn btn-default" value="{{ _('smarthomeNG starten','button') }}"></input>
+							</form>
+						{% endif %}</td>
+				</tr>
 
-                <tr>
-                    <td><img src="/static/img/knxd_service.png" alt="Icon KNXD service" width="48" height="48"></td>
-                    <td><pre>{{ knxd_service }}</pre>
-                    </td>
-                    <td>{% if knxd_active %}
-                            <form class="navbar-form navbar-left" action="/stop_knxd_service" method="post">
-                            <input type="submit" class="btn btn-default" value="{{ _('knxd service beenden','button') }}"></input>
-                            </form>
-                        {% else %}
-                            <form class="navbar-form navbar-left" action="/start_knxd" method="post">
-                            <input type="submit" class="btn btn-default" value="{{ _('knxd service starten','button') }}"></input>
-                            </form>
-                        {% endif %}</td>
-                </tr>
-                <tr>
-                    <td><img src="/static/img/knxd_socket.png" alt="Icon KNXD socket" width="48" height="48"></td>
-                    <td><pre>{{ knxd_socket }}</pre>
-                    </td>
-                    <td>{% if knxd_active %}
-                            <form class="navbar-form navbar-left" action="/stop_knxd" method="post">
-                            <input type="submit" class="btn btn-default" value="{{ _('knxd socket beenden','button') }}"></input>
-                            </form>
-                        {% else %}
-                            <form class="navbar-form navbar-left" action="/start_knxd" method="post">
-                            <input type="submit" class="btn btn-default" value="{{ _('knxd socket starten','button') }}"></input>
-                            </form>
-                        {% endif %}</td>
-                </tr>
-                <tr>
-                    <td><img src="/static/img/reboot.svg" alt="Icon Reboot" width="48" height="48"></td>
-                    <td><form class="navbar-form navbar-left" action="/reboot" method="post">
-                        <div class="form-group">
-                            <input type="password" class="form-control" name="password" maxlength="128" placeholder="{{ _('Root-Passwort') }}"></input>
-                        </div>
-                            <input type="submit" class="btn btn-default" value="{{ _('Neu starten','button') }}"></input>
-                        </form>
-                    </td>
-                    <td>{% if rbt1 %}
-                            {{ rbt1 }}
-                        {% else %}
+				<tr>
+					<td><img src="/static/img/knxd_service.png" alt="Icon KNXD service" width="48" height="48"></td>
+					<td><pre>{{ knxd_service }}</pre>
+					</td>
+					<td>{% if knxd_active %}
+							<form class="navbar-form navbar-left" action="/stop_knxd_service" method="post">
+							<input type="submit" class="btn btn-default" value="{{ _('knxd service beenden','button') }}"></input>
+							</form>
+						{% else %}
+							<form class="navbar-form navbar-left" action="/start_knxd" method="post">
+							<input type="submit" class="btn btn-default" value="{{ _('knxd service starten','button') }}"></input>
+							</form>
+						{% endif %}</td>
+				</tr>
+				<tr>
+					<td><img src="/static/img/knxd_socket.png" alt="Icon KNXD socket" width="48" height="48"></td>
+					<td><pre>{{ knxd_socket }}</pre>
+					</td>
+					<td>{% if knxd_active %}
+							<form class="navbar-form navbar-left" action="/stop_knxd" method="post">
+							<input type="submit" class="btn btn-default" value="{{ _('knxd socket beenden','button') }}"></input>
+							</form>
+						{% else %}
+							<form class="navbar-form navbar-left" action="/start_knxd" method="post">
+							<input type="submit" class="btn btn-default" value="{{ _('knxd socket starten','button') }}"></input>
+							</form>
+						{% endif %}</td>
+				</tr>
+				<tr>
+					<td><img src="/static/img/reboot.svg" alt="Icon Reboot" width="48" height="48"></td>
+					<td><form class="navbar-form navbar-left" action="/reboot" method="post">
+						<div class="form-group">
+							<input type="password" class="form-control" name="password" maxlength="128" placeholder="{{ _('Root-Passwort') }}"></input>
+						</div>
+							<input type="submit" class="btn btn-default" value="{{ _('Neu starten','button') }}"></input>
+						</form>
+					</td>
+					<td>{% if rbt1 %}
+							{{ rbt1 }}
+						{% else %}
 
-                        {% endif %}</td>
-                </tr>
-            </tbody>
-        </table>
+						{% endif %}</td>
+				</tr>
+			</tbody>
+		</table>
 		{% endif %}
 				
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                	<th width="100"></th>
-                    <th width="350">{{ _('Dienst') }}</th>
-                    <th>{{ _('Status') }}</th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><img src="/static/img/knxd_service.png" alt="Icon knxd service" width="48" height="48"></td>
-                    <td><br>{{ _('Dienst für die KNX Unterstützung') }}</td>
-					{% if knxdeamon %}
-                    <td><br>{{ knxdeamon }}</td>
-					{% else %}
-                    <td><br>{{ _('Nicht aktiv') }}</td>
-                    <td></td>
-					{% endif %}
-                    <td></td>
-                    <td></td>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th width="100"></th>
+					<th width="350">{{ _('Dienst') }}</th>
+					<th>{{ _('Status') }}</th>
+					<th></th>
+					<th></th>
 				</tr>
-                <tr>
-                    <td><img src="/static/img/languages.svg" alt="Icon languages" width="48" height="48"></td>
+			</thead>
+			<tbody>
+				<tr>
+					<td><img src="/static/img/knxd_service.png" alt="Icon knxd service" width="48" height="48"></td>
+					<td><br>{{ _('Dienst für die KNX Unterstützung') }}</td>
+					{% if knxdeamon %}
+					<td><br>{{ knxdeamon }}</td>
+					{% else %}
+					<td><br>{{ _('Nicht aktiv') }}</td>
+					<td></td>
+					{% endif %}
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td><img src="/static/img/languages.svg" alt="Icon languages" width="48" height="48"></td>
 
-                    <td><br><p>{{ _('Sprache des Backends') }}</p>
-                    </td>
-                    <td>
+					<td><br><p>{{ _('Sprache des Backends') }}</p>
+					</td>
+					<td>
 						  {% if develop %}
-                          <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html'">{{ _('Übersetzung neu laden','button') }}</span></div>
+						  <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/reload_translation.html'">{{ _('Übersetzung neu laden','button') }}</span></div>
 						  {% endif %}
-                          <select id="language" class="form-control" onChange="location.href='/reload_translation.html?lang='+$('#language').val()" style="width: 250px; margin-top: 8px;">
-                            <option {% if lang=='de' %}selected{% endif %} value="de">{% if lang!='de' %}{{ _('Auf Deutsch wechseln') }}{% else %}{{ _('Deutsch','button') }}{% endif %}</option>
-                            <option {% if lang=='en' %}selected{% endif %} value="en">{% if lang!='en' %}{{ _('Auf Englisch wechseln') }}{% else %}{{ _('Englisch','button') }}{% endif %}</option>
-                            <option {% if lang=='fr' %}selected{% endif %} value="fr">{% if lang!='fr' %}{{ _('Auf Französisch wechseln') }}{% else %}{{ _('Französisch','button') }}{% endif %}</option>
-                          </select>
-                    <td>
-                    </td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td><img src="/static/img/logfile.svg" alt="Icon logfile" width="48" height="48"></td>
+						  <select id="language" class="form-control" onChange="location.href='/reload_translation.html?lang='+$('#language').val()" style="width: 250px; margin-top: 8px;">
+							<option {% if lang=='de' %}selected{% endif %} value="de">{% if lang!='de' %}{{ _('Auf Deutsch wechseln') }}{% else %}{{ _('Deutsch','button') }}{% endif %}</option>
+							<option {% if lang=='en' %}selected{% endif %} value="en">{% if lang!='en' %}{{ _('Auf Englisch wechseln') }}{% else %}{{ _('Englisch','button') }}{% endif %}</option>
+							<option {% if lang=='fr' %}selected{% endif %} value="fr">{% if lang!='fr' %}{{ _('Auf Französisch wechseln') }}{% else %}{{ _('Französisch','button') }}{% endif %}</option>
+						  </select>
+					<td>
+					</td>
+					<td></td>
+				</tr>
+				<tr>
+					<td><img src="/static/img/logfile.svg" alt="Icon logfile" width="48" height="48"></td>
 
-                    <td>
-                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/log_dump.html')">{{ _('Logfile speichern','button') }}</span></div>
-                        <div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/log_view.html'">{{ _('Logfile ansehen','button') }}</span></div>
-                    </td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                {% if sql_plugin %}
-                <tr>
-                    <td><img src="/static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>
-                    <td><div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/db_dump.html')">{{ _('Datenbank-Dump','button') }}</span></div></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                {% endif %}
-                <tr>
-                    <td><img src="/static/img/cache.svg" alt="Icon cache" width="48" height="48"></td>
+					<td>
+						<div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/log_dump.html')">{{ _('Logfile speichern','button') }}</span></div>
+						<div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/log_view.html'">{{ _('Logfile ansehen','button') }}</span></div>
+					</td>
+					<td>
+						{% if develop %}
+						<div class="navbar-form navbar-left"><span class="btn btn-default" onclick="location.href='/logging.html'">{{ _('Logger ansehen','button') }}</span></div>
+						{% endif %}
+					</td>
+					<td></td>
+					<td></td>
+				</tr>
+				{% if sql_plugin %}
+				<tr>
+					<td><img src="/static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>
+					<td><div class="navbar-form navbar-left"><span class="btn btn-default" onclick="window.open('/db_dump.html')">{{ _('Datenbank-Dump','button') }}</span></div></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				{% endif %}
+				<tr>
+					<td><img src="/static/img/cache.svg" alt="Icon cache" width="48" height="48"></td>
 
-                    <td colspan="2">
-                        <div class="navbar-form navbar-left">
-                            <span class="btn btn-default" onclick="checkCache()">{{ _('Cacheprüfung','button') }}</span>
-                            <div id="cache_check" style="margin-top: 5px; width: 900px;"></div>
-                        </div>
-                    </td>
-                    <td></td>
-                    <td></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+					<td colspan="2">
+						<div class="navbar-form navbar-left">
+							<span class="btn btn-default" onclick="checkCache()">{{ _('Cacheprüfung','button') }}</span>
+							<div id="cache_check" style="margin-top: 5px; width: 900px;"></div>
+						</div>
+					</td>
+					<td></td>
+					<td></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
 <script type="text/javascript" language="javascript">
 function checkCache() {
-    $.getJSON("/cache_check_json.html", function(result) {
-        var temp = '<div class="table-responsive">{{ _('Dateien ohne zugehöriges Item im /var/cache Verzeichnis') }}: '+result.length+'<table class="table table-striped" style="border: 1px solid #ccc;">';
-        temp = temp+'<thead><tr><th style="width: 550px;">{{ _('Dateiname') }}</th><th>{{ _('Letzte Modifikation') }}</th><th>{{ _('Erstellungsdatum') }}</th></td></thead><tbody>';
-        $.each(result, function(index, element) {
-            temp = temp + '<tr><td>'+element.filename+'</td><td>'+element.last_modified+'</td><td>'+element.created+'</td></tr>';
-        });
-        temp = temp + '</tbody></table></div>';
-        $('#cache_check').html(temp);
-    });
+	$.getJSON("/cache_check_json.html", function(result) {
+		var temp = '<div class="table-responsive">{{ _('Dateien ohne zugehöriges Item im /var/cache Verzeichnis') }}: '+result.length+'<table class="table table-striped" style="border: 1px solid #ccc;">';
+		temp = temp+'<thead><tr><th style="width: 550px;">{{ _('Dateiname') }}</th><th>{{ _('Letzte Modifikation') }}</th><th>{{ _('Erstellungsdatum') }}</th></td></thead><tbody>';
+		$.each(result, function(index, element) {
+			temp = temp + '<tr><td>'+element.filename+'</td><td>'+element.last_modified+'</td><td>'+element.created+'</td></tr>';
+		});
+		temp = temp + '</tbody></table></div>';
+		$('#cache_check').html(temp);
+	});
 }
 </script>
 {% endblock %}
