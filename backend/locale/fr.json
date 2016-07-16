@@ -24,6 +24,7 @@
 	"Typ": "Type",
 
 	"Änderungsinformationen": "Informations sur les modifications",
+	"Letztes Update": "Dernière réviser",
 	"Letzte Änderung": "Dernière modification",
 	"Geändert durch": "Modifié par",
 	"age": "Âge",
@@ -93,6 +94,12 @@
 	"Dateien ohne zugehöriges Item im /var/cache Verzeichnis": "Fichiers dans le répertoire /var/cache sans objet associé",
 	"Letzte Modifikation": "Dernière modification",
 	"Erstellungsdatum": "Date de création",
+	"no data available": "pas de données disponibles",
+	"Logger Name": "Logger Name",
+	"disabled": "disabled",
+	"Level": "Level",
+	"filters": "Filter",
+	"handlers": "Handler",
 
 	"_items": {
 		"path": "Chemin",
@@ -148,6 +155,7 @@
 		"Scheduler": "Planificateur",
 		"Plugins": "Extensions",
 		"Threads": "Tâches",
+		"Logging": "Logging",
 		"Visu": "Visu",
 		"Disclosure": "Déclaration"
 	}

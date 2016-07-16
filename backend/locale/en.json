@@ -24,6 +24,7 @@
 	"Typ": "type",
 
 	"Änderungsinformationen": "Information about changes",
+	"Letztes Update": "last update",
 	"Letzte Änderung": "last change",
 	"Geändert durch": "changed by",
 	"age": "age",
@@ -92,6 +93,12 @@
 	"Dateien ohne zugehöriges Item im /var/cache Verzeichnis": "Files without corresponding item in /var/cache folder",
 	"Letzte Modifikation": "Last Modification",
 	"Erstellungsdatum": "Created",
+	"no data available": "no data available",
+	"Logger Name": "Logger Name",
+	"disabled": "Disabled",
+	"Level": "Level",
+	"filters": "Hilters",
+	"handlers": "Fandlers",
 
 	"_items": {
 		"path": "Pfad",
@@ -148,6 +155,7 @@
 		"Scheduler": "Scheduler",
 		"Plugins": "Plugins",
 		"Threads": "Threads",
+		"Logging": "Logging",
 		"Visu": "Visu",
 		"Disclosure": "Disclosure"
 	}
