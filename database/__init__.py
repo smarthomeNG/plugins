@@ -1,24 +1,24 @@
- #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-# Copyright 2016 Serge Wagener                               serge@swa.lu
-# Based on work copyrighted 2013-2014 Marcus Popp          marcus@popp.mx
+# Copyright 2016 Serge Wagener (Foxi352)
 #########################################################################
-#  This file is part of SmartHome.py.                https://git.io/voaH9
+#  This file is part of SmartHomeNG
+#  https://github.com/smarthomeNG/smarthome
+#  http://knx-user-forum.de/
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
@@ -26,6 +26,8 @@ import threading
 import time
 import datetime
 import functools
+import json
+
 from importlib.util import find_spec
 
 from lib.model.smartplugin import SmartPlugin
@@ -33,13 +35,14 @@ from lib.model.smartplugin import SmartPlugin
 from sqlalchemy import create_engine, __version__, Column, BigInteger, Integer, String, Numeric, Float, cast
 from sqlalchemy.sql import func as sqlfunc
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.serializer import dumps, loads
+from sqlalchemy.orm import sessionmaker, class_mapper
 from sqlalchemy.pool import StaticPool
 
 
 class Database(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.1.2"
     _buffer_time = 60 * 1000
 
     # Declare classes to store data
@@ -100,7 +103,8 @@ class Database(SmartPlugin):
         self.logger.info("Database: SqlAlchemy {0} using {1} database '{2}'".format(__version__, self._engine, self._database))
         self.logger.debug("Database: URI " + self._uri)
         try:
-            db = create_engine(self._uri, poolclass=StaticPool)
+            # db = create_engine(self._uri, poolclass=StaticPool)
+            db = create_engine(self._uri, pool_recycle=14400)
             Session = sessionmaker(bind=db)
             self.session = Session()
             self.connected = True
@@ -144,11 +148,37 @@ class Database(SmartPlugin):
                     self.session.query(self.ItemCache).filter(self.ItemCache._item == item._item).delete()
                     self.session.commit()
 
-    def dump(self, dumpfile):
+    def serialize(self, model):
+        """Transforms a model into a dictionary which can be dumped to JSON."""
+        columns = [c.key for c in class_mapper(model.__class__).columns]
+        return dict((c, getattr(model, c)) for c in columns)
+
+    def dump(self, path):
         """
         dump database into file (TODO)
         """
-        pass
+        if not self._fdb_lock.acquire(timeout=2):
+            return
+
+        self.logger.info("Database: Dumping 'cache' table".format(path))
+        serialized_cache = [
+            self.serialize(item)
+            for item in self.session.query(self.ItemCache)
+        ]
+
+        self.logger.info("Database: Dumping 'nums' table".format(path))
+        serialized_store = [
+            self.serialize(item)
+            for item in self.session.query(self.ItemStore)
+        ]
+
+        path = path.rstrip('//') + '/'
+        with open(path + 'dump_cache.json', 'w') as outfile:
+            json.dump(serialized_cache, outfile)
+        with open(path + 'dump_num.json', 'w') as outfile:
+            json.dump(serialized_store, outfile)
+        self.logger.info("Database: Dumping done. Find your files in path '{0}'".format(path))
+        self._fdb_lock.release()
 
     def move(self, old, new):
         """
@@ -169,7 +199,9 @@ class Database(SmartPlugin):
                 self.logger.warning("Database: only 'num' and 'bool' currently supported. Item: {} ".format(item.id()))
                 return
             # If item exists in cache load last value, if not create it
+            start = time.time()  # REMOVE
             cache = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
+            self.logger.debug('1 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
             if cache is None:
                 self.logger.debug("Database: Items {0} does not exist in cache, creating it".format(item.id()))
                 last_change = self._timestamp(self._sh.now())
@@ -183,13 +215,18 @@ class Database(SmartPlugin):
                 value = cache._value
                 item._database_last = last_change
                 last_change = self._datetime(last_change)
+                self.logger.debug('2 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
                 storedItem = self.session.query(self.ItemStore).filter_by(_item=item.id()).order_by(self.ItemStore._start.desc()).first()
+
+                self.logger.debug('3 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
                 if storedItem is not None:
                     prev_change = self._datetime(storedItem._start)
                     item.set(value, 'Database', prev_change=prev_change, last_change=last_change)
             self._buffer[item] = []
             item.series = functools.partial(self._series, item=item.id())
             item.db = functools.partial(self._single, item=item.id())
+            end = time.time()  # REMOVE
+            self.logger.debug('Execution time: ' + str((end - start) * 1000) + ' milliseconds')  # REMOVE
             return self.update_item
         else:
             return None
@@ -222,7 +259,8 @@ class Database(SmartPlugin):
         if _end - item._database_last > self._buffer_time:
             self._insert(item)
         if not self._fdb_lock.acquire(timeout=2):
-            return        # update cache with current value
+            return
+        # update cache with current value
         itemForUpdate = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
         if itemForUpdate is not None:
             try:
