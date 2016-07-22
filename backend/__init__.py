@@ -446,7 +446,6 @@ class Backend:
         counter = 0
         total_counter = 0
         for line in fobj:
-            total_counter += 1
             line_text = self.html_escape(line)
             if text_filter in line_text and (
                     log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22, 23]):
@@ -454,10 +453,12 @@ class Backend:
                     log_lines.append(line_text)
                 counter += 1
         fobj.close()
+        num_pages = -(-counter // 1000)
+        if num_pages == 0:
+            num_pages = 1
         tmpl = self.env.get_template('log_view.html')
-        return tmpl.render(smarthome=self._sh, current_page=int(page), pages=-(-total_counter//1000), log_lines=log_lines, text_filter=text_filter,
+        return tmpl.render(smarthome=self._sh, current_page=int(page), pages=num_pages, log_lines=log_lines, text_filter=text_filter,
                            log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin is not None))
-
 
     @cherrypy.expose
     def logics_view_html(self, file_path):
