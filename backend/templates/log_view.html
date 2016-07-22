@@ -12,7 +12,7 @@
     { list-style-type: decimal !important }
     </style>
 	<div class="container" style="width: 90%;">
-    <h3>SmarthomeNG {{ _('Logfile') }}:</h3><br/>
+    <h3>SmarthomeNG {{ _('Logfile') }} ({{ current_page }} / {{ pages }}):</h3><br/>
     </div>
     <div class="container" style="width: 90%;">
         <div class="form-group" style="display:inline;">
@@ -31,8 +31,13 @@
     </div>
     <br style="clear:both;"/>
     <div class="container" style="width: 90%;">
-<pre class="prettyprint linenums" style="max-height: 600px;">
+<pre class="prettyprint linenums{% if current_page > 1 %}:{{ (current_page-1) * 1000 +1}}{% endif %}" style="max-height: 600px;">
 {% if log_lines %}{% for line in log_lines %}{{ line }}
 {% endfor %}{% else %}{{ _('no data available') }}{% endif %}</pre></div>
+<div class="container" style="width: 90%;">
+{% if current_page > 1 %}<span class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page=1'"><<</span>{% endif %}
+{% if current_page > 1 %}<span class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ current_page-1 }}'"><</span>{% endif %}
+{% if current_page < pages %}<span class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ current_page+1 }}'">></span>{% endif %}
+{% if current_page < pages %}<span class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ pages }}'">>></span>{% endif %}
+</div>
 {% endblock %}
-
