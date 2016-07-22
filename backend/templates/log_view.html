@@ -12,7 +12,7 @@
     { list-style-type: decimal !important }
     </style>
 	<div class="container" style="width: 90%;">
-    <h3>SmarthomeNG {{ _('Logfile') }} ({{ current_page }} / {{ pages }}):</h3><br/>
+    <h3>SmarthomeNG {{ _('Logfile') }}:</h3><br/>
     </div>
     <div class="container" style="width: 90%;">
         <div class="form-group" style="display:inline;">
@@ -35,9 +35,22 @@
 {% if log_lines %}{% for line in log_lines %}{{ line }}
 {% endfor %}{% else %}{{ _('no data available') }}{% endif %}</pre></div>
 <div class="container" style="width: 90%;">
-{% if current_page > 1 %}<span class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page=1'"><i class="fa fa-fast-backward" aria-hidden="true"></i></span>{% endif %}
-{% if current_page > 1 %}<span class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ current_page-1 }}'"><i class="fa fa-step-backward" aria-hidden="true"></i></span>{% endif %}
-{% if current_page < pages %}<span class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ current_page+1 }}'"><i class="fa fa-step-forward" aria-hidden="true"></i></span>{% endif %}
-{% if current_page < pages %}<span class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ pages }}'"><i class="fa fa-fast-forward" aria-hidden="true"></i></span>{% endif %}
+<table>
+    <tr><td style="width: 50px; text-align: center;">
+        <button type="button" id="fast-backward" class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page=1'"><i class="fa fa-fast-backward" aria-hidden="true"></i></button>
+    </td><td style="width: 50px; text-align: center;">
+        <button type="button" id="step-backward" class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ current_page-1 }}'"><i class="fa fa-step-backward" aria-hidden="true"></i></button>
+    </td><td style="width: 50px; text-align: center;">
+        ({{ current_page }} / {{ pages }})
+    </td><td style="width: 50px; text-align: center;">
+        <button type="button" id="step-forward" class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ current_page+1 }}'"><i class="fa fa-step-forward" aria-hidden="true"></i></button>
+    </td><td style="width: 50px; text-align: center;">
+        <button type="button" id="fast-forward" class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ pages }}'"><i class="fa fa-fast-forward" aria-hidden="true"></i></button>
+    </td></tr>
+</table>
 </div>
+<script type="text/javascript" language="javascript">
+ {% if current_page <= 1 %}$('#fast-backward').prop('disabled', true);$('#step-backward').prop('disabled', true);{% endif %}
+ {% if current_page >= pages %}$('#fast-forward').prop('disabled', true);$('#step-forward').prop('disabled', true);{% endif %}
+</script>
 {% endblock %}
