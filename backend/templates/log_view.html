@@ -40,7 +40,7 @@
         <button type="button" id="fast-backward" class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page=1'"><i class="fa fa-fast-backward" aria-hidden="true"></i></button>
     </td><td style="width: 50px; text-align: center;">
         <button type="button" id="step-backward" class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ current_page-1 }}'"><i class="fa fa-step-backward" aria-hidden="true"></i></button>
-    </td><td style="width: 50px; text-align: center;">
+    </td><td style="width: 80px; font-weight: bold; text-align: center;">
         ({{ current_page }} / {{ pages }})
     </td><td style="width: 50px; text-align: center;">
         <button type="button" id="step-forward" class="btn btn-default" style="float:left; margin-left: 10px;" onclick="location.href='/log_view.html?text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ current_page+1 }}'"><i class="fa fa-step-forward" aria-hidden="true"></i></button>
@@ -49,6 +49,11 @@
     </td></tr>
 </table>
 </div>
+<style type="text/css">
+    li.L0, li.L1, li.L2, li.L3, li.L4, li.L5, li.L6, li.L7, li.L8, li.L9 {
+        margin-left: 10px
+    }
+</style>
 <script type="text/javascript" language="javascript">
  {% if current_page <= 1 %}$('#fast-backward').prop('disabled', true);$('#step-backward').prop('disabled', true);{% endif %}
  {% if current_page >= pages %}$('#fast-forward').prop('disabled', true);$('#step-forward').prop('disabled', true);{% endif %}
