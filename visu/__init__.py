@@ -69,7 +69,7 @@ class WebSocket(lib.connection.Server):
         self.smartvisu_dir = smartvisu_dir
         logger.warning("")
         logger.warning("+============================================================================+")
-        logger.warning("! The VISU plugin is depricated                                              !")
+        logger.warning("! The VISU plugin is deprecated                                              !")
         logger.warning("! - Please switch to the VISU_WEBSOCKET and VISU_SMARTVISU plugins           !")
         logger.warning("! - The old VISU plugin will be removed in the upcoming smarthomeNG v1.3     !")
         logger.warning("!                                                                            !")
