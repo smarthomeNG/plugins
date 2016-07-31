@@ -100,6 +100,7 @@
 	"Level": "Level",
 	"filters": "Filter",
 	"handlers": "Handler",
+	"Logging": "Logging",
 
 	"_items": {
 		"path": "Pfad",
