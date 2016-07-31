@@ -98,8 +98,9 @@
 	"Logger Name": "Logger Name",
 	"disabled": "Disabled",
 	"Level": "Level",
-	"filters": "Hilters",
-	"handlers": "Fandlers",
+	"filters": "Filters",
+	"handlers": "Handlers",
+	"Logging": "Logging",
 
 	"_items": {
 		"path": "Pfad",
