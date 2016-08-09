@@ -30,6 +30,7 @@
 #  0.3  changed most logger.info to logger.debug
 #       Added release version to init message
 #  0.4  Changed logging style
+#       corrected serious bug in compare entry with NextDay
 #
 #x#########################################################################
 
@@ -204,7 +205,7 @@ class Simulation(SmartPlugin):
             except:
                 self.logger.error('Skipped unknown item: {}'.format(target))
         entry=self.file.readline()
-        if entry =='NextDay':
+        if entry =='NextDay\n':
             entry=self.file.readline()
         if entry !='':
             day=entry.split(';')[0]
@@ -239,6 +240,8 @@ class Simulation(SmartPlugin):
         while next < now:
             pos=self.file.tell()
             entry=self.file.readline()
+            if entry == 'NextDay\n':
+                entry=self.file.readline()
             if entry != '':
                 time=entry.split(';')[1]
                 hour=int(time.split(':')[0])
