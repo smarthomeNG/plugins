@@ -59,6 +59,7 @@
 	"installierte Version": "Version installée",
 	"Neuste Version": "Dernière version",
 	"Keine Antwort von PyPI": "Pas de réponse de PyPI",
+	"PyPI nicht erreichbar": "Impossible à obtenir PyPI",
 	"Dienst": "Service",
 	"Status": "Etat",
 	"Aktion": "Action",

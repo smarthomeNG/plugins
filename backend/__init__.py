@@ -355,6 +355,18 @@ class Backend:
         returns a list with the installed python packages and its versions
         """
         self.find_visu_plugin()
+        
+        # check if pypi service is reachable
+        pypi_available = True
+        try:
+            import socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect(('pypi.python.org',443))
+            sock.close()
+        except:
+            pypi_available = False
+        
         import pip
         import xmlrpc
         installed_packages = pip.get_installed_distributions()
@@ -364,14 +376,17 @@ class Backend:
             package = {}
             package['key'] = dist.key
             package['version_installed'] = dist.version
-            try:
-                available = pypi.package_releases(dist.project_name)
+            if pypi_available:
                 try:
-                    package['version_available'] = available[0]
+                    available = pypi.package_releases(dist.project_name)
+                    try:
+                        package['version_available'] = available[0]
+                    except:
+                        package['version_available'] = '-'
                 except:
-                    package['version_available'] = '-'
-            except:
-                package['version_available'] = [translate('Keine Antwort von PyPI')]
+                    package['version_available'] = [translate('Keine Antwort von PyPI')]
+            else:
+                package['version_available'] = translate('PyPI nicht erreichbar')
             packages.append(package)
 
         sorted_packages = sorted([(i['key'], i['version_installed'], i['version_available']) for i in packages])
