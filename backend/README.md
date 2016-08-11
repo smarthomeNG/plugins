@@ -56,6 +56,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#threads = 8
 	#user = admin
 	#password = very_secure_password
+	#md5password = 71eee3a3dc276ea7dcc5b4c9967e25fa
 	#language = en
 	#developer_mode = on
 </pre>
@@ -80,7 +81,10 @@ Number of worker threads to start by cherrypy (default 8, which may be too much 
 The user for basic authentication. If left out, the user name is set as "admin"
 
 ### password (optional)
-The password for basic authentication. If left out, basic authentication is disabled.
+The plaintext password for basic authentication. If you want to store your password as md5 hash, use 'md5password' instead. If both "password" and "md5password" are left out, basic authentication is disabled.
+
+### md5password (optional)
+The password for basic authentication as md5 hash. Can be used instead of "password" if you do not want a plaintext password in your config file. If both "password" and "md5password" are left out, basic authentication is disabled. You can use online services such as (http://www.md5hashgenerator.com/) can be used to hash a password.
 
 ### language (optional)
 You can specify a language to use for the plugin. Besides the standard language (german) which is used, if this parameter isn't set, you can specify english (for the time being). The language is specified by  **`en`**

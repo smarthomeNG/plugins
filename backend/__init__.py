@@ -57,11 +57,21 @@ class BackendServer(SmartPlugin):
         s.connect(("10.10.10.10", 80))
         return s.getsockname()[0]
 
-    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", language="", developer_mode="no"):
+    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", md5password="", language="", developer_mode="no"):
         self.logger = logging.getLogger(__name__)
         self._user = user
         self._password = password
-        if self._password is not None and self._password != "":
+        self._md5password = md5password
+
+        if self._password is not None and self._password != "" and self._md5password is not None and self._md5password != "":
+            self.logger.warning("BackendServer: Both 'password' and 'md5password' given. Ignoring 'password' and using 'md5password'!")
+            self._password = None
+
+        if self._password is not None and self._password != "" and ( self._md5password is None or self._md5password == ""):
+            self.logger.warning("BackendServer: Giving plaintext password in configuration is insecure. Consider using 'md5password' instead!")
+            self._md5password = None
+
+        if (self._password is not None and self._password != "") or (self._md5password is not None and self._md5password != ""):
             self._basic_auth = True
         else:
             self._basic_auth = False
@@ -99,9 +109,6 @@ class BackendServer(SmartPlugin):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.logger.debug("BackendServer running from '{}'".format(current_dir))
 
-        userpassdict = {self._user : self._password}
-        checkpassword = cherrypy.lib.auth_basic.checkpassword_dict(userpassdict)
-
         config = {'global': {
             'server.socket_host': ip,
             'server.socket_port': self.port,
@@ -113,7 +120,7 @@ class BackendServer(SmartPlugin):
             '/': {
                 'tools.auth_basic.on': self._basic_auth,
                 'tools.auth_basic.realm': 'earth',
-                'tools.auth_basic.checkpassword': checkpassword,
+                'tools.auth_basic.checkpassword': self.validate_password,
                 'tools.staticdir.root': current_dir,
             },
             '/static': {
@@ -148,6 +155,20 @@ class BackendServer(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
 
+    def validate_password(self, realm, username, password):
+        if username != self._user or password is None or password == "":
+            return False
+
+        if self._md5password is not None:
+            import hashlib
+            md5 = hashlib.md5()
+            md5.update(password.encode())
+            md5password = md5.digest().hex().lower()
+            return  md5password == self._md5password.lower()
+        elif self._password is not None:
+            return password == self._password
+
+        return False
 
 # Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
 # Methoden einer Klasse zum laufen bekam
