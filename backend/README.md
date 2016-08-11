@@ -58,6 +58,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#password = very_secure_password
 	#language = en
 	#developer_mode = on
+	#pypi_timeout = 5
 </pre>
 
 ### ip
@@ -87,3 +88,6 @@ You can specify a language to use for the plugin. Besides the standard language 
 
 ### developer_mode (optional)
 You may specify develper_mode = on, if you are developiing within the backend plugin. At the moment, the only thing that changes is an additional button **``relaod translation``** on the services page
+
+### pypi_timeout (optional)
+Timeout for PyPI accessibility check (seconds). PyPI is queried on page "Systeminfo" to compare installed python module versions with current versions if accessible. If you receive the message "PyPI inaccessible" on systems with internet access you may increase the value. On systems where PyPI can not be reached (no/restricted internet access) you may set the timeout to 0 which disables the PyPI queries.

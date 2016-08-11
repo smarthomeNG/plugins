@@ -58,6 +58,7 @@
 	"Neuste Version": "Newest Version",
 	"Keine Antwort von PyPI": "No answer from PyPI",
 	"PyPI nicht erreichbar": "PyPI inaccessible",
+	"PyPI Prüfung deaktiviert": "PyPI check disabled",
 	"Dienst": "Service",
 	"Status": "Status",
 	"Aktion": "Action",
