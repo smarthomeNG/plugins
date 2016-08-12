@@ -472,13 +472,20 @@ class Backend:
         start = (int(page)-1) * 1000
         end = start + 1000
         counter = 0
+        log_level_hit = False
         total_counter = 0
         for line in fobj:
             line_text = self.html_escape(line)
-            if text_filter in line_text and (
-                    log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22, 23]):
+            if log_level_filter != "ALL" and not self.validate_date(line_text[0:10]) and log_level_hit:
                 if start <= counter < end:
                     log_lines.append(line_text)
+                counter += 1
+            else:
+                log_level_hit = False
+            if (log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22, 23]) and text_filter in line_text:
+                if start <= counter < end:
+                    log_lines.append(line_text)
+                    log_level_hit = True
                 counter += 1
         fobj.close()
         num_pages = -(-counter // 1000)
@@ -878,6 +885,13 @@ class Backend:
                                 stdout, stdout=subprocess.PIPE)
         print(rbt2.communicate()[0])
         return redirect('/services.html')
+
+    def validate_date(self, date_text):
+        try:
+            datetime.datetime.strptime(date_text, '%Y-%m-%d')
+            return True
+        except ValueError:
+            return False
 
 #if __name__ == "__main__":
 #    server = BackendServer( None, port=8080, ip='0.0.0.0')
