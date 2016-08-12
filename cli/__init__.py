@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.    
+#  This file is part of SmartHome.py.
 #
 #  SmartHome.py is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -28,20 +28,51 @@ from lib.model.smartplugin import SmartPlugin
 class CLIHandler(lib.connection.Stream):
     terminator = '\n'.encode()
 
-    def __init__(self, smarthome, sock, source, updates):
+    def __init__(self, smarthome, sock, source, updates, hashed_password):
         lib.connection.Stream.__init__(self, sock, source)
+        self.logger = logging.getLogger(__name__)
         self.source = source
         self.updates_allowed = updates
         self.sh = smarthome
-        self.push("SmartHome.py v{0}\n".format(self.sh.version))
-        self.push("Enter 'help' for a list of available commands.\n")
-        self.push("> ")
+        self.hashed_password = hashed_password
+        self.push("SmartHomeNG v{0}\n".format(self.sh.version))
+        self.push("Password: ")
+
+        # Inform the client that we will echo what has been entered. He won't do this from now on.
+        # As we don't do this, too, the entered hashed_password will not be shown ...
+        self.send(bytearray([0xFF, 0xFB, 0x01])) #IAC WILL ECHO
+        self.__wait_for_password = True
 
     def push(self, data):
         self.send(data.encode())
 
     def found_terminator(self, data):
+        # Every three bytes starting with 0xFF are a command. At the moment they will only occur at the start of the response, after we
+        # sent the IAC WILL ECHO/IAC WONT ECHO commands. They contain the confirmation of the commands (IAC DO ECHO: 0xFF 0xFD 0x01 or
+        # IAC DONT ECHO: 0xFF 0xFE 0x01) We will simple ignore these at the moment.
+        if data[0] == 0xFF:
+            data = data[3:]
+
         cmd = data.decode().strip()
+
+        if self.__wait_for_password:
+            # We are waiting for a password. So we take the entered command as password
+            if self.sh.tools.create_hash(cmd).lower() == self.hashed_password.lower():
+                self.logger.debug("CLI: {0} Authorization succeeded".format(self.source))
+
+                # Inform the client that we will not echo what has been entered. He will do this from now on
+                self.send(bytearray([0xFF, 0xFC, 0x01]))  # IAC WILL ECHO
+
+                self.push("Enter 'help' for a list of available commands.\n")
+                self.push("> ")
+                self.__wait_for_password = False
+                return
+            else:
+                self.logger.debug("CLI: {0} Authorization failed".format(self.source))
+                self.push("\r\nAuthorization failed. Bye\r\n")
+                self.close()
+                return
+
         if cmd.startswith('ls'):
             self.push("Items:\n======\n")
             self.ls(cmd.lstrip('ls').strip(), '*' in cmd or ':' in cmd)
@@ -107,11 +138,11 @@ class CLIHandler(lib.connection.Stream):
                 self.push("{0}\n".format(item.id()))
         else:
             if match:
-               items = self.sh.match_items(path)
-               childs = False
+                items = self.sh.match_items(path)
+                childs = False
             else:
-               items = [self.sh.return_item(path)]
-               childs = True
+                items = [self.sh.return_item(path)]
+                childs = True
             if len(items):
                 for item in items:
                     if hasattr(item, 'id'):
@@ -323,18 +354,24 @@ class CLI(lib.connection.Server, SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = '1.1.0'
 
-    def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323):
+    def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323, hashed_password=''):
         self.logger = logging.getLogger(__name__)
+
+        if hashed_password is None or hashed_password == '':
+            self.logger.error("CLI: You must set a password to use this plugin. CLI Plugin will not be initialized!")
+            return
+
         lib.connection.Server.__init__(self, ip, port)
         self.sh = smarthome
         self.updates_allowed = smarthome.string2bool(update)
+        self.hashed_password = hashed_password
 
     def handle_connection(self):
         sock, address = self.accept()
         if sock is None:
             return
         self.logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
-        CLIHandler(self.sh, sock, address, self.updates_allowed)
+        CLIHandler(self.sh, sock, address, self.updates_allowed, self.hashed_password)
 
     def run(self):
         self.alive = True
