@@ -2,6 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
+#            2016      Thomas Ernst
 #########################################################################
 #  This file is part of SmartHome.py.
 #
@@ -28,25 +29,44 @@ from lib.model.smartplugin import SmartPlugin
 class CLIHandler(lib.connection.Stream):
     terminator = '\n'.encode()
 
-    def __init__(self, smarthome, sock, source, updates, hashed_password):
+    def __init__(self, smarthome, sock, source, updates, hashed_password, commands):
+        """
+        Constructor
+        :param smarthome: SmartHomeNG instance
+        :param sock: Socket
+        :param source: Source
+        :param updates: Flag: Updates allowed
+        :param hashed_password: Hashed password that is required to logon
+        :param commands: CLICommands instance containing available commands
+        """
         lib.connection.Stream.__init__(self, sock, source)
         self.logger = logging.getLogger(__name__)
         self.source = source
         self.updates_allowed = updates
         self.sh = smarthome
         self.hashed_password = hashed_password
+        self.commands = commands
         self.push("SmartHomeNG v{0}\n".format(self.sh.version))
         self.push("Password: ")
 
         # Inform the client that we will echo what has been entered. He won't do this from now on.
         # As we don't do this, too, the entered hashed_password will not be shown ...
-        self.send(bytearray([0xFF, 0xFB, 0x01])) #IAC WILL ECHO
+        self.send(bytearray([0xFF, 0xFB, 0x01]))  # IAC WILL ECHO
         self.__wait_for_password = True
 
     def push(self, data):
+        """
+        Send data to client
+        :param data: String to send
+        """
         self.send(data.encode())
 
     def found_terminator(self, data):
+        """
+        Received data and found terminator (newline) in data
+        :param data: Received data up to terminator
+        """
+
         # Every three bytes starting with 0xFF are a command. At the moment they will only occur at the start of the response, after we
         # sent the IAC WILL ECHO/IAC WONT ECHO commands. They contain the confirmation of the commands (IAC DO ECHO: 0xFF 0xFD 0x01 or
         # IAC DONT ECHO: 0xFF 0xFE 0x01) We will simple ignore these at the moment.
@@ -73,281 +93,15 @@ class CLIHandler(lib.connection.Stream):
                 self.close()
                 return
 
-        if cmd.startswith('ls'):
-            self.push("Items:\n======\n")
-            self.ls(cmd.lstrip('ls').strip(), '*' in cmd or ':' in cmd)
-        elif cmd == 'la':
-            self.la()
-        elif cmd == 'ld':
-            self.ld()
-        elif cmd.startswith('ld '):
-            self.ld(cmd.lstrip('ld ').strip())
-        elif cmd == 'lo':
-            self.lo()
-        elif cmd == 'll':
-            self.lo()
-        elif cmd == 'lt':
-            self.lt()
-        elif cmd == 'cl':
-            self.cl()
-        elif cmd.startswith('cl '):
-            self.cl(cmd.lstrip('cl ').strip())
-        elif cmd.startswith('update ') or cmd.startswith('up '):
-            self.update(cmd.lstrip('update').strip())
-        elif cmd.startswith('dump'):
-            self.dump(cmd.lstrip('dump').strip(), '*' in cmd or ':' in cmd)
-        elif cmd.startswith('tr'):
-            self.tr(cmd.lstrip('tr').strip())
-        elif cmd.startswith('rl'):
-            self.rl(cmd.lstrip('rl').strip())
-        elif cmd.startswith('rr'):
-            self.rr(cmd.lstrip('rr').strip())
-        elif cmd == 'rt' or cmd == 'runtime':
-            self.rt()
-        elif cmd.startswith('si'):
-            self.si(cmd.lstrip('si').strip())
-        elif cmd == 'sl':
-            self.sl()
-        elif cmd == 'st':
-            self.st()
-        elif cmd == 'help' or cmd == 'h':
-            self.usage()
-        elif cmd in ('quit', 'q', 'exit', 'x'):
+        if cmd in ('quit', 'q', 'exit', 'x'):
             self.push('bye\n')
             self.close()
             return
+        else:
+            if not self.commands.execute(self, cmd, self.source):
+                self.push("Unknown command.\nEnter 'help' for a list of available commands.\n")
+
         self.push("> ")
-
-    def cl(self, name = None):
-        if name == None or name == "":
-            log = self.sh.log
-        else:
-            logs = self.sh.return_logs()
-            if name not in logs:
-                self.push("Log '{0}' does not exist\n".format(name))
-                log = None
-            else:
-                log = logs[name]
-
-        if log != None:
-            log.clean(self.sh.now())
-
-    def ls(self, path, match=True):
-        if not path:
-            for item in self.sh:
-                self.push("{0}\n".format(item.id()))
-        else:
-            if match:
-                items = self.sh.match_items(path)
-                childs = False
-            else:
-                items = [self.sh.return_item(path)]
-                childs = True
-            if len(items):
-                for item in items:
-                    if hasattr(item, 'id'):
-                        if item.type():
-                            self.push("{0} = {1}\n".format(item.id(), item()))
-                        else:
-                            self.push("{}\n".format(item.id()))
-                        if childs:
-                            for child in item:
-                                self.ls(child.id(), False)
-            else:
-                self.push("Could not find path: {}\n".format(path))
-
-    def la(self):
-        self.push("Items:\n======\n")
-        for item in self.sh.return_items():
-            if item.type():
-                self.push("{0} = {1}\n".format(item.id(), item()))
-            else:
-                self.push("{0}\n".format(item.id()))
-
-    def ld(self, name = None):
-        if name == None or name == "":
-            log = self.sh.log
-        else:
-            logs = self.sh.return_logs()
-            if name not in logs:
-                self.push("Log '{0}' does not exist\n".format(name))
-                log = None
-            else:
-                log = logs[name]
-
-        if log != None:
-            self.push("Log dump of '{0}':\n".format(log._name))
-            for entry in log.last(10):
-                values = [str(value) for value in entry]
-                self.push(str(values))
-                self.push("\n")
-
-    def update(self, data):
-        if not self.updates_allowed:
-            self.push("Updating items is not allowed.\n")
-            return
-        path, sep, value = data.partition('=')
-        path = path.strip()
-        value = value.strip()
-        if not value:
-            self.push("You have to specify an item value. Syntax: up item = value\n")
-            return
-        items = self.sh.match_items(path)
-        if len(items):
-            for item in items:
-                if not item.type():
-                    self.push("Could not find item with a valid type specified: '{0}'\n".format(path))
-                    return
-                item(value, 'CLI', self.source)
-        else:
-            self.push("Could not find any item with given pattern: '{0}'\n".format(path))
-
-    def dump(self, path, match=True):
-        if match:
-            items = self.sh.match_items(path)
-        else:
-            items = [self.sh.return_item(path)]
-        if len(items):
-            for item in items:
-                if hasattr(item, 'id') and item._type:
-                    self.push("Item {} ".format(item.id()))
-                    self.push("{\n")
-                    self.push("  type = {}\n".format(item.type()))
-                    self.push("  value = {}\n".format(item()))
-                    self.push("  age = {}\n".format(item.age()))
-                    self.push("  last_change = {}\n".format(item.last_change()))
-                    self.push("  changed_by = {}\n".format(item.changed_by()))
-                    self.push("  previous_value = {}\n".format(item.prev_value()))
-                    self.push("  previous_age = {}\n".format(item.prev_age()))
-                    self.push("  previous_change = {}\n".format(item.prev_change()))
-                    if hasattr(item, 'conf'):
-                        self.push("  config = {\n")
-                        for name in item.conf:
-                            self.push("    {} = {}\n".format(name, item.conf[name]))
-                        self.push("  }\n")
-                    self.push("  logics = [\n")
-                    for trigger in item.get_logic_triggers():
-                        self.push("    {}\n".format(trigger))
-                    self.push("  ]\n")
-                    self.push("  triggers = [\n")
-                    for trigger in item.get_method_triggers():
-                        self.push("    {}\n".format(trigger))
-                    self.push("  ]\n")
-                    self.push("}\n")
-        else:
-            self.push("Nothing found\n")
-
-    def tr(self, logic):
-        if not self.updates_allowed:
-            self.push("Logic triggering is not allowed.\n")
-            return
-        if logic in self.sh.return_logics():
-            self.sh.trigger(logic, by='CLI')
-        else:
-            self.push("Logic '{0}' not found.\n".format(logic))
-
-    def rl(self, name):
-        if not self.updates_allowed:
-            self.push("Logic triggering is not allowed.\n")
-            return
-        if name in self.sh.return_logics():
-            logic = self.sh.return_logic(name)
-            logic.generate_bytecode()
-        else:
-            self.push("Logic '{0}' not found.\n".format(name))
-
-    def rr(self, name):
-        if not self.updates_allowed:
-            self.push("Logic triggering is not allowed.\n")
-            return
-        if name in self.sh.return_logics():
-            logic = self.sh.return_logic(name)
-            logic.generate_bytecode()
-            logic.trigger(by='CLI')
-        else:
-            self.push("Logic '{0}' not found.\n".format(name))
-
-    def lo(self):
-        self.push("Logics:\n")
-        for logic in sorted(self.sh.return_logics()):
-            nt = self.sh.scheduler.return_next(logic)
-            if nt is not None:
-                self.push("{0} (scheduled for {1})\n".format(logic, nt.strftime('%Y-%m-%d %H:%M:%S%z')))
-            else:
-                self.push("{0}\n".format(logic))
-
-    def lt(self):
-        # list all threads with names
-        self.push("{0} Threads:\n".format(threading.activeCount()))
-        for t in threading.enumerate():
-            self.push("{0}\n".format(t.name))
-
-    def si(self, name):
-        if name not in self.sh.scheduler._scheduler:
-            self.push("Scheduler task '{}' not found\n".format(name))
-        else:
-            task = self.sh.scheduler._scheduler[name]
-            self.push("Task {} ".format(name))
-            self.push("{\n")
-            for key in task:
-                self.push("  {} = {}\n".format(key, task[key]))
-            self.push("}\n")
-
-    def sl(self):
-        logics = sorted(self.sh.return_logics())
-        tasks = []
-        for name in sorted(self.sh.scheduler):
-            nt = self.sh.scheduler.return_next(name)
-            if name not in logics and nt is not None:
-                task = { 'nt' : nt, 'name' : name }
-                tasks.append(task)
-
-        self.push("{} scheduler tasks:\n".format(len(tasks)))
-        for task in tasks:
-            self.push("{0} (scheduled for {1})\n".format(task['name'], task['nt'].strftime('%Y-%m-%d %H:%M:%S%z')))
-
-    def st(self):
-        logics = sorted(self.sh.return_logics())
-        tasks = []
-        for name in sorted(self.sh.scheduler):
-            nt = self.sh.scheduler.return_next(name)
-            if name not in logics and nt is not None:
-                task = { 'nt' : nt, 'name' : name }
-                p = len(tasks)
-                for i in range(0, len(tasks)):
-                    if nt < tasks[i]['nt']:
-                        p = i
-                        break
-                tasks.insert(p, task)
-
-        self.push("{} scheduler tasks by time:\n".format(len(tasks)))
-        for task in tasks:
-            self.push("{0} {1}\n".format(task['nt'].strftime('%Y-%m-%d %H:%M:%S%z'), task['name']))
-
-    def rt(self):
-        # return SH.py runtime
-        self.push("Runtime: {}\n".format(self.sh.runtime()))
-
-    def usage(self):
-        self.push('cl: clean (memory) log\n')
-        self.push('ld: log dump of (memory) logs\n')
-        self.push('ls: list the first level items\n')
-        self.push('ls item: list item and every child item (with values)\n')
-        self.push('la: list all items (with values)\n')
-        self.push('lo: list all logics and next execution time\n')
-        self.push('lt: list current thread names\n')
-        self.push('update item = value: update the specified item with the specified value\n')
-        self.push('up: alias for update\n')
-        self.push('dump item: dump details about given item\n')
-        self.push('tr logic: trigger logic\n')
-        self.push('rl logic: reload logic\n')
-        self.push('rr logic: reload and run logic\n')
-        self.push('rt: return runtime\n')
-        self.push('si task: show details for given task\n')
-        self.push('sl: list all scheduler tasks by name\n')
-        self.push('st: list all scheduler tasks by execution time\n')
-        self.push('quit: quit the session\n')
-        self.push('q: alias for quit\n')
 
 
 class CLI(lib.connection.Server, SmartPlugin):
@@ -355,6 +109,14 @@ class CLI(lib.connection.Server, SmartPlugin):
     PLUGIN_VERSION = '1.1.0'
 
     def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323, hashed_password=''):
+        """
+        Constructor
+        :param smarthome: smarthomeNG instance
+        :param update: Flag: Updates allowed
+        :param ip: IP to bind on
+        :param port: Port to bind on
+        :param hashed_password: Hashed password that is required to logon
+        """
         self.logger = logging.getLogger(__name__)
 
         if hashed_password is None or hashed_password == '':
@@ -365,17 +127,443 @@ class CLI(lib.connection.Server, SmartPlugin):
         self.sh = smarthome
         self.updates_allowed = smarthome.string2bool(update)
         self.hashed_password = hashed_password
+        self.commands = CLICommands(self.sh, self.updates_allowed)
+        self.alive = False
 
     def handle_connection(self):
+        """
+        Handle incoming connection
+        """
         sock, address = self.accept()
         if sock is None:
             return
         self.logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
-        CLIHandler(self.sh, sock, address, self.updates_allowed, self.hashed_password)
+        CLIHandler(self.sh, sock, address, self.updates_allowed, self.hashed_password, self.commands)
 
     def run(self):
+        """
+        Called by SmartHomeNG to start plugin
+        """
         self.alive = True
 
     def stop(self):
+        """
+        Called by SmarthomeNG to stop plugin
+        """
         self.alive = False
         self.close()
+
+    def add_command(self, command, function, usage):
+        """
+        Add command to list of available commands
+        :param command: Command to add
+        :param function: Function to execute for command
+        :param usage: Usage string for help-command
+        """
+        self.commands.add_command(command, function, usage)
+
+    def remove_command(self, command):
+        """
+        Remove a command from the list of available commands
+        :param command: Command to remove
+        :return: True: command found and removed, False: command not found
+        """
+        return self.commands.remove_command(command)
+
+
+class CLICommands:
+    """
+    Class containing handling for CLI commands as well as a basic set of commands
+    """
+
+    def __init__(self, smarthome, updates_allowed='False'):
+        """
+        Constructor
+        :param smarthome: sh.py instance
+        :param updates_allowed: True: basic commands may do updates, False: basic commands may not do updates
+        """
+        self.sh = smarthome
+        self.logger = logging.getLogger(__name__)
+        self.updates_allowed = updates_allowed
+        self._commands = {}
+
+        # Add basic commands
+        self.add_command('cl', self._cli_cl, 'cl [log]: clean (memory) log')
+        self.add_command('la', self._cli_la, 'la: list all items (with values)')
+        self.add_command('update', self._cli_update, 'update [item] = [value]: update the specified item with the specified value')
+        self.add_command('up', self._cli_update, 'up: alias for update')
+        self.add_command('ls', self._cli_ls, 'ls: list the first level items\nls [item]: list item and every child item (with values)')
+        self.add_command('lo', self._cli_lo, 'lo: list all logics and next execution time')
+        self.add_command('lt', self._cli_lt, 'lt: list current thread names')
+        self.add_command('tr', self._cli_tr, 'tr [logic]: trigger logic')
+        self.add_command('rl', self._cli_rl, 'rl [logic]: reload logic')
+        self.add_command('rr', self._cli_rr, 'rr [logic]: reload and run logic')
+        self.add_command('rt', self._cli_rt, 'rt: return runtime')
+        self.add_command('dump', self._cli_dump, 'dump [item]: dump details about given item')
+        self.add_command('help', self._cli_help, None)
+        self.add_command('h', self._cli_help, None)
+        self.add_command('sl', self._cli_sl, 'sl: list all scheduler tasks by name')
+        self.add_command('st', self._cli_sl, 'st: list all scheduler tasks by execution time')
+        self.add_command('si', self._cli_si, 'si [task]: show details for given task')
+        self.add_command('ld', self._cli_ld, 'ld [log]: log dump of (memory) log')
+
+    def add_command(self, command, function, usage):
+        """
+        Add command to list
+        :param command: Command to add
+        :param function: Function to execute for command
+        :param usage: Usage string for help-command
+        """
+        self._commands[command] = {'function': function, 'usage': usage}
+
+    def remove_command(self, command):
+        """
+        Remove a command from the list
+        :param command: Command to remove
+        :return: True: command found and removed, False: command not found
+        """
+        if command in self._commands:
+            del self._commands[command]
+            return True
+        else:
+            return False
+
+    def execute(self, handler, cmd, source):
+        """
+        Execute an arbitrary command
+        :param handler: CLIHandler to use for reply
+        :param cmd: Received command
+        :param source: Call source
+        :return: TRUE: Command found and handled, FALSE: Unknown command, nothing done
+        """
+        for command, data in self._commands.items():
+            if cmd == command or cmd.startswith(command + " "):
+                try:
+                    data['function'](handler, cmd.lstrip(command).strip(), source)
+                except Exception as e:
+                    self.logger.exception(e)
+                    handler.push("Exception \"{0}\" occured when executing command \"{1}\".\n".format(e, command))
+                    handler.push("See smarthomeNG log for details\n")
+                return True
+        return False
+
+    # noinspection PyUnusedLocal
+    def _cli_tr(self, handler, parameter, source):
+        """
+        CLI command "tr" - Trigger logic
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        if not self.updates_allowed:
+            handler.push("Logic triggering is not allowed.\n")
+            return
+        if parameter is None or parameter == "":
+            handler.push("Please name logic to trigger\n")
+        elif parameter in self.sh.return_logics():
+            self.sh.trigger(parameter, by='CLI')
+            handler.push("Logic '{0}' triggered.\n".format(parameter))
+        else:
+            handler.push("Logic '{0}' not found.\n".format(parameter))
+
+    # noinspection PyUnusedLocal
+    def _cli_rl(self, handler, parameter, source):
+        """
+        CLI command "rl" - Reload logic
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        if not self.updates_allowed:
+            handler.push("Logic triggering is not allowed.\n")
+            return
+        if parameter is None or parameter == "":
+            handler.push("Please name logic to reload\n")
+        elif parameter in self.sh.return_logics():
+            logic = self.sh.return_logic(parameter)
+            logic.generate_bytecode()
+            handler.push("Logic '{0}' reloaded.\n".format(parameter))
+        else:
+            handler.push("Logic '{0}' not found.\n".format(parameter))
+
+    # noinspection PyUnusedLocal
+    def _cli_rr(self, handler, parameter, source):
+        """
+        CLI command "rr" - Reload and trigger logic
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        if not self.updates_allowed:
+            handler.push("Logic triggering is not allowed.\n")
+            return
+        if parameter is None or parameter == "":
+            handler.push("Please name logic to reload and trigger")
+        elif parameter in self.sh.return_logics():
+            logic = self.sh.return_logic(parameter)
+            logic.generate_bytecode()
+            logic.trigger(by='CLI')
+            handler.push("Logic '{0}' reloaded and triggered.\n".format(parameter))
+        else:
+            handler.push("Logic '{0}' not found.\n".format(name))
+
+    # noinspection PyUnusedLocal
+    def _cli_lo(self, handler, parameter, source):
+        """
+        CLI command "lo" - List logics
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        handler.push("Logics:\n")
+        for logic in sorted(self.sh.return_logics()):
+            nt = self.sh.scheduler.return_next(logic)
+            if nt is not None:
+                handler.push("{0} (scheduled for {1})\n".format(logic, nt.strftime('%Y-%m-%d %H:%M:%S%z')))
+            else:
+                handler.push("{0}\n".format(logic))
+
+    # noinspection PyUnusedLocal,PyMethodMayBeStatic
+    def _cli_lt(self, handler, parameter, source):
+        """
+        CLI command "lt" - list all threads with names
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        handler.push("{0} Threads:\n".format(threading.activeCount()))
+        for t in threading.enumerate():
+            handler.push("{0}\n".format(t.name))
+
+    # noinspection PyUnusedLocal
+    def _cli_rt(self, handler, parameter, source):
+        """
+        CLI command "rt" - show runtime
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        handler.push("Runtime: {}\n".format(self.sh.runtime()))
+
+    # noinspection PyUnusedLocal
+    def _cli_ls(self, handler, parameter, source):
+        """
+        CLI command "ls" - list first level items
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        handler.push("Items:\n======\n")
+        self._cli_ls_int(handler, parameter, '*' in parameter or ':' in parameter)
+
+    def _cli_ls_int(self, handler, parameter, match=True):
+        """
+        Internal processing for command "ls"
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param match: True: use match_items to select items, False: single item given
+        """
+        if not parameter:
+            for item in self.sh:
+                handler.push("{0}\n".format(item.id()))
+        else:
+            if match:
+                items = self.sh.match_items(parameter)
+                childs = False
+            else:
+                items = [self.sh.return_item(parameter)]
+                childs = True
+            if len(items):
+                for item in items:
+                    if hasattr(item, 'id'):
+                        if item.type():
+                            handler.push("{0} = {1}\n".format(item.id(), item()))
+                        else:
+                            handler.push("{}\n".format(item.id()))
+                        if childs:
+                            for child in item:
+                                self._cli_ls_int(handler, child.id())
+            else:
+                handler.push("Could not find path: {}\n".format(parameter))
+
+    # noinspection PyUnusedLocal
+    def _cli_dump(self, handler, parameter, source):
+        """
+        CLI command "dump" - dump item(s)
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        if '*' in parameter or ':' in parameter:
+            items = self.sh.match_items(parameter)
+        else:
+            items = [self.sh.return_item(parameter)]
+        if len(items):
+            for item in items:
+                # noinspection PyProtectedMember
+                if hasattr(item, 'id') and item._type:
+                    handler.push("Item {} ".format(item.id()))
+                    handler.push("{\n")
+                    handler.push("  type = {}\n".format(item.type()))
+                    handler.push("  value = {}\n".format(item()))
+                    handler.push("  age = {}\n".format(item.age()))
+                    handler.push("  last_change = {}\n".format(item.last_change()))
+                    handler.push("  changed_by = {}\n".format(item.changed_by()))
+                    handler.push("  previous_value = {}\n".format(item.prev_value()))
+                    handler.push("  previous_age = {}\n".format(item.prev_age()))
+                    handler.push("  previous_change = {}\n".format(item.prev_change()))
+                    if hasattr(item, 'conf'):
+                        handler.push("  config = {\n")
+                        for name in item.conf:
+                            handler.push("    {} = {}\n".format(name, item.conf[name]))
+                        handler.push("  }\n")
+                    handler.push("  logics = [\n")
+                    for trigger in item.get_logic_triggers():
+                        handler.push("    {}\n".format(trigger))
+                    handler.push("  ]\n")
+                    handler.push("  triggers = [\n")
+                    for trigger in item.get_method_triggers():
+                        handler.push("    {}\n".format(trigger))
+                    handler.push("  ]\n")
+                    handler.push("}\n")
+        else:
+            handler.push("Nothing found\n")
+
+    # noinspection PyUnusedLocal
+    def _cli_help(self, handler, parameter, source):
+        """
+        CLI command "help" - show available commands
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        for command, data in sorted(self._commands.items()):
+            if data['usage'] is not None:
+                handler.push(data['usage'] + '\n')
+        handler.push('quit: quit the session\n')
+        handler.push('q: alias for quit\n')
+
+    # noinspection PyUnusedLocal
+    def _cli_cl(self, handler, parameter, source):
+        """
+        CLI command "cl" - clear (memory) log
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        if parameter is None or parameter == "":
+            log = self.sh.log
+        else:
+            logs = self.sh.return_logs()
+            if parameter not in logs:
+                self.push("Log '{0}' does not exist\n".format(parameter))
+                log = None
+            else:
+                log = logs[parameter]
+
+        if log is not None:
+            log.clean(self.sh.now())
+
+    # noinspection PyUnusedLocal
+    def _cli_la(self, handler, parameter, source):
+        """
+        CLI command "la" - list all items
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        handler.push("Items:\n======\n")
+        for item in self.sh.return_items():
+            if item.type():
+                handler.push("{0} = {1}\n".format(item.id(), item()))
+            else:
+                handler.push("{0}\n".format(item.id()))
+
+    def _cli_update(self, handler, parameter, source):
+        """
+        CLI command "update" - update item value
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        if not self.updates_allowed:
+            handler.push("Updating items is not allowed.\n")
+            return
+        path, sep, value = parameter.partition('=')
+        path = path.strip()
+        value = value.strip()
+        if not value:
+            handler.push("You have to specify an item value. Syntax: up item = value\n")
+            return
+        items = self.sh.match_items(path)
+        if len(items):
+            for item in items:
+                if not item.type():
+                    handler.push("Could not find item with a valid type specified: '{0}'\n".format(path))
+                    return
+                item(value, 'CLI', source)
+        else:
+            handler.push("Could not find any item with given pattern: '{0}'\n".format(path))
+
+    # noinspection PyUnusedLocal
+    def _cli_sl(self, handler, parameter, source):
+        logics = sorted(self.sh.return_logics())
+        tasks = []
+        for name in sorted(self.sh.scheduler):
+            nt = self.sh.scheduler.return_next(name)
+            if name not in logics and nt is not None:
+                task = {'nt': nt, 'name': name}
+                tasks.append(task)
+
+        handler.push("{} scheduler tasks:\n".format(len(tasks)))
+        for task in tasks:
+            handler.push("{0} (scheduled for {1})\n".format(task['name'], task['nt'].strftime('%Y-%m-%d %H:%M:%S%z')))
+
+    # noinspection PyUnusedLocal
+    def _cli_st(self, handler, parameter, source):
+        logics = sorted(self.sh.return_logics())
+        tasks = []
+        for name in sorted(self.sh.scheduler):
+            nt = self.sh.scheduler.return_next(name)
+            if name not in logics and nt is not None:
+                task = {'nt': nt, 'name': name}
+                p = len(tasks)
+                for i in range(0, len(tasks)):
+                    if nt < tasks[i]['nt']:
+                        p = i
+                        break
+                tasks.insert(p, task)
+
+        handler.push("{} scheduler tasks by time:\n".format(len(tasks)))
+        for task in tasks:
+            handler.push("{0} {1}\n".format(task['nt'].strftime('%Y-%m-%d %H:%M:%S%z'), task['name']))
+
+    # noinspection PyUnusedLocal
+    def _cli_si(self, handler, parameter, source):
+        if parameter not in self.sh.scheduler._scheduler:
+            handler.push("Scheduler task '{}' not found\n".format(parameter))
+        else:
+            task = self.sh.scheduler._scheduler[parameter]
+            handler.push("Task {}".format(parameter))
+            handler.push("{\n")
+            for key in task:
+                handler.push("  {} = {}\n".format(key, task[key]))
+            handler.push("}\n")
+
+    def _cli_ld(self, handler, parameter, source):
+        if parameter is None or parameter == "":
+            log = self.sh.log
+        else:
+            logs = self.sh.return_logs()
+            if parameter not in logs:
+                self.push("Log '{0}' does not exist\n".format(parameter))
+                log = None
+            else:
+                log = logs[parameter]
+
+        if log is not None:
+            handler.push("Log dump of '{0}':\n".format(log._name))
+            for entry in log.last(10):
+                values = [str(value) for value in entry]
+                handler.push(str(values))
+        handler.push("\n")
