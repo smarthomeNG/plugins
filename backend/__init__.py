@@ -447,8 +447,7 @@ class Backend:
         total_counter = 0
         for line in fobj:
             line_text = self.html_escape(line)
-            if text_filter in line_text and (
-                    log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22, 23]):
+            if (log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22, 23]) and text_filter in line_text:
                 if start <= counter < end:
                     log_lines.append(line_text)
                 counter += 1
