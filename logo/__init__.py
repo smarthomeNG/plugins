@@ -594,6 +594,3 @@ class LOGO(SmartPlugin):
 
     def clear_mark_bit(self, mark, position):
         return self.dave.daveClrBit(self.dc, self.daveFlags, 0, mark, position)
-    
-
-
