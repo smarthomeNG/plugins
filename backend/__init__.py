@@ -57,21 +57,21 @@ class BackendServer(SmartPlugin):
         s.connect(("10.10.10.10", 80))
         return s.getsockname()[0]
 
-    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", md5password="", language="", developer_mode="no", pypi_timeout=5):
+    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
         self.logger = logging.getLogger(__name__)
         self._user = user
         self._password = password
-        self._md5password = md5password
+        self._hashed_password = hashed_password
 
-        if self._password is not None and self._password != "" and self._md5password is not None and self._md5password != "":
-            self.logger.warning("BackendServer: Both 'password' and 'md5password' given. Ignoring 'password' and using 'md5password'!")
+        if self._password is not None and self._password != "" and self._hashed_password is not None and self._hashed_password != "":
+            self.logger.warning("BackendServer: Both 'password' and 'hashed_password' given. Ignoring 'password' and using 'hashed_password'!")
             self._password = None
 
-        if self._password is not None and self._password != "" and ( self._md5password is None or self._md5password == ""):
-            self.logger.warning("BackendServer: Giving plaintext password in configuration is insecure. Consider using 'md5password' instead!")
-            self._md5password = None
+        if self._password is not None and self._password != "" and (self._hashed_password is None or self._hashed_password == ""):
+            self.logger.warning("BackendServer: Giving plaintext password in configuration is insecure. Consider using 'hashed_password' instead!")
+            self._hashed_password = None
 
-        if (self._password is not None and self._password != "") or (self._md5password is not None and self._md5password != ""):
+        if (self._password is not None and self._password != "") or (self._hashed_password is not None and self._hashed_password != ""):
             self._basic_auth = True
         else:
             self._basic_auth = False
@@ -166,16 +166,19 @@ class BackendServer(SmartPlugin):
         if username != self._user or password is None or password == "":
             return False
 
-        if self._md5password is not None:
-            import hashlib
-            md5 = hashlib.md5()
-            md5.update(password.encode())
-            md5password = md5.digest().hex().lower()
-            return  md5password == self._md5password.lower()
+        if self._hashed_password is not None:
+            return  create_hash(password).lower() == self._hashed_password.lower()
         elif self._password is not None:
             return password == self._password
 
         return False
+
+# Funktion außerhalb der Klassen, da zentral benötigt
+def create_hash(plaintext):
+    import hashlib
+    hashfunc = hashlib.sha512()
+    hashfunc.update(plaintext.encode())
+    return hashfunc.digest().hex()
 
 # Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
 # Methoden einer Klasse zum laufen bekam
@@ -576,6 +579,10 @@ class Backend:
                     not_item_related_cache_files.append(file_data)
 
         return json.dumps(not_item_related_cache_files)
+
+    @cherrypy.expose
+    def create_hash_json_html(self, plaintext):
+        return json.dumps(create_hash(plaintext))
 
     @cherrypy.expose
     def item_change_value_html(self, item_path, value):

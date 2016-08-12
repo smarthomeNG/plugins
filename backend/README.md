@@ -56,7 +56,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#threads = 8
 	#user = admin
 	#password = very_secure_password
-	#md5password = 71eee3a3dc276ea7dcc5b4c9967e25fa
+	#hashed_password = 1245a9633edf47b7091f37c4d294b5be5a9936c81c5359b16d1c4833729965663f1943ef240959c53803fedef7ac19bd59c66ad7e7092d7dbf155ce45884607d
 	#language = en
 	#developer_mode = on
 	#pypi_timeout = 5
@@ -84,8 +84,8 @@ The user for basic authentication. If left out, the user name is set as "admin"
 ### password (optional)
 The plaintext password for basic authentication. If you want to store your password as md5 hash, use 'md5password' instead. If both "password" and "md5password" are left out, basic authentication is disabled.
 
-### md5password (optional)
-The password for basic authentication as md5 hash. Can be used instead of "password" if you do not want a plaintext password in your config file. If both "password" and "md5password" are left out, basic authentication is disabled. You can use online services such as (http://www.md5hashgenerator.com/) can be used to hash a password.
+### hashed_password (optional)
+The password for basic authentication as hash value. Can be used instead of "password" if you do not want a plaintext password in your config file. If both "password" and "hashed_password" are left out, basic authentication is disabled. Currently hashed_password is the SHA-512 hash value of the password. To create the hash for your password, you can use function "Create password hash" on page "Services" in the backend.
 
 ### language (optional)
 You can specify a language to use for the plugin. Besides the standard language (german) which is used, if this parameter isn't set, you can specify english (for the time being). The language is specified by  **`en`**

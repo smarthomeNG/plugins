@@ -141,6 +141,14 @@
 					<div id="cache_check" style="margin-top: 5px; width: 900px;"></div>
 				</td>
 			</tr>
+			<tr>
+				<td><img src="/static/img/password.svg" alt="Icon password" width="48" height="48"></td>
+				<td colspan="2" style="padding-top:15px;">
+					<input type="text" style="..." id="plaintext" size="20" maxlength="50"/>
+					<span class="btn btn-default" onclick="createHash()">{{ _('Passwort-Hash erzeugen','button') }}</span>
+					<div id="hash_value" style="margin-top: 5px; width: 900px;"></div>
+				</td>
+			</tr>
 		</tbody>
 	</table>
 </div>
@@ -154,6 +162,21 @@ function checkCache() {
 		});
 		temp = temp + '</tbody></table></div>';
 		$('#cache_check').html(temp);
+	});
+}
+
+function createHash() {
+	$.ajax({
+		url: '/create_hash_json.html',
+		type: 'GET',
+		data: { plaintext: $("#plaintext" ).val()} ,
+		contentType: 'application/json; charset=utf-8',
+		success: function (response) {
+			$('#hash_value').html(JSON.parse(response));
+		},
+		error: function () {
+			//your error code
+		}
 	});
 }
 </script>
