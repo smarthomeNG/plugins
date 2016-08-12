@@ -22,7 +22,7 @@
 import logging
 import threading
 import lib.connection
-
+from lib.model.smartplugin import SmartPlugin
 
 
 class CLIHandler(lib.connection.Stream):
@@ -319,7 +319,9 @@ class CLIHandler(lib.connection.Stream):
         self.push('q: alias for quit\n')
 
 
-class CLI(lib.connection.Server):
+class CLI(lib.connection.Server, SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = '1.1.0'
 
     def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323):
         self.logger = logging.getLogger(__name__)
