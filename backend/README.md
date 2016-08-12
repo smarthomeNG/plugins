@@ -29,6 +29,7 @@ sudo pip3 install cherrypy
 sudo pip3 install jinja2
 </pre>
 And please pay attention that the libs are installed for Python3 and not an older Python 2.7 that is probably installed on your system.
+
 The log level filter in the log file view will only work with "%(asctime)s %(levelname)-8s" in the beginning of the configured format! Dateformat needs to be datefmt: '%Y-%m-%d %H:%M:%S'
 
 ## Running this plugin under Python 3.2
