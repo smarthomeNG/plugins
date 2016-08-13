@@ -37,21 +37,25 @@ from yowsup.layers.coder                        import YowCoderLayer
 from yowsup.layers.auth                         import YowCryptLayer
 from yowsup.layers.stanzaregulator              import YowStanzaRegulator
 from yowsup.layers.network                      import YowNetworkLayer
+from yowsup.layers                              import YowParallelLayer
 from yowsup.stacks                              import YowStack
 from yowsup.common                              import YowConstants
 from yowsup.layers                              import YowLayerEvent
 from yowsup                                     import env
 import subprocess
+import datetime
+
 logger = logging.getLogger('Whatsapp')
 
 
 class Whatsapp():
-    def __init__(self, smarthome, account, password, trusted=None, logic='Whatsapp', cli_mode='False', ping_cycle='600'):
+    def __init__(self, smarthome, account, password, trusted=None, logic='Whatsapp', cli_mode='False'):
 # Set Plugin Attributes
         self._sh = smarthome
         self._credentials = (account, password.encode('utf-8'))
         self._trusted = trusted
         self._logic = logic
+        self._run = False
         if cli_mode == 'True':
             self._cli_mode = True
             return
@@ -60,7 +64,7 @@ class Whatsapp():
 # Yowsup Layers
         self._layers = (
             SmarthomeLayer,
-            (YowAuthenticationProtocolLayer, YowMessagesProtocolLayer, YowReceiptProtocolLayer, YowAckProtocolLayer, YowIbProtocolLayer, YowIqProtocolLayer, YowNotificationsProtocolLayer, YowPresenceProtocolLayer),
+            YowParallelLayer((YowAuthenticationProtocolLayer, YowMessagesProtocolLayer, YowReceiptProtocolLayer, YowAckProtocolLayer, YowIbProtocolLayer, YowIqProtocolLayer, YowNotificationsProtocolLayer, YowPresenceProtocolLayer)),
             YowCoderLayer,
 #            YowLoggerLayer,
             YowCryptLayer,
@@ -81,22 +85,17 @@ class Whatsapp():
         self._SmarthomeLayer = self._stack.getLayer(len(self._stack._YowStack__stack) - 1)
         self._SmarthomeLayer.setPlugin(self)
 
-# Ping it
-        if int(ping_cycle) > 0:
-            self._sh.scheduler.add('Yowsup_Ping', self.do_ping, prio=5, cycle=int(ping_cycle))
-
-    def do_ping(self):
-        self._SmarthomeLayer.do_ping()
-
     def run(self):
+        self._run = True
         if self._cli_mode == True:
             return
         try:
-            self._stack.loop()
+            self._stack.loop(timeout = 0.5, discrete = 0.5)
         except AuthError as e:
             logger.info("Authentication Error!")
 
     def stop(self):
+        self._run = False
         if self._cli_mode == True:
             return
         logger.info("Shutting Down WhatsApp Client")

@@ -29,11 +29,16 @@ from yowsup.layers.protocol_receipts.protocolentities import OutgoingReceiptProt
 from yowsup.layers.protocol_acks.protocolentities     import OutgoingAckProtocolEntity
 from yowsup.layers.protocol_iq.protocolentities       import PingIqProtocolEntity
 from yowsup.common                                    import YowConstants
+from yowsup.layers.network                            import YowNetworkLayer
+from yowsup.layers                                    import YowLayerEvent
 
 logger = logging.getLogger('Whatsapp')
 
 
 class SmarthomeLayer(YowInterfaceLayer):
+    _last_ping_snd_id = None
+    _last_ping_rcvd_id = None
+
     def setPlugin(self, plugin):
         self._plugin = plugin
 
@@ -51,7 +56,7 @@ class SmarthomeLayer(YowInterfaceLayer):
     def onReceipt(self, entity):
         logger.info("Received Receipt: ID {}".format(entity._id))
         logger.info("Sending ACK")
-        ack = OutgoingAckProtocolEntity(entity.getId(), "receipt", "delivery")
+        ack = OutgoingAckProtocolEntity(entity.getId(), "receipt", entity.getType(), entity.getFrom())
         self.toLower(ack)
 
     @ProtocolEntityCallback("ack")
@@ -72,7 +77,9 @@ class SmarthomeLayer(YowInterfaceLayer):
 
     @ProtocolEntityCallback("iq")
     def onIq(self, entity):
-        logger.info("Received IQ: {}".format(entity))
+        logger.debug("Received IQ: ID: {} Type: {} XMLNS: {} To: {} From: {}".format(entity._id, entity._type, entity.xmlns, entity.to, entity._from))
+        if entity._type == 'result':
+            self._last_ping_rcvd_id = entity._id
 
     @ProtocolEntityCallback("notification")
     def onNotification(self, notification):
@@ -84,7 +91,19 @@ class SmarthomeLayer(YowInterfaceLayer):
         logger.info("Sending Message {0} to {1}".format(msg, num))
         self.toLower(outgoingMessageProtocolEntity)
 
-    def do_ping(self):
-        ping_entity = PingIqProtocolEntity(to=YowConstants.DOMAIN)
-        self.toLower(ping_entity)
-        logger.info("Pinging...")
+    def connect(self):
+        self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_CONNECT))
+
+    def disconnect(self):
+        self.broadcastEvent(YowLayerEvent(YowNetworkLayer.EVENT_STATE_DISCONNECT))
+
+    def onEvent(self, yowLayerEvent):
+#        logger.info("YS_Event: {}".format(yowLayerEvent.getName()))
+        if yowLayerEvent.getName() == YowNetworkLayer.EVENT_STATE_DISCONNECTED:
+            logger.info("YOWSUP DISCONNECTED")
+            if self._plugin._run == True:
+                logger.info("Reconnecting...")
+                self.connect()
+                
+        if yowLayerEvent.getName() == YowNetworkLayer.EVENT_STATE_CONNECTED:
+            logger.info("YOWSUP CONNECTED")

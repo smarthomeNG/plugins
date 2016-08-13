@@ -134,6 +134,28 @@ class EnOcean():
         else:
             logger.warning("enocean: unknown event packet received")
 
+    def _rocker_sequence(self, item, sender_id, sequence):
+        try:
+            for step in sequence:
+                event, relation, delay = step.split()             
+                #logger.debug("waiting for {} {} {}".format(event, relation, delay))
+                if item._enocean_rs_events[event.upper()].wait(float(delay)) != (relation.upper() == "WITHIN"):
+                    logger.debug("NOT {} - aborting sequence!".format(step))
+                    return
+                else:
+                    logger.debug("{}".format(step))
+                    item._enocean_rs_events[event.upper()].clear()
+                    continue          
+            value = True
+            if 'enocean_rocker_action' in item.conf:
+                if item.conf['enocean_rocker_action'].upper() == "UNSET":
+                    value = False
+                elif item.conf['enocean_rocker_action'].upper() == "TOGGLE":
+                    value = not item()
+            item(value, 'EnOcean', "{:08X}".format(sender_id))
+        except Exception as e:
+            logger.error("enocean: error handling enocean_rocker_sequence \"{}\" - {}".format(sequence, e))        
+
     def _process_packet_type_radio(self, data, optional):
         #logger.warning("enocean: processing radio message with data = [{}] / optional = [{}]".format(', '.join(['0x%02x' % b for b in data]), ', '.join(['0x%02x' % b for b in optional])))
 
@@ -149,7 +171,7 @@ class EnOcean():
             dest_id = int.from_bytes(optional[1:5], byteorder='big', signed=False)
             dBm = -optional[5]
             SecurityLevel = optional[6]
-            logger.info("enocean: radio message with additional info: subtelnum = {} / dest_id = {:08X} / signal = {}dBm / SecurityLevel = {}".format(subtelnum, dest_id, dBm, SecurityLevel))
+            logger.debug("enocean: radio message with additional info: subtelnum = {} / dest_id = {:08X} / signal = {}dBm / SecurityLevel = {}".format(subtelnum, dest_id, dBm, SecurityLevel))
 
         if sender_id in self._rx_items:
             logger.debug("enocean: Sender ID found in item list")
@@ -163,7 +185,25 @@ class EnOcean():
                     for item in items:
                         rx_key = item.conf['enocean_rx_key'].upper()
                         if rx_key in results:
-                            item(results[rx_key], 'EnOcean', "{:08X}".format(sender_id))
+                            if 'enocean_rocker_sequence' in item.conf:
+                                try:   
+                                    if hasattr(item, '_enocean_rs_thread') and item._enocean_rs_thread.isAlive():
+                                        if results[rx_key]:
+                                            logger.debug("sending pressed event")
+                                            item._enocean_rs_events["PRESSED"].set()
+                                        else:
+                                            logger.debug("sending released event")
+                                            item._enocean_rs_events["RELEASED"].set()
+                                    elif results[rx_key]:
+                                        item._enocean_rs_events = {'PRESSED': threading.Event(), 'RELEASED': threading.Event()}
+                                        item._enocean_rs_thread = threading.Thread(target=self._rocker_sequence, name="enocean-rs", args=(item, sender_id, item.conf['enocean_rocker_sequence'].split(','), ))
+                                        #logger.info("starting enocean_rocker_sequence thread")
+                                        item._enocean_rs_thread.daemon = True
+                                        item._enocean_rs_thread.start()
+                                except Exception as e:
+                                    logger.error("enocean: error handling enocean_rocker_sequence - {}".format(e))
+                            else:
+                                item(results[rx_key], 'EnOcean', "{:08X}".format(sender_id))
         elif (sender_id <= self.tx_id + 127) and (sender_id >= self.tx_id):
             logger.debug("enocean: Received repeated enocean stick message")
         else:
@@ -344,11 +384,11 @@ class EnOcean():
                     if 'enocean_tx_id_offset' in item.conf and (isinstance(item.conf['enocean_tx_id_offset'], str)):
                         logger.debug('enocean: item has valid enocean_tx_id_offset')
                         id_offset = int(item.conf['enocean_tx_id_offset'])
-                    #if (isinstance(item(), bool)):
-                    #if item.conf['type'] == bool:
                     #Identify send command based on tx_eep coding:
-                    if(tx_eep == 'A5_38_08_02'):
-                        #if isinstance(item, bool):
+                    if(tx_eep == 'A5_20_04'):
+                        self.send_radiator_valve(id_offset)
+                        logger.debug('enocean: sent A5_20_04 radiator valve command')
+                    elif(tx_eep == 'A5_38_08_02'):
                         logger.debug('enocean: item is A5_38_08_02 type')
                         if not item():
                             self.send_dim(id_offset, 0, 0)
@@ -370,12 +410,16 @@ class EnOcean():
                         logger.debug('enocean: item is A5_38_08_01 type')
                         self.send_switch(id_offset, item(), 0)
                         logger.debug('enocean: sent switch command')
+                    elif(tx_eep == '07_3F_7F'):
+                        logger.debug('enocean: item is 07_3F_7F type')
+                        self.send_rgbw_dim(id_offset, item(), 0)
+                        logger.debug('enocean: sent RGBW dim command')
                     else:
                         logger.error('enocean: error: Unknown tx eep command')
                 else:
                     logger.error('enocean: tx_eep is not a string value')
             else:
-                logger.warning('enocean: item has no tx_eep value')
+                logger.debug('enocean: item has no tx_eep value')
 
     def read_num_securedivices(self):
         self._send_common_command(CO_RD_NUMSECUREDEVICES)
@@ -452,17 +496,73 @@ class EnOcean():
         self._response_lock.release()
         self._cmd_lock.release()
 
+    def send_radiator_valve(self,item, id_offset=0):
+        logger.debug("enocean: sending valve command A5_20_04")
+        temperature = item()
+        #define default values:
+        MC  = 1 #off
+        WUC = 3 # 120 seconds
+        BLC = 0 # unlocked
+        LRNB = 1# data
+        DSO = 0 # 0 degree
+        valve_position = 50
+
+        for sibling in get_children(item.parent):
+            if hasattr(sibling, "MC"):
+                MC = sibling()
+            if hasattr(sibling, "WUC"):
+                WUC = sibling()
+            if hasattr(sibling, "BLC"):
+                BLC = sibling()
+            if hasattr(sibling, "LRNB"):
+                LRNB = sibling()
+            if hasattr(sibling, "DSO"):
+                DSO = sibling()
+            if hasattr(sibling, "VALVE_POSITION"):
+                valve_position = sibling()
+        TSP = int((temperature -10)*255/30)
+        status =  0 + (MC << 1) + (WUC << 2) 
+        status2 = (BLC << 5) + (LRNB << 4) + (DSO << 2) 
+        self._send_radio_packet(id_offset, 0xA5, [valve_position, TSP, status , status2])
+
+    def send_learn_radiator_valve(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        logger.info("enocean: sending learn telegram for radiator valve")
+        self._send_radio_packet(id_offset, 0xA5, [0x00, 0x00, 0x00, 0x00])
+
+
     def send_dim(self,id_offset=0, dim=0, dimspeed=0):
         if (dimspeed < 0) or (dimspeed > 255):
             logger.error("enocean: sending dim command A5_38_08: invalid range of dimspeed")
             return
         logger.debug("enocean: sending dim command A5_38_08")
         if (dim == 0):
-            self._send_radio_packet(id_offset, 0xA5, [0x02, 0x00, dimspeed, 0x08])
+            self._send_radio_packet(id_offset, 0xA5, [0x02, 0x00, int(dimspeed), 0x08])
         elif (dim > 0) and (dim <= 100):
-            self._send_radio_packet(id_offset, 0xA5, [0x02, dim, dimspeed, 0x09])
+            self._send_radio_packet(id_offset, 0xA5, [0x02, int(dim), int(dimspeed), 0x09])
         else:
             logger.error("enocean: sending command A5_38_08: invalid dim value")
+
+    def send_rgbw_dim(self,id_offset=0, color='red', dim=0, dimspeed=0):
+        if(color == str(red)):
+            color_hex_code = 0x10
+        elif(color == str(green)):
+            color_hex_code = 0x11
+        elif(color == str(blue)):
+            color_hex_code = 0x12
+        elif(color == str(white)):
+            color_hex_code = 0x13
+        else:
+            logger.error("enocean: sending rgbw dim command: invalid color")
+            return
+        if (dim < 0) or (dim > 1023):
+            logger.error("enocean: sending rgb dim command: invalid dim value range. Only 10 bit allowed")
+            return
+        self._send_radio_packet(id_offset, 0x07, [ list(dim.to_bytes(2, byteorder='big')), color_hex_code, 0x0F])
+        logger.debug("enocean: sent dim command 07_3F_7F")
+
 
     def send_switch(self,id_offset=0, on=0, block=0):
         if (block < 0) and (block > 1):
@@ -482,6 +582,13 @@ class EnOcean():
             return
         logger.info("enocean: sending learn telegram for dim command")
         self._send_radio_packet(id_offset, 0xA5, [0x02, 0x00, 0x00, 0x00])
+
+    def send_learn_rgbw_dim(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        logger.info("enocean: sending learn telegram for rgbw dim command")
+        self._send_radio_packet(id_offset, 0x07, [0xFF, 0xF8, 0x0D, 0x87])
 
     def send_learn_switch(self, id_offset=0):
         if (id_offset < 0) or (id_offset > 127):
