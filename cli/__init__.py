@@ -24,6 +24,7 @@ import logging
 import threading
 import lib.connection
 from lib.model.smartplugin import SmartPlugin
+from lib.utils import Utils
 
 
 class CLIHandler(lib.connection.Stream):
@@ -77,7 +78,7 @@ class CLIHandler(lib.connection.Stream):
 
         if self.__wait_for_password:
             # We are waiting for a password. So we take the entered command as password
-            if self.sh.tools.create_hash(cmd).lower() == self.hashed_password.lower():
+            if Utils.create_hash(cmd) == self.hashed_password.lower():
                 self.logger.debug("CLI: {0} Authorization succeeded".format(self.source))
 
                 # Inform the client that we will not echo what has been entered. He will do this from now on
