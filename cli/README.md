@@ -26,6 +26,7 @@ Telnet to the configured IP adress and port.
 <code>help</code>list an set of available commands:
 <pre>
 cl: clean (memory) log
+ld: log dump of (memory) logs
 ls: list the first level items
 ls item: list item and every child item (with values)
 la: list all items (with values)
