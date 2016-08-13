@@ -32,6 +32,7 @@ This attributes represents direct access to the FritzBox webinterface. Each attr
 Example item:
 
 <pre>
+
 [fb]
     [[call1]]
         type=bool
@@ -41,6 +42,7 @@ Example item:
         fritzbox:settings/UseClickToDial = '1'
         fritzbox:command/Dial = '**610'
         fritzbox:settings/DialPort = '**611'
+
 </pre>
 
 Both `call1` and `call2` will have the same effect. The first uses the implemented call function. The later uses the telcfg commands which are used internally in the call function. With the second option you can control almost anything which can be controlled via the web interface of your FritzBox.
@@ -56,3 +58,4 @@ This function calls a specified number with the specified caller.
 <pre>
 sh.fritzbox.call('**610', '**611')
 </pre>
+

@@ -26,7 +26,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import hashlib
-import re
+from xml.dom.minidom import parseString
 
 logger = logging.getLogger('')
 
@@ -37,12 +37,20 @@ class fbex(Exception):
 
 class FritzBoxBase():
 
-    def __init__(self, host='fritz.box', password=None):
+    def __init__(self, host='fritz.box', username=None, password=None):
         self._host = host
+        self._username = username
         self._password = password
         self._sid = 0
 
+    def createResponse(self, challenge):
+        text = "%s-%s" % (challenge, self._password)
+        text = text.encode("utf-16le")
+        res = "%s-%s" % (challenge, hashlib.md5(text).hexdigest())
+        return res
+
     def _login(self):
+
         params = urllib.parse.urlencode(
             {'getpage': '../html/login_sid.xml', 'sid': self._sid})
         headers = {"Content-type":
@@ -79,7 +87,7 @@ class FritzBoxBase():
     def execute(self, cmd_dict, return_resp=False):
         logger.debug("execute command: {0}".format(cmd_dict))
         self._login()
-        cmd_dict['getpage'] = '../html/login_sid.xml'
+        cmd_dict['getpage'] = '../html/login_sid.lua'
         cmd_dict['sid'] = self._sid
         params = urllib.parse.urlencode(cmd_dict)
         headers = {"Content-type":
@@ -105,8 +113,8 @@ class FritzBoxBase():
 
 class FritzBox(FritzBoxBase):
 
-    def __init__(self, smarthome, host='fritz.box', password=None):
-        FritzBoxBase.__init__(self, host, password)
+    def __init__(self, smarthome, host='fritz.box', username=None, password=None):
+        FritzBoxBase.__init__(self, host, username, password)
         self._sh = smarthome
 
     def run(self):
