@@ -14,9 +14,9 @@ Visit:  https://github.com/smarthomeNG/
 
 This plugin does the smartVISU specific handling. It installs widgets from the plugin directories to smartVISU and it auto-generates pages for smartVISU.
 
-This plugin (**```visu_websocket```**) does not do the communication with the browser. The websocket protocol for the browser communication is implemented in **```visu_websocket```**.
+This plugin (**```visu_smartvisu```**) does not do the communication with the browser. The websocket protocol for the browser communication is implemented in **```visu_websocket```**.
 
-The plugins **```visu_websocket```** and **```visu_websocket```** replace the old visu plugin.
+The plugins **```visu_websocket```** and **```visu_smartvisu```** replace the old visu plugin.
 
 
 # Requirements
