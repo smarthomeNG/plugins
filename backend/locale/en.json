@@ -103,6 +103,7 @@
 	"filters": "Filters",
 	"handlers": "Handlers",
 	"Logging": "Logging",
+	"Passwort anzeigen": "Show Password",
 
 	"_items": {
 		"path": "Pfad",
