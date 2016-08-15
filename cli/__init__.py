@@ -47,18 +47,14 @@ class CLIHandler(lib.connection.Stream):
         self.sh = smarthome
         self.hashed_password = hashed_password
         self.commands = commands
+        self.__prompt_type = ''
         self.push("SmartHomeNG v{0}\n".format(self.sh.version))
 
-        if (hashed_password is None):
-            self.push("Enter 'help' for a list of available commands.\n")
-            self.push("> ")
-            self.__wait_for_password = False
+        if hashed_password is None:
+            self.__push_helpmessage()
+            self.__push_command_prompt()
         else:
-            self.push("Password: ")
-            # Inform the client that we will echo what has been entered. He won't do this from now on.
-            # As we don't do this, too, the entered hashed_password will not be shown ...
-            self.send(bytearray([0xFF, 0xFB, 0x01]))  # IAC WILL ECHO
-            self.__wait_for_password = True
+            self.__push_password_prompt()
 
     def push(self, data):
         """
@@ -81,33 +77,66 @@ class CLIHandler(lib.connection.Stream):
 
         cmd = data.decode().strip()
 
-        if self.__wait_for_password:
-            # We are waiting for a password. So we take the entered command as password
-            if Utils.check_hashed_password(cmd,self.hashed_password):
-                self.logger.debug("CLI: {0} Authorization succeeded".format(self.source))
+        # Call process methods based on prompt type
+        if self.__prompt_type == 'password':
+            self.__process_password(cmd)
+        elif self.__prompt_type == 'command':
+            self.__process_command(cmd)
 
-                # Inform the client that we will not echo what has been entered. He will do this from now on
-                self.send(bytearray([0xFF, 0xFC, 0x01]))  # IAC WILL ECHO
+    def __process_password(self, cmd):
+        """
+        Process entered password
+        :param cmd: entered password
+        """
+        self.__push_password_finished()
+        if Utils.check_hashed_password(cmd, self.hashed_password):
+            self.logger.debug("CLI: {0} Authorization succeeded".format(self.source))
+            self.__push_helpmessage()
+            self.__push_command_prompt()
+            return
+        else:
+            self.logger.debug("CLI: {0} Authorization failed".format(self.source))
+            self.push("Authorization failed. Bye\n")
+            self.close()
+            return
 
-                self.push("\nEnter 'help' for a list of available commands.\n")
-                self.push("> ")
-                self.__wait_for_password = False
-                return
-            else:
-                self.logger.debug("CLI: {0} Authorization failed".format(self.source))
-                self.push("\r\nAuthorization failed. Bye\r\n")
-                self.close()
-                return
-
+    def __process_command(self, cmd):
+        """
+        Process entered command
+        :param cmd: entered command
+        """
         if cmd in ('quit', 'q', 'exit', 'x'):
             self.push('bye\n')
             self.close()
             return
         else:
             if not self.commands.execute(self, cmd, self.source):
-                self.push("Unknown command.\nEnter 'help' for a list of available commands.\n")
+                self.push("Unknown command.\n")
+                self.__push_helpmessage()
+            self.__push_command_prompt()
 
+    def __push_helpmessage(self):
+        """Push help message to client"""
+        self.push("Enter 'help' for a list of available commands.\n")
+
+    def __push_password_prompt(self):
+        """
+        Push password prompt to client.
+        Additionally inform the client that we will echo what has been entered. He won't do this from now on.
+        As we don't do this, too, the entered password will not be shown ...
+        """
+        self.push("Password: ")
+        self.send(bytearray([0xFF, 0xFB, 0x01]))  # IAC WILL ECHO
+        self.__prompt_type = 'password'
+
+    def __push_password_finished(self):
+        """Inform the client that we will not echo what has been entered. He will do this from now on"""
+        self.send(bytearray([0xFF, 0xFC, 0x01, 0x0A]))  # IAC WONT ECHO +  \n
+
+    def __push_command_prompt(self):
+        """Push command prompt to client"""
         self.push("> ")
+        self.__prompt_type = 'command'
 
 
 class CLI(lib.connection.Server, SmartPlugin):
@@ -186,11 +215,11 @@ class CLICommands:
     Class containing handling for CLI commands as well as a basic set of commands
     """
 
-    def __init__(self, smarthome, updates_allowed='False'):
+    def __init__(self, smarthome, updates_allowed=False):
         """
         Constructor
         :param smarthome: sh.py instance
-        :param updates_allowed: True: basic commands may do updates, False: basic commands may not do updates
+        :param updates_allowed: bool True: basic commands may do updates, False: basic commands may not do updates
         """
         self.sh = smarthome
         self.logger = logging.getLogger(__name__)
@@ -560,6 +589,7 @@ class CLICommands:
                 handler.push("  {} = {}\n".format(key, task[key]))
             handler.push("}\n")
 
+    # noinspection PyUnusedLocal
     def _cli_ld(self, handler, parameter, source):
         if parameter is None or parameter == "":
             log = self.sh.log
