@@ -68,16 +68,8 @@ class CLIHandler(lib.connection.Stream):
         Received data and found terminator (newline) in data
         :param data: Received data up to terminator
         """
-
-        # Every three bytes starting with 0xFF are a command. At the moment they will only occur at the start of the response, after we
-        # sent the IAC WILL ECHO/IAC WONT ECHO commands. They contain the confirmation of the commands (IAC DO ECHO: 0xFF 0xFD 0x01 or
-        # IAC DONT ECHO: 0xFF 0xFE 0x01) We will simple ignore these at the moment.
-        if data[0] == 0xFF:
-            data = data[3:]
-
-        cmd = data.decode().strip()
-
         # Call process methods based on prompt type
+        cmd = data.decode().strip()
         if self.__prompt_type == 'password':
             self.__process_password(cmd)
         elif self.__prompt_type == 'command':
@@ -121,17 +113,59 @@ class CLIHandler(lib.connection.Stream):
 
     def __push_password_prompt(self):
         """
-        Push password prompt to client.
-        Additionally inform the client that we will echo what has been entered. He won't do this from now on.
-        As we don't do this, too, the entered password will not be shown ...
+        Push 'echo off' and password prompt to client.
         """
+        self.__echo_off()
         self.push("Password: ")
-        self.send(bytearray([0xFF, 0xFB, 0x01]))  # IAC WILL ECHO
         self.__prompt_type = 'password'
 
     def __push_password_finished(self):
-        """Inform the client that we will not echo what has been entered. He will do this from now on"""
-        self.send(bytearray([0xFF, 0xFC, 0x01, 0x0A]))  # IAC WONT ECHO +  \n
+        """
+        Push 'echo on' and newline to client
+        :return:
+        """
+        self.__echo_on()
+        self.push("\n")
+
+    def __echo_off(self):
+        """
+        Send 'IAC WILL ECHO' to client, telling the client that we will echo.
+        Check that reply is 'IAC DO ECHO', meaning that the client has understood.
+        As we are not echoing entered text will be invisible
+        """
+        try:
+            self.socket.settimeout(2)
+            self.send(bytearray([0xFF, 0xFB, 0x01]))  # IAC WILL ECHO
+            data = self.socket.recv(3)
+            self.socket.setblocking(0)
+            if data != bytearray([0xFF, 0xFD, 0x01]):  # IAC DO ECHO
+                logger.error("Error at 'echo off': Sent b'\\xff\\xfb\\x01 , Expected reply b'\\xff\\xfd\\x01, received {0}".format(data))
+                self.push("'echo off' failed. Bye")
+                self.close()
+        except Exception as e:
+            self.push("\nException at 'echo off'. See log for details.")
+            self.logger.exception(e)
+            self.close()
+
+    def __echo_on(self):
+        """
+        Send 'IAC WONT ECHO' to client, telling the client that we wont echo.
+        Check that reply is 'IAC DONT ECHO', meaning that the client has understood.
+        Now the client should be echoing and we do not have to care about this
+        """
+        try:
+            self.socket.settimeout(2)
+            self.send(bytearray([0xFF, 0xFC, 0x01]))  # IAC WONT ECHO
+            data = self.socket.recv(3)
+            self.socket.setblocking(0)
+            if data != bytearray([0xFF, 0xFE, 0x01]):  # IAC DONT ECHO
+                logger.error("Error at 'echo on': Sent b'\\xff\\xfc\\x01 , Expected reply b'\\xff\\xfe\\x01, received {0}".format(data))
+                self.push("'echo off' failed. Bye")
+                self.close()
+        except Exception as e:
+            self.push("\nException at 'echo on'. See log for details.")
+            self.logger.exception(e)
+            self.close()
 
     def __push_command_prompt(self):
         """Push command prompt to client"""
