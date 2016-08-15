@@ -80,7 +80,7 @@ class Raspi_GPIO(SmartPlugin):
             self._items.append(item)
             return self.update_item      
         if self.has_iattr(item.conf, 'gpio_out'):
-            out_pin = int(item.conf['gpio_out'])
+            out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
             GPIO.setup(out_pin, GPIO.OUT)
             self.logger.debug("GPIO: OUTPUT {0} assigned to \'{1}\'".format(item, out_pin))
             if (out_pin is None):
@@ -96,7 +96,7 @@ class Raspi_GPIO(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if self.has_iattr(item.conf, 'gpio_out'):
-            out_pin = int(item.conf['gpio_out'])
+            out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
             value = item()                   
             self.logger.debug("GPIO: OUTPUT Setting pin {0} ({2}) to {1}.".format(out_pin, value, item.id()))
             self.send(out_pin, value)
@@ -107,14 +107,14 @@ class Raspi_GPIO(SmartPlugin):
         if self._cycle > 0:
             try:
                 for item in self._items:
-                    if 'gpio_in' in item.conf:
-                        sensor = int(item.conf['gpio_in']) 
+                    if self.has_iattr(item.conf, 'gpio_in'):
+                        sensor = int(self.get_iattr_value(item.conf, 'gpio_in')) 
                         value = GPIO.input(sensor)
                         item(value, 'GPIO', 'get_sensors')
                         self.logger.debug("GPIO SENSOR READ: {0}  VALUE: {1}".format(sensor,value))
                         self._wait(0.1)
-                    if 'gpio_out' in item.conf:
-                        sensor = int(item.conf['gpio_out'])
+                    if self.has_iattr(item.conf, 'gpio_out'):
+                        sensor = int(self.get_iattr_value(item.conf, 'gpio_out'))
                         self.logger.debug("GPIO: Sensor {0} updated {1} seconds before".format(sensor,item.age()))
                         if item.age() >= 1:                             
                             value = GPIO.input(sensor)
@@ -127,14 +127,14 @@ class Raspi_GPIO(SmartPlugin):
             while self.alive:
                 try:
                     for item in self._items:
-                        if 'gpio_in' in item.conf:
-                            sensor = int(item.conf['gpio_in']) 
+                        if self.has_iattr(item.conf, 'gpio_in'):
+                            sensor = int(self.get_iattr_value(item.conf, 'gpio_in')) 
                             value = GPIO.input(sensor)
                             item(value, 'GPIO', 'get_sensors')
                             self.logger.debug("GPIO: SENSOR READ: {0}  VALUE: {1}".format(sensor,value))
                             self._wait(0.1)
-                        if 'gpio_out' in item.conf:
-                            sensor = int(item.conf['gpio_out']) 
+                        if self.has_iattr(item.conf, 'gpio_out'):
+                            sensor = int(self.get_iattr_value(item.conf, 'gpio_out')) 
                             self.logger.debug("GPIO: Sensor {0} updated {1} seconds before".format(sensor,item.age()))
                             if item.age() >= 1:                                
                                 value = GPIO.input(sensor)
@@ -157,4 +157,3 @@ class Raspi_GPIO(SmartPlugin):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
     FooClass(None).run()
-
