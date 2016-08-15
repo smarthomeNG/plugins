@@ -83,7 +83,7 @@ class CLIHandler(lib.connection.Stream):
 
         if self.__wait_for_password:
             # We are waiting for a password. So we take the entered command as password
-            if Utils.create_hash(cmd) == self.hashed_password.lower():
+            if Utils.check_hashed_password(cmd,self.hashed_password):
                 self.logger.debug("CLI: {0} Authorization succeeded".format(self.source))
 
                 # Inform the client that we will not echo what has been entered. He will do this from now on
@@ -130,10 +130,12 @@ class CLI(lib.connection.Server, SmartPlugin):
             hashed_password = None
         elif hashed_password.lower() == 'none':
             hashed_password = None
+        elif not Utils.is_hash(hashed_password):
+            self.logger.error("CLI: Value given for 'hashed_password' is not a valid hash value. Login will not be possible")
 
         lib.connection.Server.__init__(self, ip, port)
         self.sh = smarthome
-        self.updates_allowed = smarthome.string2bool(update)
+        self.updates_allowed = Utils.to_bool(update)
         self.hashed_password = hashed_password
         self.commands = CLICommands(self.sh, self.updates_allowed)
         self.alive = False
