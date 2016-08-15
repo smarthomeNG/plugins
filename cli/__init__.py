@@ -48,12 +48,17 @@ class CLIHandler(lib.connection.Stream):
         self.hashed_password = hashed_password
         self.commands = commands
         self.push("SmartHomeNG v{0}\n".format(self.sh.version))
-        self.push("Password: ")
 
-        # Inform the client that we will echo what has been entered. He won't do this from now on.
-        # As we don't do this, too, the entered hashed_password will not be shown ...
-        self.send(bytearray([0xFF, 0xFB, 0x01]))  # IAC WILL ECHO
-        self.__wait_for_password = True
+        if (hashed_password is None):
+            self.push("Enter 'help' for a list of available commands.\n")
+            self.push("> ")
+            self.__wait_for_password = False
+        else:
+            self.push("Password: ")
+            # Inform the client that we will echo what has been entered. He won't do this from now on.
+            # As we don't do this, too, the entered hashed_password will not be shown ...
+            self.send(bytearray([0xFF, 0xFB, 0x01]))  # IAC WILL ECHO
+            self.__wait_for_password = True
 
     def push(self, data):
         """
@@ -84,7 +89,7 @@ class CLIHandler(lib.connection.Stream):
                 # Inform the client that we will not echo what has been entered. He will do this from now on
                 self.send(bytearray([0xFF, 0xFC, 0x01]))  # IAC WILL ECHO
 
-                self.push("Enter 'help' for a list of available commands.\n")
+                self.push("\nEnter 'help' for a list of available commands.\n")
                 self.push("> ")
                 self.__wait_for_password = False
                 return
@@ -121,8 +126,10 @@ class CLI(lib.connection.Server, SmartPlugin):
         self.logger = logging.getLogger(__name__)
 
         if hashed_password is None or hashed_password == '':
-            self.logger.error("CLI: You must set a password to use this plugin. CLI Plugin will not be initialized!")
-            return
+            self.logger.warning("CLI: You should set a password for this plugin.")
+            hashed_password = None
+        elif hashed_password.lower() == 'none':
+            hashed_password = None
 
         lib.connection.Server.__init__(self, ip, port)
         self.sh = smarthome

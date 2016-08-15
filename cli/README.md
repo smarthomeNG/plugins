@@ -12,7 +12,7 @@ plugin.conf
 #   ip = 127.0.0.1
 #   port = 2323
 #   update = false
-   hashed_password = 1245a9633edf47b7091f37c4d294b5be5a9936c81c5359b16d1c4833729965663f1943ef240959c53803fedef7ac19bd59c66ad7e7092d7dbf155ce45884607d
+#   hashed_password = 1245a9633edf47b7091f37c4d294b5be5a9936c81c5359b16d1c4833729965663f1943ef240959c53803fedef7ac19bd59c66ad7e7092d7dbf155ce45884607d
 </pre>
 
 This plugin listens for a telnet connection. 
