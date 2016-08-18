@@ -30,7 +30,7 @@ import time
 from xml.dom import minidom
 import requests
 from requests.packages import urllib3
-from requests.auth import HTTPDigestAuth
+from requests.auth import HTTPBasicAuth
 from lib.model.smartplugin import SmartPlugin
 
 
@@ -284,7 +284,7 @@ class Enigma2(SmartPlugin):
 
         try:
             response = self._session.get(url, timeout=self._timeout,
-                                         auth=HTTPDigestAuth(self._enigma2_device.get_user(),
+                                         auth=HTTPBasicAuth(self._enigma2_device.get_user(),
                                                              self._enigma2_device.get_password()), verify=self._verify)
 
         except Exception as e:
