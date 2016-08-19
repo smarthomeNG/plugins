@@ -184,7 +184,7 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
                 sref@vusolo2 = 1:0:19:2B66:3F3:1:C00000:0:0:0:
                 enforce_updates = true
                 visu_acl = rw
-            [[[[3SAT]]]]
+            [[[[DREI_SAT]]]]
                 type = bool
                 sref@vusolo2 = 1:0:19:2B8E:3F2:1:C00000:0:0:0:
                 enforce_updates = true
@@ -365,52 +365,52 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 412
                 enforce_updates = true
-            [[[[0]]]]
+            [[[[KEY_0]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 11
                 enforce_updates = true
-            [[[[1]]]]
+            [[[[KEY_1]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 2
                 enforce_updates = true
-            [[[[2]]]]
+            [[[[KEY_2]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 3
                 enforce_updates = true
-            [[[[3]]]]
+            [[[[KEY_3]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 4
                 enforce_updates = true
-            [[[[4]]]]
+            [[[[KEY_4]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 5
                 enforce_updates = true
-            [[[[5]]]]
+            [[[[KEY_5]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 6
                 enforce_updates = true
-            [[[[6]]]]
+            [[[[KEY_6]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 7
                 enforce_updates = true
-            [[[[7]]]]
+            [[[[KEY_7]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 8
                 enforce_updates = true
-            [[[[8]]]]
+            [[[[KEY_8]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 9
                 enforce_updates = true
-            [[[[9]]]]
+            [[[[KEY_9]]]]
                 type = bool
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 10
