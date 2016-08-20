@@ -529,7 +529,7 @@ class CLICommands:
         else:
             logs = self.sh.return_logs()
             if parameter not in logs:
-                self.push("Log '{0}' does not exist\n".format(parameter))
+                handler.push("Log '{0}' does not exist\n".format(parameter))
                 log = None
             else:
                 log = logs[parameter]
@@ -630,7 +630,7 @@ class CLICommands:
         else:
             logs = self.sh.return_logs()
             if parameter not in logs:
-                self.push("Log '{0}' does not exist\n".format(parameter))
+                handler.push("Log '{0}' does not exist\n".format(parameter))
                 log = None
             else:
                 log = logs[parameter]
