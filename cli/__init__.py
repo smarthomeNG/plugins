@@ -640,4 +640,4 @@ class CLICommands:
             for entry in log.last(10):
                 values = [str(value) for value in entry]
                 handler.push(str(values))
-        handler.push("\n")
+                handler.push("\n")
