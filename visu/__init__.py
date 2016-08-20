@@ -313,7 +313,7 @@ class WebSocketHandler(lib.connection.Stream):
         elif command == 'ping':
             self.json_send({'cmd': 'pong'})
         elif command == 'logic':
-            if 'name' not in data or 'val' not in data:
+            if 'name' not in data:
                 return
             name = data['name']
             if name in self.logics:

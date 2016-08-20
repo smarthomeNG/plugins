@@ -339,7 +339,7 @@ class websockethandler(lib.connection.Stream):
             self.logger.debug("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))
             self.json_send({'cmd': 'pong'})
         elif command == 'logic':
-            if 'name' not in data or 'val' not in data:
+            if 'name' not in data:
                 return
             name = data['name']
             if name in self.logics:
