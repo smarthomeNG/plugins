@@ -350,7 +350,7 @@ class CLICommands:
         else:
             handler.push("Logic '{0}' not found.\n".format(parameter))
 
-    def _cl_dl(self, handler, parameter, source):
+    def _cli_dl(self, handler, parameter, source):
         if not self.updates_allowed:
             handler.push("Logic triggering is not allowed.\n")
             return
