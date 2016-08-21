@@ -30,6 +30,8 @@ sudo pip3 install jinja2
 </pre>
 And please pay attention that the libs are installed for Python3 and not an older Python 2.7 that is probably installed on your system.
 
+The log level filter in the log file view will only work with "%(asctime)s %(levelname)-8s" in the beginning of the configured format! Dateformat needs to be datefmt: '%Y-%m-%d %H:%M:%S'
+
 ## Running this plugin under Python 3.2
 If you really need to run this plugin under Python 3.2 you may not use the newest version of all packages. The packages **Jinja2** and **MarkupSafe** have dropped support for Python 3.2. Make sure to install the following older versions into your Phython3.2 environment, as newer versions are not compatible with Python 3.2 any more:
 
