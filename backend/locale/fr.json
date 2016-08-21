@@ -90,6 +90,8 @@
 	"Aktiv": "Active",
 	"Visu Client": "Client Visu",
 	"Port": "Port",
+	"Client Software": "Software du Client",
+	"Browser": "Browser",
 	"No active clients": "Pas de clients actifs",
 	"Die eingegebenen Daten sind kein numerischer Wert": "Les valeurs entrées ne sont pas numériques",
 	"Filter": "Filtre",

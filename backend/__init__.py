@@ -857,7 +857,11 @@ class Backend:
                     clients.append(client)
 
             if self.visu_plugin_build > '2':
-                for c, sw, swv, ch in self.visu_plugin.return_clients():
+#                self.logger.warning("BackendServer: Language '{0}' not found, using standard language instead".format(language))
+#                yield client.addr, client.sw, client.swversion, client.hostname, client.browser, client.browserversion
+#                for c, sw, swv, ch in self.visu_plugin.return_clients():
+                for clientinfo in self.visu_plugin.return_clients():
+                    c = clientinfo.get('addr', '')
                     client = dict()
                     deli = c.find(':')
                     client['ip'] = c[0:c.find(':')]
@@ -866,9 +870,11 @@ class Backend:
                         client['name'] = socket.gethostbyaddr(client['ip'])[0]
                     except:
                         client['name'] = client['ip']
-                    client['sw'] = sw
-                    client['swversion'] = swv
-                    client['hostname'] = ch
+                    client['sw'] = clientinfo.get('sw', '')
+                    client['swversion'] = clientinfo.get('swversion', '')
+                    client['hostname'] = clientinfo.get('hostname', '')
+                    client['browser'] = clientinfo.get('browser', '')
+                    client['browserversion'] = clientinfo.get('browserversion', '')
                     clients.append(client)
                     
         clients_sorted = sorted(clients, key=lambda k: k['name']) 
