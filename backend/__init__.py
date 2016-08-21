@@ -28,6 +28,7 @@ import platform
 import collections
 import datetime
 import pwd
+import html
 import os
 import json
 import subprocess
@@ -572,6 +573,7 @@ class Backend:
         item = self._sh.return_item(item_path)
         if self.updates_allowed:
             item(value, caller='Backend')
+
         return
 
     def disp_str(self, val):
@@ -637,8 +639,14 @@ class Backend:
         item = self._sh.return_item(item_path)
         if item.type() is None or item.type() is '':
             prev_value = ''
+            value = ''
         else:
             prev_value = item.prev_value()
+            value = item._value
+
+        if 'str' in item.type():
+            value = html.escape(value)
+            prev_value = html.escape(prev_value)
 
         cycle = ''
         crontab = ''
@@ -649,7 +657,7 @@ class Backend:
                 if self._sh.scheduler._scheduler[entry]['cron']:
                     crontab = self._sh.scheduler._scheduler[entry]['cron']
                 break
-        
+
         changed_by = item.changed_by()
         if changed_by[-5:] == ':None':
             changed_by = changed_by[:-5]
@@ -676,13 +684,13 @@ class Backend:
         triggers = []
         for trigger in item.get_method_triggers():
             trig = format(trigger)
-            trig = trig[1:len(trig)-27]
+            trig = trig[1:len(trig) - 27]
             triggers.append(self.html_escape(format(trig.replace("<", ""))))
 
         data_dict = {'path': item._path,
                      'name': item._name,
                      'type': item.type(),
-                     'value': item._value,
+                     'value': value,
                      'age': self.disp_age(item.age()),
                      'last_update': str(item.last_update()),
                      'last_change': str(item.last_change()),
@@ -692,7 +700,7 @@ class Backend:
                      'previous_change': str(item.prev_change()),
                      'enforce_updates': enforce_updates,
                      'cache': cache,
-                     'eval': self.disp_str(item._eval),
+                     'eval': html.escape(self.disp_str(item._eval)),
                      'eval_trigger': self.disp_str(item._eval_trigger),
                      'cycle': str(cycle),
                      'crontab': str(crontab),
@@ -701,11 +709,11 @@ class Backend:
                      'config': json.dumps(item_conf_sorted),
                      'logics': json.dumps(logics),
                      'triggers': json.dumps(triggers),
-                    }
+                     }
 
         if item.type() == 'foo':
             data_dict['value'] = str(item._value)
-            
+
         item_data.append(data_dict)
         return json.dumps(item_data)
 
