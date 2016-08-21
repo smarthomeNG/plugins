@@ -36,7 +36,7 @@ import sys
 import threading
 import lib.config
 from lib.model.smartplugin import SmartPlugin
-
+from lib.utils import Utils
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -167,18 +167,11 @@ class BackendServer(SmartPlugin):
             return False
 
         if self._hashed_password is not None:
-            return  create_hash(password).lower() == self._hashed_password.lower()
+            return Utils.check_hashed_password(password, self._hashed_password)
         elif self._password is not None:
             return password == self._password
 
         return False
-
-# Funktion außerhalb der Klassen, da zentral benötigt
-def create_hash(plaintext):
-    import hashlib
-    hashfunc = hashlib.sha512()
-    hashfunc.update(plaintext.encode())
-    return hashfunc.digest().hex()
 
 # Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
 # Methoden einer Klasse zum laufen bekam
@@ -589,7 +582,7 @@ class Backend:
 
     @cherrypy.expose
     def create_hash_json_html(self, plaintext):
-        return json.dumps(create_hash(plaintext))
+        return json.dumps(Utils.create_hash(plaintext))
 
     @cherrypy.expose
     def item_change_value_html(self, item_path, value):
