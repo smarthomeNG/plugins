@@ -42,7 +42,7 @@ class WebSocket(SmartPlugin):
     """
     Main class of the Plugin. Does the plugin specific stuff.
     """
-    PLUGIN_VERSION = "1.1.2"
+    PLUGIN_VERSION = "1.1.3"
     ALLOW_MULTIINSTANCE = False
 
     def my_to_bool(self, value, attr='', default=False):
