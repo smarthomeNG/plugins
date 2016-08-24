@@ -24,6 +24,7 @@ from lib.model.smartplugin import SmartPlugin
 import RPi.GPIO as GPIO
 import threading
 import time
+from time import sleep
 
 class Raspi_GPIO(SmartPlugin):
     PLUGIN_VERSION = "1.0.0"
@@ -125,6 +126,7 @@ class Raspi_GPIO(SmartPlugin):
                 self.logger.warning("GPIO ERROR: {0}".format(e))
         else:
             while self.alive:
+                sleep(0.1)
                 try:
                     for item in self._items:
                         if self.has_iattr(item.conf, 'gpio_in'):
