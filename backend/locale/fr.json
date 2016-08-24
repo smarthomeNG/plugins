@@ -106,6 +106,7 @@
 	"filters": "Filtres",
 	"handlers": "Gestionnaire",
 	"Logging": "Journalisation",
+	"SmartHomeNG Version": "Version de SmartHomeNG",
 
 	"_items": {
 		"path": "Chemin",

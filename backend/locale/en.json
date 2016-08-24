@@ -105,6 +105,7 @@
 	"filters": "Filters",
 	"handlers": "Handlers",
 	"Logging": "Logging",
+	"SmartHomeNG Version": "SmartHomeNG Version",
 
 	"_items": {
 		"path": "Pfad",

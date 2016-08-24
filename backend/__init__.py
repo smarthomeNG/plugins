@@ -335,7 +335,7 @@ class Backend:
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
-        return tmpl.render( now=now, system=system, vers=vers, node=node, arch=arch, user=user,
+        return tmpl.render( now=now, system=system, sh_vers=self._sh.env.core.version(), vers=vers, node=node, arch=arch, user=user,
                                 freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
                                 ip=ip, python_packages=python_packages, visu_plugin=(self.visu_plugin is not None))
 
