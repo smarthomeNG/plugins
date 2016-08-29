@@ -89,6 +89,8 @@
 	"Aktiv": "Aktiv",
 	"Visu Client": "Visu Client",
 	"Port": "Port",
+	"Client Software": "Client Software",
+	"Browser": "Browser",
 	"No active clients": "Keine aktiven Clients",
 	"Die eingegebenen Daten sind kein numerischer Wert": "Die eingegebenen Daten sind kein numerischer Wert",
 	"Filter": "Filter",
@@ -104,6 +106,7 @@
 	"handlers": "Handler",
 	"Logging": "Logging",
 	"Passwort anzeigen": "Passwort anzeigen",
+	"SmartHomeNG Version": "SmartHomeNG Version",
 
 	"_items": {
 		"path": "Pfad",
