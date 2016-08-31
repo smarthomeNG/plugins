@@ -90,6 +90,8 @@
 	"Aktiv": "Active",
 	"Visu Client": "Client Visu",
 	"Port": "Port",
+	"Client Software": "Software du Client",
+	"Browser": "Browser",
 	"No active clients": "Pas de clients actifs",
 	"Die eingegebenen Daten sind kein numerischer Wert": "Les valeurs entrées ne sont pas numériques",
 	"Filter": "Filtre",
@@ -104,6 +106,8 @@
 	"filters": "Filtres",
 	"handlers": "Gestionnaire",
 	"Logging": "Journalisation",
+	"Passwort anzeigen": "Afficher mot de passe",
+	"SmartHomeNG Version": "Version de SmartHomeNG",
 
 	"_items": {
 		"path": "Chemin",
@@ -146,6 +150,7 @@
 		"knxd socket beenden": "arrêter socket knxd",
 		"Filter anwenden": "Appliquer le filtre",
 		"Cacheprüfung": "Test du cache",
+		"Passwort-Hash erzeugen": "Mot de passe créer hachage",
 		"Englisch": "Anglais",
 		"Deutsch": "Allemand",
 		"Französisch": "Français"

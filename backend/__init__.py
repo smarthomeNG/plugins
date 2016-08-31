@@ -28,6 +28,7 @@ import platform
 import collections
 import datetime
 import pwd
+import html
 import os
 import json
 import subprocess
@@ -36,7 +37,7 @@ import sys
 import threading
 import lib.config
 from lib.model.smartplugin import SmartPlugin
-
+from lib.utils import Utils
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -57,11 +58,21 @@ class BackendServer(SmartPlugin):
         s.connect(("10.10.10.10", 80))
         return s.getsockname()[0]
 
-    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", language="", developer_mode="no", pypi_timeout=5):
+    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
         self.logger = logging.getLogger(__name__)
         self._user = user
         self._password = password
-        if self._password is not None and self._password != "":
+        self._hashed_password = hashed_password
+
+        if self._password is not None and self._password != "" and self._hashed_password is not None and self._hashed_password != "":
+            self.logger.warning("BackendServer: Both 'password' and 'hashed_password' given. Ignoring 'password' and using 'hashed_password'!")
+            self._password = None
+
+        if self._password is not None and self._password != "" and (self._hashed_password is None or self._hashed_password == ""):
+            self.logger.warning("BackendServer: Giving plaintext password in configuration is insecure. Consider using 'hashed_password' instead!")
+            self._hashed_password = None
+
+        if (self._password is not None and self._password != "") or (self._hashed_password is not None and self._hashed_password != ""):
             self._basic_auth = True
         else:
             self._basic_auth = False
@@ -106,9 +117,6 @@ class BackendServer(SmartPlugin):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.logger.debug("BackendServer running from '{}'".format(current_dir))
 
-        userpassdict = {self._user : self._password}
-        checkpassword = cherrypy.lib.auth_basic.checkpassword_dict(userpassdict)
-
         config = {'global': {
             'server.socket_host': ip,
             'server.socket_port': self.port,
@@ -120,7 +128,7 @@ class BackendServer(SmartPlugin):
             '/': {
                 'tools.auth_basic.on': self._basic_auth,
                 'tools.auth_basic.realm': 'earth',
-                'tools.auth_basic.checkpassword': checkpassword,
+                'tools.auth_basic.checkpassword': self.validate_password,
                 'tools.staticdir.root': current_dir,
             },
             '/static': {
@@ -155,6 +163,16 @@ class BackendServer(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
 
+    def validate_password(self, realm, username, password):
+        if username != self._user or password is None or password == "":
+            return False
+
+        if self._hashed_password is not None:
+            return Utils.check_hashed_password(password, self._hashed_password)
+        elif self._password is not None:
+            return password == self._password
+
+        return False
 
 # Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
 # Methoden einer Klasse zum laufen bekam
@@ -334,7 +352,7 @@ class Backend:
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
-        return tmpl.render( now=now, system=system, vers=vers, node=node, arch=arch, user=user,
+        return tmpl.render( now=now, system=system, sh_vers=self._sh.env.core.version(), vers=vers, node=node, arch=arch, user=user,
                                 freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
                                 ip=ip, python_packages=python_packages, visu_plugin=(self.visu_plugin is not None))
 
@@ -564,6 +582,10 @@ class Backend:
         return json.dumps(not_item_related_cache_files)
 
     @cherrypy.expose
+    def create_hash_json_html(self, plaintext):
+        return json.dumps(Utils.create_hash(plaintext))
+
+    @cherrypy.expose
     def item_change_value_html(self, item_path, value):
         """
         returns a list of items as json structure
@@ -572,6 +594,7 @@ class Backend:
         item = self._sh.return_item(item_path)
         if self.updates_allowed:
             item(value, caller='Backend')
+
         return
 
     def disp_str(self, val):
@@ -637,8 +660,14 @@ class Backend:
         item = self._sh.return_item(item_path)
         if item.type() is None or item.type() is '':
             prev_value = ''
+            value = ''
         else:
             prev_value = item.prev_value()
+            value = item._value
+
+        if 'str' in item.type():
+            value = html.escape(value)
+            prev_value = html.escape(prev_value)
 
         cycle = ''
         crontab = ''
@@ -649,7 +678,7 @@ class Backend:
                 if self._sh.scheduler._scheduler[entry]['cron']:
                     crontab = self._sh.scheduler._scheduler[entry]['cron']
                 break
-        
+
         changed_by = item.changed_by()
         if changed_by[-5:] == ':None':
             changed_by = changed_by[:-5]
@@ -676,13 +705,13 @@ class Backend:
         triggers = []
         for trigger in item.get_method_triggers():
             trig = format(trigger)
-            trig = trig[1:len(trig)-27]
+            trig = trig[1:len(trig) - 27]
             triggers.append(self.html_escape(format(trig.replace("<", ""))))
 
         data_dict = {'path': item._path,
                      'name': item._name,
                      'type': item.type(),
-                     'value': item._value,
+                     'value': value,
                      'age': self.disp_age(item.age()),
                      'last_update': str(item.last_update()),
                      'last_change': str(item.last_change()),
@@ -692,7 +721,7 @@ class Backend:
                      'previous_change': str(item.prev_change()),
                      'enforce_updates': enforce_updates,
                      'cache': cache,
-                     'eval': self.disp_str(item._eval),
+                     'eval': html.escape(self.disp_str(item._eval)),
                      'eval_trigger': self.disp_str(item._eval_trigger),
                      'cycle': str(cycle),
                      'crontab': str(crontab),
@@ -701,11 +730,11 @@ class Backend:
                      'config': json.dumps(item_conf_sorted),
                      'logics': json.dumps(logics),
                      'triggers': json.dumps(triggers),
-                    }
+                     }
 
         if item.type() == 'foo':
             data_dict['value'] = str(item._value)
-            
+
         item_data.append(data_dict)
         return json.dumps(item_data)
 
@@ -857,7 +886,11 @@ class Backend:
                     clients.append(client)
 
             if self.visu_plugin_build > '2':
-                for c, sw, swv, ch in self.visu_plugin.return_clients():
+#                self.logger.warning("BackendServer: Language '{0}' not found, using standard language instead".format(language))
+#                yield client.addr, client.sw, client.swversion, client.hostname, client.browser, client.browserversion
+#                for c, sw, swv, ch in self.visu_plugin.return_clients():
+                for clientinfo in self.visu_plugin.return_clients():
+                    c = clientinfo.get('addr', '')
                     client = dict()
                     deli = c.find(':')
                     client['ip'] = c[0:c.find(':')]
@@ -866,9 +899,11 @@ class Backend:
                         client['name'] = socket.gethostbyaddr(client['ip'])[0]
                     except:
                         client['name'] = client['ip']
-                    client['sw'] = sw
-                    client['swversion'] = swv
-                    client['hostname'] = ch
+                    client['sw'] = clientinfo.get('sw', '')
+                    client['swversion'] = clientinfo.get('swversion', '')
+                    client['hostname'] = clientinfo.get('hostname', '')
+                    client['browser'] = clientinfo.get('browser', '')
+                    client['browserversion'] = clientinfo.get('browserversion', '')
                     clients.append(client)
                     
         clients_sorted = sorted(clients, key=lambda k: k['name']) 
