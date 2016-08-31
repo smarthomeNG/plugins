@@ -105,6 +105,7 @@
 	"filters": "Filter",
 	"handlers": "Handler",
 	"Logging": "Logging",
+	"Passwort anzeigen": "Passwort anzeigen",
 	"SmartHomeNG Version": "SmartHomeNG Version",
 
 	"_items": {
@@ -148,6 +149,7 @@
 		"knxd socket beenden": "knxd socket beenden",
 		"Filter anwenden": "Filter anwenden",
 		"Cacheprüfung": "Cacheprüfung",
+		"Passwort-Hash erzeugen": "Passwort-Hash erzeugen",
 		"Englisch": "English",
 		"Deutsch": "Deutsch",
 		"Französisch": "French"

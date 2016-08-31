@@ -37,7 +37,7 @@ import sys
 import threading
 import lib.config
 from lib.model.smartplugin import SmartPlugin
-
+from lib.utils import Utils
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -58,11 +58,21 @@ class BackendServer(SmartPlugin):
         s.connect(("10.10.10.10", 80))
         return s.getsockname()[0]
 
-    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", language="", developer_mode="no", pypi_timeout=5):
+    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
         self.logger = logging.getLogger(__name__)
         self._user = user
         self._password = password
-        if self._password is not None and self._password != "":
+        self._hashed_password = hashed_password
+
+        if self._password is not None and self._password != "" and self._hashed_password is not None and self._hashed_password != "":
+            self.logger.warning("BackendServer: Both 'password' and 'hashed_password' given. Ignoring 'password' and using 'hashed_password'!")
+            self._password = None
+
+        if self._password is not None and self._password != "" and (self._hashed_password is None or self._hashed_password == ""):
+            self.logger.warning("BackendServer: Giving plaintext password in configuration is insecure. Consider using 'hashed_password' instead!")
+            self._hashed_password = None
+
+        if (self._password is not None and self._password != "") or (self._hashed_password is not None and self._hashed_password != ""):
             self._basic_auth = True
         else:
             self._basic_auth = False
@@ -107,9 +117,6 @@ class BackendServer(SmartPlugin):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.logger.debug("BackendServer running from '{}'".format(current_dir))
 
-        userpassdict = {self._user : self._password}
-        checkpassword = cherrypy.lib.auth_basic.checkpassword_dict(userpassdict)
-
         config = {'global': {
             'server.socket_host': ip,
             'server.socket_port': self.port,
@@ -121,7 +128,7 @@ class BackendServer(SmartPlugin):
             '/': {
                 'tools.auth_basic.on': self._basic_auth,
                 'tools.auth_basic.realm': 'earth',
-                'tools.auth_basic.checkpassword': checkpassword,
+                'tools.auth_basic.checkpassword': self.validate_password,
                 'tools.staticdir.root': current_dir,
             },
             '/static': {
@@ -156,6 +163,16 @@ class BackendServer(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
 
+    def validate_password(self, realm, username, password):
+        if username != self._user or password is None or password == "":
+            return False
+
+        if self._hashed_password is not None:
+            return Utils.check_hashed_password(password, self._hashed_password)
+        elif self._password is not None:
+            return password == self._password
+
+        return False
 
 # Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
 # Methoden einer Klasse zum laufen bekam
@@ -563,6 +580,10 @@ class Backend:
                     not_item_related_cache_files.append(file_data)
 
         return json.dumps(not_item_related_cache_files)
+
+    @cherrypy.expose
+    def create_hash_json_html(self, plaintext):
+        return json.dumps(Utils.create_hash(plaintext))
 
     @cherrypy.expose
     def item_change_value_html(self, item_path, value):
