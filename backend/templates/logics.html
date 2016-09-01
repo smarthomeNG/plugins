@@ -26,7 +26,7 @@
 							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data"> 
 							<td><input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic }}" type="text"></td>
 							{% if smarthome.scheduler.return_next(logic) %}
-								<td>{{ smarthome.scheduler.return_next(logic).strftime('%Y-%m-%d %H:%M:%S%z') }}</td>
+								<td>{% if not smarthome.return_logic(logic).enabled %}<s>{% endif %}{{ smarthome.scheduler.return_next(logic).strftime('%Y-%m-%d %H:%M:%S%z') }}{% if not smarthome.return_logic(logic).enabled %}</s>{% endif %}</td>
 							{% else %}
 								<td></td>
 							{% endif %}
@@ -35,6 +35,8 @@
 								<td>
 								<input name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs">
 								<input name="reload" value="{{ _('Neu Laden','button') }}" type="submit" class="btn btn-default btn-xs">
+								<input name="enable" value="{% if smarthome.return_logic(logic).enabled %}{{ _('Deaktivieren','button') }}{% else %}{{ _('Aktivieren','button') }}{% endif %}" type="submit" class="btn btn-default btn-xs">
+
 								</form>
 								</td>
 							{% endif %}

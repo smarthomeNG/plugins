@@ -750,13 +750,28 @@ class Backend:
         return item_data
 
     @cherrypy.expose
-    def logics_html(self, logic=None, trigger=None, reload=None):
+    def logics_html(self, logic=None, trigger=None, reload=None, enable=None):
         """
         display a list of all known logics
         """
         self.find_visu_plugin()
 
         self.logger.debug("Backend: logics_html: trigger = '{0}', reload = '{1}'".format(trigger, reload))
+        if enable is not None:
+            self.logger.debug("Backend: logics_html: Enable/Disable logic = '{0}'".format(logic))
+            if self.updates_allowed:
+                if logic in self._sh.return_logics():
+                    mylogic = self._sh.return_logic(logic)
+                    if mylogic.enabled:
+                        mylogic.disable()
+                    else:
+                        mylogic.enable()
+                else:
+                    self.logger.warning("Backend: Logic '{0}' not found".format(logic))
+            else:
+                self.logger.warning(
+                    "Backend: Logic enabling/disabling is not allowed. (Change 'updates_allowed' in plugin.conf")
+
         if trigger is not None:
             self.logger.debug("Backend: logics_html: Trigger logic = '{0}'".format(logic))
             if self.updates_allowed:
