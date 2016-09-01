@@ -107,6 +107,8 @@
 	"Logging": "Logging",
 	"Passwort anzeigen": "Show Password",
 	"SmartHomeNG Version": "SmartHomeNG Version",
+	"Deaktivieren": "Disable",
+	"Aktivieren": "Enable",
 
 	"_items": {
 		"path": "Pfad",

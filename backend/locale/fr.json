@@ -108,6 +108,8 @@
 	"Logging": "Journalisation",
 	"Passwort anzeigen": "Afficher mot de passe",
 	"SmartHomeNG Version": "Version de SmartHomeNG",
+	"Deaktivieren": "Désactiver",
+	"Aktivieren": "Activer",
 
 	"_items": {
 		"path": "Chemin",
