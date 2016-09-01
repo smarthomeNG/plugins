@@ -24,6 +24,7 @@ from lib.model.smartplugin import SmartPlugin
 import RPi.GPIO as GPIO
 import threading
 import time
+from time import sleep
 
 class Raspi_GPIO(SmartPlugin):
     PLUGIN_VERSION = "1.0.0"
@@ -76,13 +77,13 @@ class Raspi_GPIO(SmartPlugin):
         if self.has_iattr(item.conf, 'gpio_in'):
             in_pin = int(item.conf['gpio_in'])
             GPIO.setup(in_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            self.logger.debug("GPIO INPUT: {0} assigned to pin \'{1}\'".format(item, in_pin))
+            self.logger.debug("GPIO: INPUT {0} assigned to pin \'{1}\'".format(item, in_pin))
             self._items.append(item)
             return self.update_item      
         if self.has_iattr(item.conf, 'gpio_out'):
-            out_pin = int(item.conf['gpio_out'])
+            out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
             GPIO.setup(out_pin, GPIO.OUT)
-            self.logger.debug("GPIO OUTPUT: {0} assigned to \'{1}\'".format(item, out_pin))
+            self.logger.debug("GPIO: OUTPUT {0} assigned to \'{1}\'".format(item, out_pin))
             if (out_pin is None):
                 return None
                 self.logger.debug("GPIO: No out_pin set")
@@ -95,51 +96,55 @@ class Raspi_GPIO(SmartPlugin):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if item():
-            if self.has_iattr(item.conf, 'gpio_out'):
-                out_pin = int(item.conf['gpio_out'])
-                value = item()                   
-                self.logger.debug("GPIO OUTPUT: Setting pin {0} ({2}) to {1}.".format(out_pin, value, item.id()))
-                self.send(out_pin, value)
-            else:
-                self.logger.debug("GPIO: No gpio_out")
+        if self.has_iattr(item.conf, 'gpio_out'):
+            out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
+            value = item()                   
+            self.logger.debug("GPIO: OUTPUT Setting pin {0} ({2}) to {1}.".format(out_pin, value, item.id()))
+            self.send(out_pin, value)
+        else:
+            self.logger.debug("GPIO: No gpio_out")
 
     def get_sensors(self):   
         if self._cycle > 0:
             try:
                 for item in self._items:
-                    if 'gpio_in' in item.conf:
-                        sensor = int(item.conf['gpio_in']) 
+                    if self.has_iattr(item.conf, 'gpio_in'):
+                        sensor = int(self.get_iattr_value(item.conf, 'gpio_in')) 
                         value = GPIO.input(sensor)
                         item(value, 'GPIO', 'get_sensors')
-                        self.logger.debug("GPIO SENSOR: {0}  VALUE: {1}".format(sensor,value))
+                        self.logger.debug("GPIO SENSOR READ: {0}  VALUE: {1}".format(sensor,value))
                         self._wait(0.1)
-                    if 'gpio_out' in item.conf:
-                        sensor = int(item.conf['gpio_out']) 
-                        value = GPIO.input(sensor)
-                        item(value, 'GPIO', 'get_sensors')
-                        self.logger.debug("GPIO OUTPUT: {0}  VALUE: {1}".format(sensor,value))
-                        self._wait(0.1)
+                    if self.has_iattr(item.conf, 'gpio_out'):
+                        sensor = int(self.get_iattr_value(item.conf, 'gpio_out'))
+                        self.logger.debug("GPIO: Sensor {0} updated {1} seconds before".format(sensor,item.age()))
+                        if item.age() >= 1:                             
+                            value = GPIO.input(sensor)
+                            item(value, 'GPIO', 'get_sensors')
+                            self.logger.debug("GPIO: OUTPUT READ: {0}  VALUE: {1}".format(sensor,value))
+                            self._wait(0.1)
             except Exception as e:
                 self.logger.warning("GPIO ERROR: {0}".format(e))
         else:
             while self.alive:
+                sleep(0.1)
                 try:
                     for item in self._items:
-                        if 'gpio_in' in item.conf:
-                            sensor = int(item.conf['gpio_in']) 
+                        if self.has_iattr(item.conf, 'gpio_in'):
+                            sensor = int(self.get_iattr_value(item.conf, 'gpio_in')) 
                             value = GPIO.input(sensor)
                             item(value, 'GPIO', 'get_sensors')
-                            self.logger.debug("GPIO SENSOR: {0}  VALUE: {1}".format(sensor,value))
+                            self.logger.debug("GPIO: SENSOR READ: {0}  VALUE: {1}".format(sensor,value))
                             self._wait(0.1)
-                        if 'gpio_out' in item.conf:
-                            sensor = int(item.conf['gpio_out']) 
-                            value = GPIO.input(sensor)
-                            item(value, 'GPIO', 'get_sensors')
-                            self.logger.debug("GPIO OUTPUT: {0}  VALUE: {1}".format(sensor,value))
-                            self._wait(0.1)
+                        if self.has_iattr(item.conf, 'gpio_out'):
+                            sensor = int(self.get_iattr_value(item.conf, 'gpio_out')) 
+                            self.logger.debug("GPIO: Sensor {0} updated {1} seconds before".format(sensor,item.age()))
+                            if item.age() >= 1:                                
+                                value = GPIO.input(sensor)
+                                item(value, 'GPIO', 'get_sensors')
+                                self.logger.debug("GPIO: OUTPUT READ: {0}  VALUE: {1}".format(sensor,value))
+                                self._wait(0.1)
                 except Exception as e:
-                    self.logger.warning("GPIO ERROR: {0}".format(e))
+                    self.logger.warning("GPIO: ERROR: {0}".format(e))
 
     def send(self, pin, value):
         self._lock.acquire()
@@ -154,4 +159,3 @@ class Raspi_GPIO(SmartPlugin):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
     FooClass(None).run()
-
