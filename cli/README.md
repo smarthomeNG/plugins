@@ -30,7 +30,9 @@ Enter <code>help</code> for a list of available commands.
 command | function
 --- | ---
 <code>cl [log]</code> | clean (memory) log
+<code>dl [logic]</code> | dl logic: disables logic
 <code>dump [item]</code> | dump details about given item
+<code>el [logic]</code> | el logic: enables logic
 <code>la</code> | list all items (with values)
 <code>ld [log]</code> | log dump of (memory) log
 <code>lo</code> | list all logics and next execution time

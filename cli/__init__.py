@@ -279,6 +279,8 @@ class CLICommands:
         self.add_command('st', self._cli_sl, 'st: list all scheduler tasks by execution time')
         self.add_command('si', self._cli_si, 'si [task]: show details for given task')
         self.add_command('ld', self._cli_ld, 'ld [log]: log dump of (memory) log')
+        self.add_command('el', self._cli_el, 'el [logic]: enables logic')
+        self.add_command('dl', self._cli_dl, 'dl [logic]: disables logic')
 
     def add_command(self, command, function, usage):
         """
@@ -339,6 +341,24 @@ class CLICommands:
         else:
             handler.push("Logic '{0}' not found.\n".format(parameter))
 
+    def _cli_el(self, handler, parameter, source):
+        if not self.updates_allowed:
+            handler.push("Logic triggering is not allowed.\n")
+            return
+        if parameter in self.sh.return_logics():
+            self.sh.return_logic(parameter).enable()
+        else:
+            handler.push("Logic '{0}' not found.\n".format(parameter))
+
+    def _cli_dl(self, handler, parameter, source):
+        if not self.updates_allowed:
+            handler.push("Logic triggering is not allowed.\n")
+            return
+        if parameter in self.sh.return_logics():
+            self.sh.return_logic(parameter).disable()
+        else:
+            handler.push("Logic '{0}' not found.\n".format(parameter))
+
     # noinspection PyUnusedLocal
     def _cli_rl(self, handler, parameter, source):
         """
@@ -390,11 +410,17 @@ class CLICommands:
         """
         handler.push("Logics:\n")
         for logic in sorted(self.sh.return_logics()):
+            data = []
+            lo = self.sh.return_logic(logic)
             nt = self.sh.scheduler.return_next(logic)
+            if lo.enabled == False:
+                data.append("disabled")
             if nt is not None:
-                handler.push("{0} (scheduled for {1})\n".format(logic, nt.strftime('%Y-%m-%d %H:%M:%S%z')))
-            else:
-                handler.push("{0}\n".format(logic))
+                data.append("scheduled for {0}".format(nt.strftime('%Y-%m-%d %H:%M:%S%z')))
+            handler.push("{0}".format(logic))
+            if len(data):
+                handler.push(" ({0})".format(", ".join(data)))
+            handler.push("\n")
 
     # noinspection PyUnusedLocal,PyMethodMayBeStatic
     def _cli_lt(self, handler, parameter, source):

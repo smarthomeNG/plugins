@@ -359,13 +359,21 @@ class websockethandler(lib.connection.Stream):
             self.logger.debug("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))
             self.json_send({'cmd': 'pong'})
         elif command == 'logic':
-            if 'name' not in data or 'val' not in data:
+            if 'name' not in data:
                 return
             name = data['name']
-            value = data['val']
             if name in self.logics:
-                self.logger.info("Client {0} triggerd logic {1} with '{2}'".format(self.addr, name, value))
-                self.logics[name].trigger(by='Visu', value=value, source=self.addr)
+                if 'val' in data:
+                    value = data['val']
+                    self.logger.info("Client {0} triggerd logic {1} with '{2}'".format(self.addr, name, value))
+                    self.logics[name].trigger(by='Visu', value=value, source=self.addr)
+                if 'enabled' in data:
+                    if data['enabled']:
+                        self.logger.info("Client {0} enabled logic {1}".format(self.addr, name))
+                        self.logics[name].enable()
+                    else:
+                        self.logger.info("Client {0} disabled logic {1}".format(self.addr, name))
+                        self.logics[name].disable()
             else:
 #                self.logger.warning("VISU: Defined logics {0}".format(self.logics))
                 self.logger.warning("Client {0} requested invalid logic: {1}".format(self.addr, name))
