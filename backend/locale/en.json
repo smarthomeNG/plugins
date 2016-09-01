@@ -107,8 +107,6 @@
 	"Logging": "Logging",
 	"Passwort anzeigen": "Show Password",
 	"SmartHomeNG Version": "SmartHomeNG Version",
-	"Deaktivieren": "Disable",
-	"Aktivieren": "Enable",
 
 	"_items": {
 		"path": "Pfad",
@@ -155,7 +153,9 @@
 		"Passwort-Hash erzeugen": "Create Password Hash",
 		"Englisch": "English",
 		"Deutsch": "Deutsch",
-		"Französisch": "French"
+		"Französisch": "French",
+		"Deaktivieren": "Disable",
+		"Aktivieren": "Enable"
 	},
 	
 	"_menu": {

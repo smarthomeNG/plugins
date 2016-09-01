@@ -108,8 +108,6 @@
 	"Logging": "Journalisation",
 	"Passwort anzeigen": "Afficher mot de passe",
 	"SmartHomeNG Version": "Version de SmartHomeNG",
-	"Deaktivieren": "Désactiver",
-	"Aktivieren": "Activer",
 
 	"_items": {
 		"path": "Chemin",
@@ -155,7 +153,9 @@
 		"Passwort-Hash erzeugen": "Mot de passe créer hachage",
 		"Englisch": "Anglais",
 		"Deutsch": "Allemand",
-		"Französisch": "Français"
+		"Französisch": "Français",
+		"Deaktivieren": "Désactiver",
+		"Aktivieren": "Activer"
 	},
 
 	"_menu": {

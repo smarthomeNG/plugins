@@ -10,6 +10,7 @@
 		<table class="table table-striped table-hover">
 			<thead>
 				<tr>
+					<th style="width: 30px;"></th>
 					<th>{{ _('Logik') }}</th>
 					<th>{{ _('nächste Ausführung') }}</th>
 					<th>{{ _('Dateiname') }}</th>
@@ -23,7 +24,8 @@
 					{% for logic in smarthome.return_logics()|sort %}
 						{% if is_userlogic(smarthome, logic) %}
 						<tr>
-							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data"> 
+							<td><span style="color: {% if not smarthome.return_logic(logic).enabled %}red{% else %}green{% endif %};" class="fa {% if not smarthome.return_logic(logic).enabled %}fa-times-circle{% else %}fa-check-circle{% endif %}"></span></td>
+							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
 							<td><input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic }}" type="text"></td>
 							{% if smarthome.scheduler.return_next(logic) %}
 								<td>{% if not smarthome.return_logic(logic).enabled %}<s>{% endif %}{{ smarthome.scheduler.return_next(logic).strftime('%Y-%m-%d %H:%M:%S%z') }}{% if not smarthome.return_logic(logic).enabled %}</s>{% endif %}</td>
@@ -44,11 +46,12 @@
 						{% endif %}
 					{% endfor %}
 
-					<tr><th colspan="4">{{ _('Systemlogiken') }}</th><tr>
+					<tr><th colspan="5">{{ _('Systemlogiken') }}</th><tr>
 					{% for logic in smarthome.return_logics()|sort %}
 						{% if not is_userlogic(smarthome, logic) %}
 						<tr>
-							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data"> 
+							<td><span style="color: {% if not smarthome.return_logic(logic).enabled %}red{% else %}green{% endif %};" class="fa {% if not smarthome.return_logic(logic).enabled %}fa-times-circle{% else %}fa-check-circle{% endif %}"></span></td>
+							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
 							<td><input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic }}" type="text"></td>
 							{% if smarthome.scheduler.return_next(logic) %}
 								<td>{{ smarthome.scheduler.return_next(logic).strftime('%Y-%m-%d %H:%M:%S%z') }}</td>
