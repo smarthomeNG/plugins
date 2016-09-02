@@ -86,7 +86,7 @@ class Sml(SmartPlugin):
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'sml_obis'):
             obis = self.get_iattr_value(item.conf, 'sml_obis')
-            prop = self.get_iattr_value(item.conf, 'sml_prop') if self.has_iattr_value(item.conf, 'sml_prop') else 'valueReal'
+            prop = self.get_iattr_value(item.conf, 'sml_prop') if self.has_iattr(item.conf, 'sml_prop') else 'valueReal'
             if obis not in self._items:
                 self._items[obis] = {}
             if prop not in self._items[obis]:
