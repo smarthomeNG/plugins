@@ -514,11 +514,13 @@ class Backend:
                            log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
-    def logics_view_html(self, file_path):
+    def logics_view_html(self, file_path, logic):
         """
         returns the smarthomeNG logfile as view
         """
         self.find_visu_plugin()
+
+        mylogic = self._sh.return_logic(logic)
 
         fobj = open(file_path)
         file_lines = []
@@ -526,7 +528,7 @@ class Backend:
             file_lines.append(self.html_escape(line))
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
-        return tmpl.render(smarthome=self._sh, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin is not None))
+        return tmpl.render(smarthome=self._sh, logic=mylogic, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def items_html(self):

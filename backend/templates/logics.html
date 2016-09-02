@@ -39,7 +39,7 @@
 							<td {% if smarthome.return_logic(logic).watch_item|length > 0 %}onClick="$('#{{ logic }}_additional').toggle();" style="cursor: pointer;"{% endif %}>
 								{% if smarthome.return_logic(logic).watch_item|length == 0 %}-{% else %}{% if not smarthome.return_logic(logic).enabled %}<span style="color:#bbb;">{% endif %}{{ smarthome.return_logic(logic).watch_item|length}}{% if not smarthome.return_logic(logic).enabled %}</span>{% endif %} <span class="fa fa-arrow-circle-down" {% if not smarthome.return_logic(logic).enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
 							</td>
-							<td><a href="/logics_view.html?file_path={{ smarthome.return_logic(logic).filename }}">{{ get_basename(smarthome.return_logic(logic).filename) }}</a></th>
+							<td><a href="/logics_view.html?file_path={{ smarthome.return_logic(logic).filename }}&logic={{ logic }}">{{ get_basename(smarthome.return_logic(logic).filename) }}</a></th>
 							{% if updates %}
 								<td>
 								<input {% if not smarthome.return_logic(logic).enabled %}disabled="true"{% endif %} name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs">
