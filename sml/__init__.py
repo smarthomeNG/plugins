@@ -94,7 +94,6 @@ class Sml(SmartPlugin):
             self._items[obis][prop].append(item)
             self.logger.debug('attach {} {} {}'.format(item.id(), obis, prop))
             return self.update_item
-        self.logger.debug('XXX not registering {}'.format(self.get_info()))
         return None
 
     def parse_logic(self, logic):
