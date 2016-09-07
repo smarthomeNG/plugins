@@ -45,6 +45,14 @@ Blockly.Blocks['sh_trigger_item'] = {
         .appendField("Bei Änderung von");
     this.appendStatementInput('DO')
         .appendField('starte');
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldCheckbox("TRUE"), "ACTIVE")
+        .appendField(new Blockly.FieldTextInput("Kommentar"), "COMMENT");
+    this.appendDummyInput()
+        .appendField("als Logik")
+        .appendField(new Blockly.FieldTextInput("trigger_id"), "NAME")
+        .appendField("speichern");
+        
     this.setPreviousStatement(false);
     this.setNextStatement(false);
     this.setTooltip('Block wird ausgeführt, sobald sich der Wert des Triggers ändert.');
@@ -60,8 +68,9 @@ Blockly.Python['sh_trigger_item'] = function(block)
   var branch = Blockly.Python.statementToCode(block, 'DO') ;
   //  var branch = Blockly.Python.statementToCode(block, 'DO') || '  pass\n';
   var code = '#?#' + triggerid + ':watchitem = ' + itemid + '\n';
+  code += '"""\n' + text_comment + '\n"""\n';
   code += "if logic.name == 'blockly_runner_" + triggerid + "' :\n";
-  code += "  logger.info('ITEM TRIGGER id: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
+  //code += "  logger.info('ITEM TRIGGER id: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
   code += branch;
   return code + "\n\n";
 };
@@ -105,9 +114,9 @@ Blockly.Python['sh_trigger_cycle'] = function(block) {
   var checkbox_active = block.getFieldValue('ACTIVE') == 'TRUE';
   var text_comment = block.getFieldValue('COMMENT');
   var code = '#?#' + id + ':cycle = ' + cycle + '\n';
-  code += '"""\n' + text_comment + '\n"""\n'   
+  code += '"""\n' + text_comment + '\n"""\n';
   code += "if logic.name == 'blockly_runner_" + id + "' and " + checkbox_active + ":\n";
-  code += "  logger.info('CYCLE TRIGGER by: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
+  //code += "  logger.info('CYCLE TRIGGER by: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
   code += branch;
   return code + "\n\n";
 };
@@ -130,6 +139,13 @@ Blockly.Blocks['sh_trigger_sun'] = {
         .appendField(new Blockly.FieldDropdown( [['Aufgang', 'sunrise'], ['Untergang', 'sunset']] ), 'SUN');
     this.appendStatementInput('DO')
         .appendField('starte');
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldCheckbox("TRUE"), "ACTIVE")
+        .appendField(new Blockly.FieldTextInput("Kommentar"), "COMMENT");
+    this.appendDummyInput()
+        .appendField("als Logik")
+        .appendField(new Blockly.FieldTextInput("trigger_id"), "NAME")
+        .appendField("speichern");
     this.setPreviousStatement(false);
     this.setNextStatement(false);
     this.setTooltip('Block wird vor/nach Sonnenaufgang/Sonnenuntergang ausgeführt.');
@@ -172,6 +188,13 @@ Blockly.Blocks['sh_trigger_daily'] = {
         .appendField('Uhr');
     this.appendStatementInput('DO')
         .appendField('starte');
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldCheckbox("TRUE"), "ACTIVE")
+        .appendField(new Blockly.FieldTextInput("Kommentar"), "COMMENT");
+    this.appendDummyInput()
+        .appendField("als Logik")
+        .appendField(new Blockly.FieldTextInput("trigger_id"), "NAME")
+        .appendField("speichern");
     this.setPreviousStatement(false);
     this.setNextStatement(false);
     this.setTooltip('Block wird täglich zur gegebenen Stunde ausgeführt.');
@@ -187,8 +210,9 @@ Blockly.Python['sh_trigger_daily'] = function(block)
   var branch = Blockly.Python.statementToCode(block, 'DO') ;
   //  var branch = Blockly.Python.statementToCode(block, 'DO') || '  pass\n';
   var code = '#?#' + id + ':crontab = ' + mm + ' ' + hh + ' * * = ' + id + '\n';
+  code += '"""\n' + text_comment + '\n"""\n';
   code += "if logic.name == 'blockly_runner_" + id + "' :\n";
-  code += "  logger.info('CRONTAB TRIGGER by: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
+  //code += "  logger.info('CRONTAB TRIGGER by: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
   code += branch;
   return code;
 };
