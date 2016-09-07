@@ -9,6 +9,20 @@ var Code = {};
  */
 Code.workspace = null;
 
+/**
+ * List of tab names.
+ * @private
+ */
+Code.TABS_ = ['blocks', 'python'];
+
+Code.selected = 'blocks';
+
+
+/**
+ *  Init on window load
+ * */
+window.addEventListener('load', Code.init);
+
 
 /**
  * Restore code blocks from file on backend server
@@ -16,31 +30,33 @@ Code.workspace = null;
  */
 Code.loadBlocks = function() {
   var request = $.ajax({'url': '/logics_blockly_load', dataType: 'text'});
+  // we get the XML representation of all the blockly logics from the backend
   request.done(function(response)
   {
     var xml = Blockly.Xml.textToDom(response);
-    //var workspace = Blockly.getMainWorkspace();
     Blockly.Xml.domToWorkspace(xml, Code.workspace);
+    Code.workspace.clear();
+    Code.renderContent()
   });
-  request.fail(function(jqXHR, txtStat) {alert('Request failed: ' + txtStat);});
-  Code.renderContent()
+  request.fail(function(jqXHR, txtStat) 
+  {alert('Request failed: ' + txtStat);});
 };
 
 
 /**
- * Load blocks saved on App Engine Storage or in session/local storage.
- * @param {string} defaultXml Text representation of default blocks.
+ * Populate the Python pane with content generated from the blocks, when selected.
  */
-Code.initBlocks = function(defaultXml) {
- if (defaultXml) {
-   // Load the editor with default starting blocks.
-   var xml = Blockly.Xml.textToDom(defaultXml);
-   Blockly.Xml.domToWorkspace(xml, Code.workspace);
- } else {
-   // Restore saved blocks in a separate thread so that subsequent
-   // initialization is not affected from a failed load.
-   window.setTimeout(Code.loadBlocks, 0);
- }
+Code.renderContent = function() {
+	if (Code.selected == 'python') {
+		var content = document.getElementById('content_python');
+		pycode = Blockly.Python.workspaceToCode(Code.workspace);
+		content.textContent = pycode;
+		if (typeof prettyPrintOne == 'function') {
+		  pycode = content.innerHTML;
+		  pycode = prettyPrintOne(code, 'py');
+		  content.innerHTML = pycode;
+		}
+	}
 };
 
 
@@ -48,17 +64,17 @@ Code.initBlocks = function(defaultXml) {
  * Save XML and PYTHON code to file on backend server.
  */
 Code.saveBlocks = function() {
-  Code.workspace;
-  var xml = Blockly.Xml.workspaceToDom(Code.workspace);
-  var xmldata = Blockly.Xml.domToText(xml);
+  //Code.workspace;
   var pycode = Blockly.Python.workspaceToCode(Code.workspace);
+  var xmldom = Blockly.Xml.workspaceToDom(Code.workspace);
+  var xmltxt = Blockly.Xml.domToText(xmldom);
   $.ajax({  url: "/logics_blockly_save",
             type: "POST",
-            data: {xml: xmldata, py: pycode },
-            //success: function(response) {
+            data: {xml: xmltxt, py: pycode },
+            success: function(response) {
             //    alert(response +' ?');
             //    $("#test").html(response);
-            //}
+            }
         });
 };
 
@@ -67,14 +83,74 @@ Code.saveBlocks = function() {
  * Discard all blocks from the workspace.
  */
 Code.discardBlocks = function() {
-  var count = Code.workspace.getAllBlocks().length;
-  if (count < 2 ||
-      window.confirm(Blockly.Msg.DELETE_ALL_BLOCKS.replace('%1', count))) {
-    Code.workspace.clear();
-    Code.renderContent();
-  }
+	/**
+	var count = Code.workspace.getAllBlocks().length;
+	if (count < 2 ||
+	  	window.confirm(Blockly.Msg.DELETE_ALL_BLOCKS.replace('%1', count))) **/ {
+		Code.workspace.clear();
+		Code.renderContent(); // ?
+	}
 };
 
+
+/**
+ * Initialize Blockly.  Called on page load.
+ */
+Code.init = function() {
+
+	var container = document.getElementById('content_area');
+	var onresize = function(e) {
+		var bBox = Code.getBBox_(container);
+		for (var i = 0; i < Code.TABS_.length; i++) {
+			var el = document.getElementById('content_' + Code.TABS_[i]);
+			el.style.top = bBox.y + 'px';
+			el.style.left = bBox.x + 'px';
+			// Height and width need to be set, read back, then set again to
+			// compensate for scrollbars.
+			el.style.height = bBox.height + 'px';
+			el.style.height = (2 * bBox.height - el.offsetHeight) + 'px';
+			el.style.width = bBox.width + 'px';
+			el.style.width = (2 * bBox.width - el.offsetWidth) + 'px';
+		}
+		// Make the 'Blocks' tab line up with the toolbox.
+		if (Code.workspace && Code.workspace.toolbox_.width) {
+			document.getElementById('tab_blocks').style.minWidth =
+				(Code.workspace.toolbox_.width ) + 'px';
+				// Account for the 19 pixel margin and on each side.
+		}
+	};
+	window.addEventListener('resize', onresize, false);
+	
+	var toolboxtxt = document.getElementById('toolbox').outerHTML;
+	var toolboxXml = Blockly.Xml.textToDom(toolboxtxt);
+	
+	Code.workspace = Blockly.inject('content_blocks',
+	  {grid:
+	      {spacing: 25,
+	       length: 3,
+	       colour: '#ccc',
+	       snap: true},
+	   media: '../static/blockly/media/',
+	   //rtl: rtl,
+	   toolbox: toolboxXml,
+	   zoom:
+	       {controls: true,
+	        wheel: true}
+	  });
+	
+	window.setTimeout(Code.loadBlocks, 0);
+	
+	Code.tabClick(Code.selected);
+	
+	Code.bindClick('tab_blocks', function(name_) {return function() {Code.tabClick(name_);};}('blocks'));
+	Code.bindClick('tab_python', function(name_) {return function() {Code.tabClick(name_);};}('python'));
+	
+	onresize();
+	Blockly.svgResize(Code.workspace);
+	
+	// Lazy-load the syntax-highlighting.
+	window.setTimeout(Code.importPrettify, 1);
+};
 
 /**
  * Bind a function to a button's click event.
@@ -92,83 +168,30 @@ Code.bindClick = function(el, func) {
 
 
 /**
- * List of tab names.
- * @private
- */
-Code.TABS_ = ['blocks', 'python', 'xml'];
-
-Code.selected = 'blocks';
-
-/**
  * Switch the visible pane when a tab is clicked.
  * @param {string} clickedName Name of tab clicked.
  */
 Code.tabClick = function(clickedName) {
-  // If the XML tab was open, save and render the content.
-  if (document.getElementById('tab_xml').className == 'tabon') {
-    var xmlTextarea = document.getElementById('content_xml');
-    var xmlText = xmlTextarea.value;
-    var xmlDom = null;
-    try {
-      xmlDom = Blockly.Xml.textToDom(xmlText);
-    } catch (e) {
-      var q =
-          window.confirm(MSG['badXml'].replace('%1', e));
-      if (!q) {
-        // Leave the user on the XML tab.
-        return;
-      }
-    }
-    if (xmlDom) {
-      Code.workspace.clear();
-      Blockly.Xml.domToWorkspace(xmlDom, Code.workspace);
-    }
-  }
 
   if (document.getElementById('tab_blocks').className == 'tabon') {
     Code.workspace.setVisible(false);
   }
-  // Deselect all tabs and hide all panes.
-  for (var i = 0; i < Code.TABS_.length; i++) {
-    var name = Code.TABS_[i];
-    document.getElementById('tab_' + name).className = 'taboff';
-    document.getElementById('content_' + name).style.visibility = 'hidden';
-  }
 
-  // Select the active tab.
-  Code.selected = clickedName;
-  document.getElementById('tab_' + clickedName).className = 'tabon';
-  // Show the selected pane.
-  document.getElementById('content_' + clickedName).style.visibility =
-      'visible';
-  Code.renderContent();
   if (clickedName == 'blocks') {
+	document.getElementById('tab_python').className = 'taboff';
+	document.getElementById('tab_blocks').className = 'tabon';
+	document.getElementById('content_python').style.visibility = 'hidden';
+	document.getElementById('content_blocks').style.visibility = 'visible';
     Code.workspace.setVisible(true);
+  } else {
+	document.getElementById('tab_blocks').className = 'taboff';
+	document.getElementById('tab_python').className = 'tabon';
+	document.getElementById('content_blocks').style.visibility = 'hidden';
+	document.getElementById('content_python').style.visibility = 'visible';
   }
-  Blockly.svgResize(Code.workspace);
-};
 
-/**
- * Populate the currently selected pane with content generated from the blocks.
- */
-Code.renderContent = function() {
-  var content = document.getElementById('content_' + Code.selected);
-  // Initialize the pane.
-  if (content.id == 'content_xml') {
-    var xmlTextarea = document.getElementById('content_xml');
-    var xmlDom = Blockly.Xml.workspaceToDom(Code.workspace);
-    var xmlText = Blockly.Xml.domToPrettyText(xmlDom);
-    xmlTextarea.value = xmlText;
-    xmlTextarea.focus();
-  } else if (content.id == 'content_python') {
-    code = Blockly.Python.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.innerHTML;
-      code = prettyPrintOne(code, 'py');
-      content.innerHTML = code;
-    }
-  }
+  Code.renderContent();
+  Blockly.svgResize(Code.workspace);
 };
 
 
@@ -197,81 +220,3 @@ Code.getBBox_ = function(element) {
 };
 
 
-/**
- * Initialize Blockly.  Called on page load.
- */
-Code.init = function() {
-  //Code.initLanguage();
-
-  //var rtl = Code.isRtl();
-  var container = document.getElementById('content_area');
-  var onresize = function(e) {
-    var bBox = Code.getBBox_(container);
-    for (var i = 0; i < Code.TABS_.length; i++) {
-      var el = document.getElementById('content_' + Code.TABS_[i]);
-      el.style.top = bBox.y + 'px';
-      el.style.left = bBox.x + 'px';
-      // Height and width need to be set, read back, then set again to
-      // compensate for scrollbars.
-      el.style.height = bBox.height + 'px';
-      el.style.height = (2 * bBox.height - el.offsetHeight) + 'px';
-      el.style.width = bBox.width + 'px';
-      el.style.width = (2 * bBox.width - el.offsetWidth) + 'px';
-    }
-    // Make the 'Blocks' tab line up with the toolbox.
-    if (Code.workspace && Code.workspace.toolbox_.width) {
-      document.getElementById('tab_blocks').style.minWidth =
-          (Code.workspace.toolbox_.width ) + 'px';
-          // Account for the 19 pixel margin and on each side.
-    }
-  };
-  window.addEventListener('resize', onresize, false);
-
-  // Interpolate translated messages into toolbox.
-  //var toolboxText = document.getElementById('toolbox').outerHTML;
-  //toolboxText = toolboxText.replace(/{(\w+)}/g,
-  //    function(m, p1) {return MSG[p1]});
-  //var toolboxXml = Blockly.Xml.textToDom(toolboxText);
-
-  var toolboxXml = Blockly.Xml.textToDom(document.getElementById('toolbox').outerHTML);
-
-  Code.workspace = Blockly.inject('content_blocks',
-      {grid:
-          {spacing: 25,
-           length: 3,
-           colour: '#ccc',
-           snap: true},
-       media: '../static/blockly/media/',
-       //rtl: rtl,
-       toolbox: toolboxXml,
-       zoom:
-           {controls: true,
-            wheel: true}
-      });
-
-  // Add to reserved word list: Local variables in execution environment (runJS)
-  // and the infinite loop detection function.
-  //Blockly.JavaScript.addReservedWords('code,timeouts,checkTimeout');
-
-  Code.initBlocks('');
-
-  //if ('BlocklyStorage' in window) {
-  //  // Hook a save function onto unload.
-  //  BlocklyStorage.backupOnUnload(Code.workspace);
-  //}
-
-  Code.tabClick(Code.selected);
-
-  for (var i = 0; i < Code.TABS_.length; i++) {
-    var name = Code.TABS_[i];
-    Code.bindClick('tab_' + name,
-        function(name_) {return function() {Code.tabClick(name_);};}(name));
-  }
-  onresize();
-  Blockly.svgResize(Code.workspace);
-
-  // Lazy-load the syntax-highlighting.
-  window.setTimeout(Code.importPrettify, 1);
-};
-
-window.addEventListener('load', Code.init);
