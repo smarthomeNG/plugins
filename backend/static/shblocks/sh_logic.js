@@ -25,7 +25,7 @@ Blockly.Blocks['shlogic_by'] = {
 };
 Blockly.Python['shlogic_by'] = function(block) {
   // TODO: Assemble Python into code variable.
-  var code = '...';
+  var code = "trigger['by']";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
 };
@@ -46,7 +46,7 @@ Blockly.Blocks['shlogic_source'] = {
 };
 Blockly.Python['shlogic_source'] = function(block) {
   // TODO: Assemble Python into code variable.
-  var code = '...';
+  var code = "trigger['source']";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
 };
@@ -67,7 +67,7 @@ Blockly.Blocks['shlogic_dest'] = {
 };
 Blockly.Python['shlogic_dest'] = function(block) {
   // TODO: Assemble Python into code variable.
-  var code = '...';
+  var code = "trigger['dest']";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
 };
@@ -88,7 +88,7 @@ Blockly.Blocks['shlogic_value'] = {
 };
 Blockly.Python['shlogic_value'] = function(block) {
   // TODO: Assemble Python into code variable.
-  var code = '...';
+  var code = "trigger['value']";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
 };
