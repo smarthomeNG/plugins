@@ -36,6 +36,7 @@ import sys
 import threading
 import lib.config
 from lib.model.smartplugin import SmartPlugin
+from lib.logic import Logic
 
 #from jinja2 import Environment, FileSystemLoader
 
@@ -120,3 +121,35 @@ class BackendBlocklyLogics:
             "Backend: logics_html: SAVE XML blockly logic = {0}\n '{1}'".format(fn_xml, xml))
         with open(fn_xml, 'w') as fxml:
             fxml.write(xml)
+
+		code = self._pycode
+		bytecode = compile(code, '<string>', 'exec')
+		
+		s=[]
+		for name in self._sh.scheduler:
+		    if name.startswith('blockly_runner'):
+		        #logger.info('Blockly Logics: remove '+ name)
+		        s.append(name)
+		for name in s:
+		    self._sh.scheduler.remove(name)
+		
+		for line in code.splitlines():
+		    if line and line.startswith('#?#'):
+		        id, __, trigger = line[3:].partition(':')
+		        by, __, val = trigger.partition('=')
+		        by = by.strip()
+		        val = val.strip()
+		        #logger.info('Blockly Logics: {} => {} :: {}'.format(id, by, val))
+		        logic = Logic(sh, 'blockly_runner_' + id, {'bytecode' : bytecode,})
+		        if by == 'cycle':
+		            self._sh.scheduler.add('blockly_runner_' +id, logic, prio=prio, cron=None, cycle=val)
+		            #logger.info('Blockly Logics: cycles     => '+ val)
+		        elif by == 'crontab':
+		            self._sh.scheduler.add('blockly_runner_' +id, logic, prio=prio, cron=val, cycle=None)
+		            #logger.info('Blockly Logics: crontabs   => '+ val)
+		        elif by == 'watchitem':
+		            logic.watch_item = val
+		            item = self._sh.return_item(val)
+		            item.add_logic_trigger(logic)
+		            #logger.info('Blockly Logics: watchitems => '+ val)
+

@@ -67,9 +67,11 @@ Blockly.Python['sh_trigger_item'] = function(block)
   //var item = block.getFieldValue('TRIG_ITEM');
   var branch = Blockly.Python.statementToCode(block, 'DO') ;
   //  var branch = Blockly.Python.statementToCode(block, 'DO') || '  pass\n';
+  var checkbox_active = block.getFieldValue('ACTIVE') == 'TRUE';
+  var text_comment = block.getFieldValue('COMMENT');
   var code = '#?#' + triggerid + ':watchitem = ' + itemid + '\n';
   code += '"""\n' + text_comment + '\n"""\n';
-  code += "if logic.name == 'blockly_runner_" + triggerid + "' :\n";
+  code += "if logic.name == 'blockly_runner_" + id + "' and " + checkbox_active + ":\n";
   //code += "  logger.info('ITEM TRIGGER id: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
   code += branch;
   return code + "\n\n";
@@ -160,9 +162,11 @@ Blockly.Python['sh_trigger_sun'] = function(block)
   var plusminus = block.getFieldValue('PLUSMINUS');
   var sun       = block.getFieldValue('SUN');
   var branch = Blockly.Python.statementToCode(block, 'DO') ;
+  var checkbox_active = block.getFieldValue('ACTIVE') == 'TRUE';
+  var text_comment = block.getFieldValue('COMMENT');
   //var branch = Blockly.Python.statementToCode(block, 'DO') || '  pass\n';
   var code = '#?#' + id + ':crontab = ' + sun + plusminus + offset + ' = ' + id + '\n';
-  code += "if logic.name == 'blockly_runner_" + id + "' :\n";
+  code += "if logic.name == 'blockly_runner_" + id + "' and " + checkbox_active + ":\n";
   code += "  logger.info('SUN TRIGGER by: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
   code += branch;
   return code;
@@ -209,9 +213,11 @@ Blockly.Python['sh_trigger_daily'] = function(block)
   var mm = block.getFieldValue('MM');
   var branch = Blockly.Python.statementToCode(block, 'DO') ;
   //  var branch = Blockly.Python.statementToCode(block, 'DO') || '  pass\n';
+  var checkbox_active = block.getFieldValue('ACTIVE') == 'TRUE';
+  var text_comment = block.getFieldValue('COMMENT');
   var code = '#?#' + id + ':crontab = ' + mm + ' ' + hh + ' * * = ' + id + '\n';
   code += '"""\n' + text_comment + '\n"""\n';
-  code += "if logic.name == 'blockly_runner_" + id + "' :\n";
+  code += "if logic.name == 'blockly_runner_" + id + "' and " + checkbox_active + ":\n";
   //code += "  logger.info('CRONTAB TRIGGER by: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
   code += branch;
   return code;
