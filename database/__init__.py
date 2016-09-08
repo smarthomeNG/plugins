@@ -137,16 +137,20 @@ class Database(SmartPlugin):
             for item in db_items:
                 if item._item not in current_items:
                     self.logger.info("Database: deleting value entries for {}".format(item._item))
+                    self._fdb_lock.acquire()
                     self.session.query(self.ItemStore).filter(self.ItemStore._item == item._item).delete()
                     self.session.commit()
+                    self._fdb_lock.release()
         # Clear orphans from cache table
         db_items = self.session.query(self.ItemCache).group_by(self.ItemCache._item).all()
         if db_items:
             for item in db_items:
                 if item._item not in current_items:
                     self.logger.info("Database: deleting cache entries for {}".format(item._item))
+                    self._fdb_lock.acquire()
                     self.session.query(self.ItemCache).filter(self.ItemCache._item == item._item).delete()
                     self.session.commit()
+                    self._fdb_lock.release()
 
     def serialize(self, model):
         """Transforms a model into a dictionary which can be dumped to JSON."""
@@ -185,9 +189,11 @@ class Database(SmartPlugin):
         rename / move item including history and cache
         """
         self.logger.info("Database: renaming {0} to {1}".format(old, new))
+        self._fdb_lock.acquire()
         self.session.query(self.ItemStore).filter(self.ItemStore._item == old).update({self.ItemStore._item: new})
         self.session.query(self.ItemCache).filter(self.ItemCache._item == old).update({self.ItemCache._item: new})
         self.session.commit()
+        self._fdb_lock.release()
 
     def parse_item(self, item):
         if 'database' in item.conf:
@@ -261,7 +267,15 @@ class Database(SmartPlugin):
         if not self._fdb_lock.acquire(timeout=2):
             return
         # update cache with current value
-        itemForUpdate = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
+        try:
+            itemForUpdate = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
+        except:
+            self.logger.debug("Database: Error getting item to update from cache {}: {}".format(item.id(), e))
+        finally:
+            self._fdb_lock.release()
+
+        if not self._fdb_lock.acquire(timeout=2):
+            return
         if itemForUpdate is not None:
             try:
                 itemForUpdate._start = _end
@@ -270,7 +284,8 @@ class Database(SmartPlugin):
             except Exception as e:
                 self.logger.debug("Database: Error updating cache for item {}: {}".format(item.id(), e))
                 self.session.rollback()
-        self._fdb_lock.release()
+            finally:
+                self._fdb_lock.release()
 
     def _datetime(self, ts):
         return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
