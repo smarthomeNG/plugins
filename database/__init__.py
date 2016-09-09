@@ -339,7 +339,7 @@ class Database(SmartPlugin):
         if tlen == 1:
             _start, _dur, _avg, _on = tuples[0]
             insert = (_start, item.id(), _dur, _avg, _avg, _avg, _on)
-            newItem = self.ItemStore(_start=_start, _item=item.id(), _dur=_dur, _avg=_avg, _min=_avg, _max=_avg, _on=_on / _dur)
+            newItem = self.ItemStore(_start=_start, _item=item.id(), _dur=_dur, _avg=_avg, _min=_avg, _max=_avg, _on=_on)
         elif tlen > 1:
             _vals = []
             _dur = 0
