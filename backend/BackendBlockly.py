@@ -24,21 +24,21 @@
 
 import cherrypy
 import logging
-import platform
-import collections
-import datetime
-import pwd
-import os
-import json
-import subprocess
-import socket
-import sys
-import threading
-import lib.config
-from lib.model.smartplugin import SmartPlugin
+#import platform
+#import collections
+#import datetime
+#import pwd
+#import os
+#import json
+#import subprocess
+#import socket
+#import sys
+#import threading
+#import lib.config
+#from lib.model.smartplugin import SmartPlugin
 from lib.logic import Logic
 
-#from jinja2 import Environment, FileSystemLoader
+# from jinja2 import Environment, FileSystemLoader
 
 from .utils import *
 from cherrypy.lib.static import serve_file
@@ -124,7 +124,7 @@ class BackendBlocklyLogics:
         s = []
         for name in self._sh.scheduler:
             if name.startswith('blockly_runner'):
-                #logger.info('Blockly Logics: remove '+ name)
+                # logger.info('Blockly Logics: remove '+ name)
                 s.append(name)
         for name in s:
             self._sh.scheduler.remove(name)
@@ -135,19 +135,19 @@ class BackendBlocklyLogics:
                 by, __, val = trigger.partition('=')
                 by = by.strip()
                 val = val.strip()
-                #logger.info('Blockly Logics: {} => {} :: {}'.format(id, by, val))
-                logic = Logic(sh, 'blockly_runner_' + id,
+                # logger.info('Blockly Logics: {} => {} :: {}'.format(id, by, val))
+                logic = Logic(self._sh, 'blockly_runner_' + id,
                               {'bytecode': bytecode, })
                 if by == 'cycle':
                     self._sh.scheduler.add(
-                        'blockly_runner_' + id, logic, prio=prio, cron=None, cycle=val)
-                    #logger.info('Blockly Logics: cycles     => '+ val)
+                        'blockly_runner_' + id, logic, prio=3, cron=None, cycle=val)
+                    # logger.info('Blockly Logics: cycles     => '+ val)
                 elif by == 'crontab':
                     self._sh.scheduler.add(
-                        'blockly_runner_' + id, logic, prio=prio, cron=val, cycle=None)
-                    #logger.info('Blockly Logics: crontabs   => '+ val)
+                        'blockly_runner_' + id, logic, prio=3, cron=val, cycle=None)
+                    # logger.info('Blockly Logics: crontabs   => '+ val)
                 elif by == 'watchitem':
                     logic.watch_item = val
                     item = self._sh.return_item(val)
                     item.add_logic_trigger(logic)
-                    #logger.info('Blockly Logics: watchitems => '+ val)
+                    # logger.info('Blockly Logics: watchitems => '+ val)
