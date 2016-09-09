@@ -93,7 +93,7 @@
                     <td></td>
                     <td>{{ pack[0] }}</td>
                     <td>{% if pack[1] != pack[2] and pack[2] != "-" %}<span style="font-weight:bold; color: red;">{% else %}<span style="font-weight:bold; color: green;">{% endif %}{{ pack[1] }}<span></td>
-                    <td>{{ pack[2] }}</td>
+                    <td>{% if pack[2] == "-" %}<span style="font-weight:bold; color: red;">{% endif %}{{ pack[2] }}{% if pack[2] == "-" %}</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
             </tbody>
