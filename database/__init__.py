@@ -138,8 +138,12 @@ class Database(SmartPlugin):
                 if item._item not in current_items:
                     self.logger.info("Database: deleting value entries for {}".format(item._item))
                     self._fdb_lock.acquire()
-                    self.session.query(self.ItemStore).filter(self.ItemStore._item == item._item).delete()
-                    self.session.commit()
+                    try:
+                        self.session.query(self.ItemStore).filter(self.ItemStore._item == item._item).delete()
+                        self.session.commit()
+                    except:
+                        self.logger.error("Database: error while deleting orphans from num table")
+                        self.session.rollback()
                     self._fdb_lock.release()
         # Clear orphans from cache table
         db_items = self.session.query(self.ItemCache).group_by(self.ItemCache._item).all()
@@ -148,8 +152,12 @@ class Database(SmartPlugin):
                 if item._item not in current_items:
                     self.logger.info("Database: deleting cache entries for {}".format(item._item))
                     self._fdb_lock.acquire()
-                    self.session.query(self.ItemCache).filter(self.ItemCache._item == item._item).delete()
-                    self.session.commit()
+                    try:
+                        self.session.query(self.ItemCache).filter(self.ItemCache._item == item._item).delete()
+                        self.session.commit()
+                    except:
+                        self.logger.error("Database: error while deleting orphans from cache table")
+                        self.session.rollback()
                     self._fdb_lock.release()
 
     def serialize(self, model):
@@ -190,9 +198,13 @@ class Database(SmartPlugin):
         """
         self.logger.info("Database: renaming {0} to {1}".format(old, new))
         self._fdb_lock.acquire()
-        self.session.query(self.ItemStore).filter(self.ItemStore._item == old).update({self.ItemStore._item: new})
-        self.session.query(self.ItemCache).filter(self.ItemCache._item == old).update({self.ItemCache._item: new})
-        self.session.commit()
+        try:
+            self.session.query(self.ItemStore).filter(self.ItemStore._item == old).update({self.ItemStore._item: new})
+            self.session.query(self.ItemCache).filter(self.ItemCache._item == old).update({self.ItemCache._item: new})
+            self.session.commit()
+        except:
+            self.logger.error("Database: error while renaming item")
+            self.session.rollback()
         self._fdb_lock.release()
 
     def parse_item(self, item):
@@ -213,8 +225,14 @@ class Database(SmartPlugin):
                 last_change = self._timestamp(self._sh.now())
                 item._database_last = last_change
                 newItem = self.ItemCache(_item=item.id(), _start=last_change, _value=float(item()))
-                self.session.add(newItem)
-                self.session.commit()
+                self._fdb_lock.acquire()
+                try:
+                    self.session.add(newItem)
+                    self.session.commit()
+                except:
+                    self.logger.error("Database: error while deleting orphans from cache table")
+                    self.session.rollback()
+                self._fdb_lock.release()
             else:
                 self.logger.debug("Database: Loading last value for item {0} from cache".format(item.id()))
                 last_change = cache._start
@@ -269,7 +287,7 @@ class Database(SmartPlugin):
         # update cache with current value
         try:
             itemForUpdate = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
-        except:
+        except Exception as e:
             self.logger.debug("Database: Error getting item to update from cache {}: {}".format(item.id(), e))
         finally:
             self._fdb_lock.release()
@@ -318,32 +336,32 @@ class Database(SmartPlugin):
         tlen = len(tuples)
         self._buffer[item] = self._buffer[item][tlen:]
         item._database_last = self._timestamp(item.last_change())
+        if tlen == 1:
+            _start, _dur, _avg, _on = tuples[0]
+            insert = (_start, item.id(), _dur, _avg, _avg, _avg, _on)
+            newItem = self.ItemStore(_start=_start, _item=item.id(), _dur=_dur, _avg=_avg, _min=_avg, _max=_avg, _on=_on / _dur)
+        elif tlen > 1:
+            _vals = []
+            _dur = 0
+            _avg = 0.0
+            _on = 0.0
+            _start = tuples[0][0]
+            for __start, __dur, __avg, __on in tuples:
+                _vals.append(__avg)
+                _avg += __dur * __avg
+                _on += __dur * __on
+                _dur += __dur
+            insert = (_start, item.id(), _dur, _avg / _dur, min(_vals), max(_vals), _on / _dur)
+            newItem = self.ItemStore(_start=_start, _item=item.id(), _dur=_dur, _avg=_avg / _dur, _min=min(_vals), _max=max(_vals), _on=_on / _dur)
+        else:  # no tuples
+            return
         try:
-            if tlen == 1:
-                _start, _dur, _avg, _on = tuples[0]
-                insert = (_start, item.id(), _dur, _avg, _avg, _avg, _on)
-                newItem = self.ItemStore(_start=_start, _item=item.id(), _dur=_dur, _avg=_avg, _min=_avg, _max=_avg, _on=_on / _dur)
-            elif tlen > 1:
-                _vals = []
-                _dur = 0
-                _avg = 0.0
-                _on = 0.0
-                _start = tuples[0][0]
-                for __start, __dur, __avg, __on in tuples:
-                    _vals.append(__avg)
-                    _avg += __dur * __avg
-                    _on += __dur * __on
-                    _dur += __dur
-                insert = (_start, item.id(), _dur, _avg / _dur, min(_vals), max(_vals), _on / _dur)
-                newItem = self.ItemStore(_start=_start, _item=item.id(), _dur=_dur, _avg=_avg / _dur, _min=min(_vals), _max=max(_vals), _on=_on / _dur)
-            else:  # no tuples
-                return
             self.session.add(newItem)
             self.session.commit()
         except Exception as e:
             self.logger.warning("Database: problem updating {}: {}".format(item.id(), e))
-        finally:
-            self._fdb_lock.release()
+            self.session.rollback()
+        self._fdb_lock.release()
 
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
         init = not update
