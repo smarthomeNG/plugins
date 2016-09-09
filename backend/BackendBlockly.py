@@ -124,7 +124,6 @@ class BackendBlocklyLogics:
 
 		code = self._pycode
 		bytecode = compile(code, '<string>', 'exec')
-		
 		s=[]
 		for name in self._sh.scheduler:
 		    if name.startswith('blockly_runner'):
