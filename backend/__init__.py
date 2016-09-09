@@ -40,7 +40,7 @@ from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
 from jinja2 import Environment, FileSystemLoader
 
-from .BackendCore import Backend as BackendCore, translation_lang, translate
+from .BackendCore import Backend as BackendCore
 from .BackendBlockly import BackendBlocklyLogics
 from .utils import *
 
@@ -101,9 +101,9 @@ class BackendServer(SmartPlugin):
             self.logger.debug("BackendServer: Using local ip address '{0}'".format(ip))
         else:
             pass
-	#    if not self.is_ip(ip):
-	#         self.logger.error("BackendServer: Invalid value '"+str(ip)+"' configured for attribute ip in plugin.conf, using '"+str('0.0.0.0')+"' instead")
-	#         ip = '0.0.0.0'
+        #    if not self.is_ip(ip):
+        #         self.logger.error("BackendServer: Invalid value '"+str(ip)+"' configured for attribute ip in plugin.conf, using '"+str('0.0.0.0')+"' instead")
+        #         ip = '0.0.0.0'
         language = language.lower()
         if language != '':
             if not load_translation(language):
