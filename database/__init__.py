@@ -364,6 +364,7 @@ class Database(SmartPlugin):
         self._fdb_lock.release()
 
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
+        self.logger.debug("Database: Start series with '{0}' function".format(func))
         init = not update
         if sid is None:
             sid = item + '|' + func + '|' + start + '|' + end + '|' + str(count)
@@ -378,6 +379,7 @@ class Database(SmartPlugin):
         reply['params'] = {'update': True, 'item': item, 'func': func, 'start': iend, 'end': end, 'step': step, 'sid': sid}
         reply['update'] = self._sh.now() + datetime.timedelta(seconds=int(step / 1000))
         if not self._fdb_lock.acquire(timeout=2):
+            self.logger.error("Database: Unable to acquire database lock")
             return
         try:
             if not self.connected:
@@ -413,6 +415,7 @@ class Database(SmartPlugin):
                     .order_by(self.ItemStore._start.asc()) \
                     .all()
             else:
+                self.logger.error("Database: Function {0} not implemented".format(func))
                 raise NotImplementedError
         except Exception as e:
             self.logger.error("Database: Error {0}".format(e))
@@ -442,6 +445,7 @@ class Database(SmartPlugin):
                 items.append((iend, value))
         if items:
             reply['series'] = items
+        self.logger.debug("Database: End series with '{0}' function".format(func))
         return reply
 
     def _single(self, func, start, end='now', item=None):
