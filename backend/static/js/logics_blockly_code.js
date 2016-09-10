@@ -28,9 +28,10 @@ Code.loadBlocks = function() {
   // we get the XML representation of all the blockly logics from the backend
   request.done(function(response)
   {
+  	//alert('Request success: ' + response);
     var xml = Blockly.Xml.textToDom(response);
     Blockly.Xml.domToWorkspace(xml, Code.workspace);
-    Code.workspace.clear();
+    //Code.workspace.clear();
     Code.renderContent()
   });
   request.fail(function(jqXHR, txtStat) 
@@ -133,7 +134,8 @@ Code.init = function() {
 	        wheel: true}
 	  });
 	
-	window.setTimeout(Code.loadBlocks, 0);
+	//window.setTimeout(Code.loadBlocks, 0);
+	Code.loadBlocks();
 	
 	Code.tabClick(Code.selected);
 	

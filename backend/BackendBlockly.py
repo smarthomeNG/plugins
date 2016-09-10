@@ -148,6 +148,6 @@ class BackendBlocklyLogics:
                     # logger.info('Blockly Logics: crontabs   => '+ val)
                 elif by == 'watchitem':
                     logic.watch_item = val
-                    item = self._sh.return_item(val)
-                    item.add_logic_trigger(logic)
+                    # item = self._sh.return_item(val)
+                    # item.add_logic_trigger(logic)
                     # logger.info('Blockly Logics: watchitems => '+ val)

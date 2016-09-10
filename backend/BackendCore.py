@@ -29,6 +29,7 @@ import platform
 import collections
 import datetime
 import pwd
+import html
 import os
 import json
 import subprocess
