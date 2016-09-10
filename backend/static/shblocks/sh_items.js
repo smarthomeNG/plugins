@@ -55,6 +55,7 @@ Blockly.Python['sh_item_obj'] = function(block) {
   var code = 'sh.return_item("' + iPath + '")';
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_ATOMIC];
+  //return code;
 };
 
 
@@ -110,7 +111,8 @@ Blockly.Blocks['sh_item_get'] = {
 Blockly.Python['sh_item_get'] = function(block) {
     var itemobj = Blockly.Python.valueToCode(block, 'ITEMOBJECT', Blockly.Python.ORDER_ATOMIC) || 'item';
     var code = itemobj + '()';
-    return [code, Blockly.Python.ORDER_NONE];
+    //return [code, Blockly.Python.ORDER_NONE];
+    return code;
 };
 
 
@@ -140,7 +142,8 @@ Blockly.Python['sh_item_set'] = function(block) {
   // TODO: Assemble Python into code variable.
   //var code = '...';
   var code = itemobject + '(' + value + ')\n';
-  return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  //return [code, Blockly.Python.ORDER_FUNCTION_CALL];
+  return code;
 };
 
 

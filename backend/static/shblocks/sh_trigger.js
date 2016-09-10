@@ -65,8 +65,8 @@ Blockly.Python['sh_trigger_item'] = function(block)
   var itemcode = Blockly.Python.valueToCode(block, 'TRIG_ITEM', Blockly.Python.ORDER_ATOMIC);
   var itemid = itemcode.split('"')[1] 
   //var item = block.getFieldValue('TRIG_ITEM');
-  // var branch = Blockly.Python.statementToCode(block, 'DO') ;
-  var branch = Blockly.Python.statementToCode(block, 'DO') || '  pass\n';
+  var branch = Blockly.Python.statementToCode(block, 'DO') ;
+  //var branch = Blockly.Python.statementToCode(block, 'DO') || '  pass\n';
   var checkbox_active = (block.getFieldValue('ACTIVE') == 'TRUE') ? 'True' : 'False';
   var text_comment = block.getFieldValue('COMMENT');
   var code = '#?#' + triggerid + ':watchitem = ' + itemid + '\n';
