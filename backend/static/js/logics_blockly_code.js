@@ -18,11 +18,6 @@ Code.TABS_ = ['blocks', 'python'];
 Code.selected = 'blocks';
 
 
-/**
- *  Init on window load
- * */
-window.addEventListener('load', Code.init);
-
 
 /**
  * Restore code blocks from file on backend server
@@ -47,7 +42,7 @@ Code.loadBlocks = function() {
  * Populate the Python pane with content generated from the blocks, when selected.
  */
 Code.renderContent = function() {
-	if (Code.selected == 'python') {
+	//if (Code.selected == 'python') {
 		var content = document.getElementById('content_python');
 		pycode = Blockly.Python.workspaceToCode(Code.workspace);
 		content.textContent = pycode;
@@ -56,7 +51,7 @@ Code.renderContent = function() {
 		  pycode = prettyPrintOne(code, 'py');
 		  content.innerHTML = pycode;
 		}
-	}
+	//}
 };
 
 
@@ -219,4 +214,9 @@ Code.getBBox_ = function(element) {
   };
 };
 
+
+/**
+ *  Init on window load
+ * */
+window.addEventListener('load', Code.init);
 
