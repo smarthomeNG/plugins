@@ -383,8 +383,10 @@ class Database(SmartPlugin):
             return
         try:
             if not self.connected:
+                self._fdb_lock.release()
                 return
             if func == 'avg':
+                self.logger.debug("Database: Before eventual /0 query series with '{0}' function".format(func))
                 items = self.session.query(sqlfunc.min(self.ItemStore._start), sqlfunc.round(sqlfunc.sum(self.ItemStore._avg * self.ItemStore._dur) / sqlfunc.sum(self.ItemStore._dur), 2)) \
                     .filter(self.ItemStore._item == item) \
                     .filter(self.ItemStore._start + self.ItemStore._dur >= istart) \
@@ -392,6 +394,7 @@ class Database(SmartPlugin):
                     .group_by(cast(self.ItemStore._start / 864000, Integer)) \
                     .order_by(self.ItemStore._start.asc()) \
                     .all()
+                self.logger.debug("Database: After eventual /0 query series with '{0}' function".format(func))
             elif func == 'min':
                 items = self.session.query(sqlfunc.min(self.ItemStore._start), sqlfunc.min(self.ItemStore._min)) \
                     .filter(self.ItemStore._item == item) \
