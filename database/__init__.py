@@ -42,7 +42,7 @@ from sqlalchemy.pool import StaticPool
 
 class Database(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.2"
+    PLUGIN_VERSION = "1.1.3"
     _buffer_time = 60 * 1000
 
     # Declare classes to store data
@@ -219,7 +219,7 @@ class Database(SmartPlugin):
             # If item exists in cache load last value, if not create it
             start = time.time()  # REMOVE
             cache = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
-            self.logger.debug('1 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
+            # self.logger.debug('1 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
             if cache is None:
                 self.logger.debug("Database: Items {0} does not exist in cache, creating it".format(item.id()))
                 last_change = self._timestamp(self._sh.now())
@@ -239,10 +239,10 @@ class Database(SmartPlugin):
                 value = cache._value
                 item._database_last = last_change
                 last_change = self._datetime(last_change)
-                self.logger.debug('2 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
+                # self.logger.debug('2 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
                 storedItem = self.session.query(self.ItemStore).filter_by(_item=item.id()).order_by(self.ItemStore._start.desc()).first()
 
-                self.logger.debug('3 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
+                # self.logger.debug('3 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
                 if storedItem is not None:
                     prev_change = self._datetime(storedItem._start)
                     item.set(value, 'Database', prev_change=prev_change, last_change=last_change)
@@ -250,7 +250,7 @@ class Database(SmartPlugin):
             item.series = functools.partial(self._series, item=item.id())
             item.db = functools.partial(self._single, item=item.id())
             end = time.time()  # REMOVE
-            self.logger.debug('Execution time: ' + str((end - start) * 1000) + ' milliseconds')  # REMOVE
+            # self.logger.debug('Execution time: ' + str((end - start) * 1000) + ' milliseconds')  # REMOVE
             return self.update_item
         else:
             return None
@@ -283,16 +283,19 @@ class Database(SmartPlugin):
         if _end - item._database_last > self._buffer_time:
             self._insert(item)
         if not self._fdb_lock.acquire(timeout=2):
+            self.logger.error("Database: Unable to acquire database lock")
             return
         # update cache with current value
         try:
             itemForUpdate = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
         except Exception as e:
             self.logger.debug("Database: Error getting item to update from cache {}: {}".format(item.id(), e))
+            itemForUpdate = None
         finally:
             self._fdb_lock.release()
 
         if not self._fdb_lock.acquire(timeout=2):
+            self.logger.error("Database: Unable to acquire database lock")
             return
         if itemForUpdate is not None:
             try:
@@ -302,8 +305,7 @@ class Database(SmartPlugin):
             except Exception as e:
                 self.logger.debug("Database: Error updating cache for item {}: {}".format(item.id(), e))
                 self.session.rollback()
-            finally:
-                self._fdb_lock.release()
+        self._fdb_lock.release()
 
     def _datetime(self, ts):
         return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
