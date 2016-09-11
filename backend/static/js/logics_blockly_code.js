@@ -18,11 +18,6 @@ Code.TABS_ = ['blocks', 'python'];
 Code.selected = 'blocks';
 
 
-/**
- *  Init on window load
- * */
-window.addEventListener('load', Code.init);
-
 
 /**
  * Restore code blocks from file on backend server
@@ -33,9 +28,10 @@ Code.loadBlocks = function() {
   // we get the XML representation of all the blockly logics from the backend
   request.done(function(response)
   {
+  	//alert('Request success: ' + response);
     var xml = Blockly.Xml.textToDom(response);
     Blockly.Xml.domToWorkspace(xml, Code.workspace);
-    Code.workspace.clear();
+    //Code.workspace.clear();
     Code.renderContent()
   });
   request.fail(function(jqXHR, txtStat) 
@@ -47,16 +43,16 @@ Code.loadBlocks = function() {
  * Populate the Python pane with content generated from the blocks, when selected.
  */
 Code.renderContent = function() {
-	if (Code.selected == 'python') {
+	//if (Code.selected == 'python') {
 		var content = document.getElementById('content_python');
 		pycode = Blockly.Python.workspaceToCode(Code.workspace);
 		content.textContent = pycode;
 		if (typeof prettyPrintOne == 'function') {
 		  pycode = content.innerHTML;
-		  pycode = prettyPrintOne(code, 'py');
+		  pycode = prettyPrintOne(pycode, 'py', true);
 		  content.innerHTML = pycode;
 		}
-	}
+	//}
 };
 
 
@@ -138,7 +134,8 @@ Code.init = function() {
 	        wheel: true}
 	  });
 	
-	window.setTimeout(Code.loadBlocks, 0);
+	//window.setTimeout(Code.loadBlocks, 0);
+	Code.loadBlocks();
 	
 	Code.tabClick(Code.selected);
 	
@@ -149,6 +146,7 @@ Code.init = function() {
 	Blockly.svgResize(Code.workspace);
 	
 	// Lazy-load the syntax-highlighting.
+	Code.importPrettify();
 	window.setTimeout(Code.importPrettify, 1);
 };
 
@@ -194,6 +192,21 @@ Code.tabClick = function(clickedName) {
   Blockly.svgResize(Code.workspace);
 };
 
+/**
+ * Load the Prettify CSS and JavaScript.
+ */
+Code.importPrettify = function() {
+  //<link rel="stylesheet" href="../prettify.css">
+  //<script src="../prettify.js"></script>
+  var link = document.createElement('link');
+  link.setAttribute('rel', 'stylesheet');
+  link.setAttribute('href', '../static/blockly/demos/prettify.css');
+  document.head.appendChild(link);
+  var script = document.createElement('script');
+  script.setAttribute('src', '../static/blockly/demos/prettify.js');
+  document.head.appendChild(script);
+};
+
 
 /**
  * Compute the absolute coordinates and dimensions of an HTML element.
@@ -219,4 +232,9 @@ Code.getBBox_ = function(element) {
   };
 };
 
+
+/**
+ *  Init on window load
+ * */
+window.addEventListener('load', Code.init);
 

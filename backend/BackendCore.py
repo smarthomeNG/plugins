@@ -41,6 +41,7 @@ from lib.model.smartplugin import SmartPlugin
 
 #from jinja2 import Environment, FileSystemLoader
 
+#from .utils import translation_lang, load_translation, translate, html_escape
 from .utils import *
 
 
@@ -52,7 +53,7 @@ class Backend:
         """
         if self.visu_plugin is not None:
             return
-            
+
         for p in self._sh._plugins:
             if p.__class__.__name__ == "WebSocket":
                 self.visu_plugin = p
@@ -72,14 +73,14 @@ class Backend:
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render( visu_plugin=(self.visu_plugin is not None))
+        return tmpl.render(visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def main_html(self):
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render( visu_plugin=(self.visu_plugin is not None))
+        return tmpl.render(visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def reload_translation_html(self, lang=''):
@@ -97,12 +98,12 @@ class Backend:
         vers = platform.version()
         node = platform.node()
         arch = platform.machine()
-        user = pwd.getpwuid(os.geteuid()).pw_name  #os.getlogin()
+        user = pwd.getpwuid(os.geteuid()).pw_name  # os.getlogin()
         node = platform.node()
         python_packages = self.getpackages()
 
         ip = self._bs.get_local_ip_address()
-        
+
         space = os.statvfs(self._sh_dir)
         freespace = space.f_frsize * space.f_bavail/1024/1024
 
@@ -122,7 +123,7 @@ class Backend:
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
-        return tmpl.render( now=now, system=system, sh_vers=self._sh.env.core.version(), vers=vers, node=node, arch=arch, user=user,
+        return tmpl.render(now=now, system=system, sh_vers=self._sh.env.core.version(), vers=vers, node=node, arch=arch, user=user,
                                 freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
                                 ip=ip, python_packages=python_packages, visu_plugin=(self.visu_plugin is not None))
 
@@ -235,9 +236,9 @@ class Backend:
         """
         returns the smarthomeNG sqlite database as download
         """
-        self._sh.sql.dump('%s/var/db/smarthomedb.dump'%self._sh_dir)
+        self._sh.sql.dump('%s/var/db/smarthomedb.dump' % self._sh_dir)
         mime = 'application/octet-stream'
-        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump"%self._sh_dir, mime, "%s/var/db/"%self._sh_dir)
+        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump" % self._sh_dir, mime, "%s/var/db/" % self._sh_dir)
 
     @cherrypy.expose
     def log_dump_html(self):
@@ -308,14 +309,14 @@ class Backend:
         self.find_visu_plugin()
         
         tmpl = self.env.get_template('items.html')
-        return tmpl.render( smarthome = self._sh, items=sorted(self._sh.return_items(),key=lambda k: str.lower(k['_path']), reverse=False), visu_plugin=(self.visu_plugin is not None))
+        return tmpl.render(smarthome=self._sh, items=sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False), visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def items_json_html(self):
         """
         returns a list of items as json structure
         """
-        items_sorted = sorted(self._sh.return_items(),key=lambda k: str.lower(k['_path']), reverse=False)
+        items_sorted = sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         parent_items_sorted = []
         last_parent_item = None
         for item in items_sorted:
@@ -332,7 +333,7 @@ class Backend:
         """
         returns a list of items as json structure
         """
-        cache_path = "%s/var/cache/"%self._sh_dir
+        cache_path = "%s/var/cache/" % self._sh_dir
         from os import listdir
         from os.path import isfile, join
         onlyfiles = [f for f in listdir(cache_path) if isfile(join(cache_path, f))]
@@ -673,9 +674,9 @@ class Backend:
                     clients.append(client)
 
             if self.visu_plugin_build > '2':
-#                self.logger.warning("BackendServer: Language '{0}' not found, using standard language instead".format(language))
-#                yield client.addr, client.sw, client.swversion, client.hostname, client.browser, client.browserversion
-#                for c, sw, swv, ch in self.visu_plugin.return_clients():
+                # self.logger.warning("BackendServer: Language '{0}' not found, using standard language instead".format(language))
+                # yield client.addr, client.sw, client.swversion, client.hostname, client.browser, client.browserversion
+                # for c, sw, swv, ch in self.visu_plugin.return_clients():
                 for clientinfo in self.visu_plugin.return_clients():
                     c = clientinfo.get('addr', '')
                     client = dict()
