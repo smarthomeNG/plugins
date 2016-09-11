@@ -211,7 +211,9 @@ class Backend:
                 break
 
         tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket, sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=translation_lang, develop=self.developer_mode, knxdeamon=knxdeamon)
+        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket,
+                           sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=translation_lang,
+                           develop=self.developer_mode, knxdeamon=knxdeamon)
 
     @cherrypy.expose
     def disclosure_html(self):

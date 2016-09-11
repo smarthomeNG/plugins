@@ -23,19 +23,7 @@
 #########################################################################
 
 import cherrypy
-import logging
-#import platform
-#import collections
-#import datetime
-#import pwd
-#import os
-#import json
-#import subprocess
-#import socket
-#import sys
-#import threading
-#import lib.config
-#from lib.model.smartplugin import SmartPlugin
+from .utils import *
 from lib.logic import Logic
 
 # from jinja2 import Environment, FileSystemLoader
@@ -54,7 +42,7 @@ class BackendBlocklyLogics:
 
         tmpl = self.env.get_template('logics_blockly.html')
         return tmpl.render(smarthome=self._sh,
-                           dyn_sh_toolbox=self._DynToolbox(self._sh),
+                           dyn_sh_toolbox=self._DynToolbox(self._sh), lang=translation_lang,
                            visu_plugin=(self.visu_plugin is not None))
 
     def _DynToolbox(self, sh):
