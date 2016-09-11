@@ -22,24 +22,9 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-#import cherrypy
 import logging
-#import platform
-#import collections
-#import datetime
-#import pwd
+import json
 import os
-#import json
-import html
-#import subprocess
-#import socket
-#import sys
-#import threading
-#import lib.config
-#from lib.model.smartplugin import SmartPlugin
-
-#from jinja2 import Environment, FileSystemLoader
-
 
 # Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
 # Methoden einer Klasse zum laufen bekam

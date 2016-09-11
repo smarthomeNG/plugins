@@ -24,26 +24,18 @@
 #########################################################################
 
 import cherrypy
-import logging
 import platform
 import collections
 import datetime
 import pwd
 import html
-import os
-import json
 import subprocess
 import socket
 import sys
 import threading
 import lib.config
 from lib.model.smartplugin import SmartPlugin
-
-#from jinja2 import Environment, FileSystemLoader
-
-#from .utils import translation_lang, load_translation, translate, html_escape
 from .utils import *
-
 
 class Backend:
 
