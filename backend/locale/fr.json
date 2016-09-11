@@ -156,7 +156,12 @@
 		"Deutsch": "Allemand",
 		"Französisch": "Français",
 		"Deaktivieren": "Désactiver",
-		"Aktivieren": "Activer"
+		"Aktivieren": "Activer",
+		"Leeren" : "Clairer",
+		"Schließen": "Fermer",
+		"Änderungen verwerfen" : "Undo Changes",
+		"Blöcke speichern" : "Save Blocks",
+		"Beenden" : "Arrêter"
 	},
 
 	"_menu": {

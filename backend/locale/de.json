@@ -155,7 +155,12 @@
 		"Deutsch": "Deutsch",
 		"Französisch": "French",
 		"Deaktivieren": "Deaktivieren",
-		"Aktivieren": "Aktivieren"
+		"Aktivieren": "Aktivieren",
+		"Leeren" : "Leeren",
+		"Schließen": "Schließen",
+		"Änderungen verwerfen" : "Änderungen verwerfen",
+		"Blöcke speichern" : "Blöcke speichern",
+		"Beenden" : "Beenden"
 	},
 
 	"_menu": {

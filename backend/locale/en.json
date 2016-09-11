@@ -156,7 +156,12 @@
 		"Deutsch": "Deutsch",
 		"Französisch": "French",
 		"Deaktivieren": "Disable",
-		"Aktivieren": "Enable"
+		"Aktivieren": "Enable",
+		"Leeren" : "Clear",
+		"Schließen": "Close",
+		"Änderungen verwerfen" : "Undo Changes",
+		"Blöcke speichern" : "Save Blocks",
+		"Beenden" : "Stop"
 	},
 	
 	"_menu": {
