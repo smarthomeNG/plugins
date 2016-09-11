@@ -157,11 +157,11 @@
 		"Französisch": "Français",
 		"Deaktivieren": "Désactiver",
 		"Aktivieren": "Activer",
-		"Leeren" : "Clairer",
+		"Leeren" : "Vider",
 		"Schließen": "Fermer",
-		"Änderungen verwerfen" : "Undo Changes",
-		"Blöcke speichern" : "Save Blocks",
-		"Beenden" : "Arrêter"
+		"Änderungen verwerfen" : "Annuler modifications",
+		"Blöcke speichern" : "Enregistrer les blocs",
+		"Beenden" : "Terminer"
 	},
 
 	"_menu": {
