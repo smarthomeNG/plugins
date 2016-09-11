@@ -424,14 +424,16 @@ class Database(SmartPlugin):
                 raise NotImplementedError
         except Exception as e:
             self.logger.error("Database: Error {0}".format(e))
-            reply = None
-            return reply
+            return None
         finally:
+            self.logger.debug("Database: Releasing lock")
             self._fdb_lock.release()
 
+        self.logger.debug("Database: Marker 1")
         _item = self._sh.return_item(item)
         if self._buffer[_item] != [] and end == 'now':
             self._insert(_item)
+        self.logger.debug("Database: Marker 2")
         if items:
             if istart > items[0][0]:
                 items[0] = (istart, items[0][1])
@@ -439,6 +441,7 @@ class Database(SmartPlugin):
                 items.append((iend, items[-1][1]))
         else:
             items = []
+        self.logger.debug("Database: Marker 3")
         item_change = self._timestamp(_item.last_change())
         if item_change < iend:
             value = float(_item())
@@ -448,6 +451,7 @@ class Database(SmartPlugin):
                 items.append((item_change, value))
             if init:
                 items.append((iend, value))
+        self.logger.debug("Database: Marker 4")
         if items:
             reply['series'] = items
         self.logger.debug("Database: End series with '{0}' function".format(func))
