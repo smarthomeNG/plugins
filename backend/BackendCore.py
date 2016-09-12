@@ -88,10 +88,10 @@ class Backend:
         now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
         system = platform.system()
         vers = platform.version()
-        node = platform.node()
+        #node = platform.node()
+        node = socket.getfqdn()
         arch = platform.machine()
         user = pwd.getpwuid(os.geteuid()).pw_name  # os.getlogin()
-        node = platform.node()
         python_packages = self.getpackages()
 
         ip = self._bs.get_local_ip_address()
