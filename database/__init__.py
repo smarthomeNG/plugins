@@ -36,7 +36,7 @@ from sqlalchemy import create_engine, __version__, Column, BigInteger, Integer, 
 from sqlalchemy.sql import func as sqlfunc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.serializer import dumps, loads
-from sqlalchemy.orm import sessionmaker, class_mapper
+from sqlalchemy.orm import sessionmaker, class_mapper, scoped_session
 from sqlalchemy.pool import StaticPool
 
 
@@ -105,7 +105,8 @@ class Database(SmartPlugin):
         try:
             # db = create_engine(self._uri, poolclass=StaticPool)
             db = create_engine(self._uri, pool_recycle=14400)
-            Session = sessionmaker(bind=db)
+            session_factory = sessionmaker(bind=db)
+            Session = scoped_session(session_factory)
             self.session = Session()
             self.connected = True
             # For debugging purposes, disable in production version. Prints out all DB sql queries.
@@ -362,7 +363,10 @@ class Database(SmartPlugin):
             self.session.commit()
         except Exception as e:
             self.logger.warning("Database: problem updating {}: {}".format(item.id(), e))
-            self.session.rollback()
+            try:
+                self.session.rollback()
+            except Exception as e:
+                self.logger.warning("Database: Error rolling back transaction for {}: {}".format(item.id(), e))
         self._fdb_lock.release()
 
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
