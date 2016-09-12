@@ -293,8 +293,8 @@ class Backend:
             file_lines.append(self.html_escape(line))
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
-        return tmpl.render(smarthome=self._sh, logic=mylogic, logic_lines=file_lines, file_path=file_path, visu_plugin=(self.visu_plugin is not None))
-
+        return tmpl.render(smarthome=self._sh, logic=mylogic, logic_lines=file_lines, file_path=file_path,
+                           updates=self.updates_allowed, visu_plugin=(self.visu_plugin is not None))
     @cherrypy.expose
     def items_html(self):
         """
