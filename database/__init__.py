@@ -219,7 +219,9 @@ class Database(SmartPlugin):
                 return
             # If item exists in cache load last value, if not create it
             start = time.time()  # REMOVE
+            self._fdb_lock.acquire()
             cache = self.session.query(self.ItemCache).filter_by(_item=item.id()).first()
+            self._fdb_lock.release()
             # self.logger.debug('1 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
             if cache is None:
                 self.logger.debug("Database: Items {0} does not exist in cache, creating it".format(item.id()))
@@ -241,8 +243,9 @@ class Database(SmartPlugin):
                 item._database_last = last_change
                 last_change = self._datetime(last_change)
                 # self.logger.debug('2 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
+                self._fdb_lock.acquire()
                 storedItem = self.session.query(self.ItemStore).filter_by(_item=item.id()).order_by(self.ItemStore._start.desc()).first()
-
+                self._fdb_lock.release()
                 # self.logger.debug('3 - Execution time: ' + str((time.time() - start) * 1000) + ' milliseconds')  # REMOVE
                 if storedItem is not None:
                     prev_change = self._datetime(storedItem._start)
@@ -284,7 +287,7 @@ class Database(SmartPlugin):
         if _end - item._database_last > self._buffer_time:
             self._insert(item)
         if not self._fdb_lock.acquire(timeout=2):
-            self.logger.error("Database: Unable to acquire database lock")
+            self.logger.error("Database: update_item - Unable to acquire database lock")
             return
         # update cache with current value
         try:
@@ -296,7 +299,7 @@ class Database(SmartPlugin):
             self._fdb_lock.release()
 
         if not self._fdb_lock.acquire(timeout=2):
-            self.logger.error("Database: Unable to acquire database lock")
+            self.logger.error("Database: update_item - Unable to acquire database lock")
             return
         if itemForUpdate is not None:
             try:
@@ -339,9 +342,9 @@ class Database(SmartPlugin):
         tlen = len(tuples)
         self._buffer[item] = self._buffer[item][tlen:]
         item._database_last = self._timestamp(item.last_change())
+        self.logger.debug("Database: _insert - item: {} tlen: {} tuples: {}".format(item, tlen, tuples));
         if tlen == 1:
             _start, _dur, _avg, _on = tuples[0]
-            insert = (_start, item.id(), _dur, _avg, _avg, _avg, _on)
             newItem = self.ItemStore(_start=_start, _item=item.id(), _dur=_dur, _avg=_avg, _min=_avg, _max=_avg, _on=_on)
         elif tlen > 1:
             _vals = []
@@ -354,19 +357,20 @@ class Database(SmartPlugin):
                 _avg += __dur * __avg
                 _on += __dur * __on
                 _dur += __dur
-            insert = (_start, item.id(), _dur, _avg / _dur, min(_vals), max(_vals), _on / _dur)
+            self.logger.debug("Database: _insert - Start:{} Item:{} Dur:{} Avg:{} Min:{} Max:{} On:{}".format(_start, item.id(), _dur, _avg, min(_vals), max(_vals), _on))
             newItem = self.ItemStore(_start=_start, _item=item.id(), _dur=_dur, _avg=_avg / _dur, _min=min(_vals), _max=max(_vals), _on=_on / _dur)
         else:  # no tuples
+            self._fdb_lock.release()
             return
         try:
             self.session.add(newItem)
             self.session.commit()
         except Exception as e:
-            self.logger.warning("Database: problem updating {}: {}".format(item.id(), e))
+            self.logger.warning("Database: _insert - problem updating {}: {}".format(item.id(), e))
             try:
                 self.session.rollback()
             except Exception as e:
-                self.logger.warning("Database: Error rolling back transaction for {}: {}".format(item.id(), e))
+                self.logger.warning("Database: _insert - Error rolling back transaction for {}: {}".format(item.id(), e))
         self._fdb_lock.release()
 
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
@@ -387,10 +391,11 @@ class Database(SmartPlugin):
         if not self._fdb_lock.acquire(timeout=2):
             self.logger.error("Database: Unable to acquire database lock")
             return
+        if not self.connected:
+            self._fdb_lock.release()
+            self.logger.error("Database: _series - Database is  not connected")
+            return
         try:
-            if not self.connected:
-                self._fdb_lock.release()
-                return
             if func == 'avg':
                 self.logger.debug("Database: Before eventual /0 query series with '{0}' function".format(func))
                 items = self.session.query(sqlfunc.min(self.ItemStore._start), sqlfunc.round(sqlfunc.sum(self.ItemStore._avg * self.ItemStore._dur) / sqlfunc.sum(self.ItemStore._dur), 2)) \
@@ -466,6 +471,9 @@ class Database(SmartPlugin):
     def _single(self, func, start, end='now', item=None):
         istart = self._get_timestamp(start)
         iend = self._get_timestamp(end)
+        if not self._fdb_lock.acquire(timeout=2):
+            self.logger.error("Database: _single - Unable to acquire database lock")
+            return
         if func == 'avg':
             items = self.session.query(sqlfunc.round(sqlfunc.sum(self.ItemStore._avg * self.ItemStore._dur) / sqlfunc.sum(self.ItemStore._dur), 2)) \
                 .filter(self.ItemStore._item == item) \
@@ -493,6 +501,7 @@ class Database(SmartPlugin):
         else:
             self.logger.warning("Database: Unknown export function: {0}".format(func))
             return
+        self._fdb_lock.release()
         _item = self._sh.return_item(item)
         if self._buffer[_item] != [] and end == 'now':
             self._insert(_item)
