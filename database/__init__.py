@@ -283,11 +283,13 @@ class Database(SmartPlugin):
         _dur = _end - _start
         _avg = float(item.prev_value())
         _on = int(bool(_avg))
+        self.logger.debug("Database: update_item - item:{} start:{} end:{} dur:{} avg:{} on:{}".format(item, _start, _end, _dur, _avg, _on)) 
         self._buffer[item].append((_start, _dur, _avg, _on))
         if _end - item._database_last > self._buffer_time:
+            self.logger.debug("Database: update_item - Calling _insert item:{} end:{} last:{} diff:{} > buffer_time:{}".format(item, _end, item._database_last, _end - item._database_last, self._buffer_time))
             self._insert(item)
         if not self._fdb_lock.acquire(timeout=2):
-            self.logger.error("Database: update_item - Unable to acquire database lock")
+            self.logger.error("Database: update_item - Unable to acquire database lock (1)")
             return
         # update cache with current value
         try:
@@ -299,7 +301,7 @@ class Database(SmartPlugin):
             self._fdb_lock.release()
 
         if not self._fdb_lock.acquire(timeout=2):
-            self.logger.error("Database: update_item - Unable to acquire database lock")
+            self.logger.error("Database: update_item - Unable to acquire database lock (2)")
             return
         if itemForUpdate is not None:
             try:
@@ -397,7 +399,6 @@ class Database(SmartPlugin):
             return
         try:
             if func == 'avg':
-                self.logger.debug("Database: Before eventual /0 query series with '{0}' function".format(func))
                 items = self.session.query(sqlfunc.min(self.ItemStore._start), sqlfunc.round(sqlfunc.sum(self.ItemStore._avg * self.ItemStore._dur) / sqlfunc.sum(self.ItemStore._dur), 2)) \
                     .filter(self.ItemStore._item == item) \
                     .filter(self.ItemStore._start + self.ItemStore._dur >= istart) \
@@ -405,7 +406,6 @@ class Database(SmartPlugin):
                     .group_by(cast(self.ItemStore._start / 864000, Integer)) \
                     .order_by(self.ItemStore._start.asc()) \
                     .all()
-                self.logger.debug("Database: After eventual /0 query series with '{0}' function".format(func))
             elif func == 'min':
                 items = self.session.query(sqlfunc.min(self.ItemStore._start), sqlfunc.min(self.ItemStore._min)) \
                     .filter(self.ItemStore._item == item) \
@@ -438,15 +438,12 @@ class Database(SmartPlugin):
             self.logger.debug("Database: Releasing lock")
             self._fdb_lock.release()
 
-        self.logger.debug("Database: Marker 1")
-        self.logger.debug("Database: Fetching item {} from core".format(item))
         _item = self._sh.return_item(item)
-        self.logger.debug("Database: Got item {} of type {}".format(_item, type(_item)))
-        self.logger.debug("Database: Marker 2")
+        self.logger.debug("Database: Marker 1")
         if self._buffer[_item] != [] and end == 'now':
-            self.logger.debug("Database: Marker 3")
+            self.logger.debug("Database: Marker 2")
             self._insert(_item)  
-        self.logger.debug("Database: Marker 4")
+        self.logger.debug("Database: Marker 3")
         if items:
             if istart > items[0][0]:
                 items[0] = (istart, items[0][1])
