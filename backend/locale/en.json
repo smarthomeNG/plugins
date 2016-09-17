@@ -161,7 +161,8 @@
 		"Schließen": "Close",
 		"Änderungen verwerfen" : "Undo Changes",
 		"Blöcke speichern" : "Save Blocks",
-		"Beenden" : "Stop"
+		"Beenden" : "Stop",
+		"Speichern" : "Save"
 	},
 	
 	"_menu": {
