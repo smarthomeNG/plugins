@@ -704,6 +704,18 @@ class Backend:
                 self.logger.warning(
                     "Backend: Logic triggering is not allowed. (Change 'updates_allowed' in plugin.conf")
 
+        if save is not None:
+            self.logger.debug("Backend: logics_view_html: Save logic = '{0}'".format(logic))
+
+            if self.updates_allowed:
+                if logic in self._sh.return_logics():
+                    mylogic = self._sh.return_logic(logic)
+
+            f = open(mylogic.filename, 'w')
+            f.write(logics_code)
+            f.close()
+            reload = True
+
         if reload is not None:
             self.logger.debug("Backend: logics[_view]_html: Reload logic = '{0}'".format(logic))
             if self.updates_allowed:
@@ -718,16 +730,5 @@ class Backend:
                     self.logger.warning("Backend: Logic '{0}' not found".format(logic))
             else:
                 self.logger.warning("Backend: Logic reloads are not allowed. (Change 'updates_allowed' in plugin.conf")
-
-        if save is not None:
-            self.logger.debug("Backend: logics_view_html: Save logic = '{0}'".format(logic))
-
-            if self.updates_allowed:
-                if logic in self._sh.return_logics():
-                    mylogic = self._sh.return_logic(logic)
-
-            f = open(mylogic.filename, 'w')
-            f.write(logics_code)
-            f.close()
 
         return
