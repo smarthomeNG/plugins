@@ -33,10 +33,8 @@
         </div>
         <div style="border: 1px solid #ccc; margin-bottom: 10px;">
         {% if logic_lines %}
-        <textarea id="logics_code" name="logics_code">
-{% if logic_lines %}{% for line in logic_lines %}{{ line }}
-{% endfor %}{% endif %}
-        </textarea>
+        <textarea id="logics_code" name="logics_code">{% if logic_lines %}{% for line in logic_lines %}{{ line }}
+{% endfor %}{% endif %}</textarea>
         {% if updates %}</form>{% endif %}
          <script>
          var myCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
@@ -49,7 +47,7 @@
     </div>
  <div class="container">
      <table class="table table-bordered table-hover table-striped">
-          {% if smarthome.scheduler.return_next(logic.name) %}
+         {% if smarthome.scheduler.return_next(logic.name) %}
          <tr>
              <td style="width:150px;">
                <strong>{{ _('nächste Ausführung') }}</strong>
