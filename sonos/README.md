@@ -2,7 +2,36 @@ This sub-project is a client implementation fpr the Sonos Broker. It is a plugin
 Smarthome.py framework (https://github.com/mknx/smarthome).
 
 ##Release
+
+  v1.61 2016-01-03
+        
+    --  bug: discover function call now working
+    --  command "balance" added; documentation updated 
+    
+  v1.6  2015-12-23
+    
+    -- function 'discover' added to perform a manual scan for new Sonos speaker
   
+  v1.5  2015-10-30
+  
+    -- property 'display_version' added
+    -- property 'model_number' added
+    -- property 'household_id' added (a unique identifier for all players in a household)
+
+  v1.4  2015-04-11
+  
+    -- added "wifi_state" command (only Sonos Broker >= v0.6)
+    -- added refresh_media_library function (only Sonos Broker >= v0.6)
+    
+  v1.3  2015-01-18
+
+    --  added "get_playlist" and "set_playlist" commmands
+        It is now possible to store the playlist for later use.
+    --  added "is_coordinator" property
+    --  added "tts_local_mode" property
+    --  added a fallback method to retrieve the local ip address
+    --  only working with Sonos Broker version v0.5
+
   v1.2  2014-11-09
   
     --  added force_stream_mode option to play_tts command (see broker documentation)
@@ -48,22 +77,6 @@ Smarthome.py framework (https://github.com/mknx/smarthome).
     
     --  bugfixes in some command processing
     
-    
-  v0.8    2014-06-06
-
-    --  changed some values in sonos plugin config to 'foo' (commands without parameter like play, 
-        pause, next etc), updated usage of 'enforce_updates = True' for some values,
-        !! please update / replace  your sonos config file !!
-    --  new command:
-        -   join [write]: joins a speaker to another speaker (uid as parameter)
-        -   unjoin [write]: removes the speaker from current group
-        -   partymode [write]: group all speaker to one zone (partymode)
-        -   volume_up [write]: increases the volume (+2)
-        -   volume_down [write]: decreases the volume (-2)
-    --  new value:
-        -   additional_zone_members [read]: additional zone members if speaker is in a group
-    --  changed commands: pause, play, stop, led, mute now toggle commands
-    --  documentation: 'Group behaviour' added
 
 ## Requirements:
 
@@ -281,6 +294,21 @@ Edit file with this sample of mine:
             type = str
             sonos_recv = model
             visu_acl = rw
+
+        [[model_number]]
+            type = str
+            sonos_recv = model_number
+            visu_acl = rw
+    
+        [[display_version]]
+            type = str
+            sonos_recv = display_version
+            visu_acl = rw
+    
+        [[household_id]]
+            type = str
+            sonos_recv = household_id
+            visu_acl = rw
     
         [[zone_name]]
             type = str
@@ -404,6 +432,42 @@ Edit file with this sample of mine:
             sonos_recv = alarms
             sonos_send = alarms
         
+        [[is_coordinator]]
+            type = bool
+            sonos_recv = is_coordinator
+
+        [[tts_local_mode]]
+            type = bool
+            sonos_recv = tts_local_mode
+        
+        [[get_playlist]]
+           type = str  # the give item value represents the local file path
+                    # where to save the playlist
+            sonos_send = get_playlist
+            enforce_updates = True
+
+        [[set_playlist]]
+            type = str  # the give item value represents the file path where
+                        # the playlist is stored (previously saved with
+                        # 'get_playlist')
+            sonos_send = set_playlist
+            enforce_updates = True
+
+            [[[play_after_insert]]]
+                type = bool
+                value = 0
+
+        [[balance]]
+            type = num
+            visu_acl = rw
+            sonos_recv = balance
+            sonos_send = balance
+            
+            [[[group_command]]]
+                type = bool
+                value = 0
+        
+        
  This sonos.conf file implements most of the commands to interact with the Sonos Broker. Please follow the detailed
  description under the [command section in the Broker manual](../README.md#available-commands).
 
@@ -434,6 +498,7 @@ Edit file with this sample of mine:
     play_tts ('group_command' parameter only affects the snippet volume)
     partymode
     playmode
+    set_playlist
 
 ###### These commands only act as group commands if the parameter 'group_command' is set to 1:
 
@@ -448,6 +513,7 @@ Edit file with this sample of mine:
     bass
     treble
     loudness
+    balance
 
 ## Methods
 
@@ -479,9 +545,32 @@ get_favorite_radiostations(<start_item>, <max_items>)
             "total": "10"
     }
 
+    call this function with:
+    sh.sonos.get_favorite_radiostations()
+    
 version()
 
     current plugin version
+    
+    call this function with:
+    sh.sonos.version()
+
+refresh_media_library(<display_option>)
+    
+    Refreshs the media library
+    For parameter 'display_option' see 
+    <a href="http://www.sonos.com/support/help/3.4/en/sonos_user_guide/Chap07_new/Compilation_albums.htm">Sonos Help Page</<a>
+    
+    call this function with:
+    
+    sh.sonos.refresh_media_library()
+
+discover()
+
+    Performs a manual scan for Sonos speaker in the network.
+    
+    call this function with:
+    sh.sonos.discover()
 
 
 ## smartVISU Integration
