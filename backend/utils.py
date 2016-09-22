@@ -49,6 +49,9 @@ def is_userlogic(sh, logic):
 translation_dict = {}
 translation_lang = ''
 
+def get_translation_lang():
+    global translation_lang
+    return translation_lang
 
 def load_translation(language):
     global translation_dict    # Needed to modify global copy of translation_dict

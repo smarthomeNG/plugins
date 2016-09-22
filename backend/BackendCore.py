@@ -79,7 +79,7 @@ class Backend:
         if lang != '':
             load_translation(lang)
         else:
-            load_translation(translation_lang)
+            load_translation(get_translation_lang())
         return self.index()
 
     @cherrypy.expose
@@ -212,7 +212,7 @@ class Backend:
 
         tmpl = self.env.get_template('services.html')
         return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket,
-                           sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=translation_lang,
+                           sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=get_translation_lang(),
                            develop=self.developer_mode, knxdeamon=knxdeamon)
 
     @cherrypy.expose
