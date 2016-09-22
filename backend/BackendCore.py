@@ -352,7 +352,7 @@ class Backend:
 
     @cherrypy.expose
     def create_hash_json_html(self, plaintext):
-        return json.dumps(Utils.create_hash(plaintext))
+        return json.dumps(create_hash(plaintext))
 
     @cherrypy.expose
     def item_change_value_html(self, item_path, value):

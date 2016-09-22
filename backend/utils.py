@@ -105,3 +105,9 @@ def translate(txt, block=''):
             logger.warning("Backend: Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
             tr = txt
     return html_escape(tr)
+
+def create_hash(plaintext):
+    import hashlib
+    hashfunc = hashlib.sha512()
+    hashfunc.update(plaintext.encode())
+    return hashfunc.digest().hex()
