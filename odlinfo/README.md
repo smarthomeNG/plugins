@@ -26,7 +26,8 @@ The data published by ODL can be used freely for registred users. The data provi
 copyrighted by Bundesamt für Strahlenschutz (BfS), Willy-Brandt-Straße 5, 38226 Salzgitter, Deutschland
 Do not directly link the data interface / URL of ODLINFO in any context.
 
-# Nutzung der Daten / Terms of Service (in German only - taken from https://odlinfo.bfs.de/DE/service/downloadbereich.html)
+# Nutzung der Daten / Terms of Service
+(in German only - most recent version see https://odlinfo.bfs.de/DE/service/downloadbereich.html)
 
 Bei der Nutzung der vom Bundesamt für Strahlenschutz erhobenen Daten ist zu beachten:
 
