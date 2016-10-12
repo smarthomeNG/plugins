@@ -434,6 +434,9 @@ class Backend:
             prev_value = item.prev_value()
             value = item._value
 
+        if isinstance(prev_value, datetime.datetime):
+            prev_value = str(prev_value)
+
         if 'str' in item.type():
             value = html.escape(value)
             prev_value = html.escape(prev_value)
@@ -451,6 +454,7 @@ class Backend:
         changed_by = item.changed_by()
         if changed_by[-5:] == ':None':
             changed_by = changed_by[:-5]
+
         if item.prev_age() < 0:
             prev_age = ''
         else:
