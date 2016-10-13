@@ -94,6 +94,30 @@ class Backend:
         user = pwd.getpwuid(os.geteuid()).pw_name  # os.getlogin()
         python_packages = self.getpackages()
 
+        req_dict = {}
+        req_dict_base = parse_requirements("%s/requirements/base.txt" % self._sh_dir)
+
+        # parse plugins and look for requirements
+        _conf = lib.config.parse(self._sh._plugin_conf)
+
+        plugin_names = []
+        for plugin in _conf:
+            plugin_name = _conf[plugin]['class_path'].strip()
+            if not plugin_name in plugin_names: #only unique plugin names, e.g. if multiinstance is used
+                plugin_names.append(plugin_name)
+
+        req_dict = req_dict_base.copy()
+        for plugin_name in plugin_names:
+            file_path = "%s/requirements/%s.txt" % (self._sh_dir, plugin_name)
+            if os.path.isfile(file_path):
+                plugin_dict = parse_requirements(file_path)
+                for key in plugin_dict:
+                    if key not in req_dict:
+                        req_dict[key] = plugin_dict[key]
+                    else:
+                        req_dict[key] = req_dict[key] + ', ' + plugin_dict[key] + ' ('+plugin_name.replace('plugins.','')+')'
+
+
         ip = self._bs.get_local_ip_address()
 
         space = os.statvfs(self._sh_dir)
@@ -117,7 +141,7 @@ class Backend:
         tmpl = self.env.get_template('system.html')
         return tmpl.render(now=now, system=system, sh_vers=self._sh.env.core.version(), vers=vers, node=node, arch=arch, user=user,
                                 freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
-                                ip=ip, python_packages=python_packages, visu_plugin=(self.visu_plugin is not None))
+                                ip=ip, python_packages=python_packages, requirements=req_dict, visu_plugin=(self.visu_plugin is not None))
 
     def get_process_info(self, command):
         """
