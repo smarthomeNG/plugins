@@ -113,7 +113,7 @@ class Backend:
                 plugin_dict = parse_requirements(file_path)
                 for key in plugin_dict:
                     if key not in req_dict:
-                        req_dict[key] = plugin_dict[key]
+                        req_dict[key] = plugin_dict[key] + ' ('+plugin_name.replace('plugins.','')+')'
                     else:
                         req_dict[key] = req_dict[key] + ', ' + plugin_dict[key] + ' ('+plugin_name.replace('plugins.','')+')'
 
