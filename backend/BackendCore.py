@@ -338,14 +338,11 @@ class Backend:
         """
         items_sorted = sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         parent_items_sorted = []
-        last_parent_item = None
         for item in items_sorted:
-            if last_parent_item is None or last_parent_item._path not in item._path:
+            if "." not in item._path:
                 parent_items_sorted.append(item)
-                last_parent_item = item
 
         item_data = self._build_item_tree(parent_items_sorted)
-
         return json.dumps(item_data)
 
     @cherrypy.expose
