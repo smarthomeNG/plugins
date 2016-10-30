@@ -46,8 +46,6 @@ class Dashbutton(SmartPlugin):
             # remove duplicates
             mac_addresses = list(set(mac_addresses))
 
-            self._logger.debug(mac_addresses)
-
             for mac_address in mac_addresses:
                 mac_address = mac_address.strip()
 
@@ -76,8 +74,6 @@ class Dashbutton(SmartPlugin):
                 if mac_address not in self._dashbuttons:
                     break
 
-                self._logger.debug(mac_address)
-                self._logger.info('button pressed')
                 for i in range(len(self._dashbuttons[mac_address])):
                     # sometimes the dashbutton triggers the push twice
                     # store last-push-timestamp to prevent the "double push"
