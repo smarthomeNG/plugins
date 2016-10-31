@@ -372,6 +372,17 @@ class Backend:
         return json.dumps(not_item_related_cache_files)
 
     @cherrypy.expose
+    def cache_file_delete_html(self, filename=''):
+        """
+        deletes a file from cache
+        """
+        if len(filename) > 0:
+            file_path = "%s/var/cache/%s" % (self._sh_dir, filename)
+            os.remove(file_path);
+
+        return
+
+    @cherrypy.expose
     def create_hash_json_html(self, plaintext):
         return json.dumps(create_hash(plaintext))
 
