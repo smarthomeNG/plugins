@@ -31,7 +31,7 @@ from . import actions_temperature
 from . import actions_percentage
 
 class Alexa(SmartPlugin):
-    PLUGIN_VERSION = "0.8.0"
+    PLUGIN_VERSION = "1.3.0.9.0"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, service_host='0.0.0.0', service_port=9000, service_https_certfile=None, service_https_keyfile=None):
@@ -108,7 +108,16 @@ class Alexa(SmartPlugin):
                 self.logger.warning("Alexa: item {} is changing device-description of {} from '{}' to '{}'".format(item.id(), device_id, device.description, descr))
             device.description = descr
 
+        # value-range
+        if 'alexa_item_range' in item.conf:
+            item_min_raw, item_max_raw = item.conf['alexa_item_range'].split('-')
+            item_min = float( item_min_raw.strip() )
+            item_max = float( item_max_raw.strip() )
+            item.alexa_range = (item_min, item_max)
+            self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
+
         # register item-actions with the device
+        if action_names:
             for action_name in action_names:
                 device.register(action_name, item)
             self.logger.info("Alexa: item {} supports actions {} as device {}".format(item.id(), action_names, device_id, device.supported_actions()))
