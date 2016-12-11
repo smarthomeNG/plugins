@@ -17,9 +17,9 @@ class AlexaDevices(object):
 class AlexaDevice(object):
     def __init__(self, id):
         self.id = id
-        self.action_items = {}
         self.name = None
         self.description = None
+        self.action_items = {}
 
     @classmethod
     def create_id_from_name(cls, name):
@@ -51,6 +51,9 @@ class AlexaDevice(object):
 
     def items_for_action(self, action_name):
         return self.action_items[action_name] if action_name in self.action_items else []
+
+    def item_range(self, item):
+        return self.item_ranges[item] if item in self.item_ranges else None
 
     def validate(self, logger):
         logger.debug("Alexa: validating device {}".format(self.id))

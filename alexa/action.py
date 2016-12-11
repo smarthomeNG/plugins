@@ -50,6 +50,9 @@ class AlexaAction(object):
         device = self.devices.get(device_id)
         return device.items_for_action(self.name) if device else []
 
+    def item_range(self, item, default=None):
+        return item.alexa_range if item.alexa_range else default
+
     def header(self, name=None):
         return {
             'messageId': uuid.uuid4().hex,
