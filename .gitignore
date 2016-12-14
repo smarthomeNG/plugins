@@ -1,0 +1,28 @@
+*.pyc
+*.jar
+*.tgz
+*.zip
+
+# Logs
+*.log
+
+# Unittest and coverage reports
+.cache
+.coverage
+.tox
+nosetests.xml
+*.egg-info
+
+# OSX specific files
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Pycharm settings
+/.idea
