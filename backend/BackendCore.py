@@ -108,7 +108,7 @@ class Backend:
 
         req_dict = req_dict_base.copy()
         for plugin_name in plugin_names:
-            file_path = "%s/requirements/%s.txt" % (self._sh_dir, plugin_name)
+            file_path = "%s/%s/requirements.txt" % (self._sh_dir, plugin_name.replace("plugins.", "plugins/"))
             if os.path.isfile(file_path):
                 plugin_dict = parse_requirements(file_path)
                 for key in plugin_dict:
