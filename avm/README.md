@@ -252,6 +252,14 @@ are parsed as child items. In the example below there is a comment in the respec
             type = num
             visu_acl = ro
             avm_data_type@fritzbox_7490 = wan_total_packets_received
+        [[[current_packets_sent]]]
+            type = num
+            visu_acl = ro
+            avm_data_type@fritzbox_7490 = wan_current_packets_sent
+        [[[current_packets_received]]]
+            type = num
+            visu_acl = ro
+            avm_data_type@fritzbox_7490 = wan_current_packets_received
         [[[total_bytes_sent]]]
             type = num
             visu_acl = ro
@@ -260,6 +268,14 @@ are parsed as child items. In the example below there is a comment in the respec
             type = num
             visu_acl = ro
             avm_data_type@fritzbox_7490 = wan_total_bytes_received
+        [[[current_bytes_sent]]]
+            type = num
+            visu_acl = ro
+            avm_data_type@fritzbox_7490 = wan_current_bytes_sent
+        [[[current_bytes_received]]]
+            type = num
+            visu_acl = ro
+            avm_data_type@fritzbox_7490 = wan_current_bytes_received
         [[[link]]]
             type = bool
             visu_acl = ro

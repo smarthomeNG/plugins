@@ -467,6 +467,7 @@ class AVM(SmartPlugin):
     _urn_map = dict([('WLANConfiguration', 'urn:dslforum-org:service:WLANConfiguration:%s'),
                      # index needs to be adjusted from 1 to 3
                      ('WANCommonInterfaceConfig', 'urn:dslforum-org:service:WANCommonInterfaceConfig:1'),
+                     ('WANCommonInterfaceConfig_alt', 'urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1'),
                      ('WANIPConnection', 'urn:schemas-upnp-org:service:WANIPConnection:1'),
                      ('TAM', 'urn:dslforum-org:service:X_AVM-DE_TAM:1'),
                      ('OnTel', 'urn:dslforum-org:service:X_AVM-DE_OnTel:1'),
@@ -592,8 +593,13 @@ class AVM(SmartPlugin):
                 self._update_wlan_config(item)
             elif self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_total_packets_sent',
                                                                       'wan_total_packets_received',
+                                                                      'wan_current_packets_sent',
+                                                                      'wan_current_packets_received',
                                                                       'wan_total_bytes_sent',
-                                                                      'wan_total_bytes_received', 'wan_link']:
+                                                                      'wan_total_bytes_received',
+                                                                      'wan_current_bytes_sent',
+                                                                      'wan_current_bytes_received',
+                                                                      'wan_link']:
                 self._update_wan_common_interface_configuration(item)
             elif self.get_iattr_value(item.conf, 'avm_data_type') in ['network_device']:
                 self._update_host(item)
@@ -622,7 +628,8 @@ class AVM(SmartPlugin):
 
     def parse_item(self, item):
         """
-        Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to the AVM identifier and adds it to an internal array
+        Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to
+        the AVM identifier and adds it to an internal array
 
         :param item: The item to process.
         """
@@ -752,7 +759,8 @@ class AVM(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
-        | Write items values - in case they were changed from somewhere else than the AVM plugin (=the FritzDevice) to the FritzDevice.
+        | Write items values - in case they were changed from somewhere else than the AVM plugin (=the FritzDevice) to
+        | the FritzDevice.
 
         | Uses:
         | - http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
@@ -1634,11 +1642,10 @@ class AVM(SmartPlugin):
         Updates wide area network (WAN) related information
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wancommonifconfigSCPD.pdf
+              https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/IGD1.pdf
 
-        :param item: item to be updated (Supported item avm_data_types: wan_total_packets_sent, wan_total_packets_received, wan_total_bytes_sent, wan_total_bytes_received)
+        :param item: item to be updated (Supported item avm_data_types: wan_total_packets_sent, wan_total_packets_received, wan_current_packets_sent, wan_current_packets_received, wan_total_bytes_sent, wan_total_bytes_received, wan_current_bytes_sent, wan_current_bytes_received, wan_link)
         """
-        url = self._build_url("/upnp/control/wancommonifconfig1")
-
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_sent':
             action = 'GetTotalPacketsSent'
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_received':
@@ -1647,6 +1654,11 @@ class AVM(SmartPlugin):
             action = 'GetTotalBytesSent'
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_received':
             action = 'GetTotalBytesReceived'
+        elif self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_current_packets_sent',
+                                                                  'wan_current_packets_received',
+                                                                  'wan_current_bytes_sent',
+                                                                  'wan_current_bytes_received']:
+            action = 'GetAddonInfos'
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_link':
             action = 'GetCommonLinkProperties'
         else:
@@ -1654,9 +1666,14 @@ class AVM(SmartPlugin):
             return
 
         headers = self._header.copy()
-        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WANCommonInterfaceConfig'], action)
-        soap_data = self._assemble_soap_data(action, self._urn_map['WANCommonInterfaceConfig'])
-
+        if action != 'GetAddonInfos':
+            headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WANCommonInterfaceConfig'], action)
+            soap_data = self._assemble_soap_data(action, self._urn_map['WANCommonInterfaceConfig'])
+            url = self._build_url("/upnp/control/wancommonifconfig1")
+        else:
+            headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WANCommonInterfaceConfig_alt'], action)
+            soap_data = self._assemble_soap_data(action, self._urn_map['WANCommonInterfaceConfig_alt'])
+            url = self._build_url("/igdupnp/control/WANCommonIFC1")
         # if action has not been called in a cycle so far, request it and cache response
         if "wan_common_interface_configuration_" + action not in self._response_cache:
             try:
@@ -1678,37 +1695,65 @@ class AVM(SmartPlugin):
             return
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_sent':
-            element_xml = xml.getElementsByTagName('NewTotalPacketsSent')
-            if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+            data = self._get_value_from_xml_node(xml, 'NewTotalPacketsSent')
+            if data is not None:
+                item(int(data))
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_received':
-            element_xml = xml.getElementsByTagName('NewTotalPacketsReceived')
-            if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+            data = self._get_value_from_xml_node(xml, 'NewTotalPacketsReceived')
+            if data is not None:
+                item(int(data))
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_packets_sent':
+            data = self._get_value_from_xml_node(xml, 'NewPacketSendRate')
+            if data is not None:
+                item(int(data))
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_packets_received':
+            data = self._get_value_from_xml_node(xml, 'NewPacketReceiveRate')
+            if data is not None:
+                item(int(data))
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_sent':
-            element_xml = xml.getElementsByTagName('NewTotalBytesSent')
-            if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+            data = self._get_value_from_xml_node(xml, 'NewTotalBytesSent')
+            if data is not None:
+                item(int(data))
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_received':
-            element_xml = xml.getElementsByTagName('NewTotalBytesReceived')
-            if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+            data = self._get_value_from_xml_node(xml, 'NewTotalBytesReceived')
+            if data is not None:
+                item(int(data))
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_bytes_sent':
+            data = self._get_value_from_xml_node(xml, 'NewByteSendRate')
+            if data is not None:
+                item(int(data))
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_bytes_received':
+            data = self._get_value_from_xml_node(xml, 'NewByteReceiveRate')
+            if data is not None:
+                item(int(data))
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_link':
-            element_xml = xml.getElementsByTagName('NewPhysicalLinkStatus')
-            if len(element_xml) > 0:
-                if element_xml[0].firstChild.data == 'Up':
+            data = self._get_value_from_xml_node(xml, 'NewPhysicalLinkStatus')
+            if data is not None:
+                if data == 'Up':
                     item(True)
                 else:
                     item(False)
