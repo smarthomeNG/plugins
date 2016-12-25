@@ -69,8 +69,10 @@ class SMA_EM(SmartPlugin):
         while self.alive:
             emparts = self.readem()
             if self._serial == format(emparts['serial']):
-                self._items['pregard'](emparts['pregard'])
-                self._items['psurplus'](emparts['psurplus'])
+                if 'pregard' in self._items:
+                    self._items['pregard'](emparts['pregard'])
+                if 'psurplus' in self._items:
+                    self._items['psurplus'](emparts['psurplus'])
             time.sleep(self._time_sleep)
 
     def stop(self):
