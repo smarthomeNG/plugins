@@ -6,13 +6,7 @@ This plugin retrieves the data sent by the SMA Energy Meter.
 In agreement with the author Florian Wenger, this plugin uses code published in
 https://github.com/datenschuft/SMA-EM/ - especially the readem method.
 
-# Requirements
-This plugin requires lib requests. You can install this lib with:
-<pre>
-sudo pip3 install requests --upgrade
-</pre>
-
-Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/986480-odlinfo-plugin-f%C3%BCr-strahlungsdaten
+Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/1030610-sma_em-plugin
 
 The SMA Energy Meter broadcasts its information via multicast to the network address 239.12.255.254. Beyond the items
 supported by this plugin, the readem method allows for a lot more of parameters. The items will be extended in future
