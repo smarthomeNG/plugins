@@ -53,10 +53,4 @@ If demand exists, the plugin can also be extended to be used with more than 1 en
 			eval = sh.smaem.regard() / 1000
 			eval_trigger = smaem.regard
 			database@mysqldb = init
-	[[regard_active]]
-        visu_acl = ro
-        type = bool
-    [[surplus_active]]
-        visu_acl = ro
-        type = bool
 </pre>
