@@ -51,6 +51,14 @@ If demand exists, the plugin can also be extended to be used with more than one 
 			type = num
 			eval = sh.smaem.regard() / 1000
 			eval_trigger = smaem.regard
+	[[surplus_counter]]
+        name = Solar Energy Surplus Counter
+        sma_em_data_type = psurpluscounter
+        type = num
+    [[regard_counter]]
+        name = Solar Energy Regard Counter
+        sma_em_data_type = pregardcounter
+        type = num
 	[[cosphi]]
 	    sma_em_data_type = cosphi
 	    type = num

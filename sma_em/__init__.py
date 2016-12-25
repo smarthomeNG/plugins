@@ -73,6 +73,10 @@ class SMA_EM(SmartPlugin):
                     self._items['pregard'](emparts['pregard'])
                 if 'psurplus' in self._items:
                     self._items['psurplus'](emparts['psurplus'])
+                if 'pregardcounter' in self._items:
+                    self._items['pregardcounter'](emparts['pregardcounter'])
+                if 'psurpluscounter' in self._items:
+                    self._items['psurpluscounter'](emparts['psurpluscounter'])
                 if 'cosphi' in self._items:
                     self._items['cosphi'](emparts['cosphi'])
             time.sleep(self._time_sleep)
