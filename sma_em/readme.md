@@ -12,7 +12,7 @@ The SMA Energy Meter broadcasts its information via multicast to the network add
 supported by this plugin, the readem method allows for a lot more of parameters. The items will be extended in future
 versions of this plugin on demand. The available values can be seen in the readem method of this plugin.
 
-If demand exists, the plugin can also be extended to be used with more than 1 energy meter.
+If demand exists, the plugin can also be extended to be used with more than one energy meter.
 
 # Configuration
 
@@ -51,4 +51,7 @@ If demand exists, the plugin can also be extended to be used with more than 1 en
 			type = num
 			eval = sh.smaem.regard() / 1000
 			eval_trigger = smaem.regard
+	[[cosphi]]
+	    sma_em_data_type = cosphi
+	    type = num
 </pre>
