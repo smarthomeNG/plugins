@@ -43,7 +43,6 @@ If demand exists, the plugin can also be extended to be used with more than 1 en
 			type = num
 			eval = sh.smaem.surplus() / 1000
 			eval_trigger = smaem.surplus
-			database@mysqldb = init
     [[regard]]
         name = Solar Energy Regard
         sma_em_data_type = pregard
@@ -52,5 +51,4 @@ If demand exists, the plugin can also be extended to be used with more than 1 en
 			type = num
 			eval = sh.smaem.regard() / 1000
 			eval_trigger = smaem.regard
-			database@mysqldb = init
 </pre>
