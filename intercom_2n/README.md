@@ -8,6 +8,8 @@ Germany is [Keil Telecom](http://www.keil-telecom.de).
 The plugin is tested to work with [2N Helios IP Verso](http://www.2n.cz/en/products/intercom-systems/ip-intercoms/helios-ip-verso/) but should be working with all device, 
 which integrates the [2N Helio HTTP API](https://wiki.2n.cz/hip/hapi/latest/en).
 
+Please use the support thread in the [KNX-User-Forum](https://knx-user-forum.de/forum/supportforen/smarthome-py/1030539-plugin-2n-intercom-t%C3%BCrsprechanlagen) for any questions and bug reports.
+
 Most of the commands need the 'Enhanced Integration' licence key. ([Shop Keil Telecom](http://www.keil-onlineshop.de/2N-EntryCom-IP/2N-EntryCom-IP-Lizenzen/)).
 The event listening feature should be working without any extra license.
 
@@ -75,7 +77,7 @@ The ```auth_type``` parameter must be set to one of the following values:
 
 This value must be the same as the value in web-interface of your 2N Intercom.
 Despite the fact that you can adjust different security settings for different APIs in your 2N Intercom, 
-this plugin only supports a consistent setting for all APIs. So just set all security parameter in the webinterface to
+this plugin only supports a consistent setting for all APIs. So just set all security parameter in the web-interface to
 the same setting (under Services --> HTTP-API).
 
 If you set the authentication methode to Digest (maybe the securest setting) you might wondering about some '401' logs of the
@@ -83,7 +85,7 @@ underlying python requests class. This is a feature and can be ignored (they hav
 call is always an 401 unauthorized error).
 
 Copy the ```2n_intercom.conf``` from the example directory of this plugin (usually under ```plugins/intercom_2n/example```
-(or pste the example below) to the items directory. You can delete unwanted events or commands, but always the complete subtree.
+(or paste the example below) to the items directory. You can delete unwanted events or commands, but always the complete subtree.
 <b>Don't change the structure of an event or command</b>, the internal processing depends on it. 
 
 
