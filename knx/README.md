@@ -21,9 +21,9 @@ plugin.conf
    class_path = plugins.knx
 #   host = 127.0.0.1
 #   port = 6720
-   send_time = 600 # update date/time every 600 seconds, default none
-   time_ga = 1/1/1 # default none
-   date_ga = 1/1/2 # default none
+#   send_time = 600 # update date/time every 600 seconds, default none
+#   time_ga = 1/1/1 # default none
+#   date_ga = 1/1/2 # default none
 #   busmonitor = False
 #   readonly = False
 </pre>
@@ -31,8 +31,32 @@ plugin.conf
 This plugins is looking by default for the eibd on 127.0.0.1 port 6720. You could change this in your plugin.conf.
 If you specify a `send_time` intervall and a `time_ga` and/or `date_ga` the plugin sends the time/date every cycle seconds on the bus.
 
-If you set `busmonitor` to True, every KNX packet will be logged.
-If you set `readonly` to True, the plugin only read the knx bus and send no group message to the bus.
+`busmonitor=' : Values: (True, False, 'logger') When you set `busmonitor` to True, every KNX packet will be logged to the default plugin logger.
+                Set parameter to `busmonitor = 'logger'` to log all knx messages to a separate logger 'knx_busmonitor'
+                     In `logging.yaml` you can configure a formatter, handler and a logger to write all bus messages to a separate file.
+                     <pre>
+                     formatters:
+                         busmonitor:
+                            format: '%(asctime)s;%(message)s'
+                            datefmt: '%Y-%m-%d %H:%M:%S'
+                     handlers:
+                         busmonitor_file:
+                            class: logging.handlers.TimedRotatingFileHandler
+                            formatter: busmonitor
+                            when: midnight
+                            backupCount: 7
+                            filename: ./var/log/knx_busmonitor.log
+                     loggers:
+                         knx_busmonitor:
+                            level: INFO
+                            handlers: [busmonitor_file]
+                    </pre>
+
+                    With this configuration all bus monitor messages are writen to `./var/log/knx_busmonitor.log`
+
+                False disable the logging until you start SmartHomeNG in debug modus.
+
+`readonly=` : If you set `readonly` to True, the plugin only read the knx bus and send no group message to the bus.
 
 items.conf
 --------------
