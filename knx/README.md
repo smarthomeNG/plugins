@@ -27,13 +27,17 @@ plugin.conf
 #   busmonitor = False
 #   readonly = False
 </pre>
-
 This plugins is looking by default for the eibd on 127.0.0.1 port 6720. You could change this in your plugin.conf.
-If you specify a `send_time` intervall and a `time_ga` and/or `date_ga` the plugin sends the time/date every cycle seconds on the bus.
 
-`busmonitor=' : Values: (True, False, 'logger') When you set `busmonitor` to True, every KNX packet will be logged to the default plugin logger.
-                Set parameter to `busmonitor = 'logger'` to log all knx messages to a separate logger 'knx_busmonitor'
-                     In `logging.yaml` you can configure a formatter, handler and a logger to write all bus messages to a separate file.
+### Attributes
+  * `host` : eibd or knxd hostname (default: 127.0.0.1) 
+  * `port` : eibd or knxd port (default: 6720) 
+  * `send_time` : interval to send time and date to the knx bus
+  * `time_ga` : groupadress to send a timestamp to the knx bus
+  * `date_ga` : groupadress to send a date to the knx bus
+  * `busmonitor` : Values: (True, False, 'logger'). If you set `busmonitor` to True, every KNX packet will be logged to the default plugin logger.                
+      Set parameter to `busmonitor = 'logger'` to log all knx messages to a separate logger 'knx_busmonitor'.
+      In `logging.yaml` you can configure a formatter, handler and a logger to write all bus messages to a separate file.
                      <pre>
                      formatters:
                          busmonitor:
@@ -51,12 +55,13 @@ If you specify a `send_time` intervall and a `time_ga` and/or `date_ga` the plug
                             level: INFO
                             handlers: [busmonitor_file]
                     </pre>
-
                     With this configuration all bus monitor messages are writen to `./var/log/knx_busmonitor.log`
-
                 False disable the logging until you start SmartHomeNG in debug modus.
 
-`readonly=` : If you set `readonly` to True, the plugin only read the knx bus and send no group message to the bus.
+  * `readonly` :  If you set `readonly` to True, the plugin only read the knx bus and send no group message to the bus.
+
+
+If you specify a `send_time` intervall and a `time_ga` and/or `date_ga` the plugin sends the time/date every cycle seconds on the bus.
 
 items.conf
 --------------
