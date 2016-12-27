@@ -33,6 +33,7 @@ import subprocess
 import socket
 import sys
 import threading
+import os # für sh_dir
 import lib.config
 from lib.model.smartplugin import SmartPlugin
 from .utils import *
@@ -108,7 +109,7 @@ class Backend:
 
         req_dict = req_dict_base.copy()
         for plugin_name in plugin_names:
-            file_path = "%s/%s/requirements.txt" % (self._sh_dir, plugin_name.replace("plugins.", "plugins/"))
+            file_path = "%s/requirements/%s.txt" % (self._sh_dir, plugin_name)
             if os.path.isfile(file_path):
                 plugin_dict = parse_requirements(file_path)
                 for key in plugin_dict:
@@ -139,7 +140,7 @@ class Backend:
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
-        return tmpl.render(now=now, system=system, sh_vers=self._sh.env.core.version(), vers=vers, node=node, arch=arch, user=user,
+        return tmpl.render(now=now, system=system, sh_vers=self._sh.env.core.version(), sh_dir=self._sh_dir, vers=vers, node=node, arch=arch, user=user,
                                 freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
                                 ip=ip, python_packages=python_packages, requirements=req_dict, visu_plugin=(self.visu_plugin is not None))
 

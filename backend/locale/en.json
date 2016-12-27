@@ -54,6 +54,7 @@
 	"Sekunden": "seconds",
 	"Betriebszeit": "Uptime",
 	"Python Version": "Python Version",
+	"in": "in",
 	"installierte Version": "installed Version",
 	"Neuste Version": "Newest Version",
 	"Keine Antwort von PyPI": "No answer from PyPI",
