@@ -4,15 +4,8 @@
 #  Copyright 2016 René Frieß                        rene.friess(a)gmail.com
 #  Version 1.1.2
 #########################################################################
-#  Free for non-commercial use
-#  
-#  Plugin for the software SmartHomeNG (NG), which allows to control and read 
-#  devices such as the FritzBox. 
-#  For all functionality, the TR-064 interface is used.
 #
-#  Service implementation is mainly based on the information found on:
-#  - http://avm.de/service/schnittstellen/
-#  - http://www.fhemwiki.de/wiki/FRITZBOX
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -21,11 +14,11 @@
 #
 #  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHomeNG (NG). If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #
 #########################################################################
 

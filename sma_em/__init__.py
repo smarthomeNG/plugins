@@ -5,7 +5,8 @@
 #  https://github.com/datenschuft/SMA-EM
 #  Adaptions Copyright 2016 Marc René Frieß         rene.friess@gmail.com
 #########################################################################
-#  This file is part of SmartHomeNG.
+#
+# This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by

@@ -4,15 +4,8 @@
 #  Copyright 2016 René Frieß                        rene.friess(a)gmail.com
 #  Version 1.1.1
 #########################################################################
-#  Free for non-commercial use
 #
-#  Plugin for the API of tankerkoenig.de, which allows to read
-#  information about petrol stations.
-#  The data provided by the api is under a Creative-Commons license “CC BY 4.0”
-#  Also regard: https://creativecommons.tankerkoenig.de/#usage
-#
-#  For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
-#  api key. For your own key register to https://creativecommons.tankerkoenig.de
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -21,11 +14,11 @@
 #
 #  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHomeNG (NG). If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #
 #########################################################################
 

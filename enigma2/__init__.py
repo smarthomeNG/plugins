@@ -4,11 +4,8 @@
 #  Copyright 2016 René Frieß                        rene.friess(a)gmail.com
 #  Version 1.1.11
 #########################################################################
-#  Free for non-commercial use
 #
-#  Plugin for the software SmartHomeNG, which allows to control and read
-#  enigma2 compatible devices such as the VUSolo4k. For the API, the openwebif
-#  needs to be installed.
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,7 +14,7 @@
 #
 #  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
