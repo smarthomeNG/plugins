@@ -71,6 +71,7 @@ This attribute is mandatory. If you don't provide one the item will be ignored.
 The DPT has to match the type of the item!
 
 The following datapoint types are supported:
+<pre>
 
 +--------+---------+------+----------------------------------+
 | DPT    | Data    | Type | Values                           |
@@ -117,7 +118,7 @@ The following datapoint types are supported:
 +--------+---------+------+----------------------------------+
 | 232    | 3 byte  | list | RGB: [0, 0, 0] - [255, 255, 255] |
 +--------+---------+------+----------------------------------+
-
+</pre>
 If you are missing one, open a bug report or drop me a message in the knx user forum.
 
 ### knx_send
