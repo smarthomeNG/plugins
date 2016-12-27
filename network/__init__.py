@@ -26,8 +26,7 @@ import urllib.parse
 import urllib.error
 import lib.connection
 
-logger = logging.getLogger('')
-
+from lib.model.smartplugin import SmartPlugin
 
 class TCPHandler(lib.connection.Stream):
 
@@ -98,6 +97,7 @@ class HTTPDispatcher(lib.connection.Server):
 class UDPDispatcher(lib.connection.Server):
 
     def __init__(self, parser, ip, port):
+        self.logger = logging.getLogger(__name__)
         lib.connection.Server.__init__(self, ip, port, proto='UDP')
         self.dest = 'udp:' + ip + ':' + port
         self.parser = parser
@@ -108,14 +108,16 @@ class UDPDispatcher(lib.connection.Server):
             data, addr = self.socket.recvfrom(4096)
             ip = addr[0]
             addr = "{}:{}".format(addr[0], addr[1])
-            logger.debug("{}: incoming connection from {} to {}".format(self._name, addr, self.address))
+            self.logger.debug("{}: incoming connection from {} to {}".format(self._name, addr, self.address))
         except Exception as e:
-            logger.exception("{}: {}".format(self._name, e))
+            self.logger.exception("{}: {}".format(self._name, e))
             return
         self.parser(ip, self.dest, data.decode(errors="ignore").strip())
 
 
-class Network():
+class Network(SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.3.1"
 
     generic_listeners = {}
     special_listeners = {}
@@ -125,6 +127,7 @@ class Network():
 
     def __init__(self, smarthome, ip='0.0.0.0', port='2727', udp='no', tcp='no', http='no', udp_acl='*', tcp_acl='*', http_acl='*'):
         self._sh = smarthome
+        self.logger = logging.getLogger(__name__)
         self.tcp_acl = self.parse_acl(tcp_acl)
         self.udp_acl = self.parse_acl(udp_acl)
         self.http_acl = self.parse_acl(http_acl)
@@ -143,14 +146,14 @@ class Network():
             sock.close()
             del(sock)
         except Exception as e:
-            logger.warning("UDP: Problem sending data to {}:{}: {}".format(host, port, e))
+            self.logger.warning("UDP: Problem sending data to {}:{}: {}".format(host, port, e))
             pass
         else:
-            logger.debug("UDP: Sending data to {}:{}: {}".format(host, port, data))
+            self.logger.debug("UDP: Sending data to {}:{}: {}".format(host, port, data))
 
     def add_listener(self, proto, ip, port, acl='*', generic=False):
         dest = proto + ':' + ip + ':' + port
-        logger.debug("Adding listener on: {}".format(dest))
+        self.logger.debug("Adding listener on: {}".format(dest))
         if proto == 'tcp':
             dispatcher = TCPDispatcher(self.parse_input, ip, port)
         elif proto == 'udp':
@@ -179,7 +182,7 @@ class Network():
         if dest in self.generic_listeners:
             inp = data.split(self.input_seperator, 2)  # max 3 elements
             if len(inp) < 3:
-                logger.info("Ignoring input {}. Format not recognized.".format(data))
+                self.logger.info("Ignoring input {}. Format not recognized.".format(data))
                 return False
             typ, name, value = inp
             proto = dest.split(':')[0].upper()
@@ -187,32 +190,32 @@ class Network():
             gacl = self.generic_listeners[dest]['acl']
             if typ == 'item':
                 if name not in self.generic_listeners[dest]['items']:
-                    logger.error("Item '{}' not available in the generic listener.".format(name))
+                    self.logger.error("Item '{}' not available in the generic listener.".format(name))
                     return False
                 iacl = self.generic_listeners[dest]['items'][name]['acl']
                 if iacl:
                     if source not in iacl:
-                        logger.error("Item '{}' acl doesn't permit updates from {}.".format(name, source))
+                        self.logger.error("Item '{}' acl doesn't permit updates from {}.".format(name, source))
                         return False
                 elif gacl:
                     if source not in gacl:
-                        logger.error("Generic network acl doesn't permit updates from {}.".format(source))
+                        self.logger.error("Generic network acl doesn't permit updates from {}.".format(source))
                         return False
                 item = self.generic_listeners[dest]['items'][name]['item']
                 item(value, proto, source)
 
             elif typ == 'logic':
                 if name not in self.generic_listeners[dest]['logics']:
-                    logger.error("Logic '{}' not available in the generic listener.".format(name))
+                    self.logger.error("Logic '{}' not available in the generic listener.".format(name))
                     return False
                 lacl = self.generic_listeners[dest]['logics'][name]['acl']
                 if lacl:
                     if source not in lacl:
-                        logger.error("Logic '{}' acl doesn't permit triggering from {}.".format(name, source))
+                        self.logger.error("Logic '{}' acl doesn't permit triggering from {}.".format(name, source))
                         return False
                 elif gacl:
                     if source not in gacl:
-                        logger.error("Generic network acl doesn't permit triggering from {}.".format(source))
+                        self.logger.error("Generic network acl doesn't permit triggering from {}.".format(source))
                         return False
                 logic = self.generic_listeners[dest]['logics'][name]['logic']
                 logic.trigger(proto, source, value)
@@ -220,18 +223,18 @@ class Network():
             elif typ == 'log':
                 if gacl:
                     if source not in gacl:
-                        logger.error("Generic network acl doesn't permit log entries from {}".format(source))
+                        self.logger.error("Generic network acl doesn't permit log entries from {}".format(source))
                         return False
                 if name == 'info':
-                    logger.info(value)
+                    self.logger.info(value)
                 elif name == 'warning':
-                    logger.warning(value)
+                    self.logger.warning(value)
                 elif name == 'error':
-                    logger.error(value)
+                    self.logger.error(value)
                 else:
-                    logger.warning("Unknown logging priority '{}'. Data: '{}'".format(name, data))
+                    self.logger.warning("Unknown logging priority '{}'. Data: '{}'".format(name, data))
             else:
-                logger.error("Unsupporter key element {}. Data: {}".format(typ, data))
+                self.logger.error("Unsupporter key element {}. Data: {}".format(typ, data))
                 return False
         elif dest in self.special_listeners:
             proto, t1, t2 = dest.partition(':')
@@ -246,11 +249,11 @@ class Network():
                 logic = self.special_listeners[dest]['logics'][entry]['logic']
                 if lacl:
                     if source not in lacl:
-                        logger.error("Logic '{}' acl doesn't permit triggering from {}.".format(logic.name, source))
+                        self.logger.error("Logic '{}' acl doesn't permit triggering from {}.".format(logic.name, source))
                         return False
                 elif gacl:
                     if source not in gacl:
-                        logger.error("Generic network acl doesn't permit triggering from {}.".format(source))
+                        self.logger.error("Generic network acl doesn't permit triggering from {}.".format(source))
                         return False
                 logic.trigger('network', source, data)
             for entry in self.special_listeners[dest]['items']:
@@ -258,15 +261,15 @@ class Network():
                 item = self.special_listeners[dest]['items'][entry]['item']
                 if lacl:
                     if source not in lacl:
-                        logger.error("Item {0} acl doesn't permit triggering from {1}.".format(item.id(), source))
+                        self.logger.error("Item {0} acl doesn't permit triggering from {1}.".format(item.id(), source))
                         return False
                 elif gacl:
                     if source not in gacl:
-                        logger.error("Generic network acl doesn't permit triggering from {0}.".format(source))
+                        self.logger.error("Generic network acl doesn't permit triggering from {0}.".format(source))
                         return False
                 item(data, 'network', source)
         else:
-            logger.error("Destination {}, not in listeners!".format(dest))
+            self.logger.error("Destination {}, not in listeners!".format(dest))
             return False
         return True
 
@@ -322,7 +325,7 @@ class Network():
                 if self.add_listener('udp', ip, port):
                     self.special_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
                 else:
-                    logger.warning("Could not add listener {} for {}".format(dest, oid))
+                    self.logger.warning("Could not add listener {} for {}".format(dest, oid))
             else:
                 self.special_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
 
@@ -335,6 +338,6 @@ class Network():
                 if self.add_listener('tcp', ip, port):
                     self.special_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
                 else:
-                    logger.warning("Could not add listener {} for {}".format(dest, oid))
+                    self.logger.warning("Could not add listener {} for {}".format(dest, oid))
             else:
                 self.special_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}

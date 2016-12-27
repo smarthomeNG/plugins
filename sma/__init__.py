@@ -44,6 +44,8 @@ from datetime import datetime
 from dateutil import tz
 import itertools
 
+from lib.model.smartplugin import SmartPlugin
+
 BCAST_ADDR = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
 ZERO_ADDR = bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
 
@@ -81,7 +83,7 @@ FCSTAB = [
     0xe70e, 0xf687, 0xc41c, 0xd595, 0xa12a, 0xb0a3, 0x8238, 0x93b1,
     0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0x0e70, 0x1ff9,
     0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
-    0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78,
+    0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
 ]
 
 attribute_to_text = {35: "Fault",
@@ -103,8 +105,8 @@ attribute_to_text = {35: "Fault",
                      887: "None",
                      1129: "Yes",
                      1130: "No",
-                     0xFFFFFD: "NaN",
-                    }
+                     0xFFFFFD: "NaN"
+                     }
 
 # eval-id: eval-expression
 lri_evals = {'num32bit_scaleby1': '(lambda x: x if x not in [0x80000000, 0xFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 12], byteorder="little"))',
@@ -112,8 +114,8 @@ lri_evals = {'num32bit_scaleby1': '(lambda x: x if x not in [0x80000000, 0xFFFFF
              'num32bit_scaleby1000.0': '(lambda x: x / 1000.0 if x not in [0x80000000, 0xFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 12], byteorder="little"))',
              'num64bit_scaleby1': '(lambda x: x if x not in [0x8000000000000000, 0xFFFFFFFFFFFFFFFF] else 0)(int.from_bytes(msg[i + 8:i + 16], byteorder="little"))',
              'sw_version_decode': '"{}{}.{}{}.{:02d}.{}".format(msg[i + 27] >> 4, msg[i + 27] & 0xf, msg[i + 26] >> 4, msg[i + 26] & 0xf, msg[i + 25], msg[i + 24] if msg[i + 24] > 5 else "NEABRS"[msg[i + 24]])',
-             'attribute_decode': '(lambda x: attribute_to_text[x[0]] if x[0] in attribute_to_text else "?")(list(__import__("itertools").dropwhile(lambda attr_tpl: (attr_tpl[1] != 1) or (attr_tpl[0] == 0xFFFFFE), [(int.from_bytes(msg[o:o + 3], byteorder="little"), msg[o + 3]) for o in range(i+8,i+40,4)]))[0])',
-            }
+             'attribute_decode': '(lambda x: attribute_to_text[x[0]] if x[0] in attribute_to_text else "?")(list(__import__("itertools").dropwhile(lambda attr_tpl: (attr_tpl[1] != 1) or (attr_tpl[0] == 0xFFFFFE), [(int.from_bytes(msg[o:o + 3], byteorder="little"), msg[o + 3]) for o in range(i+8,i+40,4)]))[0])'
+             }
 
 TYPE_LABEL = (0x821E00, 0x8220FF, 0x58000200)
 
@@ -144,8 +146,8 @@ lris = {0x214800: ['attribute_decode', 40, (0x51800200, 0x214800, 0x2148FF)],
         0x465400: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x465300, 0x4655FF)],
         0x465500: ['num32bit_scaleby1000.0', 28, (0x51000200, 0x465300, 0x4655FF)],
         0x465700: ['num32bit_scaleby100.0', 28, (0x51000200, 0x465700, 0x4657FF)],
-        0x823400: ['sw_version_decode', 40, (0x58000200, 0x823400, 0x8234FF)],
-       }
+        0x823400: ['sw_version_decode', 40, (0x58000200, 0x823400, 0x8234FF)]
+        }
 
 # sh.py-Name: field-id
 name_to_id = {'STATUS': 0x214801,
@@ -177,10 +179,13 @@ name_to_id = {'STATUS': 0x214801,
               'AC_PHASE2_I2': 0x465401,
               'AC_PHASE3_I2': 0x465501,
               'GRID_FREQUENCY': 0x465701,
-              'SW_VERSION': 0x823401,
-             }
+              'SW_VERSION': 0x823401
+              }
 
-class SMA():
+
+class SMA(SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.3.1"
 
     def __init__(self, smarthome, bt_addr, password="0000", update_cycle="60", allowed_timedelta="10"):
         self.logger = logging.getLogger(__name__)
@@ -227,16 +232,16 @@ class SMA():
     def run(self):
         self.alive = True
         self._is_connected = False
-        if (self._plugin_active_item is None):
+        if self._plugin_active_item is None:
             self._plugin_active = True
         else:
             self._plugin_active = self._plugin_active_item()
         # "or self._is_connected" ensures the connection will be closed before terminating
-        while (self.alive or self._is_connected):
+        while self.alive or self._is_connected:
             #self.logger.warning("sma: state self._is_connected = {} / self._plugin_active = {} / self.alive = {}".format(self._is_connected, self._plugin_active, self.alive))
 
             # connect to inverter if active but not connected
-            if (self._plugin_active and not self._is_connected):
+            if self._plugin_active and not self._is_connected:
                 self._cmd_lock.acquire()
                 try:
                     self._btsocket = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
@@ -285,7 +290,7 @@ class SMA():
                 self._sh.scheduler.add('SMA', self._update_values, prio=5, cycle=self._update_cycle)
 
             # disconnect from inverter and stop updates if not active or if not alive
-            if (self._is_connected and not (self._plugin_active and self.alive)):
+            if self._is_connected and not (self._plugin_active and self.alive):
                 self._cmd_lock.acquire()
                 try:
                     self._sh.scheduler.remove('SMA')
@@ -305,26 +310,26 @@ class SMA():
                 continue
 
             # receive messages from inverter
-            if (self._plugin_active and self._is_connected):
+            if self._plugin_active and self._is_connected:
                 msg = self._recv_smanet2_msg(no_timeout_warning=True)
                 if not self.alive:
                     break
-                if (msg is None):
+                if msg is None:
                     #self.logger.debug("sma: no msg...")
                     continue
-                if (len(msg) >= 60):
+                if len(msg) >= 60:
                     i = 41
                     try:
-                        while (i < (len(msg) - 11)):
+                        while i < (len(msg) - 11):
                             full_id = int.from_bytes(msg[i:i + 3], byteorder='little')
                             lri = full_id & 0xFFFF00
                             cls = full_id & 0x0000FF
                             dataType = msg[i + 3]
                             if lri not in lris:
                                 self.logger.info("sma: unknown lri={:#06x} / cls={:#02x} / dataType={:#02x} - trying to continue".format(lri, cls, dataType))
-                                if ((dataType == 0x00) or (dataType == 0x40)):
+                                if (dataType == 0x00) or (dataType == 0x40):
                                    i += 28
-                                elif ((dataType == 0x08) or (dataType == 0x10)):
+                                elif (dataType == 0x08) or (dataType == 0x10):
                                    i += 40
                                 else:
                                     self.logger.error("sma: rx - unknown datatype {:#02x}".format(dataType))
@@ -345,7 +350,7 @@ class SMA():
                         self.logger.error("sma: rx: exception - {}".format(e))
                         self.logger.error("sma: rx - exception when parsing msg - len={} data=[{}]\n".format(len(msg), ', '.join(['0x%02x' % b for b in msg])))
                         continue
-                elif (len(msg) == 44):
+                elif len(msg) == 44:
                     start_id = int.from_bytes(msg[33:36], byteorder='little')
                     end_id = int.from_bytes(msg[37:40], byteorder='little')
                     self.logger.info("sma: inverters returns \"no new data\" in id range from {:#06x} to {:#06x}".format(start_id, end_id))
@@ -369,8 +374,8 @@ class SMA():
         self.logger.debug("sma: {} set plugin_active to {}".format(item, self._plugin_active))
 
     def parse_item(self, item):
-        if 'sma' in item.conf:
-            field_name = item.conf['sma']
+        if self.has_iattr(item.conf, 'sma'):
+            field_name = self.get_iattr_value(item.conf, 'sma')
             if field_name in name_to_id:
                 field_id = name_to_id[field_name]
                 lri = (field_id & 0xFFFF00)
@@ -378,22 +383,22 @@ class SMA():
                     self.logger.error("sma: {} connected to field {} requires unsupported lri {:#06x}".format(item, field_name, lri))
                     return None
                 self.logger.debug("sma: {} connected to field {} ({:#06x})".format(item, field_name, field_id))
-                if not field_id in self._fields:
+                if field_id not in self._fields:
                     self._fields[field_id] = {'items': [item], 'logics': []}
                 else:
                     self._fields[field_id]['items'].append(item)
                 field_request = lris[lri][2]
-                if not field_request in self._requests:
+                if field_request not in self._requests:
                     self._requests.append(field_request)
-            elif (field_name == "PLUGIN_ACTIVE"):
+            elif field_name == "PLUGIN_ACTIVE":
                 self._plugin_active_item = item
                 return self._update_plugin_active
             else:
                 self.logger.debug("sma: {0} connected to field {1})".format(item, field_name))
-                if not field_name in self._fields:
+                if field_name not in self._fields:
                     self._fields[field_name] = {'items': [item], 'logics': []}
                 else:
-                    if not item in self._fields[field_name]['items']:
+                    if item not in self._fields[field_name]['items']:
                         self._fields[field_name]['items'].append(item)
         # return None to indicate "read-only"
         return None
@@ -404,25 +409,25 @@ class SMA():
             # wait for sfd
             msg = bytearray()
             self._btsocket.settimeout(timeout)
-            while (len(msg) < 4):
+            while len(msg) < 4:
                 msg += self._btsocket.recv(4)
-                while (msg[0] != 0x7E):
+                while msg[0] != 0x7E:
                     msg.pop(0)
             # get level 1 length and validate
-            if ((msg[1] ^ msg[2] ^ msg[3]) != 0x7E):
+            if (msg[1] ^ msg[2] ^ msg[3]) != 0x7E:
                 self.logger.warning("sma: rx: length fields invalid")
                 return None
             length = int.from_bytes(msg[1:3], byteorder='little')
-            if (length < 18):
+            if length < 18:
                 self.logger.warning("sma: rx: length to small: {}".format(length))
                 return None
             # get remaining bytes
-            while (len(msg) < length):
+            while len(msg) < length:
                 # receive at most only precisely the number of bytes that are
                 # missing for this msg (allow follow-up msgs))
                 msg += self._btsocket.recv(length - len(msg))
             # check src and dst addr and check
-            if (msg[4:10] != self._inv_bt_addr_le):
+            if msg[4:10] != self._inv_bt_addr_le:
                 self.logger.warning("sma: rx: unknown src addr")
                 return None
             if (msg[10:16] != self._own_bt_addr_le) and (msg[10:16] != ZERO_ADDR) and (msg[10:16] != BCAST_ADDR):
@@ -445,7 +450,7 @@ class SMA():
         smanet2_msg = bytearray()
         while self.alive:
             retries -= 1
-            if (retries == 0):
+            if retries == 0:
                 self.logger.warning("sma: recv smanet2 msg - retries used up!")
                 return []
             smanet1_msg = self._recv_smanet1_msg(no_timeout_warning=no_timeout_warning)
@@ -455,13 +460,13 @@ class SMA():
             # get cmdcode - check for last message code (0x0001)
             smanet2_msg += smanet1_msg[18::]
             cmdcode_recv = int.from_bytes(smanet1_msg[16:18], byteorder='little')
-            if (cmdcode_recv == 0x0001):
+            if cmdcode_recv == 0x0001:
                 break
 
         if (smanet2_msg == b'') and no_timeout_warning:
             return None
 
-        if (smanet2_msg[0:5] != SMANET2_HDR):
+        if smanet2_msg[0:5] != SMANET2_HDR:
             self.logger.warning("sma: no SMANET2 msg")
             self.logger.warning("sma: recv: len={} / data=[{}]".format(len(smanet2_msg), ' '.join(['0x%02x' % b for b in smanet2_msg])))
             return None
@@ -469,15 +474,15 @@ class SMA():
         # remove escape characters
         i = 0
         while True:
-            if (smanet2_msg[i] == 0x7d):
+            if smanet2_msg[i] == 0x7d:
                 smanet2_msg[i + 1] ^= 0x20
                 del(smanet2_msg[i])
             i += 1
-            if (i == len(smanet2_msg)):
+            if i == len(smanet2_msg):
                 break
 
         crc = self._calc_crc16(smanet2_msg[1:-3])
-        if (crc != int.from_bytes(smanet2_msg[-3:-1], byteorder='little')):
+        if crc != int.from_bytes(smanet2_msg[-3:-1], byteorder='little'):
             self.logger.warning("sma: crc: crc16 error - {:04x}".format(crc))
             self.logger.warning("sma: crc: len={} / data=[{}]".format(len(smanet2_msg), ' '.join(['0x%02x' % b for b in smanet2_msg])))
             return None
@@ -487,7 +492,7 @@ class SMA():
         retries = 3
         while self.alive:
             retries -= 1
-            if (retries == 0):
+            if retries == 0:
                 self.logger.warning("sma: recv msg with cmdcode - retries used up!")
                 return None
             msg = self._recv_smanet1_msg()
@@ -497,13 +502,13 @@ class SMA():
         return msg
 
     def _send_msg(self, msg):
-        if (len(msg) >= 0x3a):
+        if len(msg) >= 0x3a:
             # calculate crc starting with byte 19 and append with LE byte-oder
             msg += self._calc_crc16(msg[19::]).to_bytes(2, byteorder='little')
             # add escape sequences starting with byte 19
             i = 19
             while True:
-                if (msg[i] in [0x7d, 0x7e, 0x11, 0x12, 0x13]):
+                if msg[i] in [0x7d, 0x7e, 0x11, 0x12, 0x13]:
                     msg[i] ^= 0x20
                     msg.insert(i, 0x7d)
                 i += 1
@@ -544,7 +549,7 @@ class SMA():
         # receive msg from inverter
         msg = self._recv_smanet1_msg_with_cmdcode([0x0005])
 
-        if (msg == []):
+        if msg == []:
             raise
 
         # extract own bluetooth addr
@@ -568,10 +573,10 @@ class SMA():
             self._send_msg(msg)
             # receive msg from inverter
             msg = self._recv_smanet2_msg()
-            if (msg != []):
+            if msg != []:
                 break
 
-        if (retries == 0):
+        if retries == 0:
             self.logger.warning("sma: connect - retries used up!")
             return
 
@@ -613,10 +618,10 @@ class SMA():
             self._send_msg(msg)
             # receive msg from inverter
             msg = self._recv_smanet2_msg()
-            if (msg != []):
+            if msg != []:
                 break
 
-        if (retries == 0):
+        if retries == 0:
             self.logger.warning("sma: login - retries used up!")
             return
 
@@ -632,7 +637,7 @@ class SMA():
         self._send_msg(msg)
         msg = self._recv_smanet1_msg_with_cmdcode([0x0004])
         # extract signal strength
-        return ((msg[22] * 100.0) / 0xff)
+        return (msg[22] * 100.0) / 0xff
 
     def _inv_send_request(self, request_set):
         # send request
