@@ -312,7 +312,7 @@ class Network(SmartPlugin):
             acl = False
 
         if 'nw' in obj.conf:  # adding object to generic listeners
-            if self._sh.string2bool(obj.conf['nw']):
+            if self.to_bool(obj.conf['nw']):
                 for dest in self.generic_listeners:
                     self.generic_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
 
