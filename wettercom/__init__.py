@@ -22,8 +22,12 @@ import logging
 import datetime
 import threading
 import xml.etree.cElementTree
+from lib.model.smartplugin import SmartPlugin
 
-class wettercom():
+
+class wettercom(SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.3.1"
     _server = 'api.wetter.com'
 
     """get city code
