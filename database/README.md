@@ -183,6 +183,23 @@ dbplugin.db().lock()                         # lock the connection for processin
 dbplugin.db().release()                      # release lock again after processing
 </pre>
 
+## dbplugin.dump(dumpfile, id = None, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None)
+This method will dump the complete log table if not restricted by some argument.
+The restriction can be specified by specifying some of the criteria arguments
+(e.g. id, time_start, time_end, ...). These arguments only allow one value to
+be specified (if you want to dump more items you need to invoke the method
+multiple times).
+
+The parameters have the same meaning as described in `readLogs()` method.
+
+e.g.
+<pre>
+dbplugin = sh.outside.temperature.dbplugin   # get associated database plugin instance
+dbplugin.dump("/path/dump.csv")              # dump all items
+dbplugin.dump("/path/dump.csv", id=1)        # only dump item with id 1
+dbplugin.dump("/path/dump.csv", id="test")   # only dump item with name "test"
+</pre>
+
 ### dbplugin.insertLog(id, time, duration=0, val=None, it=None, changed=None, cur=None)
 This method will insert a new log entry for the given item with the following
 data (in the `log` database table):
