@@ -343,7 +343,7 @@ class Database(SmartPlugin):
             raise NotImplementedError
 
         order = '' if func+'.order' not in queries else queries[func+'.order']
-        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group="GROUP BY ROUND(time / :step)", order=order)
+        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group="GROUP BY ROUND(time / :step)", order=order, border=init)
         tuples = logs['tuples']
         if tuples:
             if logs['istart'] > tuples[0][0]:
@@ -383,9 +383,13 @@ class Database(SmartPlugin):
             return
         return logs['tuples'][0][0]
 
-    def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
+    def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order='', border=False):
         istart = self._parse_ts(start)
         iend = self._parse_ts(end)
+        inow = self._parse_ts('now')
+
+        if inow > iend:
+            inow = iend
 
         if step is None:
             if count != 0:
@@ -397,15 +401,28 @@ class Database(SmartPlugin):
         if self._buffer[_item] != []:
             self._dump(items=[_item])
 
+        params = {'id':'<id>', 'time_start':istart, 'time_end':iend, 'inow':inow, 'step':step}
+
+        # Query log table
         query = "SELECT {0} {3} {1} {2}".format(columns, group, order, self._prepare(
             "FROM {log} WHERE "
             "item_id = :id AND "
-            "time > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND "
+            "time " + (">=" if border else ">") + " (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND "
             "time <= :time_end AND "
             "time + duration > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start)"))
+        logs = self._fetch(query, _item, params)
+
+        # No values from log table, try item table
+        if logs is None or len(logs) == 0 or logs[0][0] is None:
+            query = "SELECT {0} {1}".format(columns, self._prepare(
+                "FROM {item} WHERE "
+                "id = :id AND "
+                "time " + (">=" if border else ">") + " :time_start AND "
+                "time <= :time_end"))
+            logs = self._fetch(query.replace('duration', '(:inow - time)'), _item, params)
 
         return {
-            'tuples' : self._fetch(query, _item, {'id':'<id>', 'time_start':istart, 'time_end':iend, 'step':step}),
+            'tuples' : logs,
             'item'   : _item,
             'istart' : istart,
             'iend'   : iend,
