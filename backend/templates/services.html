@@ -132,8 +132,16 @@
 			{% if sql_plugin %}
 			<tr>
 				<td><img src="/static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>
-				<td style="padding-top:15px;"><button type="button" class="btn btn-default" onclick="window.open('/db_dump.html')">{{ _('Datenbank-Dump','button') }}</button></td>
+				<td style="padding-top:15px;"><button type="button" class="btn btn-default" onclick="window.open('/db_dump.html?plugin=sqlite_old')">{{ _('Datenbank-Dump','button') }} (SQLite Plugin)</button></td>
 			</tr>
+			{% endif %}
+			{% if database_plugin %}
+				{% for p in database_plugin  %}
+				<tr>
+					<td><img src="/static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>
+					<td style="padding-top:15px;"><button type="button" class="btn btn-default" onclick="window.open('/db_dump.html?plugin={{ p }}')">{{ _('Datenbank-Dump','button') }} - {{ _('Instanz') }}: ({{ p }})</button></td>
+				</tr>
+				{% endfor %}
 			{% endif %}
 			<tr>
 				<td><img src="/static/img/cache.svg" alt="Icon cache" width="48" height="48"></td>

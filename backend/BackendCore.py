@@ -230,15 +230,19 @@ class Backend:
             knxdeamon += 'knxd'
         
         sql_plugin = False
+        database_plugin = []
+
         for x in self._sh._plugins:
             if x.__class__.__name__ == "SQL":
                 sql_plugin = True
                 break
+            elif x.__class__.__name__ == "Database":
+                database_plugin.append(x.get_instance_name())
 
         tmpl = self.env.get_template('services.html')
         return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket,
                            sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=get_translation_lang(),
-                           develop=self.developer_mode, knxdeamon=knxdeamon)
+                           develop=self.developer_mode, knxdeamon=knxdeamon, database_plugin=database_plugin)
 
     @cherrypy.expose
     def disclosure_html(self):
@@ -251,13 +255,22 @@ class Backend:
         return tmpl.render(smarthome=self._sh, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
-    def db_dump_html(self):
+    def db_dump_html(self, plugin):
         """
         returns the smarthomeNG sqlite database as download
         """
-        self._sh.sql.dump('%s/var/db/smarthomedb.dump' % self._sh_dir)
-        mime = 'application/octet-stream'
-        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump" % self._sh_dir, mime, "%s/var/db/" % self._sh_dir)
+        if (plugin == "sqlite_old"):
+            self._sh.sql.dump('%s/var/db/smarthomedb.dump' % self._sh_dir)
+            mime = 'application/octet-stream'
+            return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump" % self._sh_dir, mime, "%s/var/db/" % self._sh_dir)
+        elif plugin != "":
+            for x in self._sh._plugins:
+                if isinstance(x, SmartPlugin):
+                    if x.get_instance_name() == plugin:
+                        x.dump('%s/var/db/smarthomedb_%s.dump' % (self._sh_dir, plugin))
+                        mime = 'application/octet-stream'
+                        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb_%s.dump" % (self._sh_dir, plugin), mime, "%s/var/db/" % self._sh_dir)
+        return
 
     @cherrypy.expose
     def log_dump_html(self):
