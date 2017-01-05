@@ -7,7 +7,8 @@ This started as a fork of the plugin `influxdata` with the following enhancement
 - specify additional tags or fields globally (plugin.conf) and/or on per-item basis
 
 The special smarthomeNG attributes `caller`, `source` and `dest` are always logged as tags.
-Only if a measurement name is specified, the item's ID is automatically logged as well (tag `item`) - if you don't specify a measurement-name, the name will fallback to the item's ID which makes the item-tag redundant 
+
+Only if a measurement name is specified, the item's ID is automatically logged as well (tag `item`) - if you don't specify a measurement-name, the name will fallback to the item's ID which makes the item-tag redundant
 
 ## Proper Logging
 Please read the [Key Concepts](https://docs.influxdata.com/influxdb/v1.1/concepts/key_concepts/) and [Schema Design](https://docs.influxdata.com/influxdb/v1.1/concepts/schema_and_data_layout/)
@@ -29,7 +30,7 @@ You have to explicitly enable the UDP endpoint in influxdb. The UDP endpoint can
 </pre>
 
 ### plugin.conf
-you can setup global tags and fields
+you can setup global tags and fields (JSON encoded)
 <pre>
 [influxdb]
     class_name = InfluxData
@@ -57,7 +58,7 @@ if `keyword` in plugin.conf is set to `sqlite` this can also be used as a drop-i
     sqlite = true
 </pre>
 
-recommended logging: logging into the measurement `temp` with an additional tag `room` and default tags (including `item: root.dining_temp`) and tags/fields as specified in plugin.conf
+*recommended*: logging into the measurement `temp` with an additional tag `room` and default tags (including `item: root.dining_temp`) and tags/fields as specified in plugin.conf
 <pre>
 [root]
   [[dining_temp]]
