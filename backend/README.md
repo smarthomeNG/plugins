@@ -84,7 +84,7 @@ Number of worker threads to start by cherrypy (default 8, which may be too much 
 The user for basic authentication. If left out, the user name is set as "admin"
 
 ### password (optional)
-The plaintext password for basic authentication. If you want to store your password as md5 hash, use 'md5password' instead. If both "password" and "md5password" are left out, basic authentication is disabled.
+The plaintext password for basic authentication. If you want to store your password as hash, use 'hashed_password' instead. If both "password" and "hashed_password" are left out, basic authentication is disabled.
 
 ### hashed_password (optional)
 The password for basic authentication as hash value. Can be used instead of "password" if you do not want a plaintext password in your config file. If both "password" and "hashed_password" are left out, basic authentication is disabled. Currently hashed_password is the SHA-512 hash value of the password. To create the hash for your password, you can use function "Create password hash" on page "Services" in the backend.
