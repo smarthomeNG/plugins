@@ -57,6 +57,11 @@ class Xiaomi(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("stop method called")
+        try:
+            self._sh.scheduler.remove(__name__)
+        except:
+            self.logger.error("removing of scheduler failed: {}".format(sys.exc_info()))
+
         self.alive = False
 
     def parse_item(self, item):
