@@ -58,7 +58,7 @@ class Xiaomi(SmartPlugin):
         """
         self.logger.debug("stop method called")
         try:
-            self._sh.scheduler.remove(__name__)
+            self._sh.scheduler.remove(__name__+"_"+self.get_instance_name())
         except:
             self.logger.error("removing of scheduler failed: {}".format(sys.exc_info()))
 
