@@ -266,11 +266,22 @@ dbplugin.updateItem(id, 12345, 0, 100)       # update item value in database for
 
 
 ### dbplugin.readItem(id, cur=None)
-This method will read the item data including all fields.
+This method will read the item data including all fields. When the id
+parameter is a string it is assumed that the item should be selected by
+the items name and not by the items ID.
 
 e.g.
 <pre>
-data = dbplugin.readItem(id)                 # read all fields of item which contains the last item status
+data = dbplugin.readItem(1)                  # read all fields of item with ID 1 which contains the last item status
+data = dbplugin.readItem("test.item")        # read all fields of item with name test.item which contains the last item status
+</pre>
+
+### dbplugin.readItems(cur=None)
+This method will read all items data including all fields.
+
+e.g.
+<pre>
+items = dbplugin.readItems()                 # read all fields of all item which contains the last item status
 </pre>
 
 ### dbplugin.deleteItem(id, cur=None)

@@ -172,7 +172,12 @@ class Database(SmartPlugin):
 
     def readItem(self, id, cur=None):
         params = {'id':id}
+        if type(id) == str:
+            return self._db.fetchone(self._prepare("SELECT id, name, time, val_str, val_num, val_bool, changed from {item} WHERE name = :id;"), params, cur=cur)
         return self._db.fetchone(self._prepare("SELECT id, name, time, val_str, val_num, val_bool, changed from {item} WHERE id = :id;"), params, cur=cur)
+
+    def readItems(self, cur=None):
+        return self._db.fetchall(self._prepare("SELECT id, name, time, val_str, val_num, val_bool, changed from {item};"), {}, cur=cur)
 
     def deleteItem(self, id, cur=None):
         params = {'id':id}
