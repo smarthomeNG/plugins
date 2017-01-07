@@ -105,14 +105,17 @@ class EEP_Parser():
         result = {}
         result['ENG'] = 0.47 + (payload[0] * 1.5 / 66)       # voltage of energy buffer in Volts
         result['HUM'] = (payload[1] / 250.0 * 100)           # relative humidity in percent
-        result['TMP'] = -20.0 + (payload[2] / 250.0 * 40.0)  # temperature in degree Celsius from -20.0 degC- 60degC
+        result['TMP'] = -20.0 + (payload[2] / 250.0 * 80.0)  # temperature in degree Celsius from -20.0 degC - 60degC
         return result
 
     def _parse_eep_A5_08_01(self, payload, status):
         # Brightness and movement sensor, for example eltako FBH65TFB, RORG = 0x07
+        logger.debug("enocean: parsing A5_08_01: Movement sensor")
         result = {}
         result['BRI'] = (payload[1] / 255.0 * 2048)          # brightness in lux
-        result['MOV'] = not((payload[3] & 0x02) == 0x02)     # movement
+        result['MOV'] = not ((payload[3] & 0x02) == 0x02)    # movement
+        #logger.debug("enocean: movement: {0}, brightness: {1}".format(result['MOV'],result['BRI']))
+        #logger.debug("enocean: movement data byte0: {0}".format(payload[3]))
         return result
 
     def _parse_eep_A5_11_04(self, payload, status):
