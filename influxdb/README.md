@@ -33,8 +33,8 @@ You have to explicitly enable the UDP endpoint in influxdb. The UDP endpoint can
 you can setup global tags and fields (JSON encoded)
 <pre>
 [influxdb]
-    class_name = InfluxData
-    class_path = plugins.influxdata
+    class_name = InfluxDB
+    class_path = plugins.influxdb
 #   host = localhost
 #   port = 8089
 #   keyword = influxdb

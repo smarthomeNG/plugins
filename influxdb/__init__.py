@@ -1,5 +1,3 @@
-
-
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
@@ -115,9 +113,6 @@ class InfluxDB(SmartPlugin):
 
         line = self.create_line(name, tags, fields)
         self.send( line )
-        return None
-
-    def _update_values(self):
         return None
 
     def send(self, data):
