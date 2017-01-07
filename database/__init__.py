@@ -109,14 +109,7 @@ class Database(SmartPlugin):
         if not self._db.lock(60):
             self.logger.error("Can not acquire lock for database file dump")
             return
-
-        if type(id) is int:
-            item_ids = self._db.fetchall(self._prepare("SELECT id, name FROM {item} WHERE id = :id"), {'id':id}, cur=cur)
-        elif type(id) is str:
-            item_ids = self._db.fetchall(self._prepare("SELECT id, name FROM {item} WHERE name = :name"), {'name':id}, cur=cur)
-        else:
-            item_ids = self._db.fetchall(self._prepare("SELECT id, name FROM {item}"), cur=cur)
-
+        item_ids = self.readItems(cur=cur) if id is None else [self.readItem(id, cur=cur)]
         self._db.release()
 
         s = ';'
@@ -125,17 +118,16 @@ class Database(SmartPlugin):
         f.write(s.join(h) + "\n")
         for item in item_ids:
             self.logger.debug("... dumping item {}/{}".format(item[1], item[0]))
-            condition, params = self._slice_condition(item[0], time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end)
+
             if not self._db.lock(60):
                 self.logger.error("Can not acquire lock for database file dump")
                 return
-            rows = self._db.fetchall(self._prepare("SELECT item_id, " + ", ".join(h[2:-2]) + " FROM {log} WHERE " + condition), params, cur=cur)
+            rows = self.readLogs(item[0], time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end, cur=cur)
             self._db.release()
 
             for row in rows:
-                cols = list(row)
-                cols.insert(1, item[1])
-                cols.append('' if row[1] is None else datetime.datetime.fromtimestamp(row[1]/1000.0))
+                cols = [item[0], item[1], row[0], row[2], row[3], row[4], row[5], row[6]]
+                cols.append('' if row[0] is None else datetime.datetime.fromtimestamp(row[0]/1000.0))
                 cols.append('' if row[6] is None else datetime.datetime.fromtimestamp(row[6]/1000.0))
                 cols = map(lambda col: '' if col is None else col, cols)
                 cols = map(lambda col: str(col) if not '"' in str(col) else col.replace('"', '\\"'), cols)
@@ -146,13 +138,13 @@ class Database(SmartPlugin):
     def cleanup(self):
         items = [item.id() for item in self._buffer]
         cur = self._db.cursor()
-        for item in self._db.fetchall(self._prepare("SELECT id, name FROM {item};"), {}, cur=cur):
+        for item in self.readItems(cur=cur):
             if item[1] not in items:
                 self.deleteItem(item[0], cur=cur)
         cur.close()
 
     def id(self, item, create=True, cur=None):
-        id = self._db.fetchone(self._prepare("SELECT id FROM {item} where name = :name;"), {'name':item.id()}, cur=cur)
+        id = self.readItem(str(item.id()), cur=cur)
 
         if id == None and create == True:
             id = [self.insertItem(item.id(), cur)]
