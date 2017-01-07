@@ -28,6 +28,7 @@ import struct
 import time
 import threading
 from . import eep_parser
+from lib.model.smartplugin import SmartPlugin
 
 FCSTAB = [
     0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
@@ -85,6 +86,15 @@ CO_RD_LEARNMODE        = 0x24          # Function: Reads the learn-mode state of
 CO_RD_NUMSECUREDEVICES = 0x29          # Read number of taught in secure devices
 CO_RD_SECUREDEVICE     = 0x30          # Read secure device by ID
 
+#List of Event Codes
+SA_RECLAIM_NOT_SUCCESSFUL  = 0x01      # Informs the backbone of a Smart Ack Client to not successful reclaim.
+SA_CONFIRM_LEARN           = 0x02      # Used for SMACK to confirm/discard learn in/out
+SA_LEARN_ACK               = 0x03      # Inform backbone about result of learn request
+CO_READY                   = 0x04      # Inform backbone about the readiness for operation
+CO_EVENT_SECUREDEVICES     = 0x05      # Informs about a secure device
+CO_DUTYCYCLE_LIMIT         = 0x06      # Informs about duty cycle limit
+CO_TRANSMIT_FAILED         = 0x07      # Informs that the device was not able to send a telegram.
+
 #Smart Acknowledge Defines:
 SA_WR_LEARNMODE        = 0x01          # Set/Reset Smart Ack learn mode
 SA_RD_LEARNMODE        = 0x02          # Get Smart Ack learn mode state
@@ -100,17 +110,23 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 logger = logging.getLogger('EnOcean')
 
-class EnOcean():
 
+class EnOcean(SmartPlugin):
+    PLUGIN_VERSION = "1.1.2"
+    ALLOW_MULTIINSTANCE = False
+    
     def __init__(self, smarthome, serialport, tx_id=''):
         self._sh = smarthome
         self.port = serialport
+        self.logger = logging.getLogger(__name__)
         if (len(tx_id) < 8):
             self.tx_id = 0
             logger.warning('enocean: No valid enocean stick ID configured. Transmitting is not supported')
+            self.logger.warning('enocean: No valid enocean stick ID configured. Transmitting is not supported')
         else:
             self.tx_id = int(tx_id, 16)
             logger.info('enocean: Stick TX ID configured via plugin.conf to: {0}'.format(tx_id))
+            self.logger.info('enocean: Stick TX ID configured via plugin.conf to: {0}'.format(tx_id))
         self._tcm = serial.Serial(serialport, 57600, timeout=0.5)
         self._cmd_lock = threading.Lock()
         self._response_lock = threading.Condition()
@@ -134,12 +150,25 @@ class EnOcean():
                             value_dict = RADIO_PAYLOAD_VALUE[rorg]['entities']
                             value = eval(RADIO_PAYLOAD_VALUE[rorg]['entities'][eval_value])
                             logger.debug("Resulting value: {0} for {1}".format(value, item))
+                            self.logger.debug("Resulting value: {0} for {1}".format(value, item))
                             if value:  # not shure about this
                                 item(value, 'EnOcean', 'RADIO')
 
     def _process_packet_type_event(self, data, optional):
         event_code = data[0]
-        if(event_code == CO_EVENT_SECUREDEVICES):
+        if(event_code == SA_RECLAIM_NOT_SUCCESSFUL):
+            logger.error("enocean: SA reclaim was not successful")
+        elif(event_code == SA_CONFIRM_LEARN):
+            logger.info("enocean: Requesting how to handle confirm/discard learn in/out")
+        elif(event_code == SA_LEARN_ACK):
+            logger.info("enocean: SA lern acknowledged")
+        elif(event_code == CO_READY):
+            logger.info("enocean: Controller is ready for operation")
+        elif(event_code == CO_TRANSMIT_FAILED):
+            logger.error("enocean: Telegram transmission failed")
+        elif(event_code == CO_DUTYCYCLE_LIMIT):
+            logger.warning("enocean: Duty cycle limit reached")
+        elif(event_code == CO_EVENT_SECUREDEVICES):
             logger.info("enocean: secure device event packet received")
         else:
             logger.warning("enocean: unknown event packet received")
@@ -182,6 +211,7 @@ class EnOcean():
             dBm = -optional[5]
             SecurityLevel = optional[6]
             logger.debug("enocean: radio message with additional info: subtelnum = {} / dest_id = {:08X} / signal = {}dBm / SecurityLevel = {}".format(subtelnum, dest_id, dBm, SecurityLevel))
+            self.logger.debug("enocean: radio message with additional info: subtelnum = {} / dest_id = {:08X} / signal = {}dBm / SecurityLevel = {}".format(subtelnum, dest_id, dBm, SecurityLevel))
 
         if sender_id in self._rx_items:
             logger.debug("enocean: Sender ID found in item list")
