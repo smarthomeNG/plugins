@@ -105,12 +105,19 @@ class Database(SmartPlugin):
 
     def dump(self, dumpfile, id = None, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None):
         self.logger.info("Starting file dump to {} ...".format(dumpfile))
+
+        if not self._db.lock(60):
+            self.logger.error("Can not acquire lock for database file dump")
+            return
+
         if type(id) is int:
             item_ids = self._db.fetchall(self._prepare("SELECT id, name FROM {item} WHERE id = :id"), {'id':id}, cur=cur)
         elif type(id) is str:
             item_ids = self._db.fetchall(self._prepare("SELECT id, name FROM {item} WHERE name = :name"), {'name':id}, cur=cur)
         else:
             item_ids = self._db.fetchall(self._prepare("SELECT id, name FROM {item}"), cur=cur)
+
+        self._db.release()
 
         s = ';'
         h = ['item_id', 'item_name', 'time', 'duration', 'val_str', 'val_num', 'val_bool', 'changed', 'time_date', 'changed_date']
@@ -119,7 +126,13 @@ class Database(SmartPlugin):
         for item in item_ids:
             self.logger.debug("... dumping item {}/{}".format(item[1], item[0]))
             condition, params = self._slice_condition(item[0], time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end)
-            for row in self._db.fetchall(self._prepare("SELECT item_id, " + ", ".join(h[2:-2]) + " FROM {log} WHERE " + condition), params, cur=cur):
+            if not self._db.lock(60):
+                self.logger.error("Can not acquire lock for database file dump")
+                return
+            rows = self._db.fetchall(self._prepare("SELECT item_id, " + ", ".join(h[2:-2]) + " FROM {log} WHERE " + condition), params, cur=cur)
+            self._db.release()
+
+            for row in rows:
                 cols = list(row)
                 cols.insert(1, item[1])
                 cols.append('' if row[1] is None else datetime.datetime.fromtimestamp(row[1]/1000.0))
