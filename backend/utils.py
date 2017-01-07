@@ -28,6 +28,8 @@ import os
 
 # Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
 # Methoden einer Klasse zum laufen bekam
+
+
 def get_basename(p):
     """
     returns the filename of a full pathname
@@ -49,9 +51,11 @@ def is_userlogic(sh, logic):
 translation_dict = {}
 translation_lang = ''
 
+
 def get_translation_lang():
     global translation_lang
     return translation_lang
+
 
 def load_translation(language):
     global translation_dict    # Needed to modify global copy of translation_dict
@@ -109,11 +113,13 @@ def translate(txt, block=''):
             tr = txt
     return html_escape(tr)
 
+
 def create_hash(plaintext):
     import hashlib
     hashfunc = hashlib.sha512()
     hashfunc.update(plaintext.encode())
     return hashfunc.hexdigest()
+
 
 def parse_requirements(file_path):
     fobj = open(file_path)
@@ -121,10 +127,19 @@ def parse_requirements(file_path):
     for line in fobj:
         if len(line) > 0 and '#' not in line:
             if ">" in line:
-                req_dict[line[0:line.find(">")].lower().strip()] = line[line.find(">"):len(line)].lower().strip()
+                if line[0:line.find(">")].lower().strip() in req_dict:
+                    req_dict[line[0:line.find(">")].lower().strip()] += " | "+line[line.find(">"):len(line)].lower().strip()
+                else:
+                    req_dict[line[0:line.find(">")].lower().strip()] = line[line.find(">"):len(line)].lower().strip()
             elif "<" in line:
-                req_dict[line[0:line.find("<")].lower().strip()] = line[line.find("<"):len(line)].lower().strip()
+                if line[0:line.find("<")].lower().strip() in req_dict:
+                    req_dict[line[0:line.find("<")].lower().strip()] += " | "+line[line.find("<"):len(line)].lower().strip()
+                else:
+                    req_dict[line[0:line.find("<")].lower().strip()] = line[line.find("<"):len(line)].lower().strip()
             elif "=" in line:
-                req_dict[line[0:line.find("=")].lower().strip()] = line[line.find("="):len(line)].lower().strip()
+                if line[0:line.find("=")].lower().strip() in req_dict:
+                    req_dict[line[0:line.find("=")].lower().strip()] += " | "+line[line.find("="):len(line)].lower().strip()
+                else:
+                    req_dict[line[0:line.find("=")].lower().strip()] = line[line.find("="):len(line)].lower().strip()
     fobj.close()
     return req_dict
