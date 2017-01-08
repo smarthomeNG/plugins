@@ -1,22 +1,21 @@
 import logging
 
-logger = logging.getLogger('EnOcean')
-
 class EEP_Parser():
 
     def __init__(self):
-        logger.info('enocean: eep-parser instantiated')
+        self.logger = logging.getLogger(__name__)
+        self.logger.info('enocean: eep-parser instantiated')
 
     def CanParse(self, eep):
         found = callable(getattr(self, "_parse_eep_" + eep, None))
         if (not found):
-            logger.error("eep-parser: missing parser for eep {} - there should be a _parse_eep_{}-function!".format(eep, eep))
+            self.logger.error("eep-parser: missing parser for eep {} - there should be a _parse_eep_{}-function!".format(eep, eep))
         return found
 
     def Parse(self, eep, payload, status):
-        #logger.debug('enocean: parser called with eep={} / payload={} / status={}'.format(eep, payload, status))
+        #self.logger.debug('enocean: parser called with eep={} / payload={} / status={}'.format(eep, payload, status))
         results = getattr(self, "_parse_eep_" + eep)(payload, status)
-        #logger.info('enocean: parser returns {}'.format(results))
+        #self.logger.info('enocean: parser returns {}'.format(results))
         return results
 
     def _parse_eep_A5_02_01(self, payload, status):
@@ -110,7 +109,7 @@ class EEP_Parser():
 
     def _parse_eep_A5_08_01(self, payload, status):
         # Brightness and movement sensor, for example eltako FBH65TFB, RORG = 0x07
-        logger.debug("enocean: parsing A5_08_01: Movement sensor")
+        #logger.debug("enocean: parsing A5_08_01: Movement sensor")
         result = {}
         result['BRI'] = (payload[1] / 255.0 * 2048)          # brightness in lux
         result['MOV'] = not ((payload[3] & 0x02) == 0x02)    # movement
@@ -125,7 +124,7 @@ class EEP_Parser():
         #Data_byte2 = Dimmwert in % von 0-100 dez.
         #Data_byte1 = 0x00
         #Data_byte0 = 0x08 = Dimmer aus, 0x09 = Dimmer an
-        logger.debug("enocean: processing A5_11_04: Dimmer Status on/off")
+        #logger.debug("enocean: processing A5_11_04: Dimmer Status on/off")
         results = {}
         #if !( (payload[0] == 0x02) and (payload[2] == 0x00)):
         #    logger.error("enocean: error in processing A5_11_04: static byte missmatch")
@@ -139,7 +138,7 @@ class EEP_Parser():
 
     def _parse_eep_A5_12_01(self, payload, status):
         # Status command from switche actor with powermeter, for example eltako FSVA-230, RORG = 0x07
-        logger.debug("enocean: processing A5_12_01")
+        #logger.debug("enocean: processing A5_12_01")
         results = {}
         status = payload[3]
         value = (payload[0] << 16) + (payload[1] << 8) + payload[2]
@@ -148,7 +147,7 @@ class EEP_Parser():
 
     def _parse_eep_A5_20_04(self, payload, status):
         # Status command from heating radiator valve, for example Hora smartdrive MX, RORG = 0x07
-        logger.debug("enocean: processing A5_20_04")
+        #logger.debug("enocean: processing A5_20_04")
         results = {}
         TS = ((status & 1 << 6) == 1 << 6) #1: temperature setpoint, 0: feed temperature
         FL = ((status & 1 << 7) == 1 << 7) #1: failure, 0: normal
@@ -191,11 +190,11 @@ class EEP_Parser():
     def _parse_eep_D5_00_01(self, payload, status):
         #ORG = 0x06
         #Window/Door Contact Sensor, for example Eltako FTK, FTKB
-        logger.debug("enocean: processing D5_00_01: Door contact")
+        #logger.debug("enocean: processing D5_00_01: Door contact")
         return {'STATUS': (payload[0] & 0x01) == 0x01}
 
     def _parse_eep_F6_02_01(self, payload, status):
-        logger.debug("enocean: processing F6_02_01: Rocker Switch, 2 Rocker, Light and Blind Control - Application Style 1")
+        #logger.debug("enocean: processing F6_02_01: Rocker Switch, 2 Rocker, Light and Blind Control - Application Style 1")
         results = {}
         R1 = (payload[0] & 0xE0) >> 5
         EB = (payload[0] & (1<<4) == (1<<4))
@@ -211,17 +210,18 @@ class EEP_Parser():
         elif (not NU) and (payload[0] == 0x00):
             results = {'AI': False, 'AO': False, 'BI': False, 'BO': False}
         else:
-            logger.error("enocean: parser detected invalid state encoding - check your switch!")
+            self.logger.error("enocean: parser detected invalid state encoding - check your switch!")
+            pass
         return results
 
     def _parse_eep_F6_02_02(self, payload, status):
-        logger.debug("enocean: processing F6_02_02: Rocker Switch, 2 Rocker, Light and Blind Control - Application Style 2")
+        #logger.debug("enocean: processing F6_02_02: Rocker Switch, 2 Rocker, Light and Blind Control - Application Style 2")
         return self._parse_eep_F6_02_01(payload, status)
 
     def _parse_eep_F6_02_03(self, payload, status):
         #Repeated switch communication(RPS) Telegramm, RORG = F6 = ORG = 0x05
         # Status command from bidirectional actors, for example eltako FSUD-230, FSVA-230V or switches (for example Gira)
-        logger.debug("enocean: processing F6_02_03: Rocker Switch, 2 Rocker")
+        #logger.debug("enocean: processing F6_02_03: Rocker Switch, 2 Rocker")
         results = {}
         #Button A1: Dimm light down
         results['AI'] = (payload[0]) == 0x10
@@ -242,7 +242,7 @@ class EEP_Parser():
         return results
 
     def _parse_eep_F6_10_00(self, payload, status):
-        logger.debug("enocean: processing F6_10_00: Mechanical Handle")
+        #logger.debug("enocean: processing F6_10_00: Mechanical Handle")
         results = {}
         if (payload[0] == 0xF0):
             results['STATUS'] = 0
@@ -252,5 +252,5 @@ class EEP_Parser():
         elif (payload[0] == 0xD0):
             results['STATUS'] = 2
         else:
-            logger.error("enocean: error in F6_10_00 handle status, payload: {0} unknown".format(payload[0]))
+            self.logger.error("enocean: error in F6_10_00 handle status, payload: {0} unknown".format(payload[0]))
         return results
