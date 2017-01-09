@@ -213,7 +213,7 @@ class iCal():
                 if 'DTEND' not in event:
                     logger.warning("iCal: Warning in parsing {0} no DTEND for UID: {1}. Setting DTEND from DTSTART".format(ics, event['UID']))
                     #Set end to start time:
-                    event['DTEND'] = event['DTEND']
+                    event['DTEND'] = event['DTSTART']
                     continue
                 if 'RRULE' in event:
                     event['RRULE'] = self._parse_rrule(event, tzinfo)

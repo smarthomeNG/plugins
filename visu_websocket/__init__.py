@@ -114,7 +114,9 @@ class WebSocket(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         self.websocket.update_item(item.id(), item(), source)
 
-
+    def url(self, url):
+        self.websocket.url(url)
+		
     def parse_logic(self, logic):
         if hasattr(logic, 'visu_acl'):
             if logic.conf['visu_acl'].lower() in ('true', 'yes', 'rw'):
