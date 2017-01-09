@@ -43,18 +43,14 @@
 # {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '17:30'}
 # ]})
 
-
-
 import logging
 from lib.model.smartplugin import SmartPlugin
-
 from datetime import datetime, timedelta
-
 from dateutil.rrule import rrulestr
 from dateutil import parser
-
 import lib.orb
 
+ITEM_TAG = ['uzsu_item']
 class UZSU(SmartPlugin):
     """
     Main class of the UZSU Plugin. Does all plugin specific stuff and provides
@@ -74,7 +70,7 @@ class UZSU(SmartPlugin):
 
         :param sh:  The instance of the smarthome object, save it for later references
         """
-        self.logger = logging.getLogger('UZSU')
+        self.logger = logging.getLogger(__name__)
         self.logger.info('Init UZSU')
         self._sh = smarthome
 
@@ -115,8 +111,7 @@ class UZSU(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
 
         """
-	
-        if 'uzsu_item' in item.conf:
+        if self.has_iattr(item.conf, ITEM_TAG[0]):	
             self._items[item] = item()
             return self.update_item
 
