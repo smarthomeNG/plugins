@@ -43,55 +43,96 @@
 # {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '17:30'}
 # ]})
 
-
-
 import logging
+from lib.model.smartplugin import SmartPlugin
 from datetime import datetime, timedelta
-
 from dateutil.rrule import rrulestr
 from dateutil import parser
-
 import lib.orb
 
-class UZSU():
+ITEM_TAG = ['uzsu_item']
+class UZSU(SmartPlugin):
+    """
+    Main class of the UZSU Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
+    
+    ALLOW_MULTIINSTANCE = False
+    
+    PLUGIN_VERSION = "1.3.0"
+
 
     _items = {}         # item buffer for all uzsu enabled items
 
-    def __init__(self, smarthome, path=None):
-        self.logger = logging.getLogger('UZSU')
+    def __init__(self, smarthome, path=None, *args, **kwargs):
+        """
+        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+
+        :param sh:  The instance of the smarthome object, save it for later references
+        """
+        self.logger = logging.getLogger(__name__)
         self.logger.info('Init UZSU')
         self._sh = smarthome
 
-    def parse_item(self, item):
-        if 'uzsu_item' in item.conf:
-            self._items[item] = item()
-            return self.update_item
-
     def run(self):
-        """This is called once at the beginning after all items are already parsed from smarthome.py
+        """
+		This is called once at the beginning after all items are already parsed from smarthome.py
         All active uzsu items are registered to the scheduler
         """
+        self.logger.debug("run method called")
         self.alive = True
+        # if you want to create child threads, do not make them daemon = True!
+        # They will not shutdown properly. (It's a python bug)
+		
         for item in self._items:
             if 'active' in self._items[item]:
                 if self._items[item]['active']:
                     self._schedule(item)
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("stop method called")
         self.alive = False
+
+    def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change you should return a call back function
+                        like the function update_item down below. An example when this is needed is the knx plugin
+                        where parse_item returns the update_item function when the attribute knx_send is found.
+                        This means that when the items value is about to be updated, the call back function is called
+                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                        can be sent to the knx with a knx write function within the knx plugin.
+
+        """
+        if self.has_iattr(item.conf, ITEM_TAG[0]):	
+            self._items[item] = item()
+            return self.update_item
+
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         This is called by smarthome engine when the item changes, e.g. by Visu or by the command line interface
         The relevant item is put into the internal item list and registered to the scheduler
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
         """
         self._items[item] = item()
         self._schedule(item)
 
+
     def _schedule(self, item):
         """
-        This function schedules an item: First the item is removed from the scheduler. If the item is active
-        then the list is searched for the nearest next execution time
+        This function schedules an item: First the item is removed from the scheduler.
+		If the item is active then the list is searched for the nearest next execution time
         """
         self._sh.scheduler.remove('uzsu_{}'.format(item))
         _next = None
@@ -108,6 +149,7 @@ class UZSU():
                         _value = value
         if _next and not _value is None:
             self._sh.scheduler.add('uzsu_{}'.format(item), self._set, value={'item': item, 'value': _value}, next=_next)
+
 
     def _set(self, **kwargs):
         item = kwargs['item']
