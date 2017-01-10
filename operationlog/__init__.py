@@ -26,19 +26,22 @@ import os
 import pickle
 
 from .AutoBlindLoggerOLog import AbLogger
+from lib.model.smartplugin import SmartPlugin
 
-logger = logging.getLogger('')
 
 
-class OperationLog(AbLogger):
+class OperationLog(AbLogger, SmartPlugin):
     _log = None
     _items = {}
+    PLUGIN_VERSION = "1.3.0"
+    ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome, name, cache=True, logtofile=True, filepattern="{year:04}-{month:02}-{day:02}-{name}.log",
                  mapping=['time', 'thread', 'level', 'message'], items=[], maxlen=50):
         log_directory = "var/log/operationlog/"
         self._sh = smarthome
         self.name = name
+        self.logger = logging.getLogger(__name__)
         if log_directory[0] != "/":
             base = self._sh.base_dir
             if base[-1] != "/":
@@ -73,7 +76,7 @@ class OperationLog(AbLogger):
                                                                                                     self._filepattern, int(self._maxlen))
         if isinstance(logtofile, str) and logtofile in ['False', 'false', 'No', 'no']:
             self._logtofile = False
-        logger.info(info_txt_log + info_txt_cache)
+        self.logger.info(info_txt_log + info_txt_cache)
 
         #############################################################
         # Cache
@@ -83,14 +86,14 @@ class OperationLog(AbLogger):
             try:
                 self.__last_change, self._logcache = _cache_read(self._cachefile, self._sh._tzinfo)
                 self.load(self._logcache)
-                logger.debug("OperationLog {}: read cache: {}".format(self.name, self._logcache))
+                self.logger.debug("OperationLog {}: read cache: {}".format(self.name, self._logcache))
             except Exception:
                 try:
-                    _cache_write(self._cachefile, self._log.export(int(self._maxlen)))
+                    _cache_write(self.logger, self._cachefile, self._log.export(int(self._maxlen)))
                     _cache_read(self._cachefile, self._sh._tzinfo)
-                    logger.info("OperationLog {}: generated cache file".format(self.name))
+                    self.logger.info("OperationLog {}: generated cache file".format(self.name))
                 except Exception as e:
-                    logger.warning("OperationLog {}: problem reading cache: {}".format(self._path, e))
+                    self.logger.warning("OperationLog {}: problem reading cache: {}".format(self._path, e))
 
     def update_logfilename(self):
         if self.__date == datetime.datetime.today() and self.__fname is not None:
@@ -109,7 +112,7 @@ class OperationLog(AbLogger):
                     try:
                         eval(eval_str)
                     except Exception as e:
-                        logger.warning('olog: could not evaluate {} for item: {}, {}'.format(eval_str, item_id, e))
+                        self.logger.warning('olog: could not evaluate {} for item: {}, {}'.format(eval_str, item_id, e))
                         self._item_conf[item_id]['olog_eval'][ind] = "'--'"
         self.alive = True
 
@@ -135,7 +138,7 @@ class OperationLog(AbLogger):
                     start = pos + 5
                     pos = olog_txt.find('}', pos + 1)
                     if pos == -1:
-                        logger.warning('olog: did not find ending } for eval in item.conf, item {}'.format(item.id()))
+                        self.logger.warning('olog: did not find ending } for eval in item.conf, item {}'.format(item.id()))
                         break
                     eval_str = olog_txt[start + 1:pos]
                     self._item_conf[item.id()]['olog_eval'].append(eval_str)
@@ -143,7 +146,7 @@ class OperationLog(AbLogger):
                     pos = start
                 self._item_conf[item.id()]['olog_txt'] = olog_txt
                 if len(self._item_conf[item.id()]['olog_eval']) != 0:
-                    logger.info('Item: {}, olog evaluating: {}'.format(item.id(), self._item_conf[item.id()]['olog_eval']))
+                    self.logger.info('Item: {}, olog evaluating: {}'.format(item.id(), self._item_conf[item.id()]['olog_eval']))
             if 'olog_rules' in item.conf:
                 olog_rules = item.conf['olog_rules']
                 if isinstance(olog_rules, str):
@@ -166,7 +169,7 @@ class OperationLog(AbLogger):
                                 self._item_conf[item.id()]['olog_rules']["*"] = 'value'
                     self._item_conf[item.id()]['olog_rules'][key] = value
                 if len(self._item_conf[item.id()]['olog_rules']) != 0:
-                    logger.info('Item: {}, olog rules: {}'.format(item.id(), self._item_conf[item.id()]['olog_rules']))
+                    self.logger.info('Item: {}, olog rules: {}'.format(item.id(), self._item_conf[item.id()]['olog_rules']))
             return self.update_item
         else:
             return None
@@ -269,9 +272,9 @@ class OperationLog(AbLogger):
 
             if self._cache is True:
                 try:
-                    _cache_write(self._cachefile, self._log.export(int(self._maxlen)))
+                    _cache_write(self.logger, self._cachefile, self._log.export(int(self._maxlen)))
                 except Exception as e:
-                    logger.warning("OperationLog {}: could not update cache {}".format(self._path, e))
+                    self.logger.warning("OperationLog {}: could not update cache {}".format(self._path, e))
 
 
 #####################################################################
@@ -286,7 +289,7 @@ def _cache_read(filename, tz):
     return (dt, value)
 
 
-def _cache_write(filename, value):
+def _cache_write(logger, filename, value):
     try:
         with open(filename, 'wb') as f:
             pickle.dump(value, f)

@@ -25,11 +25,11 @@ import datetime
 import dateutil.tz
 import dateutil.rrule
 import dateutil.relativedelta
+from lib.model.smartplugin import SmartPlugin
 
-logger = logging.getLogger('')
-
-
-class iCal():
+class iCal(SmartPlugin):
+    PLUGIN_VERSION = "1.3.0"
+    ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
     PROPERTIES = ("SUMMARY", "DESCRIPTION", "LOCATION", "CATEGORIES", "CLASS")
@@ -39,15 +39,17 @@ class iCal():
         self._items = []
         self._icals = {}
         self._ical_aliases = {}
+        self.logger = logging.getLogger(__name__)
+
 
         for calendar in calendars:
             if ':' in calendar and 'http' != calendar[:4]:
                 name, sep, cal = calendar.partition(':')
-                logger.info('iCal: Registering calendar {0} ({1})'.format(name, cal))
+                self.logger.info('iCal: Registering calendar {0} ({1})'.format(name, cal))
                 self._ical_aliases[name] = cal
                 calendar = cal
             else:
-                logger.info('iCal: Registering calendar {0}'.format(calendar))
+                self.logger.info('iCal: Registering calendar {0}'.format(calendar))
 
             self._icals[calendar] = self._read_events(calendar)
 
@@ -80,14 +82,14 @@ class iCal():
 
     def __call__(self, ics, delta=1, offset=0, username=None, password=None, timeout=2):
         if ics in self._ical_aliases:
-            logger.debug('iCal retrieve events by alias {0} -> {1}'.format(ics, self._ical_aliases[ics]))
+            self.logger.debug('iCal retrieve events by alias {0} -> {1}'.format(ics, self._ical_aliases[ics]))
             return self._filter_events(self._icals[self._ical_aliases[ics]], delta, offset)
 
         if ics in self._icals:
-            logger.debug('iCal retrieve cached events {0}'.format(ics))
+            self.logger.debug('iCal retrieve cached events {0}'.format(ics))
             return self._filter_events(self._icals[ics], delta, offset)
 
-        logger.debug('iCal retrieve events {0}'.format(ics))
+        self.logger.debug('iCal retrieve events {0}'.format(ics))
         return self._filter_events(self._read_events(ics, username=username, password=password, timeout=timeout), delta, offset)
 
     def _update_items(self):
@@ -116,7 +118,7 @@ class iCal():
     def _update_calendars(self):
         for uri in self._icals:
             self._icals[uri] = self._read_events(uri)
-            logger.debug('iCal: Updated calendar {0}'.format(uri))
+            self.logger.debug('iCal: Updated calendar {0}'.format(uri))
 
         if len(self._icals):
             self._update_items()
@@ -132,7 +134,7 @@ class iCal():
             event = events[event]
             e_start = event['DTSTART']
             e_end = event['DTEND']
-            if 'RRULE' in event:
+            if 'RRULE' in event and (event['RRULE'] is not None):
                 e_duration = e_end - e_start
                 for e_rstart in event['RRULE'].between(start, end, inc=True):
                     if e_rstart not in event['EXDATES']:
@@ -169,7 +171,7 @@ class iCal():
                 with open(ics, 'r') as f:
                     ical = f.read()
             except IOError as e:
-                logger.error('Could not open ics file {0}: {1}'.format(ics, e))
+                self.logger.error('Could not open ics file {0}: {1}'.format(ics, e))
                 return {}
 
         return self._parse_ical(ical, ics)
@@ -202,16 +204,16 @@ class iCal():
                 event = {'EXDATES': []}
             elif line == 'END:VEVENT':
                 if 'UID' not in event:
-                    logger.warning("iCal: problem parsing {0} no UID for event: {1}".format(ics, event))
+                    self.logger.warning("iCal: problem parsing {0} no UID for event: {1}".format(ics, event))
                     continue
                 if 'SUMMARY' not in event:
-                    logger.warning("iCal: problem parsing {0} no SUMMARY for UID: {1}".format(ics, event['UID']))
+                    self.logger.warning("iCal: problem parsing {0} no SUMMARY for UID: {1}".format(ics, event['UID']))
                     continue
                 if 'DTSTART' not in event:
-                    logger.warning("iCal: problem parsing {0} no DTSTART for UID: {1}".format(ics, event['UID']))
+                    self.logger.warning("iCal: problem parsing {0} no DTSTART for UID: {1}".format(ics, event['UID']))
                     continue
                 if 'DTEND' not in event:
-                    logger.warning("iCal: Warning in parsing {0} no DTEND for UID: {1}. Setting DTEND from DTSTART".format(ics, event['UID']))
+                    self.logger.warning("iCal: Warning in parsing {0} no DTEND for UID: {1}. Setting DTEND from DTSTART".format(ics, event['UID']))
                     #Set end to start time:
                     event['DTEND'] = event['DTSTART']
                     continue
@@ -222,7 +224,7 @@ class iCal():
                         events[event['UID']]['EXDATES'].append(event['RECURRENCE-ID'])
                         events[event['UID'] + event['DTSTART'].isoformat()] = event
                     else:
-                        logger.warning("iCal: problem parsing {0} duplicate UID: {1}".format(ics, event['UID']))
+                        self.logger.warning("iCal: problem parsing {0} duplicate UID: {1}".format(ics, event['UID']))
                         continue
                 else:
                     events[event['UID']] = event
@@ -239,7 +241,7 @@ class iCal():
                     try:
                         date = self._parse_date(val, tzinfo, par)
                     except Exception as e:
-                        logger.warning("Problem parsing: {0}: {1}".format(ics, e))
+                        self.logger.warning("Problem parsing: {0}: {1}".format(ics, e))
                         continue
                     if key == 'EXDATE':
                         event['EXDATES'].append(date)  # noqa
@@ -251,11 +253,13 @@ class iCal():
 
     def _parse_rrule(self, event, tzinfo):
         rrule = dict(a.split('=') for a in event['RRULE'].upper().split(';'))
+        self.logger.debug("iCal: Rrule {0}".format(rrule))
         args = {}
         if 'FREQ' not in rrule:
+            self.logger.debug("iCal: Rrule has no frequency")
             return
         freq = self.FREQ.index(rrule['FREQ'])
-        #logger.debug("iCal: Frequency: {0}".format(freq))
+        self.logger.debug("iCal: Frequency: {0}".format(freq))
         del(rrule['FREQ'])
         if 'DTSTART' not in rrule:
             rrule['DTSTART'] = event['DTSTART']
@@ -283,8 +287,13 @@ class iCal():
             try:
                 rrule['UNTIL'] = self._parse_date(rrule['UNTIL'], tzinfo)
             except Exception as e:
-                logger.warning("Problem parsing UNTIL: {1} --- {0} ".format(event, e))
+                self.logger.warning("Problem parsing UNTIL: {1} --- {0} ".format(event, e))
                 return
         for par in rrule:
+            #self.logger.info("par: {0}".format(par))
             args[par.lower()] = rrule[par]
+            #self.logger.info("arg: {0}".format(rrule[par]))
+        
+        self.logger.debug("Args: {0}".format(args))
         return dateutil.rrule.rrule(freq, **args)
+        
