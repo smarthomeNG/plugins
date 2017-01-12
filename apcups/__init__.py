@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 ITEM_TAG = ['apcups']
 class APCUPS(SmartPlugin):
-    PLUGIN_VERSION = "1.3."
-    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.3.1"
+    ALLOW_MULTIINSTANCE = True
   
     def __init__(self, smarthome, host='127.0.0.1', port=3551, cycle=300):
         self._sh = smarthome
@@ -39,7 +39,7 @@ class APCUPS(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('Apcups', self.update_status, cycle=self._cycle)
+        self._sh.scheduler.add('APCups', self.update_status, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
