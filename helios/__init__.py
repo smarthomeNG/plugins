@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 #########################################################################
 # Copyright 2014 Marcel Tiews marcel.tiews@gmail.com
+# Modified 2014-2017 by René Jahncke aka Tom-Bom-badil @ github.com
 #########################################################################
-# Helios-Plugin for SmartHome.py. http://mknx.github.io/smarthome/
+# Helios-Vallox-Plugin for SmartHome.py. http://mknx.github.io/smarthome/
 #
 # This plugin is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -65,9 +66,9 @@ CONST_MAP_VARIABLES_TO_ID = {
         "frost_stop"      : {"varid" : 0xA8, 'type': 'temperature',  'bitposition': -1, 'read': True, 'write': True  },
         "cell_defrost"    : {"varid" : 0xB2, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': True  },
         "boost_mode"      : {"varid" : 0xAA, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
-		"boost_on"        : {"varid" : 0x71, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
-		"boost_status"    : {"varid" : 0x71, 'type': 'bit',          'bitposition':  6, 'read': True, 'write': False },
-        "boost_remaining" : {"varid" : 0x79, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': False },
+	"boost_on"        : {"varid" : 0x71, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
+	"boost_status"    : {"varid" : 0x71, 'type': 'bit',          'bitposition':  6, 'read': True, 'write': False },
+9        "boost_remaining" : {"varid" : 0x79, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': False },
         "fan_in_on_off"   : {"varid" : 0x08, 'type': 'bit',          'bitposition':  3, 'read': True, 'write': True  },
         "fan_in_percent"  : {"varid" : 0xB0, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': True  },        
         "fan_out_on_off"  : {"varid" : 0x08, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
@@ -94,7 +95,7 @@ class HeliosException(Exception):
 
 class HeliosBase(SmartPlugin):
 
-    PLUGIN_VERSION = "1.1.098"
+    PLUGIN_VERSION = "1.1.1"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, tty='/dev/ttyUSB0'):
