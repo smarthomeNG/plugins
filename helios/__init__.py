@@ -43,7 +43,6 @@ from lib.model.smartplugin import SmartPlugin
 # Broadcast addresses - no way to address slave boards in the units directly (according to Vallox)
 CONST_BUS_ALL_MAINBOARDS   = 0x10
 CONST_BUS_ALL_REMOTES      = 0x20
-
 # Individual addresses
 CONST_BUS_MAINBOARD1       = 0x11 # 1st of max 15 ventilation units (mainboards 1-F)
 CONST_BUS_REMOTE1          = 0x21 # 1st of max 15 remote controls (remotes 1-F, default jumper = 1)
@@ -68,7 +67,7 @@ CONST_MAP_VARIABLES_TO_ID = {
         "boost_mode"      : {"varid" : 0xAA, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
 	"boost_on"        : {"varid" : 0x71, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
 	"boost_status"    : {"varid" : 0x71, 'type': 'bit',          'bitposition':  6, 'read': True, 'write': False },
-9        "boost_remaining" : {"varid" : 0x79, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': False },
+        "boost_remaining" : {"varid" : 0x79, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': False },
         "fan_in_on_off"   : {"varid" : 0x08, 'type': 'bit',          'bitposition':  3, 'read': True, 'write': True  },
         "fan_in_percent"  : {"varid" : 0xB0, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': True  },        
         "fan_out_on_off"  : {"varid" : 0x08, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
