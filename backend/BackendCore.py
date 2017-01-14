@@ -33,13 +33,13 @@ import subprocess
 import socket
 import sys
 import threading
-import os # für sh_dir
+import os  # für sh_dir
 import lib.config
 from lib.model.smartplugin import SmartPlugin
 from .utils import *
 
-class Backend:
 
+class Backend:
     def find_visu_plugin(self):
         """
         look for the configured instance of the visu protocol plugin.
@@ -58,8 +58,9 @@ class Backend:
             self.visu_plugin_build = self.visu_plugin_version[4:]
             if self.visu_plugin_build < '2':
                 self.visu_plugin = None
-                self.logger.warning("Backend: visu protocol plugin v{0} is too old to support BackendServer, please update".format(self.visu_plugin_version))
-
+                self.logger.warning(
+                    "Backend: visu protocol plugin v{0} is too old to support BackendServer, please update".format(
+                        self.visu_plugin_version))
 
     @cherrypy.expose
     def index(self):
@@ -89,7 +90,7 @@ class Backend:
         now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
         system = platform.system()
         vers = platform.version()
-        #node = platform.node()
+        # node = platform.node()
         node = socket.getfqdn()
         arch = platform.machine()
         user = pwd.getpwuid(os.geteuid()).pw_name  # os.getlogin()
@@ -104,7 +105,7 @@ class Backend:
         plugin_names = []
         for plugin in _conf:
             plugin_name = _conf[plugin]['class_path'].strip()
-            if not plugin_name in plugin_names: #only unique plugin names, e.g. if multiinstance is used
+            if not plugin_name in plugin_names:  # only unique plugin names, e.g. if multiinstance is used
                 plugin_names.append(plugin_name)
 
         req_dict = req_dict_base.copy()
@@ -114,15 +115,15 @@ class Backend:
                 plugin_dict = parse_requirements(file_path)
                 for key in plugin_dict:
                     if key not in req_dict:
-                        req_dict[key] = plugin_dict[key] + ' ('+plugin_name.replace('plugins.', '')+')'
+                        req_dict[key] = plugin_dict[key] + ' (' + plugin_name.replace('plugins.', '') + ')'
                     else:
-                        req_dict[key] = req_dict[key] + '<br/>' + plugin_dict[key] + ' ('+plugin_name.replace('plugins.', '')+')'
-
+                        req_dict[key] = req_dict[key] + '<br/>' + plugin_dict[key] + ' (' + plugin_name.replace(
+                            'plugins.', '') + ')'
 
         ip = self._bs.get_local_ip_address()
 
         space = os.statvfs(self._sh_dir)
-        freespace = space.f_frsize * space.f_bavail/1024/1024
+        freespace = space.f_frsize * space.f_bavail / 1024 / 1024
 
         get_uptime = subprocess.Popen('uptime', stdout=subprocess.PIPE)
         uptime = get_uptime.stdout.read().decode()
@@ -136,13 +137,17 @@ class Backend:
             days = 0
             hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
         sh_uptime = self.age_to_string(days, hours, minutes, seconds)
-        
-        pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3])
+
+        pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
+                                             sys.version_info[3])
 
         tmpl = self.env.get_template('system.html')
-        return tmpl.render(now=now, system=system, sh_vers=self._sh.env.core.version(), sh_dir=self._sh_dir, vers=vers, node=node, arch=arch, user=user,
-                                freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
-                                ip=ip, python_packages=python_packages, requirements=req_dict, visu_plugin=(self.visu_plugin is not None))
+        return tmpl.render(now=now, system=system, sh_vers=self._sh.env.core.version(), sh_dir=self._sh_dir, vers=vers,
+                           node=node, arch=arch, user=user,
+                           freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
+                           develop=self.developer_mode,
+                           ip=ip, python_packages=python_packages, requirements=req_dict,
+                           visu_plugin=(self.visu_plugin is not None))
 
     def get_process_info(self, command):
         """
@@ -169,7 +174,7 @@ class Backend:
         returns a list with the installed python packages and its versions
         """
         self.find_visu_plugin()
-        
+
         # check if pypi service is reachable
         if self.pypi_timeout <= 0:
             pypi_available = False
@@ -180,12 +185,12 @@ class Backend:
                 import socket
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(self.pypi_timeout)
-                sock.connect(('pypi.python.org',443))
+                sock.connect(('pypi.python.org', 443))
                 sock.close()
             except:
                 pypi_available = False
                 pypi_unavailable_message = translate('PyPI nicht erreichbar')
-        
+
         import pip
         import xmlrpc
         installed_packages = pip.get_installed_distributions()
@@ -228,7 +233,7 @@ class Backend:
             if knxdeamon != '':
                 knxdeamon += ' and '
             knxdeamon += 'knxd'
-        
+
         sql_plugin = False
         database_plugin = []
 
@@ -241,7 +246,8 @@ class Backend:
 
         tmpl = self.env.get_template('services.html')
         return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket,
-                           sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), lang=get_translation_lang(),
+                           sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None),
+                           lang=get_translation_lang(),
                            develop=self.developer_mode, knxdeamon=knxdeamon, database_plugin=database_plugin)
 
     @cherrypy.expose
@@ -252,7 +258,7 @@ class Backend:
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('disclosure.html')
-        return tmpl.render(smarthome=self._sh, visu_plugin=(self.visu_plugin is not None))
+        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def db_dump_html(self, plugin):
@@ -262,14 +268,16 @@ class Backend:
         if (plugin == "sqlite_old"):
             self._sh.sql.dump('%s/var/db/smarthomedb.dump' % self._sh_dir)
             mime = 'application/octet-stream'
-            return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump" % self._sh_dir, mime, "%s/var/db/" % self._sh_dir)
+            return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump" % self._sh_dir, mime,
+                                                  "%s/var/db/" % self._sh_dir)
         elif plugin != "":
             for x in self._sh._plugins:
                 if isinstance(x, SmartPlugin):
                     if x.get_instance_name() == plugin:
                         x.dump('%s/var/db/smarthomedb_%s.dump' % (self._sh_dir, plugin))
                         mime = 'application/octet-stream'
-                        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb_%s.dump" % (self._sh_dir, plugin), mime, "%s/var/db/" % self._sh_dir)
+                        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb_%s.dump" % (self._sh_dir, plugin),
+                                                              mime, "%s/var/db/" % self._sh_dir)
         return
 
     @cherrypy.expose
@@ -290,7 +298,7 @@ class Backend:
 
         fobj = open("%s/var/log/smarthome.log" % self._sh_dir)
         log_lines = []
-        start = (int(page)-1) * 1000
+        start = (int(page) - 1) * 1000
         end = start + 1000
         counter = 0
         log_level_hit = False
@@ -303,7 +311,8 @@ class Backend:
                 counter += 1
             else:
                 log_level_hit = False
-            if (log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22, 23]) and text_filter in line_text:
+            if (log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22,
+                                                                                  23]) and text_filter in line_text:
                 if start <= counter < end:
                     log_lines.append(line_text)
                     log_level_hit = True
@@ -313,7 +322,8 @@ class Backend:
         if num_pages == 0:
             num_pages = 1
         tmpl = self.env.get_template('log_view.html')
-        return tmpl.render(smarthome=self._sh, current_page=int(page), pages=num_pages, log_lines=log_lines, text_filter=text_filter,
+        return tmpl.render(smarthome=self._sh, current_page=int(page), pages=num_pages, log_lines=log_lines,
+                           text_filter=text_filter,
                            log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
@@ -322,9 +332,7 @@ class Backend:
         returns the smarthomeNG logfile as view
         """
         self.find_visu_plugin()
-
         self.process_logics_action(logic, trigger, reload, enable, save, logics_code)
-
         mylogic = self._sh.return_logic(logic)
 
         fobj = open(file_path)
@@ -334,16 +342,21 @@ class Backend:
         fobj.close()
         tmpl = self.env.get_template('logics_view.html')
         return tmpl.render(smarthome=self._sh, logic=mylogic, logic_lines=file_lines, file_path=file_path,
-                           updates=self.updates_allowed, visu_plugin=(self.visu_plugin is not None))
+                           updates=self.updates_allowed, develop=self.developer_mode,
+                           visu_plugin=(self.visu_plugin is not None))
+
     @cherrypy.expose
     def items_html(self):
         """
         display a list of items
         """
         self.find_visu_plugin()
-        
+
         tmpl = self.env.get_template('items.html')
-        return tmpl.render(smarthome=self._sh, items=sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False), visu_plugin=(self.visu_plugin is not None))
+        return tmpl.render(smarthome=self._sh,
+                           items=sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                                        reverse=False), develop=self.developer_mode,
+                           visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def items_json_html(self):
@@ -370,15 +383,15 @@ class Backend:
         onlyfiles = [f for f in listdir(cache_path) if isfile(join(cache_path, f))]
         not_item_related_cache_files = []
         for file in onlyfiles:
-            if not file.find(".") == 0:  #filter .gitignore etc.
+            if not file.find(".") == 0:  # filter .gitignore etc.
                 item = self._sh.return_item(file)
                 if item is None:
                     file_data = {}
-                    file_data['last_modified']= datetime.datetime.fromtimestamp(
-                        int(os.path.getmtime(cache_path+file))
+                    file_data['last_modified'] = datetime.datetime.fromtimestamp(
+                        int(os.path.getmtime(cache_path + file))
                     ).strftime('%Y-%m-%d %H:%M:%S')
                     file_data['created'] = datetime.datetime.fromtimestamp(
-                        int(os.path.getctime(cache_path+file))
+                        int(os.path.getctime(cache_path + file))
                     ).strftime('%Y-%m-%d %H:%M:%S')
                     file_data['filename'] = file
                     not_item_related_cache_files.append(file_data)
@@ -449,7 +462,7 @@ class Backend:
             s += str("%.2f" % seconds)
         s += ' ' + translate('Sekunden')
         return s
-            
+
     def disp_age(self, age):
         days = 0
         hours = 0
@@ -572,7 +585,6 @@ class Backend:
 
         return item_data
 
-
     @cherrypy.expose
     def logics_html(self, logic=None, trigger=None, reload=None, enable=None, save=None):
         """
@@ -582,7 +594,8 @@ class Backend:
         self.process_logics_action(logic, trigger, reload, enable, save)
 
         tmpl = self.env.get_template('logics.html')
-        return tmpl.render( smarthome = self._sh, updates = self.updates_allowed, visu_plugin=(self.visu_plugin is not None))
+        return tmpl.render(smarthome=self._sh, updates=self.updates_allowed, develop=self.developer_mode,
+                           visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def schedules_html(self):
@@ -590,9 +603,9 @@ class Backend:
         display a list of all known schedules
         """
         self.find_visu_plugin()
-        
+
         tmpl = self.env.get_template('schedules.html')
-        return tmpl.render( smarthome = self._sh, visu_plugin=(self.visu_plugin is not None))
+        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def plugins_html(self):
@@ -600,14 +613,14 @@ class Backend:
         display a list of all known plugins
         """
         self.find_visu_plugin()
-        
+
         conf_plugins = {}
         _conf = lib.config.parse(self._sh._plugin_conf)
         for plugin in _conf:
-            #self.logger.warning("plugins_html: class_name='{0}', class_path='{1}'".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
-            conf_plugins[_conf[plugin]['class_name']] =  _conf[plugin]['class_path']
-            #self.logger.warning("plugins_html: conf_plugins='{0}'".format(conf_plugins))
-        
+            # self.logger.warning("plugins_html: class_name='{0}', class_path='{1}'".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
+            conf_plugins[_conf[plugin]['class_name']] = _conf[plugin]['class_path']
+            # self.logger.warning("plugins_html: conf_plugins='{0}'".format(conf_plugins))
+
         plugins = []
         for x in self._sh._plugins:
             plugin = dict()
@@ -621,21 +634,19 @@ class Backend:
             else:
                 plugin['smartplugin'] = False
             plugins.append(plugin)
-        plugins_sorted = sorted(plugins, key=lambda k: k['classpath']) 
+        plugins_sorted = sorted(plugins, key=lambda k: k['classpath'])
 
         tmpl = self.env.get_template('plugins.html')
-        return tmpl.render( smarthome = self._sh, plugins=plugins_sorted, visu_plugin=(self.visu_plugin is not None))
-        
-        
-       
-        
+        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, plugins=plugins_sorted,
+                           visu_plugin=(self.visu_plugin is not None))
+
     @cherrypy.expose
     def threads_html(self):
         """
         display a list of all threads
         """
         self.find_visu_plugin()
-        
+
         threads = []
         for t in threading.enumerate():
             thread = dict()
@@ -644,12 +655,13 @@ class Backend:
             thread['id'] = t.ident
             thread['alive'] = t.is_alive()
             threads.append(thread)
-        threads_sorted = sorted(threads, key=lambda k: k['sort']) 
+        threads_sorted = sorted(threads, key=lambda k: k['sort'])
         threads_count = len(threads_sorted)
-            
-        tmpl = self.env.get_template('threads.html')
-        return tmpl.render( smarthome = self._sh, threads=threads_sorted, threads_count=threads_count, visu_plugin=(self.visu_plugin is not None))
 
+        tmpl = self.env.get_template('threads.html')
+        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, threads=threads_sorted,
+                           threads_count=threads_count,
+                           visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def logging_html(self):
@@ -657,13 +669,14 @@ class Backend:
         display a list of all loggers
         """
         self.find_visu_plugin()
-        
+
         loggerDict = logging.Logger.manager.loggerDict
         loggerDict_sorted = sorted(loggerDict)
-        
-        tmpl = self.env.get_template('logging.html')
-        return tmpl.render( smarthome = self._sh, loggerDict_sorted=loggerDict_sorted, logging=logging, visu_plugin=(self.visu_plugin is not None))
 
+        tmpl = self.env.get_template('logging.html')
+        return tmpl.render(smarthome=self._sh, loggerDict_sorted=loggerDict_sorted, develop=self.developer_mode,
+                           logging=logging,
+                           visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def visu_html(self):
@@ -671,7 +684,7 @@ class Backend:
         display a list of all connected visu clients
         """
         self.find_visu_plugin()
-            
+
         clients = []
         if self.visu_plugin is not None:
             if self.visu_plugin_build == '2':
@@ -679,7 +692,7 @@ class Backend:
                     client = dict()
                     deli = c.find(':')
                     client['ip'] = c[0:c.find(':')]
-                    client['port'] = c[c.find(':')+1:]
+                    client['port'] = c[c.find(':') + 1:]
                     try:
                         client['name'] = socket.gethostbyaddr(client['ip'])[0]
                     except:
@@ -695,7 +708,7 @@ class Backend:
                     client = dict()
                     deli = c.find(':')
                     client['ip'] = c[0:c.find(':')]
-                    client['port'] = c[c.find(':')+1:]
+                    client['port'] = c[c.find(':') + 1:]
                     try:
                         client['name'] = socket.gethostbyaddr(client['ip'])[0]
                     except:
@@ -706,12 +719,13 @@ class Backend:
                     client['browser'] = clientinfo.get('browser', '')
                     client['browserversion'] = clientinfo.get('browserversion', '')
                     clients.append(client)
-                    
-        clients_sorted = sorted(clients, key=lambda k: k['name']) 
-        
-        tmpl = self.env.get_template('visu.html')
-        return tmpl.render( visu_plugin=(self.visu_plugin is not None), visu_plugin_build=self.visu_plugin_build, clients=clients_sorted )
 
+        clients_sorted = sorted(clients, key=lambda k: k['name'])
+
+        tmpl = self.env.get_template('visu.html')
+        return tmpl.render(visu_plugin=(self.visu_plugin is not None), develop=self.developer_mode,
+                           visu_plugin_build=self.visu_plugin_build,
+                           clients=clients_sorted)
 
     @cherrypy.expose
     def reboot(self):
@@ -731,7 +745,8 @@ class Backend:
 
     def process_logics_action(self, logic=None, trigger=None, reload=None, enable=None, save=None, logics_code=None):
         self.logger.debug(
-            "Backend: logics_html: trigger = '{0}', reload = '{1}', enable='{2}', save='{3}'".format(trigger, reload, enable, save))
+            "Backend: logics_html: trigger = '{0}', reload = '{1}', enable='{2}', save='{3}'".format(trigger, reload,
+                                                                                                     enable, save))
         if enable is not None:
             self.logger.debug("Backend: logics[_view]_html: Enable/Disable logic = '{0}'".format(logic))
             if self.updates_allowed:

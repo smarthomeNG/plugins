@@ -19,6 +19,7 @@
 				<li class="nav-item"><a href="system.html">{{ _('Systeminfo', 'menu') }}</a></li>
 				<li class="nav-item"><a href="services.html">{{ _('Dienste', 'menu') }}</a></li>
 				<li class="nav-item"><a href="items.html">{{ _('Items', 'menu') }}</a></li>
+				{% if develop %}
 				<li class="nav-item dropdown">
 					<a class="nav-link dropdown-toggle" href="http://example.com" id="supportedContentDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ _('Logiken', 'menu') }}<span class="caret"></span></a>
 				 	<ul class="dropdown-menu" aria-labelledby="supportedContentDropdown">
@@ -27,6 +28,9 @@
 						<li><a class="dropdown-item" href="logics_blockly.html">{{ _('Blockly-Logiken-Editor', 'menu') }}</a></li>
 				 	</ul>
 				</li>
+				{% else %}
+				<li class="nav-item"><a href="logics.html">{{ _('Logiken', 'menu') }}</a></li>
+				{% endif %}
 				<li class="nav-item"><a href="schedules.html">{{ _('Scheduler', 'menu') }}</a></li>
 				<li class="nav-item"><a href="plugins.html">{{ _('Plugins', 'menu') }}</a></li>
 				<li class="nav-item"><a href="threads.html">{{ _('Threads', 'menu') }}</a></li>

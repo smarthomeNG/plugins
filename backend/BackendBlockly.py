@@ -36,6 +36,7 @@ class BackendBlocklyLogics:
     """
     Google Blockly for Logics
     """
+
     @cherrypy.expose
     def logics_blockly_html(self):
         self.find_visu_plugin()
@@ -43,6 +44,7 @@ class BackendBlocklyLogics:
         tmpl = self.env.get_template('logics_blockly.html')
         return tmpl.render(smarthome=self._sh,
                            dyn_sh_toolbox=self._DynToolbox(self._sh), lang=translation_lang,
+                           develop=self.developer_mode,
                            visu_plugin=(self.visu_plugin is not None))
 
     def _DynToolbox(self, sh):
