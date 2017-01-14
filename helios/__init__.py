@@ -33,7 +33,7 @@ from lib.model.smartplugin import SmartPlugin
 
 # old / removed: logger = logging.getLogger("")
 
-# Old "Ccnstants" - previous definitions
+# Old CONST's - previous definitions
 #CONST_BUSMEMBER__MAINBOARD     = 0x11
 #CONST_BUSMEMBER__SLAVEBOARDS   = 0x10
 #CONST_BUSMEMBER__CONTROLBOARDS = 0x20
@@ -43,6 +43,7 @@ from lib.model.smartplugin import SmartPlugin
 # Broadcast addresses - no way to address slave boards in the units directly (according to Vallox)
 CONST_BUS_ALL_MAINBOARDS   = 0x10
 CONST_BUS_ALL_REMOTES      = 0x20
+
 # Individual addresses
 CONST_BUS_MAINBOARD1       = 0x11 # 1st of max 15 ventilation units (mainboards 1-F)
 CONST_BUS_REMOTE1          = 0x21 # 1st of max 15 remote controls (remotes 1-F, default jumper = 1)
