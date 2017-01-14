@@ -7,8 +7,8 @@ https://github.com/Tom-Bom-badil/helios/wiki
 Installation in short:
 ----------------------
 
-files/helios.conf         copy file to smarthome/items/helios.conf
-files/helios_logics.py    copy file to smarthome/logics/helios.conf
+files/helios.conf          copy file to smarthome/items/helios.conf
+files/helios_logics.py     copy file to smarthome/logics/helios.conf
 
 Add to smarthome/etc/plugin.conf:
 
