@@ -33,7 +33,7 @@ from lib.model.smartplugin import SmartPlugin
 
 # old / removed: logger = logging.getLogger("")
 
-# Some "Constants" - previous definitions (thanks to Johannes and Marcel)
+# Old "Ccnstants" - previous definitions
 #CONST_BUSMEMBER__MAINBOARD     = 0x11
 #CONST_BUSMEMBER__SLAVEBOARDS   = 0x10
 #CONST_BUSMEMBER__CONTROLBOARDS = 0x20
@@ -65,8 +65,8 @@ CONST_MAP_VARIABLES_TO_ID = {
         "frost_stop"      : {"varid" : 0xA8, 'type': 'temperature',  'bitposition': -1, 'read': True, 'write': True  },
         "cell_defrost"    : {"varid" : 0xB2, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': True  },
         "boost_mode"      : {"varid" : 0xAA, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
-	"boost_on"        : {"varid" : 0x71, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
-	"boost_status"    : {"varid" : 0x71, 'type': 'bit',          'bitposition':  6, 'read': True, 'write': False },
+        "boost_on"        : {"varid" : 0x71, 'type': 'bit',          'bitposition':  5, 'read': True, 'write': True  },
+        "boost_status"    : {"varid" : 0x71, 'type': 'bit',          'bitposition':  6, 'read': True, 'write': False },
         "boost_remaining" : {"varid" : 0x79, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': False },
         "fan_in_on_off"   : {"varid" : 0x08, 'type': 'bit',          'bitposition':  3, 'read': True, 'write': True  },
         "fan_in_percent"  : {"varid" : 0xB0, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': True  },        
@@ -75,6 +75,7 @@ CONST_MAP_VARIABLES_TO_ID = {
         "clean_filter"    : {"varid" : 0xAB, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': True  },
         "device_error"    : {"varid" : 0x36, 'type': 'dec',          'bitposition': -1, 'read': True, 'write': False }
     }
+
 CONST_TEMPERATURE = array.array('i', [
                                 -74,-70,-66,-62,-59,-56,-54,-52,-50,-48,-47,-46,-44,-43,-42,-41,-40,-39,-38,-37,-36,
                                 -35,-34,-33,-33,-32,-31,-30,-30,-29,-28,-28,-27,-27,-26,-25,-25,-24,-24,-23,-23,-22,
