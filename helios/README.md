@@ -14,7 +14,6 @@ files/helios_logics.py    copy file to smarthome/logics/helios.conf
 
 Add the following lines to smarthome/etc/plugin.conf:
 
-
 [helios]
     class_name = helios
     class_path = plugins.helios
