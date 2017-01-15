@@ -67,14 +67,14 @@ class Backend:
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), develop=self.developer_mode,)
+        return tmpl.render(visu_plugin=(self.visu_plugin is not None), develop=self.developer_mode)
 
     @cherrypy.expose
     def main_html(self):
         self.find_visu_plugin()
 
         tmpl = self.env.get_template('main.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), develop=self.developer_mode,)
+        return tmpl.render(visu_plugin=(self.visu_plugin is not None), develop=self.developer_mode)
 
     @cherrypy.expose
     def reload_translation_html(self, lang=''):
