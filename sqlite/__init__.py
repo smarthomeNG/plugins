@@ -30,7 +30,7 @@ from lib.model.smartplugin import SmartPlugin
 class SQL(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.3.1"
     _version = 2
     # (period days, granularity hours)
     periods = [(1900, 168), (400, 24), (32, 1), (7, 0.5), (1, 0.1)]
