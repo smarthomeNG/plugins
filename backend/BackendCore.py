@@ -87,8 +87,9 @@ class Backend:
     @cherrypy.expose
     def conf_yaml_converter_html(self, convert=None, conf_code=None):
         if convert is not None:
-            conf_code = conf_code
-            yaml_code = conf_code
+            ydata = parse_for_convert(conf_code)
+            if ydata != None:
+                yaml_code = convert_yaml(ydata)
         else:
             conf_code = ''
             yaml_code = ''
