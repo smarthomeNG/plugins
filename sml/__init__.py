@@ -170,6 +170,8 @@ class Sml(SmartPlugin):
             while retry > 0:
                 try:
                     data = self._read(512)
+                    if len(data) == 0:
+                        self.logger.error('Reading data from device returned 0 bytes!')
 
                     retry = 0
                     values = self._parse(self._prepare(data))
