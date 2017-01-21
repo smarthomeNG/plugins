@@ -182,6 +182,7 @@
 		"Plugins": "Extensions",
 		"Threads": "Tâches",
 		"Visu": "Visu",
-		"Disclosure": "Déclaration"
+		"Disclosure": "Déclaration",
+		"CONF-YAML-Konverter": "CONF-YAML-Konverter"
 	}
 }

@@ -182,6 +182,7 @@
 		"Plugins": "Plugins",
 		"Threads": "Threads",
 		"Visu": "Visu",
-		"Disclosure": "Disclosure"
+		"Disclosure": "Disclosure",
+		"CONF-YAML-Konverter": "CONF-YAML Converter"
 	}
 }

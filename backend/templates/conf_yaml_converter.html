@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% import "navbar.html" as nav with context %}
+{% block navbar %}
+	{{ nav }}
+{% endblock navbar %}
+
+{% block content %}
+<script src="/static/codemirror/lib/codemirror.js"></script>
+<link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
+<script src="/static/codemirror/mode/python/python.js"></script>
+<style>
+li.L0, li.L1, li.L2, li.L3,
+li.L5, li.L6, li.L7, li.L8
+{ list-style-type: decimal !important }
+</style>
+
+<div class="table-responsive">
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th width="50%">{{ _('.CONF') }}</th>
+				<th width="50%">{{ _('.YAML') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+				<tr>
+                    <td>
+                        <form name="input" action="conf_yaml_converter.html" method="POST" enctype="multipart/form-data">
+                        <textarea id="conf_code" name="conf_code" style="height: 500px; width:90%;">{{ conf_code }}</textarea>
+                            <br/>
+                        <input name="convert" value="{{ _('Konvertieren','button') }}" type="submit" class="btn btn-default btn-xs">
+                        </form>
+                    </td>
+                    <td>
+                        <textarea id="yaml_code" name="yaml_code" style="height: 500px; width:90%;">{{ yaml_code }}</textarea>
+                    </td>
+                </tr>
+        </tbody>
+    </table>
+</div>
+<script>
+     var myCodeMirrorConf = CodeMirror.fromTextArea(document.getElementById("conf_code"), {
+       lineNumbers: true,
+       mode: "python"
+     });
+     var myCodeMirrorYaml = CodeMirror.fromTextArea(document.getElementById("yaml_code"), {
+       lineNumbers: true,
+       readOnly: true,
+       mode: "python"
+     });
+</script>
+{% endblock %}

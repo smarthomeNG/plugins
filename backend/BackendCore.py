@@ -85,6 +85,17 @@ class Backend:
         return self.index()
 
     @cherrypy.expose
+    def conf_yaml_converter_html(self, convert=None, conf_code=None):
+        if convert is not None:
+            conf_code = conf_code
+            yaml_code = conf_code
+        else:
+            conf_code = ''
+            yaml_code = ''
+        tmpl = self.env.get_template('conf_yaml_converter.html')
+        return tmpl.render(develop=self.developer_mode,conf_code=conf_code, yaml_code=yaml_code)
+
+    @cherrypy.expose
     def system_html(self):
         self.find_visu_plugin()
         now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')

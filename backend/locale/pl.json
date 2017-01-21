@@ -181,6 +181,7 @@
 		"Plugins": "Pluginy",
 		"Threads": "Wątki",
 		"Visu": "Visu",
-		"Disclosure": "Deklaracja"
+		"Disclosure": "Deklaracja",
+		"CONF-YAML-Konverter": "CONF-YAML-Konverter"
 	}
 }
