@@ -112,6 +112,9 @@
 	"Watch_Items": "Watch_Items",
 	"Anforderungen": "Anforderungen",
 	"Übersicht": "Übersicht",
+	"Eingabe im .CONF Format": "Eingabe im .CONF Format",
+	"Ergebnis im .YAML Format": "Ergebnis im .YAML Format",
+	
 
 	"_items": {
 		"path": "Pfad",
@@ -168,12 +171,14 @@
 		"Beenden" : "Beenden",
 		"Speichern" : "Speichern",
 		"Speichern_und_Neu_Laden" : "Speichern und neu laden",
-		"Löschen" : "Löschen"
+		"Löschen" : "Löschen",
+		"Konvertieren": "Konvertieren"
 	},
 
 	"_menu": {
 		"Systeminfo": "Systeminfo",
 		"Dienste": "Dienste",
+		"CONF-YAML Konverter": "CONF-YAML Konverter",
 		"Items": "Items",
 		"Logiken": "Logiken",
 		"Blockly-Logiken-Editor": "Blockly-Logiken-Editor",
@@ -181,7 +186,6 @@
 		"Plugins": "Plugins",
 		"Threads": "Threads",
 		"Visu": "Visu",
-		"Disclosure": "Disclosure",
-		"CONF-YAML-Konverter": "CONF-YAML-Konverter"
+		"Disclosure": "Disclosure"
 	}
 }

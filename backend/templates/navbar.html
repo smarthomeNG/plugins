@@ -17,13 +17,13 @@
 		<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 			<ul class="nav navbar-nav">
 				<li class="nav-item"><a href="system.html">{{ _('Systeminfo', 'menu') }}</a></li>
-				{% if False %}
+				{% if yaml_converter %}
 				<li class="nav-item dropdown">
 					<a class="nav-link dropdown-toggle" href="services.html" id="supportedContentDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ _('Dienste', 'menu') }}<span class="caret"></span></a>
 				 	<ul class="dropdown-menu" aria-labelledby="supportedContentDropdown">
 						<li><a class="dropdown-item" href="services.html">{{ _('Übersicht') }}</a></li>
 						<li role="separator" class="divider"></li>
-						<li><a class="dropdown-item" href="conf_yaml_converter.html">{{ _('CONF-YAML-Konverter', 'menu') }}</a></li>
+						<li><a class="dropdown-item" href="conf_yaml_converter.html">{{ _('CONF-YAML Konverter', 'menu') }}</a></li>
 				 	</ul>
 				</li>
 				{% else %}

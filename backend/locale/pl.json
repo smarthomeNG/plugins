@@ -111,6 +111,8 @@
 	"Watch_Items": "Obserwowane Itemy",
 	"Anforderungen": "Wymagania",
 	"Übersicht": "Badanie",
+	"Eingabe im .CONF Format": "Eingabe im .CONF Format",
+	"Ergebnis im .YAML Format": "Ergebnis im .YAML Format"
 
 	"_items": {
 		"path": "ścieżka",
@@ -169,6 +171,7 @@
 		"Speichern" : "Zapisz",
 		"Speichern_und_Neu_Laden" : "Zapisz i przeładuj",
 		"Löschen" : "Skasuj"
+		"Konvertieren": "Konvertieren"
 	},
 	
 	"_menu": {
@@ -182,6 +185,6 @@
 		"Threads": "Wątki",
 		"Visu": "Visu",
 		"Disclosure": "Deklaracja",
-		"CONF-YAML-Konverter": "CONF-YAML-Konverter"
+		"CONF-YAML Konverter": "CONF-YAML Konverter"
 	}
 }

@@ -113,6 +113,8 @@
 	"Watch_Items": "Objets surveillés",
 	"Anforderungen": "Version demandée",
 	"Übersicht": "Aperçu",
+	"Eingabe im .CONF Format": "Eingabe im .CONF Format",
+	"Ergebnis im .YAML Format": "Ergebnis im .YAML Format",
 
 	"_items": {
 		"path": "Chemin",
@@ -169,7 +171,8 @@
 		"Beenden" : "Terminer",
 		"Speichern" : "Sauvegarder",
 		"Speichern_und_Neu_Laden" : "Sauvegarder et Recharger",
-		"Löschen" : "Supprimer"
+		"Löschen" : "Supprimer",
+		"Konvertieren": "Konvertieren"
 	},
 
 	"_menu": {
@@ -183,6 +186,6 @@
 		"Threads": "Tâches",
 		"Visu": "Visu",
 		"Disclosure": "Déclaration",
-		"CONF-YAML-Konverter": "CONF-YAML-Konverter"
+		"CONF-YAML Konverter": "CONF-YAML Konverter"
 	}
 }
