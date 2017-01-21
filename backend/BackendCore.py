@@ -85,7 +85,7 @@ class Backend:
         return self.index()
 
     @cherrypy.expose
-    def conf_yaml_converter_html(self, convert=None, conf_code=None):
+    def conf_yaml_converter_html(self, convert=None, conf_code=None, yaml_code=None):
         if convert is not None:
             ydata = parse_for_convert(conf_code)
             if ydata != None:
