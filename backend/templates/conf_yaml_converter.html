@@ -18,11 +18,11 @@ li.L5, li.L6, li.L7, li.L8
 <form name="input" action="conf_yaml_converter.html" method="POST" enctype="multipart/form-data">
     <div class="container" style="width: 100%;">
     <div style="width: 45%; float: left; border: 1px solid #ccc; margin-bottom: 10px; margin-right: 5px;">
-        <strong>{{ _('.CONF') }}</strong><br/>
+        <div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('.CONF') }}</div>
         <textarea id="conf_code" name="conf_code" style="height: 500px;">{{ conf_code }}</textarea>
     </div>
     <div style="width: 45%; float: left; border: 1px solid #ccc; margin-bottom: 10px;">
-        <strong>{{ _('.YAML') }}</strong><br/>
+        <div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('.YAML') }}</div>
         <textarea id="yaml_code" name="yaml_code" style="height: 500px;">{{ yaml_code }}</textarea>
     </div>
     </div>
