@@ -50,8 +50,8 @@ def is_userlogic(sh, logic):
     This function extends the jinja2 template engine
     """
     return os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics'
-    
-    
+
+
 translation_dict = {}
 translation_lang = ''
 
@@ -62,23 +62,23 @@ def get_translation_lang():
 
 
 def load_translation(language):
-    global translation_dict    # Needed to modify global copy of translation_dict
-    global translation_lang    # Needed to modify global copy of translation_lang
-    
+    global translation_dict  # Needed to modify global copy of translation_dict
+    global translation_lang  # Needed to modify global copy of translation_lang
+
     logger = logging.getLogger(__name__)
-    
+
     translation_lang = language.lower()
     if translation_lang == '':
         translation_dict = {}
     else:
-        lang_filename = os.path.dirname(os.path.abspath(__file__))+'/locale/' + translation_lang + '.json'
+        lang_filename = os.path.dirname(os.path.abspath(__file__)) + '/locale/' + translation_lang + '.json'
         try:
-            f=open(lang_filename,'r')
+            f = open(lang_filename, 'r')
         except:
             translation_lang = ''
             return False
         try:
-            translation_dict=json.load(f)
+            translation_dict = json.load(f)
         except Exception as e:
             logger.error("Backend: load_translation language='{0}': Error '{1}'".format(translation_lang, e))
             return False
@@ -87,9 +87,9 @@ def load_translation(language):
 
 
 def html_escape(str):
-    str = str.rstrip().replace('<','&lt;').replace('>','&gt;')
-    str = str.rstrip().replace('(','&#40;').replace(')','&#41;')
-    html = str.rstrip().replace("'",'&#39;').replace('"','&quot;')
+    str = str.rstrip().replace('<', '&lt;').replace('>', '&gt;')
+    str = str.rstrip().replace('(', '&#40;').replace(')', '&#41;')
+    html = str.rstrip().replace("'", '&#39;').replace('"', '&quot;')
     return html
 
 
@@ -106,12 +106,12 @@ def translate(txt, block=''):
         tr = txt
     else:
         if block != '':
-            blockdict = translation_dict.get('_'+block,{})
-            tr = blockdict.get(txt,'')
+            blockdict = translation_dict.get('_' + block, {})
+            tr = blockdict.get(txt, '')
             if tr == '':
-                tr = translation_dict.get(txt,'')
+                tr = translation_dict.get(txt, '')
         else:
-            tr = translation_dict.get(txt,'')
+            tr = translation_dict.get(txt, '')
         if tr == '':
             logger.warning("Backend: Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
             tr = txt
@@ -132,21 +132,25 @@ def parse_requirements(file_path):
         if len(line) > 0 and '#' not in line:
             if ">" in line:
                 if line[0:line.find(">")].lower().strip() in req_dict:
-                    req_dict[line[0:line.find(">")].lower().strip()] += " | "+line[line.find(">"):len(line)].lower().strip()
+                    req_dict[line[0:line.find(">")].lower().strip()] += " | " + line[line.find(">"):len(
+                        line)].lower().strip()
                 else:
                     req_dict[line[0:line.find(">")].lower().strip()] = line[line.find(">"):len(line)].lower().strip()
             elif "<" in line:
                 if line[0:line.find("<")].lower().strip() in req_dict:
-                    req_dict[line[0:line.find("<")].lower().strip()] += " | "+line[line.find("<"):len(line)].lower().strip()
+                    req_dict[line[0:line.find("<")].lower().strip()] += " | " + line[line.find("<"):len(
+                        line)].lower().strip()
                 else:
                     req_dict[line[0:line.find("<")].lower().strip()] = line[line.find("<"):len(line)].lower().strip()
             elif "=" in line:
                 if line[0:line.find("=")].lower().strip() in req_dict:
-                    req_dict[line[0:line.find("=")].lower().strip()] += " | "+line[line.find("="):len(line)].lower().strip()
+                    req_dict[line[0:line.find("=")].lower().strip()] += " | " + line[line.find("="):len(
+                        line)].lower().strip()
                 else:
                     req_dict[line[0:line.find("=")].lower().strip()] = line[line.find("="):len(line)].lower().strip()
     fobj.close()
     return req_dict
+
 
 def strip_quotes(string):
     string = string.strip()
@@ -156,12 +160,15 @@ def strip_quotes(string):
                 string = string[1:-1]  # remove them
     return string
 
+
 def handle_multiline_string(string):
     if len(string) > 0 and string.find('\n') > -1 and string[0] != '|':
         string = '|\n' + string
     return string
 
+
 def parse_for_convert(conf_code, config=None):
+    logger = logging.getLogger(__name__)
     valid_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@*'
     valid_set = set(valid_chars)
     if config is None:
@@ -222,7 +229,7 @@ def parse_for_convert(conf_code, config=None):
                         item['comment' + str(i)] = handle_multiline_string(strip_quotes(comment))
                         last_comment_nr = i
                 else:
-                    #self.logger.info("comment: '{}'".format(comment))
+                    # self.logger.info("comment: '{}'".format(comment))
                     item['comment'] = handle_multiline_string(strip_quotes(comment))
                     last_comment_nr = 0
                 lastline_was_comment = True
@@ -231,13 +238,13 @@ def parse_for_convert(conf_code, config=None):
 
         if line[0] == '[':  # item
             lastline_was_comment = False
-            #
+
             comment_in_line = line.find('#')
             comment = line.partition('#')[2].strip()
             if comment_in_line > -1 and comment == '':
                 comment = '>**<'
             line = line.partition('#')[0].strip()
-            #
+
             brackets = 0
             level = 0
             closing = False
@@ -251,13 +258,17 @@ def parse_for_convert(conf_code, config=None):
                 else:
                     closing = True
                     if line[index] not in valid_chars + "'":
-                        #ERROR invalid characters
+                        logger.error(
+                            "ERROR: Problem (1) parsing data - invalid character in \nline {}: {}. \nValid chars: {}".format(
+                                linenu, line, valid_chars))
                         return config
             if brackets != 0:
-                #"ERROR: Problem parsing '{}' unbalanced brackets in line {}: {}".format(filename, linenu, line))
+                logger.error("ERROR: Problem parsing data - unbalanced brackets in line {}: {}".format(linenu, line))
                 return config
             if comment_in_line > -1:
-                #"ERROR: Problem parsing '{}' \nunhandled comment {} in \nline {}: {}. \nValid chars: {}".format(
+                logger.error(
+                    "ERROR: Problem parsing data - unhandled comment {} in \nline {}: {}. \nValid chars: {}".format(
+                        comment, linenu, line, valid_chars))
                 pass
             name = line.strip("[]")
             name = strip_quotes(name)
@@ -269,14 +280,15 @@ def parse_for_convert(conf_code, config=None):
                 parents[level] = item
             else:
                 if level - 1 not in parents:
-                    #"ERROR: Problem parsing '{}' no parent item defined for item in line {}: {}"
-                    pass
+                    logger.error(
+                        "ERROR: Problem parsing data - no parent item defined for item in line {}: {}".format(linenu,
+                                                                                                              line))
+                    return config
                 parent = parents[level - 1]
                 if name not in parent:
                     parent[name] = collections.OrderedDict()
                 item = parent[name]
                 parents[level] = item
-
         else:  # attribute
             lastline_was_comment = False
             attr, __, value = line.partition('=')
@@ -284,6 +296,8 @@ def parse_for_convert(conf_code, config=None):
                 continue
             attr = attr.strip()
             if not set(attr).issubset(valid_set):
+                logger.error("ERROR: Problem parsing data - invalid character in line {}: {}. Valid characters are: {}".format(
+                        linenu, attr, valid_chars))
                 continue
             if '|' in value:
                 item[attr] = [strip_quotes(x) for x in value.split('|')]
@@ -294,16 +308,14 @@ def parse_for_convert(conf_code, config=None):
                     item[attr] = ivalue
                 except:
                     item[attr] = svalue.replace('\t', ' ')
+
     return config
 
 
 def convert_yaml(data):
-    yaml_version = '1.1'
     indent_spaces = 4
     ordered = (type(data).__name__ == 'OrderedDict')
-    dict_type = 'dict'
     if ordered:
-        dict_type = 'OrderedDict'
         sdata = _ordered_dump(data, Dumper=yaml.SafeDumper, indent=indent_spaces, width=12288, allow_unicode=True,
                               default_flow_style=False)
     else:
@@ -313,11 +325,13 @@ def convert_yaml(data):
 
     return sdata
 
+
 def _ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
     """
     Ordered yaml dumper
     Use this instead ot yaml.Dumper/yaml.SaveDumper to get an Ordereddict
 
+    :param data: data to use
     :param stream: stream to write to
     :param Dumper: yaml-dumper to use
     :**kwds: Additional keywords
@@ -340,8 +354,6 @@ def _ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
 
 def _format_yaml_dump(data):
     """
-    ***Converter Special ***
-
     Format yaml-dump to make file more readable
     (yaml structure must be dumped to a stream before using this function)
     | Currently does the following:
