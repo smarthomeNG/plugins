@@ -178,6 +178,7 @@ def parse_for_convert(conf_code, config=None):
     last_comment_nr = 0
     linenu = 0
     parent = collections.OrderedDict()
+    parents = collections.OrderedDict()
     lines = conf_code.splitlines()
     for line in lines:
         linenu += 1
