@@ -41,13 +41,12 @@ li.L5, li.L6, li.L7, li.L8
 </div>
 <script>
      var myCodeMirrorConf = CodeMirror.fromTextArea(document.getElementById("conf_code"), {
-       lineNumbers: true,
-       mode: "python"
+       lineNumbers: true
      });
      var myCodeMirrorYaml = CodeMirror.fromTextArea(document.getElementById("yaml_code"), {
        lineNumbers: true,
        readOnly: true,
-       mode: "python"
+       mode: "yaml"
      });
 </script>
 {% endblock %}
