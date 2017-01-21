@@ -94,7 +94,7 @@ class Backend:
             conf_code = ''
             yaml_code = ''
         tmpl = self.env.get_template('conf_yaml_converter.html')
-        return tmpl.render(develop=self.developer_mode,conf_code=conf_code, yaml_code=yaml_code)
+        return tmpl.render(develop=self.developer_mode,conf_code=conf_code, yaml_code=yaml_code, visu_plugin=(self.visu_plugin is not None))
 
     @cherrypy.expose
     def system_html(self):
