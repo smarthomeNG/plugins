@@ -376,7 +376,7 @@ class Database(SmartPlugin):
 
         return {
             'cmd': 'series', 'series': tuples, 'sid': sid,
-            'params' : {'update': True, 'item': item, 'func': func, 'start': logs['istart'], 'end': end, 'step': logs['step'], 'sid': sid},
+            'params' : {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end, 'step': step, 'sid': sid},
             'update' : self._sh.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
         }
 
