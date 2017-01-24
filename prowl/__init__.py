@@ -22,15 +22,18 @@
 import logging
 import urllib.parse
 import http.client
+from lib.model.smartplugin import SmartPlugin
 
-logger = logging.getLogger('Prowl')
 
+class Prowl(SmartPlugin):
+    ALLOW_MULTIINSTANCE = True
+    PLUGIN_VERSION = "1.3.0"
 
-class Prowl():
     _host = 'api.prowlapp.com'
     _api = '/publicapi/add'
 
     def __init__(self, smarthome, apikey=None):
+        self.logger = logging.getLogger(__name__)
         self._apikey = apikey
         self._sh = smarthome
 
@@ -40,12 +43,15 @@ class Prowl():
     def stop(self):
         pass
 
-    def __call__(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHome'):
+    def __call__(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHomeNG'):
         data = {}
-        headers = {'User-Agent': "SmartHomeNG", 'Content-Type': "application/x-www-form-urlencoded"}
+        origin = application
+        if self.get_instance_name() != '':
+        	origin += ' (' + self.get_instance_name() + ')'
+        headers = {'User-Agent': application, 'Content-Type': "application/x-www-form-urlencoded"}
         data['event'] = event[:1024].encode()
         data['description'] = description[:10000].encode()
-        data['application'] = application[:256].encode()
+        data['application'] = origin[:256].encode()
         if apikey:
             data['apikey'] = apikey
         else:
@@ -62,4 +68,4 @@ class Prowl():
             if resp.status != 200:
                 raise Exception("{} {}".format(resp.status, resp.reason))
         except Exception as e:
-            logger.warning("Could not send prowl notification: {0}. Error: {1}".format(event, e))
+            self.logger.warning("Could not send prowl notification: {0}. Error: {1}".format(event, e))
