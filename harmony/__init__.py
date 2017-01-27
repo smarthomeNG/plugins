@@ -108,6 +108,8 @@ class Harmony(SmartPlugin):
                 if isinstance(command, str):
                     command = command.split('|')
 
+                if command is None:
+                    return
                 for action in command:
 
                     delay = 0.2
