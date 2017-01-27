@@ -1,24 +1,27 @@
- # Harmony Hub Plugin
+# Harmony Hub Plugin
 
- ### Requirenments
+This is the SmarthomeNG-Plugin for a Harmony Hub device.
+For support, questions and bug reports, please refer to [KNX-User-Forum](https://knx-user-forum.de/forum/supportforen/smarthome-py/1046500-harmony-hub-plugin)
+
+### Requirenments
 
  - an Harmony Hub device
- - SmarthomeNG version >= 1.2
+ - SmarthomeNG version >= 1.3
  - Python3 module <b>sleekxmpp</b>
   ```
   sudo pip3 install sleekxmpp
   ```
- 
- ### Setup activities on Harmony Hub
+
+### Setup activities on Harmony Hub
  
  Thanks to Logitech for closing the access to the Harmony API for end-users, it#s only possible to trigger pre-configured
  activities on your Harmony Hub. (https://support.myharmony.com/en-us/how-to-create-a-harmony-activity). To trigger
  single actions on a device, simple create an activity for each action.
 
- #### Finding Activity ID
+#### Finding Activity ID
 
  Before you can start setting up your SmarthomNG items, you have to find out the ids of your configured Harmony Hub
- activities. Therefor you can use the script ```get_activities.py```. You can find in in the Harmony plugin folder,
+ activities. Therefor you can use the script ```get_activities.py```. You can find it in the Harmony plugin folder,
  usually under ```/usr/local/smarthome/plugins/harmony```
  
  ```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT```
@@ -29,7 +32,7 @@
  {24534937: 'Sat', 24556412: 'dummy', 24555597: 'NVIDIA Shield', -1: 'PowerOff'}
  ```
  
- #### Dummy activity
+#### Dummy activity
  A very annoying Harmony Hub behaviour is, that you cannot trigger an activity twice, if it was the last triggered  
  activity. The trick is to define a dummy activity with any unused device in your Harmony App. You can set all delays 
  of this device to 0 in the Harmony Hub settings. If you call this activity <b>dummy</b>, the plugin will use this 
@@ -55,7 +58,7 @@
  You can set ```sleekxmpp_debug = true``` to enable verbose output for the underlying sleekxmpp library. 
  <p>
   
- ### Setup item
+### Setup item
   
  To configure an Harmony activity vou have to configure an item as follows:
  
@@ -76,13 +79,13 @@
  
  **harmony_delay_0|1**     [optional, default: 0, type: int (seconds)]<p>
  Sometimes a device is unresponsive after a power-off/power-on (e.g. turning on the socket). Therefor you can set up a 
- trigger delay for the activity. The attribute harmony_delay_1 defines a delay in seconds for activity defined under 
- harmony_activity_1, harmony_delay_0 for harmony_activity_1. If you omitting these values, the activities are triggered 
+ trigger delay for the activity. The attribute harmony_delay_1 defines a delay in seconds for the activity defined with 
+ harmony_activity_1, harmony_delay_0 for harmony_activity_0. If you omit these values, the activities are triggered 
  instantly. 
- If an activity should be triggered before and a delayed activity with the same id is already pending, the
- new trigger activity will be ignored.
+ If an activity should be triggered and a delayed activity with the same id is already pending, the new trigger 
+ activity will be ignored.
  
- ### Examples
+### Examples
  ```
  [TV]
     type = bool
