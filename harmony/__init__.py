@@ -16,6 +16,7 @@ class Harmony(SmartPlugin):
 
     def __init__(self, sh, harmony_ip, harmony_port=5222, sleekxmpp_debug=False, harmony_dummy_activity=None):
 
+        self._default_delay = 0.2
         self._devices = {}
         self._threadLock = threading.Lock()
         self._logger = logging.getLogger(__name__)
@@ -112,7 +113,7 @@ class Harmony(SmartPlugin):
                     return
                 for action in command:
 
-                    delay = 0.2
+                    delay = self._default_delay
 
                     action = action.split(":")
                     if len(action) < 2 or len(action) > 3:
