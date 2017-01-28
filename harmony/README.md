@@ -10,7 +10,7 @@ For support, questions and bug reports, please refer to [KNX-User-Forum](https:/
 - Python3 module <b>sleekxmpp</b>
 
 ```
-    sudo pip3 install sleekxmpp
+sudo pip3 install sleekxmpp
 ```
 
 #### Device IDs and Commands
@@ -21,14 +21,19 @@ devices and their associated commands. Therefor you can use the script ```get_ac
  
 Execute this script like this:
  
-```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT```
+```
+python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT
+```
  
 If you want to save the output, you can redirect the stdout to a file:
  
-```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT > /your/path/here.txt```
+```
+python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT > /your/path/here.txt
+```
  
  
- This is an example output:
+This is an example output:
+
 ```
     Philips 50PFL7956K/02     device id: 31913922
     ---------------------------------------------
