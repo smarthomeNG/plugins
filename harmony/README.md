@@ -22,7 +22,7 @@ For support, questions and bug reports, please refer to [KNX-User-Forum](https:/
  ```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT```
  
  If you want to save the output, you can redirect the stdout to a file:
- ```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT > /your/path/here.txt
+ ```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT > /your/path/here.txt```
  
  
  This is an example output:
