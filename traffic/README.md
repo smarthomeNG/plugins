@@ -23,7 +23,7 @@ More information and API key see: https://developers.google.com/maps/documentati
 [traffic]
     class_name = Traffic
     class_path = plugins.traffic
-    apikey = <your own api key>
+    apikey = your own api key
     language = de (optional)
 </pre>
 
