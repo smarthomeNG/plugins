@@ -19,57 +19,59 @@ For support, questions and bug reports, please refer to [KNX-User-Forum](https:/
  ```/usr/local/smarthome/plugins/harmony```
  
  Execute this script like this:
+ 
  ```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT```
  
  If you want to save the output, you can redirect the stdout to a file:
+ 
  ```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT > /your/path/here.txt```
  
  
  This is an example output:
  ```
- Philips 50PFL7956K/02     device id: 31913922
----------------------------------------------
-	Power
-		command: PowerOff
-		command: PowerOn
-		command: PowerToggle
-	NumericBasic
-		command: 0
-		command: 1
-		...
-	Volume
-		command: Mute
-		command: VolumeDown
-		command: VolumeUp
-	    ...
-    ...
-    
-Pace S HD 201     device id: 31914808
--------------------------------------
-	Power
-		command: PowerToggle
-	Channel
-		command: ChannelPrev
-		command: ChannelDown
-		command: ChannelUp
-		...
-	NavigationBasic
-		command: DirectionDown
-		command: DirectionLeft
-		command: DirectionRight
-		...
-	TransportBasic
-		command: Stop
-		command: Play
-		command: Rewind
-	...
-		
-Microsoft Xbox One     device id: 31907101
-------------------------------------------
-	Power
-		command: PowerOff
+    Philips 50PFL7956K/02     device id: 31913922
+    ---------------------------------------------
+        Power
+            command: PowerOff
+            command: PowerOn
+            command: PowerToggle
+        NumericBasic
+            command: 0
+            command: 1
+            ...
+        Volume
+            command: Mute
+            command: VolumeDown
+            command: VolumeUp
+            ...
         ...
-    ...
+        
+    Pace S HD 201     device id: 31914808
+    -------------------------------------
+        Power
+            command: PowerToggle
+        Channel
+            command: ChannelPrev
+            command: ChannelDown
+            command: ChannelUp
+            ...
+        NavigationBasic
+            command: DirectionDown
+            command: DirectionLeft
+            command: DirectionRight
+            ...
+        TransportBasic
+            command: Stop
+            command: Play
+            command: Rewind
+        ...
+            
+    Microsoft Xbox One     device id: 31907101
+    ------------------------------------------
+        Power
+            command: PowerOff
+            ...
+        ...
 ```
  
  You need the device id and the name of the command.
@@ -123,6 +125,7 @@ Microsoft Xbox One     device id: 31907101
      harmony_command_1 = 42282391:PowerOn:6|42282391:InputBd
      harmony_command_0 = 42282391:PowerOff
  ```
+ 
  If the Item 'Shield' is set to True, the AV receiver is powered on and the and the input channel is set to 'Bluray' 
  after 6 seconds (the AV receiver is not instantly responsive after a power-on). 
  If the Item 'Shield' is set to False, the AV receiver is powered off.
