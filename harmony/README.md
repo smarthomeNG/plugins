@@ -93,7 +93,6 @@ You need the device id and the name of the command.
         class_path = plugins.harmony
         harmony_ip = 192.168.178.78 
         #harmony_port = 5222 # [default: 5222, int]
-        #harmony_dummy_activity = 1234567 #  [default: None, int]
         #sleekxmpp_debug = false  #[default:false, bool]
 ```
 <p>
