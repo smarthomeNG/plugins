@@ -28,7 +28,7 @@ More information and API key see: https://developers.google.com/maps/documentati
 </pre>
 
 ### Attributes
-  * `apikey`: Your own personal API key for Google Directions. For your own key register to https://creativecommons.tankerkoenig.de
+  * `apikey`: Your own personal API key for Google Directions. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
   * `language`: Any 2 char language code that is supported by Google Directions API, default is "de"
 
 ## items.conf
