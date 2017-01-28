@@ -76,9 +76,11 @@ class Traffic(SmartPlugin):
                 route_information['distance'] = leg['distance']['value']
                 route_information['duration'] = leg['duration']['value']
                 route_information['start_address'] = leg['start_address']
-                route_information['start_location'] = leg['start_location']
+                route_information['start_location_lat'] = leg['start_location']['lat']
+                route_information['start_location_lon'] = leg['start_location']['lng']
                 route_information['end_address'] = leg['end_address']
-                route_information['end_location'] = leg['end_location']
+                route_information['end_location_lat'] = leg['end_location']['lat']
+                route_information['end_location_lon'] = leg['end_location']['lng']
             route_information['summary'] = route['summary']
             route_information['copyrights'] = route['copyrights']
 

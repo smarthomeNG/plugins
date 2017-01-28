@@ -52,13 +52,23 @@ Currently, no pre defined items exist, the example below needs these items:
         type = str
 
     [[start_location]]
-        type = str
+
+        [[[lat]]]
+            type = num
+
+        [[[lon]]]
+            type = num
 
     [[end_address]]
         type = str
 
     [[end_location]]
-        type = str
+
+        [[[lat]]]
+            type = num
+
+        [[[lon]]]
+            type = num
 </pre>
 # Functions
 
@@ -73,9 +83,11 @@ sh.travel_info.travel_distance(route['distance'])
 sh.travel_info.travel_summary(summary)
 sh.travel_info.copyrights(route['copyrights'])
 sh.travel_info.start_address(route['start_address'])
-sh.travel_info.start_location(route['start_location'])
+sh.travel_info.start_location.lat(route['start_location_lat'])
+sh.travel_info.start_location.lon(route['start_location_lon'])
 sh.travel_info.end_address(route['end_address'])
-sh.travel_info.end_location(route['end_location'])
+sh.travel_info.end_location.lat(route['end_location_lat'])
+sh.travel_info.end_location.lon(route['end_location_lon'])
 
 </pre>
 Returned is a dict (or in case of alternatives = True an array of dicts) with route information.
