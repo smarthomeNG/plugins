@@ -75,7 +75,12 @@ class Traffic(SmartPlugin):
             for leg in route['legs']:
                 route_information['distance'] = leg['distance']['value']
                 route_information['duration'] = leg['duration']['value']
+                route_information['start_address'] = leg['start_address']
+                route_information['start_location'] = leg['start_location']
+                route_information['end_address'] = leg['end_address']
+                route_information['end_location'] = leg['end_location']
             route_information['summary'] = route['summary']
+            route_information['copyrights'] = route['copyrights']
 
         routes.append(route_information)
         if alternatives:
