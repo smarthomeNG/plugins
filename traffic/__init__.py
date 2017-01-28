@@ -34,8 +34,9 @@ class Traffic(SmartPlugin):
     def __init__(self, smarthome, apikey, language='de'):
         """
         Initializes the plugin
-        @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
-        api key. For your own key register to https://creativecommons.tankerkoenig.de
+        @param apikey: For accessing the free "Google Directions API" you need a personal
+        api key. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
+        @param language: two char language code. default: de
         """
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
