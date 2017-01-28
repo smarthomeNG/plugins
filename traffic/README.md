@@ -48,6 +48,9 @@ Currently, no pre defined items exist, the example below needs these items:
     [[html_instructions]]
         type = str
 
+    [[html_warnings]]
+        type = str
+
     [[copyrights]]
         type = str
 
@@ -88,6 +91,7 @@ sh.travel_info.travel_time(route['duration'])
 sh.travel_info.travel_distance(route['distance'])
 sh.travel_info.travel_summary(summary)
 sh.travel_info.html_instructions(route['html_instructions'])
+sh.travel_info.html_warnings(route['html_warnings'])
 sh.travel_info.copyrights(route['copyrights'])
 sh.travel_info.start_address(route['start_address'])
 sh.travel_info.start_location.lat(route['start_location_lat'])
