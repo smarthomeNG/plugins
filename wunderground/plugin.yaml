@@ -1,0 +1,13 @@
+plugin:
+    type: cloud                 # plugin type (system, gateway, interface, protocol, cloud)
+    subtype: weather            # plugin subtype (if applicable)
+    version: 1.2.1              # Plugin version
+#   keywords:                   # keywords, where applicable
+    sh_minversion: 1.2          # minimum shNG version to use this plugin
+#   sh_maxversion:              # maximum shNG version to use this plugin (if not latest)
+    multi_instance: true        # plugin supports multi instance
+    description: 'Abfrage der Daten des Wetterdienstes Wunderground.com'
+#   documentation:              # url of wiki page
+    maintainer: msinn           # Who maintains this plugin?
+#   tester:                     # Who tests this plugin?
+

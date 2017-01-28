@@ -36,7 +36,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class Wunderground(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION='1.1.0'
+    PLUGIN_VERSION='1.2.1'
 
 
     ## The constructor: Initialize plugin
@@ -156,7 +156,7 @@ class Wunderground(SmartPlugin):
                     else:
                         self.logger.debug('_update_items: WARNUNG: Wert konnte nicht gecleaned werden. Kein Wert ins item geschrieben - Item: "{0}" mit wug_xmlstring: "{1}", gefunden: "{2}"'.format(item,s,val_uncleaned))  
                 else:
-                    self.logger.warning('_update_items: returned empty value for item "{0}"'.format(item))   
+                    self.logger.info('_update_items: returned empty value for item "{0}"'.format(item))   
         except KeyError:
             self.logger.debug('_update_items: wug_xmlstring is empty or not existent for item "{0}"'.format(item))
             pass
