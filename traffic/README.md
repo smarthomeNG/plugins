@@ -45,6 +45,9 @@ Currently, no pre defined items exist, the example below needs these items:
     [[travel_summary]]
         type = str
 
+    [[html_instructions]]
+        type = str
+
     [[copyrights]]
         type = str
 
@@ -81,6 +84,7 @@ summary = route['summary']+": %.1f km in %.0f min" % (round(route['duration']/60
 sh.travel_info.travel_time(route['duration'])
 sh.travel_info.travel_distance(route['distance'])
 sh.travel_info.travel_summary(summary)
+sh.travel_info.html_instructions(route['html_instructions'])
 sh.travel_info.copyrights(route['copyrights'])
 sh.travel_info.start_address(route['start_address'])
 sh.travel_info.start_location.lat(route['start_location_lat'])
@@ -88,7 +92,6 @@ sh.travel_info.start_location.lon(route['start_location_lon'])
 sh.travel_info.end_address(route['end_address'])
 sh.travel_info.end_location.lat(route['end_location_lat'])
 sh.travel_info.end_location.lon(route['end_location_lon'])
-
 </pre>
 Returned is a dict (or in case of alternatives = True an array of dicts) with route information.
 The following dict keys are available: distance (in meters), duration (in seconds), summary

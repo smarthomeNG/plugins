@@ -81,6 +81,9 @@ class Traffic(SmartPlugin):
                 route_information['end_address'] = leg['end_address']
                 route_information['end_location_lat'] = leg['end_location']['lat']
                 route_information['end_location_lon'] = leg['end_location']['lng']
+                route_information['html_instructions'] = ''
+                for step in leg['steps']:
+                    route_information['html_instructions'] = route_information['html_instructions']+'<p>'+step['html_instructions']+'</p>'
             route_information['summary'] = route['summary']
             route_information['copyrights'] = route['copyrights']
 
