@@ -75,12 +75,15 @@ Currently, no pre defined items exist, the example below needs these items:
 </pre>
 # Functions
 
-## get_route_info(origin, destination, alternatives):
+## get_route_info(origin, destination, alternatives, mode):
 Returns route information for a provided origin (in the example home coordinates) and destination (in the example Berlin)
 <pre>
-route = sh.traffic.get_route_info(sh._lat+','+sh._lon, 'Berlin', False)
+route = sh.traffic.get_route_info(sh._lat+','+sh._lon, 'Berlin', False, 'driving')
 
 summary = route['summary']+": %.1f km in %.0f min" % (round(route['duration']/60,2), round(route['distance']/1000,2))
+if route['summary'] is not '':
+    route['summary'] += ": "
+summary = route['summary']+"%.1f km in %.0f min" % (round(route['duration']/60,2), round(route['distance']/1000,2))
 sh.travel_info.travel_time(route['duration'])
 sh.travel_info.travel_distance(route['distance'])
 sh.travel_info.travel_summary(summary)

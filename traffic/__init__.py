@@ -50,20 +50,21 @@ class Traffic(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    def get_route_info(self, origin, destination, alternatives=False):
+    def get_route_info(self, origin, destination, alternatives=False, mode='driving'):
         """
         Returns route information for a provided origin and destination
         @param origin: string representing the origin according to google directions api
         @param destination: string representing the destination according to google directions api
         @param alternatives: returns alternative routes if true
+        @param mode: driving (default), walking, bicycling, transit
 
         @return: return an array of routes if alternatives are true, or a route (as dict) if alternatives are false
         """
         routes = []
         try:
             response = self._session.get(
-                '%s?language=%s&alternatives=%s&origin=%s&destination=%s&key=%s' % (self._base_url,
-                self._language, alternatives, origin, destination, self._apikey))
+                '%s?language=%s&alternatives=%s&origin=%s&destination=%s&mode=%s&key=%s' % (self._base_url,
+                self._language, alternatives, origin, destination, mode, self._apikey))
         except Exception as e:
             self.logger.error(
                 "Exception when sending GET request for get_route_info: %s" % str(e))
