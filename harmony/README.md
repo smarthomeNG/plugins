@@ -12,34 +12,68 @@ For support, questions and bug reports, please refer to [KNX-User-Forum](https:/
   sudo pip3 install sleekxmpp
   ```
 
-### Setup activities on Harmony Hub
- 
- Thanks to Logitech for closing the access to the Harmony API for end-users, it#s only possible to trigger pre-configured
- activities on your Harmony Hub. (https://support.myharmony.com/en-us/how-to-create-a-harmony-activity). To trigger
- single actions on a device, simple create an activity for each action.
-
-#### Finding Activity ID
+#### Device IDs and Commands
 
  Before you can start setting up your SmarthomNG items, you have to find out the ids of your configured Harmony Hub
- activities. Therefor you can use the script ```get_activities.py```. You can find it in the Harmony plugin folder,
- usually under ```/usr/local/smarthome/plugins/harmony```
+ devices and their associated commands. Therefor you can use the script ```get_activities.py```. normally located under 
+ ```/usr/local/smarthome/plugins/harmony```
  
+ Execute this script like this:
  ```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT```
+ 
+ If you want to save the output, you can redirect the stdout to a file:
+ ```python3 get_activities.py -i HARMONY_HUB_IP -p HARMONY_HUB_PORT > /your/path/here.txt
+ 
  
  This is an example output:
  ```
- Available Harmony Hub activities:
- {24534937: 'Sat', 24556412: 'dummy', 24555597: 'NVIDIA Shield', -1: 'PowerOff'}
- ```
+ Philips 50PFL7956K/02     device id: 31913922
+---------------------------------------------
+	Power
+		command: PowerOff
+		command: PowerOn
+		command: PowerToggle
+	NumericBasic
+		command: 0
+		command: 1
+		...
+	Volume
+		command: Mute
+		command: VolumeDown
+		command: VolumeUp
+	    ...
+    ...
+    
+Pace S HD 201     device id: 31914808
+-------------------------------------
+	Power
+		command: PowerToggle
+	Channel
+		command: ChannelPrev
+		command: ChannelDown
+		command: ChannelUp
+		...
+	NavigationBasic
+		command: DirectionDown
+		command: DirectionLeft
+		command: DirectionRight
+		...
+	TransportBasic
+		command: Stop
+		command: Play
+		command: Rewind
+	...
+		
+Microsoft Xbox One     device id: 31907101
+------------------------------------------
+	Power
+		command: PowerOff
+        ...
+    ...
+```
  
-#### Dummy activity
- A very annoying Harmony Hub behaviour is, that you cannot trigger an activity twice, if it was the last triggered  
- activity. The trick is to define a dummy activity with any unused device in your Harmony App. You can set all delays 
- of this device to 0 in the Harmony Hub settings. If you call this activity <b>dummy</b>, the plugin will use this 
- activity automatically for the internal processing, otherwise you can setup this dummy activity in th plugin 
- configuration.
-<p>
-
+ You need the device id and the name of the command.
+ 
 ### Setup plugin
 
  - Activate the plugin in your plugins.conf [default: /usr/local/smarthome/etc/plugins.conf]
@@ -53,50 +87,49 @@ For support, questions and bug reports, please refer to [KNX-User-Forum](https:/
      #harmony_dummy_activity = 1234567 #  [default: None, int]
      #sleekxmpp_debug = false  #[default:false, bool]
  ```
- 
- If your dummy activity is NOT called 'dummy', you have to set the ```harmony_dummy_activity``` manually.
- You can set ```sleekxmpp_debug = true``` to enable verbose output for the underlying sleekxmpp library. 
  <p>
   
 ### Setup item
   
- To configure an Harmony activity vou have to configure an item as follows:
+ To configure Harmony command(s) vou have to set an item as follows:
  
  ```
  [MyItem]
     type = bool
     enforce_updates = true
-    harmony_activity_0 = 24556412
-    harmony_activity_1 = 44153418
-    harmony_delay_0 = 1
-    harmony_delay_1 = 5
+    harmony_command_0 = DEVICE_ID:COMMAND(:DELAY)|DEVICE_ID:COMMAND(:DELAY)| .... | .... | .... | ....
+    harmony_command_1 = DEVICE_ID:COMMAND(:DELAY)|DEVICE_ID:COMMAND(:DELAY)| .... | .... | .... | ....
  ```
  
- **harmony_activity_0|1**     [at least one required, type: int]<p>
- All plugin attributes are only valid for items with the type bool. You have to set at least one of the attributes 
- <b>harmony_activity_0</b> or <b>harmony_activity_1</b>, both values together are valid too. If the item value is 
- 'True', the activity id defined for harmony_activity_1 will be triggered, harmony_activity_0 vice versa.<p>
+ **harmony_command_0_0|1**     [at least one required]<p>
+ All plugin attributes are only valid for items with the type 'bool'. You have to set at least one of the attributes 
+ <b>harmony_command_0</b> or <b>harmony_command_1</b>, both values together are valid too. If the item value is 
+ 'True', the command defined for harmony_command_1 will be triggered, harmony_command_0 vice versa.<p>
+
+ As you can see the format of a **command** is always ```DEVICE_ID:COMMAND(:DELAY)|DEVICE_ID:COMMAND(:DELAY)```. The 
+ delay parameter defines the time in seconds to wait before the next command will be triggered. This parameter is 
+ optional (default: 0.2s) and can be omitted. You have to find out the right value by yourself since it heavily
+ depends on your device. The maximum value is 60 (seconds).  
+ You can group more than one commands together like this: ```COMMAND1 | COMMAND2 | COMMAND3```
  
- **harmony_delay_0|1**     [optional, default: 0, type: int (seconds)]<p>
- Sometimes a device is unresponsive after a power-off/power-on (e.g. turning on the socket). Therefor you can set up a 
- trigger delay for the activity. The attribute harmony_delay_1 defines a delay in seconds for the activity defined with 
- harmony_activity_1, harmony_delay_0 for harmony_activity_0. If you omit these values, the activities are triggered 
- instantly. 
- If an activity should be triggered and a delayed activity with the same id is already pending, the new trigger 
- activity will be ignored.
+### Limitations
+
+ Only one set of commands can be triggered by the plugin simultaneously to avoid unpredictable behavior. 
  
-### Examples
+### Real World Examples
  ```
- [TV]
-    type = bool
-    knx_dpt = 1
-    knx_listen = 2/2/0
-    knx_send = 2/2/1
-    knx_init = 2/2/0
-    enforce_updates = true
-    harmony_activity_1 = 12345678
-    harmony_delay_1 = 3
+ [[Shield]]
+     type = bool
+     harmony_command_1 = 42282391:PowerOn:6|42282391:InputBd
+     harmony_command_0 = 42282391:PowerOff
  ```
+ If the Item 'Shield' is set to True, the AV receiver is powered on and the and the input channel is set to 'Bluray' 
+ after 6 seconds (the AV receiver is not instantly responsive after a power-on). 
+ If the Item 'Shield' is set to False, the AV receiver is powered off.
  
- A value '1' on KNX group address 2/2/0 enables the socket and turn on the plugged-in TV. With a delay of 3 seconds, the 
- Harmony Hub triggers a predefined power-on activity for the TV. 
+ ```
+    [[RTL]]
+        type = bool
+        harmony_command_1 = 42282391:InputSat/Cbl:0.2|31914808:3:0.3|31914808:Select
+ ```
+ This command sets the input channel of the AV receiver to SAT/Cbl, enters '3' and commits the input with 'Select'.

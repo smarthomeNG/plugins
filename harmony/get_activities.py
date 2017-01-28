@@ -42,14 +42,17 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
         device_list = action_cmd.text
         config = json.loads(device_list)
 
-        activities = {}
+        for device in config["device"]:
+            model = "%s %s     device id: %s" % (device["manufacturer"], device["model"], device["id"])
+            print("\n")
+            print(model)
+            print("-" * len(model))
+            for group in device["controlGroup"]:
+                print("\t%s" % group["name"])
+                for function in group["function"]:
+                    action = json.loads(function["action"])
+                    print("\t\tcommand: %s" % action["command"])
 
-        if "activity" in config:
-            for action in config["activity"]:
-                if "label" in action and "id" in action:
-                    activities[int(action["id"])] = action["label"]
-        print("Available Harmony Hub activities:")
-        print(activities)
         self.disconnect()
 
 if __name__ == '__main__':

@@ -16,10 +16,10 @@ class Harmony(SmartPlugin):
 
     def __init__(self, sh, harmony_ip, harmony_port=5222, sleekxmpp_debug=False, harmony_dummy_activity=None):
 
-        self._pending_activities = []
-        self._activities = {}
+        self._default_delay = 0.2
+        self._devices = {}
+        self._threadLock = threading.Lock()
         self._logger = logging.getLogger(__name__)
-        self._dummy_activity = None
 
         if Utils.is_int(harmony_dummy_activity):
             self._dummy_activity = harmony_dummy_activity
@@ -34,7 +34,6 @@ class Harmony(SmartPlugin):
         self._sh = sh
         self._ip = harmony_ip
         self._port = harmony_port
-        self._is_active_session = False
         self._reconnect_timeout = 60
         self._scheduler_name = "harmony_reconnect"
         self._client = HarmonyClient()
@@ -53,45 +52,26 @@ class Harmony(SmartPlugin):
         self._logger.info("Try to re-connect after {sec}".format(sec=self._reconnect_timeout))
         self._sh.scheduler.add(self._scheduler_name, self._connect, prio=3, cron=None, cycle=self._reconnect_timeout,
                                value=None, offset=None, next=None)
-        self._is_active_session = False
 
     def _event_session_negotiated(self, event):
         self._logger.debug("Session started: {event}".format(event=event))
-        self._is_active_session = True
         self._sh.scheduler.remove(self._scheduler_name)
+
+        # get device names and their ids
+        config = self._client.get_config()
+
+        if 'device' in config:
+            for device in config['device']:
+                if 'label' in device and 'id' in device:
+                    self._devices[int(device['id'])] = device['label']
 
     def _event_session_end(self, event):
         self._logger.error("Session stopped: {err}".format(err=event))
-        self._is_active_session = False
         self._logger.info("Try to re-connect after {sec}".format(sec=self._reconnect_timeout))
         self._sh.scheduler.add(self._scheduler_name, self._connect, prio=3, cron=None, cycle=self._reconnect_timeout,
                                value=None, offset=None, next=None)
 
-    def available_activities(self):
-        activities = {}
-        config = self._client.get_config()
-        if "activity" in config:
-            for action in config["activity"]:
-                if "label" in action and "id" in action:
-                    activities[int(action["id"])] = action["label"]
-        self._logger.debug("Available Harmony Hub activities:")
-        self._logger.debug(activities)
-        return activities
-
     def run(self):
-        if self._is_active_session:
-            self._activities = self.available_activities()
-            # if dummy activity was not set manually, search it
-            if self._dummy_activity is None:
-                found = False
-                for id, activity in self._activities.items():
-                    if activity.lower() == 'dummy':
-                        self._dummy_activity = id
-                        found = True
-                        break
-                if not found:
-                    self._logger.warning("No dummy activity id was found. Set it up manually or call your dummy "
-                                         "activity 'dummy'. Otherwise, the Harmony plugin won't working correctly.")
         self.alive = True
 
     def stop(self):
@@ -105,20 +85,9 @@ class Harmony(SmartPlugin):
     def parse_item(self, item):
         if item.type() != 'bool':
             return
-        has_harmony = False
-        if self.has_iattr(item.conf, 'harmony_activity_0'):
-            if not Utils.is_int(self.get_iattr_value(item.conf, 'harmony_activity_0')):
-                return
-            has_harmony = True
-
-        if self.has_iattr(item.conf, 'harmony_activity_1'):
-            if not Utils.is_int(self.get_iattr_value(item.conf, 'harmony_activity_1')):
-                return
-            has_harmony = True
-        if has_harmony:
+        if self.has_iattr(item.conf, 'harmony_command_0') or self.has_iattr(item.conf, 'harmony_command_1'):
             return self.update_item
         return
-
 
     def parse_logic(self, logic):
         pass
@@ -129,50 +98,60 @@ class Harmony(SmartPlugin):
         if item is None:
             return
 
-        suffix = '1' if item() else '0'
-        delay = 0
-
-        activity = self.get_iattr_value(item.conf, 'harmony_activity_{suffix}'.format(suffix=suffix))
-        if self.has_iattr(item.conf, 'harmony_delay_{suffix}'.format(suffix=suffix)):
-            delay = self.get_iattr_value(item.conf, 'harmony_delay_{suffix}'.format(suffix=suffix))
-            if not Utils.is_int(delay):
-                self._logger.warning("attribute #harmony_delay_{suffix}' is not an integer, "
-                                     "ignoring".format(suffix=suffix))
-                delay = 0
-            else:
-                delay = int(delay)
-
-        if not Utils.is_int(activity):
-            self._logger.error("{item}: activity {activity} is not an integer.".format(item=item, activity=activity))
+        if not self._threadLock.acquire(False):
+            self._logger.warning("Couldn't trigger Harmony Hub command. Another command is already pending.")
             return
-        activity = int(activity)
-        if activity not in self._activities:
-            self._logger.warning("Activity '{activity}' not found in available activities.".format(activity=activity))
-            self._logger.debug("Triggering '{val}'-activity UNKNOWN [{activity}] for item {item}".format(
-                activity=activity, item=item, val=str(item()).upper()))
         else:
-            self._logger.debug("Triggering '{val}'-activity {label} [{activity}] for item {item}".format(
-                label=self._activities[activity], activity=activity, item=item, val=str(item()).upper()))
+            try:
+                suffix = '1' if item() else '0'
 
-        if activity in self._pending_activities:
-            self._logger.warning("Activity {activity} already pending, ignoring.")
-            return
+                command = self.get_iattr_value(item.conf, 'harmony_command_{suffix}'.format(suffix=suffix))
+                if isinstance(command, str):
+                    command = command.split('|')
 
-        self._pending_activities.append(activity)
-        threading.Timer(delay, self.trigger_activity, [activity]).start()
+                if command is None:
+                    return
+                for action in command:
 
+                    delay = self._default_delay
 
-    def trigger_activity(self, activity):
-        self._logger.debug("triggering dummy activity")
-        self._client.start_activity(self._dummy_activity)
-        time.sleep(0.5)
-        self._logger.debug("triggering activity {activity}".format(activity=activity))
-        self._pending_activities.remove(activity)
-        self._client.start_activity(str(activity))
+                    action = action.split(":")
+                    if len(action) < 2 or len(action) > 3:
+                        self._logger.error("Invalid command {action} in item {item}".format(action=action, item=item))
+                        return
+                    # first item has to be an integer (device id)
+                    if not Utils.is_int(action[0]):
+                        self._logger.error("Invalid device id for action {action} in item {item}".format(action=action,
+                                                                                                         item=item))
+                        return
+
+                    if len(action) == 3:
+                        if not Utils.is_float(action[2]):
+                            self._logger.error("Invalid delay for action {action} in item {item}".format(action=action,
+                                                                                                         item=item))
+                            return
+                        else:
+                            delay = float(action[2])
+                            # max delay 60 sec
+                            if delay > 60:
+                                self._logger.error(
+                                    "Invalid delay (>60sec) for action {action} in item {item}".format(action=action,
+                                                                                                       item=item))
+                                return
+
+                    label = "unknown"
+                    if int(action[0]) in self._devices:
+                        label = self._devices[int(action[0])]
+
+                    self._logger.debug("trigger command {command} for device '{label}'".format(command=command,
+                                                                                             label=label))
+                    self._client.send_command(action[0], action[1])
+                    time.sleep(delay)
+            finally:
+                self._threadLock.release()
 
 
 class HarmonyClient(sleekxmpp.ClientXMPP):
-    """An XMPP client for connecting to the Logitech Harmony."""
 
     def __init__(self):
         user = "guest@x.com/gatorade"
@@ -199,10 +178,6 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
         self.add_event_handler(event_name, event_handler)
 
     def get_config(self):
-        """Retrieves the Harmony device configuration.
-        Returns:
-          A nested dictionary containing activities, devices, etc.
-        """
         iq_cmd = self.Iq()
         iq_cmd['type'] = 'get'
         action_cmd = ET.Element('oa')
@@ -217,41 +192,23 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
         device_list = action_cmd.text
         return json.loads(device_list)
 
-    def get_current_activity(self):
-        """Retrieves the current activity.
-        Returns:
-          A int with the activity ID.
-        """
+    def send_command(self, device, command):
         iq_cmd = self.Iq()
         iq_cmd['type'] = 'get'
+        iq_cmd['id'] = '5e518d07-bcc2-4634-ba3d-c20f338d8927-2'
         action_cmd = ET.Element('oa')
         action_cmd.attrib['xmlns'] = 'connect.logitech.com'
-        action_cmd.attrib['mime'] = 'vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity'
+        action_cmd.attrib['mime'] = (
+            'vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction')
+        action_cmd.text = 'action={"type"::"IRCommand","deviceId"::"' + device + '","command"::"' + command + \
+                          '"}:status=press'
         iq_cmd.set_payload(action_cmd)
-        result = iq_cmd.send(block=True)
-        payload = result.get_payload()
-        assert len(payload) == 1
-        action_cmd = payload[0]
-        assert action_cmd.attrib['errorcode'] == '200'
-        activity = action_cmd.text.split("=")
-        return int(activity[1])
+        iq_cmd.send(block=False)
 
-    def start_activity(self, activity_id):
-        """Starts an activity.
-        Args:
-            activity_id: An int or string identifying the activity to start
-        Returns:
-          A nested dictionary containing activities, devices, etc.
-        """
-        iq_cmd = self.Iq()
-        iq_cmd['type'] = 'get'
-        action_cmd = ET.Element('oa')
-        action_cmd.attrib['xmlns'] = 'connect.logitech.com'
-        action_cmd.attrib['mime'] = 'harmony.engine?startactivity'
-        cmd = 'activityId={id}:timestamp=0'.format(id=str(activity_id))
-        action_cmd.text = cmd
+        action_cmd.attrib['mime'] = (
+            'vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction')
+        action_cmd.text = 'action={"type"::"IRCommand","deviceId"::"' + device + '","command"::"' + command + \
+                          '"}:status=release'
         iq_cmd.set_payload(action_cmd)
-        result = iq_cmd.send(block=True)
-        payload = result.get_payload()
-        assert len(payload) == 1
-        return payload[0].text
+        result = iq_cmd.send(block=False)
+        return result
