@@ -3,16 +3,19 @@
 This is the SmarthomeNG-Plugin for a Harmony Hub device.
 For support, questions and bug reports, please refer to [KNX-User-Forum](https://knx-user-forum.de/forum/supportforen/smarthome-py/1046500-harmony-hub-plugin)
 
+---
+
 ### Requirenments
 
 - an Harmony Hub device
 - SmarthomeNG version >= 1.3
 - Python3 module <b>sleekxmpp</b>
-- (optional) create a dummy Harmony Hub activity [(see remarks)](#dummy)
+- (optional) create a dummy Harmony Hub activity, [see remarks](#dummy)
 
 ```
 sudo pip3 install sleekxmpp
 ```
+---
 
 ### Device IDs and Commands
 
@@ -90,6 +93,8 @@ Microsoft Xbox One     device id: 31907101
  
 For a direct Harmony Hub command, you need the device id and the name of the command, for a Harmony Hub activity the 
 activity id.
+
+---
  
 ### Setup plugin
 
@@ -150,15 +155,19 @@ activity:12345678:1
 a:12345678:4
 ```
 
-<a name="dummy"></a>**Attention:** if your're using activities with this plugin, it's highly recommended that you create
+**Attention:**<a name="dummy"></a> If your're using activities with this plugin, it's highly recommended that you create
 a dummy Harmony Hub activity. Just add any unused device and create an empty activity. Without this dummy, it is not 
 possible to trigger an activity twice, if it's currently activated by the Harmony Hub. With every activity trigger, the 
 plugin starts the dummy first to make sure, every activity can be triggered more than once.
+
+---
 
 ### Limitations
 
 There're neither plugin limitations of how many commands are triggered simultaneously nor a logic that checks whether 
 commands or activities influence each other or not. 
+
+---
 
 ### Put things together with examples
 
@@ -174,7 +183,6 @@ was set to "True". With an additional delay of one second, the input channel is 
 If the Item 'Shield' is set to False, the command "PowerOff" is triggered instantly. 5 seconds later, a pre-configured
 Harmony Hub activity with id '12345678' is triggered.
 
- 
 ```
 [[RTL]]
     type = bool
