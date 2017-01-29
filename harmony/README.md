@@ -110,16 +110,16 @@ activity id.
         #sleekxmpp_debug = false  #[default:false, bool]
 ```
 
-### Setup item
+### Setup harmony commands and activities
   
 To configure Harmony command(s) vou have to set an item as follows:
  
 ```
-    [MyItem]
-        type = bool
-        enforce_updates = true
-        harmony_command_0 = DEVICE_ID/activity:COMMAND/ACTIVITY_ID(:DELAY)| ... | .... | .... | .... | ....
-        harmony_command_1 = DEVICE_ID/activity:COMMAND/ACTIVITY_ID(:DELAY)| ... | .... | .... | .... | ....
+[MyItem]
+    type = bool
+    enforce_updates = true
+    harmony_command_0 = DEVICE_ID/activity:COMMAND/ACTIVITY_ID(:DELAY)| ... | .... | .... | .... | ....
+    harmony_command_1 = DEVICE_ID/activity:COMMAND/ACTIVITY_ID(:DELAY)| ... | .... | .... | .... | ....
 ```
  
 **harmony_command_0|1**     [at least one required]
@@ -158,7 +158,37 @@ a:12345678:4
 **Attention:**<a name="dummy"></a> If your're using activities with this plugin, it's highly recommended that you create
 a dummy Harmony Hub activity. Just add any unused device and create an empty activity. Without this dummy, it is not 
 possible to trigger an activity twice, if it's currently activated by the Harmony Hub. With every activity trigger, the 
-plugin starts the dummy first to make sure, every activity can be triggered more than once.
+plugin starts the dummy first to make sure, every activity can be triggered more than once. In the Harmony Hub app, you
+can set all delays to 0 for that device since it has no function.
+
+---
+
+### Setup Harmony status items
+
+There are two more harmony item types. They are useful to retrieve status information about the current activated 
+activity in the Harmony Hub.
+
+#### Harmony Current Activity by ID
+
+```
+[MyItem]
+    type = num
+    enforce_updates = true
+    harmony_item = current_activity_id
+```
+To retrieve the current activated activity ID in the Harmony Hub, your item has to be type 'num' an must implement
+the attribute ```harmony_item = current_activity_id```
+
+#### Harmony Current Activity by Name
+
+```
+[MyItem]
+    type = num
+    enforce_updates = true
+    harmony_item = current_activity_id
+```
+To retrieve name of the current activated activity in the Harmony Hub, your item has to be type 'str' and must 
+implement the attribute ```harmony_item = current_activity_name```
 
 ---
 
@@ -169,7 +199,7 @@ commands or activities influence each other or not.
 
 ---
 
-### Put things together with examples
+### Examples
 
 ```
 [[Shield]]
