@@ -123,8 +123,7 @@ All plugin attributes are only valid for items with the type 'bool'. You have to
 <b>harmony_command_0</b> or <b>harmony_command_1</b>, both values together are valid too. If the item value is 
 'True', the command defined for harmony_command_1 will be triggered, harmony_command_0 vice versa.<p>
 
-As you can see the format of a **command** is always ```DEVICE_ID:COMMAND(:DELAY)``` or 
-```activity:ACTIVITY_ID(:DELAY)```. 
+As you can see the format of a **command** is always ```DEVICE_ID:COMMAND(:DELAY)``` or ```activity:ACTIVITY_ID(:DELAY)```. 
 
 The delay parameter defines the time in seconds to wait after the previous command or activity was triggered. 
 This parameter is optional (default: 0.2s) and can be omitted. You have to find out the right value by yourself since it 
