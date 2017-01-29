@@ -185,7 +185,7 @@ the attribute ```harmony_item = current_activity_id```
 [MyItem]
     type = num
     enforce_updates = true
-    harmony_item = current_activity_id
+    harmony_item = current_activity_name
 ```
 To retrieve name of the current activated activity in the Harmony Hub, your item has to be type 'str' and must 
 implement the attribute ```harmony_item = current_activity_name```
