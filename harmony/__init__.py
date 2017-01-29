@@ -14,6 +14,7 @@ class Harmony(SmartPlugin):
 
     def __init__(self, sh, harmony_ip, harmony_port=5222, sleekxmpp_debug=False):
         self._is_active = False
+        self._get_config_reconnect = 300  # scheduler time to get config from Hub and for possible reconnect
         self._scheduler = sched.scheduler(time.time, time.sleep)
         self._default_delay = 0.2
         self._devices = {}
@@ -93,6 +94,7 @@ class Harmony(SmartPlugin):
             self._connect()
 
     def _set_current_activity(self):
+        if self._is_active:
             current_activity = self._client.get_current_activity()
             activity_name = "unknown"
             activity_id = 0
@@ -119,12 +121,13 @@ class Harmony(SmartPlugin):
             time.sleep(0.3)
 
         self._logger.debug("Trigger activity '{label}' with id '{activity}'".format(label=label, activity=activity))
-        self._client.start_activity(activity)
+        if self._client.start_activity(activity):
+            self._set_current_activity()
 
     def run(self):
         self._connect()
-        self._sh.scheduler.add("harmony_config", self._get_config, prio=3, cron=None, cycle=300, value=None,
-                               offset=None, next=None)
+        self._sh.scheduler.add("harmony_config", self._get_config, prio=3, cron=None, cycle=self._get_config_reconnect,
+                               value=None, offset=None, next=None)
         self.alive = True
 
     def stop(self):
@@ -252,7 +255,6 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
         try:
             result = iq_cmd.send(block=True)
         except Exception:
-            logger.info('XMPP timeout, reattempting')
             result = iq_cmd.send(block=True)
         payload = result.get_payload()
         assert len(payload) == 1
@@ -260,7 +262,6 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
         assert action_cmd.attrib['errorcode'] == '200'
         activity = action_cmd.text.split("=")
         return int(activity[1])
-
 
     def get_config(self):
         iq_cmd = self.Iq()
