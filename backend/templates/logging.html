@@ -44,7 +44,7 @@
                         </td>
                         <td>{% for fn in l.filenames %}
                             {% if (fn != '') and (not loop.first) %}, {% endif %}
-                            {{ fn }}
+                            <a href="/log_view.html?logfile={{ get_basename(fn) }}">{{ fn }}</a>
                             {% endfor %}
                         </td>
                     </tr>

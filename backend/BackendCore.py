@@ -293,51 +293,8 @@ class Backend:
                                                               mime, "%s/var/db/" % self._sh_dir)
         return
 
-    @cherrypy.expose
-    def log_dump_html(self):
-        """
-        returns the smarthomeNG logfile as download
-        """
-        mime = 'application/octet-stream'
-        return cherrypy.lib.static.serve_file("%s/var/log/smarthome.log" % self._sh_dir, mime,
-                                              "%s/var/log/" % self._sh_dir)
+    # -----  Logfile support on services page -> see LOGGING part   -----
 
-    @cherrypy.expose
-    def log_view_html(self, text_filter="", log_level_filter="ALL", page=1):
-        """
-        returns the smarthomeNG logfile as view
-        """
-        self.find_visu_plugin()
-
-        fobj = open("%s/var/log/smarthome.log" % self._sh_dir)
-        log_lines = []
-        start = (int(page) - 1) * 1000
-        end = start + 1000
-        counter = 0
-        log_level_hit = False
-        total_counter = 0
-        for line in fobj:
-            line_text = self.html_escape(line)
-            if log_level_filter != "ALL" and not self.validate_date(line_text[0:10]) and log_level_hit:
-                if start <= counter < end:
-                    log_lines.append(line_text)
-                counter += 1
-            else:
-                log_level_hit = False
-            if (log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22,
-                                                                                  23]) and text_filter in line_text:
-                if start <= counter < end:
-                    log_lines.append(line_text)
-                    log_level_hit = True
-                counter += 1
-        fobj.close()
-        num_pages = -(-counter // 1000)
-        if num_pages == 0:
-            num_pages = 1
-        tmpl = self.env.get_template('log_view.html')
-        return tmpl.render(smarthome=self._sh, current_page=int(page), pages=num_pages, log_lines=log_lines,
-                           text_filter=text_filter,
-                           log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
     # -----------------------------------------------------------------------------------
 
@@ -775,6 +732,59 @@ class Backend:
         return tmpl.render(loggers=loggers,
                            smarthome=self._sh, develop=self.developer_mode,
                            visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+
+
+    @cherrypy.expose
+    def log_dump_html(self, logfile='smarthome.log'):
+        """
+        returns the smarthomeNG logfile as download
+        """
+        log = '/var/log/' + os.path.basename(logfile)
+        log_name = self._sh_dir + log
+        mime = 'application/octet-stream'
+        return cherrypy.lib.static.serve_file(log_name, mime, log_name)
+
+    @cherrypy.expose
+    def log_view_html(self, text_filter='', log_level_filter='ALL', page=1, logfile='smarthome.log'):
+        """
+        returns the smarthomeNG logfile as view
+        """
+        self.logger.warning("Backend (log_view_html): logfile={}, page={}".format(str(logfile), str(page)))
+        self.find_visu_plugin()
+
+        log = '/var/log/' + os.path.basename(logfile)
+        log_name = self._sh_dir + log
+        fobj = open(log_name)
+        log_lines = []
+        start = (int(page) - 1) * 1000
+        end = start + 1000
+        counter = 0
+        log_level_hit = False
+        total_counter = 0
+        for line in fobj:
+            line_text = self.html_escape(line)
+            if log_level_filter != "ALL" and not self.validate_date(line_text[0:10]) and log_level_hit:
+                if start <= counter < end:
+                    log_lines.append(line_text)
+                counter += 1
+            else:
+                log_level_hit = False
+            if (log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22,
+                                                                                  23]) and text_filter in line_text:
+                if start <= counter < end:
+                    log_lines.append(line_text)
+                    log_level_hit = True
+                counter += 1
+        fobj.close()
+        num_pages = -(-counter // 1000)
+        if num_pages == 0:
+            num_pages = 1
+        tmpl = self.env.get_template('log_view.html')
+        return tmpl.render(current_page=int(page), pages=num_pages, 
+                           logfile=os.path.basename(log_name), log_lines=log_lines, text_filter=text_filter, 
+                           smarthome=self._sh, develop=self.developer_mode,
+                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+                           
 
 
     # -----------------------------------------------------------------------------------
