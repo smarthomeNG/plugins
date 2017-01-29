@@ -41,6 +41,7 @@
             <tbody>
                 {% if smarthome %}
                     {% for l in loggerDict_sorted  %}
+                    {% if (logging.getLogger(l).level > 0) or (logging.getLogger(l).handlers != []) %}
                     <tr>
                         <td>{{ logging.getLogger(l).name }}</td>
                         <td>{{ logging.getLogger(l).disabled }}</td>
@@ -61,6 +62,7 @@
                             {% endfor %}
                         </td>
                     </tr>
+                    {% endif %}
                     {% endfor %}
                 {% else %}
                     <tr>
