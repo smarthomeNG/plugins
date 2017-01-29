@@ -161,6 +161,13 @@ possible to trigger an activity twice, if it's currently activated by the Harmon
 plugin starts the dummy first to make sure, every activity can be triggered more than once. In the Harmony Hub app, you
 can set all delays to 0 for that device since it has no function.
 
+You can also trigger the default Harmony Hub activity "Power Off", that switch the current active activity off. This
+can be done by sending '-1' to the Hub.
+
+```
+a:-1
+```
+
 ---
 
 ### Setup Harmony status items
@@ -205,13 +212,13 @@ commands or activities influence each other or not.
 [[Shield]]
     type = bool
     harmony_command_1 = 42282391:PowerOn:6 | 42282391:InputBd:1
-    harmony_command_0 = 42282391:PowerOff | activity:12345678:5
+    harmony_command_0 = 42282391:PowerOff | activity:-1
 ```
  
 If the Item 'Shield' is set to True, the AV receiver is powered on with an delay of 6 seconds after the item 'Shield'
 was set to "True". With an additional delay of one second, the input channel is set to 'Bluray'.
-If the Item 'Shield' is set to False, the command "PowerOff" is triggered instantly. 5 seconds later, a pre-configured
-Harmony Hub activity with id '12345678' is triggered.
+If the Item 'Shield' is set to False, the command "PowerOff" is triggered instantly. 5 seconds later, the default 
+Harmony Hub activity 'Power Off' is triggered
 
 ```
 [[RTL]]
