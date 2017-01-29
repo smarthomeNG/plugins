@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 #########################################################################
-#  Copyright 2016 Bernd Meiners,
-#                 Christian Strassburg            c.strassburg@gmx.de
-#                 René Frieß                      rene.friess@gmail.com
-#                 Martin Sinn                     m.sinn@gmx.de
+# Copyright 2016-       René Frieß                  rene.friess@gmail.com
+#                       Martin Sinn                         m.sinn@gmx.de
+#                       Bernd Meiners
+#                       Christian Strassburg          c.strassburg@gmx.de
 #########################################################################
 #  Backend plugin for SmartHomeNG
 #
@@ -726,13 +726,54 @@ class Backend:
         """
         self.find_visu_plugin()
 
-        loggerDict = logging.Logger.manager.loggerDict
-        self.logger.warning("Backend: loggerDict = {}".format(str(loggerDict)))
-        loggerDict_sorted = sorted(loggerDict)
+        loggerDict = {}
+        # Filter to get only active loggers
+        for l in logging.Logger.manager.loggerDict:
+            if (logging.getLogger(l).level > 0) or (logging.getLogger(l).handlers != []):
+                loggerDict[l] = logging.Logger.manager.loggerDict[l]
+        
+
+        # get information about active loggers
+        loggerList_sorted = sorted(loggerDict)
+        loggerList_sorted.insert(0, "root")      # Insert information about root logger at the beginning of the list
+        loggers = []
+        for ln in loggerList_sorted:
+            if ln == 'root':
+                logger = logging.root
+            else:
+                logger = logging.getLogger(ln)
+            l = dict()
+            l['name'] = logger.name
+            l['disabled'] = logger.disabled
+            
+            # get information about loglevels
+            if logger.level == 0:
+                l['level'] = ''
+            elif logger.level in logging._levelToName:
+                l['level'] = logging._levelToName[logger.level]
+            else:
+                l['level'] = logger.level
+
+            l['filters'] = logger.filters
+
+            # get information about handlers and filenames
+            l['handlers'] = list()
+            l['filenames'] = list()
+            for h in logger.handlers:
+                l['handlers'].append(h.__class__.__name__)
+                try:
+                    fn = str(h.baseFilename)
+                except:
+                    fn = ''
+                l['filenames'].append(fn)
+
+            loggers.append(l)
+            self.logger.warning("Backend: l = {}".format(str(l)))
+            
 
         tmpl = self.env.get_template('logging.html')
-        return tmpl.render(smarthome=self._sh, loggerDict_sorted=loggerDict_sorted, develop=self.developer_mode,
-                           logging=logging,
+        return tmpl.render(loggers=loggers,
+                           smarthome=self._sh, develop=self.developer_mode,
                            visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
 

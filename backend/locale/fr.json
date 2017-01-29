@@ -77,7 +77,7 @@
 	"Übersetzung neu laden": "Recharger traduction",
 	"Auf Deutsch wechseln": "Basculer vers l'allemand",
 	"Auf Englisch wechseln": "Basculer vers l'anglais",
-	"Auf Polnisch wechseln": "Basculer vers le polonais",
+	"Auf Polnisch wechseln": "Basculer vers l'polonais",
 	"Nr.": "N°",
 	"Type": "Type",
 	"Plugin": "Extension",
@@ -102,19 +102,20 @@
 	"Letzte Modifikation": "Dernière modification",
 	"Erstellungsdatum": "Date de création",
 	"no data available": "pas de données disponibles",
-	"Logger Name": "Nom du journalisateur",
+	"logger name": "Nom du journalisateur",
 	"disabled": "Désactivé",
-	"Level": "Niveau",
+	"level": "Niveau",
 	"filters": "Filtres",
 	"handlers": "Gestionnaire",
+	"logfiles": "Fichier(s) log",
 	"Logging": "Journalisation",
 	"Passwort anzeigen": "Afficher mot de passe",
 	"SmartHomeNG Version": "Version de SmartHomeNG",
 	"Watch_Items": "Objets surveillés",
 	"Anforderungen": "Version demandée",
 	"Übersicht": "Aperçu",
-	"Eingabe im .CONF Format": "Entrée en format .CONF",
-	"Ergebnis im .YAML Format": "Résultat en format .YAML",
+	"Eingabe im .CONF Format": "Eingabe im .CONF Format",
+	"Ergebnis im .YAML Format": "Ergebnis im .YAML Format",
 
 	"_items": {
 		"path": "Chemin",
@@ -170,9 +171,9 @@
 		"Blöcke speichern" : "Enregistrer les blocs",
 		"Beenden" : "Terminer",
 		"Speichern" : "Sauvegarder",
-		"Speichern_und_Neu_Laden" : "Sauvegarder et recharger",
+		"Speichern_und_Neu_Laden" : "Sauvegarder et Recharger",
 		"Löschen" : "Supprimer",
-		"Konvertieren": "Convertir"
+		"Konvertieren": "Konvertieren"
 	},
 
 	"_menu": {
@@ -186,6 +187,6 @@
 		"Threads": "Tâches",
 		"Visu": "Visu",
 		"Disclosure": "Déclaration",
-		"CONF-YAML Konverter": "Convertisseur .conf vers .yaml"
+		"CONF-YAML Konverter": "CONF-YAML Konverter"
 	}
 }

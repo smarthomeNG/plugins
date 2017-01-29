@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 #########################################################################
-#  Copyright 2016 Bernd Meiners, 
-#                 Christian Strassburg            c.strassburg@gmx.de
-#                 René Frieß                      rene.friess@gmail.com
-#                 Martin Sinn                     m.sinn@gmx.de
+# Copyright 2016-       René Frieß                  rene.friess@gmail.com
+#                       Martin Sinn                         m.sinn@gmx.de
+#                       Bernd Meiners
+#                       Christian Strassburg          c.strassburg@gmx.de
 #########################################################################
 #  Backend plugin for SmartHomeNG
 #
@@ -48,7 +48,7 @@ from .utils import *
 
 class BackendServer(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.3.4'
+    PLUGIN_VERSION='1.3.5'
 
     def my_to_bool(self, value, attr='', default=False):
         try:
