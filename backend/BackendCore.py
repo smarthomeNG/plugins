@@ -5,7 +5,6 @@
 #                 Christian Strassburg            c.strassburg@gmx.de
 #                 René Frieß                      rene.friess@gmail.com
 #                 Martin Sinn                     m.sinn@gmx.de
-#				  Dirk Wallmeier				  dirk@wallmeier.info
 #########################################################################
 #  Backend plugin for SmartHomeNG
 #
@@ -84,18 +83,6 @@ class Backend:
         else:
             load_translation(get_translation_lang())
         return self.index()
-
-    @cherrypy.expose
-    def conf_yaml_converter_html(self, convert=None, conf_code=None, yaml_code=None):
-        if convert is not None:
-            ydata = lib.item_conversion.parse_for_convert(conf_code=conf_code)
-            if ydata != None:
-                yaml_code = lib.item_conversion.convert_yaml(ydata)
-        else:
-            conf_code = ''
-            yaml_code = ''
-        tmpl = self.env.get_template('conf_yaml_converter.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode,conf_code=conf_code, yaml_code=yaml_code)
 
     @cherrypy.expose
     def system_html(self):
@@ -230,6 +217,11 @@ class Backend:
         sorted_packages = sorted([(i['key'], i['version_installed'], i['version_available']) for i in packages])
         return sorted_packages
 
+
+    # -----------------------------------------------------------------------------------
+    #    SERVICES
+    # -----------------------------------------------------------------------------------
+
     @cherrypy.expose
     def services_html(self):
         """
@@ -264,15 +256,22 @@ class Backend:
                            lang=get_translation_lang(),
                            develop=self.developer_mode, knxdeamon=knxdeamon, database_plugin=database_plugin)
 
-    @cherrypy.expose
-    def disclosure_html(self):
-        """
-        display disclosure
-        """
-        self.find_visu_plugin()
 
-        tmpl = self.env.get_template('disclosure.html')
-        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+    @cherrypy.expose
+    def reboot(self):
+        passwd = request.form['password']
+        rbt1 = subprocess.Popen(["echo", passwd], stdout=subprocess.PIPE)
+        rbt2 = subprocess.Popen(["sudo", "-S", "reboot"], stdin=rbt1.
+                                stdout, stdout=subprocess.PIPE)
+        print(rbt2.communicate()[0])
+        return redirect('/services.html')
+
+    def validate_date(self, date_text):
+        try:
+            datetime.datetime.strptime(date_text, '%Y-%m-%d')
+            return True
+        except ValueError:
+            return False
 
     @cherrypy.expose
     def db_dump_html(self, plugin):
@@ -340,24 +339,24 @@ class Backend:
                            text_filter=text_filter,
                            log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
-    @cherrypy.expose
-    def logics_view_html(self, file_path, logic, trigger=None, reload=None, enable=None, save=None, logics_code=None):
-        """
-        returns the smarthomeNG logfile as view
-        """
-        self.find_visu_plugin()
-        self.process_logics_action(logic, trigger, reload, enable, save, logics_code)
-        mylogic = self._sh.return_logic(logic)
+    # -----------------------------------------------------------------------------------
 
-        fobj = open(file_path)
-        file_lines = []
-        for line in fobj:
-            file_lines.append(self.html_escape(line))
-        fobj.close()
-        tmpl = self.env.get_template('logics_view.html')
-        return tmpl.render(smarthome=self._sh, logic=mylogic, logic_lines=file_lines, file_path=file_path,
-                           updates=self.updates_allowed, develop=self.developer_mode,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+    @cherrypy.expose
+    def conf_yaml_converter_html(self, convert=None, conf_code=None, yaml_code=None):
+        if convert is not None:
+            ydata = lib.item_conversion.parse_for_convert(conf_code=conf_code)
+            if ydata != None:
+                yaml_code = lib.item_conversion.convert_yaml(ydata)
+        else:
+            conf_code = ''
+            yaml_code = ''
+        tmpl = self.env.get_template('conf_yaml_converter.html')
+        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode,conf_code=conf_code, yaml_code=yaml_code)
+
+
+    # -----------------------------------------------------------------------------------
+    #    ITEMS
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def items_html(self):
@@ -599,6 +598,30 @@ class Backend:
 
         return item_data
 
+
+    # -----------------------------------------------------------------------------------
+    #    LOGICS
+    # -----------------------------------------------------------------------------------
+
+    @cherrypy.expose
+    def logics_view_html(self, file_path, logic, trigger=None, reload=None, enable=None, save=None, logics_code=None):
+        """
+        returns the smarthomeNG logfile as view
+        """
+        self.find_visu_plugin()
+        self.process_logics_action(logic, trigger, reload, enable, save, logics_code)
+        mylogic = self._sh.return_logic(logic)
+
+        fobj = open(file_path)
+        file_lines = []
+        for line in fobj:
+            file_lines.append(self.html_escape(line))
+        fobj.close()
+        tmpl = self.env.get_template('logics_view.html')
+        return tmpl.render(smarthome=self._sh, logic=mylogic, logic_lines=file_lines, file_path=file_path,
+                           updates=self.updates_allowed, develop=self.developer_mode,
+                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+
     @cherrypy.expose
     def logics_html(self, logic=None, trigger=None, reload=None, enable=None, save=None):
         """
@@ -611,6 +634,10 @@ class Backend:
         return tmpl.render(smarthome=self._sh, updates=self.updates_allowed, develop=self.developer_mode,
                            visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
+    # -----------------------------------------------------------------------------------
+    #    SCHEDULERS
+    # -----------------------------------------------------------------------------------
+
     @cherrypy.expose
     def schedules_html(self):
         """
@@ -620,6 +647,11 @@ class Backend:
 
         tmpl = self.env.get_template('schedules.html')
         return tmpl.render(smarthome=self._sh, develop=self.developer_mode, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+
+
+    # -----------------------------------------------------------------------------------
+    #    PLUGINS
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def plugins_html(self):
@@ -654,6 +686,11 @@ class Backend:
         return tmpl.render(smarthome=self._sh, develop=self.developer_mode, plugins=plugins_sorted,
                            visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
+
+    # -----------------------------------------------------------------------------------
+    #    THREADS
+    # -----------------------------------------------------------------------------------
+
     @cherrypy.expose
     def threads_html(self):
         """
@@ -677,6 +714,11 @@ class Backend:
                            threads_count=threads_count,
                            visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
+
+    # -----------------------------------------------------------------------------------
+    #    LOGGING
+    # -----------------------------------------------------------------------------------
+
     @cherrypy.expose
     def logging_html(self):
         """
@@ -685,12 +727,18 @@ class Backend:
         self.find_visu_plugin()
 
         loggerDict = logging.Logger.manager.loggerDict
+        self.logger.warning("Backend: loggerDict = {}".format(str(loggerDict)))
         loggerDict_sorted = sorted(loggerDict)
 
         tmpl = self.env.get_template('logging.html')
         return tmpl.render(smarthome=self._sh, loggerDict_sorted=loggerDict_sorted, develop=self.developer_mode,
                            logging=logging,
                            visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+
+
+    # -----------------------------------------------------------------------------------
+    #    VISU
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def visu_html(self):
@@ -741,21 +789,21 @@ class Backend:
                            visu_plugin_build=self.visu_plugin_build,
                            clients=clients_sorted)
 
-    @cherrypy.expose
-    def reboot(self):
-        passwd = request.form['password']
-        rbt1 = subprocess.Popen(["echo", passwd], stdout=subprocess.PIPE)
-        rbt2 = subprocess.Popen(["sudo", "-S", "reboot"], stdin=rbt1.
-                                stdout, stdout=subprocess.PIPE)
-        print(rbt2.communicate()[0])
-        return redirect('/services.html')
 
-    def validate_date(self, date_text):
-        try:
-            datetime.datetime.strptime(date_text, '%Y-%m-%d')
-            return True
-        except ValueError:
-            return False
+    # -----------------------------------------------------------------------------------
+    #    DISCLOSURE
+    # -----------------------------------------------------------------------------------
+
+    @cherrypy.expose
+    def disclosure_html(self):
+        """
+        display disclosure
+        """
+        self.find_visu_plugin()
+
+        tmpl = self.env.get_template('disclosure.html')
+        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+
 
     def process_logics_action(self, logic=None, trigger=None, reload=None, enable=None, save=None, logics_code=None):
         self.logger.debug(
