@@ -768,7 +768,7 @@ class Backend:
                 l['filenames'].append(fn)
 
             loggers.append(l)
-            self.logger.warning("Backend: l = {}".format(str(l)))
+#            self.logger.warning("Backend: l = {}".format(str(l)))
             
 
         tmpl = self.env.get_template('logging.html')
