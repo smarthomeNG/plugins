@@ -32,7 +32,7 @@ import subprocess
 import socket
 import sys
 import threading
-import os  # für sh_dir
+import os
 import lib.config
 from lib.model.smartplugin import SmartPlugin
 from .utils import *
@@ -40,6 +40,7 @@ from .utils import *
 import lib.item_conversion
 
 class Backend:
+
     def find_visu_plugin(self):
         """
         look for the configured instance of the visu protocol plugin.
@@ -62,31 +63,48 @@ class Backend:
                     "Backend: visu protocol plugin v{0} is too old to support BackendServer, please update".format(
                         self.visu_plugin_version))
 
+
+    def render_template(self, tmpl_name, **kwargs):
+        """
+
+        Render a template and add vars needed gobally (for navigation, etc.)
+    
+        :param tmpl_name: Name of the template file to be rendered
+        :param **kwargs: keyworded arguments to use while rendering
+        
+        :return: contents of the template after beeing rendered 
+
+        """
+        self.find_visu_plugin()
+        tmpl = self.env.get_template(tmpl_name)
+        return tmpl.render(develop=self.developer_mode,
+                           smarthome=self._sh, 
+                           visu_plugin=(self.visu_plugin is not None), 
+                           yaml_converter=lib.item_conversion.is_ruamelyaml_installed(),
+                           **kwargs)
+
+
+    # -----------------------------------------------------------------------------------
+    #    MAIN
+    # -----------------------------------------------------------------------------------
+
     @cherrypy.expose
     def index(self):
-        self.find_visu_plugin()
 
-        tmpl = self.env.get_template('main.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode)
+        return self.render_template('main.html')
 
     @cherrypy.expose
     def main_html(self):
-        self.find_visu_plugin()
 
-        tmpl = self.env.get_template('main.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode)
+        return self.render_template('main.html')
 
-    @cherrypy.expose
-    def reload_translation_html(self, lang=''):
-        if lang != '':
-            load_translation(lang)
-        else:
-            load_translation(get_translation_lang())
-        return self.index()
+
+    # -----------------------------------------------------------------------------------
+    #    SYSTEMINFO
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def system_html(self):
-        self.find_visu_plugin()
         now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
         system = platform.system()
         vers = platform.version()
@@ -141,14 +159,12 @@ class Backend:
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
                                              sys.version_info[3])
 
-        tmpl = self.env.get_template('system.html')
-        return tmpl.render(now=now, system=system, sh_vers=self._sh.env.core.version(), sh_dir=self._sh_dir, vers=vers,
-                           node=node, arch=arch, user=user,
-                           freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
-                           ip=ip, python_packages=python_packages, requirements=req_dict,
-                           visu_plugin=(self.visu_plugin is not None),
-                           yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), 
-                           develop=self.developer_mode )
+        return self.render_template('system.html', 
+                                    now=now, system=system, sh_vers=self._sh.env.core.version(), sh_dir=self._sh_dir,
+                                    vers=vers, node=node, arch=arch, user=user, freespace=freespace, 
+                                    uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
+                                    ip=ip, python_packages=python_packages, requirements=req_dict)
+
 
     def get_process_info(self, command):
         """
@@ -227,7 +243,6 @@ class Backend:
         """
         shows a page with info about some services needed by smarthome
         """
-        self.find_visu_plugin()
         knxd_service = self.get_process_info("systemctl status knxd.service")
         smarthome_service = self.get_process_info("systemctl status smarthome.service")
         knxd_socket = self.get_process_info("systemctl status knxd.socket")
@@ -250,12 +265,19 @@ class Backend:
             elif x.__class__.__name__ == "Database":
                 database_plugin.append(x.get_instance_name())
 
-        tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket,
-                           sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(),
-                           lang=get_translation_lang(),
-                           develop=self.developer_mode, knxdeamon=knxdeamon, database_plugin=database_plugin)
+        return self.render_template('services.html', 
+                                    knxd_service=knxd_service, knxd_socket=knxd_socket, knxdeamon=knxdeamon,
+                                    smarthome_service=smarthome_service, lang=get_translation_lang(), 
+                                    sql_plugin=sql_plugin, database_plugin=database_plugin)
 
+
+    @cherrypy.expose
+    def reload_translation_html(self, lang=''):
+        if lang != '':
+            load_translation(lang)
+        else:
+            load_translation(get_translation_lang())
+        return self.index()
 
     @cherrypy.expose
     def reboot(self):
@@ -293,9 +315,6 @@ class Backend:
                                                               mime, "%s/var/db/" % self._sh_dir)
         return
 
-    # -----  Logfile support on services page -> see LOGGING part   -----
-
-
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
@@ -307,8 +326,7 @@ class Backend:
         else:
             conf_code = ''
             yaml_code = ''
-        tmpl = self.env.get_template('conf_yaml_converter.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode,conf_code=conf_code, yaml_code=yaml_code)
+        return self.render_template('conf_yaml_converter.html')
 
 
     # -----------------------------------------------------------------------------------
@@ -320,13 +338,9 @@ class Backend:
         """
         display a list of items
         """
-        self.find_visu_plugin()
+        return self.render_template('items.html', item_count=self._sh.item_count, 
+                                    items=sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False) )
 
-        tmpl = self.env.get_template('items.html')
-        return tmpl.render(smarthome=self._sh,
-                           items=sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']),
-                                        reverse=False), develop=self.developer_mode,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
     @cherrypy.expose
     def items_json_html(self):
@@ -561,11 +575,19 @@ class Backend:
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
+    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, save=None):
+        """
+        display a list of all known logics
+        """
+        self.process_logics_action(logic, trigger, reload, enable, save)
+
+        return self.render_template('logics.html', updates=self.updates_allowed)
+
+    @cherrypy.expose
     def logics_view_html(self, file_path, logic, trigger=None, reload=None, enable=None, save=None, logics_code=None):
         """
         returns the smarthomeNG logfile as view
         """
-        self.find_visu_plugin()
         self.process_logics_action(logic, trigger, reload, enable, save, logics_code)
         mylogic = self._sh.return_logic(logic)
 
@@ -574,22 +596,9 @@ class Backend:
         for line in fobj:
             file_lines.append(self.html_escape(line))
         fobj.close()
-        tmpl = self.env.get_template('logics_view.html')
-        return tmpl.render(smarthome=self._sh, logic=mylogic, logic_lines=file_lines, file_path=file_path,
-                           updates=self.updates_allowed, develop=self.developer_mode,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+        return self.render_template('logics_view.html', logic=mylogic, logic_lines=file_lines, file_path=file_path,
+                                    updates=self.updates_allowed)
 
-    @cherrypy.expose
-    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, save=None):
-        """
-        display a list of all known logics
-        """
-        self.find_visu_plugin()
-        self.process_logics_action(logic, trigger, reload, enable, save)
-
-        tmpl = self.env.get_template('logics.html')
-        return tmpl.render(smarthome=self._sh, updates=self.updates_allowed, develop=self.developer_mode,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
     # -----------------------------------------------------------------------------------
     #    SCHEDULERS
@@ -600,10 +609,7 @@ class Backend:
         """
         display a list of all known schedules
         """
-        self.find_visu_plugin()
-
-        tmpl = self.env.get_template('schedules.html')
-        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+        return self.render_template('schedules.html')
 
 
     # -----------------------------------------------------------------------------------
@@ -615,8 +621,6 @@ class Backend:
         """
         display a list of all known plugins
         """
-        self.find_visu_plugin()
-
         conf_plugins = {}
         _conf = lib.config.parse(self._sh._plugin_conf)
         for plugin in _conf:
@@ -639,9 +643,7 @@ class Backend:
             plugins.append(plugin)
         plugins_sorted = sorted(plugins, key=lambda k: k['classpath'])
 
-        tmpl = self.env.get_template('plugins.html')
-        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, plugins=plugins_sorted,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+        return self.render_template('plugins.html', plugins=plugins_sorted)
 
 
     # -----------------------------------------------------------------------------------
@@ -653,8 +655,6 @@ class Backend:
         """
         display a list of all threads
         """
-        self.find_visu_plugin()
-
         threads = []
         for t in threading.enumerate():
             thread = dict()
@@ -666,10 +666,7 @@ class Backend:
         threads_sorted = sorted(threads, key=lambda k: k['sort'])
         threads_count = len(threads_sorted)
 
-        tmpl = self.env.get_template('threads.html')
-        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, threads=threads_sorted,
-                           threads_count=threads_count,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+        return self.render_template('threads.html', threads=threads_sorted, threads_count=threads_count)
 
 
     # -----------------------------------------------------------------------------------
@@ -681,8 +678,6 @@ class Backend:
         """
         display a list of all loggers
         """
-        self.find_visu_plugin()
-
         loggerDict = {}
         # Filter to get only active loggers
         for l in logging.Logger.manager.loggerDict:
@@ -725,13 +720,8 @@ class Backend:
                 l['filenames'].append(fn)
 
             loggers.append(l)
-#            self.logger.warning("Backend: l = {}".format(str(l)))
-            
 
-        tmpl = self.env.get_template('logging.html')
-        return tmpl.render(loggers=loggers,
-                           smarthome=self._sh, develop=self.developer_mode,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+        return self.render_template('logging.html', loggers=loggers)
 
 
     @cherrypy.expose
@@ -744,14 +734,12 @@ class Backend:
         mime = 'application/octet-stream'
         return cherrypy.lib.static.serve_file(log_name, mime, log_name)
 
+
     @cherrypy.expose
     def log_view_html(self, text_filter='', log_level_filter='ALL', page=1, logfile='smarthome.log'):
         """
         returns the smarthomeNG logfile as view
         """
-        self.logger.warning("Backend (log_view_html): logfile={}, page={}".format(str(logfile), str(page)))
-        self.find_visu_plugin()
-
         log = '/var/log/' + os.path.basename(logfile)
         log_name = self._sh_dir + log
         fobj = open(log_name)
@@ -779,12 +767,9 @@ class Backend:
         num_pages = -(-counter // 1000)
         if num_pages == 0:
             num_pages = 1
-        tmpl = self.env.get_template('log_view.html')
-        return tmpl.render(current_page=int(page), pages=num_pages, 
-                           logfile=os.path.basename(log_name), log_lines=log_lines, text_filter=text_filter, 
-                           smarthome=self._sh, develop=self.developer_mode,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
-                           
+        return self.render_template('log_view.html', 
+                                    current_page=int(page), pages=num_pages, 
+                                    logfile=os.path.basename(log_name), log_lines=log_lines, text_filter=text_filter)
 
 
     # -----------------------------------------------------------------------------------
@@ -796,8 +781,6 @@ class Backend:
         """
         display a list of all connected visu clients
         """
-        self.find_visu_plugin()
-
         clients = []
         if self.visu_plugin is not None:
             if self.visu_plugin_build == '2':
@@ -835,10 +818,9 @@ class Backend:
 
         clients_sorted = sorted(clients, key=lambda k: k['name'])
 
-        tmpl = self.env.get_template('visu.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode,
-                           visu_plugin_build=self.visu_plugin_build,
-                           clients=clients_sorted)
+        return self.render_template('visu.html', 
+                                    visu_plugin_build=self.visu_plugin_build,
+                                    clients=clients_sorted)
 
 
     # -----------------------------------------------------------------------------------
@@ -850,10 +832,7 @@ class Backend:
         """
         display disclosure
         """
-        self.find_visu_plugin()
-
-        tmpl = self.env.get_template('disclosure.html')
-        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+        return self.render_template('disclosure.html')
 
 
     def process_logics_action(self, logic=None, trigger=None, reload=None, enable=None, save=None, logics_code=None):

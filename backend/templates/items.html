@@ -7,7 +7,7 @@
 {% block content %}
 
  <div class="container">
-      <strong>{{ _('Items') }} ({{ _('gesamt') }}: {{ smarthome.item_count }})</strong><span id="search-results"></span><br/><br/>
+      <strong>{{ _('Items') }} ({{ _('gesamt') }}: {{ item_count }})</strong><span id="search-results"></span><br/><br/>
       <div class="form-group">
           <input type="input" class="form-control" id="input-search" placeholder="{{ _('Itempfad suchen...') }}" value=""><br/>
           <button type="button" class="btn btn-default" id="btn-search">{{ _('Suchen') }}</button>

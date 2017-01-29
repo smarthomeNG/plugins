@@ -20,41 +20,35 @@
                 
             </thead>
             <tbody>
-                {% if smarthome %}
-                    {% for l in loggers  %}
-                    <tr>
-                        {% if l.name == 'root' %}
-                            <th>{{ l.name }}</th>
-                            <th>{{ l.disabled }}</th>
-                            <th>{{ l.level }}</th>
-                        {% else %}
-                            <td>{{ l.name }}</td>
-                            <td>{{ l.disabled }}</td>
-                            <td>{{ l.level }}</td>
-                        {% endif %}
-                        <td>{% for f in l.filters %}
-                            {% if (f != '') and (not loop.first) %}, {% endif %}
-                            {{ f }}
-                            {% endfor %}
-                        </td>
-                        <td>{% for h in l.handlers %}
-                            {% if (h != '') and (not loop.first) %}, {% endif %}
-                            {{ h }}
-                            {% endfor %}
-                        </td>
-                        <td>{% for fn in l.filenames %}
-                            {% if (fn != '') and (not loop.first) %}, {% endif %}
-                            <a href="/log_view.html?logfile={{ get_basename(fn) }}">{{ fn }}</a>
-                            {% endfor %}
-                        </td>
-                    </tr>
-                    {% endfor %}
+                {% for l in loggers  %}
+                <tr>
+                    {% if l.name == 'root' %}
+                        <th>{{ l.name }}</th>
+                        <th>{{ l.disabled }}</th>
+                        <th>{{ l.level }}</th>
+                    {% else %}
+                        <td>{{ l.name }}</td>
+                        <td>{{ l.disabled }}</td>
+                        <td>{{ l.level }}</td>
+                    {% endif %}
+                    <td>{% for f in l.filters %}
+                        {% if (f != '') and (not loop.first) %}, {% endif %}
+                        {{ f }}
+                        {% endfor %}
+                    </td>
+                    <td>{% for h in l.handlers %}
+                        {% if (h != '') and (not loop.first) %}, {% endif %}
+                        {{ h }}
+                        {% endfor %}
+                    </td>
+                    <td>{% for fn in l.filenames %}
+                        {% if (fn != '') and (not loop.first) %}, {% endif %}
+                        <a href="/log_view.html?logfile={{ get_basename(fn) }}">{{ fn }}</a>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
 
-                {% else %}
-                    <tr>
-                        <td>{{ _('no data available') }}</td>
-                    </tr>
-                {% endif %}
             </tbody>
         </table>
     </div>
