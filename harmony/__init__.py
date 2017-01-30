@@ -2,6 +2,8 @@ import sched
 import time
 import json
 import logging
+import html.parser
+import re
 from lib.model.smartplugin import SmartPlugin
 import sleekxmpp
 from sleekxmpp.xmlstream import ET
@@ -19,7 +21,6 @@ class Harmony(SmartPlugin):
         self._default_delay = 0.2
         self._devices = {}
         self._activities = {}
-        self._dummy_activity = None
         self._logger = logging.getLogger(__name__)
         self._current_activity_id_items = []
         self._current_activity_name_items = []
@@ -34,22 +35,17 @@ class Harmony(SmartPlugin):
         self._ip = harmony_ip
         self._port = harmony_port
         self._reconnect_timeout = 60
-        self._scheduler_name = "harmony_reconnect"
-        self._client = HarmonyClient()
-        self._client.add_custom_handler('stream_negotiated', self._event_session_negotiated)
-        self._client.add_custom_handler('socket_error', self._event_socket_error)
-        self._client.add_custom_handler('session_end', self._event_session_end)
-        self._client.whitespace_keepalive = True
-        self._client.whitespace_keepalive_interval = 30
+        self._scheduler_name = "harmony_init"
 
-    def _connect(self):
-        self._client.connect_client(self._ip, self._port)
+    def _message(self, message):
+        match = re.search(r".*?startActivityFinished\">activityId=([/d].*?):errorCode=200.*",
+                          html.unescape(str(message)))
+        if match:
+            self._set_current_activity(int(match.group(1)))
 
     def _event_socket_error(self, event):
         self._logger.error("Could not connect to Harmony Hub: {err}".format(err=event))
         self._logger.info("Try to re-connect after {sec}".format(sec=self._reconnect_timeout))
-        self._sh.scheduler.add(self._scheduler_name, self._connect, prio=3, cron=None, cycle=self._reconnect_timeout,
-                               value=None, offset=None, next=None)
         self._is_active = False
 
     def _event_session_negotiated(self, event):
@@ -61,8 +57,6 @@ class Harmony(SmartPlugin):
     def _event_session_end(self, event):
         self._logger.error("Session stopped: {err}".format(err=event))
         self._logger.info("Try to re-connect after {sec}".format(sec=self._reconnect_timeout))
-        self._sh.scheduler.add(self._scheduler_name, self._connect, prio=3, cron=None, cycle=self._reconnect_timeout,
-                               value=None, offset=None, next=None)
         self._is_active = False
 
     def _send_command(self, device, command):
@@ -72,61 +66,65 @@ class Harmony(SmartPlugin):
         self._logger.debug("Trigger '{command}' for device '{label}'".format(command=command, label=label))
         self._client.send_command(device, command)
 
+    def _harmony_init(self):
+        if not self._is_active:
+            token = get_auth_token(ip_address=self._ip, port=str(self._port))
+            if not token:
+                return
+            self._client = HarmonyClient(token)
+            self._client.add_custom_handler('stream_negotiated', self._event_session_negotiated)
+            self._client.add_custom_handler('socket_error', self._event_socket_error)
+            self._client.add_custom_handler('session_end', self._event_session_end)
+            self._client.add_event_handler('message', self._message)
+            self._client.whitespace_keepalive = True
+            self._client.whitespace_keepalive_interval = 30
+            self._client.register_handler(sleekxmpp.Callback('Example Handler', sleekxmpp.MatchXPath(
+                '{%s}message/{connect.logitech.com}event' % self._client.default_ns), self._message))
+            self._client.connect_client(self._ip, self._port)
+        else:
+            self._get_config()
+
     def _get_config(self):
         if self._is_active:
             config = self._client.get_config()
-
             if 'activity' in config:
                 for activity in config['activity']:
-                    label = activity["label"].lower()
-                    if label == "dummy":
-                        self._dummy_activity = int(activity["id"])
                     self._activities[int(activity["id"])] = activity["label"]
-
             if 'device' in config:
                 for device in config['device']:
                     if 'label' in device and 'id' in device:
                         self._devices[int(device['id'])] = device['label']
-
             self._set_current_activity()
         else:
-            self._logger.debug("Trying to reconnect to Harmony Hub.")
-            self._connect()
+            self._logger.warning("Could not get config. Harmony Hub connection inactive.")
 
-    def _set_current_activity(self):
+    def _set_current_activity(self, activity=None):
         if self._is_active:
-            current_activity = self._client.get_current_activity()
             activity_name = "unknown"
-            activity_id = 0
+            if activity is None:
+                activity = self._client.get_current_activity()
+                if activity is None:
+                    activity = 0
 
-            if current_activity is not None:
-                activity_id = current_activity
-                if current_activity in self._activities:
-                    activity_name = self._activities[current_activity]
-
+            if activity in self._activities:
+                activity_name = self._activities[activity]
             for item in self._current_activity_id_items:
-                item(activity_id)
+                item(activity)
             for item in self._current_activity_name_items:
                 item(activity_name)
 
     def _send_activity(self, activity):
         label = "unknown"
-
         if activity in self._activities:
             label = self._activities[activity]
-
-        if self._dummy_activity is not None:
-            self._logger.debug("Trigger dummy activity")
-            self._client.start_activity(self._dummy_activity)
-            time.sleep(0.3)
 
         self._logger.debug("Trigger activity '{label}' with id '{activity}'".format(label=label, activity=activity))
         if self._client.start_activity(activity):
             self._set_current_activity()
 
     def run(self):
-        self._connect()
-        self._sh.scheduler.add("harmony_config", self._get_config, prio=3, cron=None, cycle=self._get_config_reconnect,
+        self._harmony_init()
+        self._sh.scheduler.add("harmony_init", self._harmony_init, prio=3, cron=None, cycle=self._get_config_reconnect,
                                value=None, offset=None, next=None)
         self.alive = True
 
@@ -220,13 +218,17 @@ class Harmony(SmartPlugin):
 
 
 class HarmonyClient(sleekxmpp.ClientXMPP):
-    def __init__(self):
-        user = "guest@x.com/gatorade"
-        password = "guest"
+    def __init__(self, auth_token):
+        self.token = None
+        self.uuid = None
+        user = '%s@connect.logitech.com/gatorade.' % auth_token
+        password = auth_token
         plugin_config = {
+            # Enables PLAIN authentication which is off by default.
             'feature_mechanisms': {'unencrypted_plain': True},
         }
-        super(HarmonyClient, self).__init__(user, password, plugin_config=plugin_config)
+        super(HarmonyClient, self).__init__(
+            user, password, plugin_config=plugin_config)
 
     def connect_client(self, ip_address, port):
 
@@ -320,3 +322,58 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
             return True
         else:
             return False
+
+class AuthToken(sleekxmpp.ClientXMPP):
+    """An XMPP client for swapping a Login Token for a Session Token.
+
+    After the client finishes processing, the uuid attribute of the class will
+    contain the session token.
+    """
+
+    def __init__(self):
+        """Initializes the client."""
+        plugin_config = {
+            # Enables PLAIN authentication which is off by default.
+            'feature_mechanisms': {'unencrypted_plain': True},
+        }
+        super(AuthToken, self).__init__(
+            'guest@connect.logitech.com/gatorade.', 'gatorade.', plugin_config=plugin_config)
+
+        self.token = None
+        self.uuid = None
+        self.add_event_handler('session_start', self.session_start)
+
+    def session_start(self, _):
+        """Called when the XMPP session has been initialized."""
+        iq_cmd = self.Iq()
+        iq_cmd['type'] = 'get'
+        action_cmd = ET.Element('oa')
+        action_cmd.attrib['xmlns'] = 'connect.logitech.com'
+        action_cmd.attrib['mime'] = 'vnd.logitech.connect/vnd.logitech.pair'
+        action_cmd.text = 'token=%s:name=%s' % (self.token,
+                                                'foo#iOS6.0.1#iPhone')
+        iq_cmd.set_payload(action_cmd)
+        result = iq_cmd.send(block=True)
+        payload = result.get_payload()
+        assert len(payload) == 1
+        oa_resp = payload[0]
+        assert oa_resp.attrib['errorcode'] == '200'
+        match = re.search(r'identity=(?P<uuid>[\w-]+):status', oa_resp.text)
+        assert match
+        self.uuid = match.group('uuid')
+        self.disconnect(send_close=False)
+
+def get_auth_token(ip_address, port):
+    """Swaps the Logitech auth token for a session token.
+
+    Args:
+        ip_address (str): IP Address of the Harmony device IP address
+        port (str): Harmony device port
+
+    Returns:
+        A string containing the session token.
+    """
+    login_client = AuthToken()
+    login_client.connect(address=(ip_address, port), use_tls=False, use_ssl=False)
+    login_client.process(block=True)
+    return login_client.uuid
