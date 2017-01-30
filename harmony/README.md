@@ -157,9 +157,9 @@ a:12345678:4
 
 **Attention:**<a name="dummy"></a> If your're using activities with this plugin, it's highly recommended that you create
 a dummy Harmony Hub activity. Just add any unused device and create an empty activity. Without this dummy, it is not 
-possible to trigger an activity twice, if it's currently activated by the Harmony Hub. With every activity trigger, the 
-plugin starts the dummy first to make sure, every activity can be triggered more than once. In the Harmony Hub app, you
-can set all delays to 0 for that device since it has no function.
+possible to trigger an activity twice, if it's currently activated by the Harmony In the Harmony Hub app, you
+can set all delays to 0 for that device since it has no function. If this is done, you can add your dummy command in the
+harmony_command chain to make sure, your activity is triggered.
 
 You can also trigger the default Harmony Hub activity "Power Off", that switch the current active activity off. This
 can be done by sending '-1' to the Hub.
@@ -173,7 +173,8 @@ a:-1
 ### Setup Harmony status items
 
 There are two more harmony item types. They are useful to retrieve status information about the current activated 
-activity in the Harmony Hub.
+activity in the Harmony Hub. Everytime the active activity was changed (by your logics or other remotes), the items blow
+are set with status values about this activity.
 
 #### Harmony Current Activity by ID
 
