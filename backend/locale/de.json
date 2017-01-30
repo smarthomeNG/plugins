@@ -2,6 +2,7 @@
 	"Scheduler": "Scheduler",
 	"Logik": "Logik",
 	"Systemlogiken": "Systemlogiken",
+	"Neue Logiken (nicht geladen)": "Neue Logiken (nicht geladen)",
 	"nächste Ausführung": "nächste Ausführung",
 	"Cycle": "Cycle",
 	"Crontab": "Crontab",
@@ -148,8 +149,6 @@
 	},
 
 	"_button": {
-		"Auslösen": "Auslösen",
-		"Neu Laden": "Neu Laden",
 		"smarthomeNG starten": "SmartHomeNG starten",
 		"knxd service starten": "knxd service starten",
 		"knxd socket starten": "knxd socket starten",
@@ -163,8 +162,11 @@
 		"Deutsch": "Deutsch",
 		"Französisch": "French",
 		"Polnisch": "Polish",
+		"Auslösen": "Auslösen",
+		"Neu Laden": "Neu Laden",
 		"Deaktivieren": "Deaktivieren",
 		"Aktivieren": "Aktivieren",
+		"Hinzufügen": "Hinzufügen",
 		"Leeren" : "Leeren",
 		"Schließen": "Schließen",
 		"Änderungen verwerfen" : "Änderungen verwerfen",
