@@ -191,11 +191,11 @@ class DWD(SmartPlugin):
             if fb == '':
                 continue
             minute = 0
-            if frame.count('heute_frueh'):
+            if frame.count('frueh'):
                 hour = 6
-            elif frame == 'heute_mittag':
+            elif frame == 'mittag':
                 hour = 12
-            elif frame == 'heute_nacht':
+            elif frame == 'nacht':
                 hour = 23
                 minute = 59
             else:
@@ -208,7 +208,7 @@ class DWD(SmartPlugin):
                             header = element
 
             matchTR = re.findall(r'<tr>(.*?)</tr>', fb, re.M | re.I | re.S)
-            if not matchTR is None:
+            if matchTR is not None:
                 if len(matchTR) > 0:
                     for element in matchTR:
                         if element.count(location):
