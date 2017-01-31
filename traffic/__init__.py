@@ -70,7 +70,7 @@ class Traffic(SmartPlugin):
                 "Exception when sending GET request for get_route_info: %s" % str(e))
             return
         json_obj = response.json()
-
+        route_information = {}
         for route in json_obj['routes']:
             route_information = {}
             for leg in route['legs']:
@@ -95,7 +95,7 @@ class Traffic(SmartPlugin):
                 route_information['warnings'].append(warning)
             route_information['copyrights'] = route['copyrights']
 
-        routes.append(route_information)
+            routes.append(route_information)
         if alternatives:
             return routes
         else:
