@@ -34,7 +34,7 @@ Have a look at one file in the `gds/specials/observations/tables/germany` direct
 This function returns a dictonary with the values for the availabe information.
 
 ## forecast(Area, Location)
-See the `gds/specials/forecasts/tables/germany/` for the available areas (e.g. Deutschland, Mitte, Nordost ...) and locations.
+See the `gds/specials/forecasts/tables/germany/` for the available areas (currently only Deutschland) and locations.
 
 ## pollen(Area)
 See `gds/specials/alerts/health/s_b31fg.xml` for available areas.
