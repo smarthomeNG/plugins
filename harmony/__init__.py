@@ -38,7 +38,7 @@ class Harmony(SmartPlugin):
         self._scheduler_name = "harmony_init"
 
     def _message(self, message):
-        match = re.search(r".*?startActivityFinished\">activityId=([/d].*?):errorCode=200.*",
+        match = re.match(r".*?startActivityFinished\">activityId=(\d+):errorCode=200.*",
                           html.unescape(str(message)))
         if match:
             self._set_current_activity(int(match.group(1)))
