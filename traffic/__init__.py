@@ -50,21 +50,22 @@ class Traffic(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    def get_route_info(self, origin, destination, alternatives=False, mode='driving'):
+    def get_route_info(self, origin, destination, alternatives=False, departure_time='now', mode='driving'):
         """
         Returns route information for a provided origin and destination
         @param origin: string representing the origin according to google directions api
         @param destination: string representing the destination according to google directions api
         @param alternatives: returns alternative routes if true
         @param mode: driving (default), walking, bicycling, transit
+        @param departure_time: desired time of departure in seconds since 01.01.1970 UTC or "now" (default)
 
         @return: return an array of routes if alternatives are true, or a route (as dict) if alternatives are false
         """
         routes = []
         try:
             response = self._session.get(
-                '%s?language=%s&alternatives=%s&origin=%s&destination=%s&mode=%s&key=%s' % (self._base_url,
-                self._language, alternatives, origin, destination, mode, self._apikey))
+                '%s?language=%s&alternatives=%s&origin=%s&destination=%s&mode=%s&departure_time=%s&key=%s' % (self._base_url,
+                self._language, alternatives, origin, destination, mode, departure_time, self._apikey))
         except Exception as e:
             self.logger.error(
                 "Exception when sending GET request for get_route_info: %s" % str(e))
@@ -76,6 +77,7 @@ class Traffic(SmartPlugin):
             for leg in route['legs']:
                 route_information['distance'] = leg['distance']['value']
                 route_information['duration'] = leg['duration']['value']
+                route_information['duration_in_traffic'] = leg['duration_in_traffic']['value']
                 route_information['start_address'] = leg['start_address']
                 route_information['start_location_lat'] = leg['start_location']['lat']
                 route_information['start_location_lon'] = leg['start_location']['lng']
