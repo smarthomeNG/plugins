@@ -97,4 +97,5 @@ Nuki lock.
         type = num
         nuki_id = 123456789
         nuki_trigger = action
+        enforce_updates = true
 ```
