@@ -557,8 +557,8 @@ This is a function to search for telephone numbers in the contacts stored on the
 This is a function to search for contact names and retrieve the related telephone numbers
 
 Set an item with a html of all found numbers e.g. by:
-<pre>
 ```html
+<pre>
 result_numbers = sh.fritzbox_7490.get_phone_numbers_by_name('Mustermann')
 result_string = ''
 for contact in result_numbers:
@@ -572,8 +572,8 @@ for contact in result_numbers:
         i += 1
     result_string += '</p>'
 sh.general_items.number_search_results(result_string)
-```
 </pre>
+```
 
 ## get_calllist()
 Returns an array with calllist entries
