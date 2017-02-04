@@ -553,6 +553,9 @@ This function reboots the FritzDevice.
 ## get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book
 
+##get_phone_numbers_by_name(name)
+This is a function to search for contact names and retrieve the related telephone numbers
+
 ## get_calllist()
 Returns an array with calllist entries
 
