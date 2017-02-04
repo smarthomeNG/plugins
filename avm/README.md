@@ -566,7 +566,7 @@ for contact in result_numbers:
     while i < len(result_numbers[contact]):
         number = result_numbers[contact][i]
         result_string += number
-        if i >= 0:
+        if i < len(result_numbers[contact])-1:
             result_string += '<br/>'
         i += 1
     result_string += '</p>'
