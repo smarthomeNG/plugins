@@ -912,6 +912,8 @@ class AVM(SmartPlugin):
 
             contacts = pb_xml.getElementsByTagName('contact')
             result_numbers = {}
+            if name == '':
+                return result_numbers
             if len(contacts) > 0:
                 for contact in contacts:
                     real_names = contact.getElementsByTagName('realName')
