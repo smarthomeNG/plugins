@@ -556,6 +556,24 @@ This is a function to search for telephone numbers in the contacts stored on the
 ##get_phone_numbers_by_name(name)
 This is a function to search for contact names and retrieve the related telephone numbers
 
+Set an item with a html of all found numbers e.g. by:
+result_numbers = sh.fritzbox_7490.get_phone_numbers_by_name('Mustermann')
+print(result_numbers)
+result_string = ''
+for contact in result_numbers:
+    result_string += '<p><strong>'+contact+'</strong><br>'
+    i = 0
+    while i < len(result_numbers[contact]):
+        print(i)
+        number = result_numbers[contact][i]
+        print(number+"\n")
+        result_string += number
+        if i >= 0:
+            result_string += '<br/>'
+        i += 1
+    result_string += '</p>'
+sh.general_items.number_search_results(result_string)
+
 ## get_calllist()
 Returns an array with calllist entries
 

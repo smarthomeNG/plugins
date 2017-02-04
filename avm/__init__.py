@@ -865,7 +865,7 @@ class AVM(SmartPlugin):
                     phone_numbers = contact.getElementsByTagName('number')
                     if phone_numbers.length > 0:
                         i = phone_numbers.length
-                        while (i >= 0):
+                        while i >= 0:
                             i -= 1
                             if phone_number in phone_numbers[i].firstChild.data:
                                 return contact.getElementsByTagName('realName')[0].firstChild.data.strip()
@@ -916,19 +916,19 @@ class AVM(SmartPlugin):
                 for contact in contacts:
                     real_names = contact.getElementsByTagName('realName')
                     if real_names.length > 0:
-                        i = real_names.length
-                        while i >= 0:
-                            i -= 1
+                        i = 0
+                        while i < real_names.length:
                             if name.lower() in real_names[i].firstChild.data.lower():
                                 phone_numbers = contact.getElementsByTagName('number')
                                 if phone_numbers.length > 0:
                                     result_numbers[real_names[i].firstChild.data] = []
-                                    j = phone_numbers.length
-                                    while j >= 0:
-                                        j -= 1
-                                        if phone_numbers[i].firstChild.data:
+                                    j = 0
+                                    while j < phone_numbers.length:
+                                        if phone_numbers[j].firstChild.data:
                                             result_numbers[real_names[i].firstChild.data].append(
-                                                phone_numbers[j].firstChild.data)
+                                                    phone_numbers[j].firstChild.data)
+                                        j += 1
+                            i += 1
         else:
             self.logger.error("Phonebook not available on the FritzDevice")
 
