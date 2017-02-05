@@ -560,15 +560,17 @@ Set an item with a html of all found numbers e.g. by:
 ```html
 result_numbers = sh.fritzbox_7490.get_phone_numbers_by_name('Mustermann')
 result_string = ''
+keys = {'work': 'Geschäftlich', 'home': 'Privat', 'mobile': 'Mobil', 'fax_work': 'Fax', 'intern': 'Intern'}
 for contact in result_numbers:
     result_string += '<p><h2>'+contact+'</h2>'
     i = 0
+    result_string += '<table>'
     while i < len(result_numbers[contact]):
         number = result_numbers[contact][i]['number']
-        type_number = result_numbers[contact][i]['type']
-        result_string += '<div>'+type_number+': <a href="tel:'+number+'" style="font-weight: normal;">'+number+'</a></div>'
+        type_number = keys[result_numbers[contact][i]['type']]
+        result_string += '<tr><td>' + type_number + ':</td><td><a href="tel:' + number + '" style="font-weight: normal;">' + number + '</a></td></tr>'
         i += 1
-    result_string += '</p>'
+    result_string += '</table></p>'
 sh.general_items.number_search_results(result_string)
 ```
 
