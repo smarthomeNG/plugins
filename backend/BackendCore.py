@@ -576,12 +576,12 @@ class Backend:
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, save=None, unload=None, configload=None, add=None):
+    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, savereload=None, unload=None, configload=None, add=None):
         """
         returns information to display a list of all known logics
         """
         # process actions triggerd by buttons on the web page
-        self.process_logics_action(logic, trigger, reload, enable, save, None, unload, configload, add)
+        self.process_logics_action(logic, trigger, reload, enable, savereload, None, unload, configload, add)
 
         # create a list of dicts, where each dict contains the information for one logic
         logics = []
@@ -606,12 +606,12 @@ class Backend:
 
 
     @cherrypy.expose
-    def logics_view_html(self, file_path, logic, trigger=None, reload=None, enable=None, save=None, logics_code=None):
+    def logics_view_html(self, file_path, logic, trigger=None, reload=None, enable=None, savereload=None, logics_code=None):
         """
         returns information to display a logic in an editor window
         """
         # process actions triggerd by buttons on the web page
-        self.process_logics_action(logic, trigger, reload, enable, save, logics_code, None, None, None)
+        self.process_logics_action(logic, trigger, reload, enable, savereload, logics_code, None, None, None)
         mylogic = self._sh.return_logic(logic)
 
         fobj = open(file_path)
@@ -625,10 +625,10 @@ class Backend:
 
     # -----------------------------------------------------------------------------------
 
-    def process_logics_action(self, logic=None, trigger=None, reload=None, enable=None, save=None, logics_code=None, unload=None, configload=None, add=None):
+    def process_logics_action(self, logic=None, trigger=None, reload=None, enable=None, savereload=None, logics_code=None, unload=None, configload=None, add=None):
         self.logger.debug(
-            "Backend: logics_html: trigger = '{0}', reload = '{1}', enable='{2}', save='{3}'".format(trigger, reload,
-                                                                                                     enable, save))
+            "Backend: logics_html: trigger = '{0}', reload = '{1}', enable='{2}', savereload='{3}'".format(trigger, reload,
+                                                                                                     enable, savereload))
         if enable is not None:
             self.logic_enable(logic)
 
@@ -639,6 +639,7 @@ class Backend:
 #            self.logic_reloadcode(logic)   # old way to reload a logic (only generate new byte code from python source)
             self.logic_unload(logic)
             self.logic_configload(logic)
+            self.logic_trigger(logic)
 
         if unload is not None:
             self.logic_unload(logic)
@@ -649,18 +650,12 @@ class Backend:
         if add is not None:
             self.logic_configload(logic)
 
-        if save is not None:
-            self.logger.debug("Backend: logics_view_html: Save logic = '{0}'".format(logic))
+        if savereload is not None:
+            self.logic_save(logic, logics_code)
 
-            if self.updates_allowed:
-                if logic in self._sh.return_logics():
-                    mylogic = self._sh.return_logic(logic)
-
-            f = open(mylogic.filename, 'w')
-            f.write(logics_code)
-            f.close()
-            reload = True
-
+            self.logic_unload(logic)
+            self.logic_configload(logic)
+            self.logic_trigger(logic)
         return
 
 
@@ -733,6 +728,18 @@ class Backend:
                 for entry in newlogic.watch_item:
                     for item in self._sh.match_items(entry):
                         item.add_logic_trigger(newlogic)
+
+
+    def logic_save(self, logic, logics_code):
+        self.logger.debug("Backend: logics_view_html: Save logic = '{0}'".format(logic))
+
+        if self.updates_allowed:
+            if logic in self._sh.return_logics():
+                mylogic = self._sh.return_logic(logic)
+
+                f = open(mylogic.filename, 'w')
+                f.write(logics_code)
+                f.close()
 
 
 #         for name in _config:
