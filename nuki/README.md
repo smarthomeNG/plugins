@@ -3,6 +3,8 @@
 Plugin for integrating [Nuki Smartlock](https://nuki.io/de/smart-lock/) into smarthome.py facilitating triggering lock actions and getting status information from it.
 # Requirements
 You need a [Nuki Bridge](https://nuki.io/de/bridge/) which is already paired with your Nuki Smartlock(s).
+# Support
+You can find the offical support thread for this plugin in the [KNX-User-Forum](https://knx-user-forum.de/forum/supportforen/smarthome-py/1052437-nuki-smartlock-plugin-support-thread).
 # Configuration
 ## plugin.conf
 ```
