@@ -185,6 +185,8 @@ class Nuki(SmartPlugin):
         # reset list of nukis
         del paired_nukis[:]
         response = self._api_call(self._base_url, endpoint='list', token=self._token)
+        if response is None:
+            return
         for nuki in response:
             paired_nukis.append(nuki['nukiId'])
             self._logger.info('Nuki: Paired Nuki Lock found: {name} - {id}'.format(name=nuki['name'], id=nuki['nukiId']))
