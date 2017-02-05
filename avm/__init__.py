@@ -884,7 +884,7 @@ class AVM(SmartPlugin):
         | Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
 
         :param name: partial or full name of contact as defined in the phonebook.
-        :return: dict with arrays of numbers (strings) of the found contacts (dict keys)
+        :return: dict of found contact names (keys) with each containing an array of dicts (keys: type, number)
         """
         url = self._build_url("/upnp/control/x_contact")
         headers = self._header.copy()
@@ -927,8 +927,10 @@ class AVM(SmartPlugin):
                                     j = 0
                                     while j < phone_numbers.length:
                                         if phone_numbers[j].firstChild.data:
-                                            result_numbers[real_names[i].firstChild.data].append(
-                                                    phone_numbers[j].firstChild.data)
+                                            result_number_dict = {}
+                                            result_number_dict['number'] = phone_numbers[j].firstChild.data
+                                            result_number_dict['type'] = phone_numbers[j].attributes["type"].value
+                                            result_numbers[real_names[i].firstChild.data].append(result_number_dict)
                                         j += 1
                             i += 1
         else:

@@ -561,13 +561,12 @@ Set an item with a html of all found numbers e.g. by:
 result_numbers = sh.fritzbox_7490.get_phone_numbers_by_name('Mustermann')
 result_string = ''
 for contact in result_numbers:
-    result_string += '<p><strong>'+contact+'</strong><br/>'
+    result_string += '<p><h2>'+contact+'</h2>'
     i = 0
     while i < len(result_numbers[contact]):
-        number = result_numbers[contact][i]
-        result_string += number
-        if i < len(result_numbers[contact])-1:
-            result_string += '<br/>'
+        number = result_numbers[contact][i]['number']
+        type_number = result_numbers[contact][i]['type']
+        result_string += '<div>'+type_number+': <a href="tel:'+number+'" style="font-weight: normal;">'+number+'</a></div>'
         i += 1
     result_string += '</p>'
 sh.general_items.number_search_results(result_string)
