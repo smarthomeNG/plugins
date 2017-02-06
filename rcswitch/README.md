@@ -25,7 +25,7 @@ Example:
 					type = bool
 					knx_dpt = 1
 					knx_listen = 14/0/10
-					knx_send = 14/0/10
+					knx_send = 14/0/13
 					rc_code = 11111
 					rc_device = 2
 </pre>
