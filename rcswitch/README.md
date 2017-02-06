@@ -6,14 +6,14 @@ Adding following lines to plugin.conf in smarthomeNG will enable the rcswitch pl
 <pre>[rc]
     class_name = RCswitch
     class_path = plugins.rcswitch
-    rcswitch_dir = {path of rc switch} # optional parameter. Default: /etc/local/bin/rcswitch-pi
+    rcswitch_dir = {path of rc switch} # optional parameter. Default: /usr/local/bin/rcswitch-pi
     rcswitch_sendDuration = {minimum time in s between sending commands} # optional parameter. Default: 0.5
 </pre>
 Example:
 <pre>[rc]
     class_name = RCswitch
     class_path = plugins.rcswitch
-    rcswitch_dir = /etc/local/bin/rcswitch-pi # optional
+    rcswitch_dir = /usr/local/bin/rcswitch-pi # optional
     rcswitch_sendDuration = 0.5 # optional
 </pre>
 The parameter rcswitch_dir has to point to the directory where the rcswitch-pi send command can be found.
@@ -75,7 +75,7 @@ sudo ./build
 >Soure: https://raspiprojekt.de/machen/basics/software/10-wiringpi.html?showall=&start=1
 
 ### Installation of rcswitch-pi
-Download the sources into /etc/local/bin/rcswitch-pi:
+Download the sources into /usr/local/bin/rcswitch-pi:
 <pre>
 cd /usr/local/bin
 sudo git clone https://github.com/r10r/rcswitch-pi.git
