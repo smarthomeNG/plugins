@@ -126,7 +126,7 @@ Because the setting of port 17, done with the command 'gpio export 17 out' will 
 cd /usr/local/scripts/
 sudo nano exportGPIO17
 </pre>
-and add the following content:
+... and add following content:
 <pre>#!/bin/sh  
 echo "17" > /sys/class/gpio/export
 echo "out" > /sys/class/gpio/gpio17/direction
