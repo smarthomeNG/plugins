@@ -15,6 +15,20 @@ Just add following attributes to the items which shall be connected with rcswitc
 rc_device = number of device [1-5]
 rc_code = code of device [00000 - 11111]
 </pre>
+Example:
+<pre>
+[Basement]
+	[[LivingRoom]]
+		[[[RCpowerPlug]]]
+			[[[[TV]]]]
+				[[[[[switch]]]]]
+					type = bool
+					knx_dpt = 1
+					knx_listen = 14/0/10
+					knx_send = 14/0/10
+					rc_code = 11111
+					rc_device = 2
+</pre>
 ----------------------------
 ## Necessary Hardware
 - RaspberryPi or any other board having digital GPIO
