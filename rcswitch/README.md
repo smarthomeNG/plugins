@@ -17,11 +17,11 @@ rc_code = code of device [00000 - 11111]
 </pre>
 
 ## Necessary Hardware
-- RaspberryPi or any other board wich has digital GPIO
+- RaspberryPi or any other board having digital GPIO
 - [433 Mhz transmitter](https://www.google.de/search?q=433+mhz+transmitter&client=opera&hs=aeh&source=lnms&tbm=isch&sa=X&ved=0ahUKEwjzsYKo7vHRAhXKWxoKHdk1D6YQ_AUICSgC&biw=1163&bih=589)
 - 433 Mhz controlled power plug, e.g. Brennenstuhl RCS 1000 N
 
-Connect the VCC of the 433Mhz transmitter to any 5V output pin of your board, the GND to a ground pin and the ATAD to any GPIO pin. In this example we use  pin 17. I reccomend also to connect a (long) cable to the ANT pin of the 433Mhz transmitter - this extends the range of the sender.
+Connect the VCC of the 433Mhz transmitter to any 5V output pin of your board, the GND to a ground pin and the ATAD to any GPIO pin. In this example, pin 17 is used. I recommend also to connect a (long) cable to the ANT pin of the 433Mhz transmitter - this extends the range of the sender.
 
 ## Installation of 3rd party software
 The plugin depends on two 3rd party software packages:
@@ -54,12 +54,12 @@ Download the sources into /etc/local/bin/rcswitch-pi:
 cd /usr/local/bin
 sudo git clone https://github.com/r10r/rcswitch-pi.git
 </pre>
-Before building rcswitch-pi, the port has to be defineded the the code has to be slightly changed. Therefore edit the file send.cpp and the change the port to your needs and replace the command wiringPiSetup() to wiringPiSetupSys(). For editing the file:
+Before building rcswitch-pi, the port has to be defined the code has to be changed slightly. Therefore edit the file send.cpp and the change the port to your needs and replace the command wiringPiSetup() to wiringPiSetupSys(). For editing the file:
 <pre>
 cd rcswitch-pi
 sudo nano send.cpp
 </pre>
-In our example the file send.cpp has to look like follwos:
+In our example the file send.cpp has to look like follows:
 <pre>
 int PIN = 17;
   char* systemCode = argv[1];
@@ -91,7 +91,7 @@ make
 ##Send as non-root and testing
 For a first basic test, write access to non-root users can be granted with the command:
 <pre>gpio export 17 out</pre>
-Now, with the send command the power plugs can be swithed. Assuming, the power plug has code 11111 and address 2 (=B), the command to switch it on is:
+Now, with the send command the power plugs can be switched. Assuming, the power plug has code 11111 and address 2 (=B), the command to switch it on is:
 <pre>./send 11111 2 1</pre>
 If the power plug does not switch at this point, you need to figure out why before proceeding.
 
@@ -106,10 +106,10 @@ echo "17" > /sys/class/gpio/export
 echo "out" > /sys/class/gpio/gpio17/direction
 chmod 666 /sys/class/gpio/gpio17/value
 chmod 666 /sys/class/gpio/gpio17/direction</pre>
-Save and close the file. Now the file has to be made executeable with
+Save and close the file. Now the file has to be made executable with
 <pre>sudo sudo chmod +x exportGPIO17</pre>
-Last step is to ensure that the file is called during system boot. Therefore add the following  line has to be added to /etc/rc.local, right before the 'exit 0' command:
+Last step is to ensure that the file is called during system boot. Therefore, add the following  line has to be added to /etc/rc.local, right before the 'exit 0' command:
 <pre>/usr/local/scripts/exportGPIO17</pre>
-Now even after reboot it sould be possible to switch the power plungs with the rcswitch-pi 'send' command.
+Now even after reboot it should be possible to switch the power plugs with the rcswitch-pi 'send' command.
 ## Further information
 For discussion see https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen 
