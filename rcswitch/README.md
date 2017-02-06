@@ -1,5 +1,5 @@
 # RCswitch
-RCswithc is a plugin for smarthomeNG to send RC switch commands. With this plugin 433mhz remote controlled power plugs can be controlled from the smarthomeNG environment.
+RCswitch is a plugin for smarthomeNG to send RC switch commands. With this plugin 433mhz remote controlled power plugs can be controlled from the smarthomeNG environment.
 
 ## plugin.conf
 Adding following lines to plugin.conf in smarthomeNG will enable the rcswitch plugin:
