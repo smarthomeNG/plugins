@@ -17,7 +17,9 @@ Example:
     rcswitch_sendDuration = 0.5 # optional
 </pre>
 The parameter rcswitch_dir has to point to the directory where the rcswitch-pi send command can be found.
+
 The parameter rcswitch_sendDuration is intended for trouble shooting. Increase this parameter in case switching several power plugs does not work reliable.
+
 Background: In case several power plugs (with different codes / device numbers) shall be switched at the same time, there must be a short gap between sending the serval commands. Otherwise, the several send commands are executed in parallel, gernerating jam on the rc signal.
 ## items.conf
 Just add following attributes to the items which shall be connected with rcswitch:
