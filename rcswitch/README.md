@@ -134,7 +134,7 @@ chmod 666 /sys/class/gpio/gpio17/value
 chmod 666 /sys/class/gpio/gpio17/direction</pre>
 Save and close the file. Now the file has to be made executable with
 <pre>sudo sudo chmod +x exportGPIO17</pre>
-Last step is to ensure that the file is called during system boot. Therefore, add the following  line has to be added to /etc/rc.local, right before the 'exit 0' command:
+Last step is to ensure that the file is called during system boot. Therefore, the following line has to be added to /etc/rc.local, right before the 'exit 0' command:
 <pre>/usr/local/scripts/exportGPIO17</pre>
 Now even after reboot it should be possible to switch the power plugs with the rcswitch-pi 'send' command.
 ## Further information
