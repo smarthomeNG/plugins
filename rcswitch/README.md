@@ -2,13 +2,23 @@
 RCswithc is a plugin for smarthomeNG to send RC switch commands. With this plugin 433mhz remote controlled power plugs can be controlled from the smarthomeNG environment.
 
 ## plugin.conf
-Adding the following lines to plungin.conf in smarthomeNG will enable the rcswitch plugin:
+Adding the following lines to plugin.conf in smarthomeNG will enable the rcswitch plugin:
 <pre>[rc]
     class_name = RCswitch
     class_path = plugins.rcswitch
     rcswitch_dir = {path of rc switch} # optional parameter. Default: /etc/local/bin/rcswitch-pi
     rcswitch_sendDuration = {minimum time in s between sending commands} # optional parameter. Default: 0.5
 </pre>
+Example:
+<pre>[rc]
+    class_name = RCswitch
+    class_path = plugins.rcswitch
+    rcswitch_dir = /etc/local/bin/rcswitch-pi # optional
+    rcswitch_sendDuration = 0.5 # optional
+</pre>
+The parameter rcswitch_dir has to point to the directory where the rcswitch-pi send command can be found.
+The parameter rcswitch_sendDuration is intended for trouble shooting. Increase this parameter in case switching several power plugs does not work reliable.
+Background: In case several power plugs (with different codes / device numbers) shall be switched at the same time, there must be a short gap between sending the serval commands. Otherwise, the several send commands are executed in parallel, gernerating jam on the rc signal.
 ## items.conf
 Just add following attributes to the items which shall be connected with rcswitch:
 <pre>
