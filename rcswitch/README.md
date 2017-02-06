@@ -15,7 +15,7 @@ Just add following attributes to the items which shall be connected with rcswitc
 rc_device = number of device [1-5]
 rc_code = code of device [00000 - 11111]
 </pre>
-
+----------------------------
 ## Necessary Hardware
 - RaspberryPi or any other board having digital GPIO
 - [433 Mhz transmitter](https://www.google.de/search?q=433+mhz+transmitter&client=opera&hs=aeh&source=lnms&tbm=isch&sa=X&ved=0ahUKEwjzsYKo7vHRAhXKWxoKHdk1D6YQ_AUICSgC&biw=1163&bih=589)
