@@ -26,15 +26,14 @@ import os
 import time
 import threading
 
-logger = logging.getLogger(__name__)
-
 class RCswitch(SmartPlugin):
 
 	ALLOW_MULTIINSTANCE = False
-	PLUGIN_VERSION = "0.1"
+	PLUGIN_VERSION = "1.2.1"
 
 	def __init__(self, smarthome, rcswitch_dir='/usr/local/bin/rcswitch-pi', rcswitch_sendDuration='0.5'):
-		logger.info('Init RCswitch')
+		self.logger = logging.getLogger(__name__)
+		self.logger.info('Init RCswitch')
 		self.setupOK = True
 		self._sh=smarthome
 		
@@ -47,7 +46,7 @@ class RCswitch(SmartPlugin):
 
 		# Step 2: check if rc switch is installed at the specified path
 		if not os.path.isfile('{}/send'.format(self.rcswitch_dir)):
-			logger.error('RCswitch: send file of RCswitch not found at {}. Check if RCswitch is installed correctly and path is set correctly in logic.conf.'.format(self.rcswitch_dir))
+			self.logger.error('RCswitch: send file of RCswitch not found at {}. Check if RCswitch is installed correctly and path is set correctly in logic.conf.'.format(self.rcswitch_dir))
 			self.setupOK = False
 			
 		# Check optional Parameters: check sendDuration
@@ -55,7 +54,7 @@ class RCswitch(SmartPlugin):
 			self.sendDuration = float(rcswitch_sendDuration)
 		except Exception as e:
 			self.sendDuration = float(0.5)
-			logger.warning('RCswitch: Argument {} for rcswitch_sendDuration is not a valid number. Using default value instead.'.format(rcswitch_sendDuration))
+			self.logger.warning('RCswitch: Argument {} for rcswitch_sendDuration is not a valid number. Using default value instead.'.format(rcswitch_sendDuration))
 			
 		# setup semaphore
 		self.lock = threading.Lock()
@@ -72,10 +71,10 @@ class RCswitch(SmartPlugin):
 			if 'rc_code' in item.conf:
 				return self.update_item
 			else:
-				logger.warning('RC Switch: attribute rc_code for {} missing. Item will be ignored by RCswitch plugin'.format(item))
+				self.logger.warning('RC Switch: attribute rc_code for {} missing. Item will be ignored by RCswitch plugin'.format(item))
 				return None
 		elif 'rc_code' in item.conf:
-			logger.warning('RC Switch: attribute rc_device for {} missing. Item will be ignored by RCswitch plugin'.format(item))
+			self.logger.warning('RC Switch: attribute rc_device for {} missing. Item will be ignored by RCswitch plugin'.format(item))
 			return None
 		else:
 			return None
@@ -92,6 +91,6 @@ class RCswitch(SmartPlugin):
 			# avoid parallel access by use of semaphore
 			self.lock.acquire()
 			os.popen('{}/send {} {} {}'.format(self.rcswitch_dir, rcCode, rcDevice, int(value)))
-			logger.info('RC Switch: setting device {} with system code {} to {}'.format(rcDevice, rcCode, value))
+			self.logger.info('RC Switch: setting device {} with system code {} to {}'.format(rcDevice, rcCode, value))
 			time.sleep(min(self.sendDuration,10))# give the transmitter time to complete sending of the command (but not more than 10s)
 			self.lock.release()
