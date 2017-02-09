@@ -3,20 +3,20 @@
 #########################################################################
 # Copyright 2017      Daniel Frank                knx-user-forum.de:dafra 
 #########################################################################
-# This file is part of SmartHome.py. http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-# SmartHome.py is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#  SmartHomeNG is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
 #
-# SmartHome.py is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+#  SmartHomeNG is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  You should have received a copy of the GNU General Public License
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
@@ -67,13 +67,13 @@ class RCswitch(SmartPlugin):
 
 	def parse_item(self, item):
 		# generate warnings for incomplete configured itemns
-		if 'rc_device' in item.conf:
-			if 'rc_code' in item.conf:
+		if self.has_iattr(item.conf, 'rc_device'):#if 'rc_device' in item.conf:
+			if self.has_iattr(item.conf, 'rc_code'):#if 'rc_code' in item.conf:
 				return self.update_item
 			else:
 				self.logger.warning('RC Switch: attribute rc_code for {} missing. Item will be ignored by RCswitch plugin'.format(item))
 				return None
-		elif 'rc_code' in item.conf:
+		elif self.has_iattr(item.conf, 'rc_code'): #elif 'rc_code' in item.conf:
 			self.logger.warning('RC Switch: attribute rc_device for {} missing. Item will be ignored by RCswitch plugin'.format(item))
 			return None
 		else:
@@ -82,12 +82,12 @@ class RCswitch(SmartPlugin):
 
 	def update_item(self, item, caller=None, source=None, dest=None):
 		# send commands to devices
-		if 'rc_device' in item.conf and 'rc_code' in item.conf and self.setupOK:
+		if self.has_iattr(item.conf, 'rc_code') and self.has_iattr(item.conf, 'rc_device') and self.setupOK: #if 'rc_device' in item.conf and 'rc_code' in item.conf and self.setupOK:
 			# prepare parameters
 			value = item()
-			rcCode = item.conf['rc_code']
-			rcDevice = item.conf['rc_device']
-			
+			rcCode =self.get_iattr_value(item.conf, 'rc_code') #rcCode = item.conf['rc_code']
+			rcDevice =self.get_iattr_value(item.conf, 'rc_device')#rcDevice = item.conf['rc_device']
+		
 			# avoid parallel access by use of semaphore
 			self.lock.acquire()
 			os.popen('{}/send {} {} {}'.format(self.rcswitch_dir, rcCode, rcDevice, int(value)))
