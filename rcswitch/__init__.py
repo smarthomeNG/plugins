@@ -67,13 +67,13 @@ class RCswitch(SmartPlugin):
 
 	def parse_item(self, item):
 		# generate warnings for incomplete configured itemns
-		if self.has_iattr(item.conf, 'rc_device'):#if 'rc_device' in item.conf:
-			if self.has_iattr(item.conf, 'rc_code'):#if 'rc_code' in item.conf:
+		if self.has_iattr(item.conf, 'rc_device'):
+			if self.has_iattr(item.conf, 'rc_code'):
 				return self.update_item
 			else:
 				self.logger.warning('RC Switch: attribute rc_code for {} missing. Item will be ignored by RCswitch plugin'.format(item))
 				return None
-		elif self.has_iattr(item.conf, 'rc_code'): #elif 'rc_code' in item.conf:
+		elif self.has_iattr(item.conf, 'rc_code'): 
 			self.logger.warning('RC Switch: attribute rc_device for {} missing. Item will be ignored by RCswitch plugin'.format(item))
 			return None
 		else:
@@ -85,8 +85,8 @@ class RCswitch(SmartPlugin):
 		if self.has_iattr(item.conf, 'rc_code') and self.has_iattr(item.conf, 'rc_device') and self.setupOK: #if 'rc_device' in item.conf and 'rc_code' in item.conf and self.setupOK:
 			# prepare parameters
 			value = item()
-			rcCode =self.get_iattr_value(item.conf, 'rc_code') #rcCode = item.conf['rc_code']
-			rcDevice =self.get_iattr_value(item.conf, 'rc_device')#rcDevice = item.conf['rc_device']
+			rcCode =self.get_iattr_value(item.conf, 'rc_code') 
+			rcDevice =self.get_iattr_value(item.conf, 'rc_device')
 		
 			# avoid parallel access by use of semaphore
 			self.lock.acquire()
