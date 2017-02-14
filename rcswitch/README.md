@@ -1,51 +1,8 @@
 # RCswitch
 RCswitch is a plugin for smarthomeNG to send RC switch commands. With this plugin 433mhz remote controlled power plugs can be controlled from the smarthomeNG environment.
-##Configuration
-### plugin.conf
-Adding following lines to plugin.conf in smarthomeNG will enable the rcswitch plugin:
-<pre>[rc]
-    class_name = RCswitch
-    class_path = plugins.rcswitch
-    rcswitch_dir = {path of rc switch} # optional parameter. Default: /usr/local/bin/rcswitch-pi
-    rcswitch_sendDuration = {minimum time in s between sending commands} # optional parameter. Default: 0.5
-</pre>
-####Attributes
-* `rcswitch_dir`: has to point to the directory where the rcswitch-pi send command can be found.
-* `rcswitch_sendDuration`: intended for trouble shooting. Increase this parameter in case switching several power plugs at the same time does not work reliable. Background: In case several power plugs (with different codes / device numbers) shall be switched at the same time, there must be a short gap between sending the serval commands. Otherwise, the several send commands are executed in parallel, gernerating jam on the rc signal.
-
-####Example
-<pre>[rc]
-    class_name = RCswitch
-    class_path = plugins.rcswitch
-    rcswitch_dir = /usr/local/bin/rcswitch-pi # optional
-    rcswitch_sendDuration = 0.5 # optional
-</pre>
-
-### items.conf
-Just add following attributes to the items which shall be connected with rcswitch:
-<pre>
-rc_device = number of device [1-5]
-rc_code = code of device [00000 - 11111]
-</pre>
-####Attributes
-* `rc_device`: Number of the device. In case your device is coded with ABCDE: A=1, B=2,...
-* `rc_code`: the code of the device. Must be 5 binary digits.
-####Example:
-<pre>
-[Basement]
-	[[LivingRoom]]
-		[[[RCpowerPlug]]]
-			[[[[TV]]]]
-				[[[[[switch]]]]]
-					type = bool
-					knx_dpt = 1
-					knx_listen = 14/0/10
-					knx_send = 14/0/13
-					rc_code = 11111
-					rc_device = 2
-</pre>
-
-----------------------------
+The plugin supports two setups:
+* smarthomeNG runs on the same machine where the 433 MHz sender is connected to
+* smarthomeNG accesses a 433 MHz transmitter installed on a remote machine
 
 ## Necessary Hardware
 - RaspberryPi or any other board having digital GPIO
@@ -56,11 +13,12 @@ Connect the VCC of the 433Mhz transmitter to any 5V output pin of your board, th
 
 ## Requirements
 The plugin depends on two 3rd party software packages:
-- wiringPi
-- rcswitch-pi
+- wiringPi (on the machine where the 433 MHz transmitter is installed)
+- rcswitch-pi (on the machine where the 433 MHz transmitter is installed)
+- ssh and sshpass (only if remote access is needed)
 
 ### Installation of wiringPi:
-In case not already done, update the system and install git:
+All steps have to be done on the machine where the on the machine where the 433 MHz transmitter is installed. In case not already done, update the system and install git:
 <pre>
 sudo apt-get update
 sudo apt-get upgrade
@@ -80,7 +38,7 @@ sudo ./build
 >Soure: https://raspiprojekt.de/machen/basics/software/10-wiringpi.html?showall=&start=1
 
 ### Installation of rcswitch-pi
-Download the sources into /usr/local/bin/rcswitch-pi:
+All steps have to be done on the machine where the 433 MHz transmitter is installed. Download the sources into /usr/local/bin/rcswitch-pi:
 <pre>
 cd /usr/local/bin
 sudo git clone https://github.com/r10r/rcswitch-pi.git
@@ -119,7 +77,7 @@ make
 </pre>
 > source https://raspiprojekt.de/anleitungen/schaltungen/28-433-mhz-funksteckdosen-schalten.html?showall=&start=1
 
-##Send as non-root and testing
+### Send as non-root and testing
 For a first basic test, write access to non-root users can be granted with the command:
 <pre>gpio export 17 out</pre>
 Now, with the send command the power plugs can be switched. Assuming, the power plug has code 11111 and address 2 (=B), the command to switch it on is:
@@ -142,5 +100,72 @@ Save and close the file. Now the file has to be made executable with
 Last step is to ensure that the file is called during system boot. Therefore, the following line has to be added to /etc/rc.local, right before the 'exit 0' command:
 <pre>/usr/local/scripts/exportGPIO17</pre>
 Now even after reboot it should be possible to switch the power plugs with the rcswitch-pi 'send' command.
+
+
+### Installation of ssh and sshpass
+Optional step: In case smarthomeNG wants to access the 433 MHz transmitter on an remote host, the following stepst have to be done on the machine where smarthomeNG runs:
+<pre>apt-get update
+apt-get upgrade
+apt-get install ssh sshpass</pre>
+Also, ssh has to be installed on the machine where the 433 MHz transmitter is connected to:
+<pre>apt-get update
+apt-get upgrade
+apt-get install ssh</pre>
+
+## Configuration
+### plugin.conf
+Adding following lines to plugin.conf in smarthomeNG will enable the rcswitch plugin:
+<pre>[rc]
+    class_name = RCswitch
+    class_path = plugins.rcswitch
+    rcswitch_dir = {path of rc switch} # optional parameter. Default: /usr/local/bin/rcswitch-pi
+    rcswitch_sendDuration = {minimum time in s between sending commands} # optional parameter. Default: 0.5
+    rcswitch_host = {ip}# optional parameter. Default: empty
+    rcswitch_user = {user at remote host}#  optional parameter. Default: empty
+    rcswitch_password = {password for user at remote host}# optional parameter. Default: empty
+</pre>
+####Attributes
+* `rcswitch_dir`: has to point to the directory where the rcswitch-pi send command can be found.
+* `rcswitch_sendDuration`: intended for trouble shooting. Increase this parameter in case switching several power plugs at the same time does not work reliable. Background: In case several power plugs (with different codes / device numbers) shall be switched at the same time, there must be a short gap between sending the serval commands. Otherwise, the several send commands are executed in parallel, gernerating jam on the rc signal.
+* `rcswitch_host`: in case rcswitch is running on a remote machine, the IPv4 address has to be specified. Note: a SSH server has to be installed on the remote machine.
+* `rcswitch_user`: user on the remote machine
+* `rcswitch_password`: password for the user on the remote machine
+####Example
+<pre>[rc]
+    class_name = RCswitch
+    class_path = plugins.rcswitch
+    rcswitch_dir = /usr/local/bin/rcswitch-pi # optional
+    rcswitch_sendDuration = 0.5 # optional
+    rcswitch_host = 192.168.0.4 # optional
+    rcswitch_user = pi # optional
+    rcswitch_password = raspberry # optional
+</pre>
+
+### items.conf
+Just add following attributes to the items which shall be connected with rcswitch:
+<pre>
+rc_device = number of device [1-5]
+rc_code = code of device [00000 - 11111]
+</pre>
+####Attributes
+* `rc_device`: Number or letter or the device. Valid values: 1,2,3,4,5,a,b,c,d,e,A,B,C,D,E
+* `rc_code`: the code of the device. Must be 5 binary digits.
+####Example:
+<pre>
+[Basement]
+	[[LivingRoom]]
+		[[[RCpowerPlug]]]
+			[[[[TV]]]]
+				[[[[[switch]]]]]
+					type = bool
+					knx_dpt = 1
+					knx_listen = 14/0/10
+					knx_send = 14/0/13
+					rc_code = 11111
+					rc_device = 2
+</pre>
+
+----------------------------
+
 ## Further information
 For discussion see https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen 
