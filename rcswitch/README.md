@@ -126,12 +126,14 @@ Adding following lines to plugin.conf in smarthomeNG will enable the rcswitch pl
     rcswitch_user = {user at remote host}#  optional parameter. Default: empty
     rcswitch_password = {password for user at remote host}# optional parameter. Default: empty
 </pre>
+
 ####Attributes
 * `rcswitch_dir`: has to point to the directory where the rcswitch-pi send command can be found.
 * `rcswitch_sendDuration`: intended for trouble shooting. Increase this parameter in case switching several power plugs at the same time does not work reliable. Background: In case several power plugs (with different codes / device numbers) shall be switched at the same time, there must be a short gap between sending the serval commands. Otherwise, the several send commands are executed in parallel, gernerating jam on the rc signal.
 * `rcswitch_host`: in case rcswitch is running on a remote machine, the IPv4 address has to be specified. Note: a SSH server has to be installed on the remote machine.
 * `rcswitch_user`: user on the remote machine
 * `rcswitch_password`: password for the user on the remote machine
+
 ####Example
 <pre>[rc]
     class_name = RCswitch
