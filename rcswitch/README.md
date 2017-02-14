@@ -98,19 +98,21 @@ chmod 666 /sys/class/gpio/gpio17/direction</pre>
 Save and close the file. Now the file has to be made executable with
 <pre>sudo sudo chmod +x exportGPIO17</pre>
 Last step is to ensure that the file is called during system boot. Therefore, the following line has to be added to /etc/rc.local, right before the 'exit 0' command:
-<pre>/usr/local/scripts/exportGPIO17</pre>
+<pre>/usr/local/scripts/exportGPIO17
+</pre>
 Now even after reboot it should be possible to switch the power plugs with the rcswitch-pi 'send' command.
-
 
 ### Installation of ssh and sshpass
 Optional step: In case smarthomeNG wants to access the 433 MHz transmitter on an remote host, the following stepst have to be done on the machine where smarthomeNG runs:
 <pre>apt-get update
 apt-get upgrade
-apt-get install ssh sshpass</pre>
+apt-get install ssh sshpass
+</pre>
 Also, ssh has to be installed on the machine where the 433 MHz transmitter is connected to:
 <pre>apt-get update
 apt-get upgrade
-apt-get install ssh</pre>
+apt-get install ssh
+</pre>
 
 ## Configuration
 ### plugin.conf
@@ -147,10 +149,11 @@ Just add following attributes to the items which shall be connected with rcswitc
 rc_device = number of device [1-5]
 rc_code = code of device [00000 - 11111]
 </pre>
-####Attributes
+#### Attributes
 * `rc_device`: Number or letter or the device. Valid values: 1,2,3,4,5,a,b,c,d,e,A,B,C,D,E
 * `rc_code`: the code of the device. Must be 5 binary digits.
-####Example:
+
+#### Example:
 <pre>
 [Basement]
 	[[LivingRoom]]
