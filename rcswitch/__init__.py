@@ -19,7 +19,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import os
 import logging
 from lib.model.smartplugin import SmartPlugin
 from datetime import datetime, timedelta
@@ -37,6 +36,7 @@ class RCswitch(SmartPlugin):
 	def __init__(self, smarthome, rcswitch_dir='/usr/local/bin/rcswitch-pi', rcswitch_sendDuration='0.5', rcswitch_host='', rcswitch_user='', rcswitch_password=''):
 		self.logger = logging.getLogger(__name__)
 		self.setupOK = True
+		self.mapping = {'a':1,'A':1,'b':2,'B':2,'c':3,'C':3,'d':4,'D':4,'e':5,'E':5}
 		self._sh=smarthome
 		
 		# format path: cut possible '/' at end of rcswitch_dir parameter
@@ -64,7 +64,7 @@ class RCswitch(SmartPlugin):
 				self.logger.info('RCswitch: Using {} as host.'.format(rcswitch_host))
 			except subprocess.CalledProcessError as e:
 				self.setupOK = False
-				# give user hint where the problem is
+				# give user hint where the problem is located
 				try:
 					if (user == rcswitch_user):
 						self.logger.error('RCswitch: send file of RCswitch not found at {} on {}. Check if RCswitch is installed correctly at specifed path on {}. System returned: {}'.format(self.rcswitch_dir, rcswitch_host, rcswitch_host, e))
@@ -114,7 +114,15 @@ class RCswitch(SmartPlugin):
 		
 			# avoid parallel access by use of semaphore
 			self.lock.acquire()
-			os.popen('{}/send {} {} {}'.format(self.rcswitch_dir, rcCode, rcDevice, int(value)))
-			self.logger.info('RC Switch: setting device {} with system code {} to {}'.format(rcDevice, rcCode, value))
+			# sending commands
+			if(rcDevice in self.mapping):#handling of device encoded with a,A,b,...
+				subprocess.call(shlex.split('{}/send {} {} {}'.format(self.rcswitch_dir, rcCode, self.mapping[rcDevice], int(value))), stdout=DEVNULL, stderr=DEVNULL)
+				self.logger.info('RC Switch: setting device {} with system code {} to {}'.format(rcDevice, rcCode, value))
+			else:
+				try:#handling of devices encoded with 1,2,3
+					subprocess.call(shlex.split('{}/send {} {} {}'.format(self.rcswitch_dir, rcCode, int(rcDevice), int(value))), stdout=DEVNULL, stderr=DEVNULL)
+					self.logger.info('RC Switch: setting device {} with system code {} to {}'.format(rcDevice, rcCode, value))
+				except Exception as e:#invalid encoding of device
+					self.logger.error('RC Switch: requesting invalid device {} with system code {} '.format(rcDevice, rcCode))
 			time.sleep(min(self.sendDuration,10))# give the transmitter time to complete sending of the command (but not more than 10s)
 			self.lock.release()
