@@ -84,7 +84,7 @@ Now, with the send command the power plugs can be switched. Assuming, the power 
 <pre>./send 11111 2 1</pre>
 If the power plug does not switch at this point, you need to figure out why before proceeding.
 
-Because the setting of port 17, done with the command 'gpio export 17 out' will be lost after reboot, it has to made persistent. Therefore create file /usr/local/scripts/exportGPIO17
+Because the setting of port 17, done with the command 'gpio export 17 out' will be lost after reboot, it has to made persistent. Therefore, create file /usr/local/scripts/exportGPIO17
 <pre>sudo mkdir /usr/local/scripts/
 cd /usr/local/scripts/
 sudo nano exportGPIO17
@@ -103,7 +103,7 @@ Last step is to ensure that the file is called during system boot. Therefore, th
 Now even after reboot it should be possible to switch the power plugs with the rcswitch-pi 'send' command.
 
 ### Installation of ssh and sshpass
-Optional step: In case smarthomeNG wants to access the 433 MHz transmitter on an remote host, the following stepst have to be done on the machine where smarthomeNG runs:
+Optional step: In case smarthomeNG wants to access the 433 MHz transmitter on an remote host, the following steps have to be done on the machine where smarthomeNG runs:
 <pre>apt-get update
 apt-get upgrade
 apt-get install ssh sshpass
