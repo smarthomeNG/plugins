@@ -169,6 +169,17 @@ rc_code = code of device [00000 - 11111]
 </pre>
 
 ----------------------------
+## Changelog
 
+### v0.1
+* initial version. Supports sending on local machine
+
+### v0.2
+* support of remote transmitter
+* more detailed failure report in case of misconfiguration
+* usage of subprocess module instead of the os module
+* support of literal device numbers
+
+----------------------------
 ## Further information
 For discussion see https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen 
