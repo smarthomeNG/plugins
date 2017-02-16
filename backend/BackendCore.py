@@ -352,7 +352,8 @@ class Backend:
         parent_items_sorted = []
         for item in items_sorted:
             if "." not in item._path:
-                parent_items_sorted.append(item)
+                if item._name not in ['env_daily', 'env_init', 'env_loc', 'env_stat'] and item._type == 'foo':
+                    parent_items_sorted.append(item)
 
         item_data = self._build_item_tree(parent_items_sorted)
         return json.dumps(item_data)
