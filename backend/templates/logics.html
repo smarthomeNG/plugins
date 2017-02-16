@@ -67,7 +67,7 @@
 						{% endif %}
 					{% endfor %}
 
-				    <tr><td></td></tr>
+				    <tr><td colspan="{% if updates %}8{% else %}7{% endif %}" style="background: #fff;"></td></tr>
 					<tr><th colspan="{% if updates %}8{% else %}7{% endif %}">{{ _('Systemlogiken') }}</th><tr>
 
 					{% for logic in logics %}
