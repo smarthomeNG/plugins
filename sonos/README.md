@@ -1,47 +1,51 @@
-This sub-project is a client implementation fpr the Sonos Broker. It is a plugin for the 
-Smarthome.py framework (https://github.com/smarthomeNG/smarthome).
+This sub-project is a client implementation for the Sonos Broker. It is a plugin for the 
+SmarthomeNG framework (https://github.com/smarthomeNG).
 
 ##Release
 
-v0.9  (2016-11-20)
+v1.0    (2017-02-18)
     
+    -- Attention: only compatible with SmarthomeNG
+    -- SmartPlugin functionality added
+    -- dpt3 functionality added for volume item
+    -- command 'transport_actions' added
+    -- command 'nightmode' added 
+    -- play_tts: attribute 'force_stream_mode' (re)-added
+    -- added attribute 'play' to 'unjoin'
+        -- resumes the last played track / radio before join to another group
     -- added missing 'track_album' property
     -- add new property 'playlist_total_tracks'
-    -- change expected Sonos Broker version to 0.9
+    -- attribute 'is_coordiantor' in example has now the right value
+    -- version string updated
+    -- change expected Sonos Broker version to v1.0
 
-v0.8.2  (2016-11-14)
+## Overview
 
-    -- change expected Sonos Broker version to 0.8.2
- 
-v0.8.1  (2016-11-14)
+[1. Requirements](#req)
 
-    -- switching versioning to the current Sonos Broker version
-    -- change expected Sonos Broker version to 0.8.1
-    
-v1.8    (2016-11-11)
-    
-    -- ATTENTION: commands 'get_playlist' and 'set_playlist' removed  and replaced by 'sonos_playlists' and
-       'load_sonos_playlist'
-    --command "load_sonos_playlist" with parameter added. The commands loads a Sonos playlist by its name.
-        -- optional parameters: play_after_insert, clear_queue
-    -- command "play_tunein" added
-        -- 'play_tunein' expects a radio station name. The name will be searched within TuneIn and the 
-            first match is played. To make sure the correct radio station is played provide the full radio 
-            station showing in the Sonos app.
-    -- 'clear_queue' command added. The command clears the current queue.
-    -- version check against Sonos Broker to identify an out-dated plugin or Broker
-    
+[2. Integration in SmarthomeNG](#shng)
 
-## Requirements:
+[3. Volume DPT3 support](#dpt)
 
-  sonos_broker server v0.8.3
+[4. Group behavior](#group)
+
+[5. Methods](#meth)
+
+[6. SmartVISU Integration](#visu)
+
+[7. FAQ](#faq)
+
+
+##<a name="req"></a>Requirements:
+
+  Sonos Broker v1.0
   (https://github.com/pfischi/shSonos)
 
-  SmarthomeNG 
+  SmarthomeNG 1.3 
   (https://github.com/smarthomeNG/smarthome)
 
 
-## Integration in Smarthome.py
+##<a name="shng"></a>Integration in SmarthomeNG
 
 Go to /usr/smarthome/etc and edit plugins.conf and add ths entry:
 
@@ -57,9 +61,7 @@ the same system.
 The ***refresh*** parameter specifies, how often the broker is requested for sonos status updates (default: 120s).
 Normally, all changes to the speakers will be triggered automatically to the plugin.
 
-Go to /usr/smarthome/items
-    
-Create a file named sonos.conf.
+Go to /usr/smarthome/items. Create a file named sonos.conf or copy the sonos.conf from the examples folder.
   
 Edit file with this sample of mine:
   
@@ -90,8 +92,6 @@ Edit file with this sample of mine:
     
         [[volume]]
             type = num
-            enforce_updates = True
-            visu_acl = rw
             sonos_recv = volume
             sonos_send = volume
     
@@ -99,6 +99,16 @@ Edit file with this sample of mine:
                 type = bool
                 value = 0
     
+            [[[volume_dpt3]]]
+                type = list
+                sonos_volume_dpt3 = foo
+                sonos_vol_step = 2
+                sonos_vol_time = 1
+        
+                [[[[helper]]]]
+                    type = num
+                    sonos_send = volume
+                
         [[max_volume]]
             type = num
             enforce_updates = True
@@ -238,6 +248,10 @@ Edit file with this sample of mine:
             [[[group_command]]]
                 type = bool
                 value = 0
+            
+            [[[force_stream_mode]]]
+                type = bool
+                value = 0
     
         [[radio_show]]
             type = str
@@ -325,6 +339,10 @@ Edit file with this sample of mine:
             enforce_updates = True
             sonos_send = unjoin
             visu_acl = rw
+            
+            [[[play]]]
+                type = bool
+                value = 1
     
         [[partymode]]
             type = foo
@@ -386,7 +404,14 @@ Edit file with this sample of mine:
             [[[group_command]]]
                 type = bool
                 value = 0
-    
+        
+        [[nightmode]]
+            type = bool
+            enforce_updates = True
+            visu_acl = rw
+            sonos_recv = nightmode
+            sonos_send = nightmode
+        
         [[playmode]]
             type = str
             enforce_updates = True
@@ -451,6 +476,11 @@ Edit file with this sample of mine:
             type = bool
             enforce_updates = True
             sonos_send = clear_queue
+         
+        [[transport_actions]]
+            type = str
+            sonos_recv = transport_actions
+    
         
         
  This sonos.conf file implements most of the commands to interact with the Sonos Broker. Please follow the detailed
@@ -463,7 +493,49 @@ Edit file with this sample of mine:
   
     http://<sonos_server_ip:port>/client/list
 
-## Group behaviour
+##<a name="dpt">Volume DPT3 support
+
+If you take look at the ```volume``` item in your Sonos items configuration you should find something like this:
+```
+[[volume]]
+    type = num
+    sonos_recv = volume
+    sonos_send = volume
+
+    [[[group_command]]]
+        type = bool
+        value = 0
+
+    [[[volume_dpt3]]]
+        type = list
+        sonos_volume_dpt3 = foo
+        sonos_vol_step = 2
+        sonos_vol_time = 1
+
+        [[[[helper]]]]
+            type = num
+            sonos_send = volume
+```
+If you want to use a dim-like functionality to control the volume (e.g. with a button), you can edit the 
+```volume_dpt3``` item. ***sonos_vol_step*** (default: 2) defines the volume step for up and down, ***sonos_vol_time*** 
+(default: 1) the time between the steps. Both values are optional, if not set, the default value is used. A real-world
+example could look like this:
+```
+[[[volume_dpt3]]]
+    type = list
+    knx_dpt = 3
+    knx_listen = 7/0/0
+    sonos_volume_dpt3 = foo
+    sonos_vol_step = 2
+    sonos_vol_time = 1
+ 
+    [[[[helper]]]]
+        type = num
+        sonos_send = volume
+```
+Don't change the items name, otherwise the function will not work.
+
+##<a name="group"></a>Group behaviour
 
  If two or more speakers are in the same zone, most of the commands are automatically executed for all zone
  members. Normally the Sonos API requires to send the command to the zone master. This is done by the Broker
@@ -501,7 +573,7 @@ Edit file with this sample of mine:
     loudness
     balance
 
-## Methods
+##<a name="meth"></a>Methods
 
 get_favorite_radiostations(<start_item>, <max_items>)
 
@@ -559,36 +631,22 @@ discover()
     sh.sonos.discover()
 
 
-## smartVISU Integration
+##<a name="visu"></a>smartVISU Integration
 
-more information here: https://github.com/pfischi/shSonos/tree/develop/widget.smartvisu
+More information [--> HERE <--](https://github.com/pfischi/shSonos/tree/develop/widget.smartvisu)
 
+##<a name="faq"></a>FAQ
 
-## Logic examples
-
-To run this plugin with a logic, here is my example:
-    
-Go to /usr/smarthome/logics and create a self-named file (e.g. sonos.py)
-Edit this file and place your logic here:
-    
-    
-    #!/usr/bin/env python
-    #
-
-    if sh.ow.ibutton():
-        sh.sonos.mute(1)
-    else:
-        sh.sonos.mute(0)
-
-    
-  Last step: go to /usr/smarthome/etc and edit logics.conf
-  Add a section for your logic:
-    
-    # logic
-    [sonos_logic]
-        filename = sonos.py
-        watch_item = ow.ibutton
-    
-    
-In this small example, the sonos speaker with uid RINCON_000E58D5892E11230 is muted when the iButton is connected
-to an iButton Probe.
+##### utf-8 codec error
+If you're using Onkelandy's SmarthomeNG Image (and other Linux distros), following error can occurred if you're using 
+non-ASCII characters for Sonos speaker names:
+```
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 37: invalid start byte
+```
+This happens because the 'stdout' setting of the system is set to an ASCII character set. You can this by entering 
+following command in your console:
+```
+export LC_ALL=de_DE.utf8
+export LANGUAGE=de_DE.utf8
+```
+For more information about 'locales', please follow this [--> LINK <--](https://www.thomas-krenn.com/de/wiki/Locales_unter_Ubuntu_konfigurieren)
