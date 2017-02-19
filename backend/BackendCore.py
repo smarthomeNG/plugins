@@ -327,7 +327,7 @@ class Backend:
         else:
             conf_code = ''
             yaml_code = ''
-        return self.render_template('conf_yaml_converter.html')
+        return self.render_template('conf_yaml_converter.html', conf_code=conf_code, yaml_code=yaml_code)
 
 
     # -----------------------------------------------------------------------------------
