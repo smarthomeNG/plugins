@@ -39,7 +39,7 @@ class Harmony(SmartPlugin):
 
     def _message(self, message):
         match = re.match(r".*?startActivityFinished\">activityId=(\d+):errorCode=200.*",
-                          html.unescape(str(message)))
+                         html.unescape(str(message)))
         if match:
             self._set_current_activity(int(match.group(1)))
 
@@ -73,7 +73,7 @@ class Harmony(SmartPlugin):
                 return
             self._client = HarmonyClient(token)
             self._client.add_custom_handler('stream_negotiated', self._event_session_negotiated)
-            self._client.add_custom_handler('socket_error', self._event_socket_error)
+            self._client.add_event_handler('socket_error', self._event_socket_error)
             self._client.add_custom_handler('session_end', self._event_session_end)
             self._client.add_event_handler('message', self._message)
             self._client.whitespace_keepalive = True
@@ -85,7 +85,7 @@ class Harmony(SmartPlugin):
             self._get_config()
 
     def _get_config(self):
-        if self._is_active:
+        try:
             config = self._client.get_config()
             if 'activity' in config:
                 for activity in config['activity']:
@@ -95,23 +95,23 @@ class Harmony(SmartPlugin):
                     if 'label' in device and 'id' in device:
                         self._devices[int(device['id'])] = device['label']
             self._set_current_activity()
-        else:
-            self._logger.warning("Could not get config. Harmony Hub connection inactive.")
+        except:
+            self._client.disconnect(reconnect=False, send_close=False, wait=2)
+            self._logger.warning("Harmony: Harmony hub seems to be offline.")
 
     def _set_current_activity(self, activity=None):
-        if self._is_active:
-            activity_name = "unknown"
+        activity_name = "unknown"
+        if activity is None:
+            activity = self._client.get_current_activity()
             if activity is None:
-                activity = self._client.get_current_activity()
-                if activity is None:
-                    activity = 0
+                activity = 0
 
-            if activity in self._activities:
-                activity_name = self._activities[activity]
-            for item in self._current_activity_id_items:
-                item(activity)
-            for item in self._current_activity_name_items:
-                item(activity_name)
+        if activity in self._activities:
+            activity_name = self._activities[activity]
+        for item in self._current_activity_id_items:
+            item(activity)
+        for item in self._current_activity_name_items:
+            item(activity_name)
 
     def _send_activity(self, activity):
         label = "unknown"
@@ -209,7 +209,7 @@ class Harmony(SmartPlugin):
 
             if is_activity:
                 self._logger.debug("activity {activity} scheduled".format(activity=action[1]))
-                scheduler.enter(absolute_delay, 1, self._send_activity, (action[1], ))
+                scheduler.enter(absolute_delay, 1, self._send_activity, (action[1],))
             else:
                 self._logger.debug("command {command} scheduled".format(command=action[1]))
                 scheduler.enter(absolute_delay, 1, self._send_command, (int(action[0]), action[1]))
@@ -232,7 +232,10 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
 
     def connect_client(self, ip_address, port):
 
-        self.connect(address=(ip_address, port), use_tls=False, use_ssl=False)
+        if not self.connect(address=(ip_address, port), use_tls=False, use_ssl=False, reattempt=False):
+            self._logger.warning("Harmony: Harmony hub seems to be offline.")
+            return False
+
         self.process(block=False)
 
         duration = 30
@@ -323,6 +326,7 @@ class HarmonyClient(sleekxmpp.ClientXMPP):
         else:
             return False
 
+
 class AuthToken(sleekxmpp.ClientXMPP):
     """An XMPP client for swapping a Login Token for a Session Token.
 
@@ -363,6 +367,7 @@ class AuthToken(sleekxmpp.ClientXMPP):
         self.uuid = match.group('uuid')
         self.disconnect(send_close=False)
 
+
 def get_auth_token(ip_address, port):
     """Swaps the Logitech auth token for a session token.
 
@@ -374,6 +379,16 @@ def get_auth_token(ip_address, port):
         A string containing the session token.
     """
     login_client = AuthToken()
-    login_client.connect(address=(ip_address, port), use_tls=False, use_ssl=False)
-    login_client.process(block=True)
-    return login_client.uuid
+    if login_client.connect(address=(ip_address, port), use_tls=False, use_ssl=False, reattempt=False):
+        login_client.process(block=False)
+    duration = 30
+
+    while not login_client.sessionstarted and duration != 0:
+        time.sleep(0.1)
+        duration -= 1
+    if login_client.sessionstarted:
+        time.sleep(1)
+        return login_client.uuid
+
+    login_client.disconnect(send_close=False)
+    return None
