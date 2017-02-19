@@ -10,7 +10,7 @@ import requests
 import time
 from lib.model.smartplugin import SmartPlugin
 
-EXPECTED_BROKER_VERSION = "1.0"
+EXPECTED_BROKER_VERSION = "1.1"
 sonos_speaker = {}
 
 
@@ -54,7 +54,7 @@ class UDPDispatcher(lib.connection.Server):
 
 
 class Sonos(SmartPlugin):
-    PLUGIN_VERSION = "1.3.0.1"
+    PLUGIN_VERSION = "1.3.0.2"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, listen_host='0.0.0.0', listen_port=9999, broker_url=None, refresh=120):
@@ -556,7 +556,7 @@ class Sonos(SmartPlugin):
         return self._send_cmd(SonosCommand.refresh_media_library(display_option))
 
     def version(self):
-        return "v1.0\t2017-02-15"
+        return "v1.1\t2017-02-19"
 
     def discover(self):
         return self._send_cmd(SonosCommand.discover())
