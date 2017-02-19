@@ -44,7 +44,7 @@ import logging
 import socket
 from lib.model.smartplugin import SmartPlugin
 
-ITEM_TAG = ['wol_mac']
+ITEM_TAG = ['wol_mac', 'wol_ip']
 class WakeOnLan(SmartPlugin):
     PLUGIN_VERSION = "1.1.2"
     ALLOW_MULTIINSTANCE = True
@@ -72,9 +72,12 @@ class WakeOnLan(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         if item():
             if self.has_iattr(item.conf, ITEM_TAG[0]):
-                self.wake_on_lan(self.get_iattr_value(item.conf,ITEM_TAG[0]))
+                if self.has_iattr(item.conf, ITEM_TAG[1]):
+                    self.wake_on_lan(self.get_iattr_value(item.conf,ITEM_TAG[0]),self.get_iattr_value(item.conf,ITEM_TAG[1]))
+                else:
+                    self.wake_on_lan(self.get_iattr_value(item.conf,ITEM_TAG[0]))
 
-    def wake_on_lan(self, mac_adr):
+    def wake_on_lan(self, mac_adr, ip_adr='<broadcast>'):
         self.logger.debug("WakeOnLan: send magic paket to {}".format(mac_adr))
         # check length and format 
         if self.is_mac(mac_adr) != True:
@@ -86,10 +89,10 @@ class WakeOnLan(SmartPlugin):
         # create magic packet 
         data = ''.join(['FF' * 6, mac_adr * 20])
         # Broadcast
-        self.logger.debug("WakeOnLan: send magic paket " + data)
+        self.logger.debug("WakeOnLan: send magic paket " + data + "to ip/mac " + ip_adr + "/" + mac_adr)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.sendto(bytearray.fromhex(data), ('<broadcast>', 7))
+        sock.sendto(bytearray.fromhex(data), (ip_adr, 7))
 
 if __name__ == '__main__':
     myplugin = WakeOnLan('smarthome-dummy')
