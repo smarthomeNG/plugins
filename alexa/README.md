@@ -53,42 +53,45 @@ implemented actions (case-sensitive, [exactly as specified](https://developer.am
 specify supported actions space-separated
 ```
 [item]
-type = foo
+type = bool
+name = diningroomlamp
 alexa_name = "Diningroom Lamp"
 alexa_actions = "turnOn turnOff"
 ```
 
-you may omit the `alexa_name`
+you may omit the `alexa_name` (which is used as the 'friendly name' in alexa) and reuse the normal `name` property
 ```
 [item]
-type = foo
+type = bool
 name = "Diningroom Lamp"
 alexa_actions = "turnOn turnOff"
 ```
 
 you can use multiple items for specific actions using the same alexa-name.
+however, it is recommended to use the device-identifier for this purpose instead (see next example)
 ```
 [item_only_on]
-type = foo
+type = bool
 alexa_name = "Diningroom Lamp"
 alexa_actions = turnOn
 
 [item_only_off]
-type = foo
+type = bool
 alexa_name = "Diningroom Lamp"
 alexa_actions = turnOff
 ```
 
-the device-identifier is automatically deduced from the `alexa_name` - but you can specify it explicitly using `alexa_device` (please note the [format of the `applianceId`](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discovery-messages))
+the device-identifier is automatically deduced from the `alexa_name` - but you can specify it explicitly using `alexa_device`
+(please note the [format of the `applianceId`](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discovery-messages))
 ```
 [[item_only_on]]
-type = foo
+type = bool
 alexa_name = "Diningroom Lamp"
 alexa_device = diningroom-lamp
 alexa_actions = turnOn
 
 [[item_only_off]]
-type = foo
+type = bool
 alexa_device = diningroom-lamp
 alexa_actions = turnOff
 ```
@@ -96,7 +99,7 @@ alexa_actions = turnOff
 alexa demands "friendly descriptions", you should set it using `alexa_description`. If not set, the `alexa_name` is used as a fallback.
 ```
 [item]
-type = foo
+type = bool
 alexa_name = "Diningroom Lamp"
 alexa_actions = "turnOn turnOff"
 alexa_description = "The pompous dining room lamp in the west-wing"
@@ -115,7 +118,7 @@ knx_init = 1/1/1
 knx_send = 1/1/0
 ````
 
-you can define `alexa_name` & `alexa_description` centrally in one item and reference the device in other items just by using the `alexa_device` (you must always define a `type` though!)
+you can define `alexa_name` & `alexa_description` centrally in one item and reference the device in other items just by using the `alexa_device` (you must always define a `type` though!). this is the recommended fully-specified, no-fallbacks configuration.
 ```
 [root]
   [[livingroom_lamps]]
