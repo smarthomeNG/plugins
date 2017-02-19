@@ -3,6 +3,11 @@ SmarthomeNG framework (https://github.com/smarthomeNG).
 
 ##Release
 
+v1.1    (2017-02-19)
+    
+    -- changed expected Sonos Broker version to 1.1
+    -- change output of volume_dpt3 items from warning to debug
+
 v1.0    (2017-02-18)
     
     -- Attention: only compatible with SmarthomeNG
