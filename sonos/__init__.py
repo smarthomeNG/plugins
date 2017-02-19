@@ -189,17 +189,17 @@ class Sonos(SmartPlugin):
         if self.has_iattr(item.conf, 'sonos_volume_dpt3'):
             if not self.has_iattr(item.conf, 'sonos_vol_step'):
                 item.conf['sonos_vol_step'] = self._dpt3_vol_step
-                self._logger.warning("Sonos: no sonos_vol_step defined, using default value {step}.".
+                self._logger.debug("Sonos: no sonos_vol_step defined, using default value {step}.".
                                      format(step=self._dpt3_vol_step))
 
             if not self.has_iattr(item.conf, 'sonos_vol_time'):
                 item.conf['sonos_vol_time'] = self._dpt3_vol_time
-                self._logger.warning("Sonos: no sonos_vol_time defined, using default value {time}.".
+                self._logger.debug("Sonos: no sonos_vol_time defined, using default value {time}.".
                                      format(time=self._dpt3_vol_time))
 
             if not self.has_iattr(item.conf, 'sonos_vol_max'):
                 item.conf['sonos_vol_max'] = self._dpt3_vol_max
-                self._logger.warning("Sonos: no sonos_vol_max defined, using default value {max}.".
+                self._logger.debug("Sonos: no sonos_vol_max defined, using default value {max}.".
                                      format(max=self._dpt3_vol_max))
 
             return self._handle_volume_dpt3
