@@ -43,10 +43,10 @@ v1.0    (2017-02-18)
 
 ##<a name="req"></a>Requirements:
 
-  Sonos Broker v1.0
+  Sonos Broker v1.1
   (https://github.com/pfischi/shSonos)
 
-  SmarthomeNG 1.3 
+  SmarthomeNG >= 1.2 
   (https://github.com/smarthomeNG/smarthome)
 
 
