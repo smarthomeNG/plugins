@@ -28,7 +28,7 @@
 #        class_path = plugins.wol
 #
 #  2. add to you items atribute  "wol_mac" with the mac for wake up.
-#     there is also an option wol_ip when waking up hosts in differen
+#     there is also an option wol_ip when waking up hosts in different
 #     subnets.
 #  [wakeonlan_item]
 #     type = bool

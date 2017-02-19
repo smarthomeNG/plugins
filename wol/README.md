@@ -24,7 +24,7 @@ Configuration
      type = bool
 
      wol_mac = 01:02:03:04:05:06
-     wol_ip = 1.2.3.4
+#     wol_ip = 1.2.3.4
 </pre>
 
 ### wol_mac
