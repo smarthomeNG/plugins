@@ -10,7 +10,7 @@ import requests
 import time
 from lib.model.smartplugin import SmartPlugin
 
-EXPECTED_BROKER_VERSION = "1.0"
+EXPECTED_BROKER_VERSION = "1.1"
 sonos_speaker = {}
 
 
@@ -54,7 +54,7 @@ class UDPDispatcher(lib.connection.Server):
 
 
 class Sonos(SmartPlugin):
-    PLUGIN_VERSION = "1.3.0.1"
+    PLUGIN_VERSION = "1.3.0.2"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, listen_host='0.0.0.0', listen_port=9999, broker_url=None, refresh=120):
@@ -189,17 +189,17 @@ class Sonos(SmartPlugin):
         if self.has_iattr(item.conf, 'sonos_volume_dpt3'):
             if not self.has_iattr(item.conf, 'sonos_vol_step'):
                 item.conf['sonos_vol_step'] = self._dpt3_vol_step
-                self._logger.warning("Sonos: no sonos_vol_step defined, using default value {step}.".
+                self._logger.debug("Sonos: no sonos_vol_step defined, using default value {step}.".
                                      format(step=self._dpt3_vol_step))
 
             if not self.has_iattr(item.conf, 'sonos_vol_time'):
                 item.conf['sonos_vol_time'] = self._dpt3_vol_time
-                self._logger.warning("Sonos: no sonos_vol_time defined, using default value {time}.".
+                self._logger.debug("Sonos: no sonos_vol_time defined, using default value {time}.".
                                      format(time=self._dpt3_vol_time))
 
             if not self.has_iattr(item.conf, 'sonos_vol_max'):
                 item.conf['sonos_vol_max'] = self._dpt3_vol_max
-                self._logger.warning("Sonos: no sonos_vol_max defined, using default value {max}.".
+                self._logger.debug("Sonos: no sonos_vol_max defined, using default value {max}.".
                                      format(max=self._dpt3_vol_max))
 
             return self._handle_volume_dpt3
@@ -556,7 +556,7 @@ class Sonos(SmartPlugin):
         return self._send_cmd(SonosCommand.refresh_media_library(display_option))
 
     def version(self):
-        return "v1.0\t2017-02-15"
+        return "v1.1\t2017-02-19"
 
     def discover(self):
         return self._send_cmd(SonosCommand.discover())
