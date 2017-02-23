@@ -577,6 +577,16 @@ class JSONEncoder(json.JSONEncoder):
             return obj.isoformat()
         elif isinstance(obj, datetime.date):
             return obj.isoformat()
+        elif isinstance(obj, datetime.time):
+            return obj.isoformat()
+        elif isinstance(obj, datetime.timedelta):
+            return int(obj.total_seconds())
+        elif isinstance(obj, decimal.Decimal):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
+rn obj.isoformat()
         elif isinstance(obj, datetime.timedelta):
             return int(obj.total_seconds())
         elif isinstance(obj, decimal.Decimal):

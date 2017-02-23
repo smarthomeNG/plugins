@@ -254,3 +254,20 @@ The following example shows, what a smartVISU v2.7 running in a Safari Browser w
 	}
 ```
 
+
+## url
+--> This command is new with **SmartHomeNG 1.3**
+
+--> This command works with **smartVISU 2.9** and up, for **smartVISU 2.8** a modified driver **`io_smarthome.py`** is needed.
+
+ **`url`**  is a command sent from the plugin to the smartVISU clients. With the **`url`** command the smartVISU client can be instructed to change to another page.
+
+The following command instructs smartVISU to change to the main page:
+
+```
+	{"cmd":"url", "url": "index.php"}
+```
+
+The smartVISU client does not send an answer to the **`url`** command.
+
+
