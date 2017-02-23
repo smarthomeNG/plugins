@@ -100,7 +100,7 @@ This function instructs the smartVISU clients to change to the specified url (vi
 Example:
 
 ```
-	sh.visu.url('index.php', '10.0.0.23')
+	sh.visu.url('index.php')
 ```
 
 This function call expects the visu_websocket plugin to be configured in a section named **`visu`** in the configuration file **`etc/plugin.yaml`** or **`etc/plugin.conf`**.
