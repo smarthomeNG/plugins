@@ -20,7 +20,7 @@ You can configure multiple instances of the wunderground plugin to collect data 
 	class_name = Wunderground
 	class_path = plugins.wunderground
 	apikey = xxxxyyyyxxxxyyyy
-	language = DL
+	# language = de
 	location = Germany/Hamburg
 	item_subtree = mein_wetter
 	instance = wetter_ham
@@ -31,7 +31,10 @@ You can configure multiple instances of the wunderground plugin to collect data 
 Enter you registered wunderground API key
 
 ### language
-Defines the language for the forcast data. Examples: EN: English, DL: German, FR: French, LI: British English, FC: French Canadian, CH: Swiss.
+Defines the language for the forcast data. (en: English, de: German, fr: French)
+
+If you need another language, lookup a complete list of language codes on www.wunderground.com
+
 
 For a complete list, consult www.wunderground.com
 

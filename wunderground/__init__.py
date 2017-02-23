@@ -64,8 +64,8 @@ class Wunderground(SmartPlugin):
 
         self.language = ''
         self.language = languagedict.get( str(language).lower() )
-        if self.language == '':
-            self.language = str(self.language).upper()
+        if self.language == None:
+            self.language = str(language).upper()
 
         self.location = str(location)
         if self.location == '':
