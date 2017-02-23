@@ -93,6 +93,8 @@ You could specify the **`visu_acl`** attribute to every logic in your logic.conf
 
 ## url(url)
 
+--> This command works with **smartVISU 2.9** and up, for **smartVISU 2.8** a modified driver **`io_smarthome.py`** is needed.
+
 This function instructs the smartVISU clients to change to the specified url (visu page).
 
 Example:
@@ -108,6 +110,8 @@ It instructs all running visu clients to change to the main page.
 
 ## url(url, ip)
 
+--> This command works with **smartVISU 2.9** and up, for **smartVISU 2.8** a modified driver **`io_smarthome.py`** is needed.
+
 Function is the same as above, but only clients (browsers) running on a host with the specified ip address are instructed to change the page.
 
 Example:
@@ -117,23 +121,4 @@ Example:
 ```
 
 This command expects the visu_websocket plugin to be configured in a section named **`visu`** in the configuration file **`etc/plugin.yaml`** or **`etc/plugin.conf`**.
-
-It instructs visu clients running on host 10.0.0.23 to change to the livingroom page **`apartement.living`**.
-
-
-## send_message(messagetext, messagetype=1, timeout=10)
-
-Sets a message to the device
-messagetype: Number from 0 to 3, 0= Yes/No, 1= Info, 2=Message, 3=Attention
-timeout: Number of seconds the message should stay on the device, default: 10
-<pre>
-sh.vusolo2.send_message("Testnachricht",1,10)
-</pre>       
-
-## get_answer()
-
-This function checks for an answer to a sent message. If you call this method, take into account the timeout until the message can be answered and e.g. set a "while (count < 0)"
-<pre>
-sh.vusolo2.get_answer()
-</pre>
 
