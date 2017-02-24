@@ -145,7 +145,7 @@ class EnOcean(SmartPlugin):
                             value_dict = RADIO_PAYLOAD_VALUE[rorg]['entities']
                             value = eval(RADIO_PAYLOAD_VALUE[rorg]['entities'][eval_value])
                             self.logger.debug("Resulting value: {0} for {1}".format(value, item))
-                            if value:  # not shure about this
+                            if value:  # not sure about this
                                 item(value, 'EnOcean', 'RADIO')
 
     def _process_packet_type_event(self, data, optional):
@@ -571,7 +571,7 @@ class EnOcean(SmartPlugin):
 
     def send_radiator_valve(self,item, id_offset=0):
         self.logger.debug("enocean: sending valve command A5_20_04")
-        temperature = item()
+        temperature = item
         #define default values:
         MC  = 1 #off
         WUC = 3 # 120 seconds

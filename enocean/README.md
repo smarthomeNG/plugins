@@ -5,7 +5,7 @@ Configure plugin.conf
 =
 
 Add the following lines to your plugin.conf and just adapt the serial port to your port name of your enocean-adpater.
-A udev-rules for the enocean-adapter is recommend. The specification of the enocean tx_id is optional but mandatory for sending control commands from the stick to a device. When controlling multiple devices, it is recommended to use the stick's BaseID (not ChipID) as transmitting ID.
+A udev-rules for the enocean-adapter is recommend. The specification of the enocean tx_id is optional but mandatory for sending control commands from the stick to a device. It is defined as a 8 digit hex value. When controlling multiple devices, it is recommended to use the stick's BaseID (not ChipID) as transmitting ID.
 For further information regarding the difference between BaseID and ChipID, see https://www.enocean.com/en/knowledge-base-doku/enoceansystemspecification:issue:what_is_a_base_id/
 With the specification of the BaseID, 128 different transmit IDs are available, ranging between BaseID and BaseID + 127.
 
@@ -14,19 +14,10 @@ With the specification of the BaseID, 128 different transmit IDs are available, 
     class_name = EnOcean
     class_path = plugins.enocean
     serialport = /dev/ttyUSB0
-    tx_id      = FFFF_4680
+    tx_id      = FFFF4680
 </pre>
 
 
-Learning Mode:
-For some enocean devices it is important to teach in the enocean stick first. In order to send a special learning message, start smarthome with the interactive console: ./smarthome.py -i
-Then use the following command:
-<pre>
-    sh.enocean.send_learn(ID_Offset)
-</pre>
-, where ID_Offset, range (0-127), specifies the sending ID offset with respect to the BaseID. Later, the ID offset is specified in the item.conf for every outgoing send command, see example below.
-Use different ID offsets for different groups of actors.
-That's it!
 
 Configure items
 =
@@ -181,3 +172,23 @@ Send commands: Tx EEPs
 * A5_38_08_01 Regular switch actor command (on/off)
 * A5_38_08_02 Dimmer command with fix on off command (on: 100, off:0)
 * A5_38_08_03 Dimmer command with specified dim level (0-100)
+              The optional ref_level parameter defines default dim value when dimmer is switched on via on command.
+
+Learning Mode:
+=
+
+Devices that shall receive commands from the smarthome plugin, i.e. the encoean gateway must be subscribed first. Generally follow the teach in procedure as described by enocean.
+Usually, the enocean device, e.g. enocean actor, is set to teach in mode. See the manual of the respective device for further information. Once being in teach in mode, trigger a learn-in command from smarthomeNG.
+In order to send a special learning message, start smarthome with the interactive console: ./smarthome.py -i
+Then use one of th following learn-in command, depending on your enocean device:
+<pre>
+    sh.enocean.send_learn_dim(ID_Offset)
+    sh.enocean.send_learn_rgbw_dim(ID_Offset)
+    sh.enocean.send_learn_switch(ID_Offset)
+</pre>
+, where ID_Offset, range (0-127), specifies the sending ID offset with respect to the BaseID. Later, the ID offset is specified in the item.conf for every outgoing send command, see example below.
+Use different ID offsets for different groups of actors. After complete the teach-in procedure, leave the interactive console and add the applied ID_Offset to the respective enocean send item (enocean_tx_id_offse = ID_Offse).
+That's it!
+
+Docu V1.1
+
