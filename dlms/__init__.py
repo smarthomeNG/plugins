@@ -591,7 +591,7 @@ class DLMS(SmartPlugin):
     def _update_dlms_obis_readout_items(self, textblock):
         if __name__ != '__main__':
             for item in self.dlms_obis_readout_items:
-                item(textblock)
+                item(textblock, 'DLMS')
     
 
     def _is_obis_code_wanted( self, code):
@@ -632,7 +632,7 @@ class DLMS(SmartPlugin):
                         try:
                             itemValue = Values[Index][Key]
                             itemValue = self._convert_value(itemValue, Converter )
-                            item(itemValue)
+                            item(itemValue, 'DLMS')
                             self.logger.debug("Set item {} for Obis Code {} to Value {}".format(item, Code, itemValue))
                         except IndexError as e:
                             self.logger.warning("Index Error '{}' while setting item {} for Obis Code {} to Value "
