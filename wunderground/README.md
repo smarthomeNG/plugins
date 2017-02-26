@@ -15,7 +15,8 @@ Use the plugin configuration to configure the wunderground plugin.
 
 You can configure multiple instances of the wunderground plugin to collect data for multiple locations.
 
-<pre>
+```
+# for etc/plugin.conf configuration file:
 [weather_somewhere]
 	class_name = Wunderground
 	class_path = plugins.wunderground
@@ -24,8 +25,21 @@ You can configure multiple instances of the wunderground plugin to collect data 
 	location = Germany/Hamburg
 	item_subtree = mein_wetter
 	instance = wetter_ham
-</pre>
+```
 
+or
+
+```yaml
+# for etc/plugin.yaml configuration file:
+weather_somewhere:
+    class_name: Wunderground
+    class_path: plugins.wunderground
+    apikey: xxxxyyyyxxxxyyyy
+    # language: de
+    location: Germany/Hamburg
+    item_subtree: mein_wetter
+    instance: wetter_ham
+```
 
 ### apikey
 Enter you registered wunderground API key
