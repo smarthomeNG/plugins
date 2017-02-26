@@ -1011,6 +1011,7 @@ class Backend:
 
         clients_sorted = sorted(clients, key=lambda k: k['name'])
 
+        self.find_visu_plugin()
         return self.render_template('visu.html', 
                                     visu_plugin_build=self.visu_plugin_build,
                                     clients=clients_sorted)
