@@ -36,7 +36,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class Wunderground(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION='1.2.1'
+    PLUGIN_VERSION='1.2.2'
 
 
     ## The constructor: Initialize plugin
@@ -132,12 +132,13 @@ class Wunderground(SmartPlugin):
 
     def _get_item_fromxml(self, item):
         """
-        Parse the xml String 
+        Parse the xml String from wunderground
         """
         try:
             s=item.conf['wug_xmlstring']
+            dt=item.conf.get('wug_datatype', '').lower()
             if len(s)>0:
-                self.logger.debug('_update_items: Behandle jetzt Item "{0}" mit wug_xmlstring "{1}"'.format(item,s))
+                self.logger.debug('_update_items: Handling Item "{0}" mit wug_xmlstring "{1}"'.format(item,s))
                 val=self.tree.findall('*/'+s)
                 if len(val)==0:
                     val=self.tree.findall(s)
@@ -147,18 +148,39 @@ class Wunderground(SmartPlugin):
                     if not isinstance(item(), str):
                         val_uncleaned = val
                         val=self.clean(val)
+
+                    if (val!=-99999) and (dt != ''):
+                        sval = val
+                        self.logger.debug("_update_items: Handling Item '{}' with wug_datatype '{}', val '{}', self.is_float(val) '{}'".format(item,dt, str(val), str(self.is_float(val))))
+                        if dt == 'percent':
+                            if self.is_float(val):
+                                fval = float(val)
+                                if (fval <0) or (fval>1):
+                                    val=-99999
+                            else:
+                                val=-99999
+                        if dt == 'positive':
+                            if self.is_float(val):
+                                fval = float(val)
+                                if (fval <0):
+                                    val=-99999
+                            else:
+                                val=-99999
+                        if val==-99999:
+                            self.logger.warning("_update_items: Handling Item '{}' invalid data from wunderground for wug_datatype '{}' -> '{}'".format(item,dt, str(sval)))
+                            
                     if val!=-99999:
-                        if isinstance(item(), str): # ms
+                        if isinstance(item(), str):
                             if val == None:
-                                val = ''  # /ms
+                                val = ''
                         item(val)
-                        self.logger.debug('_update_items: Wert "{0}" ins item geschrieben'.format(val))
+                        self.logger.debug('_update_items: Value "{0}" written to item'.format(val))
                     else:
-                        self.logger.debug('_update_items: WARNUNG: Wert konnte nicht gecleaned werden. Kein Wert ins item geschrieben - Item: "{0}" mit wug_xmlstring: "{1}", gefunden: "{2}"'.format(item,s,val_uncleaned))  
+                        self.logger.debug('_update_items: WARNUNG: Value could not be cleaned. No value was written to item - Item: "{0}" mit wug_xmlstring: "{1}", gefunden: "{2}"'.format(item,s,val_uncleaned))  
                 else:
                     self.logger.info('_update_items: returned empty value for item "{0}"'.format(item))   
         except KeyError:
-            self.logger.debug('_update_items: wug_xmlstring is empty or not existent for item "{0}"'.format(item))
+            self.logger.warning('_update_items: wug_xmlstring is empty or not existent for item "{0}"'.format(item))
             pass
 
 

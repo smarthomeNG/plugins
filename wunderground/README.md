@@ -1,6 +1,13 @@
 # Wunderground
 
+Version 1.2.2
+
 This plugins can be used retrieve weather information from wunderground.
+
+## Changes Since version 1.2.1
+
+- Added attribute **`wug_datatype`** to be able to filter out wrong data sent by wunderground.
+
 
 # Requirements
 
@@ -80,9 +87,22 @@ If **```item_subtree```** is not defined or empty, the whole item-tree is search
 Name of the plugin instance (SmartPlugin attribute). This is important if you define multiple weather locations using multiple instances of the wunderground plugin.
 
 ## items configuration
+There are two item-attributes in items.yaml/items.conf that are specific to the wunderground plugin. These parameters beginn with **`wug_`**.
+
+### wug_xmlstring
+
+**`wug_xmlstring`** contains a matchstring for parsing the data sent by wunderground. The commonly uesd matchstring are defined in the examples below.
+
+### wug_datatype
+**`wug_datatype`** is used to filter out wrong data that may be sent by a weatherstation from time to time. Those wrong values are filtered and not written to the item. This attribute can have the values **`positive`** and **`percent`**.
+
+- **`positive`** filters out all values less than 0. 
+- **`percent`** filters out values less than 0 and values greater than  1.
+ 
 The following attributes can be used. You can define additional attributes. To do so, you have to lookup the matching wunderground xmlstring on www.wunderground.com.
 
-The items can have a default value, set by using the ```value``` attribute. The default values are used, if the weather station you selected does not send data for the selected xmlstring. The following example defines default values for items, which are not supported by all weather stations.
+## value
+The items can have a default value, set by using the ```value``` attribute. This attribute is not plugin specific. The default values are used, if the weather station you selected does not send data for the selected xmlstring. The following example defines default values for items, which are not supported by all weather stations.
 
 
 ## Example: items.yaml
@@ -136,6 +156,7 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
             type: num
             value: -9999
             wug_xmlstring: relative_humidity
+            wug_datatype: percent
 
         taupunkt:
             type: num
@@ -165,11 +186,13 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
             type: num
             value: -9999
             wug_xmlstring: precip_1hr_metric
+            wug_datatype: positive
 
         niederschlag_heute:
             type: num
             value: -9999
             wug_xmlstring: precip_today_metric
+            wug_datatype: positive
 
         windrichtung:
             type: str
@@ -183,11 +206,13 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
             type: num
             value: -9999
             wug_xmlstring: wind_kph
+            wug_datatype: positive
 
         windboeen:
             type: num
             value: -9999
             wug_xmlstring: wind_gust_kph
+            wug_datatype: positive
 
         vorhersage:
 
@@ -205,6 +230,7 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
                 type: num
                 value: -9999
                 wug_xmlstring: simpleforecast/forecastdays/forecastday/pop
+                wug_datatype: positive
 
             verhaeltnisse:
                 type: str
@@ -215,6 +241,7 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
                 type: num
                 value: -9999
                 wug_xmlstring: simpleforecast/forecastdays/forecastday/maxwind/kph
+                wug_datatype: positive
 
             maxwinddir:
                 type: str
@@ -230,6 +257,7 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
                 type: num
                 value: -9999
                 wug_xmlstring: simpleforecast/forecastdays/forecastday/avewind/kph
+                wug_datatype: positive
 
             avgwinddir:
                 type: str
@@ -293,6 +321,7 @@ Example configuration for wunderground plugin in the old conf-format:
 		type = num
 		value = -9999
 		wug_xmlstring = relative_humidity
+		wug_datatype = percent
 
 	[[taupunkt]]
 		type = num
@@ -322,11 +351,13 @@ Example configuration for wunderground plugin in the old conf-format:
 		type = num
 		value = -9999
 		wug_xmlstring = precip_1hr_metric
+		wug_datatype = positive
 
 	[[niederschlag_heute]]
 		type = num
 		value = -9999
 		wug_xmlstring = precip_today_metric
+		wug_datatype = positive
 
 	[[windrichtung]]
 		type = str
@@ -340,11 +371,13 @@ Example configuration for wunderground plugin in the old conf-format:
 		type = num
 		value = -9999
 		wug_xmlstring = wind_kph
+		wug_datatype = positive
 
 	[[windboeen]]
 		type = num
 		value = -9999
 		wug_xmlstring = wind_gust_kph
+		wug_datatype = positive
 
 	[[vorhersage]]
 
@@ -362,6 +395,7 @@ Example configuration for wunderground plugin in the old conf-format:
 			type = num
 			value = -9999
 			wug_xmlstring = simpleforecast/forecastdays/forecastday/pop
+			wug_datatype = positive
 
 		[[[verhaeltnisse]]]
 			type = str
@@ -372,6 +406,7 @@ Example configuration for wunderground plugin in the old conf-format:
 			type = num
 			value = -9999
 			wug_xmlstring = simpleforecast/forecastdays/forecastday/maxwind/kph
+			wug_datatype = positive
 
 		[[[maxwinddir]]]
 			type = str
@@ -387,6 +422,7 @@ Example configuration for wunderground plugin in the old conf-format:
 			type = num
 			value = -9999
 			wug_xmlstring = simpleforecast/forecastdays/forecastday/avewind/kph
+			wug_datatype = positive
 
 		[[[avgwinddir]]]
 			type = str
