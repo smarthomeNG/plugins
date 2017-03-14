@@ -234,27 +234,50 @@ class DLMS(SmartPlugin):
         # ta < 1 500 ms
         wait_before_acknowledge = 0.4   # wait for 400 ms before sending the request to change baudrate
         wait_after_acknowledge = 0.4    # wait for 400 ms after sending acknowledge
+        dlms_serial = None
 
         try:
-            dlms_serial = serial.Serial(self._serialport, InitialBaudrate, bytesize=serial.SEVENBITS, parity=serial.PARITY_EVEN, timeout=self.timeout)
+            dlms_serial = serial.Serial(self._serialport,
+                                        InitialBaudrate,
+                                        bytesize=serial.SEVENBITS,
+                                        parity=serial.PARITY_EVEN,
+                                        timeout=self.timeout)
             if not self._serialport == dlms_serial.name:
-                self.logger.debug("Asked for {} as serial port, but really using now {}".format( self._serialport, dlms_serial.name))
+                self.logger.debug("Asked for {} as serial port, but really using now {}".format(
+                    self._serialport, dlms_serial.name))
+        except FileNotFoundError as e:
+            self.logger.error("Serial port '{0}' does not exist, please check your port".format( self._serialport))
+            return
+        except OSError as e:
+            self.logger.error("Serial port '{0}' does not exist, please check the spelling".format(self._serialport))
+            return
+        except serial.SerialException as e:
+            if dlms_serial is None:
+                self.logger.error("Serial port '{0}' could not be opened".format(self._serialport))
+            else:
+                self.logger.error("Serial port '{0}' could be opened but somehow not accessed".format(self._serialport))
         except Exception as e:
-            self.logger.error("Error {0}".format(e))
+            self.logger.error("Another unknown error occurred: '{0}'".format(e))
+            return
+
+        if not dlms_serial.isOpen():
+            self.logger.error("Serial port '{0}' could not be opened with given parameters, maybe wrong baudrate?".format(self._serialport))
             return
 
         self.logger.debug("Time to open serial port {}: {}".format(self._serialport,self.format_time(time.time()- runtime)))
         runtime = time.time()
         
-        self.logger.debug("Sending request message {} to smartmeter".format(Request_Message))
         try:
-            dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()            
+            self.logger.debug("Reset input buffer from serial port '{}'".format(self._serialport))
+            dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
+            self.logger.debug("Writing request message {} to serial port '{}'".format(Request_Message, self._serialport))
             dlms_serial.write(Request_Message)
+            self.logger.debug("Flushing buffer from serial port '{}'".format(self._serialport))
             dlms_serial.flush()                 # replaced dlms_serial.drainOutput()
-            dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()            
-            dlms_serial.timeout = self.timeout
-        except Exception as e: 
-            self.logger.warning("Error {0}".format(e))
+            self.logger.debug("Reset input buffer from serial port '{}'".format(self._serialport))
+            dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
+        except Exception as e:
+            self.logger.warning("Error {}".format(e))
             return
 
         self.logger.debug("Time to send first request to smartmeter: {}".format(self.format_time(time.time()- runtime)))
@@ -726,7 +749,7 @@ if __name__ == '__main__':
     ch.setLevel(logging.DEBUG)
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s  @ %(lineno)d')
-    formatter = logging.Formatter('%(message)s')
+    #formatter = logging.Formatter('%(message)s')
     ch.setFormatter(formatter)
     # add the handlers to the logger
     logging.getLogger().addHandler(ch)
@@ -743,7 +766,11 @@ if __name__ == '__main__':
         
     dlms_plugin = DLMS(None, serial_to_use )
     result = dlms_plugin._query_smartmeter()
-    if len(result) > 0:
+    if result is None:
+        print()
+        print("No results from query, maybe a problem with the serial port '{}' given ".format(serial_to_use))
+        print("==============================================")
+    elif len(result) > 0:
         print()
         print("These are the results of the query")
         print("==============================================")
