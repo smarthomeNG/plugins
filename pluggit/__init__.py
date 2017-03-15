@@ -38,8 +38,8 @@ class PluggitException(Exception):
     pass
 
 class Pluggit(SmartPlugin):
-   ALLOW_MULTIINSTANCE = False
-   PLUGIN_VERSION="1.2.2"
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION="1.2.2"
 
     _myTempReadDict = {}
     _myTempWriteDict = {}
@@ -100,7 +100,7 @@ class Pluggit(SmartPlugin):
         self.logger.info("Pluggit: connected to {0}:{1}".format(self._host, self._port))
         self._is_connected = True
         end_time = time.time()
-        self.logger.info("Pluggit: connection took {0} seconds".format(end_time - start_time))
+        self.logger.debug("Pluggit: connection took {0} seconds".format(end_time - start_time))
 
     def disconnect(self):
         start_time = time.time()
@@ -111,7 +111,7 @@ class Pluggit(SmartPlugin):
                 pass
         self._is_connected = False
         end_time = time.time()
-        self.logger.info("Pluggit: disconnect took {0} seconds".format(end_time - start_time))
+        self.logger.debug("Pluggit: disconnect took {0} seconds".format(end_time - start_time))
 
     def run(self):
         self.alive = True
@@ -124,21 +124,21 @@ class Pluggit(SmartPlugin):
     def parse_item(self, item):
         # check for smarthome.py attribute 'pluggit_listen' in pluggit.conf
         if 'pluggit_listen' in item.conf:
-            # self.logger.debug("Pluggit: parse read item: {0}".format(item))
+            self.logger.debug("Pluggit: parse read item: {0}".format(item))
             pluggit_key = item.conf['pluggit_listen']
             if pluggit_key in self._modbusRegisterDic:
                 self._myTempReadDict[pluggit_key] = item
-                # self.logger.debug("Pluggit: Inhalt des dicts _myTempReadDict nach Zuweisung zu item: '{0}'".format(self._myTempReadDict))
+                self.logger.debug("Pluggit: Inhalt des dicts _myTempReadDict nach Zuweisung zu item: '{0}'".format(self._myTempReadDict))
             else:
                 self.logger.warn("Pluggit: invalid key {0} configured".format(pluggit_key))
         elif 'pluggit_send' in item.conf:
-            # self.logger.debug("Pluggit: parse send item: {0}".format(item))
+            self.logger.debug("Pluggit: parse send item: {0}".format(item))
             pluggit_sendKey = item.conf['pluggit_send']
             if pluggit_sendKey is None:
                 return None
             else:
                 self._myTempWriteDict[pluggit_sendKey] = item
-                # self.logger.debug("Pluggit: Inhalt des dicts _myTempWriteDict nach Zuweisung zu send item: '{0}'".format(self._myTempWriteDict))
+                self.logger.debug("Pluggit: Inhalt des dicts _myTempWriteDict nach Zuweisung zu send item: '{0}'".format(self._myTempWriteDict))
                 return self.update_item
         else:
             return None
@@ -165,18 +165,18 @@ class Pluggit(SmartPlugin):
         fan_speed_level_value = 4, 0
 
         # Change Unit Mode to manual
-        # self.logger.debug("Pluggit: Start => Change Unit mode to manual: {0}".format(active_unit_mode_value))
+        self.logger.debug("Pluggit: Start => Change Unit mode to manual: {0}".format(active_unit_mode_value))
         self._Pluggit.write_registers(self._modbusRegisterDic['prmRamIdxUnitMode'], active_unit_mode_value)
-        # self.logger.debug("Pluggit: Finished => Change Unit mode to manual: {0}".format(active_unit_mode_value))
+        self.logger.debug("Pluggit: Finished => Change Unit mode to manual: {0}".format(active_unit_mode_value))
 
         # wait 500ms before changing fan speed
-        # self.logger.debug("Pluggit: Wait 500ms before changing fan speed")
+        self.logger.debug("Pluggit: Wait 500ms before changing fan speed")
         time.sleep(0.5)
 
         # Change Fan Speed to highest speed
-        # self.logger.debug("Pluggit: Start => Change Fan Speed to Level 4")
+        self.logger.debug("Pluggit: Start => Change Fan Speed to Level 4")
         self._Pluggit.write_registers(self._modbusRegisterDic['prmRomIdxSpeedLevel'], fan_speed_level_value)
-        # self.logger.debug("Pluggit: Finished => Change Fan Speed to Level 4")
+        self.logger.debug("Pluggit: Finished => Change Fan Speed to Level 4")
 
         # self._refresh()
         # check new active unit mode
@@ -196,9 +196,9 @@ class Pluggit(SmartPlugin):
         active_unit_mode_value = 8, 0
 
         # Change Unit Mode to "Week Program"
-        # self.logger.debug("Pluggit: Start => Change Unit mode to 'Week Program': {0}".format(active_unit_mode_value))
+        self.logger.debug("Pluggit: Start => Change Unit mode to 'Week Program': {0}".format(active_unit_mode_value))
         self._Pluggit.write_registers(self._modbusRegisterDic['prmRamIdxUnitMode'], active_unit_mode_value)
-        # self.logger.debug("Pluggit: Finished => Change Unit mode to 'Week Program': {0}".format(active_unit_mode_value))
+        self.logger.debug("Pluggit: Finished => Change Unit mode to 'Week Program': {0}".format(active_unit_mode_value))
 
         # self._refresh()
 
@@ -220,57 +220,57 @@ class Pluggit(SmartPlugin):
     def _refresh(self):
         start_time = time.time()
         try:
-        # myCounter = 1
+            myCounter = 1
             for pluggit_key in self._myTempReadDict:
-                # self.logger.debug("Pluggit: ---------------------------------> Wir sind in der Refresh Schleife")
+                self.logger.debug("Pluggit: ---------------------------------> Wir sind in der Refresh Schleife")
                 values = self._modbusRegisterDic[pluggit_key]
-                # self.logger.debug("Pluggit: Refresh Schleife: Inhalt von values ist {0}".format(values))
+                self.logger.debug("Pluggit: Refresh Schleife: Inhalt von values ist {0}".format(values))
                 # 2015-01-07 23:53:08,296 DEBUG    Pluggit      Pluggit: Refresh Schleife: Inhalt von values ist 168 -- __init__.py:_refresh:158
                 item = self._myTempReadDict[pluggit_key]
-                # self.logger.debug("Pluggit: Refresh Schleife: Inhalt von item ist {0}".format(item))
+                self.logger.debug("Pluggit: Refresh Schleife: Inhalt von item ist {0}".format(item))
                 # 2015-01-07 23:53:08,316 DEBUG    Pluggit      Pluggit: Refresh Schleife: Inhalt von item ist pluggit.unitMode -- __init__.py:_refresh:160
 
                 #=======================================================#
                 # read values from pluggit via modbus client registers
                 #=======================================================#
 
-                # self.logger.debug("Pluggit: ------------------------------------------> Wir sind vor dem Auslesen der Werte")
+                self.logger.debug("Pluggit: ------------------------------------------> Wir sind vor dem Auslesen der Werte")
                 registerValue = None
                 registerValue = self._Pluggit.read_holding_registers(values, read_qty = 1).getRegister(0)
-                # self.logger.debug("Pluggit: Read parameter '{0}' with register '{1}': Value is '{2}'".format(pluggit_key, values, registerValue))
+                self.logger.debug("Pluggit: Read parameter '{0}' with register '{1}': Value is '{2}'".format(pluggit_key, values, registerValue))
 
                 # week program: possible values 0-10
                 if values == self._modbusRegisterDic['prmNumOfWeekProgram']:
                     registerValue += 1
                     item(registerValue, 'Pluggit')
                     # 2015-01-07 23:53:08,435 DEBUG    Pluggit      Item pluggit.unitMode = 8 via Pluggit None None -- item.py:__update:363
-                    # self.logger.debug("Pluggit: Week Program Number: {0}".format(registerValue))
+                    self.logger.debug("Pluggit: Week Program Number: {0}".format(registerValue))
                     # 2015-01-07 23:53:08,422 DEBUG    Pluggit      Pluggit: Active Unit Mode: Week program -- __init__.py:_refresh:177
 
                 # active unit mode
                 if values == self._modbusRegisterDic['prmRamIdxUnitMode'] and registerValue == 8:
-                    # self.logger.debug("Pluggit: Active Unit Mode: Week program")
+                    self.logger.debug("Pluggit: Active Unit Mode: Week program")
                     item('Woche', 'Pluggit')
                 if values == self._modbusRegisterDic['prmRamIdxUnitMode'] and registerValue == 4:
-                    # self.logger.debug("Pluggit: Active Unit Mode: Manual")
+                    self.logger.debug("Pluggit: Active Unit Mode: Manual")
                     item('Manuell', 'Pluggit')
 
                 # fan speed
                 if values == self._modbusRegisterDic['prmRomIdxSpeedLevel']:
-                    # self.logger.debug("Pluggit: Fan Speed: {0}".format(registerValue))
+                    self.logger.debug("Pluggit: Fan Speed: {0}".format(registerValue))
                     item(registerValue, 'Pluggit')
 
                 # remaining filter lifetime
                 if values == self._modbusRegisterDic['prmFilterRemainingTime']:
-                    # self.logger.debug("Pluggit: Remaining filter lifetime: {0}".format(registerValue))
+                    self.logger.debug("Pluggit: Remaining filter lifetime: {0}".format(registerValue))
                     item(registerValue, 'Pluggit')
 
                 # bypass state
                 if values == self._modbusRegisterDic['prmRamIdxBypassActualState'] and registerValue == 255:
-                    # self.logger.debug("Pluggit: Bypass state: opened")
+                    self.logger.debug("Pluggit: Bypass state: opened")
                     item('geöffnet', 'Pluggit')
                 if values == self._modbusRegisterDic['prmRamIdxBypassActualState'] and registerValue == 0:
-                    # self.logger.debug("Pluggit: Bypass state: closed")
+                    self.logger.debug("Pluggit: Bypass state: closed")
                     item('geschlossen', 'Pluggit')
 
                 # Temperatures
@@ -280,7 +280,7 @@ class Pluggit(SmartPlugin):
                     decodert1 = BinaryPayloadDecoder.fromRegisters(t1.registers, endian=Endian.Big)
                     t1 = decodert1.decode_32bit_float()
                     t1 = round(t1, 2)
-                    #self.logger.debug("Pluggit: Frischluft außen: {0:4.1f}".format(t1))
+                    self.logger.debug("Pluggit: Frischluft außen: {0:4.1f}".format(t1))
                     self.logger.debug("Pluggit: Frischluft außen: {0}".format(t1))
                     item(t1, 'Pluggit')
 
@@ -290,7 +290,7 @@ class Pluggit(SmartPlugin):
                     decodert2 = BinaryPayloadDecoder.fromRegisters(t2.registers, endian=Endian.Big)
                     t2 = decodert2.decode_32bit_float()
                     t2 = round(t2, 2)
-                    #self.logger.debug("Pluggit: Zuluft innen: {0:4.1f}".format(t2))
+                    self.logger.debug("Pluggit: Zuluft innen: {0:4.1f}".format(t2))
                     self.logger.debug("Pluggit: Zuluft innen: {0}".format(t2))
                     item(t2, 'Pluggit')
 
@@ -300,7 +300,7 @@ class Pluggit(SmartPlugin):
                     decodert3 = BinaryPayloadDecoder.fromRegisters(t3.registers, endian=Endian.Big)
                     t3 = decodert3.decode_32bit_float()
                     t3 = round(t3, 2)
-                    #self.logger.debug("Pluggit: Abluft innen: {0:4.1f}".format(t3))
+                    self.logger.debug("Pluggit: Abluft innen: {0:4.1f}".format(t3))
                     self.logger.debug("Pluggit: Abluft innen: {0}".format(t3))
                     item(t3, 'Pluggit')
 
@@ -310,13 +310,13 @@ class Pluggit(SmartPlugin):
                     decodert4 = BinaryPayloadDecoder.fromRegisters(t4.registers, endian=Endian.Big)
                     t4 = decodert4.decode_32bit_float()
                     t4 = round(t4, 2)
-                    #self.logger.debug("Pluggit: Fortluft außen: {0:4.1f}".format(t4))
+                    self.logger.debug("Pluggit: Fortluft außen: {0:4.1f}".format(t4))
                     self.logger.debug("Pluggit: Fortluft außen: {0}".format(t4))
                     item(t4, 'Pluggit')
 
-                # self.logger.debug("Pluggit: ------------------------------------------> Ende der Schleife vor sleep, Durchlauf Nr. {0}".format(myCounter))
+                self.logger.debug("Pluggit: ------------------------------------------> Ende der Schleife vor sleep, Durchlauf Nr. {0}".format(myCounter))
                 time.sleep(0.1)
-                # myCounter += 1
+                myCounter += 1
 
         except Exception as e:
             self.logger.error("Pluggit: something went wrong in the refresh function: {0}".format(e))
@@ -326,6 +326,6 @@ class Pluggit(SmartPlugin):
         self.logger.debug("Pluggit: cycle took {0} seconds".format(cycletime))
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     myplugin = Plugin('Pluggit')
     myplugin.run()
