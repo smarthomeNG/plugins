@@ -22,6 +22,7 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
+import re
 import logging
 import datetime
 import functools
@@ -75,13 +76,14 @@ class Database(SmartPlugin):
             if self.get_iattr_value(item.conf, 'database') == 'init':
                 cache = None if id is None else self.readItem(id, cur=cur)
                 if cache is not None:
-                    last_change_ts = cache[2]
                     value = self._item_value_tuple_rev(item.type(), cache[3:6])
-                    last_change = self._datetime(last_change_ts)
+                    last_change = self._datetime(cache[2])
                     prev_change = self._db.fetchone(self._prepare('SELECT MAX(time) from {log} WHERE item_id = :id'), {'id':id})
+                    last_change_ts = self._timestamp(last_change)
                     if value is not None and prev_change is not None:
                         prev_change = self._datetime(prev_change[0])
                         item.set(value, 'Database', prev_change=prev_change, last_change=last_change)
+                    self._buffer[item].append((last_change_ts, None, value))
             cur.close()
             return self.update_item
         else:
@@ -100,8 +102,14 @@ class Database(SmartPlugin):
         if acl is 'rw':
             start = self._timestamp(item.prev_change())
             end = self._timestamp(item.last_change())
+            last = None if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None else self._buffer[item][-1]
+            if last:  # update current value with duration
+                self._buffer[item][-1] = (last[0], end - start, last[2])
+            else:     # append new value with none duration
+                self._buffer[item].append((start, end - start, item.prev_value()))
 
-            self._buffer[item].append((start, end - start, item.prev_value()))
+            # add current value with None duration
+            self._buffer[item].append((end, None, item()))
 
     def dump(self, dumpfile, id = None, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None):
         self.logger.info("Starting file dump to {} ...".format(dumpfile))
@@ -298,7 +306,7 @@ class Database(SmartPlugin):
 
                     # Get current values of item
                     start = self._timestamp(item.last_change())
-                    end = self._timestamp(self._sh.now())
+                    end = changed
                     val = item()
 
                     # When finalizing (e.g. plugin shutdown) add current value to item and log
@@ -396,9 +404,12 @@ class Database(SmartPlugin):
         return logs['tuples'][0][0]
 
     def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order='', border=False):
+        _item = self._sh.return_item(item)
+
         istart = self._parse_ts(start)
         iend = self._parse_ts(end)
         inow = self._parse_ts('now')
+        id = self.id(_item, create=False)
 
         if inow > iend:
             inow = iend
@@ -409,29 +420,51 @@ class Database(SmartPlugin):
             else:
                 step = iend - istart
 
-        _item = self._sh.return_item(item)
         if self._buffer[_item] != []:
             self._dump(items=[_item])
 
-        params = {'id':'<id>', 'time_start':istart, 'time_end':iend, 'inow':inow, 'step':step}
+        params = {'id':id, 'time_start':istart, 'time_end':iend, 'inow':inow, 'step':step}
+        duration_now = "COALESCE(duration, :inow - time)"
 
-        # Query log table
-        query = "SELECT {0} {3} {1} {2}".format(columns, group, order, self._prepare(
-            "FROM {log} WHERE "
+        # Duration calculation (S=Start, E=End):
+        duration = (
+            "("
+            #    ----------|<--------------------------->|---------->
+            # 1. Duration for items within the given start/end range
+            #    -----------------[S]======[E]---------------------->
+            "COALESCE(duration * (time >= :time_start) * (time + duration <= :time_end), 0) + "
+            # 2. Duration for items partially before start but ends after start
+            #    -----[S]======[E]---------------------------------->
+            "COALESCE(duration / duration * (time + duration - :time_start) * (time < :time_start) * (time + duration >= :time_start), 0) + "
+            #    ----------------------------------[S]======[E]----->
+            # 3. Duration for items partially after end but starts before end
+            "COALESCE(duration_now / duration_now * (:time_end - time) * (time + duration_now >= :time_end), 0)"
+            ")"
+        )
+
+        # Replace duration fields with calculated durations from previous
+        # generated expressions to include all three cases.
+        columns = columns.replace('duration', duration)
+
+        # Create base query including the replaced columns
+        query = (
+            "SELECT " + columns + " FROM {log} WHERE "
             "item_id = :id AND "
-            "time " + (">=" if border else ">") + " (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND "
+            "time >= (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND "
             "time <= :time_end AND "
-            "time + duration > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start)"))
-        logs = self._fetch(query, _item, params)
+            "time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) "
+            "" + group + " " + order
+        )
 
-        # No values from log table, try item table
-        if logs is None or len(logs) == 0 or logs[0][0] is None:
-            query = "SELECT {0} {1}".format(columns, self._prepare(
-                "FROM {item} WHERE "
-                "id = :id AND "
-                "time " + (">=" if border else ">") + " :time_start AND "
-                "time <= :time_end"))
-            logs = self._fetch(query.replace('duration', '(:inow - time)'), _item, params)
+        # Replace duration_now with value from start time til current time to
+        # get a duration value referring to the current timestamp - if required.
+        query = query.replace('duration_now', duration_now)
+
+        query = self._prepare(query)
+        query_readable = re.sub(r':([a-z_]+)', r'{\1}', query).format(**params)
+        self.logger.debug(query_readable)
+
+        logs = self._fetch(query, _item, params)
 
         return {
             'tuples' : logs,
@@ -451,8 +484,6 @@ class Database(SmartPlugin):
             return None
         tuples = None
         try:
-            id = self.id(item, create=False)
-            params = {n:id if params[n] == '<id>' else params[n] for n in params}
             tuples = self._db.fetchall(query, params)
         except Exception as e:
             self.logger.warning("Database: Error fetching data for {}: {}".format(item, e))
