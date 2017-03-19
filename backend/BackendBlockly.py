@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 #########################################################################
-#  Copyright 2016 Bernd Meiners,
-#                 Christian Strassburg            c.strassburg@gmx.de
-#                 René Frieß                      rene.friess@gmail.com
-#                 Martin Sinn                     m.sinn@gmx.de
+# Copyright 2016-       René Frieß                  rene.friess@gmail.com
+#                       Martin Sinn                         m.sinn@gmx.de
+#                       Bernd Meiners
+#                       Christian Strassburg          c.strassburg@gmx.de
+#                       Dirk Wallmeier                dirk@wallmeier.info
 #########################################################################
 #  Backend plugin for SmartHomeNG
 #

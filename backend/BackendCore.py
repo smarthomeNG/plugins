@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 #########################################################################
-#  Copyright 2016 Bernd Meiners,
-#                 Christian Strassburg            c.strassburg@gmx.de
-#                 René Frieß                      rene.friess@gmail.com
-#                 Martin Sinn                     m.sinn@gmx.de
-#				  Dirk Wallmeier				  dirk@wallmeier.info
+# Copyright 2016-       René Frieß                  rene.friess@gmail.com
+#                       Martin Sinn                         m.sinn@gmx.de
+#                       Bernd Meiners
+#                       Christian Strassburg          c.strassburg@gmx.de
 #########################################################################
 #  Backend plugin for SmartHomeNG
 #
@@ -33,14 +32,16 @@ import subprocess
 import socket
 import sys
 import threading
-import os  # für sh_dir
+import os
 import lib.config
+import lib.logic   # zum Test
 from lib.model.smartplugin import SmartPlugin
 from .utils import *
 
 import lib.item_conversion
 
 class Backend:
+
     def find_visu_plugin(self):
         """
         look for the configured instance of the visu protocol plugin.
@@ -63,43 +64,48 @@ class Backend:
                     "Backend: visu protocol plugin v{0} is too old to support BackendServer, please update".format(
                         self.visu_plugin_version))
 
+
+    def render_template(self, tmpl_name, **kwargs):
+        """
+
+        Render a template and add vars needed gobally (for navigation, etc.)
+    
+        :param tmpl_name: Name of the template file to be rendered
+        :param **kwargs: keyworded arguments to use while rendering
+        
+        :return: contents of the template after beeing rendered 
+
+        """
+        self.find_visu_plugin()
+        tmpl = self.env.get_template(tmpl_name)
+        return tmpl.render(develop=self.developer_mode,
+                           smarthome=self._sh, 
+                           visu_plugin=(self.visu_plugin is not None), 
+                           yaml_converter=lib.item_conversion.is_ruamelyaml_installed(),
+                           **kwargs)
+
+
+    # -----------------------------------------------------------------------------------
+    #    MAIN
+    # -----------------------------------------------------------------------------------
+
     @cherrypy.expose
     def index(self):
-        self.find_visu_plugin()
 
-        tmpl = self.env.get_template('main.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode)
+        return self.render_template('main.html')
 
     @cherrypy.expose
     def main_html(self):
-        self.find_visu_plugin()
 
-        tmpl = self.env.get_template('main.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode)
+        return self.render_template('main.html')
 
-    @cherrypy.expose
-    def reload_translation_html(self, lang=''):
-        if lang != '':
-            load_translation(lang)
-        else:
-            load_translation(get_translation_lang())
-        return self.index()
 
-    @cherrypy.expose
-    def conf_yaml_converter_html(self, convert=None, conf_code=None, yaml_code=None):
-        if convert is not None:
-            ydata = lib.item_conversion.parse_for_convert(conf_code=conf_code)
-            if ydata != None:
-                yaml_code = lib.item_conversion.convert_yaml(ydata)
-        else:
-            conf_code = ''
-            yaml_code = ''
-        tmpl = self.env.get_template('conf_yaml_converter.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode,conf_code=conf_code, yaml_code=yaml_code)
+    # -----------------------------------------------------------------------------------
+    #    SYSTEMINFO
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def system_html(self):
-        self.find_visu_plugin()
         now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
         system = platform.system()
         vers = platform.version()
@@ -154,14 +160,12 @@ class Backend:
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
                                              sys.version_info[3])
 
-        tmpl = self.env.get_template('system.html')
-        return tmpl.render(now=now, system=system, sh_vers=self._sh.env.core.version(), sh_dir=self._sh_dir, vers=vers,
-                           node=node, arch=arch, user=user,
-                           freespace=freespace, uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
-                           ip=ip, python_packages=python_packages, requirements=req_dict,
-                           visu_plugin=(self.visu_plugin is not None),
-                           yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), 
-                           develop=self.developer_mode )
+        return self.render_template('system.html', 
+                                    now=now, system=system, sh_vers=self._sh.env.core.version(), sh_dir=self._sh_dir,
+                                    vers=vers, node=node, arch=arch, user=user, freespace=freespace, 
+                                    uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
+                                    ip=ip, python_packages=python_packages, requirements=req_dict)
+
 
     def get_process_info(self, command):
         """
@@ -230,12 +234,16 @@ class Backend:
         sorted_packages = sorted([(i['key'], i['version_installed'], i['version_available']) for i in packages])
         return sorted_packages
 
+
+    # -----------------------------------------------------------------------------------
+    #    SERVICES
+    # -----------------------------------------------------------------------------------
+
     @cherrypy.expose
     def services_html(self):
         """
         shows a page with info about some services needed by smarthome
         """
-        self.find_visu_plugin()
         knxd_service = self.get_process_info("systemctl status knxd.service")
         smarthome_service = self.get_process_info("systemctl status smarthome.service")
         knxd_socket = self.get_process_info("systemctl status knxd.socket")
@@ -258,21 +266,35 @@ class Backend:
             elif x.__class__.__name__ == "Database":
                 database_plugin.append(x.get_instance_name())
 
-        tmpl = self.env.get_template('services.html')
-        return tmpl.render(knxd_service=knxd_service, smarthome_service=smarthome_service, knxd_socket=knxd_socket,
-                           sql_plugin=sql_plugin, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(),
-                           lang=get_translation_lang(),
-                           develop=self.developer_mode, knxdeamon=knxdeamon, database_plugin=database_plugin)
+        return self.render_template('services.html', 
+                                    knxd_service=knxd_service, knxd_socket=knxd_socket, knxdeamon=knxdeamon,
+                                    smarthome_service=smarthome_service, lang=get_translation_lang(), 
+                                    sql_plugin=sql_plugin, database_plugin=database_plugin)
+
 
     @cherrypy.expose
-    def disclosure_html(self):
-        """
-        display disclosure
-        """
-        self.find_visu_plugin()
+    def reload_translation_html(self, lang=''):
+        if lang != '':
+            load_translation(lang)
+        else:
+            load_translation(get_translation_lang())
+        return self.index()
 
-        tmpl = self.env.get_template('disclosure.html')
-        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+    @cherrypy.expose
+    def reboot(self):
+        passwd = request.form['password']
+        rbt1 = subprocess.Popen(["echo", passwd], stdout=subprocess.PIPE)
+        rbt2 = subprocess.Popen(["sudo", "-S", "reboot"], stdin=rbt1.
+                                stdout, stdout=subprocess.PIPE)
+        print(rbt2.communicate()[0])
+        return redirect('/services.html')
+
+    def validate_date(self, date_text):
+        try:
+            datetime.datetime.strptime(date_text, '%Y-%m-%d')
+            return True
+        except ValueError:
+            return False
 
     @cherrypy.expose
     def db_dump_html(self, plugin):
@@ -294,83 +316,32 @@ class Backend:
                                                               mime, "%s/var/db/" % self._sh_dir)
         return
 
-    @cherrypy.expose
-    def log_dump_html(self):
-        """
-        returns the smarthomeNG logfile as download
-        """
-        mime = 'application/octet-stream'
-        return cherrypy.lib.static.serve_file("%s/var/log/smarthome.log" % self._sh_dir, mime,
-                                              "%s/var/log/" % self._sh_dir)
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def log_view_html(self, text_filter="", log_level_filter="ALL", page=1):
-        """
-        returns the smarthomeNG logfile as view
-        """
-        self.find_visu_plugin()
+    def conf_yaml_converter_html(self, convert=None, conf_code=None, yaml_code=None):
+        if convert is not None:
+            ydata = lib.item_conversion.parse_for_convert(conf_code=conf_code)
+            if ydata != None:
+                yaml_code = lib.item_conversion.convert_yaml(ydata)
+        else:
+            conf_code = ''
+            yaml_code = ''
+        return self.render_template('conf_yaml_converter.html', conf_code=conf_code, yaml_code=yaml_code)
 
-        fobj = open("%s/var/log/smarthome.log" % self._sh_dir)
-        log_lines = []
-        start = (int(page) - 1) * 1000
-        end = start + 1000
-        counter = 0
-        log_level_hit = False
-        total_counter = 0
-        for line in fobj:
-            line_text = self.html_escape(line)
-            if log_level_filter != "ALL" and not self.validate_date(line_text[0:10]) and log_level_hit:
-                if start <= counter < end:
-                    log_lines.append(line_text)
-                counter += 1
-            else:
-                log_level_hit = False
-            if (log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22,
-                                                                                  23]) and text_filter in line_text:
-                if start <= counter < end:
-                    log_lines.append(line_text)
-                    log_level_hit = True
-                counter += 1
-        fobj.close()
-        num_pages = -(-counter // 1000)
-        if num_pages == 0:
-            num_pages = 1
-        tmpl = self.env.get_template('log_view.html')
-        return tmpl.render(smarthome=self._sh, current_page=int(page), pages=num_pages, log_lines=log_lines,
-                           text_filter=text_filter,
-                           log_level_filter=log_level_filter, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
-    @cherrypy.expose
-    def logics_view_html(self, file_path, logic, trigger=None, reload=None, enable=None, save=None, logics_code=None):
-        """
-        returns the smarthomeNG logfile as view
-        """
-        self.find_visu_plugin()
-        self.process_logics_action(logic, trigger, reload, enable, save, logics_code)
-        mylogic = self._sh.return_logic(logic)
-
-        fobj = open(file_path)
-        file_lines = []
-        for line in fobj:
-            file_lines.append(self.html_escape(line))
-        fobj.close()
-        tmpl = self.env.get_template('logics_view.html')
-        return tmpl.render(smarthome=self._sh, logic=mylogic, logic_lines=file_lines, file_path=file_path,
-                           updates=self.updates_allowed, develop=self.developer_mode,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+    # -----------------------------------------------------------------------------------
+    #    ITEMS
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def items_html(self):
         """
         display a list of items
         """
-        self.find_visu_plugin()
+        return self.render_template('items.html', item_count=self._sh.item_count, 
+                                    items=sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False) )
 
-        tmpl = self.env.get_template('items.html')
-        return tmpl.render(smarthome=self._sh,
-                           items=sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']),
-                                        reverse=False), develop=self.developer_mode,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
 
     @cherrypy.expose
     def items_json_html(self):
@@ -381,7 +352,8 @@ class Backend:
         parent_items_sorted = []
         for item in items_sorted:
             if "." not in item._path:
-                parent_items_sorted.append(item)
+                if item._name not in ['env_daily', 'env_init', 'env_loc', 'env_stat'] and item._type == 'foo':
+                    parent_items_sorted.append(item)
 
         item_data = self._build_item_tree(parent_items_sorted)
         return json.dumps(item_data)
@@ -599,35 +571,250 @@ class Backend:
 
         return item_data
 
-    @cherrypy.expose
-    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, save=None):
-        """
-        display a list of all known logics
-        """
-        self.find_visu_plugin()
-        self.process_logics_action(logic, trigger, reload, enable, save)
 
-        tmpl = self.env.get_template('logics.html')
-        return tmpl.render(smarthome=self._sh, updates=self.updates_allowed, develop=self.developer_mode,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+    # -----------------------------------------------------------------------------------
+    #    LOGICS
+    # -----------------------------------------------------------------------------------
+
+    @cherrypy.expose
+    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, savereload=None, unload=None, configload=None, add=None):
+        """
+        returns information to display a list of all known logics
+        """
+        # process actions triggerd by buttons on the web page
+        self.process_logics_action(logic, trigger, reload, enable, savereload, None, unload, configload, add)
+
+        # create a list of dicts, where each dict contains the information for one logic
+        logics = []
+        for ln in self._sh.return_logics():
+            logic = dict()
+            logic['name'] = self._sh.return_logic(ln).name
+            logic['enabled'] = self._sh.return_logic(ln).enabled
+            logic['filename'] = self._sh.return_logic(ln).filename
+            logic['userlogic'] = (os.path.basename(os.path.dirname(logic['filename'])) == 'logics')
+            logic['crontab'] = self._sh.return_logic(ln).crontab
+            logic['cycle'] = self._sh.return_logic(ln).cycle
+            logic['watch_items'] = []
+            if hasattr(self._sh.return_logic(ln), 'watch_item'):
+                logic['watch_items'] = self._sh.return_logic(ln).watch_item
+            logics.append(logic)
+#            self.logger.warning("Backend: logics_html: - logic = {}, enabled = {}, filename = {}, userlogic = {}, watch_items = {}".format(str(logic['name']), str(logic['enabled']), str(logic['filename']), str(logic['userlogic']), str(logic['watch_items'])) )
+
+        newlogics = sorted(self.logic_findnew(logics), key=lambda k: k['name'])
+
+        logics_sorted = sorted(logics, key=lambda k: k['name'])
+        return self.render_template('logics.html', updates=self.updates_allowed, logics=logics_sorted, newlogics=newlogics)
+
+
+    @cherrypy.expose
+    def logics_view_html(self, file_path, logic, trigger=None, reload=None, enable=None, savereload=None, logics_code=None):
+        """
+        returns information to display a logic in an editor window
+        """
+        # process actions triggerd by buttons on the web page
+        self.process_logics_action(logic, trigger, reload, enable, savereload, logics_code, None, None, None)
+        mylogic = self._sh.return_logic(logic)
+
+        fobj = open(file_path)
+        file_lines = []
+        for line in fobj:
+            file_lines.append(self.html_escape(line))
+        fobj.close()
+
+        return self.render_template('logics_view.html', logic=mylogic, logic_lines=file_lines, file_path=file_path,
+                                    updates=self.updates_allowed)
+
+    # -----------------------------------------------------------------------------------
+
+    def process_logics_action(self, logic=None, trigger=None, reload=None, enable=None, savereload=None, logics_code=None, unload=None, configload=None, add=None):
+        self.logger.debug(
+            "Backend: logics_html: trigger = '{0}', reload = '{1}', enable='{2}', savereload='{3}'".format(trigger, reload,
+                                                                                                     enable, savereload))
+        if enable is not None:
+            self.logic_enable(logic)
+
+        if trigger is not None:
+            self.logic_trigger(logic)
+
+        if reload is not None:
+#            self.logic_reloadcode(logic)   # old way to reload a logic (only generate new byte code from python source)
+            self.logic_unload(logic)
+            self.logic_configload(logic)
+            self.logic_trigger(logic)
+
+        if unload is not None:
+            self.logic_unload(logic)
+
+        if configload is not None:
+            self.logic_configload(logic)
+
+        if add is not None:
+            self.logic_configload(logic)
+
+        if savereload is not None:
+            self.logic_save(logic, logics_code)
+
+            self.logic_unload(logic)
+            self.logic_configload(logic)
+            self.logic_trigger(logic)
+        return
+
+
+    def logic_enable(self, logic):
+        self.logger.debug("Backend: logics[_view]_html: Enable/Disable logic = '{0}'".format(logic))
+        if self.updates_allowed:
+            if logic in self._sh.return_logics():
+                mylogic = self._sh.return_logic(logic)
+                if mylogic.enabled:
+                    mylogic.disable()
+                else:
+                    mylogic.enable()
+            else:
+                self.logger.warning("Backend: Logic '{0}' not found, cannot be be enabled/disabled".format(logic))
+        else:
+            self.logger.warning("Backend: Logic enabling/disabling is not allowed. (Change 'updates_allowed' in plugin.conf")
+
+
+    def logic_trigger(self, logic):
+        self.logger.debug("Backend: logics[_view]_html: Trigger logic = '{0}'".format(logic))
+        if self.updates_allowed:
+            if logic in self._sh.return_logics():
+                self._sh.trigger(logic, by='Backend')
+            else:
+                self.logger.warning("Backend: Logic '{0}' not found".format(logic))
+        else:
+            self.logger.warning("Backend: Logic triggering is not allowed. (Change 'updates_allowed' in plugin.conf")
+
+
+    def logic_unload(self, logic):
+        self.logger.warning("Backend: logics[_view]_html: Unload logic = '{0}'".format(logic))
+        mylogic = self._sh.return_logic(logic)
+        mylogic.enabled = False
+        mylogic.cycle = None
+        mylogic.crontab = None
+
+        # Scheduler entfernen
+        self._sh.scheduler.remove(logic)
+        
+        # watch_items entfernen
+        if hasattr(mylogic, 'watch_item'):
+            if isinstance(mylogic.watch_item, str):
+                mylogic.watch_item = [mylogic.watch_item]
+            for entry in mylogic.watch_item:
+                # item hook
+                for item in self._sh.match_items(entry):
+                    try:
+                        item.remove_logic_trigger(mylogic)
+                    except:
+                        self.logger.error("Backend: logics[_view]_html: Unload logic = '{0}' - cannot remove logic_triggers".format(logic))
+        mylogic.watch_item = []
+
+
+    def logic_configload(self, logic):
+        self.logger.warning("Backend: logics[_view]_html: load logic with config = '{}'".format(logic))
+
+        _config = {}
+        _config.update(self._sh._logics._read_logics(self._sh._logic_conf_basename, self._sh._logic_dir))
+#        self.logger.warning("Backend: logics[_view]_html: _config[{}] = '{}'".format(str(logic), str(_config[logic])))
+
+        newlogic = lib.logic.Logic(self._sh, logic, _config[logic])
+        if hasattr(newlogic, 'bytecode'):
+            self._sh._logics._logics[logic] = newlogic
+            self._sh.scheduler.add(logic, newlogic, newlogic.prio, newlogic.crontab, newlogic.cycle)
+            # plugin hook
+            # item hook
+            if hasattr(newlogic, 'watch_item'):
+                if isinstance(newlogic.watch_item, str):
+                    newlogic.watch_item = [newlogic.watch_item]
+                for entry in newlogic.watch_item:
+                    for item in self._sh.match_items(entry):
+                        item.add_logic_trigger(newlogic)
+
+
+    def logic_save(self, logic, logics_code):
+        self.logger.debug("Backend: logics_view_html: Save logic = '{0}'".format(logic))
+
+        if self.updates_allowed:
+            if logic in self._sh.return_logics():
+                mylogic = self._sh.return_logic(logic)
+
+                f = open(mylogic.filename, 'w')
+                f.write(logics_code)
+                f.close()
+
+
+#         for name in _config:
+#             logger.debug("Logic: {}".format(name))
+#             logic = Logic(self._sh, name, _config[name])
+#             if hasattr(logic, 'bytecode'):
+#                 self._logics[name] = logic
+#                 self._sh.scheduler.add(name, logic, logic.prio, logic.crontab, logic.cycle)
+#             else:
+#                 continue
+#             # plugin hook
+#             for plugin in self._sh._plugins:
+#                 if hasattr(plugin, PLUGIN_PARSE_LOGIC):
+#                     update = plugin.parse_logic(logic)
+#                     if update:
+#                         logic.add_method_trigger(update)
+
+
+    def logic_findnew(self, loadedlogics):
+
+        _config = {}
+        _config.update(self._sh._logics._read_logics(self._sh._logic_conf_basename, self._sh._logic_dir))
+
+#        self.logger.warning("Backend (logic_findnew): _config = '{}'".format(_config))
+        newlogics = []
+        for configlogic in _config:
+            found = False
+            for l in loadedlogics:
+                if configlogic == str(l['name']):
+                    found = True
+            if not found:
+
+                newlogics.append({'name': configlogic, 'filename': _config[configlogic]['filename'] })
+#        self.logger.warning("Backend (logic_findnew): newlogics = '{}'".format(newlogics))
+        return newlogics
+
+
+    def logic_reloadcode(self, logic):
+        self.logger.debug("Backend: logics[_view]_html: Reload logic = '{0}'".format(logic))
+        if self.updates_allowed:
+            if logic in self._sh.return_logics():
+                mylogic = self._sh.return_logic(logic)
+                self.logger.info("Backend: logics_html: Reload logic='{0}', filename = '{1}'".format(logic,
+                                                                                                     os.path.basename(
+                                                                                                         mylogic.filename)))
+                mylogic.generate_bytecode()
+                self._sh.trigger(logic, by='Backend', value="Init")
+            else:
+                self.logger.warning("Backend: Logic '{0}' not found".format(logic))
+        else:
+            self.logger.warning("Backend: Logic reloads are not allowed. (Change 'updates_allowed' in plugin.conf")
+
+
+    # -----------------------------------------------------------------------------------
+    #    SCHEDULERS
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def schedules_html(self):
         """
         display a list of all known schedules
         """
-        self.find_visu_plugin()
+        return self.render_template('schedules.html')
 
-        tmpl = self.env.get_template('schedules.html')
-        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+
+    # -----------------------------------------------------------------------------------
+    #    PLUGINS
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def plugins_html(self):
         """
         display a list of all known plugins
         """
-        self.find_visu_plugin()
-
         conf_plugins = {}
         _conf = lib.config.parse(self._sh._plugin_conf)
         for plugin in _conf:
@@ -650,17 +837,18 @@ class Backend:
             plugins.append(plugin)
         plugins_sorted = sorted(plugins, key=lambda k: k['classpath'])
 
-        tmpl = self.env.get_template('plugins.html')
-        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, plugins=plugins_sorted,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+        return self.render_template('plugins.html', plugins=plugins_sorted)
+
+
+    # -----------------------------------------------------------------------------------
+    #    THREADS
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def threads_html(self):
         """
         display a list of all threads
         """
-        self.find_visu_plugin()
-
         threads = []
         for t in threading.enumerate():
             thread = dict()
@@ -672,33 +860,120 @@ class Backend:
         threads_sorted = sorted(threads, key=lambda k: k['sort'])
         threads_count = len(threads_sorted)
 
-        tmpl = self.env.get_template('threads.html')
-        return tmpl.render(smarthome=self._sh, develop=self.developer_mode, threads=threads_sorted,
-                           threads_count=threads_count,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+        return self.render_template('threads.html', threads=threads_sorted, threads_count=threads_count)
+
+
+    # -----------------------------------------------------------------------------------
+    #    LOGGING
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def logging_html(self):
         """
         display a list of all loggers
         """
-        self.find_visu_plugin()
+        loggerDict = {}
+        # Filter to get only active loggers
+        for l in logging.Logger.manager.loggerDict:
+            if (logging.getLogger(l).level > 0) or (logging.getLogger(l).handlers != []):
+                loggerDict[l] = logging.Logger.manager.loggerDict[l]
+        
 
-        loggerDict = logging.Logger.manager.loggerDict
-        loggerDict_sorted = sorted(loggerDict)
+        # get information about active loggers
+        loggerList_sorted = sorted(loggerDict)
+        loggerList_sorted.insert(0, "root")      # Insert information about root logger at the beginning of the list
+        loggers = []
+        for ln in loggerList_sorted:
+            if ln == 'root':
+                logger = logging.root
+            else:
+                logger = logging.getLogger(ln)
+            l = dict()
+            l['name'] = logger.name
+            l['disabled'] = logger.disabled
+            
+            # get information about loglevels
+            if logger.level == 0:
+                l['level'] = ''
+            elif logger.level in logging._levelToName:
+                l['level'] = logging._levelToName[logger.level]
+            else:
+                l['level'] = logger.level
 
-        tmpl = self.env.get_template('logging.html')
-        return tmpl.render(smarthome=self._sh, loggerDict_sorted=loggerDict_sorted, develop=self.developer_mode,
-                           logging=logging,
-                           visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed())
+            l['filters'] = logger.filters
+
+            # get information about handlers and filenames
+            l['handlers'] = list()
+            l['filenames'] = list()
+            for h in logger.handlers:
+                l['handlers'].append(h.__class__.__name__)
+                try:
+                    fn = str(h.baseFilename)
+                except:
+                    fn = ''
+                l['filenames'].append(fn)
+
+            loggers.append(l)
+
+        return self.render_template('logging.html', loggers=loggers)
+
+
+    @cherrypy.expose
+    def log_view_html(self, text_filter='', log_level_filter='ALL', page=1, logfile='smarthome.log'):
+        """
+        returns the smarthomeNG logfile as view
+        """
+        log = '/var/log/' + os.path.basename(logfile)
+        log_name = self._sh_dir + log
+        fobj = open(log_name)
+        log_lines = []
+        start = (int(page) - 1) * 1000
+        end = start + 1000
+        counter = 0
+        log_level_hit = False
+        total_counter = 0
+        for line in fobj:
+            line_text = self.html_escape(line)
+            if log_level_filter != "ALL" and not self.validate_date(line_text[0:10]) and log_level_hit:
+                if start <= counter < end:
+                    log_lines.append(line_text)
+                counter += 1
+            else:
+                log_level_hit = False
+            if (log_level_filter == "ALL" or line_text.find(log_level_filter) in [19, 20, 21, 22,
+                                                                                  23]) and text_filter in line_text:
+                if start <= counter < end:
+                    log_lines.append(line_text)
+                    log_level_hit = True
+                counter += 1
+        fobj.close()
+        num_pages = -(-counter // 1000)
+        if num_pages == 0:
+            num_pages = 1
+        return self.render_template('log_view.html', 
+                                    current_page=int(page), pages=num_pages, 
+                                    logfile=os.path.basename(log_name), log_lines=log_lines, text_filter=text_filter)
+
+
+    @cherrypy.expose
+    def log_dump_html(self, logfile='smarthome.log'):
+        """
+        returns the smarthomeNG logfile as download
+        """
+        log = '/var/log/' + os.path.basename(logfile)
+        log_name = self._sh_dir + log
+        mime = 'application/octet-stream'
+        return cherrypy.lib.static.serve_file(log_name, mime, log_name)
+
+    # -----------------------------------------------------------------------------------
+    #    VISU
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def visu_html(self):
         """
         display a list of all connected visu clients
         """
-        self.find_visu_plugin()
-
         clients = []
         if self.visu_plugin is not None:
             if self.visu_plugin_build == '2':
@@ -736,82 +1011,20 @@ class Backend:
 
         clients_sorted = sorted(clients, key=lambda k: k['name'])
 
-        tmpl = self.env.get_template('visu.html')
-        return tmpl.render(visu_plugin=(self.visu_plugin is not None), yaml_converter=lib.item_conversion.is_ruamelyaml_installed(), develop=self.developer_mode,
-                           visu_plugin_build=self.visu_plugin_build,
-                           clients=clients_sorted)
+        self.find_visu_plugin()
+        return self.render_template('visu.html', 
+                                    visu_plugin_build=self.visu_plugin_build,
+                                    clients=clients_sorted)
+
+
+    # -----------------------------------------------------------------------------------
+    #    DISCLOSURE
+    # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def reboot(self):
-        passwd = request.form['password']
-        rbt1 = subprocess.Popen(["echo", passwd], stdout=subprocess.PIPE)
-        rbt2 = subprocess.Popen(["sudo", "-S", "reboot"], stdin=rbt1.
-                                stdout, stdout=subprocess.PIPE)
-        print(rbt2.communicate()[0])
-        return redirect('/services.html')
+    def disclosure_html(self):
+        """
+        display disclosure
+        """
+        return self.render_template('disclosure.html')
 
-    def validate_date(self, date_text):
-        try:
-            datetime.datetime.strptime(date_text, '%Y-%m-%d')
-            return True
-        except ValueError:
-            return False
-
-    def process_logics_action(self, logic=None, trigger=None, reload=None, enable=None, save=None, logics_code=None):
-        self.logger.debug(
-            "Backend: logics_html: trigger = '{0}', reload = '{1}', enable='{2}', save='{3}'".format(trigger, reload,
-                                                                                                     enable, save))
-        if enable is not None:
-            self.logger.debug("Backend: logics[_view]_html: Enable/Disable logic = '{0}'".format(logic))
-            if self.updates_allowed:
-                if logic in self._sh.return_logics():
-                    mylogic = self._sh.return_logic(logic)
-                    if mylogic.enabled:
-                        mylogic.disable()
-                    else:
-                        mylogic.enable()
-                else:
-                    self.logger.warning("Backend: Logic '{0}' not found".format(logic))
-            else:
-                self.logger.warning(
-                    "Backend: Logic enabling/disabling is not allowed. (Change 'updates_allowed' in plugin.conf")
-
-        if trigger is not None:
-            self.logger.debug("Backend: logics[_view]_html: Trigger logic = '{0}'".format(logic))
-            if self.updates_allowed:
-                if logic in self._sh.return_logics():
-                    self._sh.trigger(logic, by='Backend')
-                else:
-                    self.logger.warning("Backend: Logic '{0}' not found".format(logic))
-            else:
-                self.logger.warning(
-                    "Backend: Logic triggering is not allowed. (Change 'updates_allowed' in plugin.conf")
-
-        if save is not None:
-            self.logger.debug("Backend: logics_view_html: Save logic = '{0}'".format(logic))
-
-            if self.updates_allowed:
-                if logic in self._sh.return_logics():
-                    mylogic = self._sh.return_logic(logic)
-
-            f = open(mylogic.filename, 'w')
-            f.write(logics_code)
-            f.close()
-            reload = True
-
-        if reload is not None:
-            self.logger.debug("Backend: logics[_view]_html: Reload logic = '{0}'".format(logic))
-            if self.updates_allowed:
-                if logic in self._sh.return_logics():
-                    mylogic = self._sh.return_logic(logic)
-                    self.logger.info("Backend: logics_html: Reload logic='{0}', filename = '{1}'".format(logic,
-                                                                                                         os.path.basename(
-                                                                                                             mylogic.filename)))
-                    mylogic.generate_bytecode()
-                    self._sh.trigger(logic, by='Backend', value="Init")
-                else:
-                    self.logger.warning("Backend: Logic '{0}' not found".format(logic))
-            else:
-                self.logger.warning("Backend: Logic reloads are not allowed. (Change 'updates_allowed' in plugin.conf")
-
-        return

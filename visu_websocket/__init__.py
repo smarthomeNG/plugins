@@ -114,8 +114,8 @@ class WebSocket(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         self.websocket.update_item(item.id(), item(), source)
 
-    def url(self, url):
-        self.websocket.url(url)
+    def url(self, url, clientip=''):
+        self.websocket.url(url, clientip)
 		
     def parse_logic(self, logic):
         if hasattr(logic, 'visu_acl'):
@@ -235,12 +235,15 @@ class _websocket(lib.connection.Server):
             except:
                 pass
 
-    def url(self, url):
+    def url(self, url, clientip=''):
         for client in list(self.clients):
-            try:
-                client.json_send({'cmd': 'url', 'url': url})
-            except:
-                pass
+            ip, _, port = client.addr.partition(':')
+            if (clientip == '') or (clientip == ip):
+                self.logger.debug("VISU: Websocket send url to ip={}, port={}".format(str(ip),str(port)))
+                try:
+                    client.json_send({'cmd': 'url', 'url': url})
+                except:
+                    pass
 
 
 #########################################################################
@@ -576,6 +579,8 @@ class JSONEncoder(json.JSONEncoder):
         if isinstance(obj, datetime.datetime):
             return obj.isoformat()
         elif isinstance(obj, datetime.date):
+            return obj.isoformat()
+        elif isinstance(obj, datetime.time):
             return obj.isoformat()
         elif isinstance(obj, datetime.timedelta):
             return int(obj.total_seconds())

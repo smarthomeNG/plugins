@@ -61,6 +61,7 @@ class Sml(SmartPlugin):
         self._dataoffset = 0
         self._items = {}
         self._lock = threading.Lock()
+        self.logger = logging.getLogger(__name__)
 
         if device in self._devices:
           device = self._devices[device]

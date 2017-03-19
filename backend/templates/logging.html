@@ -10,63 +10,45 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>{{ _('Logger Name') }}</th>
+                    <th>{{ _('logger name') }}</th>
                     <th>{{ _('disabled') }}</th>
-                    <th>{{ _('Level') }}</th>
+                    <th>{{ _('level') }}</th>
                     <th>{{ _('filters') }}</th>
                     <th>{{ _('handlers') }}</th>
+                    <th>{{ _('logfiles') }}</th>
                 </tr>
-                <tr>
-                    <th>root</th>
-                    <th>{{ logging.root.disabled }}</th>
-                    {% if logging.root.level == 0 %}
-                    <th></th>
-                    {% elif logging.root.level in logging._levelToName %}
-                    <th>{{ logging._levelToName[logging.root.level] }}</th>
-                    {% else %}
-                    <th>{{ logging.root.level }}</th>
-                    {% endif %}
-
-                    <th>{% for f in logging.root.filters %}
-                        {{ f.__class__.__name__ }}{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                    </th>
-                    <th>{% for h in logging.root.handlers %}
-                        {{ h.__class__.__name__ }}{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                    </th>
-                </tr>
-
+                
             </thead>
             <tbody>
-                {% if smarthome %}
-                    {% for l in loggerDict_sorted  %}
-                    <tr>
-                        <td>{{ logging.getLogger(l).name }}</td>
-                        <td>{{ logging.getLogger(l).disabled }}</td>
-                        {% if logging.getLogger(l).level == 0 %}
-                        <td></td>
-                        {% elif logging.getLogger(l).level in logging._levelToName %}
-                        <td>{{ logging._levelToName[logging.getLogger(l).level] }}</td>
-                        {% else %}
-                        <td>{{ logging.getLogger(l).level }}</td>
-                        {% endif %}
+                {% for l in loggers  %}
+                <tr>
+                    {% if l.name == 'root' %}
+                        <th>{{ l.name }}</th>
+                        <th>{{ l.disabled }}</th>
+                        <th>{{ l.level }}</th>
+                    {% else %}
+                        <td>{{ l.name }}</td>
+                        <td>{{ l.disabled }}</td>
+                        <td>{{ l.level }}</td>
+                    {% endif %}
+                    <td>{% for f in l.filters %}
+                        {% if (f != '') and (not loop.first) %}, {% endif %}
+                        {{ f }}
+                        {% endfor %}
+                    </td>
+                    <td>{% for h in l.handlers %}
+                        {% if (h != '') and (not loop.first) %}, {% endif %}
+                        {{ h }}
+                        {% endfor %}
+                    </td>
+                    <td>{% for fn in l.filenames %}
+                        {% if (fn != '') and (not loop.first) %}, {% endif %}
+                        <a href="/log_view.html?logfile={{ get_basename(fn) }}">{{ fn }}</a>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
 
-                        <td>{% for f in logging.getLogger(l).filters %}
-                            {{ f.__class__.__name__ }}{% if not loop.last %},{% endif %}
-                            {% endfor %}
-                        </td>
-                        <td>{% for h in logging.getLogger(l).handlers %}
-                            {{ h.__class__.__name__ }}{% if not loop.last %},{% endif %}
-                            {% endfor %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td>{{ _('no data available') }}</td>
-                    </tr>
-                {% endif %}
             </tbody>
         </table>
     </div>

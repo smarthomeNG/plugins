@@ -2,7 +2,7 @@
 You need to specify the following environmental variables in the lambda function:
 - SMARTHOME_HOST
 		foobar.dyndns.tld
-- SMARHOME_PORT
+- SMARTHOME_PORT
 		443 - endpoint must be https enabled!
 - SMARTHOME_PATH
 		'/'
@@ -14,7 +14,7 @@ exports.handler = function(event, context, callback) {
 
 	var options = {
 		hostname: process.env.SMARTHOME_HOST,
-		port: process.env.SMARHOME_PORT,
+		port: process.env.SMARTHOME_PORT,
 		path: process.env.SMARTHOME_PATH,
 		method: 'POST',
 		auth: process.env.SMARTHOME_AUTH,

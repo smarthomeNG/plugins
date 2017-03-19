@@ -89,3 +89,36 @@ You could specify the **`visu_acl`** attribute to every logic in your logic.conf
 </pre>
 
 
+# Functions
+
+## url(url)
+
+--> This command works with **smartVISU 2.9** and up, for **smartVISU 2.8** a modified driver **`io_smarthome.py`** is needed.
+
+This function instructs the smartVISU clients to change to the specified url (visu page).
+
+Example:
+
+```
+	sh.visu.url('index.php')
+```
+
+This function call expects the visu_websocket plugin to be configured in a section named **`visu`** in the configuration file **`etc/plugin.yaml`** or **`etc/plugin.conf`**.
+
+It instructs all running visu clients to change to the main page.
+
+
+## url(url, ip)
+
+--> This command works with **smartVISU 2.9** and up, for **smartVISU 2.8** a modified driver **`io_smarthome.py`** is needed.
+
+Function is the same as above, but only clients (browsers) running on a host with the specified ip address are instructed to change the page.
+
+Example:
+
+```
+	sh.visu.url('index.php?page=apartement.living', '10.0.0.23')
+```
+
+This command expects the visu_websocket plugin to be configured in a section named **`visu`** in the configuration file **`etc/plugin.yaml`** or **`etc/plugin.conf`**.
+

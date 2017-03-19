@@ -175,7 +175,7 @@ class CLIHandler(lib.connection.Stream):
 
 class CLI(lib.connection.Server, SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.1.0'
+    PLUGIN_VERSION = '1.3.0'
 
     def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323, hashed_password=''):
         """

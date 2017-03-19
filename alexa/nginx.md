@@ -118,7 +118,7 @@ server {
 	include /etc/nginx/include.d/common;
 
 	location / {
-		proxy_pass http://192.168.16.5:9000/;
+		proxy_pass http://192.168.X.Y:9000/;
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -135,7 +135,7 @@ server {
 	include /etc/nginx/include.d/common;
 
 	location / {
-		proxy_pass http://192.168.16.6/;
+		proxy_pass http://192.168.X.Z/;
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

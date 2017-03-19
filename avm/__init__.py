@@ -2,7 +2,6 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess(a)gmail.com
-#  Version 1.1.2
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -439,7 +438,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.1.2"
+    PLUGIN_VERSION = "1.2.3"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -775,7 +774,7 @@ class AVM(SmartPlugin):
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 if int(item.conf['avm_wlan_index']) > 0:
                     headers['SOAPACTION'] = "%s#%s" % (
-                    self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
+                        self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
                     soap_data = self._assemble_soap_data(action, self._urn_map['WLANConfiguration'] % str(
                         item.conf['avm_wlan_index']), {'NewEnable': int(item())})
                 else:
@@ -798,7 +797,7 @@ class AVM(SmartPlugin):
 
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 param = "%s%s%s" % (
-                "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['avm_wlan_index'])
+                    "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['avm_wlan_index'])
                 url = self._build_url(param)
 
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
@@ -820,9 +819,9 @@ class AVM(SmartPlugin):
                 for citem in self._fritz_device.get_items():  # search for guest time remaining item.
                     if self.get_iattr_value(citem.conf,
                                             'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(
-                            citem.conf, 'avm_wlan_index') == item.conf['avm_wlan_index']:
+                        citem.conf, 'avm_wlan_index') == item.conf['avm_wlan_index']:
                         self._response_cache.pop("wlanconfig_%s_%s" % (
-                        self.get_iattr_value(citem.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
+                            self.get_iattr_value(citem.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
                                                  None)  # reset response cache
                         self._update_wlan_config(citem)  # immediately update remaining guest time
 
@@ -852,7 +851,7 @@ class AVM(SmartPlugin):
             return
 
         pb_url_xml = xml.getElementsByTagName('NewPhonebookURL')
-        if (len(pb_url_xml) > 0):
+        if len(pb_url_xml) > 0:
             pb_url = pb_url_xml[0].firstChild.data
             try:
                 pb_result = self._session.get(pb_url, timeout=self._timeout, verify=self._verify)
@@ -861,12 +860,12 @@ class AVM(SmartPlugin):
                 self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
                 return
             contacts = pb_xml.getElementsByTagName('contact')
-            if (len(contacts) > 0):
+            if len(contacts) > 0:
                 for contact in contacts:
                     phone_numbers = contact.getElementsByTagName('number')
-                    if (phone_numbers.length > 0):
+                    if phone_numbers.length > 0:
                         i = phone_numbers.length
-                        while (i >= 0):
+                        while i >= 0:
                             i -= 1
                             if phone_number in phone_numbers[i].firstChild.data:
                                 return contact.getElementsByTagName('realName')[0].firstChild.data.strip()
@@ -876,6 +875,68 @@ class AVM(SmartPlugin):
             self.logger.error("Phonebook not available on the FritzDevice")
 
         return phone_number
+
+    def get_phone_numbers_by_name(self, name=''):
+        """
+        Searches the phonebook for a contact by a given name
+
+        | Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
+        | Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
+
+        :param name: partial or full name of contact as defined in the phonebook.
+        :return: dict of found contact names (keys) with each containing an array of dicts (keys: type, number)
+        """
+        url = self._build_url("/upnp/control/x_contact")
+        headers = self._header.copy()
+        action = "GetPhonebook"
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['OnTel'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'], {'NewPhonebookID': 0})
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()), verify=self._verify)
+            xml = minidom.parseString(response.content)
+        except Exception as e:
+            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            return
+
+        pb_url_xml = xml.getElementsByTagName('NewPhonebookURL')
+        if len(pb_url_xml) > 0:
+            pb_url = pb_url_xml[0].firstChild.data
+            try:
+                pb_result = self._session.get(pb_url, timeout=self._timeout, verify=self._verify)
+                pb_xml = minidom.parseString(pb_result.content)
+            except Exception as e:
+                self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                return
+
+            contacts = pb_xml.getElementsByTagName('contact')
+            result_numbers = {}
+            if name == '':
+                return result_numbers
+            if len(contacts) > 0:
+                for contact in contacts:
+                    real_names = contact.getElementsByTagName('realName')
+                    if real_names.length > 0:
+                        i = 0
+                        while i < real_names.length:
+                            if name.lower() in real_names[i].firstChild.data.lower():
+                                phone_numbers = contact.getElementsByTagName('number')
+                                if phone_numbers.length > 0:
+                                    result_numbers[real_names[i].firstChild.data] = []
+                                    j = 0
+                                    while j < phone_numbers.length:
+                                        if phone_numbers[j].firstChild.data:
+                                            result_number_dict = {}
+                                            result_number_dict['number'] = phone_numbers[j].firstChild.data
+                                            result_number_dict['type'] = phone_numbers[j].attributes["type"].value
+                                            result_numbers[real_names[i].firstChild.data].append(result_number_dict)
+                                        j += 1
+                            i += 1
+        else:
+            self.logger.error("Phonebook not available on the FritzDevice")
+
+        return result_numbers
 
     def get_calllist(self, filter_incoming=''):
         """
@@ -1026,8 +1087,9 @@ class AVM(SmartPlugin):
         soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'])
         try:
             response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
-                               auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()),
-                               verify=self._verify)
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
         except Exception as e:
             self.logger.error("Exception when sending POST request: %s" % str(e))
             return
@@ -1041,7 +1103,7 @@ class AVM(SmartPlugin):
         self.logger.error("No call origin available.")
         return
 
-    def get_phone_name(self, index = 1):
+    def get_phone_name(self, index=1):
         """
         Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin.
 
@@ -1062,8 +1124,9 @@ class AVM(SmartPlugin):
                                              {'NewIndex': index})
         try:
             response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
-                               auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()),
-                               verify=self._verify)
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
         except Exception as e:
             self.logger.error("Exception when sending POST request: %s" % str(e))
             return
@@ -1169,7 +1232,7 @@ class AVM(SmartPlugin):
         else:
             is_active = False
             self.logger.debug("MAC Address %s not available on the FritzDevice - ID: %s" % (
-            mac_address, self._fritz_device.get_identifier()))
+                mac_address, self._fritz_device.get_identifier()))
         return bool(is_active)
 
     def _update_myfritz(self, item):
@@ -1529,7 +1592,7 @@ class AVM(SmartPlugin):
             return
 
         headers['SOAPACTION'] = "%s#%s" % (
-        self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
+            self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
         soap_data = self._assemble_soap_data(action,
                                              self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']))
 

@@ -13,10 +13,12 @@ plugin.conf
     class_name = Prowl
     class_path = plugins.prowl
     apikey = asdf1234asdf1234 # secret global key for prowl
+    instance = Whatever # Instance name displayed in messages
 </pre>
 
 ### Attributes
    * `apikey`: this attribute is optional. You could define a global apikey for the prowl service.
+   * `instance`: this attribute is optional. If set it will be displayed in prowl messages.
 
 Functions
 =========

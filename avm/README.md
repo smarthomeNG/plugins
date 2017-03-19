@@ -553,6 +553,27 @@ This function reboots the FritzDevice.
 ## get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book
 
+##get_phone_numbers_by_name(name)
+This is a function to search for contact names and retrieve the related telephone numbers
+
+Set an item with a html of all found numbers e.g. by:
+```html
+result_numbers = sh.fritzbox_7490.get_phone_numbers_by_name('Mustermann')
+result_string = ''
+keys = {'work': 'Geschäftlich', 'home': 'Privat', 'mobile': 'Mobil', 'fax_work': 'Fax', 'intern': 'Intern'}
+for contact in result_numbers:
+    result_string += '<p><h2>'+contact+'</h2>'
+    i = 0
+    result_string += '<table>'
+    while i < len(result_numbers[contact]):
+        number = result_numbers[contact][i]['number']
+        type_number = keys[result_numbers[contact][i]['type']]
+        result_string += '<tr><td>' + type_number + ':</td><td><a href="tel:' + number + '" style="font-weight: normal;">' + number + '</a></td></tr>'
+        i += 1
+    result_string += '</table></p>'
+sh.general_items.number_search_results(result_string)
+```
+
 ## get_calllist()
 Returns an array with calllist entries
 

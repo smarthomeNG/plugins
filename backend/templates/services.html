@@ -119,16 +119,6 @@
 			</tr>
 		</thead>
 		<tbody>
-			<tr>
-				<td><img src="/static/img/logfile.svg" alt="Icon logfile" width="48" height="48"></td>
-				<td style="padding-top:15px;">
-					<button type="button" class="btn btn-default" onclick="window.open('/log_dump.html')">{{ _('Logfile speichern','button') }}</button>
-					<button type="button" class="btn btn-default" onclick="location.href='/log_view.html'">{{ _('Logfile ansehen','button') }}</button>
-					{% if develop %}
-					<button type="button" class="btn btn-default" onclick="location.href='/logging.html'">{{ _('Logger ansehen','button') }}</button>
-					{% endif %}
-				</td>
-			</tr>
 			{% if sql_plugin %}
 			<tr>
 				<td><img src="/static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>

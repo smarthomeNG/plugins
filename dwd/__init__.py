@@ -181,11 +181,12 @@ class DWD(SmartPlugin):
         return {}
 
     def forecast(self, region, location):
+        cleanr = re.compile('<.*?>')  # clean html tags
         path = 'gds/specials/forecasts/tables/germany/Daten_'
-        frames = ['frueh', 'mittag', 'spaet', 'nacht', 'morgen_frueh', 'morgen_spaet', 'uebermorgen_frueh', 'uebermorgen_spaet', 'Tag4_frueh', 'Tag4_spaet']
+        frames = ['heute_frueh', 'heute_mittag', 'heute_spaet', 'heute_nacht', 'morgen_frueh', 'morgen_spaet', 'uebermorgen_frueh', 'uebermorgen_spaet', 'Tag4_frueh', 'Tag4_spaet']
         forecast = {}
         for frame in frames:
-            filepath = "{0}{1}_{2}".format(path, region, frame)
+            filepath = "{0}{1}_{2}_HTML".format(path, region, frame)
             fb = self._retr_file(filepath)
             if fb == '':
                 continue
@@ -199,37 +200,34 @@ class DWD(SmartPlugin):
                 minute = 59
             else:
                 hour = 18
-            for line in fb.splitlines():
-                if line.count('Termin ist nicht mehr'):  # already past
-                    date = self._sh.now().replace(hour=hour, minute=minute, second=0, microsecond=0, tzinfo=self.tz)
-                    forecast[date] = ['', '', '']
-                    continue
-                elif line.startswith('Vorhersage'):
-                    header = line
-                elif line.count(location):
-                    if frame == 'nacht':
-                        #header = re.sub(r"/\d\d?", '', header)
-                        day, month, year = re.findall(r"\d\d\D\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')  #31/01.06.2016
-                        day1, day2 = day.split("/")
-                        if day2 == "01":
-                            if 1 < int(month) < 10:
-                                month = "0%s"%str(int(month)-1)
-                            elif int(month) == 1: #next day of night in new year, reset to last year
-                                month = "12"
-                                year = str(int(year)-1)
-                            else:
-                                month = str(int(month)-1)
-                        day = day1
-                    else:
-                        header = re.sub(r"/\d\d?", '', header)
-                        day, month, year = re.findall(r"\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')
-                    #self.logger.debug(day+" "+month+" "+year)
-                    date = datetime.datetime(int(year), int(month), int(day), hour, tzinfo=self.tz)
-                    if re.search("\d\d\/\d\d", header):
-                        date = date + datetime.timedelta(days=-1)
-                    space = re.compile(r'  +')
-                    fc = space.split(line)
-                    forecast[date] = fc[1:]
+            matchH4 = re.findall(r'<h4>(.*?)</h4>', fb, re.M | re.I | re.S)
+            if not matchH4 is None:
+                if len(matchH4) > 0:
+                    for element in matchH4:
+                        if element.startswith('Vorhersage'):
+                            header = element
+
+            matchTR = re.findall(r'<tr>(.*?)</tr>', fb, re.M | re.I | re.S)
+            if matchTR is not None:
+                if len(matchTR) > 0:
+                    for element in matchTR:
+                        if element.count(location):
+                            result = []
+                            header = re.sub(r"/\d\d?", '', header)
+                            day, month, year = re.findall(r"\d\d\.\d\d\.\d\d\d\d", header)[0].split('.')
+                            date = datetime.datetime(int(year), int(month), int(day), hour, tzinfo=self.tz)
+                            if re.search("\d\d\/\d\d", header):
+                                date = date + datetime.timedelta(days=-1)
+
+                            data_string = re.sub(cleanr, '', element)
+                            data = list(
+                                filter(None, [s.strip() for s in data_string.splitlines()]))  # filter empty lines
+                            i = 0
+                            for dataset in data:
+                                if i >= 2:
+                                    result.append(dataset)
+                                i += 1
+                            forecast[date] = result
         return forecast
 
     def uvi(self, location):
