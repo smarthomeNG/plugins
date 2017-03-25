@@ -3,20 +3,20 @@
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py.  If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG.  If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import datetime
@@ -131,7 +131,7 @@ class RRD():
         if step is not None:
             query.extend(['--resolution', step])
         try:
-            meta, name, data = rrdtool.fetch(query)
+            meta, name, data = rrdtool.fetch(*query)
         except Exception as e:
             logger.warning("error reading {0} data: {1}".format(item, e))
             return None
@@ -181,7 +181,7 @@ class RRD():
             else:
                 query.extend(['--end', "now-{}".format(end)])
         try:
-            meta, name, data = rrdtool.fetch(query)
+            meta, name, data = rrdtool.fetch(*query)
         except Exception as e:
             logger.warning("error reading {0} data: {1}".format(item, e))
             return None
@@ -218,7 +218,7 @@ class RRD():
             args.append('RRA:AVERAGE:0.5:{}:1826'.format(int(86400 / rrd['step'])))  # 24h/5y
             args.append('RRA:AVERAGE:0.5:{}:1300'.format(int(604800 / rrd['step'])))  # 7d/25y
         try:
-            rrdtool.create(args)
+            rrdtool.create(*args)
             logger.debug("Creating rrd ({0}) for {1}.".format(rrd['rrdb'], rrd['item']))
         except Exception as e:
             logger.warning("Error creating rrd ({0}) for {1}: {2}".format(rrd['rrdb'], rrd['item'], e))

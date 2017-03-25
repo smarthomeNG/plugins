@@ -4,20 +4,20 @@
 #  Copyright 2012-2014 Oliver Hinckel                  github@ollisnet.de
 #########################################################################
 #
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
@@ -29,10 +29,13 @@ import struct
 import socket
 import errno
 
-logger = logging.getLogger('')
+from lib.model.smartplugin import SmartPlugin
 
+class Sml(SmartPlugin):
 
-class Sml():
+    ALLOW_MULTIINSTANCE = True
+    PLUGIN_VERSION = '1.0.0'
+
     _units = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
        1 : 'a',    2 : 'mo',    3 : 'wk',  4 : 'd',    5 : 'h',     6 : 'min.',  7 : 's',     8 : '°',     9 : '°C',    10 : 'currency',
       11 : 'm',   12 : 'm/s',  13 : 'm³', 14 : 'm³',  15 : 'm³/h', 16 : 'm³/h', 17 : 'm³/d', 18 : 'm³/d', 19 : 'l',     20 : 'kg',
@@ -58,6 +61,7 @@ class Sml():
         self._dataoffset = 0
         self._items = {}
         self._lock = threading.Lock()
+        self.logger = logging.getLogger(__name__)
 
         if device in self._devices:
           device = self._devices[device]
@@ -67,7 +71,7 @@ class Sml():
         elif device == "raw":
             self._prepare = self._prepareRaw
         else:
-            logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(device))
+            self.logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(device))
             self._prepare = self._prepareRaw
 
         smarthome.connections.monitor(self)
@@ -81,14 +85,15 @@ class Sml():
         self.disconnect()
 
     def parse_item(self, item):
-        if 'sml_obis' in item.conf:
-            obis = item.conf['sml_obis']
-            prop = item.conf['sml_prop'] if 'sml_prop' in item.conf else 'valueReal'
+        if self.has_iattr(item.conf, 'sml_obis'):
+            obis = self.get_iattr_value(item.conf, 'sml_obis')
+            prop = self.get_iattr_value(item.conf, 'sml_prop') if self.has_iattr(item.conf, 'sml_prop') else 'valueReal'
             if obis not in self._items:
                 self._items[obis] = {}
             if prop not in self._items[obis]:
                 self._items[obis][prop] = []
             self._items[obis][prop].append(item)
+            self.logger.debug('attach {} {} {}'.format(item.id(), obis, prop))
             return self.update_item
         return None
 
@@ -114,11 +119,11 @@ class Sml():
                 self._sock.connect((self.host, self.port))
                 self._sock.setblocking(False)
         except Exception as e:
-            logger.error('Sml: Could not connect to {}: {}'.format(self._target, e))
+            self.logger.error('Sml: Could not connect to {}: {}'.format(self._target, e))
             self._lock.release()
             return
         else:
-            logger.info('Sml: Connected to {}'.format(self._target))
+            self.logger.info('Sml: Connected to {}'.format(self._target))
             self.connected = True
             self._lock.release()
 
@@ -133,7 +138,7 @@ class Sml():
                     self._sock = None
             except:
                 pass
-            logger.info('Sml: Disconnected!')
+            self.logger.info('Sml: Disconnected!')
             self.connected = False
             self._target = None
 
@@ -166,12 +171,14 @@ class Sml():
             while retry > 0:
                 try:
                     data = self._read(512)
+                    if len(data) == 0:
+                        self.logger.error('Reading data from device returned 0 bytes!')
 
                     retry = 0
                     values = self._parse(self._prepare(data))
 
                     for obis in values:
-                        logger.debug('Entry {}'.format(values[obis]))
+                        self.logger.debug('Entry {}'.format(values[obis]))
 
                         if obis in self._items:
                             for prop in self._items[obis]:
@@ -179,7 +186,7 @@ class Sml():
                                     item(values[obis][prop], 'Sml')
 
                 except Exception as e:
-                    logger.error('Reading data from {0} failed: {1} - reconnecting!'.format(self._target, e))
+                    self.logger.error('Reading data from {0} failed: {1} - reconnecting!'.format(self._target, e))
 
                     self.disconnect()
                     time.sleep(1)
@@ -187,11 +194,11 @@ class Sml():
 
                     retry = retry - 1
                     if retry == 0:
-                        logger.warn('Trying to read data in next cycle due to connection errors!')
+                        self.logger.warn('Trying to read data in next cycle due to connection errors!')
 
 
             cycletime = time.time() - start
-            logger.debug("cycle takes {0} seconds".format(cycletime))
+            self.logger.debug("cycle takes {0} seconds".format(cycletime))
 
     def _parse(self, data):
         # Search SML List Entry sequences like:
@@ -201,7 +208,7 @@ class Sml():
         # Details see http://wiki.volkszaehler.org/software/sml
         values = {}
         packetsize = 7
-        logger.debug('Data:{}'.format(''.join(' {:02x}'.format(x) for x in data)))
+        self.logger.debug('Data:{}'.format(''.join(' {:02x}'.format(x) for x in data)))
         self._dataoffset = 0
         while self._dataoffset < len(data)-packetsize:
 
@@ -228,7 +235,7 @@ class Sml():
                     values[entry['obis']] = entry
                 except Exception as e:
                     if self._dataoffset < len(data) - 1:
-                        logger.warning('Can not parse entity at position {}, byte {}: {}:{}...'.format(self._dataoffset, self._dataoffset - packetstart, e, ''.join(' {:02x}'.format(x) for x in data[packetstart:packetstart+64])))
+                        self.logger.warning('Can not parse entity at position {}, byte {}: {}:{}...'.format(self._dataoffset, self._dataoffset - packetstart, e, ''.join(' {:02x}'.format(x) for x in data[packetstart:packetstart+64])))
                         self._dataoffset = packetstart + packetsize - 1
             else:
                 self._dataoffset += 1
@@ -285,7 +292,7 @@ class Sml():
             return result
 
         else:
-            logger.warning('Skipping unkown field {}'.format(hex(tlf)))
+            self.logger.warning('Skipping unkown field {}'.format(hex(tlf)))
 
         self._dataoffset += len
 

@@ -3,20 +3,20 @@
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import base64
@@ -313,13 +313,21 @@ class WebSocketHandler(lib.connection.Stream):
         elif command == 'ping':
             self.json_send({'cmd': 'pong'})
         elif command == 'logic':
-            if 'name' not in data or 'val' not in data:
+            if 'name' not in data:
                 return
             name = data['name']
-            value = data['val']
             if name in self.logics:
-                logger.info("Client {0} triggerd logic {1} with '{2}'".format(self.addr, name, value))
-                self.logics[name].trigger(by='Visu', value=value, source=self.addr)
+                if 'val' in data:
+                    value = data['val']
+                    logger.info("Client {0} triggerd logic {1} with '{2}'".format(self.addr, name, value))
+                    self.logics[name].trigger(by='Visu', value=value, source=self.addr)
+                if 'enabled' in data:
+                    if data['enabled']:
+                        logger.info("Client {0} enabled logic {1}".format(self.addr, name))
+                        self.logics[name].enable()
+                    else:
+                        logger.info("Client {0} disabled logic {1}".format(self.addr, name))
+                        self.logics[name].disable()
             else:
                 logger.warning("Client {0} requested invalid logic: {1}".format(self.addr, name))
         elif command == 'series':
@@ -368,7 +376,7 @@ class WebSocketHandler(lib.connection.Stream):
         elif command == 'proto':  # protocol version
             proto = data['ver']
             if proto > self.proto:
-                logger.warning("WebSocket: protocol mismatch. Update SmartHome.py")
+                logger.warning("WebSocket: protocol mismatch. Update SmartHomeNG")
             elif proto < self.proto:
                 logger.warning("WebSocket: protocol mismatch. Update your client: {0}".format(self.addr))
             self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()})

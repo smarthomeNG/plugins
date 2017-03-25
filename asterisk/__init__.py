@@ -3,20 +3,20 @@
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import threading
@@ -25,13 +25,15 @@ import datetime
 
 import lib.connection
 import lib.log
+from lib.model.smartplugin import SmartPlugin
 
-logger = logging.getLogger('')
 
-
-class Asterisk(lib.connection.Client):
+class Asterisk(lib.connection.Client,SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.3.0"
 
     def __init__(self, smarthome, username, password, host='127.0.0.1', port=5038):
+        self.logger = logging.getLogger(__name__)
         lib.connection.Client.__init__(self, host, port, monitor=True)
         self.terminator = b'\r\n\r\n'
         self._init_cmd = {'Action': 'Login', 'Username': username, 'Secret': password, 'Events': 'call,user,cdr'}
@@ -55,14 +57,14 @@ class Asterisk(lib.connection.Client):
         self._error = False
         if reply:
             d['ActionID'] = self._aid
-        #logger.debug("Request {0} - sending: {1}".format(self._aid, d))
+        #self.logger.debug("Request {0} - sending: {1}".format(self._aid, d))
         self._reply_lock.acquire()
         self.send(('\r\n'.join(['{0}: {1}'.format(key, value) for (key, value) in list(d.items())]) + '\r\n\r\n').encode())
         if reply:
             self._reply_lock.wait(2)
         self._reply_lock.release()
         reply = self._reply
-        #logger.debug("Request {0} - reply: {1}".format(self._aid, reply))
+        #self.logger.debug("Request {0} - reply: {1}".format(self._aid, reply))
         error = self._error
         self._cmd_lock.release()
         if error:
@@ -74,20 +76,20 @@ class Asterisk(lib.connection.Client):
         try:
             return self._command({'Action': 'DBGet', 'Family': fam, 'Key': key})
         except Exception:
-            logger.warning("Asterisk: Problem reading {0}/{1}.".format(fam, key))
+            self.logger.warning("Asterisk: Problem reading {0}/{1}.".format(fam, key))
 
     def db_write(self, key, value):
         fam, sep, key = key.partition('/')
         try:
             return self._command({'Action': 'DBPut', 'Family': fam, 'Key': key, 'Val': value})
         except Exception as e:
-            logger.warning("Asterisk: Problem updating {0}/{1} to {2}: {3}.".format(fam, key, value, e))
+            self.logger.warning("Asterisk: Problem updating {0}/{1} to {2}: {3}.".format(fam, key, value, e))
 
     def mailbox_count(self, mailbox, context='default'):
         try:
             return self._command({'Action': 'MailboxCount', 'Mailbox': mailbox + '@' + context})
         except Exception as e:
-            logger.warning("Asterisk: Problem reading mailbox count {0}@{1}: {2}.".format(mailbox, context, e))
+            self.logger.warning("Asterisk: Problem reading mailbox count {0}@{1}: {2}.".format(mailbox, context, e))
             return (0, 0)
 
     def call(self, source, dest, context, callerid=None):
@@ -97,7 +99,7 @@ class Asterisk(lib.connection.Client):
         try:
             self._command(cmd, reply=False)
         except Exception as e:
-            logger.warning("Asterisk: Problem calling {0} from {1} with context {2}: {3}.".format(dest, source, context, e))
+            self.logger.warning("Asterisk: Problem calling {0} from {1} with context {2}: {3}.".format(dest, source, context, e))
 
     def hangup(self, hang):
         active_channels = self._command({'Action': 'CoreShowChannels'})

@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 {% extends "base.html" %}
 {% import "navbar.html" as nav with context %}
 {% block navbar %}
@@ -10,29 +10,45 @@
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th>{{ _('Logger Name') }}</th>
+                    <th>{{ _('logger name') }}</th>
                     <th>{{ _('disabled') }}</th>
-                    <th>{{ _('Level') }}</th>
+                    <th>{{ _('level') }}</th>
                     <th>{{ _('filters') }}</th>
                     <th>{{ _('handlers') }}</th>
+                    <th>{{ _('logfiles') }}</th>
                 </tr>
+                
             </thead>
             <tbody>
-                {% if smarthome %}
-                    {% for l in loggerDict_sorted  %}
-                    <tr>
-                        <td>{{ logging.getLogger(l).name }}</td>
-                        <td>{{ logging.getLogger(l).disabled }}</td>
-                        <td>{{ logging.getLogger(l).level }}</td>
-                        <td>{{ logging.getLogger(l).filters }}</td>
-                        <td>{{ logging.getLogger(l).handlers }}</td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td>{{ _('no data available') }}</td>
-                    </tr>
-                {% endif %}
+                {% for l in loggers  %}
+                <tr>
+                    {% if l.name == 'root' %}
+                        <th>{{ l.name }}</th>
+                        <th>{{ l.disabled }}</th>
+                        <th>{{ l.level }}</th>
+                    {% else %}
+                        <td>{{ l.name }}</td>
+                        <td>{{ l.disabled }}</td>
+                        <td>{{ l.level }}</td>
+                    {% endif %}
+                    <td>{% for f in l.filters %}
+                        {% if (f != '') and (not loop.first) %}, {% endif %}
+                        {{ f }}
+                        {% endfor %}
+                    </td>
+                    <td>{% for h in l.handlers %}
+                        {% if (h != '') and (not loop.first) %}, {% endif %}
+                        {{ h }}
+                        {% endfor %}
+                    </td>
+                    <td>{% for fn in l.filenames %}
+                        {% if (fn != '') and (not loop.first) %}, {% endif %}
+                        <a href="/log_view.html?logfile={{ get_basename(fn) }}">{{ fn }}</a>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+
             </tbody>
         </table>
     </div>

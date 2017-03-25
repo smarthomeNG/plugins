@@ -3,34 +3,37 @@
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
 import urllib.parse
 import http.client
+from lib.model.smartplugin import SmartPlugin
 
-logger = logging.getLogger('Prowl')
 
+class Prowl(SmartPlugin):
+    ALLOW_MULTIINSTANCE = True
+    PLUGIN_VERSION = "1.3.0"
 
-class Prowl():
     _host = 'api.prowlapp.com'
     _api = '/publicapi/add'
 
     def __init__(self, smarthome, apikey=None):
+        self.logger = logging.getLogger(__name__)
         self._apikey = apikey
         self._sh = smarthome
 
@@ -40,12 +43,15 @@ class Prowl():
     def stop(self):
         pass
 
-    def __call__(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHome'):
+    def __call__(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHomeNG'):
         data = {}
-        headers = {'User-Agent': "SmartHome.py", 'Content-Type': "application/x-www-form-urlencoded"}
+        origin = application
+        if self.get_instance_name() != '':
+        	origin += ' (' + self.get_instance_name() + ')'
+        headers = {'User-Agent': application, 'Content-Type': "application/x-www-form-urlencoded"}
         data['event'] = event[:1024].encode()
         data['description'] = description[:10000].encode()
-        data['application'] = application[:256].encode()
+        data['application'] = origin[:256].encode()
         if apikey:
             data['apikey'] = apikey
         else:
@@ -62,4 +68,4 @@ class Prowl():
             if resp.status != 200:
                 raise Exception("{} {}".format(resp.status, resp.reason))
         except Exception as e:
-            logger.warning("Could not send prowl notification: {0}. Error: {1}".format(event, e))
+            self.logger.warning("Could not send prowl notification: {0}. Error: {1}".format(event, e))

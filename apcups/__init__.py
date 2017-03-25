@@ -3,47 +3,50 @@
 #########################################################################
 # Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
 import subprocess # we scrape apcaccess output
+from lib.model.smartplugin import SmartPlugin
 
-logger = logging.getLogger('')
+logger = logging.getLogger(__name__)
 
-class APCUPS():
-
+ITEM_TAG = ['apcups']
+class APCUPS(SmartPlugin):
+    PLUGIN_VERSION = "1.3.1"
+    ALLOW_MULTIINSTANCE = True
+  
     def __init__(self, smarthome, host='127.0.0.1', port=3551, cycle=300):
         self._sh = smarthome
         self._host = host
         self._port = port
         self._cycle = int(cycle)
-        #self._cycle = 300
         self._items = {}
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('Apcups', self.update_status, cycle=self._cycle)
+        self._sh.scheduler.add('APCups', self.update_status, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
 
     def parse_item(self, item):
-        if 'apcups' in item.conf:
-            apcups_key = (item.conf['apcups']).lower()
+        if self.has_iattr(item.conf, ITEM_TAG[0]):
+            apcups_key = (self.get_iattr_value(ITEM_TAG[0])).lower()
             self._items[apcups_key]=item
             logger.debug("item {0} added with apcupd_key {1}".format(item,apcups_key))
             return self.update_item

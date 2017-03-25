@@ -3,9 +3,7 @@
 Requirements
 ============
 You have to install the python3 bindings for rrdtool:
-<pre>$ sudo apt-get install python3-dev librrd-dev
-$ cd lib/3rd/rrdtool
-$ sudo python3 setup.py install</pre>
+<pre>$ sudo apt-get install python3-dev librrd-dev </pre>
 
 Configuration
 =============
@@ -43,7 +41,7 @@ items.conf
 
 ### rrd
 To active rrd logging (for an item) simply set this attribute to yes.
-If you set this attribute to `init`, SmartHome.py tries to set the item to the last known value (like cache = yes).
+If you set this attribute to `init`, SmartHomeNG tries to set the item to the last known value (like cache = yes).
 
 ### rrd_min
 Set this item attribute to log the minimum as well. Default is no.

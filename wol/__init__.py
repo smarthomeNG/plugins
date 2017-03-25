@@ -51,7 +51,7 @@ class WakeOnLan(SmartPlugin):
     def __init__(self, sh,*args, **kwargs):
         self._sh = sh
         self.logger = logging.getLogger(__name__)
-        print("###"+self.get_instance_name())
+        #print("###"+self.get_instance_name())
 
     def __call__(self, mac_adr):
         self.wake_on_lan(mac_adr)
@@ -90,10 +90,7 @@ class WakeOnLan(SmartPlugin):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.sendto(bytearray.fromhex(data), ('<broadcast>', 7))
-    def testprint(self):
-        print(self.get_version())
-        print(self.get_instance_name())
-        print(self.to_bool("yes"))
+
 if __name__ == '__main__':
     myplugin = WakeOnLan('smarthome-dummy')
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')

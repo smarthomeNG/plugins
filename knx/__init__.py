@@ -49,10 +49,21 @@ class KNX(lib.connection.Client):
         self.date_ga = date_ga
         self.instance = instance
         self._lock = threading.Lock()
+        self._bm_separatefile = False
+        self._bm_format= "KNX[{0}]: {1} set {2} to {3}"
+
         if smarthome.string2bool(busmonitor):
             self._busmonitor = self.logger.info
         else:
             self._busmonitor = self.logger.debug
+
+            # write bus messages in a separate logger
+            if isinstance(busmonitor, str):
+                if busmonitor.lower() in ['logger']:
+                    self._bm_separatefile = True
+                    self._bm_format = "{0};{1};{2};{3}"
+                    self._busmonitor = logging.getLogger("knx_busmonitor").info
+
         if send_time:
             self._sh.scheduler.add('KNX[{0}] time'.format(self.instance), self._send_time, prio=5, cycle=int(send_time))
         if readonly: 
@@ -195,7 +206,8 @@ class KNX(lib.connection.Client):
             payload = data[8:]
         if flg == 'write' or flg == 'response':
             if dst not in self.gal:  # update item/logic
-                self._busmonitor("KNX[{0}]: {1} set {2} to {3}".format(self.instance, src, dst, binascii.hexlify(payload).decode()))
+
+                self._busmonitor(self._bm_format.format(self.instance, src, dst, binascii.hexlify(payload).decode()))
                 return
             dpt = self.gal[dst]['dpt']
             try:
@@ -204,7 +216,7 @@ class KNX(lib.connection.Client):
                 self.logger.exception("KNX[{0}]: Problem decoding frame from {1} to {2} with '{3}' and DPT {4}. Exception: {5}".format(self.instance, src, dst, binascii.hexlify(payload).decode(), dpt, e))
                 return
             if val is not None:
-                self._busmonitor("KNX[{0}]: {1} set {2} to {3}".format(self.instance, src, dst, val))
+                self._busmonitor(self._bm_format.format(self.instance, src, dst, val))
                 #print "in:  {0}".format(self.decode(payload, 'hex'))
                 #out = ''
                 #for i in self.encode(val, dpt):
@@ -241,6 +253,10 @@ class KNX(lib.connection.Client):
             if dpt not in dpts.decode:
                 self.logger.warning("KNX[{0}]: Ignoring {1} unknown dpt: {2}".format(self.instance, item, dpt))
                 return None
+        elif 'knx_status' in item.conf or 'knx_send' in item.conf or 'knx_reply' in item.conf or 'knx_listen' in item.conf or 'knx_init' in item.conf or 'knx_cache' in item.conf:
+            self.logger.warning(
+                "KNX[{0}]: Ignoring {1}: please add knx_dpt.".format(self.instance, item))
+            return None
         else:
             return None
 

@@ -3,24 +3,23 @@
 #########################################################################
 # Copyright 2013-2014 Marcus Popp                          marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
-import sqlite3
 import datetime
 import functools
 import time
@@ -30,7 +29,7 @@ from lib.model.smartplugin import SmartPlugin
 class SQL(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.3.1"
     _version = 3
     _buffer_time = 60 * 1000
     # (period days, granularity hours)
@@ -58,6 +57,7 @@ class SQL(SmartPlugin):
         self.connected = False
         self._buffer = {}
         self._buffer_lock = threading.Lock()
+        sqlite3 = self._sh.dbapi('sqlite')
         self.logger.debug("SQLite {0}".format(sqlite3.sqlite_version))
         self._fdb_lock = threading.Lock()
         self._fdb_lock.acquire()
@@ -282,7 +282,11 @@ class SQL(SmartPlugin):
             self._fdb_lock.release()
 
     def _maintain(self):
-        for item in self._buffer:
+        if not self._fdb_lock.acquire(timeout=2):
+            return
+        items = list(self._buffer.keys())
+        self._fdb_lock.release()
+        for item in items:
             if self._buffer[item] != []:
                 self._insert(item)
         self._pack()

@@ -252,6 +252,14 @@ are parsed as child items. In the example below there is a comment in the respec
             type = num
             visu_acl = ro
             avm_data_type@fritzbox_7490 = wan_total_packets_received
+        [[[current_packets_sent]]]
+            type = num
+            visu_acl = ro
+            avm_data_type@fritzbox_7490 = wan_current_packets_sent
+        [[[current_packets_received]]]
+            type = num
+            visu_acl = ro
+            avm_data_type@fritzbox_7490 = wan_current_packets_received
         [[[total_bytes_sent]]]
             type = num
             visu_acl = ro
@@ -260,6 +268,14 @@ are parsed as child items. In the example below there is a comment in the respec
             type = num
             visu_acl = ro
             avm_data_type@fritzbox_7490 = wan_total_bytes_received
+        [[[current_bytes_sent]]]
+            type = num
+            visu_acl = ro
+            avm_data_type@fritzbox_7490 = wan_current_bytes_sent
+        [[[current_bytes_received]]]
+            type = num
+            visu_acl = ro
+            avm_data_type@fritzbox_7490 = wan_current_bytes_received
         [[[link]]]
             type = bool
             visu_acl = ro
@@ -486,11 +502,34 @@ are parsed as child items. In the example below there is a comment in the respec
 
 # Functions
 
-## set_call_origin(phone_name)
-Sets the origin of a call. E.g. an internal number associated to a phone. Typically set before using "start_call".
+## get_phone_name
+Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin. Parameter is an INT, starting from 1. In case an index does not exist, an error is logged.
+The used function X_AVM-DE_GetPhonePort() does not deliver analog connections like FON 1 and FON 2 (BUG in AVM Software).
 <pre>
-sh.fb1.set_call_origin("**610")
-</pre>       
+phone_name = sh.fb1.get_phone_name(1)
+</pre>
+CURL for this function:
+<pre>
+curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/x_voip" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:X_VoIP:1#X_AVM-DE_GetPhonePort" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:X_AVM-DE_GetPhonePort xmlns:u='urn:dslforum-org:service:X_VoIP:1'><s:NewIndex>1</s:NewIndex></u:X_AVM-DE_GetPhonePort></s:Body></s:Envelope>" -s -k
+</pre>
+
+##get_call_origin
+Gets the phone name, currently set as call_origin.
+<pre>
+phone_name = sh.fritzbox_7490.get_call_origin()
+</pre>
+CURL for this function:
+<pre>
+curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/x_voip" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:X_VoIP:1#X_AVM-DE_DialGetConfig" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:X_AVM-DE_DialGetConfig xmlns:u='urn:dslforum-org:service:X_VoIP:1' /></s:Body></s:Envelope>" -s -k
+</pre>
+
+## set_call_origin(phone_name)
+Sets the origin of a call. E.g. a DECT phone. Typically set before using "start_call".
+You can also set the origin on your FritzDevice via "Telefonie -> Anrufe -> Wählhilfe verwenden -> Verbindung mit dem Telefon".
+The used function X_AVM-DE_SetDialConfig() does not allow the configuration of analog connections (BUG in AVM Software).
+<pre>
+sh.fb1.set_call_origin("<phone_name>")
+</pre>
 
 ## start_call(phone_number)
 This function starts a call. Parameter can be an external or internal number.
@@ -513,6 +552,27 @@ This function reboots the FritzDevice.
 
 ## get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book
+
+##get_phone_numbers_by_name(name)
+This is a function to search for contact names and retrieve the related telephone numbers
+
+Set an item with a html of all found numbers e.g. by:
+```html
+result_numbers = sh.fritzbox_7490.get_phone_numbers_by_name('Mustermann')
+result_string = ''
+keys = {'work': 'Geschäftlich', 'home': 'Privat', 'mobile': 'Mobil', 'fax_work': 'Fax', 'intern': 'Intern'}
+for contact in result_numbers:
+    result_string += '<p><h2>'+contact+'</h2>'
+    i = 0
+    result_string += '<table>'
+    while i < len(result_numbers[contact]):
+        number = result_numbers[contact][i]['number']
+        type_number = keys[result_numbers[contact][i]['type']]
+        result_string += '<tr><td>' + type_number + ':</td><td><a href="tel:' + number + '" style="font-weight: normal;">' + number + '</a></td></tr>'
+        i += 1
+    result_string += '</table></p>'
+sh.general_items.number_search_results(result_string)
+```
 
 ## get_calllist()
 Returns an array with calllist entries

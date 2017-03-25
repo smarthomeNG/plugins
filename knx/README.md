@@ -21,18 +21,47 @@ plugin.conf
    class_path = plugins.knx
 #   host = 127.0.0.1
 #   port = 6720
-   send_time = 600 # update date/time every 600 seconds, default none
-   time_ga = 1/1/1 # default none
-   date_ga = 1/1/2 # default none
+#   send_time = 600 # update date/time every 600 seconds, default none
+#   time_ga = 1/1/1 # default none
+#   date_ga = 1/1/2 # default none
 #   busmonitor = False
 #   readonly = False
 </pre>
-
 This plugins is looking by default for the eibd on 127.0.0.1 port 6720. You could change this in your plugin.conf.
-If you specify a `send_time` intervall and a `time_ga` and/or `date_ga` the plugin sends the time/date every cycle seconds on the bus.
 
-If you set `busmonitor` to True, every KNX packet will be logged.
-If you set `readonly` to True, the plugin only read the knx bus and send no group message to the bus.
+### Attributes
+  * `host` : eibd or knxd hostname (default: 127.0.0.1) 
+  * `port` : eibd or knxd port (default: 6720) 
+  * `send_time` : interval to send time and date to the knx bus
+  * `time_ga` : groupadress to send a timestamp to the knx bus
+  * `date_ga` : groupadress to send a date to the knx bus
+  * `busmonitor` : Values: (True, False, 'logger'). If you set `busmonitor` to True, every KNX packet will be logged to the default plugin logger.                
+      Set parameter to `busmonitor = 'logger'` to log all knx messages to a separate logger 'knx_busmonitor'.
+      In `logging.yaml` you can configure a formatter, handler and a logger to write all bus messages to a separate file.
+                     <pre>
+                     formatters:
+                         busmonitor:
+                            format: '%(asctime)s;%(message)s'
+                            datefmt: '%Y-%m-%d %H:%M:%S'
+                     handlers:
+                         busmonitor_file:
+                            class: logging.handlers.TimedRotatingFileHandler
+                            formatter: busmonitor
+                            when: midnight
+                            backupCount: 7
+                            filename: ./var/log/knx_busmonitor.log
+                     loggers:
+                         knx_busmonitor:
+                            level: INFO
+                            handlers: [busmonitor_file]
+                    </pre>
+                    With this configuration all bus monitor messages are writen to `./var/log/knx_busmonitor.log`
+                False disable the logging until you start SmartHomeNG in debug modus.
+
+  * `readonly` :  If you set `readonly` to True, the plugin only read the knx bus and send no group message to the bus.
+
+
+If you specify a `send_time` intervall and a `time_ga` and/or `date_ga` the plugin sends the time/date every cycle seconds on the bus.
 
 items.conf
 --------------
@@ -42,6 +71,7 @@ This attribute is mandatory. If you don't provide one the item will be ignored.
 The DPT has to match the type of the item!
 
 The following datapoint types are supported:
+<pre>
 
 +--------+---------+------+----------------------------------+
 | DPT    | Data    | Type | Values                           |
@@ -88,7 +118,7 @@ The following datapoint types are supported:
 +--------+---------+------+----------------------------------+
 | 232    | 3 byte  | list | RGB: [0, 0, 0] - [255, 255, 255] |
 +--------+---------+------+----------------------------------+
-
+</pre>
 If you are missing one, open a bug report or drop me a message in the knx user forum.
 
 ### knx_send
@@ -101,11 +131,11 @@ Similar to knx_send but will send updates even for changes vie KNX if the knx_st
 You could specify one or more group addresses to monitor for changes.
 
 ### knx_init
-If you set this attribute, SmartHome.py sends a read request to specified group address at startup and set the value of the item to the response.
+If you set this attribute, SmartHomeNG sends a read request to specified group address at startup and set the value of the item to the response.
 It implies 'knx_listen'.
 
 ### knx_cache
-If you set this attribute, SmartHome.py tries to read the cached value for the group address. If it fails it sends a read request to specified group address at startup and set the value of the item to the response.
+If you set this attribute, SmartHomeNG tries to read the cached value for the group address. If it fails it sends a read request to specified group address at startup and set the value of the item to the response.
 It implies 'knx_listen'.
 
 ### knx_reply
@@ -142,7 +172,7 @@ You could specify the `knx_listen` and `knx_reply` attribute to every logic in y
     knx_dpt = 9
     knx_reply = 1/1/8 | 1/1/8
 </pre>
-If there is a packet directed to the according group address, SmartHome.py would trigger the logic and will pass the payload (via the trigger object) to the logic.
+If there is a packet directed to the according group address, SmartHomeNG would trigger the logic and will pass the payload (via the trigger object) to the logic.
 
 In the context of the KNX plugin the trigger dictionary consists of the following elements:
 

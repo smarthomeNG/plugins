@@ -5,7 +5,7 @@
 Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
 
-This plugin is part of SmartHome.py.
+This plugin is part of SmartHomeNG.
   
 Visit:  https://github.com/smarthomeNG/
         https://knx-user-forum.de/forum/supportforen/smarthome-py
@@ -235,4 +235,39 @@ The plugin answers with the protocol version it supports. Additionally it sends 
 	 "time":"2016-04-14T21:23:20.248227+02:00"
 	}
 ```
+
+
+## identity
+--> This command is new with **SmartHomeNG 1.3**
+
+With the **`identity`** command a client sends information about itself to SmartHomeNG. The command should be issued right after opening a connection.
+
+The following example shows, what a smartVISU v2.7 running in a Safari Browser would send:
+
+```
+	{
+	 'cmd': 'identity',
+	 'sw': 'smartVISU', 
+	 'ver': 'v2.7', 
+	 'browser': 'Safari', 
+	 'bver': '9'
+	}
+```
+
+
+## url
+--> This command is new with **SmartHomeNG 1.3**
+
+--> This command works with **smartVISU 2.9** and up, for **smartVISU 2.8** a modified driver **`io_smarthome.py`** is needed.
+
+ **`url`**  is a command sent from the plugin to the smartVISU clients. With the **`url`** command the smartVISU client can be instructed to change to another page.
+
+The following command instructs smartVISU to change to the main page:
+
+```
+	{"cmd":"url", "url": "index.php"}
+```
+
+The smartVISU client does not send an answer to the **`url`** command.
+
 

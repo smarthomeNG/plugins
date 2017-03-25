@@ -13,20 +13,30 @@ Should work on all APC UPS devices. Tested only on a "smartUPS".
 
 ## plugin.conf
 
-Please provide a plugin.conf snippet for your plugin with ever option your plugin supports. Optional attributes should be commented out.
+Please provide a plugin.yaml snippet for your plugin with ever option your plugin supports. Optional attributes should be commented out.
+<pre>
+ApcUps:
+    class_name: APCUPS
+    class_path: plugins.apcups
+    host: localhost
+    port: 3551
+</pre>
 
+If you use the old plugin.conf config file format add the following lines to activate the plugin:
 <pre>
 [apcups]
     class_name = APCUPS
     class_path = plugins.apcups
 #    host = localhost
 #    port = 3551
+#    cycle = 300
 </pre>
 
 Description of the attributes:
 
 * __host__: ip address of the NIS (optional, default: localhost)
 * __port__: port of the NIS (optional, default: 3551)
+* __cycle__: time to update the items with values from apcaccess
 
 ## items.conf
 

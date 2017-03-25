@@ -4,22 +4,22 @@
 #  Copyright 2016- Martin Sinn                              m.sinn@gmx.de
 #  Parts Copyright 2012-2013 Marcus Popp                   marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.  
+#  This file is part of SmartHomeNG.  
 #  Visit:  https://github.com/smarthomeNG/
 #          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
@@ -40,7 +40,7 @@ import sys
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.1.0"
+    PLUGIN_VERSION="1.3.1"
     ALLOW_MULTIINSTANCE = False
 
 
@@ -84,6 +84,22 @@ class SmartVisu(SmartPlugin):
 
     def stop(self):
         self.alive = False
+
+
+    def parse_item(self, item):
+        # Relative path support (release 1.3 and up)
+        item.expand_relativepathes('sv_widget', "'", "'")
+        item.expand_relativepathes('sv_widget2', "'", "'")
+        item.expand_relativepathes('sv_nav_aside', "'", "'")
+        item.expand_relativepathes('sv_nav_aside2', "'", "'")
+
+
+    def parse_logic(self, logic):
+        pass
+
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        pass
 
 
 #########################################################################
@@ -196,7 +212,7 @@ class SmartVisuGenerator:
             else:
                 img = ''
             if isinstance(item.conf['sv_widget'], list):
-                self.logger.warning("room: sv_widget")
+                self.logger.warning("room: sv_widget: IsList")
                 for widget in item.conf['sv_widget']:
                     widgets += self.parse_tpl(widgetblocktemplate, [('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('item.name', str(item)), ("'item", "'" + item.id())])
             else:
