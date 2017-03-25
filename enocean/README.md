@@ -1,5 +1,5 @@
-EnOcean - Still under development.
-
+EnOcean
+(PLUGIN_VERSION = "1.3.2")
 
 Configure plugin.conf
 =
@@ -45,7 +45,7 @@ An Enocean item must specify at minimum an enocean_rx_id (Enocean Identification
 Example item.conf
 =
 <pre>
-[Enocean]
+[Enocean_Section]
     [[Outside_Temperature]]
         type = num
         enocean_rx_id = 0180924D
@@ -190,5 +190,5 @@ Then use one of th following learn-in command, depending on your enocean device:
 Use different ID offsets for different groups of actors. After complete the teach-in procedure, leave the interactive console and add the applied ID_Offset to the respective enocean send item (enocean_tx_id_offse = ID_Offse).
 That's it!
 
-Docu V1.1
+Docu V1.2
 
