@@ -696,67 +696,7 @@ class EnOcean(SmartPlugin):
             return
         self.logger.info("enocean: sending learn telegram for switch command")
         self._send_radio_packet(id_offset, 0xA5, [0x01, 0x00, 0x00, 0x00])
-        
-    def send_psc_on(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending psc on")
-        SubTel = 0x03
-        db = 0xFF
-        Secu = 0x0
-        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x60, 0x32],[0x03, 0x01, 0x93, 0xAF, 0x59, 0xFF, 0x0])
-        
-    def send_psc_off(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        SubTel = 0x03
-        db = 0xFF
-        Secu = 0x0
-        self.logger.info("enocean: sending psc off")
-        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x60, 0x0],[SubTel, 0x01, 0x93, 0xAF, 0x59, db, Secu])
-        
-    def send_nodon_1_on(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        SubTel = 0x03
-        db = 0xFF
-        Secu = 0x0
-        self.logger.info("enocean: sending nodon_1_on")
-        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x0, 0x60],[SubTel, 0x01, 0xA6, 0x20, 0x2B, db, Secu])  
-    
-    def send_nodon_2_on(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        SubTel = 0x03
-        db = 0xFF
-        Secu = 0x0
-        self.logger.info("enocean: sending nodon_2_on")
-        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1, 0x60],[SubTel, 0x01, 0xA6, 0x20, 0x2B, db, Secu])
-        
-    def send_nodon_2_off(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        SubTel = 0x03
-        db = 0xFF
-        Secu = 0x0
-        self.logger.info("enocean: sending nodon_2_off")
-        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1, 0x0],[SubTel, 0x01, 0xA6, 0x20, 0x2B, db, Secu]) 
-    
-    def send_nodon_1_off(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        SubTel = 0x03
-        db = 0xFF
-        Secu = 0x0
-        self.logger.info("enocean: sending nodon_1_off")
-        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x0, 0x0],[SubTel, 0x01, 0xA6, 0x20, 0x2B, db, Secu]) 
-    
+           
     def _calc_crc8(self, msg, crc=0):
         for i in msg:
             crc = FCSTAB[crc ^ i]
