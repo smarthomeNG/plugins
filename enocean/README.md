@@ -190,5 +190,14 @@ Then use one of th following learn-in command, depending on your enocean device:
 Use different ID offsets for different groups of actors. After complete the teach-in procedure, leave the interactive console and add the applied ID_Offset to the respective enocean send item (enocean_tx_id_offse = ID_Offse).
 That's it!
 
+UTE teach-in
+=
+
+When activated on Enocean device the device will send a "D4" teach in request. An automatic answer within 500ms is expected. To do so enable the UTE learnmode prior to the activation on the device:
+Start smarthome with the interactive console - see above.
+sh.enocean.start_UTE_learnmode(ID_Offset)
+
+The device will be teached in and the learn mode will be ended automatically.
+
 Docu V1.2
 

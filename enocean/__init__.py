@@ -205,7 +205,15 @@ class EnOcean(SmartPlugin):
             dBm = -optional[5]
             SecurityLevel = optional[6]
             self.logger.debug("enocean: radio message with additional info: subtelnum = {} / dest_id = {:08X} / signal = {}dBm / SecurityLevel = {}".format(subtelnum, dest_id, dBm, SecurityLevel))
-
+            if (choice == 0xD4) and (self.UTE_listen == True):
+                #self.logger.info("UTE FOUND!! RORG {:02x}".format(choice))
+                self.logger.info("call send_UTE_response")
+                self._send_UTE_response(data, optional)
+                #self.logger.debug("send response")
+                #logger.debug("time in milliseconds")
+                #logger.debug(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+                #self._send_radio_packet(5, choice, [0x91, 0xFF, 0x33, 0x00, 0x09, 0x01, 0xD2],[0x03, 0x01, 0x93, 0xAF, 0x59, 0xFF, 0x0] )#UTE response package for psc234 - 0193AF59
+                #self._send_radio_packet(8, choice, [0x91, 0x02, 0x46, 0x00, 0x12, 0x01, 0xD2],[0x03, 0x01, 0xA6, 0x20, 0x2B, 0xFF, 0x0] )#UTE response package for Nodon actor - 01A6202B
         if sender_id in self._rx_items:
             self.logger.debug("enocean: Sender ID found in item list")
             # iterate over all eep known for this id and get list of associated items
@@ -326,6 +334,8 @@ class EnOcean(SmartPlugin):
 
     def run(self):
         self.alive = True
+        self.UTE_listen = False
+        #self.learn_id = 0
         t = threading.Thread(target=self._startup, name="enocean-startup")
         t.daemon = True
         t.start()
@@ -376,7 +386,24 @@ class EnOcean(SmartPlugin):
     def stop(self):
         self.alive = False
         self.logger.info("enocean: Thread stopped")
+        
+    def start_UTE_learnmode(self, id_offset=0):
+        self.UTE_listen = True
+        self.learn_id = id_offset
+        self.logger.info("enocean: Listeining for UTE package ('D4')")
 
+    def _send_UTE_response(self, data, optional):
+        choice = data[0]
+        #payload = data[1:-5]
+        #sender_id = int.from_bytes(data[-5:-1], byteorder='big', signed=False)
+        #status = data[-1]
+        #repeater_cnt = status & 0x0F
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        self._send_radio_packet(self.learn_id, choice, [0x91, payload[1], payload[2], payload[3], payload[4], payload[5], payload[6]],[SubTel, data[-5], data[-4], data[-3], data[-2], db, Secu] )#payload[0] = 0x91: EEP Teach-in response, Request accepted, teach-in successful, bidirectional
+        self.UTE_listen = False
+        self.logger.info("enocean: sending UTE response and end listening")
     def parse_item(self, item):
         if 'enocean_rx_key' in item.conf:
             # look for info from the most specific info to the broadest (key->eep->id) - one id might use multiple eep might define multiple keys
@@ -531,7 +558,7 @@ class EnOcean(SmartPlugin):
         packet += bytes([self._calc_crc8(packet[1:5])])
         packet += bytes(data + optional)
         packet += bytes([self._calc_crc8(packet[6:])])
-        #self.logger.warning("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
+        self.logger.warning("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
         self._tcm.write(packet)
 
     def _send_smart_ack_command(self, _code, data=[]):
@@ -669,7 +696,67 @@ class EnOcean(SmartPlugin):
             return
         self.logger.info("enocean: sending learn telegram for switch command")
         self._send_radio_packet(id_offset, 0xA5, [0x01, 0x00, 0x00, 0x00])
-
+        
+    def send_psc_on(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        self.logger.info("enocean: sending psc on")
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x60, 0x32],[0x03, 0x01, 0x93, 0xAF, 0x59, 0xFF, 0x0])
+        
+    def send_psc_off(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        self.logger.info("enocean: sending psc off")
+        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x60, 0x0],[SubTel, 0x01, 0x93, 0xAF, 0x59, db, Secu])
+        
+    def send_nodon_1_on(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        self.logger.info("enocean: sending nodon_1_on")
+        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x0, 0x60],[SubTel, 0x01, 0xA6, 0x20, 0x2B, db, Secu])  
+    
+    def send_nodon_2_on(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        self.logger.info("enocean: sending nodon_2_on")
+        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1, 0x60],[SubTel, 0x01, 0xA6, 0x20, 0x2B, db, Secu])
+        
+    def send_nodon_2_off(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        self.logger.info("enocean: sending nodon_2_off")
+        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1, 0x0],[SubTel, 0x01, 0xA6, 0x20, 0x2B, db, Secu]) 
+    
+    def send_nodon_1_off(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        self.logger.info("enocean: sending nodon_1_off")
+        self._send_radio_packet(id_offset, 0xD2, [0x01, 0x0, 0x0],[SubTel, 0x01, 0xA6, 0x20, 0x2B, db, Secu]) 
+    
     def _calc_crc8(self, msg, crc=0):
         for i in msg:
             crc = FCSTAB[crc ^ i]
