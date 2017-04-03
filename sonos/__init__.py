@@ -31,12 +31,13 @@ import subprocess
 import threading
 from pprint import pprint
 from queue import Empty
-
+from soco.music_services import MusicService
 from lib.item import Item
-from plugins.sonos_new.soco import *
+from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
-from plugins.sonos_new.soco.events import event_listener
-from plugins.sonos_new.soco.xml import XML
+from plugins.sonos.soco.data_structures import to_didl_string, DidlItem
+from plugins.sonos.soco.events import event_listener
+from plugins.sonos.soco.xml import XML
 
 _create_speaker_lock = threading.Lock()  # make speaker object creation thread-safe
 sonos_speaker = {}
@@ -1849,8 +1850,46 @@ class Speaker(object):
             for item in sonos_speaker[member].stream_content_items:
                 item(self.stream_content, 'Sonos')
 
+    def play_tunein(self, station_name: str, start: bool = True) -> None:
+        """
+        Plays a radio station by a given radio name. If more than one radio station are found, the first result will be
+        played.
+        :param station_name: radio station name
+        :param start: Start playing after setting the radio stream? Default: True
+        :return: None
+        """
+        if not self.is_coordinator:
+            sonos_speaker[self.coordinator].play_tunein(station_name, start)
+        else:
+            service = MusicService('TuneIn')
+            result = service.search(category='stations', term=station_name)
+            if not result:
+                self._logger.warning("No radio station found for search string '{term}'.".format(term=station_name))
+                return
+            item = result['mediaMetadata'][0]
+            didl = DidlItem(title="DUMMY", parent_id="DUMMY", item_id="DUMMY", desc=service.desc)
+            meta = to_didl_string(didl)
+            account = service.account
+            uri = "x-sonosapi-stream:{0}?sid={1}&sn={2}".format(item['id'], service.service_id, account.serial_number)
+            self.soco.avTransport.SetAVTransportURI([('InstanceID', 0),
+                                                     ('CurrentURI', uri), ('CurrentURIMetaData', meta)])
+            if start:
+                self.soco.play()
 
-class SonosNew(SmartPlugin):
+    def play_url(self, url: str, start: bool = True) -> None:
+        """
+        Plays a track from a given url
+        :param start: Start playing after setting the url? Default: True
+        :param url: url to be played
+        :return: None
+        """
+        if not self.is_coordinator:
+            sonos_speaker[self.coordinator].play_url(url, start)
+        else:
+            self.soco.play_uri(url, start=start)
+
+
+class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.3.0.3"
 
@@ -1858,8 +1897,8 @@ class SonosNew(SmartPlugin):
         self._sh = sh
         self._logger = logging.getLogger('sonos_new')  # get a unique logger for the plugin and provide it internally
         self.zero_zone = False  # sometime a discovery scan fails, so try it two times; we need to save the state
-        self._sonos_dpt3_step = 2 # default value for dpt3 volume step (step(s) per time period)
-        self._sonos_dpt3_time = 1 # default value for dpt3 volume time (time period per step in seconds)
+        self._sonos_dpt3_step = 2  # default value for dpt3 volume step (step(s) per time period)
+        self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
 
         discover_cycle_default = 120
 
@@ -2070,6 +2109,12 @@ class SonosNew(SmartPlugin):
                 if command == "switch_tv":
                     if item():
                         sonos_speaker[uid].switch_to_tv()
+                if command == "play_tunein":
+                    start = self._resolve_start_after(item)
+                    sonos_speaker[uid].play_tunein(item(), start)
+                if command == "play_url":
+                    start = self._resolve_start_after(item)
+                    sonos_speaker[uid].play_url(item(), start)
 
     def _resolve_group_command(self, item: Item) -> bool:
         """
@@ -2087,6 +2132,19 @@ class SonosNew(SmartPlugin):
         for child in group_item.return_children():
             if self.has_iattr(child.conf, 'sonos_attrib'):
                 if self.get_iattr_value(child.conf, 'sonos_attrib') == "group":
+                    return child()
+        return False
+
+    def _resolve_start_after(self, item: Item) -> bool:
+        """
+        Resolves a start_after_insert child for an item
+        :rtype: bool
+        :param item: The item for which a child item is to be searched
+        :return: 'True' or 'False'
+        """
+        for child in item.return_children():
+            if self.has_iattr(child.conf, 'sonos_attrib'):
+                if self.get_iattr_value(child.conf, 'sonos_attrib') == "start_after":
                     return child()
         return False
 
