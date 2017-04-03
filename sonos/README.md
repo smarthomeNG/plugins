@@ -50,7 +50,7 @@ rincon_c7e91735d19711411
 ```
 The first line of each entry is our UID (rincon_xxxxxxxxxxxxxx) we were looking for.
 
-###<a name="struc"></a>Item Structure 
+### <a name="struc"></a>Item Structure 
 The first thing to mention is that you don't have to implement all items / functions for a speaker. Choose your
 functionality and all the relevant items. To get the Sonos widget working you have at least to implement all items
 marked with ```visu``` in the items description below. This list is updated if a new functionality is implemented in the 
@@ -133,7 +133,7 @@ MyRoom:
             sonos_send: mute
 ```
 
-###<a name="desc"></a>Item Description
+### <a name="desc"></a>Item Description
 
 ---
 **bass**
@@ -450,9 +450,9 @@ item is changed by Sonos events and should always be up-to-date.
 
 ---
 
-###<a name="best"></a>Best practise
+### <a name="best"></a>Best practise
 
-####Group commands
+#### Group commands
 As you can see, some of the items have an additional child item "group_command". You can ommit this child item, then 
 the default value is always ```False```. If you set the```group_command``` item to ```True``` the value from the parent
 item( e.g. ```volume```) will be set to all members of the speaker's group. To get all UIDs of a group you can check the 
@@ -474,12 +474,12 @@ previous
 For this items you don't have to pay attention to which speaker of the group you have to send the command. This is done 
 automatically and affects all speakers of the group.
 
-####Do not stress the discover functionality
+#### Do not stress the discover functionality
 You can define the parameter 'discover_cycle' on plugin start to set the interval how often the plugin searches for 
 new and / or offline speakers in the network. Due to the initialization of the speakers and network traffic, it is 
 not recommended to set the value less than 60 seconds.
 
-####Use the "is_initialized" item
+#### Use the "is_initialized" item
 
 It takes some time to discover all Sonos speakers in the network. Use the "is_initialized" item for your logic. If true,
 the speaker is fully functional. If this item is 'False' the speaker is not yet initialized or offline.
@@ -497,7 +497,7 @@ status_light
 
 These values are updated periodically with each speaker discovery cycle.
 
-####Yaml or "classical" item configuration
+#### Yaml or "classical" item configuration
 The plugin comes with an example in yaml format. This will be the preferable format for the SamrthomeNG item 
 configuration in the future. Feel free to change this example  to the "classical" format. SmarthomeNG is 
 backward-compatible.
@@ -554,7 +554,7 @@ becomes
             sonos_send = play
       .....
 ```
-####DPT3 volume example
+#### DPT3 volume example
 ```bash
  Kueche:
     sonos_uid: rincon_000e58cxxxxxxxxx
@@ -589,7 +589,7 @@ becomes
           sonos_send: volume
 ```
 
-####Debug on error
+#### Debug on error
 You've any trouble to get the plugin working, start SmarthomeNG in debug mode and post the logfile with the error to
 the [**support thread**](https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung) in the 
 KNX User Forum.
