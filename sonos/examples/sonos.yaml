@@ -1,0 +1,212 @@
+MySonos:
+  Kueche:
+    sonos_uid: rincon_xxxxxxxxxxxxxxxxx
+
+    is_initialized:
+      type: bool
+      sonos_recv: is_initialized
+
+    volume:
+      type: num
+      sonos_recv: volume
+      sonos_send: volume
+      enforce_updates: true
+
+      group_command:
+        type: bool
+        value: false
+        sonos_attrib: group
+
+      max_volume:
+        type: num
+        value: -1
+        sonos_attrib: max_volume
+
+      volume_dpt3:
+        type: list
+        sonos_attrib: vol_dpt3
+        sonos_dpt3_step: 2
+        sonos_dpt3_time: 1
+
+        helper:
+          sonos_attrib: dpt3_helper
+          type: num
+          sonos_send: volume
+
+    play:
+      type: bool
+      sonos_recv: play
+      sonos_send: play
+
+    stop:
+      type: bool
+      sonos_recv: stop
+      sonos_send: stop
+
+    pause:
+      type: bool
+      sonos_recv: pause
+      sonos_send: pause
+
+    next:
+      type: bool
+      sonos_send: next
+      enforce_updates: true
+
+    previous:
+      type: bool
+      sonos_send: previous
+      enforce_updates: true
+
+    mute:
+      type: bool
+      sonos_recv: mute
+      sonos_send: mute
+
+    play_mode:
+      type: str
+      sonos_recv: play_mode
+      sonos_send: play_mode
+
+    bass:
+      type: num
+      sonos_recv: bass
+      sonos_send: bass
+
+      group_command:
+        type: bool
+        value: false
+        sonos_attrib: group
+
+    treble:
+      type: num
+      sonos_recv: treble
+      sonos_send: treble
+
+      group_command:
+        type: bool
+        value: false
+        sonos_attrib: group
+
+    loudness:
+      type: bool
+      sonos_recv: loudness
+      sonos_send: loudness
+
+      group_command:
+        type: bool
+        value: false
+        sonos_attrib: group
+
+    night_mode:
+      # only supported by Playbar
+      type: bool
+      sonos_recv: night_mode
+      sonos_send: night_mode
+
+    dialog_mode:
+      # only supported by Playbar
+      type: bool
+      sonos_recv: dialog_mode
+      sonos_send: dialog_mode
+
+    cross_fade:
+      type: bool
+      sonos_recv: cross_fade
+      sonos_send: cross_fade
+
+    snooze:
+      type: num
+      sonos_recv: snooze
+      sonos_send: snooze
+
+    is_coordinator:
+      type: bool
+      sonos_recv: is_coordinator
+
+    coordinator:
+      type: str
+      sonos_recv: coordinator
+
+    zone_group_members:
+      type: list
+      sonos_recv: zone_group_members
+
+    status_light:
+      type: bool
+      sonos_recv: status_light
+      sonos_send: status_light
+
+    player_name:
+      type: str
+      sonos_recv: player_name
+
+    household_id:
+      type: str
+      sonos_recv: household_id
+
+    track_uri:
+      type: str
+      sonos_recv: track_uri
+
+    streamtype:
+      type: str
+      sonos_recv: streamtype
+
+    switch_linein:
+      # only supported by Play5 yet (or all speakers with line-in)
+      type: bool
+      sonos_send: switch_linein
+
+    switch_tv:
+      # only supported by Playbar
+      type: bool
+      sonos_send: switch_tv
+
+    track_artist:
+      type: str
+      sonos_recv: track_artist
+
+    track_title:
+      type: str
+      sonos_recv: track_title
+
+    track_album:
+      type: str
+      sonos_recv: track_album
+
+    track_album_art:
+      type: str
+      sonos_recv: track_album_art
+
+    radio_station:
+      type: str
+      sonos_recv: radio_station
+
+    radio_show:
+      type: str
+      sonos_recv: radio_show
+
+    current_track:
+      type: num
+      sonos_recv: current_track
+
+    number_of_tracks:
+      type: num
+      sonos_recv: number_of_tracks
+
+    current_track_duration:
+      type: str
+      sonos_recv: current_track_duration
+
+    current_transport_actions:
+      type: str
+      sonos_recv: current_transport_actions
+
+    current_valid_play_modes:
+      type: str
+      sonos_recv: current_valid_play_modes
+
+    stream_content:
+      type: str
+      sonos_recv: stream_content
