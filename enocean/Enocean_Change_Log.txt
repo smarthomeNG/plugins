@@ -1,0 +1,40 @@
+##############################################
+# Enocean for SmarthomeNG
+# Change Log for further Changes
+#
+# Date: 27.03.2017
+# Issuer: F. Häfele
+# Email: mail@frankhaefele.de
+##############################################
+
+#######
+v1.33
+#######
+
+# __init__.py
+
+	1.) Change learn command for send_learn_switch:
+		0xA5, [0xE0, 0x40, 0x0D, 0x80]
+	
+	2.) Change bugs in send_learn_switch method
+	
+	3.) change org (0x07) to RORG (0xA5) in send_learn_dim method
+	
+	4.) Refracturing and Sort Methods
+	
+	5.) optimize Outputs
+	
+	6.) insert logger
+	
+# eep_parser.py
+
+	- no changes
+	
+# README.md
+
+	1.) Improve readability
+	
+	2.) Correction of mistakes
+	
+	3.) insert actual links
+#############################################

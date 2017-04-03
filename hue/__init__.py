@@ -42,10 +42,15 @@ class HUE():
 
         # parameter zu übergabe aus der konfiguration pulgin.conf
         self._sh = smarthome
-        # parmeter übernehmen, aufteilen und leerzeichen herausnehmen
-        self._hue_ip = [hue_ip]
-        self._hue_user = [hue_user]
-        self._hue_port = [hue_port]
+        # parmeter übernehmen, aufteilen
+        if type(hue_ip) == 'list':
+            self._hue_ip = hue_ip
+            self._hue_user = hue_user
+            self._hue_port = hue_port
+        else:
+            self._hue_ip = [hue_ip]
+            self._hue_user = [hue_user]
+            self._hue_port = [hue_port]
         # verabreitung der parameter aus der plugin.conf
         self._numberHueBridges = len(self._hue_ip)
         if len(self._hue_port) != self._numberHueBridges or len(self._hue_user) != self._numberHueBridges:
@@ -543,7 +548,11 @@ class HUE():
             errorItem = None
             logger.info('HUE: _get_web_content '+hueBridgeId)
         # dann der aufruf kompatibel, aber inhaltlich nicht identisch fetch_url aus lib.tools, daher erst eimal das fehlerobjekt nicht mehr da
-        response = client.fetch_url(url, None, None, 2, 0, method, body, errorItem)
+        try:
+            response = client.fetch_url(url, None, None, 2, 0, method, body, errorItem)
+        except Exception as e:
+            response = None
+            logger.error('HUE: _get_web_content: Error: {0} (bridge available?)'.format(e))
         if response:
             # und jetzt der anteil der decodierung, der nicht in der fetch_url drin ist
             # lesen, decodieren nach utf-8 (ist pflicht nach der api definition philips) und in ein python objekt umwandeln
