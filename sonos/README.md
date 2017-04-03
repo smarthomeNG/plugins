@@ -300,7 +300,7 @@ Plays a radio station by a give name. Keep in mind that Sonos searches for an ap
 station was found, the first result will be used. 
 
 _child item_ ```start_after```:
-If you add an child item (tpye bool) with an attribute ```sonos_attrib =start_after``` you can control the behaviour
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib =start_after``` you can control the behaviour
 after the radio station was added to the Sonos speaker. If you set this item to ```True```, the speaker starts playing
 immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
 setting is 'True'.
@@ -312,7 +312,7 @@ setting is 'True'.
 Plays a given url. 
 
 _child item_ ```start_after```:
-If you add an child item (tpye bool) with an attribute ```sonos_attrib =start_after``` you can control the behaviour
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib =start_after``` you can control the behaviour
 after the url was added to the Sonos speaker. If you set this item to ```True```, the speaker starts playing
 immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
 setting is 'True'.
