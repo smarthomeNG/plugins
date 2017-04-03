@@ -510,6 +510,8 @@ snooze
 play_mode
 next
 previous
+play_tunein
+play_url
 ```
 For this items you don't have to pay attention to which speaker of the group you have to send the command. This is done 
 automatically and affects all speakers of the group.
