@@ -27,6 +27,8 @@ MySonos:
         sonos_attrib: vol_dpt3
         sonos_dpt3_step: 2
         sonos_dpt3_time: 1
+        knx_dpt: 3
+        knx_listen: 7/0/0
 
         helper:
           sonos_attrib: dpt3_helper
@@ -210,3 +212,21 @@ MySonos:
     stream_content:
       type: str
       sonos_recv: stream_content
+
+    play_tunein:
+      type: str
+      sonos_send: play_tunein
+
+      start_after:
+        type: bool
+        value: True
+        sonos_attrib: start_after
+
+    play_url:
+      type: str
+      sonos_send: play_url
+
+      start_after:
+        type: bool
+        value: True
+        sonos_attrib: start_after
