@@ -293,6 +293,31 @@ Sets / gets the play mode for a speaker. Allowed values are 'NORMAL', 'REPEAT_AL
 by Sonos events and should always be up-to-date.
 
 ---
+**play_tunein**
+```write```
+<p>
+Plays a radio station by a give name. Keep in mind that Sonos searches for an appropiate radio station. If more than one
+station was found, the first result will be used. 
+
+_child item_ ```start_after```:
+If you add an child item (tpye bool) with an attribute ```sonos_attrib =start_after``` you can control the behaviour
+after the radio station was added to the Sonos speaker. If you set this item to ```True```, the speaker starts playing
+immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
+setting is 'True'.
+
+---
+**play_url**
+```write```
+<p>
+Plays a given url. 
+
+_child item_ ```start_after```:
+If you add an child item (tpye bool) with an attribute ```sonos_attrib =start_after``` you can control the behaviour
+after the url was added to the Sonos speaker. If you set this item to ```True```, the speaker starts playing
+immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
+setting is 'True'.
+
+---
 **previous**
 ```write``` ```visu```
 <p>
@@ -419,7 +444,7 @@ set to the given ```max_volume``` value. This does not effect the volume set by 
 
 _child item_ ```volume_dpt3```:
 Things get a little bit more complicated when you're trying to increase or decrease the volume level via a knx dpt3 
-group command. To make it easier and without logics, a child item ```volume_dpt3``` can be added to the volume item:
+command. To make it easier and without logics, a child item ```volume_dpt3``` can be added to the volume item:
 
 ```bash
 volume:
