@@ -4,11 +4,13 @@
 
 [2. Sonos Speaker UID](#uid)
 
-[3. Item Structure](#struc)
+[3. SmarthomeNG Integration](#sh)
 
-[4. Item Description](#desc)
+[4. Item Structure](#struc)
 
-[5. Best Practise](#best)
+[5. Item Description](#desc)
+
+[6. Best Practise](#best)
 <p>
 
 ### <a name="req"></a>Requirements
@@ -49,6 +51,19 @@ rincon_c7e91735d19711411
 ---------------------------------------------------------
 ```
 The first line of each entry is our UID (rincon_xxxxxxxxxxxxxx) we were looking for.
+
+### <a name="sh"></a>Smarthome Integration
+
+Edit the file ```/usr/local/smarthome/etc/plugins.conf``` (might differ) and add the following entry:
+```bash
+[sonos]
+    class_name = Sonos
+    class_path = plugins.sonos
+    discover_cycle = 120 # can be omitted, default 120 seconds
+```
+After that you have to create an item configuration file under ```/usr/local/smarthome/items```, e.g. ```sonos.yaml```.
+You can use the full-featured example configuration in the example sub folder. Just change the [Sonos UID](#uid) to your
+needs.
 
 ### <a name="struc"></a>Item Structure 
 The first thing to mention is that you don't have to implement all items / functions for a speaker. Choose your
