@@ -27,8 +27,6 @@ MySonos:
         sonos_attrib: vol_dpt3
         sonos_dpt3_step: 2
         sonos_dpt3_time: 1
-        knx_dpt: 3
-        knx_listen: 7/0/0
 
         helper:
           sonos_attrib: dpt3_helper
