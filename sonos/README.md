@@ -11,7 +11,7 @@
 [5. Best Practise](#best)
 <p>
 
-###<a name="req"></a>Requirements
+###<a name="req"></a> Requirements
 
 * SmarthomeNG v1.3 or newer
 * Python3 libraries ```requests``` and ```xmltodict```
@@ -26,7 +26,7 @@ For any questions, bug reports and feature requests, please post to the
 [Sonos-Plugin thread](https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung) in the
 [KNX-User-Forum](https://knx-user-forum.de/). 
 
-###<a name="uid"></a>Sonos Speaker UID
+###<a name="uid"></a> Sonos Speaker UID
 Before you can start, you have to find all UIDs of your Sonos Speaker in the network. Therefor you can use the
 ```search_uids.py``` script in the plugin folder. Execute the script on your console via:
 
