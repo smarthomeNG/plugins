@@ -206,14 +206,8 @@ class EnOcean(SmartPlugin):
             SecurityLevel = optional[6]
             self.logger.debug("enocean: radio message with additional info: subtelnum = {} / dest_id = {:08X} / signal = {}dBm / SecurityLevel = {}".format(subtelnum, dest_id, dBm, SecurityLevel))
             if (choice == 0xD4) and (self.UTE_listen == True):
-                #self.logger.info("UTE FOUND!! RORG {:02x}".format(choice))
                 self.logger.info("call send_UTE_response")
                 self._send_UTE_response(data, optional)
-                #self.logger.debug("send response")
-                #logger.debug("time in milliseconds")
-                #logger.debug(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
-                #self._send_radio_packet(5, choice, [0x91, 0xFF, 0x33, 0x00, 0x09, 0x01, 0xD2],[0x03, 0x01, 0x93, 0xAF, 0x59, 0xFF, 0x0] )#UTE response package for psc234 - 0193AF59
-                #self._send_radio_packet(8, choice, [0x91, 0x02, 0x46, 0x00, 0x12, 0x01, 0xD2],[0x03, 0x01, 0xA6, 0x20, 0x2B, 0xFF, 0x0] )#UTE response package for Nodon actor - 01A6202B
         if sender_id in self._rx_items:
             self.logger.debug("enocean: Sender ID found in item list")
             # iterate over all eep known for this id and get list of associated items
@@ -696,7 +690,7 @@ class EnOcean(SmartPlugin):
             return
         self.logger.info("enocean: sending learn telegram for switch command")
         self._send_radio_packet(id_offset, 0xA5, [0x01, 0x00, 0x00, 0x00])
-           
+    
     def _calc_crc8(self, msg, crc=0):
         for i in msg:
             crc = FCSTAB[crc ^ i]
