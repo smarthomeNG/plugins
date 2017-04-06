@@ -31,7 +31,7 @@ import subprocess
 import threading
 from pprint import pprint
 from queue import Empty
-from soco.music_services import MusicService
+from plugins.sonos.soco.music_services import MusicService
 from lib.item import Item
 from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
@@ -508,6 +508,8 @@ class Speaker(object):
                                 radio_show = radio_show.split(',p', 1)
                                 if len(radio_show) > 1:
                                     self.radio_show = radio_show[0]
+                            else:
+                                self.radio_show = ''
                         else:
                             self.radio_show = ''
 
@@ -517,7 +519,8 @@ class Speaker(object):
                             radio_metadata = event.variables['enqueued_transport_uri_meta_data']
                             if hasattr(radio_metadata, 'title'):
                                 if self.streamtype == 'radio':
-                                    self.radio_station = radio_metadata.title
+                                    if isinstance(radio_metadata.title, str):
+                                        self.radio_station = radio_metadata.title
                             # parse the stream-content: if possible set title, artist
                     else:
                         self.radio_station = ''
@@ -1866,11 +1869,11 @@ class Speaker(object):
             if not result:
                 self._logger.warning("No radio station found for search string '{term}'.".format(term=station_name))
                 return
-            item = result['mediaMetadata'][0]
-            didl = DidlItem(title="DUMMY", parent_id="DUMMY", item_id="DUMMY", desc=service.desc)
-            meta = to_didl_string(didl)
+            item = result[0]
+            meta = to_didl_string(item)
             account = service.account
-            uri = "x-sonosapi-stream:{0}?sid={1}&sn={2}".format(item['id'], service.service_id, account.serial_number)
+            uri = "x-sonosapi-stream:{0}?sid={1}&sn={2}".format(item.metadata['id'], service.service_id,
+                                                                account.serial_number)
             self.soco.avTransport.SetAVTransportURI([('InstanceID', 0),
                                                      ('CurrentURI', uri), ('CurrentURIMetaData', meta)])
             if start:
