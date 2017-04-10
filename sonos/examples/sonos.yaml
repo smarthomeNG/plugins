@@ -1,6 +1,6 @@
 MySonos:
   Kueche:
-    sonos_uid: rincon_000exxxxxxxxxxxxx
+    sonos_uid: rincon_xxxxxxxxxxxxxxxxx
 
     is_initialized:
       type: bool
@@ -243,3 +243,28 @@ MySonos:
         type: bool
         value: False
         sonos_attrib: start_after
+
+    sonos_playlists:
+      type: list
+      sonos_recv: sonos_playlists
+
+    load_sonos_playlist:
+      type: str
+      sonos_send: load_sonos_playlist
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        value: False
+        sonos_attrib: start_after
+
+      start_track:
+        type: num
+        value: 0
+        sonos_attrib: start_track
+
+      clear_queue:
+        type: bool
+        value: False
+        sonos_attrib: clear_queue
+

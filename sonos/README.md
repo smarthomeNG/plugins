@@ -234,10 +234,32 @@ initialized. Use this item to before starting logics or scenes.
 ---
 **join**
 ```write```
- <p>
+<p>
 
 Joins a Sonos speaker to an existing group by passing any UID of a speaker that is member of this group. You should use
 the additional SmarthomeNG attribute ```enforce_update: True```.
+---
+**load_sonos_playlist**
+```write```
+<p>
+
+Loads a Sonos playlist by its name. The item ```sonos_playlists``` shows all available playlists. This is a group 
+command can be executed on any speaker of a group.
+ 
+_child item_ ```start_after```:
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib = start_after``` you can control the 
+behaviour after the playlist was loaded. If you set this item to ```True```, the speaker starts playing
+immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
+setting is 'False'.
+
+_child item_ ```clear_queue```:
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib = clear_queue```, the Sonos queue will be 
+cleared before loading the new playlist if you set this item to ```True```, ```False``` otherwise. (see example item 
+configuration). You can omit this child item, the default setting is 'False'.
+
+_child item_ ```start_track```:
+If you add an child item (type ```num```) with an attribute ```sonos_attrib = start_track```, you can define the track 
+to start play from. First item in the queue is 0. You can omit this child item, the default setting is 0.
 
 ---
 **loudness**
@@ -372,6 +394,13 @@ Sets / gets the snooze timer. It must be an integer between 0 - 86399 (in second
 snooze timer is deactivated. This is a group command and effects all speakers in the group. The value is NOT updated in 
 real-time. For each speaker discover cycle the item will be updated.
   
+---  
+**sonos_playlists**
+```read```
+<p>
+
+Returns a list of Sonos playlists. These playlists can be loaded by the ```load_sonos_playlist``` item. 
+
 ---
 **status_light**
 ```read``` ```write```
@@ -533,6 +562,7 @@ next
 previous
 play_tunein
 play_url
+load_sonos_playlist
 ```
 For this items you don't have to pay attention to which speaker of the group you have to send the command. This is done 
 automatically and affects all speakers of the group.

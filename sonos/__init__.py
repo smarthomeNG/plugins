@@ -31,6 +31,8 @@ import subprocess
 import threading
 from pprint import pprint
 from queue import Empty
+
+from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
 from lib.item import Item
 from plugins.sonos.soco import *
@@ -88,7 +90,6 @@ class SubscriptionHandler(object):
         if self._event:
             return self._event.is_subscribed
         return False
-
 
 class Speaker(object):
     def __init__(self, uid, logger):
@@ -163,7 +164,7 @@ class Speaker(object):
         self.radio_show_items = []
         self._stream_content = str
         self.stream_content_items = []
-
+        self.sonos_playlists_items = []
         self._is_initialized = False
         self.is_initialized_items = []
 
@@ -254,6 +255,7 @@ class Speaker(object):
             if self.snooze > 0:
                 self.snooze = self.get_snooze()
         self.status_light = self.get_status_light()
+        self.sonos_playlists()
 
     def check_subscriptions(self) -> None:
         """
@@ -1771,10 +1773,10 @@ class Speaker(object):
         Returns the radio station title
         :return: radio station
         """
-        if self.coordinator:
-            return self._radio_station
         if not self._check_property():
             return ''
+        if self.coordinator:
+            return self._radio_station
         return sonos_speaker[self.coordinator].radio_station
 
     @radio_station.setter
@@ -1860,6 +1862,8 @@ class Speaker(object):
         :param start: Start playing after setting the radio stream? Default: True
         :return: None
         """
+        if not self._check_property():
+            return
         if not self.is_coordinator:
             sonos_speaker[self.coordinator].play_tunein(station_name, start)
         else:
@@ -1885,12 +1889,22 @@ class Speaker(object):
         :param url: url to be played
         :return: None
         """
+        if not self._check_property():
+            return
         if not self.is_coordinator:
             sonos_speaker[self.coordinator].play_url(url, start)
         else:
             self.soco.play_uri(url, start=start)
 
-    def join(self, uid):
+    def join(self, uid: str) -> None:
+        """
+        Joins a speaker to an exiting group.
+        :rtype: None
+        :param uid: UID of any speaker of the group to join
+        :return: None
+        """
+        if not self._check_property():
+            return
         uid = uid.lower()
         if uid not in sonos_speaker:
             self._logger.warning("Sonos: Cannot join ... no speaker found with uid {uid}.".format(uid=uid))
@@ -1901,13 +1915,71 @@ class Speaker(object):
                 uid=uid, to_join=speaker_to_join.uid, master=speaker_to_join.coordinator))
         self.soco.join(sonos_speaker[speaker_to_join.coordinator].soco)
 
-    def unjoin(self, unjoin, start=False):
+    def unjoin(self, unjoin: bool, start: bool = False) -> None:
+        """
+        Unjoins a speaker from a group.
+        :rtype: None
+        :param unjoin: 'True' for unjoin
+        :param start: Should the speaker start playing after the unjoin command?
+        """
+        if not self._check_property():
+            return
         if unjoin:
             self.soco.unjoin()
             if start:
                 time.sleep(2)
                 self.set_play()
 
+    def sonos_playlists(self) -> None:
+        """
+        Gets all Sonos playlist items.
+        """
+        playlists = self.soco.get_sonos_playlists()
+        p_l = []
+        for value in playlists:
+            p_l.append(value.title)
+        for item in self.sonos_playlists_items:
+            item(p_l, 'Sonos')
+
+    def load_sonos_playlist(self, name: str, start: bool = False, clear_queue: bool = False, track: int = 0) -> None:
+        """
+        Loads a Sonos playlist.
+        :param track: The index of the track to start play from. First item in the queue is 0.
+        :param name: playlist name
+        :param start: Should the speaker start playing after loading the playlist?
+        :param clear_queue: 'True' to clearthe queue before loading the new playlist, 'False' otherwise.
+        :rtype: None
+        :return: None
+        """
+        if not self._check_property():
+            return
+        if not self.is_coordinator:
+            sonos_speaker[self.coordinator].load_sonos_playlist(name, start, clear_queue, track)
+        else:
+            try:
+                if not name:
+                    self._logger.warning("Sonos: A valid playlist name must be provided.")
+                    return
+                playlist = self.soco.get_sonos_playlist_by_attr('title', name)
+                if playlist:
+                    if clear_queue:
+                        self.soco.clear_queue()
+                    self.soco.add_to_queue(playlist)
+                    try:
+                        track = int(track)
+                    except TypeError:
+                        self._logger.warning("Sonos: Could not cast track [{track}] to 'int'.")
+                        return
+                    try:
+                        self.soco.play_from_queue(track, start)
+                    except SoCoUPnPException as ex:
+                        self._logger.warning("Sonos: {ex}".format(ex=ex))
+                        return
+                    #  bug here? no event, we have to trigger it manually
+                    if start:
+                        self.play = True
+            except Exception as ex:
+                self._logger.warning("Sonos: No Sonos playlist found with title '{title}'.".format(title=name))
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
@@ -2130,17 +2202,53 @@ class Sonos(SmartPlugin):
                     if item():
                         sonos_speaker[uid].switch_to_tv()
                 if command == "play_tunein":
-                    start = self._resolve_start_after(item)
+                    start = self._resolve_child_command_bool(item, 'start_after')
                     sonos_speaker[uid].play_tunein(item(), start)
                 if command == "play_url":
-                    start = self._resolve_start_after(item)
+                    start = self._resolve_child_command_bool(item, 'start_after')
                     sonos_speaker[uid].play_url(item(), start)
                 if command == "join":
                     sonos_speaker[uid].join(item())
                 if command == "unjoin":
-                    start = self._resolve_start_after(item)
+                    start = self._resolve_child_command_bool(item, 'start_after')
                     sonos_speaker[uid].unjoin(item(), start)
+                if command == 'load_sonos_playlist':
+                    start = self._resolve_child_command_bool(item, 'start_after')
+                    clear_queue = self._resolve_child_command_bool(item, 'clear_queue')
+                    track = self._resolve_child_command_int(item, 'start_track')
+                    sonos_speaker[uid].load_sonos_playlist(item(), start, clear_queue, track)
 
+    def _resolve_child_command_bool(self, item: Item, child_command) -> bool:
+        """
+        Resolves a child command for an item
+        :type child_command: The sonos_attrib name for the child
+        :param item: The item for which a child item is to be searched
+        :rtype: bool
+        :return: 'True' or 'False'
+        """
+        for child in item.return_children():
+            if self.has_iattr(child.conf, 'sonos_attrib'):
+                if self.get_iattr_value(child.conf, 'sonos_attrib') == child_command:
+                    return child()
+        return False
+
+    def _resolve_child_command_int(self, item: Item, child_command) -> int:
+        """
+        Resolves a child command for an item
+        :type child_command: The sonos_attrib name for the child
+        :param item: The item for which a child item is to be searched
+        :rtype: int
+        :return: value as int
+        """
+        try:
+            for child in item.return_children():
+                if self.has_iattr(child.conf, 'sonos_attrib'):
+                    if self.get_iattr_value(child.conf, 'sonos_attrib') == child_command:
+                        return int(child())
+            return 0
+        except:
+            self._logger.warning("Sonos: Could not cast value [{val}] to 'int', using default value '0'")
+            return 0
 
     def _resolve_group_command(self, item: Item) -> bool:
         """
@@ -2161,19 +2269,6 @@ class Sonos(SmartPlugin):
                     return child()
         return False
 
-    def _resolve_start_after(self, item: Item) -> bool:
-        """
-        Resolves a start_after_insert child for an item
-        :rtype: bool
-        :param item: The item for which a child item is to be searched
-        :return: 'True' or 'False'
-        """
-        for child in item.return_children():
-            if self.has_iattr(child.conf, 'sonos_attrib'):
-                if self.get_iattr_value(child.conf, 'sonos_attrib') == "start_after":
-                    return child()
-        return False
-
     def _resolve_max_volume_command(self, item: Item) -> int:
 
         if self.get_iattr_value(item.conf, 'sonos_attrib') == 'vol_dpt3':
@@ -2190,19 +2285,6 @@ class Sonos(SmartPlugin):
                         self._logger.error(ex)
                         return -1
         return -1
-
-    def _resolve_force_refresh_command(self, item: Item) -> bool:
-        """
-        Resolves a force_refresh child for an item
-        :rtype: bool
-        :param item: The item for which a child item is to be searched
-        :return: 'True' or 'False'
-        """
-        for child in item.return_children():
-            if self.has_iattr(child.conf, 'sonos_attrib'):
-                if self.get_iattr_value(child.conf, 'sonos_attrib') == "force_refresh":
-                    return child()
-        return False
 
     def _resolve_uid(self, item: Item) -> str:
         """
@@ -2269,11 +2351,12 @@ class Sonos(SmartPlugin):
                         self._logger.debug("Sonos: SoCo instance already initiated, skipping.")
                         self._logger.debug("Sonos: checking subscriptions")
                         sonos_speaker[uid].check_subscriptions()
-                        sonos_speaker[uid].refresh_static_properties()
+
                 else:
                     _initialize_speaker(uid, self._logger)
 
                 sonos_speaker[uid].is_initialized = True
+                sonos_speaker[uid].refresh_static_properties()
 
             else:
                 if sonos_speaker[uid].soco is not None:
