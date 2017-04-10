@@ -38,10 +38,10 @@ from lib.model.smartplugin import SmartPlugin
 from plugins.sonos.soco.data_structures import to_didl_string, DidlItem
 from plugins.sonos.soco.events import event_listener
 from plugins.sonos.soco.xml import XML
+import time
 
 _create_speaker_lock = threading.Lock()  # make speaker object creation thread-safe
 sonos_speaker = {}
-
 
 class SubscriptionHandler(object):
     def __init__(self, endpoint, service):
@@ -521,7 +521,6 @@ class Speaker(object):
                                 if self.streamtype == 'radio':
                                     if isinstance(radio_metadata.title, str):
                                         self.radio_station = radio_metadata.title
-                            # parse the stream-content: if possible set title, artist
                     else:
                         self.radio_station = ''
 
@@ -1891,6 +1890,24 @@ class Speaker(object):
         else:
             self.soco.play_uri(url, start=start)
 
+    def join(self, uid):
+        uid = uid.lower()
+        if uid not in sonos_speaker:
+            self._logger.warning("Sonos: Cannot join ... no speaker found with uid {uid}.".format(uid=uid))
+            return
+        speaker_to_join = sonos_speaker[uid]
+        self._logger.debug(
+            'Sonos: Joining [{uid}] to [uid: {to_join}, master: {master}]'.format(
+                uid=uid, to_join=speaker_to_join.uid, master=speaker_to_join.coordinator))
+        self.soco.join(sonos_speaker[speaker_to_join.coordinator].soco)
+
+    def unjoin(self, unjoin, start=False):
+        if unjoin:
+            self.soco.unjoin()
+            if start:
+                time.sleep(2)
+                self.set_play()
+
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
@@ -2118,6 +2135,12 @@ class Sonos(SmartPlugin):
                 if command == "play_url":
                     start = self._resolve_start_after(item)
                     sonos_speaker[uid].play_url(item(), start)
+                if command == "join":
+                    sonos_speaker[uid].join(item())
+                if command == "unjoin":
+                    start = self._resolve_start_after(item)
+                    sonos_speaker[uid].unjoin(item(), start)
+
 
     def _resolve_group_command(self, item: Item) -> bool:
         """

@@ -232,6 +232,14 @@ If 'True', this item indicates a fully initialized Sonos speaker. If 'False' the
 initialized. Use this item to before starting logics or scenes.
 
 ---
+**join**
+```write```
+ <p>
+
+Joins a Sonos speaker to an existing group by passing any UID of a speaker that is member of this group. You should use
+the additional SmarthomeNG attribute ```enforce_update: True```.
+
+---
 **loudness**
 ```read``` ```write```
 <p>
@@ -261,8 +269,8 @@ command and effects all speakers in the group. This item is changed by Sonos eve
 <p>
 
 Go to the next track. 'True' for the next track, all other values have no effects. Be aware that you have to use the
-additional SmarthomeNG attribute ```enforce_updates: true``` for this item to make it working. This is a group command and 
-effects all speakers in the group. 
+additional SmarthomeNG attribute ```enforce_updates: true``` for this item to make it working. This is a group command 
+and effects all speakers in the group. 
 
 ---
 **night_mode**
@@ -439,6 +447,19 @@ Sets / gets the treble level for a speaker. It must be an integer value between 
 group item, nevertheless you can set the child item ```group_command``` to 'True' to set the bass level to all members
 of the group. This must be done before setting the treble item to a new value. This item is changed by Sonos events and 
 should always be up-to-date.
+
+---
+**unjoin**
+```write```
+<p>
+
+Unjoins a speaker from a group. 
+
+_child item_ ```start_after```:
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib =start_after``` you can control the 
+behaviour after the speaker was unjoined from a group.. If you set this item to ```True```, the speaker starts playing
+immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
+setting is 'False'.
 
 ---
 **volume**

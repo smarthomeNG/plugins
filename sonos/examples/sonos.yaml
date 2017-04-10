@@ -1,6 +1,6 @@
 MySonos:
   Kueche:
-    sonos_uid: rincon_xxxxxxxxxxxxxxxxx
+    sonos_uid: rincon_000exxxxxxxxxxxxx
 
     is_initialized:
       type: bool
@@ -227,4 +227,19 @@ MySonos:
       start_after:
         type: bool
         value: True
+        sonos_attrib: start_after
+
+    join:
+      type: str
+      sonos_send: join
+      enforce_updates: True
+
+    unjoin:
+      type: bool
+      sonos_send: unjoin
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        value: False
         sonos_attrib: start_after
