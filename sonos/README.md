@@ -234,10 +234,12 @@ initialized. Use this item to before starting logics or scenes.
 ---
 **join**
 ```write```
+
 <p>
 
 Joins a Sonos speaker to an existing group by passing any UID of a speaker that is member of this group. You should use
 the additional SmarthomeNG attribute ```enforce_update: True```.
+
 ---
 **load_sonos_playlist**
 ```write```
@@ -472,6 +474,7 @@ Returns the uri of currently played track. This item is changed by Sonos events 
 **treble**
 ```read``` ```write```
 <p>
+
 Sets / gets the treble level for a speaker. It must be an integer value between -10 and 10. This property is NOT a
 group item, nevertheless you can set the child item ```group_command``` to 'True' to set the bass level to all members
 of the group. This must be done before setting the treble item to a new value. This item is changed by Sonos events and 
