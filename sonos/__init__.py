@@ -1996,7 +1996,7 @@ class Sonos(SmartPlugin):
 
     def __init__(self, sh, discover_cycle=120):
         self._sh = sh
-        self._logger = logging.getLogger('sonos_new')  # get a unique logger for the plugin and provide it internally
+        self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
         self.zero_zone = False  # sometime a discovery scan fails, so try it two times; we need to save the state
         self._sonos_dpt3_step = 2  # default value for dpt3 volume step (step(s) per time period)
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
