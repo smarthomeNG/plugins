@@ -481,6 +481,13 @@ of the group. This must be done before setting the treble item to a new value. T
 should always be up-to-date.
 
 ---
+**uid**
+```read```
+<p>
+
+Returns the UID of a Sonos speaker.
+
+---
 **unjoin**
 ```write```
 <p>

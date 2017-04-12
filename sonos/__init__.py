@@ -94,7 +94,8 @@ class SubscriptionHandler(object):
 class Speaker(object):
     def __init__(self, uid, logger):
         self._logger = logger
-        self._uid = uid
+        self.uid_items = []
+        self._uid = ""
         self._soco = None
         self._events = None
         self._zone_group = []
@@ -144,25 +145,25 @@ class Speaker(object):
         self.current_track_items = []
         self._number_of_tracks = 0
         self.number_of_tracks_items = []
-        self._current_track_duration = str
+        self._current_track_duration = ""
         self.current_track_duration_items = []
-        self._current_transport_actions = str
+        self._current_transport_actions = ""
         self.current_transport_actions_items = []
-        self._current_valid_play_modes = str
+        self._current_valid_play_modes = ""
         self.current_valid_play_modes_items = []
-        self._track_artist = str
+        self._track_artist = ""
         self.track_artist_items = []
-        self._track_title = str
+        self._track_title = ""
         self.track_title_items = []
-        self._track_album = str
+        self._track_album = ""
         self.track_album_items = []
-        self._track_album_art = str
+        self._track_album_art = ""
         self.track_album_art_items = []
-        self._radio_station = str
+        self._radio_station = ""
         self.radio_station_items = []
-        self._radio_show = str
+        self._radio_show = ""
         self.radio_show_items = []
-        self._stream_content = str
+        self._stream_content = ""
         self.stream_content_items = []
         self.sonos_playlists_items = []
         self._is_initialized = False
@@ -175,9 +176,17 @@ class Speaker(object):
         self.alarm_subscription = None
         self.device_subscription = None
 
+
+
     @property
     def uid(self):
         return self._uid
+
+    @uid.setter
+    def uid(self, value):
+        self._uid = value
+        for item in self.uid_items:
+            item(self.uid, 'Sonos')
 
     @property
     def soco(self):
@@ -212,6 +221,7 @@ class Speaker(object):
                     self.device_subscription
                 ]
                 self._is_coordinator = self._soco.is_coordinator
+                self.uid = self.soco.uid.lower()
                 self.household_id = self.soco.household_id
 
     def dispose(self):
@@ -486,26 +496,26 @@ class Speaker(object):
                         if hasattr(metadata, 'title'):
                             # ignore x-sonos-api-stream: radio played, title seeoms wrong
                             if re.match(r"^x-sonosapi-stream:", metadata.title) is None:
-                                self.track_title = metadata.title
+                                self.track_title = str(metadata.title)
                         else:
                             self.track_title = ''
                         if hasattr(metadata, 'album'):
-                            self.track_album = metadata.album
+                            self.track_album = str(metadata.album)
                         else:
                             self.track_album = ''
                         if hasattr(metadata, 'album_art_uri'):
-                            cover_url = metadata.album_art_uri
+                            cover_url = str(metadata.album_art_uri)
                             if not cover_url.startswith(('http:', 'https:')):
                                 self.track_album_art = 'http://' + self.soco.ip_address + ':1400' + cover_url
                         else:
                             self.track_album_art = ''
 
                         if hasattr(metadata, 'stream_content'):
-                            self.stream_content = metadata.stream_content.title()
+                            self.stream_content = str(metadata.stream_content).title()
                         else:
                             self.stream_content = ''
                         if hasattr(metadata, 'radio_show'):
-                            radio_show = metadata.radio_show
+                            radio_show = str(metadata.radio_show)
                             if radio_show:
                                 radio_show = radio_show.split(',p', 1)
                                 if len(radio_show) > 1:
@@ -521,8 +531,7 @@ class Speaker(object):
                             radio_metadata = event.variables['enqueued_transport_uri_meta_data']
                             if hasattr(radio_metadata, 'title'):
                                 if self.streamtype == 'radio':
-                                    if isinstance(radio_metadata.title, str):
-                                        self.radio_station = radio_metadata.title
+                                    self.radio_station = str(radio_metadata.title)
                     else:
                         self.radio_station = ''
 
