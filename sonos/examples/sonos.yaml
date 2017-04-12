@@ -268,3 +268,7 @@ MySonos:
         value: False
         sonos_attrib: clear_queue
 
+    uid:
+      type: str
+      sonos_recv: uid
+
