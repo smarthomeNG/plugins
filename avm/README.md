@@ -557,7 +557,7 @@ Example of a logic which is merging hosts of three devices into one list and ren
 'avm.devices.device_list'
 
 <pre>
-hosts = sh.fritzbox_7490.get_hosts(True)
+```hosts = sh.fritzbox_7490.get_hosts(True)
 hosts_300 = sh.wlan_repeater_300.get_hosts(True)
 hosts_1750 = sh.wlan_repeater_1750.get_hosts(True)
 
@@ -579,11 +579,12 @@ for host_1750 in hosts_1750:
 
 string = '<ul>'
 for host in hosts:
-    device_string = '\<li><strong>'+host['name']+':</strong> '+host['ip_address']+', '+host['mac_address']+'\</li>'
+    device_string = '<li><strong>'+host['name']+':</strong> '+host['ip_address']+', '+host['mac_address']+'</li>'
     string += device_string
 
 string += '</ul>'
 sh.avm.devices.device_list(string)
+```
 </pre>
 
 ## get_host_details(index)
