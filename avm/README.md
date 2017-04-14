@@ -589,6 +589,9 @@ sh.avm.devices.device_list(string)
 Gets the data of a host as dict:
 dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_remaining
 
+## is_host_active(mac_address)
+This function checks, if a device running on a given mac address is active on the FritzDevice. Can be used for presence detection.
+
 ## get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book
 
@@ -615,6 +618,3 @@ sh.general_items.number_search_results(result_string)
 
 ## get_calllist()
 Returns an array with calllist entries
-
-## is_host_active(mac_address)
-This function checks, if a device running on a given mac address is active on the FritzDevice. Can be used for presence detection.
