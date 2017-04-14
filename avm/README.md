@@ -592,7 +592,7 @@ dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_
 ## get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book
 
-##get_phone_numbers_by_name(name)
+## get_phone_numbers_by_name(name)
 This is a function to search for contact names and retrieve the related telephone numbers
 
 Set an item with a html of all found numbers e.g. by:
