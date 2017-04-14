@@ -1054,7 +1054,7 @@ class AVM(SmartPlugin):
                                                self._fritz_device.get_password()), verify=self._verify)
         return
 
-    def get_hosts(self, only_active=False):
+    def get_hosts(self, only_active):
         """
         Gets the name of all hosts as an array
 
@@ -1082,7 +1082,7 @@ class AVM(SmartPlugin):
         hosts = []
         for i in range(1, number_of_hosts):
             host = self.get_host_details(i)
-            if not only_active or (only_active and host['is_active'] == 1):
+            if not only_active or (only_active and self.to_bool(host['is_active'])):
                 hosts.append(host)
 
         return hosts
