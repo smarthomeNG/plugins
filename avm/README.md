@@ -550,6 +550,13 @@ This function reconnects the WAN (=internet) connection.
 ## reboot()
 This function reboots the FritzDevice.
 
+## get_hosts(only_active = False)
+Gets the data of get_host_details for all hosts as array. If only_active is True, only active hosts are returned.
+
+## get_host_details(index)
+Gets the data of a host as dict:
+dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_remaining
+
 ## get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book
 
