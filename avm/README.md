@@ -550,7 +550,7 @@ This function reconnects the WAN (=internet) connection.
 ## reboot()
 This function reboots the FritzDevice.
 
-## get_hosts(only_active = False)
+## get_hosts(only_active)
 Gets the data of get_host_details for all hosts as array. If only_active is True, only active hosts are returned.
 
 Example of a logic which is merging hosts of three devices into one list and rendering them to an HTML list, which is written to the item
