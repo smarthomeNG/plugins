@@ -579,7 +579,7 @@ for host_1750 in hosts_1750:
 
 string = '<ul>'
 for host in hosts:
-    device_string = '<li><strong>'+host['name']+':</strong> '+host['ip_address']+', '+host['mac_address']+'</li>'
+    device_string = '\<li><strong>'+host['name']+':</strong> '+host['ip_address']+', '+host['mac_address']+'\</li>'
     string += device_string
 
 string += '</ul>'
