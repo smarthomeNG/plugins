@@ -553,6 +553,39 @@ This function reboots the FritzDevice.
 ## get_hosts(only_active = False)
 Gets the data of get_host_details for all hosts as array. If only_active is True, only active hosts are returned.
 
+Example of a logic which is merging hosts of three devices into one list and rendering them to an HTML list, which is written to the item
+'avm.devices.device_list'
+
+<pre>
+hosts = sh.fritzbox_7490.get_hosts(True)
+hosts_300 = sh.wlan_repeater_300.get_hosts(True)
+hosts_1750 = sh.wlan_repeater_1750.get_hosts(True)
+
+hosts = []
+for host_300 in hosts_300:
+    new = True
+    for host in hosts:
+        if host_300['mac_address'] == host['mac_address']:
+            new = False
+    if new:
+        hosts.append(host_300)
+for host_1750 in hosts_1750:
+    new = True
+    for host in hosts:
+        if host_1750['mac_address'] == host['mac_address']:
+            new = False
+    if new:
+        hosts.append(host_1750)
+
+string = '<ul>'
+for host in hosts:
+    device_string = '<li><strong>'+host['name']+':</strong> '+host['ip_address']+', '+host['mac_address']+'</li>'
+    string += device_string
+
+string += '</ul>'
+sh.avm.devices.device_list(string)
+</pre>
+
 ## get_host_details(index)
 Gets the data of a host as dict:
 dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_remaining
