@@ -561,7 +561,6 @@ hosts = sh.fritzbox_7490.get_hosts(True)
 hosts_300 = sh.wlan_repeater_300.get_hosts(True)
 hosts_1750 = sh.wlan_repeater_1750.get_hosts(True)
 
-hosts = []
 for host_300 in hosts_300:
     new = True
     for host in hosts:
