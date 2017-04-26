@@ -29,7 +29,6 @@ import logging
 import re
 import subprocess
 import threading
-from pprint import pprint
 from queue import Empty
 
 from plugins.sonos.soco.exceptions import SoCoUPnPException
@@ -37,7 +36,7 @@ from plugins.sonos.soco.music_services import MusicService
 from lib.item import Item
 from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
-from plugins.sonos.soco.data_structures import to_didl_string, DidlItem
+from plugins.sonos.soco.data_structures import to_didl_string, DidlItem, DidlMusicTrack
 from plugins.sonos.soco.events import event_listener
 from plugins.sonos.soco.xml import XML
 import time
@@ -260,6 +259,9 @@ class Speaker(object):
         This function is called by the plugins discover function. This is typically called every 180sec.
         We're using this cycle to update some properties that are not updated by events
         """
+        if not self._check_property():
+            return
+
         # do this only for the coordinator, don't tress the network
         if self.is_coordinator:
             if self.snooze > 0:
@@ -296,7 +298,7 @@ class Speaker(object):
         if self.is_coordinator:
             if not self.av_subscription.is_subscribed:
                 subs_ok = False
-                self.av_subscription.usubscribe()
+                self.av_subscription.unsubscribe()
                 self.av_subscription.subscribe()
 
         # sometimes a discover fails --> coordinator is empty --> resubscribe zone topology event
@@ -425,6 +427,7 @@ class Speaker(object):
 
                                 # get some other properties
                                 self.status_light = self.get_status_light()
+                                self.sonos_playlists()
 
                     sub_handler.event.events.task_done()
                 except Empty:
@@ -442,7 +445,6 @@ class Speaker(object):
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
-                    pprint(event.variables)
 
                     if 'transport_state' in event.variables:
                         transport_state = event.variables['transport_state']
@@ -467,6 +469,14 @@ class Speaker(object):
                                 self.track_uri = ''
                         else:
                             self.track_uri = track_uri
+                        # empty track is a trigger to reset some other props
+                        if not self.track_uri:
+                            self.track_artist = ''
+                            self.track_album = ''
+                            self.track_album_art = ''
+                            self.track_title = ''
+                            self.radio_show = ''
+                            self.radio_station = ''
 
                     if 'current_track' in event.variables:
                         self.current_track = event.variables['current_track']
@@ -488,42 +498,54 @@ class Speaker(object):
                         self.current_valid_play_modes = event.variables['current_valid_play_modes']
 
                     if 'current_track_meta_data' in event.variables:
-                        metadata = event.variables['current_track_meta_data']
-                        if hasattr(metadata, 'creator'):
-                            self.track_artist = metadata.creator
-                        else:
-                            self.track_artist = ''
-                        if hasattr(metadata, 'title'):
-                            # ignore x-sonos-api-stream: radio played, title seeoms wrong
-                            if re.match(r"^x-sonosapi-stream:", metadata.title) is None:
-                                self.track_title = str(metadata.title)
-                        else:
-                            self.track_title = ''
-                        if hasattr(metadata, 'album'):
-                            self.track_album = str(metadata.album)
-                        else:
-                            self.track_album = ''
-                        if hasattr(metadata, 'album_art_uri'):
-                            cover_url = str(metadata.album_art_uri)
-                            if not cover_url.startswith(('http:', 'https:')):
-                                self.track_album_art = 'http://' + self.soco.ip_address + ':1400' + cover_url
-                        else:
-                            self.track_album_art = ''
+                        if event.variables['current_track_meta_data']:
+                            # we have some different data structures, handle it
+                            if isinstance(event.variables['current_track_meta_data'], DidlMusicTrack):
+                                metadata = event.variables['current_track_meta_data'].__dict__
+                            elif isinstance(event.variables['current_track_meta_data'], DidlItem):
+                                metadata = event.variables['current_track_meta_data'].__dict__
+                            else:
+                                metadata = event.variables['current_track_meta_data'].metadata
+                            if 'creator' in metadata:
+                                self.track_artist = metadata['creator']
+                            else:
+                                self.track_artist = ''
+                            if 'title' in metadata:
+                                # ignore x-sonos-api-stream: radio played, title seeoms wrong
+                                if re.match(r"^x-sonosapi-stream:", metadata['title']) is None:
+                                    self.track_title = metadata['title']
+                            else:
+                                self.track_title = ''
+                            if 'album' in metadata:
+                                self.track_album = metadata['album']
+                            else:
+                                self.track_album = ''
+                            if 'album_art_uri' in metadata:
+                                cover_url = metadata['album_art_uri']
+                                if not cover_url.startswith(('http:', 'https:')):
+                                    self.track_album_art = 'http://' + self.soco.ip_address + ':1400' + cover_url
+                            else:
+                                self.track_album_art = ''
 
-                        if hasattr(metadata, 'stream_content'):
-                            self.stream_content = str(metadata.stream_content).title()
-                        else:
-                            self.stream_content = ''
-                        if hasattr(metadata, 'radio_show'):
-                            radio_show = str(metadata.radio_show)
-                            if radio_show:
-                                radio_show = radio_show.split(',p', 1)
-                                if len(radio_show) > 1:
-                                    self.radio_show = radio_show[0]
+                            if 'stream_content' in metadata:
+                                stream_content = metadata['stream_content'].title()
+                                if not stream_content.lower() in \
+                                        ['zpstr_buffering', 'zpstr_connecting', 'x-sonosapi-stream']:
+                                    self.stream_content = stream_content
+                                else:
+                                    self.stream_content = ""
+                            else:
+                                self.stream_content = ''
+                            if 'radio_show' in metadata:
+                                radio_show = metadata['radio_show']
+                                if radio_show:
+                                    radio_show = radio_show.split(',p', 1)
+                                    if len(radio_show) > 1:
+                                        self.radio_show = radio_show[0]
+                                else:
+                                    self.radio_show = ''
                             else:
                                 self.radio_show = ''
-                        else:
-                            self.radio_show = ''
 
                     if self.streamtype == 'radio':
                         # we need the title from 'enqueued_transport_uri_meta_data'
