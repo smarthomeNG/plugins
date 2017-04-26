@@ -139,7 +139,7 @@ Kitchen:
 Last but not least you can rename the item name. This is not recommended due to the fact, that (only) the Sonos widget 
 depends on that names (of course you can edit the sonos.html to adapt the widget to your changes).  
 Example:
-```bash
+```yaml
 MyRoom:
     MySonos:
         sonos_uid: rincon_xxxxxxxxxxxxxx
