@@ -10,7 +10,9 @@
 
 [5. Item Description](#desc)
 
-[6. Best Practise](#best)
+[6. SmartVISU Integration](#visu)
+
+[7. Best Practise](#best)
 <p>
 
 ### <a name="req"></a>Requirements
@@ -113,7 +115,7 @@ Example:
 ```bash
 Kitchen:
     child1:
-        MySonos1:
+        MySonos:
             sonos_uid: rincon_xxxxxxxxxxxxxx
             
             play:
@@ -398,7 +400,7 @@ real-time. For each speaker discover cycle the item will be updated.
   
 ---  
 **sonos_playlists**
-```read```
+```read``` ```visu```
 <p>
 
 Returns a list of Sonos playlists. These playlists can be loaded by the ```load_sonos_playlist``` item. 
@@ -549,6 +551,58 @@ Returns a list of all UIDs of the group the speaker is a member in. The list con
 item is changed by Sonos events and should always be up-to-date.
 
 ---
+
+### <a name="visu"></a>SmartVISU Integration
+
+The Sonos Plugin full-fills all requirements for an automatic integration in SmartVISU via the **visu_websocket** and
+**visu_smartvisu** plugins (for detailed information follow this 
+[link](https://github.com/smarthomeNG/smarthome/wiki/Visu_smartvisu_autogen_in_v1.2). 
+
+#### Sonos widget via plugin
+To install / show the Sonos widget via the ```visu_smartvisu``` plugin, you have to [set up the mentioned plugin 
+properly](https://github.com/smarthomeNG/plugins/blob/develop/visu_smartvisu/README.md). After that you can define a 
+page item like that:
+```bash
+MyPage:
+    name: Sonos
+    sv_page: room
+    sv_img: audio_audio.svg
+
+    sonos:
+      name: Sonos Kitchen
+      visu_acl: rw
+      sv_blocksize: 1 # optional
+      sv_widget: "{{ sonos.player('sonos_kueche', 'MySonos.Kueche') }}"
+```
+The important entry here is ```{{ sonos.player('sonos_kueche', 'MySonos.Kueche') }}```.  The first value is a 
+self-defined unique identifier, the second value is the full path of the Sonos item which you want to control. If you 
+have more than one Sonos widget per page, make sure you set an **unique** identifier for each widget.
+
+#### Manual setup
+Copy the file ```widget_sonos.html``` from the ```sv_widget``` folder to your smartVISU directory, e.g.
+```bash
+/var/www/smartvisu/pages/YOUR_PATH_HERE 
+```
+Change to this directory and append the content of ```widget_sonos.js``` (also located in the sv_widget directory) 
+to ```visu.js``` and ```widget_sonos.css``` to ```visu.css```. Create both files if they do not not exist.
+
+Edit your page where you want to display the widget and add the following code snippet:
+```bash
+{% import "widget_sonos.html" as sonos %}
+{% block content %}
+
+<div class="block">
+  <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+    <div data-role="collapsible" data-collapsed="false" >
+      {{ sonos.player('sonos_kueche', 'Sonos.Kueche') }}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+```
+
 
 ### <a name="best"></a>Best practise
 
