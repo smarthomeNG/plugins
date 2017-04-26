@@ -57,7 +57,7 @@ The first line of each entry is our UID (rincon_xxxxxxxxxxxxxx) we were looking 
 ### <a name="sh"></a>Smarthome Integration
 
 Edit the file ```/usr/local/smarthome/etc/plugins.conf``` (might differ) and add the following entry:
-```bash
+```yaml
 [sonos]
     class_name = Sonos
     class_path = plugins.sonos
@@ -78,7 +78,7 @@ Every item is described by one or more additional tags in the item description b
 
 For a minimal functionality you have to set up an item with the attribute 'sonos_uid' and at least one child item.
 Example:
-```bash
+```yaml
 MyRoom:
     MySonos:
         sonos_uid: rincon_xxxxxxxxxxxxxx
@@ -91,7 +91,7 @@ MyRoom:
 
 The level of the item with the attribute 'sonos_uid' doesn't matter, the below example is also possible.
 Example:
-```bash
+```yaml
 MyRoom:
     parent:
         child:
@@ -112,7 +112,7 @@ MyRoom:
 You can multiple use the same Sonos speaker for your items. The only requirement for a Sonos item is the parent item 
 with the sonos uid. 
 Example:
-```bash
+```yaml
 Kitchen:
     child1:
         MySonos:
@@ -523,7 +523,7 @@ _child item_ ```volume_dpt3```:
 Things get a little bit more complicated when you're trying to increase or decrease the volume level via a knx dpt3 
 command. To make it easier and without logics, a child item ```volume_dpt3``` can be added to the volume item:
 
-```bash
+```yaml
 volume:
     ...
     ...
@@ -562,7 +562,7 @@ The Sonos Plugin fulfills all requirements for an automatic integration in Smart
 To install / show the Sonos widget via the ```visu_smartvisu``` plugin, you have to [set up the mentioned plugin 
 properly](https://github.com/smarthomeNG/plugins/blob/develop/visu_smartvisu/README.md). After that you can define a 
 page item like that:
-```bash
+```yaml
 MyPage:
     name: Sonos
     sv_page: room
@@ -587,7 +587,7 @@ Change to this directory and append the content of ```widget_sonos.js``` (also l
 to ```visu.js``` and ```widget_sonos.css``` to ```visu.css```. Create both files if they do not not exist.
 
 Edit your page where you want to display the widget and add the following code snippet:
-```bash
+```html
 {% import "widget_sonos.html" as sonos %}
 {% block content %}
 
@@ -603,7 +603,6 @@ Edit your page where you want to display the widget and add the following code s
 
 ```
 
-
 ### <a name="best"></a>Best practise
 
 #### Group commands
@@ -614,7 +613,7 @@ the item ```zone_group_members```.
 
 **Important**: Some of the items ​​always act as a group commands. Here is list of all relevant item:
   
-```bash
+```
 play
 pause
 stop
@@ -642,7 +641,7 @@ It takes some time to discover all Sonos speakers in the network. Use the "is_in
 the speaker is fully functional. If this item is 'False' the speaker is not yet initialized or offline.
 
 Example
-```bash
+```python
 if sh.MySonosPlayer.is_initialized():
     do_something()
 ```
@@ -660,7 +659,7 @@ configuration in the future. Feel free to change this example  to the "classical
 backward-compatible.
 
 This example shows a yaml config and the 'classic' pendant: 
-```bash
+```yaml
 MySonos:
   Kueche:
     sonos_uid: rincon_xxxxxxxxxxxxxx
@@ -687,7 +686,7 @@ MySonos:
       .....
 ```
 becomes 
-```bash
+```yaml
 [MySonos]
     [[Kueche]]
         sonos_uid = rincon_xxxxxxxxxxxxxx
@@ -712,7 +711,7 @@ becomes
       .....
 ```
 #### DPT3 volume example
-```bash
+```yaml
  Kueche:
     sonos_uid: rincon_000e58cxxxxxxxxx
 
