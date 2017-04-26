@@ -554,9 +554,9 @@ item is changed by Sonos events and should always be up-to-date.
 
 ### <a name="visu"></a>SmartVISU Integration
 
-The Sonos Plugin full-fills all requirements for an automatic integration in SmartVISU via the **visu_websocket** and
+The Sonos Plugin fulfills all requirements for an automatic integration in SmartVISU via the **visu_websocket** and
 **visu_smartvisu** plugins (for detailed information follow this 
-[link](https://github.com/smarthomeNG/smarthome/wiki/Visu_smartvisu_autogen_in_v1.2). 
+[link](https://github.com/smarthomeNG/smarthome/wiki/Visu_smartvisu_autogen_in_v1.2)). 
 
 #### Sonos widget via plugin
 To install / show the Sonos widget via the ```visu_smartvisu``` plugin, you have to [set up the mentioned plugin 
