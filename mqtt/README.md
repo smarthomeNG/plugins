@@ -116,17 +116,17 @@ if **`birth_payload`** is not specified, no birth message will be sent. In this 
 Example: If you have the following items:
 
 ```yaml
-	root:
-	   parent:
-	       testitem:
-	            name: Test Item for publishing
-	            type: num
+root:
+   parent:
+       testitem:
+            name: Test Item for publishing
+            type: num
 ```
 and have set 
 
 ```yaml
-	mqtt:
-	    items_topic_prefix: 'item_tree'
+mqtt:
+    items_topic_prefix: 'item_tree'
 ```
 The item **`testitem`** would be published with the MQTT topic 
 
@@ -166,17 +166,17 @@ With this attribute you could specify channels to send and receive info.
 ### Example
 
 ```yaml
-	alarm_in_
-	    # messages coming from the alarm panel
-	    name: alarm_test_mqtt_in
-	    type: foo
-	    mqtt_topic_in: 'alarm/out'
+alarm_in_
+    # messages coming from the alarm panel
+    name: alarm_test_mqtt_in
+    type: foo
+    mqtt_topic_in: 'alarm/out'
 
-	alarm_out:
-		# messages published, to be read by the alarm panel
-		name: alarm_test_mqtt_out
-		type: foo
-		mqtt_topic_out: 'alarm/in'
+alarm_out:
+	# messages published, to be read by the alarm panel
+	name: alarm_test_mqtt_out
+	type: foo
+	mqtt_topic_out: 'alarm/in'
 
 ```
 
