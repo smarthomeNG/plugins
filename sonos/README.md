@@ -19,6 +19,7 @@
 
 * SmarthomeNG v1.3 or newer
 * Python3 libraries ```requests``` and ```xmltodict```
+* available ```ping``` executable on the host system
 
 To install all necessary libraries for SmarthomeNG, you can run following bash command:
 ```bash
