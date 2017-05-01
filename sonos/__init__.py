@@ -175,8 +175,6 @@ class Speaker(object):
         self.alarm_subscription = None
         self.device_subscription = None
 
-
-
     @property
     def uid(self):
         return self._uid
@@ -2014,7 +2012,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0.3"
+    PLUGIN_VERSION = "1.3.1.0"
 
     def __init__(self, sh, discover_cycle=120):
         self._sh = sh
