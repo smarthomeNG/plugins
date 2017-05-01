@@ -173,10 +173,10 @@ alarm_in_
     mqtt_topic_in: 'alarm/out'
 
 alarm_out:
-	# messages published, to be read by the alarm panel
-	name: alarm_test_mqtt_out
-	type: foo
-	mqtt_topic_out: 'alarm/in'
+    # messages published, to be read by the alarm panel
+    name: alarm_test_mqtt_out
+    type: foo
+    mqtt_topic_out: 'alarm/in'
 
 ```
 
