@@ -125,6 +125,40 @@ The code is replaced by the return value of the \<python code> for the logtext. 
         olog_level = info
 ```
 
+## Logics
+Configure a logic to be logged as follows:
+
+```
+[some_logic]
+    filename = script.py
+    olog = mylogname1
+    #olog_txt = The logic {logic.name} was triggered!
+    #olog_level = INFO
+```
+
+To enable logging for a given logic when it is triggered just
+add the `olog` attribute to the logic configuration. As default a simple
+logtext is logged: Logic {logic.name} triggered.
+
+Optionally you can overwrite the default logtext using the `olog_txt`
+attribute. In contrast to the item setting this supports different predefined
+keys as listed below:
+
+Key         | Description
+----------- | -----------
+`{plugin.*}`| the plugin instance (e.g. plugin.name for the name of the plugin)
+`{logic.*}` | the logic object (e.g. logic.name for the name)
+`{by}`      | name of the source of the logic trigger
+`{source}`  | identifies the source of change
+`{dest}`    | identifies the destination of change
+
+Furthermore user defined python expressions can be used in the logtext. Define as follows:
+
+`{eval=<python code>}`
+
+The code is replaced by the return value of the \<python code> for the logtext. Multiple `{eval=<python code>}` statements can be used.
+
+
 ## Functions
 
 ```
