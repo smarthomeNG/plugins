@@ -26,3 +26,28 @@ class TestDatabaseBase(unittest.TestCase):
     def assertSingle(self, expected, actual):
         self.assertEquals(expected, actual)
 
+    def assertSeries(self, expected, actual):
+        # Series result is:
+        # {
+        # 'sid': 'main.num|avg|0|now|100',
+        # 'params': {
+        #   'item': 'main.num',
+        #   'step': None,
+        #   'update': True,
+        #   'func': 'avg',
+        #   'start': 1494087165032,
+        #   'sid': 'main.num|avg|0|now|100',
+        #   'end': 'now'
+        # },
+        # 'series': [
+        #   (1494087165029, 0.0),
+        #   (1494087165032, 0.0)
+        # ],
+        # 'update': datetime.datetime(2017, 10, 26, 16, 27, 16, 33702),
+        # 'cmd': 'series'
+        # }
+        self.assertEquals(expected, actual['series'])
+
+    def assertSeriesCount(self, expected, actual):
+        self.assertEquals(expected, len(actual['series']))
+
