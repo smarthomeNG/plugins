@@ -162,7 +162,7 @@ SENT_RADIO_PACKET              = 0xFF
 SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
-    PLUGIN_VERSION = "1.4.1.0"
+    PLUGIN_VERSION = "1.3.3"
     ALLOW_MULTIINSTANCE = False
     
     def __init__(self, smarthome, serialport, tx_id=''):
