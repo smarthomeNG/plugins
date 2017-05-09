@@ -350,7 +350,7 @@ class Database(SmartPlugin):
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
         init = not update
         if sid is None:
-            sid = item + '|' + func + '|' + start + '|' + end  + '|' + str(count)
+            sid = item + '|' + func + '|' + str(start) + '|' + str(end)  + '|' + str(count)
         queries = {
             'avg' : 'MIN(time), ROUND(AVG(val_num * duration) / AVG(duration), 2)',
             'avg.order' : 'ORDER BY time ASC',
