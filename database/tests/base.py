@@ -25,14 +25,19 @@ class TestDatabaseBase(unittest.TestCase):
         return plugin.id(self.sh.return_item(name), True)
 
     def create_log(self, plugin, name, tuples):
+        """ Create log in database (pass list of tuples: start, end, value)
+        """
         id = self.create_item(plugin, name)
         for t in tuples:
-            plugin.insertLog(id, time=self.t(t[0]), duration=self.t(t[1]-t[0]), val=t[2], it='num')
+            if t[1] is None:
+                duration = None
+            else:
+                duration = self.t(t[1]-t[0])
+            plugin.insertLog(id, time=self.t(t[0]), duration=duration, val=t[2], it='num')
 
     def dump_log(self, plugin, name):
-        print(":::::::")
-        print(plugin.readLogs(plugin.id(self.sh.return_item(name), False)))
-        print(":::::::")
+        values = [(value[0], value[2], value[4]) for value in plugin.readLogs(plugin.id(self.sh.return_item(name), False))]
+        self.log_dump(values)
 
     def log_slice(self, start, interval, *tuples_list):
         logs = []
@@ -73,7 +78,8 @@ class TestDatabaseBase(unittest.TestCase):
                fmt = "{0: " + align[i] + "}"
                v = column
                nv = None if j == len(values)-1 else values[j+1][i]
-               print(fmt.format(func[i](v, nv)), end='')
+               res = func[i](v, nv)
+               print(fmt.format(res if res is not None else "(none)"), end='')
            print("");
 
     def assertSingle(self, expected, actual):
