@@ -32,6 +32,7 @@
 # - checken warum logging der stop Methode nur erfolgt, wenn nicht letztes Plugin
 # - password als hash speichern / auswerten
 # - Logiken testen
+# - Broker disconnect erkennen
 
 import logging
 from lib.model.smartplugin import SmartPlugin
@@ -39,6 +40,7 @@ from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
 import json
 import os
+import socket    # for gethostbyname
 
 import paho.mqtt.client as mqtt
 
@@ -53,9 +55,12 @@ class Mqtt(SmartPlugin):
     # change ALLOW_MULTIINSTANCE to true if your plugin will support multiple instances (seldom)
     ALLOW_MULTIINSTANCE = True
     
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.3.2"
 
-
+    __plugif_CallbackTopics = {}         # for plugin interface
+    __plugif_Sub = None
+    
+    
     def __init__(self, sh, 
             host='127.0.0.1', port='1883', qos='1',
             last_will_topic='', last_will_payload='',
@@ -83,6 +88,11 @@ class Mqtt(SmartPlugin):
         # if your plugin runs standalone, sh will likely be None so do not rely on it later or check it within your code
         
         self._sh = sh
+        
+        self.topics = {}                # subscribed topics
+        self.logictopics = {}           # subscribed topics for triggering logics
+        self.logicpayloadtypes = {}     # payload types for subscribed topics for triggering logics
+        self.inittopics = {}            # topics for items publishing initial value ('mqtt_topic_init')
 
         # needed because self.set_attr_value() can only set but not add attributes
         self.at_instance_name = self.get_instance_name()
@@ -94,12 +104,22 @@ class Mqtt(SmartPlugin):
         self._connected = False
         
         # check parameters specified in plugin.yaml
+        # get ip address for hostname
+        self.broker_hostname = host
+        try:
+            host = socket.gethostbyname( host )
+        except Exception as e:
+            self.logger.error(self.logIdentifier+": Error resolving '%s': %s" % (host, e))
+            return
+
         if Utils.is_ip(host):
             self.broker_ip = host
         else:
             self.broker_ip = ''
             self.logger.error(self.logIdentifier+': Invalid ip address for broker specified, plugin not starting')
             return
+        if self.broker_ip == self.broker_hostname:
+            self.broker_hostname = ''
 
         if Utils.is_int(port):
             self.broker_port = int(port)
@@ -144,12 +164,8 @@ class Mqtt(SmartPlugin):
         
         # tls ...
         # ca_certs ...
-        
+
         self.ConnectToBroker()
-        self.topics = {}                # subscribed topics
-        self.logictopics = {}           # subscribed topics for triggering logics
-        self.logicpayloadtypes = {}     # payload types for subscribed topics for triggering logics
-        self.inittopics = {}            # topics for items publishing initial value ('mqtt_topic_init')
         
 
     def run(self):
@@ -219,8 +235,6 @@ class Mqtt(SmartPlugin):
             
             self.logger.debug(self.logIdentifier+" (parsing result): item.conf '{}'".format( str(item.conf) ))
                    
-            self._client.on_message = self.on_mqtt_message
-
         # subscribe to configured topics
         if self.has_iattr(item.conf, 'mqtt_topic_in'):
             if self._connected:
@@ -257,7 +271,7 @@ class Mqtt(SmartPlugin):
                     else:
                         self.logger.warning(self.logIdentifier+": Invalid payload-datatype specified for logic '{}', ignored".format( str(logic) ))            
                 self._client.subscribe(topic, qos=self.qos)
-                self.logger.warning(self.logIdentifier+": Listening on topic '{}' for logic '{}'".format( topic, str(logic) ))
+                self.logger.info(self.logIdentifier+": Listening on topic '{}' for logic '{}'".format( topic, str(logic) ))
 
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -283,7 +297,7 @@ class Mqtt(SmartPlugin):
         """
         Cast input data to SmartHomeNG datatypes
 
-        :param item:      item to whichs type the data should be casted
+        :param datatype:  datatype to which the data should be casted to
         :param raw_data:  data as received from the mqtt broker
         :return:          data casted to the datatype of the item it should be written to
         """
@@ -346,17 +360,34 @@ class Mqtt(SmartPlugin):
             
         if self.username != '':
             self._client.username_pw_set(self.username, self.password)
+        self._client.on_connect = self.on_connect
         try:
             self._client.connect(self.broker_ip, self.broker_port, 60)
-            self._connected = True
         except Exception as e:
-            print('Connection error:', e)
+            self.logger.error('Connection error:', e)
 
+        self._client.on_message = self.on_mqtt_message
+        self._client.subscribe('$SYS/broker/version', qos=0 )
+
+
+    def on_connect(self, mqttc, obj, flags, rc):
+        """
+        Connecting callback function
+        """
+        if rc == 0:
+            self.logger.info(self.logIdentifier+": Connection returned result '{}' ".format( mqtt.connack_string(rc) ))
+            self._connected = True
+            return
+            
+        self.logger.warning(self.logIdentifier+": Connection returned result '{}': {}".format( str(rc), mqtt.connack_string(rc) ))
+        
 
     def DisconnectFromBroker(self):
         """
         Stop all communication with MQTT broker
         """
+        self._client.unsubscribe('$SYS/broker/version')
+
         for topic in self.topics:
             item = self.topics[topic]
             self.logger.debug(self.logIdentifier+": Unsubscribing topic '{}' for item '{}'".format( str(topic), str(item.id()) ))
@@ -398,5 +429,93 @@ class Mqtt(SmartPlugin):
             self.logger.info(self.logIdentifier+": Received topic '{}', payload '{} (type {})', QoS '{}', retain '{}' for logic '{}'".format( message.topic, str(payload), datatype, str(message.qos), str(message.retain), str(logic) ))
             logic.trigger('MQTT'+self.at_instance_name, message.topic, payload )
         if (item == None) and (logic == None):
-            self.logger.error(self.logIdentifier+": Received topic '{}', payload '{}', QoS '{}, retain '{}'' WITHOUT matching item/logic".format( message.topic, message.payload, str(message.qos), str(message.retain) ))
+            if message.topic == '$SYS/broker/version':
+                self.log_brokerinfo(message.payload)
+                # self._client.unsubscribe('$SYS/broker/version')
+            else:
+                self.logger.error(self.logIdentifier+": Received topic '{}', payload '{}', QoS '{}, retain '{}'' WITHOUT matching item/logic".format( message.topic, message.payload, str(message.qos), str(message.retain) ))
+
+
+    def log_brokerinfo(self, payload):
+        """
+        Log info about broker connection
+        """
+        payload = self.cast_mqtt('str', payload)
+        if self.broker_hostname == '':
+            address = str(self.broker_ip)+':'+str(self.broker_port)
+        else:
+            address = self.broker_hostname + ' (' + str(self.broker_ip)+':'+str(self.broker_port) + ')'
+        self.logger.warning(self.logIdentifier+": Connected to broker '{}' at address {}".format( str(payload), address ))
+
+
+    # ---------------------------------------------------------------------------------
+    # Following functions build the interface for other plugins which want to use MQTT
+    #
+
+    def publish_topic(self, plug, topic, payload, qos=None, retain=False):
+        """
+        function to publish a topic
+        
+        this function is to be called from other plugins, which are utilizing
+        the mqtt plugin
+        
+        :param topic:      topic to publish to
+        :param payload:    payload to publish
+        :param qos:        quality of service (optional) otherwise the default of the mqtt plugin will be used
+        :param retain:     retain flag (optional)
+        """
+        if not self._connected:
+            return
+        if qos == None:
+            qos = self.qos
+        self.logger.warning(self.logIdentifier+" (interface): Plugin '{}' is publishing topic '{}'".format( str(plug), str(topic) ))
+        self._client.publish(topic=topic, payload=payload, qos=qos, retain=retain)
+
+
+    def subscription_callback(self, plug, sub, callback=None):
+        """
+        function set a callback function
+        
+        this function is to be called from other plugins, which are utilizing
+        the mqtt plugin
+        
+        :param plug:       identifier of plgin/logic using the MQTT plugin
+        :param sub:        topic(s) which should call the callback function
+                           example: 'device/eno-gw1/#'
+        :param callback:   quality of service (optional) otherwise the default of the mqtt plugin will be used
+        """
+        if self.__plugif_Sub == None:
+            if sub[-2:] != '/#':
+                if sub[-1] == '/':
+                    sub = sub[:-1]
+                self.__plugif_Sub = sub + '/#'
+            else:
+                self.__plugif_Sub = sub
+        
+            self.logger.warning(self.logIdentifier+" (interface): Plugin '{}' is registering a callback function for subscription of topics '{}'".format( str(plug), str(self.__plugif_Sub) ))
+            self._client.message_callback_add(self.__plugif_Sub, callback)
+        else:
+            if sub == '':
+                self.logger.warning(self.logIdentifier+" (interface): Plugin '{}' is clearing the callback function for subscription of topics '{}'".format( str(plug), str(self.__plugif_Sub) ))
+                self._client.message_callback_remove(self.__plugif_Sub)
+                self.__plugif_Sub = None
+            else:
+                self.logger.error(self.logIdentifier+" (interface): Plugin '{}' is trying to register a second callback function (for subscription of topics '{}')".format( str(plug), str(self.__plugif_Sub) ))
+
+
+    def subscribe_topic(self, plug, topic, qos=None):
+        """
+        function to subscribe to a topic
+         
+        this function is to be called from other plugins, which are utilizing
+        the mqtt plugin
+         
+        :param topic:      topic to subscribe to
+        :param qos:        quality of service (optional) otherwise the default of the mqtt plugin will be used
+        """
+        if qos == None:
+            qos = self.qos
+        self._client.subscribe(topic, qos=qos)
+        self.logger.info(self.logIdentifier+" (interface): Plugin '{}' is subscribing to topic '{}'".format( str(plug), str(topic) ))
+
 
