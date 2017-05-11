@@ -15,6 +15,7 @@ Support is provided trough the support thread within the smarthomeNG forum: [Sup
 
 ## Changes since version 1.3.1
 
+- Login to broker with user/password is supported
 - Log the type and version of the broker
 - configure host by dns-name or ip address 
 - Added functions to allow other plugins to use this plugin for MQTT communication (documented at the end of this document)
