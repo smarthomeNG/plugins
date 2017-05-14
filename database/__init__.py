@@ -78,10 +78,10 @@ class Database(SmartPlugin):
                 if cache is not None:
                     value = self._item_value_tuple_rev(item.type(), cache[3:6])
                     last_change = self._datetime(cache[2])
-                    prev_change = self._db.fetchone(self._prepare('SELECT MAX(time) from {log} WHERE item_id = :id'), {'id':id})
+                    prev_change = self._fetch(self._prepare('SELECT MAX(time) from {log} WHERE item_id = :id'), item, {'id':id})
                     last_change_ts = self._timestamp(last_change)
-                    if value is not None and prev_change is not None:
-                        prev_change = self._datetime(prev_change[0])
+                    if value is not None and prev_change:
+                        prev_change = self._datetime(prev_change[0][0])
                         item.set(value, 'Database', prev_change=prev_change, last_change=last_change)
                     self._buffer[item].append((last_change_ts, None, value))
             cur.close()
