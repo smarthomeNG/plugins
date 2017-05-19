@@ -1,1 +1,2 @@
 telepot>=8.3
+urllib3>=1.9.1
