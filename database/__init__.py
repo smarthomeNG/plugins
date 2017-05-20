@@ -66,25 +66,36 @@ class Database(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'database'):
+            self._buffer_lock.acquire()
             self._buffer[item] = []
+            self._buffer_lock.release()
             item.series = functools.partial(self._series, item=item.id())
             item.db = functools.partial(self._single, item=item.id())
             item.dbplugin = self
 
-            cur = self._db.cursor()
-            id = self.id(item, create=False, cur=cur)
             if self.get_iattr_value(item.conf, 'database') == 'init':
-                cache = None if id is None else self.readItem(id, cur=cur)
-                if cache is not None:
-                    value = self._item_value_tuple_rev(item.type(), cache[3:6])
-                    last_change = self._datetime(cache[2])
-                    prev_change = self._fetch(self._prepare('SELECT MAX(time) from {log} WHERE item_id = :id'), item, {'id':id})
-                    last_change_ts = self._timestamp(last_change)
-                    if value is not None and prev_change:
-                        prev_change = self._datetime(prev_change[0][0])
-                        item.set(value, 'Database', prev_change=prev_change, last_change=last_change)
-                    self._buffer[item].append((last_change_ts, None, value))
-            cur.close()
+                if not self._db.lock(5):
+                    self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
+                    return
+                try:
+                    cur = self._db.cursor()
+                    id = self.id(item, create=False, cur=cur)
+                    cache = None if id is None else self.readItem(id, cur=cur)
+                    if cache is not None:
+                        value = self._item_value_tuple_rev(item.type(), cache[3:6])
+                        last_change = self._datetime(cache[2])
+                        prev_change = self._db.fetchone(self._prepare('SELECT MAX(time) from {log} WHERE item_id = :id'), {'id':id}, cur=cur)
+                        last_change_ts = self._timestamp(last_change)
+                        if value is not None and prev_change is not None:
+                            prev_change = self._datetime(prev_change[0])
+                            item.set(value, 'Database', prev_change=prev_change, last_change=last_change)
+                        self._buffer_lock.acquire()
+                        self._buffer[item].append((last_change_ts, None, value))
+                        self._buffer_lock.release()
+                    cur.close()
+                except Exception as e:
+                    self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
+                self._db.release()
             return self.update_item
         else:
             return None
