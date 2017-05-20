@@ -32,6 +32,26 @@ import lib.db
 
 from lib.model.smartplugin import SmartPlugin
 
+# Constants for item table
+COL_ITEM = ('id', 'name', 'time', 'val_str', 'val_num', 'val_bool', 'changed')
+COL_ITEM_ID = 0
+COL_ITEM_NAME = 1
+COL_ITEM_TIME = 2
+COL_ITEM_VAL_STR = 3
+COL_ITEM_VAL_NUM = 4
+COL_ITEM_VAL_BOOL = 5
+COL_ITEM_CHANGED = 6
+
+# Constants for log table
+COL_LOG = ('time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed')
+COL_LOG_TIME = 0
+COL_LOG_ITEM_ID = 1
+COL_LOG_DURATION = 2
+COL_LOG_VAL_STR = 3
+COL_LOG_VAL_NUM = 4
+COL_LOG_VAL_BOOL = 5
+COL_LOG_CHANGED = 6
+
 class Database(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
@@ -53,7 +73,9 @@ class Database(SmartPlugin):
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
         self._name = self.get_instance_name()
-        self._tables = {table: table if prefix == "" else prefix + "_" + table for table in ["log", "item"]}
+        self._replace = {table: table if prefix == "" else prefix + "_" + table for table in ["log", "item"]}
+        self._replace['item_columns'] = ", ".join(COL_ITEM)
+        self._replace['log_columns'] = ", ".join(COL_LOG)
         self._buffer = {}
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
@@ -82,8 +104,8 @@ class Database(SmartPlugin):
                     id = self.id(item, create=False, cur=cur)
                     cache = None if id is None else self.readItem(id, cur=cur)
                     if cache is not None:
-                        value = self._item_value_tuple_rev(item.type(), cache[3:6])
-                        last_change = self._datetime(cache[2])
+                        value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL+1])
+                        last_change = self._datetime(cache[COL_ITEM_TIME])
                         prev_change = cache[6]
                         last_change_ts = self._timestamp(last_change)
                         if value is not None and prev_change is not None:
@@ -144,9 +166,13 @@ class Database(SmartPlugin):
             self._db.release()
 
             for row in rows:
-                cols = [item[0], item[1], row[0], row[2], row[3], row[4], row[5], row[6]]
-                cols.append('' if row[0] is None else datetime.datetime.fromtimestamp(row[0]/1000.0))
-                cols.append('' if row[6] is None else datetime.datetime.fromtimestamp(row[6]/1000.0))
+                cols = []
+                for key in [COL_ITEM_ID, COL_ITEM_NAME]:
+                    cols.append(item[key])
+                for key in [COL_LOG_TIME, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM, COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                    cols.append(row[key])
+                for key in [COL_ITEM_ID, COL_LOG_CHANGED]:
+                  cols.append('' if row[key] is None else datetime.datetime.fromtimestamp(row[key]/1000.0))
                 cols = map(lambda col: '' if col is None else col, cols)
                 cols = map(lambda col: str(col) if not '"' in str(col) else col.replace('"', '\\"'), cols)
                 f.write(s.join(cols) + "\n")
@@ -157,8 +183,8 @@ class Database(SmartPlugin):
         items = [item.id() for item in self._buffer]
         cur = self._db.cursor()
         for item in self.readItems(cur=cur):
-            if item[1] not in items:
-                self.deleteItem(item[0], cur=cur)
+            if item[COL_ITEM_NAME] not in items:
+                self.deleteItem(item[COL_ITEM_ID], cur=cur)
         cur.close()
 
     def id(self, item, create=True, cur=None):
@@ -167,7 +193,7 @@ class Database(SmartPlugin):
         if id == None and create == True:
             id = [self.insertItem(item.id(), cur)]
 
-        return None if id == None else int(id[0])
+        return None if id == None else int(id[COL_ITEM_ID])
 
     def insertItem(self, name, cur=None):
         id = self._db.fetchone(self._prepare("SELECT MAX(id) FROM {item};"), {}, cur=cur)
@@ -183,11 +209,11 @@ class Database(SmartPlugin):
     def readItem(self, id, cur=None):
         params = {'id':id}
         if type(id) == str:
-            return self._db.fetchone(self._prepare("SELECT id, name, time, val_str, val_num, val_bool, changed from {item} WHERE name = :id;"), params, cur=cur)
-        return self._db.fetchone(self._prepare("SELECT id, name, time, val_str, val_num, val_bool, changed from {item} WHERE id = :id;"), params, cur=cur)
+            return self._db.fetchone(self._prepare("SELECT {item_columns} from {item} WHERE name = :id;"), params, cur=cur)
+        return self._db.fetchone(self._prepare("SELECT {item_columns} from {item} WHERE id = :id;"), params, cur=cur)
 
     def readItems(self, cur=None):
-        return self._db.fetchall(self._prepare("SELECT id, name, time, val_str, val_num, val_bool, changed from {item};"), {}, cur=cur)
+        return self._db.fetchall(self._prepare("SELECT {item_columns} from {item};"), {}, cur=cur)
 
     def deleteItem(self, id, cur=None):
         params = {'id':id}
@@ -206,11 +232,11 @@ class Database(SmartPlugin):
 
     def readLog(self, id, time, cur = None):
         params = {'id':id, 'time':time}
-        return self._db.fetchall(self._prepare("SELECT time, item_id, duration, val_str, val_num, val_bool, changed FROM {log} WHERE item_id = :id AND time = :time;"), params, cur=cur)
+        return self._db.fetchall(self._prepare("SELECT {log_columns} FROM {log} WHERE item_id = :id AND time = :time;"), params, cur=cur)
 
     def readLogs(self, id, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None):
         condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end)
-        return self._db.fetchall(self._prepare("SELECT time, item_id, duration, val_str, val_num, val_bool, changed FROM {log} WHERE " + condition), params, cur=cur)
+        return self._db.fetchall(self._prepare("SELECT {log_columns} FROM {log} WHERE " + condition), params, cur=cur)
 
     def deleteLog(self, id, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None):
         condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end)
@@ -267,7 +293,7 @@ class Database(SmartPlugin):
         return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
 
     def _prepare(self, query):
-        return query.format(**self._tables)
+        return query.format(**self._replace)
 
     def _dump(self, finalize=False, items=None):
         if self._dump_lock.acquire(timeout=60) == False:
