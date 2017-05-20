@@ -1,5 +1,7 @@
+import os
 import common
 import datetime
+import tempfile
 import unittest
 
 from plugins.database import Database
@@ -21,6 +23,17 @@ class TestDatabaseBase(unittest.TestCase):
     def t(self, s):
         return s * TestDatabaseBase.TIME_FACTOR;
 
+    def create_tmpfile(self):
+        (fd, name) = tempfile.mkstemp()
+        os.close(fd)
+        return name
+
+    def read_tmpfile(self, name):
+        with open(name, 'r') as f:
+          content = f.read(os.path.getsize(name))
+        os.unlink(name)
+        return content
+
     def create_item(self, plugin, name):
         return plugin.id(self.sh.return_item(name), True)
 
@@ -34,6 +47,11 @@ class TestDatabaseBase(unittest.TestCase):
             else:
                 duration = self.t(t[1]-t[0])
             plugin.insertLog(id, time=self.t(t[0]), duration=duration, val=t[2], it='num')
+
+    def dump_item(self, plugin, name):
+        value = plugin.readItem(plugin.id(self.sh.return_item(name)))
+        values = [(value[0], value[2], value[4])]
+        self.log_dump(values)
 
     def dump_log(self, plugin, name):
         values = [(value[0], value[2], value[4]) for value in plugin.readLogs(plugin.id(self.sh.return_item(name), False))]
@@ -81,6 +99,11 @@ class TestDatabaseBase(unittest.TestCase):
                res = func[i](v, nv)
                print(fmt.format(res if res is not None else "(none)"), end='')
            print("");
+
+    def assertLines(self, expected, actual):
+        print(actual.split("\n"))
+        for line in actual.split("\n"):
+            self.assertIn(line, expected)
 
     def assertSingle(self, expected, actual):
         self.assertEquals(expected, actual)
