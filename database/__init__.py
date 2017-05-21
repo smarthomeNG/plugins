@@ -399,7 +399,7 @@ class Database(SmartPlugin):
             raise NotImplementedError
 
         order = '' if func+'.order' not in queries else queries[func+'.order']
-        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group="GROUP BY ROUND(time / :step)", order=order, border=init)
+        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group="GROUP BY ROUND(time / :step)", order=order)
         tuples = logs['tuples']
         if tuples:
             if logs['istart'] > tuples[0][0]:
@@ -439,7 +439,7 @@ class Database(SmartPlugin):
             return
         return logs['tuples'][0][0]
 
-    def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order='', border=False):
+    def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
         _item = self._sh.return_item(item)
 
         istart = self._parse_ts(start)
