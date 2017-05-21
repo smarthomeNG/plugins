@@ -1054,6 +1054,74 @@ class AVM(SmartPlugin):
                                                self._fritz_device.get_password()), verify=self._verify)
         return
 
+    def get_hosts(self, only_active):
+        """
+        Gets the name of all hosts as an array
+
+        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+
+        :param only_active: bool, if only active hosts shall be returned
+        :return: Array host dicts (see get_host_details)
+        """
+        url = self._build_url("/upnp/control/hosts")
+        headers = self._header.copy()
+        action = 'GetHostNumberOfEntries'
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'])
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
+        except Exception as e:
+            self.logger.error("Exception when sending POST request: %s" % str(e))
+
+        xml = minidom.parseString(response.content)
+
+        number_of_hosts = int(self._get_value_from_xml_node(xml, 'NewHostNumberOfEntries'))
+        hosts = []
+        for i in range(1, number_of_hosts):
+            host = self.get_host_details(i)
+            if not only_active or (only_active and self.to_bool(host['is_active'])):
+                hosts.append(host)
+
+        return hosts
+
+    def get_host_details(self, index):
+        """
+        Gets the name of a hosts at a specific index
+
+        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+
+        :param index: index of host in hosts list
+        :return: Dict host data: name, interface_type, ip_address, address_source, mac_address, is_active, lease_time_remaining
+        """
+        url = self._build_url("/upnp/control/hosts")
+        headers = self._header.copy()
+        action = 'GetGenericHostEntry'
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'], {'NewIndex': index})
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
+        except Exception as e:
+            self.logger.error("Exception when sending POST request: %s" % str(e))
+
+        xml = minidom.parseString(response.content)
+        host = {
+            'name': self._get_value_from_xml_node(xml, 'NewHostName'),
+            'interface_type': self._get_value_from_xml_node(xml, 'NewInterfaceType'),
+            'ip_address': self._get_value_from_xml_node(xml, 'NewIPAddress'),
+            'address_source': self._get_value_from_xml_node(xml, 'NewAddressSource'),
+            'mac_address': self._get_value_from_xml_node(xml, 'NewMACAddress'),
+            'is_active': self._get_value_from_xml_node(xml, 'NewActive'),
+            'lease_time_remaining': self._get_value_from_xml_node(xml, 'NewLeaseTimeRemaining')
+        }
+
+        return host
+
     def reconnect(self):
         """
         Reconnects the FritzDevice to the WAN

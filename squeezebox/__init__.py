@@ -211,6 +211,11 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                     if (data[2] == 'jump') and (len(data) == 4):
                         self._update_items_with_data(
                             [data[0], 'playlist index', data[3]])
+                    elif (data[2] == 'name') and (len(data) <= 3):
+                        self._update_items_with_data(
+                                [data[0], 'playlist name', ''])
+                    elif (data[2] == 'loadtracks' or data[2] == 'save'):
+                        self._send(data[0] + ' playlist name ?')
                     elif (data[2] == 'newsong'):
                         self._send(data[0] + ' mode ?')
                         if (len(data) >= 4):

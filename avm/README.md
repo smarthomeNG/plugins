@@ -550,10 +550,52 @@ This function reconnects the WAN (=internet) connection.
 ## reboot()
 This function reboots the FritzDevice.
 
+## get_hosts(only_active)
+Gets the data of get_host_details for all hosts as array. If only_active is True, only active hosts are returned.
+
+Example of a logic which is merging hosts of three devices into one list and rendering them to an HTML list, which is written to the item
+'avm.devices.device_list'
+
+```html
+hosts = sh.fritzbox_7490.get_hosts(True)
+hosts_300 = sh.wlan_repeater_300.get_hosts(True)
+hosts_1750 = sh.wlan_repeater_1750.get_hosts(True)
+
+for host_300 in hosts_300:
+    new = True
+    for host in hosts:
+        if host_300['mac_address'] == host['mac_address']:
+            new = False
+    if new:
+        hosts.append(host_300)
+for host_1750 in hosts_1750:
+    new = True
+    for host in hosts:
+        if host_1750['mac_address'] == host['mac_address']:
+            new = False
+    if new:
+        hosts.append(host_1750)
+
+string = '<ul>'
+for host in hosts:
+    device_string = '<li><strong>'+host['name']+':</strong> '+host['ip_address']+', '+host['mac_address']+'</li>'
+    string += device_string
+
+string += '</ul>'
+sh.avm.devices.device_list(string)
+```
+
+## get_host_details(index)
+Gets the data of a host as dict:
+dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_remaining
+
+## is_host_active(mac_address)
+This function checks, if a device running on a given mac address is active on the FritzDevice. Can be used for presence detection.
+
 ## get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book
 
-##get_phone_numbers_by_name(name)
+## get_phone_numbers_by_name(name)
 This is a function to search for contact names and retrieve the related telephone numbers
 
 Set an item with a html of all found numbers e.g. by:
@@ -576,6 +618,3 @@ sh.general_items.number_search_results(result_string)
 
 ## get_calllist()
 Returns an array with calllist entries
-
-## is_host_active(mac_address)
-This function checks, if a device running on a given mac address is active on the FritzDevice. Can be used for presence detection.

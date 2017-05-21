@@ -398,7 +398,7 @@ class Enigma2(SmartPlugin):
         """
         Retrieves the answer to a currently sent message, take care to take the timeout into account in which the answer can be given and start a thread which is polling the answer for that period.
         """
-        xml = self.box_request(self._url_suffix_map['message'], 'getanswer=now')
+        xml = self.box_request(self._url_suffix_map['messageanswer'], 'getanswer=now')
 
         e2result_xml = xml.getElementsByTagName('e2state')
         e2resulttext_xml = xml.getElementsByTagName('e2statetext')

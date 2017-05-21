@@ -551,8 +551,10 @@ class Backend:
                          'triggers': json.dumps(triggers),
                          }
 
-            if item.type() == 'foo':
+            # cast raw data to a string
+            if item.type() in ['foo', 'list', 'dict']:
                 data_dict['value'] = str(item._value)
+                data_dict['previous_value'] = str(prev_value)
 
             item_data.append(data_dict)
             return json.dumps(item_data)

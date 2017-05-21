@@ -1,0 +1,68 @@
+/**
+ * --- W i d g e t s :   SONOS ------------------------------------------
+ */
+.sonos table{
+ width: 100%;
+ height: 100%;
+ empty-cells: show;
+ border-spacing: 5px;
+}
+
+.sonos .td-cover{
+ height: 120px;
+ width: 120px;
+}
+
+.sonos .title{
+ font-weight: bold;
+ font-size: 110%;
+}
+
+.sonos .radio_station {
+ font-weight: bold;
+ font-size: 110%;
+}
+
+.sonos .artist {
+}
+
+.sonos .stream_content {
+}
+
+.sonos .album{
+  vertical-align: top;
+  font-style: italic;
+}
+
+.sonos .control{
+
+}
+
+.sonos .cover{
+  max-width:100%;
+  max-height:100%;
+  margin: 10px;
+}
+
+.sonos .control td {
+  min-width: 20px
+}
+
+.sonos .volume td {
+  min-width: 20px
+}
+
+.sonos .volume .slider {
+  width: 75%;
+}
+
+.sonos .control .previous {
+  text-align: right;
+}
+
+.sonos .control .next {
+  text-align: left;
+}
+
+.sonos .favorite {
+}
