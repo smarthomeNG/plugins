@@ -181,11 +181,18 @@ class Database(SmartPlugin):
 
     def cleanup(self):
         items = [item.id() for item in self._buffer]
+        if not self._db.lock(60):
+            self.logger.error("Can not acquire lock for database cleanup")
+            return
         cur = self._db.cursor()
-        for item in self.readItems(cur=cur):
-            if item[COL_ITEM_NAME] not in items:
-                self.deleteItem(item[COL_ITEM_ID], cur=cur)
+        try:
+            for item in self.readItems(cur=cur):
+                if item[COL_ITEM_NAME] not in items:
+                    self.deleteItem(item[COL_ITEM_ID], cur=cur)
+        except Exception as e:
+            self.logger.error("Database cleanup failed: {}".format(e))
         cur.close()
+        self._db.release()
 
     def id(self, item, create=True, cur=None):
         id = self.readItem(str(item.id()), cur=cur)
