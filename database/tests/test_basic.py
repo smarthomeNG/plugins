@@ -226,3 +226,17 @@ class TestDatabaseBasic(TestDatabaseBase):
           self.read_tmpfile(name)
         )
 
+    def test_cleanup_empty(self):
+        plugin = self.plugin()
+        plugin.cleanup()
+        items = plugin.readItems()
+        self.assertEqual(0, len(items))
+
+    def test_cleanup(self):
+        plugin = self.plugin()
+        self.create_item(plugin, 'main.num')
+        self.create_item(plugin, 'main.nodb')
+        plugin.cleanup()
+        items = plugin.readItems()
+        self.assertEqual(1, len(items))
+        self.assertEqual("main.num", items[0][1])
