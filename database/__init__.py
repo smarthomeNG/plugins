@@ -106,7 +106,7 @@ class Database(SmartPlugin):
                     if cache is not None:
                         value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL+1])
                         last_change = cache[COL_ITEM_TIME]
-                        prev_change = self._fetchone(self._prepare('SELECT MAX(time) from {log} WHERE item_id = :id'), {'id':id}, cur=cur)
+                        prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id', {'id':id}, cur=cur)
                         item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=self._datetime(last_change))
                         self._buffer_lock.acquire()
                         self._buffer[item].append((self._timestamp(last_change), None, value))
@@ -193,9 +193,9 @@ class Database(SmartPlugin):
         return None if id == None else int(id[COL_ITEM_ID])
 
     def insertItem(self, name, cur=None):
-        id = self._fetchone(self._prepare("SELECT MAX(id) FROM {item};"), cur=cur)
+        id = self._fetchone("SELECT MAX(id) FROM {item};", cur=cur)
         self._execute(self._prepare("INSERT INTO {item}(id, name) VALUES(:id, :name);"), {'id':1 if id[0] == None else id[0]+1, 'name':name}, cur=cur)
-        id = self._fetchone(self._prepare("SELECT id FROM {item} where name = :name;"), {'name':name}, cur=cur)
+        id = self._fetchone("SELECT id FROM {item} where name = :name;", {'name':name}, cur=cur)
         return int(id[0])
 
     def updateItem(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
@@ -206,11 +206,11 @@ class Database(SmartPlugin):
     def readItem(self, id, cur=None):
         params = {'id':id}
         if type(id) == str:
-            return self._fetchone(self._prepare("SELECT {item_columns} from {item} WHERE name = :id;"), params, cur=cur)
-        return self._fetchone(self._prepare("SELECT {item_columns} from {item} WHERE id = :id;"), params, cur=cur)
+            return self._fetchone("SELECT {item_columns} from {item} WHERE name = :id;", params, cur=cur)
+        return self._fetchone("SELECT {item_columns} from {item} WHERE id = :id;", params, cur=cur)
 
     def readItems(self, cur=None):
-        return self._fetchall(self._prepare("SELECT {item_columns} from {item};"), cur=cur)
+        return self._fetchall("SELECT {item_columns} from {item};", cur=cur)
 
     def deleteItem(self, id, cur=None):
         params = {'id':id}
@@ -229,11 +229,11 @@ class Database(SmartPlugin):
 
     def readLog(self, id, time, cur = None):
         params = {'id':id, 'time':time}
-        return self._fetchall(self._prepare("SELECT {log_columns} FROM {log} WHERE item_id = :id AND time = :time;"), params, cur=cur)
+        return self._fetchall("SELECT {log_columns} FROM {log} WHERE item_id = :id AND time = :time;", params, cur=cur)
 
     def readLogs(self, id, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None):
         condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end)
-        return self._fetchall(self._prepare("SELECT {log_columns} FROM {log} WHERE " + condition), params, cur=cur)
+        return self._fetchall("SELECT {log_columns} FROM {log} WHERE " + condition, params, cur=cur)
 
     def deleteLog(self, id, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None):
         condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end)
@@ -493,10 +493,6 @@ class Database(SmartPlugin):
         # get a duration value referring to the current timestamp - if required.
         query = query.replace('duration_now', duration_now)
 
-        query = self._prepare(query)
-        query_readable = re.sub(r':([a-z_]+)', r'{\1}', query).format(**params)
-        self.logger.debug(query_readable)
-
         logs = self._fetchall(query, params)
 
         return {
@@ -527,14 +523,17 @@ class Database(SmartPlugin):
             if not self._db.lock(300):
                 self.logger.error("Database: Can't query due to fail to acquire lock")
                 return None
+        query = self._prepare(query)
+        query_readable = re.sub(r':([a-z_]+)', r'{\1}', query).format(**params)
         tuples = None
         try:
-            tuples = func(query, params, cur=cur)
+            self.logger.debug(query_readable)
+            tuples = func(self._prepare(query), params, cur=cur)
         except Exception as e:
             self.logger.warning("Database: Running query: {}".format(e))
         if cur is None:
             self._db.release()
-        self.logger.debug("Fetch {} (args {}): {}".format(query, params, tuples))
+        self.logger.debug("Fetch {}: {}".format(query_readable, tuples))
         return tuples
 
     def _parse_ts(self, frame):
