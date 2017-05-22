@@ -99,21 +99,22 @@ class Database(SmartPlugin):
                 if not self._db.lock(5):
                     self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
                     return
+                cur = self._db.cursor()
                 try:
-                    cur = self._db.cursor()
-                    id = self.id(item, create=False, cur=cur)
-                    cache = None if id is None else self.readItem(id, cur=cur)
+                    cache = self.readItem(str(item.id()), cur=cur)
                     if cache is not None:
                         value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL+1])
-                        last_change = cache[COL_ITEM_TIME]
-                        prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id', {'id':id}, cur=cur)
-                        item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=self._datetime(last_change))
+                        last_change = self._datetime(cache[COL_ITEM_TIME])
+                        last_change_ts = self._timestamp(last_change)
+                        prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id', {'id':cache[COL_ITEM_ID]}, cur=cur)
+                        if value is not None and prev_change is not None:
+                            item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
                         self._buffer_lock.acquire()
-                        self._buffer[item].append((self._timestamp(last_change), None, value))
+                        self._buffer[item].append((last_change_ts, None, value))
                         self._buffer_lock.release()
-                    cur.close()
                 except Exception as e:
                     self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
+                cur.close()
                 self._db.release()
             return self.update_item
         else:
@@ -527,10 +528,9 @@ class Database(SmartPlugin):
         query_readable = re.sub(r':([a-z_]+)', r'{\1}', query).format(**params)
         tuples = None
         try:
-            self.logger.debug(query_readable)
             tuples = func(self._prepare(query), params, cur=cur)
         except Exception as e:
-            self.logger.warning("Database: Running query: {}".format(e))
+            self.logger.warning("Database: Running query {}: {}".format(query_readable, e))
         if cur is None:
             self._db.release()
         self.logger.debug("Fetch {}: {}".format(query_readable, tuples))
