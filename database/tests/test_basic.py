@@ -1,4 +1,5 @@
 import os
+import datetime
 import tempfile
 
 from plugins.database import Database
@@ -132,9 +133,30 @@ class TestDatabaseBasic(TestDatabaseBase):
         plugin = self.plugin()
         item = self.sh.return_item('main.num')
         id = self.create_item(plugin, item.id())
-        plugin.updateItem(id, time=0, val='42', it='num', changed=0)
+        plugin.updateItem(id, time=7200, val='42', it='num', changed=7200)
+        plugin.insertLog(id, time=3600, duration=3600, val='20', it='num', changed=3600)
         plugin.parse_item(item)
         self.assertEqual(42, item())
+        self.assertEqual('1970-01-01T00:00:03.600000+00:00', item.prev_change().isoformat())
+        self.assertEqual('1970-01-01T00:00:07.200000+00:00', item.last_change().isoformat())
+
+    def test_update_item_without_item(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        item(10)
+        plugin.update_item(item)
+
+    def test_update_item_with_cache(self):
+        plugin = self.plugin()
+        item = self.sh.return_item('main.num')
+        id = self.create_item(plugin, item.id())
+        plugin.updateItem(id, time=7200, val='42', it='num', changed=7200)
+        plugin.insertLog(id, time=3600, duration=3600, val='20', it='num', changed=3600)
+        plugin.parse_item(item)
+        plugin.update_item(item)
+        self.assertEqual(42, item())
+        self.assertEqual('1970-01-01T00:00:03.600000+00:00', item.prev_change().isoformat())
+        self.assertEqual('1970-01-01T00:00:07.200000+00:00', item.last_change().isoformat())
 
     def test_dump_empty(self):
         name = self.create_tmpfile()
