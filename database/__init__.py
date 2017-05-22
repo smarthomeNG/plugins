@@ -105,13 +105,11 @@ class Database(SmartPlugin):
                     cache = None if id is None else self.readItem(id, cur=cur)
                     if cache is not None:
                         value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL+1])
-                        last_change = self._datetime(cache[COL_ITEM_TIME])
-                        prev_change = cache[6]
-                        last_change_ts = self._timestamp(last_change)
-                        if value is not None and prev_change is not None:
-                            item.set(value, 'Database', prev_change=prev_change, last_change=last_change)
+                        last_change = cache[COL_ITEM_TIME]
+                        prev_change = self._fetchone(self._prepare('SELECT MAX(time) from {log} WHERE item_id = :id'), {'id':id}, cur=cur)
+                        item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=self._datetime(last_change))
                         self._buffer_lock.acquire()
-                        self._buffer[item].append((last_change_ts, None, value))
+                        self._buffer[item].append((self._timestamp(last_change), None, value))
                         self._buffer_lock.release()
                     cur.close()
                 except Exception as e:
