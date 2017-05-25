@@ -168,21 +168,21 @@ Configure your commands depending on your model and manufacturer. You have to na
 
 Each line holds one specific command that should be sent to the device. You also specify the zone, the query command, response command, etc.
 
-zone: Number of zone. Has to correspond to the attribute in item.yaml. E.g. for zone 1 use "avdevice_zone1: command". Zone 0 holds special commands like navigating in the menu, display reponse, information about currently playing songs, etc.
+* `zone`: Number of zone. Has to correspond to the attribute in item.yaml. E.g. for zone 1 use "avdevice_zone1: command". Zone 0 holds special commands like navigating in the menu, display reponse, information about currently playing songs, etc.
 
-function: name of the function. You can name them whatever you like but keep in mind the following scheme: for boolean functions add a " on" or " off" to the function name. For commands setting a specific value like source, input mode, volume, etc. add a " set"
+* `function`: name of the function. You can name them whatever you like but keep in mind the following scheme: for boolean functions add a " on" or " off" to the function name. For commands setting a specific value like source, input mode, volume, etc. add a " set"
 
-send: the command to be sent, e.g. power off is "PF" for Pioneer receivers. You can use a pipe "|" if more than one command should be sent. That might be necessary for power on commands via RS232, e.g. for Pioneer receivers to power on "PO|PO" forces the plugin to send the "PO" command twice. Use stars "*" to specify the format of the value to be sent. Let's say your device expects the value for volume as 3 digits, a "***VL" ensures that even setting the volume to "5" sends the command as "005VL"
+* `send`: the command to be sent, e.g. power off is "PF" for Pioneer receivers. You can use a pipe "|" if more than one command should be sent. That might be necessary for power on commands via RS232, e.g. for Pioneer receivers to power on "PO|PO" forces the plugin to send the "PO" command twice. Use stars "*" to specify the format of the value to be sent. Let's say your device expects the value for volume as 3 digits, a "***VL" ensures that even setting the volume to "5" sends the command as "005VL"
 
-query: Query command. This is usually useful after setting up the connection or turning on the power. This command gets also used if the plugin doesn't receive the correct answer after sending a command.
+* `query`: Query command. This is usually useful after setting up the connection or turning on the power. This command gets also used if the plugin doesn't receive the correct answer after sending a command.
 
-response: The expected response after sending a command. Use "none" if you don't want to wait for the correct response. You can use stars "*" again to ensure that the exact correct value is set. Example: You set the volume to 100. If you want to ensure that the device responds with any value for volume just use "VOL" here (or whatever response your device sends). If you want to ensure that the device is set to a volume of 100, use stars as placeholders, e.g. "VOL***" for 3 digits.
+* `response`: The expected response after sending a command. Use "none" if you don't want to wait for the correct response. You can use stars "*" again to ensure that the exact correct value is set. Example: You set the volume to 100. If you want to ensure that the device responds with any value for volume just use "VOL" here (or whatever response your device sends). If you want to ensure that the device is set to a volume of 100, use stars as placeholders, e.g. "VOL***" for 3 digits.
 
-readwrite: R for read only, W for write only, RW for Read and Write. E.g. display values are read only whereas turning the volume up might be a write operation only. Setting this correctly ensures a fast and reliable plugin operation
+* `readwrite`: R for read only, W for write only, RW for Read and Write. E.g. display values are read only whereas turning the volume up might be a write operation only. Setting this correctly ensures a fast and reliable plugin operation
 
-invertresponse: some devices are stupid enough to reply with a "0" for "on" and "1" for "off". E.g. a Pioneer receiver responds with "PWR0" if the device is turned on. Configure with "yes" if your device is quite stupid, too.
+* `invertresponse`: some devices are stupid enough to reply with a "0" for "on" and "1" for "off". E.g. a Pioneer receiver responds with "PWR0" if the device is turned on. Configure with "yes" if your device is quite stupid, too.
 
-maxvalue: You can define the maximum value for setting a specific function. This might be most relevant for setting the volume. If you configure this with "100" and set the volume to "240" (via Visu or CLI) the value will get clamped by the plugin and set to "100". 
+* `maxvalue`: You can define the maximum value for setting a specific function. This might be most relevant for setting the volume. If you configure this with "100" and set the volume to "240" (via Visu or CLI) the value will get clamped by the plugin and set to "100". 
 
 ### Example
 
