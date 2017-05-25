@@ -162,7 +162,7 @@ Pioneer:
 
 ## model.txt
 
-### ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE
+### ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;TYPE
 
 Configure your commands depending on your model and manufacturer. You have to name the file the same as configured in the plugin.yaml as "model". E.g. if you've configured "model: vsx-923" you name the file "vsx-923.txt"
 
@@ -183,6 +183,8 @@ Each line holds one specific command that should be sent to the device. You also
 * `invertresponse`: some devices are stupid enough to reply with a "0" for "on" and "1" for "off". E.g. a Pioneer receiver responds with "PWR0" if the device is turned on. Configure with "yes" if your device is quite stupid, too.
 
 * `maxvalue`: You can define the maximum value for setting a specific function. This might be most relevant for setting the volume. If you configure this with "100" and set the volume to "240" (via Visu or CLI) the value will get clamped by the plugin and set to "100". 
+
+* `type`: If you want to force a function to deal with boolean values, use "bool" here. This might be necessary when your device responds in a weird way like an Epson projector does. It responds with "PWR=01" or "PWR=02" when turned on.. depending on it's mood ;)
 
 ### Example
 
