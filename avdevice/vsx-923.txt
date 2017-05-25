@@ -1,0 +1,27 @@
+ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE
+1;power on;PO|PO;?P;PWR*;RW;yes
+1;power off;PF;?P;PWR*;RW;yes
+1;volume+;VU;?V;VOL;W
+1;volume-;VD;?V;VOL;W
+1;volumehigh;150VL;?V;VOL150;W
+1;volumelow;110VL;?V;VOL110;W
+1;volume set;***VL;?V;VOL***;RW;;185
+1;mute on;MO;?M;MUT*;RW;yes
+1;mute off;MF;?M;MUT*;RW;yes
+1;input set;**FN;?F;FN**;RW
+2;power on;APO|APO;?AP;APR*;RW;yes
+2;power off;APF;?AP;APR*;RW;yes
+2;volume+;ZU;?ZV;ZV;W
+2;volume-;ZD;?ZV;ZV;W
+2;volumehigh;75ZV;?ZV;ZV75;W
+2;volumelow;45ZV;?ZV;ZV45;W
+2;volume set;**ZV;?ZV;ZV**;RW;;81
+2;mute on;Z2MO;?Z2M;Z2MUT*;RW;yes
+2;mute off;Z2MF;?Z2M;Z2MUT*;RW;yes
+2;input set;**ZS;?ZS;Z2F**;RW
+0;title;;;GEH01020;R
+0;station;;;GEH04022;R
+0;genre;;;GEH05024;R
+0;statusupdate;;;;W
+0;display;?FL;?FL;FL******************************;R
+1;speakers set;*SPK;?SPK;SPK*;RW
