@@ -142,5 +142,5 @@ class Alexa(SmartPlugin):
     def create_alias_devices(self):
         for device in self.devices.all():
             alias_devices = device.create_alias_devices()
-            for alias_device in alias_devices
+            for alias_device in alias_devices:
                 self.devices.put( alias_device )
