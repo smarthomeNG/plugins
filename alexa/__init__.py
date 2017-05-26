@@ -101,13 +101,6 @@ class Alexa(SmartPlugin):
                 self.logger.warning("Alexa: item {} is changing device-name of {} from '{}' to '{}'".format(item.id(), device_id, device.name, name))
             device.name = name
 
-        # alias names
-        if 'alexa_alias' in item.conf:
-            alias_names = list( map(str.strip, item.conf['alexa_alias'].split(' ')) )
-            for alias_name in alias_names:
-                self.logger.debug("Alexa: {}-alias = {}".format(item.id(), alias_name))
-                device.alias.append(alias_name)
-
         # friendly description
         if 'alexa_description' in item.conf:
             descr = item.conf['alexa_description']
@@ -115,6 +108,13 @@ class Alexa(SmartPlugin):
             if device.description and device.description != descr:
                 self.logger.warning("Alexa: item {} is changing device-description of {} from '{}' to '{}'".format(item.id(), device_id, device.description, descr))
             device.description = descr
+
+        # alias names
+        if 'alexa_alias' in item.conf:
+            alias_names = list( map(str.strip, item.conf['alexa_alias'].split(',')) )
+            for alias_name in alias_names:
+                self.logger.debug("Alexa: {}-alias = {}".format(item.id(), alias_name))
+                device.alias.append(alias_name)
 
         # value-range
         if 'alexa_item_range' in item.conf:
