@@ -145,5 +145,5 @@ class Alexa(SmartPlugin):
         for device in self.devices.all():
             alias_devices = device.create_alias_devices()
             for alias_device in alias_devices:
-                logger.info("Alexa: device {} aliased '{}' via {}".format(device.id, alias_device.name, alias_device.id))
+                self.logger.info("Alexa: device {} aliased '{}' via {}".format(device.id, alias_device.name, alias_device.id))
                 self.devices.put( alias_device )
