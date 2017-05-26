@@ -128,7 +128,7 @@ class Alexa(SmartPlugin):
         if action_names:
             for action_name in action_names:
                 device.register(action_name, item)
-            self.logger.info("Alexa: item {} supports actions {} as device {}".format(item.id(), action_names, device_id, device.supported_actions()))
+            self.logger.info("Alexa: {} supports {} as device {}".format(item.id(), action_names, device_id, device.supported_actions()))
 
         return None
 
@@ -144,5 +144,5 @@ class Alexa(SmartPlugin):
         for device in self.devices.all():
             alias_devices = device.create_alias_devices()
             for alias_device in alias_devices:
-                self.logger.info("Alexa: item {} aliased '' as device {}".format(item.id(), alias_device.name, alias_device.id))
+                self.logger.info("Alexa: {} aliased '' as device {}".format(item.id(), alias_device.name, alias_device.id))
                 self.devices.put( alias_device )

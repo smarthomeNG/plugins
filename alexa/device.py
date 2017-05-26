@@ -22,10 +22,11 @@ class AlexaDevice(object):
         self.action_items = {}
         self.alias = []
 
-    def create_alias_devices(self, name):
+    def create_alias_devices(self):
         alias_devices = []
         for idx, alias_name in enumerate(self.alias):
             alias_device_id = "{}-ALIAS{}".format(self.id, idx+1)
+
             alias_device = AlexaDevice(alias_device_id)
             alias_device.name = alias_name
             alias_device.description = self.description
