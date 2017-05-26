@@ -50,7 +50,7 @@ implemented actions (case-sensitive, [exactly as specified](https://developer.am
 - `incrementPercentage`
 - `decrementPercentage`
 
-specify supported actions space-separated
+Specify *supported actions* space-separated
 ```
 [item]
 type = bool
@@ -59,7 +59,7 @@ alexa_name = "Diningroom Lamp"
 alexa_actions = "turnOn turnOff"
 ```
 
-you may omit the `alexa_name` (which is used as the 'friendly name' in alexa) and reuse the normal `name` property
+You may omit the `alexa_name` (which is used as the '*friendly name*' in alexa) and reuse the normal `name` property
 ```
 [item]
 type = bool
@@ -67,7 +67,7 @@ name = "Diningroom Lamp"
 alexa_actions = "turnOn turnOff"
 ```
 
-you can use multiple items for specific actions using the same alexa-name.
+You can use *different items for specific actions* using the same alexa-name.
 however, it is recommended to use the device-identifier for this purpose instead (see next example)
 ```
 [item_only_on]
@@ -81,7 +81,7 @@ alexa_name = "Diningroom Lamp"
 alexa_actions = turnOff
 ```
 
-the device-identifier is automatically deduced from the `alexa_name` - but you can specify it explicitly using `alexa_device`
+The *device-identifier* is automatically deduced from the `alexa_name` - but you can specify it explicitly using `alexa_device`
 (please note the [format of the `applianceId`](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference#discovery-messages))
 ```
 [[item_only_on]]
@@ -96,7 +96,7 @@ alexa_device = diningroom-lamp
 alexa_actions = turnOff
 ```
 
-alexa demands "friendly descriptions", you should set it using `alexa_description`. If not set, the `alexa_name` is used as a fallback.
+alexa demands "*friendly descriptions*", you should set it using `alexa_description`. If not set, the `alexa_name` is used as a fallback.
 ```
 [item]
 type = bool
@@ -105,7 +105,17 @@ alexa_actions = "turnOn turnOff"
 alexa_description = "The pompous dining room lamp in the west-wing"
 ```
 
-you may define the item's value-range which controls the percentage-directives (default: 0-100) and limits the temperature-directives (default: 16-26), use `alexa_item_range` to specify an explicit range (e.g. you should use this when dimming lights via KNX or generally dealing with ranges like DPT=5 which is 1 byte: 0-255):
+To provide *multiple names for the same device*, you can specific alias-names via 'alexa_alias'. For each alias another device will be created and is also visible in your alexa app (and thus will clutter up your list of devices ...). Separate multiple alias names by comma. If you define groups in your alexa app, you shouldn't assign the aliases to the groups as well. This could trigger the underlying items multiple times, for each group-assigned device once.
+```
+[item]
+type = bool
+alexa_name = "Diningroom Lamp"
+alexa_alias = "Dining Lamp, Chandelier"
+alexa_actions = "turnOn turnOff"
+alexa_description = "The pompous dining room lamp in the west-wing"
+```
+
+You may define the *item's value-range* which controls the percentage-directives (default: 0-100) and limits the temperature-directives (default: 16-26), use `alexa_item_range` to specify an explicit range (e.g. you should use this when dimming lights via KNX or generally dealing with ranges like DPT=5 which is 1 byte: 0-255):
 ```
 [[[[dim]]]]
 type = num
@@ -118,7 +128,7 @@ knx_init = 1/1/1
 knx_send = 1/1/0
 ````
 
-you can define `alexa_name` & `alexa_description` centrally in one item and reference the device in other items just by using the `alexa_device` (you must always define a `type` though!). this is the recommended fully-specified, no-fallbacks configuration.
+You can define `alexa_name` & `alexa_description` centrally in one item and *reference the device in other items* just by using the `alexa_device` (you must always define a `type` though!). this is the recommended fully-specified, no-fallbacks configuration.
 ```
 [root]
   [[livingroom_lamps]]
@@ -154,7 +164,8 @@ real-life example:
     type = bool
     alexa_device = ew_light_couch
     alexa_name = "Couch"
-    alexa_description = "Couch-Deckenlampe im Wohnzimmer"
+    alexa_alias = "Sofa, Wohnzimmer"
+    alexa_description = "Deckenlampe über der Couch im Wohnzimmer"
     alexa_actions = "turnOn turnOff"
     knx_dpt = 1
     knx_listen = 1/2/1
@@ -170,10 +181,47 @@ real-life example:
       knx_init = 1/2/5
       knx_send = 1/2/4
 
+    [[[couch_fenster]]]
+    type = bool
+    alexa_device = ew_light_couch_fenster
+    alexa_name = "Couch-Fenster"
+    alexa_alias = "Sofa-Fenster, Wohnzimmer-Fenster"
+    alexa_description = "Lampe in der Nord-Fensterlaibung bei der Couch im Wohnzimmer"
+    alexa_actions = "turnOn turnOff"
+    knx_dpt = 1
+    knx_listen = 2/2/21
+    knx_init = 2/2/21
+    knx_send = 2/2/20
+
+    [[[couch_stehlampe]]]
+    type = bool
+    alexa_device = ew_light_couch_stehlampe
+    alexa_name = "Couch-Stehlampe"
+    alexa_alias = "Sofa-Stehlampe, Wohnzimmer-Stehlampe, Couch-Stehleuchte, Sofa-Stehleuchte, Wohnzimmer-Stehleuchte"
+    alexa_description = "Stehlampe bei der Couch im Wohnzimmer"
+    alexa_actions = "turnOn turnOff"
+    knx_dpt = 1
+    knx_listen = 2/2/31
+    knx_init = 2/2/31
+    knx_send = 2/2/30
+
+    [[[couch_regal]]]
+    type = bool
+    alexa_device = ew_light_couch_regal
+    alexa_name = "Couch-Regal"
+    alexa_alias = "Sofa-Regal, Wohnzimmer-Regal"
+    alexa_description = "Kleine Lampe im Regal bei der Couch im Wohnzimmer"
+    alexa_actions = "turnOn turnOff"
+    knx_dpt = 1
+    knx_listen = 2/2/11
+    knx_init = 2/2/11
+    knx_send = 2/2/10
+
     [[[mitte]]]
     type = bool
     alexa_device = ew_light_mitte
     alexa_name = "Mittlere Lampe"
+    alexa_alias = "Mitte"
     alexa_description = "Mittlere Deckenlampe im Wohnzimmer"
     alexa_actions = "turnOn turnOff"
     knx_dpt = 1
@@ -194,6 +242,7 @@ real-life example:
     type = bool
     alexa_device = ew_light_esstisch
     alexa_name = "Esstisch"
+    alexa_alias = "Esszimmer"
     alexa_description = "Esstischlampe im Wohnzimmer"
     alexa_actions = "turnOn turnOff"
     knx_dpt = 1
@@ -209,6 +258,62 @@ real-life example:
   		knx_listen = 1/2/25
       knx_init = 1/2/25
       knx_send = 1/2/24
+
+    [[[esstisch_fenster]]]
+    type = bool
+    alexa_device = ew_light_esstisch_fenster
+    alexa_name = "Esstisch-Fenster"
+    alexa_alias = "Esszimmer-Fenster"
+    alexa_description = "Lampe in der Süd-Fensterlaibung beim Esstisch im Wohnzimmer"
+    alexa_actions = "turnOn turnOff"
+    knx_dpt = 1
+    knx_listen = 2/2/71
+    knx_init = 2/2/71
+    knx_send = 2/2/70
+
+    [[[esstisch_stehlampe]]]
+    type = bool
+    alexa_device = ew_light_esstisch_stehlampe
+    alexa_name = "Esstisch-Stehlampe"
+    alexa_alias = "Esszimmer-Stehlampe"
+    alexa_description = "Stehlampe beim Esstisch im Wohnzimmer"
+    alexa_actions = "turnOn turnOff"
+    knx_dpt = 1
+    knx_listen = 2/2/51
+    knx_init = 2/2/51
+    knx_send = 2/2/50
+
+    [[[kueche]]]
+    type = bool
+    alexa_device = ew_light_kueche
+    alexa_name = "Küche"
+    alexa_description = "Deckenlicht in der Küche"
+    alexa_actions = "turnOn turnOff"
+    knx_dpt = 1
+    knx_listen = 1/2/31
+    knx_init = 1/2/31
+    knx_send = 1/0/30
+      [[[[dimmen]]]]
+      type = num
+      alexa_device = ew_light_kueche
+      alexa_actions = "setPercentage incrementPercentage decrementPercentage"
+      alexa_item_range = 0-255
+      knx_dpt = 5
+      knx_listen = 1/2/35
+      knx_init = 1/2/35
+      knx_send = 1/2/34
+
+    [[[arbeitsplatte]]]
+    type = bool
+    alexa_device = ew_light_kueche_arbeitsplatte
+    alexa_name = "Arbeitsplatte"
+    alexa_alias = "Tresen, Counter"
+    alexa_description = "Arbeitsplatten-Licht in der Küche"
+    alexa_actions = "turnOn turnOff"
+    knx_dpt = 1
+    knx_listen = 1/2/61
+    knx_init = 1/2/61
+    knx_send = 1/0/90
 
     [[[heizung]]]
     type = num
