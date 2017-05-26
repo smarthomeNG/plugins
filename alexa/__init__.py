@@ -137,13 +137,13 @@ class Alexa(SmartPlugin):
 
     def validate_devices(self):
         for device in self.devices.all():
-            self.logger.debug("Alexa: validating device {}".format(self.id))
+            self.logger.debug("Alexa: validating device {}".format(device.id))
             if not device.validate(self.logger):
                 raise ValueError("Alexa: invalid device {}".format(device.id))
 
     def create_alias_devices(self):
         for device in self.devices.all():
-            alias_devices = device.create_alias_devices(self.logger)
+            alias_devices = device.create_alias_devices()
             for alias_device in alias_devices:
                 logger.info("Alexa: device {} aliased '{}' via {}".format(device.id, alias_device.name, alias_device.id))
                 self.devices.put( alias_device )
