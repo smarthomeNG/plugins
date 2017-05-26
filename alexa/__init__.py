@@ -44,6 +44,7 @@ class Alexa(SmartPlugin):
 
     def run(self):
         self.validate_devices()
+        self.create_alias_devices()
         self.service.start()
         self.alive = True
 
@@ -100,6 +101,12 @@ class Alexa(SmartPlugin):
                 self.logger.warning("Alexa: item {} is changing device-name of {} from '{}' to '{}'".format(item.id(), device_id, device.name, name))
             device.name = name
 
+        # alias names
+        if 'alexa_alias' in item.conf:
+            alias_names = list( map(str.strip, item.conf['alexa_alias'].split(' ')) )
+            for alias_name in alias_names:
+                device.alias(alias_name)
+
         # friendly description
         if 'alexa_description' in item.conf:
             descr = item.conf['alexa_description']
@@ -131,3 +138,9 @@ class Alexa(SmartPlugin):
         for device in self.devices.all():
             if not device.validate(self.logger):
                 raise ValueError("Alexa: invalid device {}".format(device.id))
+
+    def create_alias_devices(self):
+        for device in self.devices.all():
+            alias_devices = device.create_alias_devices()
+            for alias_device in alias_devices
+                self.devices.put( alias_device )
