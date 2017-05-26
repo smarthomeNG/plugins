@@ -105,7 +105,8 @@ class Alexa(SmartPlugin):
         if 'alexa_alias' in item.conf:
             alias_names = list( map(str.strip, item.conf['alexa_alias'].split(' ')) )
             for alias_name in alias_names:
-                device.alias(alias_name)
+                self.logger.debug("Alexa: {}-alias = {}".format(item.id(), alias_name))
+                device.alias.append(alias_name)
 
         # friendly description
         if 'alexa_description' in item.conf:

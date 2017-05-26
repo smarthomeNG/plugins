@@ -70,9 +70,6 @@ class AlexaDevice(object):
     def item_range(self, item):
         return self.item_ranges[item] if item in self.item_ranges else None
 
-    def alias(self, name):
-        self.alias.append(name)
-
     def validate(self, logger):
         logger.debug("Alexa: validating device {}".format(self.id))
 
