@@ -28,7 +28,7 @@ class AlexaDevice(object):
             alias_device_id = "{}-ALIAS{}".format(self.id, idx+1)
             logger.info("Alexa: creating alias-device {} of {} named '{}'".format(alias_device_id, self.id, alias_name))
 
-            alias_device = new AlexaDevice(alias_device_id)
+            alias_device = AlexaDevice(alias_device_id)
             alias_device.name = alias_name
             alias_device.description = self.description
             alias_device.action_items = self.action_items
