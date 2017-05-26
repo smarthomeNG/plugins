@@ -59,6 +59,8 @@ class AlexaDevice(object):
     def create_alias_devices(self, logger):
         if self.alias:
             logger.debug("Alexa: creating alias-devices for {}".format(self.id))
+        else:
+            logger.debug("Alexa: {} not aliased".format(self.id))
 
         alias_devices = []
         for idx, alias_name in enumerate(self.alias):
