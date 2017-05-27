@@ -122,11 +122,10 @@ type = num
 alexa_name = "TV Scene"
 alexa_actions = "turnOn"
 alexa_item_turn_on = 3
-
   [[store]]
   alexa_name = "Store TV Scene"
   alexa_actions = "turnOn"
-  alexa_item_turn_on = 3+128
+  alexa_item_turn_on = 3+64
 ```
 
 You may define the *item's value-range* which controls the percentage-directives (default: 0-100) and limits the temperature-directives (default: 16-26), use `alexa_item_range` to specify an explicit range (e.g. you should use this when dimming lights via KNX or generally dealing with ranges like DPT=5 which is 1 byte: 0-255):
