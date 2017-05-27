@@ -173,6 +173,40 @@ real-life example:
 ```
 [smarthome]
   [[ew]]
+    [[[scenes]]]
+      [[[[gemuetlich]]]]
+      type = num
+      enforce_updates = on
+      knx_dpt = 17
+      knx_send = 0/1/100
+      alexa_device = ew_scene_gemuetlich
+      alexa_name = "Gemütlich"
+      alexa_description = "Szene Gemütlich aufrufen"
+      alexa_actions = "turnOn"
+      alexa_item_turn_on = 1
+
+      [[[[essen]]]]
+      type = num
+      enforce_updates = on
+      knx_dpt = 17
+      knx_send = 0/1/100
+      alexa_device = ew_scene_essen
+      alexa_name = "Essen"
+      alexa_description = "Szene Essen aufrufen"
+      alexa_actions = "turnOn"
+      alexa_item_turn_on = 2
+
+      [[[[tv]]]]
+      type = num
+      enforce_updates = on
+      knx_dpt = 17
+      knx_send = 0/1/100
+      alexa_device = ew_scene_tv
+      alexa_name = "Fernsehen"
+      alexa_description = "Szene Fernsehen aufrufen"
+      alexa_actions = "turnOn"
+      alexa_item_turn_on = 3
+
     [[[couch]]]
     type = bool
     alexa_device = ew_light_couch
