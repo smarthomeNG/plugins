@@ -124,6 +124,13 @@ class Alexa(SmartPlugin):
             item.alexa_range = (item_min, item_max)
             self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
 
+        # special turn on/off values
+        if 'alexa_item_turn_on' in item.conf or 'alexa_item_turn_off' in item.conf:
+            turn_on  = item.conf['alexa_item_turn_on']  if 'alexa_item_turn_on'  in item.conf else True
+            turn_off = item.conf['alexa_item_turn_off'] if 'alexa_item_turn_off' in item.conf else False
+            item.alexa_range = (turn_on, turn_off)
+            self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
+
         # register item-actions with the device
         if action_names:
             for action_name in action_names:
