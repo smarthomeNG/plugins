@@ -167,7 +167,7 @@ class Wunderground(SmartPlugin):
         if item.type() != 'num':
             return val
 
-        if (val == 'N/A') or (val == 'NA'):
+        if val in ['N/A', 'NA', '-']:
             return -1
 
         dt=item.conf.get('wug_datatype', '').lower()

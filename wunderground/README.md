@@ -4,6 +4,10 @@
 
 This plugins can be used retrieve weather information from wunderground.
 
+### Support
+Support is provided trough the support thread within the smarthomeNG forum: [Smarthome.py](https://knx-user-forum.de/forum/supportforen/smarthome-py)
+
+
 ## Changes Since version 1.2.2
 
 - Changed wunderground communication from xml to json
@@ -389,7 +393,7 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
 
             maxwinddir:
                 type: str
-                    value: -9999
+                value: -9999
                 wug_matchstring: forecast/simpleforecast/forecastday/2/maxwind/dir
 
             maxwinddegrees:
@@ -731,7 +735,7 @@ Example configuration of an item-subtree for the wunderground plugin in the old 
 
         [[[maxwinddir]]]
             type = str
-                value = -9999
+            value = -9999
             wug_matchstring = forecast/simpleforecast/forecastday/2/maxwind/dir
 
         [[[maxwinddegrees]]]
