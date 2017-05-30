@@ -20,7 +20,6 @@ class AlexaDevice(object):
         self.name = None
         self.description = None
         self.action_items = {}
-        self.alias = []
 
     @classmethod
     def create_id_from_name(cls, name):
@@ -56,21 +55,9 @@ class AlexaDevice(object):
     def item_range(self, item):
         return self.item_ranges[item] if item in self.item_ranges else None
 
-    def create_alias_devices(self):
-        alias_devices = []
-        for idx, alias_name in enumerate(self.alias):
-            alias_device_id = "{}-alias{}".format(self.id, idx+1)
-
-            alias_device = AlexaDevice(alias_device_id)
-            alias_device.name = alias_name
-            alias_device.description = self.description
-            alias_device.action_items = self.action_items
-
-            alias_devices.append( alias_device )
-
-        return alias_devices
-
     def validate(self, logger):
+        logger.debug("Alexa: validating device {}".format(self.id))
+
         if not self.id:
             msg = "Alexa-Device {}: empty identifier".format(self.id)
             logger.error(msg)
