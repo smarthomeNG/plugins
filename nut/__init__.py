@@ -23,7 +23,7 @@ import telnetlib
 from lib.model.smartplugin import SmartPlugin
 
 class NUT(SmartPlugin):
-  PLUGIN_VERSION = '1.3.0'
+  PLUGIN_VERSION = '1.3.0.1'
   ALLOW_MULTIINSTANCE = True
 
   def __init__(self, sh, ups, cycle = 60, host = 'localhost', port = 3493, timeout = 5):
