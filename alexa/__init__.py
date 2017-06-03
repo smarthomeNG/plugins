@@ -29,6 +29,7 @@ from .service import AlexaService
 from . import actions_turn
 from . import actions_temperature
 from . import actions_percentage
+from . import actions_lock
 
 class Alexa(SmartPlugin):
     PLUGIN_VERSION = "1.3.0.9.0"
@@ -44,6 +45,7 @@ class Alexa(SmartPlugin):
 
     def run(self):
         self.validate_devices()
+        self.create_alias_devices()
         self.service.start()
         self.alive = True
 
@@ -93,6 +95,11 @@ class Alexa(SmartPlugin):
 
         device = self.devices.get(device_id)
 
+        # types
+        if 'alexa_types' in item.conf:
+            device.types = list( map(str.strip, item.conf['alexa_types'].split(' ')) )
+            self.logger.debug("Alexa: {}-types = {}".format(item.id(), device.types))
+
         # friendly name
         if name and (not device.name or name_is_explicit):
             self.logger.debug("Alexa: {}-name = {}".format(item.id(), name))
@@ -108,6 +115,13 @@ class Alexa(SmartPlugin):
                 self.logger.warning("Alexa: item {} is changing device-description of {} from '{}' to '{}'".format(item.id(), device_id, device.description, descr))
             device.description = descr
 
+        # alias names
+        if 'alexa_alias' in item.conf:
+            alias_names = list( map(str.strip, item.conf['alexa_alias'].split(',')) )
+            for alias_name in alias_names:
+                self.logger.debug("Alexa: {}-alias = {}".format(item.id(), alias_name))
+                device.alias.append(alias_name)
+
         # value-range
         if 'alexa_item_range' in item.conf:
             item_min_raw, item_max_raw = item.conf['alexa_item_range'].split('-')
@@ -116,11 +130,18 @@ class Alexa(SmartPlugin):
             item.alexa_range = (item_min, item_max)
             self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
 
+        # special turn on/off values
+        if 'alexa_item_turn_on' in item.conf or 'alexa_item_turn_off' in item.conf:
+            turn_on  = item.conf['alexa_item_turn_on']  if 'alexa_item_turn_on'  in item.conf else True
+            turn_off = item.conf['alexa_item_turn_off'] if 'alexa_item_turn_off' in item.conf else False
+            item.alexa_range = (turn_on, turn_off)
+            self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
+
         # register item-actions with the device
         if action_names:
             for action_name in action_names:
                 device.register(action_name, item)
-            self.logger.info("Alexa: item {} supports actions {} as device {}".format(item.id(), action_names, device_id, device.supported_actions()))
+            self.logger.info("Alexa: {} supports {} as device {}".format(item.id(), action_names, device_id, device.supported_actions()))
 
         return None
 
@@ -129,5 +150,15 @@ class Alexa(SmartPlugin):
 
     def validate_devices(self):
         for device in self.devices.all():
+            self.logger.debug("Alexa: validating device {}".format(device.id))
             if not device.validate(self.logger):
                 raise ValueError("Alexa: invalid device {}".format(device.id))
+
+    def create_alias_devices(self):
+        for device in self.devices.all():
+            alias_devices = device.create_alias_devices()
+            for alias_device in alias_devices:
+                self.logger.info("Alexa: device {} aliased '{}' via {}".format(device.id, alias_device.name, alias_device.id))
+                self.devices.put( alias_device )
+
+        self.logger.info("Alexa: providing {} devices".format( len(self.devices.all()) ))
