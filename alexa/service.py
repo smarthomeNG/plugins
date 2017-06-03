@@ -123,7 +123,7 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
                 'modelName': 'smarthomeNG.alexa-device',
                 'version': self.version
             }
-            if (device.types)
+            if device.types:
                 appliance['applianceTypes'] = device.types
             discovered.append(appliance)
 
