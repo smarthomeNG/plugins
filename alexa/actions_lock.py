@@ -1,3 +1,4 @@
+from datetime import date
 from .action import alexa
 
 DEFAULT_RANGE = (True, False)
@@ -12,11 +13,9 @@ def get_lock_state(self, payload):
         self.logger.info("Alexa: getLockState({})".format(item.id(), on))
         current_lock_state = 'LOCKED' if item() == locked else 'UNLOCKED'
 
-    lock_state_timestamp = (new Date()).toISOString();
-
     return self.respond({
         'lockState': current_lock_state,
-        'applianceResponseTimestamp': lock_state_timestamp
+        'applianceResponseTimestamp': date.today().isoformat()
     })
 
 @alexa('setLockState', 'SetLockStateRequest', 'SetLockStateConfirmation')
