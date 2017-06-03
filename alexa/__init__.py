@@ -29,6 +29,7 @@ from .service import AlexaService
 from . import actions_turn
 from . import actions_temperature
 from . import actions_percentage
+from . import actions_lock
 
 class Alexa(SmartPlugin):
     PLUGIN_VERSION = "1.3.0.9.0"
