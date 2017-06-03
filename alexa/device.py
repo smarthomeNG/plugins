@@ -17,10 +17,10 @@ class AlexaDevices(object):
 class AlexaDevice(object):
     def __init__(self, id):
         self.id = id
-        self.types = []
         self.name = None
         self.description = None
         self.action_items = {}
+        self.types = []
         self.alias = []
 
     @classmethod
@@ -66,6 +66,7 @@ class AlexaDevice(object):
             alias_device.name = alias_name
             alias_device.description = self.description
             alias_device.action_items = self.action_items
+            alias_device.types = self.types
 
             alias_devices.append( alias_device )
 
