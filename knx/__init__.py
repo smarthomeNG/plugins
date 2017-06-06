@@ -26,6 +26,7 @@ import logging
 import threading
 import struct
 import binascii
+import random
 
 import lib.connection
 from lib.model.smartplugin import SmartPlugin
@@ -347,7 +348,8 @@ class KNX(lib.connection.Client,SmartPlugin):
                 knx_listen = item.conf['knx_listen']
                 poll_interval = int(item.conf['knx_poll'])
                 self.logger.info("KNX[{0}]: Item {1} is polled on GA {2} every {3} seconds".format(self.instance, item, knx_listen, poll_interval))
-                next = self._sh.now() + timedelta(seconds = poll_interval)
+                randomwait = random.randrange(15)
+                next = self._sh.now() + timedelta(seconds = poll_interval + randomwait)
                 self._sh.scheduler.add('KNX[{0}] poll {1}'.format(self.instance,item), self._poll, value={'item': item, 'ga': knx_listen, 'interval': poll_interval}, next = next)
             else:
                 self.logger.warning("KNX[{0}]: Ignoring knx_poll for item {1}: please add a knx_listen GA to poll.".format(self.instance, item))
