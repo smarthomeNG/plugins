@@ -191,12 +191,16 @@ class DLMS(SmartPlugin):
         If it is not possible it passes on, issuing a warning about increasing the query interval
         """
         if self._sema.acquire(blocking=False):
-            result = self._query_smartmeter()
-            if len(result) > 5:
-                self._update_values( result )
-            else:
-                self.logger.error( "no results from smartmeter query received" )
-            self._sema.release()
+            try:
+                result = self._query_smartmeter()
+                if len(result) > 5:
+                    self._update_values( result )
+                else:
+                    self.logger.error( "no results from smartmeter query received" )
+            except Exception as e:
+                    self.logger.debug("Uncaught Exception {0} occurred, please inform plugin author!".format(e))
+            finally:
+                    self._sema.release()
         else:
             self.logger.warning("update is alrady running, maybe it really takes very long or you should use longer "
                                 "query interval time")
