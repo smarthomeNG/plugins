@@ -73,7 +73,7 @@ class DLMS(SmartPlugin):
         'dlms_obis_code',           # a single code in form of '1-1:1.8.1'
         'dlms_obis_readout']        # complete readout from smartmeter, if you want to examine codes yourself in a logic
     
-    def __init__(self, smarthome, serialport, baudrate="auto", update_cycle="60", instance = 0, device_address = b'', timeout = 2 ):
+    def __init__(self, smarthome, serialport, baudrate="auto", update_cycle="60", instance = 0, device_address = b'', timeout = 2, use_checksum = True, reset_baudrate = True, no_waiting = False ):
         """
         This function initializes the DLMS plugin
         :param serialport: 
@@ -96,7 +96,13 @@ class DLMS(SmartPlugin):
         self.dlms_obis_codes = []                               # this is a list of codes that are to be parsed
         
         self.dlms_obis_readout_items = []                       # this is a list of items that receive the full readout
-        
+ 
+ 		# obsolete parameters, kept for compatability with previous versions       
+        self._use_checksum = smarthome.string2bool(use_checksum)
+        self._reset_baudrate = smarthome.string2bool(reset_baudrate)
+        self._no_waiting = smarthome.string2bool(no_waiting)
+
+		
         self.logger.debug("Instance {} of DLMS configured to use serialport '{}' with update cycle {} seconds".format( self._instance if self._instance else 0,self._serialport, self._update_cycle))
         if __name__ == '__main__':
             self.alive = True
