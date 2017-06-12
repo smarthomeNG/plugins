@@ -8,21 +8,21 @@ This plugin provides two features as described here: [Understanding the Smart Ho
 
 Please use [this thread for support, questions, feedback etc.](https://knx-user-forum.de/forum/supportforen/smarthome-py/1021150-amazon-alexa-plugin)
 
-# Alexa Setup
+## Alexa Setup
 - [Five Steps Before Developing a Smart Home Skill](https://developer.amazon.com/public/community/post/Tx4WG410EHXIYQ/Five-Steps-Before-Developing-a-Smart-Home-Skill)
 - [5 Steps to Seamlessly Link Your Alexa Skill with Login with Amazon](https://developer.amazon.com/public/community/post/Tx3CX1ETRZZ2NPC/Alexa-Account-Linking-5-Steps-to-Seamlessly-Link-Your-Alexa-Skill-with-Login-wit)
 
-## AWS Lambda
+### AWS Lambda
 - create the lambda-function in EU-Ireland (which supports Alexa in both english and german)
 - copy & paste `aws_lambda.js` as a `Node.js` Lambda
 - provide the environmental variables as specified in the header of `aws_lambda.js`
 
-# Shortcomings / Pitfalls
+## Shortcomings / Pitfalls
 This plugin/s service *does not offer any ssl or authentication*! It is strongly recommended to use a reverse-proxy in your smarthome to enforce HTTPS and authentication. As of now, the shipped `aws_lambda.js` only supports HTTPS-calls with HTTP Basic Authentication. See the shipped `nginx.md` for an example configuration of the lightweight and very good reverse-proxy Nginx.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 basic configuration
 ```
 [alexa]
@@ -39,7 +39,7 @@ you may change host/ip and port of the web-service
     service_port = 9000
 ```
 
-## items.conf
+### items.conf
 implemented actions (case-sensitive, [exactly as specified](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference)):
 - `turnOn`
 - `turnOff`
@@ -406,7 +406,7 @@ real-life example:
     knx_send = 3/2/2
 ```
 
-## logging.yaml
+### logging.yaml
 you can enable debug logging for the alexa-plugin specifically:
 ```
 loggers:
