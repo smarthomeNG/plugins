@@ -1,6 +1,6 @@
 # DLMS
 
-# Requirements
+## Requirements
 
 * smartmeter using DLMS (Device Language Message Specification) IEC 62056-21
 * USB IR-Reader e.g. from volkszaehler.org
@@ -21,14 +21,14 @@ udevadm trigger
 
 If you like, you can also give the serial port a descriptive name with this.
 
-## Supported Hardware
+### Supported Hardware
 
 * smart meters using using DLMS (Device Language Message Specification) IEC 62056-21
 * e.g. Landis & Gyr ZMD120
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
 ```
 [dlms]
@@ -44,14 +44,14 @@ Description of the attributes:
 * __update_cycle__: interval in seconds how often the data is read from the meter - be careful not to set a shorter interval than a read operation takes (default: 300)
 
 
-## Setup procedure:
+### Setup procedure:
 
 Start the plugin in standalone mode from the plugins directory e.g. **/usr/local/smarthome/plugins/dlms** with
 **python3 __init__.py _serialport_**
 
 Copy the given obis codes to your item configuration to help generate items as needed
 
-## items.conf
+### items.conf
 
 You can use all obis codes available by the meter.
 
@@ -59,7 +59,7 @@ Attributes:
 * __dlms_obis_code__: obis code such as 'x.y', 'x.y.z' or 'x.y.z*q' plus a specifier which value to read, the type must match the conversion from OBIS value (str, num, foo)
 * __dlms_obis_readout__: value irrelevant, the item will need to be of ``type = str`` at it receives the full readout of the smartmeter
 
-# Some background information on OBIS Codes
+## Some background information on OBIS Codes
 
 OBIS codes are a combination of six value groups, which describe in a hierarchical way 
 the exact meaning of each data item
@@ -80,7 +80,7 @@ the file itself. It's in the smartmeters specification but one can guess also wh
 
 See the follwing examples to get an idea about the differences:
 
-## OBIS code example A
+### OBIS code example A
 Some first lines of a sample OBIS Code readout for a **Landis & Gyr ZMD 310** Smartmeter for industrial purposes
 ```
 1-1:F.F(00000000)
@@ -105,7 +105,7 @@ Some first lines of a sample OBIS Code readout for a **Landis & Gyr ZMD 310** Sm
 ...
 ```
 
-## OBIS code example B
+### OBIS code example B
 Sample OBIS Code readout from a relative simple **Pafal 12EC3g** smartmeter
 ```
 0.0.0(72044837)(72044837)
