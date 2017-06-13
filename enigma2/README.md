@@ -231,30 +231,30 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
                 visu_acl = rw
         [[[remote]]] # see http://dream.reichholf.net/wiki/Enigma2:WebInterface#RemoteControl
             [[[[TEXT]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 388
-				enforce_updates = true
-			[[[[RED]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 398
-				enforce_updates = true
-			[[[[GREEN]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 399
-				enforce_updates = true
-			[[[[YELLOW]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 400
-				enforce_updates = true
-			[[[[BLUE]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 401
-				enforce_updates = true
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 388
+                enforce_updates = true
+            [[[[RED]]]]
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 398
+                enforce_updates = true
+            [[[[GREEN]]]]
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 399
+                enforce_updates = true
+            [[[[YELLOW]]]]
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 400
+                enforce_updates = true
+            [[[[BLUE]]]]
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 401
+                enforce_updates = true
             [[[[PAUSE]]]]
                 type = bool
                 visu_acl = rw
