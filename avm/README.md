@@ -79,7 +79,7 @@ are parsed as child items. In the example below there is a comment in the respec
 ### Example:
 <pre>
 [avm]
-	[[uptime_7490]]
+    [[uptime_7490]]
         type = num
         visu_acl = ro
         avm_data_type@fritzbox_7490 = uptime
