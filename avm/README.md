@@ -217,12 +217,12 @@ are parsed as child items. In the example below there is a comment in the respec
             avm_data_type@fritzbox_7490 = tam_total_message_number
     [[wan]]
         [[[connection_status]]]
-           	type = str
-           	visu_acl = ro
+            type = str
+            visu_acl = ro
             avm_data_type@fritzbox_7490 = wan_connection_status
         [[[connection_error]]]
-           	type = str
-           	visu_acl = ro
+            type = str
+            visu_acl = ro
             avm_data_type@fritzbox_7490 = wan_connection_error
         [[[is_connected]]]
             type = bool
