@@ -50,16 +50,16 @@ Possible xiaomi_data_type's are temperature, light, moisture, conductivity, name
 # items/my.conf
 [plants]
     [[sensor_office]]
-		[[[temperature]]]
+        [[[temperature]]]
 			type = num
 			xiaomi_data_type@xiaomi = 'temperature'
-		[[[light]]]
+        [[[light]]]
 			type = num
 			xiaomi_data_type@xiaomi = 'light'
-		[[[moisture]]]
+        [[[moisture]]]
 			type = num
 			xiaomi_data_type@xiaomi = 'moisture'
-		[[[conductivity]]]
+        [[[conductivity]]]
 			type = num
 			xiaomi_data_type@xiaomi = 'conductivity'
         [[[name]]]
