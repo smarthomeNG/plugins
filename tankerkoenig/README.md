@@ -2,7 +2,8 @@
 
 Version 0.1
 
-# Requirements
+## Requirements
+
 This plugin requires lib requests. You can install this lib with: 
 <pre>
 sudo pip3 install requests --upgrade

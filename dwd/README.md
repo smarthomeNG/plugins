@@ -2,8 +2,8 @@
 
 Thread for the Plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/34390-dwd-plugin
 
-Requirements
-============
+## Requirements
+
 This plugin needs an FTP account from the Deutscher Wetterdienst.
 You could get it, free of charge, [here](http://kunden.dwd.de/gdsRegistration/gdsRegistrationStart.do).
 
