@@ -139,7 +139,7 @@ are parsed as child items. In the example below there is a comment in the respec
             avm_incoming_allowed = xxxxxxxx
             avm_target_number = xxxxxxxx
             enforce_updates = yes
-	    [[[incoming]]]
+        [[[incoming]]]
             [[[[is_call_incoming]]]]
                 type = bool
                 avm_data_type@fritzbox_7490 = is_call_incoming
