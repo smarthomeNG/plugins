@@ -51,24 +51,24 @@ Possible xiaomi_data_type's are temperature, light, moisture, conductivity, name
 [plants]
     [[sensor_office]]
         [[[temperature]]]
-			type = num
-			xiaomi_data_type@xiaomi = 'temperature'
+            type = num
+            xiaomi_data_type@xiaomi = 'temperature'
         [[[light]]]
-			type = num
-			xiaomi_data_type@xiaomi = 'light'
+            type = num
+            xiaomi_data_type@xiaomi = 'light'
         [[[moisture]]]
-			type = num
-			xiaomi_data_type@xiaomi = 'moisture'
+            type = num
+            xiaomi_data_type@xiaomi = 'moisture'
         [[[conductivity]]]
-			type = num
-			xiaomi_data_type@xiaomi = 'conductivity'
+            type = num
+            xiaomi_data_type@xiaomi = 'conductivity'
         [[[name]]]
             type = str
             xiaomi_data_type@xiaomi = 'name'
-		[[[firmware]]]
+        [[[firmware]]]
             type = str
             xiaomi_data_type@xiaomi = 'firmware'
-		[[[battery]]]
+        [[[battery]]]
             type = num
             xiaomi_data_type@xiaomi = 'battery'
 </pre>
