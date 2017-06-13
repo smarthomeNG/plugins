@@ -2,7 +2,7 @@
 
 Version 0.1
 
-# Requirements
+## Requirements
 This plugin requires lib miflora. You can install this lib with:
 <pre>
 sudo pip3 install miflora --upgrade
@@ -12,13 +12,13 @@ Due to the miflora package, currently all firmwares up to 2.6.6 are supported.
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/1027133-plugin-xiaomi-mi-plant-flowers-tester-light-monitor
 
-## Supported Hardware
+### Supported Hardware
 
 * Xiaomi Mi Plant Flowers Tester Light Monitor
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
 Please provide a plugin.conf snippet for your plugin with ever option your plugin supports. Optional attributes should be commented out.
 
@@ -31,20 +31,20 @@ Please provide a plugin.conf snippet for your plugin with ever option your plugi
     instance = xiaomi
 </pre>
 
-### Attributes
+#### Attributes
   * `bt_addr`: The Bluetooth address of your xiaomi plant sensor. Find e.g. with hcitool lescan
   * `cycle`: Cycle interval for data retrieval
   * `instance`: Instance name in case multi-instance use is needed (one instance can handle one sensor)
 
 
-## items.conf
+### items.conf
 
-### xiaomi_data_type
+#### xiaomi_data_type
 
 The xiaomi_data_type is needed to provide information to the plugin, which values shall be stored in the item.
 Possible xiaomi_data_type's are temperature, light, moisture, conductivity, name, firmware and battery.
 
-### Example
+#### Example
 
 <pre>
 # items/my.conf
