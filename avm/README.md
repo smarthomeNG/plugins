@@ -1,6 +1,6 @@
 # AVM
 
-# Requirements
+## Requirements
 This plugin requires lib requests. You can install this lib with: 
 <pre>
 sudo pip3 install requests --upgrade
@@ -23,9 +23,9 @@ connect to the FritzDevice's CallMonitor, you have to activate it, by typing `#9
 
 The version is tested with new multi-instance functionality of SmartHomeNG.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 <pre>
 [fb1]
     class_name = AVM
@@ -58,7 +58,7 @@ The version is tested with new multi-instance functionality of SmartHomeNG.
 Note: Depending on the FritzDevice a shorter cycle time can result in problems with CPU rating and, in consequence with the accessibility of the webservices on the device.
 If cycle time is reduced, please carefully watch your device and your sh.log. In the development process, 120 Seconds also worked worked fine on the used devices.
 
-### Attributes
+#### Attributes
   * `username`: Optional login information
   * `password`: Required login information
   * `host`: Hostname or ip address of the FritzDevice.
@@ -69,9 +69,9 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
   * `call_monitor`: True or False => Activates or deactivates the MonitoringService, which connects to the FritzDevice's call monitor
   * `instance`: Unique identifier for each FritzDevice / each instance of the plugin
 
-## items.conf
+### items.conf
 
-### avm_data_type
+#### avm_data_type
 This attribute defines supported functions that can be set for an item. Full set see example below.
 For most items, the avm_data_type can be bound to an instance via @... . Only in some points the items
 are parsed as child items. In the example below there is a comment in the respective spots.
@@ -500,9 +500,9 @@ are parsed as child items. In the example below there is a comment in the respec
                 visu_acl = ro
 </pre>
 
-# Functions
+## Functions
 
-## get_phone_name
+### get_phone_name
 Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin. Parameter is an INT, starting from 1. In case an index does not exist, an error is logged.
 The used function X_AVM-DE_GetPhonePort() does not deliver analog connections like FON 1 and FON 2 (BUG in AVM Software).
 <pre>
@@ -513,7 +513,7 @@ CURL for this function:
 curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/x_voip" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:X_VoIP:1#X_AVM-DE_GetPhonePort" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:X_AVM-DE_GetPhonePort xmlns:u='urn:dslforum-org:service:X_VoIP:1'><s:NewIndex>1</s:NewIndex></u:X_AVM-DE_GetPhonePort></s:Body></s:Envelope>" -s -k
 </pre>
 
-##get_call_origin
+###get_call_origin
 Gets the phone name, currently set as call_origin.
 <pre>
 phone_name = sh.fritzbox_7490.get_call_origin()
@@ -523,7 +523,7 @@ CURL for this function:
 curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/x_voip" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:X_VoIP:1#X_AVM-DE_DialGetConfig" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:X_AVM-DE_DialGetConfig xmlns:u='urn:dslforum-org:service:X_VoIP:1' /></s:Body></s:Envelope>" -s -k
 </pre>
 
-## set_call_origin(phone_name)
+### set_call_origin(phone_name)
 Sets the origin of a call. E.g. a DECT phone. Typically set before using "start_call".
 You can also set the origin on your FritzDevice via "Telefonie -> Anrufe -> Wählhilfe verwenden -> Verbindung mit dem Telefon".
 The used function X_AVM-DE_SetDialConfig() does not allow the configuration of analog connections (BUG in AVM Software).
@@ -531,26 +531,26 @@ The used function X_AVM-DE_SetDialConfig() does not allow the configuration of a
 sh.fb1.set_call_origin("<phone_name>")
 </pre>
 
-## start_call(phone_number)
+### start_call(phone_number)
 This function starts a call. Parameter can be an external or internal number.
 <pre>
 sh.fb1.start_call('0891234567')
 sh.fb1.start_call('**9')
 </pre>
 
-## cancel_call()
+### cancel_call()
 This function cancels a running call.
 
-## wol(mac_address)
+### wol(mac_address)
 This function executes a wake on lan command to the specified MAC address
 
-## reconnect()
+### reconnect()
 This function reconnects the WAN (=internet) connection.
 
-## reboot()
+### reboot()
 This function reboots the FritzDevice.
 
-## get_hosts(only_active)
+### get_hosts(only_active)
 Gets the data of get_host_details for all hosts as array. If only_active is True, only active hosts are returned.
 
 Example of a logic which is merging hosts of three devices into one list and rendering them to an HTML list, which is written to the item
@@ -585,17 +585,17 @@ string += '</ul>'
 sh.avm.devices.device_list(string)
 ```
 
-## get_host_details(index)
+### get_host_details(index)
 Gets the data of a host as dict:
 dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_remaining
 
-## is_host_active(mac_address)
+### is_host_active(mac_address)
 This function checks, if a device running on a given mac address is active on the FritzDevice. Can be used for presence detection.
 
-## get_contact_name_by_phone_number(phone_number)
+### get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book
 
-## get_phone_numbers_by_name(name)
+### get_phone_numbers_by_name(name)
 This is a function to search for contact names and retrieve the related telephone numbers
 
 Set an item with a html of all found numbers e.g. by:
@@ -616,5 +616,5 @@ for contact in result_numbers:
 sh.general_items.number_search_results(result_string)
 ```
 
-## get_calllist()
+### get_calllist()
 Returns an array with calllist entries
