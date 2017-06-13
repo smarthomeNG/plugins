@@ -2,7 +2,7 @@
 
 Version 0.1
 
-# Requirements
+## Requirements
 This plugin requires lib requests. You can install this lib with:
 <pre>
 sudo pip3 install requests --upgrade
@@ -16,9 +16,9 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 Take care not to request the interface too often as there currently is only a limit of 2500 free requests / day.
 More information and API key see: https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 <pre>
 [traffic]
     class_name = Traffic
@@ -27,11 +27,11 @@ More information and API key see: https://developers.google.com/maps/documentati
     language = de (optional)
 </pre>
 
-### Attributes
+#### Attributes
   * `apikey`: Your own personal API key for Google Directions. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
   * `language`: Any 2 char language code that is supported by Google Directions API, default is "de"
 
-## items.conf
+### items.conf
 
 Currently, no pre defined items exist, the example below needs these items:
 <pre>
@@ -80,9 +80,9 @@ Currently, no pre defined items exist, the example below needs these items:
         [[[lon]]]
             type = num
 </pre>
-# Functions
+## Functions
 
-## get_route_info(origin, destination, alternatives, mode):
+### get_route_info(origin, destination, alternatives, mode):
 Returns route information for a provided origin (in the example home coordinates) and destination (in the example Berlin)
 <pre>
 route = sh.traffic.get_route_info(sh._lat+','+sh._lon, 'Berlin', False, 'now', 'driving')
