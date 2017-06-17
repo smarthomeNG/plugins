@@ -534,6 +534,10 @@ class EnOcean(SmartPlugin):
                         self.logger.debug('enocean: item is 07_3F_7F type')
                         self.send_rgbw_dim(id_offset, item(), 0)
                         self.logger.debug('enocean: sent RGBW dim command')
+                    elif(tx_eep == 'A5_3F_7F'):
+                        self.logger.debug('enocean: item is A5_3F_7F type')
+                        self.send_actuator_cmd(id_offset, item())
+                        self.logger.debug('enocean: sent actuator command')
                     else:
                         self.logger.error('enocean: error: Unknown tx eep command')
                 else:
@@ -605,7 +609,7 @@ class EnOcean(SmartPlugin):
         packet += bytes([self._calc_crc8(packet[1:5])])
         packet += bytes(data + optional)
         packet += bytes([self._calc_crc8(packet[6:])])
-        self.logger.warning("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
+        self.logger.debug("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
         self._tcm.write(packet)
 
     def _send_smart_ack_command(self, _code, data=[]):
@@ -692,6 +696,10 @@ class EnOcean(SmartPlugin):
         else:
             self.logger.error("enocean: sending command A5_38_08: invalid dim value")
 
+    def send_actuator_cmd(self,id_offset=0, command=0):
+        pass
+
+
     def send_rgbw_dim(self,id_offset=0, color='red', dim=0, dimspeed=0):
         if(color == str(red)):
             color_hex_code = 0x10
@@ -744,6 +752,12 @@ class EnOcean(SmartPlugin):
         self.logger.info("enocean: sending learn telegram for switch command")
         self._send_radio_packet(id_offset, 0xA5, [0x01, 0x00, 0x00, 0x00])
 
+    def send_learn_actuator(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        self.logger.info("enocean: sending learn telegram for actuator")
+        self._send_radio_packet(id_offset, 0xA5, [0xFF, 0xF8, 0x0D, 0x80])
 
 #################################
 ### --- START - Calc CRC8 --- ###

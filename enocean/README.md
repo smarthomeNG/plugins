@@ -173,7 +173,7 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
 You have to know about the EnOcean RORG of your device (please search the internet or ask the vendor). 
 Further the RORG must be declared in the plugin.
 
-The following EEPs are supported:
+The following status EEPs are supported:
 
 ```
 * A5_02_01 - A5_02_0B	Temperature Sensors (40°C overall range, various starting offsets, 1/6°C resolution)
@@ -199,6 +199,7 @@ A complete list of available EEPs is documented at [EnOcean Alliance](http://www
 * A5_38_08_01			Regular switch actor command (on/off)
 * A5_38_08_02			Dimmer command with fix on off command (on: 100, off:0)
 * A5_38_08_03			Dimmer command with specified dim level (0-100)
+* A5_3F_7F			Universal actuator command 
 ```
 
 The optional ref_level parameter defines default dim value when dimmer is switched on via on command.
@@ -223,6 +224,7 @@ Then use one of the following learn-in command methods, depending on your enocea
 sh.enocean.send_learn_dim(ID_Offset)
 sh.enocean.send_learn_rgbw_dim(ID_Offset)
 sh.enocean.send_learn_switch(ID_Offset)
+sh.enocean.send_learn_actuator(ID_Offset) , e.g. for Eltako FSB61NP-230V 
 ```
 
 where ID_Offset, range (0-127), specifies the sending ID offset with respect to the BaseID.
