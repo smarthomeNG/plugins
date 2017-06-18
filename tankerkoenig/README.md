@@ -2,7 +2,8 @@
 
 Version 0.1
 
-# Requirements
+## Requirements
+
 This plugin requires lib requests. You can install this lib with: 
 <pre>
 sudo pip3 install requests --upgrade
@@ -22,9 +23,9 @@ Other ways of using the interface may result in mail communication with responsi
 of using the interface in the way described above (static storage of meta data). Please take this into account when
 integrating it..
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 <pre>
 [tankerkoenig]
     class_name = TankerKoenig
@@ -32,12 +33,12 @@ integrating it..
     apikey = <your own api key>
 </pre>
 
-### Attributes
+#### Attributes
   * `apikey`: Your own personal API key for TankerKoenig. For your own key register to https://creativecommons.tankerkoenig.de
 
-## items.conf
+### items.conf
 
-### Example (for cheapest station and for one station that is requested via its id):
+#### Example (for cheapest station and for one station that is requested via its id):
 <pre>
 [petrol_station]
     [[cheapest]]
@@ -63,9 +64,9 @@ integrating it..
             visu_acl = ro
 </pre>
 
-# Functions
+## Functions
 
-## get_petrol_stations(lat, lon, type, sort, rad):
+### get_petrol_stations(lat, lon, type, sort, rad):
 Gets a list of petrol stations around provided coordinates, depending on a provided type, sort order and radius.
 In the example, sh._lat and sh.._long are the geocoordinates configured for smarthome in etc/smarthome.conf. You
 can also set your own coordinates!
@@ -76,16 +77,16 @@ Returned is an array of petrol station data, with the following available keys:
 'place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode'
 Note: Take care with too high rad values, as this also increases load on tankerkoenig interface.
 
-## get_petrol_station_detail(id)
+### get_petrol_station_detail(id)
 This funktion gets the details of one petrol station, identified by its internal TankerKoenig ID.
 <pre>
 detail = sh.tankerkoenig.get_petrol_station_detail(sh.petrol_station.DemoBavariaPetrol.conf['tankerkoenig_id'])
 </pre>
 Returned keys are 'e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen'
 
-# Logics
+## Logics
 
-## Fill items with cheapest petrol station data
+### Fill items with cheapest petrol station data
 <pre>
 cheapest = sh.tankerkoenig.get_petrol_stations(sh._lat, sh._lon, 'diesel', 'price', rad='10')
 sh.petrol_station.cheapest.name(cheapest[0]['name'])
@@ -93,7 +94,7 @@ sh.petrol_station.cheapest.isOpen(cheapest[0]['isOpen'])
 sh.petrol_station.cheapest.price(cheapest[0]['price'])
 </pre>
 
-## Get data of one petrol station
+### Get data of one petrol station
 <pre>
 detail = sh.tankerkoenig.get_petrol_station_detail(sh.petrol_station.DemoBavariaPetrol.conf['tankerkoenig_id'])
 sh.petrol_station.DemoBavariaPetrol.name(detail['name'])
@@ -101,7 +102,7 @@ sh.petrol_station.DemoBavariaPetrol.isOpen(detail['isOpen'])
 sh.petrol_station.DemoBavariaPetrol.diesel(detail['diesel'])
 </pre>
 
-## Get prices of two petrol stations
+### Get prices of two petrol stations
 <pre>
 prices = sh.tankerkoenig.get_petrol_station_prices(['6437ff91-823c-40c6-b556-42553056f7cd','56e30926-02dd-41aa-9e05-1120cbafe34f'])
 </pre>

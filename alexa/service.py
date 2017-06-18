@@ -26,13 +26,9 @@ class AlexaService(object):
     def start(self):
         self.logger.info("Alexa: service starting")
         self.server.serve_forever()
-        #self.shutdown = False
-        #while not self.shutdown:
-        #    self.server.handle_request()
 
     def stop(self):
         self.logger.info("Alexa: service stopping")
-        #self.shutdown = True
         self.server.shutdown()
 
 class AlexaRequestHandler(BaseHTTPRequestHandler):
@@ -114,7 +110,7 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
     def discover_appliances(self):
         discovered = []
         for device in self.devices.all():
-            discovered.append({
+            appliance = {
                 'actions': device.supported_actions(),
                 'additionalApplianceDetails': {
                     'item{}'.format(idx+1) : item.id() for idx, item in enumerate(device.backed_items())
@@ -126,7 +122,10 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
                 'manufacturerName': 'smarthomeNG.alexa',
                 'modelName': 'smarthomeNG.alexa-device',
                 'version': self.version
-            })
+            }
+            if device.types:
+                appliance['applianceTypes'] = device.types
+            discovered.append(appliance)
 
         return {
             'header': self.header('DiscoverAppliancesResponse', 'Alexa.ConnectedHome.Discovery'),

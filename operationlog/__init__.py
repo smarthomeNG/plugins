@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #########################################################################
-# Copyright 2016 Jan Troelsen                             jan@troelsen.de
+# Copyright 2016- Jan Troelsen                            jan@troelsen.de
+# Copyright 2017- Oliver Hinckel                       github@ollisnet.de
 #########################################################################
 #  operationlogger
 #
@@ -65,6 +66,7 @@ class OperationLog(AbLogger, SmartPlugin):
         self._maxlen = int(maxlen)
         self._items = items
         self._item_conf = {}
+        self._logic_conf = {}
         self.__date = None
         self.__fname = None
         info_txt_cache = ", caching active"
@@ -114,6 +116,15 @@ class OperationLog(AbLogger, SmartPlugin):
                     except Exception as e:
                         self.logger.warning('olog: could not evaluate {} for item: {}, {}'.format(eval_str, item_id, e))
                         self._item_conf[item_id]['olog_eval'][ind] = "'--'"
+        for logic_name in self._logic_conf:
+            if 'olog_eval' in self._logic_conf[logic_name]:
+                for (ind, eval_str) in enumerate(self._logic_conf[logic_name]['olog_eval']):
+                    try:
+                        eval(eval_str)
+                    except Exception as e:
+                        self.logger.warning('olog: could not evaluate {} for logic: {}, {}'.format(eval_str, logic_name, e))
+                        self._logic_conf[logic_name]['olog_eval'][ind] = "'--'"
+
         self.alive = True
 
     def stop(self):
@@ -130,21 +141,9 @@ class OperationLog(AbLogger, SmartPlugin):
             if 'olog_txt' in item.conf:
                 olog_txt = item.conf['olog_txt']
                 self._item_conf[item.id()]['olog_eval'] = []
-                pos = -1
-                while True:
-                    pos = olog_txt.find('{eval=', pos + 1)
-                    if pos == -1:
-                        break
-                    start = pos + 5
-                    pos = olog_txt.find('}', pos + 1)
-                    if pos == -1:
-                        self.logger.warning('olog: did not find ending } for eval in item.conf, item {}'.format(item.id()))
-                        break
-                    eval_str = olog_txt[start + 1:pos]
-                    self._item_conf[item.id()]['olog_eval'].append(eval_str)
-                    olog_txt = olog_txt[:start - 4] + olog_txt[pos:]
-                    pos = start
-                self._item_conf[item.id()]['olog_txt'] = olog_txt
+                eval_parse = self.parse_eval("item.conf, item {}".format(item.id()), olog_txt)
+                self._item_conf[item.id()]['olog_txt'] = eval_parse['olog_txt']
+                self._item_conf[item.id()]['olog_eval'] = eval_parse['olog_eval']
                 if len(self._item_conf[item.id()]['olog_eval']) != 0:
                     self.logger.info('Item: {}, olog evaluating: {}'.format(item.id(), self._item_conf[item.id()]['olog_eval']))
             if 'olog_rules' in item.conf:
@@ -175,7 +174,36 @@ class OperationLog(AbLogger, SmartPlugin):
             return None
 
     def parse_logic(self, logic):
-        pass
+        if 'olog' in logic.conf and logic.conf['olog'] == self.name:
+            self._logic_conf[logic.name] = {}
+            if 'olog_txt' in logic.conf:
+                eval_parse = self.parse_eval("logic {}".format(logic.name), logic.conf['olog_txt'])
+                olog_txt = eval_parse['olog_txt']
+                olog_eval = eval_parse['olog_eval']
+            else:
+                olog_txt = "Logic {logic.name} triggered"
+                olog_eval = []
+            self._logic_conf[logic.name]['olog_txt'] = olog_txt
+            self._logic_conf[logic.name]['olog_eval'] = olog_eval
+            return self.trigger_logic
+
+    def parse_eval(self, info, olog_txt):
+        olog_eval = []
+        pos = -1
+        while True:
+            pos = olog_txt.find('{eval=', pos + 1)
+            if pos == -1:
+                 break
+            start = pos + 5
+            pos = olog_txt.find('}', pos + 1)
+            if pos == -1:
+                self.logger.warning('olog: did not find ending } for eval in '.format(info))
+                break
+            eval_str = olog_txt[start + 1:pos]
+            olog_eval.append(eval_str)
+            olog_txt = olog_txt[:start - 4] + olog_txt[pos:]
+            pos = start
+        return {'olog_txt' : olog_txt, 'olog_eval' : olog_eval}
 
     def __call__(self, param1=None, param2=None):
         if isinstance(param1, list) and isinstance(param2, type(None)):
@@ -251,6 +279,15 @@ class OperationLog(AbLogger, SmartPlugin):
                     for it in self._items:
                         logvalues.append('{} = {} '.format(str(it), self._sh.return_item(it)()))
                 self.log(logvalues, 'INFO' if 'olog_level' not in item.conf else item.conf['olog_level'])
+
+    def trigger_logic(self, logic, by=None, source=None, dest=None):
+        if self.name == logic.conf['olog'] and logic.name in self._logic_conf:
+            sh = self._sh
+            olog_txt = self._logic_conf[logic.name]['olog_txt']
+            olog_eval = self._logic_conf[logic.name]['olog_eval']
+            eval_res = [eval(expr) for expr in olog_eval]
+            logvalues = [olog_txt.format(*eval_res, **{'plugin' : self, 'logic' : logic, 'by' : by, 'source' : source, 'dest' : dest})] 
+            self.log(logvalues, 'INFO' if 'olog_level' not in logic.conf else logic.conf['olog_level'])
 
     def log(self, logvalues, level='INFO'):
         if len(logvalues):

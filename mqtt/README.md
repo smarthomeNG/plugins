@@ -1,6 +1,6 @@
 # MQTT Plugin
 
-Version 1.3.1
+Version 1.3.2
 
 This plugin implements the the functionality for SmartHomeNG to act as a MQTT client.
 
@@ -12,6 +12,14 @@ Details on the protocol can be found on [mqtt.org](http://mqtt.org).
 
 ### Support
 Support is provided trough the support thread within the smarthomeNG forum: [Support-Thread](https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin)
+
+## Changes since version 1.3.1
+
+- Login to broker with user/password is supported
+- Log the type and version of the broker
+- configure host by dns-name or ip address 
+- Added functions to allow other plugins to use this plugin for MQTT communication (documented at the end of this document)
+
 
 # Requirements
 
@@ -53,13 +61,14 @@ mqtt:
     # last_will_payload: False
     # birth_topic: 'shng/$online'
     # birth_payload: True
+
+    # user: None                 # username (or None)
+    # password: None             # password (or None)
     
     # === The following parameters are not yet implemented:
     # publish_items: no          # NEW: publish using item-path
     # items_topic_prefix: 'shng' # NEW: prefix for publishing items     
     # acl: pub                   # NEW: access control (none, pub, sub, pubsub)
-    # user: None                 # username (or None)
-    # password: None             # password (or None)
     # tls: None                  # use TLS version (v1 or None)
     # ca_certs: '/etc/...'       # path to the Certificate Authority certificate files     
 ```
@@ -103,6 +112,19 @@ The birth message is the opposite to the MQTT Testament message and sent, when t
 ### birth_payload - birth message
 if **`birth_payload`** is not specified, no birth message will be sent. In this case there will be no last-will message sent, if the connection is closed orderly (by shutting down SmartHomeNG).
 
+### user - username to login to broker
+Username to login to the MQTT broker, if the broker is configured for user/password authentication.
+
+>NOTICE: Until Implementation of TLS, username and password are transmitted unencrypted.
+
+### password - password to login to broker
+Password to login to the MQTT broker, if the broker is configured for user/password authentication.
+
+>NOTICE: 
+>
+>- Until Implementation of TLS, username and password are transmitted unencrypted.
+>- At this stage of implementation the Password is stored in the plugin.yaml file as clear text.
+
 ## Configuration *(not yet implemented)*
 
 ### publish_items
@@ -142,14 +164,6 @@ The item **`testitem`** would be published with the MQTT topic
 - pubsub=publish and subscribe topic.
 
 This parameter defines the default access control for items, which have no individual access control configured.
-
-### user - username to login to broker
-	-> ***not yet implemented***
-username to login to broker
-
-### password - password to login to broker
-	-> ***not yet implemented***
-password to login to broker
 
 ### tls - Use tls for encryption
 	-> ***not yet implemented***
@@ -228,3 +242,48 @@ Alarm:
 
 
 if  **`mqtt_payload_type`** is specified, the payload is converted to the SmartHomeNG datatype before being handed to the logic. Otherwise the payload is handed over as raw data (array of bytes).
+
+# Interface for other Plugins
+Version 1.3.2 added functions to allow other plugins to use this plugin for MQTT communication.
+
+> Example: A plugin (enow) to communicate with an EnOcean gateway over MQTT.
+>
+> (Links to this example will be added later.)
+
+
+## Functions of the interface
+
+### publish_topic(plug, topic, payload, qos=None, retain=False)
+
+        function to publish a topic
+        
+        this function is to be called from other plugins, which are utilizing
+        the mqtt plugin
+        
+        :param topic:      topic to publish to
+        :param payload:    payload to publish
+        :param qos:        quality of service (optional) otherwise the default of the mqtt plugin will be used
+        :param retain:     retain flag (optional)
+
+
+### subscription_callback(plug, sub, callback=None)
+
+        function set a callback function
+        
+        this function is to be called from other plugins, which are utilizing
+        the mqtt plugin
+        
+        :param plug:       identifier of plgin/logic using the MQTT plugin
+        :param sub:        topic(s) which should call the callback function
+                           example: 'device/eno-gw1/#'
+        :param callback:   quality of service (optional) otherwise the default of the mqtt plugin will be used
+
+### subscribe_topic(plug, topic, qos=None)
+
+        function to subscribe to a topic
+         
+        this function is to be called from other plugins, which are utilizing
+        the mqtt plugin
+         
+        :param topic:      topic to subscribe to
+        :param qos:        quality of service (optional) otherwise the default of the mqtt plugin will be used

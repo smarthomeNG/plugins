@@ -532,6 +532,10 @@ class EnOcean(SmartPlugin):
                         self.logger.debug('enocean: item is 07_3F_7F type')
                         self.send_rgbw_dim(id_offset, item(), 0)
                         self.logger.debug('enocean: sent RGBW dim command')
+                    elif(tx_eep == 'A5_3F_7F'):
+                        self.logger.debug('enocean: item is A5_3F_7F type')
+                        self.send_actuator_cmd(id_offset, item())
+                        self.logger.debug('enocean: sent actuator command')
                     else:
                         self.logger.error('enocean: error: Unknown tx eep command')
                 else:
@@ -603,7 +607,7 @@ class EnOcean(SmartPlugin):
         packet += bytes([self._calc_crc8(packet[1:5])])
         packet += bytes(data + optional)
         packet += bytes([self._calc_crc8(packet[6:])])
-        self.logger.warning("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
+        self.logger.debug("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
         self._tcm.write(packet)
 
     def _send_smart_ack_command(self, _code, data=[]):
@@ -682,6 +686,10 @@ class EnOcean(SmartPlugin):
             self._send_radio_packet(id_offset, 0xA5, [0x02, int(dim), int(dimspeed), 0x09])
         else:
             self.logger.error("enocean: sending command A5_38_08: invalid dim value")
+
+    def send_actuator_cmd(self,id_offset=0, command=0):
+        pass
+
 
     def send_rgbw_dim(self,id_offset=0, color='red', dim=0, dimspeed=0):
         if(color == str(red)):
@@ -786,9 +794,11 @@ class EnOcean(SmartPlugin):
         self.learn_id = id_offset
         self.logger.info("enocean: Listeining for UTE package ('D4')")
 
+
 ##################################################
 ### --- END - Definitions of Learn Methods --- ###
 ##################################################
+
 
 #################################
 ### --- START - Calc CRC8 --- ###

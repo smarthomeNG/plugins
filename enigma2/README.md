@@ -1,6 +1,6 @@
 # Enigma2
 
-# Requirements
+## Requirements
 This plugin requires lib requests. You can install this lib with: 
 <pre>
 sudo pip3 install requests --upgrade
@@ -15,9 +15,9 @@ It is currently also tested with a Dreambox 8000 and Dreambox 7020hd.
 
 The version is tested with new multi-instance functionality of SmartHomeNG.
 
-# Configuration
+## Configuration
 
-## plugin.conf (uses multi-instance feature of SmartHomeNG)
+### plugin.conf (uses multi-instance feature of SmartHomeNG)
 <pre>
 [vusolo4k]
     class_name = Enigma2
@@ -45,7 +45,7 @@ The version is tested with new multi-instance functionality of SmartHomeNG.
 Note: Depending on the device a shorter cycle time can result in problems with CPU rating and, in consequence with the accessibility of the services on the device.
 If cycle time is reduced, please carefully watch your device and your sh.log. In the development process, 240 seconds also worked worked fine on the used devices.
 
-### Attributes
+#### Attributes
   * `username`: Optional login information #not tested so far
   * `password`: Optional login information #not tested so far
   * `host`: Hostname or ip address of the Enigma2 Device.
@@ -55,9 +55,9 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
   * `verify`: True or False => Turns certificate verification on or off. Typically False
   * `instance`: Unique identifier for each Enigma2Device / each instance of the plugin
 
-## items.conf
+### items.conf
 
-### Example:
+#### Example:
 <pre>
 [enigma2]
     [[vusolo2]]
@@ -231,30 +231,30 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
                 visu_acl = rw
         [[[remote]]] # see http://dream.reichholf.net/wiki/Enigma2:WebInterface#RemoteControl
             [[[[TEXT]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 388
-				enforce_updates = true
-			[[[[RED]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 398
-				enforce_updates = true
-			[[[[GREEN]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 399
-				enforce_updates = true
-			[[[[YELLOW]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 400
-				enforce_updates = true
-			[[[[BLUE]]]]
-				type = bool
-				visu_acl = rw
-				enigma2_remote_command_id@vusolo2 = 401
-				enforce_updates = true
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 388
+                enforce_updates = true
+            [[[[RED]]]]
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 398
+                enforce_updates = true
+            [[[[GREEN]]]]
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 399
+                enforce_updates = true
+            [[[[YELLOW]]]]
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 400
+                enforce_updates = true
+            [[[[BLUE]]]]
+                type = bool
+                visu_acl = rw
+                enigma2_remote_command_id@vusolo2 = 401
+                enforce_updates = true
             [[[[PAUSE]]]]
                 type = bool
                 visu_acl = rw
@@ -422,15 +422,15 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
                 enforce_updates = true
 </pre>
 
-# Functions
+## Functions
 
-## get_audio_tracks()
+### get_audio_tracks()
 This function returns an array of dicts with the following keys: "e2audiotrackdescription" (string), "e2audiotrackid" (int), "e2audiotrackpid" (int), "e2audiotrackactive" (bool)
 <pre>
 sh.vusolo2.get_audio_tracks()
 </pre>
 
-## send_message(messagetext, messagetype=1, timeout=10)
+### send_message(messagetext, messagetype=1, timeout=10)
 Sets a message to the device
 messagetype: Number from 0 to 3, 0= Yes/No, 1= Info, 2=Message, 3=Attention
 timeout: Number of seconds the message should stay on the device, default: 10
@@ -438,7 +438,7 @@ timeout: Number of seconds the message should stay on the device, default: 10
 sh.vusolo2.send_message("Testnachricht",1,10)
 </pre>       
 
-## get_answer()
+### get_answer()
 This function checks for an answer to a sent message. If you call this method, take into account the timeout until the message can be answered and e.g. set a "while (count < 0)"
 <pre>
 sh.vusolo2.get_answer()

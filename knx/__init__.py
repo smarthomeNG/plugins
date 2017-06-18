@@ -26,16 +26,20 @@ import logging
 import threading
 import struct
 import binascii
+import random
 
 import lib.connection
+from lib.model.smartplugin import SmartPlugin
+from datetime import timedelta
 from . import dpts
 
 KNXREAD = 0x00
 KNXRESP = 0x40
 KNXWRITE = 0x80
 
-
-class KNX(lib.connection.Client):
+class KNX(lib.connection.Client,SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.3.1"
 
     def __init__(self, smarthome, time_ga=None, date_ga=None, send_time=False, busmonitor=False, host='127.0.0.1', port=6720, readonly=False, instance='default'):
         lib.connection.Client.__init__(self, host, port, monitor=True)
@@ -120,6 +124,23 @@ class KNX(lib.connection.Client):
             return
         pkt.extend([0, KNXREAD])
         self._send(pkt)
+
+    def _poll(self, **kwargs):
+        if 'item' in kwargs:
+            item = kwargs['item']
+        else:
+            item = 'unknown item'
+
+        if 'ga' in kwargs:
+            self.groupread(kwargs['ga'])
+        else:
+            self.logger.warning('KNX[{0}]: problem polling {1}, no known ga'.format(self.instance, item))      
+        
+        if 'interval' in kwargs and 'ga' in kwargs:
+            ga = kwargs['ga']
+            interval = int(kwargs['interval'])
+            next = self._sh.now() + timedelta(seconds = interval)
+            self._sh.scheduler.add('KNX[{0}] poll {1}'.format(self.instance,item), self._poll, value={'instance': self.instance, 'item': item, 'ga': ga, 'interval': interval}, next = next)
 
     def _send_time(self):
         self.send_time(self.time_ga, self.date_ga)
@@ -321,6 +342,18 @@ class KNX(lib.connection.Client):
 
         if 'knx_status' in item.conf or 'knx_send' in item.conf:
             return self.update_item
+
+        if 'knx_poll' in item.conf:
+            if 'knx_listen' in item.conf:
+                knx_listen = item.conf['knx_listen']
+                poll_interval = int(item.conf['knx_poll'])
+                self.logger.info("KNX[{0}]: Item {1} is polled on GA {2} every {3} seconds".format(self.instance, item, knx_listen, poll_interval))
+                randomwait = random.randrange(15)
+                next = self._sh.now() + timedelta(seconds = poll_interval + randomwait)
+                self._sh.scheduler.add('KNX[{0}] poll {1}'.format(self.instance,item), self._poll, value={'item': item, 'ga': knx_listen, 'interval': poll_interval}, next = next)
+            else:
+                self.logger.warning("KNX[{0}]: Ignoring knx_poll for item {1}: please add a knx_listen GA to poll.".format(self.instance, item))
+                pass
 
         return None
 
