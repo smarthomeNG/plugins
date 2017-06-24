@@ -32,6 +32,8 @@ You can configure multiple instances of the wunderground plugin to collect data 
 	location = Germany/Hamburg
 	item_subtree = mein_wetter
 	instance = wetter_ham
+	wug_datatype = positive
+	#cycle = 600
 ```
 
 or
@@ -85,6 +87,9 @@ If **```item_subtree```** is not defined or empty, the whole item-tree is search
 
 ### instance
 Name of the plugin instance (SmartPlugin attribute). This is important if you define multiple weather locations using multiple instances of the wunderground plugin.
+
+### cycle
+By default the Plugin is triggered every 600s. This parameter can modify this value
 
 ## items configuration
 There are two item-attributes in items.yaml/items.conf that are specific to the wunderground plugin. These parameters beginn with **`wug_`**.
@@ -226,10 +231,16 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
                 value: -9999
                 wug_xmlstring: simpleforecast/forecastdays/forecastday/high/celsius
 
-            niederschlag:
+            niederschlag_prozent:  #likelyhood
                 type: num
                 value: -9999
                 wug_xmlstring: simpleforecast/forecastdays/forecastday/pop
+                wug_datatype: percent
+
+            niederschlag: #amount
+                type: num
+                value: -9999
+                wug_xmlstring: forecast/simpleforecast/forecastdays/forecastday/qpf_allday/mm
                 wug_datatype: positive
 
             verhaeltnisse:
@@ -391,11 +402,18 @@ Example configuration for wunderground plugin in the old conf-format:
 			value = -9999
 			wug_xmlstring = simpleforecast/forecastdays/forecastday/high/celsius
 
-		[[[niederschlag]]]
+		[[[niederschlag_percent]]] #likelyhood
 			type = num
 			value = -9999
 			wug_xmlstring = simpleforecast/forecastdays/forecastday/pop
+			wug_datatype = percent
+
+		[[[niederschlag]]] #amount
+			type = num
+			value = -9999
+			wug_xmlstring = forecast/simpleforecast/forecastdays/forecastday/qpf_allday/mm
 			wug_datatype = positive
+
 
 		[[[verhaeltnisse]]]
 			type = str
