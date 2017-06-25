@@ -1,11 +1,11 @@
 # SmartTV
 
-# Requirements
+## Requirements
 This plugin has no requirements or dependencies.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 <pre>
 [smarttv]
     class_name = SmartTV
@@ -15,19 +15,19 @@ This plugin has no requirements or dependencies.
 #    tvid = 1
 </pre>
 
-### Attributes
+#### Attributes
   * `host`: specifies the ip address of your SmartTV device.
   * `port`: if you want to use a nonstandard port.
   * `tvid`: if you have more than one SmartTV device, you can identify them with the tvid in the item configuration.
 
-## items.conf
+### items.conf
 
-### smarttv
+#### smarttv
 There are two possibilities to use this attribute. 
   * Define it on a string item and set it to `true`: With this configuration, every string you set to this item will be send to the SmartTV device.
   * Define it on a boolean item and set it to a key value: With this configuration, the specified key value is sent whenever you set the item to `true` (if the item is only for sending a specific command to the tv then you should consider using the `enforce_updates` attribute, too). It is even possible to define several keys separeted with a comma.
 
-### smarttv_id
+#### smarttv_id
 With this attribute you can define to which smarttv device you want to send the specified command. If there is only one device configured you can avoid setting this attribute.
 
 <pre>
@@ -54,7 +54,7 @@ With this attribute you can define to which smarttv device you want to send the 
         knx_listen = 0/0/7
 </pre>
 
-### Key Values
+#### Key Values
 And here is a list of possible key values. It depends on your device if all of them are supported.
 
 KEY_MENU
@@ -299,11 +299,11 @@ KEY_EXT39
 KEY_EXT40
 KEY_EXT41
 
-## logic.conf
+### logic.conf
 
 Currently there is no logic configuration for this plugin.
 
-# Functions
+## Functions
 
 Currently there are no functions offered from this plugin.
 
