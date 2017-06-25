@@ -24,6 +24,7 @@ Requires PIP Package websocket-client (tested with 0.44.0) for the implementatio
 #    instance = smarttv1
 </pre>
 ### plugin.yaml
+<pre>
 smarttv:
     class_name: SmartTV
     class_path: plugins.smarttv
@@ -32,6 +33,7 @@ smarttv:
     # tv_version = old
     # delay = 1
     # instance = smarttv1
+</pre>
 
 #### Attributes
   * `host`: specifies the ip address of your SmartTV device.
