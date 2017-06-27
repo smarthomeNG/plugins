@@ -2,13 +2,18 @@
 
 # Requirements
 
-This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PICO inverters).
+This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PIKO inverters)
+Since UI-version 6 json-format is supported
+
+Tested with Kostal Piko 3.0 (single phase)  UI-Version 06.20
+dc-line 2, ac line 2 and ac line 3 values unchecked/untested
 
 ## Supported Hardware
 
-Is currently working with the following KOSTA inverter modules:
+Is currently working with the following KOSTAL inverter modules:
 
-  * KOSTAL PIKO 7.0
+  * KOSTAL PIKO 3.0
+  (should work with all KOSTAL PIKO inverters)
 
 # Configuration
 
@@ -17,42 +22,34 @@ Is currently working with the following KOSTA inverter modules:
 The plugin can be configured like this:
 
 <pre>
-[KOSTAL]
+[Kostal-PV]
    class_name = Kostal
    class_path = plugins.kostal
-   ip = 10.10.10.10
+   ip = 192.168.1.21
+   cycle = 30
 #   user = pvserver
 #   passwd = pvwr
-#   cycle = 300
+#   datastucture=html
+# use
+#   datastucture=json
+# for UI-Version >6
 </pre>
 
 This plugin retrieves data from a KOSTAL inverter module of a solar energy
 plant.
 
-The data retrieval is done by establishing a network connection to the 
-inverter module and retrieving the status via a HTTP request.
+The data retrieval is done by establishing a network connection to the
+inverter module and retrieving the status via a HTTP/JSON request.
 
-You need to configure the host (or IP) address of the inverter module. Also
-the user and password attributes (user, passwd) can be overwritten, but
+You need to configure the host (or IP) address of the inverter module.
+If datastucture=html is used the user and password attributes (user, passwd) can be overwritten, but
 defaults to the standard credentials.
+
+If datasructure=json is used, no credentials are requred.
 
 The cycle parameter defines the update interval and defaults to 300 seconds.
 
 ## items.conf
-
-### kostal
-
-This attribute references the information to retrieve by the plugin. The
-following list of information can be specified:
-
-  * power_current: The current power of the solar installation
-  * power_total: The total amount of generated energy
-  * power_day: The amount of generated energy for the current day
-  * status: The textual status of the module (off, feeding, ...)
-  * string1_volt ... string3_volt: The current voltage of string 1, 2, 3
-  * string1_ampere ... string3_ampere: The current ampere of string 1, 2, 3
-  * l1_volt ... l3_volt: The current voltage of L 1, 2, 3
-  * l1_watt ... l3_watt: The current watt of L 1, 2, 3
 
 ### Example
 
@@ -63,35 +60,97 @@ daily power. Additionally it shows the volts and watts for the phases.
 # items/my.conf
 [solar]
     [[status]]
+        name = Wechselrichter Status
         type = str
-        kostal = status
-    [[current]]
+        kostal = operation_status
+    [[dcpower]]
+        name = Gleichspannungsleitung gesamt
         type = num
-        kostal = power_current
-    [[total]]
+        kostal = dctot_w
+    [[dc1_v]]
+        name = DC-Strang 1 Spannung
         type = num
-        kostal = power_total
-    [[day]]
+        kostal = dc1_v
+    [[dc1_a]]
+        name = DC-Strang 1 Strom
         type = num
-        kostal = power_day
-    [[l1v]]
+        kostal = dc1_a
+    [[dc1_w]]
+        name = DC-Strang 1 Leistung
         type = num
-        kostal = l1_watt
-    [[l1w]]
+        kostal = dc1_w
+    [[dc2_v]]
+        name = DC-Strang 2 Spannung
         type = num
-        kostal = l1_watt
-    [[l2v]]
+        kostal = dc2_v
+    [[dc2_a]]
+        name = DC-Strang 2 Strom
         type = num
-        kostal = l2_watt
-    [[l2w]]
+        kostal = dc2_a
+    [[dc2_w]]
+        name = DC-Strang 2 Leistung
         type = num
-        kostal = l2_watt
-    [[l3v]]
+        kostal = dc2_w
+    [[actot_w]]
+        name = Wechselspannungsleistung gesamt
         type = num
-        kostal = l3_watt
-    [[l3w]]
+        kostal = actot_w
+    [[actot_cos]]
+        name = Cos phi
         type = num
-        kostal = l3_watt
+        kostal = actot_cos
+    [[actot_limitation]]
+        name = Abregelungsfaktor
+        type = num
+        kostal = actot_limitation
+    [[ac1_v]]
+        name = Phase 1 Spannung
+        type = num
+        kostal = ac1_v
+    [[ac1_a]]
+        name = Phase 1 Strom
+        type = num
+        kostal = ac1_a
+    [[ac1_w]]
+        name = Phase 1 Leistung
+        type = num
+        kostal = ac1_w
+    [[ac2_v]]
+        name = Phase 2 Spannung
+        type = num
+        kostal = ac2_v
+    [[ac2_a]]
+        name = Phase 2 Strom
+        type = num
+        kostal = ac2_a
+    [[ac2_w]]
+        name = Phase 2 Leistung
+        type = num
+        kostal = ac2_w
+    [[ac3_v]]
+        name = Phase 3 Spannung
+        type = num
+        kostal = ac3_v
+    [[ac3_a]]
+        name = Phase 3 Strom
+        type = num
+        kostal = ac3_a
+    [[ac3_w]]
+        name = Phase 3 Leistung
+        type = num
+        kostal = ac3_w
+    [[yield_day_wh]]
+        name = Gesamtleistung heute
+        type = num
+        kostal = yield_day_wh
+    [[yield_tot_kwh]]
+        name = Gesamtleistung total
+        type = num
+        kostal = yield_tot_kwh
+    [[operationtime_h]]
+        name = Betriebsstunden
+        type = num
+        kostal = operationtime_h
 </pre>
 
 ## logic.conf
@@ -101,4 +160,3 @@ No logic related stuff implemented.
 # Methods
 
 No methods provided currently.
-
