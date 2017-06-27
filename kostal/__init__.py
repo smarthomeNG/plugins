@@ -183,6 +183,7 @@ class Kostal(SmartPlugin):
                         kostal_key = str(list(self._keytable.keys())[list(self._keytable.values()).index(values['dxsId'])])
                         value=values['value']
                         if kostal_key == "operation_status":
+                            self.logger.debug("operation_status" + str(value))
                             if str(value) == "0":
                                 value = "off"
                             elif str(value) == "2":
@@ -195,7 +196,7 @@ class Kostal(SmartPlugin):
                                 value = "unknown"
                         if kostal_key in self._items:
                             self._items[kostal_key](value)
-                            #self.logger.debug("items[" + str(kostal_key) +"] = " +str(value))
+                            self.logger.debug("items[" + str(kostal_key) +"] = " +str(value))
             except Exception as e:
                 self.logger.error(
                     'could not retrieve data from {0}: {1}'.format(self.ip, e))
