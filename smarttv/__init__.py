@@ -32,18 +32,18 @@ class SmartTV(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.3.2"
 
-    def __init__(self, smarthome, host, port=55000, tv_version='old', delay=1):
+    def __init__(self, smarthome, host, port=55000, tv_version='classic', delay=1):
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
         self._host = host
         self._port = int(port)
         self._delay = delay
-        if tv_version not in ['new', 'old']:
+        if tv_version not in ['samsung_m_series', 'classic']:
             self.logger.error('No valid tv_version attribute specified to plugin')
         self._tv_version = tv_version
         self.logger.debug("Smart TV plugin for {0} SmartTV device initalized".format(tv_version))
 
-    def push_new(self, key):
+    def push_samsung_m_series(self, key):
         """
         | Pushes a key (as string) to a websocket connection
 
@@ -61,7 +61,7 @@ class SmartTV(SmartPlugin):
         ws.close()
         return
 
-    def push_old(self, key):
+    def push_classic(self, key):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self._host, int(self._port)))
@@ -143,10 +143,10 @@ class SmartTV(SmartPlugin):
         val = item()
         if isinstance(val, str):
             if val.startswith('KEY_'):
-                if self._tv_version == 'old':
-                    self.push_old(val)
-                elif self._tv_version == 'new':
-                    self.push_new(val)
+                if self._tv_version == 'classic':
+                    self.push_classic(val)
+                elif self._tv_version == 'samsung_m_series':
+                    self.push_samsung_m_series(val)
             return
         if val:
             keys = self.get_iattr_value(item.conf, 'smarttv')
@@ -158,10 +158,10 @@ class SmartTV(SmartPlugin):
                 if isinstance(key, str) and key.startswith('KEY_'):
                     if i != len(keys):
                         time.sleep(self._delay)
-                    if self._tv_version == 'old':
-                        self.push_old(key)
-                    elif self._tv_version == 'new':
-                        self.push_new(key)
+                    if self._tv_version == 'classic':
+                        self.push_classic(key)
+                    elif self._tv_version == 'samsung_m_series':
+                        self.push_samsung_m_series(key)
 
     def parse_logic(self, logic):
         pass

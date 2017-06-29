@@ -19,7 +19,7 @@ Requires PIP Package websocket-client (tested with 0.44.0) for the implementatio
     class_path = plugins.smarttv
     host = 192.168.0.45
 #    port = 55000
-#    tv_version = old
+#    tv_version = classic
 #    delay = 1
 #    instance = smarttv1
 </pre>
@@ -30,7 +30,7 @@ smarttv:
     class_path: plugins.smarttv
     host: 192.168.0.45
     # port = 55000
-    # tv_version = old
+    # tv_version = classic
     # delay = 1
     # instance = smarttv1
 </pre>
@@ -38,7 +38,7 @@ smarttv:
 #### Attributes
   * `host`: specifies the ip address of your SmartTV device.
   * `port`: if you want to use a nonstandard port.
-  * `tv_version`: allowed values are "old" or "new", depending on the traditional use of the plugin via port 55000 or the version for new SmartTVs, which use port 8001 and a websocket connection
+  * `tv_version`: allowed values are "classic" or "samsung_m_series", depending on the traditional (classic) use of the plugin via port 55000 or the version for the Samsung M series, which use port 8001 and a websocket connection
   * `delay`: specify a delay in case more than 1 key is sent. Reduces problems when switching e.g. to TV programs with numbers like "135".
   * `instance`: if you want to specify more than 1 instances of the plugin (requires to set @instance_name on the item attribute smarttv.
 
