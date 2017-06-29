@@ -237,11 +237,11 @@ class Mqtt(SmartPlugin):
                    
         # subscribe to configured topics
         if self.has_iattr(item.conf, 'mqtt_topic_in'):
-            if self._connected:
-                topic = self.get_iattr_value(item.conf, 'mqtt_topic_in')
-                self.topics[topic] = item
-                self._client.subscribe(topic, qos=self.get_qos_forTopic(item) )
-                self.logger.info(self.logIdentifier+": Listening on topic '{}' for item '{}'".format( topic, item.id() ))
+#             if self._connected:
+            topic = self.get_iattr_value(item.conf, 'mqtt_topic_in')
+            self.topics[topic] = item
+            self._client.subscribe(topic, qos=self.get_qos_forTopic(item) )
+            self.logger.info(self.logIdentifier+": Listening on topic '{}' for item '{}'".format( topic, item.id() ))
         
         if self.has_iattr(item.conf, 'mqtt_topic_out'):
             # initialize topics if configured
