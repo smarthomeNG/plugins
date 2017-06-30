@@ -40,12 +40,19 @@
 
 ### Activate plugin
 
- Activate plugin via plugin.con:
- 
-    [dashbutton]
-        class_name = Dashbutton
-        class_path = plugins.dashbutton
- 
+ Activate plugin via plugin.conf (deprecated) or plugin.yaml:
+
+<pre>
+[dashbutton]
+    class_name = Dashbutton
+    class_path = plugins.dashbutton
+</pre>
+
+<pre>
+dashbutton:
+    class_name: Dashbutton
+    class_path: plugins.dashbutton
+</pre>
 
 ### Item attributes
 
@@ -69,23 +76,40 @@
  seconds (neither a button press nor another action), the first element of the list is taken when the item is triggered 
  the next time. This attribute will be ignored, if no list is passed to the attribute 'dashbutton_value'.
  
-### Examples
+### Examples (in .conf (deprecated) and .yaml)
  
  **'flip' mode**
- 
-    [Room]
-        [[Dining_Room]]
-            name = "Light DiningRoom"
-            type = bool
-            knx_dpt = 1
-            knx_send = 1/1/1
-            knx_listen = 1/1/1
-            dashbutton_mac = cc:66:de:dd:55:11 | xx:xx:xx:xx:xx:01 | xx:xx:xx:xx:xx:02
-            dashbutton_mode = 'flip'
-         
+
+ <pre>
+ [Room]
+    [[Dining_Room]]
+        name = "Light DiningRoom"
+        type = bool
+        knx_dpt = 1
+        knx_send = 1/1/1
+        knx_listen = 1/1/1
+        dashbutton_mac = cc:66:de:dd:55:11 | xx:xx:xx:xx:xx:01 | xx:xx:xx:xx:xx:02
+        dashbutton_mode = 'flip'
+ </pre>
+
+ <pre>
+ Room:
+
+    Dining_Room:
+        name: Light DiningRoom
+        type: bool
+        knx_dpt: 1
+        knx_send: 1/1/1
+        knx_listen: 1/1/1
+        dashbutton_mac:
+          - cc:66:de:dd:55:11
+          - xx:xx:xx:xx:xx:01
+          - xx:xx:xx:xx:xx:02
+        dashbutton_mode: flip
+ </pre>
             
   **'value' mode**
-
+<pre>
     [Room]
         [[Dining_Room]]
             name = "Light Dimm DiningRoom"
@@ -108,3 +132,35 @@
             dashbutton_mode = 'value'
             dashbutton_value = 30|10|20|0
             dashbutton_reset = 240
+</pre>
+
+<pre>
+Room:
+
+    Dining_Room:
+        name: Light Dimm DiningRoom
+        type: num
+        knx_dpt: 5
+        knx_send: 1/2/1
+        knx_listen: 1/2/1
+        dashbutton_mac: cc:66:de:dd:55:11
+        dashbutton_mode: value
+        dashbutton_value: 30
+
+    Kitchen:
+        name: Light Dimm Kitchen
+        type: num
+        knx_dpt: 5
+        knx_send: 1/2/1
+        knx_listen: 1/2/1
+        dashbutton_mac:
+          - dd:11:12:55:55:22
+          - cc:66:de:dd:55:11
+        dashbutton_mode: value
+        dashbutton_value:
+          - '30'
+          - '10'
+          - '20'
+          - '0'
+        dashbutton_reset: 240
+</pre>
