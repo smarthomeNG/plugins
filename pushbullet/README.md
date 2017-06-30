@@ -36,7 +36,7 @@ __2014-05-16__:
 ---
 ## Configuration  
   
-### plugin.conf  
+### plugin.conf (deprecated) / plugin.yaml
   
 <pre>
 [pushbullet]
@@ -45,7 +45,15 @@ __2014-05-16__:
 #	deviceid = <your-default-device-id>
 #   apikey = <your-api-key>
 </pre>
-  
+
+<pre>
+pushbullet:
+    class_name: Pushbullet
+    class_path: plugins.pushbullet
+    # deviceid = <your-default-device-id>
+    # apikey = <your-api-key>
+</pre>
+
 Description of the attributes:
   
 * __apikey__: set api-key globally so you do not have to set it in the function calls  
