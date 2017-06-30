@@ -169,6 +169,6 @@ $ wget "http://XX.XX.XX.XX:8090/item|network.incoming|123"
 
 ## Functions
 
-udp(host, port, data)
----------------------
+### udp(host, port, data)
+
 <code>sh.nw.udp('192.168.0.5', 9999, 'turn it on')</code> would send 'turn it on' to 192.168.0.5 port 9999. Simple, isn't it?
