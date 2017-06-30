@@ -8,8 +8,9 @@ This plugin requires lib PyMVGLive. You can install this lib with:
 sudo pip3 install PyMVGLive --upgrade
 </pre>
 
-This plugin provides functionality to query the data of www.mvg-live.de via the python package PyMVGLive. Take care to not run it too often. My example below is triggered by a select action in the
-SmartVISU 2.9 select widget.
+This plugin provides functionality to query the data of www.mvg-live.de via the python package PyMVGLive.
+Take care to not run it too often. My example below is manually triggered by a select action in the
+SmartVISU 2.9 select widget or a refresh button.
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/1108867-neues-plugin-mvg_live
 
@@ -40,6 +41,11 @@ Currently, no pre defined items exist, the example below needs these items:
                 type = str
                 cache = yes
                 visu_acl: rw
+
+            [[[[refresh]]]]
+                type = bool
+                visu_acl = rw
+                enforce_updates = true
 </pre>
 
 <pre>
@@ -56,6 +62,11 @@ travel_info:
                 type: str
                 cache: 'yes'
                 visu_acl: ro
+
+            refresh:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'true'
 </pre>
 
 ## Functions
@@ -77,6 +88,7 @@ MVGWatch:
     filename: mvg.py
     watch_item:
       - travel_info.mvg_station.search
+      - travel_info.mvg_station.search.refresh
 </pre>
 
 ### mvg.py
@@ -104,9 +116,22 @@ html_string += '</table>'
 sh.travel_info.mvg_station.search.result(html_string)
 ```
 
-### SmartVisu integration (Requires SmartVisu 2.9 as select widget is used)
+### SmartVisu integration (Requires SmartVisu 2.9, as select widget is used)
 
 <pre>
-{{ basic.select('travel_info.mvg_station.search', 'travel_info.mvg_station.search', '', ['Frankfurter Ring', 'Hauptbahnhof', 'Karlsplatz (Stachus)', 'Marienplatz'], '', ['Frankfurter Ring', 'Hauptbahnhof', 'Karlsplatz (Stachus)', 'Marienplatz']) }}
-{{ basic.print('travel_info.mvg_station.search.result', 'travel_info.mvg_station.search.result', 'html') }}
+<div class="block">
+    <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+        <div data-role="collapsible" data-collapsed="false">
+            <h3>MVG Info</h3>
+            <table><tr>
+                <td style="width: 100%;">
+                {{ basic.select('travel_info.mvg_station.search', 'travel_info.mvg_station.search', '', ['Frankfurter Ring', 'Hauptbahnhof', 'Karlsplatz (Stachus)', 'Marienplatz'], '', ['Frankfurter Ring', 'Hauptbahnhof', 'Karlsplatz (Stachus)', 'Marienplatz']) }}
+                </td><td>
+                {{ basic.button('travel_info.mvg_station.search.refresh', 'travel_info.mvg_station.search.refresh', '', 'refresh', '1', 'mini') }}
+                </td>
+            </tr></table>
+            {{ basic.print('travel_info.mvg_station.search.result', 'travel_info.mvg_station.search.result', 'html') }}
+        </div>
+    </div>
+</div>
 </pre>
