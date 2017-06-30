@@ -25,7 +25,7 @@ integrating it..
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 <pre>
 [tankerkoenig]
     class_name = TankerKoenig
@@ -33,10 +33,17 @@ integrating it..
     apikey = <your own api key>
 </pre>
 
+<pre>
+tankerkoenig:
+    class_name: TankerKoenig
+    class_path: plugins.tankerkoenig
+    apikey: <your own api key>
+</pre>
+
 #### Attributes
   * `apikey`: Your own personal API key for TankerKoenig. For your own key register to https://creativecommons.tankerkoenig.de
 
-### items.conf
+### items.conf (deprecated) / items.yaml
 
 #### Example (for cheapest station and for one station that is requested via its id):
 <pre>
@@ -62,6 +69,39 @@ integrating it..
         [[[isOpen]]]
             type=bool
             visu_acl = ro
+</pre>
+
+<pre>
+petrol_station:
+
+    cheapest:
+
+        isOpen:
+            type: bool
+            visu_acl: ro
+
+        name:
+            type: str
+            visu_acl: ro
+
+        price:
+            type: num
+            visu_acl: ro
+
+    DemoBavariaPetrol:
+        tankerkoenig_id: a07b7f50-6e6f-4e6e-9bce-17d79bf0778c
+
+        diesel:
+            type: num
+            visu_acl: ro
+
+        name:
+            type: str
+            visu_acl: ro
+
+        isOpen:
+            type: bool
+            visu_acl: ro
 </pre>
 
 ## Functions
