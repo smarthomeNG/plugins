@@ -65,7 +65,7 @@ There is a second item type available for reading error messages from the pellet
 #### Example
 The __visu__ elements are optional.
 <pre>
-# items/eta_pu.conf
+# items/eta_pu.conf (deprecated)
 [eta_unit]
     [[boiler]]
         [[[emission_temperature]]]
