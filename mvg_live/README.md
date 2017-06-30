@@ -16,14 +16,20 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 <pre>
 [mvg_live]
     class_name = MVG_Live
     class_path = plugins.mvg_live
 </pre>
 
-### items.conf / items.yaml
+<pre>
+mvg_live:
+    class_name: MVG_Live
+    class_path: plugins.mvg_live
+</pre>
+
+### items.conf (deprecated) / items.yaml
 
 Currently, no pre defined items exist, the example below needs these items:
 <pre>
