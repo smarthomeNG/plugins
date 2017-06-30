@@ -10,7 +10,7 @@ sudo pip3 install PyMVGLive --upgrade
 
 This plugin provides functionality to query the data of www.mvg-live.de via the python package PyMVGLive.
 Take care to not run it too often. My example below is manually triggered by a select action in the
-SmartVISU 2.9 select widget or a refresh button.
+smartVISU 2.9 select widget or a refresh button.
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/1108867-neues-plugin-mvg_live
 
@@ -116,9 +116,9 @@ html_string += '</table>'
 sh.travel_info.mvg_station.search.result(html_string)
 ```
 
-### SmartVisu integration (Requires SmartVisu 2.9, as select widget is used)
+### smartVISU integration (Requires smartVISU 2.9, as select widget is used)
 
-![SmartVISU 2.9 integration](https://github.com/smarthomeNG/plugins/blob/develop/mvg_live/mvg.PNG?raw=true "SmartVISU 2.9 integration")
+![smartVISU 2.9 integration](https://github.com/smarthomeNG/plugins/blob/develop/mvg_live/mvg.PNG?raw=true "smartVISU 2.9 integration")
 
 ```html
 <div class="block">
