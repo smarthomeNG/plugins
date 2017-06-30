@@ -118,7 +118,7 @@ sh.travel_info.mvg_station.search.result(html_string)
 
 ### SmartVisu integration (Requires SmartVisu 2.9, as select widget is used)
 
-<pre>
+```html
 <div class="block">
     <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
         <div data-role="collapsible" data-collapsed="false">
@@ -134,4 +134,4 @@ sh.travel_info.mvg_station.search.result(html_string)
         </div>
     </div>
 </div>
-</pre>
+```
