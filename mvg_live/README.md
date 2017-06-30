@@ -13,8 +13,6 @@ SmartVISU 2.9 select widget.
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/1108867-neues-plugin-mvg_live
 
-Take care not to request the interface too often. In the example below i show how to trigger a logic on a select box of SmartVISU
-
 ## Configuration
 
 ### plugin.conf
