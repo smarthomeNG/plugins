@@ -35,7 +35,7 @@ simulation:
 
  `sim = track` (.conf syntax)
 
- `sim: track` (yaml syntax)
+ `sim: track` (.yaml syntax)
  
  Add sim = track to each item that you want to include in the simulation. All items with with the sim
  Attribute are tracked in the data_file. Each change of the item is stored as one line. Only bool
