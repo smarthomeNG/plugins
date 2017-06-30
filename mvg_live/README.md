@@ -87,7 +87,7 @@ Returns information about the departures in a specific station. See www.mvg-live
 [MVGWatch]
     filename = mvg.py
     watch_items = travel_info.mvg_station.search
-</pre
+</pre>
 
 <pre>
 MVGWatch:
