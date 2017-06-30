@@ -8,9 +8,10 @@ This plugin requires lib PyMVGLive. You can install this lib with:
 sudo pip3 install PyMVGLive --upgrade
 </pre>
 
-This plugin provides functionality to query the data of www.mvg-live.de via the python package PyMVGLive
+This plugin provides functionality to query the data of www.mvg-live.de via the python package PyMVGLive. Take care to not run it too often. My example below is triggered by a select action in the
+SmartVISU 2.9 select widget.
 
-Forum thread to the plugin: https://knx-user-forum.de/...
+Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/1108867-neues-plugin-mvg_live
 
 Take care not to request the interface too often. In the example below i show how to trigger a logic on a select box of SmartVISU
 
@@ -64,7 +65,7 @@ travel_info:
 ### get_station_departures(self, station, timeoffset=0, entries=10, ubahn=True, tram=True, bus=True, sbahn=True):
 Returns information about the departures in a specific station. See www.mvg-live.de for the allowed names.
 
-## logics
+## Logics
 
 ### logics.conf / yaml
 <pre>
