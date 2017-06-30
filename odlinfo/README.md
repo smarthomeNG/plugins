@@ -5,7 +5,7 @@ Version 0.1
 This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in µSv/h from several measuring stations in Germany.
 For more information see https://odlinfo.bfs.de.
 
-# Requirements
+## Requirements
 This plugin requires lib requests. You can install this lib with: 
 <pre>
 sudo pip3 install requests --upgrade
@@ -26,7 +26,7 @@ The data published by ODL can be used freely for registred users. The data provi
 copyrighted by Bundesamt für Strahlenschutz (BfS), Willy-Brandt-Straße 5, 38226 Salzgitter, Deutschland
 Do not directly link the data interface / URL of ODLINFO in any context.
 
-# Nutzung der Daten / Terms of Service
+## Nutzung der Daten / Terms of Service
 (in German only - most recent version see https://odlinfo.bfs.de/DE/service/downloadbereich.html)
 
 Bei der Nutzung der vom Bundesamt für Strahlenschutz erhobenen Daten ist zu beachten:
@@ -69,9 +69,9 @@ durch sonstige Veränderungen der Umgebungsbedingungen verursacht sein. Kleinere
 veraltete Sonden erneuert wurden. Im Rahmen der Messnetzpflege kommt es ständig zu Verlegungen von Sondenstandorten.
 Dies führt dazu, dass einzelne Zeitreihen abrupt enden.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 <pre>
 [odlinfo]
     class_name = ODLInfo
@@ -80,22 +80,37 @@ Dies führt dazu, dass einzelne Zeitreihen abrupt enden.
     password = <your own password>
 </pre>
 
-### Attributes
+<pre>
+odlinfo:
+    class_name: ODLInfo
+    class_path: plugins.odlinfo
+    user: <your own user>
+    password: <your own password>
+</pre>
+
+#### Attributes
   * `user`: Your own personal user for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html
   * `password`: Your own personal password for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html
 
-## items.conf
+### items.conf (deprecated) / items.yaml
 
-### Example:
+#### Example:
 <pre>
 [outside]
     [[radiation]]
         type = num
 </pre>
 
-# Functions
+<pre>
+outside:
 
-## get_radiation_for_ids(odlinfo_ids):
+    radiation:
+        type: num
+</pre>
+
+## Functions
+
+### get_radiation_for_ids(odlinfo_ids):
 Gets a list of radiaton values and according stations to an array of internal odlinfo_ids
 Dict keys per entry: 'ort', 'kenn', 'plz', 'status', 'kid', 'hoehe', 'lon', 'lat', 'mw'
 Description see stamm.json (https://odlinfo.bfs.de/downloads/Datenbereitstellung-2016-04-21.pdf)
@@ -103,7 +118,7 @@ Description see stamm.json (https://odlinfo.bfs.de/downloads/Datenbereitstellung
 sh.odlinfo.get_radiation_for_ids(['010620461','091811461']) # station Meddewade and Windach
 </pre>
 
-## get_radiation_for_id(odlinfo_id)
+### get_radiation_for_id(odlinfo_id)
 Gets a list of radiaton values and according stations to an internal odlinfo_id
 Dict keys per entry: 'ort', 'kenn', 'plz', 'status', 'kid', 'hoehe', 'lon', 'lat', 'mw'
 Description see stamm.json (https://odlinfo.bfs.de/downloads/Datenbereitstellung-2016-04-21.pdf)
@@ -111,9 +126,9 @@ Description see stamm.json (https://odlinfo.bfs.de/downloads/Datenbereitstellung
 sh.odlinfo.get_radiation_for_id('091811461') # station Windach
 </pre>
 
-# Logics
+## Logics
 
-## Fill item with radiation data
+### Fill item with radiation data
 <pre>
 radiation = sh.odlinfo.get_radiation_for_id('091811461') # station Windach
 sh.outside.radiation(radiation['mw'])
