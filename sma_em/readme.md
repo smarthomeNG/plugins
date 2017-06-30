@@ -26,11 +26,11 @@ If demand exists, the plugin can also be extended to be used with more than one 
 </pre>
 
 <pre>
-[sma_em]
-    class_name = SMA_EM
-    class_path = plugins.sma_em
-    serial = xxxxxxxxxx
-    time_sleep = 5
+sma_em:
+    class_name: SMA_EM
+    class_path: plugins.sma_em
+    serial: xxxxxxxxxx
+    time_sleep: 5
 </pre>
 
 #### Attributes
