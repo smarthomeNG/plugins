@@ -118,7 +118,7 @@ sh.travel_info.mvg_station.search.result(html_string)
 
 ### SmartVisu integration (Requires SmartVisu 2.9, as select widget is used)
 
-![SmartVISU 2.9 integration](https://github.com/smarthomeNG/plugins/tree/develop/mvg_live/mvg.PNG "SmartVISU 2.9 integration")
+![SmartVISU 2.9 integration](https://github.com/smarthomeNG/plugins/blob/develop/mvg_live/mvg.PNG?raw=true "SmartVISU 2.9 integration")
 
 ```html
 <div class="block">
