@@ -86,7 +86,6 @@ results = sh.mvg_live.get_station_departures(sh.travel_info.mvg_station.search()
 html_string = '<table>'
 i = 1
 for result in results:
-    logger.error(result)
 
     dir_info = ''
     line_string = '<tr><td style="width: 10px;"></td>'
