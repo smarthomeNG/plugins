@@ -18,7 +18,7 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 Please provide a plugin.conf snippet for your plugin with ever option your plugin supports. Optional attributes should be commented out.
 
@@ -31,13 +31,22 @@ Please provide a plugin.conf snippet for your plugin with ever option your plugi
     instance = xiaomi
 </pre>
 
+<pre>
+xiaomi:
+    class_name: Xiaomi
+    class_path: plugins.xiaomi
+    bt_addr: C4:7C:7E:21:F3:2B
+    cycle: 300
+    instance: xiaomi
+</pre>
+
 #### Attributes
   * `bt_addr`: The Bluetooth address of your xiaomi plant sensor. Find e.g. with hcitool lescan
   * `cycle`: Cycle interval for data retrieval
   * `instance`: Instance name in case multi-instance use is needed (one instance can handle one sensor)
 
 
-### items.conf
+### items.conf (deprecated) / items.yaml
 
 #### xiaomi_data_type
 
@@ -71,4 +80,39 @@ Possible xiaomi_data_type's are temperature, light, moisture, conductivity, name
         [[[battery]]]
             type = num
             xiaomi_data_type@xiaomi = 'battery'
+</pre>
+
+<pre>
+# items/my.yaml
+plants:
+
+    sensor_office:
+
+        temperature:
+            type: num
+            xiaomi_data_type@xiaomi: temperature
+
+        light:
+            type: num
+            xiaomi_data_type@xiaomi: light
+
+        moisture:
+            type: num
+            xiaomi_data_type@xiaomi: moisture
+
+        conductivity:
+            type: num
+            xiaomi_data_type@xiaomi: conductivity
+
+        name:
+            type: str
+            xiaomi_data_type@xiaomi: name
+
+        firmware:
+            type: str
+            xiaomi_data_type@xiaomi: firmware
+
+        battery:
+            type: num
+            xiaomi_data_type@xiaomi: battery
 </pre>
