@@ -42,7 +42,7 @@ __2014-05-16__:
 [pushbullet]
     class_name = Pushbullet
     class_path = plugins.pushbullet
-#	deviceid = <your-default-device-id>
+#   deviceid = <your-default-device-id>
 #   apikey = <your-api-key>
 </pre>
 
