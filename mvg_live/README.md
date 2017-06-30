@@ -58,6 +58,7 @@ travel_info:
                 cache: 'yes'
                 visu_acl: ro
 </pre>
+
 ## Functions
 
 ### get_station_departures(self, station, timeoffset=0, entries=10, ubahn=True, tram=True, bus=True, sbahn=True):
@@ -80,7 +81,8 @@ MVGWatch:
 </pre>
 
 ### mvg.py
-<pre>
+
+```html
 results = sh.mvg_live.get_station_departures(sh.travel_info.mvg_station.search(), entries=15, bus=False, tram=False)
 html_string = '<table>'
 i = 1
@@ -102,7 +104,7 @@ for result in results:
 
 html_string += '</table>'
 sh.travel_info.mvg_station.search.result(html_string)
-</pre>
+```
 
 ### SmartVisu integration (Requires SmartVisu 2.9 as select widget is used)
 
