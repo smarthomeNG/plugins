@@ -1,35 +1,47 @@
-Simulation Plugin
-==========
+# Simulation Plugin
 
-Description:
+## Description
 The simulation plugin allows simulating presence in case none is at home.
 To achieve this, the plugin constantly records all configured items and
 writes changes to those (events) into a file. It is a text file where each event has one
 line. The file can be modified using a text editor, but be careful.
 Upon request the plugin can playback the contents of this file.
 
-Requirements:
+## Requirements
+
 This plugins has no requirements.
 
-Configuration:
-plugin.conf
+## Configuration
+
+### plugin.conf (deprecated) / plugin.yaml
+
 ```
 [simulation]
    class_name = Simulation
    class_path = plugins.simulation
    data_file = /usr/smarthome/var/db/simulation.txt
 ```
+
+```
+simulation:
+    class_name: Simulation
+    class_path: plugins.simulation
+    data_file: /usr/smarthome/var/db/simulation.txt
+```
+
 `data_file`: This is the file where all recorded events are stored.
 
-items.conf:
+### items.conf (deprecated) / items.yaml
 
- `sim = track` 
+ `sim = track`
+
+ `sim: track`
  
  Add sim = track to each item that you want to include in the simulation. All items with with the sim
  Attribute are tracked in the data_file. Each change of the item is stored as one line. Only bool
  and number items are supportet.
 
-Example:
+#### Example
 ```
 [eg]
    [[flur]]
@@ -41,7 +53,21 @@ Example:
          knx_send = 1/1/0
          enforce_updates = yes
          sim = track
+```
 
+```
+eg:
+
+    flur:
+
+        licht:
+            type: bool
+            visu_acl: rw
+            knx_dpt: 1
+            knx_cache: 1/1/1
+            knx_send: 1/1/0
+            enforce_updates: 'yes'
+            sim: track
 ```
 
 Add to your item tree some adminstrative items:
@@ -63,6 +89,30 @@ Add to your item tree some adminstrative items:
     type=num
     sim=tank
     visu_acl = ro
+```
+
+```
+sim:
+
+    status:
+        type: num
+        sim: state
+        visu_acl: ro
+
+    control:
+        type: num
+        sim: control
+        visu_acl: rw
+
+    message:
+        type: str
+        sim: message
+        visu_acl: ro
+
+    tank:
+        type: num
+        sim: tank
+        visu_acl: ro
 ```
 
 These items are needed to control the simulation plugin. If they do not exist,
@@ -102,9 +152,9 @@ Thank contains the actual value of day that are stored in the events file. The v
 will grow up to 14 and then stay constant. Put his in the visu in case you want to
 see if there are already enough events to start a playback.
 
-Usage
------
-Record:
+## Usage
+
+### Record
 The plugin starts automatically together with smarthome.py. After initialization
 it automatically starts to record all changes to items that have the sim=track
 in the item.conf file. Item datatypes bool and num have been tested. When an
@@ -128,8 +178,9 @@ Ba this behavior empty gaps in the event file are avoided when recording was sto
 for some time because .eg. playback was active. 
 If control is set to 01, recording stops immediately.
 
-Playback:
-Setting control to 02 will start playback. Recording will stop automatically. 
+### Playback
+
+Setting control to 02 will start playback. Recording will stop automatically.
 Item changes triggered by the simulation are not recorded. 
 In playback mode, the plugin reads the file line by line and executes the events
 by changing the item as it was recorded. When the file ends, the simulation stops.
@@ -138,9 +189,9 @@ the other. In case the next time stamp is before the actual time the plugin
 shifts the event to the next day. 
 
 
-Control:
+### Control
 The plugin needs certain control items to exist. They can be integrated in
-smartvisu. I created a block the looks like in the following picture:
+smartVISU. I created a block the looks like in the following picture:
 
 ![screenshot](screenshot.png)
 
@@ -202,8 +253,7 @@ The png files for the lamps are in the package.
 
 ```
 
-Internals
----------
+## Internals
 
 <strong>Event file format</strong>
 
