@@ -18,7 +18,7 @@ More information and API key see: https://developers.google.com/maps/documentati
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 <pre>
 [traffic]
     class_name = Traffic
@@ -27,11 +27,19 @@ More information and API key see: https://developers.google.com/maps/documentati
     language = de (optional)
 </pre>
 
+<pre>
+traffic:
+    class_name: Traffic
+    class_path: plugins.traffic
+    apikey: your own api key
+    language: de (optional)
+</pre>
+
 #### Attributes
   * `apikey`: Your own personal API key for Google Directions. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
   * `language`: Any 2 char language code that is supported by Google Directions API, default is "de"
 
-### items.conf
+### items.conf (deprecated) / items.yaml
 
 Currently, no pre defined items exist, the example below needs these items:
 <pre>
@@ -80,6 +88,54 @@ Currently, no pre defined items exist, the example below needs these items:
         [[[lon]]]
             type = num
 </pre>
+
+<pre>
+travel_info:
+
+    travel_time:
+        type: num
+
+        in_traffic:
+            type: num
+
+    travel_distance:
+        type: num
+
+    travel_summary:
+        type: str
+
+    html_instructions:
+        type: str
+
+    html_warnings:
+        type: str
+
+    copyrights:
+        type: str
+
+    start_address:
+        type: str
+
+    start_location:
+
+        lat:
+            type: num
+
+        lon:
+            type: num
+
+    end_address:
+        type: str
+
+    end_location:
+
+        lat:
+            type: num
+
+        lon:
+            type: num
+</pre>
+
 ## Functions
 
 ### get_route_info(origin, destination, alternatives, mode):
