@@ -62,7 +62,7 @@ imap:
 
 There is no item specific configuration.
 
-### logic.conf
+### logic.conf (deprecated) / logic.yaml
 
 You could assign the following keywords to a logic. The matching order is as listed.
 
