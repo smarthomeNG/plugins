@@ -1,16 +1,16 @@
 # wetter.com
 
-# Requirements
+## Requirements
 
 wetter.com account with project, recommended: 3 days, all data transmitted
 
-## Supported Hardware
+### Supported Hardware
 
 none
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 <pre>
 [wettercom]
@@ -20,14 +20,22 @@ none
     project = <enter your project name here>
 </pre>
 
+<pre>
+wettercom:
+    class_name: wettercom
+    class_path: plugins.wettercom
+    apikey: <enter your api code here>
+    project: <enter your project name here>
+</pre>
+
 add your project on wetter.com and paste API-key and project name
 in plugin.conf
 
-## items.conf
+### items.conf (deprecated) / items.yaml
 
 none
 
-### Example
+#### Example
 
 <pre>
 # items/wetter.conf
@@ -264,16 +272,388 @@ none
                             type = str
                 [[[[[niederschlag]]]]]
                     type = num
+</pre>
 
+<pre>
+# items/wetter.conf
+wetter:
+
+    vorhersage:
+
+        heute:
+
+            frueh:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+            mittag:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+            spaet:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+            nacht:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+        morgen:
+
+            frueh:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+            mittag:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+            spaet:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+            nacht:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+        uebermorgen:
+
+            frueh:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+            mittag:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+            spaet:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
+
+            nacht:
+
+                temperatur:
+
+                    max:
+                        type: num
+
+                    min:
+                        type: num
+
+                text:
+                    type: str
+
+                code:
+                    type: num
+
+                wind:
+
+                    geschwindigkeit:
+                        type: num
+
+                    richtung:
+                        type: num
+
+                        text:
+                            type: str
+
+                niederschlag:
+                    type: num
 </pre>
 
 This structure will be filled by the example logic file (see below)
 
-## logic.conf
+### logic.conf (deprecated) / logic.yaml
 
 none
 
-### Example
+#### Example
 
 <pre>
 #!/usr/bin/env python
@@ -307,21 +687,20 @@ for date in forecast:
         frame.code(forecast[date][7])
 
 logger.info(forecast)
- 
 </pre>
 
 This logic will parse the weather data and put it in the example items.conf
 above. Use etc/logic.conf for cyclic call (900s or so, requests are limited
 at 10000 / month)
 
-# Methods
+## Methods
 
-## search(location)
+### search(location)
 Uses wetter.com to search for your city_code. method will return an
 empty dictionary if no match is found. If more than one match is found,
 the dictionary will contain at most 20 matches, best match first
 
-## forecast(city_code)
+### forecast(city_code)
 Returns forecast data for your city_code (use search or wetter.com
 website to find it). Forecast data is returned as dictionary for each
 date/time (usually three days at four times). Values are min. temperature,
