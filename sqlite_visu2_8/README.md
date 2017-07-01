@@ -1,10 +1,8 @@
 # SQLite
 
-Configuration
-=============
+## Configuration
 
-plugin.conf
------------
+### plugin.conf (deprecated) / plugin.yaml
 <pre>
 [sql]
     class_name = SQL
@@ -13,12 +11,19 @@ plugin.conf
 #   dumpfile = /tmp/smarthomedb.dump
 </pre>
 
+<pre>
+sql:
+    class_name: SQL
+    class_path: plugins.sqlite_visu2_8
+    # path = None
+    # dumpfile = /tmp/smarthomedb.dump
+</pre>
+
 The `path` attribute allows you to specify the of the SQLite database.
 
 If you specify a `dumpfile`, SmartHomeNG dumps the database every night into this file.
 
-items.conf
---------------
+### items.conf (deprecated) / items.yaml
 
 For num and bool items, you could set the attribute: `sqlite`. By this you enable logging of the item values and SmartHomeNG set the item to the last know value at start up (equal cache = yes).
 
@@ -31,22 +36,31 @@ For num and bool items, you could set the attribute: `sqlite`. By this you enabl
         sqlite = yes
 </pre>
 
+<pre>
+outside:
+    name: Outside
 
-# Functions
+    temperature:
+        name: Temperatur
+        type: num
+        sqlite: 'yes'
+</pre>
+
+## Functions
 This plugin adds one item method to every item which has sqlite enabled.
 
-## cleanup()
+### cleanup()
 This function removes orphaned item entries which are no longer referenced in the item configuration.
 
-## dump(filename)
+### dump(filename)
 Dumps the database into the specified file.
 `sh.sql.dump('/tmp/smarthomedb.dump')` writes the database content into /tmp/smarthomedb.dump
 
-## move(old, new)
+### move(old, new)
 This function renames item entries.
 `sh.sql.move('my.old.item', 'my.new.item')`
 
-## sh.item.db(function, start, end='now')
+### sh.item.db(function, start, end='now')
 This method returns you an value for the specified function and timeframe.
 
 Supported functions are:
