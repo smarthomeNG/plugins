@@ -39,14 +39,20 @@ cd plugins
 git clone https://github.com/rthill/yamaha.git
 </pre>
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 <pre>
 [yamaha]
     class_name = Yamaha
     class_path = plugins.yamaha
 </pre>
 
-### items.conf
+<pre>
+yamaha:
+    class_name: Yamaha
+    class_path: plugins.yamaha
+</pre>
+
+### items.conf (deprecated) / items.yaml
 
 <pre>
 [mm]
@@ -70,6 +76,37 @@ git clone https://github.com/rthill/yamaha.git
                     type = str
                     yamaha_cmd = input
                     enforce_updates = True
+</pre>
+
+<pre>
+mm:
+
+    gf:
+
+        living:
+
+            yamaha:
+                yamaha_host: 192.168.178.186
+
+                power:
+                    type: bool
+                    yamaha_cmd: power
+                    enforce_updates: 'True'
+
+                volume:
+                    type: num
+                    yamaha_cmd: volume
+                    enforce_updates: 'True'
+
+                mute:
+                    type: bool
+                    yamaha_cmd: mute
+                    enforce_updates: 'True'
+
+                input:
+                    type: str
+                    yamaha_cmd: input
+                    enforce_updates: 'True'
 </pre>
 
 ### Example CLI usage
