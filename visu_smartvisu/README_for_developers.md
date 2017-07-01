@@ -17,25 +17,25 @@ This file gives **smarthomeNG** developers additional information about the smar
 This file describes the widget handling for smartVISU widgets and the autogeneration of smartVISU pages.
 
 
-# Files of the Plugin
+## Files of the Plugin
 The plugin is made up by several files, which are described below.
 
 
-## __ init __.py
+### __ init __.py
 Main file of the plugin.
 
-## sv_widgets subdirectory
+### sv_widgets subdirectory
 This directory stores general-use widgets, which are not specific to a plugin. These plugins are installed together with widgets from different plugins.
 
-## tplNG subdirectory
+### tplNG subdirectory
 This directory stores template files, that are used while auto-generating pages for smartVISU. The files in this directory are copied to the pages/base/tplNG directory, which is created.
 
-# Handling of smartVISU widgets
+## Handling of smartVISU widgets
 The visu plugin handles widgets, which a plugin developer delivers with the plugin he has written. For this to work, the attribute **`smartvisu_dir`** in the visu section of **`plugin.conf`** must be set to the base directory of smartVISU. 
 
 It handles widgets that define their own Javascript or css. The Javascript and css files must follow the same naming convention as the html file.
 
-## Add a widget to a plugin
+### Add a widget to a plugin
 A developer of a plugin can add widgets to the plugin. He has to create a directory named **sv_widgets** in his plugin directory and add the file(s) of the widget to that directory.
 
 All files in the **sv_widgets** directory are copied to the smartVISU installation.
@@ -74,7 +74,7 @@ If a Javascript file would exist for the hue widget, it would have to have the n
 The handling of a css file is analog to the Javascript handling.
 
 
-## Modifications to smartVISU made by the visu plugin
+### Modifications to smartVISU made by the visu plugin
 For this functionality to work, smarthome.py must have write access to the smartVISU directory structure. The modifications to smartVISU are minimal invasive. The implementation may change, if smartVISU is forked.
 
 The visu plugin creates a directory named **_sh_widgets** in the **widgets** directory of smartVISU. All files copied from the different plugins are stored in this directory.
