@@ -1,15 +1,14 @@
 # RRDTool
 
-Requirements
-============
+## Requirements
+
 You have to install the python3 bindings for rrdtool:
 <pre>$ sudo apt-get install python3-dev librrd-dev </pre>
 
-Configuration
-=============
+## Configuration
 
 Remark: 
--------
+
 The rrd plugin and the sqlite plugin can not be used together. Some pros and cons:
 
 RRD
@@ -23,8 +22,8 @@ SQLite
 + accurate logging of changing times
 + more analysis functionality
 
-plugin.conf
------------
+### plugin.conf (deprecated) / plugin.yaml
+
 <pre>
 [rrd]
     class_name = RRD
@@ -33,23 +32,30 @@ plugin.conf
     # rrd_dir = /usr/smarthome/var/rrd/
 </pre>
 
+<pre>
+rrd:
+    class_name: RRD
+    class_path: plugins.rrd
+    # step = 300
+    # rrd_dir = /usr/smarthome/var/rrd/
+</pre>
+
 `step` sets the cycle time how often entries will be updated.
 `rrd_dir` specify the rrd storage location.
 
-items.conf
---------------
+### items.conf (deprecated) / items.yaml
 
-### rrd
+#### rrd
 To active rrd logging (for an item) simply set this attribute to yes.
 If you set this attribute to `init`, SmartHomeNG tries to set the item to the last known value (like cache = yes).
 
-### rrd_min
+#### rrd_min
 Set this item attribute to log the minimum as well. Default is no.
 
-### rrd_max
+#### rrd_max
 Set this item attribute to log the maximum as well. Default is no.
 
-### rrd_mode
+#### rrd_mode
 Set the type of data source. Default ist `gauge`.
   * `gauge` - should be used for things like temperatures.
   * `counter` - should be used for continuous incrementing counters like the Powermeter (kWh), watercounter (m³), pellets (kg).
@@ -72,10 +78,30 @@ Set the type of data source. Default ist `gauge`.
         rrd = yes
 </pre>
 
-# Functions
+<pre>
+outside:
+    name: Outside
+
+    temperature:
+        name: Temperatur
+        type: num
+        rrd: init
+        rrd_min: 'yes'
+        rrd_max: 'yes'
+
+office:
+    name: Büro
+
+    temperature:
+        name: Temperatur
+        type: num
+        rrd: 'yes'
+</pre>
+
+## Functions
 This plugin adds one item method to every item which has rrd enabled.
 
-## sh.item.db(function, start, end='now')
+### sh.item.db(function, start, end='now')
 This method returns you a value for the specified function and timeframe.
 
 Supported functions are:
