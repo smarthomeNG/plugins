@@ -3,13 +3,13 @@
 This plugins can be used to create logs which are cached, written to file and stored in memory to be used by items or other
 plugins. Furthermore the logs can be visualised by smartVISU using the standard widget "status.log".
 
-# Requirements
+## Requirements
 
 No special requirements.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 Use the plugin configuration to configure the logs.
 
@@ -33,6 +33,26 @@ Use the plugin configuration to configure the logs.
     filepattern = yearly_log-{name}-{year:04}.log
 ```
 
+```
+mylogname1:
+    class_name: OperationLog
+    class_path: plugins.operationlog
+    name: mylogname1
+
+# maxlen = 50
+# cache = yes
+# logtofile = yes
+# filepattern = {year:04}-{month:02}-{day:02}-{name}.log
+mylogname2:
+    class_name: OperationLog
+    class_path: plugins.operationlog
+    name: mylogname2
+    maxlen: 0
+    cache: 'no'
+    logtofile: 'yes'
+    filepattern: yearly_log-{name}-{year:04}.log
+```
+
 This will register two logs named mylogname1 and mylogname2. 
 The first one named mylogname1 is configured with the default configuration as shown,
 caching the log to file (smarthome/var/cache/mylogname1) and logging to file (smarthome/var/log/operationlog/yyyy-mm-dd-mylogname1.log). 
@@ -44,7 +64,7 @@ The logging file can be named as desired. The keys `{name}`, `{year}`, `{month}`
 Every time a log entry is written, the file name is checked and a new file is created upon change. 
 
 
-## items
+### items.conf (deprecated) / items.yaml
 Configure an item to be logged as follows:
 
 ```
@@ -56,6 +76,18 @@ Configure an item to be logged as follows:
     #   olog_rules = *:value
     #   olog_txt = {id} = {value} 
     #   olog_level = INFO
+```
+
+```
+foo:
+    name: Foo
+
+    bar:
+        type: num
+        olog: mylogname1
+        # olog_rules = *:value
+        # olog_txt = {id} = {value}
+        # olog_level = INFO
 ```
 
 foo.bar uses the minimum configuration and default values. 
@@ -125,15 +157,25 @@ The code is replaced by the return value of the \<python code> for the logtext. 
         olog_level = info
 ```
 
-## Logics
+### Logics
 Configure a logic to be logged as follows:
 
 ```
+#logics.conf (deprecated)
 [some_logic]
     filename = script.py
     olog = mylogname1
     #olog_txt = The logic {logic.name} was triggered!
     #olog_level = INFO
+```
+
+```
+#logics.yaml
+some_logic:
+    filename: script.py
+    olog: mylogname1
+    # olog_txt = The logic {logic.name} was triggered!
+    # olog_level = INFO
 ```
 
 To enable logging for a given logic when it is triggered just
@@ -159,7 +201,7 @@ Furthermore user defined python expressions can be used in the logtext. Define a
 The code is replaced by the return value of the \<python code> for the logtext. Multiple `{eval=<python code>}` statements can be used.
 
 
-## Functions
+### Functions
 
 ```
 sh.mylogname1('<level_keyword>', msg)
