@@ -122,6 +122,7 @@ The code is replaced by the return value of the \<python code> for the logtext. 
 ### item log examples:
 
 ```
+# .conf (deprecated)
 [foo]
     name = Foo
     [[bar1]]
@@ -155,6 +156,55 @@ The code is replaced by the return value of the \<python code> for the logtext. 
         olog_rules = lowlim:-1.0 | highlim:10.0
         olog_txt = Item with name {name} has lowlim={lowlim} <= value={value} < highlim={highlim}, the value {eval='increased' if sh.foo.bar4() > sh.foo.bar4.prev_value() else 'decreased'} by {eval=round(abs(sh.foo.bar4() - sh.foo.bar4.prev_value()), 3)} 
         olog_level = info
+```
+
+```
+#yaml
+foo:
+    name: Foo
+
+    bar1:
+        type: num
+        name: Bar1
+        olog: mylogname1
+        olog_rules:
+          - 2:two
+          - 0:zero
+          - 1:one
+          - '*:value'
+        olog_txt: This is a log text for item with name {name} and value {value} mapped to {mvalue}, parent item name is {pname}
+        olog_level: ERROR
+
+    bar2:
+        type: bool
+        name: Bar2
+        olog: mylogname1
+        olog_rules:
+          - True:the value is true
+          - False:the value is false
+        olog_txt: This is a log text for {value} mapped to '{mvalue}', {name} changed after {age} seconds
+        olog_level: warning
+
+    bar3:
+        type: str
+        name: Bar3
+        olog: mylogname1
+        olog_rules:
+          - t1:text string number one
+          - t2:text string number two
+          - '*:value'
+        olog_txt: "text {value} is mapped to logtext '{mvalue}', expression with syntax errors: {eval=sh.this.item.doesnotexist()*/+-42}"
+        olog_level: critical
+
+    bar4:
+        type: num
+        name: Bar4
+        olog: mylogname1
+        olog_rules:
+          - lowlim:-1.0
+          - highlim:10.0
+        olog_txt: Item with name {name} has lowlim={lowlim} <= value={value} < highlim={highlim}, the value {eval='increased' if sh.foo.bar4() > sh.foo.bar4.prev_value() else 'decreased'} by {eval=round(abs(sh.foo.bar4() - sh.foo.bar4.prev_value()), 3)}
+        olog_level: info
 ```
 
 ### Logics
