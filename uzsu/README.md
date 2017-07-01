@@ -1,12 +1,12 @@
 # UZSU
 Provides universial time switches for items.
 
-# Requirements
+## Requirements
 Calculating of sunset/sunrise in triggers, requires installation of ephem.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 <pre>
 [uzsu]
@@ -14,13 +14,19 @@ Calculating of sunset/sunrise in triggers, requires installation of ephem.
    class_path = plugins.uzsu
 </pre>
 
-## items.conf
+<pre>
+uzsu:
+    class_name: UZSU
+    class_path: plugins.uzsu
+</pre>
 
-### uzsu
+### items.conf (deprecated) / items.yaml
+
+#### uzsu
 You have to specify a item with `type = dict` and with the `uzsu_item` attribute set to the path of the item which will be set by this item. The dict has to have two keys. `active` which says if the whole list of entries should be active or not and `list` which contains a list of all entries (see the Item Data Format section for more details).
 
 <pre>
-# items/my.conf
+# items/my.conf (deprecated)
 
 [someroom]
     [[someitem]]
@@ -31,9 +37,22 @@ You have to specify a item with `type = dict` and with the `uzsu_item` attribute
             cache = True
 </pre>
 
+<pre>
+# items/my.yaml
+someroom:
+
+    someitem:
+        type: int
+
+        anotheritem:
+            type: dict
+            uzsu_item: someroom.someitem
+            cache: 'True'
+</pre>
+
 If you specify the `cache = True` as well, then you're switching entries will be there even if you restart smarthome.py.
 
-# Item Data Format
+## Item Data Format
 
 Each UZSU item is of type list. Each list entry has to be a dict with specific key and value pairs. Here are the possible keys and what their for:
 
