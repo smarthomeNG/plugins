@@ -51,11 +51,9 @@ class Mqtt(SmartPlugin):
     the update functions for the items
     """
     
-    # todo
-    # change ALLOW_MULTIINSTANCE to true if your plugin will support multiple instances (seldom)
     ALLOW_MULTIINSTANCE = True
     
-    PLUGIN_VERSION = "1.3.2"
+    PLUGIN_VERSION = "1.3.3"
 
     __plugif_CallbackTopics = {}         # for plugin interface
     __plugif_Sub = None
@@ -72,17 +70,21 @@ class Mqtt(SmartPlugin):
         """
         Initalizes the plugin. The parameters described for this method are pulled from the entry in plugin.yaml.
 
-        :param sh:  The instance of the smarthome object, save it for later references
-        :param host:  .
-        :param port:  .
-        :param qos:  Default Quality-of-Service, can be overwritten in item definition
-        :param acl:  Default Access-Control, can be overwritten in item definition
-        :param publish_items:  .
-        :param items_topic_prefix:  .
-        :param user:  username to loginto broker
-        :param password:  password to loginto broker
-        :param tls:  .
-        :param ca_certs:  .
+        :param sh:                 The instance of the smarthome object, save it for later references
+        :param host:               ip address or hostname of the MQTT broker
+        :param port:               port number of the MQTT broker (should not be specified under normal conditions
+        :param qos:                Default Quality-of-Service, can be overwritten in item definition
+        :param last_will_topic:    topic for MQTT last-will message to be sent by broker if shng terminates
+        :param last_will_payload:  payload for MQTT last-will message to be sent by broker if shng terminates
+        :param birth_topic:        topic for birth message to be sent when shng starts
+        :param birth_payload:      payload for birth message to be sent when shng starts
+        :param publish_items:      .
+        :param items_topic_prefix: .
+        :param user:               username to log into broker
+        :param password:           password to log into broker
+        :param tls:                .
+        :param ca_certs:           .
+        :param acl:                Default Access-Control, can be overwritten in item definition
         """
         # attention:
         # if your plugin runs standalone, sh will likely be None so do not rely on it later or check it within your code
@@ -139,10 +141,11 @@ class Mqtt(SmartPlugin):
             self.acl ='none'
             self.logger.error(self.logIdentifier+": Invalid value specified for default acess-control, using standard '{}'".format(self.acl))
 
-        if last_will_topic [-1] == '/':
+        if (last_will_topic != '') and (last_will_topic [-1] == '/'):
             last_will_topic = last_will_topic[:-1]
         self.last_will_topic = last_will_topic
         self.last_will_payload = last_will_payload
+        
         if birth_topic == '':
             self.birth_topic = self.last_will_topic
         else:
@@ -277,6 +280,9 @@ class Mqtt(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         Write items values
+        
+        This function is called by the core when a value changed, 
+        so the plugin can update it's peripherals
 
         :param item:   item to be updated towards the plugin
         :param caller: if given it represents the callers name
