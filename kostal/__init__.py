@@ -22,6 +22,7 @@
 
 import logging
 from lib.model.smartplugin import SmartPlugin
+from lib.utils import Utils
 import urllib.request, json
 import time
 import re
@@ -83,16 +84,19 @@ class Kostal(SmartPlugin):
         'ac2_w': 81,
         'ac3_w': 105
     }
+
     def __init__(self, sh, ip, user="pvserver", passwd="pvwr",cycle=300, datastucture="html"):
         self._sh = sh
-        self.logger = logging.getLogger(__name__)       # get a unique logger for the plugin and provide it internally
+        self.logger = logging.getLogger(__name__)
         self.logger.info('Init Kostal plugin')
-        self.ip = ip
         self.user = user
         self.passwd = passwd
         self.cycle = int(cycle)
         self._items = {}
-        #self._values = {}
+        if Utils.is_ip(ip):
+            self.ip = ip
+        else:
+            self.logger.error(str(ip) + " is not a valid IP")
         if datastucture == "html":
             self._keytable = self._key2td
             self.datastucture = "html"
@@ -107,7 +111,6 @@ class Kostal(SmartPlugin):
         self.logger.debug("run method Kostal called")
         self.alive = True
         self._sh.scheduler.add('Kostal', self._refresh, cycle=self.cycle)
-
 
     def stop(self):
         """
@@ -127,20 +130,8 @@ class Kostal(SmartPlugin):
             self.logger.debug("parse item: {0}".format(item))
             return self.update_item
     def parse_logic(self, logic):
-        """
-        Default plugin parse_logic method
-        """
         pass
     def update_item(self, item, caller=None, source=None, dest=None):
-        """
-        Write items values
-        :param item: item to be updated towards the plugin
-        :param caller: if given it represents the callers name
-        :param source: if given it represents the source
-        :param dest: if given it represents the dest
-        """
-        # todo
-        # change 'foo_itemtag' into your attribute name
         if item():
             if self.has_iattr(item.conf, 'kostal'):
                 self.logger.debug("update_item ws called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
@@ -162,10 +153,6 @@ class Kostal(SmartPlugin):
                         self.logger.debug('set {0} = {1}'.format(kostal_key, value))
                         if kostal_key in self._items:
                             self._items[kostal_key](value)
-                        #self._values[kostal_key] = value
-                #for item_cfg in self._items:
-                #    if item_cfg[1] in self._values:
-                #        item_cfg[0](self._values[item_cfg[1]], 'Kostal')
             except Exception as e:
                 self.logger.error(
                     'could not retrieve data from {0}: {1}'.format(self.ip, e))
@@ -204,9 +191,7 @@ class Kostal(SmartPlugin):
         cycletime = time.time() - start
         self.logger.debug("cycle takes {0} seconds".format(cycletime))
 
-"""
-If the plugin is run standalone e.g. for test purposes the follwing code will be executed
-"""
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
     # todo

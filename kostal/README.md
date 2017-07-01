@@ -1,5 +1,7 @@
 # KOSTAL
 
+VERSION = "1.3.1"
+
 # Requirements
 
 This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PIKO inverters)
@@ -26,7 +28,7 @@ The plugin can be configured like this:
    class_name = Kostal
    class_path = plugins.kostal
    ip = 192.168.1.21
-   cycle = 30
+   cycle = 5
 #   user = pvserver
 #   passwd = pvwr
 #   datastucture=html
