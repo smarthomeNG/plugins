@@ -1,25 +1,53 @@
 # KOSTAL
 
-VERSION = "1.3.1"
+Version: 1.3.1
 
-# Requirements
+This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PIKO inverters).
+Since UI-version (communication-board) 6 json-format is supported.
 
-This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PIKO inverters)
-Since UI-version 6 json-format is supported
-
-Tested with Kostal Piko 3.0 (single phase)  UI-Version 06.20
-dc-line 2, ac line 2 and ac line 3 values unchecked/untested
+Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/
 
 ## Supported Hardware
 
 Is currently working with the following KOSTAL inverter modules:
 
-  * KOSTAL PIKO 3.0
+  * KOSTAL PIKO 3.0 UI-Version 06.20 (datastructure=json)
+  * KOSTAL PIKO 5.5 UI-Version 05.xx (datastructure=html)
+
   (should work with all KOSTAL PIKO inverters)
+  <add more successfull testet Kostal Inverters with UI-Version and used datastructure>
 
-# Configuration
+knx-user-forum.de
 
-## plugin.conf
+### Hint
+  If com­mu­ni­ca­tion board (Kom­mu­nika­tions­board II) firmware has a version 5.x,
+  then the inverter generates an html - page.
+  The default datastructure=html configuration of this plugin, trys to read
+  the current inverter values from this status page.
+
+  If com­mu­ni­ca­tion board (Kom­mu­nika­tions­board II) firmware has a version 6.x,
+  then the inverter generates ajax - style status page.
+  The datastructure=json configuration of this plugin, reads the current
+  inverter values from an json-comminication string.
+
+  So the datastructure - configuration depends on the firmwareversion of your
+  communication board.
+
+  New inverters:
+  http://kostal-solar-electric.com/de-DE/Produkte_Service/PIKO-Wechselrichter_neue_Generation
+  My Kostal Piko 3.0 was shipped with a communication board with a firmware version 5.x.
+  After a firmware-upgrade my inverter doesn't ship a html-page. Now i could user the
+  JSON-communication.
+  Firmware Updates http://www.kostal-solar-electric.com/de-DE/Download/Updates
+
+  Old inverters:
+  http://kostal-solar-electric.com/de-DE/Produkte_Service/PIKO-Wechselrichter_bewaehrte_Generation,
+  I'll don't know if the communication board of old inverters could also be updated to version 6.x.
+
+
+## Configuration
+
+### plugin.conf
 
 The plugin can be configured like this:
 
@@ -31,9 +59,9 @@ The plugin can be configured like this:
    cycle = 5
 #   user = pvserver
 #   passwd = pvwr
-#   datastucture=html
+#   datastructure=html
 # use
-#   datastucture=json
+#   datastructure=json
 # for UI-Version >6
 </pre>
 
@@ -43,20 +71,35 @@ plant.
 The data retrieval is done by establishing a network connection to the
 inverter module and retrieving the status via a HTTP/JSON request.
 
-You need to configure the host (or IP) address of the inverter module.
-If datastucture=html is used the user and password attributes (user, passwd) can be overwritten, but
-defaults to the standard credentials.
+You need to configure the IP address of the inverter module.
+If datastructure=html is used the user and password attributes (user, passwd)
+can be overwritten, but defaults to the standard credentials.
 
 If datasructure=json is used, no credentials are requred.
 
 The cycle parameter defines the update interval and defaults to 300 seconds.
 
-## items.conf
+### items.conf
 
-### Example
+#### Example
 
-Example configuration which shows the current status and the current, total and
-daily power. Additionally it shows the volts and watts for the phases.
+Example configuration which shows all supported values, depending on the
+features of the inverter.
+
+Example: PIKO 3.0 is a single phase inverter with a single dc-line (dc-string).
+  all DC2, DC3, AC2 and AC3 values would reply a None-value.
+
+If your communication board has a firmwareversion 5 (datastructure=html),
+the following values are not displayed in the html-status page and also not
+available for the plugin.
+
+dctot_w, dc1_w, dc2_w, dc3_w,
+actot_cos, actot_limitation, ac1_a, ac2_a, ac3_a,
+operationtime_h
+
+Hint:
+Item names have changed from the previous version of the plugin, so that both
+types of communication can be configured the same way.
 
 <pre>
 # items/my.conf

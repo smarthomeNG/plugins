@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2017 Wenger Florian                       <wenger@unifox.at>
+# Copyright 2012- Oliver Hinckel github@ollisnet.de
+# Copyright 2017 Wenger Florian  wenger@unifox.at
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
@@ -32,10 +33,11 @@ class Kostal(SmartPlugin):
     Since UI-version 6 the inverter can answere requests with json.
     Unfortunately, I have only a simple inverter. Therefore, I can not test
     the values for other phases or a second DC Line-In.
+    See README.md for more details
     """
     ALLOW_MULTIINSTANCE = True
 
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.3.1.1"
 
     _key2json = {
        'operation_status' : 16780032,
@@ -85,7 +87,7 @@ class Kostal(SmartPlugin):
         'ac3_w': 105
     }
 
-    def __init__(self, sh, ip, user="pvserver", passwd="pvwr",cycle=300, datastucture="html"):
+    def __init__(self, sh, ip, user="pvserver", passwd="pvwr",cycle=300, datastructure="html"):
         self._sh = sh
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Kostal plugin')
@@ -97,12 +99,14 @@ class Kostal(SmartPlugin):
             self.ip = ip
         else:
             self.logger.error(str(ip) + " is not a valid IP")
-        if datastucture == "html":
+        if datastructure == "html":
             self._keytable = self._key2td
-            self.datastucture = "html"
+            #self.datastructure = "html"
+            self.datastructure = self._html
         else:
             self._keytable = self._key2json
-            self.datastucture = "json"
+            #self.datastructure = "json"
+            self.datastructure = self._json
 
     def run(self):
         """
@@ -128,72 +132,67 @@ class Kostal(SmartPlugin):
         if self.has_iattr(item.conf, 'kostal'):
             self._items[self.get_iattr_value(item.conf, 'kostal')] = item
             self.logger.debug("parse item: {0}".format(item))
-            return self.update_item
+            #return self.update_item
+
     def parse_logic(self, logic):
         pass
-    def update_item(self, item, caller=None, source=None, dest=None):
-        if item():
-            if self.has_iattr(item.conf, 'kostal'):
-                self.logger.debug("update_item ws called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
-                pass
+
+    def _html(self):
+        #HTML-OLD-Coding
+        try:
+            data = self._sh.tools.fetch_url(
+                'http://' + self.ip + '/', self.user, self.passwd, timeout=2).decode()
+            # remove all attributes for easy findall()
+            data = re.sub(r'<([a-zA-Z0-9]+)(\s+[^>]*)>', r'<\1>', data)
+            # search all TD elements
+            table = re.findall(r'<td>([^<>]*)</td>', data, re.M | re.I | re.S)
+            for kostal_key in self._keytable:
+                value = table[self._keytable[kostal_key]].strip()
+                if 'x x x' not in value:
+                    self.logger.debug('set {0} = {1}'.format(kostal_key, value))
+                    if kostal_key in self._items:
+                        self._items[kostal_key](value)
+        except Exception as e:
+            self.logger.error(
+                'could not retrieve data from {0}: {1}'.format(self.ip, e))
+            return
+
+    def _json(self):
+        #NEW-JSON-Coding
+        try:
+            # generate url; fetching only needed elements
+            kostalurl = 'http://' + self.ip + '/api/dxs.json?sessionid=SmartHomeNG'
+            for item in self._items:
+                value = self._keytable[item]
+                kostalurl +='&dxsEntries=' + str(value)
+            with urllib.request.urlopen(kostalurl) as url:
+                data = json.loads(url.read().decode())
+                for values in data['dxsEntries']:
+                    kostal_key = str(list(self._keytable.keys())[list(self._keytable.values()).index(values['dxsId'])])
+                    value=values['value']
+                    if kostal_key == "operation_status":
+                        self.logger.debug("operation_status" + str(value))
+                        if str(value) == "0":
+                            value = "off"
+                        elif str(value) == "2":
+                            value = "startup"
+                        elif str(value) == "3":
+                            value = "feed in (mpp)"
+                        elif str(value) == "6":
+                            value = "dc voltage low"
+                        else:
+                            value = "unknown"
+                    if kostal_key in self._items:
+                        self._items[kostal_key](value)
+                        self.logger.debug("items[" + str(kostal_key) +"] = " +str(value))
+        except Exception as e:
+            self.logger.error(
+                'could not retrieve data from {0}: {1}'.format(self.ip, e))
+            return
+
     def _refresh(self):
         start = time.time()
-        if self.datastucture == "html":
-            #HTML-OLD-Coding
-            try:
-                data = self._sh.tools.fetch_url(
-                    'http://' + self.ip + '/', self.user, self.passwd, timeout=2).decode()
-                # remove all attributes for easy findall()
-                data = re.sub(r'<([a-zA-Z0-9]+)(\s+[^>]*)>', r'<\1>', data)
-                # search all TD elements
-                table = re.findall(r'<td>([^<>]*)</td>', data, re.M | re.I | re.S)
-                for kostal_key in self._keytable:
-                    value = table[self._keytable[kostal_key]].strip()
-                    if 'x x x' not in value:
-                        self.logger.debug('set {0} = {1}'.format(kostal_key, value))
-                        if kostal_key in self._items:
-                            self._items[kostal_key](value)
-            except Exception as e:
-                self.logger.error(
-                    'could not retrieve data from {0}: {1}'.format(self.ip, e))
-                return
-        else:
-            #NEW-JSON-Coding
-            try:
-                kostalurl = 'http://' + self.ip + '/api/dxs.json?sessionid=SmartHomeNG'
-                for kostal_key in self._keytable:
-                    value = self._keytable[kostal_key]
-                    kostalurl +='&dxsEntries=' + str(value)
-                with urllib.request.urlopen(kostalurl) as url:
-                    data = json.loads(url.read().decode())
-                    for values in data['dxsEntries']:
-                        kostal_key = str(list(self._keytable.keys())[list(self._keytable.values()).index(values['dxsId'])])
-                        value=values['value']
-                        if kostal_key == "operation_status":
-                            self.logger.debug("operation_status" + str(value))
-                            if str(value) == "0":
-                                value = "off"
-                            elif str(value) == "2":
-                                value = "startup"
-                            elif str(value) == "3":
-                                value = "feed in (mpp)"
-                            elif str(value) == "6":
-                                value = "dc voltage low"
-                            else:
-                                value = "unknown"
-                        if kostal_key in self._items:
-                            self._items[kostal_key](value)
-                            self.logger.debug("items[" + str(kostal_key) +"] = " +str(value))
-            except Exception as e:
-                self.logger.error(
-                    'could not retrieve data from {0}: {1}'.format(self.ip, e))
-                return
+        # run the working methods
+        self.datastructure()
         cycletime = time.time() - start
         self.logger.debug("cycle takes {0} seconds".format(cycletime))
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    # todo
-    # change PluginClassName appropriately
-    PluginClassName(None).run()
