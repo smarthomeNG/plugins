@@ -1,6 +1,6 @@
 # KOSTAL
 
-Version: 1.3.1
+Version: 1.3.1.1
 
 This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PIKO inverters).
 Since UI-version (communication-board) 6 json-format is supported.

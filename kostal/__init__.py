@@ -132,9 +132,19 @@ class Kostal(SmartPlugin):
         if self.has_iattr(item.conf, 'kostal'):
             self._items[self.get_iattr_value(item.conf, 'kostal')] = item
             self.logger.debug("parse item: {0}".format(item))
-            #return self.update_item
+            return self.update_item
 
     def parse_logic(self, logic):
+        pass
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        """
+        Write items values
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
         pass
 
     def _html(self):
