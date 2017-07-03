@@ -1,14 +1,26 @@
 # Wunderground
 
-### Version 1.2.4
+#### Version 1.2.5
 
 This plugins can be used retrieve weather information from wunderground.
 
-### Support
+## Support
 Support is provided trough the support thread within the smarthomeNG forum: [Smarthome.py](https://knx-user-forum.de/forum/supportforen/smarthome-py)
 
 
-## Changes Since version 1.2.2
+## Change History
+
+### Changes Since version 1.2.4
+
+- Fixed handling for %-values
+ 
+README:
+
+- Changed **pressure_trend** to string, since quite some weather stations report the trend as '-', '0', '+'
+- Added forecast definitions for precipitation in mm (all day, day, night) 
+
+
+### Changes Since version 1.2.2
 
 - Changed wunderground communication from xml to json
 - matchstring has to be full qualified for json implementation of plugin (in xml implementation the matchstring could be minimalistic) For details, see example item.yaml at the end of this document
@@ -16,12 +28,12 @@ Support is provided trough the support thread within the smarthomeNG forum: [Sma
 - Supports forecast information for multiple days
 
 
-## Changes Since version 1.2.1
+### Changes Since version 1.2.1
 
 - Added attribute **`wug_datatype`** to be able to filter out wrong data sent by wunderground.
 
 
-# Requirements
+### Requirements
 
 An api key from wunderground is needed. It can be obtained free of charge from ```https://www.wunderground.com/weather/api/d/pricing.html```.
 
@@ -29,9 +41,9 @@ The api key which is available free of charge allows up to 500 calls a day. Keep
 
 
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
 Use the plugin configuration to configure the wunderground plugin. 
 
@@ -65,10 +77,10 @@ weather_somewhere:
     # cycle: 600
 ```
 
-### apikey
+#### apikey
 Enter you registered wunderground API key
 
-### language
+#### language
 Defines the language for the forcast data. (en: English, de: German, fr: French)
 
 If you need another language, lookup a complete list of language codes on www.wunderground.com
@@ -77,7 +89,7 @@ If you need another language, lookup a complete list of language codes on www.wu
 For a complete list, consult www.wunderground.com
 
 
-### location
+#### location
 The location for which you want weather information. 
 Examples (from wunderground.com):
 
@@ -94,7 +106,7 @@ autoip.json?geo_ip=38.102.136.138     specific IP address location
 
 To find a location string that works for you, you can look at your local waether on wunderground.com and use the location string you see on that page.
 
-### item_subtree
+#### item_subtree
 
 **```item_subtree```** defines the part of the item-tree which the wunderground plugin searches during data updates for the **```wug_matchstring```** attribute. 
 
@@ -104,21 +116,21 @@ If you are going to configure multiple instances of the plugin to get the weathe
 
 The subtrees defined by **`item_subtree`** for the different instances must not intersect!
 
-### instance
+#### instance
 Name of the plugin instance (SmartPlugin attribute). This is important if you define multiple weather locations using multiple instances of the wunderground plugin.
 
-### cycle
+#### cycle
 
 This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 600 seconds). As a standard, the plugin updates the weather data every 10 minutes. This ensures that the maximum of 500 requests for the free-of-charge- account are not maxed out, even if you use wunderground weather for two locations and/or smartVISU.
 
-## items configuration
+### items configuration
 There are two item-attributes in items.yaml/items.conf that are specific to the wunderground plugin. These parameters beginn with **`wug_`**.
 
 ### wug_matchstring
 
 **`wug_matchstring`** contains a matchstring for parsing the data sent by wunderground. The commonly uesd matchstring are defined in the examples below.
 
-### wug_datatype
+#### wug_datatype
 **`wug_datatype`** is used to filter out wrong data that may be sent by a weatherstation from time to time. Those wrong values are filtered and not written to the item. This attribute can have the values **`positive`** and **`percent`**.
 
 - **`positive`** filters out all values less than 0. 
@@ -126,11 +138,11 @@ There are two item-attributes in items.yaml/items.conf that are specific to the 
  
 The following attributes can be used. You can define additional attributes. To do so, you have to lookup the matching wunderground matchstring on www.wunderground.com.
 
-## value
+### value
 The items can have a default value, set by using the ```value``` attribute. This attribute is not plugin specific. The default values are used, if the weather station you selected does not send data for the selected matchstring. The following example defines default values for items, which are not supported by all weather stations.
 
 
-## Example: items.yaml
+### Example: items.yaml
 Example configuration of an item-subtree for the wunderground plugin in yaml-format:
 
 ```YAML
@@ -197,10 +209,8 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
             wug_datatype: positive
 
         luftdruck_trend:
-            type: num
-            value: -9999
+            type: str
             wug_matchstring: current_observation/pressure_trend
-            wug_datatype: positive
 
         sichtweite:
             type: num
@@ -265,8 +275,26 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
             niederschlag:
                 type: num
                 value: -9999
-                wug_matchstring: forecast/txt_forecast/forecastday/0/pop
+                wug_matchstring: forecast/simpleforecast/forecastday/0/pop
                 wug_datatype: percent
+
+            niederschlag_ganzertag_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/0/qpf_allday/mm
+                wug_datatype: positive
+
+            niederschlag_tag_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/0/qpf_day/mm
+                wug_datatype: positive
+
+            niederschlag_nacht_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/0/qpf_night/mm
+                wug_datatype: positive
 
             verhaeltnisse:
                 type: str
@@ -321,8 +349,26 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
             niederschlag:
                 type: num
                 value: -9999
-                wug_matchstring: forecast/txt_forecast/forecastday/1/pop
+                wug_matchstring: forecast/simpleforecast/forecastday/1/pop
                 wug_datatype: percent
+
+            niederschlag_ganzertag_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/1/qpf_allday/mm
+                wug_datatype: positive
+
+            niederschlag_tag_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/1/qpf_day/mm
+                wug_datatype: positive
+
+            niederschlag_nacht_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/1/qpf_night/mm
+                wug_datatype: positive
 
             verhaeltnisse:
                 type: str
@@ -377,8 +423,26 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
             niederschlag:
                 type: num
                 value: -9999
-                wug_matchstring: forecast/txt_forecast/forecastday/2/pop
+                wug_matchstring: forecast/simpleforecast/forecastday/2/pop
                 wug_datatype: percent
+
+            niederschlag_ganzertag_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/2/qpf_allday/mm
+                wug_datatype: positive
+
+            niederschlag_tag_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/2/qpf_day/mm
+                wug_datatype: positive
+
+            niederschlag_nacht_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/2/qpf_night/mm
+                wug_datatype: positive
 
             verhaeltnisse:
                 type: str
@@ -436,8 +500,26 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
             niederschlag:
                 type: num
                 value: -9999
-                wug_matchstring: forecast/txt_forecast/forecastday/3/pop
+                wug_matchstring: forecast/simpleforecast/forecastday/3/pop
                 wug_datatype: percent
+
+            niederschlag_ganzertag_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/3/qpf_allday/mm
+                wug_datatype: positive
+
+            niederschlag_tag_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/3/qpf_day/mm
+                wug_datatype: positive
+
+            niederschlag_nacht_mm:
+                type: num
+                value: -9999
+                wug_matchstring: forecast/simpleforecast/forecastday/3/qpf_night/mm
+                wug_datatype: positive
 
             verhaeltnisse:
                 type: str
@@ -475,7 +557,7 @@ Example configuration of an item-subtree for the wunderground plugin in yaml-for
 
 ```
 
-## Example: items.conf
+### Example: items.conf
 Example configuration of an item-subtree for the wunderground plugin in the old conf-format:
 
 ```
@@ -539,10 +621,8 @@ Example configuration of an item-subtree for the wunderground plugin in the old 
         wug_datatype = positive
 
     [[luftdruck_trend]]
-        type = num
-        value = -9999
+        type = str
         wug_matchstring = current_observation/pressure_trend
-        wug_datatype = positive
 
     [[sichtweite]]
         type = num
@@ -607,8 +687,26 @@ Example configuration of an item-subtree for the wunderground plugin in the old 
         [[[niederschlag]]]
             type = num
             value = -9999
-            wug_matchstring = forecast/txt_forecast/forecastday/0/pop
+            wug_matchstring = forecast/simpleforecast/forecastday/0/pop
             wug_datatype = percent
+
+        [[[niederschlag_ganzertag_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/0/qpf_allday/mm
+            wug_datatype = positive
+
+        [[[niederschlag_tag_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/0/qpf_day/mm
+            wug_datatype = positive
+
+        [[[niederschlag_nacht_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/0/qpf_night/mm
+            wug_datatype = positive
 
         [[[verhaeltnisse]]]
             type = str
@@ -663,8 +761,26 @@ Example configuration of an item-subtree for the wunderground plugin in the old 
         [[[niederschlag]]]
             type = num
             value = -9999
-            wug_matchstring = forecast/txt_forecast/forecastday/1/pop
+            wug_matchstring = forecast/simpleforecast/forecastday/1/pop
             wug_datatype = percent
+
+        [[[niederschlag_ganzertag_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/1/qpf_allday/mm
+            wug_datatype = positive
+
+        [[[niederschlag_tag_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/1/qpf_day/mm
+            wug_datatype = positive
+
+        [[[niederschlag_nacht_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/1/qpf_night/mm
+            wug_datatype = positive
 
         [[[verhaeltnisse]]]
             type = str
@@ -719,8 +835,26 @@ Example configuration of an item-subtree for the wunderground plugin in the old 
         [[[niederschlag]]]
             type = num
             value = -9999
-            wug_matchstring = forecast/txt_forecast/forecastday/2/pop
+            wug_matchstring = forecast/simpleforecast/forecastday/2/pop
             wug_datatype = percent
+
+        [[[niederschlag_ganzertag_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/2/qpf_allday/mm
+            wug_datatype = positive
+
+        [[[niederschlag_tag_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/2/qpf_day/mm
+            wug_datatype = positive
+
+        [[[niederschlag_nacht_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/2/qpf_night/mm
+            wug_datatype = positive
 
         [[[verhaeltnisse]]]
             type = str
@@ -778,8 +912,26 @@ Example configuration of an item-subtree for the wunderground plugin in the old 
         [[[niederschlag]]]
             type = num
             value = -9999
-            wug_matchstring = forecast/txt_forecast/forecastday/3/pop
+            wug_matchstring = forecast/simpleforecast/forecastday/3/pop
             wug_datatype = percent
+
+        [[[niederschlag_ganzertag_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/3/qpf_allday/mm
+            wug_datatype = positive
+
+        [[[niederschlag_tag_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/3/qpf_day/mm
+            wug_datatype = positive
+
+        [[[niederschlag_nacht_mm]]]
+            type = num
+            value = -9999
+            wug_matchstring = forecast/simpleforecast/forecastday/3/qpf_night/mm
+            wug_datatype = positive
 
         [[[verhaeltnisse]]]
             type = str
@@ -817,11 +969,11 @@ Example configuration of an item-subtree for the wunderground plugin in the old 
 
 ```
 
-## logic.yaml
+### logic.yaml
 
 No logic configuration implemented.
 
-# Methods / Functions
+## Methods / Functions
 
 No methods or functions are implemented.
 

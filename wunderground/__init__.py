@@ -23,6 +23,13 @@
 #########################################################################
 
 
+# TO DO:
+#
+# - Windrichtung: Wunderground liefert
+#   - Nordwest statt NW
+#   - Nord-Nordost statt NNO
+#   - Nord-Nordwest statt NNW
+
 import logging
 
 import json
@@ -39,7 +46,7 @@ class Wunderground(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION='1.2.4'
+    PLUGIN_VERSION='1.2.5'
 
 
     def __init__(self, sh, apikey='', language='de', location='', cycle='600', item_subtree='', log_start='False'):
@@ -167,16 +174,19 @@ class Wunderground(SmartPlugin):
         if item.type() != 'num':
             return val
 
-        if val in ['N/A', 'NA', '-']:
+        if val in ['N/A', 'NA', '-1']:
             return -1
 
         dt=item.conf.get('wug_datatype', '').lower()
         oval = val
         # number has to be a percentage value
         if dt == 'percent':
-            if val[-1:] == '%':
-                val = val[:-1]
-
+            try:
+                if val[-1:] == '%':
+                    val = val[:-1]
+            except:
+                pass
+                
             if self.is_float(val):
                 fval = float(val)
                 if (fval <0) or (fval>100):
