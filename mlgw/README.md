@@ -1,31 +1,33 @@
-# Bang & Olufsen Masterlink Gateway #
+# Bang & Olufsen Masterlink Gateway 
 
-Version 1.1.1
+## Changelog
+
+### Version 1.1.1
 
 This plugin can send commands to all Bang & Olufsen audio- and video systems which are connected to a Masterlink Gateway. Supported commands are the commands, a B&O remote can produce.
 
 This plugin can receive telegrams, which are send by an B&O audio- or video system. These commands are the **LIGHT** and **CONTROL** commands, which originate from a B&O remote control (e.g. Beo4).
 
-# Changes Since version 0.5
+### Changes Since version 0.5
 
 - Changed to SmartPlugin for smarthomeNG
 
 
-# Changes Since version 0.4 
+### Changes Since version 0.4 
 
 - handling of listening for SOURCE STATUS command implemented
 - handling of listening for PICT&SND STATUS commands implemented
 - mlns in item.conf can now be specified by their names (as defined in plugin.conf) or by their number (as before)
 
 
-# Changes Since version 0.3 
+### Changes Since version 0.3 
 
 - listening vor any LIGHT or CONTROL command implemented
 - handling of listening for CONTROL Cinema-Off command for BeoSystem 3 documented
 - handling of listening for CONTROL commands corrected
 
 
-# Requirements
+## Requirements
 
 This plugin need a Bang & Olufsen Masterlink Gateway and can connect to it via TCPIP. Connecting via RS232 are not supported.
 
@@ -35,11 +37,11 @@ This plugin need a Bang & Olufsen Masterlink Gateway and can connect to it via T
 * B&O Beolink Gateway with firmware v1.1.0 or later
 
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
-<pre>
+```
 [mlgw]
     class_name = mlgw
     class_path = plugins.mlgw
@@ -50,7 +52,7 @@ This plugin need a Bang & Olufsen Masterlink Gateway and can connect to it via T
 #    rooms = ['living', 'kitchen']
 #    Mlns = []
 #    log_mlgwtelegrams = 0
-</pre>
+```
 
 This plugins is looking for a masterlink gateway. By default it tries to connect to the host 'mlgw.local' on port 9000. You could change this in your plugin.conf.
 
@@ -67,11 +69,11 @@ With **log_mlgwtelegrams** you can control if decoded mlgw telegrams should be l
 	- 4 send and received telegrams are logged, including keep alive traffic
 
 
-## items.conf
+### items.conf
 
 The following attributes are used to **send commands** to a B&O device:
 
-### mlgw_send
+#### mlgw_send
 **mlgw_send** has to be specified to send commands to a B&O device. To send a b&o command (like a beo4 key-press), you have to set **mlgw_send** = *cmd*. Alternatively you could set **mlgw_send** = *ch*. In this case, you send a program/channel number to the B&O device.
 
 When setting **mlgw_send** = *cmd*, you have two options for the datatype. You could set **type** = *str*. In this case the name of the command has to be passed to the item (e.g. 'DVD'). For the list of supported commands look at the description of the attribute **mlgw_cmd**.
@@ -82,7 +84,7 @@ When setting **mlgw_send** = *ch*, you have to define the datatype as numeric (*
  
 **enforce_updates** = *true* has to be set in conjunction with **mlgw_send**. Otherwise the command will be send only the first time.
 
-### mlgw_cmd
+#### mlgw_cmd
 **mlgw_cmd** has to be specified, if you set **mlgw_send** = *cmd* and define the item's datatype as *bool*. In conjunction with **mlgw_send**, the attribute **mlgw_cmd** specifies the command to send (e.g.: **mlgw_cmd** = *'DVD'*). 
 
 The following commands are supported in conjunction with **mlgw_send** at the moment:
@@ -110,24 +112,24 @@ The following commands are supported in conjunction with **mlgw_send** at the mo
       'Light'
  
 
-### mlgw_mln
+#### mlgw_mln
 **mlgw_mln** specifies the destination (B&O device) to which the command is being sent. The *Masterlink Node* (MLN) numbers of the B&O devices have been specified in the Masterlink Gateway configuration. You can specify the numeric value (as defined in the masterlink gateway) or for better readability, you can specify the corresponding string (as defined in *mlns = []* in plugin.conf)
 
 ---
 
 The following attributes are used to **receive triggers** from a B&O device. They can be used to define triggers to use within smarthome.py:
 
-### mlgw_listen
+#### mlgw_listen
 **mlgw_listen** has to be specified to listen for command telegrams from a B&O device. You have to specify *LIGHT* or *CONTROL* to listen for the corresponding command set. You can listen for a specific command or listen for any command
 
 If you want to listen for a specific command, the command to listen for has to be specified in **mlgw_cmd** and the **type** of the item has to be **bool**. The item is set to true, when the corresponding command is received. Remember to set **enforce_updates** to **true** to ensure correct handling of multiple occurrences of the same command.
 
 If you want to listen for any command, the **type** of the item has to be **str** and **mlgw_cmd** has not to be specified. In this case, the name of the command (e.g.: 'STEP_UP'*) is returned in the item.
 
-### mlgw_room
+#### mlgw_room
 **mlgw_room** specifies the room (the B&O device is in) from which the command originated. The room numbers of the B&O devices have been specified in the Masterlink Gateway configuration. You can specify the numeric value (as defined in the masterlink gateway) or for better readability, you can specify the corresponding string (as defined in *rooms = []* in plugin.conf) 
 
-### mlgw_cmd
+#### mlgw_cmd
 **mlgw_cmd** has to be specified, if you define **mlgw_listen**. In conjunction with **mlgw_listen**, the attribute **mlgw_cmd** specifies the command from a B&O remote control to listen for (e.g.: **mlgw_cmd** = *'STEP_UP'*). 
 
 The following commands are supported in conjunction with **mlgw_listen** at the moment:
@@ -146,11 +148,11 @@ The following commands are supported in conjunction with **mlgw_listen** at the 
       'SELECT', 'Cursor_Up', 'Cursor_Down', 'Cursor_Left', 'Cursor_Right'
 
 
-### Example
+#### Example
 
 Please provide an item configuration with every attribute and usefull settings.
 
-<pre>
+```
 # items/my.conf
         
     [Someroom]
@@ -197,6 +199,7 @@ Please provide an item configuration with every attribute and usefull settings.
             mlgw_listen = control
             mlgw_room = 6
             mlgw_cmd = 'Digit-0'
-</pre>
+```
+
 The attribute **name** has not to be specified. It serves in this example as a remark only.
 

@@ -9,6 +9,7 @@ This plugin needs an OpenEnergyMonitor account. This can be on [emoncms.org](htt
 ## Configuration
 
 ### plugin.conf
+
 ```
 [OpenEnergyMonitor]
    class_name = OpenEnergyMonitor

@@ -33,7 +33,7 @@ Use the plugin configuration to configure the logs.
     filepattern = yearly_log-{name}-{year:04}.log
 ```
 
-```
+```yaml
 mylogname1:
     class_name: OperationLog
     class_path: plugins.operationlog
@@ -78,7 +78,7 @@ Configure an item to be logged as follows:
     #   olog_level = INFO
 ```
 
-```
+```yaml
 foo:
     name: Foo
 
@@ -158,8 +158,7 @@ The code is replaced by the return value of the \<python code> for the logtext. 
         olog_level = info
 ```
 
-```
-#yaml
+```yaml
 foo:
     name: Foo
 
@@ -219,7 +218,7 @@ Configure a logic to be logged as follows:
     #olog_level = INFO
 ```
 
-```
+```yaml
 #logics.yaml
 some_logic:
     filename: script.py
@@ -253,7 +252,7 @@ The code is replaced by the return value of the \<python code> for the logtext. 
 
 ### Functions
 
-```
+```python
 sh.mylogname1('<level_keyword>', msg)
 ```
 
@@ -262,20 +261,16 @@ Logs the message in `msg` parameter with the given log level specified in the `<
 
 Using the loglevel keywords `INFO`, `WARNING` and `ERROR` (upper or lower case) will cause the smartVISU plugin "status.log" to mark the entries with the colors green, yellow and red respectively. Alternative formulation causing a red color are `EXCEPTION` and `CRITICAL`. Using other loglevel keyword will result in log entry without a color mark.
 
-```
+```python
 sh.mylogname1(msg)
 ```
 
 Logs the message in the `msg` parameter with the default loglevel `INFO`.
 
-```
+```python
 data = sh.mylogname1()
 ```
 
 will return a deque object containing the log with the last `maxlen` entries.
-
-
-
-
 
 This plugin is inspired from the plugins MemLog and AutoBlind, reusing some of their sourcecode.

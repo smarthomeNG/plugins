@@ -4,9 +4,10 @@ Version 0.1
 
 ## Requirements
 This plugin requires lib PyMVGLive. You can install this lib with:
-<pre>
+
+```
 sudo pip3 install PyMVGLive --upgrade
-</pre>
+```
 
 This plugin provides functionality to query the data of www.mvg-live.de via the python package PyMVGLive.
 Take care to not run it too often. My example below is manually triggered by a select action in the
@@ -17,22 +18,24 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 ## Configuration
 
 ### plugin.conf (deprecated) / plugin.yaml
-<pre>
+
+```
 [mvg_live]
     class_name = MVG_Live
     class_path = plugins.mvg_live
-</pre>
+```
 
-<pre>
+```yaml
 mvg_live:
     class_name: MVG_Live
     class_path: plugins.mvg_live
-</pre>
+```
 
 ### items.conf (deprecated) / items.yaml
 
 Currently, no pre defined items exist, the example below needs these items:
-<pre>
+
+```
 [travel_info]
 
      [[mvg_station]]
@@ -52,9 +55,9 @@ Currently, no pre defined items exist, the example below needs these items:
                 type = bool
                 visu_acl = rw
                 enforce_updates = true
-</pre>
+```
 
-<pre>
+```yaml
 travel_info:
 
     mvg_station:
@@ -73,7 +76,7 @@ travel_info:
                 type: bool
                 visu_acl: rw
                 enforce_updates: 'true'
-</pre>
+```
 
 ## Functions
 
@@ -83,19 +86,19 @@ Returns information about the departures in a specific station. See www.mvg-live
 ## Logics
 
 ### logics.conf / yaml
-<pre>
+```
 [MVGWatch]
     filename = mvg.py
     watch_items = travel_info.mvg_station.search
-</pre>
+```
 
-<pre>
+```yaml
 MVGWatch:
     filename: mvg.py
     watch_item:
       - travel_info.mvg_station.search
       - travel_info.mvg_station.search.refresh
-</pre>
+```
 
 ### mvg.py
 

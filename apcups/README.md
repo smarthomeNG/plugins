@@ -15,7 +15,7 @@ Should work on all APC UPS devices. Tested only on a "smartUPS".
 
 Please provide a plugin.yaml snippet for your plugin with ever option your plugin supports. Optional attributes should be commented out.
 
-```
+```yaml
 ApcUps:
     class_name: APCUPS
     class_path: plugins.apcups
