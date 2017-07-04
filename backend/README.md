@@ -20,13 +20,15 @@ Support is provided trough the support thread within the smarthomeNG forum:
 [knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-f%C3%BCr-das-backend-plugin](https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin)
 
 ## Requirements
+
 This plugin is running under Python >= 3.4 as well as the libs cherrypy and jinja2. You can install them with:
-<pre>
+```
 (sudo apt-get install python-cherrypy)
 sudo pip3 install cherrypy
 (sudo apt-get install python-jinja2)
 sudo pip3 install jinja2
-</pre>
+```
+
 And please pay attention that the libs are installed for Python3 and not an older Python 2.7 that is probably installed on your system.
 
 The log level filter in the log file view will only work with "%(asctime)s %(levelname)-8s" in the beginning of the configured format! Dateformat needs to be datefmt: '%Y-%m-%d %H:%M:%S'
@@ -34,12 +36,12 @@ The log level filter in the log file view will only work with "%(asctime)s %(lev
 ### Running this plugin under Python 3.2
 If you really need to run this plugin under Python 3.2 you may not use the newest version of all packages. The packages **Jinja2** and **MarkupSafe** have dropped support for Python 3.2. Make sure to install the following older versions into your Phython3.2 environment, as newer versions are not compatible with Python 3.2 any more:
 
-<pre>
-- Jinja2	v2.6
+```
+- Jinja2	    v2.6
 - MarkupSafe	v0.15
-</pre>
+```
 
-.
+
 
 To support visualization, the visu_websocket plugin has to be used. It has to be PLUGIN_VERSION >= "1.1.2".
 
@@ -47,7 +49,8 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 ## Configuration
 
 ### plugin.conf (deprecated) / plugin.yaml
-<pre>
+
+```
 [BackendServer]
 	class_name = BackendServer
 	class_path = plugins.backend
@@ -61,9 +64,9 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#language = en
 	#developer_mode = on
 	#pypi_timeout = 5
-</pre>
+```
 
-<pre>
+```
 BackendServer:
     class_name: BackendServer
     class_path: plugins.backend
@@ -77,7 +80,7 @@ BackendServer:
     # language = en
     # developer_mode = on
     # pypi_timeout = 5
-</pre>
+```
 
 #### ip
 IP address to start the backend server. Usually it doesnot need to be configured.
@@ -96,19 +99,25 @@ By default, the backend server allows updates to the running smarthomeNG instanc
 Number of worker threads to start by cherrypy (default 8, which may be too much for slow CPUs)
 
 #### user (optional)
+
 The user for basic authentication. If left out, the user name is set as "admin"
 
 #### password (optional)
+
 The plaintext password for basic authentication. If you want to store your password as hash, use 'hashed_password' instead. If both "password" and "hashed_password" are left out, basic authentication is disabled.
 
 #### hashed_password (optional)
+
 The password for basic authentication as hash value. Can be used instead of "password" if you do not want a plaintext password in your config file. If both "password" and "hashed_password" are left out, basic authentication is disabled. Currently hashed_password is the SHA-512 hash value of the password. To create the hash for your password, you can use function "Create password hash" on page "Services" in the backend.
 
 #### language (optional)
-You can specify a language to use for the plugin. Besides the standard language (german) which is used, if this parameter isn't set, you can specify english (for the time being). The language is specified by  **`en`**
+
+You can specify a language to use for the plugin. Besides the standard language (german) which is used, if this parameter isn't set, you can specify english (for the time being). The language is specified by  **``en``**
 
 #### developer_mode (optional)
-You may specify develper_mode = on, if you are developiing within the backend plugin. At the moment, the only thing that changes is an additional button **``relaod translation``** on the services page
+
+You may specify develper_mode = on, if you are developiing within the backend plugin. At the moment, the only thing that changes is an additional button **``reload translation``** on the services page
 
 #### pypi_timeout (optional)
+
 Timeout for PyPI accessibility check (seconds). PyPI is queried on page "Systeminfo" to compare installed python module versions with current versions if accessible. If you receive the message "PyPI inaccessible" on systems with internet access you may increase the value. On systems where PyPI can not be reached (no/restricted internet access) you may set the timeout to 0 which disables the PyPI queries.

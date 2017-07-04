@@ -15,13 +15,15 @@ You need to generate a key from your a) device password, printed on a sticker an
 
 
 ## Installation
-<pre>
+
+```
 cd smarthome.py directory
 cd plugins
 git clone https://github.com/rthill/buderus.git
-</pre>
+```
 
 ### plugin.conf
+
 ```
 [buderus]
 class_name = Buderus

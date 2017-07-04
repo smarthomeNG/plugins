@@ -42,17 +42,17 @@
 
  Activate plugin via plugin.conf (deprecated) or plugin.yaml:
 
-<pre>
+```
 [dashbutton]
     class_name = Dashbutton
     class_path = plugins.dashbutton
-</pre>
+```
 
-<pre>
+```
 dashbutton:
     class_name: Dashbutton
     class_path: plugins.dashbutton
-</pre>
+```
 
 ### Item attributes
 
@@ -80,36 +80,36 @@ dashbutton:
  
  **'flip' mode**
 
- <pre>
- [Room]
-    [[Dining_Room]]
-        name = "Light DiningRoom"
-        type = bool
-        knx_dpt = 1
-        knx_send = 1/1/1
-        knx_listen = 1/1/1
-        dashbutton_mac = cc:66:de:dd:55:11 | xx:xx:xx:xx:xx:01 | xx:xx:xx:xx:xx:02
-        dashbutton_mode = 'flip'
- </pre>
+```
+[Room]
+   [[Dining_Room]]
+       name = "Light DiningRoom"
+       type = bool
+       knx_dpt = 1
+       knx_send = 1/1/1
+       knx_listen = 1/1/1
+       dashbutton_mac = cc:66:de:dd:55:11 | xx:xx:xx:xx:xx:01 | xx:xx:xx:xx:xx:02
+       dashbutton_mode = 'flip'
+```
 
- <pre>
- Room:
+```
+Room:
 
-    Dining_Room:
-        name: Light DiningRoom
-        type: bool
-        knx_dpt: 1
-        knx_send: 1/1/1
-        knx_listen: 1/1/1
-        dashbutton_mac:
-          - cc:66:de:dd:55:11
-          - xx:xx:xx:xx:xx:01
-          - xx:xx:xx:xx:xx:02
-        dashbutton_mode: flip
- </pre>
+   Dining_Room:
+       name: Light DiningRoom
+       type: bool
+       knx_dpt: 1
+       knx_send: 1/1/1
+       knx_listen: 1/1/1
+       dashbutton_mac:
+         - cc:66:de:dd:55:11
+         - xx:xx:xx:xx:xx:01
+         - xx:xx:xx:xx:xx:02
+       dashbutton_mode: flip
+```
             
   **'value' mode**
-<pre>
+```
     [Room]
         [[Dining_Room]]
             name = "Light Dimm DiningRoom"
@@ -132,9 +132,9 @@ dashbutton:
             dashbutton_mode = 'value'
             dashbutton_value = 30|10|20|0
             dashbutton_reset = 240
-</pre>
+```
 
-<pre>
+```
 Room:
 
     Dining_Room:
@@ -163,4 +163,4 @@ Room:
           - '20'
           - '0'
         dashbutton_reset: 240
-</pre>
+```
