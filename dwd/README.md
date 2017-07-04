@@ -10,21 +10,21 @@ You could get it, free of charge, [here](http://kunden.dwd.de/gdsRegistration/gd
 ## Configuration
 
 ### plugin.conf (deprecated) / plugin.yaml
-<pre>
+```
 [dwd]
    class_name = DWD
    class_path = plugins.dwd
    username = ****
    password = ****
-</pre>
+```
 
-<pre>
+```
 dwd:
     class_name: DWD
     class_path: plugins.dwd
     username: '****'
     password: '****'
-</pre>
+```
 
 You only need to specify your username and password.
 

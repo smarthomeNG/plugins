@@ -1,18 +1,14 @@
 # GPIO
 
-## Changelog
-1.0 
-- initial release
-
-1.0.1
-- Changed event detection from constant polling to GPIO.add_event_detect
 
 ## Requirements
 
 RPi.GPIO Python module
 
 Install it with:
+```
 sudo pip3 install RPi.GPIO --upgrade
+```
 
 ## Supported Hardware
 
@@ -22,19 +18,19 @@ Raspberry Pi all versions (tested on Raspberry Pi 1 revision 2)
 
 ### plugin.conf (deprecated) / plugin.yaml
 
-<pre>
+```
 [GPIO]
    class_name = Raspi_GPIO
    class_path = plugins.gpio
 #   mode = BOARD
-</pre>
+```
 
-<pre>
+```yaml
 GPIO:
    class_name: Raspi_GPIO
    class_path: plugins.gpio
 #   mode: BOARD
-</pre>
+```
 
 #### `mode`
 Define the GPIO PIN Mode that you use to declare the pin numbers. If not set, default is BOARD
@@ -55,7 +51,7 @@ Define the pin number of your Raspberry Pi that should be written, i.e. where a 
 
 #### Example
 
-<pre>
+```
 # .conf
 [item1]
     type = bool
@@ -65,9 +61,9 @@ Define the pin number of your Raspberry Pi that should be written, i.e. where a 
     type = bool
     visu_acl = rw
     gpio_out = 13
-</pre>
+```
 
-<pre>
+```yaml
 # .yaml
 item1:
     type: bool
@@ -77,4 +73,11 @@ item2:
     type: bool
     visu_acl: rw
     gpio_out: 13
-</pre>
+```
+
+## Changelog
+1.0 
+- initial release
+
+1.0.1
+- Changed event detection from constant polling to GPIO.add_event_detect

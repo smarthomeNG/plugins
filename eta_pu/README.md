@@ -2,14 +2,14 @@
 
 ## Requirements
 
-### Supported Hardware
+## Supported Hardware
 
 * ETA Pellet Unit PU (http://www.eta.at) with remote access enabled (there are 3 modes available: none, readonly, read/write)
 
 ## Configuration
 ### plugin.conf (deprecated) / plugin.yaml
 
-<pre>
+```
 [eta_pu]
     class_name = ETA_PU
     class_path = plugins.eta_pu
@@ -17,9 +17,9 @@
     port = 8080
     setpath = '/user/vars'
     setname = 'smarthome'
-</pre>
+```
 
-<pre>
+```yaml
 eta_pu:
     class_name: ETA_PU
     class_path: plugins.eta_pu
@@ -27,7 +27,7 @@ eta_pu:
     port: 8080
     setpath: /user/vars
     setname: smarthome
-</pre>
+```
 
 Description of the attributes:
 
@@ -41,14 +41,17 @@ Description of the attributes:
 The ETA pellet unit organises the data with so calles "uri" (unified ressource identifier). Every uri is readable, some are also writable.
 Every uri represents a CAN-bus-id of all internal parts of the pellet unit.
 The ETA pellet unit replies to an uri-request e.g. with the following answer:
-<pre>
+
+```
 <value uri="/user/var/112/10021/0/0/12162" strValue="26" unit="°C" decPlaces="0" scaleFactor="10" advTextOffset="0">262</value>
-</pre>
+```
 
 The plugin can read every part of the answer into an extra subitem depending of the requested type. There is an additional type "calc", that calculates the reply with:
-<pre>
+
+```
 data = value * scale_factor + adv_text_offset
-</pre>
+```
+
 For writing operations, the "calc" type must be used. The plugin calculates the correct value to write down. Not every uri is writable. Generally, every data, changeable by the ETA touch display (user mode), can be written with the display.
 
 The following item entries are available for reading and writing uri data:
@@ -63,8 +66,10 @@ There is a second item type available for reading error messages from the pellet
 
 
 #### Example
+
 The __visu__ elements are optional.
-<pre>
+
+```
 # items/eta_pu.conf (deprecated)
 [eta_unit]
     [[boiler]]
@@ -93,9 +98,9 @@ The __visu__ elements are optional.
     [[error]]
         eta_pu_error = yes
         type = str
-</pre>
+```
 
-<pre>
+```yaml
 # items/eta_pu.yaml
 eta_unit:
 
@@ -134,7 +139,7 @@ eta_unit:
     error:
         eta_pu_error: 'yes'
         type: str
-</pre>
+```
 
 ### logic.conf
 

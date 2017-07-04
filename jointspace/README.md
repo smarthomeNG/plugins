@@ -11,13 +11,13 @@ Should work with all Philips TV sets > 2010 (http://jointspace.sourceforge.net)
 
 ### plugin.conf
 
-<pre>
+```
 [jointspace]
     class_name = Jointspace
     class_path = plugins.jointspace
     host = &lt;ip&gt;
 #   port = &lt;port&gt;
-</pre>
+```
 
 Description of the attributes:
 
@@ -26,7 +26,7 @@ Description of the attributes:
 
 ### items.conf example
 
-<pre>
+```
 [TV]
 	type = bool
 	visu_acl = rw
@@ -90,15 +90,14 @@ Description of the attributes:
 			jointspace_cmd = channel 675
 		[...] u.s.w.
 
-</pre>
+```
 
 ### pages example
+
+```html
 {{ multimedia.station('TV.ARD', 'TV.Channels.ARD','pics/station/tv/das-erste_s.png', 1, 'midi') }}
 {{ multimedia.station('TV.ZDF', 'TV.Channels.ZDF','pics/station/tv/zdf_s.png', 1, 'midi') }}
 
 {{ basic.button('MuteTV', 'Tv.Keys.Mute', ' Mute ', 'alert', '', 'midi') }}
 {{ basic.button('VolDownTV', 'TV.Keys.VolumeDown', ' Leiser ', 'minus', '', 'midi') }}
-
-
-<pre>
-</pre>
+```

@@ -6,15 +6,18 @@ Thanks to SgtSeppel for the initial plugin which can be found here: https://gith
 I'd choose to implement UDP over the initial implementation because I run my InfluxData server in the cloud over VPN. This setup has some latency and the original plugin blocked my whole smarthome.py including logics not executed.
 
 ## Installation
-<pre>
+
+```
 cd smarthome.py directory
 cd plugins
 git clone https://github.com/rthill/influxdata.git
-</pre>
+```
 
 ## Configuration
+
 ### /etc/influxdb/influxdb.conf (deprecated) / influxdb.yaml
-<pre>
+
+```
 ###
 ### [[udp]]
 ###
@@ -35,9 +38,9 @@ git clone https://github.com/rthill/influxdata.git
   # batch-pending = 5 # number of batches that may be pending in memory
   # batch-timeout = "1s" # will flush at least this often even if we haven't hit buffer limit
   # read-buffer = 0 # UDP Read buffer size, 0 means OS default. UDP listener will fail if set above OS max.
-</pre>
+```
 
-<pre>
+```yaml
 ###
 ### udp:
 ###
@@ -53,34 +56,36 @@ udp:
     # batch-size = 1000 # will flush if this many points get buffered
     # batch-pending = 5 # number of batches that may be pending in memory
     # batch-timeout = \"1s\" # will flush at least this often even if we haven't hit buffer limit
-</pre>
+```
 
 For more information on buffers and how to setup high performance UDP listener see: https://influxdb.com/docs/v0.9/write_protocols/udp.html
 
 ### plugin.conf (deprecated) / plugin.yaml
-<pre>
+
+```
 [influxdata]
     class_name = InfluxData
     class_path = plugins.influxdata
 #   influx_host = localhost
 #   influx_port = 8089
     influx_keyword = influx
-</pre>
+```
 
-<pre>
+```yaml
 influxdata:
     class_name: InfluxData
     class_path: plugins.influxdata
     # influx_host = localhost
     # influx_port = 8089
     influx_keyword: influx
-</pre>
+```
 
 ### items.conf (deprecated) / items.yaml
+
 The configuration flag influx_keyword has a special relevance. Here you can choose which keyword the plugin should look for.
 If you do not specify anything, the default keyword "influx" will be used like in the following example of an EnOcean temperature and humidity sensor:
 
-<pre>
+```
 [sensor]
     [[gf]]
         [[[kitchen]]]
@@ -94,9 +99,9 @@ If you do not specify anything, the default keyword "influx" will be used like i
                 type = num
                 influx = true
                 enocean_rx_key = TMP
-</pre>
+```
 
-<pre>
+```yaml
 sensor:
 
     gf:
@@ -114,20 +119,24 @@ sensor:
                 type: num
                 influx: 'true'
                 enocean_rx_key: TMP
-</pre>
+```
 
 However, you can change this. Many people use the sqlite keyword to store data in a sqlite database.
+
 If you set in plugin.conf
-<pre>
+
+```
 influx_keyword = sqlite
-</pre>
-you do not have to update anything in your item configuration files. All data that is pushed to sqlite (i.e. for smartVISU) will automatically be copied to InfluxData also.
+```
+
+you do not have to update anything in your item configuration files. 
+All data that is pushed to sqlite (i.e. for smartVISU) will automatically be copied to InfluxData also.
 
 ## Check data
 
 Open influx terminal or webui and change to database 'smarthome' and run:
 
-<pre>
+```
 > select * from "sensor.gf.kitchen.temp"
 name: sensor.gf.kitchen.temp
 ----------------------------
@@ -139,4 +148,4 @@ name: sensor.gf.kitchen.hum
 ---------------------------
 time			caller	dest	source		value
 1451897887305586638	EnOcean	None	01234567	44.800000000000004
-</pre>
+```

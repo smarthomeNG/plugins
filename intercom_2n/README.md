@@ -15,7 +15,6 @@ The event listening feature should be working without any extra license.
 
 You must also add the required privileges to your user. This can be done in the web-interface of your 2N Intercom.   
 
-<p>
 
 Command       | Service      | Privileges  | License     
 -------------:|-------------:| -----------:|------------:
@@ -116,8 +115,7 @@ If the 2N device state was changed (for example an reboot), the item ```Intercom
 set to 'startup'.
 An event can have more than one sub-item, all of them will be set to the appropriate event value. 
 
-<b>Implemented events:</b>  
-<p>
+**Implemented events:**
 
 Event type |Description |Note
 ---------:|------------:|----:
@@ -148,7 +146,7 @@ the command defined in the parent item (attribute ```command_2n```) will be exec
 the value of the parent item. 
 
 Example:
-
+```
     [Intercom_2n]
 
         [[Commands]]
@@ -162,10 +160,12 @@ Example:
                     type = bool
                     command_2n = execute
                     enforce_updates = true
+```
     
 If you set the item ```Intercom_2n.Commands.system_info.execute = 1```, the item value of ```Intercom_2n.Commands.system_info```
 should be something like this:
-    
+
+```    
     {
         'success" : true,
          "result" : {
@@ -177,6 +177,7 @@ should be something like this:
          "deviceName" : "2N Helios IP Vario"
          }
     }
+```
 
 Most of the command have multiple options to set. All options are sub-items of a command. Some of them are mandatory,
 others are optional. All commands and command options are documented in the example below (and in the example item file)
@@ -185,6 +186,7 @@ and should be self-explanatory.
 
 ## Example item config
 
+```
     [Intercom_2n]
 
         [[Events]]
@@ -1542,3 +1544,4 @@ and should be self-explanatory.
                 # {
                 #    "success" : true
                 # }
+```

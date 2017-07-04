@@ -1,6 +1,6 @@
 # KOSTAL
 
-# Requirements
+## Requirements
 
 This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PICO inverters).
 
@@ -10,13 +10,13 @@ Is currently working with the following KOSTA inverter modules:
 
   * KOSTAL PIKO 7.0
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
 The plugin can be configured like this:
 
-<pre>
+```
 [KOSTAL]
    class_name = Kostal
    class_path = plugins.kostal
@@ -24,7 +24,7 @@ The plugin can be configured like this:
 #   user = pvserver
 #   passwd = pvwr
 #   cycle = 300
-</pre>
+```
 
 This plugin retrieves data from a KOSTAL inverter module of a solar energy
 plant.
@@ -38,9 +38,9 @@ defaults to the standard credentials.
 
 The cycle parameter defines the update interval and defaults to 300 seconds.
 
-## items.conf
+### items.conf
 
-### kostal
+#### kostal
 
 This attribute references the information to retrieve by the plugin. The
 following list of information can be specified:
@@ -54,12 +54,12 @@ following list of information can be specified:
   * l1_volt ... l3_volt: The current voltage of L 1, 2, 3
   * l1_watt ... l3_watt: The current watt of L 1, 2, 3
 
-### Example
+#### Example
 
 Example configuration which shows the current status and the current, total and
 daily power. Additionally it shows the volts and watts for the phases.
 
-<pre>
+```
 # items/my.conf
 [solar]
     [[status]]
@@ -92,13 +92,13 @@ daily power. Additionally it shows the volts and watts for the phases.
     [[l3w]]
         type = num
         kostal = l3_watt
-</pre>
+```
 
-## logic.conf
+### logic.conf
 
 No logic related stuff implemented.
 
-# Methods
+## Methods
 
 No methods provided currently.
 

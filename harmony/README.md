@@ -3,9 +3,8 @@
 This is the SmarthomeNG-Plugin for a Harmony Hub device.
 For support, questions and bug reports, please refer to [KNX-User-Forum](https://knx-user-forum.de/forum/supportforen/smarthome-py/1046500-harmony-hub-plugin)
 
----
 
-### Requirenments
+## Requirenments
 
 - an Harmony Hub device
 - SmarthomeNG version >= 1.3
@@ -24,6 +23,7 @@ configured Harmony Hub devices and their associated commands. Therefor you can u
 normally located under '/usr/local/smarthome/plugins/harmony'.
  
 Execute this script like this:
+
 ```
 python3 get_config.py -i HARMONY_HUB_IP
 ```

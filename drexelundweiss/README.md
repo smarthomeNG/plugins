@@ -38,7 +38,7 @@ The plugin detects the connected device type automatically:
 
 ### plugin.conf (deprecated) / plugin.yaml
 
-<pre>
+```
 [DuW]
    class_name = DuW
    class_path = plugins.drexelundweiss
@@ -48,9 +48,9 @@ The plugin detects the connected device type automatically:
 #   WP_ID = 140
 #   device = 14 # x2 plus as standard device
 #   retrylimit = 100 # number of retries to get answer right
-</pre>
+```
 
-<pre>
+```
 DuW:
     class_name: DuW
     class_path: plugins.drexelundweiss
@@ -60,7 +60,7 @@ DuW:
     # WP_ID = 140
     # device = 14 # x2 plus as standard device
     # retrylimit = 100 # number of retries to get answer right
-</pre>
+```
 
 You have to adapt the tty to your local environment and change LU_ID and WP_ID if not D&W default is used.
 Busmonitor mode will output all activity on Service Interface to smarthome.py log if started in debug mode, default is Busmonitor off.
@@ -75,7 +75,8 @@ If the value of the item is getting out of the configured register range, then t
 Values are calculated automatically regarding the register depending divisor and comma setting, e.g. DuW_LU_register = 200 will result in a item value = 18,5
 
 #### Example
-<pre>
+
+```
 #.conf
 [KWL]
     [[MODE]]
@@ -84,9 +85,9 @@ Values are calculated automatically regarding the register depending divisor and
         type = num
         DuW_LU_register = 5002
         sv_widget = {{ basic.slider('item', 'item', 0, 5, 1) }}
-</pre>
+```
 
-<pre>
+```
 # .yaml
 KWL:
 
@@ -96,7 +97,7 @@ KWL:
         type: num
         DuW_LU_register: 5002
         sv_widget: "{{ basic.slider('item', 'item', 0, 5, 1) }}"
-</pre>
+```
 
 Find a full conf file example in plugin folder
 
