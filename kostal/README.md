@@ -5,7 +5,7 @@ Version: 1.3.1.1
 This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PIKO inverters).
 Since UI-version (communication-board) 6 json-format is supported.
 
-Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/
+Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/1109697-kostal-plugin-piko-wechselrichter
 
 ## Supported Hardware
 
