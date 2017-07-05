@@ -1,31 +1,33 @@
 # UZSU
-Provides universial time switches for items.
+
+Provides universal time switches for items (German: *U*niverselle *Z*eit*s*chalt *U*hr)
 
 ## Requirements
-Calculating of sunset/sunrise in triggers, requires installation of ephem.
+
+Calculating of sunset/sunrise in triggers, requires installation of ephem (which should already be part of core)
 
 ## Configuration
 
 ### plugin.conf (deprecated) / plugin.yaml
 
-<pre>
+```
 [uzsu]
    class_name = UZSU
    class_path = plugins.uzsu
-</pre>
+```
 
-<pre>
+```yaml
 uzsu:
     class_name: UZSU
     class_path: plugins.uzsu
-</pre>
+```
 
 ### items.conf (deprecated) / items.yaml
 
 #### uzsu
 You have to specify a item with `type = dict` and with the `uzsu_item` attribute set to the path of the item which will be set by this item. The dict has to have two keys. `active` which says if the whole list of entries should be active or not and `list` which contains a list of all entries (see the Item Data Format section for more details).
 
-<pre>
+```
 # items/my.conf (deprecated)
 
 [someroom]
@@ -35,9 +37,9 @@ You have to specify a item with `type = dict` and with the `uzsu_item` attribute
             type = dict
             uzsu_item = someroom.someitem
             cache = True
-</pre>
+```
 
-<pre>
+```yaml
 # items/my.yaml
 someroom:
 
@@ -48,7 +50,7 @@ someroom:
             type: dict
             uzsu_item: someroom.someitem
             cache: 'True'
-</pre>
+```
 
 If you specify the `cache = True` as well, then you're switching entries will be there even if you restart smarthome.py.
 
@@ -70,9 +72,13 @@ Each UZSU item is of type list. Each list entry has to be a dict with specific k
 
 Activates the light every other day at 16:30 and deactivates it at 17:30 for five times:
 
-<pre>
+```python
 sh.eg.wohnen.kugellampe.uzsu({'active':True, 'list':[
 {'value':1, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '16:30'},
 {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '17:30'}
 ]})
-</pre>
+```
+
+## SmartVISU
+
+There is a widget available which gives an interface to the UZSU. The structure has changed from SmartVISU 2.8 to 2.9 slightly, please consult the corresponding forum.

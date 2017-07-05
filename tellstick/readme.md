@@ -1,31 +1,35 @@
+# Tellstick
+
 This plugin is design for TellStick and TellStick Duo RF Transmitter
 
 
-1/ how to install   
-=================
+## Requirements
 
+You need to install ``telldus-core`` and configure it (http://developer.telldus.com/wiki/TellStickInstallationSource)
 
-You must install telldus-core and configure it (http://developer.telldus.com/wiki/TellStickInstallationSource)
+After installing you need to configure your devices in ``/etc/tellstick.conf`` (http://developer.telldus.com/wiki/TellStick_conf)   
 
-After install you must configure your devices in /etc/tellstick.conf (http://developer.telldus.com/wiki/TellStick_conf)   
+## Configuration
 
-2/ how to config   
-================ 
+### plugin.conf
 
-Plugin activation `etc/plugin.conf`
+```
+[tellstick]
+    class_name = Tellstick
+    class_path = plugins.tellstick
+```
+
+### item.conf 
+
+#### ts_id
+
+id of the device in /etc/tellstick.conf
  
-        [tellstick]
-          class_name = Tellstick
-          class_path = plugins.tellstick
+#### Example :
  
- 
-Items configuration :
- 
-- ts_id : id of the device in /etc/tellstick.conf
- 
-Example :
- 
-        [kitchen]
-          [[light]]
-            type = bool
-            ts_id = 1
+``` 
+[kitchen]
+    [[light]]
+        type = bool
+        ts_id = 1
+```

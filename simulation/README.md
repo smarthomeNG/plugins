@@ -1,6 +1,7 @@
-# Simulation Plugin
+# Simulation
 
 ## Description
+
 The simulation plugin allows simulating presence in case none is at home.
 To achieve this, the plugin constantly records all configured items and
 writes changes to those (events) into a file. It is a text file where each event has one
@@ -22,7 +23,7 @@ This plugins has no requirements.
    data_file = /usr/smarthome/var/db/simulation.txt
 ```
 
-```
+```yaml
 simulation:
     class_name: Simulation
     class_path: plugins.simulation
@@ -42,6 +43,7 @@ simulation:
  and number items are supportet.
 
 #### Example
+
 ```
 [eg]
    [[flur]]
@@ -55,7 +57,7 @@ simulation:
          sim = track
 ```
 
-```
+```yaml
 eg:
 
     flur:
@@ -71,6 +73,7 @@ eg:
 ```
 
 Add to your item tree some adminstrative items:
+
 ```
 [sim]
   [[status]]
@@ -91,7 +94,7 @@ Add to your item tree some adminstrative items:
     visu_acl = ro
 ```
 
-```
+```yaml
 sim:
 
     status:
@@ -118,7 +121,7 @@ sim:
 These items are needed to control the simulation plugin. If they do not exist,
 the plugin will fail to initialize.
 
-<strong>state</strong>: is set by the plugin and can be read in order to see which state the plugin
+**state**: is set by the plugin and can be read in order to see which state the plugin
        is in. 
        
        00: Stop
@@ -130,7 +133,7 @@ the plugin will fail to initialize.
        04: Play
            The plugin plays the event file
 
-<strong>control</strong>: The control item is set by the user to 
+**control**: The control item is set by the user to 
 
        01: Stop
            Setting control to 01 will stop recording or playback
@@ -141,13 +144,13 @@ the plugin will fail to initialize.
            Setting control to 03 will start recording. If playback is running, it will
            be stopped automatically
 
-<strong>message</strong>:
+**message**:
 The message item is set by the plugin depending in the events. In case of recording
 it contains the last recorded event. In case of playback it contains the next event.
 In case of errors, it will contain an error message. Use this in a visualization
 in order to see what the plugin is doing.
 
-<strong>tank</strong>:
+**tank**:
 Thank contains the actual value of day that are stored in the events file. The value 
 will grow up to 14 and then stay constant. Put his in the visu in case you want to
 see if there are already enough events to start a playback.
@@ -155,6 +158,7 @@ see if there are already enough events to start a playback.
 ## Usage
 
 ### Record
+
 The plugin starts automatically together with smarthome.py. After initialization
 it automatically starts to record all changes to items that have the sim=track
 in the item.conf file. Item datatypes bool and num have been tested. When an
@@ -190,6 +194,7 @@ shifts the event to the next day.
 
 
 ### Control
+
 The plugin needs certain control items to exist. They can be integrated in
 smartVISU. I created a block the looks like in the following picture:
 
@@ -197,7 +202,8 @@ smartVISU. I created a block the looks like in the following picture:
 
 The code is here. Replace the item names with yours from the item.conf file. 
 The png files for the lamps are in the package. 
-```HTML
+
+```html
 <h1><img class="icon" src='{{ icon0 }}time_clock.png' />Simulation</h1>
 <div class="block">
   <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
@@ -255,7 +261,7 @@ The png files for the lamps are in the package.
 
 ## Internals
 
-<strong>Event file format</strong>
+### Event file format
 
 Each event is stored in one line in the following format:
 ```
@@ -267,7 +273,7 @@ At 00:00 the string "NextDay" is put into one line. The value of Trigger
 is the source from where the item was changed during record. 
 Day and Trigger are ignored for the time being and might be used later. 
 
-<strong>State Diagram</strong>
+### State Diagram
 
 The following state diagram shows the state changes depenging on the control item.
 The state is stored in the state item. 

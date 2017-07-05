@@ -1,10 +1,20 @@
-Roomba
-====
+# Roomba
+
 Plugin to connect to a Roomba. Read Sensors, Start/Stop.
 
-plugin.conf:
-=
-<pre>
+## Requirements
+
+Needs either Bluetooth or TCP connection
+
+## Supported Hardware
+
+Selected Roomba robo cleaners
+
+## Configuration
+
+### plugin.conf:
+
+```
 [roomba]
      class_name = Roomba
      class_path = plugins.roomba
@@ -12,16 +22,15 @@ plugin.conf:
 	 socket_type = bt #tcp or bt 
 	 socket_addr = 00:13:04:11:14:77 # MAC for Bluetooth, IP for TCP 
 	 socket_port = 1234
-</pre>
+```
 
+### item.conf:
 
-item.conf:
-=
 There are 3 attributes wich can be used with the Roomba-Plugin:
 
-* <code>roomba_cmd = xxx</code>
+* ``roomba_cmd = xxx``
 Here you can use one of the following commands (clean, dock, power_off, spot, max) and the Roomba will do it.
-You can also define a "driving scene": <code>roomba_cmd = backward | 2 | stop | 2 | clean</code>
+You can also define a "driving scene": ``roomba_cmd = backward | 2 | stop | 2 | clean``
 Integers are sleep times in this moment. The above example drives 2 seconds backward, stops for 2 seconds and begins to clean.
 There are the following commands available:
 forward (100mm/s)
@@ -30,14 +39,15 @@ spin_left
 spin_right
 stop
 
-* <code>roomba_get = xxx</code>
+* ``roomba_get = xxx``
 Use the following item.conf to see how to configure the item for your wanted sensor. 
 I think the names are self explaining.
 
-* <code>roomba_raw = [123]</code>
+* ``roomba_raw = [123]``
 To send integers to Roomba following the documentation of Roomba SCI as List!
 
-<pre>[roomba]
+```
+[roomba]
     [[command]]
         [[[clean]]]
 			enforce_updates = true
@@ -206,24 +216,26 @@ To send integers to Roomba following the documentation of Roomba SCI as List!
 			enforce_updates = true
             type = bool
             roomba_cmd = bumps_wheeldrops_wheeldrop_caster
-</pre>
+```
 
-Connection:
-=
+## Connection:
+
 There are several availabilitys to connect to Roomba Serial Port. 
 This was tested with a DIY-bluetooth-modul.
 This can be done in do-it-yourself or you can buy it i.e. "FT41 BlueRoom" from Fussel-Tronic.
 Not tested is a connection trough a wifi-rs232 adapter. 
 
-#Bluetooth:
-#install Bluetooth
-<pre>apt-get install bluez</pre>
+### Bluetooth:
+
+install Bluetooth
+```bash
+apt-get install bluez
+```
 
 Choose socket_type = 'bt' and add the Roomba Bluetooth-Mac in socket_addr = XX:XX:XX:XX:XX:XX
 
-#TCP:
+### TCP:
  !!! Not tested yet !!!
-Choose <code>socket_type = 'tcp'</code> and add the IP and Port of your Roomba-Remote in <code>socket_addr = 192.168.2.123</code> and <code>socket_port = 1234</code>
-
+Choose ``socket_type = 'tcp'`` and add the IP and Port of your Roomba-Remote in ``socket_addr = 192.168.2.123`` and ``socket_port = 1234``
 
 Good doocumentation to Roombas SCI: http://www.robotiklubi.ee/_media/kursused/roomba_sumo/failid/hacking_roomba.pdf

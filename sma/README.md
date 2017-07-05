@@ -5,7 +5,8 @@
 bluez
 
 install by
-<pre>
+
+```bash
 $ apt-get install bluez python-gobject python-dbus
 $ hcitool scan
 Scanning ...
@@ -17,7 +18,7 @@ Release
 New device (/org/bluez/3070/hci0/dev_bt_addr_underscores)
 $ bluez-test-device trusted <bt-addr> yes
 $ bluez-test-device list
-</pre>
+```
 
 ### Supported Hardware
 
@@ -32,7 +33,7 @@ Should work with other SMA inverters as well - please let me know!
 
 ### plugin.conf (deprecated) / plugin.yaml
 
-<pre>
+```
 [sma]
     class_name = SMA
     class_path = plugins.sma
@@ -40,9 +41,9 @@ Should work with other SMA inverters as well - please let me know!
 #    password = 0000
 #    update_cycle = 60
 #    allowed_timedelta = 10
-</pre>
+```
 
-<pre>
+```yaml
 sma:
     class_name: SMA
     class_path: plugins.sma
@@ -50,7 +51,7 @@ sma:
     # password = 0000
     # update_cycle = 60
     # allowed_timedelta = 10
-</pre>
+```
 
 Description of the attributes:
 
@@ -61,9 +62,9 @@ Description of the attributes:
 
 ### items.conf (deprecated) / items.yaml
 
-The item having 'sma = PLUGIN_ACTIVE' can be set to True/False in order to connect/disconnect to the inverter during night. 
+The item having ``sma = PLUGIN_ACTIVE`` can be set to True/False in order to connect/disconnect to the inverter during night. 
 
-<pre>
+```
 [Inverter]
   [[Plugin_active]]
     type = bool
@@ -122,9 +123,9 @@ The item having 'sma = PLUGIN_ACTIVE' can be set to True/False in order to conne
   [[Software_Version]]
     type = str
     sma = SW_VERSION
-</pre>
+```
 
-<pre>
+```yaml
 Inverter:
 
     Plugin_active:
@@ -202,4 +203,4 @@ Inverter:
     Software_Version:
         type: str
         sma: SW_VERSION
-</pre>
+```

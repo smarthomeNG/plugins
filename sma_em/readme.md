@@ -17,21 +17,22 @@ If demand exists, the plugin can also be extended to be used with more than one 
 ## Configuration
 
 ### plugin.conf (deprecated) / plugin.yaml
-<pre>
+
+```
 [sma_em]
     class_name = SMA_EM
     class_path = plugins.sma_em
     serial = xxxxxxxxxx
     time_sleep = 5
-</pre>
+```
 
-<pre>
+```yaml
 sma_em:
     class_name: SMA_EM
     class_path: plugins.sma_em
     serial: xxxxxxxxxx
     time_sleep: 5
-</pre>
+```
 
 #### Attributes
   * `serial`: The serial number of your energy meter
@@ -40,7 +41,8 @@ sma_em:
 ### items.conf
 
 #### Example:
-<pre>
+
+```
 # items/sma-em.conf (deprecated)
 [smaem]
     [[surplus]]
@@ -70,9 +72,9 @@ sma_em:
 	[[cosphi]]
 	    sma_em_data_type = cosphi
 	    type = num
-</pre>
+```
 
-<pre>
+```yaml
 # items/items.yaml
 smaem:
 
@@ -109,4 +111,4 @@ smaem:
     cosphi:
         sma_em_data_type: cosphi
         type: num
-</pre>
+```

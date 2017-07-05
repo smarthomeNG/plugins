@@ -1,7 +1,6 @@
 # Visualisation plugin (smartVISU support)
 
-```
- 
+``` 
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
 Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
 
@@ -20,42 +19,45 @@ The plugins **```visu_websocket```** and **```visu_smartvisu```** replace the ol
 
 
 ## Requirements
+
 None.
 
 **But**: For the visualization to work, the websocket protocol must be configured. This is done by configuring the visu_websocket plugin.
 
 
 ## Configuration
+
 The configuration of the plugin itself is done in the file **`etc/plugin.conf`**. The configuration of the visualization of the items is done by defining additional attributes of the item in the file **`items/*.conf`**.
 
 ### plugin.conf (deprecated) / plugin.yaml
-<pre>
+
+```
 [smartvisu]
     class_name = SmartVisu
     class_path = plugins.visu_smartvisu
 #    smartvisu_dir = False
 #    handle_widgets = True
-</pre>
+```
 
-<pre>
+```yaml
 smartvisu:
     class_name: SmartVisu
     class_path: plugins.visu_smartvisu
     # smartvisu_dir = False
     # handle_widgets = True
-</pre>
+```
 
 #### visu_dir
 ** Only used for **old visu** (not for smartVISU) **
 
- Directory in which the generated web pages of the old visa are stored.
+Directory in which the generated web pages of the old visa are stored.
 
 #### smartvisu_dir
 You could generate pages for the smartVISU visualisation if you specify the **`smartvisu_dir`** which should be set to the root directory of your smartVISU installation.
 
 In the examples directory you could find a configuration with every supported element. `examples/items/smartvisu.conf` 
 
-####    handle_widgets
+#### handle_widgets
 
 By default, the visu plugin handles smartVISU widgets. If your run into problems, you can disable the widget handling by setting this attribute to **`False`**.
 
@@ -155,7 +157,8 @@ If one of the **`sv_heading_...`** parameters is defined, heading.html from the 
 --> directory = parameter to pages() in smartvisu.py -> self.smartvisu_dir
 
 #### Example (.conf and .yaml)
-<pre>
+
+```
 [first]
     . . .
 [menu_divider]
@@ -181,9 +184,9 @@ If one of the **`sv_heading_...`** parameters is defined, heading.html from the 
                 knx_dpt = 5
                 knx_listen = 3/2/14
                 knx_send = 3/2/14
-</pre>
+```
 
-<pre>
+```yaml
 first:
  ...
 menu_divider:
@@ -213,13 +216,13 @@ second:
                 knx_dpt: 5
                 knx_listen: 3/2/14
                 knx_send: 3/2/14
-</pre>
+```
 
 But instead of giving the widget distinct options you could use **`item`** as a keyword.
 
 The page generator will replace it with the current path. This way you could easily copy widget calls and don't type the item path every time.
 
-<pre>
+```
 [second]
     [[sleeping]]
         name = Sleeping Room
@@ -239,9 +242,9 @@ The page generator will replace it with the current path. This way you could eas
                 knx_dpt = 5
                 knx_listen = 3/2/14
                 knx_send = 3/2/14
-</pre>
+```
 
-<pre>
+```yaml
 second:
 
     sleeping:
@@ -253,7 +256,7 @@ second:
             name: Light
             type: bool
             visu_acl: rw
-            sv_widget: "&    ## 123;{ device.dimmer('item', 'item.name', 'item', 'item.level') }}"
+            sv_widget: "{{ device.dimmer('item', 'item.name', 'item', 'item.level') }}"
             knx_dpt: 1
             knx_listen: 3/2/12
             knx_send: 3/2/12
@@ -264,19 +267,19 @@ second:
                 knx_dpt: 5
                 knx_listen: 3/2/14
                 knx_send: 3/2/14
-</pre>
+```
 
 ### logic.conf (deprecated) / logic.yaml
 You could specify the **`visu_acl`** attribute to every logic in your logic.conf. This way you could trigger the logic via the interface.
 
-<pre>
+```
 [dialog]
     filename = 'dialog.py'
     visu_acl = true
-</pre>
+```
 
-<pre>
+```yaml
 dialog:
     filename: dialog.py
     visu_acl: 'true'
-</pre>
+```

@@ -1,6 +1,6 @@
 # Squeezebox
 
-# Requirements
+## Requirements
 
 A properly installed and configured Logitech Media Server is required.
 
@@ -20,24 +20,24 @@ Should work with other Squeezebox players as well - please let me know!
 * When starting playing by adding and playing a playlist the play mode is now correctly set to "play"
 * The player_id in your conf file is now searched not only in the parent item but also 2 levels further up
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
-<pre>
+```
 [squeezebox]
     class_name = Squeezebox
     class_path = plugins.squeezebox
 #    host = &lt;server&gt;
 #    port = &lt;port&gt;
-</pre>
+```
 
 Description of the attributes:
 
 * __host__: IP or hostname of the Logitech Media Server if not local
 * __port__: Port number of the Logitech Media Server if not 9090
 
-## items.conf
+### items.conf
 
 You can use all commands available by the telnet-interface.
 
@@ -54,14 +54,15 @@ Fields:
 * __{}__: the value of the item is written to this placeholder (don't use if a fixed/no value is required)
 
 You should verify all your commands manually by using the telnet-interface on port 9090.
-<pre>
+
+```bash
 telnet &lt;server&gt;:&lt;port&gt;
 listen 1
 &lt;playerid&gt; name ?
 ...
-</pre>
+```
 
-<pre>
+```
 [Squeezebox]
   squeezebox_playerid = your-players-ID-in-here
 
@@ -238,4 +239,4 @@ listen 1
     enforce_updates = true
     visu = yes
     squeezebox_send = &lt;playerid&gt; playlist shuffle 0
-</pre>
+```

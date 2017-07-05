@@ -2,12 +2,6 @@
 
 Version 0.1
 
-## Requirements
-This plugin requires lib requests. You can install this lib with:
-<pre>
-sudo pip3 install requests --upgrade
-</pre>
-
 This plugin provides functionality to query the Google Directions API for traffic / direction info.
 All mappings to items need to be done via your own logic.
 
@@ -16,24 +10,33 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 Take care not to request the interface too often as there currently is only a limit of 2500 free requests / day.
 More information and API key see: https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
 
+
+## Requirements
+
+This plugin requires lib requests. You can install this lib with:
+
+```
+sudo pip3 install requests --upgrade
+```
+
 ## Configuration
 
 ### plugin.conf (deprecated) / plugin.yaml
-<pre>
+```
 [traffic]
     class_name = Traffic
     class_path = plugins.traffic
     apikey = your own api key
     language = de (optional)
-</pre>
+```
 
-<pre>
+```yaml
 traffic:
     class_name: Traffic
     class_path: plugins.traffic
     apikey: your own api key
     language: de (optional)
-</pre>
+```
 
 #### Attributes
   * `apikey`: Your own personal API key for Google Directions. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
@@ -42,7 +45,7 @@ traffic:
 ### items.conf (deprecated) / items.yaml
 
 Currently, no pre defined items exist, the example below needs these items:
-<pre>
+```
 [travel_info]
 
      [[travel_time]]
@@ -87,9 +90,9 @@ Currently, no pre defined items exist, the example below needs these items:
 
         [[[lon]]]
             type = num
-</pre>
+```
 
-<pre>
+```yaml
 travel_info:
 
     travel_time:
@@ -134,17 +137,19 @@ travel_info:
 
         lon:
             type: num
-</pre>
+```
 
 ## Functions
 
 ### get_route_info(origin, destination, alternatives, mode):
 Returns route information for a provided origin (in the example home coordinates) and destination (in the example Berlin)
-<pre>
+
+```python
 route = sh.traffic.get_route_info(sh._lat+','+sh._lon, 'Berlin', False, 'now', 'driving')
 
 if route['summary'] is not '':
     route['summary'] += ": "
+
 summary = route['summary']+"%.1f km in %.0f min" % (round(route['duration_in_traffic']/60,2), round(route['distance']/1000,2))
 sh.travel_info.travel_time(route['duration'])
 sh.travel_info.travel_time.in_traffic(route['duration_in_traffic'])
@@ -159,6 +164,7 @@ sh.travel_info.start_location.lon(route['start_location_lon'])
 sh.travel_info.end_address(route['end_address'])
 sh.travel_info.end_location.lat(route['end_location_lat'])
 sh.travel_info.end_location.lon(route['end_location_lon'])
-</pre>
+```
+
 Returned is a dict (or in case of alternatives = True an array of dicts) with route information.
 The following dict keys are available: distance (in meters), duration (in seconds), summary

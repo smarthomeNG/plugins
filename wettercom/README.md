@@ -12,21 +12,21 @@ none
 
 ### plugin.conf (deprecated) / plugin.yaml
 
-<pre>
+```
 [wettercom]
     class_name = wettercom
     class_path = plugins.wettercom
     apikey = <enter your api code here>
     project = <enter your project name here>
-</pre>
+```
 
-<pre>
+```yaml
 wettercom:
     class_name: wettercom
     class_path: plugins.wettercom
     apikey: <enter your api code here>
     project: <enter your project name here>
-</pre>
+```
 
 add your project on wetter.com and paste API-key and project name
 in plugin.conf
@@ -37,8 +37,8 @@ none
 
 #### Example
 
-<pre>
-# items/wetter.conf
+items/wetter.conf
+```
 [wetter]
     [[vorhersage]]
         [[[heute]]]
@@ -272,10 +272,10 @@ none
                             type = str
                 [[[[[niederschlag]]]]]
                     type = num
-</pre>
+```
 
-<pre>
-# items/wetter.conf
+items/wetter.yaml
+```yaml
 wetter:
 
     vorhersage:
@@ -645,7 +645,7 @@ wetter:
 
                 niederschlag:
                     type: num
-</pre>
+```
 
 This structure will be filled by the example logic file (see below)
 
@@ -655,7 +655,7 @@ none
 
 #### Example
 
-<pre>
+```python
 #!/usr/bin/env python
 # parse weather data
 
@@ -687,7 +687,7 @@ for date in forecast:
         frame.code(forecast[date][7])
 
 logger.info(forecast)
-</pre>
+```
 
 This logic will parse the weather data and put it in the example items.conf
 above. Use etc/logic.conf for cyclic call (900s or so, requests are limited

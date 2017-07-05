@@ -1,3 +1,5 @@
+# Sonos
+
 ### Overview
 
 [1. Requirements](#req)
@@ -15,7 +17,7 @@
 [7. Best Practise](#best)
 <p>
 
-### <a name="req"></a>Requirements
+## <a name="req"></a>Requirements
 
 * SmarthomeNG v1.3 or newer
 * Python3 libraries ```requests``` and ```xmltodict```
@@ -55,7 +57,7 @@ rincon_c7e91735d19711411
 ```
 The first line of each entry is our UID (rincon_xxxxxxxxxxxxxx) we were looking for.
 
-### <a name="sh"></a>Smarthome Integration
+## <a name="sh"></a>Smarthome Integration
 
 Edit the file ```/usr/local/smarthome/etc/plugins.conf``` (might differ) and add the following entry:
 ```yaml
@@ -553,13 +555,13 @@ item is changed by Sonos events and should always be up-to-date.
 
 ---
 
-### <a name="visu"></a>SmartVISU Integration
+## <a name="visu"></a>SmartVISU Integration
 
 The Sonos Plugin fulfills all requirements for an automatic integration in SmartVISU via the **visu_websocket** and
 **visu_smartvisu** plugins (for detailed information follow this 
 [link](https://github.com/smarthomeNG/smarthome/wiki/Visu_smartvisu_autogen_in_v1.2)). 
 
-#### Sonos widget via plugin
+### Sonos widget via plugin
 To install / show the Sonos widget via the ```visu_smartvisu``` plugin, you have to [set up the mentioned plugin 
 properly](https://github.com/smarthomeNG/plugins/blob/develop/visu_smartvisu/README.md). After that you can define a 
 page item like that:
@@ -579,7 +581,7 @@ The important entry here is ```{{ sonos.player('sonos_kueche', 'MySonos.Kueche')
 self-defined unique identifier, the second value is the full path of the Sonos item which you want to control. If you 
 have more than one Sonos widget per page, make sure you set an **unique** identifier for each widget.
 
-#### Manual setup
+### Manual setup
 Copy the file ```widget_sonos.html``` from the ```sv_widget``` folder to your smartVISU directory, e.g.
 ```bash
 /var/www/smartvisu/pages/YOUR_PATH_HERE 
@@ -604,9 +606,9 @@ Edit your page where you want to display the widget and add the following code s
 
 ```
 
-### <a name="best"></a>Best practise
+## <a name="best"></a>Best practice
 
-#### Group commands
+### Group commands
 As you can see, some of the items have an additional child item "group_command". You can ommit this child item, then 
 the default value is always ```False```. If you set the```group_command``` item to ```True``` the value from the parent
 item( e.g. ```volume```) will be set to all members of the speaker's group. To get all UIDs of a group you can check the 
@@ -631,12 +633,12 @@ load_sonos_playlist
 For this items you don't have to pay attention to which speaker of the group you have to send the command. This is done 
 automatically and affects all speakers of the group.
 
-#### Do not stress the discover functionality
+### Do not stress the discover functionality
 You can define the parameter 'discover_cycle' on plugin start to set the interval how often the plugin searches for 
 new and / or offline speakers in the network. Due to the initialization of the speakers and network traffic, it is 
 not recommended to set the value less than 60 seconds.
 
-#### Use the "is_initialized" item
+### Use the "is_initialized" item
 
 It takes some time to discover all Sonos speakers in the network. Use the "is_initialized" item for your logic. If true,
 the speaker is fully functional. If this item is 'False' the speaker is not yet initialized or offline.
@@ -646,7 +648,7 @@ Example
 if sh.MySonosPlayer.is_initialized():
     do_something()
 ```
-#### "Non-realtime" items
+### "Non-realtime" items
 Some properties are not event-driver. That means they are not updated by the Sonos event system. These properties are:
 
 snooze
@@ -654,10 +656,10 @@ status_light
 
 These values are updated periodically with each speaker discovery cycle.
 
-#### Yaml or "classical" item configuration
+### Yaml or "classical" item configuration
 The plugin comes with an example in yaml format. This will be the preferable format for the SamrthomeNG item 
 configuration in the future. Feel free to change this example  to the "classical" format. SmarthomeNG is 
-backward-compatible.
+backwards compatible.
 
 This example shows a yaml config and the 'classic' pendant: 
 ```yaml
@@ -711,7 +713,7 @@ becomes
             sonos_send = play
       .....
 ```
-#### DPT3 volume example
+### DPT3 volume example
 ```yaml
  Kueche:
     sonos_uid: rincon_000e58cxxxxxxxxx
@@ -746,7 +748,7 @@ becomes
           sonos_send: volume
 ```
 
-#### Debug on error
+### Debug on error
 You've any trouble to get the plugin working, start SmarthomeNG in debug mode and post the logfile with the error to
 the [**support thread**](https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung) in the 
 KNX User Forum.

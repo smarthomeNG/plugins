@@ -13,7 +13,7 @@ Requires PIP Package websocket-client (tested with 0.44.0) for the implementatio
 ## Configuration
 
 ### plugin.conf
-<pre>
+```
 [smarttv]
     class_name = SmartTV
     class_path = plugins.smarttv
@@ -22,9 +22,9 @@ Requires PIP Package websocket-client (tested with 0.44.0) for the implementatio
 #    tv_version = classic
 #    delay = 1
 #    instance = smarttv1
-</pre>
-### plugin.yaml
-<pre>
+```
+
+```yaml
 smarttv:
     class_name: SmartTV
     class_path: plugins.smarttv
@@ -33,7 +33,7 @@ smarttv:
     # tv_version = classic
     # delay = 1
     # instance = smarttv1
-</pre>
+```
 
 #### Attributes
   * `host`: specifies the ip address of your SmartTV device.
@@ -52,7 +52,8 @@ There are two possibilities to use this attribute.
   * Define it on a boolean item and set it to a key value: With this configuration, the specified key value is sent whenever you set the item to `true` (if the item is only for sending a specific command to the tv then you should consider using the `enforce_updates` attribute, too). It is even possible to define several keys separeted with a comma.
 
 Example: items.conf
-<pre>
+
+```
 [tv]
     type = str
     smarttv@smarttv1 = true
@@ -90,10 +91,10 @@ Example: items.conf
         enforce_updates = true
         knx_dpt = 1
         knx_listen = 0/0/7
-</pre>
+```
 
 Example: items.yaml
-<pre>
+```yaml
 tv:
     type: str
     smarttv@smarttv1: 'true'
@@ -139,7 +140,7 @@ tv2:
         enforce_updates: 'true'
         knx_dpt: 1
         knx_listen: 0/0/7
-</pre>
+```
 
 #### Key Values
 And here is a list of possible key values. It depends on your device if all of them are supported.

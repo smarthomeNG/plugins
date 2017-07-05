@@ -3,11 +3,14 @@
 ## Requirements
 
 You have to install the python3 bindings for rrdtool:
-<pre>$ sudo apt-get install python3-dev librrd-dev </pre>
+
+```bash
+sudo apt-get install python3-dev librrd-dev
+```
 
 ## Configuration
 
-Remark: 
+Remark:
 
 The rrd plugin and the sqlite plugin can not be used together. Some pros and cons:
 
@@ -24,21 +27,21 @@ SQLite
 
 ### plugin.conf (deprecated) / plugin.yaml
 
-<pre>
+```
 [rrd]
     class_name = RRD
     class_path = plugins.rrd
     # step = 300
     # rrd_dir = /usr/smarthome/var/rrd/
-</pre>
+```
 
-<pre>
+```yaml
 rrd:
     class_name: RRD
     class_path: plugins.rrd
     # step = 300
     # rrd_dir = /usr/smarthome/var/rrd/
-</pre>
+```
 
 `step` sets the cycle time how often entries will be updated.
 `rrd_dir` specify the rrd storage location.
@@ -60,7 +63,7 @@ Set the type of data source. Default ist `gauge`.
   * `gauge` - should be used for things like temperatures.
   * `counter` - should be used for continuous incrementing counters like the Powermeter (kWh), watercounter (m³), pellets (kg).
 
-<pre>
+```
 [outside]
     name = Outside
     [[temperature]]
@@ -76,9 +79,9 @@ Set the type of data source. Default ist `gauge`.
         name = Temperatur
         type = num
         rrd = yes
-</pre>
+```
 
-<pre>
+```yaml
 outside:
     name: Outside
 
@@ -96,7 +99,7 @@ office:
         name: Temperatur
         type: num
         rrd: 'yes'
-</pre>
+```
 
 ## Functions
 This plugin adds one item method to every item which has rrd enabled.
@@ -122,8 +125,7 @@ The time point could be specified with `<number><interval>`, where interval coul
    * `y`: year
 
 e.g.
-<pre>
+```python
 sh.outside.temperature.db('min', '1d')  # returns the minimum temperature within the last day
 sh.outside.temperature.db('avg', '2w', '1w')  # returns the average temperature of the week before last week
-</pre>
-
+```
