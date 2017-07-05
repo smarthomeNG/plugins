@@ -9,7 +9,7 @@ This plugin needs one of the supported DMX interfaces:
 
 and pyserial.
 
-```
+```bash
 apt-get install python-serial
 ```
 
@@ -29,7 +29,7 @@ With ``interface``  you could choose between ``nanodmx`` and ``enttec``. By defa
 
 You have to adapt the tty to your local enviroment. In my case it's ``/dev/usbtty-1-2.4`` because I have the following udev rule:
 
-``` 
+```bash
 # /etc/udev/rules.d/80-smarthome.rules
 SUBSYSTEMS=="usb",KERNEL=="ttyACM*",ATTRS{product}=="NanoDMX Interface",SYMLINK+="usbtty-%b"
 ```

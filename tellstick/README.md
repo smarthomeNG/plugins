@@ -27,7 +27,7 @@ id of the device in /etc/tellstick.conf
  
 #### Example :
  
-``` 
+```
 [kitchen]
     [[light]]
         type = bool

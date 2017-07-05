@@ -1,6 +1,6 @@
 # Visualisation plugin (smartVISU support)
 
-``` 
+```
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
 Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
 
@@ -149,7 +149,6 @@ For this setting to work, the files **heading.html** and **room.html** have to b
 
 For this setting to work, the files **heading.html** and **room.html** have to be installed in the **pages/base/tpl** directory of smartVISU.
 
-.
 
 If one of the **`sv_heading_...`** parameters is defined, heading.html from the template directory ?tpldir? is added to the page.
 

@@ -165,7 +165,7 @@ Example:
 If you set the item ```Intercom_2n.Commands.system_info.execute = 1```, the item value of ```Intercom_2n.Commands.system_info```
 should be something like this:
 
-```    
+```
     {
         'success" : true,
          "result" : {
