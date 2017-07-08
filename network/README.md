@@ -3,6 +3,8 @@
 ## Requirements
 
 This plugin has no requirements or dependencies.
+Please be aware that ports need to be higher than 1025 to work. Otherwise an access error might occur. 
+Ports up to 1024 are _well defined ports_ and are normally reserved to the system usage.
 
 ## Configuration
 
@@ -102,7 +104,7 @@ test:
         nw_udp_listen: 127.0.0.1:8888
 ```
 
-If you send a TCP/UDP packet to the port, the corrosponding item will be set to the TCP/UDP payload.
+If you send a TCP/UDP packet to the port, the corresponding item will be set to the TCP/UDP payload.
 ``$ echo teststring | nc -u 127.0.0.1 8888`` would set the value of ``item2`` to ``teststring``.
 
 #### nw_udp_send
