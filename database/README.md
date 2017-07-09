@@ -7,11 +7,6 @@ implementation (e.g. [SQLite](http://docs.python.org/3.2/library/sqlite3.html)
 which is already bundled with Python or MySQL by using a
 [implementation module](https://wiki.python.org/moin/MySQL)).
 
-Before you can use any of the database implementation please make sure to
-register them in the common configuration file `smarthome.conf`. Details
-see [configuration page](https://github.com/smarthomeNG/smarthome/wiki/Configuration#smarthomeconf). Further
-details see also the [requirements section](https://github.com/smarthomeNG/smarthome/tree/develop/plugins/database#requirements) below.
-
 The plugin will create the following database structure:
 
   * Table `item` - the item table contains all items and thier last known value
@@ -39,24 +34,8 @@ The `log` table contains the following columns:
 ## Requirements
 
 If you want to log to a given database system you need to install the right
-Python DB API 2 implementation of the database and register them by adding it
-to the `smarthome.conf` (deprecated) / `smarthome.yaml` configuration file. For example using SQLite and a
-MySQL driver you may add the following (requires PyMySQL module installed):
-
-<pre>
-#.conf (deprecated)
-db = sqlite:sqlite3 | mysql:pymysql
-</pre>
-
-<pre>
-#.yaml
-db:
-  - sqlite:sqlite3
-  - mysql:pymysql
-</pre>
-
-After this you can use them by referencing the alias name of the database
-registration. In the example above the alias is "sqlite" or "mysql".
+Python DB API 2 implementation of the database and configure it in the
+plugin configuration (driver and connection parameters, see below).
 
 **Important**: This plugin supports drivers using one of the following
 format (or parameter) styles: qmark, format, numeric and pyformat.
@@ -76,7 +55,7 @@ Tested drivers (other may work too):
 [database]
     class_name = Database
     class_path = plugins.database
-    db = sqlite
+    driver = sqlite3
     connect = database:/path/to/log.db | check_same_thread:0
     #prefix = log
 </pre>
@@ -85,7 +64,7 @@ Tested drivers (other may work too):
 database:
     class_name: Database
     class_path: plugins.database
-    db: sqlite
+    driver: sqlite3
     connect:
       - database:/path/to/log.db
       - check_same_thread:0
@@ -94,8 +73,9 @@ database:
 
 The following attributes can be used in the plugin configuration:
 
-   * `db` - specifies the type of database to use by using an alias (register
-     them in `smarthome.conf`)
+   * `driver` - specifies the DB-API2 driver module (e.g. Python includes
+     the SQLite driver by importing the module `sqlite3`, to use it here
+     just set the driver parameter to the module name `sqlite3`)
    * `connect` - specifies the connection parameters which is directly
      used to invoke the `connect()` function of the DB API 2 implementation
      (for SQLite lookup [here](http://docs.python.org/3.2/library/sqlite3.html#sqlite3.connect),

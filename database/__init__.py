@@ -47,7 +47,7 @@ class Database(SmartPlugin):
       '6' : ["CREATE INDEX {item}_name ON {item} (name);", "DROP INDEX {item}_name;"]
     }
 
-    def __init__(self, smarthome, db, connect, prefix="", cycle=60):
+    def __init__(self, smarthome, driver, connect, prefix="", cycle=60):
         self._sh = smarthome
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
@@ -57,7 +57,7 @@ class Database(SmartPlugin):
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", self._sh.dbapi(db), connect)
+        self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver, connect)
         self._db.connect()
         self._db.setup({i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
 
