@@ -13,9 +13,8 @@ class TestDatabaseBase(unittest.TestCase):
 
     def plugin(self):
         self.sh = MockSmartHome()
-        self.sh.with_dbapi('sqlite', 'sqlite3')
         self.sh.with_items_from(common.BASE + '/plugins/database/tests/test_items.conf')
-        plugin = Database(self.sh, 'sqlite', {'database' : ':memory:'})
+        plugin = Database(self.sh, 'sqlite3', {'database' : ':memory:'})
         for item in self.sh.return_items():
             plugin.parse_item(item)
         return plugin
