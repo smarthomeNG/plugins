@@ -17,7 +17,6 @@ Is currently working with the following KOSTAL inverter modules:
   (should work with all KOSTAL PIKO inverters)
   <add more successfull testet Kostal Inverters with UI-Version and used datastructure>
 
-knx-user-forum.de
 
 ### Hint
   If com­mu­ni­ca­tion board (Kom­mu­nika­tions­board II) firmware has a version 5.x,
@@ -89,13 +88,29 @@ features of the inverter.
 Example: PIKO 3.0 is a single phase inverter with a single dc-line (dc-string).
   all DC2, DC3, AC2 and AC3 values would reply a None-value.
 
-If your communication board has a firmwareversion 5 (datastructure=html),
-the following values are not displayed in the html-status page and also not
-available for the plugin.
 
-dctot_w, dc1_w, dc2_w, dc3_w,
-actot_cos, actot_limitation, ac1_a, ac2_a, ac3_a,
-operationtime_h
+
+
+
+#### Description of all possible items (depending on inverter features)
+* operation_status: status of the Kostal inverter (On,Off,Feed in,starting)
+* dcpower: total dc power (all dc inputs); unit: Watt
+* dc1_v ... dc3_v: DC-voltage input 1 ... 3; unit: Voltage
+* dc1_a ... dc3_a: DC-current input 1 ... 3; unit: Ampere
+* dc1_w ... dc3_w: DC-power input 1 ... 3; unit: Watt [1]
+* actot_w : total ac power (all ac phases); unit: Watt
+* actot_cos: total ac Cos φ [1]
+* actot_limitation: total ac limitation; unit % [1]
+* ac1_v ... ac3_v: AC phase 1 ... 3 voltage; unit: Voltage
+* ac1_a ... ac3_a: AC phase 1 ... 3 current; unit: Ampere [1]
+* ac1_w ... ac3_w: AC phase 1 ... 3 power; unit: Watt
+* yield_day_kwh: Yield today; unit kWh [2]
+* yield_tot_kwh: Yield total; unit kWh
+* operationtime_h: Inverter operation time; unit hours [1]
+
+[1] If your communication board has a firmwareversion 5 (datastructure=html), these values are not displayed in the html-status page and are also not available for the plugin.
+
+[2] The json communication returns Yield_today in Wh. The plugin divide the value by 1000. So we get in both communication ways the same units.
 
 Hint:
 Item names have changed from the previous version of the plugin, so that both
@@ -105,39 +120,39 @@ types of communication can be configured the same way.
 # items/my.conf
 [solar]
     [[status]]
-        name = Wechselrichter Status
+        name = inverter status
         type = str
         kostal = operation_status
     [[dcpower]]
-        name = Gleichspannungsleitung gesamt
+        name = total dc power
         type = num
         kostal = dctot_w
     [[dc1_v]]
-        name = DC-Strang 1 Spannung
+        name = DC-input 1 voltage
         type = num
         kostal = dc1_v
     [[dc1_a]]
-        name = DC-Strang 1 Strom
+        name = DC-input 1 current
         type = num
         kostal = dc1_a
     [[dc1_w]]
-        name = DC-Strang 1 Leistung
+        name = DC-input 1 power
         type = num
         kostal = dc1_w
     [[dc2_v]]
-        name = DC-Strang 2 Spannung
+        name = DC-input 2 voltage
         type = num
         kostal = dc2_v
     [[dc2_a]]
-        name = DC-Strang 2 Strom
+        name = DC-input 2 current
         type = num
         kostal = dc2_a
     [[dc2_w]]
-        name = DC-Strang 2 Leistung
+        name = DC-input 2 power
         type = num
         kostal = dc2_w
     [[actot_w]]
-        name = Wechselspannungsleistung gesamt
+        name = total ac-output power
         type = num
         kostal = actot_w
     [[actot_cos]]
@@ -145,55 +160,55 @@ types of communication can be configured the same way.
         type = num
         kostal = actot_cos
     [[actot_limitation]]
-        name = Abregelungsfaktor
+        name = Limitation on percent
         type = num
         kostal = actot_limitation
     [[ac1_v]]
-        name = Phase 1 Spannung
+        name = Phase 1 voltage
         type = num
         kostal = ac1_v
     [[ac1_a]]
-        name = Phase 1 Strom
+        name = Phase 1 current
         type = num
         kostal = ac1_a
     [[ac1_w]]
-        name = Phase 1 Leistung
+        name = Phase 1 power
         type = num
         kostal = ac1_w
     [[ac2_v]]
-        name = Phase 2 Spannung
+        name = Phase 2 voltage
         type = num
         kostal = ac2_v
     [[ac2_a]]
-        name = Phase 2 Strom
+        name = Phase 2 current
         type = num
         kostal = ac2_a
     [[ac2_w]]
-        name = Phase 2 Leistung
+        name = Phase 2 power
         type = num
         kostal = ac2_w
     [[ac3_v]]
-        name = Phase 3 Spannung
+        name = Phase 3 voltage
         type = num
         kostal = ac3_v
     [[ac3_a]]
-        name = Phase 3 Strom
+        name = Phase 3 current
         type = num
         kostal = ac3_a
     [[ac3_w]]
-        name = Phase 3 Leistung
+        name = Phase 3 power
         type = num
         kostal = ac3_w
-    [[yield_day_wh]]
-        name = Gesamtleistung heute
+    [[yield_day_kwh]]
+        name = Yield today
         type = num
-        kostal = yield_day_wh
+        kostal = yield_day_kwh
     [[yield_tot_kwh]]
-        name = Gesamtleistung total
+        name = Yield total
         type = num
         kostal = yield_tot_kwh
     [[operationtime_h]]
-        name = Betriebsstunden
+        name = Operation time
         type = num
         kostal = operationtime_h
 </pre>

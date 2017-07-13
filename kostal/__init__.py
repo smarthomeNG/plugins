@@ -64,14 +64,14 @@ class Kostal(SmartPlugin):
        'ac3_v' : 67109890,
        'ac3_a' : 67109889,
        'ac3_w' : 67109891,
-       'yield_day_wh' : 251658754,
+       'yield_day_kwh' : 251658754,
        'yield_tot_kwh' : 251658753,
        'operationtime_h' : 251658496
     }
     _key2td = {
         'actot_w': 9,
         'yield_tot_kwh': 12,
-        'yield_day_wh': 21,
+        'yield_day_kwh': 21,
         'operation_status': 27,
         'dc1_v': 45,
         'dc2_v': 69,
@@ -192,6 +192,8 @@ class Kostal(SmartPlugin):
                             value = "dc voltage low"
                         else:
                             value = "unknown"
+                    if kostal_key == "yield_day_kwh":
+                            value = value / 1000
                     if kostal_key in self._items:
                         self._items[kostal_key](value)
                         self.logger.debug("items[" + str(kostal_key) +"] = " +str(value))
