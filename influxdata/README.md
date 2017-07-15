@@ -15,7 +15,7 @@ git clone https://github.com/rthill/influxdata.git
 
 ## Configuration
 
-### /etc/influxdb/influxdb.conf (deprecated) / influxdb.yaml
+### /etc/influxdb/influxdb.conf
 
 ```
 ###
@@ -38,24 +38,6 @@ git clone https://github.com/rthill/influxdata.git
   # batch-pending = 5 # number of batches that may be pending in memory
   # batch-timeout = "1s" # will flush at least this often even if we haven't hit buffer limit
   # read-buffer = 0 # UDP Read buffer size, 0 means OS default. UDP listener will fail if set above OS max.
-```
-
-```yaml
-###
-### udp:
-###
-### Controls the listeners for InfluxDB line protocol data via UDP.
-###
-udp:
-    enabled: 'true'
-    database: smarthome
-    # retention-policy = \"\"
-    # These next lines control how batching works. You should have this enabled
-    # otherwise you could get dropped metrics or poor performance. Batching
-    # will buffer points in memory if you have many coming in.
-    # batch-size = 1000 # will flush if this many points get buffered
-    # batch-pending = 5 # number of batches that may be pending in memory
-    # batch-timeout = \"1s\" # will flush at least this often even if we haven't hit buffer limit
 ```
 
 For more information on buffers and how to setup high performance UDP listener see: https://influxdb.com/docs/v0.9/write_protocols/udp.html
