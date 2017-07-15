@@ -9,7 +9,7 @@ Philips hue bridge, multiple bridges allowed
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 Typical configuration for 3 bridges
 
@@ -25,6 +25,27 @@ Typical configuration for 3 bridges
     default_transitionTime = 0.4
 ```
 
+```
+HUE:
+    class_name: HUE
+    class_path: plugins.hue
+    hue_user:
+      - 38f625a739562a8bd261ab9c7f5e62c8
+      - 38f625a739562a8bd261ab9c7f5e62c8
+      - 38f625a739562a8bd261ab9c7f5e62c8
+    hue_ip:
+      - 192.168.2.2
+      - 192.168.2.3
+      - 192.168.2.4
+    hue_port:
+      - '80'
+      - '80'
+      - '80'
+    cycle_lamps: 3
+    cycle_bridges: 30
+    default_transitionTime: '0.4'
+```
+
 Minimal configuration for single bridge an default settings
 
 ```
@@ -33,6 +54,14 @@ Minimal configuration for single bridge an default settings
     class_path = plugins.hue
     hue_user = 38f625a739562a8bd261ab9c7f5e62c8
     hue_ip = 192.168.2.2
+```
+
+```
+HUE:
+    class_name: HUE
+    class_path: plugins.hue
+    hue_user: 38f625a739562a8bd261ab9c7f5e62c8
+    hue_ip: 192.168.2.2
 ```
 
 #### hue_user
@@ -68,7 +97,7 @@ Time in seconds how fast check states of the lamps are changed through the bridg
 is used.
 Note: The hue bridge has no notification feature. Therefore changes can only be detected via polling.
 
-### items.conf
+### items.conf (deprecated) / items.yaml
 
 #### hue_bridge_id (formerly hue_bridge !)
 
@@ -214,7 +243,7 @@ In addition to hue_dim_max this parameter has to be set. If not a warning will b
 
 ### Example
 
-items/test.conf
+items/test.conf (deprecated)
 ```
 [keller]
     [[hue]]
@@ -358,12 +387,194 @@ items/test.conf
             hue_listen = swversion
 ```
 
+items/test.yaml
+
+```
+keller:
+
+    hue:
+        # if hue_lamp_id and hue_bridge_id is not set, it is searched in a higher layer
+        hue_lamp_id: 1
+        hue_bridge_id: 0
+        hue_lamp_type: 0
+
+        bridge_name:
+            type: str
+            hue_listen: bridge_name
+
+        zigbeechannel:
+            type: num
+            hue_listen: zigbeechannel
+
+        mac:
+            type: str
+            hue_listen: mac
+
+        dhcp:
+            type: bool
+            hue_listen: dhcp
+
+        ipaddress:
+            type: str
+            hue_listen: ipaddress
+
+        netmask:
+            type: str
+            hue_listen: netmask
+
+        gateway:
+            type: str
+            hue_listen: gateway
+
+        utc:
+            type: str
+            hue_listen: UTC
+
+        localtime:
+            type: str
+            hue_listen: localtime
+
+        timezone:
+            type: str
+            hue_listen: timezone
+
+        whitelist:
+            type: dict
+            hue_listen: whitelist
+
+        bridge_swversion:
+            type: str
+            hue_listen: bridge_swversion
+
+        apiversion:
+            type: str
+            hue_listen: apiversion
+
+        swupdate:
+            type: dict
+            hue_listen: swupdate
+
+        linkbutton:
+            type: bool
+            hue_listen: linkbutton
+
+        portalservices:
+            type: bool
+            hue_listen: portalservices
+
+        portalconnection:
+            type: str
+            hue_listen: portalconnection
+
+        portalstate:
+            type: dict
+            hue_listen: portalstate
+
+        power:
+            type: bool
+            hue_send: 'on'
+            hue_listen: 'on'
+            knx_dpt: 1
+            knx_cache: 8/0/1
+
+        reachable:
+            type: bool
+            hue_listen: reachable
+
+        ct:
+            type: num
+            hue_send: ct
+            hue_listen: ct
+
+        scene:
+            type: str
+            hue_send: scene
+            enforce_updates: 'true'
+
+        bri:
+            type: num
+            cache: 'on'
+            hue_send: bri
+            hue_listen: bri
+            hue_transitionTime: '0.2'
+
+            dim:
+                type: list
+                knx_dpt: 3
+                knx_listen: 8/0/2
+                hue_dim_max: 255
+                hue_dim_step: 10
+                hue_dim_time: '0.2'
+
+        sat:
+            type: num
+            cache: 'on'
+            hue_send: sat
+            hue_listen: sat
+
+        col_r:
+            type: num
+            cache: 'on'
+            hue_send: col_r
+
+        col_g:
+            type: num
+            cache: 'on'
+            hue_send: col_g
+
+        col_b:
+            type: num
+            cache: 'on'
+            hue_send: col_b
+
+        hue:
+            type: num
+            cache: 'on'
+            hue_send: hue
+            hue_listen: hue
+            hue_transitionTime: '0.2'
+
+            dim:
+                type: list
+                knx_dpt: 3
+                knx_listen: 8/0/12
+                hue_dim_max: 65535
+                hue_dim_step: 2000
+                hue_dim_time: '0.2'
+
+        effect:
+            type: str
+            hue_send: effect
+            hue_listen: effect
+
+        alert:
+            type: str
+            hue_send: alert
+            hue_listen: alert
+
+        modeltype:
+            type: str
+            hue_listen: type
+
+        lampname:
+            type: str
+            hue_listen: name
+
+        modelid:
+            type: str
+            hue_listen: modelid
+
+        swversion:
+            type: str
+            hue_listen: swversion
+```
+
 Please note that knx_cache is wrong in the old example for [[[dim]]], the right setting is knx_listen
 
-### logic.conf
+### logic.conf (deprecated) / logic.yaml
 No logic attributes.
 
-## Methodes
+## Methods
 
 ### get_config()
 Drops the list of stored scenes in the bridge.
