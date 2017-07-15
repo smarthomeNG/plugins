@@ -13,7 +13,7 @@ install telepot library (see requirements.txt)
 * BotFather will send you a token (=shard secred) you will need for plugin registration
 * configure some bot details starting by sending "/mybots" to BotFather
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 ```
 [telegram]
@@ -22,6 +22,15 @@ install telepot library (see requirements.txt)
         class_path = plugins.telegram
         token = 123456789:BBCCfd78dsf98sd9ds-_HJKShh4z5z4zh22
         trusted_chat_ids = 123456789,9876543210
+```
+
+```
+telegram:
+    name: My Home
+    class_name: Telegram
+    class_path: plugins.telegram
+    token: 123456789:BBCCfd78dsf98sd9ds-_HJKShh4z5z4zh22
+    trusted_chat_ids: 123456789,9876543210
 ```
 
 #### name
@@ -36,7 +45,7 @@ shared secret key to authenticate to telegram network
 
 Telegram communication is handled over chat(-channels) with unique ids. So a communication is bound to a chat id (=connected user) which can be adressed with broadcast messages. To get your current chat id, send a /subscribe command to the bot, which will replay with your chatid.  
 
-### items.conf
+### items.conf (deprecated) / items.yaml
 
 #### telegram_message 
 
@@ -66,18 +75,35 @@ In some cases it is usefull to check a value against a condition before sending 
 	telegram_message = "Es klingelt an der Tür"
 ```
 
+```
+doorbell:
+    name: Türklingel (entprellt)
+    type: bool
+    knx_dpt: 1
+    telegram_message: Es klingelt an der Tür
+```
+	
 #### Example with tags
 
 The following example shows an integration in AutoBlind.
 If the state changes, a message with the current state name is broadcasted 
 
 ```
-[state_name]]
+[state_name]
         name = Name des aktuellen Zustands
         type = str
         visu_acl = r
         cache = on
         telegram_message = "New AutoBlind state: [VALUE]"
+```
+
+```
+state_name:
+    name: Name des aktuellen Zustands
+    type: str
+    visu_acl: r
+    cache: 'on'
+    telegram_message: 'New AutoBlind state: [VALUE]'
 ```
 
 ## Todo and feature requests
