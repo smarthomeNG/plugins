@@ -1,6 +1,6 @@
 # KOSTAL
 
-Version: 1.3.1.1
+Version: 1.3.1.2
 
 This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PIKO inverters).
 Since UI-version (communication-board) 6 json-format is supported.
@@ -19,12 +19,12 @@ Is currently working with the following KOSTAL inverter modules:
 
 
 ### Hint
-  If com­mu­ni­ca­tion board (Kom­mu­nika­tions­board II) firmware has a version 5.x,
+  If communication board (Kommunikationsboard II) firmware has a version 5.x,
   then the inverter generates an html - page.
   The default datastructure=html configuration of this plugin, trys to read
   the current inverter values from this status page.
 
-  If com­mu­ni­ca­tion board (Kom­mu­nika­tions­board II) firmware has a version 6.x,
+  If communication board (Kommunikationsboard II) firmware has a version 6.x,
   then the inverter generates ajax - style status page.
   The datastructure=json configuration of this plugin, reads the current
   inverter values from an json-comminication string.
