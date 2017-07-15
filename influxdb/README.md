@@ -35,7 +35,7 @@ You have to explicitly enable the UDP endpoint in influxdb. The UDP endpoint can
   # retention-policy = ""
 ```
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 you can setup global tags and fields (JSON encoded)
 
@@ -51,13 +51,32 @@ you can setup global tags and fields (JSON encoded)
     fields = {"key": "value", "foo": "bar"}
 ```
 
-### items.conf
+```
+influxdb:
+    class_name: InfluxDB
+    class_path: plugins.influxdb
+    # host: localhost
+    # port: 8089
+    # keyword: influxdb
+    # value_field: value
+    tags: '{"key": "value", "foo": "bar"}'
+    fields: '{"key": "value", "foo": "bar"}'
+```
+
+### items.conf (deprecated) / items.yaml
 logging into a measurement named `root.some_item`, default tags and tags/fields as specified in plugin.conf
 
 ```
 [root]
   [[some_item]]
     influxdb = true
+```
+
+```
+root:
+
+    some_item:
+        influxdb: 'true'
 ```
 
 if `keyword` in plugin.conf is set to `sqlite` this can also be used as a drop-in replacement for sqlite.
@@ -68,6 +87,13 @@ if `keyword` in plugin.conf is set to `sqlite` this can also be used as a drop-i
     sqlite = true
 ```
 
+```
+root:
+
+    some_item:
+        sqlite: 'true'
+```
+
 *recommended*: logging into the measurement `temp` with an additional tag `room` and default tags (including `item: root.dining_temp`) and tags/fields as specified in plugin.conf
 
 ```
@@ -75,4 +101,12 @@ if `keyword` in plugin.conf is set to `sqlite` this can also be used as a drop-i
   [[dining_temp]]
     influxdb_name = temp
     influxdb_tags = {"room": "dining"}
+```
+
+```
+root:
+
+    dining_temp:
+        influxdb_name: temp
+        influxdb_tags: '{"room": "dining"}'
 ```
