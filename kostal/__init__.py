@@ -37,7 +37,7 @@ class Kostal(SmartPlugin):
     """
     ALLOW_MULTIINSTANCE = True
 
-    PLUGIN_VERSION = "1.3.1.1"
+    PLUGIN_VERSION = "1.3.1.2"
 
     _key2json = {
        'operation_status' : 16780032,
