@@ -70,16 +70,16 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 BackendServer:
     class_name: BackendServer
     class_path: plugins.backend
-    # ip = xxx.xxx.xxx.xxx
-    # port = 8383
-    # updates_allowed = True
-    # threads = 8
-    # user = admin
-    # password = very_secure_password
-    # hashed_password = 1245a9633edf47b7091f37c4d294b5be5a9936c81c5359b16d1c4833729965663f1943ef240959c53803fedef7ac19bd59c66ad7e7092d7dbf155ce45884607d
-    # language = en
-    # developer_mode = on
-    # pypi_timeout = 5
+	#ip: xxx.xxx.xxx.xxx
+    #port: 8383
+    #updates_allowed: 'True'
+    #threads: 8
+    #user: admin
+    #password: very_secure_password
+    #hashed_password: 1245a9633edf47b7091f37c4d294b5be5a9936c81c5359b16d1c4833729965663f1943ef240959c53803fedef7ac19bd59c66ad7e7092d7dbf155ce45884607d
+    #language: en
+    #developer_mode: 'on'
+    #pypi_timeout: 5
 ```
 
 #### ip
