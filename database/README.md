@@ -68,7 +68,7 @@ database:
     connect:
       - database:/path/to/log.db
       - check_same_thread:0
-    # prefix = log
+    # prefix: log
 </pre>
 
 The following attributes can be used in the plugin configuration:
@@ -108,7 +108,7 @@ some:
     item:
         type: num
         database: 'yes'
-        # database_acl = rw
+        # database_acl: rw
 </pre>
 
 #### database_acl
