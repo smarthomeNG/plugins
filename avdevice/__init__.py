@@ -45,6 +45,7 @@ class AVDevice(SmartPlugin):
     def __init__(self,
                  smarthome,
                  model,
+                 manufacturer='',
                  ignoreresponse='',
                  forcebuffer='',
                  inputignoredisplay='',
@@ -66,6 +67,7 @@ class AVDevice(SmartPlugin):
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
         self._model = model
+        self._manufacturer = manufacturer
         self._name = self.get_instance_name()
         self._serialwrapper = None
         self._serial = None
@@ -264,10 +266,14 @@ class AVDevice(SmartPlugin):
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         if command.startswith('power on'):
-                            if self._functions['zone{}'.format(zone)][command][6] == 'yes':
-                                value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
-                            else:
-                                value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
+                            try:
+                                value = re.sub('\*\*', 'ON', self._functions['zone{}'.format(zone)][command][4])
+                            except:
+                                if self._functions['zone{}'.format(zone)][command][6] == 'yes':
+                                    value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
+                                else:
+                                    value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
+                            
                             combined = '{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2], self._functions['zone{}'.format(zone)][command][3], value) 
                             self._power_commands.append(combined)
                     except Exception as err:
@@ -309,7 +315,7 @@ class AVDevice(SmartPlugin):
                                 type = '' 
                             function = self._functions['zone{}'.format(zone)][command][1].split(" ")[0]
                             item = self._items['zone{}'.format(zone)][function]['Item']                                                           
-                            #self.logger.debug("Initializing {}: Response: {}, Function: {}, Item: {}".format(self._name, response, function, item))
+                            self.logger.debug("Initializing {}: Response: {}, Function: {}, Item: {}, Type: {}".format(self._name, response, function, item, type))
                             if self._functions['zone{}'.format(zone)][command][5].lower() in ['r', 'rw']:
                                 try:
                                     if function == 'display':                   
@@ -395,6 +401,22 @@ class AVDevice(SmartPlugin):
                         if row[0] == '': row[0] = '0'
                         function = row[1]
                         itemtest = re.sub(' set| on| off','', function)  
+                        for i in range(0,9):
+                            try:
+                                test = row[i]
+                            except IndexError:
+                                if i == 5:
+                                    row.append('RW')
+                                if i == 6:
+                                    row.append('no')
+                                if i == 8 and "set" in function:
+                                    row.append('num')
+                                elif i == 8 and ("on" in function or "off" in function):
+                                    row.append('bool')
+                                elif i == 8 and ("+" in function or "-" in function):
+                                    row.append('bool')
+                                else:
+                                    row.append('')
                         try:
                             itemkeys = self._items['zone{}'.format(row[0])].keys()
                         except:
@@ -545,9 +567,21 @@ class AVDevice(SmartPlugin):
                     value = receivedvalue = data[valuestart:valueend]
                     if self._response_commands[command][7] == 'bool' and not value == '':
                         self.logger.debug("Storing Values {}: Limiting bool value for received data.".format(self._name))
-                        value = max(min(int(value), 1), 0)
+                        if self._manufacturer.lower() == 'epson':
+                            try:
+                                value = max(min(int(value), 1), 0)
+                                self.logger.debug("Parsing Input {}: Limiting bool value for {} with received value {} to {}.".format(
+                                    self._name, self._items[zone][function], receivedvalue, value))  
+                            except:
+                                pass
+                        if receivedvalue.lower() == 'on' or receivedvalue == 1:
+                            value = True
+                        if receivedvalue.lower() == 'off' or receivedvalue == 0:
+                            value = False
+                        
                     if self._response_commands[command][6].lower() in ['1', 'true', 'yes', 'on']:
-                        value = 0 if int(receivedvalue) > 0 else 1                    
+                        value = False if int(receivedvalue) > 0 else True
+                               
                     self._items[zone][function]['Value'] = value
                     self.logger.debug("Storing Values {}: Found writeable dict key: {}. Zone: {}. Value: {}. Function: {}.".format(self._name, command, zone, value, function))
                     return self._items[zone][function], value
@@ -933,7 +967,7 @@ class AVDevice(SmartPlugin):
                     
         finally:
             if self._threadlock_standard.locked(): self._lock.release()
-            if ('TCP' not in self._is_connected and self._tcp is not None) and self._auto_reconnect.lower() in ['1', 'yes', 'true', 'on']:
+            if ('TCP' not in self._is_connected and self._tcp is not None) and str(self._auto_reconnect.lower()) in ['1', 'yes', 'true', 'on']:
                 #self._sh.scheduler.change('avdevice-tcp-reconnect', active=True)
                 self.connect()
                 self._trigger_reconnect = False
@@ -1003,7 +1037,7 @@ class AVDevice(SmartPlugin):
                     
         finally:
             if self._threadlock_standard.locked(): self._lock.release()
-            if ('Serial' not in self._is_connected and self._rs232 is not None) and self._auto_reconnect.lower() in ['1', 'yes', 'true', 'on']:
+            if ('Serial' not in self._is_connected and self._rs232 is not None) and str(self._auto_reconnect.lower()) in ['1', 'yes', 'true', 'on']:
                 #self._sh.scheduler.change('avdevice-serial-reconnect', active=True)
                 self.connect()
                 self._trigger_reconnect = False
@@ -1124,8 +1158,10 @@ class AVDevice(SmartPlugin):
                             for expected in expectedresponse:
                                 expectedlist = expected.split("|")
                                 
-                                if data == ':PWR=02' or data == 'PWR=02':
+                                if self._manufacturer == 'epson' and (data == ':PWR=02' or data == 'PWR=02'):
                                     data = 'PWR=01'                                
+                                data = re.sub('ON$', '1', data)
+                                data = re.sub('OFF$', '0', data)
                                 
                                 if data.startswith(tuple(expectedlist)):
                                     entry, value = self._write_itemsdict(data)
@@ -1295,12 +1331,14 @@ class AVDevice(SmartPlugin):
                                 except Exception as err:
                                     self.logger.warning("AVDevice {}: Problems reading Speakers info. Error:{}".format(self._name, err))
                             else:
-                                receivedvalue = data[index + commandlength:index + commandlength + valuelength]
-                                if not receivedvalue.isdigit():
-                                    receivedvalue = data[index + commandlength-1:index + commandlength + valuelength]
-                                if not receivedvalue.isdigit():
-                                    receivedvalue = '1'   
-                                #self.logger.debug("Parsing Input {}: Neither Display nor Now Playing in response. receivedvalue: {}.".format(self._name, receivedvalue))
+                                if self._manufacturer == 'pioneer':
+                                    receivedvalue = data[index + commandlength:index + commandlength + valuelength]
+                                else:
+                                    receivedvalue = data[index + commandlength:]
+                                self.logger.debug("Parsing Input {}: Neither Display nor Now Playing in response. receivedvalue: {}.".format(self._name, receivedvalue))
+                                if not receivedvalue.isdigit() and self._response_commands[key][7] == 'num':
+                                    self.logger.warning("Parsing Input {}: Receivedvalue {} is not num as defined in the txt-file.".format(self._name, receivedvalue))   
+                                    
                             
                             if data.startswith(tuple(inputcommands)) and receivedvalue in self._ignoredisplay and not '' in self. _ignoredisplay:
                                 for i in range(0,len(inputcommands)):
@@ -1318,28 +1356,54 @@ class AVDevice(SmartPlugin):
                                     while self._specialcommands['Display']['Command'] in self._ignoreresponse:
                                         self._ignoreresponse.remove(self._specialcommands['Display']['Command'])
                                     #self.logger.warning("Parsing Input {}: Removing {} from ignore.".format(self._name, self._specialcommands['Display']['Command']))
+                            value = receivedvalue
                             if self._response_commands[key][6].lower() in ['1', 'true', 'yes', 'on']:
-                                value = 0 if int(receivedvalue) > 0 else 1
+                                value = False if int(receivedvalue) > 0 else True
                                 self.logger.debug("Parsing Input {}: Inverting value for item {}. Original Value: {}, New Value: {}".format(
                                     self._name, item, receivedvalue, value))
-                            else:                                   
-                                value = receivedvalue
+                                                                                               
                             self.logger.debug("Parsing Input {}: Found key {} in response at position {} with value {}.".format(
                                 self._name, key, index, value))
                             # for weird situations where the device sends back a higher value than 1 even it is bool.
                             if self._response_commands[key][7] == 'bool':
-                                self.logger.debug("Parsing Input {}: Limiting bool value for {} with received value {}.".format(self._name, self._items[zone][function], value))
-                                value = max(min(int(value), 1), 0)                                
+                                if self._manufacturer.lower() == 'epson':
+                                    try:
+                                        value = max(min(int(value), 1), 0) 
+                                        self.logger.debug("Parsing Input {}: Limiting bool value for {} with received value {} to {}.".format(
+                                            self._name, self._items[zone][function], receivedvalue, value))  
+                                    except:
+                                        pass  
+                                if receivedvalue.lower() == 'on' or receivedvalue == 1:
+                                    value = True
+                                if receivedvalue.lower() == 'off' or receivedvalue == 0:
+                                    value = False  
+                                                                                           
                             
-                            if function in self._items[zone].keys():
-                                self._items[zone][function]['Value'] = value
-                                self.logger.debug("Parsing Input {}: Updating Items Dict Entry for {} with value {}.".format(self._name, function, self._items[zone][function]))
+                            if function in self._items[zone].keys():                                
+                                if self._response_commands[key][7] == 'bool' and (value == True or value == False):
+                                    self._items[zone][function]['Value'] = value
+                                if self._response_commands[key][7] == 'num' and value.isdigit():
+                                    self._items[zone][function]['Value'] = value
+                                if self._response_commands[key][7] == 'string' and isinstance(value, str):
+                                    self._items[zone][function]['Value'] = value
 
                             for singleitem in item:
-                                singleitem(value, 'AVDevice', self._tcp)
-                                self._wait(0.15)
-                                self.logger.debug("Parsing Input {}: Updating Item {} with Value: {}.".format(
-                                    self._name, item, value))
+                                if self._response_commands[key][7] == 'bool' and (value == True or value == False):
+                                    singleitem(value, 'AVDevice', self._tcp)
+                                    self.logger.debug("Parsing Input {}: Updating Item {} with Boolean Value: {}.".format(
+                                        self._name, item, value))
+                                    self._wait(0.15)
+                                elif self._response_commands[key][7] == 'num' and value.isdigit():
+                                    singleitem(value, 'AVDevice', self._tcp)
+                                    self.logger.debug("Parsing Input {}: Updating Item {} with number Value: {}.".format(
+                                        self._name, item, value))
+                                    self._wait(0.15)
+                                elif self._response_commands[key][7] == 'string' and isinstance(value, str):
+                                    singleitem(value, 'AVDevice', self._tcp)
+                                    self.logger.debug("Parsing Input {}: Updating Item {} with string Value: {}.".format(
+                                        self._name, item, value))
+                                    self._wait(0.15)
+                                
                             break
                         elif key.lower() == 'string':
                             value = data
@@ -1351,7 +1415,7 @@ class AVDevice(SmartPlugin):
                                 for singleitem in item:
                                     singleitem(value, 'AVDevice', self._tcp)
                                     self._wait(0.15)
-                                    self.logger.debug("Updating item {} with value {}".format(
+                                    self.logger.debug("Parsing Input {}: Updating item {} with value {}".format(
                                         self._name, singleitem, value))
                                 break
                     #self.logger.debug("Parsing Input {}: Finished comparing values".format(self._name))
@@ -1405,7 +1469,7 @@ class AVDevice(SmartPlugin):
             if caller != 'AVDevice':
                 if not self._updatelock.acquire(timeout=2):
                     return
-                try:                    
+                try:                   
                     emptycommand = False
                     self.logger.debug("Updating Item for avdevice_{}: Starting to update item {}. Lock is: {}. Reconnectrigger is {}".format(
                         self._name.lower(), item.id(), self._threadlock_update.locked(), self._trigger_reconnect))
@@ -1534,14 +1598,21 @@ class AVDevice(SmartPlugin):
                                             self.logger.debug("Updating Item for avdevice_{}: Command On {} already in Commandlist {}. Ignoring.".format(
                                                 self._name.lower(), commandinfo[2], self._send_commands))
                                         else:
-                                            if commandinfo[6].lower() in ['1', 'true', 'yes', 'on']:
-                                                replacedvalue = '0'
-                                            else:
-                                                replacedvalue = '1'
-                                            self._send_commands.append('{},{},{}'.format(
-                                                commandinfo[2], commandinfo[3], commandinfo[4].replace('*', replacedvalue)))
-                                            self._sendingcommand = '{},{},{}'.format(
-                                                commandinfo[2], commandinfo[3], commandinfo[4].replace('*', replacedvalue))
+                                            try:                                            
+                                                replacedvalue = '1'  
+                                                self._send_commands.append('{},{},{}'.format(
+                                                    commandinfo[2], commandinfo[3], commandinfo[4].replace('**', replacedvalue)))
+                                                self._sendingcommand = '{},{},{}'.format(
+                                                    commandinfo[2], commandinfo[3], commandinfo[4].replace('**', replacedvalue))
+                                            except:
+                                                if commandinfo[6].lower() in ['1', 'true', 'yes', 'on']:
+                                                    replacedvalue = '0'
+                                                else:
+                                                    replacedvalue = '1'
+                                                self._send_commands.append('{},{},{}'.format(
+                                                    commandinfo[2], commandinfo[3], commandinfo[4].replace('*', replacedvalue)))
+                                                self._sendingcommand = '{},{},{}'.format(
+                                                    commandinfo[2], commandinfo[3], commandinfo[4].replace('*', replacedvalue)) 
                                             self.logger.debug("Updating Item for avdevice_{}: Update Zone {} Command On {} for {}".format(
                                                 self._name.lower(), zone, commandinfo[2], item))
                                             if command_on == 'power on':
@@ -1558,14 +1629,21 @@ class AVDevice(SmartPlugin):
                                                 self._name.lower(), commandinfo[2], self._send_commands))
                                             #self._send_commands[self._send_commands.index(sendcommand)] = commandinfo
                                         else:
-                                            if commandinfo[6].lower() in ['1', 'true', 'yes', 'on']:
-                                                replacedvalue = '1'
-                                            else:
-                                                replacedvalue = '0'
-                                            self._send_commands.append('{},{},{}'.format(
-                                                commandinfo[2], commandinfo[3], commandinfo[4].replace('*', replacedvalue)))
-                                            self._sendingcommand = '{},{},{}'.format(
-                                                commandinfo[2], commandinfo[3], commandinfo[4].replace('*', replacedvalue))
+                                            try:                                            
+                                                replacedvalue = '0'  
+                                                self._send_commands.append('{},{},{}'.format(
+                                                    commandinfo[2], commandinfo[3], commandinfo[4].replace('***', replacedvalue)))
+                                                self._sendingcommand = '{},{},{}'.format(
+                                                    commandinfo[2], commandinfo[3], commandinfo[4].replace('***', replacedvalue))
+                                            except:
+                                                if commandinfo[6].lower() in ['1', 'true', 'yes', 'on']:
+                                                    replacedvalue = '1'
+                                                else:
+                                                    replacedvalue = '0'
+                                                self._send_commands.append('{},{},{}'.format(
+                                                    commandinfo[2], commandinfo[3], commandinfo[4].replace('*', replacedvalue)))
+                                                self._sendingcommand = '{},{},{}'.format(
+                                                    commandinfo[2], commandinfo[3], commandinfo[4].replace('*', replacedvalue))                                            
                                             self.logger.debug("Updating Item for avdevice_{}: Update Zone {} Command Off {} for {}".format(
                                                 self._name.lower(), zone, commandinfo[2], item))
                                     elif command_set in self._functions['zone{}'.format(zone)] and isinstance(value, int):
@@ -1801,8 +1879,12 @@ class AVDevice(SmartPlugin):
 
 
         except Exception as err:
-            self.logger.warning(
-                "Sending {}: Problem sending multicommand {}. Message: {}".format(self._name, self._send_commands[0], err))
+            try:
+                self.logger.warning(
+                    "Sending {}: Problem sending multicommand {}. Message: {}".format(self._name, self._send_commands[0], err))
+            except:
+                self.logger.warning(
+                    "Sending {}: Problem sending multicommand {}. Message: {}".format(self._name, self._send_commands, err))
         finally:
             if self._threadlock_send.locked(): self._sendlock.release()
             #self.logger.debug("Sending {}: Finished sending command. Lock is released. Now it is {}".format(self._name, self._threadlock_send.locked()))
