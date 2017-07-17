@@ -66,7 +66,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 	#pypi_timeout = 5
 ```
 
-```
+```yaml
 BackendServer:
     class_name: BackendServer
     class_path: plugins.backend

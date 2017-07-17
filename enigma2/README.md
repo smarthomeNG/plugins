@@ -18,7 +18,7 @@ The version is tested with new multi-instance functionality of SmartHomeNG.
 ## Configuration
 
 ### plugin.conf (deprecated) / plugin.yaml (both use multi-instance feature of SmartHomeNG)
-<pre>
+```
 [vusolo4k]
     class_name = Enigma2
     class_path = plugins.enigma2
@@ -40,9 +40,9 @@ The version is tested with new multi-instance functionality of SmartHomeNG.
     verify = False # verify ssl certificate
     instance = vusolo2
 [...]    
-</pre>
+```
 
-<pre>
+```yaml
 vusolo4k:
     class_name: Enigma2
     class_path: plugins.enigma2
@@ -65,7 +65,7 @@ vusolo2:
     verify: False    # verify ssl certificate
     instance: vusolo2
 [...]
-</pre>
+```
 
 Note: Depending on the device a shorter cycle time can result in problems with CPU rating and, in consequence with the accessibility of the services on the device.
 If cycle time is reduced, please carefully watch your device and your sh.log. In the development process, 240 seconds also worked worked fine on the used devices.
@@ -83,7 +83,7 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
 ### items.conf (deprecated) / items.yaml
 
 #### Example:
-<pre>
+```
 [enigma2]
     [[vusolo2]]
         [[[disc_model]]]
@@ -445,9 +445,9 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
                 visu_acl = rw
                 enigma2_remote_command_id@vusolo2 = 10
                 enforce_updates = true
-</pre>
+```
 
-<pre>
+```yaml
 enigma2:
 
     vusolo2:
@@ -889,7 +889,7 @@ enigma2:
                 visu_acl: rw
                 enigma2_remote_command_id@vusolo2: 10
                 enforce_updates: 'true'
-</pre>
+```
 
 ## Functions
 
