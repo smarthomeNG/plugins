@@ -1,28 +1,28 @@
 # Russound
 
-Requirements
-============
+## Requirements
+
 This plugin needs a Russound audio device in the network to communicate with. The communication protocol for the ethernet port has to be set to RIO.
 
-Configuration
-=============
+## Configuration
 
-plugin.conf
------------
-<pre>
+### plugin.conf
+
+```
 [russound]
    class_name = Russound
    class_path = plugins.russound
    host = 192.168.1.123
 #   port = 9621
-</pre>
+```
 
 This plugin talks by default with the Russound audio device with the given host ip on the default port 9621. If you have changed the default port you have to change it here as well.
 
-items.conf
---------------
+### items.conf
 
-### rus_path
+
+#### rus_path
+
 This attribute is mandatory. If you don't provide one the item will be ignored.
 The value must be given with the following format c.z.p where c is the number of the controller, z is the number of the zone and p is the system parameter of the Russound audio device like volume or treble.
 Right know the following russound parameter types are supported:
@@ -46,8 +46,9 @@ Besides the above parameters there are so called key codes. This are special val
 
 For such key codes it will be best to define the item with the aditional attribute enforce_updates=true so that the value of the item is not important. That means you can e.g. use a KNX push device that sends a ONE on every push to a group address and smarthome.py listens for that address. With this on every push the channelup key code is sent.
 
-# Example
-<pre>
+#### Example
+
+```
 ['dg']
         [['bedroom']]
                 [[['audio']]]
@@ -99,5 +100,5 @@ For such key codes it will be best to define the item with the aditional attribu
                         [[[['donotdisturb']]]]
                                 type=str
                                 rus_path=1.1.donotdisturb
-</pre>
+```
 

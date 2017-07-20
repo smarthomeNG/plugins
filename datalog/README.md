@@ -1,6 +1,6 @@
 # DataLog
 
-# Requirements
+## Requirements
 
 Plugin to dump the item data into files on the file system. It can be used
 to configure different logs and log patterns and assign them to the
@@ -10,13 +10,13 @@ items. These items will be logged to the files.
 
 No special hardware required.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
 The plugin can be configured using the following settings:
 
-<pre>
+```
 [datalog]
    class_name = DataLog
    class_path = plugins.datalog
@@ -24,7 +24,7 @@ The plugin can be configured using the following settings:
 #   filepatterns = default:{log}-{year}-{month}-{day}.csv | yearly:{log}-{year}.csv
 #   logpatterns = csv:{time};{item};{value}\n
 #   cycle = 300
-</pre>
+```
 
 This will setup the logs `default` and `yearly`, which is using the configured
 patter to build the target file name (key-value pairs). The `default` log is
@@ -49,15 +49,15 @@ Placeholders which can be used in the `logpatterns` option:
    * `item` - the id of the item
    * `value` - the value of items
 
-## items.conf
+### items.conf
 
-### path
+#### path
 
 Specifies the path to log into. The default value is `var/log/data` which can
 be changed by using this option. All log files will be logged into this directory.
 It's not possible to configure different log paths for different log files.
 
-### filepatterns
+#### filepatterns
 
 This specifies a list of file patterns, which is used to build the target files
 to log data into. It's using a key-value pair syntax, which means you can
@@ -70,7 +70,7 @@ Placeholders which can be used in the `filepatterns` option:
    * `month` - the current month
    * `day` - the current day
 
-### logpatterns
+#### logpatterns
 
 The log pattners setting configured the format in which the data will be
 logged into the log files. It's using a key-value pair syntax, which means
@@ -80,22 +80,22 @@ A log pattern is used for logging when a file pattern is configured, where
 the extension (part behind the last `.`) matches the key.
 
 Example:
-<pre>
+```
 [datalog]
    class_name = DataLog
    class_path = plugins.datalog
    filepatterns = default:{log}-{year}-{month}-{day}.csv | custom:{log}-{year}-{month}-{day}.txt
    logpatterns = csv:{time};{item};{value}\n
-</pre>
+```
 
 In this example the `default` log file will use the configured log pattern. The
 `custom` log file is completely ignored, since no pattern is configured.
 
-### Example
+#### Example
 
 Example configuration using the plugin configuration on top of the page.
 
-<pre>
+```
 # items/my.conf
 [some]
     [[item1]]
@@ -107,7 +107,7 @@ Example configuration using the plugin configuration on top of the page.
     [[item3]]
         type = num
         datalog = custom
-</pre>
+```
 
 This will log the items
 
@@ -115,11 +115,11 @@ This will log the items
    * `some.item2` to the `default` and `custom` log 
    * `some.item3` to the `custom` log
 
-## logic.conf
+### logic.conf
 
 No logic related stuff implemented.
 
-# Methods
+## Methods
 
 No methods provided currently.
 

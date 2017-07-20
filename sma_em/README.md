@@ -16,14 +16,23 @@ If demand exists, the plugin can also be extended to be used with more than one 
 
 ## Configuration
 
-### plugin.conf
-<pre>
+### plugin.conf (deprecated) / plugin.yaml
+
+```
 [sma_em]
     class_name = SMA_EM
     class_path = plugins.sma_em
     serial = xxxxxxxxxx
     time_sleep = 5
-</pre>
+```
+
+```yaml
+sma_em:
+    class_name: SMA_EM
+    class_path: plugins.sma_em
+    serial: xxxxxxxxxx
+    time_sleep: 5
+```
 
 #### Attributes
   * `serial`: The serial number of your energy meter
@@ -32,8 +41,9 @@ If demand exists, the plugin can also be extended to be used with more than one 
 ### items.conf
 
 #### Example:
-<pre>
-# items/sma-em.conf
+
+```
+# items/sma-em.conf (deprecated)
 [smaem]
     [[surplus]]
         name = Solar Energy Surplus
@@ -62,4 +72,43 @@ If demand exists, the plugin can also be extended to be used with more than one 
 	[[cosphi]]
 	    sma_em_data_type = cosphi
 	    type = num
-</pre>
+```
+
+```yaml
+# items/items.yaml
+smaem:
+
+    surplus:
+        name: Solar Energy Surplus
+        sma_em_data_type: psurplus
+        type: num
+
+        kw:
+            type: num
+            eval: sh.smaem.surplus() / 1000
+            eval_trigger: smaem.surplus
+
+    regard:
+        name: Energy Regard
+        sma_em_data_type: pregard
+        type: num
+
+        kw:
+            type: num
+            eval: sh.smaem.regard() / 1000
+            eval_trigger: smaem.regard
+
+    surplus_counter:
+        name: Solar Energy Surplus Counter
+        sma_em_data_type: psurpluscounter
+        type: num
+
+    regard_counter:
+        name: Energy Regard Counter
+        sma_em_data_type: pregardcounter
+        type: num
+
+    cosphi:
+        sma_em_data_type: cosphi
+        type: num
+```

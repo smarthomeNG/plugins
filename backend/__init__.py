@@ -125,7 +125,8 @@ class BackendServer(SmartPlugin):
         config = {'global': {
             'engine.autoreload.on': False,
             'tools.staticdir.debug': True,
-            'tools.trailing_slash.on': False
+            'tools.trailing_slash.on': False,
+            'log.screen': False
             },
             '/': {
                 'tools.auth_basic.on': self._basic_auth,

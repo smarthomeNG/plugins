@@ -9,14 +9,22 @@ You could get it, free of charge, [here](http://kunden.dwd.de/gdsRegistration/gd
 
 ## Configuration
 
-### plugin.conf
-<pre>
+### plugin.conf (deprecated) / plugin.yaml
+```
 [dwd]
    class_name = DWD
    class_path = plugins.dwd
    username = ****
    password = ****
-</pre>
+```
+
+```
+dwd:
+    class_name: DWD
+    class_path: plugins.dwd
+    username: '****'
+    password: '****'
+```
 
 You only need to specify your username and password.
 

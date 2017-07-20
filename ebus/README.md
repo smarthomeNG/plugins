@@ -10,29 +10,33 @@ running ebusd in network (note: ebusd also requires an ebus-interface)
 I.e. Vaillant, Wolf, Kromschroeder or other eBus-heatings
 
 ## Configuration
+
 ### plugin.conf
 
-<pre>
+```
 [ebus]
     class_name = eBus
     class_path = plugins.ebus
     host = localhost  # ip of ebusd
     port = 8888       # port of ebusd
     cycle = 240       # cycle of each item
-</pre>  
-  
-    
+``` 
 
 ### items.conf
+
 Items need parameter "ebus_cmd" and "ebus_type".  
 ebus_cmd is the command you use for telnet-connection to ebusd.  
 ebus_type can be "get" or "set".
-####ebus_set
+
+#### ebus_set
+
 Items are read/write. All "set"-items will be read cyclic too!
-####ebus_get
+
+#### ebus_get
+
 Items will only be readable, i.e. sensors.
 
-<pre>
+```
 [ebus]
   [[hk_pumpe_perc]]
     type = num
@@ -59,5 +63,5 @@ Items will only be readable, i.e. sensors.
     ebus_cmd = "short hw_load"
     ebus_type = "set"
     comment = Quick - WW Speicherladung
-</pre>   
+``` 
   

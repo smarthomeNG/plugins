@@ -1,28 +1,28 @@
-# 1-Wire
+# Onewire
 
-Requirements
-============
+## Requirements
+
 This plugin needs an running owserver from owfs. I have tested owfs-2.7p34 and owfs-2.8p15.
 
 Hint: to run the owserver as non root. You have to add a udev rule for the usb busmasters.
-<pre># /etc/udev/rules.d/80-smarthome.rules
+```
+# /etc/udev/rules.d/80-smarthome.rules
 SUBSYSTEM=="usb",ENV{DEVTYPE}=="usb_device",ATTR{idVendor}=="04fa", ATTR{idProduct}=="2490",GROUP="smarthome",MODE="0660"
-</pre>
+```
 
 Hint2: You can also use a running owserver on another host.
 
-Configuration
-=============
+## Configuration
 
-plugin.conf
------------
-<pre>
+### plugin.conf
+
+```
 [ow]
     class_name = OneWire
     class_path = plugins.onewire
 #    host = 127.0.0.1
 #    port = 4304
-</pre>
+```
 
 This plugins is looking by default for the owserver on 127.0.0.1 port 4304. You could change this in your plugin.conf.
 
@@ -32,21 +32,18 @@ Advanced options in plugin.conf. Please be careful.
 * 'io_wait' = timeperiod between two requests of 1-wire I/O chip. Default 5 seconds.
 * 'button_wait' = timeperiod between two requests of ibutton-busmaster. Default 0.5 seconds.
 
+### items.conf
 
-
-items.conf
---------------
-
-### name
+#### name
 This is a name for the defined sensor information.
 
-### type
+#### type
 This is the type of the sensor data. Currently 'num' and 'bool' are supported.
 
-### ow_addr
+#### ow_addr
 'ow_addr' defines the 1wire adress of the sensor (formerly 'ow_id'). If 'ow_addr' is specified, the 1wire plugin monitors this sensor.
 
-### ow_sensor
+#### ow_sensor
 'ow_sensor' defines the particular data of the sensor. Currently are supported:
 
 * 'T' - temperature - could be T, T9, T10, T11, T12 (depends on accuracy, but more accuracy needs more time!)
@@ -76,7 +73,7 @@ Currently the following 1wire devices are tested by users:
 * DATANAB DS2438 (rugged temp/hum)
 * D2PC (dual I/O DS2406)
 
-<pre>
+```
 [test-1wire]
     [[bm-ibutton]]
         name = ibutton busmaster to identify ibutton buses
@@ -121,25 +118,25 @@ Currently the following 1wire devices are tested by users:
         type = num
         ow_addr = 26.A9D76B010000
         ow_sensor = V
-</pre>
+```
 
-Functions
-=========
+## Functions
 
-ibutton_hook(ibutton, item)
---------------------------------
+### ibutton_hook(ibutton, item)
 
 This is a special function which is called if an unknown ibutton is attached to the bus.
 If the unknown ibutton is already seen, the id will be cached and the function is not called again. The cache will be reset every ten minutes.
-The function must take two arguments. The first will be the id of the ibutton and the second is the item of the ibutton busmaster (e.g. `sh.home.key_hanger`).
+The function must take two arguments. The first will be the id of the ibutton and the second is the item of the ibutton busmaster (e.g. ``sh.home.key_hanger``).
 
 To use it you have to assign a (useful) function. For this you could do something like this:
 
-<pre># my startup.py logic which is called at startup with crontab = init
+```python
+# my startup.py logic which is called at startup with crontab = init
 def intruder_alert(ibutton_id, item):
     sh.notify("iButton-Alert","Someone uses an unknown iButton ({0}) at {1}".format(ibutton_id, item))
     # sh.take_picuture()
     # ...
 
-sh.ow.ibutton_hook = intruder_alert</pre>
+sh.ow.ibutton_hook = intruder_alert
+```
 

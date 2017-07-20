@@ -1,33 +1,33 @@
 # Notify My Android
 
-# Requirements
+## Requirements
 
 NMA API-KEY
 
 get it from http://www.notifymyandroid.com/ for free
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
-<pre>
+```
 [nma]
     class_name = NMA
     class_path = plugins.nma
 #    apikey = <your-api-key>
-</pre>
+```
 
 Description of the attributes:
 
 * __apikey__: set api-key globally so you do not have to set it in the function calls
 
-# Functions
+## Functions
 
 Because there is only one function you could access it directly by the object. 
 
-<pre>
+```python
 sh.nma('Intrusion', 'Living room window broken!')
-</pre>
+```
 
 This function takes several arguments:
 
@@ -38,8 +38,9 @@ This function takes several arguments:
 * __apikey__: API-KEY used for this request - not necessary if global 'apikey' is set
 * __application__: Name of the application (default: 'SmartHome')
  
-# Examples
-<pre>
+## Examples
+```python
 sh.nma('Intrusion', 'Living room window broken', 2, 'http://yourvisu.com/')
 sh.nma('Tumbler', 'finished', apikey='<your-api-key>')
-</pre>
+```
+

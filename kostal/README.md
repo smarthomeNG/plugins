@@ -1,6 +1,9 @@
 # KOSTAL
 
 Version: 1.3.1.2
+=======
+## Requirements
+Kostal Inverter
 
 This plugin is designed to retrieve data from a [KOSTAL](http://www.kostal-solar-electric.com/) inverter module (e.g. PIKO inverters).
 Since UI-version (communication-board) 6 json-format is supported.
@@ -45,11 +48,12 @@ Is currently working with the following KOSTAL inverter modules:
 
 ## Configuration
 
+
 ### plugin.conf
 
 The plugin can be configured like this:
 
-<pre>
+```
 [Kostal_PV]
    class_name = Kostal
    class_path = plugins.kostal
@@ -61,7 +65,7 @@ The plugin can be configured like this:
 # use
 #   datastructure=json
 # for UI-Version >6
-</pre>
+```
 
 This plugin retrieves data from a KOSTAL inverter module of a solar energy
 plant.
@@ -110,7 +114,7 @@ types of communication can be configured the same way.
 
 #### Example
 
-<pre>
+```
 # items/my.conf
 # not all possible items are used
 
@@ -207,12 +211,13 @@ types of communication can be configured the same way.
       name = Operation time
       type = num
       kostal = operationtime_h
-</pre>
+=======
+```
 
-## logic.conf
+### logic.conf
 
 No logic related stuff implemented.
 
-# Methods
+## Methods
 
 No methods provided currently.

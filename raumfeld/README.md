@@ -1,10 +1,10 @@
-# Raumfeld Plugin
+# Raumfeld
 Thanks to tfeldmann for his raumfeld code: https://github.com/tfeldmann/python-raumfeld
 
 This is a prototyp for a simple raumfeld integration. The current version
 supports start and stop playing stream in a specific zone. 
 
-# Requirements
+## Requirements
 
 Plugin for Teufel Raumfeld compontents. See https://www.raumfeld.com/
 
@@ -12,19 +12,19 @@ Plugin for Teufel Raumfeld compontents. See https://www.raumfeld.com/
 
 * all Raumfeld Speaker
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
-<pre>
+```
 [raumfeld]
     class_name = Raumfeld
     class_path = plugins.raumfeld
-</pre>
+```
 
 
-## items.conf
-<pre>
+### items.conf
+```
 [raumfeld]
 	[[bad]]
 		type = bool
@@ -49,11 +49,11 @@ Plugin for Teufel Raumfeld compontents. See https://www.raumfeld.com/
         knx_send = 0/0/36
 		knx_init = 0/0/37
 		knx_reply = 0/0/37
-</pre>
-### device_name
+```
+#### device_name
 
 Raumfeld Zone/Hörzonen name
 
-### stream_url
+#### stream_url
 
 Stream URL to play

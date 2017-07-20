@@ -1,4 +1,5 @@
-# smarthome-yamaha
+# Yamaha
+
 Plugin to control Yamaha RX-V and RX-S receivers, e.g.: Power On / Off, select input, set volume and mute.
 
 ## Notes
@@ -13,7 +14,8 @@ As far as I know all RX-V4xx, RX-V5xx, RX-V6xx, RX-V7xx and RX-Sxxx series share
 
 After installation of the plugin, you might not receive event notifications over multicast. To enable event notifications please power on the device at least once using sh.py, see examples below to power on using CLI. 
 
-## Prerequisite
+## Requirements
+
 The following python packages need to be installed on your system:
 
 - requests
@@ -21,7 +23,7 @@ The following python packages need to be installed on your system:
 
 Those packages can be installed using:
 
-<pre>
+```bash
 # Debian based
 sudo apt-get install python3-lxml python3-requests
 
@@ -30,25 +32,32 @@ sudo pacman -S python-lxml python-requests
 
 # Fedora
 sudo dnf install python3-lxml python3-requests
-</pre>
+```
 
 ## Installation
-<pre>
+
+```bash
 cd smarthome.py directory
 cd plugins
 git clone https://github.com/rthill/yamaha.git
-</pre>
+```
 
-### plugin.conf
-<pre>
+### plugin.conf (deprecated) / plugin.yaml
+```
 [yamaha]
     class_name = Yamaha
     class_path = plugins.yamaha
-</pre>
+```
 
-### items.conf
+```yaml
+yamaha:
+    class_name: Yamaha
+    class_path: plugins.yamaha
+```
 
-<pre>
+### items.conf (deprecated) / items.yaml
+
+```
 [mm]
     [[gf]]
         [[[living]]]
@@ -70,10 +79,42 @@ git clone https://github.com/rthill/yamaha.git
                     type = str
                     yamaha_cmd = input
                     enforce_updates = True
-</pre>
+```
+
+```yaml
+mm:
+
+    gf:
+
+        living:
+
+            yamaha:
+                yamaha_host: 192.168.178.186
+
+                power:
+                    type: bool
+                    yamaha_cmd: power
+                    enforce_updates: 'True'
+
+                volume:
+                    type: num
+                    yamaha_cmd: volume
+                    enforce_updates: 'True'
+
+                mute:
+                    type: bool
+                    yamaha_cmd: mute
+                    enforce_updates: 'True'
+
+                input:
+                    type: str
+                    yamaha_cmd: input
+                    enforce_updates: 'True'
+```
 
 ### Example CLI usage
-<pre>
+
+```
 > up mm.gf.living.yamaha.power=True
 > up mm.gf.living.yamaha.input=AV4 
 > up mm.gf.living.yamaha.volume=-600 # This is equivalent for -60.0dB
@@ -81,4 +122,4 @@ git clone https://github.com/rthill/yamaha.git
 > up mm.gf.living.yamaha.mute=True
 > up mm.gf.living.yamaha.mute=False
 > up mm.gf.living.yamaha.power=False
-</pre>
+```
