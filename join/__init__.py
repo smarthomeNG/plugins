@@ -109,3 +109,11 @@ class Join(SmartPlugin):
                 "Exception when sending GET request towards https://joinjoaomgcd.appspot.com: %s" % str(e))
             return
         return
+
+    def get_devices(self):
+        req_url = self.LIST_URL + self._api_key
+        response = requests.get(req_url).json()
+
+        if response.get('success') and not response.get('userAuthError'):
+            return [(r['deviceName'], r['deviceId']) for r in response['records']]
+        return False

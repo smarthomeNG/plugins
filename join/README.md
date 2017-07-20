@@ -39,9 +39,13 @@ join:
 
 ## Functions
 
-### send( title=None, text=None, icon=None, find=None, smallicon=None, device_id=None, device_ids=None, device_names=None, url=None, image=None, sound=None, group=None, clipboard=None, file=None, callnumber=None, smsnumber=None, smstext=None, mmsfile=None, wallpaper=None, lockWallpaper=None, interruptionFilter=None, mediaVolume=None, ringVolume=None, alarmVolume=None):
+### send( title=None, text=None, icon=None, find=None, smallicon=None, device_id=None, device_ids=None, device_names=None, url=None, image=None, sound=None, group=None, clipboard=None, file=None, callnumber=None, smsnumber=None, smstext=None, mmsfile=None, wallpaper=None, lockWallpaper=None, interruptionFilter=None, mediaVolume=None, ringVolume=None, alarmVolume=None)
 
 For the definition of the respective variables refer to the Join API: https://joaoapps.com/join/api/
+
+### get_devices()
+
+Returns an array of all devices registered for the Join API
 
 ## Logics
 
