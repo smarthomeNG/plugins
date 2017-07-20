@@ -22,13 +22,7 @@
 #########################################################################
 
 import logging
-import json
 import requests
-import magic
-import os
-import re
-import urllib.parse
-import http.client
 from lib.model.smartplugin import SmartPlugin
 
 
