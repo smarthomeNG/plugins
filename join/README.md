@@ -23,7 +23,6 @@ sudo pip3 install requests --upgrade
     class_path = plugins.join
     device_id = <your deviceid>
     api_key = <your apikey>
-</pre>
 ```
 
 ```yaml
@@ -32,7 +31,6 @@ join:
     class_path: plugins.join
     device_id: <your deviceid>
     api_key: <your apikey>
-</pre>
 ```
 
 #### Attributes
