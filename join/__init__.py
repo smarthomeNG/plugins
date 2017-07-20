@@ -31,7 +31,7 @@ class Join(SmartPlugin):
     SEND_URL = URL_PREFIX+'messaging/v1/sendPush?apikey='
     LIST_URL = URL_PREFIX+'registration/v1/listDevices?apikey='
     PLUGIN_VERSION = "1.4.1.0"
-    ALLOW_MULTIINSTANCE = True
+    ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome, api_key=None, device_id=None):
         logging.getLogger("requests").setLevel(logging.WARNING)
