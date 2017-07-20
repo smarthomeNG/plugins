@@ -47,10 +47,10 @@ For the definition of the respective variables refer to the Join API: https://jo
 
 ```python
 if (sh.your.item() == 1):
-    sh.join.send(smsnumber="0123456789, smstext="Hello World") #to write a SMS
+    sh.join.send(smsnumber="0123456789", smstext="Hello World") #to write a SMS
 
 if (sh.your.item() == 1):
-    sh.join.send(title="0123456789, text="Hello World") #to write a notification
+    sh.join.send(title="01234567892, text="Hello World") #to write a notification
 
 if (sh.your.item() == 1):
     sh.join.send(find="true") #to find your device
