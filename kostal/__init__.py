@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
-#
-# Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
-#
-#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#########################################################################
+# Copyright 2012- Oliver Hinckel github@ollisnet.de
+# Copyright 2017 Wenger Florian  wenger@unifox.at
+#########################################################################
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,69 +19,136 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #
+#########################################################################
 
 import logging
+from lib.model.smartplugin import SmartPlugin
+from lib.utils import Utils
+import urllib.request, json
 import time
 import re
 
-logger = logging.getLogger('')
+class Kostal(SmartPlugin):
+    """
+    Since UI-version 6 the inverter can answere requests with json.
+    Unfortunately, I have only a simple inverter. Therefore, I can not test
+    the values for other phases or a second DC Line-In.
+    See README.md for more details
+    """
+    ALLOW_MULTIINSTANCE = True
 
+    PLUGIN_VERSION = "1.3.1.2"
 
-class Kostal():
+    _key2json = {
+       'operation_status' : 16780032,
+       'dctot_w' : 33556736,
+       'dc1_v' : 33555202,
+       'dc1_a' : 33555201,
+       'dc1_w' : 33555203,
+       'dc2_v' : 33555458,
+       'dc2_a' : 33555457,
+       'dc2_w' : 33555459,
+       'dc3_v' : 33555714,
+       'dc3_a' : 33555713,
+       'dc3_w' : 33555715,
+       'actot_w' : 67109120,
+       'actot_Hz' : 67110400,
+       'actot_cos' : 67110656,
+       'actot_limitation' : 67110144,
+       'ac1_v' : 67109378,
+       'ac1_a' : 67109377,
+       'ac1_w' : 67109379,
+       'ac2_v' : 67109634,
+       'ac2_a' : 67109633,
+       'ac2_w' : 67109635,
+       'ac3_v' : 67109890,
+       'ac3_a' : 67109889,
+       'ac3_w' : 67109891,
+       'yield_day_kwh' : 251658754,
+       'yield_tot_kwh' : 251658753,
+       'operationtime_h' : 251658496
+    }
     _key2td = {
-        'power_current': 9,
-        'power_total': 12,
-        'power_day': 21,
-        'status': 27,
-        'string1_volt': 45,
-        'string2_volt': 69,
-        'string3_volt': 93,
-        'string1_ampere': 54,
-        'string2_ampere': 78,
-        'string3_ampere': 102,
-        'l1_volt': 48,
-        'l2_volt': 72,
-        'l3_volt': 96,
-        'l1_watt': 57,
-        'l2_watt': 81,
-        'l3_watt': 105
+        'actot_w': 9,
+        'yield_tot_kwh': 12,
+        'yield_day_kwh': 21,
+        'operation_status': 27,
+        'dc1_v': 45,
+        'dc2_v': 69,
+        'dc3_v': 93,
+        'dc1_a': 54,
+        'dc2_a': 78,
+        'dc3_a': 102,
+        'ac1_v': 48,
+        'ac2_v': 72,
+        'ac3_v': 96,
+        'ac1_w': 57,
+        'ac2_w': 81,
+        'ac3_w': 105
     }
 
-    def __init__(self, smarthome, ip, user="pvserver", passwd="pvwr", cycle=300):
-        self._sh = smarthome
-        self.ip = ip
+    def __init__(self, sh, ip, user="pvserver", passwd="pvwr",cycle=300, datastructure="html"):
+        self._sh = sh
+        self.logger = logging.getLogger(__name__)
+        self.logger.info('Init Kostal plugin')
         self.user = user
         self.passwd = passwd
         self.cycle = int(cycle)
-        self._items = []
-        self._values = {}
+        self._items = {}
+        if Utils.is_ip(ip):
+            self.ip = ip
+        else:
+            self.logger.error(str(ip) + " is not a valid IP")
+        if datastructure == "html":
+            self._keytable = self._key2td
+            #self.datastructure = "html"
+            self.datastructure = self._html
+        else:
+            self._keytable = self._key2json
+            #self.datastructure = "json"
+            self.datastructure = self._json
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("run method Kostal called")
         self.alive = True
         self._sh.scheduler.add('Kostal', self._refresh, cycle=self.cycle)
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("stop method Kostal called")
         self.alive = False
 
     def parse_item(self, item):
-        if 'kostal' in item.conf:
-            kostal_key = item.conf['kostal']
-            if kostal_key in self._key2td:
-                self._items.append([item, kostal_key])
-                return self.update_item
-            else:
-                logger.warn('invalid key {0} configured', kostal_key)
-        return None
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        Selects each item corresponding to its attribute keywords and adds it to an internal array
+        :param item: The item to process.
+        """
+        if self.has_iattr(item.conf, 'kostal'):
+            self._items[self.get_iattr_value(item.conf, 'kostal')] = item
+            self.logger.debug("parse item: {0}".format(item))
+            return self.update_item
 
     def parse_logic(self, logic):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'Kostal':
-            pass
+        """
+        Write items values
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        pass
 
-    def _refresh(self):
-        start = time.time()
+    def _html(self):
+        #HTML-OLD-Coding
         try:
             data = self._sh.tools.fetch_url(
                 'http://' + self.ip + '/', self.user, self.passwd, timeout=2).decode()
@@ -88,18 +156,55 @@ class Kostal():
             data = re.sub(r'<([a-zA-Z0-9]+)(\s+[^>]*)>', r'<\1>', data)
             # search all TD elements
             table = re.findall(r'<td>([^<>]*)</td>', data, re.M | re.I | re.S)
-            for kostal_key in self._key2td:
-                value = table[self._key2td[kostal_key]].strip()
+            for kostal_key in self._keytable:
+                value = table[self._keytable[kostal_key]].strip()
                 if 'x x x' not in value:
-                    logger.debug('set {0} = {1}'.format(kostal_key, value))
-                    self._values[kostal_key] = value
-            for item_cfg in self._items:
-                if item_cfg[1] in self._values:
-                    item_cfg[0](self._values[item_cfg[1]], 'Kostal')
+                    self.logger.debug('set {0} = {1}'.format(kostal_key, value))
+                    if kostal_key in self._items:
+                        self._items[kostal_key](value)
         except Exception as e:
-            logger.error(
+            self.logger.error(
                 'could not retrieve data from {0}: {1}'.format(self.ip, e))
             return
 
+    def _json(self):
+        #NEW-JSON-Coding
+        try:
+            # generate url; fetching only needed elements
+            kostalurl = 'http://' + self.ip + '/api/dxs.json?sessionid=SmartHomeNG'
+            for item in self._items:
+                value = self._keytable[item]
+                kostalurl +='&dxsEntries=' + str(value)
+            with urllib.request.urlopen(kostalurl) as url:
+                data = json.loads(url.read().decode())
+                for values in data['dxsEntries']:
+                    kostal_key = str(list(self._keytable.keys())[list(self._keytable.values()).index(values['dxsId'])])
+                    value=values['value']
+                    if kostal_key == "operation_status":
+                        self.logger.debug("operation_status" + str(value))
+                        if str(value) == "0":
+                            value = "off"
+                        elif str(value) == "2":
+                            value = "startup"
+                        elif str(value) == "3":
+                            value = "feed in (mpp)"
+                        elif str(value) == "6":
+                            value = "dc voltage low"
+                        else:
+                            value = "unknown"
+                    if kostal_key == "yield_day_kwh":
+                            value = value / 1000
+                    if kostal_key in self._items:
+                        self._items[kostal_key](value)
+                        self.logger.debug("items[" + str(kostal_key) +"] = " +str(value))
+        except Exception as e:
+            self.logger.error(
+                'could not retrieve data from {0}: {1}'.format(self.ip, e))
+            return
+
+    def _refresh(self):
+        start = time.time()
+        # run the working methods
+        self.datastructure()
         cycletime = time.time() - start
-        logger.debug("cycle takes {0} seconds".format(cycletime))
+        self.logger.debug("cycle takes {0} seconds".format(cycletime))
