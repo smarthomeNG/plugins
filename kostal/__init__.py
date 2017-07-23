@@ -86,6 +86,24 @@ class Kostal(SmartPlugin):
         'ac2_w': 81,
         'ac3_w': 105
     }
+    _deprecated = {
+        'power_current': 'actot_w',
+        'power_total': 'yield_tot_kwh',
+        'power_day': 'yield_day_kwh',
+        'status': 'operation_status',
+        'string1_volt': 'dc1_v',
+        'string2_volt': 'dc2_v',
+        'string3_volt': 'dc3_v',
+        'string1_ampere': 'dc1_a',
+        'string2_ampere': 'dc2_a',
+        'string3_ampere': 'dc3_a',
+        'l1_volt': 'ac1_v',
+        'l2_volt': 'ac2_v',
+        'l3_volt': 'ac3_v',
+        'l1_watt': 'ac1_w',
+        'l2_watt': 'ac2_w',
+        'l3_watt': 'ac3_w'
+    }
 
     def __init__(self, sh, ip, user="pvserver", passwd="pvwr",cycle=300, datastructure="html"):
         self._sh = sh
@@ -130,8 +148,11 @@ class Kostal(SmartPlugin):
         :param item: The item to process.
         """
         if self.has_iattr(item.conf, 'kostal'):
-            self._items[self.get_iattr_value(item.conf, 'kostal')] = item
-            self.logger.debug("parse item: {0}".format(item))
+            setting = self.get_iattr_value(item.conf, 'kostal')
+            if setting in self._deprecated:
+                self.logger.warn('Kostal: Using deprecated setting {}, please change to {}'.format(setting, self._deprecated[setting]))
+                setting = self._deprecated[setting]
+            self._items[setting] = item
             return self.update_item
 
     def parse_logic(self, logic):
