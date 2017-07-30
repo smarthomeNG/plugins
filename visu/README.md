@@ -1,7 +1,8 @@
-# Visualisation
+# Visualisation (deprecated)
 
-This plugin provides a WebSocket interface for the smartVISU visualisation framework.
-Right now the WebSocket interface only supports unencrypted connections. Please use a internal network or VPN to connect to the service.
+The VISU plugin is deprecated and will be removed with release 1.3. Please switch to the ``visu_websocket`` and ``visu_smartvisu`` plugin.
+
+This plugin provides a web socket interface for the smartVISU visualisation framework and creates pages for the SmartVISU from item definitions.
 
 ## Requirements
 
