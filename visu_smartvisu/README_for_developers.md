@@ -1,7 +1,6 @@
-# Visualisation plugin
+# Visualisation plugin (smartVISU support) - for developers
 
 ```
- 
 Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
 
@@ -9,7 +8,6 @@ This plugin is part of SmartHomeNG.
   
 Visit:  https://github.com/smarthomeNG/
         https://knx-user-forum.de/forum/supportforen/smarthome-py
-
 ```
 
 This file gives **smarthomeNG** developers additional information about the smartvisu plugin. For information about the configuration of the plugin refer to **README.md**.

@@ -1,4 +1,4 @@
-# Visualisation plugin
+# Visualisation plugin (Websocket Protocol) - for developers
 
 ```
  
@@ -12,7 +12,8 @@ Visit:  https://github.com/smarthomeNG/
 
 ```
 
-This file gives **smarthome.py** developers of visualization software additional information about the visu_websocket plugin. The following sections describe the implemented websocket protocol, that can be used my a visu to interface with smarthomeNG.
+This file gives **smarthome.py** developers of visualization software additional information about the visu_websocket plugin. 
+The following sections describe the implemented websocket protocol, that can be used my a visu to interface with smarthomeNG.
 
 For information about the configuration of the plugin refer to **README.md**.
 

@@ -1,6 +1,11 @@
 # NUT - Network UPS Tools plugin
 
-This plugin is connecting to NUT daemon and can be used to read ups variables. You can list available variables using command `upsc your_ups_name`.
+This plugin is connecting to NUT daemon and can be used to read ups variables. 
+
+The primary goal of the Network UPS Tools (NUT) project is to provide support for Power Devices, 
+such as Uninterruptible Power Supplies, Power Distribution Units, Automatic Transfer Switch, Power Supply Units and Solar Controllers.
+
+The plugin can be used standalone to list available variables using command `upsc your_ups_name`.
 More about NUT: http://networkupstools.org/
 
 
