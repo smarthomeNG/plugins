@@ -13,7 +13,7 @@ This plugin needs an OpenEnergyMonitor account. This can be on [emoncms.org](htt
 ```
 [OpenEnergyMonitor]
    class_name = OpenEnergyMonitor
-   class_path = plugins.OpenEnergyMonitor
+   class_path = plugins.openenergymonitor
    url = http://emoncms.org | http://localhost/emoncms
    timeout = 4
    writeApiKey = ...
