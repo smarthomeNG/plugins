@@ -128,6 +128,7 @@ class KNX(lib.connection.Client,SmartPlugin):
 
         if send_time:
             self._sh.scheduler.add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(send_time))
+		readonly = self.to_bool(readonly)	
         if readonly: 
             self.logger.warning("!!! KNX Plugin in READONLY mode !!! ")
         self.readonly = readonly
