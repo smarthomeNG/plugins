@@ -1,5 +1,8 @@
 # AVM
 
+## Description
+The AVM Plugin can be used to connect to a device from AVM (e.g. the Fritzbox). You can control functionality and read data from the device. Moreover you can connect to the live call monitor and monitor incoming or outgoing calls and trigger items based on these events.
+
 ## Requirements
 This plugin requires lib requests. You can install this lib with: 
 
