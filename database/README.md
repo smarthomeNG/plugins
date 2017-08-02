@@ -42,9 +42,9 @@ format (or parameter) styles: qmark, format, numeric and pyformat.
 Make sure the installed module supports one of this!
 
 Tested drivers (other may work too):
-   * SQLite
+   * SQLite (`driver = sqlite3`)
       * Standard [driver](https://docs.python.org/3/library/sqlite3.html#module-sqlite3) from Python
-   * MySQL
+   * MySQL (`driver = pymysql`)
       * [PyMySQL](http://pymysql.readthedocs.io/)
 
 ## Configuration
