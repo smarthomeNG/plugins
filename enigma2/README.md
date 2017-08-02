@@ -1,5 +1,8 @@
 # Enigma2
 
+## Description
+The Enigma2 plugin allows to control and read info from linux based Enigma2 satellite receivers, on which the OpenWebIF is installed.
+
 ## Requirements
 This plugin requires lib requests. You can install this lib with: 
 <pre>
