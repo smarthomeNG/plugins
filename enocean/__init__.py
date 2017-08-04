@@ -65,28 +65,77 @@ FCSTAB = [
     0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3
     ]
 
-PACKET_SYNC_BYTE              = 0x55
-
-PACKET_TYPE_RADIO             = 0x01   # Packet Type Radio ERP1
-PACKET_TYPE_RESPONSE          = 0x02
-PACKET_TYPE_EVENT             = 0x04   # Event
-PACKET_TYPE_COMMON_COMMAND    = 0x05
-PACKET_TYPE_SMART_ACK_COMMAND = 0x06   # Smart Ack command
-PACKET_REMOTE_MAN_COMMAND     = 0x07   # Remote management command
-PACKET_TYPE_RADIO_MESSAGE     = 0x09
-PACKET_TYPE_RADIO_ERP2        = 0x0A   # ERP2 protocol radio telegram
+################################
+### --- Packet Sync Byte --- ###
+################################
+PACKET_SYNC_BYTE              = 0x55   # PACKET SYNC BYTE
 
 
-CO_WR_RESET            = 0x02
-CO_RD_VERSION          = 0x03
-CO_WR_BIST             = 0x06          # Perform built in self test
-CO_RD_IDBASE           = 0x08          # Read base ID number
-CO_WR_LEARNMODE        = 0x23          # Function: Enables or disables learn mode of Controller.
-CO_RD_LEARNMODE        = 0x24          # Function: Reads the learn-mode state of Controller.
-CO_RD_NUMSECUREDEVICES = 0x29          # Read number of taught in secure devices
-CO_RD_SECUREDEVICE     = 0x30          # Read secure device by ID
+############################
+### --- Packet Types --- ###
+############################
 
-#List of Event Codes
+PACKET_TYPE_RADIO             = 0x01   # RADIO ERP1
+PACKET_TYPE_RESPONSE          = 0x02   # RESPONSE
+PACKET_TYPE_RADIO_SUB_TEL     = 0x03   # RADIO_SUB_TEL
+PACKET_TYPE_EVENT             = 0x04   # EVENT
+PACKET_TYPE_COMMON_COMMAND    = 0x05   # COMMON COMMAND
+PACKET_TYPE_SMART_ACK_COMMAND = 0x06   # SMART ACK COMMAND
+PACKET_REMOTE_MAN_COMMAND     = 0x07   # REMOTE MANAGEMENT COMMAND
+PACKET_TYPE_RADIO_MESSAGE     = 0x09   # RADIO MESSAGE
+PACKET_TYPE_RADIO_ERP2        = 0x0A   # RADIO ERP2
+PACKET_TYPE_RADIO_802_15_4    = 0x10   # RADIO_802_15_4
+PACKET_TYPE_COMMAND_2_4       = 0x11   # COMMAND_2_4
+
+
+############################################
+### --- List of Common Command Codes --- ###
+############################################
+
+CO_WR_SLEEP                     = 0x01     # Order to enter in energy saving mode
+CO_WR_RESET                     = 0x02     # Order to reset the device
+CO_RD_VERSION                   = 0x03     # Read the device (SW) version /(HW) version, chip ID etc.
+CO_RD_SYS_LOG                   = 0x04     # Read system log from device databank
+CO_WR_SYS_LOG                   = 0x05     # Reset System log from device databank
+CO_WR_BIST                      = 0x06     # Perform built in self test
+CO_WR_IDBASE                    = 0x07     # Write ID range base number
+CO_RD_IDBASE                    = 0x08     # Read ID range base number
+CO_WR_REPEATER                  = 0x09     # Write Repeater Level off,1,2
+CO_RD_REPEATER                  = 0x0A     # Read Repeater Level off,1,2
+CO_WR_FILTER_ADD                = 0x0B     # Add filter to filter list
+CO_WR_FILTER_DEL                = 0x0C     # Delete filter from filter list
+CO_WR_FILTER_DEL_ALL            = 0x0D     # Delete all filter
+CO_WR_FILTER_ENABLE             = 0x0E     # Enable/Disable supplied filters
+CO_RD_FILTER                    = 0x0F     # Read supplied filters
+CO_WR_WAIT_MATURITY             = 0x10     # Waiting till end of maturity time before received radio telegrams will transmitted
+CO_WR_SUBTEL                    = 0x11     # Enable/Disable transmitting additional subtelegram info
+CO_WR_MEM                       = 0x12     # Write x bytes of the Flash, XRAM, RAM0 …
+CO_RD_MEM                       = 0x13     # Read x bytes of the Flash, XRAM, RAM0 ….
+CO_RD_MEM_ADDRESS               = 0x14     # Feedback about the used address and length of the configarea and the Smart Ack Table
+CO_RD_SECURITY                  = 0x15     # Read own security information (level, key)
+CO_WR_SECURITY                  = 0x16     # Write own security information (level, key)
+CO_WR_LEARNMODE                 = 0x17     # Function: Enables or disables learn mode of Controller.
+CO_RD_LEARNMODE                 = 0x18     # Function: Reads the learn-mode state of Controller.
+CO_WR_SECUREDEVICE_ADD          = 0x19     # Add a secure device
+CO_WR_SECUREDEVICE_DEL          = 0x1A     # Delete a secure device
+CO_RD_SECUREDEVICE_BY_INDEX     = 0x1B     # Read secure device by index
+CO_WR_MODE                      = 0x1C     # Sets the gateway transceiver mode
+CO_RD_NUMSECUREDEVICES          = 0x1D     # Read number of taught in secure devices
+CO_RD_SECUREDEVICE_BY_ID        = 0x1E     # Read secure device by ID
+CO_WR_SECUREDEVICE_ADD_PSK      = 0x1F     # Add Pre-shared key for inbound secure device
+CO_WR_SECUREDEVICE_SENDTEACHIN  = 0x20     # Send secure Teach-In message
+CO_WR_TEMPORARY_RLC_WINDOW      = 0x21     # Set the temporary rolling-code window for every taught-in devic
+CO_RD_SECUREDEVICE_PSK          = 0x22     # Read PSK
+CO_RD_DUTYCYCLE_LIMIT           = 0x23     # Read parameters of actual duty cycle limit
+CO_SET_BAUDRATE                 = 0x24     # Modifies the baud rate of the EnOcean device
+CO_GET_FREQUENCY_INFO           = 0x25     # Reads Frequency and protocol of the Device
+CO_GET_STEPCODE                 = 0x27     # Reads Hardware Step code and Revision of the Device
+
+
+###################################
+### --- List of Event Codes --- ###
+###################################
+
 SA_RECLAIM_NOT_SUCCESSFUL  = 0x01      # Informs the backbone of a Smart Ack Client to not successful reclaim.
 SA_CONFIRM_LEARN           = 0x02      # Used for SMACK to confirm/discard learn in/out
 SA_LEARN_ACK               = 0x03      # Inform backbone about result of learn request
@@ -95,7 +144,11 @@ CO_EVENT_SECUREDEVICES     = 0x05      # Informs about a secure device
 CO_DUTYCYCLE_LIMIT         = 0x06      # Informs about duty cycle limit
 CO_TRANSMIT_FAILED         = 0x07      # Informs that the device was not able to send a telegram.
 
-#Smart Acknowledge Defines:
+
+###########################################
+###  --- Smart Acknowledge Defines: --- ###
+###########################################
+
 SA_WR_LEARNMODE        = 0x01          # Set/Reset Smart Ack learn mode
 SA_RD_LEARNMODE        = 0x02          # Get Smart Ack learn mode state
 SA_WR_LEARNCONFIRM     = 0x03          # Used for Smart Ack to add or delete a mailbox of a client
@@ -109,7 +162,7 @@ SENT_RADIO_PACKET              = 0xFF
 SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
-    PLUGIN_VERSION = "1.3.2"
+    PLUGIN_VERSION = "1.3.3"
     ALLOW_MULTIINSTANCE = False
     
     def __init__(self, smarthome, serialport, tx_id=''):
@@ -205,7 +258,9 @@ class EnOcean(SmartPlugin):
             dBm = -optional[5]
             SecurityLevel = optional[6]
             self.logger.debug("enocean: radio message with additional info: subtelnum = {} / dest_id = {:08X} / signal = {}dBm / SecurityLevel = {}".format(subtelnum, dest_id, dBm, SecurityLevel))
-
+            if (choice == 0xD4) and (self.UTE_listen == True):
+                self.logger.info("call send_UTE_response")
+                self._send_UTE_response(data, optional)
         if sender_id in self._rx_items:
             self.logger.debug("enocean: Sender ID found in item list")
             # iterate over all eep known for this id and get list of associated items
@@ -326,6 +381,8 @@ class EnOcean(SmartPlugin):
 
     def run(self):
         self.alive = True
+        self.UTE_listen = False
+        #self.learn_id = 0
         t = threading.Thread(target=self._startup, name="enocean-startup")
         t.daemon = True
         t.start()
@@ -376,7 +433,24 @@ class EnOcean(SmartPlugin):
     def stop(self):
         self.alive = False
         self.logger.info("enocean: Thread stopped")
+        
+    def start_UTE_learnmode(self, id_offset=0):
+        self.UTE_listen = True
+        self.learn_id = id_offset
+        self.logger.info("enocean: Listeining for UTE package ('D4')")
 
+    def _send_UTE_response(self, data, optional):
+        choice = data[0]
+        #payload = data[1:-5]
+        #sender_id = int.from_bytes(data[-5:-1], byteorder='big', signed=False)
+        #status = data[-1]
+        #repeater_cnt = status & 0x0F
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        self._send_radio_packet(self.learn_id, choice, [0x91, payload[1], payload[2], payload[3], payload[4], payload[5], payload[6]],[SubTel, data[-5], data[-4], data[-3], data[-2], db, Secu] )#payload[0] = 0x91: EEP Teach-in response, Request accepted, teach-in successful, bidirectional
+        self.UTE_listen = False
+        self.logger.info("enocean: sending UTE response and end listening")
     def parse_item(self, item):
         if 'enocean_rx_key' in item.conf:
             # look for info from the most specific info to the broadest (key->eep->id) - one id might use multiple eep might define multiple keys
@@ -460,6 +534,10 @@ class EnOcean(SmartPlugin):
                         self.logger.debug('enocean: item is 07_3F_7F type')
                         self.send_rgbw_dim(id_offset, item(), 0)
                         self.logger.debug('enocean: sent RGBW dim command')
+                    elif(tx_eep == 'A5_3F_7F'):
+                        self.logger.debug('enocean: item is A5_3F_7F type')
+                        self.send_actuator_cmd(id_offset, item())
+                        self.logger.debug('enocean: sent actuator command')
                     else:
                         self.logger.error('enocean: error: Unknown tx eep command')
                 else:
@@ -531,7 +609,7 @@ class EnOcean(SmartPlugin):
         packet += bytes([self._calc_crc8(packet[1:5])])
         packet += bytes(data + optional)
         packet += bytes([self._calc_crc8(packet[6:])])
-        #self.logger.warning("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
+        self.logger.debug("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
         self._tcm.write(packet)
 
     def _send_smart_ack_command(self, _code, data=[]):
@@ -618,6 +696,10 @@ class EnOcean(SmartPlugin):
         else:
             self.logger.error("enocean: sending command A5_38_08: invalid dim value")
 
+    def send_actuator_cmd(self,id_offset=0, command=0):
+        pass
+
+
     def send_rgbw_dim(self,id_offset=0, color='red', dim=0, dimspeed=0):
         if(color == str(red)):
             color_hex_code = 0x10
@@ -670,7 +752,21 @@ class EnOcean(SmartPlugin):
         self.logger.info("enocean: sending learn telegram for switch command")
         self._send_radio_packet(id_offset, 0xA5, [0x01, 0x00, 0x00, 0x00])
 
+    def send_learn_actuator(self, id_offset=0):
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        self.logger.info("enocean: sending learn telegram for actuator")
+        self._send_radio_packet(id_offset, 0xA5, [0xFF, 0xF8, 0x0D, 0x80])
+
+#################################
+### --- START - Calc CRC8 --- ###
+#################################
     def _calc_crc8(self, msg, crc=0):
         for i in msg:
             crc = FCSTAB[crc ^ i]
         return crc
+
+###############################
+### --- END - Calc CRC8 --- ###
+###############################

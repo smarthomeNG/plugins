@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-# Copyright 2016 Serge Wagener (Foxi352)
+# Copyright 2016 Serge Wagener (Foxi352)             serge@wagener.family
 #########################################################################
-#  This file is part of SmartHomeNG
-#  https://github.com/smarthomeNG/smarthome
-#  http://knx-user-forum.de/
+#
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,7 +17,8 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHomeNG If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
 
 import logging
@@ -27,7 +27,7 @@ import threading
 from lib.model.smartplugin import SmartPlugin
 from time import sleep
 
-import http.client
+import requests
 import json
 
 logger = logging.getLogger('Jointspace')
@@ -37,12 +37,13 @@ class Jointspace(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.1.2"
     # Initialize connection to receiver
-    def __init__(self, smarthome, host, port=1925, cycle=10):
+    def __init__(self, smarthome, host, port=1925, cycle=15):
         logger.info("Jointspace: talking with jointspace running on TV set {0}:{1}".format(host, port))
         self._sh = smarthome
         self._items = {}
         self._host = host
         self._port = port
+        self._version = 1
         self._volmin = 0
         self._volmax = 0
         self._muted = False
@@ -50,7 +51,6 @@ class Jointspace(SmartPlugin):
         self._volume = 0
         # Poll status objects
         self._sh.scheduler.add('joinstpace-status-update', self._update_status, cycle=cycle)
-        #self._sh.scheduler.change('joinstpace-status-update', active=False)
 
     # Set plugin to alive
     def run(self):
@@ -63,6 +63,7 @@ class Jointspace(SmartPlugin):
 
     # Parse items and bind commands to plugin
     def parse_item(self, item):
+
         if 'jointspace_cmd' in item.conf:
             cmd = item.conf['jointspace_cmd']
             if (cmd is None):
@@ -71,6 +72,7 @@ class Jointspace(SmartPlugin):
                 self._items[cmd] = item
                 logger.debug("Jointspace: Command {0} found".format(cmd))
             return self.update_item
+
         elif 'jointspace_listen' in item.conf:
             info = item.conf['jointspace_listen']
             if (info is None):
@@ -104,9 +106,9 @@ class Jointspace(SmartPlugin):
                     else:
                         logger.warning("Jointspace: Power on not supported by jointspace API interface")
                 elif(command == 'mute') and (isinstance(value, bool)):
-                    self._post_json(json.dumps({'muted': value}), "/1/audio/volume")
+                    self._post_json("/audio/volume", body = {'muted': value})
                 elif(command == 'volume') and (isinstance(value, int)):
-                    self._post_json(json.dumps({'current': value * self._volmax / 255}), "/1/audio/volume")
+                    self._post_json("/audio/volume", body = {'current': int(value * self._volmax / 255)})
                 elif(command == 'channel'):
                     channel = args[0]
                     logger.info("Jointspace: switching to channel {}".format(channel))
@@ -115,7 +117,7 @@ class Jointspace(SmartPlugin):
                         sleep(0.2)
                     self._send_key('Confirm')
                 elif(command == 'source'):
-                    self._post_json(json.dumps({'id': value}), "/1/sources/current")
+                    self._post_json("/sources/current", body = {'id': value})
                 elif(command == 'sendkey'):
                     key = args[0]
                     logger.info("Jointspace: sending key {}".format(key))
@@ -125,7 +127,8 @@ class Jointspace(SmartPlugin):
 
     # Poll Jointspace REST API for status
     def _update_status(self):
-        resp = self._request_json("/1/audio/volume")
+        resp = self._request_json("/audio/volume")
+        logger.debug("RESP {}".format(resp))
         if(resp):
             self._volmin = int(resp['min'])
             self._volmax = int(resp['max'])
@@ -148,22 +151,23 @@ class Jointspace(SmartPlugin):
             self._muted = False
             if 'mute' in self._items:
                 self._items['mute'](self._muted, 'Jointspace', self._host)
-        resp = self._request_json("/1/channels/current")
+        resp = self._request_json("/channels/current")
+        
         # Get ID of current channel and poll for preset number and channel name
         if(resp):
             logger.debug("Jointspace: Getting details for channel {}".format(resp['id']))
-            resp = self._request_json("/1/channels/" + resp['id'])
+            resp = self._request_json("/channels/" + resp['id'])
             if(resp):
                 self._channel = resp['preset'] + ' - ' + resp['name']
                 logger.debug("Jointspace: Channel is {}".format(self._channel))
                 if 'channel' in self._items:
                     self._items['channel'](self._channel, 'Jointspace', self._host)
         # Get current source
-        resp = self._request_json("/1/sources/current")
+        resp = self._request_json("/sources/current")
         if(resp):
             _id = resp['id']
             logger.debug("Jointspace: Getting details for source {}".format(_id))
-            resp = self._request_json("/1/sources")
+            resp = self._request_json("/sources")
             if(resp):
                 self._source = resp[_id]['name']
                 logger.debug("Jointspace: Source is {}".format(self._source))
@@ -172,51 +176,47 @@ class Jointspace(SmartPlugin):
 
     # Poll channellist
     def _poll_channels(self):
-        resp = self._request_json("/1/channels")
+        return
+        resp = self._request_json("/channels")
         if(resp):
             logger.debug("Jointspace: got channellist")
             print(resp)
 
+    # simulate a TV remote key press
+    def _send_key(self, key):
+        return self._post_json("/input/key", body = {'key': key})
+
     # post json requests to Jointspace REST API
-    def _post_json(self, json, path):
-        header = {'Content-Type': 'application/json'}
-        logger.debug("Jointspace: Sending {0} via {1} to {2}".format(json, path, self._host))
+    def _post_json(self, path, body):
+        headers = { 'User-Agent': 'SmartHomeNG', 'Content-Type': 'application/json; charset=UTF-8' }
+        url = 'http://' + self._host + ':' + str(self._port) + '/' + str(self._version) + path
+        logger.debug("Jointspace: Sending {0} to {1}".format(body, url))
+        
         try:
-            con = http.client.HTTPConnection(self._host, self._port, timeout=5)
-            con.request('POST', path, json, header)
-            resp = con.getresponse().read().decode()
+            resp = requests.post(url, headers=headers, json=body, timeout=1)
         except:
-            logger.warning("Jointspace: Error posting {0} to ".format(json, path))
             return False
-        else:
-            status = resp.split('<title>')[1].split('</title>')[0].strip()
-            logger.debug("Jointspace: Response-> {}".format(status))
-            con.close()
+
+        logger.debug("Jointspace: Response-> {}".format(resp.text))
+
+        if(resp.status_code != 200):
+            return False
+
         return True
 
     # request json data from Jointspace REST API
     def _request_json(self, path):
-        logger.debug("Jointspace: Reading via {} from {}".format(path, self._host))
-        # requestion json from jointspace
-        try:
-            con = http.client.HTTPConnection(self._host, self._port, timeout=5)
-            con.request('GET', path)
-            resp = con.getresponse().read().decode()
-            #logger.debug("Jointspace: Response -> {0}".format(resp))
-        except:
-            #logger.warning("Jointspace: Error requesting json from jointspace API")
-            return False
-        else:
-            con.close()
-        # decoding json
-        try:
-            data = json.loads(resp)
-        except:
-            logger.warning("Jointspace: Error decoding json")
-            return False
-        else:
-            return data
+        headers = { 'User-Agent': 'SmartHomeNG', 'Content-Type': 'application/json; charset=UTF-8' }
+        url = 'http://' + self._host + ':' + str(self._port) + '/' + str(self._version) + path
+        logger.debug("Jointspace: Reading from {}".format(url))
 
-    # simulate a TV remote key press
-    def _send_key(self, key):
-        return self._post_json(json.dumps({'key': key}), "/1/input/key")
+        try:
+            resp = requests.get(url, headers=headers, timeout=1)
+        except:
+            return False
+            
+        if(resp.status_code != 200):
+            return False
+
+        logger.debug("Jointspace: Response -> {0}".format(resp.json()))
+        return resp.json()

@@ -1,24 +1,25 @@
 # Luxtronic2
 
-# Requirements
+## Requirements
 This plugin has no requirements or dependencies.
 
-# Configuration
+## Configuration
 
-## plugin.conf
-<pre>
+### plugin.conf
+
+```
 [luxtronic2]
     class_name = Luxtronic2
     class_path = plugins.luxtronic2
     host = 192.168.0.123
     # port = 8888
-</pre>
+```
 
-### Attributes
+#### Attributes
   * `host`: specifies the hostname of your heating server.
   * `port`: if you want to use a nonstandard port.
 
-## items.conf
+### items.conf
 
 Each heating controlled with a Luxtronic 2.0 controller has different things which can controlled or different information which can be received. 
 The reason for that is that every heating system can have special modules installed or mounted to the system itself.
@@ -30,23 +31,23 @@ There are three main sections:
 
 For all of the following items.conf attributes you have to define the right index for the output from your heating.
 
-### lux2
+#### lux2
 Special post processed values from the calculated section for the most important information (read-only).
 
 Processed indexes are:
 119: current state of the heating as string
 10, 11, 12, 15, 19, 20, 151, 152: original float values encoded as integer so they're just divided by ten.
 
-### lux2_p
+#### lux2_p
 Defines a mapping to a parameter (remember, parameters are read- and writeable). All parameter are integer (numbers).
 
-### lux2_a
+#### lux2_a
 Defines a mapping to a attribute (read-only). All attribute values are bytes (numbers).
 
-### lux2_c
+#### lux2_c
 Defines a mapping to a calculated value (read-only). All calculated values are integer (numbers).
 
-<pre>
+```
 [heating]
     [[temp_outside]]
         type = num
@@ -57,13 +58,13 @@ Defines a mapping to a calculated value (read-only). All calculated values are i
     [[state]]
         type = str
         lux2 = 119
-</pre>
+```
 
-## logic.conf
+### logic.conf
 
 Currently there is no logic configuration for this plugin.
 
-# Functions
+## Functions
 
 Currently there are no functions offered from this plugin.
 

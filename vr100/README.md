@@ -1,11 +1,11 @@
 # VR100
 
-# Requirements
+## Requirements
 
 bluez
 
 install by
-<pre>
+```bash
 $ apt-get install bluez
 $ hcitool scan
 Scanning ...
@@ -17,30 +17,30 @@ Release
 New device (/org/bluez/3070/hci0/dev_bt_addr_underscores)
 $ bluez-test-device trusted <bt-addr> yes
 $ bluez-test-device list
-</pre>
+```
 
 ## Supported Hardware
 
 A Vorwerk Kobold VR100 robotic vacuum cleaner with a retrofitted bluetooth module.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
-<pre>
+```
 [vr100]
     class_name = VR100
     class_path = plugins.vr100
     bt_addr = 07:12:07:xx:xx:xx
 #    update_cycle = 60
-</pre>
+```
 
 Description of the attributes:
 
 * __bt_addr__: MAC-address of the robot (find out with 'hcitool scan')
 * __update_cycle__: interval in seconds how often the data is read from the robot (default 60)
 
-## items.conf
+### items.conf
 
 You can use all commands available by the serial interface.
 
@@ -55,7 +55,7 @@ Fields:
 
 You should verify all your commands manually by using the serial interface.
 
-<pre>
+```
 [VR100]
   [[Reinigung]]
     type = bool
@@ -78,4 +78,4 @@ You should verify all your commands manually by using the serial interface.
       type = num
       sqlite = true
       vr100_info = GetCharger VBattV
-</pre>
+```

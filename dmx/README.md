@@ -1,7 +1,7 @@
 # DMX
 
-Requirements
-============
+## Requirements
+
 This plugin needs one of the supported DMX interfaces:
 
    * [NanoDMX](http://www.dmx4all.de/)
@@ -9,49 +9,52 @@ This plugin needs one of the supported DMX interfaces:
 
 and pyserial.
 
-<pre>apt-get install python-serial</pre>
+```bash
+apt-get install python-serial
+```
 
-Configuration
-=============
+## Configuration
 
-plugin.conf
------------
-<pre>
+### plugin.conf
+
+```
 [dmx]
    class_name = DMX
    class_path = plugins.dmx
    tty = /dev/usbtty...
 #  interface = nanodmx
-</pre>
+```
 
-You have to adapt the tty to your local enviroment. In my case it's <code>/dev/usbtty-1-2.4</code> because I have the following udev rule:
+With ``interface``  you could choose between ``nanodmx`` and ``enttec``. By default nanodmx is used.
 
-<pre># /etc/udev/rules.d/80-smarthome.rules
-SUBSYSTEMS=="usb",KERNEL=="ttyACM*",ATTRS{product}=="NanoDMX Interface",SYMLINK+="usbtty-%b"</pre>
+You have to adapt the tty to your local enviroment. In my case it's ``/dev/usbtty-1-2.4`` because I have the following udev rule:
 
-With 'interface'  you could choose between 'nanodmx' and 'enttec'. By default nanodmx is used.
+```bash
+# /etc/udev/rules.d/80-smarthome.rules
+SUBSYSTEMS=="usb",KERNEL=="ttyACM*",ATTRS{product}=="NanoDMX Interface",SYMLINK+="usbtty-%b"
+```
 
-items.conf
---------------
+### items.conf
 
-### dmx_ch
+#### dmx_ch
+
 With this attribute you could specify one or more DMX channels.
 
-# Example
-<pre>
+### Example
+```
 [living_room]
     [[dimlight]]
         type = num
         dmx_ch = 10 | 11
-</pre>
+```
 
 Now you could simply use:
-<pre>sh.living_room.dimlight(80)</pre> to dim the living room light.
+``sh.living_room.dimlight(80)`` to dim the living room light.
 
-Functions
-=========
+## Functions
 
-send(channel, value)
---------------------
-This function sends the value to the dmx channel. The value could be 0 to 255.
-<pre>sh.dmx.send(12, 255)</pre>
+### send(channel, value)
+
+Sends the value to the given dmx channel. The value could be ``0`` to ``255``.
+
+Example: ``sh.dmx.send(12, 255)``

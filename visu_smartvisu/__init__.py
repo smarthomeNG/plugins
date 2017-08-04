@@ -40,7 +40,7 @@ import sys
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.3.1"
+    PLUGIN_VERSION="1.3.2"
     ALLOW_MULTIINSTANCE = False
 
 
@@ -232,6 +232,8 @@ class SmartVisuGenerator:
 
             if room.conf['sv_page'] == 'room':
                 r = self.parse_tpl('room.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
+            elif room.conf['sv_page'] == 'overview':
+                r = self.parse_tpl('room.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
             elif room.conf['sv_page'] == 'category':
                 r = self.parse_tpl('category_page.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
             elif room.conf['sv_page'] == 'room_lite':
@@ -279,6 +281,8 @@ class SmartVisuGenerator:
             if (item.conf['sv_page'] == 'category') or (item.conf['sv_page'] == 'cat_overview'):
                 cat_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
             elif item.conf['sv_page'] == 'room':
+                nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
+            elif item.conf['sv_page'] == 'overview':
                 nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
             elif item.conf['sv_page'] == 'room_lite':
                 lite_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])

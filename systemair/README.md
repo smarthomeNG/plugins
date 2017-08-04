@@ -77,6 +77,7 @@ is a writeable register.
 
 ### Example
 
+```
     [[Lueftergeschwindigkeit]]
         # read/write
         # 0: Aus
@@ -233,17 +234,21 @@ is a writeable register.
         # 0: Relais nicht aktiv, 1: Relais aktiv
         type = num
         systemair_coiladdr = 12817
-
+```
         
 ### Workarounds
  
- If you get an error like ```Modbus systemair 'ascii' codec can't encode character '\xcf' in position 99: ordinal not
- in range(128)``` or similar, you can edit the minimalmodbus.py and replace 
+ If you get an error like ``Modbus systemair 'ascii' codec can't encode character '\xcf' in position 99: ordinal not
+ in range(128)`` or similar, you can edit the ``minimalmodbus.py`` and replace 
  
- ```self.handle_local_echo = False```
+ ```python
+ self.handle_local_echo = False
+ ```
   
  with
  
- ```self.handle_local_echo = True```
+ ```python
+ self.handle_local_echo = True
+ ```
  
  to activate the echo mode.

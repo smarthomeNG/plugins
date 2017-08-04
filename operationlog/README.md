@@ -3,13 +3,13 @@
 This plugins can be used to create logs which are cached, written to file and stored in memory to be used by items or other
 plugins. Furthermore the logs can be visualised by smartVISU using the standard widget "status.log".
 
-# Requirements
+## Requirements
 
 No special requirements.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 Use the plugin configuration to configure the logs.
 
@@ -33,6 +33,26 @@ Use the plugin configuration to configure the logs.
     filepattern = yearly_log-{name}-{year:04}.log
 ```
 
+```yaml
+mylogname1:
+    class_name: OperationLog
+    class_path: plugins.operationlog
+    name: mylogname1
+
+# maxlen = 50
+# cache = yes
+# logtofile = yes
+# filepattern = {year:04}-{month:02}-{day:02}-{name}.log
+mylogname2:
+    class_name: OperationLog
+    class_path: plugins.operationlog
+    name: mylogname2
+    maxlen: 0
+    cache: 'no'
+    logtofile: 'yes'
+    filepattern: yearly_log-{name}-{year:04}.log
+```
+
 This will register two logs named mylogname1 and mylogname2. 
 The first one named mylogname1 is configured with the default configuration as shown,
 caching the log to file (smarthome/var/cache/mylogname1) and logging to file (smarthome/var/log/operationlog/yyyy-mm-dd-mylogname1.log). 
@@ -44,7 +64,7 @@ The logging file can be named as desired. The keys `{name}`, `{year}`, `{month}`
 Every time a log entry is written, the file name is checked and a new file is created upon change. 
 
 
-## items
+### items.conf (deprecated) / items.yaml
 Configure an item to be logged as follows:
 
 ```
@@ -56,6 +76,18 @@ Configure an item to be logged as follows:
     #   olog_rules = *:value
     #   olog_txt = {id} = {value} 
     #   olog_level = INFO
+```
+
+```yaml
+foo:
+    name: Foo
+
+    bar:
+        type: num
+        olog: mylogname1
+        # olog_rules = *:value
+        # olog_txt = {id} = {value}
+        # olog_level = INFO
 ```
 
 foo.bar uses the minimum configuration and default values. 
@@ -90,6 +122,7 @@ The code is replaced by the return value of the \<python code> for the logtext. 
 ### item log examples:
 
 ```
+# .conf (deprecated)
 [foo]
     name = Foo
     [[bar1]]
@@ -125,9 +158,101 @@ The code is replaced by the return value of the \<python code> for the logtext. 
         olog_level = info
 ```
 
-## Functions
+```yaml
+foo:
+    name: Foo
+
+    bar1:
+        type: num
+        name: Bar1
+        olog: mylogname1
+        olog_rules:
+          - 2:two
+          - 0:zero
+          - 1:one
+          - '*:value'
+        olog_txt: This is a log text for item with name {name} and value {value} mapped to {mvalue}, parent item name is {pname}
+        olog_level: ERROR
+
+    bar2:
+        type: bool
+        name: Bar2
+        olog: mylogname1
+        olog_rules:
+          - True:the value is true
+          - False:the value is false
+        olog_txt: This is a log text for {value} mapped to '{mvalue}', {name} changed after {age} seconds
+        olog_level: warning
+
+    bar3:
+        type: str
+        name: Bar3
+        olog: mylogname1
+        olog_rules:
+          - t1:text string number one
+          - t2:text string number two
+          - '*:value'
+        olog_txt: "text {value} is mapped to logtext '{mvalue}', expression with syntax errors: {eval=sh.this.item.doesnotexist()*/+-42}"
+        olog_level: critical
+
+    bar4:
+        type: num
+        name: Bar4
+        olog: mylogname1
+        olog_rules:
+          - lowlim:-1.0
+          - highlim:10.0
+        olog_txt: Item with name {name} has lowlim={lowlim} <= value={value} < highlim={highlim}, the value {eval='increased' if sh.foo.bar4() > sh.foo.bar4.prev_value() else 'decreased'} by {eval=round(abs(sh.foo.bar4() - sh.foo.bar4.prev_value()), 3)}
+        olog_level: info
+```
+
+### Logics
+Configure a logic to be logged as follows:
 
 ```
+#logics.conf (deprecated)
+[some_logic]
+    filename = script.py
+    olog = mylogname1
+    #olog_txt = The logic {logic.name} was triggered!
+    #olog_level = INFO
+```
+
+```yaml
+#logics.yaml
+some_logic:
+    filename: script.py
+    olog: mylogname1
+    # olog_txt = The logic {logic.name} was triggered!
+    # olog_level = INFO
+```
+
+To enable logging for a given logic when it is triggered just
+add the `olog` attribute to the logic configuration. As default a simple
+logtext is logged: Logic {logic.name} triggered.
+
+Optionally you can overwrite the default logtext using the `olog_txt`
+attribute. In contrast to the item setting this supports different predefined
+keys as listed below:
+
+Key         | Description
+----------- | -----------
+`{plugin.*}`| the plugin instance (e.g. plugin.name for the name of the plugin)
+`{logic.*}` | the logic object (e.g. logic.name for the name)
+`{by}`      | name of the source of the logic trigger
+`{source}`  | identifies the source of change
+`{dest}`    | identifies the destination of change
+
+Furthermore user defined python expressions can be used in the logtext. Define as follows:
+
+`{eval=<python code>}`
+
+The code is replaced by the return value of the \<python code> for the logtext. Multiple `{eval=<python code>}` statements can be used.
+
+
+### Functions
+
+```python
 sh.mylogname1('<level_keyword>', msg)
 ```
 
@@ -136,20 +261,16 @@ Logs the message in `msg` parameter with the given log level specified in the `<
 
 Using the loglevel keywords `INFO`, `WARNING` and `ERROR` (upper or lower case) will cause the smartVISU plugin "status.log" to mark the entries with the colors green, yellow and red respectively. Alternative formulation causing a red color are `EXCEPTION` and `CRITICAL`. Using other loglevel keyword will result in log entry without a color mark.
 
-```
+```python
 sh.mylogname1(msg)
 ```
 
 Logs the message in the `msg` parameter with the default loglevel `INFO`.
 
-```
+```python
 data = sh.mylogname1()
 ```
 
 will return a deque object containing the log with the last `maxlen` entries.
-
-
-
-
 
 This plugin is inspired from the plugins MemLog and AutoBlind, reusing some of their sourcecode.

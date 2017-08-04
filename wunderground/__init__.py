@@ -2,8 +2,6 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 # Copyright 2016-2017   Martin Sinn                         m.sinn@gmx.de
-# -This plugin is inspired by a logic published by henfri
-#  on the wiki of smarthome.py in 2015
 #########################################################################
 #  Free for non-commercial use
 #
@@ -25,9 +23,16 @@
 #########################################################################
 
 
+# TO DO:
+#
+# - Windrichtung: Wunderground liefert
+#   - Nordwest statt NW
+#   - Nord-Nordost statt NNO
+#   - Nord-Nordwest statt NNW
+
 import logging
 
-import xml.etree.ElementTree as ET
+import json
 from urllib.request import urlopen
 
 from lib.model.smartplugin import SmartPlugin
@@ -35,24 +40,29 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class Wunderground(SmartPlugin):
+    """
+    Main class of the Wunderground-Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
+
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION='1.2.2'
+    PLUGIN_VERSION='1.2.5'
 
 
-    ## The constructor: Initialize plugin
-    #
-    # Store config parameters of plugin. Smarthome.py reads these parameters from plugin.conf
-    # and hands them to the __init__ method of the plugin.
-    #
-    #  @param self      The object pointer.
-    #  @param smarthome Defined by smarthome.py.
-    #  @param apikey    api key for wunderground.
-    #  @param language  language for the forcast messages.
-    #  @param location  location to display the weather for.
-    #
-    def __init__(self, smarthome, apikey='', language='de', location='', cycle='600', item_subtree='', log_start='False'):
+    def __init__(self, sh, apikey='', language='de', location='', cycle='600', item_subtree='', log_start='False'):
+        """
+        Initalizes the plugin. The parameters described for this method are pulled from the entry in plugin.yaml.
+
+        :param sh:                 The instance of the smarthome object, save it for later references
+        :param apikey:             api key needed to access wunderground
+        :param language:           language for the forcast messages
+        :param location:           location to display the weather for
+        :param cycle:              number of seconds between updates
+        :param item_subtree:       subtree of items in which the plugin looks for items to update
+        :param log_start:          x
+        """
         self.logger = logging.getLogger(__name__)
-        self.__sh = smarthome
+        self.__sh = sh
 
         if self.to_bool(log_start):
             self.logger.info("--------------------   Init Plugin: {0} {1}   --------------------".format(self.__class__.__name__, self.PLUGIN_VERSION))
@@ -71,8 +81,9 @@ class Wunderground(SmartPlugin):
         if self.location == '':
             self.logger.error("Wunderground: No location specified, plugin is not starting")
 
-        self.url = 'https://api.wunderground.com/api/' + self.apikey + '/conditions/forecast/lang:' + self.language + '/q/' + self.location + '.xml'
-#        self.logger.warning("Wunderground: url={0}".format(self.url))
+        self.url = 'https://api.wunderground.com/api/' + self.apikey + '/conditions/forecast/lang:' + self.language + '/q/' + self.location + '.json'
+
+        self.logger.info("Wunderground: url={}".format(str(self.url)))
 
         if self.is_int(cycle):
             self._cycle = int(cycle)
@@ -96,119 +107,187 @@ class Wunderground(SmartPlugin):
 
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
         self.alive = False
 
 
     def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+
+        :param item:  The item to process
+        :return:      If the plugin needs to be informed of an items change you should return a call back function
+                      like the function update_item down below. An example when this is needed is the knx plugin
+                      where parse_item returns the update_item function when the attribute knx_send is found.
+                      This means that when the items value is about to be updated, the call back function is called
+                      with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                      can be sent to the knx with a knx write function within the knx plugin.
+
+        """
         if 'wug_xmlstring' in item.conf:
+            # if config is still stored in wug_xmlstring, copy it to wug_matchstring
+            item.conf['wug_matchstring'] = item.conf['wug_xmlstring']
+        if 'wug_matchstring' in item.conf:
             return self.update_item
         else:
             return None
 
 
     def parse_logic(self, logic):
+        """
+        Default plugin parse_logic method
+
+        :param logic:  The logic to process
+        """
         pass
 
 
     def update_item(self, item, caller=None, source=None, dest=None):
+        """
+        Write items values
+
+        This function is called by the core when a value changed, 
+        so the plugin can update it's peripherals
+
+        :param item:   item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest:   if given it represents the dest
+        """
         if caller != 'Wunderground':
 #            self.logger.warning("update_item: caller={0}, item={1}".format(caller, item))
             pass
 
 
-    def clean(self, v):
-        if v == 'N/A':
+    def _check_result_value(self, item, val):
+        """
+        Check if value returned by wunderground is plausible, if the itemtype is 'num'
+        
+        :param item:   item to be updated with the value
+        :param val:    value to be checked
+        :return:       checked/cleaned value
+        """
+        if item.type() != 'num':
+            return val
+
+        if val in ['N/A', 'NA', '-1']:
             return -1
-        try:
-            import re 
-            non_decimal = re.compile(r'[^-?\d*\.{0,1}\d+$]')
-            w=float(non_decimal.sub('', v))
-            if v.find('%')>0:
-                w=w/100
-            return w
-        except:
-            return -99999
 
-
-    def _get_item_fromxml(self, item):
-        """
-        Parse the xml String from wunderground
-        """
-        try:
-            s=item.conf['wug_xmlstring']
-            dt=item.conf.get('wug_datatype', '').lower()
-            if len(s)>0:
-                self.logger.debug('_update_items: Handling Item "{0}" mit wug_xmlstring "{1}"'.format(item,s))
-                val=self.tree.findall('*/'+s)
-                if len(val)==0:
-                    val=self.tree.findall(s)
-                if len(val)>0:
-                    val=val[0].text
-                    self.logger.debug('_update_items: Wert "{0}" in xml gefunden'.format(val))
-                    if not isinstance(item(), str):
-                        val_uncleaned = val
-                        val=self.clean(val)
-
-                    if (val!=-99999) and (dt != ''):
-                        sval = val
-                        self.logger.debug("_update_items: Handling Item '{}' with wug_datatype '{}', val '{}', self.is_float(val) '{}'".format(item,dt, str(val), str(self.is_float(val))))
-                        if dt == 'percent':
-                            if self.is_float(val):
-                                fval = float(val)
-                                if (fval <0) or (fval>1):
-                                    val=-99999
-                            else:
-                                val=-99999
-                        if dt == 'positive':
-                            if self.is_float(val):
-                                fval = float(val)
-                                if (fval <0):
-                                    val=-99999
-                            else:
-                                val=-99999
-                        if val==-99999:
-                            self.logger.warning("_update_items: Handling Item '{}' invalid data from wunderground for wug_datatype '{}' -> '{}'".format(item,dt, str(sval)))
-                            
-                    if val!=-99999:
-                        if isinstance(item(), str):
-                            if val == None:
-                                val = ''
-                        item(val)
-                        self.logger.debug('_update_items: Value "{0}" written to item'.format(val))
-                    else:
-                        self.logger.debug('_update_items: WARNUNG: Value could not be cleaned. No value was written to item - Item: "{0}" mit wug_xmlstring: "{1}", gefunden: "{2}"'.format(item,s,val_uncleaned))  
+        dt=item.conf.get('wug_datatype', '').lower()
+        oval = val
+        # number has to be a percentage value
+        if dt == 'percent':
+            try:
+                if val[-1:] == '%':
+                    val = val[:-1]
+            except:
+                pass
+                
+            if self.is_float(val):
+                fval = float(val)
+                if (fval <0) or (fval>100):
+                    val=-9999
                 else:
-                    self.logger.info('_update_items: returned empty value for item "{0}"'.format(item))   
-        except KeyError:
-            self.logger.warning('_update_items: wug_xmlstring is empty or not existent for item "{0}"'.format(item))
-            pass
+                    val = fval
+            else:
+                val=-99999
+            self.logger.debug("_check_result_value: wug_matchstring '{}', percent val '{}' -> '{}'".format( str(item.conf['wug_matchstring']), str(oval), str(val) ))
+
+        # number has to be positive
+        if dt == 'positive':
+            if self.is_float(val):
+                fval = float(val)
+                if (fval <0):
+                    val=-99999
+            else:
+                val=-99999
+
+        if val==-99999:
+            self.logger.warning("_check_result_value: Handling Item '{}' invalid data from wunderground for wug_datatype '{}' -> '{}'".format(item,dt, str(oval)))
+
+        return val
+
+
+    def _get_item_fromwugdata(self, item):
+        """
+        Parse the self.wugdata structure from wunderground json string
+        
+        This routine is called for every item that has a configuration parameter wug_matchstring
+        
+        :param item:   item to be updated
+        """
+        s=item.conf['wug_matchstring']
+        if s == '':
+            return
+            
+        sp = s.split('/')
+        
+        # parse dict structure with wunderground data to get value for item
+        wrk = self.wugdata
+        while True:
+            if (len(sp) == 0) or (wrk == None):
+                break
+            if type(wrk) is list:
+                if self.is_int(sp[0]):
+                    if int(sp[0]) < len(wrk):
+                        wrk = wrk[int(sp[0])]
+                    else:
+                        self.logger.error("_get_item_fromwugdata: invalid wug_matchstring '{}'; integer too large in matchstring".format(s))
+                        break
+                else:
+                    self.logger.error("_get_item_fromwugdata: invalid wug_matchstring '{}'; integer expected in matchstring".format(s))
+                    break
+            else:
+                wrk = wrk.get( sp[0] )
+            if len(sp) == 1:
+                spl = s.split('/')
+                self.logger.info("_get_item_fromwugdata: wug_matchstring split len={}, content={} -> '{}'".format( str(len(spl)), str(spl), str(wrk) ))
+            sp.pop(0)
+
+        # if a value was found, store it to item
+        if wrk != None:
+            cwrk = self._check_result_value(item, wrk)    
+            if cwrk != -99999:
+                item(cwrk, 'Wunderground')
+                self.logger.debug('_get_item_fromwugdata: Value "{0}" written to item'.format(cwrk))
+            else:
+                self.logger.debug('_get_item_fromwugdata: WARNING: Value could not be cleaned. No value was written to item - Item: "{}"; wug_matchstring: "{}", found: "{}"'.format(item,s,wrk))  
 
 
     def _update_items(self):
         """
-        Sheduler started update for all known items.
+        Get new data from wunderground.com and update all known items
+        
+        This routine is started by the scheduler
         """
         weatheritems = self.__sh.return_item(self.item_subtree)
         if (self.item_subtree != '') and (weatheritems == None):
-            self.logger.warning("_update_items: configured item_subtree '{0}' not found, searching complete item-tree instead".format(self.item_subtree) )   
+            self.logger.warning("_update_items: configured item_subtree '{}' not found, searching complete item-tree instead".format(self.item_subtree) )   
 
         try:
-            xml = self.__sh.tools.fetch_url(self.url, timeout=5)
-            #xml=minidom.parseString(xml)
+            wugjson = self.__sh.tools.fetch_url(self.url, timeout=5)
         except:
             self.logger.warning('_update_items: sh.tools.fetch_url() timed out' )   
-            xml = False
+            wugjson = False
 
-        if xml == False:
+        if wugjson == False:
             self.logger.warning('_update_items: Could not read data from Wunderground' )   
         else:
-            self.tree=ET.fromstring(xml)
-            self.logger.info('_update_items: xml heruntergeladen {0}'.format(xml))
+            self.wugdata = json.loads( wugjson.decode('utf-8') )
+            self.logger.info('_update_items: json heruntergeladen {}'.format( str(self.wugdata) ))
 
             if weatheritems == None:
-                self.itemlist = self.__sh.find_items('wug_xmlstring')
+                # search complete item-tree
+                self.itemlist = self.__sh.find_items('wug_matchstring')
             else:
-                self.itemlist = self.__sh.find_children(weatheritems, 'wug_xmlstring')
+                # search subtree
+                self.itemlist = self.__sh.find_children(weatheritems, 'wug_matchstring')
+                
             for item in self.itemlist:
-                self._get_item_fromxml(item)
+                # check every item
+                self._get_item_fromwugdata(item)
 

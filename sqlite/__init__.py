@@ -24,6 +24,7 @@ import datetime
 import functools
 import time
 import threading
+import sqlite3
 from lib.model.smartplugin import SmartPlugin
 
 
@@ -59,7 +60,6 @@ class SQL(SmartPlugin):
         self._dump_cycle = int(cycle)
         self._buffer = {}
         self._buffer_lock = threading.Lock()
-        sqlite3 = self._sh.dbapi('sqlite')
         self.logger.debug("SQLite {0}".format(sqlite3.sqlite_version))
         self._fdb_lock = threading.Lock()
         self._fdb_lock.acquire()

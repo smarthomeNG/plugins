@@ -1,14 +1,14 @@
 # NetIO230B
 
-# Requirements
+## Requirements
 ## Supported Hardware
 
 * KOUKAAM NETIO230B
 
-# Configuration
-## plugin.conf
+## Configuration
+### plugin.conf
 
-<pre>
+```
 [netio230b0]
     class_name = NetIO230B
     class_path = plugins.netio230b
@@ -16,7 +16,7 @@
     user = username
     password = password
 #   netio_id = 1
-</pre>
+```
 
 Description of the attributes:
 
@@ -25,7 +25,7 @@ Description of the attributes:
 * __password__: password needed for login
 * __netio_id__: optional, set id if you want to control more than one device
 
-## items.conf
+### items.conf
 
 There are two types of items in this plugin. Items to control the state of the power
 distribution (control item) and items to detect an error (error item). The error item
@@ -36,9 +36,9 @@ is used to detect wether it is not possible to communicate with the device.
 * __netio_port__: Specify one of the 4 ports of the power distribution, starting with 0. This attribute must not
 be set for the error item.
 
-### Example
+#### Example
 
-<pre>
+```
 # items/netio230b.conf
 
 [someroom]
@@ -63,7 +63,7 @@ be set for the error item.
     [[error2]]
         type = bool
         netio_id = 2
-</pre>
+```
 
 * __control0__: item to control port 0 of netio230b device with id 1
 * __control1__: item to control port 3 of netio230b device with id 1 (default for netio_id is 1)
@@ -75,7 +75,7 @@ be set for the error item.
 
 The state of a port can be changed by setting the belonging item to True or False. For the example above mentioned:
 
-<pre>
+```python
 sh.someroom.control0(True)
 sh.someroom.control1(False)
-</pre>
+```

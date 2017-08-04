@@ -1,51 +1,71 @@
-EnOcean
-(PLUGIN_VERSION = "1.3.2")
+# EnOcean
 
-Configure plugin.conf
-=
+This plugin is still under development. If you have special hardware not supported yet please feel free to improve and contribute!
 
-Add the following lines to your plugin.conf and just adapt the serial port to your port name of your enocean-adpater.
-A udev-rules for the enocean-adapter is recommend. The specification of the enocean tx_id is optional but mandatory for sending control commands from the stick to a device. It is defined as a 8 digit hex value. When controlling multiple devices, it is recommended to use the stick's BaseID (not ChipID) as transmitting ID.
-For further information regarding the difference between BaseID and ChipID, see https://www.enocean.com/en/knowledge-base-doku/enoceansystemspecification:issue:what_is_a_base_id/
+## Requirements
+
+## Configuration
+
+### plugin.conf
+
+Add the following lines to your ``plugin.conf`` and just adapt the serial port to your port name of your enocean-adpater.
+A udev-rules for the enocean-adapter is recommend, when using different uart devices.
+The specification of the enocean tx_id is optional but mandatory for sending control commands from the stick to a device. 
+It is defined as a 8 digit hex value.
+
+When controlling multiple devices, it is recommended to use the stick's BaseID (not ChipID) as transmitting ID.
+For further information regarding the difference between BaseID and ChipID, see [Knowledge Base](https://www.enocean.com/en/knowledge-base-doku/enoceansystemspecification%3Aissue%3Awhat_is_a_base_id/)
+
 With the specification of the BaseID, 128 different transmit IDs are available, ranging between BaseID and BaseID + 127.
 
-<pre>
+```
 [enocean]
     class_name = EnOcean
     class_path = plugins.enocean
     serialport = /dev/ttyUSB0
     tx_id      = FFFF4680
-</pre>
+```
 
+### Getting ID of an EnOcean device
 
+1.) reboot the pi or restart the smarthome (sudo reboot; sudo systemctl restart smarthome)
+2.) wait some time for comming up of the service
+3.) have a look into the log file an look for ``enocean: Base ID = 0xYYYYZZZZ``
+4.) now you have the right BaseID and you can place it into the plugin.conf-first
+5.) alternating you will also find the ChipID in the log-file
 
-Configure items
-=
+The following example is for a rocker/switch with two rocker (EEP F6_02_01 or F6_02_02).
 
- The following example is for a rocker/switch with two rocker (EEP F6_02_01 or F6_02_02).
+```
 left rocker down = AI
 left rocker up = AO
 right rocker down = BI
 right rocker up = BO
+```
 
 The following example is for a rocker/switch with two rocker and 6 available combinations (EEP F6_02_03).
+
+```
 left rocker down = AI
 left rocker up = AO
 right rocker down = BI
 right rocker up = BO
 last state of left rocker = A
 last state of right rocker = B
-
+```
 Mechanical handle example:
+
+```
 handle_status = STATUS
+```
+### Items
 
-An Enocean item must specify at minimum an enocean_rx_id (Enocean Identification Number (hex code)) and an enocean_rx_eep (Enocean Equipment Profile). Send items additionally hold an enocean_tx_id_offset.
+An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identification Number (hex code)) and an ``enocean_rx_eep`` (Enocean Equipment Profile). Send items additionally hold an ``enocean_tx_id_offset``.
 
+#### Example item.conf
 
-Example item.conf
-=
-<pre>
-[Enocean_Section]
+```
+[Enocean_Item]
     [[Outside_Temperature]]
         type = num
         enocean_rx_id = 0180924D
@@ -146,49 +166,79 @@ Example item.conf
         [[[power_status]]]
             type = num
             enocean_rx_key = ENG
-</pre>
+```
 
-Add new listening enocean devices
-=
+### Add new listening enocean devices
 
-You have to know about the EnOcean RORG of your device (please search the internet or ask the vendor). Further the RORG must be declared in the plugin. The following EEPs are supported:
-A complete list of available EEPs is documented under http://www.enocean-alliance.org/eep/
-* A5_02_01 - A5_02_0B    Temperature Sensors (40캜 overall range, various starting offsets, 1/6캜 resolution)
-* A5_02_10 - A5_02_1B    Temperature Sensors (80캜 overall range, various starting offsets, 1/3캜 resolution)
-* A5_02_20    High Precision Temperature Sensor (ranges -10*C to +41.2캜, 1/20캜 resolution)
-* A5_02_30    High Precision Temperature Sensor (ranges -40*C to +62.3캜, 1/10캜 resolution)
-* A5_04_02    Energy (optional), humidity and temperature sensor
-* A5_08_01    Brightness and movement sensor
-* A5_11_04    Dimmer status feedback
-* A5_12_01    Power Measurement
-* D5_00_01    Door/Window Contact, e.g. Eltako FTK, FTKB
-* F6_02_01/F6_02_02    2-Button-Rocker
-* F6_02_03    2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V or Gira switches.
-* F6_10_00    Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
+You have to know about the EnOcean RORG of your device (please search the internet or ask the vendor). 
+Further the RORG must be declared in the plugin.
 
-Send commands: Tx EEPs
-=
+The following status EEPs are supported:
 
-* A5_38_08_01 Regular switch actor command (on/off)
-* A5_38_08_02 Dimmer command with fix on off command (on: 100, off:0)
-* A5_38_08_03 Dimmer command with specified dim level (0-100)
-              The optional ref_level parameter defines default dim value when dimmer is switched on via on command.
+```
+* A5_02_01 - A5_02_0B	Temperature Sensors (40째C overall range, various starting offsets, 1/6째C resolution)
+* A5_02_10 - A5_02_1B	Temperature Sensors (80째C overall range, various starting offsets, 1/3째C resolution)
+* A5_02_20		                High Precision Temperature Sensor (ranges -10*C to +41.2째C, 1/20째C resolution)
+* A5_02_30				High Precision Temperature Sensor (ranges -40*C to +62.3째C, 1/10째C resolution)
+* A5_04_02				Energy (optional), humidity and temperature sensor
+* A5_08_01				Brightness and movement sensor
+* A5_11_04				Dimmer status feedback
+* A5_12_01				Power Measurement
+* D5_00_01				Door/Window Contact, e.g. Eltako FTK, FTKB
+* F6_02_01				2-Button-Rocker
+* F6_02_02				2-Button-Rocker
+* F6_02_03				2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V or Gira switches.
+* F6_10_00				Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
+```
+A complete list of available EEPs is documented at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
 
-Learning Mode:
-=
 
-Devices that shall receive commands from the smarthome plugin, i.e. the encoean gateway must be subscribed first. Generally follow the teach in procedure as described by enocean.
+### Send commands: Tx EEPs
+
+```
+* A5_38_08_01			Regular switch actor command (on/off)
+* A5_38_08_02			Dimmer command with fix on off command (on: 100, off:0)
+* A5_38_08_03			Dimmer command with specified dim level (0-100)
+* A5_3F_7F			Universal actuator command 
+```
+
+The optional ref_level parameter defines default dim value when dimmer is switched on via on command.
+
+### Learning Mode
+
+Devices that shall receive commands from the smarthome plugin, i.e. the encoean gateway must be subscribed first.
+Generally follow the teach in procedure as described by enocean.
 Usually, the enocean device, e.g. enocean actor, is set to teach in mode. See the manual of the respective device for further information. Once being in teach in mode, trigger a learn-in command from smarthomeNG.
-In order to send a special learning message, start smarthome with the interactive console: ./smarthome.py -i
-Then use one of th following learn-in command, depending on your enocean device:
-<pre>
-    sh.enocean.send_learn_dim(ID_Offset)
-    sh.enocean.send_learn_rgbw_dim(ID_Offset)
-    sh.enocean.send_learn_switch(ID_Offset)
-</pre>
-, where ID_Offset, range (0-127), specifies the sending ID offset with respect to the BaseID. Later, the ID offset is specified in the item.conf for every outgoing send command, see example below.
-Use different ID offsets for different groups of actors. After complete the teach-in procedure, leave the interactive console and add the applied ID_Offset to the respective enocean send item (enocean_tx_id_offse = ID_Offse).
+
+In order to send a special learning message, start smarthome with the interactive console:
+
+```bash
+cd /usr/local/smarthome/bin
+sudo systemctl stop smarthome
+sudo ./smarthome.py -i
+```
+	
+Then use one of the following learn-in command methods, depending on your enocean device:
+
+```python
+sh.enocean.send_learn_dim(ID_Offset)
+sh.enocean.send_learn_rgbw_dim(ID_Offset)
+sh.enocean.send_learn_switch(ID_Offset)
+sh.enocean.send_learn_actuator(ID_Offset) , e.g. for Eltako FSB61NP-230V 
+```
+
+where ID_Offset, range (0-127), specifies the sending ID offset with respect to the BaseID.
+Later, the ID offset is specified in the <item.conf> for every outgoing send command, see example below.
+
+Use different ID offsets for different groups of actors.
+After complete the teach-in procedure, leave the interactive console and add the applied ID_Offset to the respective enocean send item (enocean_tx_id_offset = ID_Offset).
 That's it!
 
-Docu V1.2
+### UTE teach-in
 
+UTE does mean "Universal Uni- and Bidirectional Teach in".
+When activated on Enocean device the device will send a ``D4`` teach in request. An automatic answer within 500ms is expected.
+To do so enable the UTE learnmode prior to the activation on the device: Start smarthome with the interactive console - see above. ``sh.enocean.start_UTE_learnmode(ID_Offset)``
+The device will be teached in and the learn mode will be ended automatically
+
+Docu v 1.4a

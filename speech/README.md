@@ -1,15 +1,14 @@
 # Speech_Parser
 
-Requirements
-============
+## Requirements
+
 This plugin has no requirements or dependencies.
 
-Configuration
-=============
+## Configuration
 
-plugin.conf
------------
-<pre>
+### plugin.conf
+
+```
 [sp]
     class_name = Speech_Parser
     class_path = plugins.speech
@@ -18,9 +17,9 @@ plugin.conf
     #acl = w.x.y.z
     port = 2788
     default_access = rw
-</pre>
+```
 
-### Attributes
+#### Attributes
   * `config_file`: path to the speech.py configuration file, with the variables and the parsing rules. You could find an example configuration file in the plugin/speech folder of smartvisu.
   * `ip`: specifies the listening IP address. By default it listens on all addresses.
   * `port`: specifies the listening port for HTTP-connections. By default it listens on 2788.
@@ -28,22 +27,23 @@ plugin.conf
   * `default_access`: with this attribute you could specify a default access to the items, without setting the sp attribute in every item.
 
 
-items.conf
-----------
+### items.conf
 
-### sp
+#### sp
+
 If this "sp"-attribute is set to 'rw' you could update this item, with the value 'ro' you only read it (status).
-<pre>
+
+```
 [test]
     [[item1]]
         type = string
         sp = rw
-</pre>
+```
 
 You could test the parsing rules with a browser and as URL the path, for example: http://smarthome.pi:2788/switch lights in the kitchen on
 
-logic.conf
-----------
+### logic.conf
+
 You could use the same network attribute as in items.conf to trigger logics.
 
 In the context of the KNX plugin the trigger dictionary consists of the following elements:
@@ -52,8 +52,8 @@ In the context of the KNX plugin the trigger dictionary consists of the followin
 * trigger['source']     IP adress of the sender
 * trigger['value']     payload 
 
-speech.py
----------
+### speech.py
+
 speech.py ist the main configuration file with some python variables and a dict with error messages.
 An example "speech.py"-file is located in the plugin directory (/plugins/speech/speech.py), you should use a copy as starting point. Specify the copy of "speech.py" in the "plugin.conf"-file. 
 The error messages can be customized in dictError, the construction is self explained in the example-file.
@@ -61,14 +61,15 @@ The error messages can be customized in dictError, the construction is self expl
 The importend list ist "varParse" with the rules to analyze the received message.
 
 This is the construction of varParse:
-<pre>
+```
     Name of the list                               Return value                              Answer again with place holders
           |     Item- or Logic-Name with placeholder      | Searchstring with variables/lists             |     Optional: "item" (default) or "logic"
     varParse = [                  |                       |                   |           |                  |                    |
                      ["%x%.lights.kitchen.switch", "%y%", [varXYZ, 'search word1', varWXY], "OK, the command has been executed", 'item'],
                      [ ... ]
                ]
-</pre>
+```
+
 The order determines the priority, only the first rule that applies is executed all other no more.
 The numbering wildcard (%x%) corresponds to the order of the lists/words starting with zero,
 example: [varLight, varRoom, varSwitch] the numbering wildcard %0% will be replaced with the return value of varLight, %1% by varRoom and %2% from varSwitch.
@@ -76,20 +77,21 @@ If no type is specified a item will be assumed, if you wish to trigger a logic t
 varParse must have this name and be entered after the other lists. 
 
 The other lists (varXYZ) are mounted together as follows:
-<pre>
+
+```
     Name of list        searchstring1 is the replace value
           |         return value         |               other searchstrings
     varExample = [       |               |                |               |
                      ['return_value', ['searchstring1', 'searchstring2', 'searchstring3']],
                      [ ... ]
                    ]
-</pre>
+```
+
 The return value can, for example, be a part of the item or a value that is returned.
 Is defined as the return value %status%, then the value of the item is retrieved and returned (see example temperature)
 Important: All Keywords in lowercase!
 
-Usage
-=====
+## Usage
 
 This speech parser plugin works with Android Smartphones with installed tasker and the AutoVoice-Plugin. 
 
@@ -106,8 +108,7 @@ That's all, use the microphone symbol to speak a command and tasker sends this a
 
 KNXfriend at "knx-user-forum.de" wrote that it also works with Automagic.
 
-Links
-=====
+## Links
 
 * Tasker: https://play.google.com/store/apps/details?id=net.dinglisch.android.taskerm
 * AutoVoice: https://play.google.com/store/apps/details?id=com.joaomgcd.autovoice

@@ -14,26 +14,36 @@ versions of this plugin on demand. The available values can be seen in the reade
 
 If demand exists, the plugin can also be extended to be used with more than one energy meter.
 
-# Configuration
+## Configuration
 
-## plugin.conf
-<pre>
+### plugin.conf (deprecated) / plugin.yaml
+
+```
 [sma_em]
     class_name = SMA_EM
     class_path = plugins.sma_em
     serial = xxxxxxxxxx
     time_sleep = 5
-</pre>
+```
 
-### Attributes
+```yaml
+sma_em:
+    class_name: SMA_EM
+    class_path: plugins.sma_em
+    serial: xxxxxxxxxx
+    time_sleep: 5
+```
+
+#### Attributes
   * `serial`: The serial number of your energy meter
   * `time_sleep`: The time in seconds to sleep after a multicast was received. I introduced this to avoid too many values to be processed
 
-## items.conf
+### items.conf
 
-### Example:
-<pre>
-# items/sma-em.conf
+#### Example:
+
+```
+# items/sma-em.conf (deprecated)
 [smaem]
     [[surplus]]
         name = Solar Energy Surplus
@@ -62,4 +72,43 @@ If demand exists, the plugin can also be extended to be used with more than one 
 	[[cosphi]]
 	    sma_em_data_type = cosphi
 	    type = num
-</pre>
+```
+
+```yaml
+# items/items.yaml
+smaem:
+
+    surplus:
+        name: Solar Energy Surplus
+        sma_em_data_type: psurplus
+        type: num
+
+        kw:
+            type: num
+            eval: sh.smaem.surplus() / 1000
+            eval_trigger: smaem.surplus
+
+    regard:
+        name: Energy Regard
+        sma_em_data_type: pregard
+        type: num
+
+        kw:
+            type: num
+            eval: sh.smaem.regard() / 1000
+            eval_trigger: smaem.regard
+
+    surplus_counter:
+        name: Solar Energy Surplus Counter
+        sma_em_data_type: psurpluscounter
+        type: num
+
+    regard_counter:
+        name: Energy Regard Counter
+        sma_em_data_type: pregardcounter
+        type: num
+
+    cosphi:
+        sma_em_data_type: cosphi
+        type: num
+```
