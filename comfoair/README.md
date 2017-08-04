@@ -13,15 +13,15 @@ You can configure the plugin to connect by TCP (host and port) using a TCP to se
 WARNING!
 * Don't use the CC Ease command panel parallel with the plugin. They would both try to communicate with ComfoAir at the same time and create big troubles (corrupt the config in ComfoAir in worst case).
 
-# Requirements
+## Requirements
 
 This plugin has no requirements or dependencies.
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
-<pre>
+```
 [comfoair]
     class_name = ComfoAir
     class_path = plugins.comfoair
@@ -29,67 +29,66 @@ This plugin has no requirements or dependencies.
     host = 192.168.123.6        # Provide host and port if you want to use TCP connection (for a TCP to serial converter)
     port = 5555                 # Port
     #serialport = /dev/ttyUSB0  # Enable this if you want to use a serial connection
+```
 
-</pre>
-
-## items.conf
+### items.conf
 
 The plugin is completely flexible in which commands you use and when you want the read out which parameters.
-Everything is configured by adding new items in a SmartHome.py item configuration file.
+Everything is configured by adding new items in a SmartHomeNG item configuration file.
 
 The following item attributes are supported: 
 
-### comfoair_send
+#### comfoair_send
 
 Changes to this item result in sending the configured command to the KWL system.
 The command is complemented by the item value in a pre-configured way (see commands.py).
 
 e.g. comfoair_send = WriteVentilationLevel
 
-### comfoair_read
+#### comfoair_read
 
 The item value should be read by using the configured command.
 
 e.g. comfoair_read = ReadVentilationLevel
 
-### comfoair_read_afterwrite
+#### comfoair_read_afterwrite
 
 A timespan (seconds) can be configured. If a value for this attribute is set, the plugin will wait the configured delay after the write command and then issue the configured read command to update the items value.
 This attribute has no default value. If the attribute is not set, no read will be issued after write.
 
 e.g. comfoair_read_afterwrite = 1 # seconds
 
-### comfoair_read_cycle
+#### comfoair_read_cycle
 
 With this attribute a read cycle for this item can be configured (timespan between cycles in seconds).
 
 e.g. comfoair_read_cycle = 3600 # every hour
 
-### comfoair_init
+#### comfoair_init
 
 If this attribute is set to a value (e.g. 'true'), the plugin will use the read command at startup to get an initial value.
 
 e.g. comfoair_init = true
 
-### comfoair_trigger
+#### comfoair_trigger
 
 This attribute can contain a list of commands, which will be issued if the item is updated.
 Useful for instance: If the ventilation level is changed, get updated ventilator RPM values.
 
 e.g. comfoair_trigger = ReadSupplyAirRPM | ReadExtractAirRPM
 
-### comfoair_trigger_afterwrite
+#### comfoair_trigger_afterwrite
 
 A timespan (seconds) can be configured. After an update to this item, the commands configured in comfoair_trigger will be issued. Before triggering the here configured delay will be waited for.
 Default value: 5 seconds.
 
 e.g. comfoair_trigger_afterwrite = 10 # seconds
 
-### Example
+#### Example
 
 Here you can find a sample configuration using the ComfoAir 350 commands:
 
-<pre>
+```
 [kwl]
     [[level]]
         type = num
@@ -223,11 +222,11 @@ Here you can find a sample configuration using the ComfoAir 350 commands:
         eval = (sh.kwl.temp.supplyair() - sh.kwl.temp.freshair()) / (sh.kwl.temp.extractair() - sh.kwl.temp.exhaustair()) * 100
         eval_trigger = kwl.temp.supplyair | kwl.temp.freshair | kwl.temp.extractair | kwl.temp.exhaustair
 
-</pre>
+```
 
-## logic.conf
+### logic.conf
 Currently there is no logic configuration for this plugin.
 
 
-# Methodes
+## Methods
 Currently there are no functions offered from this plugin.

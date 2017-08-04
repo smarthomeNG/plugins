@@ -1,6 +1,6 @@
 # Squeezebox
 
-# Requirements
+## Requirements
 
 A properly installed and configured Logitech Media Server is required.
 
@@ -8,27 +8,36 @@ A properly installed and configured Logitech Media Server is required.
 
 Tested with:
 * Logitech Squeezebox Radio
+* Squeezelite on Windows, Mac OS X and Linux
 
 Should work with other Squeezebox players as well - please let me know!
 
-# Configuration
+## New in version 1.3.0
 
-## plugin.conf
+* The plugin is now a Smart Plugin. You can change the logging level in logging.yaml
+* When the end of a playlist is reached the plugin now changes the mode correctly to "stop" 
+* When playing a radio station the play mode is now correctly set to "play"
+* When starting playing by adding and playing a playlist the play mode is now correctly set to "play"
+* The player_id in your conf file is now searched not only in the parent item but also 2 levels further up
 
-<pre>
+## Configuration
+
+### plugin.conf
+
+```
 [squeezebox]
     class_name = Squeezebox
     class_path = plugins.squeezebox
 #    host = &lt;server&gt;
 #    port = &lt;port&gt;
-</pre>
+```
 
 Description of the attributes:
 
 * __host__: IP or hostname of the Logitech Media Server if not local
 * __port__: Port number of the Logitech Media Server if not 9090
 
-## items.conf
+### items.conf
 
 You can use all commands available by the telnet-interface.
 
@@ -45,14 +54,15 @@ Fields:
 * __{}__: the value of the item is written to this placeholder (don't use if a fixed/no value is required)
 
 You should verify all your commands manually by using the telnet-interface on port 9090.
-<pre>
+
+```bash
 telnet &lt;server&gt;:&lt;port&gt;
 listen 1
 &lt;playerid&gt; name ?
 ...
-</pre>
+```
 
-<pre>
+```
 [Squeezebox]
   squeezebox_playerid = your-players-ID-in-here
 
@@ -229,4 +239,4 @@ listen 1
     enforce_updates = true
     visu = yes
     squeezebox_send = &lt;playerid&gt; playlist shuffle 0
-</pre>
+```

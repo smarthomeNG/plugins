@@ -3,20 +3,20 @@
 #########################################################################
 # Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
@@ -51,7 +51,10 @@ class MemLog():
             return None
 
     def parse_logic(self, logic):
-        pass
+        if 'memlog' in logic.conf:
+            return self.trigger_logic
+        else:
+            return None
 
     def __call__(self, param1=None, param2=None):
         if type(param1) == list and type(param2) == type(None):
@@ -72,6 +75,14 @@ class MemLog():
                         logvalues.append(self._sh.return_item(item)())
 
                 self.log(logvalues, 'INFO')
+
+    def trigger_logic(self, logic, by=None, source=None, dest=None):
+        if self.name == logic.conf['memlog']:
+            if 'memlog_message' in logic.conf:
+                msg = logic.conf['memlog_message']
+            else:
+                msg = "Logic {} triggered"
+            self.log([msg.format(**{'plugin' : self, 'logic' : logic, 'by' : by, 'source' : source, 'dest' : dest})]) 
 
     def log(self, logvalues, level = 'INFO'):
         if len(logvalues):

@@ -3,42 +3,65 @@
 #
 # Copyright 2012 KNX-User-Forum e.V.            http://knx-user-forum.de/
 #
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py.  If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG.  If not, see <http://www.gnu.org/licenses/>.
 #
 
 import logging
 import socket
 import time
 import base64
+from websocket import create_connection
 from lib.model.smartplugin import SmartPlugin
 from uuid import getnode as getmac
 
 class SmartTV(SmartPlugin):
 
-    ALLOW_MULTIINSTANCE = False # so far not implemented for multiinstance capability
-    PLUGIN_VERSION = "1.1.1"
+    ALLOW_MULTIINSTANCE = True
+    PLUGIN_VERSION = "1.3.2"
 
-    def __init__(self, smarthome, host, port=55000, tvid=1):
+    def __init__(self, smarthome, host, port=55000, tv_version='classic', delay=1):
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
         self._host = host
-        self._port = port
-        self._tvid = int(tvid)
+        self._port = int(port)
+        self._delay = delay
+        if tv_version not in ['samsung_m_series', 'classic']:
+            self.logger.error('No valid tv_version attribute specified to plugin')
+        self._tv_version = tv_version
+        self.logger.debug("Smart TV plugin for {0} SmartTV device initalized".format(tv_version))
 
-    def push(self, key):
+    def push_samsung_m_series(self, key):
+        """
+        | Pushes a key (as string) to a websocket connection
+
+        :param key: key as string representation
+        """
+        try:
+            ws = create_connection('ws://%s:%d/api/v2/channels/samsung.remote.control' % (self._host, self._port))
+        except Exception as e:
+            self.logger.error(
+                "Could not connect to ws://%s:%d/api/v2/channels/samsung.remote.control, to send key: %s. Exception: %s" % (self._host, self._port, key, str(e)))
+            return
+        cmd = '{"method":"ms.remote.control","params":{"Cmd":"Click","DataOfCmd":"%s","Option":"false","TypeOfRemote":"SendRemoteKey"}}' % key
+        self.logger.debug("Sending %s via websocket connection to %s" % (cmd, 'ws://%s:%d/api/v2/channels/samsung.remote.control' % (self._host, self._port)))
+        ws.send(cmd)
+        ws.close()
+        return
+
+    def push_classic(self, key):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((self._host, int(self._port)))
@@ -109,17 +132,9 @@ class SmartTV(SmartPlugin):
         time.sleep(0.1)
 
     def parse_item(self, item):
-        if 'smarttv_id' in item.conf:
-            tvid = int(item.conf['smarttv_id'])
-        else:
-            tvid = 1
-
-        if tvid != self._tvid:
-            return None
-
-        if 'smarttv' in item.conf:
-            self.logger.debug("Smart TV Item {0} with value {1} for TV ID {2} found!".format(
-                item, item.conf['smarttv'], tvid))
+        if self.has_iattr(item.conf, 'smarttv'):
+            self.logger.debug("Smart TV Item {0} with value {1} for plugin instance {2} found!".format(
+                item, self.get_iattr_value(item.conf, 'smarttv'), self.get_instance_name()))
             return self.update_item
         else:
             return None
@@ -128,15 +143,25 @@ class SmartTV(SmartPlugin):
         val = item()
         if isinstance(val, str):
             if val.startswith('KEY_'):
-                self.push(val)
+                if self._tv_version == 'classic':
+                    self.push_classic(val)
+                elif self._tv_version == 'samsung_m_series':
+                    self.push_samsung_m_series(val)
             return
         if val:
-            keys = item.conf['smarttv']
+            keys = self.get_iattr_value(item.conf, 'smarttv')
             if isinstance(keys, str):
                 keys = [keys]
+            i = 0
             for key in keys:
+                i = i + 1
                 if isinstance(key, str) and key.startswith('KEY_'):
-                    self.push(key)
+                    if i != len(keys):
+                        time.sleep(self._delay)
+                    if self._tv_version == 'classic':
+                        self.push_classic(key)
+                    elif self._tv_version == 'samsung_m_series':
+                        self.push_samsung_m_series(key)
 
     def parse_logic(self, logic):
         pass

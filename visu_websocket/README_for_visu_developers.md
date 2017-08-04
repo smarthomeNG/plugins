@@ -1,29 +1,30 @@
-# Visualisation plugin
+# Visualisation plugin (Websocket Protocol) - for developers
 
 ```
  
 Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
 
-This plugin is part of SmartHome.py.
+This plugin is part of SmartHomeNG.
   
 Visit:  https://github.com/smarthomeNG/
         https://knx-user-forum.de/forum/supportforen/smarthome-py
 
 ```
 
-This file gives **smarthome.py** developers of visualization software additional information about the visu_websocket plugin. The following sections describe the implemented websocket protocol, that can be used my a visu to interface with smarthomeNG.
+This file gives **smarthome.py** developers of visualization software additional information about the visu_websocket plugin. 
+The following sections describe the implemented websocket protocol, that can be used my a visu to interface with smarthomeNG.
 
 For information about the configuration of the plugin refer to **README.md**.
 
 .
 
-# WebSocket Interface
+## WebSocket Interface
 
 The visa plugin implements a WebSocket server. This section describes the implemented protocol. The messages of the protocol consist of data in json format. Following are the request commands which the visu plugin handles. 
 
 
-## item
+### item
 With the **`item`** command a client requests to change the value of an item. The example requests the item with the id "wohnung.buero.schreibtischleuchte.onoff" to be turned off:
 
 ```
@@ -37,7 +38,7 @@ With the **`item`** command a client requests to change the value of an item. Th
 The plugin does not send an answer to the **`item`** command.
 
 
-## monitor
+### monitor
 With the **`monitor`** command a client requests the actual value of a list of items. The list of the requested item names has to be comma seperated. Take a look at the following example:
 
 ```
@@ -86,7 +87,7 @@ Additionally, the plugin initiates an update routine, which sends updates for it
 ```
 
 
-## ping
+### ping
 With the **`ping`** command a client checks if the connection to the plugin is alive.
 
 ```
@@ -100,7 +101,7 @@ The plugin answers with:
 ```
 
 
-## logic
+### logic
 With the **`logic`** command a client requests a logic to be triggered. **`name`** is the name of the logic, as defined in **`etc/logic.conf`**. Furthermore, in **`etc/logic.conf`** the attribute **`visu_acl`** for that logic has to be set to **True**.
 
 ```
@@ -118,7 +119,7 @@ Following information is passed to the logic via the trigger variable:
 The plugin does not send an answer to the **`logic`** command.
 
 
-## series
+### series
 With the **`series`** command a client requests a series of values for an item. The values which are requested are stored in a database using the sqlite plugin. The **`series`** command only returns data for items which are configured to store data via the **sqlite** plugin. 
 
 The series command is for instance used by SmartVISU to get data for the plot widget. The following example requests a series of the average values of the last 48 hours:
@@ -191,7 +192,7 @@ Additionally, the plugin initiates an update routine, which sends updates for se
 ```
 
 
-## log
+### log
 With the **`log`** command a client requests the last entries of a specified log. The example command requests the last 5 log entries of the core log:
 
 ```
@@ -218,7 +219,7 @@ The plugin answers with a message like this:
 ```
 
 
-## proto
+### proto
 With the **`proto`** command a client requests the WebSocket protocol version, it wants to use for communication:
 
 ```
@@ -235,4 +236,39 @@ The plugin answers with the protocol version it supports. Additionally it sends 
 	 "time":"2016-04-14T21:23:20.248227+02:00"
 	}
 ```
+
+
+### identity
+--> This command is new with **SmartHomeNG 1.3**
+
+With the **`identity`** command a client sends information about itself to SmartHomeNG. The command should be issued right after opening a connection.
+
+The following example shows, what a smartVISU v2.7 running in a Safari Browser would send:
+
+```
+	{
+	 'cmd': 'identity',
+	 'sw': 'smartVISU', 
+	 'ver': 'v2.7', 
+	 'browser': 'Safari', 
+	 'bver': '9'
+	}
+```
+
+
+### url
+--> This command is new with **SmartHomeNG 1.3**
+
+--> This command works with **smartVISU 2.9** and up, for **smartVISU 2.8** a modified driver **`io_smarthome.py`** is needed.
+
+ **`url`**  is a command sent from the plugin to the smartVISU clients. With the **`url`** command the smartVISU client can be instructed to change to another page.
+
+The following command instructs smartVISU to change to the main page:
+
+```
+	{"cmd":"url", "url": "index.php"}
+```
+
+The smartVISU client does not send an answer to the **`url`** command.
+
 

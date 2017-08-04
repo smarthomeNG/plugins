@@ -3,20 +3,20 @@
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
@@ -25,11 +25,11 @@ import smtplib
 import email
 from email.mime.text import MIMEText
 from email.header import Header
+from lib.model.smartplugin import SmartPlugin
 
-logger = logging.getLogger('')
-
-
-class IMAP():
+class IMAP(SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.3.1"
 
     def __init__(self, smarthome, host, username, password, cycle=300, port=None, ssl=False):
         self._sh = smarthome
@@ -42,6 +42,7 @@ class IMAP():
         self._mail_to = {}
         self._mail = False
         self._ssl = smarthome.string2bool(ssl)
+        self.logger = logging.getLogger(__name__)
 
     def _connect(self):
         if self._ssl:
@@ -61,17 +62,17 @@ class IMAP():
         try:
             imap = self._connect()
         except Exception as e:
-            logger.warning("Could not connect to {0}: {1}".format(self._host, e))
+            self.logger.warning("Could not connect to {0}: {1}".format(self._host, e))
             return
         rsp, data = imap.select()
         if rsp != 'OK':
-            logger.warning("IMAP: Could not select mailbox")
+            self.logger.warning("IMAP: Could not select mailbox")
             imap.close()
             imap.logout()
             return
         rsp, data = imap.uid('search', None, "ALL")
         if rsp != 'OK':
-            logger.warning("IMAP: Could not search mailbox")
+            self.logger.warning("IMAP: Could not search mailbox")
             imap.close()
             imap.logout()
             return
@@ -82,7 +83,7 @@ class IMAP():
             try:
                 rsp, data = imap.uid('fetch', uid, '(RFC822)')
                 if rsp != 'OK':
-                    logger.warning("IMAP: Could not fetch mail")
+                    self.logger.warning("IMAP: Could not fetch mail")
                     continue
                 mail = email.message_from_bytes(data[0][1])
                 to = email.utils.parseaddr(mail['To'])[1]
@@ -91,7 +92,7 @@ class IMAP():
                 if encoding is not None:
                     subject = subject.decode(encoding)
             except Exception as e:
-                logger.exception("IMAP: problem parsing message {}: {}".format(uid, e))
+                self.logger.exception("IMAP: problem parsing message {}: {}".format(uid, e))
                 continue
             if subject in self._mail_sub:
                 logic = self._mail_sub[subject]
@@ -106,11 +107,11 @@ class IMAP():
                 rsp, data = imap.uid('copy', uid, 'Trash')
                 if rsp == 'OK':
                     typ, data = imap.uid('store', uid, '+FLAGS', '(\Deleted)')
-                    logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                    self.logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                 else:
-                    logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                    self.logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
             else:
-                logger.info("Ignoring mail. {0} => {1}: {2}".format(fo, to, subject))
+                self.logger.info("Ignoring mail. {0} => {1}: {2}".format(fo, to, subject))
         imap.close()
         imap.logout()
 
@@ -136,7 +137,9 @@ class IMAP():
         pass
 
 
-class SMTP():
+class SMTP(SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.3.1"
 
     def __init__(self, smarthome, host, mail_from, username=False, password=False, port=25, ssl=False):
         self._sh = smarthome
@@ -146,12 +149,13 @@ class SMTP():
         self._from = mail_from
         self._username = username
         self._password = password
+        self.logger = logging.getLogger(__name__)
 
     def __call__(self, to, sub, msg):
         try:
             smtp = self._connect()
         except Exception as e:
-            logger.warning("Could not connect to {0}: {1}".format(self._host, e))
+            self.logger.warning("Could not connect to {0}: {1}".format(self._host, e))
             return
         try:
             msg = MIMEText(msg, 'plain', 'utf-8')
@@ -159,11 +163,11 @@ class SMTP():
             msg['From'] = self._from
             msg['Date'] = email.utils.formatdate()
             msg['To'] = to
-            msg['Message-ID'] = email.utils.make_msgid('SmartHome.py')
+            msg['Message-ID'] = email.utils.make_msgid('SmartHomeNG')
             to = [x.strip() for x in to.split(',')]
             smtp.sendmail(self._from, to, msg.as_string())
         except Exception as e:
-            logger.warning("Could not send message {} to {}: {}".format(sub, to, e))
+            self.logger.warning("Could not send message {} to {}: {}".format(sub, to, e))
         finally:
             try:
                 smtp.quit()

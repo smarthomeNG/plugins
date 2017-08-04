@@ -3,7 +3,7 @@
 # Copyright 2013 Jan N. Klug
 #
 #
-#  This SmartHome.py plugin is free software: you can redistribute it and/or
+#  This SmartHomeNG plugin is free software: you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License as published
 #  by the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
@@ -22,8 +22,12 @@ import logging
 import datetime
 import threading
 import xml.etree.cElementTree
+from lib.model.smartplugin import SmartPlugin
 
-class wettercom():
+
+class wettercom(SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.3.1"
     _server = 'api.wetter.com'
 
     """get city code

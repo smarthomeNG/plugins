@@ -3,28 +3,25 @@
 #
 # Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
 #
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #
 
 import logging
 import time
 import threading
-
-logger = logging.getLogger('')
-
 
 class DataLog():
     filepatterns = {}
@@ -37,34 +34,48 @@ class DataLog():
     def __init__(self, smarthome, path="var/log/data", filepatterns={ "default" : "{log}-{year}-{month}-{day}.csv" }, logpatterns={ "csv" : "{time};{item};{value}\n" }, cycle=10):
         self._sh = smarthome
         self.path = path
+        self.logger = logging.getLogger(__name__)
 
-        if type(filepatterns) is list:
+        newfilepatterns = {}
+        if isinstance(filepatterns, str):
+            filepatterns = [filepatterns]
+        if isinstance(filepatterns, list):
             for pattern in filepatterns:
                 key, value = pattern.split(':')
-                self.filepatterns[key] = value
+                newfilepatterns[key] = value
+        elif isinstance(filepatterns, dict):
+            newfilepatterns = filepatterns
         else:
-            self.filepatterns = filepatterns
+            raise Exception("Type of argument filepatterns unknown: {}".format(type(filepatterns)))
 
-        if type(logpatterns) is list:
-            newlogpatterns = {}
+        newlogpatterns = {}
+        if isinstance(logpatterns, str):
+            logpatterns = [logpatterns]
+        if isinstance(logpatterns, list):
             for pattern in logpatterns:
                 key, value = pattern.split(':')
                 newlogpatterns[key] = value
-            logpatterns = newlogpatterns
+        elif isinstance(logpatterns, dict):
+            newlogpatterns = logpatterns
+        else:
+            raise Exception("Type of argument logpatterns unknown: {}".format(type(logpatterns)))
 
-        for log in self.filepatterns:
-            ext = self.filepatterns[log].split('.')[-1]
-            if ext in logpatterns:
+        for log in newfilepatterns:
+            ext = newfilepatterns[log].split('.')[-1]
+            if ext in newlogpatterns:
+                self.filepatterns[log] = newfilepatterns[log]
                 self.logpatterns[log] = logpatterns[ext]
+            else:
+                self.logger.warn('DataLog: Ignoring log "{}", log pattern missing!'.format(log))
 
         self.cycle = int(cycle)
         self._items = {}
         self._buffer = {}
         self._buffer_lock = threading.Lock()
-        
-        logger.info('DataLog: Initialized, logging to "{}"'.format(self.path))
+
+        self.logger.info('DataLog: Initialized, logging to "{}"'.format(self.path))
         for log in self.filepatterns:
-            logger.info('DataLog: Registered log "{}", file="{}", format="{}"'.format(log, self.filepatterns[log], self.logpatterns[log]))
+            self.logger.info('DataLog: Registered log "{}", file="{}", format="{}"'.format(log, self.filepatterns[log], self.logpatterns[log]))
 
     def run(self):
         self.alive = True
@@ -84,7 +95,7 @@ class DataLog():
             found = False
             for log in logs:
                 if log not in self.filepatterns:
-                    logger.debug('Unknown log "{}" for item {}'.format(log, item.id()))
+                    self.logger.debug('Unknown log "{}" for item {}'.format(log, item.id()))
                     return None
 
                 if log not in self._buffer:
@@ -120,7 +131,7 @@ class DataLog():
 
         for log in self._buffer:
             self._buffer_lock.acquire()
-            logger.debug('Dumping log "{}" with {} entries ...'.format(log, len(self._buffer[log])))
+            self.logger.debug('Dumping log "{}" with {} entries ...'.format(log, len(self._buffer[log])))
             entries = self._buffer[log]
             self._buffer[log] = []
             self._buffer_lock.release()
@@ -140,10 +151,9 @@ class DataLog():
                         handles[filename].write(logpattern.format(**data))
 
                 except Exception as e:
-                    logger.error('Error while writing to {}: {}'.format(filename, e))
+                    self.logger.error('Error while writing to {}: {}'.format(filename, e))
 
         for filename in handles:
             handles[filename].close()
 
-        logger.debug('Dump done!')
-
+            self.logger.debug('Dump done!')

@@ -1,25 +1,24 @@
 # MPD
 
-Requirements
-============
+## Requirements
+
 You only need one or more Music Player Daemons (MPD).
 
-Configuration
-=============
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
-<pre>
+```
 [mpd]
     class_name = MPD
     class_path = plugins.mpd
-</pre>
+```
 
-## items.conf
+### items.conf
 
 You could see a full featured item configuration at the end of this file.
 
-<pre>
+```
 [living]
     type = bool
     [[mpd]]
@@ -38,16 +37,16 @@ You could see a full featured item configuration at the end of this file.
             type = bool
             mpd_file = http://jungletrain.net/64kbps.m3u
             enforce_updates = yes
-</pre>
+```
 
 
-### mpd_host
+#### mpd_host
 This attribute is mandatory. You have to provide the IP address or host name of a MPD system.
 
-### mpd_port
+#### mpd_port
 You could specify a port to connect to. By default port 6060 is used.
 
-### mpd_listen
+#### mpd_listen
 You could assign the following values to `mpd_listen`:
 
    * `state`: ("play", "stop", or "pause")
@@ -75,7 +74,7 @@ You could assign the following values to `mpd_listen`:
    * `disc`: album disc
 
 
-### mpd_send
+#### mpd_send
 The following `mpd_send` attributes could be defined to send changes to the system:
 
    * `volume`: a numeric value (0 -100)
@@ -84,26 +83,26 @@ The following `mpd_send` attributes could be defined to send changes to the syst
    * `single`: enable/disable repeat current song 
    * `<command>`: send the specified command at an item change. See below for a list of commands.
 
-### mpd_file
+#### mpd_file
 You could specify a file, directory or URL which will be played if the value of this item change.
 
 
 
-# Functions
+## Functions
 
-## command(cmd)
+### command(cmd)
 Send any of the commands: `play`, `pause`, `stop`, `next`, `previous`...<br />
 For a complete list see: [http://www.musicpd.org/doc/protocol/command_reference.html](http://www.musicpd.org/doc/protocol/command_reference.html)
 
-## play(file)
+### play(file)
 Plays the specified file, directory or URL.
 
-## add(file)
+### add(file)
 Adding the specified file, directory or URL to the playlist.
 
 
-# Example item.conf
-<pre>
+## Example item.conf
+```
 [living]
     [[mpd]]
         type = str
@@ -177,4 +176,4 @@ Adding the specified file, directory or URL to the playlist.
         [[[track]]]
             type = str
             mpd_listen = track
-</pre>
+```

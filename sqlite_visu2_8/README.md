@@ -1,52 +1,66 @@
-# SQLite
+# SQLite (für SmartVisu >= 2.8)
 
-Configuration
-=============
+## Configuration
 
-plugin.conf
------------
-<pre>
+### plugin.conf (deprecated) / plugin.yaml
+```
 [sql]
     class_name = SQL
     class_path = plugins.sqlite_visu2_8
 #   path = None
 #   dumpfile = /tmp/smarthomedb.dump
-</pre>
+```
+
+```yaml
+sql:
+    class_name: SQL
+    class_path: plugins.sqlite_visu2_8
+    # path = None
+    # dumpfile = /tmp/smarthomedb.dump
+```
 
 The `path` attribute allows you to specify the of the SQLite database.
 
-If you specify a `dumpfile`, SmartHome.py dumps the database every night into this file.
+If you specify a `dumpfile`, SmartHomeNG dumps the database every night into this file.
 
-items.conf
---------------
+### items.conf (deprecated) / items.yaml
 
-For num and bool items, you could set the attribute: `sqlite`. By this you enable logging of the item values and SmartHome.py set the item to the last know value at start up (equal cache = yes).
+For num and bool items, you could set the attribute: `sqlite`. By this you enable logging of the item values and SmartHomeNG set the item to the last know value at start up (equal cache = yes).
 
-<pre>
+```
 [outside]
     name = Outside
     [[temperature]]
         name = Temperatur
         type = num
         sqlite = yes
-</pre>
+```
 
+```yaml
+outside:
+    name: Outside
 
-# Functions
+    temperature:
+        name: Temperatur
+        type: num
+        sqlite: 'yes'
+```
+
+## Functions
 This plugin adds one item method to every item which has sqlite enabled.
 
-## cleanup()
+### cleanup()
 This function removes orphaned item entries which are no longer referenced in the item configuration.
 
-## dump(filename)
+### dump(filename)
 Dumps the database into the specified file.
 `sh.sql.dump('/tmp/smarthomedb.dump')` writes the database content into /tmp/smarthomedb.dump
 
-## move(old, new)
+### move(old, new)
 This function renames item entries.
 `sh.sql.move('my.old.item', 'my.new.item')`
 
-## sh.item.db(function, start, end='now')
+### sh.item.db(function, start, end='now')
 This method returns you an value for the specified function and timeframe.
 
 Supported functions are:
@@ -67,7 +81,7 @@ The time point could be specified with `<number><interval>`, where interval coul
    * `y`: year
 
 e.g.
-<pre>
+```yaml
 sh.outside.temperature.db('min', '1d')  # returns the minimum temperature within the last day
 sh.outside.temperature.db('avg', '2w', '1w')  # returns the average temperature of the week before last week
-</pre>
+```

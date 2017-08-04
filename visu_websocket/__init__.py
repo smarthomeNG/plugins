@@ -4,26 +4,27 @@
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #  Copyright 2016- Martin Sinn                              m.sinn@gmx.de
 #########################################################################
-#  This file is part of SmartHome.py.  
+#  This file is part of SmartHomeNG.  
 #  Visit:  https://github.com/smarthomeNG/
 #          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import base64
 import datetime
+import decimal
 import hashlib
 import json
 import logging
@@ -42,7 +43,7 @@ class WebSocket(SmartPlugin):
     """
     Main class of the Plugin. Does the plugin specific stuff.
     """
-    PLUGIN_VERSION = "1.1.2"
+    PLUGIN_VERSION = "1.1.3"
     ALLOW_MULTIINSTANCE = False
 
     def my_to_bool(self, value, attr='', default=False):
@@ -113,7 +114,9 @@ class WebSocket(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         self.websocket.update_item(item.id(), item(), source)
 
-
+    def url(self, url, clientip=''):
+        self.websocket.url(url, clientip)
+		
     def parse_logic(self, logic):
         if hasattr(logic, 'visu_acl'):
             if logic.conf['visu_acl'].lower() in ('true', 'yes', 'rw'):
@@ -122,8 +125,26 @@ class WebSocket(SmartPlugin):
 
     def return_clients(self):
         for client in self.websocket.clients:
-            yield client.addr			# v1.1.2
-#            yield client.addr, client.sw, client.swversion, client.hostname          # v1.1.3
+            infos = {}
+            infos['addr'] = client.addr
+            infos['sw'] = client.sw
+            infos['swversion'] = client.swversion
+            infos['hostname'] = client.hostname
+            infos['browser'] = client.browser
+            infos['browserversion'] = client.browserversion
+            if self.PLUGIN_VERSION == "1.1.2":
+                yield client.addr			# v1.1.2
+            else:
+                # v1.1.3 and up
+                yield infos
+
+#    def return_clients(self):
+#        for client in self.websocket.clients:
+#            if self.PLUGIN_VERSION == "1.1.2":
+#                yield client.addr			# v1.1.2
+#            else:
+#                # v1.1.3 and up
+#                yield client.addr, client.sw, client.swversion, client.hostname, client.browser, client.browserversion
 
 
 #########################################################################
@@ -214,12 +235,15 @@ class _websocket(lib.connection.Server):
             except:
                 pass
 
-    def url(self, url):
+    def url(self, url, clientip=''):
         for client in list(self.clients):
-            try:
-                client.json_send({'cmd': 'url', 'url': url})
-            except:
-                pass
+            ip, _, port = client.addr.partition(':')
+            if (clientip == '') or (clientip == ip):
+                self.logger.debug("VISU: Websocket send url to ip={}, port={}".format(str(ip),str(port)))
+                try:
+                    client.json_send({'cmd': 'url', 'url': url})
+                except:
+                    pass
 
 
 #########################################################################
@@ -252,6 +276,8 @@ class websockethandler(lib.connection.Stream):
         self.sw = ''
         self.swversion = ''
         self.hostname = ''
+        self.browser = ''
+        self.browserversion = ''
         
 
     def send_event(self, event, data):
@@ -339,13 +365,21 @@ class websockethandler(lib.connection.Stream):
             self.logger.debug("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))
             self.json_send({'cmd': 'pong'})
         elif command == 'logic':
-            if 'name' not in data or 'val' not in data:
+            if 'name' not in data:
                 return
             name = data['name']
-            value = data['val']
             if name in self.logics:
-                self.logger.info("Client {0} triggerd logic {1} with '{2}'".format(self.addr, name, value))
-                self.logics[name].trigger(by='Visu', value=value, source=self.addr)
+                if 'val' in data:
+                    value = data['val']
+                    self.logger.info("Client {0} triggerd logic {1} with '{2}'".format(self.addr, name, value))
+                    self.logics[name].trigger(by='Visu', value=value, source=self.addr)
+                if 'enabled' in data:
+                    if data['enabled']:
+                        self.logger.info("Client {0} enabled logic {1}".format(self.addr, name))
+                        self.logics[name].enable()
+                    else:
+                        self.logger.info("Client {0} disabled logic {1}".format(self.addr, name))
+                        self.logics[name].disable()
             else:
 #                self.logger.warning("VISU: Defined logics {0}".format(self.logics))
                 self.logger.warning("Client {0} requested invalid logic: {1}".format(self.addr, name))
@@ -367,7 +401,7 @@ class websockethandler(lib.connection.Stream):
                         reply = self.items[path]['item'].series(series, start, end, count)
 #                        self.logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, reply))	# MSinn
                     except Exception as e:
-                        self.logger.exception("Problem fetching series for {0}: {1}".format(path, e))
+                        self.logger.error("Problem fetching series for {0}: {1} - Wrong sqlite plugin?".format(path, e))
                     else:
                         if 'update' in reply:
                             self._series_lock.acquire()
@@ -405,7 +439,9 @@ class websockethandler(lib.connection.Stream):
             self.sw = data.get('sw','')
             self.swversion = data.get('ver','')
             self.hostname = data.get('hostname','')
-#            self.logger.warning("VISU json_parse: received from {0}: {1}".format(self.addr, "{'cmd': 'identity', 'sw': "+self.sw+", 'ver': "+self.swversion+"}"))	# MSinn
+            self.browser = data.get('browser','')
+            self.browserversion = data.get('bver','')
+            self.logger.debug("VISU json_parse: received 'identify' from {0}: {1}".format(self.addr, data))
 
     def parse_header(self, data):
         data = bytes(data)
@@ -544,8 +580,12 @@ class JSONEncoder(json.JSONEncoder):
             return obj.isoformat()
         elif isinstance(obj, datetime.date):
             return obj.isoformat()
+        elif isinstance(obj, datetime.time):
+            return obj.isoformat()
         elif isinstance(obj, datetime.timedelta):
             return int(obj.total_seconds())
+        elif isinstance(obj, decimal.Decimal):
+            return float(obj)
         return json.JSONEncoder.default(self, obj)
 
 

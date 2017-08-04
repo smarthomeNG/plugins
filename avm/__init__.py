@@ -2,30 +2,22 @@
 #
 #########################################################################
 #  Copyright 2016 René Frieß                        rene.friess(a)gmail.com
-#  Version 1.1.2
 #########################################################################
-#  Free for non-commercial use
-#  
-#  Plugin for the software SmartHome.py (NG), which allows to control and read 
-#  devices such as the FritzBox. 
-#  For all functionality, the TR-064 interface is used.
 #
-#  Service implementation is mainly based on the information found on:
-#  - http://avm.de/service/schnittstellen/
-#  - http://www.fhemwiki.de/wiki/FRITZBOX
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py (NG). If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #
 #########################################################################
 
@@ -446,7 +438,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.1.2"
+    PLUGIN_VERSION = "1.2.3"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -467,6 +459,7 @@ class AVM(SmartPlugin):
     _urn_map = dict([('WLANConfiguration', 'urn:dslforum-org:service:WLANConfiguration:%s'),
                      # index needs to be adjusted from 1 to 3
                      ('WANCommonInterfaceConfig', 'urn:dslforum-org:service:WANCommonInterfaceConfig:1'),
+                     ('WANCommonInterfaceConfig_alt', 'urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1'),
                      ('WANIPConnection', 'urn:schemas-upnp-org:service:WANIPConnection:1'),
                      ('TAM', 'urn:dslforum-org:service:X_AVM-DE_TAM:1'),
                      ('OnTel', 'urn:dslforum-org:service:X_AVM-DE_OnTel:1'),
@@ -592,8 +585,13 @@ class AVM(SmartPlugin):
                 self._update_wlan_config(item)
             elif self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_total_packets_sent',
                                                                       'wan_total_packets_received',
+                                                                      'wan_current_packets_sent',
+                                                                      'wan_current_packets_received',
                                                                       'wan_total_bytes_sent',
-                                                                      'wan_total_bytes_received', 'wan_link']:
+                                                                      'wan_total_bytes_received',
+                                                                      'wan_current_bytes_sent',
+                                                                      'wan_current_bytes_received',
+                                                                      'wan_link']:
                 self._update_wan_common_interface_configuration(item)
             elif self.get_iattr_value(item.conf, 'avm_data_type') in ['network_device']:
                 self._update_host(item)
@@ -622,7 +620,8 @@ class AVM(SmartPlugin):
 
     def parse_item(self, item):
         """
-        Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to the AVM identifier and adds it to an internal array
+        Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to
+        the AVM identifier and adds it to an internal array
 
         :param item: The item to process.
         """
@@ -752,7 +751,8 @@ class AVM(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
-        | Write items values - in case they were changed from somewhere else than the AVM plugin (=the FritzDevice) to the FritzDevice.
+        | Write items values - in case they were changed from somewhere else than the AVM plugin (=the FritzDevice) to
+        | the FritzDevice.
 
         | Uses:
         | - http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
@@ -774,7 +774,7 @@ class AVM(SmartPlugin):
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 if int(item.conf['avm_wlan_index']) > 0:
                     headers['SOAPACTION'] = "%s#%s" % (
-                    self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
+                        self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
                     soap_data = self._assemble_soap_data(action, self._urn_map['WLANConfiguration'] % str(
                         item.conf['avm_wlan_index']), {'NewEnable': int(item())})
                 else:
@@ -797,7 +797,7 @@ class AVM(SmartPlugin):
 
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 param = "%s%s%s" % (
-                "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['avm_wlan_index'])
+                    "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['avm_wlan_index'])
                 url = self._build_url(param)
 
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
@@ -819,9 +819,9 @@ class AVM(SmartPlugin):
                 for citem in self._fritz_device.get_items():  # search for guest time remaining item.
                     if self.get_iattr_value(citem.conf,
                                             'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(
-                            citem.conf, 'avm_wlan_index') == item.conf['avm_wlan_index']:
+                        citem.conf, 'avm_wlan_index') == item.conf['avm_wlan_index']:
                         self._response_cache.pop("wlanconfig_%s_%s" % (
-                        self.get_iattr_value(citem.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
+                            self.get_iattr_value(citem.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
                                                  None)  # reset response cache
                         self._update_wlan_config(citem)  # immediately update remaining guest time
 
@@ -851,7 +851,7 @@ class AVM(SmartPlugin):
             return
 
         pb_url_xml = xml.getElementsByTagName('NewPhonebookURL')
-        if (len(pb_url_xml) > 0):
+        if len(pb_url_xml) > 0:
             pb_url = pb_url_xml[0].firstChild.data
             try:
                 pb_result = self._session.get(pb_url, timeout=self._timeout, verify=self._verify)
@@ -860,12 +860,12 @@ class AVM(SmartPlugin):
                 self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
                 return
             contacts = pb_xml.getElementsByTagName('contact')
-            if (len(contacts) > 0):
+            if len(contacts) > 0:
                 for contact in contacts:
                     phone_numbers = contact.getElementsByTagName('number')
-                    if (phone_numbers.length > 0):
+                    if phone_numbers.length > 0:
                         i = phone_numbers.length
-                        while (i >= 0):
+                        while i >= 0:
                             i -= 1
                             if phone_number in phone_numbers[i].firstChild.data:
                                 return contact.getElementsByTagName('realName')[0].firstChild.data.strip()
@@ -875,6 +875,68 @@ class AVM(SmartPlugin):
             self.logger.error("Phonebook not available on the FritzDevice")
 
         return phone_number
+
+    def get_phone_numbers_by_name(self, name=''):
+        """
+        Searches the phonebook for a contact by a given name
+
+        | Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
+        | Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
+
+        :param name: partial or full name of contact as defined in the phonebook.
+        :return: dict of found contact names (keys) with each containing an array of dicts (keys: type, number)
+        """
+        url = self._build_url("/upnp/control/x_contact")
+        headers = self._header.copy()
+        action = "GetPhonebook"
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['OnTel'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'], {'NewPhonebookID': 0})
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()), verify=self._verify)
+            xml = minidom.parseString(response.content)
+        except Exception as e:
+            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            return
+
+        pb_url_xml = xml.getElementsByTagName('NewPhonebookURL')
+        if len(pb_url_xml) > 0:
+            pb_url = pb_url_xml[0].firstChild.data
+            try:
+                pb_result = self._session.get(pb_url, timeout=self._timeout, verify=self._verify)
+                pb_xml = minidom.parseString(pb_result.content)
+            except Exception as e:
+                self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                return
+
+            contacts = pb_xml.getElementsByTagName('contact')
+            result_numbers = {}
+            if name == '':
+                return result_numbers
+            if len(contacts) > 0:
+                for contact in contacts:
+                    real_names = contact.getElementsByTagName('realName')
+                    if real_names.length > 0:
+                        i = 0
+                        while i < real_names.length:
+                            if name.lower() in real_names[i].firstChild.data.lower():
+                                phone_numbers = contact.getElementsByTagName('number')
+                                if phone_numbers.length > 0:
+                                    result_numbers[real_names[i].firstChild.data] = []
+                                    j = 0
+                                    while j < phone_numbers.length:
+                                        if phone_numbers[j].firstChild.data:
+                                            result_number_dict = {}
+                                            result_number_dict['number'] = phone_numbers[j].firstChild.data
+                                            result_number_dict['type'] = phone_numbers[j].attributes["type"].value
+                                            result_numbers[real_names[i].firstChild.data].append(result_number_dict)
+                                        j += 1
+                            i += 1
+        else:
+            self.logger.error("Phonebook not available on the FritzDevice")
+
+        return result_numbers
 
     def get_calllist(self, filter_incoming=''):
         """
@@ -992,6 +1054,74 @@ class AVM(SmartPlugin):
                                                self._fritz_device.get_password()), verify=self._verify)
         return
 
+    def get_hosts(self, only_active):
+        """
+        Gets the name of all hosts as an array
+
+        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+
+        :param only_active: bool, if only active hosts shall be returned
+        :return: Array host dicts (see get_host_details)
+        """
+        url = self._build_url("/upnp/control/hosts")
+        headers = self._header.copy()
+        action = 'GetHostNumberOfEntries'
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'])
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
+        except Exception as e:
+            self.logger.error("Exception when sending POST request: %s" % str(e))
+
+        xml = minidom.parseString(response.content)
+
+        number_of_hosts = int(self._get_value_from_xml_node(xml, 'NewHostNumberOfEntries'))
+        hosts = []
+        for i in range(1, number_of_hosts):
+            host = self.get_host_details(i)
+            if not only_active or (only_active and self.to_bool(host['is_active'])):
+                hosts.append(host)
+
+        return hosts
+
+    def get_host_details(self, index):
+        """
+        Gets the name of a hosts at a specific index
+
+        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+
+        :param index: index of host in hosts list
+        :return: Dict host data: name, interface_type, ip_address, address_source, mac_address, is_active, lease_time_remaining
+        """
+        url = self._build_url("/upnp/control/hosts")
+        headers = self._header.copy()
+        action = 'GetGenericHostEntry'
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'], {'NewIndex': index})
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
+        except Exception as e:
+            self.logger.error("Exception when sending POST request: %s" % str(e))
+
+        xml = minidom.parseString(response.content)
+        host = {
+            'name': self._get_value_from_xml_node(xml, 'NewHostName'),
+            'interface_type': self._get_value_from_xml_node(xml, 'NewInterfaceType'),
+            'ip_address': self._get_value_from_xml_node(xml, 'NewIPAddress'),
+            'address_source': self._get_value_from_xml_node(xml, 'NewAddressSource'),
+            'mac_address': self._get_value_from_xml_node(xml, 'NewMACAddress'),
+            'is_active': self._get_value_from_xml_node(xml, 'NewActive'),
+            'lease_time_remaining': self._get_value_from_xml_node(xml, 'NewLeaseTimeRemaining')
+        }
+
+        return host
+
     def reconnect(self):
         """
         Reconnects the FritzDevice to the WAN
@@ -1011,6 +1141,73 @@ class AVM(SmartPlugin):
             self.logger.error("Exception when sending POST request: %s" % str(e))
             return
 
+    def get_call_origin(self):
+        """
+        Gets the phone name, currently set as call_origin.
+
+        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_voipSCPD.pdf
+        :return: String phone name
+        """
+        url = self._build_url("/upnp/control/x_voip")
+        action = 'X_AVM-DE_DialGetConfig'
+        headers = self._header.copy()
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['X_VoIP'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'])
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
+        except Exception as e:
+            self.logger.error("Exception when sending POST request: %s" % str(e))
+            return
+
+        xml = minidom.parseString(response.content)
+
+        phone_name = self._get_value_from_xml_node(xml, 'NewX_AVM-DE_PhoneName')
+        if phone_name is not None:
+            return phone_name
+
+        self.logger.error("No call origin available.")
+        return
+
+    def get_phone_name(self, index=1):
+        """
+        Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin.
+
+        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_voipSCPD.pdf
+
+        :param index: Parameter is an INT, starting from 1. In case an index does not exist, an error is logged.
+        :return: String phone name
+        """
+        if not self.is_int(index):
+            self.logger.error("Index parameter \"%s\" is no INT." % index)
+            return
+
+        url = self._build_url("/upnp/control/x_voip")
+        action = 'X_AVM-DE_GetPhonePort'
+        headers = self._header.copy()
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['X_VoIP'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'],
+                                             {'NewIndex': index})
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
+        except Exception as e:
+            self.logger.error("Exception when sending POST request: %s" % str(e))
+            return
+
+        xml = minidom.parseString(response.content)
+
+        phone_name = self._get_value_from_xml_node(xml, 'NewX_AVM-DE_PhoneName')
+        if phone_name is not None:
+            return phone_name
+
+        self.logger.error("No phone name available at provided index %s." % index)
+        return
+
     def set_call_origin(self, phone_name):
         """
         Sets the call origin, e.g. before running 'start_call'
@@ -1020,7 +1217,7 @@ class AVM(SmartPlugin):
         :param phone_name: full phone identifier, could be e.g. '\*\*610' for an internal device
         """
         url = self._build_url("/upnp/control/x_voip")
-        action = 'X_AVM-DE_DialNumber'
+        action = 'X_AVM-DE_DialSetConfig'
         headers = self._header.copy()
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['X_VoIP'], action)
         soap_data = self._assemble_soap_data(action, self._urn_map['X_VoIP'],
@@ -1103,7 +1300,7 @@ class AVM(SmartPlugin):
         else:
             is_active = False
             self.logger.debug("MAC Address %s not available on the FritzDevice - ID: %s" % (
-            mac_address, self._fritz_device.get_identifier()))
+                mac_address, self._fritz_device.get_identifier()))
         return bool(is_active)
 
     def _update_myfritz(self, item):
@@ -1463,7 +1660,7 @@ class AVM(SmartPlugin):
             return
 
         headers['SOAPACTION'] = "%s#%s" % (
-        self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
+            self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
         soap_data = self._assemble_soap_data(action,
                                              self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']))
 
@@ -1569,11 +1766,10 @@ class AVM(SmartPlugin):
         Updates wide area network (WAN) related information
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wancommonifconfigSCPD.pdf
+              https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/IGD1.pdf
 
-        :param item: item to be updated (Supported item avm_data_types: wan_total_packets_sent, wan_total_packets_received, wan_total_bytes_sent, wan_total_bytes_received)
+        :param item: item to be updated (Supported item avm_data_types: wan_total_packets_sent, wan_total_packets_received, wan_current_packets_sent, wan_current_packets_received, wan_total_bytes_sent, wan_total_bytes_received, wan_current_bytes_sent, wan_current_bytes_received, wan_link)
         """
-        url = self._build_url("/upnp/control/wancommonifconfig1")
-
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_sent':
             action = 'GetTotalPacketsSent'
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_received':
@@ -1582,6 +1778,11 @@ class AVM(SmartPlugin):
             action = 'GetTotalBytesSent'
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_received':
             action = 'GetTotalBytesReceived'
+        elif self.get_iattr_value(item.conf, 'avm_data_type') in ['wan_current_packets_sent',
+                                                                  'wan_current_packets_received',
+                                                                  'wan_current_bytes_sent',
+                                                                  'wan_current_bytes_received']:
+            action = 'GetAddonInfos'
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_link':
             action = 'GetCommonLinkProperties'
         else:
@@ -1589,9 +1790,14 @@ class AVM(SmartPlugin):
             return
 
         headers = self._header.copy()
-        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WANCommonInterfaceConfig'], action)
-        soap_data = self._assemble_soap_data(action, self._urn_map['WANCommonInterfaceConfig'])
-
+        if action != 'GetAddonInfos':
+            headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WANCommonInterfaceConfig'], action)
+            soap_data = self._assemble_soap_data(action, self._urn_map['WANCommonInterfaceConfig'])
+            url = self._build_url("/upnp/control/wancommonifconfig1")
+        else:
+            headers['SOAPACTION'] = "%s#%s" % (self._urn_map['WANCommonInterfaceConfig_alt'], action)
+            soap_data = self._assemble_soap_data(action, self._urn_map['WANCommonInterfaceConfig_alt'])
+            url = self._build_url("/igdupnp/control/WANCommonIFC1")
         # if action has not been called in a cycle so far, request it and cache response
         if "wan_common_interface_configuration_" + action not in self._response_cache:
             try:
@@ -1613,37 +1819,65 @@ class AVM(SmartPlugin):
             return
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_sent':
-            element_xml = xml.getElementsByTagName('NewTotalPacketsSent')
-            if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+            data = self._get_value_from_xml_node(xml, 'NewTotalPacketsSent')
+            if data is not None:
+                item(int(data))
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_received':
-            element_xml = xml.getElementsByTagName('NewTotalPacketsReceived')
-            if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+            data = self._get_value_from_xml_node(xml, 'NewTotalPacketsReceived')
+            if data is not None:
+                item(int(data))
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_packets_sent':
+            data = self._get_value_from_xml_node(xml, 'NewPacketSendRate')
+            if data is not None:
+                item(int(data))
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_packets_received':
+            data = self._get_value_from_xml_node(xml, 'NewPacketReceiveRate')
+            if data is not None:
+                item(int(data))
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_sent':
-            element_xml = xml.getElementsByTagName('NewTotalBytesSent')
-            if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+            data = self._get_value_from_xml_node(xml, 'NewTotalBytesSent')
+            if data is not None:
+                item(int(data))
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_received':
-            element_xml = xml.getElementsByTagName('NewTotalBytesReceived')
-            if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+            data = self._get_value_from_xml_node(xml, 'NewTotalBytesReceived')
+            if data is not None:
+                item(int(data))
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_bytes_sent':
+            data = self._get_value_from_xml_node(xml, 'NewByteSendRate')
+            if data is not None:
+                item(int(data))
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_bytes_received':
+            data = self._get_value_from_xml_node(xml, 'NewByteReceiveRate')
+            if data is not None:
+                item(int(data))
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_link':
-            element_xml = xml.getElementsByTagName('NewPhysicalLinkStatus')
-            if len(element_xml) > 0:
-                if element_xml[0].firstChild.data == 'Up':
+            data = self._get_value_from_xml_node(xml, 'NewPhysicalLinkStatus')
+            if data is not None:
+                if data == 'Up':
                     item(True)
                 else:
                     item(False)

@@ -19,9 +19,7 @@
         {{ basic.symbol(id~'connect', gad_event, '', icon1~'phone_call.png', 'connect') }}        				
         {{ basic.symbol(id~'disconnect', gad_event, '', 'icons/ws/phone_call_end.svg', 'disconnect') }}	
         </div>
-        {{ basic.symbol(id~'phone_status.fritz.call_incoming_0', gad_incoming_call, '', 'icons/ws/phone_missed_in.svg', 0) }}
-        {{ basic.symbol(id~'phone_status.fritz.call_incoming_1', gad_incoming_call, '', 'icons/gn/phone_call_in.png') }}
-        {{ basic.value(id~'phone_status.fritz.last_caller', gad_last_caller)}}, 
+        {{ basic.value(id~'phone_status.fritz.last_caller', gad_last_caller)}},
         {{ basic.value(id~'phone_status.fritz.last_call_date', gad_last_call_date)}}<br/>          
         Dauer: {{ basic.value(id~'gad_duration', gad_duration)}} Sekunden
     </div>

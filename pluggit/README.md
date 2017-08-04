@@ -1,6 +1,6 @@
 # PLUGGIT
 
-# Requirements
+## Requirements
 
 This plugin is based on the lib pymodbus (branch python3):
 https://github.com/bashwork/pymodbus
@@ -12,19 +12,19 @@ It is currently working and tested with:
 
   * Pluggit AP310
 
-# Configuration
+## Configuration
 
-## plugin.conf
+### plugin.conf
 
 The plugin can be configured like this:
 
-<pre>
+```
 [pluggit]
    class_name = Pluggit
    class_path = plugins.pluggit
    host = 192.168.0.222
    #cycle = 300
-</pre>
+```
 
 This plugin retrieves data from the KWL Pluggit AP310 based on the modbus register description from the official pluggit homepage ( http://www.pluggit.com/portal/de/faq/bms-building-management-system/verbindung-mit-building-management-system-9737 )
 
@@ -33,9 +33,9 @@ You need to configure the host (or IP) address of your pluggit KWL.
 
 The cycle parameter defines the update interval and defaults to 300 seconds.
 
-## items.conf
+### items.conf
 
-### pluggit
+#### pluggit
 
 This attribute references the information to retrieve by the plugin.
 The following list of information can be specified:
@@ -51,11 +51,11 @@ The following list of information can be specified:
   * prmRamIdxBypassActualState: Bypass state> Closed 0x0000; In process 0x0001; Closing 0x0020; Opening 0x0040; Opened 0x00FF
   * activatePowerBoost: bool variable that changes the Unit Mode to manual mode and sets the fan speed level to the highest level (4)
 
-### Example
+#### Example
 
 Example configuration which shows the current unit mode, the actual week program, the fan speed, the remaining filter lifetime and the bypass state.
 
-<pre>
+```
 # items/pluggit.conf
 [pluggit]
     type = foo
@@ -109,7 +109,7 @@ Example configuration which shows the current unit mode, the actual week program
         visu_acl = rw
         enforce_updates = true
         pluggit_send = activatePowerBoost
-</pre>
+```
 
 ## logic.conf
 

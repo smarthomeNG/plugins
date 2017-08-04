@@ -27,10 +27,13 @@
 #        class_name = WakeOnLan
 #        class_path = plugins.wol
 #
-#  2. add to you items atribute  "wol_mac" with the mac for wake up
+#  2. add to you items atribute  "wol_mac" with the mac for wake up.
+#     there is also an option wol_ip when waking up hosts in different
+#     subnets.
 #  [wakeonlan_item]
 #     type = bool
 #     wol_mac = 01:02:03:04:05:06
+#     wol_ip = 1.2.3.4 #optional
 #
 #  type of separators are unimportant. you can use:
 #    wol_mac = 01:02:03:04:05:06
@@ -44,14 +47,14 @@ import logging
 import socket
 from lib.model.smartplugin import SmartPlugin
 
-ITEM_TAG = ['wol_mac']
+ITEM_TAG = ['wol_mac', 'wol_ip']
 class WakeOnLan(SmartPlugin):
     PLUGIN_VERSION = "1.1.2"
     ALLOW_MULTIINSTANCE = True
     def __init__(self, sh,*args, **kwargs):
         self._sh = sh
         self.logger = logging.getLogger(__name__)
-        print("###"+self.get_instance_name())
+        #print("###"+self.get_instance_name())
 
     def __call__(self, mac_adr):
         self.wake_on_lan(mac_adr)
@@ -72,9 +75,12 @@ class WakeOnLan(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         if item():
             if self.has_iattr(item.conf, ITEM_TAG[0]):
-                self.wake_on_lan(self.get_iattr_value(item.conf,ITEM_TAG[0]))
+                if self.has_iattr(item.conf, ITEM_TAG[1]):
+                    self.wake_on_lan(self.get_iattr_value(item.conf,ITEM_TAG[0]),self.get_iattr_value(item.conf,ITEM_TAG[1]))
+                else:
+                    self.wake_on_lan(self.get_iattr_value(item.conf,ITEM_TAG[0]))
 
-    def wake_on_lan(self, mac_adr):
+    def wake_on_lan(self, mac_adr, ip_adr='<broadcast>'):
         self.logger.debug("WakeOnLan: send magic paket to {}".format(mac_adr))
         # check length and format 
         if self.is_mac(mac_adr) != True:
@@ -86,14 +92,11 @@ class WakeOnLan(SmartPlugin):
         # create magic packet 
         data = ''.join(['FF' * 6, mac_adr * 20])
         # Broadcast
-        self.logger.debug("WakeOnLan: send magic paket " + data)
+        self.logger.debug("WakeOnLan: send magic paket " + data + "to ip/mac " + ip_adr + "/" + mac_adr)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.sendto(bytearray.fromhex(data), ('<broadcast>', 7))
-    def testprint(self):
-        print(self.get_version())
-        print(self.get_instance_name())
-        print(self.to_bool("yes"))
+        sock.sendto(bytearray.fromhex(data), (ip_adr, 7))
+
 if __name__ == '__main__':
     myplugin = WakeOnLan('smarthome-dummy')
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')

@@ -3,20 +3,20 @@
 #########################################################################
 #  Copyright 2011-2013 Marcus Popp                         marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
@@ -48,10 +48,8 @@ class DMX():
                 logger.warning("Could not communicate with dmx adapter.")
                 self._is_connected = False
         elif interface == 'enttec':
-            self._enttec_data = [chr(0)] * 513
+            self._enttec_data = bytearray(512)
             self.send = self.send_enttec
-            self._send_enttec(chr(0o3) + chr(0o2) + chr(0) + chr(0) + chr(0))
-            self._send_enttec(chr(10) + chr(0o2) + chr(0) + chr(0) + chr(0))
         else:
             logger.error("Unknown interface: {0}".format(interface))
 
@@ -76,7 +74,7 @@ class DMX():
         if not self._is_connected:
             return False
         self._lock.acquire()
-        self._port.write((chr(126) + data + chr(231)).encode())
+        self._port.write(data)
         self._lock.release()
         return True
 
@@ -91,8 +89,32 @@ class DMX():
         self._send_nanodmx("C{0:03d}L{1:03d}".format(int(channel), int(value)))
 
     def send_enttec(self, channel, value):
-        self._enttec_data[channel] = chr(value)
-        self._send_enttec(chr(6) + chr(1) + chr(2) + ''.join(self._enttec_data))
+        START_VAL = 0x7E
+        END_VAL = 0xE7
+
+        LABELS = {
+           'GET_WIDGET_PARAMETERS' :3,  #unused
+           'SET_WIDGET_PARAMETERS' :4,  #unused
+           'RX_DMX_PACKET'         :5,  #unused
+           'TX_DMX_PACKET'         :6,
+           'TX_RDM_PACKET_REQUEST' :7,  #unused
+           'RX_DMX_ON_CHANGE'      :8,  #unused
+        }
+
+        START_DATA = 0x00
+
+        self._enttec_data[channel] = int(value);
+
+        packet = bytearray()
+        packet.append(START_VAL)
+        packet.append(LABELS['TX_DMX_PACKET'])
+        packet.append(len(self._enttec_data) & 0xFF)
+        packet.append((len(self._enttec_data) >> 8) & 0xFF)
+        packet.append(START_DATA)
+        packet.extend(self._enttec_data)
+        packet.append(END_VAL)
+
+        self._send_enttec(packet)
 
     def parse_item(self, item):
         if 'dmx_ch' in item.conf:
