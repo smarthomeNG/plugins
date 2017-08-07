@@ -179,10 +179,10 @@ class TestDatabaseBasic(TestDatabaseBase):
         plugin.dump(name)
         self.assertLines(
           "item_id;item_name;time;duration;val_str;val_num;val_bool;changed;time_date;changed_date\n"
-          "1;main.num;0;3600;;10.0;1;0;1970-01-01 01:00:00;1970-01-01 01:00:00\n"
-          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 01:00:03.600000;1970-01-01 01:00:03.600000\n"
-          "1;main.num;7200;3600;;15.0;1;7200;1970-01-01 01:00:07.200000;1970-01-01 01:00:07.200000\n"
-          "1;main.num;10800;3600;;10.0;1;10800;1970-01-01 01:00:10.800000;1970-01-01 01:00:10.800000\n",
+          "1;main.num;0;3600;;10.0;1;0;1970-01-01 00:00:00;1970-01-01 00:00:00\n"
+          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 00:00:03.600000;1970-01-01 00:00:03.600000\n"
+          "1;main.num;7200;3600;;15.0;1;7200;1970-01-01 00:00:07.200000;1970-01-01 00:00:07.200000\n"
+          "1;main.num;10800;3600;;10.0;1;10800;1970-01-01 00:00:10.800000;1970-01-01 00:00:10.800000\n",
           self.read_tmpfile(name)
         )
 
@@ -197,7 +197,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         plugin.dump(name, time=3600)
         self.assertLines(
           "item_id;item_name;time;duration;val_str;val_num;val_bool;changed;time_date;changed_date\n"
-          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 01:00:03.600000;1970-01-01 01:00:03.600000\n",
+          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 00:00:03.600000;1970-01-01 00:00:03.600000\n",
           self.read_tmpfile(name)
         )
 
@@ -212,8 +212,8 @@ class TestDatabaseBasic(TestDatabaseBase):
         plugin.dump(name, time_start=3600, time_end=7200)
         self.assertLines(
           "item_id;item_name;time;duration;val_str;val_num;val_bool;changed;time_date;changed_date\n"
-          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 01:00:03.600000;1970-01-01 01:00:03.600000\n"
-          "1;main.num;7200;3600;;15.0;1;7200;1970-01-01 01:00:07.200000;1970-01-01 01:00:07.200000\n",
+          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 00:00:03.600000;1970-01-01 00:00:03.600000\n"
+          "1;main.num;7200;3600;;15.0;1;7200;1970-01-01 00:00:07.200000;1970-01-01 00:00:07.200000\n",
           self.read_tmpfile(name)
         )
 
@@ -228,7 +228,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         plugin.dump(name, changed=3600)
         self.assertLines(
           "item_id;item_name;time;duration;val_str;val_num;val_bool;changed;time_date;changed_date\n"
-          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 01:00:03.600000;1970-01-01 01:00:03.600000\n",
+          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 00:00:03.600000;1970-01-01 00:00:03.600000\n",
           self.read_tmpfile(name)
         )
 
@@ -243,8 +243,8 @@ class TestDatabaseBasic(TestDatabaseBase):
         plugin.dump(name, changed_start=3600, changed_end=7200)
         self.assertLines(
           "item_id;item_name;time;duration;val_str;val_num;val_bool;changed;time_date;changed_date\n"
-          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 01:00:03.600000;1970-01-01 01:00:03.600000\n"
-          "1;main.num;7200;3600;;15.0;1;7200;1970-01-01 01:00:07.200000;1970-01-01 01:00:07.200000\n",
+          "1;main.num;3600;3600;;20.0;1;3600;1970-01-01 00:00:03.600000;1970-01-01 00:00:03.600000\n"
+          "1;main.num;7200;3600;;15.0;1;7200;1970-01-01 00:00:07.200000;1970-01-01 00:00:07.200000\n",
           self.read_tmpfile(name)
         )
 
