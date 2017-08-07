@@ -26,14 +26,14 @@ Ports up to 1024 are _well defined ports_ and are normally reserved to the syste
 nw:
     class_name: Network
     class_path: plugins.network
-    # ip = 0.0.0.0
-    # port = 2727
+    # ip: 0.0.0.0
+    # port: 2727
     tcp: 'yes'
     tcp_acl:
       - 127.0.0.1
       - 192.168.0.34
-    # udp = no
-    # udp_acl= *
+    # udp: 'no'
+    # udp_acl: '*'
 ```
 
 ### Attributes
