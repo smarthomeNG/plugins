@@ -62,7 +62,16 @@
 							</form>
 						</tr>
 						<tr id="{{ logic.name }}_additional3" style="display: none; cursor: pointer;" onClick="$('#{{ logic.name }}_additional3').toggle();">
-							<td colspan="{% if updates %}8{% else %}7{% endif %}">{{ logic.watch_items }}</td>
+							<td colspan="{% if updates %}8{% else %}7{% endif %}">
+								<div class="panel panel-default">
+									<div class="panel-heading">{{ _('Watch_Items') }}</div>
+  									<div class="panel-body">
+										{% for value in logic.watch_items %}
+											{{ value }}<br/>
+										{% endfor %}
+									</div>
+								</div>
+							</td>
 						</tr>
 						{% endif %}
 					{% endfor %}

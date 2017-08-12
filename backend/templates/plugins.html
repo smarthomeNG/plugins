@@ -40,15 +40,20 @@
                 </tr>
                 <tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
                     <td colspan="7">
-                        {% if p.attributes|length > 2 %}
-                        {% for key, value in p.attributes.items() %}
-                            {% if key not in ['class_path', 'class_name'] %}
-                            {{ key }}: {{ value }}<br/>
-                            {%endif%}
-                        {% endfor %}
-                        {% else %}
-                        -
-                        {%endif%}
+                        <div class="panel panel-default">
+                            <div class="panel-heading">{{ _('Plugin spezifische Attribute') }}:</div>
+                            <div class="panel-body">
+                                {% if p.attributes|length > 2 %}
+                                {% for key, value in p.attributes.items() %}
+                                    {% if key not in ['class_path', 'class_name'] %}
+                                    <strong>{{ key }}:</strong> {{ value }}<br/>
+                                    {%endif%}
+                                {% endfor %}
+                                {% else %}
+                                -
+                                {%endif%}
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 <script>
