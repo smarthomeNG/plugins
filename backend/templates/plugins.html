@@ -21,7 +21,7 @@
             </thead>
             <tbody>
                 {% for p in plugins  %}
-                <tr>
+                <tr id="{{ loop.index }}_click" style="cursor: pointer;">
                     <td width="30px">{{ loop.index }}</td>
                     <td width="30px">{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}
                     <td width="200px">{{ p.classpath }}</td>
@@ -38,6 +38,28 @@
                         <td>-</td>
                     {%endif%}
                 </tr>
+                <tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
+                    <td colspan="7">
+                        {% if p.attributes|length > 2 %}
+                        {% for key, value in p.attributes.items() %}
+                            {% if key not in ['class_path', 'class_name'] %}
+                            {{ key }}: {{ value }}<br/>
+                            {%endif%}
+                        {% endfor %}
+                        {% else %}
+                        -
+                        {%endif%}
+                    </td>
+                </tr>
+                <script>
+                $(document).on('click', 'tr', function(event){
+                    if (event.target.closest('tr').id == '{{ loop.index }}_click') {
+                        $('#'+event.target.closest('tr').id.replace('click', 'additional')).toggle();
+                    } else if (event.target.closest('tr').id == '{{ loop.index }}_additional') {
+                        $('#'+event.target.closest('tr').id).toggle();
+                    }
+                });
+                </script>
                 {% endfor %}
             </tbody>
         </table>

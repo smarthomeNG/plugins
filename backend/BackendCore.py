@@ -821,14 +821,16 @@ class Backend:
         _conf = lib.config.parse(self._sh._plugin_conf)
         for plugin in _conf:
             # self.logger.warning("plugins_html: class_name='{0}', class_path='{1}'".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
-            conf_plugins[_conf[plugin]['class_name']] = _conf[plugin]['class_path']
+            conf_plugins[_conf[plugin]['class_name']] = {}
+            conf_plugins[_conf[plugin]['class_name']] = _conf[plugin]
             # self.logger.warning("plugins_html: conf_plugins='{0}'".format(conf_plugins))
 
         plugins = []
         for x in self._sh._plugins:
             plugin = dict()
             plugin['classname'] = x.__class__.__name__
-            plugin['classpath'] = conf_plugins[x.__class__.__name__]
+            plugin['classpath'] = conf_plugins[x.__class__.__name__]['class_path']
+            plugin['attributes'] = conf_plugins[x.__class__.__name__]
             if isinstance(x, SmartPlugin):
                 plugin['smartplugin'] = True
                 plugin['instancename'] = x.get_instance_name()
