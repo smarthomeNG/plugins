@@ -1,6 +1,6 @@
 # Pushover  
 
-Pushover is one out of many push services, which is compatible with Android, IOS and Windows Clients. This plugin make it possibe to push messages to your clients from smarthomeNG.
+Pushover is one out of many push services, which is compatible with Android, IOS and Windows Clients. This plugin make it possible to push messages to your clients from smarthomeNG.
   
 ## Requirements
   
