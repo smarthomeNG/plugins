@@ -80,8 +80,15 @@ class Pushover(SmartPlugin):
                         data['expire'] = 10800
                         self.logger.error("Pushover message expire need at most 10800 secounds! I set it to 10800.")
                 elif not expire and priority == 2:
-                    self.logger.error("Pushover message priority = 2 need expire go be set, degrade priority to 1!")
+                    self.logger.error("Pushover message priority = 2 need expire to be set, degrade priority to 1!")
                     data['priority'] = 1
+
+                # delete not used vars
+                if data['priority'] < 2:
+                    if 'expire' in data:
+                        del data['expire']
+                    if 'retry' in data:
+                        del data['retry']
 
             else:
                 self.logger.error("Pushover message priority need to be a number between -2 and 2!")
