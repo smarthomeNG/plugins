@@ -63,15 +63,15 @@ class Pushover(SmartPlugin):
             if property.isdigit() and priority => -2 and priority <= 2:
                 data['priority'] = priority
 
-                if retry and priority = 2:
+                if retry and priority == 2:
                     data['retry'] = retry
-                elif not retry and priority = 2:
+                elif not retry and priority == 2:
                     self.logger.error("Pushover message priority = 2 need retry to be set, degrade priority to 1!")
                     data['priority'] = 1
 
-                if expire and priority = 2:
+                if expire and priority == 2:
                     data['expire'] = expire
-                elif not expire and priority = 2:
+                elif not expire and priority == 2:
                     self.logger.error("Pushover message priority = 2 need expire go be set, degrade priority to 1!")
                     data['priority'] = 1
 
