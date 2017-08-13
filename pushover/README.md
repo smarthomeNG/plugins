@@ -65,7 +65,7 @@ Send a message to your device.
 * __userKey__: defines and/or override the globally defined user-key of the receiving user
 * __apiKey__: defines and/or override the globally defined api-key of the sending application
 
-  All params can set to None (only message not), so they will not be set or in case of device, userKey and apiKey the global vars will be used.
+All params can set to None (only message not), so they will not be set or in case of device, userKey and apiKey the global vars will be used.
   
 #### Example
 ```python
