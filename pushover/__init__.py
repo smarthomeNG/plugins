@@ -60,17 +60,25 @@ class Pushover(SmartPlugin):
         data['message'] = message[:1000].encode()
 
         if priority:
-            if priority.isdigit() and priority => -2 and priority <= 2:
+            if priority.isdigit() and priority >= -2 and priority <= 2:
                 data['priority'] = priority
 
                 if retry and priority == 2:
-                    data['retry'] = retry
+                    if retry.isdigit() and retry >= 30:
+                        data['retry'] = retry
+                    else:
+                        data['retry'] = 30
+                        self.logger.error("Pushover message retry need at least 30 secounds! I set it to 30!")
                 elif not retry and priority == 2:
                     self.logger.error("Pushover message priority = 2 need retry to be set, degrade priority to 1!")
                     data['priority'] = 1
 
                 if expire and priority == 2:
-                    data['expire'] = expire
+                    if expire.isdigit() and expire > 10800:
+                        data['expire'] = expire
+                    else:
+                        data['expire'] = 10800
+                        self.logger.error("Pushover message expire need at most 10800 secounds! I set it to 10800.")
                 elif not expire and priority == 2:
                     self.logger.error("Pushover message priority = 2 need expire go be set, degrade priority to 1!")
                     data['priority'] = 1
