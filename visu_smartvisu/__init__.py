@@ -230,7 +230,7 @@ class SmartVisuGenerator:
                     name2 = self.get_attribute('sv_name2', item)
                     widgets += self.parse_tpl(widgetblocktemplate2, [('{{ visu_name }}', str(name1)), ('{{ visu_name2 }}', str(name2)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('{{ visu_widget2 }}', widget2), ('item.name', str(item)), ("'item", "'" + item.id())])
 
-            if (room.conf['sv_page'] == 'room') or (room.conf['sv_page'] == 'overview'):
+            if room.conf['sv_page'] == 'room' or room.conf['sv_page'] == 'overview':
                 r = self.parse_tpl('room.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
             elif room.conf['sv_page'] == 'overview':
                 r = self.parse_tpl('room.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
@@ -280,7 +280,7 @@ class SmartVisuGenerator:
                 nav_aside2 = ''
             if (item.conf['sv_page'] == 'category') or (item.conf['sv_page'] == 'cat_overview'):
                 cat_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
-            elif (item.conf['sv_page'] == 'room') or (item.conf['sv_page'] == 'overview'):
+            elif item.conf['sv_page'] == 'room' or (item.conf['sv_page'] == 'overview'):
                 nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
             elif item.conf['sv_page'] == 'overview':
                 nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
