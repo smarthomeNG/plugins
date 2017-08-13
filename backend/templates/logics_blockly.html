@@ -9,7 +9,7 @@
 {% block content %}
 
  {% include "logics_blockly_toolbox.html" %}
- 
+
 <style>
 li.L0, li.L1, li.L2, li.L3,
 li.L5, li.L6, li.L7, li.L8
@@ -35,8 +35,8 @@ li.L5, li.L6, li.L7, li.L8
             <td id="tab_xml" class="taboff">XML</td>-->
             <td class="tabmax">
 		<form name="input" action="logics_blockly.html" method="POST" enctype="multipart/form-data">
-      <button onclick="function() {$.ajax({'url': '/logics_blockly_start'})}" class="btn btn-default btn-xs">{{ _('Aktivieren','button') }}</button>
-      <button onclick="function() {$.ajax({'url': '/logics_blockly_stop'})}" class="btn btn-default btn-xs">{{ _('Beenden','button') }}</button>
+      <button onclick="function() {$.ajax({'url': 'logics_blockly_start'})}" class="btn btn-default btn-xs">{{ _('Aktivieren','button') }}</button>
+      <button onclick="function() {$.ajax({'url': 'logics_blockly_stop'})}" class="btn btn-default btn-xs">{{ _('Beenden','button') }}</button>
       <button onclick="Code.saveBlocks()" class="btn btn-default btn-xs">{{ _('Blöcke speichern','button') }}</button>
       <button onclick="Code.loadBlocks()" class="btn btn-default btn-xs">{{ _('Änderungen verwerfen','button') }}</button>
       <button onclick="Code.discardBlocks()" class="btn btn-default btn-xs">{{ _('Leeren','button') }}</button>
@@ -58,22 +58,22 @@ li.L5, li.L6, li.L7, li.L8
   
 
 <!-- BLOCKLY Script Editor -->
-<link rel="stylesheet" href="../static/blockly/demos/code/style.css">
+<link rel="stylesheet" href="static/blockly/demos/code/style.css">
 
 <!-- BLOCKLY Script Editor -->
-<script src="../static/blockly/blockly_compressed.js"></script>
-<script src="../static/blockly/blocks_compressed.js"></script>
-<script src="../static/blockly/python_compressed.js"></script>
-<script src="../static/blockly/msg/js/de.js"></script>
-<script src="../static/blockly/msg/js/en.js"></script>
+<script src="static/blockly/blockly_compressed.js"></script>
+<script src="static/blockly/blocks_compressed.js"></script>
+<script src="static/blockly/python_compressed.js"></script>
+<script src="static/blockly/msg/js/de.js"></script>
+<script src="static/blockly/msg/js/en.js"></script>
 
-<script type="text/javascript" src="../static/shblocks/sh_items.js"></script>
-<script type="text/javascript" src="../static/shblocks/sh_trigger.js"></script>
-<script type="text/javascript" src="../static/shblocks/sh_logic.js"></script>
-<script type="text/javascript" src="../static/shblocks/sh_notify.js"></script>
-<script type="text/javascript" src="../static/shblocks/sh_tools.js"></script>
-<script type="text/javascript" src="../static/shblocks/sh_time.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_items.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_trigger.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_logic.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_notify.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_tools.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_time.js"></script>
 
-<script src="../static/js/logics_blockly_code.js"></script>
+<script src="static/js/logics_blockly_code.js"></script>
 
 {% endblock %}

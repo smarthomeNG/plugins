@@ -32,11 +32,17 @@ from lib.logic import Logic
 from .utils import *
 from cherrypy.lib.static import serve_file
 
+import logging
+
 
 class BackendBlocklyLogics:
     """
     Google Blockly for Logics
     """
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.logger.warning('BackendBlocklyLogics.__init__')
 
     @cherrypy.expose
     def logics_blockly_html(self):
@@ -93,6 +99,7 @@ class BackendBlocklyLogics:
     @cherrypy.expose
     def logics_blockly_load(self):
         fn_xml = self._sh._logic_dir + "blockly_logics.xml"
+        self.logger.warning("logics_blockly_load: fn_xml = {}".format(fn_xml))
         return serve_file(fn_xml, content_type='application/xml')
 
     @cherrypy.expose

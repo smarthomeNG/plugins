@@ -24,7 +24,7 @@ Code.selected = 'blocks';
  *
  */
 Code.loadBlocks = function() {
-  var request = $.ajax({'url': '/logics_blockly_load', dataType: 'text'});
+  var request = $.ajax({'url': 'logics_blockly_load', dataType: 'text'});
   // we get the XML representation of all the blockly logics from the backend
   request.done(function(response)
   {
@@ -64,7 +64,7 @@ Code.saveBlocks = function() {
   var pycode = Blockly.Python.workspaceToCode(Code.workspace);
   var xmldom = Blockly.Xml.workspaceToDom(Code.workspace);
   var xmltxt = Blockly.Xml.domToText(xmldom);
-  $.ajax({  url: "/logics_blockly_save",
+  $.ajax({  url: "logics_blockly_save",
             type: "POST",
             data: {xml: xmltxt, py: pycode },
             success: function(response) {
@@ -126,7 +126,7 @@ Code.init = function() {
 	       length: 3,
 	       colour: '#ccc',
 	       snap: true},
-	   media: '../static/blockly/media/',
+	   media: 'static/blockly/media/',
 	   //rtl: rtl,
 	   toolbox: toolboxXml,
 	   zoom:
@@ -200,10 +200,10 @@ Code.importPrettify = function() {
   //<script src="../prettify.js"></script>
   var link = document.createElement('link');
   link.setAttribute('rel', 'stylesheet');
-  link.setAttribute('href', '../static/js/google-prettify/prettify.css');
+  link.setAttribute('href', 'static/js/google-prettify/prettify.css');
   document.head.appendChild(link);
   var script = document.createElement('script');
-  script.setAttribute('src', '../static/js/google-prettify/prettify.js');
+  script.setAttribute('src', 'static/js/google-prettify/prettify.js');
   document.head.appendChild(script);
 };
 

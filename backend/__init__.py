@@ -48,7 +48,7 @@ from .utils import *
 
 class BackendServer(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.3.5'
+    PLUGIN_VERSION='1.3x.6'
 
     def my_to_bool(self, value, attr='', default=False):
         try:
@@ -65,6 +65,11 @@ class BackendServer(SmartPlugin):
 
     def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
         self.logger = logging.getLogger(__name__)
+        self.logger.debug('Backend.__init__')
+        
+        #================================================================================
+        # Checking and converting parameters
+        #
         self._user = user
         self._password = password
         self._hashed_password = hashed_password
@@ -119,15 +124,27 @@ class BackendServer(SmartPlugin):
             if pypi_timeout is not None:
                 self.logger.error("BackendServer: Invalid value '" + str(pypi_timeout) + "' configured for attribute 'pypi_timeout' in plugin.conf, using '" + str(self.pypi_timeout) + "' instead")
 
+
+
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.logger.debug("BackendServer running from '{}'".format(current_dir))
 
-        config = {'global': {
-            'engine.autoreload.on': False,
-            'tools.staticdir.debug': True,
-            'tools.trailing_slash.on': False,
-            'log.screen': False
-            },
+
+        #================================================================================
+        # Handling for module mod_http (try/except to handle running in a core version that does not support modules)
+        #
+        try:
+            self.mod_http = sh.get_module('mod_http')
+        except:
+             self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error('BackendServer: Module ''mod_http'' not loaded')
+            return
+
+#        self.logger.warning('BackendServer: Using module {} version {}: {}'.format( str( self.mod_http.shortname ), str( self.mod_http.version ), str( self.mod_http.longname ) ) )
+        self.logger.warning('BackendServer: Using module {}'.format( str( self.mod_http.shortname ), str( self.mod_http.version ), str( self.mod_http.longname ) ) )
+        appname = 'Backend'
+        config = {
             '/': {
                 'tools.auth_basic.on': self._basic_auth,
                 'tools.auth_basic.realm': 'earth',
@@ -139,28 +156,22 @@ class BackendServer(SmartPlugin):
                 'tools.staticdir.dir': os.path.join(current_dir, 'static')
             }
         }
-        from cherrypy._cpserver import Server
-        self._server = Server()
-        self._server.socket_host = ip
-        self._server.socket_port = int(self.port)
-        self._server.thread_pool = self.threads
-        self._server.subscribe()
+        plugin = self.__class__.__name__
+        instance = self.get_instance_name()
 
-        self._cherrypy = cherrypy
-        self._cherrypy.config.update(config)
-        self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language, self.developer_mode, self.pypi_timeout), '/', config = config)
+        self.mod_http.RegisterApp(Backend(self, self.updates_allowed, language, self.developer_mode, self.pypi_timeout), 
+                                  appname, 
+                                  config, 
+                                  plugin, instance)
+
 
     def run(self):
         self.logger.debug("BackendServer: rest run")
-        self._server.start()
-        #self._cherrypy.engine.start()
-        self.logger.debug("BackendServer: engine started")
-        #cherrypy.engine.block()
         self.alive = True
 
     def stop(self):
         self.logger.debug("BackendServer: shutting down")
-        self._server.stop()
+#        self._server.stop()
         #self._cherrypy.engine.exit()
         self.logger.debug("BackendServer: engine exited")
         self.alive = False

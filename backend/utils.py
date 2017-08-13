@@ -150,3 +150,14 @@ def parse_requirements(file_path):
     fobj.close()
     return req_dict
 
+
+def strip_quotes(string):
+    string = string.strip()
+    if len(string) > 0:
+        if string[0] in ['"', "'"]:  # check if string starts with ' or "
+            if string[0] == string[-1]:  # and end with it
+                if string.count(string[0]) == 2:  # if they are the only one
+                    string = string[1:-1]  # remove them
+    return string
+
+
