@@ -31,7 +31,7 @@ import requests
 class Pushover(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.0.0"
+    PLUGIN_VERSION = "1.3.1.0"
 
     _url = "https://api.pushover.net/1/messages.json"
 

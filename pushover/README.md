@@ -1,12 +1,14 @@
 # Pushover  
-  
-## Requirements  
 
+Pushover is one out of many push services, which is compatible with Android, IOS and Windows Clients. This plugin make it possibe to push messages to your clients from smarthomeNG.
+  
+## Requirements
+  
 ### Python libraries  
 * requests - [install instructions](http://docs.python-requests.org/en/latest/user/install/#install "http://docs.python-requests.org/en/latest/user/install/#install")
   
 ### Other  
-* Pushover API-KEY - get it from [__here__](https://pushover.net/apps/ "https://pushover.net/apps/") for free  
+* Pushover API-KEY - get it from [__here__](https://pushover.net/apps/ "https://pushover.net/apps/") for free, after registration.
   
 ---
 ## Changelog
@@ -33,9 +35,9 @@ __2017-08-13__:
 po:
     class_name: Pushover
     class_path: plugins.pushover
-    apiKey = <your-api-key>
-    userKey = <your-user-key>
-#   device = <your-device-string(optional)>
+    apiKey: <your-api-key>
+    userKey: <your-user-key>
+#   device: <your-device-string(optional)>
 ```
 
 Description of the attributes:
@@ -47,11 +49,8 @@ Description of the attributes:
 ---    
 ## Usage:
   
-*Pass a 'deviceid' if no set globally or if you want to send to another device.*
-*Add 'apikey' if not set globally.*
-  
 ### sh.po(title, message [, priority] [, retry] [, expire] [, sound] [, url] [, url_title] [, device] [, userKey] [, apiKey])
-Send a note to your device.  
+Send a message to your device.  
   
 #### Parameters  
 * __title__: The title of the message
