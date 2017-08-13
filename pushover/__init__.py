@@ -60,7 +60,7 @@ class Pushover(SmartPlugin):
         data['message'] = message[:1000].encode()
 
         if priority:
-            if property.isdigit() and priority => -2 and priority <= 2:
+            if priority.isdigit() and priority => -2 and priority <= 2:
                 data['priority'] = priority
 
                 if retry and priority == 2:
