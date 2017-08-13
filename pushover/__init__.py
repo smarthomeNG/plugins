@@ -78,7 +78,7 @@ class Pushover(SmartPlugin):
             data['user'] = userKey
         elif self._userKey:
             data['user'] = self._userKey
-        else
+        else:
             self.logger.error("Pushover needs a userKey")
             return
 
@@ -86,7 +86,7 @@ class Pushover(SmartPlugin):
             data['token'] = apiKey
         elif self._apiKey:
             data['token'] = self._apiKey
-        else
+        else:
             self.logger.error("Pushover needs a apiKey")
             return
 
