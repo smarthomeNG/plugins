@@ -60,11 +60,11 @@ class Pushover(SmartPlugin):
         data['message'] = message[:1000].encode()
 
         if priority:
-            if priority.isdigit() and priority >= -2 and priority <= 2:
+            if isinstance(priority, int) and priority >= -2 and priority <= 2:
                 data['priority'] = priority
 
                 if retry and priority == 2:
-                    if retry.isdigit() and retry >= 30:
+                    if isinstance(retry, int) and retry >= 30:
                         data['retry'] = retry
                     else:
                         data['retry'] = 30
@@ -74,7 +74,7 @@ class Pushover(SmartPlugin):
                     data['priority'] = 1
 
                 if expire and priority == 2:
-                    if expire.isdigit() and expire > 10800:
+                    if isinstance(expire, int) and expire > 10800:
                         data['expire'] = expire
                     else:
                         data['expire'] = 10800
