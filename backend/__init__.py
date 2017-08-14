@@ -131,19 +131,19 @@ class BackendServer(SmartPlugin):
 
 
         #================================================================================
-        # Handling for module mod_http (try/except to handle running in a core version that does not support modules)
+        # Handling for module http (try/except to handle running in a core version that does not support modules)
         #
+        self.classname = self.__class__.__name__
         try:
-            self.mod_http = sh.get_module('mod_http')
+            self.mod_http = sh.get_module('http')
         except:
              self.mod_http = None
         if self.mod_http == None:
-            self.logger.error('BackendServer: Module ''mod_http'' not loaded')
+            self.logger.error('{}: Module ''http'' not loaded - Abort loading of plugin {0}'.format(self.classname))
             return
 
 #        self.logger.warning('BackendServer: Using module {} version {}: {}'.format( str( self.mod_http.shortname ), str( self.mod_http.version ), str( self.mod_http.longname ) ) )
-        self.logger.warning('BackendServer: Using module {}'.format( str( self.mod_http.shortname ), str( self.mod_http.version ), str( self.mod_http.longname ) ) )
-        appname = 'Backend'
+        self.logger.warning('{}: Using module {}'.format(self.classname, str( self.mod_http.shortname ), str( self.mod_http.version ), str( self.mod_http.longname ) ) )
         config = {
             '/': {
                 'tools.auth_basic.on': self._basic_auth,
@@ -156,13 +156,15 @@ class BackendServer(SmartPlugin):
                 'tools.staticdir.dir': os.path.join(current_dir, 'static')
             }
         }
+        appname = 'backend'    # Name of the plugin
         plugin = self.__class__.__name__
         instance = self.get_instance_name()
 
-        self.mod_http.RegisterApp(Backend(self, self.updates_allowed, language, self.developer_mode, self.pypi_timeout), 
-                                  appname, 
-                                  config, 
-                                  plugin, instance)
+        self.mod_http.register_app(Backend(self, self.updates_allowed, language, self.developer_mode, self.pypi_timeout), 
+                                   appname, 
+                                   config, 
+                                   plugin, instance,
+                                   description='Administrationsoberfläche für SmartHomeNG')
 
 
     def run(self):
