@@ -139,7 +139,7 @@ class BackendServer(SmartPlugin):
         except:
              self.mod_http = None
         if self.mod_http == None:
-            self.logger.error('{}: Module ''http'' not loaded - Abort loading of plugin {0}'.format(self.classname))
+            self.logger.error('{0}: Module ''http'' not loaded - Abort loading of plugin {0}'.format(self.classname))
             return
 
 #        self.logger.warning('BackendServer: Using module {} version {}: {}'.format( str( self.mod_http.shortname ), str( self.mod_http.version ), str( self.mod_http.longname ) ) )
