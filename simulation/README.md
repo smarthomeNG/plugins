@@ -21,6 +21,7 @@ This plugins has no requirements.
    class_name = Simulation
    class_path = plugins.simulation
    data_file = /usr/smarthome/var/db/simulation.txt
+   callers = knx | visu
 ```
 
 ```yaml
