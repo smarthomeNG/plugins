@@ -23,14 +23,6 @@ This plugins has no requirements.
    data_file = /usr/smarthome/var/db/simulation.txt
 ```
 
-```yaml
-simulation:
-    class_name: Simulation
-    class_path: plugins.simulation
-    data_file: /usr/smarthome/var/db/simulation.txt
-    callers = knx | visu
-```
-
 `data_file`: This is the file where all recorded events are stored.
 
 `callers`: is a list of event sources for recording of events. When an item is changed, the change is done
