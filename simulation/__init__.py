@@ -31,8 +31,9 @@
 #       Added release version to init message
 #  0.4  Changed logging style
 #       corrected serious bug in compare entry with NextDay
+#  0.5  Added feature to select which caller is written to the simulation file 
 #
-#x#########################################################################
+##########################################################################
 
 import logging
 from datetime import datetime, timedelta
@@ -41,14 +42,15 @@ from lib.model.smartplugin import SmartPlugin
 class Simulation(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.0.4"
+    PLUGIN_VERSION = "1.1.0.5"
 
-    def __init__(self, smarthome,data_file):
+    def __init__(self, smarthome,data_file,callers):
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Init Simulation release 0.4')
+        self.logger.info('Init Simulation release 0.5')
         self._sh = smarthome
         self._datafile=data_file
         self.lastday=''
+        self._callers=callers
         smarthome.scheduler.add('midnight', self._midnight, cron='0 0 * *', prio=3)
 
     def run(self):
@@ -91,7 +93,7 @@ class Simulation(SmartPlugin):
 # Callback. Writes the event to the file
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if (item.conf['sim'] == 'track') and (self.state()==2):
+        if (item.conf['sim'] == 'track') and (self.state()==2) and (caller in self._callers):
             now = self._sh.now()
             day=now.day
             self.file.write(now.strftime('%a;%H:%M:%S'))
