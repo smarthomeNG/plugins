@@ -34,7 +34,8 @@ simulation:
 `data_file`: This is the file where all recorded events are stored.
 
 `callers`: is a list of event sources for recording of events. When an item is changed, the change is done
-by someone, e.g. knx for changes from the bus. The canner name is identical with the plugin name that changes the item.
+by someone, e.g. knx for changes from the bus. The caller name is set by the plugin programmer and has to be
+found out manually.
 Only item changes with a caller in the list are recorded to the simulation file. In the example above e.g. uzsu is
 ignored.
 
