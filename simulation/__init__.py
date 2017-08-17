@@ -44,7 +44,7 @@ class Simulation(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.1.0.5"
 
-    def __init__(self, smarthome, data_file, callers=['knx', 'visu']):
+    def __init__(self, smarthome, data_file, callers=None):
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Simulation release 0.5')
         self._sh = smarthome
@@ -93,7 +93,7 @@ class Simulation(SmartPlugin):
 # Callback. Writes the event to the file
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if (item.conf['sim'] == 'track') and (self.state()==2) and (caller in self._callers):
+        if (item.conf['sim'] == 'track') and (self.state()==2) and (self._callers and caller in self._callers):
             now = self._sh.now()
             day=now.day
             self.file.write(now.strftime('%a;%H:%M:%S'))
