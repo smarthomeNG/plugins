@@ -29,6 +29,9 @@ simulation:
     class_name: Simulation
     class_path: plugins.simulation
     data_file: /usr/smarthome/var/db/simulation.txt
+    callers:
+      - knx
+      - visu
 ```
 
 `data_file`: This is the file where all recorded events are stored.

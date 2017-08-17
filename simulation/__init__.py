@@ -44,7 +44,7 @@ class Simulation(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.1.0.5"
 
-    def __init__(self, smarthome,data_file,callers):
+    def __init__(self, smarthome, data_file, callers=['knx', 'visu']):
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Simulation release 0.5')
         self._sh = smarthome
