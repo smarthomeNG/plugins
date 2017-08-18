@@ -1,6 +1,6 @@
 # MQTT
 
-#### Version 1.3.3
+#### Version 1.3.4
 
 This plugin implements the the functionality for SmartHomeNG to act as a MQTT client.
 
@@ -14,6 +14,10 @@ Details on the protocol can be found on [mqtt.org](http://mqtt.org).
 Support is provided trough the support thread within the smarthomeNG forum: [Support-Thread](https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin)
 
 ## Change History
+
+### Changes since version 1.3.3
+
+- Fixed error not initializing subscriptions for items, if the broker was slow to respond on connect
 
 ### Changes since version 1.3.2
 
