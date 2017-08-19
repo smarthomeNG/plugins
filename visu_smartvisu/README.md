@@ -1,4 +1,4 @@
-# Visualisation plugin (smartVISU support)
+# Visualisation (smartVISU support)
 
 ```
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
