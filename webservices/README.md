@@ -99,6 +99,8 @@ http://<your_server_ip>:<your_backend_port>/rest/item/<item_path>/<value>
 
 E.g. http://192.168.178.100:1234/rest/item/office.light/0 turns off the light.
 
+#### HTTP GET (List of Accessible Items)
 
+The following URL prints out a list of all items, that can be requested or modified by the plugin (all str, num and bool items).
 
-### URL based interface
+http://<your_server_ip>:<your_backend_port>/rest/items/
