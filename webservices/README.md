@@ -1,10 +1,10 @@
-# REST plugin
+# WebServices plugin
 
 ## Description
 
-This plugin makes use of the new SmartHomeNG module system. It provides a REST based API
+This plugin makes use of the new SmartHomeNG module system. It provides a Webservice API based on REST and is 
 built upon Cherrpy.
-Basic REST command such as put and get are supported.
+Basic REST command such as PUT and GET are supported.
 
 ## Requirements
 
@@ -15,20 +15,20 @@ This plugin requires CherryPy to be installed via pip.
 ### plugin.conf (deprecated) / plugin.yaml
 
 ```
-[REST]
-   class_name = REST
-   class_path = plugins.rest
+[WebServices]
+   class_name = WebServices
+   class_path = plugins.webservices
 ```
 
 ```yaml
-REST:
-    class_name: REST
-    class_path: plugins.rest
+WebServices:
+    class_name: WebServices
+    class_path: plugins.webservices
 ```
 
 ### items.conf (deprecated) / items.yaml
 
- All items are provided via the REST api, no setting has to be made in items.conf (deprecated) / items.yaml
+Currently access to all items is provided via the REST api, no setting has to be made in items.conf (deprecated) / items.yaml
 
 ## Usage
 
@@ -44,7 +44,9 @@ E.g. http://192.168.178.100:1234/rest/items/ return the list of all available it
 
 ### HTTP PUT
 
-An HTTP PUT request to the URL sets a value of an item.
+A HTTP PUT request to the URL sets a value of an item. Only num, bool and str item types are supported.
+For bool items you can use int values 0 and 1, but also "yes", "no", "y", "n", "true", "false", "t", "f", "on", "off".
+In case you send a string (or a string bool representation), take care it is provided in "...".
 
 http://<your_server_ip>:<your_backend_port>/rest/item/<item_path>/<value>
 

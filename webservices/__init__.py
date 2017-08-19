@@ -29,9 +29,10 @@ import json
 import html
 import os
 
-class REST(SmartPlugin):
+
+class WebServices(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.4.0.1'
+    PLUGIN_VERSION = '1.4.0.1'
 
     def __init__(self, smarthome):
         self.logger = logging.getLogger(__name__)
@@ -58,8 +59,8 @@ class REST(SmartPlugin):
         }
 
         # Register the web interface as a cherrypy app
-        self.mod_http.register_app(RESTWebInterface(webif_dir, self),
-                                   self.get_shortname(),
+        self.mod_http.register_app(RESTWebServicesInterface(webif_dir, self),
+                                   'rest',
                                    config,
                                    self.get_classname(), self.get_instance_name(),
                                    description='REST-Plugin für SmartHomeNG')
@@ -71,7 +72,6 @@ class REST(SmartPlugin):
         self.logger.debug("Plugin '{}': run method called".format(self.get_shortname()))
         self.alive = True
 
-
     def stop(self):
         """
         Stop method for the plugin
@@ -80,8 +80,7 @@ class REST(SmartPlugin):
         self.alive = False
 
 
-
-class RESTWebInterface():
+class RESTWebServicesInterface():
     exposed = True
 
     def __init__(self, webif_dir, plugin):
@@ -89,7 +88,7 @@ class RESTWebInterface():
         self.logger = logging.getLogger(__name__)
         self.plugin = plugin
 
-    #@cherrypy.tools.accept(media='application/json')
+    # @cherrypy.tools.accept(media='application/json')
 
 
     @cherrypy.expose
@@ -105,14 +104,42 @@ class RESTWebInterface():
 
         self.logger.debug(cherrypy.request.method)
         if cherrypy.request.method == 'PUT':
-            data = cherrypy.request.body.read()
-            self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+            data = cherrypy.request.json
+            self.logger.error(data)
             if 'num' in item.type():
                 if self.plugin.is_int(data) or self.plugin.is_float(data):
-                    json_data = int(data)
+                    item(data)
+                    self.logger.debug("Item with item path %s set to %s." % (item_path, data))
                 else:
                     return json.dumps({"Error": "Item with item path %s is type num, value is %s." % (item_path, data)})
-            item(data)
+            elif 'bool' in item.type():
+                if self.plugin.is_int(data):
+                    if data == 0 or data == 1:
+                        item(data)
+                        self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+                    else:
+                        return json.dumps({
+                            "Error": "Item with item path %s is type bool, only 0 and 1 are accepted as integers, value is %s." % (
+                                item_path,
+                                data)})
+                else:
+                    try:
+                        data = self.plugin.to_bool(data)
+                        item(data)
+                        self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+                    except Exception as e:
+                        return json.dumps({"Error": "Item with item path %s is type bool, value is %s." % (item_path,
+                                                                                                           data)})
+            elif 'str' in item.type():
+                item(data)
+                self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+            else:
+                return json.dumps({
+                                      "Error": "Only str, num and bool items are supported by the interafce. Item with item path %s is %s" % (
+                                      item_path,
+                                      item.type())})
+
+
         elif cherrypy.request.method == 'GET':
             return json.dumps(item())
 
