@@ -1,4 +1,4 @@
-# Backend GUI
+# Backend GUI (SmartHomeNG beyond v1.3)
 
 This plugin delivers information about the current SmartHomeNG installation. Right now it serves as a support tool for helping other users with an installation that does not run properly. Some highlights:
 
