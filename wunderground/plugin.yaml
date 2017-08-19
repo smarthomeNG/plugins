@@ -10,7 +10,7 @@ plugin:
 #   description:               # Alternative: description in multiple languages
 #       de: 'Abfrage der Daten des Wetterdienstes Wunderground.com'
 #       en: 'Get weather data from wunderground.com'
-   documentation: https://github.com/smarthomeNG/plugins/blob/develop/wunderground/README.md        # url of wiki page
+    documentation: https://github.com/smarthomeNG/plugins/blob/develop/wunderground/README.md        # url of wiki page
     maintainer: msinn           # Who maintains this plugin?
 #   tester:                     # Who tests this plugin?
 
