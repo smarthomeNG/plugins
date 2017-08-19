@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+		<br>
+		<br>
+        <div class="row">
+            <div class="col-md-7 col-md-offset-2 panel panel-default">
+				<h1 class="margin-base-vertical">
+				<img src="/static/img/logo_big.png" width="150" height="75">
+	        	&nbsp; SmartHomeNG WebServices</h1>
+                <p align="center">
+                SmartHomeNG WebService Plugin - {% if interface == 'REST' %}REST{% else %}Simple
+                        WebService{% endif %} Interface.
+                </p>
+				<br/>
+                <div>
+                    <span>The following items can be accessed by the {% if interface == 'REST' %}REST{% else %}Simple
+                        WebService{% endif %} interface{% if interface == 'REST' %} (GET, PUT){% endif %}:</span>
+                    {% if interface == 'REST' %}<br/><span><a href="/rest/items/">(Full list in JSON Format)</a></span>{%endif%}
+                    <br/><br/>
+                    <ul>
+                    {% for item in item_data %}
+                        {% if item.type() in ['str', 'num', 'bool'] %}
+                        <li><a href="/{% if interface == 'REST' %}rest/item/{% elif interface == 'SIMPLE' %}ws/get/{% endif %}{{item}}/">{{item}}</a>{% if interface != 'REST' %},
+                            <a href="/ws/details/{{item}}/">(Details, GET only)</a>{% endif %}</li>
+                        {% endif %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div><!-- //main content -->
+        </div><!-- //row -->
+    </div> <!-- //container -->
+{% endblock %}
