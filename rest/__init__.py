@@ -82,96 +82,67 @@ class REST(SmartPlugin):
 
 
 class RESTWebInterface():
+    exposed = True
 
     def __init__(self, webif_dir, plugin):
         self.webif_dir = webif_dir
         self.logger = logging.getLogger(__name__)
         self.plugin = plugin
 
+    #@cherrypy.tools.accept(media='application/json')
+
+
     @cherrypy.expose
-    def get(self, item_path):
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def item(self, item_path):
         """
-        get item values
+        REST function for items
         """
         item = self.plugin._sh.return_item(item_path)
-        if item is not None:
+        if item is None:
+            return json.dumps({"Error": "No item with item path %s found." % item_path})
+
+        self.logger.debug(cherrypy.request.method)
+        if cherrypy.request.method == 'PUT':
+            data = cherrypy.request.body.read()
+            self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+            if 'num' in item.type():
+                if self.plugin.is_int(data) or self.plugin.is_float(data):
+                    json_data = int(data)
+                else:
+                    return json.dumps({"Error": "Item with item path %s is type num, value is %s." % (item_path, data)})
+            item(data)
+        elif cherrypy.request.method == 'GET':
             return json.dumps(item())
-        else:
-            return json.dumps({"Error": "No item with item path %s found."%item_path})
 
     @cherrypy.expose
-    def put(self, item_path, value):
+    @cherrypy.tools.json_out()
+    def items(self):
         """
-        set item value
+        REST function for items
         """
-        item = self.plugin._sh.return_item(item_path)
-        if item is not None:
-            item(value)
-            return json.dumps({"Success": "Item with item path %s set to %s." % (item_path, value)})
-        else:
-            return json.dumps({"Error": "No item with item path %s found." % item_path})
+        self.logger.debug(cherrypy.request.method)
+        if cherrypy.request.method == 'PUT':
+            return json.dumps({"Error": "Put requests not allowed for this URL"})
 
-    @cherrypy.expose
-    def head(self, item_path):
-        """
-        get item meta data
-        """
-        item_data = []
-        item = self.plugin._sh.return_item(item_path)
-        if item is not None:
-            cycle = ''
-            crontab = ''
-            for entry in self.plugin._sh.scheduler._scheduler:
-                if entry == item._path:
-                    if self.plugin._sh.scheduler._scheduler[entry]['cycle']:
-                        cycle = self.plugin._sh.scheduler._scheduler[entry]['cycle']
-                    if self.plugin._sh.scheduler._scheduler[entry]['cron']:
-                        crontab = str(self.plugin._sh.scheduler._scheduler[entry]['cron'])
-                    break
+        elif cherrypy.request.method == 'GET':
+            items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+            parent_items_sorted = []
+            for item in items_sorted:
+                if item._name not in ['env_daily', 'env_init', 'env_loc', 'env_stat'] and item._type == 'foo':
+                    parent_items_sorted.append(item)
 
-            changed_by = item.changed_by()
-            if changed_by[-5:] == ':None':
-                changed_by = changed_by[:-5]
-
-            item_conf_sorted = collections.OrderedDict(sorted(item.conf.items(), key=lambda t: str.lower(t[0])))
-
-            if item.prev_age() < 0:
-                prev_age = ''
-            else:
-                prev_age = self.disp_age(item.prev_age())
-
-            logics = []
-            for trigger in item.get_logic_triggers():
-                logics.append(format(trigger))
-            triggers = []
-            for trigger in item.get_method_triggers():
-                trig = format(trigger)
-                trig = trig[1:len(trig) - 27]
-                triggers.append(format(trig.replace("<", "")))
-
-            data_dict = {'path': item._path,
-                         'name': item._name,
-                         'type': item.type(),
-                         'age': item.age(),
-                         'last_update': str(item.last_update()),
-                         'last_change': str(item.last_change()),
-                         'changed_by': changed_by,
-                         'previous_age': prev_age,
-                         'previous_change': str(item.prev_change()),
-                         'enforce_updates': str(item._enforce_updates),
-                         'cache': str(item._cache),
-                         'eval': str(item._eval),
-                         'eval_trigger': str(item._eval_trigger),
-                         'cycle': str(cycle),
-                         'crontab': str(crontab),
-                         'autotimer': str(item._autotimer),
-                         'threshold': str(item._threshold),
-                         'config': json.dumps(item_conf_sorted),
-                         'logics': json.dumps(logics),
-                         'triggers': json.dumps(triggers)
-            }
-
-            item_data.append(data_dict)
+            item_data = self._build_item_tree(parent_items_sorted)
             return json.dumps(item_data)
-        else:
-            return json.dumps({"Error": "No item with item path %s found." % item_path})
+
+    def _build_item_tree(self, parent_items_sorted):
+        item_data = []
+
+        for item in parent_items_sorted:
+            nodes = self._build_item_tree(item.return_children())
+            tags = []
+            tags.append(len(nodes))
+            item_data.append(item._path)
+
+        return item_data
