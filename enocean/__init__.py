@@ -433,11 +433,7 @@ class EnOcean(SmartPlugin):
     def stop(self):
         self.alive = False
         self.logger.info("enocean: Thread stopped")
-        
-    def start_UTE_learnmode(self, id_offset=0):
-        self.UTE_listen = True
-        self.learn_id = id_offset
-        self.logger.info("enocean: Listeining for UTE package ('D4')")
+
 
     def _send_UTE_response(self, data, optional):
         choice = data[0]
@@ -448,9 +444,11 @@ class EnOcean(SmartPlugin):
         SubTel = 0x03
         db = 0xFF
         Secu = 0x0
-        self._send_radio_packet(self.learn_id, choice, [0x91, payload[1], payload[2], payload[3], payload[4], payload[5], payload[6]],[SubTel, data[-5], data[-4], data[-3], data[-2], db, Secu] )#payload[0] = 0x91: EEP Teach-in response, Request accepted, teach-in successful, bidirectional
+        #payload[0] = 0x91: EEP Teach-in response, Request accepted, teach-in successful, bidirectional
+        self._send_radio_packet(self.learn_id, choice, [0x91, payload[1], payload[2], payload[3], payload[4], payload[5], payload[6]],[SubTel, data[-5], data[-4], data[-3], data[-2], db, Secu] )
         self.UTE_listen = False
         self.logger.info("enocean: sending UTE response and end listening")
+
     def parse_item(self, item):
         if 'enocean_rx_key' in item.conf:
             # look for info from the most specific info to the broadest (key->eep->id) - one id might use multiple eep might define multiple keys
@@ -676,13 +674,6 @@ class EnOcean(SmartPlugin):
         status2 = (BLC << 5) + (LRNB << 4) + (DSO << 2) 
         self._send_radio_packet(id_offset, 0xA5, [valve_position, TSP, status , status2])
 
-    def send_learn_radiator_valve(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending learn telegram for radiator valve")
-        self._send_radio_packet(id_offset, 0xA5, [0x00, 0x00, 0x00, 0x00])
-
 
     def send_dim(self,id_offset=0, dim=0, dimspeed=0):
         if (dimspeed < 0) or (dimspeed > 255):
@@ -731,33 +722,83 @@ class EnOcean(SmartPlugin):
         else:
             self.logger.error("enocean: sending command A5_38_08: error")
 
+
+####################################################
+### --- START - Definitions of Learn Methods --- ###
+####################################################
     def send_learn_dim(self, id_offset=0):
+        #self.logger.debug('enocean: send_learn_dim()')
+        # Prepare Data
+        rorg = 0xA5
+        # Only for Eltako FSUD-230V
+        payload = [0x02, 0x00, 0x00, 0x00]
+        # For other Eltako Dim Devices use this payload
+        #payload = [0xE0, 0x40, 0x0D, 0x80]
+
         if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending learn telegram for dim command")
-        self._send_radio_packet(id_offset, 0xA5, [0x02, 0x00, 0x00, 0x00])
+            self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
+            return None
+        else:
+            self.logger.info('enocean: sending learn telegram for dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self._send_radio_packet(id_offset, rorg, payload)
+            return None
+
 
     def send_learn_rgbw_dim(self, id_offset=0):
+        #self.logger.debug('enocean: send_learn_rgbw_dim()')
+        # Prepare Data
+        rorg = 0xA5
+        payload = [0xFF, 0xF8, 0x0D, 0x87]
+
         if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending learn telegram for rgbw dim command")
-        self._send_radio_packet(id_offset, 0x07, [0xFF, 0xF8, 0x0D, 0x87])
+            self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
+            return None
+        else:
+            self.logger.info('enocean: sending learn telegram for rgbw dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self._send_radio_packet(id_offset, rorg, payload)
+            return None
+
 
     def send_learn_switch(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending learn telegram for switch command")
-        self._send_radio_packet(id_offset, 0xA5, [0x01, 0x00, 0x00, 0x00])
+        #self.logger.debug('enocean: send_learn_switch()')
+        # Prepare Data
+        rorg = 0xA5
+        payload = [0xE0, 0x40, 0x0D, 0x80]
 
-    def send_learn_actuator(self, id_offset=0):
         if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending learn telegram for actuator")
-        self._send_radio_packet(id_offset, 0xA5, [0xFF, 0xF8, 0x0D, 0x80])
+            self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
+            return None
+        else:
+            self.logger.info('enocean: sending learn telegram for switch command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self._send_radio_packet(id_offset, rorg, payload)
+            return None
+
+
+    def send_learn_radiator_valve(self, id_offset=0):
+        #self.logger.debug('enocean: send_learn_radiator_valve()')
+        # Prepare Data
+        rorg = 0xA5
+        payload = [0x00, 0x00, 0x00, 0x00]
+
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
+            return None
+        else:
+            self.logger.info('enocean: sending learn telegram for radiator valve with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self._send_radio_packet(id_offset, rorg, payload)
+            return None
+
+
+    def start_UTE_learnmode(self, id_offset=0):
+        self.UTE_listen = True
+        self.learn_id = id_offset
+        self.logger.info("enocean: Listeining for UTE package ('D4')")
+
+
+##################################################
+### --- END - Definitions of Learn Methods --- ###
+##################################################
+
 
 #################################
 ### --- START - Calc CRC8 --- ###
