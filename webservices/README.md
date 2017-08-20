@@ -67,6 +67,8 @@ http://<your_server_ip>:<your_backend_port>/rest/items/
 
 #### HTTP GET (e.g. normal access to the URL)
 
+##### Reading an Item's Values
+
 Gets the value of an item, enriched by meta data, as json object. Here, also the REST Url is provided as URL field.
 
 http://<your_server_ip>:<your_backend_port>/rest/items/<item_path>
@@ -77,7 +79,14 @@ returns
 
 {"value": true, "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "previous_age": "", "crontab": "", "last_change": "2017-08-20 16:53:01.914540+02:00", "previous_change": "2017-08-20 19:49:54.424230+02:00", "cycle": "", "enforce_updates": "False", "name": "office.light", "threshold": "False", "age": 10631.105385, "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "type": "bool", "eval_trigger": "False", "autotimer": "False", "logics": ["LightCheckLogic"], "changed_by": "Cache", "cache": "/python/smarthome_dev/var/cache/office.light", "path": "office.light", "last_update": "2017-08-20 16:53:01.914540+02:00", "url": "http://192.168.178.100:1234/rest/items/office.light", "previous_value": true, "eval": "None"}
 
-E.g. http://192.168.178.100:1234/rest/items/ return the list of all available items.
+##### Item List
+
+The following URL prints out a list of all items, that can be requested or modified by the plugin (all str, num and bool items).
+For each item, the detail information is also delivered.
+
+http://<your_server_ip>:<your_backend_port>/rest/items/
+
+E.g. http://192.168.178.100:1234/rest/items/ returns the list of all available (str, num, bool) items.
 
 #### HTTP PUT
 
@@ -88,10 +97,3 @@ In case you send a string (or a string bool representation), take care it is pro
 http://<your_server_ip>:<your_backend_port>/rest/items/<item_path>
 
 E.g. a PUT request with 0 as payload to http://192.168.178.100:1234/rest/item/office.light turns off the light.
-
-#### HTTP GET (List of Accessible Items)
-
-The following URL prints out a list of all items, that can be requested or modified by the plugin (all str, num and bool items).
-For each item, the detail information is also delivered.
-
-http://<your_server_ip>:<your_backend_port>/rest/items/
