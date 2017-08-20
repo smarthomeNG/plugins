@@ -155,9 +155,9 @@ class WebServiceInterface:
                              'crontab': str(crontab),
                              'autotimer': str(item._autotimer),
                              'threshold': str(item._threshold),
-                             'config': json.dumps(item_conf_sorted),
-                             'logics': json.dumps(logics),
-                             'triggers': json.dumps(triggers)
+                             'config': item_conf_sorted,
+                             'logics': logics,
+                             'triggers': triggers
                              }
                 return data_dict
             else:
