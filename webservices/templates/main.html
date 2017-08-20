@@ -22,8 +22,7 @@
                     <ul>
                     {% for item in item_data %}
                         {% if item.type() in ['str', 'num', 'bool'] %}
-                        <li><a href="/{% if interface == 'REST' %}rest/item/{% elif interface == 'SIMPLE' %}ws/get/{% endif %}{{item}}/">{{item}}</a>{% if interface != 'REST' %},
-                            <a href="/ws/details/{{item}}/">(Details, GET only)</a>{% endif %}</li>
+                        <li><a href="/{% if interface == 'REST' %}rest/items/{% elif interface == 'SIMPLE' %}ws/get/{% endif %}{{item}}/">{{item}}</a></li>
                         {% endif %}
                     {% endfor %}
                     </ul>
