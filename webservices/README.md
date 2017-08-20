@@ -44,11 +44,13 @@ In case a request is successful, it returns a SUCCESS message as JSON.
 
 #### Get
 
-Gets the value of an item.
+Gets the data of an item, enriched by meta data, as json object.
 
 http://<your_server_ip>:<your_backend_port>/ws/get/<item_path>
 
-E.g. http://192.168.178.100:1234/ws/get/office.light returns "True" when the light is on.
+E.g. http://192.168.178.100:1234/ws/get/office.light retuns:
+
+{"name": "office.light", "last_update": "2017-08-20 16:53:01.914540+02:00", "path": "office.light", "eval": "None", "previous_age": "", "enforce_updates": "False", "threshold": "False", "previous_change": "2017-08-20 17:03:18.041298+02:00", "changed_by": "Cache", "logics": ["LightCheckLogic"], "last_change": "2017-08-20 16:53:01.914540+02:00", "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "previous_value": true, "type": "bool", "cycle": "", "autotimer": "False", "cache": "/python/smarthome_dev/var/cache/office.light", "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "age": 10441.073385, "value": true, "eval_trigger": "False", "crontab": ""}
 
 #### Set
 
@@ -58,25 +60,6 @@ http://<your_server_ip>:<your_backend_port>/ws/set/<item_path>/<value>
 
 E.g. http://192.168.178.100:1234/ws/set/office.light/0 or http://192.168.178.100:1234/ws/set/office.light/False turns off the light.
 
-#### Details
-
-Returns detail data of the item.
-
-http://<your_server_ip>:<your_backend_port>/ws/details/<item_path>
-
-E.g. http://192.168.178.100:1234/ws/details/office.light
-
-[{"name": "office.light", "last_change": "2017-08-18 12:40:33.544449+02:00", "threshold": "False", "crontab": "", 
-"enforce_updates": "False", "eval_trigger": "False", "autotimer": "False", "logics": "[]", 
-"config": "{\"alexa_actions\": \"turnOn turnOff\", \"alexa_name\": \"Lampe B\\u00fcro\", \"knx_dpt\": \"1\", 
-\"knx_init\": \"2/3/50\", \"knx_listen\": \"2/3/50\", \"knx_send\": [\"2/3/10\"], \"nw\": \"yes\", \"sim\": \"track\", 
-\"visu_acl\": \"rw\"}", "previous_change": "2017-08-18 15:12:36.970801+02:00", "eval": "None", "cycle": "", 
-"previous_age": "", "triggers": "[\"bound method KNX.update_item of plugins.knx.KNX\", 
-\"bound method WebSocket.update_item of plugins.visu_websocket.WebSocket\", 
-\"bound method Simulation.update_item of plugins.simulation.Simulation\"]", "path": "office.light", "age": 9123.543011, 
-"type": "bool", "last_update": "2017-08-18 12:40:33.544449+02:00", "changed_by": "Cache", 
-"cache": "/usr/local/smarthome/var/cache/office.light"}]
-
 ### REST Compliant Interface
 
 http://<your_server_ip>:<your_backend_port>/rest/item/<item_path>
@@ -84,9 +67,16 @@ http://<your_server_ip>:<your_backend_port>/rest/items/
 
 #### HTTP GET (e.g. normal access to the URL)
 
-Gets the value of an item.
+Gets the value of an item, enriched by meta data, as json object. Here, also the REST Url is provided as URL field.
 
-E.g. http://192.168.178.100:1234/rest/item/office.light returns "True" when the light is on.
+http://<your_server_ip>:<your_backend_port>/rest/items/<item_path>
+
+E.g. http://192.168.178.100:1234/rest/items/office.light 
+
+returns
+
+{"value": true, "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "previous_age": "", "crontab": "", "last_change": "2017-08-20 16:53:01.914540+02:00", "previous_change": "2017-08-20 19:49:54.424230+02:00", "cycle": "", "enforce_updates": "False", "name": "office.light", "threshold": "False", "age": 10631.105385, "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "type": "bool", "eval_trigger": "False", "autotimer": "False", "logics": ["LightCheckLogic"], "changed_by": "Cache", "cache": "/python/smarthome_dev/var/cache/office.light", "path": "office.light", "last_update": "2017-08-20 16:53:01.914540+02:00", "url": "http://192.168.178.100:1234/rest/items/office.light", "previous_value": true, "eval": "None"}
+
 E.g. http://192.168.178.100:1234/rest/items/ return the list of all available items.
 
 #### HTTP PUT
@@ -95,12 +85,13 @@ A HTTP PUT request to the URL sets a value of an item. Only num, bool and str it
 For bool items you can use int values 0 and 1, but also "yes", "no", "y", "n", "true", "false", "t", "f", "on", "off".
 In case you send a string (or a string bool representation), take care it is provided in "...".
 
-http://<your_server_ip>:<your_backend_port>/rest/item/<item_path>/<value>
+http://<your_server_ip>:<your_backend_port>/rest/items/<item_path>
 
-E.g. http://192.168.178.100:1234/rest/item/office.light/0 turns off the light.
+E.g. a PUT request with 0 as payload to http://192.168.178.100:1234/rest/item/office.light turns off the light.
 
 #### HTTP GET (List of Accessible Items)
 
 The following URL prints out a list of all items, that can be requested or modified by the plugin (all str, num and bool items).
+For each item, the detail information is also delivered.
 
 http://<your_server_ip>:<your_backend_port>/rest/items/
