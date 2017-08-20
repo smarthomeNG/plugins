@@ -238,7 +238,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                 for item in items_sorted:
                     item_data = self.assemble_item_data(item)
                     if item_data is not None:
-                        item_data['url'] = "http://%s:%s/rest/item/%s" % (self.plugin.mod_http.get_local_ip_address(),
+                        item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
                                                                 self.plugin.mod_http.get_local_port(), item._path)
                         items.append(item_data)
                 return json.dumps(items)
@@ -291,6 +291,9 @@ class RESTWebServicesInterface(WebServiceInterface):
             elif cherrypy.request.method == 'GET':
                 item_data = self.assemble_item_data(item)
                 if item_data is not None:
+                    item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
+                                                                       self.plugin.mod_http.get_local_port(),
+                                                                       item._path)
                     return json.dumps(item_data)
                 else:
                     return json.dumps(
