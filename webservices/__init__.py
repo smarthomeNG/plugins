@@ -98,8 +98,6 @@ class WebServiceInterface:
         self.plugin = plugin
 
     def assemble_item_data(self, item):
-        item_data = []
-
         if item is not None:
             if item.type() in ['str', 'bool', 'num']:
                 prev_value = item.prev_value()
@@ -161,10 +159,9 @@ class WebServiceInterface:
                              'logics': json.dumps(logics),
                              'triggers': json.dumps(triggers)
                              }
-                item_data.append(data_dict)
-                return item_data
-        else:
-            return None
+                return data_dict
+            else:
+                return None
 
 
     def render_template(self, tmpl_name, **kwargs):
@@ -239,8 +236,11 @@ class RESTWebServicesInterface(WebServiceInterface):
                 items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
                 items = []
                 for item in items_sorted:
-                    items.append("http://%s:%s/rest/item/%s" % (self.plugin.mod_http.get_local_ip_address(),
-                                                                self.plugin.mod_http.get_local_port(), item._path))
+                    item_data = self.assemble_item_data(item)
+                    if item_data is not None:
+                        item_data['url'] = "http://%s:%s/rest/item/%s" % (self.plugin.mod_http.get_local_ip_address(),
+                                                                self.plugin.mod_http.get_local_port(), item._path)
+                        items.append(item_data)
                 return json.dumps(items)
         else:
             item = self.plugin._sh.return_item(item_path)
