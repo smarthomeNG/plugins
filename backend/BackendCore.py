@@ -402,7 +402,7 @@ class Backend:
     @cherrypy.expose
     def item_change_value_html(self, item_path, value):
         """
-        returns a list of items as json structure
+        Is called by items.html when an item value has been changed
         """
         item_data = []
         item = self._sh.return_item(item_path)
