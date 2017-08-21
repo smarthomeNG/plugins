@@ -62,9 +62,6 @@ E.g. http://192.168.178.100:1234/ws/set/office.light/0 or http://192.168.178.100
 
 ### REST Compliant Interface
 
-http://<your_server_ip>:<your_backend_port>/rest/item/<item_path>
-http://<your_server_ip>:<your_backend_port>/rest/items/
-
 #### HTTP GET (e.g. normal access to the URL)
 
 ##### Reading an Item's Values
@@ -96,4 +93,4 @@ In case you send a string (or a string bool representation), take care it is pro
 
 http://<your_server_ip>:<your_backend_port>/rest/items/<item_path>
 
-E.g. a PUT request with 0 as payload to http://192.168.178.100:1234/rest/item/office.light turns off the light.
+E.g. a PUT request with 0 as payload to http://192.168.178.100:1234/rest/items/office.light turns off the light.
