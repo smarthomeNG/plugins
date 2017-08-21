@@ -166,6 +166,19 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
         [[[power_status]]]
             type = num
             enocean_rx_key = ENG
+    [[sunblind]]
+        enocean_rx_id = 0500xxxx
+        enocean_rx_eep = F6_02_03
+        [[[move]]]
+            enocean_tx_eep = A5_3F_7F
+            enocean_rtime = 60
+            type = num
+        [[[status]]]
+            name = blind retrated
+            enocean_rx_key = B
+            enforce_updates = on
+            cache = on
+            type = bool
 ```
 
 ### Add new listening enocean devices
@@ -187,7 +200,7 @@ The following status EEPs are supported:
 * D5_00_01				Door/Window Contact, e.g. Eltako FTK, FTKB
 * F6_02_01				2-Button-Rocker
 * F6_02_02				2-Button-Rocker
-* F6_02_03				2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V or Gira switches.
+* F6_02_03				2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V, FSB61NP-230V or Gira switches.
 * F6_10_00				Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
 ```
 A complete list of available EEPs is documented at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
@@ -199,7 +212,7 @@ A complete list of available EEPs is documented at [EnOcean Alliance](http://www
 * A5_38_08_01			Regular switch actor command (on/off)
 * A5_38_08_02			Dimmer command with fix on off command (on: 100, off:0)
 * A5_38_08_03			Dimmer command with specified dim level (0-100)
-* A5_3F_7F			Universal actuator command 
+* A5_3F_7F			Universal actuator command, e.g. blind control
 ```
 
 The optional ref_level parameter defines default dim value when dimmer is switched on via on command.

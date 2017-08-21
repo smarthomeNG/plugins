@@ -240,6 +240,9 @@ class EEP_Parser():
             results['A'] = True
         elif (payload[0] == 0x10):
             results['A'] = False
+        # special extension for ELTAKO FSB61NP-230V status message compatibility:
+        elif (payload[0] == 0x02): 
+            results['B'] = False
         return results
 
     def _parse_eep_F6_10_00(self, payload, status):
