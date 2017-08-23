@@ -2,17 +2,19 @@
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
 (function() {
-  var mode = CodeMirror.getMode({tabSize: 4}, "markdown");
+  var config = {tabSize: 4, indentUnit: 2}
+  var mode = CodeMirror.getMode(config, "markdown");
   function MT(name) { test.mode(name, mode, Array.prototype.slice.call(arguments, 1)); }
-  var modeHighlightFormatting = CodeMirror.getMode({tabSize: 4}, {name: "markdown", highlightFormatting: true});
+  var modeHighlightFormatting = CodeMirror.getMode(config, {name: "markdown", highlightFormatting: true});
   function FT(name) { test.mode(name, modeHighlightFormatting, Array.prototype.slice.call(arguments, 1)); }
-  var modeAtxNoSpace = CodeMirror.getMode({tabSize: 4}, {name: "markdown", allowAtxHeaderWithoutSpace: true});
+  var modeAtxNoSpace = CodeMirror.getMode(config, {name: "markdown", allowAtxHeaderWithoutSpace: true});
   function AtxNoSpaceTest(name) { test.mode(name, modeAtxNoSpace, Array.prototype.slice.call(arguments, 1)); }
-  var modeFenced = CodeMirror.getMode({tabSize: 4}, {name: "markdown", fencedCodeBlocks: true});
+  var modeFenced = CodeMirror.getMode(config, {name: "markdown", fencedCodeBlocks: true});
   function FencedTest(name) { test.mode(name, modeFenced, Array.prototype.slice.call(arguments, 1)); }
-  var modeOverrideClasses = CodeMirror.getMode({tabsize: 4}, {
+  var modeOverrideClasses = CodeMirror.getMode(config, {
     name: "markdown",
     strikethrough: true,
+    emoji: true,
     tokenTypeOverrides: {
       "header" : "override-header",
       "code" : "override-code",
@@ -30,10 +32,11 @@
       "linkHref" : "override-link-href",
       "em" : "override-em",
       "strong" : "override-strong",
-      "strikethrough" : "override-strikethrough"
+      "strikethrough" : "override-strikethrough",
+      "emoji" : "override-emoji"
   }});
   function TokenTypeOverrideTest(name) { test.mode(name, modeOverrideClasses, Array.prototype.slice.call(arguments, 1)); }
-  var modeFormattingOverride = CodeMirror.getMode({tabsize: 4}, {
+  var modeFormattingOverride = CodeMirror.getMode(config, {
     name: "markdown",
     highlightFormatting: true,
     tokenTypeOverrides: {
@@ -381,28 +384,28 @@
   MT("listAsteriskFormatting",
      "[variable-2 * ][variable-2&em *foo*][variable-2  bar]",
      "[variable-2 * ][variable-2&strong **foo**][variable-2  bar]",
-     "[variable-2 * ][variable-2&strong **][variable-2&em&strong *foo**][variable-2&em *][variable-2  bar]",
+     "[variable-2 * ][variable-2&em&strong ***foo***][variable-2  bar]",
      "[variable-2 * ][variable-2&comment `foo`][variable-2  bar]");
 
   // Formatting in lists (+)
   MT("listPlusFormatting",
      "[variable-2 + ][variable-2&em *foo*][variable-2  bar]",
      "[variable-2 + ][variable-2&strong **foo**][variable-2  bar]",
-     "[variable-2 + ][variable-2&strong **][variable-2&em&strong *foo**][variable-2&em *][variable-2  bar]",
+     "[variable-2 + ][variable-2&em&strong ***foo***][variable-2  bar]",
      "[variable-2 + ][variable-2&comment `foo`][variable-2  bar]");
 
   // Formatting in lists (-)
   MT("listDashFormatting",
      "[variable-2 - ][variable-2&em *foo*][variable-2  bar]",
      "[variable-2 - ][variable-2&strong **foo**][variable-2  bar]",
-     "[variable-2 - ][variable-2&strong **][variable-2&em&strong *foo**][variable-2&em *][variable-2  bar]",
+     "[variable-2 - ][variable-2&em&strong ***foo***][variable-2  bar]",
      "[variable-2 - ][variable-2&comment `foo`][variable-2  bar]");
 
   // Formatting in lists (1.)
   MT("listNumberFormatting",
      "[variable-2 1. ][variable-2&em *foo*][variable-2  bar]",
      "[variable-2 2. ][variable-2&strong **foo**][variable-2  bar]",
-     "[variable-2 3. ][variable-2&strong **][variable-2&em&strong *foo**][variable-2&em *][variable-2  bar]",
+     "[variable-2 3. ][variable-2&em&strong ***foo***][variable-2  bar]",
      "[variable-2 4. ][variable-2&comment `foo`][variable-2  bar]");
 
   // Paragraph lists
@@ -467,6 +470,53 @@
      "       [keyword * A list item that meets this will be part of the next level.]",
      "   [variable-3 * Otherwise, it will be part of the level where it does meet this.]",
      " [variable-2 * World]");
+
+  // should handle nested and un-nested lists
+  MT("listCommonMark_MixedIndents",
+     "[variable-2 * list1]",
+     "    [variable-2 list1]",
+     "  [variable-2&header&header-1 # heading still part of list1]",
+     "  [variable-2 text after heading still part of list1]",
+     "",
+     "      [comment indented codeblock]",
+     "  [variable-2 list1 after code block]",
+     "  [variable-3 * list2]",
+     // amount of spaces on empty lines between lists doesn't matter
+     "              ",
+     // extra empty lines irrelevant
+     "",
+     "",
+     "    [variable-3 indented text part of list2]",
+     "    [keyword * list3]",
+     "",
+     "    [variable-3 text at level of list2]",
+     "",
+     "  [variable-2 de-indented text part of list1 again]",
+     "",
+     "  [variable-2&comment ```]",
+     "  [variable-2&comment code]",
+     "  [variable-2&comment ```]",
+     "",
+     "  [variable-2 text after fenced code]");
+
+  // should correctly parse numbered list content indentation
+  MT("listCommonMark_NumeberedListIndent",
+     "[variable-2 1000. list with base indent of 6]",
+     "",
+     "      [variable-2 text must be indented 6 spaces at minimum]",
+     "",
+     "         [variable-2 9-spaces indented text still part of list]",
+     "",
+     "          [comment indented codeblock starts at 10 spaces]",
+     "",
+     "     [comment text indented by 5 spaces no longer belong to list]");
+
+  // should consider tab as 4 spaces
+  MT("listCommonMark_TabIndented",
+     "[variable-2 * list]",
+     "\t[variable-3 * list2]",
+     "",
+     "\t\t[variable-3 part of list2]");
 
   // Blockquote
   MT("blockquote",
@@ -605,7 +655,7 @@
      "[image&image-marker !][image&image-alt-text&link [[][image-alt-text&strong&image&link **alt text**][image&image-alt-text&link ]]][string&url (http://link.to/image.jpg)]");
 
   MT("imageEmStrong",
-     "[image&image-marker !][image&image-alt-text&link [[][image-alt-text&image&strong&link **][image&image-alt-text&em&strong&link *alt text**][image&image-alt-text&em&link *][image&image-alt-text&link ]]][string&url (http://link.to/image.jpg)]");
+     "[image&image-marker !][image&image-alt-text&link [[][image&image-alt-text&em&strong&link ***alt text***][image&image-alt-text&link ]]][string&url (http://link.to/image.jpg)]");
 
   // Inline link with title
   MT("linkTitle",
@@ -629,7 +679,12 @@
 
   // Inline link with EmStrong
   MT("linkEmStrong",
-     "[link [[][link&strong **][link&em&strong *foo**][link&em *][link ]]][string&url (http://example.com/)] bar");
+     "[link [[][link&em&strong ***foo***][link ]]][string&url (http://example.com/)] bar");
+
+  MT("multilineLink",
+     "[link [[foo]",
+     "[link bar]]][string&url (https://foo#_a)]",
+     "should not be italics")
 
   // Image with title
   MT("imageTitle",
@@ -647,7 +702,7 @@
   // regularly in text, especially in quoted material, and no space is allowed
   // between square brackets and parentheses (per Dingus).
   MT("notALink",
-     "[[foo]] (bar)");
+     "[link [[foo]]] (bar)");
 
   // Reference-style links
   MT("linkReference",
@@ -663,7 +718,7 @@
 
   // Reference-style links with EmStrong
   MT("linkReferenceEmStrong",
-     "[link [[][link&strong **][link&em&strong *foo**][link&em *][link ]]][string&url [[bar]]] hello");
+     "[link [[][link&em&strong ***foo***][link ]]][string&url [[bar]]] hello");
 
   // Reference-style links with optional space separator (per documentation)
   // "You can optionally use a space to separate the sets of brackets"
@@ -672,7 +727,7 @@
 
   // Should only allow a single space ("...use *a* space...")
   MT("linkReferenceDoubleSpace",
-     "[[foo]]  [[bar]] hello");
+     "[link [[foo]]]  [link [[bar]]] hello");
 
   // Reference-style links with implicit link name
   MT("linkImplicit",
@@ -733,7 +788,7 @@
      "[link [[foo \\]]: bar]]:] [string&url http://example.com/]");
 
   MT("labelEscapeEnd",
-     "[[foo\\]]: http://example.com/");
+     "\\[[foo\\]]: http://example.com/");
 
   MT("linkWeb",
      "[link <http://example.com/>] foo");
@@ -757,7 +812,7 @@
      "foo[em *bar*]hello");
 
   MT("emInWordUnderscore",
-     "foo[em _bar_]hello");
+     "foo_bar_hello");
 
   // Per documentation: "...surround an * or _ with spaces, it’ll be
   // treated as a literal asterisk or underscore."
@@ -766,11 +821,11 @@
      "foo [em _bar _ hello_] world");
 
   MT("emEscapedBySpaceOut",
-     "foo _ bar[em _hello_]world");
+     "foo _ bar [em _hello_] world");
 
   MT("emEscapedByNewline",
      "foo",
-     "_ bar[em _hello_]world");
+     "_ bar [em _hello_] world");
 
   // Unclosed emphasis characters
   // Instead of simply marking as EM / STRONG, it would be nice to have an
@@ -791,14 +846,14 @@
      "[em *foo][em&strong **bar*][strong hello**] world");
 
   MT("emStrongUnderscore",
-     "[em _foo][em&strong __bar_][strong hello__] world");
+     "[em _foo ][em&strong __bar_][strong  hello__] world");
 
   // "...same character must be used to open and close an emphasis span.""
   MT("emStrongMixed",
      "[em _foo][em&strong **bar*hello__ world]");
 
   MT("emStrongMixed",
-     "[em *foo][em&strong __bar_hello** world]");
+     "[em *foo ][em&strong __bar_hello** world]");
 
   MT("linkWithNestedParens",
      "[link [[foo]]][string&url (bar(baz))]")
@@ -913,13 +968,16 @@
   TokenTypeOverrideTest("overrideStrikethrough",
     "[override-strikethrough ~~foo~~]");
 
+  TokenTypeOverrideTest("overrideEmoji",
+    "[override-emoji :foo:]");
+
   FormatTokenTypeOverrideTest("overrideFormatting",
     "[override-formatting-escape \\*]");
 
   // Tests to make sure GFM-specific things aren't getting through
 
   MT("taskList",
-     "[variable-2 * [ ]] bar]");
+     "[variable-2 * ][link&variable-2 [[ ]]][variable-2 bar]");
 
   MT("noFencedCodeBlocks",
      "~~~",
@@ -972,8 +1030,8 @@
 
   MT("xmlMode",
      "[tag&bracket <][tag div][tag&bracket >]",
-     "*foo*",
-     "[tag&bracket <][tag http://github.com][tag&bracket />]",
+     "  *foo*",
+     "  [tag&bracket <][tag http://github.com][tag&bracket />]",
      "[tag&bracket </][tag div][tag&bracket >]",
      "[link <http://github.com/>]");
 

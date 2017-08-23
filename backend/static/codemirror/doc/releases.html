@@ -30,6 +30,126 @@
 
   <h2>Version 5.x</h2>
 
+  <p class="rel">21-07-2017: <a href="http://codemirror.net/codemirror-5.28.0.zip">Version 5.28.0</a>:</p>
+
+  <ul class="rel-note">
+    <li>Fix copying of, or replacing editor content with, a single dash character when copying a big selection in some corner cases.</li>
+    <li>Make <a href="http://codemirror.net/doc/manual.html#command_goLineLeft"><code>&quot;goLineLeft&quot;</code></a>/<code>&quot;goLineRight&quot;</code> behave better on wrapped lines.</li>
+    <li><a href="http://codemirror.net/mode/sql/">sql mode</a>: Fix tokenizing of multi-dot operator and allow digits in subfield names.</li>
+    <li><a href="http://codemirror.net/doc/manual.html#addon_searchcursor">searchcursor addon</a>: Fix infinite loop on some composed character inputs.</li>
+    <li><a href="http://codemirror.net/mode/markdown/">markdown mode</a>: Make list parsing more CommonMark-compliant.</li>
+    <li><a href="http://codemirror.net/mode/gfm/">gfm mode</a>: Highlight colon syntax for emoji.</li>
+  </ul>
+
+  <p class="rel">29-06-2017: <a href="http://codemirror.net/codemirror-5.27.4.zip">Version 5.27.4</a>:</p>
+
+  <ul class="rel-note">
+    <li>Fix crash when using mode lookahead.</li>
+    <li><a href="http://codemirror.net/mode/markdown/">markdown mode</a>: Don't block inner mode's indentation support.</li>
+  </ul>
+
+  <p class="rel">22-06-2017: <a href="http://codemirror.net/codemirror-5.27.2.zip">Version 5.27.2</a>:</p>
+
+  <ul class="rel-note">
+    <li>Fix crash in the <a href="http://codemirror.net/demo/simplemode.html">simple mode</a> addon.</li>
+  </ul>
+
+  <p class="rel">22-06-2017: <a href="http://codemirror.net/codemirror-5.27.0.zip">Version 5.27.0</a>:</p>
+
+  <ul class="rel-note">
+    <li>Fix infinite loop in forced display update.</li>
+    <li>Properly disable the hidden textarea when <code>readOnly</code> is <code>&quot;nocursor&quot;</code>.</li>
+    <li>Calling the <code>Doc</code> constructor without <code>new</code> works again.</li>
+    <li><a href="http://codemirror.net/mode/sql/">sql mode</a>: Handle nested comments.</li>
+    <li><a href="http://codemirror.net/mode/javascript/">javascript mode</a>: Improve support for TypeScript syntax.</li>
+    <li><a href="http://codemirror.net/mode/markdown/">markdown mode</a>: Fix bug where markup was ignored on indented paragraph lines.</li>
+    <li><a href="http://codemirror.net/mode/demo/vim.html">vim bindings</a>: Referencing invalid registers no longer causes an uncaught exception.</li>
+    <li><a href="http://codemirror.net/mode/rust/">rust mode</a>: Add the correct MIME type.</li>
+    <li><a href="http://codemirror.net/doc/manual.html#addon_matchbrackets">matchbrackets addon</a>: Document options.</li>
+    <li>Mouse button clicks can now be bound in keymaps by using names like <code>&quot;LeftClick&quot;</code> or <code>&quot;Ctrl-Alt-MiddleTripleClick&quot;</code>. When bound to a function, that function will be passed the position of the click as second argument.</li>
+    <li>The behavior of mouse selection and dragging can now be customized with the <a href="http://codemirror.net/doc/manual.html#option_configureMouse"><code>configureMouse</code></a> option.</li>
+    <li>Modes can now look ahead across line boundaries with the <a href="http://codemirror.net/doc/manual.html#StringStream"><code>StringStream</code></a><code>.lookahead</code> method.</li>
+    <li>Introduces a <code>&quot;type&quot;</code> token type, makes modes that recognize types output it, and add styling for it to the themes.</li>
+    <li>New <a href="http://codemirror.net/doc/manual.html#option_pasteLinesPerSelection"><code>pasteLinesPerSelection</code></a> option to control the behavior of pasting multiple lines into multiple selections.</li>
+    <li><a href="http://codemirror.net/doc/manual.html#addon_searchcursor">searchcursor addon</a>: Support multi-line regular expression matches, and normalize strings when matching.</li>
+  </ul>
+
+  <p class="rel">22-05-2017: <a href="http://codemirror.net/codemirror-5.26.0.zip">Version 5.26.0</a>:</p>
+
+  <ul class="rel-note">
+    <li>In textarea-mode, don't reset the input field during composition.</li>
+    <li>More careful restoration of selections in widgets, during editor redraw.</li>
+    <li><a href="http://codemirror.net/mode/demo/vim.html">vim bindings</a>: Parse line offsets in line or range specs.</li>
+    <li><a href="http://codemirror.net/mode/javascript/">javascript mode</a>: More TypeScript parsing fixes.</li>
+    <li><a href="http://codemirror.net/mode/julia/">julia mode</a>: Fix issue where the mode gets stuck.</li>
+    <li><a href="http://codemirror.net/mode/markdown/">markdown mode</a>: Understand cross-line links, parse all bracketed things as links.</li>
+    <li><a href="http://codemirror.net/mode/soy/">soy mode</a>: Support single-quoted strings.</li>
+    <li><a href="http://codemirror.net/mode/go/">go mode</a>: Don't try to indent inside strings or comments.</li>
+  </ul>
+
+  <p class="rel">20-04-2017: <a href="http://codemirror.net/codemirror-5.25.2.zip">Version 5.25.2</a>:</p>
+
+  <ul class="rel-note">
+    <li>Better handling of selections that cover the whole viewport in contentEditable-mode.</li>
+    <li>No longer accidentally scroll the editor into view when calling <code>setValue</code>.</li>
+    <li>Work around Chrome Android bug when converting screen coordinates to editor positions.</li>
+    <li>Make sure long-clicking a selection sets a cursor and doesn't show the editor losing focus.</li>
+    <li>Fix issue where pointer events were incorrectly disabled on Chrome's overlay scrollbars.</li>
+    <li><a href="http://codemirror.net/mode/javascript/">javascript mode</a>: Recognize annotations and TypeScript-style type parameters.</li>
+    <li><a href="http://codemirror.net/mode/shell/">shell mode</a>: Handle nested braces.</li>
+    <li><a href="http://codemirror.net/mode/markdown/">markdown mode</a>: Make parsing of strong/em delimiters CommonMark-compliant.</li>
+  </ul>
+
+  <p class="rel">20-03-2017: <a href="http://codemirror.net/codemirror-5.25.0.zip">Version 5.25.0</a>:</p>
+
+  <ul class=rel-note>
+    <li>In contentEditable-mode, properly locate changes that repeat a character when inserted with IME.</li>
+    <li>Fix handling of selections bigger than the viewport in contentEditable mode.</li>
+    <li>Improve handling of changes that insert or delete lines in contentEditable mode.</li>
+    <li>Count Unicode control characters 0x80 to 0x9F as special (non-printing) chars.</li>
+    <li>Fix handling of shadow DOM roots when finding the active element.</li>
+    <li>Add <code>role=presentation</code> to more DOM elements to improve screen reader support.</li>
+    <li><a href="http://codemirror.net/doc/manual.html#addon_merge">merge addon</a>: Make aligning of unchanged chunks more robust.</li>
+    <li><a href="http://codemirror.net/doc/manual.html#addon_comment">comment addon</a>: Fix comment-toggling on a block of text that starts and ends in a (differnet) block comment.</li>
+    <li><a href="http://codemirror.net/mode/javascript/">javascript mode</a>: Improve support for TypeScript syntax.</li>
+    <li><a href="http://codemirror.net/mode/r/">r mode</a>: Fix indentation after semicolon-less statements.</li>
+    <li><a href="http://codemirror.net/mode/shell/">shell mode</a>: Properly handle escaped parentheses in parenthesized expressions.</li>
+    <li><a href="http://codemirror.net/mode/markdown/">markdown mode</a>: Fix a few bugs around leaving fenced code blocks.</li>
+    <li><a href="http://codemirror.net/mode/soy/">soy mode</a>: Improve indentation.</li>
+    <li><a href="http://codemirror.net/doc/manual.html#addon_lint">lint addon</a>: Support asynchronous linters that return promises.</li>
+    <li><a href="http://codemirror.net/doc/manual.html#addon_continuelist">continuelist addon</a>: Support continuing task lists.</li>
+    <li><a href="http://codemirror.net/mode/demo/vim.html">vim bindings</a>: Make Y behave like yy.</li>
+    <li><a href="http://codemirror.net/mode/sql/">sql mode</a>: Support sqlite dialect.</li>
+  </ul>
+
+  <p class="rel">22-02-2017: <a href="http://codemirror.net/codemirror-5.24.2.zip">Version 5.24.2</a>:</p>
+
+  <ul class=rel-note>
+    <li><a href="http://codemirror.net/mode/javascript/">javascript mode</a>: Support computed class method names.</li>
+    <li><a href="http://codemirror.net/doc/manual.html#addon_merge">merge addon</a>: Improve aligning of unchanged code in the presence of marks and line widgets.</li>
+  </ul>
+
+  <p class="rel">20-02-2017: <a href="http://codemirror.net/codemirror-5.24.0.zip">Version 5.24.0</a>:</p>
+
+  <ul class=rel-note>
+    <li>Positions now support a <code>sticky</code> property which determines whether they should be associated with the character before (value <code>"before"</code>) or after (value <code>"after"</code>) them.</li>
+    <li><a href="http://codemirror.net/mode/demo/vim.html">vim bindings</a>: Make it possible to remove built-in bindings through the API.</li>
+    <li><a href="http://codemirror.net/doc/manual.html#addon_comment">comment addon</a>: Support a per-mode <code>useInnerComments</code> option to optionally suppress descending to the inner modes to get comment strings.</li>
+    <li>A cursor directly before a line-wrapping break is now drawn before or after the line break depending on which direction you arrived from.</li>
+    <li>Visual cursor motion in line-wrapped right-to-left text should be much more correct.</li>
+    <li>Fix bug in handling of read-only marked text.</li>
+    <li><a href="http://codemirror.net/mode/shell/">shell mode</a>: Properly tokenize nested parentheses.</li>
+    <li><a href="http://codemirror.net/mode/python/">python mode</a>: Support underscores in number literals.</li>
+    <li><a href="http://codemirror.net/mode/sass/">sass mode</a>: Uses the full list of CSS properties and keywords from the CSS mode, rather than defining its own incomplete subset. Now depends on the css mode.</li>
+    <li><a href="http://codemirror.net/mode/css/">css mode</a>: Expose <code>lineComment</code> property for LESS and SCSS dialects. Recognize vendor prefixes on pseudo-elements.</li>
+    <li><a href="http://codemirror.net/mode/julia/">julia mode</a>: Properly indent <code>elseif</code> lines.</li>
+    <li><a href="http://codemirror.net/mode/markdown/">markdown mode</a>: Properly recognize the end of fenced code blocks when inside other markup.</li>
+    <li><a href="http://codemirror.net/mode/clike/">scala mode</a>: Improve handling of operators containing <code>#</code>, <code>@</code>, and <code>:</code> chars.</li>
+    <li><a href="http://codemirror.net/mode/xml/">xml mode</a>: Allow dashes in HTML tag names.</li>
+    <li><a href="http://codemirror.net/mode/javascript/">javascript mode</a>: Improve parsing of async methods, TypeScript-style comma-separated superclass lists.</li>
+    <li><a href="http://codemirror.net/demo/folding.html">indent-fold addon</a>: Ignore comment lines.</li>
+  </ul>
+
   <p class="rel">19-01-2017: <a href="http://codemirror.net/codemirror-5.23.0.zip">Version 5.23.0</a>:</p>
 
   <ul class=rel-note>
