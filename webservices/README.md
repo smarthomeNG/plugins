@@ -42,23 +42,23 @@ In case a request is successful, it returns a SUCCESS message as JSON.
 
 ### Simple Interface
 
-#### Get
+#### Get Value
 
 Gets the data of an item, enriched by meta data, as json object.
 
-http://<your_server_ip>:<your_backend_port>/ws/get/<item_path>
+http://<your_server_ip>:<your_backend_port>/ws/items/<item_path>
 
-E.g. http://192.168.178.100:1234/ws/get/office.light retuns:
+E.g. http://192.168.178.100:1234/ws/items/office.light retuns:
 
 {"name": "office.light", "last_update": "2017-08-20 16:53:01.914540+02:00", "path": "office.light", "eval": "None", "previous_age": "", "enforce_updates": "False", "threshold": "False", "previous_change": "2017-08-20 17:03:18.041298+02:00", "changed_by": "Cache", "logics": ["LightCheckLogic"], "last_change": "2017-08-20 16:53:01.914540+02:00", "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "previous_value": true, "type": "bool", "cycle": "", "autotimer": "False", "cache": "/python/smarthome_dev/var/cache/office.light", "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "age": 10441.073385, "value": true, "eval_trigger": "False", "crontab": ""}
 
-#### Set
+#### Set Value
 
 Sets a value of an item.
 
-http://<your_server_ip>:<your_backend_port>/ws/set/<item_path>/<value>
+http://<your_server_ip>:<your_backend_port>/items/<item_path>/<value>
 
-E.g. http://192.168.178.100:1234/ws/set/office.light/0 or http://192.168.178.100:1234/ws/set/office.light/False turns off the light.
+E.g. http://192.168.178.100:1234/ws/items/office.light/0 or http://192.168.178.100:1234/ws/items/office.light/False turns off the light.
 
 ### REST Compliant Interface
 

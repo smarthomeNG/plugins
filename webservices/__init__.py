@@ -181,31 +181,24 @@ class SimpleWebServiceInterface(WebServiceInterface):
         return self.render_template('main.html', item_data=items_sorted, interface='SIMPLE')
 
     @cherrypy.expose
-    def get(self, item_path):
-        """
-        get item values
-        """
-        item = self.plugin._sh.return_item(item_path)
-        if item is None:
-            return json.dumps({"Error": "No item with item path %s found." % item_path})
-        else:
-            item_data = self.assemble_item_data(item)
-            if item_data is not None:
-                return json.dumps(item_data)
-            else:
-                return json.dumps(
-                    {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
-                              (item_path, item.type())})
-
-    @cherrypy.expose
-    def set(self, item_path, value):
+    def items(self, item_path, value=None):
         """
         set item value
         """
         item = self.plugin._sh.return_item(item_path)
         if item is not None:
-            item(value)
-            return json.dumps({"Success": "Item with item path %s set to %s." % (item_path, value)})
+            if item.type() in ['str', 'bool', 'num']:
+                if value is not None:
+                    item(value)
+                    return json.dumps({"Success": "Item with item path %s set to %s." % (item_path, value)})
+                else:
+                    item_data = self.assemble_item_data(item)
+                    if item_data is not None:
+                        return json.dumps(item_data)
+            else:
+                return json.dumps(
+                    {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
+                              (item_path, item.type())})
         else:
             return json.dumps({"Error": "No item with item path %s found." % item_path})
 
