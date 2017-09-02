@@ -78,7 +78,7 @@ class WebServices(SmartPlugin):
                                        'ws_gui',
                                        config,
                                        self.get_classname(), self.get_instance_name(),
-                                       description='Webservice-Plugin für SmartHomeNG (simple)')
+                                       description='Webservice-Plugin für SmartHomeNG (Frontend)')
 
     def run(self):
         """
