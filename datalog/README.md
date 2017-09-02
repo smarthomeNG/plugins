@@ -12,35 +12,48 @@ No special hardware required.
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / .yaml
 
 The plugin can be configured using the following settings:
 
-```
+<pre>
 [datalog]
-   class_name = DataLog
-   class_path = plugins.datalog
-#   path = var/log/data
-#   filepatterns = default:{log}-{year}-{month}-{day}.csv | yearly:{log}-{year}.csv
-#   logpatterns = csv:{time};{item};{value}\n
-#   cycle = 300
-```
+    class_name = DataLog
+    class_path = plugins.datalog
+#    path = var/log/data
+#    filepatterns = default:{log}-{year}-{month}-{day}.csv | yearly:{log}-{year}.csv
+#    logpatterns = csv:{time};{item};{value}\n
+#    cycle = 300
+</pre>
 
-This will setup the logs `default` and `yearly`, which is using the configured
-patter to build the target file name (key-value pairs). The `default` log is
+<pre>
+datalog:
+    class_name: DataLog
+    class_path: plugins.datalog
+#    path: var/log/data
+#    filepatterns:
+#      - default:{log}-{year}-{month}-{day}.csv
+#      - yearly:{log}-{year}.csv
+#    logpatterns:
+#      - csv:{time};{item};{value}\n
+#    cycle: 300
+</pre>
+
+This will setup the logs `default` and `yearly`, which are using the configured
+pattern to build the target file name (key-value pairs). The `default` log is
 configured automatically if you do not specify any file patterns.
 
-Additionally the patterns to use to log the data into the files is configured
-also configured there. The key-value pairs are specifying the file extension
+Additionally the patterns to use to log the data into the files is also
+configured there. The key-value pairs are specifying the file extension
 and the log pattern to use. In this example all log files having the extension
 `.csv` will be logged using the configured pattern. This is also the default
-if you do not specify any log patterns. in the configuration.
+if you do not specify any log patterns in the configuration.
 
 Both settings can make use of some placeholders (see below).
 
-The path paramter can be used to log into a different path intead of the default
-path and the cycle parameter defines the interval to use to dump the data
-into the log files, which defaults to 300 seconds.
+The path parameter can be used to log into a different path instead of the
+default path and the cycle parameter defines the interval to use to dump the
+data into the log files, which defaults to 300 seconds.
 
 Placeholders which can be used in the `logpatterns` option:
 
@@ -49,15 +62,37 @@ Placeholders which can be used in the `logpatterns` option:
    * `item` - the id of the item
    * `value` - the value of items
 
-### items.conf
+Example:
 
-#### path
+<pre>
+# .conf (deprecated)
+[datalog]
+   class_name = DataLog
+   class_path = plugins.datalog
+   filepatterns = default:{log}-{year}-{month}-{day}.csv | custom:{log}-{year}-{month}-{day}.txt
+   logpatterns = csv:{time};{item};{value}\n
+</pre>
+
+<pre>
+# .yaml
+datalog:
+   class_name = DataLog
+   class_path = plugins.datalog
+   filepatterns = default:{log}-{year}-{month}-{day}.csv | custom:{log}-{year}-{month}-{day}.txt
+   logpatterns = csv:{time};{item};{value}\n
+  
+</pre>
+
+In this example the `default` log file will use the configured log pattern. The
+`custom` log file is completely ignored, since no pattern is configured.
+
+#### path attribute
 
 Specifies the path to log into. The default value is `var/log/data` which can
 be changed by using this option. All log files will be logged into this directory.
 It's not possible to configure different log paths for different log files.
 
-#### filepatterns
+#### filepatterns attribute
 
 This specifies a list of file patterns, which is used to build the target files
 to log data into. It's using a key-value pair syntax, which means you can
@@ -70,7 +105,7 @@ Placeholders which can be used in the `filepatterns` option:
    * `month` - the current month
    * `day` - the current day
 
-#### logpatterns
+#### logpatterns attribute
 
 The log pattners setting configured the format in which the data will be
 logged into the log files. It's using a key-value pair syntax, which means
@@ -79,24 +114,13 @@ you can configure multiple log patterns.
 A log pattern is used for logging when a file pattern is configured, where
 the extension (part behind the last `.`) matches the key.
 
-Example:
-```
-[datalog]
-   class_name = DataLog
-   class_path = plugins.datalog
-   filepatterns = default:{log}-{year}-{month}-{day}.csv | custom:{log}-{year}-{month}-{day}.txt
-   logpatterns = csv:{time};{item};{value}\n
-```
 
-In this example the `default` log file will use the configured log pattern. The
-`custom` log file is completely ignored, since no pattern is configured.
-
-#### Example
+### items.conf
 
 Example configuration using the plugin configuration on top of the page.
 
-```
-# items/my.conf
+<pre>
+# .conf (deprecated)
 [some]
     [[item1]]
         type = str
@@ -107,7 +131,23 @@ Example configuration using the plugin configuration on top of the page.
     [[item3]]
         type = num
         datalog = custom
-```
+</pre>
+
+<pre>
+# .yaml
+some:
+    item1:
+        type: str
+        datalog: default
+    item2:
+        type: num
+        datalog:
+          - default
+          - custom
+    item3:
+        type: num
+        datalog: custom
+</pre>
 
 This will log the items
 
