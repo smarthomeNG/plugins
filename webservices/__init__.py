@@ -60,14 +60,14 @@ class WebServices(SmartPlugin):
         }
 
         # Register the REST interface as a cherrypy app
-        self.mod_http.register_app(RESTWebServicesInterface(webif_dir, self),
+        self.mod_http.register_service(RESTWebServicesInterface(webif_dir, self),
                                    'rest',
                                    config,
                                    self.get_classname(), self.get_instance_name(),
                                    description='WebService Plugin für SmartHomeNG (REST)')
 
         # Register the simple WebService interface as a cherrypy app
-        self.mod_http.register_app(SimpleWebServiceInterface(webif_dir, self),
+        self.mod_http.register_service(SimpleWebServiceInterface(webif_dir, self),
                                    'ws',
                                    config,
                                    self.get_classname(), self.get_instance_name(),
