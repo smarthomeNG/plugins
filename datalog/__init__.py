@@ -147,7 +147,7 @@ class DataLog():
                             handles[filename] = open(self.path + '/' + filename, 'a')
 
                         data = entry
-                        data['stamp'] = data['time'].time();
+                        data['stamp'] = data['time'].timestamp();
                         handles[filename].write(logpattern.format(**data))
 
                 except Exception as e:
