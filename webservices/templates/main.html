@@ -2,32 +2,45 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container">
-		<br>
-		<br>
-        <div class="row">
-            <div class="col-md-7 col-md-offset-2 panel panel-default">
-				<h1 class="margin-base-vertical">
-				<img src="/static/img/logo_big.png" width="150" height="75">
-	        	&nbsp; SmartHomeNG WebServices</h1>
-                <p align="center">
-                SmartHomeNG WebService Plugin - {% if interface == 'REST' %}REST{% else %}Simple
-                        WebService{% endif %} Interface.
-                </p>
-				<br/>
-                <div>
-                    <span>The following items can be accessed by the {% if interface == 'REST' %}REST{% else %}Simple
-                        WebService{% endif %} interface{% if interface == 'REST' %} (GET, PUT){% endif %}:</span>
-                    {% if interface == 'REST' %}<br/><span><a href="/rest/items/">(Full list in JSON Format)</a></span>{%endif%}
-                    <br/><br/>
-                    <ul>
+    <div class="row">
+        <div class="panel panel-default" style="padding: 20px;">
+            <h1 class="margin-base-vertical">
+            <img src="/static/img/logo_big.png" width="150" height="75">
+            &nbsp; SmartHomeNG WebService Plugin</h1>
+            <br/>
+            <div style="width: 1600px;">
+                The following items can be accessed by the REST and the Simple WebService interface:<br/><br/>
+                <br/>
+                <table>
+                    <tr>
+                        <th>
+                            REST
+                        </th>
+                        <th>
+                            Simple
+                        </th>
+                    </tr>
+                    <tr style="border-bottom: 1px solid grey;">
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/rest/items/">Full list in JSON Format</a>
+                        </td>
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/ws/items/">Full list in JSON Format</a>
+                        </td>
+                    </tr>
                     {% for item in item_data %}
-                        {% if item.type() in ['str', 'num', 'bool'] %}
-                        <li><a href="/{% if interface == 'REST' %}rest/items/{% elif interface == 'SIMPLE' %}ws/items/{% endif %}{{item._path}}/">{{item._path}}</a></li>
-                        {% endif %}
+                    <tr>
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/rest/items/{{item._path}}/">{{item._path}}</a>
+                        </td>
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/ws/items/{{item._path}}/">{{item._path}}</a>
+                        </td>
+                    </tr>
                     {% endfor %}
-                    </ul>
-                </div>
-            </div><!-- //main content -->
-        </div><!-- //row -->
-    </div> <!-- //container -->
+                </table>
+            </div>
+        </div><!-- //main content -->
+    </div><!-- //row -->
+</div> <!-- //container -->
 {% endblock %}

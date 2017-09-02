@@ -73,6 +73,13 @@ class WebServices(SmartPlugin):
                                    self.get_classname(), self.get_instance_name(),
                                    description='Webservice-Plugin für SmartHomeNG (simple)')
 
+        # Register the web overview of the webservices interfaces as a cherrypy app
+        self.mod_http.register_app(WebGuiInterface(self),
+                                       'ws_gui',
+                                       config,
+                                       self.get_classname(), self.get_instance_name(),
+                                       description='Webservice-Plugin für SmartHomeNG (simple)')
+
     def run(self):
         """
         Run method for the plugin
@@ -86,6 +93,31 @@ class WebServices(SmartPlugin):
         """
         self.logger.debug("Plugin '{}': stop method called".format(self.get_shortname()))
         self.alive = False
+
+
+class WebGuiInterface:
+    exposed = True
+    env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__)) + '/templates'))
+
+    def __init__(self, plugin):
+        self.logger = logging.getLogger(__name__)
+        self.plugin = plugin
+
+    def render_template(self, tmpl_name, **kwargs):
+        tmpl = self.env.get_template(tmpl_name)
+        return tmpl.render(smarthome=self.plugin._sh, **kwargs)
+
+    @cherrypy.expose
+    def index(self):
+        items_filtered = []
+        items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+        for item in items_sorted:
+            if item.type() in ['str', 'bool', 'num']:
+                items_filtered.append(item)
+        return self.render_template('main.html', item_data=items_filtered,
+                                    ip=self.plugin.mod_http.get_local_ip_address(),
+                                    port=self.plugin.mod_http.get_local_port(),
+                                    servicesport=self.plugin.mod_http.get_local_servicesport())
 
 
 class WebServiceInterface:
@@ -163,56 +195,46 @@ class WebServiceInterface:
             else:
                 return None
 
-
-    def render_template(self, tmpl_name, **kwargs):
-        tmpl = self.env.get_template(tmpl_name)
-        return tmpl.render(smarthome=self.plugin._sh, **kwargs)
-
-
 class SimpleWebServiceInterface(WebServiceInterface):
     @cherrypy.expose
-    def index(self):
-        if cherrypy.request.method not in 'GET':
-            return json.dumps({"Error": "%s requests not allowed for this URL" % cherrypy.request.method})
-
-        elif cherrypy.request.method == 'GET':
-            items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
-
-        return self.render_template('main.html', item_data=items_sorted, interface='SIMPLE')
-
-    @cherrypy.expose
-    def items(self, item_path, value=None):
+    def items(self, item_path=None, value=None):
         """
-        set item value
+        Simpole WS functions for item
         """
-        item = self.plugin._sh.return_item(item_path)
-        if item is not None:
-            if item.type() in ['str', 'bool', 'num']:
-                if value is not None:
-                    item(value)
-                    return json.dumps({"Success": "Item with item path %s set to %s." % (item_path, value)})
-                else:
+        if item_path is None:
+            self.logger.debug(cherrypy.request.method)
+            if cherrypy.request.method not in 'GET':
+                return json.dumps({"Error": "%s requests not allowed for this URL" % cherrypy.request.method})
+
+            elif cherrypy.request.method == 'GET':
+                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+                items = []
+                for item in items_sorted:
                     item_data = self.assemble_item_data(item)
                     if item_data is not None:
-                        return json.dumps(item_data)
-            else:
-                return json.dumps(
-                    {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
-                              (item_path, item.type())})
+                        item_data['url'] = "http://%s:%s/ws/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
+                                                                self.plugin.mod_http.get_local_servicesport(), item._path)
+                        items.append(item_data)
+                return json.dumps(items)
         else:
-            return json.dumps({"Error": "No item with item path %s found." % item_path})
+            item = self.plugin._sh.return_item(item_path)
+            if item is not None:
+                if item.type() in ['str', 'bool', 'num']:
+                    if value is not None:
+                        item(value)
+                        return json.dumps({"Success": "Item with item path %s set to %s." % (item_path, value)})
+                    else:
+                        item_data = self.assemble_item_data(item)
+                        if item_data is not None:
+                            return json.dumps(item_data)
+                else:
+                    return json.dumps(
+                        {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
+                                  (item_path, item.type())})
+            else:
+                return json.dumps({"Error": "No item with item path %s found." % item_path})
 
 class RESTWebServicesInterface(WebServiceInterface):
-    @cherrypy.expose
-    def index(self):
-        if cherrypy.request.method not in 'GET':
-            return json.dumps({"Error": "%s requests not allowed for this URL" % cherrypy.request.method})
-
-        elif cherrypy.request.method == 'GET':
-            items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
-
-        return self.render_template('main.html', item_data=items_sorted, interface='REST')
-
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
@@ -285,7 +307,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                 item_data = self.assemble_item_data(item)
                 if item_data is not None:
                     item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
-                                                                       self.plugin.mod_http.get_local_port(),
+                                                                       self.plugin.mod_http.get_local_servicesport(),
                                                                        item._path)
                     return json.dumps(item_data)
                 else:
