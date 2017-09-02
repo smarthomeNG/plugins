@@ -25,9 +25,14 @@ import datetime
 import time
 import lib.log
 
+from lib.model.smartplugin import SmartPlugin
 
 
-class MemLog():
+class MemLog(SmartPlugin):
+
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = '1.3.0'
+
     _log = None
     _items = {}
 
@@ -45,7 +50,7 @@ class MemLog():
         self.alive = False
 
     def parse_item(self, item):
-        if 'memlog' in item.conf and item.conf['memlog'] == self.name:
+        if self.has_iattr(item.conf, 'memlog') and self.get_iattr_value(item.conf, 'memlog') == self.name:
             return self.update_item
         else:
             return None
@@ -66,7 +71,7 @@ class MemLog():
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'MemLog':
-            if item.conf['memlog'] == self.name:
+            if self.get_iattr_value(item.conf, 'memlog') == self.name:
                 if len(self._items) == 0:
                     logvalues = [item()]
                 else:
