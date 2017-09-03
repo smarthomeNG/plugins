@@ -160,11 +160,12 @@ class BackendServer(SmartPlugin):
         plugin = self.__class__.__name__
         instance = self.get_instance_name()
 
-        self.mod_http.register_app(Backend(self, self.updates_allowed, language, self.developer_mode, self.pypi_timeout), 
-                                   appname, 
-                                   config, 
-                                   plugin, instance,
-                                   description='Administrationsoberfläche für SmartHomeNG')
+        self.mod_http.register_webif(Backend(self, self.updates_allowed, language, self.developer_mode, self.pypi_timeout), 
+                                     appname, 
+                                     config, 
+                                     plugin, instance,
+                                     description='Administrationsoberfläche für SmartHomeNG',
+                                     webifname='')
 
 
     def run(self):
