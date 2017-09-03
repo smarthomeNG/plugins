@@ -5,15 +5,23 @@ This plugin has no requirements or dependencies.
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / .yaml
 
-```
+<pre>
 [luxtronic2]
     class_name = Luxtronic2
     class_path = plugins.luxtronic2
     host = 192.168.0.123
     # port = 8888
-```
+</pre>
+
+<pre>
+luxtronic2:
+    class_name: Luxtronic2
+    class_path: plugins.luxtronic2
+    host: 192.168.0.123
+    # port: 8888
+</pre>
 
 #### Attributes
   * `host`: specifies the hostname of your heating server.
@@ -47,7 +55,8 @@ Defines a mapping to a attribute (read-only). All attribute values are bytes (nu
 #### lux2_c
 Defines a mapping to a calculated value (read-only). All calculated values are integer (numbers).
 
-```
+<pre>
+#.conf (deprecated)
 [heating]
     [[temp_outside]]
         type = num
@@ -58,7 +67,21 @@ Defines a mapping to a calculated value (read-only). All calculated values are i
     [[state]]
         type = str
         lux2 = 119
-```
+</pre>
+
+<pre>
+#.yaml
+heating:
+    temp_outside:
+        type: num
+        lux2: 10
+    state_numeric:
+        type: num
+        lux2_c: 119
+    state:
+        type: str
+        lux2: 119
+</pre>
 
 ### logic.conf
 

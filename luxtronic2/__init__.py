@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
-#
-# Copyright 2012-2013 KNX-User-Forum e.V.       http://knx-user-forum.de/
-#
-#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#########################################################################
+#  Copyright 2012-2013 KNX-User-Forum e.V.      http://knx-user-forum.de/
+#########################################################################
+#  This file is part of SmartHomeNG
+#  https://github.com/smarthomeNG/smarthome
+#  http://knx-user-forum.de/
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -12,12 +14,12 @@
 #
 #  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
-#
+#########################################################################
 
 import sys
 import logging
@@ -26,16 +28,20 @@ import threading
 import struct
 import time
 
-logger = logging.getLogger('')
+from lib.model.smartplugin import SmartPlugin
 
 
 class luxex(Exception):
     pass
 
 
-class LuxBase():
+class LuxBase(SmartPlugin):
+
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = '1.3.0'
 
     def __init__(self, host, port=8888):
+        self.logger = logging.getLogger(__name__)
         self.host = host
         self.port = int(port)
         self._sock = False
@@ -74,13 +80,13 @@ class LuxBase():
         except Exception as e:
             self._connection_attempts -= 1
             if self._connection_attempts <= 0:
-                logger.error(
+                self.logger.error(
                     'Luxtronic2: could not connect to {0}:{1}: {2}'.format(self.host, self.port, e))
                 self._connection_attempts = self._connection_errorlog
             return
         finally:
             self._lock.release()
-        logger.info(
+        self.logger.info(
             'Luxtronic2: connected to {0}:{1}'.format(self.host, self.port))
         self.is_connected = True
         self._connection_attempts = 0
@@ -138,11 +144,11 @@ class LuxBase():
         fields = ['cmd', 'param']
         answer = dict(list(zip(fields, answer)))
         if answer['cmd'] == 3002 and answer['param'] == param:
-            logger.debug(
+            self.logger.debug(
                 "Luxtronic2: value {0} for parameter {1} stored".format(value, param))
             return True
         else:
-            logger.warning(
+            self.logger.warning(
                 "Luxtronic2: value {0} for parameter {1} not stored".format(value, param))
             return False
 
@@ -169,7 +175,7 @@ class LuxBase():
             return False
         else:
             self._lock.release()
-            logger.warning("Luxtronic2: failed to retrieve parameters")
+            self.logger.warning("Luxtronic2: failed to retrieve parameters")
             return False
 
     def refresh_attributes(self):
@@ -195,7 +201,7 @@ class LuxBase():
             return False
         else:
             self._lock.release()
-            logger.warning("Luxtronic2: failed to retrieve attributes")
+            self.logger.warning("Luxtronic2: failed to retrieve attributes")
             return False
 
     def refresh_calculated(self):
@@ -221,7 +227,7 @@ class LuxBase():
             return 0
         else:
             self._lock.release()
-            logger.warning("Luxtronic2: failed to retrieve calculated")
+            self.logger.warning("Luxtronic2: failed to retrieve calculated")
             return 0
 
 
@@ -272,7 +278,7 @@ class Luxtronic2(LuxBase):
                 if val is not None:
                     self._decoded[d](self._decode(d, val), 'Luxtronic2')
         cycletime = time.time() - start
-        logger.debug("cycle takes {0} seconds".format(cycletime))
+        self.logger.debug("cycle takes {0} seconds".format(cycletime))
 
     def _decode(self, identifier, value):
         if identifier == 119:
@@ -328,27 +334,27 @@ class Luxtronic2(LuxBase):
         return value
 
     def parse_item(self, item):
-        if 'lux2' in item.conf:
-            d = item.conf['lux2']
+        if self.has_iattr(item.conf, 'lux2'):
+            d = self.get_iattr_value(item.conf, 'lux2')
             d = int(d)
             self._decoded[d] = item
-        if 'lux2_a' in item.conf:
-            a = item.conf['lux2_a']
+        if self.has_iattr(item.conf, 'lux2_a'):
+            a = self.get_iattr_value(item.conf, 'lux2_a')
             a = int(a)
             self._attribute[a] = item
-        if 'lux2_c' in item.conf:
-            c = item.conf['lux2_c']
+        if self.has_iattr(item.conf, 'lux2_c'):
+            c = self.get_iattr_value(item.conf, 'lux2_c')
             c = int(c)
             self._calculated[c] = item
-        if 'lux2_p' in item.conf:
-            p = item.conf['lux2_p']
+        if self.has_iattr(item.conf, 'lux2_p'):
+            p = self.get_iattr_value(item.conf, 'lux2_p')
             p = int(p)
             self._parameter[p] = item
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'Luxtronic2':
-            self.set_param(item.conf['lux2_p'], item())
+            self.set_param(self.get_iattr_value(item.conf, 'lux2_p'), item())
 
 
 def main():
