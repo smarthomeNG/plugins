@@ -143,7 +143,7 @@ class BackendServer(SmartPlugin):
             return
 
 #        self.logger.warning('BackendServer: Using module {} version {}: {}'.format( str( self.mod_http.shortname ), str( self.mod_http.version ), str( self.mod_http.longname ) ) )
-        self.logger.warning('{}: Using module {}'.format(self.classname, str( self.mod_http.shortname ), str( self.mod_http.version ), str( self.mod_http.longname ) ) )
+        self.logger.warning('{}: Using module {}'.format(self.classname, str( self.mod_http._shortname ), str( self.mod_http.version ), str( self.mod_http._longname ) ) )
         config = {
             '/': {
                 'tools.auth_basic.on': self._basic_auth,
