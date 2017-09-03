@@ -109,7 +109,8 @@ class BackendServer(SmartPlugin):
         #    if not self.is_ip(ip):
         #         self.logger.error("BackendServer: Invalid value '"+str(ip)+"' configured for attribute ip in plugin.conf, using '"+str('0.0.0.0')+"' instead")
         #         ip = '0.0.0.0'
-        language = language.lower()
+#        language = language.lower()
+        language = self._sh.get_defaultlanguage()
         if language != '':
             if not load_translation(language):
                 self.logger.warning("BackendServer: Language '{0}' not found, using standard language instead".format(language))
