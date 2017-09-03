@@ -841,12 +841,13 @@ class Backend:
                 plugin['instancename'] = x.get_instance_name()
                 plugin['multiinstance'] = x.is_multi_instance_capable()
                 plugin['version'] = x.get_version()
+                plugin['shortname'] = x.get_shortname()
             else:
                 plugin['smartplugin'] = False
             plugins.append(plugin)
         plugins_sorted = sorted(plugins, key=lambda k: k['classpath'])
 
-        return self.render_template('plugins.html', plugins=plugins_sorted)
+        return self.render_template('plugins.html', plugins=plugins_sorted, mod_http=self._bs.mod_http)
 
 
     # -----------------------------------------------------------------------------------

@@ -28,12 +28,19 @@
                     <td width="200px">{{ p.classpath }}</td>
                     <td width="160px">{{ p.classname }}</td>
                     {% if p.smartplugin %}
+                        {% set webifs = mod_http.get_webifs_for_plugin(p.shortname) %}
                         <td width="200px">
                         {% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
                         </td>
                         <td width="150px">{{ p.version }}</td>
                         <td width="210px">{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
-                        <td>{% if p.classname == 'WebServices' %}<img src="static/img/html.svg" onClick="window.open('/ws_gui/')" style="width: 25px;"/>{% else %}-{% endif %}</td>
+                        <td>
+                            {% for webif in webifs %}
+                            {% if webif['Instance'] == '' or webif['Instance'] == p.instancename %}
+                            <img src="static/img/html.svg" onClick="window.open('http://{{mod_http.get_local_ip_address()}}:{{mod_http.get_local_port()}}/{{ webif['Webifname'] }}')" style="width: 25px;"/>
+                            {%endif%}
+                            {% endfor %}
+                        </td>
                     {% else %}
                         <td>-</td>
                         <td>-</td>
