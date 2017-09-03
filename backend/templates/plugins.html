@@ -17,6 +17,7 @@
                     <th>{{ _('Instanz') }}</th>
                     <th>{{ _('Version') }}</th>
                     <th>{{ _('Mehrere Instanzen möglich') }}</th>
+                    <th>{{ _('Aktionen') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,15 +32,17 @@
                         {% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
                         </td>
                         <td width="150px">{{ p.version }}</td>
-                        <td width="160px">{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
+                        <td width="210px">{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
+                        <td>{% if p.classname == 'WebServices' %}<img src="static/img/html.svg" onClick="window.open('/ws_gui/')" style="width: 25px;"/>{% else %}-{% endif %}</td>
                     {% else %}
+                        <td>-</td>
                         <td>-</td>
                         <td>-</td>
                         <td>-</td>
                     {%endif%}
                 </tr>
                 <tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
-                    <td colspan="7">
+                    <td colspan="8">
                         <div class="panel panel-default">
                             <div class="panel-heading">{{ _('Plugin spezifische Attribute') }}:</div>
                             <div class="panel-body">
