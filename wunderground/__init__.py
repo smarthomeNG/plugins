@@ -199,6 +199,8 @@ class Wunderground(SmartPlugin):
 
         # number has to be positive
         if dt == 'positive':
+            if val == '--':
+                val = 0
             if self.is_float(val):
                 fval = float(val)
                 if (fval <0):

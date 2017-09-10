@@ -1,22 +1,21 @@
-# Metadata for the plugin
+# Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
     type: protocol                 # plugin type (gateway, interface, protocol, system, web)
-#    subtype: ...                  # plugin subtype (if applicable)
-    version: 1.3.3                 # Plugin version
-    keywords: iot                  # keywords, where applicable
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
-#   sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: true           # plugin supports multi instance
-    description: 'Implementierung eines MQTT Clients'       # description (one language only, german preferred)
-#   description:                  # Alternative: description in multiple languages
-#       de: 'Abfrage der Daten des Wetterdienstes Wunderground.com'
-#       en: 'Get weather data from wunderground.com'
-    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of wiki page
-    maintainer: msinn              # Who maintains this plugin?
-#   tester:                        # Who tests this plugin?
+    description:                  # Alternative: description in multiple languages
+        de: 'Implementierung eines MQTT Clients. Umfassendere Implementierung des MQTT Protokolls, **seit SmartHomeNG v1.3**'
+        en: 'Implementation of a MQTT client. Feature enriched implementation of the MQTT protocol, **since SmartHomeNG v1.3**'
+    maintainer: msinn
+#    tester:                        # Who tests this plugin?
+    keywords: iot
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
-plugin_parameters:
+    version: 1.3.3                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+
+parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     
 item_attributes:
