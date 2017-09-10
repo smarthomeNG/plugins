@@ -5,7 +5,7 @@ plugin:
     description:
         de: 'Telefonbuch Anbindung für Snom Telefone'
         en: ''
-    maintainer: ? (mknx)
+    maintainer: '? (mknx)'
 #    tester: efgh                   # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
