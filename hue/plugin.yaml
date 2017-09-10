@@ -9,6 +9,7 @@ plugin:
     tester: Sandman60
 #    keywords: kwd1 kwd2            # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/41379-philips-hue-plugin-neu-v1-0-released
 
 # Following entries are for Smart-Plugins:
 #    version: 1.3.3                 # Plugin version

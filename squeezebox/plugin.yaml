@@ -9,6 +9,7 @@ plugin:
     tester: onkelandy, Sandman60, cmalo, brandst
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/28692-√-neues-plugin-logitech-squeezebox-anregungen
 
     version: 1.3.0                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin

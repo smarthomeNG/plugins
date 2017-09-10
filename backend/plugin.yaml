@@ -10,6 +10,7 @@ plugin:
     tester: Sandman60
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
 
     version: 1.3.5                 # Plugin version
     sh_minversion: 1.3a            # minimum shNG version to use this plugin
