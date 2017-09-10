@@ -5,7 +5,7 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Implementierung seperater Logs'
         en: ''
-    maintainer: ? (JanT112)
+    maintainer: '? (JanT112)'
     tester: Sandman60, onkelandy
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page

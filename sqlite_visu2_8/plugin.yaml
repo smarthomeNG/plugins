@@ -5,7 +5,7 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Integration einer SQLite Datenbank - zu verwenden für smartVISU 2.8'
         en: ''
-    maintainer: ?
+    maintainer: '?'
 #    tester:                        # Who tests this plugin?
     keywords: database
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
