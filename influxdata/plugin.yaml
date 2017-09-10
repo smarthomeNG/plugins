@@ -8,7 +8,7 @@ plugin:
     maintainer: rthill
     tester: brandst
     keywords: database
-    documentation: https://github.com/smarthomeNG/smarthome/wiki/Installation-InfluxDB%2C-Grafana-und-Plugin        # url of documentation (wiki) page
+    documentation: https://github.com/smarthomeNG/smarthome/wiki/Installation-Influx-Grafana        # url of documentation (wiki) page
 
     version: 1.0.0                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
