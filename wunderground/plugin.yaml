@@ -1,22 +1,100 @@
-# Metadata for the plugin
+# Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
-#    subtype: weather              # plugin subtype (if applicable)
-    version: 1.2.4                 # Plugin version
-    keywords: weather              # keywords, where applicable
-    sh_minversion: 1.2             # minimum shNG version to use this plugin
-#   sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: true           # plugin supports multi instance
-    description: 'Abfrage der Daten des Wetterdienstes Wunderground.com'    # description (one language only, german preferred)
-#   description:                   # Alternative: description in multiple languages
-#       de: 'Abfrage der Daten des Wetterdienstes Wunderground.com'
-#       en: 'Get weather data from wunderground.com'
-    documentation: https://github.com/smarthomeNG/plugins/blob/develop/wunderground/README.md        # url of wiki page
-    maintainer: msinn              # Who maintains this plugin?
-#   tester:                        # Who tests this plugin?
+    description:
+        de: 'Abfrage der Daten des Wetterdienstes Wunderground.com'
+        en: 'Get weather data from wunderground.com'
+    maintainer: msinn
+#    tester:                        # Who tests this plugin?
+    keywords: weather
+#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
+
+    version: 1.3.6                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+
 
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+    apikey:
+        type: str
+        mandatory: True
+        description:
+            de: 'Den bei Wunderground registrierten API Key eingeben'
+            en: 'Enter you registered wunderground API key'
+
+    language:
+        type: str
+        default: 'de'
+        description:
+            de: 'Definiert die Sprache in der Wunderground Vorhersagedaten liefern soll (en: Englisch, de: Deutsch, fr: Französisch). Für weitere Sprachen bitte die von Wunderground definierten codes verwenden.'
+            en: 'Defines the language for the forcast data (en: English, de: German, fr: French). For other languages use language codes defined by Wunderground.'
+
+    location:
+        type: str
+        mandatory: True
+        description:
+            de: 'Ort für den die Wetterinformationen angefordert werden sollen'
+            en: 'The location for which you want weather information'
+
+    cycle:
+        type: int
+        default: 600
+        description:
+            de: 'Dieser Parameter muss normalerweise nicht angegeben werden. Er erlaubt es die Update-Frquenz anzupassen (Standard: alle 600 Sekunden). Mit dem Standardwert werden die Wetterdaten alle 10 Minuten aktualisiert. Das stellt sicher, dass die maximale Tagesmenge von 500 Requests für den gebührenfreien Account nicht überschritten werden, selbst wenn Wetter für zwei Orte oder für die smartVISU angefordert wird.'
+            en: "This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 600 seconds). As a standard, the plugin updates the weather data every 10 minutes. This ensures that the maximum of 500 requests for the free-of-charge- account are not maxed out, even if you use wunderground weather for two locations and/or smartVISU."
+        
+    item_subtree:
+        type: str
+        description:
+            de: 'item_subtree definiert den Teilbaum der Items, welchen das wunderground plugin während der Updates nach dem wug_matchstring Attribut durchsuchen soll.'
+            en: 'item_subtree defines the part of the item-tree which the wunderground plugin searches during data updates for the wug_matchstring attribute.
+                If item_subtree is not defined or empty, the whole item-tree is searched, which creates unnecessary overhead vor SmartHomeNG.
+                If you are going to configure multiple instances of the plugin to get the weather report for multiple locations, you have to specify the parameter, or you will get da data mix up.
+                
+                The subtrees defined by item_subtree for the different instances must not intersect!'
+
+#    instance:
+#        type: str
+#        description:
+#            de: 'Name der Plugin Instanz (SmartHomeNG Standard-Parameter). Die Angabe ist notwendig, wenn Wetterdaten für mehrere Orte über mehrere Plugin-Instanzen abgefragt werden sollen.'
+#            en: 'Name of the plugin instance (SmartHomeNG standard parameter). This is important if you define multiple weather locations using multiple instances of the wunderground plugin.'
+
+
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
     
+    wug_matchstring:
+        type: str
+        description:
+            de: 'wug_matchstring enthält eine Zeichenkette, die zum parsen der von Wunderground gesendeten Daten verwendet wird. Item Definitionen mit den üblicherweise verwendeten Mactchstrings sind in der README nachzulesen.'
+            en: 'wug_matchstring contains a matchstring for parsing the data sent by wunderground. Item definitions with commonly used matchstrings can be found in the README file.'
+
+    wug_datatype:
+        type: str
+        description:
+            de: 'wug_datatype kann genutzt werden, um fehlerhafte Daten herauszufiltern, die evtl. von Zeit zu Zeit von einer Wunderground Wetterstation gesendet werden. Diese fehlerhaften Werte werden dann nicht in das Item geschrieben. Dieses Attribut kann die Werte positive und percent annehmen.
+                
+                - positive: Filtert alle Werte kleiner 0 heraus.
+                - percent: Filtert alle Werte heraus, die kleiner 0 oder größer als 100 sind.'
+            en: 'wug_datatype is used to filter out wrong data that may be sent by a weatherstation from time to time. Those wrong values are filtered and not written to the item. This attribute can have the values positive and percent.
+                
+                - positive filters out all values less than 0.
+                - percent filters out values less than 0 and values greater than 100.'
+
+#    value:
+#        type: str
+#        description:
+#            de: 'Standardwert eines Items (SmartHomeNG standard Attribut). Der Standardwert wird genutzt, falls die gewählte Wetterstation für den entsprechenden Matchstring keine Werte sendet.'
+#            en: 'Default value of the item (SmartHomeNG standard attribute). The default value is used, if the weather station you selected does not send data for the selected matchstring.'
+
+    wug_xmlstring:
+        type: str
+        description:
+            de: 'Veraltet. Bitte stattdessen wug_matchstring verwenden.'
+            en: 'Deprecated. Use wug_matchstring instead.'

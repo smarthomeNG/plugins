@@ -46,10 +46,10 @@ class Wunderground(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION='1.2.5'
+    PLUGIN_VERSION='1.3.6'
 
 
-    def __init__(self, sh, apikey='', language='de', location='', cycle='600', item_subtree='', log_start='False'):
+    def __init__(self, sh, apikey='', language='de', location='', cycle='600', item_subtree=''):
         """
         Initalizes the plugin. The parameters described for this method are pulled from the entry in plugin.yaml.
 
@@ -63,9 +63,6 @@ class Wunderground(SmartPlugin):
         """
         self.logger = logging.getLogger(__name__)
         self.__sh = sh
-
-        if self.to_bool(log_start):
-            self.logger.info("--------------------   Init Plugin: {0} {1}   --------------------".format(self.__class__.__name__, self.PLUGIN_VERSION))
 
         languagedict = {"de": "DL", "en": "EN", 'fr': "FR"}
         self.apikey = str(apikey)
@@ -128,10 +125,11 @@ class Wunderground(SmartPlugin):
                       can be sent to the knx with a knx write function within the knx plugin.
 
         """
-        if 'wug_xmlstring' in item.conf:
+        if 'wug_matchstring' in item.conf:
+            return self.update_item
+        elif 'wug_xmlstring' in item.conf:
             # if config is still stored in wug_xmlstring, copy it to wug_matchstring
             item.conf['wug_matchstring'] = item.conf['wug_xmlstring']
-        if 'wug_matchstring' in item.conf:
             return self.update_item
         else:
             return None
