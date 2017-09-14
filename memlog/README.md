@@ -13,7 +13,7 @@ No special requirements.
 
 Use the plugin configuration to configure the in-memory logs.
 
-<pre>
+```
 [memlog]
     class_name = MemLog
     class_path = plugins.memlog
@@ -21,9 +21,9 @@ Use the plugin configuration to configure the in-memory logs.
 #    mappings = time | thread | level | message
 #    maxlen = 50
 #    items = first.item.now | second.item.thread.info | third.item.level | fourth.item.msg
-</pre>
+```
 
-<pre>
+```
 memlog:
     class_name: MemLog
     class_path: plugins.memlog
@@ -39,7 +39,7 @@ memlog:
 #      - second.item.thread.info
 #      - third.item.level
 #      - fourth.item.msg
-</pre>
+```
 
 This will register a in-memory log with the name "alert". This can be used to attach 
 to items.
@@ -82,21 +82,21 @@ the log. Everything is logged with 'INFO' level.
 
 Simple item logging:
 
-<pre>
+```
 # .conf (deprecated)
 [some]
     [[item]]
         type = str
         memlog = alert
-</pre>
+```
 
-<pre>
+```
 # .yaml
 some:
     item:
         type: str
         memlog: alert
-</pre>
+```
 
 ### logic.conf
 
@@ -122,9 +122,9 @@ logic invocation/trigger.
 
 Example:
 
-<pre>
+```
 memlog_message = The logic {logic.name} was triggered!
-</pre>
+```
 
 ## Methods
 

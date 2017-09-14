@@ -21,7 +21,7 @@ This plugin has no requirements or dependencies.
 
 ### plugin.conf (deprecated) / .yaml
 
-<pre>
+```
 [comfoair]
     class_name = ComfoAir
     class_path = plugins.comfoair
@@ -29,9 +29,9 @@ This plugin has no requirements or dependencies.
     host = 192.168.123.6        # Provide host and port if you want to use TCP connection (for a TCP to serial converter)
     port = 5555                 # Port
     #serialport = /dev/ttyUSB0  # Enable this if you want to use a serial connection
-</pre>
+```
 
-<pre>
+```
 comfoair:
     class_name: ComfoAir
     class_path: plugins.comfoair
@@ -39,7 +39,7 @@ comfoair:
     host: 192.168.123.6        # Provide host and port if you want to use TCP connection (for a TCP to serial converter)
     port: 5555                 # Port
     #serialport: /dev/ttyUSB0  # Enable this if you want to use a serial connection
-</pre>
+```
 
 ### items.conf
 
@@ -98,7 +98,7 @@ e.g. comfoair_trigger_afterwrite = 10 # seconds
 
 Here you can find a sample configuration using the ComfoAir 350 commands:
 
-<pre>
+```
 # .conf (deprecated)
 [kwl]
     [[level]]
@@ -232,9 +232,9 @@ Here you can find a sample configuration using the ComfoAir 350 commands:
         type = num
         eval = (sh.kwl.temp.supplyair() - sh.kwl.temp.freshair()) / (sh.kwl.temp.extractair() - sh.kwl.temp.exhaustair()) * 100
         eval_trigger = kwl.temp.supplyair | kwl.temp.freshair | kwl.temp.extractair | kwl.temp.exhaustair
-</pre>
+```
 
-<pre>
+```
 # .yaml
 kwl:
     level:
@@ -372,7 +372,7 @@ kwl:
           - kwl.temp.freshair
           - kwl.temp.extractair
           - kwl.temp.exhaustair
-</pre>
+```
 
 
 ### logic.conf

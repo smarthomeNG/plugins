@@ -16,7 +16,7 @@ No special hardware required.
 
 The plugin can be configured using the following settings:
 
-<pre>
+```
 [datalog]
     class_name = DataLog
     class_path = plugins.datalog
@@ -24,9 +24,9 @@ The plugin can be configured using the following settings:
 #    filepatterns = default:{log}-{year}-{month}-{day}.csv | yearly:{log}-{year}.csv
 #    logpatterns = csv:{time};{item};{value}\n
 #    cycle = 300
-</pre>
+```
 
-<pre>
+```
 datalog:
     class_name: DataLog
     class_path: plugins.datalog
@@ -37,7 +37,7 @@ datalog:
 #    logpatterns:
 #      - csv:{time};{item};{value}\n
 #    cycle: 300
-</pre>
+```
 
 This will setup the logs `default` and `yearly`, which are using the configured
 pattern to build the target file name (key-value pairs). The `default` log is
@@ -64,16 +64,16 @@ Placeholders which can be used in the `logpatterns` option:
 
 Example:
 
-<pre>
+```
 # .conf (deprecated)
 [datalog]
    class_name = DataLog
    class_path = plugins.datalog
    filepatterns = default:{log}-{year}-{month}-{day}.csv | custom:{log}-{year}-{month}-{day}.txt
    logpatterns = csv:{time};{item};{value}\n
-</pre>
+```
 
-<pre>
+```
 # .yaml
 datalog:
    class_name = DataLog
@@ -81,7 +81,7 @@ datalog:
    filepatterns = default:{log}-{year}-{month}-{day}.csv | custom:{log}-{year}-{month}-{day}.txt
    logpatterns = csv:{time};{item};{value}\n
   
-</pre>
+```
 
 In this example the `default` log file will use the configured log pattern. The
 `custom` log file is completely ignored, since no pattern is configured.
@@ -119,7 +119,7 @@ the extension (part behind the last `.`) matches the key.
 
 Example configuration using the plugin configuration on top of the page.
 
-<pre>
+```
 # .conf (deprecated)
 [some]
     [[item1]]
@@ -131,9 +131,9 @@ Example configuration using the plugin configuration on top of the page.
     [[item3]]
         type = num
         datalog = custom
-</pre>
+```
 
-<pre>
+```
 # .yaml
 some:
     item1:
@@ -147,7 +147,7 @@ some:
     item3:
         type: num
         datalog: custom
-</pre>
+```
 
 This will log the items
 
