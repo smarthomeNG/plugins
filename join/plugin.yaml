@@ -12,7 +12,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1113523-neues-plugin-join-tts-sms-phonecall-notification-uvm
 
     version: 1.4.1.0               # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    sh_minversion: 1.3a            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
 
