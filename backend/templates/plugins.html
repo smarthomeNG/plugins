@@ -40,7 +40,7 @@
                         <td width="200px">
                         {% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
                         </td>
-                        <td width="150px">{{ p.version }}</td>
+                        <td width="150px">{{ p.metadata.get_string('version') }}</td>
                         <td width="210px">{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
                         <td>
                             {% for webif in webifs %}
@@ -67,10 +67,25 @@
                                     <strong>{{ key }}:</strong> {{ value }}<br/>
                                     {%endif%}
                                 {% endfor %}
+                                {% endif %}
+                                <hr/>
+                                {% if p.metadata.get_string('description')[lang] %}
+                                <strong>{{ _('Beschreibung') }}:</strong> {{ p.metadata.get_string('description')[lang] }}<br/>
+                                {% endif %}
+                                <strong>{{ _('Wartung') }}:</strong>
+                                {% if p.metadata.get_string('maintainer') %}
+                                    {{ p.metadata.get_string('maintainer') }}
                                 {% else %}
                                 -
-                                {%endif%}
-                            </div>
+                                {% endif %}
+                                <br/>
+                                <strong>{{ _('Tester') }}:</strong>
+                                {% if p.metadata.get_string('tester') %}
+                                    {{ p.metadata.get_string('tester') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                                <br/>
                         </div>
                     </td>
                 </tr>

@@ -849,7 +849,7 @@ class Backend:
             plugins.append(plugin)
         plugins_sorted = sorted(plugins, key=lambda k: k['classpath'])
 
-        return self.render_template('plugins.html', plugins=plugins_sorted, mod_http=self._bs.mod_http)
+        return self.render_template('plugins.html', plugins=plugins_sorted, lang=get_translation_lang(), mod_http=self._bs.mod_http)
 
 
     # -----------------------------------------------------------------------------------
