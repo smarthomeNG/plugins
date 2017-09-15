@@ -68,7 +68,9 @@
                                     {%endif%}
                                 {% endfor %}
                                 {% endif %}
-                                <hr/>
+                            </div>
+                            <div class="panel-heading">{{ _('Plugin Metadaten') }}:</div>
+                            <div class="panel-body">
                                 {% if p.metadata.get_string('description')[lang] %}
                                 <strong>{{ _('Beschreibung') }}:</strong> {{ p.metadata.get_string('description')[lang] }}<br/>
                                 {% endif %}
@@ -96,7 +98,7 @@
                                 {% else %}
                                 -
                                 {% endif %}
-                                <br/>
+                            </div>
                         </div>
                     </td>
                 </tr>
