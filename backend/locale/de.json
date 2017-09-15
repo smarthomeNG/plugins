@@ -116,9 +116,11 @@
 	"Übersicht": "Übersicht",
 	"Eingabe im .CONF Format": "Eingabe im .CONF Format",
 	"Ergebnis im .YAML Format": "Ergebnis im .YAML Format",
-	"Wartung": "Wartung & Support",
+	"Wartung": "Wartung ",
 	"Tester": "Tester",
 	"Beschreibung": "Beschreibung",
+	"Documentation": "Dokumentation",
+	"Support": "Support",
 	
 	"_items": {
 		"path": "Pfad",

@@ -118,6 +118,8 @@
 	"Wartung": "Maintainer",
 	"Tester": "Tester",
 	"Beschreibung": "Description",
+	"Documentation": "Documentation",
+	"Support": "Support",
 
 	"_items": {
 		"path": "Pfad",
