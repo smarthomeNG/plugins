@@ -61,18 +61,25 @@
                         <div class="panel panel-default">
                             <div class="panel-heading">{{ _('Plugin spezifische Attribute') }}:</div>
                             <div class="panel-body">
-                                {% if p.attributes|length > 2 %}
+                                <table>
+                                {% set first = True %}
                                 {% for key, value in p.attributes.items() %}
-                                    {% if key not in ['class_path', 'class_name'] %}
-                                    <strong>{{ key }}:</strong> {{ value }}<br/>
-                                    {%endif%}
+                                    {% if loop.index % 2 > 0 %}
+                                    <tr>
+                                    {% endif %}
+                                    <td style="width: 300px;"><strong>{{ key }}:</strong> {{ value }}</td>
+                                    {% if loop.index % 2 > 0 and not first %}
+                                    </tr>
+                                    {% else %}
+                                    {% set first = False %}
+                                    {% endif %}
                                 {% endfor %}
-                                {% endif %}
+                                </table>
                             </div>
                             <div class="panel-heading">{{ _('Plugin Metadaten') }}:</div>
                             <div class="panel-body">
-                                {% if p.metadata.get_string('description')[lang] %}
-                                <strong>{{ _('Beschreibung') }}:</strong> {{ p.metadata.get_string('description')[lang] }}<br/>
+                                {% if p.metadata.get_mlstring('description')[lang] %}
+                                <strong>{{ _('Beschreibung') }}:</strong> {{ p.metadata.get_mlstring('description')[lang] }}<br/>
                                 {% endif %}
 
                                 {% if p.metadata.get_string('documentation') %}
