@@ -61,14 +61,25 @@
 							{% endif %}
 							</form>
 						</tr>
-						<tr id="{{ logic.name }}_additional3" style="display: none; cursor: pointer;" onClick="$('#{{ logic.name }}_additional3').toggle();">
+						<tr id="{{ logic.name }}_additional3" style="display: none; cursor: pointer; background: #333;" onClick="$('#{{ logic.name }}_additional3').toggle();">
 							<td colspan="{% if updates %}8{% else %}7{% endif %}">
-								<div class="panel panel-default">
+								<div class="panel panel-default" style="margin-bottom: 5px;">
 									<div class="panel-heading">{{ _('Watch_Items') }}</div>
   									<div class="panel-body">
+										<table>
+										{% set first = True %}
 										{% for value in logic.watch_items %}
-											{{ value }}<br/>
+											{% if loop.index % 2 > 0 %}
+											<tr>
+											{% endif %}
+											<td style="width: 300px;">{{ value }}</td>
+											{% if loop.index % 2 > 0 and not first %}
+											</tr>
+											{% else %}
+											{% set first = False %}
+											{% endif %}
 										{% endfor %}
+										</table>
 									</div>
 								</div>
 							</td>
@@ -116,8 +127,28 @@
 							{% endif %}
 							</form>
 						</tr>
-						<tr id="{{ logic.name }}_additional3" style="display: none; cursor: pointer;" onClick="$('#{{ logic.name }}_additional3').toggle();">
-							<td colspan="{% if updates %}8{% else %}7{% endif %}">{{ logic.watch_items }}</td>
+						<tr id="{{ logic.name }}_additional3" style="display: none; cursor: pointer; background: #333;" onClick="$('#{{ logic.name }}_additional3').toggle();">
+							<td colspan="{% if updates %}8{% else %}7{% endif %}">
+								<div class="panel panel-default" style="margin-bottom: 5px;">
+									<div class="panel-heading">{{ _('Watch_Items') }}</div>
+  									<div class="panel-body">
+										<table>
+										{% set first = True %}
+										{% for value in logic.watch_items %}
+											{% if loop.index % 2 > 0 %}
+											<tr>
+											{% endif %}
+											<td style="width: 300px;">{{ value }}</td>
+											{% if loop.index % 2 > 0 and not first %}
+											</tr>
+											{% else %}
+											{% set first = False %}
+											{% endif %}
+										{% endfor %}
+										</table>
+									</div>
+								</div>
+							</td>
 						</tr>
 						{% endif %}
 					{% endfor %}
