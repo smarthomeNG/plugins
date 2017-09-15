@@ -11,6 +11,7 @@
             <thead>
                 <tr>
                     <th>{{ _('Nr.') }}</th>
+                    <th></th>
                     <th>{{ _('Type') }}</th>
                     <th>{{ _('Plugin') }}</th>
                     <th>{{ _('Classname') }}</th>
@@ -24,6 +25,13 @@
                 {% for p in plugins  %}
                 <tr id="{{ loop.index }}_click" style="cursor: pointer;">
                     <td width="30px">{{ loop.index }}</td>
+                    <td>
+                        {% if p.metadata.get_string('type') in ['web', 'protocol', 'interface', 'gateway', 'system'] %}
+                        <img src="static/img/{{ p.metadata.get_string('type') }}.svg" style="width: 25px;"/>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
                     <td width="30px">{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}
                     <td width="200px">{{ p.classpath }}</td>
                     <td width="160px">{{ p.classname }}</td>
@@ -49,7 +57,7 @@
                     {%endif%}
                 </tr>
                 <tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
-                    <td colspan="8">
+                    <td colspan="9">
                         <div class="panel panel-default">
                             <div class="panel-heading">{{ _('Plugin spezifische Attribute') }}:</div>
                             <div class="panel-body">

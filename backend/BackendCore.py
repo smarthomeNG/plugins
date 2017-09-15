@@ -828,6 +828,7 @@ class Backend:
             # self.logger.warning("plugins_html: class_name='{0}', class_path='{1}'".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
             conf_plugins[_conf[plugin]['class_name']] = {}
             conf_plugins[_conf[plugin]['class_name']] = _conf[plugin]
+            conf_plugins[_conf[plugin]['class_name']]['conf_plugin_name'] = plugin
             # self.logger.warning("plugins_html: conf_plugins='{0}'".format(conf_plugins))
 
         plugins = []
@@ -836,6 +837,7 @@ class Backend:
             plugin['classname'] = x.__class__.__name__
             plugin['classpath'] = conf_plugins[x.__class__.__name__]['class_path']
             plugin['attributes'] = conf_plugins[x.__class__.__name__]
+            plugin['metadata'] = getattr(self._sh , conf_plugins[x.__class__.__name__]['conf_plugin_name'])._metadata
             if isinstance(x, SmartPlugin):
                 plugin['smartplugin'] = True
                 plugin['instancename'] = x.get_instance_name()
