@@ -2,6 +2,7 @@
 	"Scheduler": "Scheduler",
 	"Logik": "Logic",
 	"Systemlogiken": "System Logics",
+	"Nutzerlogiken": "User Logics",
 	"nächste Ausführung": "next execution",
 	"Cycle": "Cycle",
 	"Crontab": "Crontab",
