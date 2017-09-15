@@ -836,7 +836,10 @@ class Backend:
             plugin = dict()
             plugin['classname'] = x.__class__.__name__
             plugin['classpath'] = conf_plugins[x.__class__.__name__]['class_path']
-            plugin['attributes'] = conf_plugins[x.__class__.__name__]
+            if bool(x._parameters):
+                plugin['attributes'] = x._parameters
+            else:
+                plugin['attributes'] = conf_plugins[x.__class__.__name__]
             plugin['metadata'] = getattr(self._sh , conf_plugins[x.__class__.__name__]['conf_plugin_name'])._metadata
             if isinstance(x, SmartPlugin):
                 plugin['smartplugin'] = True
