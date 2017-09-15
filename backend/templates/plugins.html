@@ -25,7 +25,7 @@
                 {% for p in plugins  %}
                 <tr id="{{ loop.index }}_click" style="cursor: pointer;">
                     <td width="30px">{{ loop.index }}</td>
-                    <td>
+                    <td width="30px">
                         {% if p.metadata.get_string('type') in ['web', 'protocol', 'interface', 'gateway', 'system'] %}
                         <img src="static/img/{{ p.metadata.get_string('type') }}.svg" style="width: 25px;"/>
                         {% else %}
