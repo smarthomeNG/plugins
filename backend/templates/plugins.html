@@ -33,7 +33,7 @@
                         {% endif %}
                     </td>
                     <td width="30px">{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}
-                    <td width="200px">{{ p.classpath }}</td>
+                    <td width="200px">{{ p.shortname }}</td>
                     <td width="160px">{{ p.classname }}</td>
                     {% if p.smartplugin %}
                         {% set webifs = mod_http.get_webifs_for_plugin(p.shortname) %}
