@@ -67,7 +67,15 @@
                                     {% if loop.index % 2 > 0 %}
                                     <tr>
                                     {% endif %}
-                                    <td style="width: 400px;"><strong>{{ key }}:</strong> {{ value }}</td>
+                                    {% if p['metadata'].get_parameter_type(key) != 'foo' %}
+                                        <td style="width: 400px;"><strong>{{ key }}</strong> ({{ p['metadata'].get_parameter_type(key) }}): {{ value }}
+                                        {% if p['metadata'].get_parameter_defaultvalue(key) == value %}
+                                        &nbsp; [default]
+                                        {% endif %}
+                                        </td>
+                                    {% else %}
+                                        <td style="width: 400px;"><strong>{{ key }}</strong>: {{ value }}</td>
+                                    {% endif %}
                                     {% if loop.index % 2 > 0 and not first %}
                                     </tr>
                                     {% else %}
@@ -78,8 +86,8 @@
                             </div>
                             <div class="panel-heading">{{ _('Plugin Metadaten') }}:</div>
                             <div class="panel-body">
-                                {% if p.metadata.get_mlstring('description')[lang] %}
-                                <strong>{{ _('Beschreibung') }}:</strong> {{ p.metadata.get_mlstring('description')[lang] }}<br/>
+                                {% if p.metadata.get_mlstring('description') %}
+                                <strong>{{ _('Beschreibung') }}:</strong> {{ p.metadata.get_mlstring('description') }}<br/>
                                 {% endif %}
 
                                 {% if p.metadata.get_string('documentation') %}
