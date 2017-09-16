@@ -63,7 +63,8 @@ class BackendServer(SmartPlugin):
         s.connect(("10.10.10.10", 80))
         return s.getsockname()[0]
 
-    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
+#    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
+    def __init__(self, sh, updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
         self.logger = logging.getLogger(__name__)
         self.logger.debug('Backend.__init__')
         
@@ -88,27 +89,6 @@ class BackendServer(SmartPlugin):
             self._basic_auth = False
         self._sh = sh
 
-        if self.is_int(port):
-            self.port = int(port)
-        else:
-            self.port = 8383
-            if port is not None:
-                self.logger.error("BackendServer: Invalid value '"+str(port)+"' configured for attribute 'port' in plugin.conf, using '"+str(self.port)+"' instead")
-
-        if self.is_int(threads):
-            self.threads = int(threads)
-        else:
-            self.threads = 8
-            self.logger.error("BackendServer: Invalid value '"+str(threads)+"' configured for attribute 'thread' in plugin.conf, using '"+str(self.threads)+"' instead")
-
-        if ip == '':
-            ip = self.get_local_ip_address()
-            self.logger.debug("BackendServer: Using local ip address '{0}'".format(ip))
-        else:
-            pass
-        #    if not self.is_ip(ip):
-        #         self.logger.error("BackendServer: Invalid value '"+str(ip)+"' configured for attribute ip in plugin.conf, using '"+str('0.0.0.0')+"' instead")
-        #         ip = '0.0.0.0'
 #        language = language.lower()
         language = self._sh.get_defaultlanguage()
         if language != '':

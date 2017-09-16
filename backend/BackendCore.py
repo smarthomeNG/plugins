@@ -824,43 +824,38 @@ class Backend:
         """
         conf_plugins = {}
         _conf = lib.config.parse(self._sh._plugin_conf)
+#        self.logger.warning("plugins_html: _conf = {0}".format(_conf))
         for plugin in _conf:
             # self.logger.warning("plugins_html: class_name='{0}', class_path='{1}'".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
             conf_plugins[plugin] = {}
             conf_plugins[plugin] = _conf[plugin]
-#            conf_plugins[plugin]['conf_plugin_name'] = plugin
-#            self.logger.warning("plugins_html: conf_plugins='{0}'".format(conf_plugins))
 
         plugins = []
         for x in self._sh._plugins:
-#            self.logger.warning("plugins_html: x = {}".format(str(x)))
             plugin = dict()
-#            self.logger.warning("plugins_html: _config_section = '{}'".format(x._config_section))
-#            plugin['classname'] = x.__class__.__name__
-            plugin['classpath'] = conf_plugins[x._config_section]['class_path']
+#            plugin['classpath'] = conf_plugins[x._config_section]['class_path']
             if bool(x._parameters):
                 plugin['attributes'] = x._parameters
+                self.logger.warning("plugins_html: x._parameters = {}".format(str(x._parameters)))
             else:
                 plugin['attributes'] = conf_plugins[x._config_section]
             plugin['metadata'] = x._metadata
-#            plugin['parameters'] = x._parameters
-#            self.logger.warning("plugins_html: plugin['metadata'] = {0}".format(plugin['metadata']))
             if isinstance(x, SmartPlugin):
                 plugin['smartplugin'] = True
                 plugin['instancename'] = x.get_instance_name()
                 plugin['multiinstance'] = x.is_multi_instance_capable()
                 plugin['version'] = x.get_version()
                 plugin['shortname'] = x.get_shortname()
+                plugin['classpath'] = x._classpath
                 plugin['classname'] = x.get_classname()
             else:
                 plugin['smartplugin'] = False
                 plugin['shortname'] = x._shortname
+                plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
+#            plugin['classpath'] = 'plugins.'+plugin['classname']
             plugins.append(plugin)
-#            self.logger.warning("plugins_html: plugin['...'] = {0}".format(str(plugin)))
-#        self.logger.warning("plugins_html: plugins = {0}".format(str(plugins)))
         plugins_sorted = sorted(plugins, key=lambda k: k['classpath'])
-#        self.logger.warning("plugins_html: plugins_sorted = {0}".format(str(plugins_sorted)))
 
         return self.render_template('plugins.html', plugins=plugins_sorted, lang=get_translation_lang(), mod_http=self._bs.mod_http)
 

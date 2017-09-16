@@ -57,7 +57,7 @@ class Mqtt(SmartPlugin):
 
     __plugif_CallbackTopics = {}         # for plugin interface
     __plugif_Sub = None
-    
+        
     
     def __init__(self, sh, 
             host='127.0.0.1', port='1883', qos='1',

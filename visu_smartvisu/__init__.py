@@ -40,7 +40,7 @@ import sys
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.3.2"
+    PLUGIN_VERSION="1.3.3"
     ALLOW_MULTIINSTANCE = False
 
 
@@ -77,6 +77,7 @@ class SmartVisu(SmartPlugin):
 #                self.logger.warning("Starting smartVISU handling")
                 if self._handle_widgets:
                     sv_iwdg = SmartVisuInstallWidgets(self._sh, self.smartvisu_dir)
+
                 if self._generate_pages:
                     svgen = SmartVisuGenerator(self._sh, self.smartvisu_dir, self.overwrite_templates, self.visu_style)
 #                self.logger.warning("Finished smartVISU handling")
@@ -444,10 +445,13 @@ class SmartVisuInstallWidgets:
         # copy widgets from plugin directories of configured plugins
         # read plungin.conf
         _conf = lib.config.parse(smarthome._plugin_conf)
+        self.logger.debug( "install_widgets: _conf = {0}".format(str(_conf)) )
         mypluginlist = []
         for plugin in _conf:
-    #        self.logger.warning("install_widgets: Plugin class {0}, path {1}".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
-            plgdir = _conf[plugin]['class_path']
+            self.logger.debug("install_widgets: Plugin section '{}', class_path = '{}', plugin_name = '{}'".format(plugin, str(_conf[plugin].get('class_path', '')), str(_conf[plugin].get('plugin_name', ''))))
+            plgdir = _conf[plugin].get('class_path', '')
+            if plgdir == '':
+                plgdir = 'plugins.' + _conf[plugin].get('plugin_name', '')
             if plgdir not in mypluginlist:
                 # process each plugin only once
                 mypluginlist.append( plgdir )
