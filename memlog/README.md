@@ -9,18 +9,36 @@ No special requirements.
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / yaml
 
 Use the plugin configuration to configure the in-memory logs.
 
 ```
 [memlog]
-   class_name = MemLog
-   class_path = plugins.memlog
-   name = alert
-#   mappings = time | thread | level | message
-#   maxlen = 50
-#   items = first.item.now | second.item.thread.info | third.item.level | fourth.item.msg
+    class_name = MemLog
+    class_path = plugins.memlog
+    name = alert
+#    mappings = time | thread | level | message
+#    maxlen = 50
+#    items = first.item.now | second.item.thread.info | third.item.level | fourth.item.msg
+```
+
+```
+memlog:
+    class_name: MemLog
+    class_path: plugins.memlog
+    name: alert
+    mappings:
+      - time
+      - thread
+      - level
+      - message
+#    maxlen: 50
+#    items
+#      - first.item.now
+#      - second.item.thread.info
+#      - third.item.level
+#      - fourth.item.msg
 ```
 
 This will register a in-memory log with the name "alert". This can be used to attach 
@@ -48,8 +66,8 @@ Defines the maximum amount of log entries in the in-memory log.
 Each time an item is updated using the `memlog` configuration setting, a log entry will
 be written using the list of items configured in this attribute as log values.
 
-When this is not configured, the default mapping values will be used the the associated
-item`s value will be logged.
+When this is not configured, the default mapping values will be used the associated
+item's value will be logged.
 
 ### items.conf
 
@@ -65,12 +83,19 @@ the log. Everything is logged with 'INFO' level.
 Simple item logging:
 
 ```
-# items/my.conf
-
+# .conf (deprecated)
 [some]
     [[item]]
         type = str
         memlog = alert
+```
+
+```
+# .yaml
+some:
+    item:
+        type: str
+        memlog: alert
 ```
 
 ### logic.conf
@@ -86,13 +111,14 @@ Defines the message to be logged. It configures a string which may contain place
 which got replaced by using the `format()` function.
 
 The following placeholders or object can be used in the message string:
-* logic - the logic object, e.g. logic.name for the logic's name
-* plugin - the memlog plugin instance object
-* by - the string containing the origin of logic trigger
-* source - the source
-* dest - thedestination
+* `logic` - the logic object, e.g. logic.name for the logic's name
+* `plugin` - the memlog plugin instance object
+* `by` - the string containing the origin of logic trigger
+* `source` - the source
+* `dest` - the destination
 
-The logic and plugin should always be available, the rest depends on the logic invocation/trigger.
+The `logic` and `plugin` placeholders are always available, the rest depends on the
+logic invocation/trigger.
 
 Example:
 
@@ -106,7 +132,7 @@ The `memlog()` method name is the plugin name which is used in the plugin config
 If you use another name, you need to use this name as method name too.
 
 ### memlog(entry)
-This log the given list of elements of `entry` parameter. The lsit should have the same amount
+This log the given list of elements of `entry` parameter. The list should have the same amount
 of items you used in the mapping parameter (see also the default for this value).
 
 `sh.memlog((self._sh.now(), threading.current_thread().name, 'INFO', 'Some information'))`
