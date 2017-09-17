@@ -529,17 +529,17 @@ class EnOcean(SmartPlugin):
                     elif(tx_eep == 'D2_01_07'):
                         if 'enocean_rx_id' in item.conf:
                             rx_id = int(item.conf['enocean_rx_id'],16)
-                            self.logger.info('enocean:  enocean_rx_id found')
+                            self.logger.debug('enocean:  enocean_rx_id found')
                         else:
                             rx_id=0
-                            self.logger.info('enocean:  NO enocean_rx_id found')
-                        if 'pulsewidth' in item.conf:
-                            pulsew = float(item.conf['pulsewidth'])
-                            self.logger.info('enocean:  pulsewidth found')
+                            self.logger.debug('enocean:  NO enocean_rx_id found')
+                        if 'enocean_pulsewidth' in item.conf:
+                            pulsew = float(item.conf['enocean_pulsewidth'])
+                            self.logger.debug('enocean:  pulsewidth found')
                         else:
                             pulsew=0
-                            self.logger.info('enocean:  NO pulsewidth found')
-                        self.logger.info('enocean: item is D2_01_07_01 type')
+                            self.logger.debug('enocean:  NO pulsewidth found')
+                        self.logger.debug('enocean: item is D2_01_07_01 type')
                         self.send_switch_D2(id_offset, rx_id, pulsew, item())
                         self.logger.debug('enocean: sent switch command for D2 VLD')
                     elif(tx_eep == 'A5_38_08_01'):
