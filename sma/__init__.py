@@ -205,6 +205,9 @@ class SMA(SmartPlugin):
         self._inv_bt_addr_le.reverse()
         self._plugin_active_item = None
 
+        if not hasattr(socket, 'AF_BLUETOOTH'):
+            raise Exception("Python socket module does not support Bluetooth - see README.md how to install")
+
     def _update_values(self):
         #logger.warning("sma: signal strength = {}%%".format(self._inv_get_bt_signal_strength()))
         self._cmd_lock.acquire()
