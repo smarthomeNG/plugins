@@ -1,0 +1,15 @@
+{
+	"Logik-Editor": "Editeur de Logiques",
+	"für SmartHomeNG": "pour SmartHomeNG",
+	
+	"_button": {
+		"Aktivieren": "Activer",
+		"Beenden" : "Terminer",
+		"Speichern" : "Sauvegarder",
+		"Blöcke speichern" : "Enregistrer les blocs",
+		"Änderungen verwerfen" : "Annuler modifications",
+		"Leeren" : "Vider",
+		"Schließen": "Fermer"
+	}
+
+}
