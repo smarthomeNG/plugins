@@ -574,13 +574,13 @@ class KNX(lib.connection.Client,SmartPlugin):
     - adresses that do not react upon requests
     - adresses that can't satisfy cache requests
     """
-    def enable_stats(sef):
+    def enable_stats(self):
         """
         Enables the tracking of KNX telegrams during runtime of SmartHomeNG
         """
         self.enable_stats = True
 
-    def disable_stats(sef):
+    def disable_stats(self):
         """
         Disables the tracking of KNX telegrams during runtime of SmartHomeNG
         It might be a good idea to clear your stats afterwards with clear_stats()
