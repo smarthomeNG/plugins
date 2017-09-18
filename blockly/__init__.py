@@ -225,9 +225,7 @@ class WebInterface:
 
     def _DynToolbox(self, sh):
         mytree = self._build_tree()
-#        self.logger.info("_DynToolbox #  xml -> '{}'".format( "<sep></sep>\n" + str(mytree)))
-#        return "<sep></sep>\n" + mytree
-        return mytree
+        return mytree + "<sep>-</sep>\n"
 
 
     def _build_tree(self):
@@ -240,34 +238,49 @@ class WebInterface:
 
         xml = '\n'
         for item in toplevelitems:
-            xml += self.build_treelevel(item)
+            xml += self._build_treelevel(item)
 #        self.logger.info("log_tree #  xml -> '{}'".format(str(xml)))
         return xml
                 
 
-    def build_treelevel(self, child, parent='', level=0):
-        childitems = sorted(child.return_children(), key=lambda k: str.lower(k['_path']), reverse=False)
-        prestring = ''
-        if level > 0:
-            prestring = ''.ljust(5*(level-1)) + ' +-- '
-#        self.logger.info("log_treelevel #  {}{} -> '{}'".format(prestring, str(child._path), str(childitems)))
+    def _build_treelevel(self, item, parent='', level=0):
+        """
+        Builds one tree level of the items
+        
+        This methods calls itself recursively while there are further child items
+        """
+        childitems = sorted(item.return_children(), key=lambda k: str.lower(k['_path']), reverse=False)
 
-        name = remove_prefix(child._path, parent+'.')
+        name = remove_prefix(item._path, parent+'.')
         if childitems != []:
-            xml= ''.ljust(3*(level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems))
+            xml = ''
+            if (item.type() != 'foo') or (item() != None):
+#                self.logger.info("item._path = '{}', item.type() = '{}', item() = '{}', childitems = '{}'".format(item._path, item.type(), str(item()), childitems))
+                xml += ''.ljust(3*(level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems)+1)
+                xml += self._build_leaf(name, item, level+1)
+            else:
+                xml += ''.ljust(3*(level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems))
             for grandchild in childitems:
-                xml += self.build_treelevel(grandchild, child._path, level+1)
+                xml += self._build_treelevel(grandchild, item._path, level+1)
 
-            xml += ''.ljust(3*(level)) + '</category>  # name={}\n'.format(child._path)
+            xml += ''.ljust(3*(level)) + '</category>  # name={}\n'.format(item._path)
         else:
-            n = child._path.replace('.','_')
-            xml = ''.ljust(3*(level)) + '<block type="sh_item_obj" name="' + name + '">  #'+str(parent)+'\n'
-            xml += ''.ljust(3*(level+1)) + '<field name="N">' + n + '</field>>\n'
-            xml += ''.ljust(3*(level+1)) + '<field name="P">' + child._path + '</field>>\n'
-            xml += ''.ljust(3*(level+1)) + '<field name="T">' + child.type() + '</field>>\n'
-            xml += ''.ljust(3*(level)) + '</block>\n'
+            xml = self._build_leaf(name, item, level)
         return xml
 
+
+    def _build_leaf(self, name, item, level=0):
+        """
+        Builds the leaf information for an entry in the item tree
+        """
+        n = item._path.title().replace('.','_')
+        xml = ''.ljust(3*(level)) + '<block type="sh_item_obj" name="' + name + '">\n'
+        xml += ''.ljust(3*(level+1)) + '<field name="N">' + n + '</field>>\n'
+        xml += ''.ljust(3*(level+1)) + '<field name="P">' + item._path + '</field>>\n'
+        xml += ''.ljust(3*(level+1)) + '<field name="T">' + item.type() + '</field>>\n'
+        xml += ''.ljust(3*(level)) + '</block>\n'
+        return xml
+        
 
     @cherrypy.expose
     def logics_blockly_load(self):
