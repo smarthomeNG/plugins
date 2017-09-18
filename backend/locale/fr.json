@@ -2,7 +2,7 @@
 	"Scheduler": "Planificateur",
 	"Logik": "Logique",
 	"Systemlogiken": "Logiques système",
-	"Nutzerlogiken": "Nutzerlogiken",
+	"Nutzerlogiken": "Logiques utilisateur",
 	"Neue Logiken (nicht geladen)": "Nouvelles logiques (non encore chargées)",
 	"nächste Ausführung": "Prochaine exécution",
 	"Cycle": "Cycle",
@@ -38,7 +38,7 @@
 	
 	"Evaluation und Trigger": "Configuration de l'initialisation, de l'évaluation et des déclencheurs",
 	"Plugin spezifische Attribute": "Attributs spécifiques à l'extension",
-	"Plugin Metadaten": "Plugin Metadaten",
+	"Plugin Metadaten": "Métadonnées de l'extension",
 	"Verbundene Logiken": "Logiques connexes",
 	"Verbundene Trigger": "Déclencheurs connexes",
 	"Willkommen im Backend von": "Bienvenue au Backend de",
@@ -119,10 +119,10 @@
 	"Übersicht": "Aperçu",
 	"Eingabe im .CONF Format": "Entrée en format .CONF",
 	"Ergebnis im .YAML Format": "Résultat en format .YAML",
-	"Wartung": "Wartung",
-	"Tester": "Tester",
-	"Beschreibung": "Beschreibung",
-	"Documentation": "Dokumentation",
+	"Wartung": "Maintenance",
+	"Tester": "Testeur",
+	"Beschreibung": "Description",
+	"Documentation": "Documentation",
 	"Support": "Support",
 
 	"_items": {
