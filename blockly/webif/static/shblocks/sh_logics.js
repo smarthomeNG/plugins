@@ -166,6 +166,7 @@ Blockly.Python['sh_logic_main'] = function(block)
   code += '"""\n' + 'Logic '+ logicname + '.py\n';
   code += '\n' + text_comment + '\n';
   
+  code += "\nTHIS FILE WAS GENERATED FROM A BLOCKY LOGIC WORKSHEET - DON'T EDIT THIS FILE, use the Blockly plugin instead !\n" 
   if (next[1] != '') {
     var trigger_comment = trigger_block[0].getFieldValue('COMMENT');
     code += '\nto be configured in /etc/logic.yaml:\n';
@@ -173,9 +174,16 @@ Blockly.Python['sh_logic_main'] = function(block)
     code += "    filename: "+logicname+".py\n";
     code += next[1];
   };
-
   code += '"""\n';
-  code += "if (True):\n";
+
+  var active = block.getFieldValue('ACTIVE');
+  if (active == 'TRUE') {
+    active = 'True';
+  } else {
+    active = 'False';
+  };
+  code += "logic_active = "+ active +"\n";
+  code += "if (logic_active == True):\n";
   //code += "  logger.info('ITEM TRIGGER id: \{\}, value: \{\}'.format(logic.name, trigger['value'] )) \n";
   code += branch;
   return code + "\n\n";
