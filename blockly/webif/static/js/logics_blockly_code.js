@@ -79,7 +79,7 @@ Code.saveBlocks = function() {
             //    $("#test").html(response);
             }
         });
-  Code.wait(1000);
+  Code.wait(2000);
 };
 
 
