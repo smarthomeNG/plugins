@@ -256,8 +256,8 @@ class WebInterface:
             xml = ''
             if (item.type() != 'foo') or (item() != None):
 #                self.logger.info("item._path = '{}', item.type() = '{}', item() = '{}', childitems = '{}'".format(item._path, item.type(), str(item()), childitems))
-                xml += ''.ljust(3*(level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems)+1)
                 xml += self._build_leaf(name, item, level+1)
+                xml += ''.ljust(3*(level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems)+1)
             else:
                 xml += ''.ljust(3*(level)) + '<category name="{0} ({1})">\n'.format(name, len(childitems))
             for grandchild in childitems:
@@ -283,23 +283,22 @@ class WebInterface:
         
 
     @cherrypy.expose
-    def logics_blockly_load(self):
-        fn_xml = self._sh._logic_dir + "blockly_logics.xml"
-        self.logger.warning("logics_blockly_load: fn_xml = {}".format(fn_xml))
+    def blockly_load_logic(self):
+        fn_xml = self._sh._logic_dir + "/blockly_logics.xml"
+        self.logger.warning("blockly_load_logic: fn_xml = {}".format(fn_xml))
         return serve_file(fn_xml, content_type='application/xml')
 
+
     @cherrypy.expose
-    def logics_blockly_save(self, py, xml):
+    def blockly_save_logic(self, py, xml):
         self._pycode = py
         self._xmldata = xml
-        fn_py = self._sh._logic_dir + "blockly_logics.py"
-        fn_xml = self._sh._logic_dir + "blockly_logics.xml"
-        self.logger.debug(
-            "Blockly: logics_html: SAVE PY blockly logic = {0}\n '{1}'".format(fn_py, py))
+        fn_py = self._sh._logic_dir + "/blockly_logics.py"
+        fn_xml = self._sh._logic_dir + "/blockly_logics.xml"
+        self.logger.debug("blockly_save_logic: SAVE PY blockly logic = {0}\n '{1}'".format(fn_py, py))
         with open(fn_py, 'w') as fpy:
             fpy.write(py)
-        self.logger.debug(
-            "Blockly: logics_html: SAVE XML blockly logic = {0}\n '{1}'".format(fn_xml, xml))
+        self.logger.debug("blockly_save_logic: SAVE XML blockly logic = {0}\n '{1}'".format(fn_xml, xml))
         with open(fn_xml, 'w') as fxml:
             fxml.write(xml)
 

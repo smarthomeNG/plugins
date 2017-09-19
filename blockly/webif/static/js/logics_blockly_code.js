@@ -24,7 +24,7 @@ Code.selected = 'blocks';
  *
  */
 Code.loadBlocks = function() {
-  var request = $.ajax({'url': 'logics_blockly_load', dataType: 'text'});
+  var request = $.ajax({'url': 'blockly_load_logic', dataType: 'text'});
   // we get the XML representation of all the blockly logics from the backend
   request.done(function(response)
   {
@@ -55,6 +55,13 @@ Code.renderContent = function() {
 	//}
 };
 
+Code.wait = function (ms){
+   var start = new Date().getTime();
+   var end = start;
+   while(end < start + ms) {
+     end = new Date().getTime();
+  }
+}
 
 /**
  * Save XML and PYTHON code to file on backend server.
@@ -64,7 +71,7 @@ Code.saveBlocks = function() {
   var pycode = Blockly.Python.workspaceToCode(Code.workspace);
   var xmldom = Blockly.Xml.workspaceToDom(Code.workspace);
   var xmltxt = Blockly.Xml.domToText(xmldom);
-  $.ajax({  url: "logics_blockly_save",
+  $.ajax({  url: "blockly_save_logic",
             type: "POST",
             data: {xml: xmltxt, py: pycode },
             success: function(response) {
@@ -72,6 +79,7 @@ Code.saveBlocks = function() {
             //    $("#test").html(response);
             }
         });
+  Code.wait(1000);
 };
 
 

@@ -18,13 +18,33 @@ Blockly.Blocks['shlogic_by'] = {
     this.setHelpUrl('http://www.example.com/');
     this.setColour(210);
     this.appendDummyInput()
-        .appendField("Auslöser (trigger by)");
+        .appendField("Auslöser (trigger['by'])");
     this.setOutput(true);
     this.setTooltip('');
   }
 };
 Blockly.Python['shlogic_by'] = function(block) {
   var code = "trigger['by']";
+  // TODO: Change ORDER_NONE to the correct strength.
+  return [code, Blockly.Python.ORDER_NONE];
+};
+
+
+/**
+ * https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#umj2u6
+ */
+Blockly.Blocks['shlogic_value'] = {
+  init: function() {
+    this.setHelpUrl('http://www.example.com/');
+    this.setColour(210);
+    this.appendDummyInput()
+        .appendField("Auslöser (trigger['value'])");
+    this.setOutput(true);
+    this.setTooltip('');
+  }
+};
+Blockly.Python['shlogic_value'] = function(block) {
+  var code = "trigger['value']";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
 };
@@ -38,7 +58,7 @@ Blockly.Blocks['shlogic_source'] = {
     this.setHelpUrl('http://www.example.com/');
     this.setColour(210);
     this.appendDummyInput()
-        .appendField("Trigger Source");
+        .appendField("Auslöser (trigger['Source'])");
     this.setOutput(true);
     this.setTooltip('');
   }
@@ -58,7 +78,7 @@ Blockly.Blocks['shlogic_dest'] = {
     this.setHelpUrl('http://www.example.com/');
     this.setColour(210);
     this.appendDummyInput()
-        .appendField("Trigger Dest");
+        .appendField("Auslöser (trigger['Dest'])");
     this.setOutput(true);
     this.setTooltip('');
   }
@@ -71,28 +91,9 @@ Blockly.Python['shlogic_dest'] = function(block) {
 
 
 /**
- * https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#umj2u6
- */
-Blockly.Blocks['shlogic_value'] = {
-  init: function() {
-    this.setHelpUrl('http://www.example.com/');
-    this.setColour(210);
-    this.appendDummyInput()
-        .appendField("Trigger Value");
-    this.setOutput(true);
-    this.setTooltip('');
-  }
-};
-Blockly.Python['shlogic_value'] = function(block) {
-  var code = "trigger['value']";
-  // TODO: Change ORDER_NONE to the correct strength.
-  return [code, Blockly.Python.ORDER_NONE];
-};
-
-
-/**
  * https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#r74ibg
  */
+/**
 Blockly.Blocks['shlogic_trigger'] = {
   init: function() {
     this.setHelpUrl('http://www.example.com/');
@@ -112,4 +113,5 @@ Blockly.Python['shlogic_trigger'] = function(block) {
   var code = '...';
   return code;
 };
-
+ */
+ 

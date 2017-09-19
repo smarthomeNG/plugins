@@ -1,11 +1,17 @@
  <xml id="toolbox" style="display: none">
-    <category name="SmartHomeNG Trigger">
+    <category name="SmartHomeNG Logic">
+      <block type="sh_logic_main"></block>
       <block type="sh_trigger_item">
           <value name="TRIG_ITEM"></value>
       </block>
       <block type="sh_trigger_cycle"></block>
       <block type="sh_trigger_sun"></block>
       <block type="sh_trigger_daily"></block>
+
+      <block type="shlogic_by"></block>
+      <block type="shlogic_value"></block>
+      <block type="shlogic_source"></block>
+      <block type="shlogic_dest"></block>
     </category>
 
     <category name="SmartHomeNG Items">
@@ -16,12 +22,14 @@
     {{ dyn_sh_toolbox }}
     </category>
 
-      <category name="Library">
+      <category name="SmartHomeNG Library">
         <category name="Logic">
             <block type="shlogic_by"></block>
             <block type="shlogic_source"></block>
             <block type="shlogic_dest"></block>
+<!--
             <block type="shlogic_trigger"></block>
+-->
         </category>
         <category name="Time">
             <block type="shtime_now"></block>
