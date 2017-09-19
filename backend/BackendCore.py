@@ -123,7 +123,9 @@ class Backend:
 
         plugin_names = []
         for plugin in _conf:
-            plugin_name = _conf[plugin]['class_path'].strip()
+            plugin_name = _conf[plugin].get('class_path', '').strip()
+            if plugin_name == '':
+                plugin_name =  + 'plugins.' + _conf[plugin].get('plugin_name', '').strip() 
             if not plugin_name in plugin_names:  # only unique plugin names, e.g. if multiinstance is used
                 plugin_names.append(plugin_name)
 
