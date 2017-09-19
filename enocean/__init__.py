@@ -441,7 +441,7 @@ class EnOcean(SmartPlugin):
 
     def _send_UTE_response(self, data, optional):
         choice = data[0]
-        #payload = data[1:-5]
+        payload = data[1:-5]
         #sender_id = int.from_bytes(data[-5:-1], byteorder='big', signed=False)
         #status = data[-1]
         #repeater_cnt = status & 0x0F
@@ -526,6 +526,22 @@ class EnOcean(SmartPlugin):
                         self.logger.debug('enocean: item is A5_38_08_03 type')
                         self.send_dim(id_offset, item(), 0)
                         self.logger.debug('enocean: sent dim command')
+                    elif(tx_eep == 'D2_01_07'):
+                        if 'enocean_rx_id' in item.conf:
+                            rx_id = int(item.conf['enocean_rx_id'],16)
+                            self.logger.debug('enocean:  enocean_rx_id found')
+                        else:
+                            rx_id=0
+                            self.logger.debug('enocean:  NO enocean_rx_id found')
+                        if 'enocean_pulsewidth' in item.conf:
+                            pulsew = float(item.conf['enocean_pulsewidth'])
+                            self.logger.debug('enocean:  pulsewidth found')
+                        else:
+                            pulsew=0
+                            self.logger.debug('enocean:  NO pulsewidth found')
+                        self.logger.debug('enocean: item is D2_01_07_01 type')
+                        self.send_switch_D2(id_offset, rx_id, pulsew, item())
+                        self.logger.debug('enocean: sent switch command for D2 VLD')
                     elif(tx_eep == 'A5_38_08_01'):
                         self.logger.debug('enocean: item is A5_38_08_01 type')
                         self.send_switch(id_offset, item(), 0)
@@ -746,6 +762,28 @@ class EnOcean(SmartPlugin):
         else:
             self.logger.error("enocean: sending command A5_38_08: error")
 
+    def send_switch_D2(self, id_offset=0, rx_id=0, pulsew=0, on=0):
+        if (id_offset < 0) or (id_offset > 127):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        if (rx_id < 0) or (rx_id > 0xFFFFFFFF):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        #self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x01],[0x03, 0xFF, 0xBA, 0xD0, 0x00, 0xFF, 0x0])
+        self.logger.info("enocean: sending switch command D2_01_07")
+        if (on == 0):
+            self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x00],[0x03, rx_id, 0xFF, 0x0])
+        elif (on == 1):
+            self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x01],[0x03, rx_id, 0xFF, 0x0])
+            if (pulsew  > 0):
+                time.sleep(pulsew)
+                self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x00],[0x03, rx_id, 0xFF, 0x0])
+        else:
+            self.logger.error("enocean: sending command D2_01_07: error")
+        
     def send_learn_dim(self, id_offset=0):
         if (id_offset < 0) or (id_offset > 127):
             self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
