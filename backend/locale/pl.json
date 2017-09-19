@@ -2,7 +2,7 @@
 	"Scheduler": "Planista",
 	"Logik": "Logika",
 	"Systemlogiken": "Logika systemowa",
-	"Nutzerlogiken": "Nutzerlogiken",
+	"Nutzerlogiken": "Logika użytkownika",
 	"nächste Ausführung": "Następne wykonanie",
 	"Cycle": "Cykl",
 	"Crontab": "Harmonogram",
@@ -35,7 +35,7 @@
 	
 	"Evaluation und Trigger": "Inicjalizacja, ewaluacja i wyzwalacze",
 	"Plugin spezifische Attribute": "Konfiguracja pluginów",
-	"Plugin Metadaten": "Plugin Metadaten",
+	"Plugin Metadaten": "Metadane pluginu",
 	"Verbundene Logiken": "Powiązana Logika",
 	"Verbundene Trigger": "Powiązane wyzwalacze",
 	"Willkommen im Backend von": "Witaj w backendzie",
@@ -113,14 +113,14 @@
 	"SmartHomeNG Version": "Wersja SmartHomeNG",
 	"Watch_Items": "Obserwowane Itemy",
 	"Anforderungen": "Wymagania",
-	"Übersicht": "Badanie",
-	"Eingabe im .CONF Format": "Eingabe im .CONF Format",
-	"Ergebnis im .YAML Format": "Ergebnis im .YAML Format"
-	"Wartung": "Wartung",
+	"Übersicht": "Podsumowanie",
+	"Eingabe im .CONF Format": "Wejście w formacie .CONF",
+	"Ergebnis im .YAML Format": "Wyjście w formacie .YAML",
+	"Wartung": "Opiekun",
 	"Tester": "Tester",
-	"Beschreibung": "Beschreibung",
-	"Documentation": "Dokumentation",
-	"Support": "Support",
+	"Beschreibung": "Opis",
+	"Documentation": "Dokumentacja",
+	"Support": "Wsparcie",
 
 	"_items": {
 		"path": "ścieżka",
@@ -178,8 +178,8 @@
 		"Beenden" : "Stop",
 		"Speichern" : "Zapisz",
 		"Speichern_und_Neu_Laden" : "Zapisz i przeładuj",
-		"Löschen" : "Skasuj"
-		"Konvertieren": "Konvertieren"
+		"Löschen" : "Skasuj",
+		"Konvertieren": "Konwertuj"
 	},
 	
 	"_menu": {
@@ -193,6 +193,6 @@
 		"Threads": "Wątki",
 		"Visu": "Visu",
 		"Disclosure": "Deklaracja",
-		"CONF-YAML Konverter": "CONF-YAML Konverter"
+		"CONF-YAML Konverter": "Konwerter CONF-YAML"
 	}
 }
