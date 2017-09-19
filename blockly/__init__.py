@@ -234,7 +234,8 @@ class WebInterface:
         allitems = sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         for item in allitems:
             if item._path.find('.') == -1:
-                toplevelitems.append(item)
+                if item._path not in ['env_daily', 'env_init', 'env_loc', 'env_stat']:
+                    toplevelitems.append(item)
 
         xml = '\n'
         for item in toplevelitems:
@@ -273,7 +274,8 @@ class WebInterface:
         """
         Builds the leaf information for an entry in the item tree
         """
-        n = item._path.title().replace('.','_')
+#        n = item._path.title().replace('.','_')
+        n = item._path
         xml = ''.ljust(3*(level)) + '<block type="sh_item_obj" name="' + name + '">\n'
         xml += ''.ljust(3*(level+1)) + '<field name="N">' + n + '</field>>\n'
         xml += ''.ljust(3*(level+1)) + '<field name="P">' + item._path + '</field>>\n'
