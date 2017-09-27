@@ -14,7 +14,7 @@ Hint2: You can also use a running owserver on another host.
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated)
 
 ```
 [ow]
@@ -22,6 +22,15 @@ Hint2: You can also use a running owserver on another host.
     class_path = plugins.onewire
 #    host = 127.0.0.1
 #    port = 4304
+```
+### plugin.yaml
+
+```
+ow:
+    class_name: OneWire
+    class_path: plugins.onewire
+#    host: 127.0.0.1
+#    port: 4304
 ```
 
 This plugins is looking by default for the owserver on 127.0.0.1 port 4304. You could change this in your plugin.conf.
@@ -32,7 +41,7 @@ Advanced options in plugin.conf. Please be careful.
 * 'io_wait' = timeperiod between two requests of 1-wire I/O chip. Default 5 seconds.
 * 'button_wait' = timeperiod between two requests of ibutton-busmaster. Default 0.5 seconds.
 
-### items.conf
+### Item config
 
 #### name
 This is a name for the defined sensor information.
@@ -73,6 +82,7 @@ Currently the following 1wire devices are tested by users:
 * DATANAB DS2438 (rugged temp/hum)
 * D2PC (dual I/O DS2406)
 
+#### item.conf example (deprecated)
 ```
 [test-1wire]
     [[bm-ibutton]]
@@ -118,6 +128,54 @@ Currently the following 1wire devices are tested by users:
         type = num
         ow_addr = 26.A9D76B010000
         ow_sensor = V
+```
+
+#### item.yaml example
+```
+test-1wire:
+    bm-ibutton:
+        name: ibutton busmaster to identify ibutton buses
+        type: bool
+        ow_addr: '81.75172D000000'
+        ow_sensor: BM
+    ib-guest:
+        name: ibutton guest
+        type: bool
+        ow_addr: '01.787D58130000'
+        ow_sensor: B
+    temp_outside:
+        name: temperature outside
+        type: num
+        ow_addr: '28.8DEAAA030000'
+        # could be T, T9, T10, T11, T12
+        ow_sensor: T
+    lux_outside:
+        name: lux / lightintensity outside
+        type: num
+        ow_addr: '26.8DD76B010000'
+        ow_sensor: L
+    humidity_outside:
+        name: humidity outside
+        type: num
+        ow_addr: '26.8DD76B010000'
+        ow_sensor: H
+    input_water_leak:
+        name: input water leak detection
+        type: bool
+        ow_addr: '3A.C6CC07000000'
+        # could be IA, IB
+        ow_sensor: IA
+    output_led1:
+        name: output led1 keys
+        type: bool
+        ow_addr: '3A.C6CC07000000'
+        # could be OA, OB
+        ow_sensor: OB
+    voltage_sensor:
+        name: voltage of the sensor input (0-10V)
+        type: num
+        ow_addr: '26.A9D76B010000'
+        ow_sensor: V
 ```
 
 ## Functions
