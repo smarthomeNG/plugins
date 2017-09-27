@@ -19,7 +19,7 @@ parameters:
         description:
             de: 'owserver Hostnamen oder IP Adresse'
             en: 'owserver hostname or ip address'
-            fr: 'Nom de l\'hôte ou adresse IP de l\'owserver'
+            fr: "Nom de l'hôte ou adresse IP de l'owserver"
 
     port:
         type: int
@@ -27,7 +27,7 @@ parameters:
         description:
             de: 'owserver Port'
             en: 'owserver port'
-            fr: 'Port de l\'owserver'
+            fr: "Port de l'owserver"
     
 item_attributes:
     name:
@@ -40,9 +40,9 @@ item_attributes:
     type:
         type: str
         description:
-            de: 'Format der Sensordaten: \'num\' oder \'bool\''
-            en: 'Sensor data format:  \'num\' or \'bool\''
-            fr: 'Format de données du capteur:  \'num\' ou \'bool\''
+            de: "Format der Sensordaten: 'num' oder 'bool'"
+            en: "Sensor data format:  'num' or 'bool'"
+            fr: "Format de données du capteur:  'num' ou 'bool'"
 
     ow_addr:
         type: str
@@ -57,3 +57,4 @@ item_attributes:
             de: 'Sensortyp. Unterstützte Typen sind in der Plugin Readme zu finden'
             en: 'Sensor type. See plugin readme for supported types'
             fr: 'Type du capteur. Voir dans readme du plugin pour formats supportés'
+
