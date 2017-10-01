@@ -54,7 +54,7 @@ class xbmc(lib.connection.Client):
 
     _notification_time = 10000
     _listen_keys = ['volume', 'mute', 'title', 'media', 'state']
-    _send_keys = {'volume': 'Application.SetVolume', 'mute': 'Application.SetMute', 'shutdown': 'System.Shutdown'}
+    _send_keys = {'volume': 'Application.SetVolume', 'mute': 'Application.SetMute'}
 
     def __init__(self, smarthome, item):
         if 'xbmc_port' in item.conf:
@@ -113,7 +113,7 @@ class xbmc(lib.connection.Client):
         else:
             data = {"jsonrpc": "2.0", "id": id, "method": method}
         self._reply_lock.acquire()
-        logger.debug("XBMC sending: {0}".format(json.dumps(data, separators=(',', ':'))))
+        #logger.debug("XBMC sending: {0}".format(json.dumps(data, separators=(',', ':'))))
         self.send((json.dumps(data, separators=(',', ':')) + '\r\n').encode())
         if wait:
             self._reply_lock.wait(2)
@@ -129,7 +129,7 @@ class xbmc(lib.connection.Client):
 
     def found_balance(self, data):
         event = json.loads(data.decode())
-        logger.debug("XBMC receiving: {0}".format(event))
+        #logger.debug("XBMC receiving: {0}".format(event))
         if 'id' in event:
             if event['id'] == self._rid:
                 self._rid = None
