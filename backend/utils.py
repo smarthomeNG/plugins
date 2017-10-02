@@ -28,6 +28,8 @@ import os
 import collections
 from collections import OrderedDict
 
+from lib.logic import Logics
+
 
 # Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
 # Methoden einer Klasse zum laufen bekam
@@ -48,7 +50,8 @@ def is_userlogic(sh, logic):
     
     This function extends the jinja2 template engine
     """
-    return os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics'
+#    return os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics'
+    return os.path.basename(os.path.dirname(Logics.return_logic(logic).filename)) == 'logics'
 
 
 translation_dict = {}

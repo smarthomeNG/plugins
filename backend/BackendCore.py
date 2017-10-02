@@ -34,7 +34,8 @@ import sys
 import threading
 import os
 import lib.config
-import lib.logic   # zum Test
+from lib.logic import Logics
+import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.model.smartplugin import SmartPlugin
 from .utils import *
 
@@ -590,19 +591,30 @@ class Backend:
 
         # create a list of dicts, where each dict contains the information for one logic
         logics = []
-        for ln in self._sh.return_logics():
+        import time
+        for ln in Logics.return_loaded_logics():
+            anfangfor = time.time()
+            thislogic = Logics.return_logic(ln)
+#            self.logger.info("logics_html: name {} Start".format(thislogic.name))
             logic = dict()
-            logic['name'] = self._sh.return_logic(ln).name
-            logic['enabled'] = self._sh.return_logic(ln).enabled
-            logic['filename'] = self._sh.return_logic(ln).filename
+            logic['name'] = thislogic.name
+            logic['enabled'] = thislogic.enabled
+            logic['logictype'] = Logics.return_logictype(logic['name'])
+            if logic['logictype'] == 'Python':
+                logic['filename'] = thislogic.pathname
+            elif logic['logictype'] == 'Blockly':
+                logic['filename'] = os.path.splitext(thislogic.pathname)[0] + '.blockly'
+            else:
+                logic['filename'] = ''
             logic['userlogic'] = (os.path.basename(os.path.dirname(logic['filename'])) == 'logics')
-            logic['crontab'] = self._sh.return_logic(ln).crontab
-            logic['cycle'] = self._sh.return_logic(ln).cycle
+            logic['crontab'] = thislogic.crontab
+            logic['cycle'] = thislogic.cycle
             logic['watch_items'] = []
-            if hasattr(self._sh.return_logic(ln), 'watch_item'):
-                logic['watch_items'] = self._sh.return_logic(ln).watch_item
+            if hasattr(thislogic, 'watch_item'):
+                logic['watch_items'] = thislogic.watch_item
             logics.append(logic)
-#            self.logger.warning("Backend: logics_html: - logic = {}, enabled = {}, filename = {}, userlogic = {}, watch_items = {}".format(str(logic['name']), str(logic['enabled']), str(logic['filename']), str(logic['userlogic']), str(logic['watch_items'])) )
+#            self.logger.info("logics_html: name {} Start".format(thislogic.name))
+            self.logger.debug("Backend: logics_html: - logic = {}, enabled = {}, , logictype = {}, filename = {}, userlogic = {}, watch_items = {}".format(str(logic['name']), str(logic['enabled']), str(logic['logictype']), str(logic['filename']), str(logic['userlogic']), str(logic['watch_items'])) )
 
         newlogics = sorted(self.logic_findnew(logics), key=lambda k: k['name'])
 
@@ -617,7 +629,8 @@ class Backend:
         """
         # process actions triggerd by buttons on the web page
         self.process_logics_action(logicname, trigger, reload, enable, savereload, logics_code, None, None, None)
-        mylogic = self._sh.return_logic(logicname)
+#        mylogic = self._sh.return_logic(logicname)
+        mylogic = Logics.return_logic(logicname)
 
         fobj = open(file_path)
         file_lines = []
@@ -672,8 +685,10 @@ class Backend:
     def logic_enable(self, logic):
         self.logger.debug("Backend: logics[_view]_html: Enable/Disable logic = '{0}'".format(logic))
         if self.updates_allowed:
-            if logic in self._sh.return_logics():
-                mylogic = self._sh.return_logic(logic)
+#            if logic in self._sh.return_logics():
+            if logic in Logics.return_loaded_logics():
+#                mylogic = self._sh.return_logic(logic)
+                mylogic = Logics.return_logic(logic)
                 if mylogic.enabled:
                     mylogic.disable()
                 else:
@@ -687,7 +702,8 @@ class Backend:
     def logic_trigger(self, logic):
         self.logger.debug("Backend: logics[_view]_html: Trigger logic = '{0}'".format(logic))
         if self.updates_allowed:
-            if logic in self._sh.return_logics():
+#            if logic in self._sh.return_logics():
+            if logic in Logics.return_loaded_logics():
                 self._sh.trigger(logic, by='Backend')
             else:
                 self.logger.warning("Backend: Logic '{0}' not found".format(logic))
@@ -697,7 +713,8 @@ class Backend:
 
     def logic_unload(self, logic):
         self.logger.warning("Backend: logics[_view]_html: Unload logic = '{0}'".format(logic))
-        mylogic = self._sh.return_logic(logic)
+#        mylogic = self._sh.return_logic(logic)
+        mylogic = Logics.return_logic(logic)
         mylogic.enabled = False
         mylogic.cycle = None
         mylogic.crontab = None
@@ -744,8 +761,10 @@ class Backend:
         self.logger.debug("Backend: logics_view_html: Save logic = '{0}'".format(logic))
 
         if self.updates_allowed:
-            if logic in self._sh.return_logics():
-                mylogic = self._sh.return_logic(logic)
+#            if logic in self._sh.return_logics():
+            if logic in Logics.return_loaded_logics():
+#                mylogic = self._sh.return_logic(logic)
+                mylogic = Logics.return_logic(logic)
 
                 f = open(mylogic.filename, 'w')
                 f.write(logics_code)
@@ -773,7 +792,7 @@ class Backend:
         _config = {}
         _config.update(self._sh._logics._read_logics(self._sh._logic_conf_basename, self._sh._logic_dir))
 
-#        self.logger.warning("Backend (logic_findnew): _config = '{}'".format(_config))
+        self.logger.warning("Backend (logic_findnew): _config = '{}'".format(_config))
         newlogics = []
         for configlogic in _config:
             found = False
@@ -781,8 +800,9 @@ class Backend:
                 if configlogic == str(l['name']):
                     found = True
             if not found:
-
-                newlogics.append({'name': configlogic, 'filename': _config[configlogic]['filename'] })
+                self.logger.warning("Backend (logic_findnew): name = {}".format(configlogic))
+                if _config[configlogic] != 'None':
+                    newlogics.append({'name': configlogic, 'filename': _config[configlogic]['filename'] })
 #        self.logger.warning("Backend (logic_findnew): newlogics = '{}'".format(newlogics))
         return newlogics
 
@@ -790,8 +810,10 @@ class Backend:
     def logic_reloadcode(self, logic):
         self.logger.debug("Backend: logics[_view]_html: Reload logic = '{0}'".format(logic))
         if self.updates_allowed:
-            if logic in self._sh.return_logics():
-                mylogic = self._sh.return_logic(logic)
+#            if logic in self._sh.return_logics():
+            if logic in Logics.return_loaded_logics():
+#                mylogic = self._sh.return_logic(logic)
+                mylogic = Logics.return_logic(logic)
                 self.logger.info("Backend: logics_html: Reload logic='{0}', filename = '{1}'".format(logic,
                                                                                                      os.path.basename(
                                                                                                          mylogic.filename)))
