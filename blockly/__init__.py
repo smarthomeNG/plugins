@@ -191,6 +191,7 @@ class WebInterface:
 
     logicname = ''
     logic_filename = ''
+    cmd = ''
         
     
     def __init__(self, webif_dir, plugin):
@@ -267,7 +268,9 @@ class WebInterface:
         cherrypy.lib.caching.expires(0)
 
         if cmd == '' and filename == '' and logicname == '':
-            cmd = self.cmd
+#            cmd = self.cmd
+            cmd = 'new'
+                        
         self.cmd = cmd.lower()
         self.logger.info("edit_html: cmd = {}, filename = {}, logicname = {}".format(cmd, filename, logicname))
         if self.cmd == '':
