@@ -31,35 +31,35 @@ class TestCherryPyApp(BaseCherryPyTestCase):
         self.assertEqual( str(body.find("a", href="logics.html"))[:2], '<a' )
         #self.assertEqual( str(body.find("a", href="logics_blockly.html"))[:2], '<a' )
 
-    def test_logics_blockly_html(self):
-        response = self.request('logics_blockly_html')
-        self.assertEqual(response.output_status, b'200 OK')
-        resp_body = str(response.body[0],'utf-8')
-        self.assertRegex(resp_body, 'xml id="toolbox"')
-        self.assertRegex(resp_body, 'div id="content_blocks"')
-        self.assertRegex(resp_body, '<category name="Trigger">')
-        # self.assertEqual(response.body, ['hello world'])
+#     def test_logics_blockly_html(self):
+#         response = self.request('logics_blockly_html')
+#         self.assertEqual(response.output_status, b'200 OK')
+#         resp_body = str(response.body[0],'utf-8')
+#         self.assertRegex(resp_body, 'xml id="toolbox"')
+#         self.assertRegex(resp_body, 'div id="content_blocks"')
+#         self.assertRegex(resp_body, '<category name="Trigger">')
+#         # self.assertEqual(response.body, ['hello world'])
 
-    def test_DynToolbox(self):
-        response = self.request('logics_blockly_html')
-        #resp_body = str(response.body[0],'utf-8')
-        bs_body = BeautifulSoup(response.body[0])
-        #items = bs_body.find("category", name="SmartHome Items")
-        shItemsCat = bs_body.xml.find_all(attrs={'name': 'SmartHome Items'})[0]
-        # print(shItemsCat)
-        # print("categories: {}".format(len(list(shItemsCat.find_all("category")))) )
-        # print("    blocks: {}".format(len(shItemsCat.find_all("block", type="sh_item_obj") )) )
-        self.assertEqual(len(list(shItemsCat.find_all("block", type="sh_item_obj") )), 9 )
-        self.assertEqual(len(list(shItemsCat.find_all("category") )), 6 )
+#     def test_DynToolbox(self):
+#         response = self.request('logics_blockly_html')
+#         #resp_body = str(response.body[0],'utf-8')
+#         bs_body = BeautifulSoup(response.body[0])
+#         #items = bs_body.find("category", name="SmartHome Items")
+#         shItemsCat = bs_body.xml.find_all(attrs={'name': 'SmartHome Items'})[0]
+#         # print(shItemsCat)
+#         # print("categories: {}".format(len(list(shItemsCat.find_all("category")))) )
+#         # print("    blocks: {}".format(len(shItemsCat.find_all("block", type="sh_item_obj") )) )
+#         self.assertEqual(len(list(shItemsCat.find_all("block", type="sh_item_obj") )), 9 )
+#         self.assertEqual(len(list(shItemsCat.find_all("category") )), 6 )
 
-    def test_logics_blockly_load(self):
-        response = self.request('logics_blockly_load')
-        self.assertEqual(response.output_status, b'200 OK')
-        resp_xml = str(response.body[0],'utf-8')
-        #print(resp_xml)
-        self.assertRegex(resp_xml, '<field name="N">Unit Test</field>')
-        self.assertRegex(resp_xml, '<field name="P">testen.unit.test</field>')
-        self.assertRegex(resp_xml, '<field name="T">bool</field>')
+#     def test_logics_blockly_load(self):
+#         response = self.request('logics_blockly_load')
+#         self.assertEqual(response.output_status, b'200 OK')
+#         resp_xml = str(response.body[0],'utf-8')
+#         #print(resp_xml)
+#         self.assertRegex(resp_xml, '<field name="N">Unit Test</field>')
+#         self.assertRegex(resp_xml, '<field name="P">testen.unit.test</field>')
+#         self.assertRegex(resp_xml, '<field name="T">bool</field>')
 
 
 
