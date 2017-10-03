@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+<meta http-equiv="cache-control" content="max-age=0" />
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="expires" content="-1" />
+<meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+<meta http-equiv="pragma" content="no-cache" />
+<meta name="abstract" content="{{ timestamp }}">
+
 {% extends "base.html" %}
 
 {% block content %}
@@ -30,21 +37,29 @@ li.L5, li.L6, li.L7, li.L8
             <td id="tab_xml" class="taboff">XML</td>-->
             <td class="tabmax">
 		<form name="input" action="index.html" method="POST" enctype="multipart/form-data">
-      <button onclick="function() {$.ajax({'url': 'logics_blockly_start'})}" class="btn btn-default btn-xs">{{ _('Aktivieren','button') }}</button>
-      <button onclick="function() {$.ajax({'url': 'logics_blockly_stop'})}" class="btn btn-default btn-xs">{{ _('Beenden','button') }}</button>
-      <button onclick="Code.saveBlocks()" class="btn btn-default btn-xs">{{ _('Blöcke speichern','button') }}</button>
-      <button onclick="Code.loadBlocks()" class="btn btn-default btn-xs">{{ _('Änderungen verwerfen','button') }}</button>
-      <button onclick="Code.discardBlocks()" class="btn btn-default btn-xs">{{ _('Leeren','button') }}</button>
+		{% if cmd != 'edit' and cmd != 'new' %}
+			<button onclick="function() {$.ajax({'url': 'logics_blockly_start'})}" class="btn btn-default btn-xs">{{ _('Aktivieren','button') }}</button>
+			<button onclick="function() {$.ajax({'url': 'logics_blockly_stop'})}" class="btn btn-default btn-xs">{{ _('Beenden','button') }}</button>
+			<button onclick="Code.saveBlocks()" class="btn btn-default btn-xs">{{ _('Blöcke speichern','button') }}</button>
+			<button onclick="Code.loadBlocks()" class="btn btn-default btn-xs">{{ _('Änderungen verwerfen','button') }}</button>
+			<button onclick="Code.discardBlocks()" class="btn btn-default btn-xs">{{ _('Leeren','button') }}</button>
+			<button onclick="javascript:window.close()" class="btn btn-default btn-xs">{{ _('Schließen','button') }}</button>
+		{% else %}
+			<button onclick="Code.saveBlocks(); window.close()" class="btn btn-default btn-xs">{{ _('Speichern','button') }}</button>
+			<!--
+			<button onclick="Code.loadBlocks(); window.history.back()" class="btn btn-default btn-xs">{{ _('Änderungen verwerfen','button') }}</button>
+			-->
+			<button onclick="javascript:window.close()" class="btn btn-default btn-xs">{{ _('Verwerfen','button') }}</button>
+		{% endif %}
       <!--
       <input name="close" value="{{ _('Schließen','button') }}" type="submit" class="btn btn-default btn-xs">
       -->
-      <button onclick="javascript:window.close()" class="btn btn-default btn-xs">{{ _('Schließen','button') }}</button>
 		</form>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
+        	</td>
+			</tr>
+		</table>
+	</td>
+	</tr>
     <tr>
       <td height="99%" colspan=1 id="content_area">
       </td>

@@ -23,13 +23,22 @@
 
 import logging
 import socket
+import time
+
+import collections
+import ast
 
 import lib.config
 from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
-from lib.logic import Logic
+from lib.logic import Logics          # für update der /etc/logic.yaml
+from lib.logic import Logic           # für reload (bytecode)
+#import lib.logic as logics
 
 from .utils import *
+
+import lib.shyaml as shyaml
+#from lib.constants import (YAML_FILE, CONF_FILE)
 
 
 class Blockly(SmartPlugin):
@@ -39,7 +48,7 @@ class Blockly(SmartPlugin):
     """
     
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.3a.0'
+    PLUGIN_VERSION='1.4.0'
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -179,6 +188,10 @@ from jinja2 import Environment, FileSystemLoader
 
 class WebInterface:
 
+    logicname = ''
+    logic_filename = ''
+        
+    
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -193,11 +206,16 @@ class WebInterface:
         self.plugininstance = plugin
         self._sh = self.plugininstance.get_sh()
         self._sh_dir = self._sh.base_dir
+        self._section_prefix = self.plugininstance._parameters.get('section_prefix','')
+        self.logger.debug("WebInterface: section_prefix = {}".format(self._section_prefix))
 
-        self.logger.warning('Blockly Webif.__init__')
+        self.logger.info('Blockly Webif.__init__')
 
         self.tplenv = Environment(loader=FileSystemLoader(self.plugininstance.path_join( self.webif_dir, 'templates' ) ))
         self.tplenv.globals['_'] = translate
+        
+        self.logicname = ''
+        self.logic_filename = ''
 
 
     def html_escape(self, str):
@@ -206,6 +224,59 @@ class WebInterface:
 
     @cherrypy.expose
     def index(self):
+
+        return self.index_html()
+
+
+#     @cherrypy.expose
+#     def index_html(self, cmd='', filename='', logicname='', v=0):
+# 
+#         self.cmd = cmd.lower()
+#         self.logger.info("index_html: cmd = {}, filename = {}, logicname = {}".format(cmd, filename, logicname))
+#         if self.cmd == '':
+#             self.logic_filename = ''
+#             self.logicname = ''
+#         elif self.cmd == 'new':
+#             self.logic_filename = 'new'
+#             self.logicname = ''
+#         elif self.cmd == 'edit':
+#             self.logic_filename = filename
+#             self.logicname = logicname
+#         
+#         language = self._sh.get_defaultlanguage()
+#         if language != get_translation_lang():
+#             self.logger.debug("Blockly: Language = '{}' get_translation_lang() = '{}'".format(language,get_translation_lang()))
+#             if not load_translation(language):
+#                 self.logger.warning("Blockly: Language '{}' not found, using standard language instead".format(language))
+# 
+#         tmpl = self.tplenv.get_template('blockly.html')
+#         return tmpl.render(smarthome=self._sh,
+#                            dyn_sh_toolbox=self._DynToolbox(self._sh), 
+#                            cmd=self.cmd,
+#                            logicname=logicname,
+#                            lang=translation_lang)
+
+
+    @cherrypy.expose
+    def index_html(self, cmd='', filename='', logicname='', v=0):
+
+        cherrypy.lib.caching.expires(0)
+
+        if cmd == '' and filename == '' and logicname == '':
+            cmd = self.cmd
+        self.cmd = cmd.lower()
+        self.logger.info("edit_html: cmd = {}, filename = {}, logicname = {}".format(cmd, filename, logicname))
+        if self.cmd == '':
+            self.logic_filename = ''
+            self.logicname = ''
+        elif self.cmd == 'new':
+            self.logic_filename = 'new'
+            self.logicname = ''
+        elif self.cmd == 'edit':
+            self.logic_filename = filename
+            self.logicname = logicname
+        self.logger.info("edit_html: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
+
         language = self._sh.get_defaultlanguage()
         if language != get_translation_lang():
             self.logger.debug("Blockly: Language = '{}' get_translation_lang() = '{}'".format(language,get_translation_lang()))
@@ -214,13 +285,11 @@ class WebInterface:
 
         tmpl = self.tplenv.get_template('blockly.html')
         return tmpl.render(smarthome=self._sh,
-                           dyn_sh_toolbox=self._DynToolbox(self._sh), lang=translation_lang)
-
-
-    @cherrypy.expose
-    def index_html(self):
-
-        return self.index()
+                           dyn_sh_toolbox=self._DynToolbox(self._sh), 
+                           cmd=self.cmd,
+                           logicname=logicname,
+                           timestamp=str(time.time()),
+                           lang=translation_lang)
 
 
     def _DynToolbox(self, sh):
@@ -286,53 +355,104 @@ class WebInterface:
 
     @cherrypy.expose
     def blockly_load_logic(self):
-        fn_xml = self._sh._logic_dir + "/blockly_logics.xml"
+        self.logger.warning("blockly_load_logic: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
+        if self.logicname == '':
+            if self.logic_filename == 'new':
+                fn_xml = self.plugininstance.path_join( self.webif_dir, 'templates') + '/' + "new.blockly"
+            else:
+                fn_xml = self._sh._logic_dir + "blockly_logics.blockly"
+        else:
+            fn_xml = self._sh._logic_dir + self.logic_filename
         self.logger.warning("blockly_load_logic: fn_xml = {}".format(fn_xml))
         return serve_file(fn_xml, content_type='application/xml')
 
 
+    def blockly_update_config(self, code, name=''):
+        """
+        Fill configuration section in /etc/logic.yaml from header lines in generated code
+        
+        Method is called from blockly_save_logic()
+        
+        :param code: Python code of the logic
+        :param name: name of configuration section, if ommited, the section name is read from the source code
+        :type code: str
+        :type name: str
+        """
+        section = ''
+        active = False
+        config_list = []
+        for line in code.splitlines():
+            if (line.startswith('#comment#')):
+                if config_list == []:
+                    sc, fn, ac, fnco = line[9:].split('#')
+                    fnk, fnv = fn.split(':')
+                    ack, acv = ac.split(':')
+                    active = Utils.to_bool(acv.strip(), False)
+                    if section == '':
+                        section = sc;
+                        self.logger.info("blockly_update_config: #comment# section = '{}'".format(section))
+                    config_list.append([fnk.strip(), fnv.strip(), fnco])
+            elif line.startswith('#trigger#'):
+                sc, fn, tr, co = line[9:].split('#')
+                trk, trv = tr.split(':')
+                if config_list == []:
+                    fnk, fnv = fn.split(':')
+                    fnco = ''
+                    config_list.append([fnk.strip(), fnv.strip(), fnco])
+                if section == '':
+                    section = sc;
+                    self.logger.info("blockly_update_config: #trigger# section = '{}'".format(section))
+                config_list.append([trk.strip(), trv.strip(),co])
+            else:
+                break
+
+        if section == '':
+            section = name
+        if self._section_prefix != '':
+            section = self._section_prefix + section
+        self.logger.info("blockly_update_config: section = '{}'".format(section))
+
+        Logics.update_config_section(active, section, config_list)
+    
+    
+    def pretty_print_xml(self, xml_in):
+        import xml.dom.minidom
+
+        xml = xml.dom.minidom.parseString(xml_in)
+        xml_out = xml.toprettyxml()
+        return xml_out
+    
+    
     @cherrypy.expose
-    def blockly_save_logic(self, py, xml):
+    def blockly_save_logic(self, py, xml, name):
+        """
+        Save the logic - Saves the Blocky xml and the Python code
+        
+        :param py:
+        :param xml:
+        :param name:
+        :type py:
+        :type xml:
+        :type name:
+        """
         self._pycode = py
         self._xmldata = xml
-        fn_py = self._sh._logic_dir + "/blockly_logics.py"
-        fn_xml = self._sh._logic_dir + "/blockly_logics.xml"
-        self.logger.debug("blockly_save_logic: SAVE PY blockly logic = {0}\n '{1}'".format(fn_py, py))
+        fn_py = self._sh._logic_dir + name + ".py"
+        fn_xml = self._sh._logic_dir + name + ".blockly"
+        self.logger.info("blockly_save_logic: saving blockly logic {} as file {}".format(name, fn_py))
+        self.logger.debug("blockly_save_logic: SAVE PY blockly logic {} = {}\n '{}'".format(name, fn_py, py))
         with open(fn_py, 'w') as fpy:
             fpy.write(py)
-        self.logger.debug("blockly_save_logic: SAVE XML blockly logic = {0}\n '{1}'".format(fn_xml, xml))
+        self.logger.debug("blockly_save_logic: SAVE XML blockly logic {} = {}\n '{}'".format(name, fn_xml, xml))
+        xml = self.pretty_print_xml(xml)
         with open(fn_xml, 'w') as fxml:
             fxml.write(xml)
 
-        code = self._pycode
-        bytecode = compile(code, '<string>', 'exec')
-        s = []
-        for name in self._sh.scheduler:
-            if name.startswith('blockly_runner'):
-                # logger.info('Blockly Logics: remove '+ name)
-                s.append(name)
-        for name in s:
-            self._sh.scheduler.remove(name)
-
-        for line in code.splitlines():
-            if line and line.startswith('#?#'):
-                id, __, trigger = line[3:].partition(':')
-                by, __, val = trigger.partition('=')
-                by = by.strip()
-                val = val.strip()
-                # logger.info('Blockly Logics: {} => {} :: {}'.format(id, by, val))
-                logic = Logic(self._sh, 'blockly_runner_' + id,
-                              {'bytecode': bytecode, })
-                if by == 'cycle':
-                    self._sh.scheduler.add(
-                        'blockly_runner_' + id, logic, prio=3, cron=None, cycle=val)
-                    # logger.info('Blockly Logics: cycles     => '+ val)
-                elif by == 'crontab':
-                    self._sh.scheduler.add(
-                        'blockly_runner_' + id, logic, prio=3, cron=val, cycle=None)
-                    # logger.info('Blockly Logics: crontabs   => '+ val)
-                elif by == 'watchitem':
-                    logic.watch_item = val
-                    # item = self._sh.return_item(val)
-                    # item.add_logic_trigger(logic)
-                    # logger.info('Blockly Logics: watchitems => '+ val)
+        self.blockly_update_config(self._pycode, name)
+        
+        section = name
+        if self._section_prefix != '':
+            section = self._section_prefix + section
+        
+        Logics.load_logic(section)
+        
