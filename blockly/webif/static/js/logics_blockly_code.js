@@ -24,11 +24,12 @@ Code.selected = 'blocks';
  *
  */
 Code.loadBlocks = function() {
-  var request = $.ajax({'url': 'blockly_load_logic', dataType: 'text'});
+//  $.ajaxSetup({ cache: false });
+  var request = $.ajax({url: 'blockly_load_logic', data : {'uniq_param' : (new Date()).getTime()}, dataType: 'text'});
   // we get the XML representation of all the blockly logics from the backend
   request.done(function(response)
   {
-  // 	alert('LoadBlocks - Request success: ' + response);
+   	//alert('LoadBlocks - Request success: ' + response);
     var xml = Blockly.Xml.textToDom(response);
     Blockly.Xml.domToWorkspace(xml, Code.workspace);
     //Code.workspace.clear();

@@ -192,7 +192,7 @@ class WebInterface:
     logicname = ''
     logic_filename = ''
     cmd = ''
-        
+    edit_redirect = ''
     
     def __init__(self, webif_dir, plugin):
         """
@@ -262,33 +262,79 @@ class WebInterface:
     @cherrypy.expose
     def index_html(self, cmd='', filename='', logicname='', v=0):
 
+        self.logger.info("index_html: cmd = '{}', filename = '{}', logicname = '{}'".format(cmd, filename, logicname))
+        if self.edit_redirect != '':
+            self.edit_html(cmd='edit', logicname=self.edit_redirect)
+
         if self.logics is None:
             self.logics = Logics.get_instance()
 
         cherrypy.lib.caching.expires(0)
 
         if cmd == '' and filename == '' and logicname == '':
-#            cmd = self.cmd
-            cmd = 'new'
+            cmd = self.cmd
+            if cmd == '':
+                cmd = 'new'
                         
         self.cmd = cmd.lower()
-        self.logger.info("edit_html: cmd = {}, filename = {}, logicname = {}".format(cmd, filename, logicname))
+        self.logger.info("index_html: cmd = {}, filename = {}, logicname = {}".format(cmd, filename, logicname))
         if self.cmd == '':
-            self.logic_filename = ''
+#            self.logic_filename = ''
             self.logicname = ''
         elif self.cmd == 'new':
             self.logic_filename = 'new'
             self.logicname = ''
-        elif self.cmd == 'edit':
+        elif self.cmd == 'edit' and filename != '':
+            self.logic_filename = filename
+            self.logicname = logicname
+        self.logger.info("index_html: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
+
+        language = self._sh.get_defaultlanguage()
+        if language != get_translation_lang():
+            self.logger.debug("index_html: Language = '{}' get_translation_lang() = '{}'".format(language,get_translation_lang()))
+            if not load_translation(language):
+                self.logger.warning("index_html: Language '{}' not found, using standard language instead".format(language))
+
+        tmpl = self.tplenv.get_template('blockly.html')
+        return tmpl.render(smarthome=self._sh,
+                           dyn_sh_toolbox=self._DynToolbox(self._sh), 
+                           cmd=self.cmd,
+                           logicname=logicname,
+                           timestamp=str(time.time()),
+                           lang=translation_lang)
+
+
+    @cherrypy.expose
+    def edit_html(self, cmd='', filename='', logicname='', v=0):
+
+        if self.logics is None:
+            self.logics = Logics.get_instance()
+
+        cherrypy.lib.caching.expires(0)
+
+        if cmd == '' and filename == '' and logicname == '':
+            cmd = self.cmd
+            if cmd == '':
+                cmd = 'new'
+                        
+        self.cmd = cmd.lower()
+        self.logger.info("edit_html: cmd = {}, filename = {}, logicname = {}".format(cmd, filename, logicname))
+        if self.cmd == '':
+#            self.logic_filename = ''
+            self.logicname = ''
+        elif self.cmd == 'new':
+            self.logic_filename = 'new'
+            self.logicname = ''
+        elif self.cmd == 'edit' and filename != '':
             self.logic_filename = filename
             self.logicname = logicname
         self.logger.info("edit_html: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
 
         language = self._sh.get_defaultlanguage()
         if language != get_translation_lang():
-            self.logger.debug("Blockly: Language = '{}' get_translation_lang() = '{}'".format(language,get_translation_lang()))
+            self.logger.debug("edit_html: Language = '{}' get_translation_lang() = '{}'".format(language,get_translation_lang()))
             if not load_translation(language):
-                self.logger.warning("Blockly: Language '{}' not found, using standard language instead".format(language))
+                self.logger.warning("edit_html: Language '{}' not found, using standard language instead".format(language))
 
         tmpl = self.tplenv.get_template('blockly.html')
         return tmpl.render(smarthome=self._sh,
@@ -361,15 +407,26 @@ class WebInterface:
         
 
     @cherrypy.expose
-    def blockly_load_logic(self):
+    def blockly_close_editor(self, content=''):
+        self.logger.warning("blockly_close_editor: content = '{}'".format(content))
+
+        self.logic_filename = ''
+        return
+        
+
+    @cherrypy.expose
+    def blockly_load_logic(self, uniq_param=''):
         self.logger.warning("blockly_load_logic: self.logicname = '{}', self.logic_filename = '{}'".format(self.logicname, self.logic_filename))
-        if self.logicname == '':
+        if self.logicname == '' and self.edit_redirect == '':
             if self.logic_filename == 'new':
                 fn_xml = self.plugininstance.path_join( self.webif_dir, 'templates') + '/' + "new.blockly"
             else:
                 fn_xml = self._sh._logic_dir + "blockly_logics.blockly"
         else:
-            fn_xml = self._sh._logic_dir + self.logic_filename
+            if self.logic_filename == '':
+                fn_xml = self.plugininstance.path_join( self.webif_dir, 'templates') + '/' + "new.blockly"
+            else:
+                fn_xml = self._sh._logic_dir + self.logic_filename
         self.logger.warning("blockly_load_logic: fn_xml = {}".format(fn_xml))
         return serve_file(fn_xml, content_type='application/xml')
 
@@ -420,7 +477,7 @@ class WebInterface:
         self.logger.info("blockly_update_config: section = '{}'".format(section))
 
         self.logics.update_config_section(active, section, config_list)
-    
+
     
     def pretty_print_xml(self, xml_in):
         import xml.dom.minidom
@@ -445,7 +502,8 @@ class WebInterface:
         self._pycode = py
         self._xmldata = xml
         fn_py = self._sh._logic_dir + name + ".py"
-        fn_xml = self._sh._logic_dir + name + ".blockly"
+        self.logic_filename = name + ".blockly"
+        fn_xml = self._sh._logic_dir + self.logic_filename
         self.logger.info("blockly_save_logic: saving blockly logic {} as file {}".format(name, fn_py))
         self.logger.debug("blockly_save_logic: SAVE PY blockly logic {} = {}\n '{}'".format(name, fn_py, py))
         with open(fn_py, 'w') as fpy:
@@ -462,4 +520,5 @@ class WebInterface:
             section = self._section_prefix + section
         
         self.logics.load_logic(section)
+        self.edit_redirect = name
         

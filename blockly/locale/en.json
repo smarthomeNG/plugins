@@ -6,7 +6,9 @@
 		"Aktivieren": "Enable",
 		"Beenden" : "Stop",
 		"Speichern" : "Save",
+		"Speichern & schließen" : "Save & Close",
 		"Blöcke speichern" : "Save Blocks",
+		"Verwerfen" : "Undo Changes",
 		"Änderungen verwerfen" : "Undo Changes",
 		"Leeren" : "Clear",
 		"Schließen": "Close"
