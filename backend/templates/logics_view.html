@@ -6,8 +6,9 @@
 {% endblock navbar %}
 
 {% block content %}
- <script src="static/codemirror/lib/codemirror.js"></script>
+<script src="static/codemirror/lib/codemirror.js"></script>
 <link rel="stylesheet" href="static/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="static/css/codemirror_custom.css">
 <script src="static/codemirror/mode/python/python.js"></script>
 <script src="static/codemirror/mode/xml/xml.js"></script>
 
@@ -76,13 +77,20 @@ li.L5, li.L6, li.L7, li.L8
 {% endfor %}</textarea>
 			{% if updates %}</form>{% endif %}
 			<script>
-				var myCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
+				var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
 					lineNumbers: true,
 					mode: "{{ mode }}",
 					{% if not updates %}
 					readOnly: true
 					{% endif %}
 				});
+				window.addEventListener("resize", resizeCodeMirror);
+				function resizeCodeMirror() {
+					var browserHeight = document.documentElement.clientHeight;
+					logicsCodeMirror.getWrapperElement().style.height = (-440 + browserHeight)+ 'px';
+					logicsCodeMirror.refresh();
+				}
+				resizeCodeMirror();
 			</script>
 		{% else %}{{ _('no data available') }}{% endif %}
 	</div>
