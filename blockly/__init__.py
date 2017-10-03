@@ -47,7 +47,6 @@ class Blockly(SmartPlugin):
     the update functions for the items
     """
     
-    ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION='1.4.0'
 
 
@@ -188,6 +187,8 @@ from jinja2 import Environment, FileSystemLoader
 
 class WebInterface:
 
+    logics = None
+
     logicname = ''
     logic_filename = ''
         
@@ -259,6 +260,9 @@ class WebInterface:
 
     @cherrypy.expose
     def index_html(self, cmd='', filename='', logicname='', v=0):
+
+        if self.logics is None:
+            self.logics = Logics.get_instance()
 
         cherrypy.lib.caching.expires(0)
 
@@ -412,7 +416,7 @@ class WebInterface:
             section = self._section_prefix + section
         self.logger.info("blockly_update_config: section = '{}'".format(section))
 
-        Logics.update_config_section(active, section, config_list)
+        self.logics.update_config_section(active, section, config_list)
     
     
     def pretty_print_xml(self, xml_in):
@@ -454,5 +458,5 @@ class WebInterface:
         if self._section_prefix != '':
             section = self._section_prefix + section
         
-        Logics.load_logic(section)
+        self.logics.load_logic(section)
         

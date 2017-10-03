@@ -47,6 +47,14 @@ import lib.item_conversion
 
 class BackendLogics:
 
+    logics = None
+
+    def __init__(self):
+
+        self.logics = Logics.get_instance()
+        self.logger.warning("BackendLogics __init__ self.logics = {}".format(str(self.logics)))
+        
+        
     # -----------------------------------------------------------------------------------
     #    LOGICS
     # -----------------------------------------------------------------------------------
@@ -56,6 +64,9 @@ class BackendLogics:
         """
         returns information to display a list of all known logics
         """
+        if self.logics is None:
+            self.logics = Logics.get_instance()
+
         # process actions triggerd by buttons on the web page
         self.process_logics_action(logic, trigger, reload, enable, disable, savereload, None, unload, configload, add)
 
@@ -70,36 +81,36 @@ class BackendLogics:
                     pass
 
         # create a list of dicts, where each dict contains the information for one logic
-        logics = []
+        logics_list = []
         import time
-        for ln in Logics.return_loaded_logics():
+        for ln in self.logics.return_loaded_logics():
             anfangfor = time.time()
-            thislogic = Logics.return_logic(ln)
+            thislogic = self.logics.return_logic(ln)
 #            self.logger.info("logics_html: name {} Start".format(thislogic.name))
             logic = dict()
             logic['name'] = thislogic.name
 #            logic['enabled'] = thislogic.enabled
-            logic['enabled'] = Logics.is_logic_enabled(thislogic.name)
-            logic['logictype'] = Logics.return_logictype(logic['name'])
+            logic['enabled'] = self.logics.is_logic_enabled(thislogic.name)
+            logic['logictype'] = self.logics.return_logictype(logic['name'])
             if logic['logictype'] == 'Python':
                 logic['filename'] = thislogic.pathname
             elif logic['logictype'] == 'Blockly':
                 logic['filename'] = os.path.splitext(thislogic.pathname)[0] + '.blockly'
             else:
                 logic['filename'] = ''
-            logic['userlogic'] = Logics.is_userlogic(thislogic.name)
+            logic['userlogic'] = self.logics.is_userlogic(thislogic.name)
             logic['crontab'] = thislogic.crontab
             logic['cycle'] = thislogic.cycle
             logic['watch_items'] = []
             if hasattr(thislogic, 'watch_item'):
                 logic['watch_items'] = thislogic.watch_item
-            logics.append(logic)
+            logics_list.append(logic)
 #            self.logger.info("logics_html: name {} Start".format(thislogic.name))
             self.logger.debug("Backend: logics_html: - logic = {}, enabled = {}, , logictype = {}, filename = {}, userlogic = {}, watch_items = {}".format(str(logic['name']), str(logic['enabled']), str(logic['logictype']), str(logic['filename']), str(logic['userlogic']), str(logic['watch_items'])) )
 
-        newlogics = sorted(self.logic_findnew(logics), key=lambda k: k['name'])
+        newlogics = sorted(self.logic_findnew(logics_list), key=lambda k: k['name'])
 
-        logics_sorted = sorted(logics, key=lambda k: k['name'])
+        logics_sorted = sorted(logics_list, key=lambda k: k['name'])
         return self.render_template('logics.html', updates=self.updates_allowed, logics=logics_sorted, newlogics=newlogics, 
                                                    blockly_loaded=self.blockly_plugin_loaded)
 
@@ -113,29 +124,29 @@ class BackendLogics:
         self.process_logics_action(logicname, trigger, reload, enable, disable, savereload, logics_code, None, None, None, cycle, crontab, watch)
 
         mylogic = dict()
-        mylogic['name'] = Logics.return_logic(logicname).name
-        mylogic['enabled'] = Logics.return_logic(logicname).enabled
-        mylogic['filename'] = Logics.return_logic(logicname).filename
+        mylogic['name'] = self.logics.return_logic(logicname).name
+        mylogic['enabled'] = self.logics.return_logic(logicname).enabled
+        mylogic['filename'] = self.logics.return_logic(logicname).filename
         mylogic['cycle'] = ''
         mylogic['next_exec'] = ''
-        if self._sh.scheduler.return_next(Logics.return_logic(logicname).name):
-            mylogic['next_exec'] = self._sh.scheduler.return_next(Logics.return_logic(logicname).name).strftime('%Y-%m-%d %H:%M:%S%z')
+        if self._sh.scheduler.return_next(self.logics.return_logic(logicname).name):
+            mylogic['next_exec'] = self._sh.scheduler.return_next(self.logics.return_logic(logicname).name).strftime('%Y-%m-%d %H:%M:%S%z')
 
-        if hasattr(Logics.return_logic(logicname), 'cycle'):
-            mylogic['cycle'] = Logics.return_logic(logicname).cycle
+        if hasattr(self.logics.return_logic(logicname), 'cycle'):
+            mylogic['cycle'] = self.logics.return_logic(logicname).cycle
             if mylogic['cycle'] == None:
                 mylogic['cycle'] = ''
 
         mylogic['crontab'] = ''
-        if hasattr(Logics.return_logic(logicname), 'crontab'):
-            mylogic['crontab'] = str(Logics.return_logic(logicname).crontab)
+        if hasattr(self.logics.return_logic(logicname), 'crontab'):
+            mylogic['crontab'] = str(self.logics.return_logic(logicname).crontab)
             if mylogic['crontab'][0] == '[':
                 if mylogic['crontab'][-1] == ']':
                     mylogic['crontab'] = mylogic['crontab'][1:-1]  # remove square brackets
 
         mylogic['watch_item'] = ''
-        if hasattr(Logics.return_logic(logicname), 'watch_item'):
-            mylogic['watch_item'] = str(Logics.return_logic(logicname).watch_item)
+        if hasattr(self.logics.return_logic(logicname), 'watch_item'):
+            mylogic['watch_item'] = str(self.logics.return_logic(logicname).watch_item)
             if mylogic['watch_item'][0] == '[':
                 if mylogic['watch_item'][-1] == ']':
                     mylogic['watch_item'] = mylogic['watch_item'][1:-1]  # remove square brackets
@@ -149,12 +160,12 @@ class BackendLogics:
         if os.path.splitext(file_path)[1] == '.blockly':
             return self.render_template('logics_view.html', logicname=logicname, thislogic=mylogic, logic_lines=file_lines, file_path=file_path,
                                         updates=False, 
-                                        yaml_updates=(Logics.return_config_type() == '.yaml'),
+                                        yaml_updates=(self.logics.return_config_type() == '.yaml'),
                                         mode='xml')
         else:
             return self.render_template('logics_view.html', logicname=logicname, thislogic=mylogic, logic_lines=file_lines, file_path=file_path,
                                         updates=self.updates_allowed, 
-                                        yaml_updates=(Logics.return_config_type() == '.yaml'),
+                                        yaml_updates=(self.logics.return_config_type() == '.yaml'),
                                         mode='python')
 
     # -----------------------------------------------------------------------------------
@@ -167,27 +178,27 @@ class BackendLogics:
                                                                                                      enable, disable, savereload, cycle, crontab, watch))
         logic = logicname
         if enable is not None:
-            Logics.enable_logic(logic)
+            self.logics.enable_logic(logic)
 
         if disable is not None:
-            Logics.disable_logic(logic)
+            self.logics.disable_logic(logic)
         
         if trigger is not None:
-            Logics.trigger_logic(logic)
+            self.logics.trigger_logic(logic)
         
         if reload is not None:
-            Logics.unload_logic(logic)
-            Logics.load_logic(logic)
-            Logics.trigger_logic(logic)
+            self.logics.unload_logic(logic)
+            self.logics.load_logic(logic)
+            self.logics.trigger_logic(logic)
 
         if unload is not None:
-            Logics.unload_logic(logic)
+            self.logics.unload_logic(logic)
 
         if configload is not None:
-            Logics.load_logic(logic)
+            self.logics.load_logic(logic)
 
         if add is not None:
-            Logics.load_logic(logic)
+            self.logics.load_logic(logic)
 
         if savereload is not None:
             self.logic_save(logic, logics_code)
@@ -195,7 +206,7 @@ class BackendLogics:
             # -------
 #            self.logger.warning("process_logics_action: self.mylogic = {}".format(str(self.mylogic)))
             config_list = []
-            thislogic = Logics.return_logic(logic)
+            thislogic = self.logics.return_logic(logic)
             thislogic.filename
             config_list.append(['filename', thislogic.filename, ''])
             if Utils.is_int(cycle):
@@ -219,12 +230,12 @@ class BackendLogics:
                 config_list.append(['watch_item', str(watch), ''])
 
             self.logger.warning("process_logics_action: config_list = {}".format(str(config_list)))
-            Logics.update_config_section(True, logic, config_list)
+            self.logics.update_config_section(True, logic, config_list)
 
             # reload and trigger logic
-            Logics.unload_logic(logic)
-            Logics.load_logic(logic)
-            Logics.trigger_logic(logic)
+            self.logics.unload_logic(logic)
+            self.logics.load_logic(logic)
+            self.logics.trigger_logic(logic)
         return
 
 
@@ -232,8 +243,8 @@ class BackendLogics:
         self.logger.warning("Backend: logics_view_html: Save logic = '{0}'".format(logic))
 
         if self.updates_allowed:
-            if logic in Logics.return_loaded_logics():
-                mylogic = Logics.return_logic(logic)
+            if logic in self.logics.return_loaded_logics():
+                mylogic = self.logics.return_logic(logic)
 
                 f = open(mylogic.pathname, 'w')
                 f.write(logics_code)

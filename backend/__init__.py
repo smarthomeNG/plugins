@@ -55,8 +55,8 @@ from .utils import *
 
 
 class BackendServer(SmartPlugin):
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.3b.7'
+
+    PLUGIN_VERSION='1.4.7'
 
     def my_to_bool(self, value, attr='', default=False):
         try:

@@ -25,14 +25,14 @@ teardown_module = tearDownModule
 
 class TestCherryPyApp(BaseCherryPyTestCase):
     def test_backendIntegration(self):
-        response = self.request('/index')
+        response = self.request('index')
         self.assertEqual(response.output_status, b'200 OK')
         body = BeautifulSoup(response.body[0])
         self.assertEqual( str(body.find("a", href="logics.html"))[:2], '<a' )
         #self.assertEqual( str(body.find("a", href="logics_blockly.html"))[:2], '<a' )
 
     def test_logics_blockly_html(self):
-        response = self.request('/logics_blockly_html')
+        response = self.request('logics_blockly_html')
         self.assertEqual(response.output_status, b'200 OK')
         resp_body = str(response.body[0],'utf-8')
         self.assertRegex(resp_body, 'xml id="toolbox"')
@@ -41,7 +41,7 @@ class TestCherryPyApp(BaseCherryPyTestCase):
         # self.assertEqual(response.body, ['hello world'])
 
     def test_DynToolbox(self):
-        response = self.request('/logics_blockly_html')
+        response = self.request('logics_blockly_html')
         #resp_body = str(response.body[0],'utf-8')
         bs_body = BeautifulSoup(response.body[0])
         #items = bs_body.find("category", name="SmartHome Items")
@@ -53,7 +53,7 @@ class TestCherryPyApp(BaseCherryPyTestCase):
         self.assertEqual(len(list(shItemsCat.find_all("category") )), 6 )
 
     def test_logics_blockly_load(self):
-        response = self.request('/logics_blockly_load')
+        response = self.request('logics_blockly_load')
         self.assertEqual(response.output_status, b'200 OK')
         resp_xml = str(response.body[0],'utf-8')
         #print(resp_xml)
