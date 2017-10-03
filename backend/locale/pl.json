@@ -6,6 +6,7 @@
 	"nächste Ausführung": "Następne wykonanie",
 	"Cycle": "Cykl",
 	"Crontab": "Harmonogram",
+	"Crontab(s)": "Harmonogram",
 	"Dateiname": "Nazwa pliku",
 	"Aktionen": "Akcje",
 	"Items": "Itemy",
@@ -112,6 +113,7 @@
 	"Passwort anzeigen": "pokaż",
 	"SmartHomeNG Version": "Wersja SmartHomeNG",
 	"Watch_Items": "Obserwowane Itemy",
+	"Watch_Item(s)": "Obserwowane Itemy",
 	"Anforderungen": "Wymagania",
 	"Übersicht": "Badanie",
 	"Eingabe im .CONF Format": "Eingabe im .CONF Format",
@@ -179,7 +181,8 @@
 		"Speichern" : "Zapisz",
 		"Speichern_und_Neu_Laden" : "Zapisz i przeładuj",
 		"Löschen" : "Skasuj"
-		"Konvertieren": "Konvertieren"
+		"Konvertieren": "Konvertieren",
+        "Neue Blockly Logik": ""
 	},
 	
 	"_menu": {

@@ -31,29 +31,6 @@ from collections import OrderedDict
 from lib.logic import Logics
 
 
-# Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
-# Methoden einer Klasse zum laufen bekam
-
-
-def get_basename(p):
-    """
-    returns the filename of a full pathname
-
-    This function extends the jinja2 template engine
-    """
-    return os.path.basename(p)
-
-
-def is_userlogic(sh, logic):
-    """
-    returns True if userlogic and False if system logic
-    
-    This function extends the jinja2 template engine
-    """
-#    return os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics'
-    return os.path.basename(os.path.dirname(Logics.return_logic(logic).filename)) == 'logics'
-
-
 translation_dict = {}
 translation_lang = ''
 
@@ -152,15 +129,4 @@ def parse_requirements(file_path):
                     req_dict[line[0:line.find("=")].lower().strip()] = line[line.find("="):len(line)].lower().strip()
     fobj.close()
     return req_dict
-
-
-def strip_quotes(string):
-    string = string.strip()
-    if len(string) > 0:
-        if string[0] in ['"', "'"]:  # check if string starts with ' or "
-            if string[0] == string[-1]:  # and end with it
-                if string.count(string[0]) == 2:  # if they are the only one
-                    string = string[1:-1]  # remove them
-    return string
-
 

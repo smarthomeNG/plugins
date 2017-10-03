@@ -9,71 +9,84 @@
  <script src="static/codemirror/lib/codemirror.js"></script>
 <link rel="stylesheet" href="static/codemirror/lib/codemirror.css">
 <script src="static/codemirror/mode/python/python.js"></script>
-    <style>
-    li.L0, li.L1, li.L2, li.L3,
-    li.L5, li.L6, li.L7, li.L8
-    { list-style-type: decimal !important }
-    </style>
-	<div class="container" style="width: 90%;">
-    <h3>SmartHomeNG {{ _('Logik') }}: {{ logicname }}</h3>
-        <strong>{{ _('Dateiname') }}:</strong> {{ file_path }}
-        <br/><br/>
-    </div>
-    <div class="container">
-        <div style="margin-bottom: 5px;">
-        {% if updates %}
-        <form name="input" action="logics_view.html" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="logicname" readonly="true" value="{{ logicname }}" type="text">
-            <input type="hidden" name="file_path" readonly="true" value="{{ file_path }}" type="text"/>
-            <input {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs">
-            <input name="enable" value="{% if thislogic.enabled %}{{ _('Deaktivieren','button') }}{% else %}{{ _('Aktivieren','button') }}{% endif %}" type="submit" class="btn btn-default btn-xs">
-            &nbsp;|&nbsp;
-            <input name="savereload" value="{{ _('Speichern_und_Neu_Laden','button') }}" type="submit" class="btn btn-default btn-xs">
-        {% endif %}
-        </div>
+<script src="static/codemirror/mode/xml/xml.js"></script>
 
-     <table class="table table-bordered table-hover table-striped">
-         <tr>
-             <td><strong>{{ _('Status') }}:</strong></td>
-             <td><span style="color: {% if not thislogic.enabled %}red{% else %}green{% endif %};" class="fa {% if not thislogic.enabled %}fa-times-circle{% else %}fa-check-circle{% endif %}"></span>
-             {% if not thislogic.enabled %}{{ _('Nicht aktiv') }}{% else %}{{ _('Aktiv') }}{% endif %}
-             </td>
-         </tr>
-         <tr>
-             <td style="width:200px;"><strong>{{ _('nächste Ausführung') }}</strong></td>
-             <td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
-                 {{ thislogic.next_exec }}
-                 {% if not thislogic.enabled %}</span>{% endif %}
-             </td>
-         </tr>
-         <tr>
-             <td style="width:190px;"><strong>{{ _('Cycle') }}</strong></td>
-             <td><input type="text" style="width: 200px; border: none" name="cycle" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.cycle }}"></td>
-         </tr>
-         <tr>
-             <td style="width:190px;"><strong>{{ _('Crontab') }}</strong></td>
-             <td><input type="text" style="width: 200px; border: none" name="crontab" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.crontab }}"></td>
-         </tr>
-         <tr>
-             <td><strong>{{ _('Watch_Items') }}</strong></td>
-             <td><input type="text" style="width: 800px; border: none" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_items }}"></td>
-         </tr>
-     </table>
 
-        <div style="border: 1px solid #ccc; margin-bottom: 10px;">
-        {% if logic_lines %}
-        <textarea id="logics_code" name="logics_code">{% if logic_lines %}{% for line in logic_lines %}{{ line }}
-{% endfor %}{% endif %}</textarea>
-        {% if updates %}</form>{% endif %}
-         <script>
-         var myCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
-           lineNumbers: true,
-           mode: "python"
-         });
-         </script>
-        {% else %}{{ _('no data available') }}{% endif %}
-        </div>
+<style>
+li.L0, li.L1, li.L2, li.L3,
+li.L5, li.L6, li.L7, li.L8
+{ list-style-type: decimal !important }
+</style>
+
+<div class="container" style="width: 90%;">
+	<h3>SmartHomeNG {{ _('Logik') }}: {{ logicname }}</h3>
+	<strong>{{ _('Dateiname') }}:</strong> {{ file_path }}
+	<br/><br/>
+</div>
+
+<div class="container">
+	<div style="margin-bottom: 5px;">
+	{% if updates %}
+		<form name="input" action="logics_view.html" method="POST" enctype="multipart/form-data">
+		<input type="hidden" name="logicname" readonly="true" value="{{ logicname }}" type="text">
+		<input type="hidden" name="file_path" readonly="true" value="{{ file_path }}" type="text"/>
+		<input {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs">
+
+		{% if thislogic.enabled %}
+			<input name="disable" value="{{ _('Deaktivieren','button') }}" type="submit" class="btn btn-default btn-xs">
+		{% else %}
+			<input name="enable" value="{{ _('Aktivieren','button') }}" type="submit" class="btn btn-default btn-xs">
+		{% endif %}
+		&nbsp;|&nbsp;
+		<input name="savereload" value="{{ _('Speichern_und_Neu_Laden','button') }}" type="submit" class="btn btn-default btn-xs">
+	{% endif %}
     </div>
+
+	<table class="table table-bordered table-hover table-striped">
+		<tr>
+			<td><strong>{{ _('Status') }}:</strong></td>
+			<td><span style="color: {% if not thislogic.enabled %}red{% else %}green{% endif %};" class="fa {% if not thislogic.enabled %}fa-times-circle{% else %}fa-check-circle{% endif %}"></span>
+			{% if not thislogic.enabled %}{{ _('Nicht aktiv') }}{% else %}{{ _('Aktiv') }}{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<td style="width:200px;"><strong>{{ _('nächste Ausführung') }}</strong></td>
+			<td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
+				{{ thislogic.next_exec }}
+				{% if not thislogic.enabled %}</span>{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<td style="width:190px;"><strong>{{ _('Cycle') }}</strong></td>
+			<td><input type="text" style="width: 200px; border: none" name="cycle" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.cycle }}"></td>
+		</tr>
+		<tr>
+			<td style="width:190px;"><strong>{{ _('Crontab(s)') }}</strong></td>
+			<td><input type="text" style="width: 450px; border: none" name="crontab" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.crontab }}"></td>
+		</tr>
+		<tr>
+			<td><strong>{{ _('Watch_Item(s)') }}</strong></td>
+			<td><input type="text" style="width: 900px; border: none" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"></td>
+		</tr>
+	</table>
+
+	<div style="border: 1px solid #ccc; margin-bottom: 10px;">
+		{% if logic_lines %}
+<textarea id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}
+{% endfor %}</textarea>
+			{% if updates %}</form>{% endif %}
+			<script>
+				var myCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
+					lineNumbers: true,
+					mode: "{{ mode }}",
+					{% if not updates %}
+					readOnly: true
+					{% endif %}
+				});
+			</script>
+		{% else %}{{ _('no data available') }}{% endif %}
+	</div>
+</div>
     
 {% endblock %}
 

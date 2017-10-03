@@ -35,20 +35,28 @@ import subprocess
 import socket
 import sys
 import threading
-import lib.config
-from lib.model.smartplugin import SmartPlugin
-from lib.utils import Utils
+
 from jinja2 import Environment, FileSystemLoader
 
-from .BackendCore import Backend as BackendCore
-from .BackendBlockly import BackendBlocklyLogics
+import lib.config
+from lib.logic import Logics
+from lib.utils import Utils
+
+from lib.model.smartplugin import SmartPlugin
+
+from .BackendCore import BackendCore
+from .BackendSysteminfo import BackendSysteminfo
+from .BackendItems import BackendItems
+from .BackendLogics import BackendLogics
+from .BackendPlugins import BackendPlugins
+
 from .utils import *
 
 
 
 class BackendServer(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.3a.6'
+    PLUGIN_VERSION='1.3b.7'
 
     def my_to_bool(self, value, attr='', default=False):
         try:
@@ -182,12 +190,16 @@ class BackendServer(SmartPlugin):
 
     
 
-class Backend(BackendCore, BackendBlocklyLogics):
+class Backend(BackendCore, BackendSysteminfo, BackendItems, BackendLogics, BackendPlugins):
+
     env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))+'/templates'))
+    from os.path import basename as get_basename
     env.globals['get_basename'] = get_basename
-    env.globals['is_userlogic'] = is_userlogic
+    env.globals['is_userlogic'] = Logics.is_userlogic
     env.globals['_'] = translate
     
+    blockly_plugin_loaded = None    # None = load state is unknown
+
     def __init__(self, backendserver=None, updates_allowed=True, language='', developer_mode=False, pypi_timeout = 5):
         self.logger = logging.getLogger(__name__)
         self._bs = backendserver
@@ -200,11 +212,8 @@ class Backend(BackendCore, BackendBlocklyLogics):
         self._sh_dir = self._sh.base_dir
         self.visu_plugin = None
         self.visu_plugin_version = '1.0.0'
+        
 
     def html_escape(self, str):
         return html_escape(str)
 
-
-#if __name__ == "__main__":
-#    server = BackendServer( None, port=8080, ip='0.0.0.0')
-#    server.run()

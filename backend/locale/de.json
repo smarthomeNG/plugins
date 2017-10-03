@@ -7,6 +7,7 @@
 	"nächste Ausführung": "nächste Ausführung",
 	"Cycle": "Cycle",
 	"Crontab": "Crontab",
+	"Crontab(s)": "Crontab(s)",
 	"Dateiname": "Dateiname",
 	"Aktionen": "Aktionen",
 	"Items": "Items",
@@ -114,6 +115,7 @@
 	"Passwort anzeigen": "Passwort anzeigen",
 	"SmartHomeNG Version": "SmartHomeNG Version",
 	"Watch_Items": "Watch_Items",
+	"Watch_Item(s)": "Watch_Item(s)",
 	"Anforderungen": "Anforderungen",
 	"Übersicht": "Übersicht",
 	"Eingabe im .CONF Format": "Eingabe im .CONF Format",
@@ -181,7 +183,8 @@
 		"Speichern" : "Speichern",
 		"Speichern_und_Neu_Laden" : "Speichern und neu laden",
 		"Löschen" : "Löschen",
-		"Konvertieren": "Konvertieren"
+		"Konvertieren": "Konvertieren",
+        "Neue Blockly Logik": "Neue Blockly Logik"
 	},
 
 	"_menu": {
