@@ -15,7 +15,7 @@
  <script type="text/javascript" language="javascript">
 
 function newBlocklyLogic() {
-	window.open('/blockly/index.html?cmd=new', '_blank');
+	window.open('/blockly/edit.html?cmd=new', '_blank');
 };
 
 </script>
@@ -67,7 +67,7 @@ function newBlocklyLogic() {
 								{% if logic.watch_items|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_items|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fa fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
 							</td>
 							{% if logic.logictype == 'Blockly' and blockly_loaded %}
-								<td><a target="_blank" href="/blockly/index.html?cmd=edit&filename={{ get_basename(logic.filename) }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
+								<td><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.filename) }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
 							{% else %}
 								<td><a href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
 							{% endif %}

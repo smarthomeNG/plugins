@@ -81,8 +81,11 @@ li.L5, li.L6, li.L7, li.L8
 					lineNumbers: true,
 					mode: "{{ mode }}",
 					{% if not updates %}
-					readOnly: true
+					readOnly: true,
 					{% endif %}
+					lineSeparator: '\n',
+					indentUnit: 4,
+					indentWithTabs: false
 				});
 				window.addEventListener("resize", resizeCodeMirror);
 				function resizeCodeMirror() {
