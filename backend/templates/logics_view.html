@@ -140,7 +140,9 @@
 	var dict = [];
 	function getItemDictionary() {
 		$.getJSON('items.json?mode=list', function(result) {
-			dict = result;
+			for (i = 0; i < result.length; i++) {
+				dict.push("sh."+result[i]);
+			}
 		});
 	}
 	getItemDictionary();
@@ -149,8 +151,8 @@
 			curLine = editor.getLine(cur.line);
 		var start = cur.ch,
 			end = start;
-		while (end < curLine.length && /[\w$]+/.test(curLine.charAt(end))) ++end;
-		while (start && /[\w$]+/.test(curLine.charAt(start - 1))) --start;
+		while (end < curLine.length && /[\w\.$]+/.test(curLine.charAt(end))) ++end;
+		while (start && /[\w\.$]+/.test(curLine.charAt(start - 1))) --start;
 		var curWord = start != end && curLine.slice(start, end);
 		var regex = new RegExp('^' + curWord, 'i');
 		return {
