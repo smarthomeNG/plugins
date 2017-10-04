@@ -116,7 +116,7 @@
 	"Passwort anzeigen": "Afficher mot de passe",
 	"SmartHomeNG Version": "Version de SmartHomeNG",
 	"Watch_Items": "Objets surveillés",
-	"Watch_Item(s)": "Objets surveillés",
+	"Watch_Item(s)": "Objet(s) surveillé(s)",
 	"Anforderungen": "Version demandée",
 	"Übersicht": "Aperçu",
 	"Eingabe im .CONF Format": "Entrée en format .CONF",
@@ -126,8 +126,8 @@
 	"Beschreibung": "Description",
 	"Documentation": "Documentation",
 	"Support": "Support",
-	"Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.": "Press F11 when cursor is in the editor to toggle full screen editing. Esc can also be used to exit full screen editing.",
-
+	"Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.": "Appuyez F11 si le curseur est dans la fenêtre de l'éditeur pour passer en mode plein-écran. Appuyez F11 ou ESC pour sortir du mode plein-écran.",
+	
 	"_items": {
 		"path": "Chemin",
 		"name": "Nom",
@@ -186,7 +186,7 @@
 		"Speichern_und_Neu_Laden" : "Sauvegarder et recharger",
 		"Löschen" : "Supprimer",
 		"Konvertieren": "Convertir",
-        "Neue Blockly Logik": ""
+        	"Neue Blockly Logik": "Nouvelle logique 'Blockly'"
 	},
 
 	"_menu": {
