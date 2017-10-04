@@ -125,7 +125,8 @@
 	"Beschreibung": "Beschreibung",
 	"Documentation": "Dokumentation",
 	"Support": "Support",
-	
+	"Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.": "Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.",
+
 	"_items": {
 		"path": "Pfad",
 		"name": "Name",

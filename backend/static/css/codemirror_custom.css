@@ -3,7 +3,6 @@
   height: auto;
 }
 .CodeMirror-scroll {
-  height: auto;
-  overflow-y: auto;
   overflow-x: auto;
+  overflow-y: auto;
 }
