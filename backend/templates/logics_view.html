@@ -72,47 +72,51 @@
 <textarea id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}
 {% endfor %}</textarea>
 			{% if updates %}</form>{% endif %}
-			<script>
-			    var offsetHeight = -460;
-				var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
-					lineNumbers: true,
-					extraKeys: {
-						"F11": function(cm) {
-						  logicsCodeMirror.getScrollerElement().style.maxHeight = 'none';
-						  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
-						  if (!cm.getOption("fullScreen")) {
-                              resizeCodeMirror();
-						  }
-						},
-						"Esc": function(cm, fullScreen) {
-						  if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
-						  resizeCodeMirror();
-						}
-					},
-					mode: "{{ mode }}",
-					{% if not updates %}
-					readOnly: true,
-					{% endif %}
-					lineSeparator: '\n',
-					indentUnit: 4,
-					indentWithTabs: false
-				});
-
-				window.addEventListener("resize", resizeCodeMirror, false);
-
-				function resizeCodeMirror() {
-					if (!logicsCodeMirror.getOption("fullScreen")) {
-						var browserHeight = document.documentElement.clientHeight;
-						logicsCodeMirror.getScrollerElement().style.maxHeight = (offsetHeight + browserHeight)+ 'px';
-						logicsCodeMirror.refresh();
-					}
-				}
-				resizeCodeMirror();
-			</script>
 		{% else %}{{ _('no data available') }}{% endif %}
 	</div>
+	<div id="full_screen_note">
 	{{ _('Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.') }}
+	</div>
 </div>
-    
+ <script>
+	var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
+		lineNumbers: true,
+		extraKeys: {
+			"F11": function(cm) {
+			  logicsCodeMirror.getScrollerElement().style.maxHeight = 'none';
+			  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+			  if (!cm.getOption("fullScreen")) {
+				  resizeCodeMirror();
+			  }
+			},
+			"Esc": function(cm, fullScreen) {
+			  if (cm.getOption("fullScreen")) {
+				  cm.setOption("fullScreen", false);
+				  resizeCodeMirror();
+			  }
+			}
+		},
+		mode: "{{ mode }}",
+		{% if not updates %}
+		readOnly: true,
+		{% endif %}
+		lineSeparator: '\n',
+		indentUnit: 4,
+		indentWithTabs: false
+	});
+
+	window.addEventListener("resize", resizeCodeMirror, false);
+
+	function resizeCodeMirror() {
+		if (!logicsCodeMirror.getOption("fullScreen")) {
+			var browserHeight = document.documentElement.clientHeight;
+			offsetTop = $('.CodeMirror').offset().top;
+			notesHeight = ($('#full_screen_note').height());
+			logicsCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(notesHeight+30+offsetTop) + browserHeight)+ 'px';
+			logicsCodeMirror.refresh();
+		}
+	}
+	resizeCodeMirror();
+</script>
 {% endblock %}
 
