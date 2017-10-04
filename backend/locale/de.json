@@ -127,7 +127,7 @@
 	"Support": "Support",
 	"Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.": "Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.",
 	"Zeilenumbruch" : "Zeilenumbruch",
-	"Strg + Space: Autovervollständigen von Python Befehlen. Strg+i: Autovervollständigen von Item-Pfaden.": "Strg + Space: Autovervollständigen von Python Befehlen. Strg+i: Autovervollständigen von Item-Pfaden.",
+	"Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.": "Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.",
 
 	"_items": {
 		"path": "Pfad",
