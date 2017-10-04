@@ -125,6 +125,7 @@
 	"Support": "Support",
 	"Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.": "Press F11 when cursor is in the editor to toggle full screen editing. Esc can also be used to exit full screen editing.",
     "Zeilenumbruch" : "Line Wrapping",
+	"Strg + Space: Autovervollständigen von Python Befehlen.": "Press ctrl-space to activate autocompletion of Python commands.",
 
 	"_items": {
 		"path": "ścieżka",

@@ -69,9 +69,6 @@
 			<td><input type="text" style="width: 900px; border: none" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"></td>
 		</tr>
 	</table>
-	<div>
-		<label class="checkbox-inline"><input checked="checked" type="checkbox" value="" onClick="logicsCodeMirror.setOption('lineWrapping', !logicsCodeMirror.getOption('lineWrapping'));">{{ _('Zeilenumbruch') }}</label>
-	</div>
 
 	<div style="border: 1px solid #ccc; margin-bottom: 10px;">
 		{% if logic_lines %}
@@ -81,7 +78,19 @@
 		{% else %}{{ _('no data available') }}{% endif %}
 	</div>
 	<div id="full_screen_note">
-	{{ _('Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.') }}
+		<table>
+			<tr>
+				<td>
+					<div style="float: left;" class="btn-group" data-toggle="buttons">
+						<label class="btn btn-default active" onClick="logicsCodeMirror.setOption('lineWrapping', !logicsCodeMirror.getOption('lineWrapping'));"><input type="checkbox" value="">{{ _('Zeilenumbruch') }}</label>
+					</div>
+				</td>
+				<td style="padding-left: 10px;">
+					{{ _('Strg + Space: Autovervollständigen von Python Befehlen.') }}<br/>
+					{{ _('Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.') }}
+				</td>
+			</tr>
+		</table>
 	</div>
 </div>
  <script>
