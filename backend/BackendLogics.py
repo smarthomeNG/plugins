@@ -139,17 +139,16 @@ class BackendLogics:
 
         mylogic['crontab'] = ''
         if hasattr(self.logics.return_logic(logicname), 'crontab'):
-            mylogic['crontab'] = str(self.logics.return_logic(logicname).crontab)
-            if mylogic['crontab'][0] == '[':
-                if mylogic['crontab'][-1] == ']':
-                    mylogic['crontab'] = mylogic['crontab'][1:-1]  # remove square brackets
+            if self.logics.return_logic(logicname).crontab == None:
+                mylogic['crontab'] = ''
+            else:
+                mylogic['crontab'] = Utils.strip_quotes_fromlist(str(self.logics.return_logic(logicname).crontab))
+            mylogic['crontab'] = Utils.strip_square_brackets(mylogic['crontab'])
 
         mylogic['watch_item'] = ''
         if hasattr(self.logics.return_logic(logicname), 'watch_item'):
-            mylogic['watch_item'] = str(self.logics.return_logic(logicname).watch_item)
-            if mylogic['watch_item'][0] == '[':
-                if mylogic['watch_item'][-1] == ']':
-                    mylogic['watch_item'] = mylogic['watch_item'][1:-1]  # remove square brackets
+            # Attention: watch_items are always stored as a list in logic object
+            mylogic['watch_item'] = Utils.strip_quotes_fromlist(str(self.logics.return_logic(logicname).watch_item))
         
         fobj = open(file_path)
         file_lines = []
@@ -211,25 +210,32 @@ class BackendLogics:
             config_list.append(['filename', thislogic.filename, ''])
             if Utils.is_int(cycle):
                 cycle = int(cycle)
-            config_list.append(['cycle', cycle, ''])
+                config_list.append(['cycle', cycle, ''])
 
             if crontab != None:
                 l1 = crontab.split(',')
                 l2 = []
                 for s in l1:
                     l2.append(Utils.strip_quotes(s.strip()))
-                crontab = l2
-                config_list.append(['crontab', str(crontab), ''])
+                if len(l2) > 1:
+                    crontab = l2
+                else:
+                    crontab = Utils.strip_quotes(crontab)
+                if crontab != '':
+                    config_list.append(['crontab', str(crontab), ''])
 
             if watch != None:
                 l1 = watch.split(',')
                 l2 = []
                 for s in l1:
                     l2.append(Utils.strip_quotes(s.strip()))
-                watch = l2
-                config_list.append(['watch_item', str(watch), ''])
+                if len(l2) > 1:
+                    watch = l2
+                else:
+                    watch = Utils.strip_quotes(watch)
+                if watch != '':
+                    config_list.append(['watch_item', str(watch), ''])
 
-            self.logger.warning("process_logics_action: config_list = {}".format(str(config_list)))
             self.logics.update_config_section(True, logic, config_list)
 
             # reload and trigger logic
@@ -240,7 +246,6 @@ class BackendLogics:
 
 
     def logic_save(self, logic, logics_code):
-        self.logger.warning("Backend: logics_view_html: Save logic = '{0}'".format(logic))
 
         if self.updates_allowed:
             if logic in self.logics.return_loaded_logics():
