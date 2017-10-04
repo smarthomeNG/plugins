@@ -66,6 +66,9 @@
 			<td><input type="text" style="width: 900px; border: none" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"></td>
 		</tr>
 	</table>
+	<div>
+		<label class="checkbox-inline active"><input type="checkbox" value="" onClick="logicsCodeMirror.setOption('lineWrapping', !logicsCodeMirror.getOption('lineWrapping'));">{{ _('Zeilenumbruch') }}</label>
+	</div>
 
 	<div style="border: 1px solid #ccc; margin-bottom: 10px;">
 		{% if logic_lines %}

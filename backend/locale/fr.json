@@ -127,7 +127,8 @@
 	"Documentation": "Documentation",
 	"Support": "Support",
 	"Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.": "Appuyez F11 si le curseur est dans la fenêtre de l'éditeur pour passer en mode plein-écran. Appuyez F11 ou ESC pour sortir du mode plein-écran.",
-	
+	"Zeilenumbruch" : "Line Wrapping",
+
 	"_items": {
 		"path": "Chemin",
 		"name": "Nom",
