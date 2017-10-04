@@ -137,24 +137,6 @@
 
 	resizeCodeMirror();
 
-
-
-	function build_item_array_recursive(data) {
-		var result = [];
-		result.push(data.path);
-
-		var node_length = data.nodes.length;
-		if (data.nodes.length > 0) {
-			var child_nodes = [];
-			for (var i = 0; i < node_length; i++) {
-				var new_child_node = build_item_array_recursive(data.nodes[i]);
-				child_nodes.push(new_child_node);
-			}
-		}
-		result.push(child_nodes);
-		return result;
-	}
-
 	var dict = [];
 	function getItemDictionary() {
 		$.getJSON('items.json?mode=list', function(result) {
@@ -162,8 +144,6 @@
 		});
 	}
 	getItemDictionary();
-
-
 	CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
 		var cur = editor.getCursor(),
 			curLine = editor.getLine(cur.line);
