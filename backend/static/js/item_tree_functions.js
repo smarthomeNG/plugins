@@ -43,7 +43,7 @@ function changeSearchButtonColor(active) {
 function getTree() {
     var item_tree = [];
 
-    $.getJSON('items_json.html', function(result) {
+    $.getJSON('items.json?mode=tree', function(result) {
         $.each(result, function(index, element) {
             item_tree.push(build_item_subtree_recursive(element));
         });

@@ -15,7 +15,7 @@
 <script src="static/codemirror/mode/xml/xml.js"></script>
 <script src="static/codemirror/addon/display/fullscreen.js"></script>
 <script src="static/codemirror/addon/hint/show-hint.js"></script>
-<script src="static/codemirror/addon/hint/javascript-hint.js"></script>
+<script src="static/codemirror/addon/hint/anyword-hint.js"></script>
 
 
 <div class="container" style="width: 90%;">
@@ -93,7 +93,7 @@
 		</table>
 	</div>
 </div>
- <script>
+<script>
 	var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
 		lineNumbers: true,
 		extraKeys: {
@@ -110,7 +110,8 @@
 				  resizeCodeMirror();
 			  }
 			},
-			"Ctrl-Space": "autocomplete"
+			"Ctrl-Space": "autocomplete",
+			"Ctrl-I": "autocomplete_item"
 		},
 		mode: "{{ mode }}",
 		{% if not updates %}
@@ -135,6 +136,55 @@
 	}
 
 	resizeCodeMirror();
+
+
+
+	function build_item_array_recursive(data) {
+		var result = [];
+		result.push(data.path);
+
+		var node_length = data.nodes.length;
+		if (data.nodes.length > 0) {
+			var child_nodes = [];
+			for (var i = 0; i < node_length; i++) {
+				var new_child_node = build_item_array_recursive(data.nodes[i]);
+				child_nodes.push(new_child_node);
+			}
+		}
+		result.push(child_nodes);
+		return result;
+	}
+
+	var dict = [];
+	function getItemDictionary() {
+		$.getJSON('items.json?mode=list', function(result) {
+			dict = result;
+		});
+	}
+	getItemDictionary();
+
+
+	CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
+		var cur = editor.getCursor(),
+			curLine = editor.getLine(cur.line);
+		var start = cur.ch,
+			end = start;
+		while (end < curLine.length && /[\w$]+/.test(curLine.charAt(end))) ++end;
+		while (start && /[\w$]+/.test(curLine.charAt(start - 1))) --start;
+		var curWord = start != end && curLine.slice(start, end);
+		var regex = new RegExp('^' + curWord, 'i');
+		return {
+			list: (!curWord ? [] : dict.filter(function(item) {
+				return item.match(regex);
+			})).sort(),
+			from: CodeMirror.Pos(cur.line, start),
+			to: CodeMirror.Pos(cur.line, end)
+		}
+	});
+
+	CodeMirror.commands.autocomplete_item = function(cm) {
+		CodeMirror.showHint(cm, CodeMirror.hint.itemsHint);
+	};
 </script>
 {% endblock %}
 

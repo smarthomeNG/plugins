@@ -58,19 +58,29 @@ class BackendItems:
 
 
     @cherrypy.expose
-    def items_json_html(self):
+    def items_json(self, mode="tree"):
         """
         returns a list of items as json structure
+
+        :param mode:             tree (default) or list structure
         """
         items_sorted = sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
-        parent_items_sorted = []
-        for item in items_sorted:
-            if "." not in item._path:
-                if item._name not in ['env_daily', 'env_init', 'env_loc', 'env_stat'] and item._type == 'foo':
-                    parent_items_sorted.append(item)
 
-        item_data = self._build_item_tree(parent_items_sorted)
-        return json.dumps(item_data)
+        if mode == 'tree':
+            parent_items_sorted = []
+            for item in items_sorted:
+                if "." not in item._path:
+                    if item._name not in ['env_daily', 'env_init', 'env_loc', 'env_stat'] and item._type == 'foo':
+                        parent_items_sorted.append(item)
+
+            item_data = self._build_item_tree(parent_items_sorted)
+            return json.dumps(item_data)
+        else:
+            item_list = []
+            for item in items_sorted:
+                item_list.append(item._path)
+            return json.dumps(item_list)
+
 
     @cherrypy.expose
     def cache_check_json_html(self):
