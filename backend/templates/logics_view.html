@@ -90,8 +90,7 @@ li.L5, li.L6, li.L7, li.L8
 				window.addEventListener("resize", resizeCodeMirror);
 				function resizeCodeMirror() {
 					var browserHeight = document.documentElement.clientHeight;
-					logicsCodeMirror.getWrapperElement().style.height = (-440 + browserHeight)+ 'px';
-					logicsCodeMirror.refresh();
+					logicsCodeMirror.getScrollerElement().style.maxHeight = (-440 + browserHeight)+ 'px';
 				}
 				resizeCodeMirror();
 			</script>
