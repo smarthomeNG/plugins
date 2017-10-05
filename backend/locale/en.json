@@ -128,6 +128,14 @@
 	"Zeilenumbruch" : "Line Wrapping",
 	"Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.": "Press ctrl-space to activate autocompletion of Python commands. Press ctrl-i to activate autocompletion of item paths.",
 	"Hilfe": "Help",
+	"help_search_1": "Ctrl-F / Cmd-F: Start searching",
+	"help_search_2": "Ctrl-G / Cmd-G: Find next",
+	"help_search_3": "Shift-Ctrl-G / Shift-Cmd-G: Find previous",
+	"help_search_4": "Shift-Ctrl-F / Cmd-Option-F: Replace",
+	"help_search_5": "Shift-Ctrl-R / Shift-Cmd-Option-F: Replace all",
+	"help_search_6": "Alt-F: Persistent search (dialog doesn't autoclose, enter to find next, Shift-Enter to find previous)" ,
+	"help_search_7": "Alt-G: Jump to line",
+	"Suche": "Search",
 
 	"_items": {
 		"path": "Pfad",
