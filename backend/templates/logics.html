@@ -117,7 +117,6 @@ function newBlocklyLogic() {
 					{% endfor %}
 					{% if newlogics|length > 0 %}
     					<tr><th colspan="{% if updates %}9{% else %}8{% endif %}">{{ _('Neue Logiken (nicht geladen)') }}</th><tr>
-
 						{% for logic in newlogics %}
 							<tr>
 								<td></td>

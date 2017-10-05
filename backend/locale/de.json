@@ -138,6 +138,8 @@
 	"help_search_7": "Alt + G: In Zeile springen",
 	"Suche": "Suche",
 	"Hilfslinien": "Hilfslinien",
+	"PyPI Check": "PyPI Check",
+	"Systemeigenschaften": "Systemeigenschaften",
 
 	"_items": {
 		"path": "Pfad",

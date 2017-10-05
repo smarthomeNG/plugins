@@ -136,6 +136,8 @@
 	"help_search_7": "Alt-G: Jump to line",
 	"Suche": "Search",
 	"Hilfslinien": "Rulers",
+	"PyPI Check": "PyPI Check",
+	"Systemeigenschaften": "System Properties",
 
 	"_items": {
 		"path": "ścieżka",

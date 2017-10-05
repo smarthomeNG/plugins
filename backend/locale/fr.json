@@ -139,6 +139,8 @@
 	"help_search_7": "Alt-G: Sauter vers ligne",
 	"Suche": "Chercher",
 	"Hilfslinien": "Lignes de séparation",
+	"PyPI Check": "PyPI Check",
+	"Systemeigenschaften": "System Properties",
 
 	"_items": {
 		"path": "Chemin",
