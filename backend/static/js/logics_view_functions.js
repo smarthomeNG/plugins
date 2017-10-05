@@ -30,6 +30,7 @@ CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
     while (end < curLine.length && /[\w\.$]+/.test(curLine.charAt(end))) ++end;
     while (start && /[\w\.$]+/.test(curLine.charAt(start - 1))) --start;
     var curWord = start != end && curLine.slice(start, end);
+    curWord = curWord.trim();
     var regex = new RegExp('^' + curWord, 'i');
     if (curWord.length >= 3) {
         return {
