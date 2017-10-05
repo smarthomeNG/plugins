@@ -27,8 +27,10 @@ CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
         curLine = editor.getLine(cur.line);
     var start = cur.ch,
         end = start;
-    while (end < curLine.length && /[\w\.$]+/.test(curLine.charAt(end))) ++end;
-    while (start && /[\w\.$]+/.test(curLine.charAt(start - 1))) --start;
+
+    var charexp =  /[\w\.$]+/;
+    while (end < curLine.length && charexp.test(curLine.charAt(end))) ++end;
+    while (start && charexp.test(curLine.charAt(start - 1))) --start;
     var curWord = start != end && curLine.slice(start, end);
     if (curWord.length > 1) {
         curWord = curWord.trim();

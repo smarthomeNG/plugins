@@ -116,12 +116,12 @@ class BackendLogics:
 
 
     @cherrypy.expose
-    def logics_view_html(self, file_path, logicname, trigger=None, reload=None, enable=None, disable=None, savereload=None, logics_code=None, cycle=None, crontab=None, watch=None):
+    def logics_view_html(self, file_path, logicname, trigger=None, reload=None, enable=None, disable=None, savereload=None, save=None, logics_code=None, cycle=None, crontab=None, watch=None):
         """
         returns information to display a logic in an editor window
         """
         # process actions triggerd by buttons on the web page
-        self.process_logics_action(logicname, trigger, reload, enable, disable, savereload, logics_code, None, None, None, cycle, crontab, watch)
+        self.process_logics_action(logicname, trigger, reload, enable, disable, savereload, save, logics_code, None, None, None, cycle, crontab, watch)
 
         mylogic = dict()
         mylogic['name'] = self.logics.return_logic(logicname).name
@@ -169,12 +169,12 @@ class BackendLogics:
 
     # -----------------------------------------------------------------------------------
 
-    def process_logics_action(self, logicname=None, trigger=None, reload=None, enable=None, disable=None, savereload=None, logics_code=None, unload=None, configload=None, add=None,
+    def process_logics_action(self, logicname=None, trigger=None, reload=None, enable=None, disable=None, savereload=None, save=None, logics_code=None, unload=None, configload=None, add=None,
                               cycle=None, crontab=None, watch=None):
 
         self.logger.debug(
-            "logics_html -> process_logics_action: trigger = '{}', reload = '{}', enable='{}', disable='{}', savereload='{}', cycle='{}', crontab='{}', watch='{}'".format(trigger, reload,
-                                                                                                     enable, disable, savereload, cycle, crontab, watch))
+            "logics_html -> process_logics_action: trigger = '{}', reload = '{}', enable='{}', disable='{}', savereload='{}', save='{}', cycle='{}', crontab='{}', watch='{}'".format(trigger, reload,
+                                                                                                     enable, disable, savereload, save, cycle, crontab, watch))
         logic = logicname
         if enable is not None:
             self.logics.enable_logic(logic)
@@ -199,7 +199,7 @@ class BackendLogics:
         if add is not None:
             self.logics.load_logic(logic)
 
-        if savereload is not None:
+        if savereload is not None or save is not None:
             self.logic_save(logic, logics_code)
 
             # -------
@@ -239,9 +239,10 @@ class BackendLogics:
             self.logics.update_config_section(True, logic, config_list)
 
             # reload and trigger logic
-            self.logics.unload_logic(logic)
-            self.logics.load_logic(logic)
-            self.logics.trigger_logic(logic)
+            if savereload is not None:
+                self.logics.unload_logic(logic)
+                self.logics.load_logic(logic)
+                self.logics.trigger_logic(logic)
         return
 
 
