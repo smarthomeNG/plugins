@@ -3,9 +3,9 @@ window.addEventListener("resize", resizeCodeMirror, false);
 
 function resizeCodeMirror() {
     if (!logicsCodeMirror.getOption("fullScreen")) {
-        var browserHeight = document.documentElement.clientHeight;
+        var browserHeight = $( window ).height();
         offsetTop = $('.CodeMirror').offset().top;
-        logicsCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) - 10 + browserHeight)+ 'px';
+        logicsCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) - 15 + browserHeight)+ 'px';
         logicsCodeMirror.refresh();
     }
 }
