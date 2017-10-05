@@ -130,6 +130,15 @@
 	"Zeilenumbruch" : "Coupure de ligne",
 	"Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.": "Appuyez ctrl-espace pour activer le complètement automatique des commandes Python. Appuyez ctrl-i pour activer le complètement automatique des chemins des objets.",
 	"Hilfe": "Aide",
+	"help_search_1": "Ctrl-F / Cmd-F: Démarrer la recherche",
+	"help_search_2": "Ctrl-G / Cmd-G: Prochain résultat",
+	"help_search_3": "Shift-Ctrl-G / Shift-Cmd-G: Résultat précédent",
+	"help_search_4": "Shift-Ctrl-F / Cmd-Option-F: Remplacer",
+	"help_search_5": "Shift-Ctrl-R / Shift-Cmd-Option-F: Remplacer tout",
+	"help_search_6": "Alt-F: Recherche persistente (dialogue ne se ferme pas, <Entrée> pour prochain résultat, Shift-Entrée pour résultat précédent)",
+	"help_search_7": "Alt-G: Sauter vers ligne",
+	"Suche": "Chercher",
+	"Trennlinien": "Lignes de séparation",
 
 	"_items": {
 		"path": "Chemin",
