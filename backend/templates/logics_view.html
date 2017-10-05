@@ -121,6 +121,13 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
     indentUnit: 4,
     indentWithTabs: false
 });
+
+logicsCodeMirror.on("keyup", function (cm, event) {
+        if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
+            event.keyCode != 13) {        /*Enter - do not open autocomplete list just after item has been selected in it*/
+            CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
+        }
+    });
 </script>
 <script src="static/js/logics_view_functions.js"></script>
 {% endblock %}
