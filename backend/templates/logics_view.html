@@ -12,9 +12,16 @@
 <link rel="stylesheet" href="static/css/codemirror_custom.css">
 <link rel="stylesheet" href="static/codemirror/addon/dialog/dialog.css">
 <link rel="stylesheet" href="static/codemirror/addon/search/matchesonscrollbar.css">
+<link rel="stylesheet" href="static/codemirror/addon/fold/foldgutter.css" />
 <script src="static/codemirror/lib/codemirror.js"></script>
 <script src="static/codemirror/mode/python/python.js"></script>
 <script src="static/codemirror/mode/xml/xml.js"></script>
+<script src="static/codemirror/addon/fold/foldcode.js"></script>
+<script src="static/codemirror/addon/fold/foldgutter.js"></script>
+<script src="static/codemirror/addon/fold/comment-fold.js"></script>
+<script src="static/codemirror/addon/fold/brace-fold.js"></script>
+<script src="static/codemirror/addon/fold/xml-fold.js"></script>
+<script src="static/codemirror/addon/fold/indent-fold.js"></script>
 <script src="static/codemirror/addon/display/fullscreen.js"></script>
 <script src="static/codemirror/addon/display/rulers.js"></script>
 <script src="static/codemirror/addon/hint/show-hint.js"></script>
@@ -142,6 +149,9 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
         "Tab": function(cm) {
 			var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
 			cm.replaceSelection(spaces, "end", "+input");
+		},
+		"Ctrl-Q": function(cm){
+			cm.foldCode(cm.getCursor());
 		}
     },
     mode: "{{ mode }}",
@@ -152,7 +162,9 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
     indentUnit: 4,
     rulers: rulers,
     lineWrapping: true,
-    indentWithTabs: false
+    indentWithTabs: false,
+    foldGutter: true,
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
 });
 
 logicsCodeMirror.on("keyup", function (cm, event) {
