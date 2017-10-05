@@ -39,8 +39,23 @@
 		{% endif %}
 		&nbsp;|&nbsp;
 		<input name="savereload" value="{{ _('Speichern_und_Neu_Laden','button') }}" type="submit" class="btn btn-default btn-xs"/>
+		 |
+		<input id="linewrapping" value="{{ _('Zeilenumbruch') }}" class="btn btn-default btn-xs active" onClick="switchLineWrapping();"/>
+		<input id="help" value="{{ _('Hilfe') }}" class="btn btn-default btn-xs" onClick="$('#help_text').toggle();resizeCodeMirror()"/>
 	{% endif %}
     </div>
+	<div id="help_text" style="display:none;">
+		<p>
+		<ul>
+			<li>
+			{{ _('Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.') }}<br/>
+			</li>
+			<li>
+			{{ _('Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.') }}
+			</li>
+		</ul>
+		</p>
+	</div>
 
 	<table class="table table-bordered table-hover table-striped">
 		<tr>
@@ -77,21 +92,6 @@
 			{% if updates %}</form>{% endif %}
 		{% else %}{{ _('no data available') }}{% endif %}
 	</div>
-	<div id="full_screen_note">
-		<table>
-			<tr>
-				<td>
-					<div style="float: left;" class="btn-group" data-toggle="buttons">
-						<label class="btn btn-default active" onClick="logicsCodeMirror.setOption('lineWrapping', !logicsCodeMirror.getOption('lineWrapping'));"><input type="checkbox" value="">{{ _('Zeilenumbruch') }}</label>
-					</div>
-				</td>
-				<td style="padding-left: 10px;">
-					{{ _('Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.') }}<br/>
-					{{ _('Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.') }}
-				</td>
-			</tr>
-		</table>
-	</div>
 </div>
 <script>
 var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
@@ -119,7 +119,6 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
     {% endif %}
     lineSeparator: '\n',
     indentUnit: 4,
-    lineWrapping: true,
     indentWithTabs: false
 });
 </script>

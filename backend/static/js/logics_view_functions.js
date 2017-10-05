@@ -5,8 +5,7 @@ function resizeCodeMirror() {
     if (!logicsCodeMirror.getOption("fullScreen")) {
         var browserHeight = document.documentElement.clientHeight;
         offsetTop = $('.CodeMirror').offset().top;
-        notesHeight = ($('#full_screen_note').height());
-        logicsCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(notesHeight+30+offsetTop) + browserHeight)+ 'px';
+        logicsCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) - 10 + browserHeight)+ 'px';
         logicsCodeMirror.refresh();
     }
 }
@@ -44,3 +43,12 @@ CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
 CodeMirror.commands.autocomplete_item = function(cm) {
     CodeMirror.showHint(cm, CodeMirror.hint.itemsHint);
 };
+
+function switchLineWrapping() {
+	logicsCodeMirror.setOption('lineWrapping', !logicsCodeMirror.getOption('lineWrapping'));
+	if (logicsCodeMirror.getOption('lineWrapping')) {
+		$('#linewrapping').addClass('active');
+	} else {
+		$('#linewrapping').removeClass('active');
+	}
+}
