@@ -133,7 +133,7 @@
 	"help_search_2": "Strg + G / Cmd + G: Nächsten Treffer finden",
 	"help_search_3": "Shift + Strg + G / Shift + Cmd + G: Vorherigen Treffer finden",
 	"help_search_4": "Shift + Strg + F / Cmd + Option + F: Ersetzen",
-	"help_search_5": "Shift + Strg + R / Shift+ Cmd + Option + F: Alle ersetzen",
+	"help_search_5": "Shift + Strg + R / Shift + Cmd + Option + F: Alle ersetzen",
 	"help_search_6": "Alt-F: Persistenter Such-Dialog (ENTER für nächsten Treffer, Shift-Enter für vorherigen Treffer)" ,
 	"help_search_7": "Alt-G: In Zeile springen",
 	"Suche": "Suche",
