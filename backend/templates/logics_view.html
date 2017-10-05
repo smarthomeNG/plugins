@@ -16,6 +16,7 @@
 <script src="static/codemirror/mode/python/python.js"></script>
 <script src="static/codemirror/mode/xml/xml.js"></script>
 <script src="static/codemirror/addon/display/fullscreen.js"></script>
+<script src="static/codemirror/addon/display/rulers.js"></script>
 <script src="static/codemirror/addon/hint/show-hint.js"></script>
 <script src="static/codemirror/addon/hint/anyword-hint.js"></script>
 <script src="static/codemirror/addon/dialog/dialog.js"></script>
@@ -111,6 +112,11 @@
 	</div>
 </div>
 <script>
+var rulers = [];
+for (var i = 1; i <= 8; i++) {
+	rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
+}
+
 var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
     lineNumbers: true,
     extraKeys: {
@@ -137,6 +143,7 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
     {% endif %}
     lineSeparator: '\n',
     indentUnit: 4,
+    rulers: rulers,
     lineWrapping: true,
     indentWithTabs: false
 });
