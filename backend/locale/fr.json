@@ -138,7 +138,7 @@
 	"help_search_6": "Alt-F: Recherche persistente (dialogue ne se ferme pas, <Entrée> pour prochain résultat, Shift-Entrée pour résultat précédent)",
 	"help_search_7": "Alt-G: Sauter vers ligne",
 	"Suche": "Chercher",
-	"Trennlinien": "Lignes de séparation",
+	"Hilfslinien": "Lignes de séparation",
 
 	"_items": {
 		"path": "Chemin",
