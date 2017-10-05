@@ -136,6 +136,7 @@
 	"help_search_6": "Alt-F: Persistent search (dialog doesn't autoclose, enter to find next, Shift-Enter to find previous)" ,
 	"help_search_7": "Alt-G: Jump to line",
 	"Suche": "Search",
+	"Trennlinien": "Rulers",
 
 	"_items": {
 		"path": "Pfad",

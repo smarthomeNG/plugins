@@ -57,3 +57,14 @@ function switchLineWrapping() {
 		$('#linewrapping').removeClass('active');
 	}
 }
+
+function switchRulers() {
+
+	if (logicsCodeMirror.getOption('rulers').length == 0) {
+		$('#rulers').addClass('active');
+		logicsCodeMirror.setOption('rulers', rulers);
+	} else {
+		$('#rulers').removeClass('active');
+		logicsCodeMirror.setOption('rulers', []);
+	}
+}
