@@ -31,12 +31,14 @@ CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
     while (start && /[\w\.$]+/.test(curLine.charAt(start - 1))) --start;
     var curWord = start != end && curLine.slice(start, end);
     var regex = new RegExp('^' + curWord, 'i');
-    return {
-        list: (!curWord ? [] : dict.filter(function(item) {
-            return item.match(regex);
-        })).sort(),
-        from: CodeMirror.Pos(cur.line, start),
-        to: CodeMirror.Pos(cur.line, end)
+    if (curWord.length >= 3) {
+        return {
+            list: (!curWord ? [] : dict.filter(function(item) {
+                return item.match(regex);
+            })).sort(),
+            from: CodeMirror.Pos(cur.line, start),
+            to: CodeMirror.Pos(cur.line, end)
+        }
     }
 });
 
