@@ -193,6 +193,7 @@
 		"Beenden" : "Stop",
 		"Speichern" : "Zapisz",
 		"Speichern_und_Neu_Laden" : "Zapisz i przeładuj",
+		"Speichern_Neu_Laden_und_Triggern": "Save, Reload and Trigger",
 		"Löschen" : "Skasuj"
 		"Konvertieren": "Konvertieren",
         "Neue Blockly Logik": ""

@@ -196,6 +196,7 @@
 		"Beenden" : "Terminer",
 		"Speichern" : "Sauvegarder",
 		"Speichern_und_Neu_Laden" : "Sauvegarder et recharger",
+		"Speichern_Neu_Laden_und_Triggern": "Save, Reload and Trigger",
 		"Löschen" : "Supprimer",
 		"Konvertieren": "Convertir",
         	"Neue Blockly Logik": "Nouvelle logique 'Blockly'"
