@@ -149,12 +149,14 @@ class BackendLogics:
         if hasattr(self.logics.return_logic(logicname), 'watch_item'):
             # Attention: watch_items are always stored as a list in logic object
             mylogic['watch_item'] = Utils.strip_quotes_fromlist(str(self.logics.return_logic(logicname).watch_item))
-        
-        fobj = open(file_path)
+
         file_lines = []
+        fobj = open(file_path)
         for line in fobj:
             file_lines.append(self.html_escape(line))
         fobj.close()
+        if len(file_lines) == 0:
+            file_lines.append("")
 
         if os.path.splitext(file_path)[1] == '.blockly':
             return self.render_template('logics_view.html', logicname=logicname, thislogic=mylogic, logic_lines=file_lines, file_path=file_path,
