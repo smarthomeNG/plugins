@@ -139,9 +139,9 @@
 	"help_search_7": "Alt-G: Sauter vers ligne",
 	"Suche": "Chercher",
 	"Hilfslinien": "Lignes de séparation",
-	"PyPI Check": "PyPI Check",
-	"Systemeigenschaften": "System Properties",
-	"Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!": "If you don't save, you will loose your last changes!",
+	"PyPI Check": "Vérification PyPI",
+	"Systemeigenschaften": "Propriétés du système",
+	"Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!": "Si vous ne sauvegardez pas vous perdez toutes modifications!",
 
 	"_items": {
 		"path": "Chemin",
@@ -199,7 +199,7 @@
 		"Beenden" : "Terminer",
 		"Speichern" : "Sauvegarder",
 		"Speichern_und_Neu_Laden" : "Sauvegarder et recharger",
-		"Speichern_Neu_Laden_und_Triggern": "Save, Reload and Trigger",
+		"Speichern_Neu_Laden_und_Triggern": "Sauvegarder, recharger et déclencher",
 		"Löschen" : "Supprimer",
 		"Konvertieren": "Convertir",
         	"Neue Blockly Logik": "Nouvelle logique 'Blockly'"
