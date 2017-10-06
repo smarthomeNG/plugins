@@ -169,21 +169,24 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
 });
 
 logicsCodeMirror.on("keyup", function (cm, event) {
-    if ($('#originalcontent').val() != logicsCodeMirror.getValue() ) {
+
+    if (checkChangedContent()) {
         $('#savereloadtrigger').removeClass('btn-success');
-		$('#savereload').removeClass('btn-success');
-		$('#save').removeClass('btn-success');
-		$('#savereloadtrigger').addClass('btn-danger');
-		$('#savereload').addClass('btn-danger');
-		$('#save').addClass('btn-danger');
+        $('#savereload').removeClass('btn-success');
+        $('#save').removeClass('btn-success');
+        $('#savereloadtrigger').addClass('btn-danger');
+        $('#savereload').addClass('btn-danger');
+        $('#save').addClass('btn-danger');
     } else {
-		$('#savereloadtrigger').removeClass('btn-danger');
-		$('#savereload').removeClass('btn-danger');
-		$('#save').removeClass('btn-danger');
-		$('#savereloadtrigger').addClass('btn-success');
-		$('#savereload').addClass('btn-success');
-		$('#save').addClass('btn-success');
-    };
+    	$('#savereloadtrigger').removeClass('btn-danger');
+    	$('#savereloadtrigger').removeClass('btn-danger');
+        $('#savereload').removeClass('btn-danger');
+        $('#save').removeClass('btn-danger');
+        $('#savereloadtrigger').addClass('btn-success');
+        $('#savereload').addClass('btn-success');
+        $('#save').addClass('btn-success');
+    }
+
 	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
 		(event.keyCode != 8 &&
 		event.keyCode != 9 &&
@@ -197,6 +200,19 @@ logicsCodeMirror.on("keyup", function (cm, event) {
 		CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
 	};
 });
+
+window.onbeforeunload = function(e) {
+	if (document.activeElement.id == 'save' ||
+	 document.activeElement.id == 'savereload' ||
+	 document.activeElement.id == 'savereloadtrigger') {
+		return;
+	} else if (checkChangedContent()) {
+        return "{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}";
+    } else {
+        return;
+    }
+}
+
 </script>
 <script src="static/js/logics_view_functions.js"></script>
 {% endblock %}

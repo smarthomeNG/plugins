@@ -58,7 +58,7 @@ function switchLineWrapping() {
 	} else {
 		$('#linewrapping').removeClass('active');
 	}
-}
+};
 
 function switchRulers() {
 
@@ -69,4 +69,12 @@ function switchRulers() {
 		$('#rulers').removeClass('active');
 		logicsCodeMirror.setOption('rulers', []);
 	}
-}
+};
+
+function checkChangedContent() {
+    if ($('#originalcontent').val() != logicsCodeMirror.getValue() ) {
+        return true;
+    } else {
+        return false;
+    }
+};
