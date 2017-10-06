@@ -114,7 +114,7 @@
 	</table>
 <input type="hidden" id="originalcontent" value="{% for line in logic_lines %}{{ line }}
 {% endfor %}"/>
-	<div style="border: 1px solid #ccc; margin-bottom: 10px;">
+	<div style="border: 1px solid #ccc; margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
 		{% if logic_lines %}
 <textarea id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}
 {% endfor %}</textarea>
