@@ -130,6 +130,7 @@ for (var i = 1; i <= 100; i++) {
 
 var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
     lineNumbers: true,
+    {% if updates %}
     extraKeys: {
         "F11": function(cm) {
           logicsCodeMirror.getScrollerElement().style.maxHeight = 'none';
@@ -155,6 +156,7 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
 			cm.foldCode(cm.getCursor());
 		}
     },
+    {% endif %}
     mode: "{{ mode }}",
     {% if not updates %}
     readOnly: true,
@@ -168,8 +170,8 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
     gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
 });
 
+{% if updates %}
 logicsCodeMirror.on("keyup", function (cm, event) {
-
     if (checkChangedContent()) {
         $('#savereloadtrigger').removeClass('btn-success');
         $('#savereload').removeClass('btn-success');
@@ -200,7 +202,6 @@ logicsCodeMirror.on("keyup", function (cm, event) {
 		CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
 	};
 });
-
 window.onbeforeunload = function(e) {
 	if (document.activeElement.id == 'save' ||
 	 document.activeElement.id == 'savereload' ||
@@ -212,7 +213,7 @@ window.onbeforeunload = function(e) {
         return;
     }
 }
-
+{% endif %}
 </script>
 <script src="static/js/logics_view_functions.js"></script>
 {% endblock %}
