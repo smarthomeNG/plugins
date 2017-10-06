@@ -54,9 +54,9 @@
 			<input name="enable" value="{{ _('Aktivieren','button') }}" type="submit" class="btn btn-default btn-xs"/>
 		{% endif %}
 		&nbsp;|&nbsp;|&nbsp;
-		<input name="save" value="{{ _('Speichern','button') }}" type="submit" class="btn btn-default btn-xs"/>
-		<input name="savereload" value="{{ _('Speichern_und_Neu_Laden','button') }}" type="submit" class="btn btn-default btn-xs"/>
-		<input name="savereloadtrigger" value="{{ _('Speichern_Neu_Laden_und_Triggern','button') }}" type="submit" class="btn btn-default btn-xs"/>
+		<input id="save" name="save" value="{{ _('Speichern','button') }}" type="submit" class="btn btn-default btn-xs btn-success"/>
+		<input id="savereload" name="savereload" value="{{ _('Speichern_und_Neu_Laden','button') }}" type="submit" class="btn btn-default btn-xs btn-success"/>
+		<input id="savereloadtrigger" name="savereloadtrigger" value="{{ _('Speichern_Neu_Laden_und_Triggern','button') }}" type="submit" class="btn btn-default btn-xs btn-success"/>
 		 |&nbsp;|&nbsp;
 		<input id="linewrapping" value="{{ _('Zeilenumbruch') }}" class="btn btn-default btn-xs active" onClick="switchLineWrapping();"/>
 		<input id="rulers" value="{{ _('Hilfslinien') }}" class="btn btn-default btn-xs active" onClick="switchRulers();"/>
@@ -112,7 +112,8 @@
 			<td><input type="text" style="width: 900px; border: none" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"></td>
 		</tr>
 	</table>
-
+<input type="hidden" id="originalcontent" value="{% for line in logic_lines %}{{ line }}
+{% endfor %}"/>
 	<div style="border: 1px solid #ccc; margin-bottom: 10px;">
 		{% if logic_lines %}
 <textarea id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}
@@ -168,6 +169,21 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
 });
 
 logicsCodeMirror.on("keyup", function (cm, event) {
+    if ($('#originalcontent').val() != logicsCodeMirror.getValue() ) {
+        $('#savereloadtrigger').removeClass('btn-success');
+		$('#savereload').removeClass('btn-success');
+		$('#save').removeClass('btn-success');
+		$('#savereloadtrigger').addClass('btn-danger');
+		$('#savereload').addClass('btn-danger');
+		$('#save').addClass('btn-danger');
+    } else {
+		$('#savereloadtrigger').removeClass('btn-danger');
+		$('#savereload').removeClass('btn-danger');
+		$('#save').removeClass('btn-danger');
+		$('#savereloadtrigger').addClass('btn-success');
+		$('#savereload').addClass('btn-success');
+		$('#save').addClass('btn-success');
+    };
 	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
 		(event.keyCode != 8 &&
 		event.keyCode != 9 &&
@@ -179,7 +195,7 @@ logicsCodeMirror.on("keyup", function (cm, event) {
 		event.keyCode != 40 &&
 		event.keyCode != 46)) {
 		CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
-	}
+	};
 });
 </script>
 <script src="static/js/logics_view_functions.js"></script>
