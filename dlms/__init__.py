@@ -35,10 +35,18 @@ import logging
 import datetime
 
 if __name__ == '__main__':
+    # just needed for standalone mode
     class SmartPlugin():
         pass
+    import os
+    import sys
+    BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
+    sys.path.insert(0, BASE)    
+    from lib.utils import Utils
 else:
+    # just needed for plugin mode
     from lib.model.smartplugin import SmartPlugin
+    from lib.utils import Utils
 
 import time
 import serial
@@ -46,25 +54,31 @@ import re
 from threading import Semaphore
 
 """
-This module implements the questioning of a smartmeter using the DLMS protocol
-#   Character Format: (1 start bit, 7 data bits, 1 parity bit, 1 stop bit) even parity
-#   for protocol mode A - D
-#   in protocol mode E 1 start bit, 8 data bits, 1 stop bit is allowed, see Annex E of IEC62056-21
-#   but mode E is not supported and implemented
-#   Abbreviations
-#   COSEM   COmpanion Specification for Energy Metering
-#   OBIS    OBject Identification System                (see iec62056-61{ed1.0}en_obis_protocol.pdf)
+This module implements the query of a smartmeter using the DLMS protocol.
+
+
+The Character Format for protocol mode A - D is defined as 1 start bit, 7 data bits, 1 parity bit, 1 stop bit and even parity 
+In protocol mode E it is defined as 1 start bit, 8 data bits, 1 stop bit is allowed, see Annex E of IEC62056-21
+For this plugin the protocol mode E is neither implemented nor supported.
+
+Abbreviations
+-------------
+COSEM
+   COmpanion Specification for Energy Metering
+
+OBIS
+   OBject Identification System (see iec62056-61{ed1.0}en_obis_protocol.pdf)
 """
 
 class DLMS(SmartPlugin):
-    PLUGIN_VERSION = "1.2.5"
+    PLUGIN_VERSION = "1.2.6"
     ALLOW_MULTIINSTANCE = False
     """
     This class provides a Plugin for SmarthomeNG.py which reads out a smartmeter.
     The smartmeter needs to have an infrared interface and an IR-Adapter is needed for USB
-    It is possible to use the Plugin as a standalone program to check out the communication
+    It is possible to use the Plugin as a standalone program to check out the communication 
     prior to use it in SmarthomeNG.py
-
+    
     The tag 'dlms_obis_code' identifies the items which are to be updated from the plugin
     """
 
@@ -75,8 +89,8 @@ class DLMS(SmartPlugin):
 
     def __init__(self, smarthome, serialport, baudrate="auto", update_cycle="60", instance = 0, device_address = b'', timeout = 2, use_checksum = True, reset_baudrate = True, no_waiting = False ):
         """
-        This function initializes the DLMS plugin
-        :param serialport:
+        Initializes the DLMS plugin
+        :param serialport: 
         """
         self.logger = logging.getLogger(__name__)
         self.logger.debug("init dlms")
@@ -98,9 +112,9 @@ class DLMS(SmartPlugin):
         self.dlms_obis_readout_items = []                       # this is a list of items that receive the full readout
 
  		# obsolete parameters, kept for compatability with previous versions
-        self._use_checksum = smarthome.string2bool(use_checksum)
-        self._reset_baudrate = smarthome.string2bool(reset_baudrate)
-        self._no_waiting = smarthome.string2bool(no_waiting)
+        self._use_checksum = Utils.to_bool(use_checksum)
+        self._reset_baudrate = Utils.to_bool(reset_baudrate)
+        self._no_waiting = Utils.to_bool(no_waiting)
 
 
         self.logger.debug("Instance {} of DLMS configured to use serialport '{}' with update cycle {} seconds".format( self._instance if self._instance else 0,self._serialport, self._update_cycle))
@@ -327,12 +341,17 @@ class DLMS(SmartPlugin):
                                 "aborting".format(Identification_Message[0]))
             return
 
-        # different smartmeters allow for different protocol modes.
-        # the protocol mode decides whether the communication is fixed to a certain baudrate or might be speed up.
-        # some meters do initiate a protocol by themselves with a fixed speed of 2400 baud e.g. Mode D
+        """
+        Different smartmeters allow for different protocol modes. 
+        The protocol mode decides whether the communication is fixed to a certain baudrate or might be speed up.
+        Some meters do initiate a protocol by themselves with a fixed speed of 2400 baud e.g. Mode D
+        """
         Protocol_Mode = 'A'
 
-        # always stays at the same speed, Protocol indicator can be anything except for A-I, 0-9, /, ?
+        """
+        The communication of the plugin always stays at the same speed, 
+		Protocol indicator can be anything except for A-I, 0-9, /, ?
+        """
         Baudrates_Protocol_Mode_A = 300
         Baudrates_Protocol_Mode_B = { 'A': 600, 'B': 1200, 'C': 2400, 'D': 4800, 'E': 9600, 'F': 19200,
                                       'G': "reserved", 'H': "reserved", 'I': "reserved" }
@@ -623,6 +642,10 @@ class DLMS(SmartPlugin):
         return v
 
     def _update_dlms_obis_readout_items(self, textblock):
+        """
+        Sets all items with attribute to the full readout text given in textblock
+        :param textblock: the result of the latest query
+        """
         if __name__ != '__main__':
             for item in self.dlms_obis_readout_items:
                 item(textblock, 'DLMS')
@@ -677,10 +700,12 @@ class DLMS(SmartPlugin):
 
     def _update_values(self, readout):
         """
-        this function will take the readout from smart meter with one OBIS code per line, then splits up the line
-        into OBIS code itself and all values behind that will start encapsulated in parentheses
-        if the OBIS code was included in one of the items attributes then the values will be parsed and assigned
-        to the corresponding item
+        Takes the readout from smart meter with one OBIS code per line, 
+        splits up the line into OBIS code itself and all values behind that will start encapsulated in parentheses
+
+        If the OBIS code was included in one of the items attributes then the values will be parsed and assigned
+        to the corresponding item.
+        
         :param readout: readout from smart meter with one OBIS code per line
         :return: nothing
         """
