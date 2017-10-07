@@ -126,7 +126,7 @@ class BackendLogics:
 
 
     @cherrypy.expose
-    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, disable=None, unload=None, configload=None, add=None):
+    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, disable=None, unload=None, add=None):
         """
         returns information to display a list of all known logics
         """
@@ -145,8 +145,7 @@ class BackendLogics:
             self.logics.disable_logic(logicname)
         elif unload is not None:
             self.logics.unload_logic(logicname)
-        elif configload is not None:
-            self.logics.load_logic(logicname)
+
         elif add is not None:
             self.logics.load_logic(logicname)
 
@@ -239,6 +238,8 @@ class BackendLogics:
         else:
             mode = 'python'
             updates=self.updates_allowed
+            if mylogic['userlogic'] == False:
+                updates = False
         file_lines = []
         if mylogic != {}:
             file_lines = self.logic_load_code(logicname, os.path.splitext(file_path)[1])
