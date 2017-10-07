@@ -12,12 +12,12 @@
  <ul class="nav nav-tabs">
   <li id="tab_userlogics" class="active"><a href="#">{{ _('Nutzerlogiken') }}</a></li>
   <li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
+	<li style="padding-left:20px; padding-top:10px;">
+	<input id="newPl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Python Logik','button') }}" type="submit" onclick="newPythonLogic();" >
+	</li>
 	{% if blockly_loaded %}
 	<li style="padding-left:20px; padding-top:10px;">
 	<input id="newBl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Blockly Logik','button') }}" type="submit" onclick="newBlocklyLogic();" >
-	</li>
-	<li style="padding-left:20px; padding-top:10px;">
-	<input id="newPl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Python Logik','button') }}" type="submit" onclick="newPythonLogic();" >
 	</li>
 	{% endif %}
  </ul>
@@ -71,13 +71,13 @@ function newBlocklyLogic() {
 							<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
 								{% if logic.crontab == None %}-{% else %}{{ logic.crontab}} {% endif %}{% if not logic.enabled %}</span>{% endif %}
 							</td>
-							<td {% if logic.watch_items|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
-								{% if logic.watch_items|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_items|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fa fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
+							<td {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
+								{% if logic.watch_item_list|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_item_list|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fa fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
 							</td>
 							{% if logic.logictype == 'Blockly' and blockly_loaded %}
-								<td><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.filename) }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
+								<td><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 							{% else %}
-								<td><a href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
+								<td><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 							{% endif %}
 							{% if updates and logic.userlogic %}
 								<td>
@@ -88,7 +88,7 @@ function newBlocklyLogic() {
 								{% else %}
 									<input name="enable" value="{{ _('Aktivieren','button') }}" type="submit" class="btn btn-default btn-xs">
 								{% endif %}
-								{% if 1 == 2 %}
+								{% if 1 == 1 %}
 									<input name="unload" value="{{ 'Entladen' }}" type="submit" class="btn btn-default btn-xs">
 									<input name="configload" value="{{ 'gemäß config laden' }}" type="submit" class="btn btn-default btn-xs">
 								{% endif %}
@@ -105,7 +105,7 @@ function newBlocklyLogic() {
   									<div class="panel-body">
 										<table>
 										{% set first = True %}
-										{% for value in logic.watch_items %}
+										{% for value in logic.watch_item_list %}
 											{% if loop.index % 2 > 0 %}
 											<tr>
 											{% endif %}
@@ -137,7 +137,12 @@ function newBlocklyLogic() {
 								<td></td>
 								<td></td>
 								<td></td>
-								<td><a href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
+
+								{% if logic.logictype == 'Blockly' and blockly_loaded %}
+									<td><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+								{% else %}
+									<td><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+								{% endif %}
 								{% if updates %}
 									<td>
 									<input name="add" value="{{ _('Hinzufügen','button') }}" type="submit" class="btn btn-default btn-xs">
@@ -198,10 +203,10 @@ function newBlocklyLogic() {
 							<td>
 								{% if logic.crontab == None %}-{% else %}{{ logic.crontab}} {% endif %}
 							</td>
-							<td {% if logic.watch_items|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
-								{% if logic.watch_items|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_items|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fa fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
+							<td {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
+								{% if logic.watch_item_list|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_item_list|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fa fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
 							</td>
-							<td><a href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
+							<td><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 							{% if updates and logic.userlogic %}
 								<td>
 								<input {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs">
@@ -224,7 +229,7 @@ function newBlocklyLogic() {
   									<div class="panel-body">
 										<table>
 										{% set first = True %}
-										{% for value in logic.watch_items %}
+										{% for value in logic.watch_item_list %}
 											{% if loop.index % 2 > 0 %}
 											<tr>
 											{% endif %}
