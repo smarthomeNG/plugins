@@ -201,7 +201,8 @@
 		"Speichern_Neu_Laden_und_Triggern": "Speichern, neu laden und Auslösen",
 		"Löschen" : "Löschen",
 		"Konvertieren": "Konvertieren",
-        "Neue Blockly Logik": "Neue Blockly Logik"
+        "Neue Blockly Logik": "Neue Blockly Logik",
+		"Neue Python Logik": "Neue Python Logik"
 	},
 
 	"_menu": {

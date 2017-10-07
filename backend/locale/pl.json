@@ -199,7 +199,8 @@
 		"Speichern_Neu_Laden_und_Triggern": "Save, Reload and Trigger",
 		"Löschen" : "Skasuj"
 		"Konvertieren": "Konvertieren",
-        "Neue Blockly Logik": ""
+        "Neue Blockly Logik": "",
+		"Neue Python Logik": ""
 	},
 	
 	"_menu": {

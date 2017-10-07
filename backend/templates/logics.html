@@ -7,11 +7,22 @@
 {% endblock navbar %}
 
 {% block content %}
+ <div style="display:inline;">
+ <div style="display:inline;">
  <ul class="nav nav-tabs">
   <li id="tab_userlogics" class="active"><a href="#">{{ _('Nutzerlogiken') }}</a></li>
   <li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
+	{% if blockly_loaded %}
+	<li style="padding-left:20px; padding-top:10px;">
+	<input id="newBl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Blockly Logik','button') }}" type="submit" onclick="newBlocklyLogic();" >
+	</li>
+	<li style="padding-left:20px; padding-top:10px;">
+	<input id="newPl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Python Logik','button') }}" type="submit" onclick="newPythonLogic();" >
+	</li>
+	{% endif %}
  </ul>
- 
+
+</div>
  <script type="text/javascript" language="javascript">
 
 function newBlocklyLogic() {
@@ -35,9 +46,6 @@ function newBlocklyLogic() {
 					<th style="width: 250px;">{{ _('Dateiname') }}</th>
 					{% if updates %}
 						<th style="width:260px;">{{ _('Aktionen') }} &nbsp;  &nbsp;  &nbsp;
-						{% if blockly_loaded %}
-							<input id="newBl" type="button" class="btn btn-default btn-xs" value="{{ _('Neue Blockly Logik','button') }}" type="submit" onclick="newBlocklyLogic();" >
-						{% endif %}
 						</th>
 					{% endif %}
 				</tr>
