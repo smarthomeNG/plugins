@@ -142,6 +142,17 @@
 	"Systemeigenschaften": "Systemeigenschaften",
 	"Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!": "Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!",
 
+    "Neue Logik erstellen": "Neue Logik erstellen",
+    "Angaben für die Erzeugung einer neuen Python Logik": "Angaben für die Erzeugung einer neuen Python Logik",
+    "Dateiname des Python Codes der Logik (ohne Extension '.py')": "Dateiname des Python Codes der Logik (ohne Extension '.py')",
+    "Logik-Name/Abschnittsnamen in /etc/logic.yaml) - Wenn leer, wird der Dateiname verwendet": "Logik-Name/Abschnittsnamen in /etc/logic.yaml) - Wenn leer, wird der Dateiname verwendet",
+    "Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.": "Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.",
+	"Logikname": "Logikname",
+	"Bitte Dateinamen angeben": "Bitte Dateinamen angeben",
+	"Logik-Datei": "Logik-Datei",
+	"existiert bereits": "existiert bereits",
+	"Der Logikname wird bereits verwendet": "Der Logikname wird bereits verwendet",
+
 	"_items": {
 		"path": "Pfad",
 		"name": "Name",
@@ -202,7 +213,8 @@
 		"Löschen" : "Löschen",
 		"Konvertieren": "Konvertieren",
         "Neue Blockly Logik": "Neue Blockly Logik",
-		"Neue Python Logik": "Neue Python Logik"
+		"Neue Python Logik": "Neue Python Logik",
+		"Erstellen": "Erstellen"
 	},
 
 	"_menu": {

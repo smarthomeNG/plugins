@@ -10,24 +10,30 @@
  <div style="display:inline;">
  <div style="display:inline;">
  <ul class="nav nav-tabs">
-  <li id="tab_userlogics" class="active"><a href="#">{{ _('Nutzerlogiken') }}</a></li>
-  <li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
-	<li style="padding-left:20px; padding-top:10px;">
-	<input id="newPl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Python Logik','button') }}" type="submit" onclick="newPythonLogic();" >
-	</li>
-	{% if blockly_loaded %}
-	<li style="padding-left:20px; padding-top:10px;">
-	<input id="newBl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Blockly Logik','button') }}" type="submit" onclick="newBlocklyLogic();" >
-	</li>
+	<li id="tab_userlogics" class="active"><a href="#">{{ _('Nutzerlogiken') }}</a></li>
+	<li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
+	{% if updates %}
+		<li style="padding-left:20px; padding-top:10px;">
+		<input id="newPl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Python Logik','button') }}" type="submit" onclick="newPythonLogic();" >
+		</li>
+		{% if blockly_loaded %}
+		<li style="padding-left:20px; padding-top:10px;">
+		<input id="newBl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Blockly Logik','button') }}" type="submit" onclick="newBlocklyLogic();" >
+		</li>
+		{% endif %}
 	{% endif %}
  </ul>
 
 </div>
- <script type="text/javascript" language="javascript">
+<script type="text/javascript" language="javascript">
 
-function newBlocklyLogic() {
-	window.open('/blockly/edit.html?cmd=new', '_blank');
-};
+	function newPythonLogic() {
+		window.location = 'logics_new.html';
+	};
+
+	function newBlocklyLogic() {
+		window.open('/blockly/edit.html?cmd=new', '_blank');
+	};
 
 </script>
 
@@ -127,11 +133,11 @@ function newBlocklyLogic() {
 						{% for logic in newlogics %}
 							<tr>
 								<td></td>
+								<td></td>
 								<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
 								<td>
 									<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text">
 								</td>
-								<td></td>
 								<td></td>
 								<td></td>
 								<td></td>

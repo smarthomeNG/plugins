@@ -1,0 +1,44 @@
+ <!DOCTYPE html>
+{% extends "base.html" %}
+{% import "navbar.html" as nav with context %}
+{% block navbar %}
+	{{ nav }}
+{% endblock navbar %}
+
+{% block content %}
+
+
+<div class="container" style="width: 90%;">
+	<h3>SmartHomeNG: {{ _('Neue Logik erstellen') }}</h3>
+	<strong>{{ '' }}</strong>
+	<br/><br/>
+</div>
+
+<div class="container" style="width: 90%;">
+	<div style="margin-bottom: 5px;">
+	{% if updates and yaml_updates %}
+		<form name="input" action="logics_new.html" method="POST" enctype="multipart/form-data">
+		<input id="create" name="create" value="{{ _('Erstellen','button') }}" type="submit" class="btn btn-primary btn-xs"/>
+	{% endif %}
+    </div>
+
+	<table class="table table-bordered table-hover table-striped">
+		<tr>
+			<td style="min-width:200px;">{{ _('Angaben für die Erzeugung einer neuen Python Logik') }}</td>
+			<td style="width: 900px;">{{ message }}</td>
+		</tr>
+		<tr>
+			<td>&nbsp; &nbsp; -&nbsp;<strong>{{ _('Dateiname') }}</strong></td>
+			<td><input type="text" style="width: 250px; border: none" name="filename" value="{{ filename }}">
+			{{ _("Dateiname des Python Codes der Logik (ohne Extension '.py')") }}</td>
+		</tr>
+		<tr>
+			<td>&nbsp; &nbsp; -&nbsp;<strong>{{ _('Logikname') }}</strong></td>
+			<td><input type="text" style="width: 250px; border: none" name="logicname" value="{{ logicname }}">
+			{{ _('Logik-Name/Abschnittsnamen in /etc/logic.yaml) - Wenn leer, wird der Dateiname verwendet') }}</td>
+		</tr>
+	</table>
+
+</div>
+{% endblock %}
+

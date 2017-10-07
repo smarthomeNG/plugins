@@ -143,6 +143,17 @@
 	"Systemeigenschaften": "Propriétés du système",
 	"Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!": "Si vous ne sauvegardez pas vous perdez toutes modifications!",
 
+    "Neue Logik erstellen": "",
+    "Angaben für die Erzeugung einer neuen Python Logik": "",
+    "Dateiname des Python Codes der Logik (ohne Extension '.py')": "",
+    "Logik-Name/Abschnittsnamen in /etc/logic.yaml) - Wenn leer, wird der Dateiname verwendet": "",
+    "Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.": "",
+	"Logikname": "",
+	"Bitte Dateinamen angeben": "",
+	"Logik-Datei": "",
+	"existiert bereits": "",
+	"Der Logikname wird bereits verwendet": "",
+
 	"_items": {
 		"path": "Chemin",
 		"name": "Nom",
@@ -204,6 +215,7 @@
 		"Konvertieren": "Convertir",
         "Neue Blockly Logik": "Nouvelle logique 'Blockly'",
 		"Neue Python Logik": "Nouvelle logique 'Python'",
+		"Erstellen": ""
 	},
 
 	"_menu": {

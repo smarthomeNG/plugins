@@ -249,6 +249,48 @@ class BackendLogics:
 
 
     # -----------------------------------------------------------------------------------
+    #    LOGICS - NEW
+    # -----------------------------------------------------------------------------------
+
+    @cherrypy.expose
+    def logics_new_html(self, create=None, filename='', logicname=''):
+        """
+        returns information to display a logic in an editor window
+        """
+        self.logics_initialize()
+        
+        self.logger.info("logics_new_html: create = {}, filename = '{}', logicname = '{}'".format(create, filename, logicname))
+        
+        # process actions triggerd by buttons on the web page
+        message = ''
+        if create is not None:
+            if filename != '':
+                if logicname == '':
+                    logicname = filename
+                filename = filename.lower() + '.py'
+                
+                if logicname in self.logics.return_defined_logics():
+                    message = translate("Der Logikname wird bereits verwendet")
+                else:
+                    logics_code = '#!/usr/bin/env python3\n' + '# ' + filename + '\n\n'
+                    if self.logic_create_codefile(filename, logics_code):
+                        self.logic_create_config(logicname, filename)
+                        self.logics.load_logic(logicname)
+                        self.logics.disable_logic(logicname)
+                        redir = '<meta http-equiv="refresh" content="0; url=logics_view.html?file_path={}&logicname={}" />'.format(self.logics.get_logics_dir()+filename, logicname)
+                        return redir
+                        
+                    else:
+                        message = translate("Logik-Datei")+" '"+filename+"' "+translate("existiert bereits")
+            else:
+                message = translate('Bitte Dateinamen angeben')
+                
+        filename = os.path.splitext(filename)[0]
+        return self.render_template('logics_new.html', message=message, filename=filename, logicname=logicname,
+                                    updates=self.updates_allowed, yaml_updates=self.yaml_updates)
+
+
+    # -----------------------------------------------------------------------------------
 
 
     def string_to_list(self, param_string):
@@ -268,6 +310,16 @@ class BackendLogics:
                 param_string = Utils.strip_quotes(param_string)
         return param_string
 
+
+    def logic_create_config(self, logicname, filename):
+        """
+        Create a new configuration for a logic
+        """
+        config_list = []
+        config_list.append(['filename', filename, ''])
+        self.logics.update_config_section(True, logicname, config_list)
+        return
+         
 
     def logic_save_config(self, logicname, cycle, crontab, watch):
         """
@@ -315,6 +367,7 @@ class BackendLogics:
 
     def logic_save_code(self, logicname, logics_code):
 
+        self.logger.info("logic_save_code: type(logics_code) = {}".format(str(type(logics_code))))
         if self.updates_allowed:
             if logicname in self.logics.return_loaded_logics():
                 mylogic = self.logics.return_logic(logicname)
@@ -324,3 +377,16 @@ class BackendLogics:
                 f.close()
         return
 
+
+    def logic_create_codefile(self, filename, logics_code):
+
+        pathname = self.logics.get_logics_dir() + filename
+        if os.path.isfile(pathname):
+            return False
+
+        f = open(pathname, 'w')
+        f.write(logics_code)
+        f.close()
+
+        return True
+        
