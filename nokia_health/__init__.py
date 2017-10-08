@@ -90,7 +90,7 @@ class NokiaHealth(SmartPlugin):
                     self._items['bmi'](bmi)
                 else:
                     self.logger.error(
-                        "Cannot calculate BMI: height is 0, please set height (in cm) for height item manually.")
+                        "Cannot calculate BMI: height is 0, please set height (in m) for height item manually.")
             else:
                 self.logger.error("Cannot calculate BMI: height and / or bmi item missing.")
 
