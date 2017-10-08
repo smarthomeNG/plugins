@@ -5,7 +5,9 @@ Version 0.1
 ## Description
 
 This plugin allows to retrieve data from the Nokia Health API (https://developer.health.nokia.com/api). Currently it 
-only has support for Withings WS-50 Smart Body Analyzer, a wifi capabale scale.
+only has support for "Withings WS-50 Smart Body Analyzer", a wifi capabale scale.
+
+Support Thread: https://knx-user-forum.de/forum/supportforen/smarthome-py/1141179-nokia-health-plugin
 
 ## Requirements
 
