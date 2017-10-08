@@ -37,11 +37,14 @@ Telnet to the configured IP adress and port.
 
 Enter ``help`` for a list of available commands.
 
+You can enter ``help [commandgroup]`` to see only commands belonging to that group (and global commands). Commandgroups are ``item``, ``logic``, ``log`` and ``scheduler``. 
+
 command | function
 --- | ---
 ``cl [log]`` | clean (memory) log
 ``dl [logic]`` | dl logic: disables logic
 ``dump [item]`` | dump details about given item
+``dumpl [logic]`` | dump details about a given logic (new in v1.4)
 ``el [logic]`` | el logic: enables logic
 ``la`` | list all items (with values)
 ``ld [log]`` | log dump of (memory) log

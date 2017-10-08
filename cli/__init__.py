@@ -1,28 +1,31 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
-#            2016      Thomas Ernst
+# Copyright 2016-       Martin Sinn                         m.sinn@gmx.de
+#           2016        Thomas Ernst
+#           2012-2013   Marcus Popp                        marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHomeNG.
+#  Commandline Interface for SmartHomeNG
 #
-#  SmartHomeNG is free software: you can redistribute it and/or modify
+#  This plugin is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHomeNG is distributed in the hope that it will be useful,
+#  This plugin is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHomeNG.  If not, see <http://www.gnu.org/licenses/>.
+#  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
 import logging
 import threading
+
 import lib.connection
+from lib.logic import Logics
 from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
 
@@ -169,13 +172,13 @@ class CLIHandler(lib.connection.Stream):
 
     def __push_command_prompt(self):
         """Push command prompt to client"""
-        self.push("> ")
+        self.push("CLI > ")
         self.__prompt_type = 'command'
 
 
 class CLI(lib.connection.Server, SmartPlugin):
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.3.0'
+
+    PLUGIN_VERSION = '1.4.0'     # is checked against version in plugin.yaml
 
     def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323, hashed_password=''):
         """
@@ -202,6 +205,7 @@ class CLI(lib.connection.Server, SmartPlugin):
         self.hashed_password = hashed_password
         self.commands = CLICommands(self.sh, self.updates_allowed)
         self.alive = False
+
 
     def handle_connection(self):
         """
@@ -249,6 +253,8 @@ class CLICommands:
     Class containing handling for CLI commands as well as a basic set of commands
     """
 
+    logics = None
+
     def __init__(self, smarthome, updates_allowed=False):
         """
         Constructor
@@ -261,35 +267,38 @@ class CLICommands:
         self._commands = {}
 
         # Add basic commands
-        self.add_command('cl', self._cli_cl, 'cl [log]: clean (memory) log')
-        self.add_command('la', self._cli_la, 'la: list all items (with values)')
-        self.add_command('update', self._cli_update, 'update [item] = [value]: update the specified item with the specified value')
-        self.add_command('up', self._cli_update, 'up: alias for update')
-        self.add_command('ls', self._cli_ls, 'ls: list the first level items\nls [item]: list item and every child item (with values)')
-        self.add_command('lo', self._cli_lo, 'lo: list all logics and next execution time')
-        self.add_command('lt', self._cli_lt, 'lt: list current thread names')
-        self.add_command('tr', self._cli_tr, 'tr [logic]: trigger logic')
-        self.add_command('rl', self._cli_rl, 'rl [logic]: reload logic')
-        self.add_command('rr', self._cli_rr, 'rr [logic]: reload and run logic')
-        self.add_command('rt', self._cli_rt, 'rt: return runtime')
-        self.add_command('dump', self._cli_dump, 'dump [item]: dump details about given item')
-        self.add_command('help', self._cli_help, None)
-        self.add_command('h', self._cli_help, None)
-        self.add_command('sl', self._cli_sl, 'sl: list all scheduler tasks by name')
-        self.add_command('st', self._cli_sl, 'st: list all scheduler tasks by execution time')
-        self.add_command('si', self._cli_si, 'si [task]: show details for given task')
-        self.add_command('ld', self._cli_ld, 'ld [log]: log dump of (memory) log')
-        self.add_command('el', self._cli_el, 'el [logic]: enables logic')
-        self.add_command('dl', self._cli_dl, 'dl [logic]: disables logic')
+        self.add_command('cl', self._cli_cl, 'log', 'cl [log]: clean (memory) log')
+        self.add_command('la', self._cli_la, 'item', 'la: list all items (with values)')
+        self.add_command('update', self._cli_update, 'item', 'update [item] = [value]: update the specified item with the specified value')
+        self.add_command('up', self._cli_update, 'item', 'up: alias for update')
+        self.add_command('ls', self._cli_ls, 'item', 'ls: list the first level items\nls [item]: list item and every child item (with values)')
+        self.add_command('lo', self._cli_lo, 'logic', 'lo: list all logics and next execution time')
+        self.add_command('lt', self._cli_lt, '???', 'lt: list current thread names')
+        self.add_command('tr', self._cli_tr, 'logic', 'tr [logic]: trigger logic')
+        self.add_command('rl', self._cli_rl, 'logic', 'rl [logic]: reload logic')
+        self.add_command('rr', self._cli_rr, 'logic', 'rr [logic]: reload and run logic')
+        self.add_command('rt', self._cli_rt, '???', 'rt: return runtime')
+        self.add_command('dump', self._cli_dumpi, 'item', 'dump [item]: dump details about given item')
+        self.add_command('dumpi', self._cli_dumpi, 'item', None)
+        self.add_command('dumpl', self._cli_dumpl, 'logic', 'dumpl [logic]: dump details about given logic')
+        self.add_command('help', self._cli_help2, '-', 'help [group]: show help for group of commands [item, log, logic, scheduler]' )
+        self.add_command('h', self._cli_help2, '-', 'h: alias for help')
+        self.add_command('sl', self._cli_sl, 'scheduler', 'sl: list all scheduler tasks by name')
+        self.add_command('st', self._cli_sl, 'scheduler', 'st: list all scheduler tasks by execution time')
+        self.add_command('si', self._cli_si, 'scheduler', 'si [task]: show details for given task')
+        self.add_command('ld', self._cli_ld, 'log', 'ld [log]: log dump of (memory) log')
+        self.add_command('el', self._cli_el, 'logic', 'el [logic]: enables logic')
+        self.add_command('dl', self._cli_dl, 'logic', 'dl [logic]: disables logic')
+        self.add_command('ql', self._cli_dumpl, 'logic', None)
 
-    def add_command(self, command, function, usage):
+    def add_command(self, command, function, group, usage):
         """
         Add command to list
         :param command: Command to add
         :param function: Function to execute for command
         :param usage: Usage string for help-command
         """
-        self._commands[command] = {'function': function, 'usage': usage}
+        self._commands[command] = {'function': function, 'group': group, 'usage': usage}
 
     def remove_command(self, command):
         """
@@ -311,6 +320,8 @@ class CLICommands:
         :param source: Call source
         :return: TRUE: Command found and handled, FALSE: Unknown command, nothing done
         """
+        if self.logics is None:
+            self.logics = Logics.get_instance()
         for command, data in self._commands.items():
             if cmd == command or cmd.startswith(command + " "):
                 try:
@@ -335,27 +346,38 @@ class CLICommands:
             return
         if parameter is None or parameter == "":
             handler.push("Please name logic to trigger\n")
-        elif parameter in self.sh.return_logics():
-            self.sh.trigger(parameter, by='CLI')
+        elif parameter in self.logics.return_loaded_logics():
+            self.logics.trigger_logic(parameter, by='CLI')
             handler.push("Logic '{0}' triggered.\n".format(parameter))
+        else:
+            handler.push("Logic '{0}' not found.\n".format(parameter))
+
+    def _cli_dumpl(self, handler, parameter, source):
+        if parameter in self.logics.return_loaded_logics():
+            info = self.logics.get_logic_info(parameter, ordered=True)
+#            handler.push("Logic {} ".format(info['name']))
+            handler.push("{\n")
+            for key in info:
+                handler.push("  {}: {}\n".format(key, info[key]))
+            handler.push("}\n")
         else:
             handler.push("Logic '{0}' not found.\n".format(parameter))
 
     def _cli_el(self, handler, parameter, source):
         if not self.updates_allowed:
-            handler.push("Logic triggering is not allowed.\n")
+            handler.push("Logic enabling is not allowed.\n")
             return
-        if parameter in self.sh.return_logics():
-            self.sh.return_logic(parameter).enable()
+        if parameter in self.logics.return_loaded_logics():
+            self.logics.return_logic(parameter).enable()
         else:
             handler.push("Logic '{0}' not found.\n".format(parameter))
 
     def _cli_dl(self, handler, parameter, source):
         if not self.updates_allowed:
-            handler.push("Logic triggering is not allowed.\n")
+            handler.push("Logic disabling is not allowed.\n")
             return
-        if parameter in self.sh.return_logics():
-            self.sh.return_logic(parameter).disable()
+        if parameter in self.logics.return_loaded_logics():
+            self.logics.return_logic(parameter).disable()
         else:
             handler.push("Logic '{0}' not found.\n".format(parameter))
 
@@ -372,9 +394,8 @@ class CLICommands:
             return
         if parameter is None or parameter == "":
             handler.push("Please name logic to reload\n")
-        elif parameter in self.sh.return_logics():
-            logic = self.sh.return_logic(parameter)
-            logic.generate_bytecode()
+        elif parameter in self.logics.return_loaded_logics():
+            self.logics.load_logic(parameter)
             handler.push("Logic '{0}' reloaded.\n".format(parameter))
         else:
             handler.push("Logic '{0}' not found.\n".format(parameter))
@@ -392,10 +413,9 @@ class CLICommands:
             return
         if parameter is None or parameter == "":
             handler.push("Please name logic to reload and trigger")
-        elif parameter in self.sh.return_logics():
-            logic = self.sh.return_logic(parameter)
-            logic.generate_bytecode()
-            logic.trigger(by='CLI')
+        elif parameter in self.logics.return_loaded_logics():
+            self.logics.load_logic(parameter)
+            self.logics.trigger_logic(parameter, by='CLI')
             handler.push("Logic '{0}' reloaded and triggered.\n".format(parameter))
         else:
             handler.push("Logic '{0}' not found.\n".format(name))
@@ -409,11 +429,10 @@ class CLICommands:
         :param source: Source
         """
         handler.push("Logics:\n")
-        for logic in sorted(self.sh.return_logics()):
+        for logic in sorted(self.logics.return_loaded_logics()):
             data = []
-            lo = self.sh.return_logic(logic)
             nt = self.sh.scheduler.return_next(logic)
-            if lo.enabled == False:
+            if self.logics.is_logic_enabled(logic) == False:
                 data.append("disabled")
             if nt is not None:
                 data.append("scheduled for {0}".format(nt.strftime('%Y-%m-%d %H:%M:%S%z')))
@@ -486,7 +505,7 @@ class CLICommands:
                 handler.push("Could not find path: {}\n".format(parameter))
 
     # noinspection PyUnusedLocal
-    def _cli_dump(self, handler, parameter, source):
+    def _cli_dumpi(self, handler, parameter, source):
         """
         CLI command "dump" - dump item(s)
         :param handler: CLIHandler instance
@@ -503,24 +522,24 @@ class CLICommands:
                 if hasattr(item, 'id') and item._type:
                     handler.push("Item {} ".format(item.id()))
                     handler.push("{\n")
-                    handler.push("  type = {}\n".format(item.type()))
-                    handler.push("  value = {}\n".format(item()))
-                    handler.push("  age = {}\n".format(item.age()))
-                    handler.push("  last_change = {}\n".format(item.last_change()))
-                    handler.push("  changed_by = {}\n".format(item.changed_by()))
-                    handler.push("  previous_value = {}\n".format(item.prev_value()))
-                    handler.push("  previous_age = {}\n".format(item.prev_age()))
-                    handler.push("  previous_change = {}\n".format(item.prev_change()))
+                    handler.push("  type: {}\n".format(item.type()))
+                    handler.push("  value: {}\n".format(item()))
+                    handler.push("  age: {}\n".format(item.age()))
+                    handler.push("  last_change: {}\n".format(item.last_change()))
+                    handler.push("  changed_by: {}\n".format(item.changed_by()))
+                    handler.push("  previous_value: {}\n".format(item.prev_value()))
+                    handler.push("  previous_age: {}\n".format(item.prev_age()))
+                    handler.push("  previous_change: {}\n".format(item.prev_change()))
                     if hasattr(item, 'conf'):
-                        handler.push("  config = {\n")
+                        handler.push("  config: {\n")
                         for name in item.conf:
-                            handler.push("    {} = {}\n".format(name, item.conf[name]))
+                            handler.push("    {}: {}\n".format(name, item.conf[name]))
                         handler.push("  }\n")
-                    handler.push("  logics = [\n")
+                    handler.push("  logics: [\n")
                     for trigger in item.get_logic_triggers():
                         handler.push("    {}\n".format(trigger))
                     handler.push("  ]\n")
-                    handler.push("  triggers = [\n")
+                    handler.push("  triggers: [\n")
                     for trigger in item.get_method_triggers():
                         handler.push("    {}\n".format(trigger))
                     handler.push("  ]\n")
@@ -539,6 +558,27 @@ class CLICommands:
         for command, data in sorted(self._commands.items()):
             if data['usage'] is not None:
                 handler.push(data['usage'] + '\n')
+        handler.push('quit: quit the session\n')
+        handler.push('q: alias for quit\n')
+
+    # noinspection PyUnusedLocal
+    def _cli_help2(self, handler, parameter, source):
+        """
+        CLI command "help" - show available commands
+        :param handler: CLIHandler instance
+        :param parameter: Parameters used to call the command
+        :param source: Source
+        """
+        for command, data in sorted(self._commands.items()):
+            if parameter == '' or data['group'] == parameter:
+                if data['usage'] is not None:
+                    handler.push(data['usage'] + '\n')
+        if parameter != '':
+            handler.push('\n')
+            for command, data in sorted(self._commands.items()):
+                if data['group'] == '???':
+                    if data['usage'] is not None:
+                        handler.push(data['usage'] + '\n')
         handler.push('quit: quit the session\n')
         handler.push('q: alias for quit\n')
 
@@ -606,7 +646,7 @@ class CLICommands:
 
     # noinspection PyUnusedLocal
     def _cli_sl(self, handler, parameter, source):
-        logics = sorted(self.sh.return_logics())
+        logics = sorted(self.logics.return_loaded_logics())
         tasks = []
         for name in sorted(self.sh.scheduler):
             nt = self.sh.scheduler.return_next(name)
@@ -620,7 +660,7 @@ class CLICommands:
 
     # noinspection PyUnusedLocal
     def _cli_st(self, handler, parameter, source):
-        logics = sorted(self.sh.return_logics())
+        logics = sorted(self.logics.return_loaded_logics())
         tasks = []
         for name in sorted(self.sh.scheduler):
             nt = self.sh.scheduler.return_next(name)
