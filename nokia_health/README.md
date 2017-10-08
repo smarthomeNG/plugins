@@ -47,49 +47,41 @@ body:
         type: num
         visu_acl: ro
         nh_type@nokia_health: weight
-        database@mysqldb: init
-
+ 
     height:
         type: num
         visu_acl: ro
         nh_type@nokia_health: height
-        database@mysqldb: init
-
+  
     bmi:
         type: num
         visu_acl: ro
         nh_type@nokia_health: bmi
-        database@mysqldb: init
 
     fat_ratio:
         type: num
         visu_acl: ro
         nh_type@nokia_health: fat_ratio
-        database@mysqldb: init
 
     fat_free_mass:
         type: num
         visu_acl: ro
         nh_type@nokia_health: fat_free_mass
-        database@mysqldb: init
 
     fat_mass_weight:
         type: num
         visu_acl: ro
         nh_type@nokia_health: fat_mass_weight
-        database@mysqldb: init
 
     heart_pulse:
         type: num
         visu_acl: ro
         nh_type@nokia_health: heart_pulse
-        database@mysqldb: init
 
     last_update:
         type: num
         visu_acl: ro
         nh_type@nokia_health: last_update
-        database@mysqldb: init
 ```
 
 ## Functions
