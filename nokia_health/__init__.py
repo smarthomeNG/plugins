@@ -86,7 +86,7 @@ class NokiaHealth(SmartPlugin):
             if 'height' in self._items and 'bmi' in self._items:
                 if self._items['height']() > 0:
                     bmi = round(
-                        last_measure['weight'] / ((self._items['height']()) * (self._items['height']()), 2))
+                        last_measure['weight'] / ((self._items['height']()) * (self._items['height']())), 2)
                     self._items['bmi'](bmi)
                 else:
                     self.logger.error(
