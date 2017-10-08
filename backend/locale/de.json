@@ -227,6 +227,7 @@
 		"Scheduler": "Scheduler",
 		"Plugins": "Plugins",
 		"Threads": "Threads",
+		"Logging": "Logging",
 		"Visu": "Visu",
 		"Disclosure": "Disclosure"
 	}

@@ -276,7 +276,7 @@ class BackendLogics:
                     if self.logic_create_codefile(filename, logics_code):
                         self.logic_create_config(logicname, filename)
                         self.logics.load_logic(logicname)
-                        self.logics.disable_logic(logicname)
+#                        self.logics.disable_logic(logicname)
                         redir = '<meta http-equiv="refresh" content="0; url=logics_view.html?file_path={}&logicname={}" />'.format(self.logics.get_logics_dir()+filename, logicname)
                         return redir
                         
@@ -317,6 +317,7 @@ class BackendLogics:
         """
         config_list = []
         config_list.append(['filename', filename, ''])
+        config_list.append(['enabled', False, ''])
         self.logics.update_config_section(True, logicname, config_list)
         return
          
