@@ -153,6 +153,11 @@
 	"Logik-Datei": "",
 	"existiert bereits": "",
 	"Der Logikname wird bereits verwendet": "",
+	"sowie": "",
+	"führen nicht zum": "",
+	"der Logik": "",
+	"Bitte bei Bedarf anschließend": "",
+	"drücken": "",
 
 	"_items": {
 		"path": "Chemin",
@@ -227,6 +232,7 @@
 		"Scheduler": "Planificateur",
 		"Plugins": "Extensions",
 		"Threads": "Tâches",
+		"Logging": "Journalisation",
 		"Visu": "Visu",
 		"Disclosure": "Déclaration",
 		"CONF-YAML Konverter": "Convertisseur .conf vers .yaml"

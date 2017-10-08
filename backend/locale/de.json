@@ -152,6 +152,11 @@
 	"Logik-Datei": "Logik-Datei",
 	"existiert bereits": "existiert bereits",
 	"Der Logikname wird bereits verwendet": "Der Logikname wird bereits verwendet",
+	"sowie": "sowie",
+	"führen nicht zum": "führen nicht zum",
+	"der Logik": "der Logik",
+	"Bitte bei Bedarf anschließend": "Bitte bei Bedarf anschließend",
+	"drücken": "drücken",
 
 	"_items": {
 		"path": "Pfad",

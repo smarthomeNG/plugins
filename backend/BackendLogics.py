@@ -24,7 +24,7 @@
 
 import cherrypy
 import platform
-import collections
+#import collections
 import datetime
 import pwd
 import html
@@ -172,7 +172,7 @@ class BackendLogics:
         _config = {}
         _config.update(self._sh._logics._read_logics(self._sh._logic_conf_basename, self._sh._logic_dir))
 
-        self.logger.info("Backend (logic_findnew): _config = '{}'".format(_config))
+        self.logger.info("logic_findnew: _config = '{}'".format(_config))
         newlogics = []
         for configlogic in _config:
             found = False
@@ -210,6 +210,8 @@ class BackendLogics:
         """
         self.logics_initialize()
         
+        self.logger.info("logics_view_html: logicname = {}, trigger = {}, enable = {}, disable = {}, save = {},  savereload = {},  savereloadtrigger = {}".format( logicname, trigger, enable, disable, save, savereload, savereloadtrigger ))
+        self.logger.info("logics_view_html: logicname = {}, cycle = {}, crontab = {}, watch = {}".format( logicname, cycle, crontab, watch ))
         # process actions triggerd by buttons on the web page
         if trigger is not None:
             self.logics.trigger_logic(logicname)
@@ -232,6 +234,12 @@ class BackendLogics:
 
         # assemble data for displaying/etiting of a logic
         mylogic = self.fill_logicdict(logicname)
+        if save is not None:
+            # Fill editor fields with edit results, needed because logic is not reloaded
+            mylogic['cycle'] = cycle
+            mylogic['crontab'] = crontab
+            mylogic['watch'] = watch
+        
         if os.path.splitext(file_path)[1] == '.blockly':
             mode = 'xml'
             updates = False

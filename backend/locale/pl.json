@@ -150,6 +150,11 @@
 	"Logik-Datei": "",
 	"existiert bereits": "",
 	"Der Logikname wird bereits verwendet": "",
+	"sowie": "",
+	"führen nicht zum": "",
+	"der Logik": "",
+	"Bitte bei Bedarf anschließend": "",
+	"drücken": "",
 
 	"_items": {
 		"path": "ścieżka",
@@ -224,6 +229,7 @@
 		"Scheduler": "Planista",
 		"Plugins": "Pluginy",
 		"Threads": "Wątki",
+		"Logging": "Logowanie",
 		"Visu": "Visu",
 		"Disclosure": "Deklaracja",
 		"CONF-YAML Konverter": "CONF-YAML Konverter"

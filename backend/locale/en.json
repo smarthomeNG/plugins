@@ -151,6 +151,11 @@
 	"Logik-Datei": "Logic-file",
 	"existiert bereits": "already exists",
 	"Der Logikname wird bereits verwendet": "The name of the logic is already used",
+	"sowie": "and",
+	"führen nicht zum": "do not",
+	"der Logik": "the logic",
+	"Bitte bei Bedarf anschließend": "If needed, please press",
+	"drücken": " ",
 
 	"_items": {
 		"path": "Pfad",
@@ -225,6 +230,7 @@
 		"Scheduler": "Scheduler",
 		"Plugins": "Plugins",
 		"Threads": "Threads",
+		"Logging": "Logging",
 		"Visu": "Visu",
 		"Disclosure": "Disclosure",
 		"CONF-YAML Konverter": "CONF-YAML Converter"
