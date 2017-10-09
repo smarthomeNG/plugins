@@ -141,7 +141,7 @@
 	"PyPI Check": "PyPI Check",
 	"Systemeigenschaften": "Systemeigenschaften",
 	"Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!": "Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!",
-
+	"Wollen Sie diese Logik wirklich löschen?" : "Wollen Sie diese Logik wirklich löschen?",
     "Neue Logik erstellen": "Neue Logik erstellen",
     "Angaben für die Erzeugung einer neuen Python Logik": "Angaben für die Erzeugung einer neuen Python Logik",
     "Dateiname des Python Codes der Logik (ohne Extension '.py')": "Dateiname des Python Codes der Logik (ohne Extension '.py')",
