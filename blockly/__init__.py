@@ -467,8 +467,10 @@ class WebInterface:
                     section = sc;
                     self.logger.info("blockly_update_config: #trigger# section = '{}'".format(section))
                 config_list.append([trk.strip(), trv.strip(),co])
-            else:
+            elif line.startswith('"""'):    # initial .rst-comment reached, stop scanning
                 break
+            else:                           # non-metadata lines between beginning of code and initial .rst-comment
+                pass
 
         if section == '':
             section = name
@@ -501,8 +503,8 @@ class WebInterface:
         """
         self._pycode = py
         self._xmldata = xml
-        fn_py = self._sh._logic_dir + name + ".py"
-        self.logic_filename = name + ".blockly"
+        fn_py = self._sh._logic_dir + name.lower() + ".py"
+        self.logic_filename = name.lower() + ".blockly"
         fn_xml = self._sh._logic_dir + self.logic_filename
         self.logger.info("blockly_save_logic: saving blockly logic {} as file {}".format(name, fn_py))
         self.logger.debug("blockly_save_logic: SAVE PY blockly logic {} = {}\n '{}'".format(name, fn_py, py))
