@@ -126,7 +126,7 @@ class BackendLogics:
 
 
     @cherrypy.expose
-    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, disable=None, unload=None, add=None):
+    def logics_html(self, logic=None, trigger=None, reload=None, enable=None, disable=None, unload=None, add=None, delete=None):
         """
         returns information to display a list of all known logics
         """
@@ -148,6 +148,9 @@ class BackendLogics:
 
         elif add is not None:
             self.logics.load_logic(logicname)
+            
+        elif delete is not None:
+            self.logics.delete_logic(logicname)
 
         # create a list of dicts, where each dict contains the information for one logic
         logics_list = []
@@ -184,11 +187,15 @@ class BackendLogics:
                 if _config[configlogic] != 'None':
                     mylogic = {}
                     mylogic['name'] = configlogic
+                    mylogic['userlogic'] = True
                     mylogic['logictype'] = self.logics.return_logictype(mylogic['name'])
                     if mylogic['logictype'] == 'Python':
                         mylogic['filename'] = _config[configlogic]['filename']
+                        mylogic['pathname'] = self.logics.get_logics_dir() + mylogic['filename']
                     elif mylogic['logictype'] == 'Blockly':
-                        mylogic['filename'] = os.path.splitext(_config[configlogic]['filename'])[0] + '.blockly'
+                        mylogic['filename'] = _config[configlogic]['filename']
+                        mylogic['pathname'] = os.path.splitext(self.logics.get_logics_dir() + _config[configlogic]['filename'])[0] + '.blockly'
+#                        mylogic['pathname'] = os.path.splitext(_config[configlogic]['filename'])[0] + '.blockly'
                     else:
                         mylogic['filename'] = ''
                     
@@ -210,8 +217,8 @@ class BackendLogics:
         """
         self.logics_initialize()
         
-        self.logger.info("logics_view_html: logicname = {}, trigger = {}, enable = {}, disable = {}, save = {},  savereload = {},  savereloadtrigger = {}".format( logicname, trigger, enable, disable, save, savereload, savereloadtrigger ))
-        self.logger.info("logics_view_html: logicname = {}, cycle = {}, crontab = {}, watch = {}".format( logicname, cycle, crontab, watch ))
+#        self.logger.info("logics_view_html: logicname = {}, trigger = {}, enable = {}, disable = {}, save = {},  savereload = {},  savereloadtrigger = {}".format( logicname, trigger, enable, disable, save, savereload, savereloadtrigger ))
+#        self.logger.info("logics_view_html: logicname = {}, cycle = {}, crontab = {}, watch = {}".format( logicname, cycle, crontab, watch ))
         # process actions triggerd by buttons on the web page
         if trigger is not None:
             self.logics.trigger_logic(logicname)
@@ -246,6 +253,8 @@ class BackendLogics:
         else:
             mode = 'python'
             updates=self.updates_allowed
+            if not hasattr(mylogic, 'userlogic'):
+                mylogic['userlogic'] = True
             if mylogic['userlogic'] == False:
                 updates = False
         file_lines = []
@@ -358,6 +367,7 @@ class BackendLogics:
 
     def logic_load_code(self, logicname, code_type='.python'):
 
+        file_lines = []
         if logicname in self.logics.return_loaded_logics():
             mylogic = self.logics.return_logic(logicname)
 
@@ -367,7 +377,6 @@ class BackendLogics:
                 pathname = mylogic.pathname
                 
             fobj = open(pathname)
-            file_lines = []
             for line in fobj:
                 file_lines.append(self.html_escape(line))
             fobj.close()

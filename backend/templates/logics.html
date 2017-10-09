@@ -95,7 +95,8 @@
 									<input name="enable" value="{{ _('Aktivieren','button') }}" type="submit" class="btn btn-default btn-xs">
 								{% endif %}
 								{% if 1 == 1 %}
-									<input name="unload" value="{{ 'Entladen' }}" type="submit" class="btn btn-default btn-xs">
+									<input name="unload" value="{{ _('Entladen', 'button') }}" type="submit" class="btn btn-default btn-xs">
+									<input name="delete" value="{{ _('Löschen', 'button') }}" type="submit" class="btn btn-danger btn-default btn-xs" onClick="confirm('{{_('Wollen Sie diese Logik wirklich löschen?')}}')">
 								{% endif %}
 								</td>
 							{% else %}
@@ -150,7 +151,10 @@
 								{% endif %}
 								{% if updates %}
 									<td>
+									{% if logic.filename != '' %}
 									<input name="add" value="{{ _('Hinzufügen','button') }}" type="submit" class="btn btn-default btn-xs">
+									{% endif %}
+									<input name="delete" value="{{ _('Löschen', 'button') }}" type="submit" class="btn btn-danger btn-default btn-xs" onClick="confirm('{{_('Wollen Sie diese Logik wirklich löschen?')}}')">
 									</td>
 								{% else %}
 									<td></td>

@@ -220,7 +220,8 @@
 		"Konvertieren": "Convertir",
         "Neue Blockly Logik": "Nouvelle logique 'Blockly'",
 		"Neue Python Logik": "Nouvelle logique 'Python'",
-		"Erstellen": ""
+		"Erstellen": "",
+		"Entladen": ""
 	},
 
 	"_menu": {
