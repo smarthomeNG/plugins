@@ -77,15 +77,16 @@ Code.saveBlocks = function() {
   var pycode = Blockly.Python.workspaceToCode(Code.workspace);
   var xmldom = Blockly.Xml.workspaceToDom(Code.workspace);
   var xmltxt = Blockly.Xml.domToText(xmldom);
+
   $.ajax({  url: "blockly_save_logic",
             type: "POST",
+            async: false,
             data: {xml: xmltxt, py: pycode, name: logicname },
             success: function(response) {
                 alert(SaveBlocks - response +' ?');
             //    $("#test").html(response);
             }
         });
-  Code.wait(1000);
 };
 
 
