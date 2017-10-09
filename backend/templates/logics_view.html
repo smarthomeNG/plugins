@@ -211,7 +211,6 @@ logicsCodeMirror.on("keyup", function (cm, event) {
 var answer;
 $('a').mousedown(function(e) {
     if(checkChangedContent()) {
-    	$(window).unbind();
         if(confirm("{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}")) {
         	answer=true;
         	location.href=e.currentTarget;
