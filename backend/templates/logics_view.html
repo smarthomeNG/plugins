@@ -208,12 +208,22 @@ logicsCodeMirror.on("keyup", function (cm, event) {
 		CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
 	};
 });
+var answer;
+$('a').mousedown(function(e) {
+    if(checkChangedContent()) {
+    	$(window).unbind();
+        if(confirm("{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}")) {
+        	answer=true;
+        	location.href=e.currentTarget;
+        }
+    }
+});
 window.onbeforeunload = function(e) {
 	if (document.activeElement.id == 'save' ||
 	 document.activeElement.id == 'savereload' ||
 	 document.activeElement.id == 'savereloadtrigger') {
 		return;
-	} else if (checkChangedContent()) {
+	} else if (!answer && checkChangedContent()) {
         return "{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}";
     } else {
         return;
