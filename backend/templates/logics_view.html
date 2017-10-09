@@ -136,7 +136,7 @@ for (var i = 1; i <= 100; i++) {
 
 var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
     lineNumbers: true,
-    {% if updates %}
+
     extraKeys: {
         "F11": function(cm) {
           logicsCodeMirror.getScrollerElement().style.maxHeight = 'none';
@@ -150,7 +150,7 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
               cm.setOption("fullScreen", false);
               resizeCodeMirror();
           }
-        },
+        }{% if updates %},
         "Ctrl-Space": "autocomplete",
         "Ctrl-I": "autocomplete_item",
         "Alt-F": "findPersistent",
@@ -160,9 +160,8 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
 		},
 		"Ctrl-Q": function(cm){
 			cm.foldCode(cm.getCursor());
-		}
+		}{% endif %}
     },
-    {% endif %}
     mode: "{{ mode }}",
     {% if not updates %}
     readOnly: true,
