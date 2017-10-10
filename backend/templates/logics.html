@@ -86,7 +86,7 @@
 								<td><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 							{% endif %}
 							{% if updates and logic.userlogic %}
-								<td>
+								<td style="width: 340px;">
 								<input {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs">
 								<input name="reload" value="{{ _('Neu Laden','button') }}" type="submit" class="btn btn-default btn-xs">
 								{% if logic.enabled %}
