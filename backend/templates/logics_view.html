@@ -46,12 +46,12 @@
 		<form name="input" action="logics_view.html" method="POST" enctype="multipart/form-data">
 		<input type="hidden" name="logicname" readonly="true" value="{{ logicname }}" type="text"/>
 		<input type="hidden" name="file_path" readonly="true" value="{{ file_path }}" type="text"/>
-		<input {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs"/>
+			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-default btn-xs"><i class="fa fa-hand-pointer-o"></i> {{ _('Auslösen','button') }}</button>
 
 		{% if thislogic.enabled %}
-			<input name="disable" value="{{ _('Deaktivieren','button') }}" type="submit" class="btn btn-default btn-xs"/>
+			<button name="disable" class="btn btn-default btn-xs"><i class="fa fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
 		{% else %}
-			<input name="enable" value="{{ _('Aktivieren','button') }}" type="submit" class="btn btn-default btn-xs"/>
+			<button name="enable" class="btn btn-default btn-xs"><i class="fa fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
 		{% endif %}
 		&nbsp;|&nbsp;|&nbsp;
 		<input id="save" name="save" value="{{ _('Speichern','button') }}" type="submit" class="btn btn-default btn-xs btn-success"/>

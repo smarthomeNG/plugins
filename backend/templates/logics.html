@@ -87,16 +87,16 @@
 							{% endif %}
 							{% if updates and logic.userlogic %}
 								<td>
-								    <button {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs"><i class="fa fa-hand-pointer-o"></i></button>
-									<button name="reload" title="{{ _('Neu Laden','button') }}" type="submit" class="btn btn-default btn-xs"><i class="fa fa-refresh"></i></button>
+								    <button {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-default btn-xs"><i class="fa fa-hand-pointer-o"></i></button>
+									<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-default btn-xs"><i class="fa fa-refresh"></i></button>
 								{% if logic.enabled %}
-									<button name="disable" title="{{ _('Deaktivieren','button') }}" type="submit" class="btn btn-default btn-xs"><i class="fa fa-pause"></i></button>
+									<button name="disable" title="{{ _('Deaktivieren','button') }}" class="btn btn-default btn-xs"><i class="fa fa-pause"></i></button>
 								{% else %}
-									<button name="enable" title="{{ _('Aktivieren','button') }}" type="submit" class="btn btn-default btn-xs"><i class="fa fa-play"></i></button>
+									<button name="enable" title="{{ _('Aktivieren','button') }}" class="btn btn-default btn-xs"><i class="fa fa-play"></i></button>
 								{% endif %}
 								{% if 1 == 1 %}
-									<button name="unload" title="{{ _('Entladen', 'button') }}" type="submit" class="btn btn-default btn-xs"><i class="fa fa-eject"></i></button>
-									<button name="delete" title="{{ _('Löschen', 'button') }}" type="submit" class="btn btn-danger btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie diese Logik wirklich löschen?')}}');"><i class="fa fa-times"></i></button>
+									<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-default btn-xs"><i class="fa fa-eject"></i></button>
+									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-danger btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie diese Logik wirklich löschen?')}}');"><i class="fa fa-times"></i></button>
 								{% endif %}
 								</td>
 							{% else %}
