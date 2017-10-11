@@ -1,3 +1,13 @@
+$('#help').click(function(e) {
+  $('#help_text').toggle();
+  resizeCodeMirror()
+});
+$('#linewrapping').click(function(e) {
+    switchLineWrapping()
+});
+$('#rulers').click(function(e) {
+    switchRulers();
+});
 
 window.addEventListener("resize", resizeCodeMirror, false);
 
