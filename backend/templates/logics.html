@@ -61,7 +61,7 @@
 					{% for logic in logics %}
 						{% if logic.userlogic %}
 						<tr>
-							<td><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fa {% if not logic.enabled %}fa-times-circle{% else %}fa-check-circle{% endif %}"></span></td>
+							<td><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fa {% if not logic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
 							<td>{{ loop.index }}</td>
 							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
 							<td>
