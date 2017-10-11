@@ -14,11 +14,11 @@
 	<li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
 	{% if updates %}
 		<li style="padding-left:20px; padding-top:10px;">
-		<input id="newPl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Python Logik','button') }}" type="submit" onclick="newPythonLogic();" >
+			<button id="newPl" class="btn btn-primary btn-xs" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fa fa-code">&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</i></button>
 		</li>
 		{% if blockly_loaded %}
 		<li style="padding-left:20px; padding-top:10px;">
-		<input id="newBl" type="button" class="btn btn-primary btn-xs" value="{{ _('Neue Blockly Logik','button') }}" type="submit" onclick="newBlocklyLogic();" >
+			<button id="newBl" class="btn btn-primary btn-xs" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fa fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
 		</li>
 		{% endif %}
 	{% endif %}
