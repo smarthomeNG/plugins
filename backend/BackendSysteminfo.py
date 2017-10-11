@@ -26,6 +26,7 @@ import cherrypy
 import platform
 import collections
 import datetime
+import time
 import pwd
 import html
 import subprocess
@@ -33,10 +34,12 @@ import socket
 import sys
 import threading
 import os
+import psutil
 import lib.config
 from lib.logic import Logics
 import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.model.smartplugin import SmartPlugin
+from lib.utils import Utils
 from .utils import *
 
 import lib.item_conversion
@@ -84,13 +87,23 @@ class BackendSysteminfo:
                         req_dict[key] = req_dict[key] + '<br/>' + plugin_dict[key] + ' (' + plugin_name.replace(
                             'plugins.', '') + ')'
 
-        ip = self._bs.get_local_ip_address()
+        ip = Utils.get_local_ipv4_address()
+        ipv6 = Utils.get_local_ipv6_address()
 
         space = os.statvfs(self._sh_dir)
         freespace = space.f_frsize * space.f_bavail / 1024 / 1024
 
-        get_uptime = subprocess.Popen('uptime', stdout=subprocess.PIPE)
-        uptime = get_uptime.stdout.read().decode()
+        # return host uptime
+        uptime = time.mktime(datetime.datetime.now().timetuple()) - psutil.boot_time()
+        days = uptime // (24 * 3600)
+        uptime = uptime % (24 * 3600)
+        hours = uptime // 3600
+        uptime %= 3600
+        minutes = uptime // 60
+        uptime %= 60
+        seconds = uptime
+        uptime = self.age_to_string(days, hours, minutes, seconds)
+
         # return SmarthomeNG runtime
         rt = str(self._sh.runtime())
         daytest = rt.split(' ')
@@ -109,7 +122,7 @@ class BackendSysteminfo:
                                     now=now, system=system, sh_vers=self._sh.env.core.version(), sh_dir=self._sh_dir,
                                     vers=vers, node=node, arch=arch, user=user, freespace=freespace, 
                                     uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
-                                    ip=ip, python_packages=python_packages, requirements=req_dict)
+                                    ip=ip, ipv6=ipv6, python_packages=python_packages, requirements=req_dict)
 
 
     def get_process_info(self, command):

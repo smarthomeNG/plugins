@@ -21,63 +21,43 @@
                     <th>{{ _('Status') }}</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td><img src="static/img/terminal-server.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">Host:</td>
-                    <td style="vertical-align: middle;">{{ node }}</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/NIC.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('IP') }} (v4)</td>
-                    <td style="vertical-align: middle;">{{ ip }}</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/tux_hdd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('Betriebssystem') }}:</td>
-                    <td style="vertical-align: middle;">{{ system }} {{ vers }}</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/cpu.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('Architektur') }}:</td>
-                    <td style="vertical-align: middle;">{{ arch }}</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/user.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('Benutzer') }}:</td>
-                    <td style="vertical-align: middle;">{{ user }}</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/hd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('Freier Speicher') }}:</td>
-                    <td style="vertical-align: middle;">{{ (freespace)|round|int }} MByte</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/clock.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('Datum') }} / {{ _('Zeit') }}:</td>
-                    <td style="vertical-align: middle;">{{ now }}</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/preferences.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('Betriebszeit') }} (Host):</td>
-                    <td style="vertical-align: middle;">{{ uptime }}</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('Betriebszeit') }} (SmartHomeNG):</td>
-                    <td style="vertical-align: middle;">{{ sh_uptime }}</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('SmartHomeNG Version') }}:</td>
-                    <td style="vertical-align: middle;">{{ sh_vers }} &nbsp &nbsp {{ _('in') }} &nbsp &nbsp {{ sh_dir }}</td>
-                </tr>
-                <tr>
-                    <td><img src="static/img/python.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                    <td style="vertical-align: middle;">{{ _('Python Version') }}:</td>
-                    <td style="vertical-align: middle;">{{ pyversion }}</td>
-                </tr>
-            </tbody>
+        <tbody>
+            <tr>
+                <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('SmartHomeNG Version') }}:</td>
+                <td style="vertical-align: middle;">{{ sh_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Benutzer') }}:&nbsp;{{ user }}</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/terminal-server.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">Host:</td>
+                <td style="vertical-align: middle;">{{ node }}&nbsp;&nbsp;-&nbsp;&nbsp;IPv4: {{ ip }}<!--&nbsp;&nbsp;-&nbsp;&nbsp;IPv6: {{ ipv6 }}--></td>
+            </tr>
+            <tr>
+                <td><img src="static/img/tux_hdd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Betriebssystem') }}:</td>
+                <td style="vertical-align: middle;">{{ system }} {{ vers }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Architektur') }}:&nbsp;{{ arch }}</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/python.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Python Version') }}:</td>
+                <td style="vertical-align: middle;">{{ pyversion }}</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/hd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Freier Speicher') }}:</td>
+                <td style="vertical-align: middle;">{{ (freespace)|round|int }} MByte</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/clock.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Datum') }} / {{ _('Zeit') }}:</td>
+                <td style="vertical-align: middle;">{{ now }}</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/preferences.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Betriebszeit') }}:</td>
+                <td style="vertical-align: middle;">Host:&nbsp;{{ uptime }}&nbsp;&nbsp;-&nbsp;&nbsp;SmartHomeNG:&nbsp;{{ sh_uptime }}</td>
+            </tr>
+        </tbody>
         </table>
     </div>
 </div>

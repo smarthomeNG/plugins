@@ -32,7 +32,6 @@ import html
 import os
 import json
 import subprocess
-import socket
 import sys
 import threading
 
@@ -65,12 +64,7 @@ class BackendServer(SmartPlugin):
             result = default
             self.logger.error("BackendServer: Invalid value '"+str(value)+"' configured for attribute "+attr+" in plugin.conf, using '"+str(result)+"' instead")
         return result
-
-    def get_local_ip_address(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("10.10.10.10", 80))
-        return s.getsockname()[0]
-
+    
 #    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
     def __init__(self, sh, updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
         self.logger = logging.getLogger(__name__)
