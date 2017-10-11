@@ -12,7 +12,7 @@
  <ul class="nav nav-tabs">
 	<li id="tab_userlogics" class="active"><a href="#">{{ _('Nutzerlogiken') }}</a></li>
 	<li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
-	{% if updates %}
+	{% if updates and yaml_updates %}
 		<li style="padding-left:20px; padding-top:10px;">
 			<button id="newPl" class="btn btn-primary btn-xs" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fa fa-code">&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</i></button>
 		</li>
@@ -97,7 +97,7 @@
 								{% if 1 == 1 %}
 									<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-default btn-xs"><i class="fa fa-eject"></i></button>
 									&nbsp; &nbsp; &nbsp;
-									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-danger btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie diese Logik wirklich löschen?')}}');"><i class="fa fa-times"></i></button>
+									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-danger btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ logic.name }}\' {{ _('wirklich löschen?')}}');"><i class="fa fa-times"></i></button>
 								{% endif %}
 								</td>
 							{% else %}
@@ -154,8 +154,9 @@
 									<td>
 									{% if logic.filename != '' %}
 										<button name="add" title="{{ _('Hinzufügen','button') }}" type="submit" class="btn btn-default btn-xs"><i class="fa fa-plus"></i></button>
+										&nbsp; &nbsp; &nbsp;
 									{% endif %}
-									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-danger btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie diese Logik wirklich löschen?')}}');"><i class="fa fa-times"></i></button>
+									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-danger btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ logic.name }}\' {{ _('wirklich löschen?')}}');"><i class="fa fa-times"></i></button>
 									</td>
 								{% else %}
 									<td></td>

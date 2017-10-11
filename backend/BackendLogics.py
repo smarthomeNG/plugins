@@ -164,7 +164,7 @@ class BackendLogics:
 
         newlogics = sorted(self.logic_findnew(logics_list), key=lambda k: k['name'])
         logics_sorted = sorted(logics_list, key=lambda k: k['name'])
-        return self.render_template('logics.html', updates=self.updates_allowed, logics=logics_sorted, newlogics=newlogics, 
+        return self.render_template('logics.html', updates=self.updates_allowed, yaml_updates=self.yaml_updates, logics=logics_sorted, newlogics=newlogics, 
                                                    blockly_loaded=self.blockly_plugin_loaded)
 
 
