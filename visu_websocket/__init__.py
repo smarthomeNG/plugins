@@ -90,7 +90,8 @@ class WebSocket(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('series', self.websocket._update_series, cycle=10, prio=5)
+#        self._sh.scheduler.add('series', self.websocket._update_series, cycle=10, prio=5)
+        self.scheduler_add('series', self.websocket._update_series, cycle=10, prio=5)
 
 
     def stop(self):
