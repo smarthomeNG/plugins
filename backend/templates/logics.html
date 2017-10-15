@@ -7,24 +7,23 @@
 {% endblock navbar %}
 
 {% block content %}
- <div style="display:inline;">
- <div style="display:inline;">
- <ul class="nav nav-tabs">
-	<li id="tab_userlogics" class="active"><a href="#">{{ _('Nutzerlogiken') }}</a></li>
-	<li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
-	{% if updates and yaml_updates %}
-		<li style="padding-left:20px; padding-top:10px;">
-			<button id="newPl" class="btn btn-primary btn-xs" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fa fa-code">&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</i></button>
-		</li>
-		{% if blockly_loaded %}
-		<li style="padding-left:20px; padding-top:10px;">
-			<button id="newBl" class="btn btn-primary btn-xs" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fa fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
-		</li>
+<div style="display:inline;">
+	<ul class="nav nav-tabs">
+		<li id="tab_userlogics" class="active"><a href="#">{{ _('Nutzerlogiken') }}</a></li>
+		<li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
+		{% if updates and yaml_updates %}
+			<li style="padding-left:20px; padding-top:10px;">
+				<button id="newPl" class="btn btn-primary btn-xs" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fa fa-code">&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</i></button>
+			</li>
+			{% if blockly_loaded %}
+			<li style="padding-left:20px; padding-top:10px;">
+				<button id="newBl" class="btn btn-primary btn-xs" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fa fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
+			</li>
+			{% endif %}
 		{% endif %}
-	{% endif %}
- </ul>
-
+	 </ul>
 </div>
+
 <script type="text/javascript" language="javascript">
 
 	function newPythonLogic() {

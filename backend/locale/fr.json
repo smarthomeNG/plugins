@@ -1,5 +1,8 @@
 {
+    "alle": "tous",
+    "sonstige": "autre",
 	"Scheduler": "Planificateur",
+	"Scheduler (plural)": "Planificateurs",
 	"Logik": "Logique",
 	"Systemlogiken": "Logiques système",
 	"Nutzerlogiken": "Logiques utilisateur",

@@ -205,7 +205,34 @@ class BackendCore:
         """
         display a list of all known schedules
         """
-        return self.render_template('schedules.html')
+        
+        schedule_list = []
+        for entry in self._sh.scheduler._scheduler:
+            schedule = dict()
+            s = self._sh.scheduler._scheduler[entry]
+            if s['next'] != None and s['cycle'] != '' and s['cron'] != '':
+                schedule['fullname'] = entry
+                schedule['name'] = entry
+                schedule['group'] = ''
+                schedule['next'] = s['next'].strftime('%Y-%m-%d %H:%M:%S%z')
+                schedule['cycle'] = s['cycle']
+                schedule['cron'] = s['cron']
+                
+                if schedule['cycle'] == None:
+                    schedule['cycle'] = ''
+                if schedule['cron'] == None:
+                    schedule['cron'] = ''
+                
+                nl = entry.split('.')
+                if nl[0].lower() in ['items','logics','plugins']:
+                    schedule['group'] = nl[0].lower()
+                    del nl[0]
+                    schedule['name'] = '.'.join(nl)
+                    
+                schedule_list.append(schedule)
+                    
+        schedule_list_sorted = sorted(schedule_list, key=lambda k: k['fullname'].lower())
+        return self.render_template('schedules.html', schedule_list=schedule_list_sorted)
 
 
     # -----------------------------------------------------------------------------------
