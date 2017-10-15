@@ -183,8 +183,10 @@ class Enigma2(SmartPlugin):
         """
         Run method for the plugin
         """
-        self._sh.scheduler.add(__name__, self._update_loop, cycle=self._cycle)
-        self._sh.scheduler.add(__name__ + "_fast", self._update_loop_fast, cycle=self._fast_cycle)
+#        self._sh.scheduler.add(__name__, self._update_loop, cycle=self._cycle)
+#        self._sh.scheduler.add(__name__ + "_fast", self._update_loop_fast, cycle=self._fast_cycle)
+        self.scheduler_add('update', self._update_loop, cycle=self._cycle)
+        self.scheduler_add('update_fast', self._update_loop_fast, cycle=self._fast_cycle)
         self.alive = True
 
     def stop(self):
