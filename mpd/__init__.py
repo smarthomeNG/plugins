@@ -93,6 +93,8 @@ class mpd(lib.connection.Client):
                 child.add_method_trigger(self._send_command)
         for child in self._sh.find_children(item, 'mpd_file'):
             child.add_method_trigger(self._play_file)
+        for child in self._sh.find_children(item, 'mpd_localplaylist'):
+            child.add_method_trigger(self._play_localplaylist)
         # adding item methods
         item.command = self.command
         item.play_file = self.play_file
@@ -110,6 +112,11 @@ class mpd(lib.connection.Client):
             self._send("add {0}".format(url), False)
         self._send('play', False)
 
+    def play_localplaylist(self, file):
+        self._send('clear', False)        
+        self._send('load ' + file, False)
+        self._send('play', False)
+
     def add_file(self, url):
         play = self._parse_url(url)
         if play != []:
@@ -121,6 +128,13 @@ class mpd(lib.connection.Client):
                 self.play_file(item())
             else:
                 self.play_file(item.conf['mpd_file'])
+
+    def _play_localplaylist(self, item, caller=None, source=None, dest=None):
+        if caller != 'MPD':
+            if item.conf['mpd_localplaylist'] == 'value':
+                self.play_localplaylist(item())
+            else:
+                self.play_localplaylist(item.conf['mpd_localplaylist'])
 
     def _parse_url(self, url):
         name, sep, ext = url.rpartition('.')
