@@ -68,7 +68,7 @@
                                     <tr>
                                     {% endif %}
                                     {% if p['metadata'].get_parameter_type(key) != 'foo' %}
-                                        <td style="width: 50%;"><strong>{{ key }}</strong> ({{ p['metadata'].get_parameter_type(key) }}): {{ value }}
+                                        <td style="width: 50%;"><strong>{{ key }}</strong> ( {{ p['metadata'].get_parameter_type_with_subtype(key) }} ): {{ value }}
                                         {% if p['metadata'].get_parameter_defaultvalue(key) == value %}
                                         &nbsp; [default]
                                         {% endif %}
