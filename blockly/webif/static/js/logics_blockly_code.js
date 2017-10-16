@@ -20,22 +20,23 @@ Code.selected = 'blocks';
 
 
 /**
- * Restore code blocks from file on backend server
+ * Restore code blocks from file on SmartHomeNG server
  *
  */
 Code.loadBlocks = function() {
-  var request = $.ajax({'url': 'blockly_load_logic', dataType: 'text'});
+//  $.ajaxSetup({ cache: false });
+  var request = $.ajax({url: 'blockly_load_logic', data : {'uniq_param' : (new Date()).getTime()}, dataType: 'text'});
   // we get the XML representation of all the blockly logics from the backend
   request.done(function(response)
   {
-  	//alert('Request success: ' + response);
+   	//alert('LoadBlocks - Request success: ' + response);
     var xml = Blockly.Xml.textToDom(response);
     Blockly.Xml.domToWorkspace(xml, Code.workspace);
     //Code.workspace.clear();
     Code.renderContent()
   });
   request.fail(function(jqXHR, txtStat) 
-  {alert('Request failed: ' + txtStat);});
+  {alert('LoadBlocks - Request failed: ' + txtStat);});
 };
 
 
@@ -64,22 +65,28 @@ Code.wait = function (ms){
 }
 
 /**
- * Save XML and PYTHON code to file on backend server.
+ * Save XML and PYTHON code to file on SmartHomeNG server.
  */
 Code.saveBlocks = function() {
+  var logicname = "";
+  var topblock = Code.workspace.getTopBlocks()[0];
+  if (topblock.data == "sh_logic_main") {
+      logicname = Code.workspace.getTopBlocks()[0].getFieldValue('LOGIC_NAME')
+  };
   //Code.workspace;
   var pycode = Blockly.Python.workspaceToCode(Code.workspace);
   var xmldom = Blockly.Xml.workspaceToDom(Code.workspace);
   var xmltxt = Blockly.Xml.domToText(xmldom);
+
   $.ajax({  url: "blockly_save_logic",
             type: "POST",
-            data: {xml: xmltxt, py: pycode },
+            async: false,
+            data: {xml: xmltxt, py: pycode, name: logicname },
             success: function(response) {
-            //    alert(response +' ?');
+                alert(SaveBlocks - response +' ?');
             //    $("#test").html(response);
             }
         });
-  Code.wait(1000);
 };
 
 
@@ -87,10 +94,9 @@ Code.saveBlocks = function() {
  * Discard all blocks from the workspace.
  */
 Code.discardBlocks = function() {
-	/**
 	var count = Code.workspace.getAllBlocks().length;
 	if (count < 2 ||
-	  	window.confirm(Blockly.Msg.DELETE_ALL_BLOCKS.replace('%1', count))) **/ {
+	  	window.confirm(Blockly.Msg.DELETE_ALL_BLOCKS.replace('%1', count))) {
 		Code.workspace.clear();
 		Code.renderContent(); // ?
 	}

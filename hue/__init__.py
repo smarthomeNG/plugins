@@ -1,9 +1,25 @@
 #!/usr/bin/env python3
-# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+# -*- coding: utf8 -*-
+#########################################################################
+# Copyright 2017-       Martin Sinn                         m.sinn@gmx.de
+# Copyright 2014-2016   Michael Würtenberger             
+#########################################################################
+#  Philips Hue plugin for SmartHomeNG
 #
-#  Copyright (C) 2014,2015,2016 Michael Würtenberger
+#  This plugin is free software: you can redistribute it and/or modify
+#  it under the terms of the Apache License APL2.0 as published by
+#  the Apache Software Foundation.
 #
-#  Version 1.83 developNG
+#  This plugin is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  Apache License for more details.
+#
+#  You should have received a copy of the Apache Software License along
+#  with this plugin. If not, see <https://www.apache.org/licenses/>.
+#########################################################################
+
+
 #
 #  Erstanlage mit ersten Tests
 #  Basiert auf den Ueberlegungen des verhandenen Hue Plugins.
@@ -20,7 +36,7 @@
 #
 #  Library for RGB / CIE1931 coversion ported from Bryan Johnson's JavaScript implementation:
 #  https://github.com/bjohnso5/hue-hacking
-#  extension to use differen triangle points depending of the type of the hue system
+#  extension to use different triangle points depending of the type of the hue system
 # 
 
 import logging
@@ -30,49 +46,72 @@ from collections import namedtuple
 import http.client
 import time
 import threading
+
 from lib.tools import Tools
+from lib.model.smartplugin import SmartPlugin
+from lib.utils import Utils
 
 XY = namedtuple('XY', ['x', 'y'])
-logger = logging.getLogger('HUE:')
 client = Tools()
 
-class HUE():
+class HUE(SmartPlugin):
+
+    PLUGIN_VERSION = "1.4.2"
 
     def __init__(self, smarthome, hue_ip = '', hue_user = '', hue_port = '80', cycle_lamps = '10', cycle_bridges = '60', default_transitionTime = '0.4'):
 
-        # parameter zu übergabe aus der konfiguration pulgin.conf
-        self._sh = smarthome
-        # parmeter übernehmen, aufteilen und leerzeichen herausnehmen
-        self._hue_ip = [hue_ip]
-        self._hue_user = [hue_user]
-        self._hue_port = [hue_port]
+        self.logger = logging.getLogger(__name__)
+
+        self.logger.warning("self._parameters = {}".format(str(self._parameters)))
+        # parameter zu übergabe aus der konfiguration plugin.conf
+        self._hue_ip = self._parameters['hue_ip']
+        self._hue_user = self._parameters['hue_user']
+        self._hue_port = self._parameters['hue_port']
+#        self.logger.warning("self._hue_ip = {}, self._hue_user = {}, self._hue_port = {}".format(self._hue_ip, self._hue_user, self._hue_port))
+
         # verabreitung der parameter aus der plugin.conf
         self._numberHueBridges = len(self._hue_ip)
+
+#        self.logger.warning("_numberHueBridges = {}, len(_hue_port) = {}, len(_hue_user) = {}".format(self._numberHueBridges, len(self._hue_port), len(self._hue_user)))
+#        self.logger.warning("type(hue_ip) = {}, hue_ip = >{}<".format(type(hue_ip), hue_ip))
+#        self.logger.warning("type(self._hue_ip) = {}, self._hue_ip = >{}<".format(type(self._hue_ip), self._hue_ip))
+#        self.logger.warning("type(self._parameters['hue_ip']) = {}, self._parameters['hue_ip'] = >{}<".format(type(self._parameters['hue_ip']), self._parameters['hue_ip']))
         if len(self._hue_port) != self._numberHueBridges or len(self._hue_user) != self._numberHueBridges:
-            logger.error('HUE: Error in plugin.conf: if you specify more than 1 bridge, all parameters hue_ip, hue_user and hue_port have to be defined')
-            raise Exception('HUE: Plugin stopped due to configuration fault in plugin.conf') 
+            self.logger.error('Error in plugin.conf: if you specify more than 1 bridge, all parameters hue_ip, hue_user and hue_port have to be defined')
+            self._init_complete = False
+            return
         if '' in self._hue_user:
-            logger.error('HUE: Error in plugin.conf: you have to specify all hue_user')
-            raise Exception('HUE: Plugin stopped due to configuration fault in plugin.conf') 
-        if '' in self._hue_ip:
-            logger.error('HUE: Error in plugin.conf: you have to specify all hue_ip')
-            raise Exception('HUE: Plugin stopped due to configuration fault in plugin.conf') 
+            self.logger.error('Error in plugin.conf: you have to specify all hue_user')
+            self._init_complete = False
+            return
+        if ('' in self._hue_ip) or ('0.0.0.0' in self._hue_ip):
+            self.logger.error('Error in plugin.conf: you have to specify all hue_ip')
+            self._init_complete = False
+            return
         if '' in self._hue_port:
-            logger.error('HUE: Error in plugin.conf: you have to specify all hue_port')
-            raise Exception('HUE: Plugin stopped due to configuration fault in plugin.conf') 
-        self._cycle_lampsGroups = int(cycle_lamps)
-        if self._cycle_lampsGroups < 5:
-            # beschränkung der wiederholrate 
-            self._cycle_lampsGroups = 5
-        self._cycle_bridges = int(cycle_bridges)
-        if self._cycle_bridges < 10:
-            # beschränkung der wiederholrate 
-            self._cycle_bridges = 10
-        self._hueDefaultTransitionTime = float(default_transitionTime)
-        if self._hueDefaultTransitionTime < 0:
-            # beschränkung der wiederholrate 
-            logger.warning('HUE: Error in plugin.conf: the default_transitionTime parameter cannot be negative. It is set to 0')
-            self._hueDefaultTransitionTime = 0
+            self.logger.error('Error in plugin.conf: you have to specify all hue_port')
+            self._init_complete = False
+            return
+
+#        self._cycle_lampsGroups = int(cycle_lamps)
+#        if self._cycle_lampsGroups < 5:
+#            # beschränkung der wiederholrate 
+#            self._cycle_lampsGroups = 5
+        self._cycle_lampsGroups = self._parameters['cycle_lamps']
+        
+#        self._cycle_bridges = int(cycle_bridges)
+#        if self._cycle_bridges < 10:
+#            # beschränkung der wiederholrate 
+#            self._cycle_bridges = 10
+        self._cycle_bridges = self._parameters['cycle_bridges']
+
+#        self._hueDefaultTransitionTime = float(default_transitionTime)
+#        if self._hueDefaultTransitionTime < 0:
+#            # beschränkung der wiederholrate 
+#            self.logger.warning('Error in plugin.conf: the default_transitionTime parameter cannot be negative. It is set to 0')
+#            self._hueDefaultTransitionTime = 0
+        self._hueDefaultTransitionTime = self._parameters['default_transitionTime']
+
         # variablen zur steuerung des plugins
         # hier werden alle bekannte items für lampen eingetragen
         self._sendLampItems = {}
@@ -123,11 +162,11 @@ class HUE():
         self.Blue =[XY(0.168, 0.041), XY(0.139, 0.081), XY(0.0, 0.0)]
         # Konfigurationen zur laufzeit
         # scheduler für das polling des status der lampen über die hue bridge
-        self._sh.scheduler.add('hue-update-lamps', self._update_lamps, cycle = self._cycle_lampsGroups)
+        self.scheduler_add('update-lamps', self._update_lamps, cycle = self._cycle_lampsGroups)
         # scheduler für das polling des status der lampen über die hue bridge
-        self._sh.scheduler.add('hue-update-groups', self._update_groups, cycle = self._cycle_lampsGroups)
+        self.scheduler_add('update-groups', self._update_groups, cycle = self._cycle_lampsGroups)
         # scheduler für das polling des status der hue bridge
-        self._sh.scheduler.add('hue-update-bridges', self._update_bridges, cycle = self._cycle_bridges)
+        self.scheduler_add('update-bridges', self._update_bridges, cycle = self._cycle_bridges)
 
     ### following the library parts of the rewritten topics
     def crossProduct(self, p1, p2):
@@ -209,18 +248,18 @@ class HUE():
             if (itemSearch is self._sh):
                 # wir sind am root knoten angekommen und haben nichts gefunden !
                 if attribute == 'hue_bridge_id' and self._numberHueBridges > 1:
-                    logger.warning('HUE: _find_item_attribute: could not find [{0}] for item [{1}], setting defined default value {2}'.format(attribute, item, attributeDefault))
+                    self.logger.warning('_find_item_attribute: could not find [{0}] for item [{1}], setting defined default value {2}'.format(attribute, item, attributeDefault))
                 elif attribute == 'hue_lamp_type':
-                    logger.warning('HUE: _find_item_attribute: could not find [{0}] for item [{1}], setting defined default value {2}'.format(attribute, item, attributeDefault))
+                    self.logger.warning('_find_item_attribute: could not find [{0}] for item [{1}], setting defined default value {2}'.format(attribute, item, attributeDefault))
                 elif attribute == 'hue_lamp_id':
-                    logger.error('HUE: _find_item_attribute: could not find [{0}] for item [{1}], an value has to be defined'.format(attribute, item))
-                    raise Exception('HUE: Plugin stopped due to missing hue_lamp_id in item.conf')
+                    self.logger.error('_find_item_attribute: could not find [{0}] for item [{1}], an value has to be defined'.format(attribute, item))
+                    raise Exception('Plugin stopped due to missing hue_lamp_id in item.conf')
                 # wenn nicht gefunden, dann wird der standardwert zurückgegeben
                 return str(attributeDefault)
         itemAttribute = int(itemSearch.conf[attribute])
         if itemAttribute >= attributeLimit:
             itemAttribute = attributeLimit
-            logger.warning('HUE: _find_item_attribute: attribute [{0}] exceeds upper limit and set to default in item [{1}]'.format(attribute,item))
+            self.logger.warning('_find_item_attribute: attribute [{0}] exceeds upper limit and set to default in item [{1}]'.format(attribute,item))
         return str(itemAttribute)
     
     def parse_item(self, item):
@@ -232,10 +271,10 @@ class HUE():
         if 'hue_dim_max' in item.conf:
             if not 'hue_dim_step' in item.conf:
                 item.conf['hue_dim_step'] = '25'
-                logger.warning('HUE: dimmenDPT3: no hue_dim_step defined in item [{0}] using default 25'.format(item))
+                self.logger.warning('dimmenDPT3: no hue_dim_step defined in item [{0}] using default 25'.format(item))
             if not 'hue_dim_time' in item.conf:
                 item.conf['hue_dim_time'] = '1'
-                logger.warning('HUE: dimmenDPT3: no hue_dim_time defined in item [{0}] using default 1'.format(item))
+                self.logger.warning('dimmenDPT3: no hue_dim_time defined in item [{0}] using default 1'.format(item))
             return self.dimmenDPT3
 
         if 'hue_listen' in item.conf:
@@ -252,7 +291,7 @@ class HUE():
                 if not hueIndex in self._listenLampItems:
                     self._listenLampItems[hueIndex] = item
                 else:
-                    logger.warning('HUE: parse_item: in lamp item [{0}] command hue_listen = {1} is duplicated to item  [{2}]'.format(item,hueListenCommand,self._listenLampItems[hueIndex]))
+                    self.logger.warning('parse_item: in lamp item [{0}] command hue_listen = {1} is duplicated to item  [{2}]'.format(item,hueListenCommand,self._listenLampItems[hueIndex]))
             elif hueListenCommand in self._listenBridgeKeys:
                 # hier brauche ich nur eine hue_bridge_id
                 hueBridgeId = self._find_item_attribute(item, 'hue_bridge_id', 0, self._numberHueBridges)
@@ -261,9 +300,9 @@ class HUE():
                 if not hueIndex in self._listenBridgeItems:
                     self._listenBridgeItems[hueIndex] = item
                 else:
-                    logger.warning('HUE: parse_item: in bridge item [{0}] command hue_listen = {1} is duplicated to item  [{2}]'.format(item,hueListenCommand,self._listenLampItems[hueIndex]))
+                    self.logger.warning('parse_item: in bridge item [{0}] command hue_listen = {1} is duplicated to item  [{2}]'.format(item,hueListenCommand,self._listenLampItems[hueIndex]))
             else:
-                logger.error('HUE: parse_item: command hue_listen = {0} not defined in item [{1}]'.format(hueListenCommand,item))
+                self.logger.error('parse_item: command hue_listen = {0} not defined in item [{1}]'.format(hueListenCommand,item))
 
         # für die groups brauchen wir eine eigenes listen attribut, weil die kommandos gleich denen der lampen sind damit schwer nur unterscheidbar
         if 'hue_listen_group' in item.conf:
@@ -278,7 +317,7 @@ class HUE():
                 if not hueIndex in self._listenGroupItems:
                     self._listenGroupItems[hueIndex] = item
                 else:
-                    logger.warning('HUE: parse_item: in group item [{0}] command hue_listen_group = {1} is duplicated to item  [{2}]'.format(item,hueListenGroupCommand,self._listenGroupItems[hueIndex]))
+                    self.logger.warning('parse_item: in group item [{0}] command hue_listen_group = {1} is duplicated to item  [{2}]'.format(item,hueListenGroupCommand,self._listenGroupItems[hueIndex]))
         
         if 'hue_send' in item.conf:
             hueSendCommand = item.conf['hue_send']
@@ -294,7 +333,7 @@ class HUE():
                 if not hueIndex in self._sendLampItems:
                     self._sendLampItems[hueIndex] = item
                 else:
-                    logger.warning('HUE: parse_item: in lamp item [{0}] command hue_send = {1} is duplicated to item  [{2}]'.format(item,hueSendCommand,self._sendLampItems[hueIndex]))
+                    self.logger.warning('parse_item: in lamp item [{0}] command hue_send = {1} is duplicated to item  [{2}]'.format(item,hueSendCommand,self._sendLampItems[hueIndex]))
                 return self.update_lamp_item
             elif hueSendCommand in self._sendBridgeKeys:
                 # hier brauche ich nur eine hue_bridge_id
@@ -304,10 +343,10 @@ class HUE():
                 if not hueIndex in self._sendBridgeItems:
                     self._sendBridgeItems[hueIndex] = item
                 else:
-                    logger.warning('HUE: parse_item: in bridge item [{0}] command hue_send = {1} is duplicated to item  [{2}]'.format(item,hueSendCommand,self._sendLampItems[hueIndex]))
+                    self.logger.warning('parse_item: in bridge item [{0}] command hue_send = {1} is duplicated to item  [{2}]'.format(item,hueSendCommand,self._sendLampItems[hueIndex]))
                 return self.update_bridge_item
             else:
-                logger.error('HUE: parse_item: command hue_send = {0} not defined in item [{1}]'.format(hueSendCommand,item))
+                self.logger.error('parse_item: command hue_send = {0} not defined in item [{1}]'.format(hueSendCommand,item))
 
         # für die groups brauchen wir eine eigenes listen attribut, weil die kommandos gleich denen der lampen sind damit schwer nur unterscheidbar
         if 'hue_send_group' in item.conf:
@@ -322,7 +361,7 @@ class HUE():
                 if not hueIndex in self._sendGroupItems:
                     self._sendGroupItems[hueIndex] = item
                 else:
-                    logger.warning('HUE: parse_item: in group item [{0}] command hue_send_group = {1} is duplicated to item  [{2}]'.format(item,hueSendGroupCommand,self._sendGroupItems[hueIndex]))
+                    self.logger.warning('parse_item: in group item [{0}] command hue_send_group = {1} is duplicated to item  [{2}]'.format(item,hueSendGroupCommand,self._sendGroupItems[hueIndex]))
                 return self.update_group_item
 
     def _limit_range_int(self, value, minValue, maxValue):
@@ -357,7 +396,7 @@ class HUE():
             if hueIndex + '.on' in self._sendLampItems:
                 hueLampIsOn = self._sendLampItems[(hueIndex + '.on')]()
             else:
-                logger.warning('HUE: update_lamp_item: no item for on/off defined for bridge {0} lampe {1}'.format(hueBridgeId, hueLampId))
+                self.logger.warning('update_lamp_item: no item for on/off defined for bridge {0} lampe {1}'.format(hueBridgeId, hueLampId))
                 hueLampIsOn = False
                 
             # test aus die wertgrenzen, die die bridge verstehen kann
@@ -388,7 +427,7 @@ class HUE():
                     else:
                         # ansonst wird nur eingeschaltet
                         self._set_lamp_state(hueBridgeId, hueLampId, {'on': True , 'transitiontime': hueTransitionTime})
-                        logger.info('HUE: update_lamp_item: no bri item defined for restoring the brightness after swiching on again')                        
+                        self.logger.info('update_lamp_item: no bri item defined for restoring the brightness after swiching on again')                        
                 else:
                     # anderer befehl gegeben
                     if hueSend in self._rgbKeys:
@@ -403,7 +442,7 @@ class HUE():
                             # und jetzt der wert setzen
                             self._set_lamp_state(hueBridgeId, hueLampId, {'xy': xyPoint, 'transitiontime': hueTransitionTime})
                         else:
-                            logger.warning('HUE: update_lamp_item: on or more of the col... items around item [{0}] is not defined'.format(item))
+                            self.logger.warning('update_lamp_item: on or more of the col... items around item [{0}] is not defined'.format(item))
                     else:
                         # standardbefehle
                         self._set_lamp_state(hueBridgeId, hueLampId, {hueSend: value, 'transitiontime': hueTransitionTime})
@@ -443,7 +482,7 @@ class HUE():
             if hueIndex + '.on' in self._sendGroupItems:
                 hueGroupIsOn = self._sendGroupItems[(hueIndex + '.on')]()
             else:
-                logger.warning('HUE: update_group_item: no item for on/off defined for bridge {0} group {1}'.format(hueBridgeId, hueGroupId))
+                self.logger.warning('update_group_item: no item for on/off defined for bridge {0} group {1}'.format(hueBridgeId, hueGroupId))
                 hueGroupIsOn = False
                 
             # test aus die wertgrenzen, die die bridge verstehen kann
@@ -468,7 +507,7 @@ class HUE():
                     else:
                         # ansonst wird nur eingeschaltet
                         self._set_group_state(hueBridgeId, hueGroupId, {'on': True , 'transitiontime': hueTransitionTime})
-                        logger.info('HUE: update_lamp_item: no bri item defined for restoring the brightness after swiching on again')                        
+                        self.logger.info('update_lamp_item: no bri item defined for restoring the brightness after swiching on again')                        
                 else:
                     # standardbefehle
                     self._set_group_state(hueBridgeId, hueGroupId, {hueSendGroup: value, 'transitiontime': hueTransitionTime})
@@ -541,7 +580,7 @@ class HUE():
             errorItem = self._listenBridgeItems[hueBridgeId + '.' + 'errorstatus']
         else:
             errorItem = None
-            logger.info('HUE: _get_web_content '+hueBridgeId)
+            self.logger.info('_get_web_content '+hueBridgeId)
         # dann der aufruf kompatibel, aber inhaltlich nicht identisch fetch_url aus lib.tools, daher erst eimal das fehlerobjekt nicht mehr da
         response = client.fetch_url(url, None, None, 2, 0, method, body, errorItem)
         if response:
@@ -554,9 +593,9 @@ class HUE():
                 error = returnValues[0]["error"]
                 description = error['description']
                 if error['type'] == 1:
-                    logger.error('HUE: _request: Error: {0} (Need to specify correct hue user?)'.format(description))
+                    self.logger.error('_request: Error: {0} (Need to specify correct hue user?)'.format(description))
                 else:
-                    logger.error('HUE: _request: Error: {0}'.format(description))
+                    self.logger.error('_request: Error: {0}'.format(description))
                 return None
             return returnValues
         else:
@@ -594,7 +633,7 @@ class HUE():
                                     value = int(hueObjectReturnStringValue)
                                 self._listenLampItems[returnItem](value, 'HUE')
                 else:
-                    logger.warning('HUE: hue_set_lamp_state - hueObjectStatus no success:: {0}: {1} command state {2}'.format(hueObjectStatus, hueObjectReturnString, state))
+                    self.logger.warning('hue_set_lamp_state - hueObjectStatus no success:: {0}: {1} command state {2}'.format(hueObjectStatus, hueObjectReturnString, state))
         self._hueLock.release()
 
     def _set_group_state(self, hueBridgeId, hueGroupId , state):
@@ -611,7 +650,7 @@ class HUE():
                 if hueObjectStatus == 'success':
                     pass
                 else:
-                    logger.warning('HUE: _set_group_state - hueObjectStatus no success:: {0}: {1} command state {2}'.format(hueObjectStatus, hueObjectReturnString, state))
+                    self.logger.warning('_set_group_state - hueObjectStatus no success:: {0}: {1} command state {2}'.format(hueObjectStatus, hueObjectReturnString, state))
         self._hueLock.release()
 
     def _update_lamps(self):
@@ -756,9 +795,9 @@ class HUE():
         # mit dem die szenen gesetzt worden sind, um ihn dann als user für das plugin einzusetzen
         # und jetzt alle szenen
         returnValues = self._get_webcontent(hueBridgeId, '/scenes')
-        logger.warning('HUE: get_config: Scenes {0}'.format(returnValues))
+        self.logger.warning('get_config: Scenes {0}'.format(returnValues))
         returnValues = self._get_webcontent(hueBridgeId, '/groups')
-        logger.warning('HUE: get_config: Groups {0}'.format(returnValues))
+        self.logger.warning('get_config: Groups {0}'.format(returnValues))
         return returnValues
 
     def authorizeuser(self, hueBridgeId='0'):
@@ -769,11 +808,11 @@ class HUE():
         resp = con.getresponse()
         con.close()
         if resp.status != 200:
-            logger.error('HUE: authorize: Authenticate request failed')
+            self.logger.error('authorize: Authenticate request failed')
             return "Authenticate request failed"
         resp = resp.read()
-        logger.debug(resp)
+        self.logger.debug(resp)
         resp = json.loads(resp)
-        logger.debug(resp)
+        self.logger.debug(resp)
         return resp
 

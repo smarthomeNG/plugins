@@ -61,14 +61,14 @@
                         <div class="panel panel-default" style="margin-bottom: 5px;">
                             <div class="panel-heading">{{ _('Plugin spezifische Attribute') }}:</div>
                             <div class="panel-body">
-                                <table>
+                                <table style="width: 90%;">
                                 {% set first = True %}
                                 {% for key, value in p.attributes.items() %}
                                     {% if loop.index % 2 > 0 %}
                                     <tr>
                                     {% endif %}
                                     {% if p['metadata'].get_parameter_type(key) != 'foo' %}
-                                        <td style="width: 400px;"><strong>{{ key }}</strong> ({{ p['metadata'].get_parameter_type(key) }}): {{ value }}
+                                        <td style="width: 50%;"><strong>{{ key }}</strong> ( {{ p['metadata'].get_parameter_type_with_subtype(key) }} ): {{ value }}
                                         {% if p['metadata'].get_parameter_defaultvalue(key) == value %}
                                         &nbsp; [default]
                                         {% endif %}

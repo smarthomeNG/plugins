@@ -124,7 +124,7 @@ class Enigma2(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the Enigma2Device
     """
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.1.11"
+    PLUGIN_VERSION = "1.4.11"
 
     _url_suffix_map = dict([('about', '/web/about'),
                             ('deviceinfo', '/web/deviceinfo'),
@@ -183,8 +183,10 @@ class Enigma2(SmartPlugin):
         """
         Run method for the plugin
         """
-        self._sh.scheduler.add(__name__, self._update_loop, cycle=self._cycle)
-        self._sh.scheduler.add(__name__ + "_fast", self._update_loop_fast, cycle=self._fast_cycle)
+#        self._sh.scheduler.add(__name__, self._update_loop, cycle=self._cycle)
+#        self._sh.scheduler.add(__name__ + "_fast", self._update_loop_fast, cycle=self._fast_cycle)
+        self.scheduler_add('update', self._update_loop, cycle=self._cycle)
+        self.scheduler_add('update_fast', self._update_loop_fast, cycle=self._fast_cycle)
         self.alive = True
 
     def stop(self):

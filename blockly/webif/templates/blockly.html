@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 {% extends "base.html" %}
 
 {% block content %}
@@ -10,6 +11,27 @@ li.L0, li.L1, li.L2, li.L3,
 li.L5, li.L6, li.L7, li.L8
 { list-style-type: decimal !important }
 </style>
+
+<script type="text/javascript" language="javascript">
+
+function closeEditor() {
+  $.ajax({  url: "blockly_close_editor",
+            type: "POST",
+            data: { content: '' },
+        })
+    myWait(500);
+    window.close();
+};
+
+myWait = function (ms){
+   var start = new Date().getTime();
+   var end = start;
+   while(end < start + ms) {
+     end = new Date().getTime();
+  }
+}
+
+</script>
 
   <table width="99%" height="91%">
     <tr>
@@ -30,21 +52,30 @@ li.L5, li.L6, li.L7, li.L8
             <td id="tab_xml" class="taboff">XML</td>-->
             <td class="tabmax">
 		<form name="input" action="index.html" method="POST" enctype="multipart/form-data">
-      <button onclick="function() {$.ajax({'url': 'logics_blockly_start'})}" class="btn btn-default btn-xs">{{ _('Aktivieren','button') }}</button>
-      <button onclick="function() {$.ajax({'url': 'logics_blockly_stop'})}" class="btn btn-default btn-xs">{{ _('Beenden','button') }}</button>
-      <button onclick="Code.saveBlocks()" class="btn btn-default btn-xs">{{ _('Blöcke speichern','button') }}</button>
-      <button onclick="Code.loadBlocks()" class="btn btn-default btn-xs">{{ _('Änderungen verwerfen','button') }}</button>
-      <button onclick="Code.discardBlocks()" class="btn btn-default btn-xs">{{ _('Leeren','button') }}</button>
+		{% if cmd != 'edit' and cmd != 'new' %}
+			<button onclick="function() {$.ajax({'url': 'logics_blockly_start'})}" class="btn btn-default btn-xs">{{ _('Aktivieren','button') }}</button>
+			<button onclick="function() {$.ajax({'url': 'logics_blockly_stop'})}" class="btn btn-default btn-xs">{{ _('Beenden','button') }}</button>
+			<button onclick="Code.saveBlocks()" class="btn btn-default btn-xs">{{ _('Blöcke speichern','button') }}</button>
+			<button onclick="Code.loadBlocks()" class="btn btn-default btn-xs">{{ _('Änderungen verwerfen','button') }}</button>
+			<button onclick="Code.discardBlocks()" class="btn btn-default btn-xs">{{ _('Leeren','button') }}</button>
+			<button onclick="javascript:window.close()" class="btn btn-default btn-xs">{{ _('Schließen','button') }}</button>
+		{% else %}
+			<button onclick="Code.saveBlocks(); closeEditor()" class="btn btn-default btn-xs">{{ _('Speichern & schließen','button') }}</button>
+			<button onclick="Code.saveBlocks()" class="btn btn-default btn-xs">{{ _('Speichern','button') }}</button>
+			<!--
+			<button onclick="Code.loadBlocks(); window.history.back()" class="btn btn-default btn-xs">{{ _('Änderungen verwerfen','button') }}</button>
+			-->
+			<button onclick="closeEditor()" class="btn btn-default btn-xs">{{ _('Verwerfen','button') }}</button>
+		{% endif %}
       <!--
       <input name="close" value="{{ _('Schließen','button') }}" type="submit" class="btn btn-default btn-xs">
       -->
-      <button onclick="javascript:window.close()" class="btn btn-default btn-xs">{{ _('Schließen','button') }}</button>
 		</form>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
+        	</td>
+			</tr>
+		</table>
+	</td>
+	</tr>
     <tr>
       <td height="99%" colspan=1 id="content_area">
       </td>
@@ -66,7 +97,7 @@ li.L5, li.L6, li.L7, li.L8
 <script src="static/blockly/msg/js/en.js"></script>
 
 <script type="text/javascript" src="static/shblocks/sh_items.js"></script>
-<script type="text/javascript" src="static/shblocks/sh_trigger.js"></script>
+<script type="text/javascript" src="static/shblocks/sh_logics.js"></script>
 <script type="text/javascript" src="static/shblocks/sh_logic.js"></script>
 <script type="text/javascript" src="static/shblocks/sh_notify.js"></script>
 <script type="text/javascript" src="static/shblocks/sh_tools.js"></script>

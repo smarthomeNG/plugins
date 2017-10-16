@@ -28,30 +28,12 @@ import os
 import collections
 from collections import OrderedDict
 
-
-# Funktionen für Jinja2 z.Zt außerhalb der Klasse Backend, da ich Jinja2 noch nicht mit
-# Methoden einer Klasse zum laufen bekam
-
-
-def get_basename(p):
-    """
-    returns the filename of a full pathname
-
-    This function extends the jinja2 template engine
-    """
-    return os.path.basename(p)
-
-
-def is_userlogic(sh, logic):
-    """
-    returns True if userlogic and False if system logic
-    
-    This function extends the jinja2 template engine
-    """
-    return os.path.basename(os.path.dirname(sh.return_logic(logic).filename)) == 'logics'
+from lib.logic import Logics
 
 
 translation_dict = {}
+translation_dict_en = {}
+translation_dict_de = {}
 translation_lang = ''
 
 
@@ -60,11 +42,41 @@ def get_translation_lang():
     return translation_lang
 
 
+def load_translation_backuplanguages():
+    global translation_dict_en  # Needed to modify global copy of translation_dict
+    global translation_dict_de  # Needed to modify global copy of translation_dict
+
+    logger = logging.getLogger(__name__)
+
+    lang_filename = os.path.dirname(os.path.abspath(__file__)) + '/locale/' + 'en' + '.json'
+    try:
+        f = open(lang_filename, 'r')
+        translation_dict_en = json.load(f)
+    except Exception as e:
+        translation_dict_en = {}
+        logger.error("Backend: load_translation language='{0}' failed: Error '{1}'".format('en', e))
+    logger.debug("Backend: translation_dict_en='{0}'".format(translation_dict_en))
+
+    lang_filename = os.path.dirname(os.path.abspath(__file__)) + '/locale/' + 'de' + '.json'
+    try:
+        f = open(lang_filename, 'r')
+        translation_dict_de = json.load(f)
+    except Exception as e:
+        translation_dict_de = {}
+        logger.error("Backend: load_translation language='{0}' failed: Error '{1}'".format('de', e))
+    logger.debug("Backend: translation_dict_de='{0}'".format(translation_dict_de))
+
+    return
+
+
 def load_translation(language):
     global translation_dict  # Needed to modify global copy of translation_dict
     global translation_lang  # Needed to modify global copy of translation_lang
 
     logger = logging.getLogger(__name__)
+
+    if translation_dict_en == {}:
+        load_translation_backuplanguages()
 
     translation_lang = language.lower()
     if translation_lang == '':
@@ -73,8 +85,9 @@ def load_translation(language):
         lang_filename = os.path.dirname(os.path.abspath(__file__)) + '/locale/' + translation_lang + '.json'
         try:
             f = open(lang_filename, 'r')
-        except:
+        except Exception as e:
             translation_lang = ''
+            logger.error("Backend: load_translation language='{0}' failed: Error '{1}'".format(translation_lang, e))
             return False
         try:
             translation_dict = json.load(f)
@@ -92,6 +105,43 @@ def html_escape(str):
     return html
 
 
+def _get_translation_for_block(lang, txt, block):
+    """
+    """
+    if lang == 'en':
+        blockdict = translation_dict_en.get('_' + block, {})
+    elif lang == 'de':
+        blockdict = translation_dict_de.get('_' + block, {})
+    else:
+        blockdict = translation_dict.get('_' + block, {})
+
+    return blockdict.get(txt, '')
+        
+        
+def _get_translation(txt, block):
+    """
+    Get translation with fallback to english and further fallback to german
+    """
+    logger = logging.getLogger(__name__)
+
+    if block != '':
+        tr = _get_translation_for_block('', txt, block)
+        if tr == '':
+            logger.info("Backend: Language '{0}': Translation for '{1}' is missing!".format(translation_lang, txt))
+            tr = _get_translation_for_block('en', txt, block)
+            if tr == '':
+                tr = _get_translation_for_block('de', txt, block)
+    else:
+        tr = translation_dict.get(txt, '')
+        if tr == '':
+            logger.info("Backend: Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
+            tr = translation_dict_en.get(txt, '')
+            if tr == '':
+                logger.info("Backend: Language '{0}': Translation for '{1}' is missing".format('en', txt))
+                tr = translation_dict_de.get(txt, '')
+    return tr
+    
+
 def translate(txt, block=''):
     """
     returns translated text
@@ -104,15 +154,10 @@ def translate(txt, block=''):
     if translation_lang == '':
         tr = txt
     else:
-        if block != '':
-            blockdict = translation_dict.get('_' + block, {})
-            tr = blockdict.get(txt, '')
-            if tr == '':
-                tr = translation_dict.get(txt, '')
-        else:
-            tr = translation_dict.get(txt, '')
+        tr = _get_translation(txt, block)
+
         if tr == '':
-            logger.warning("Backend: Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
+            logger.info("Backend: -> Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
             tr = txt
     return html_escape(tr)
 
@@ -149,15 +194,4 @@ def parse_requirements(file_path):
                     req_dict[line[0:line.find("=")].lower().strip()] = line[line.find("="):len(line)].lower().strip()
     fobj.close()
     return req_dict
-
-
-def strip_quotes(string):
-    string = string.strip()
-    if len(string) > 0:
-        if string[0] in ['"', "'"]:  # check if string starts with ' or "
-            if string[0] == string[-1]:  # and end with it
-                if string.count(string[0]) == 2:  # if they are the only one
-                    string = string[1:-1]  # remove them
-    return string
-
 

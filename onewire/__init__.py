@@ -23,8 +23,7 @@ import logging
 import socket
 import threading
 import time
-
-logger = logging.getLogger('')
+from lib.model.smartplugin import SmartPlugin
 
 
 class owex(Exception):
@@ -35,9 +34,12 @@ class owexpath(Exception):
     pass
 
 
-class OwBase():
+class OwBase(SmartPlugin):
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = '1.3.1'
 
     def __init__(self, host='127.0.0.1', port=4304):
+        self.logger = logging.getLogger(__name__)
         self.host = host
         self.port = int(port)
         self._lock = threading.Lock()
@@ -57,13 +59,13 @@ class OwBase():
         except Exception as e:
             self._connection_attempts -= 1
             if self._connection_attempts <= 0:
-                logger.error('1-Wire: could not connect to {0}:{1}: {2}'.format(self.host, self.port, e))
+                self.logger.error('1-Wire: could not connect to {0}:{1}: {2}'.format(self.host, self.port, e))
                 self._connection_attempts = self._connection_errorlog
             self._lock.release()
             return
         else:
             self.connected = True
-            logger.info('1-Wire: connected to {0}:{1}'.format(self.host, self.port))
+            self.logger.info('1-Wire: connected to {0}:{1}'.format(self.host, self.port))
             self._connection_attempts = 0
             self._lock.release()
         try:
@@ -182,7 +184,7 @@ class OwBase():
             try:
                 page3 = self.read(path + 'pages/page.3')  # .encode('hex').upper()
             except Exception as e:
-                logger.warning("1-Wire: sensor {0} problem reading page.3: {1}".format(addr, e))
+                self.logger.warning("1-Wire: sensor {0} problem reading page.3: {1}".format(addr, e))
                 return
             try:
                 vis = float(self.read(path + 'vis').decode())
@@ -197,7 +199,7 @@ class OwBase():
             except Exception:
                 vdd = None
             if vdd is not None:
-                logger.debug("1-Wire: sensor {0} voltage: {1}".format(addr, vdd))
+                self.logger.debug("1-Wire: sensor {0} voltage: {1}".format(addr, vdd))
                 keys['VDD'] = 'VDD'
             if page3[0] == 0x19:
                 return keys
@@ -211,7 +213,7 @@ class OwBase():
                 keys['H'] = 'humidity'
                 return keys
             else:
-                logger.info("1-Wire: unknown sensor {0} {1} page3: {2}".format(addr, typ, page3))
+                self.logger.info("1-Wire: unknown sensor {0} {1} page3: {2}".format(addr, typ, page3))
                 keys.update({'V': 'VAD', 'VDD': 'VDD'})
                 return keys
         elif typ == 'DS2401':  # iButton
@@ -225,7 +227,7 @@ class OwBase():
         elif typ == 'DS2408':  # I/O
             return {'I0': 'sensed.0', 'I1': 'sensed.1', 'I2': 'sensed.2', 'I3': 'sensed.3', 'I4': 'sensed.4', 'I5': 'sensed.5', 'I6': 'sensed.6', 'I7': 'sensed.7', 'O0': 'PIO.0', 'O1': 'PIO.1', 'O2': 'PIO.2', 'O3': 'PIO.3', 'O4': 'PIO.4', 'O5': 'PIO.5', 'O6': 'PIO.6', 'O7': 'PIO.7'}
         else:
-            logger.info("1-Wire: unknown sensor {0} {1}".format(addr, typ))
+            self.logger.info("1-Wire: unknown sensor {0} {1}".format(addr, typ))
             return
 
 
@@ -269,7 +271,7 @@ class OneWire(OwBase):
         self._sh.scheduler.add('1w-sen', self._sensor_cycle, cycle=self._cycle, prio=5, offset=0)
         #self._sh.scheduler.add('1w', self.wrapper('bus.1'), cycle=self._cycle, prio=5, offset=4)
         if self._ibuttons != {} and self._ibutton_masters == {}:
-            logger.info("1-Wire: iButtons specified but no dedicated iButton master. Using I/O cycle for the iButtons.")
+            self.logger.info("1-Wire: iButtons specified but no dedicated iButton master. Using I/O cycle for the iButtons.")
             for addr in self._ibuttons:
                 for key in self._ibuttons[addr]:
                     if key == 'B':
@@ -294,12 +296,12 @@ class OneWire(OwBase):
 
     def _io_loop(self):
         threading.currentThread().name = '1w-io'
-        logger.debug("1-Wire: Starting I/O detection")
+        self.logger.debug("1-Wire: Starting I/O detection")
         while self.alive:
             # start = time.time()
             self._io_cycle()
             # cycletime = time.time() - start
-            # logger.debug("cycle takes {0} seconds".format(cycletime))
+            # self.logger.debug("cycle takes {0} seconds".format(cycletime))
             time.sleep(self._io_wait)
 
     def _io_cycle(self):
@@ -314,7 +316,7 @@ class OneWire(OwBase):
                 item = self._ios[addr][key]['item']
                 path = self._ios[addr][key]['path']
                 if path is None:
-                    logger.debug("1-Wire: path not found for {0}".format(item.id()))
+                    self.logger.debug("1-Wire: path not found for {0}".format(item.id()))
                     continue
                 try:
                     if key == 'B':
@@ -323,13 +325,13 @@ class OneWire(OwBase):
                     else:
                         value = self._flip[self.read('/uncached' + path).decode()]
                 except Exception:
-                    logger.warning("1-Wire: problem reading {0}".format(addr))
+                    self.logger.warning("1-Wire: problem reading {0}".format(addr))
                     continue
                 item(value, '1-Wire', path)
 
     def _ibutton_loop(self):
         threading.currentThread().name = '1w-b'
-        logger.debug("1-Wire: Starting iButton detection")
+        self.logger.debug("1-Wire: Starting iButton detection")
         while self.alive:
             self._ibutton_cycle()
             time.sleep(self._button_wait)
@@ -380,16 +382,16 @@ class OneWire(OwBase):
                 item = self._sensors[addr][key]['item']
                 path = self._sensors[addr][key]['path']
                 if path is None:
-                    logger.info("1-Wire: path not found for {0}".format(item.id()))
+                    self.logger.info("1-Wire: path not found for {0}".format(item.id()))
                     continue
                 try:
                     value = self.read('/uncached' + path).decode()
                     if key.startswith('T') and value == '85.0000':
-                        logger.info("1-Wire: problem reading {0}. Wiring problem?".format(addr))
+                        self.logger.info("1-Wire: problem reading {0}. Wiring problem?".format(addr))
                         continue
                     value = float(value)
                 except Exception as e:
-                    logger.warning("1-Wire: problem reading {} {}: {}".format(addr, path, e))
+                    self.logger.warning("1-Wire: problem reading {} {}: {}".format(addr, path, e))
                     if not self.connected:
                         return
                     else:
@@ -404,7 +406,7 @@ class OneWire(OwBase):
                     value = value * 310 + 450
                 item(value, '1-Wire', path)
         cycletime = time.time() - start
-        logger.debug("1-Wire: sensor cycle takes {0} seconds".format(cycletime))
+        self.logger.debug("1-Wire: sensor cycle takes {0} seconds".format(cycletime))
 
     def _discovery(self):
         self._intruders = []  # reset intrusion detection
@@ -415,7 +417,7 @@ class OneWire(OwBase):
         except Exception:
             return
         if type(listing) != list:
-            logger.warning("1-Wire: listing '{0}' is not a list.".format(listing))
+            self.logger.warning("1-Wire: listing '{0}' is not a list.".format(listing))
             return
         for path in listing:
             if not self.alive:
@@ -427,7 +429,7 @@ class OneWire(OwBase):
                 try:
                     sensors = self.dir(path)
                 except Exception as e:
-                    logger.info("1-Wire: problem reading bus: {0}: {1}".format(bus, e))
+                    self.logger.info("1-Wire: problem reading bus: {0}: {1}".format(bus, e))
                     continue
                 for sensor in sensors:
                     addr = sensor.split("/")[-2]
@@ -436,7 +438,7 @@ class OneWire(OwBase):
                         if keys is None:
                             continue
                         self._buses[bus].append(addr)
-                        logger.info("1-Wire: {0} with sensors: {1}".format(addr, ', '.join(list(keys.keys()))))
+                        self.logger.info("1-Wire: {0} with sensors: {1}".format(addr, ', '.join(list(keys.keys()))))
                         if 'IA' in keys or 'IB' in keys or 'I0' in keys or 'I1' in keys or 'I2' in keys or 'I3' in keys or 'I4' in keys or 'I5' in keys or 'I6' in keys or 'I7' in keys:
                             table = self._ios
                         elif 'BM' in keys:
@@ -451,7 +453,7 @@ class OneWire(OwBase):
                                     try:
                                         self.write(sensor + keys['O' + ch], 0)
                                     except Exception as e:
-                                        logger.info("1-Wire: problem setting {0}{1} as input: {2}".format(sensor, keys['O' + ch], e))
+                                        self.logger.info("1-Wire: problem setting {0}{1} as input: {2}".format(sensor, keys['O' + ch], e))
                                     del(keys['O' + ch])
                             for key in keys:
                                 if key in table[addr]:
@@ -461,17 +463,19 @@ class OneWire(OwBase):
                                     try:
                                         self.write(table[addr][key]['path'], self._flip[table[addr][key]['item']()])
                                     except Exception as e:
-                                        logger.info("1-Wire: problem setting output {0}{1}: {2}".format(sensor, keys['O' + ch], e))
+                                        self.logger.info("1-Wire: problem setting output {0}{1}: {2}".format(sensor, keys['O' + ch], e))
         self._discovered = True
 
     def parse_item(self, item):
         if 'ow_addr' not in item.conf:
             return
         if 'ow_sensor' not in item.conf:
-            logger.warning("1-Wire: No ow_sensor for {0} defined".format(item.id()))
+            self.logger.warning("1-Wire: No ow_sensor for {0} defined".format(item.id()))
             return
         addr = item.conf['ow_addr']
         key = item.conf['ow_sensor']
+        if len(addr) != 15:
+            self.logger.warning("1-Wire: Wrong address size '{}' for item {}".format(addr, item))
         if key in ['IA', 'IB', 'OA', 'OB', 'I0', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'O0', 'O1', 'O2', 'O3', 'O4', 'O5', 'O6', 'O7']:
             table = self._ios
         elif key == 'B':
@@ -483,7 +487,7 @@ class OneWire(OwBase):
             table = self._sensors
         if key not in self._supported:  # unknown key
             path = '/' + addr + '/' + key
-            logger.info("1-Wire: unknown sensor specified for {0} using path: {1}".format(item.id(), path))
+            self.logger.info("1-Wire: unknown sensor specified for {0} using path: {1}".format(item.id(), path))
         else:
             path = None
             if key == 'VOC':
@@ -500,4 +504,4 @@ class OneWire(OwBase):
         try:
             self.write(item._ow_path['path'], self._flip[item()])
         except Exception as e:
-            logger.info("1-Wire: problem setting output {0}: {1}".format(item._ow_path['path'], e))
+            self.logger.info("1-Wire: problem setting output {0}: {1}".format(item._ow_path['path'], e))

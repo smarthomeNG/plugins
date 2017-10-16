@@ -60,7 +60,7 @@ export function makeChange(doc, change, ignoreReadOnly) {
   let split = sawReadOnlySpans && !ignoreReadOnly && removeReadOnlyRanges(doc, change.from, change.to)
   if (split) {
     for (let i = split.length - 1; i >= 0; --i)
-      makeChangeInner(doc, {from: split[i].from, to: split[i].to, text: i ? [""] : change.text})
+      makeChangeInner(doc, {from: split[i].from, to: split[i].to, text: i ? [""] : change.text, origin: change.origin})
   } else {
     makeChangeInner(doc, change)
   }
@@ -260,9 +260,9 @@ function makeChangeSingleDocInEditor(cm, change, spans) {
 
 export function replaceRange(doc, code, from, to, origin) {
   if (!to) to = from
-  if (cmp(to, from) < 0) { let tmp = to; to = from; from = tmp }
+  if (cmp(to, from) < 0) [from, to] = [to, from]
   if (typeof code == "string") code = doc.splitLines(code)
-  makeChange(doc, {from: from, to: to, text: code, origin: origin})
+  makeChange(doc, {from, to, text: code, origin})
 }
 
 // Rebasing/resetting history to deal with externally-sourced changes

@@ -104,7 +104,8 @@ class SQL(SmartPlugin):
         year = 365 * day
         self._frames = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
         self._times = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
-        smarthome.scheduler.add('SQLite Maintain', self._maintain, cron='2 3 * *', prio=5)
+#        smarthome.scheduler.add('SQLite Maintain', self._maintain, cron='2 3 * *', prio=5)
+        self.scheduler_add('SQLite Maintain', self._maintain, cron='2 3 * *', prio=5)
 
     def remove_orphans(self):
         current_items = [item.id() for item in self._buffer]
