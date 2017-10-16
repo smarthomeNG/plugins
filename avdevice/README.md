@@ -1,6 +1,6 @@
 # AV Device
 
-# Requirements
+## Requirements
 
 Serial Python module
 
@@ -12,12 +12,11 @@ sudo pip3 install serial --upgrade
 Hopefully several different AV devices based on TCP or Serial RS232 connections
 Tested with Pioneer AV receivers and Epson projector
 
-# Configuration
+## Configuration
 
-## plugin.yaml
+### plugin.yaml
 
-
-<pre>
+```
 # etc/plugin.yaml
 avdevice:
     class_name: AVDevice
@@ -41,11 +40,13 @@ avdevice:
     #secondstokeep: 50
     #responsebuffer: -5
     #autoreconnect: false    
-</pre>
+```
 
 
-### Attributes:
+#### Attributes:
+
 * `model`: string. name of AV device. Has to correspond to a text file with the same name in the folder plugins/avdevice.
+* `manufacturer`: string. Name of manufacturer. Not necessary usually but maybe with Epson projectors.
 * `instance`: string. define instance name, each device needs an individual instance name!
 * `tcp`: list of values. if you use TCP connection define IP address and port, separated by a ","
 * `rs232`: list of values. if you use a RS232 cable to communicate with your device (highly recommended!) define port, baudrate, timeout and write timeout separated by ","
@@ -60,23 +61,22 @@ avdevice:
 * `sendretries`: integer. This value defines how often a command should be sent when receiving a wrong answer from the device.
 * `resendwait`: float. Seconds the plugin should wait between each resend retry.
 * `reconnectretries`: integer. If the plugin can not connect to the device it retries this often. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device. 
-* `reconnectcycle`: integer. Seconds the plugin should wait between each reconnect retry.
 * `secondstokeep`: integer. Seconds the plugin should temporarily save a command to retry later on after establishing a connection. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device. 
 * `responsebuffer`: integer or boolean. Set this to a negative number to collect quickly received responses in a buffer and evaluate them collectively. The standard value should be fine and prevent responses getting lost. Some receivers might first respond to a command with an update of the display and then with the actual value. The buffer ensures the correct evaluation of the response. 
 * `autoreconnect`: boolean. Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command.
+* `verboselevel`: int 0-3. Value between 0 and 3 to define the verbose level of the debug logger. The higher the value, the more debug messages. 
 
+### items.yaml
 
-## items.yaml
-
-### avdevice_zone[0-4]@[instance]: [command]
+#### avdevice_zone[0-4]@[instance]: [command]
 
 specifiy the zone number and instance.
 The command has to correspond to a "base" command in the relevant text configuration file in the avdevice plugin folder named the same as the "model" configured in plugin.yaml.
 Only use the first part of the command before the space, e.g. "power" instead of "power on" or "power off". "volume" instead of "volume set", etc.
 
-### Example
+#### Example
 
-<pre>
+```
 # items/my.yaml
 Pioneer:
     type: foo
@@ -156,13 +156,11 @@ Pioneer:
         visu_acl: rw
         avdevice_zone2@pioneer_one: input
         enforce_updates: 'no'
+```
 
+### model.txt
 
-</pre>
-
-## model.txt
-
-### ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;TYPE
+#### ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;TYPE
 
 Configure your commands depending on your model and manufacturer. You have to name the file the same as configured in the plugin.yaml as "model". E.g. if you've configured "model: vsx-923" you name the file "vsx-923.txt"
 
@@ -186,9 +184,9 @@ Each line holds one specific command that should be sent to the device. You also
 
 * `type`: If you want to force a function to deal with boolean values, use "bool" here. This might be necessary when your device responds in a weird way like an Epson projector does. It responds with "PWR=01" or "PWR=02" when turned on.. depending on it's mood ;)
 
-### Example
+#### Example
 
-<pre>
+```
 # plugins/avdevice/model.txt
 ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE
 1;power on;PO|PO;?P;PWR*;RW;yes
@@ -231,4 +229,4 @@ ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE
 0;statusupdate;;;;W
 0;display;?FL;?FL;FL******************************;R
 
-</pre>
+```
