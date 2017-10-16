@@ -62,20 +62,16 @@ class HUE(SmartPlugin):
 
         self.logger = logging.getLogger(__name__)
 
-        self.logger.warning("self._parameters = {}".format(str(self._parameters)))
+#        self.logger.warning("self._parameters = {}".format(str(self._parameters)))
         # parameter zu übergabe aus der konfiguration plugin.conf
-        self._hue_ip = self._parameters['hue_ip']
-        self._hue_user = self._parameters['hue_user']
-        self._hue_port = self._parameters['hue_port']
+        self._hue_ip = self.get_parameter_value('hue_ip')
+        self._hue_user = self.get_parameter_value('hue_user')
+        self._hue_port = self.get_parameter_value('hue_port')
 #        self.logger.warning("self._hue_ip = {}, self._hue_user = {}, self._hue_port = {}".format(self._hue_ip, self._hue_user, self._hue_port))
 
         # verabreitung der parameter aus der plugin.conf
         self._numberHueBridges = len(self._hue_ip)
 
-#        self.logger.warning("_numberHueBridges = {}, len(_hue_port) = {}, len(_hue_user) = {}".format(self._numberHueBridges, len(self._hue_port), len(self._hue_user)))
-#        self.logger.warning("type(hue_ip) = {}, hue_ip = >{}<".format(type(hue_ip), hue_ip))
-#        self.logger.warning("type(self._hue_ip) = {}, self._hue_ip = >{}<".format(type(self._hue_ip), self._hue_ip))
-#        self.logger.warning("type(self._parameters['hue_ip']) = {}, self._parameters['hue_ip'] = >{}<".format(type(self._parameters['hue_ip']), self._parameters['hue_ip']))
         if len(self._hue_port) != self._numberHueBridges or len(self._hue_user) != self._numberHueBridges:
             self.logger.error('Error in plugin.conf: if you specify more than 1 bridge, all parameters hue_ip, hue_user and hue_port have to be defined')
             self._init_complete = False
@@ -84,33 +80,15 @@ class HUE(SmartPlugin):
             self.logger.error('Error in plugin.conf: you have to specify all hue_user')
             self._init_complete = False
             return
-        if ('' in self._hue_ip) or ('0.0.0.0' in self._hue_ip):
-            self.logger.error('Error in plugin.conf: you have to specify all hue_ip')
-            self._init_complete = False
-            return
         if '' in self._hue_port:
             self.logger.error('Error in plugin.conf: you have to specify all hue_port')
             self._init_complete = False
             return
 
-#        self._cycle_lampsGroups = int(cycle_lamps)
-#        if self._cycle_lampsGroups < 5:
-#            # beschränkung der wiederholrate 
-#            self._cycle_lampsGroups = 5
-        self._cycle_lampsGroups = self._parameters['cycle_lamps']
-        
-#        self._cycle_bridges = int(cycle_bridges)
-#        if self._cycle_bridges < 10:
-#            # beschränkung der wiederholrate 
-#            self._cycle_bridges = 10
-        self._cycle_bridges = self._parameters['cycle_bridges']
+        self._cycle_lampsGroups = self.get_parameter_value('cycle_lamps')
+        self._cycle_bridges = self.get_parameter_value('cycle_bridges')
+        self._hueDefaultTransitionTime = self.get_parameter_value('default_transitionTime')
 
-#        self._hueDefaultTransitionTime = float(default_transitionTime)
-#        if self._hueDefaultTransitionTime < 0:
-#            # beschränkung der wiederholrate 
-#            self.logger.warning('Error in plugin.conf: the default_transitionTime parameter cannot be negative. It is set to 0')
-#            self._hueDefaultTransitionTime = 0
-        self._hueDefaultTransitionTime = self._parameters['default_transitionTime']
 
         # variablen zur steuerung des plugins
         # hier werden alle bekannte items für lampen eingetragen
