@@ -46,6 +46,7 @@ avdevice:
 #### Attributes:
 
 * `model`: string. name of AV device. Has to correspond to a text file with the same name in the folder plugins/avdevice.
+* `manufacturer`: string. Name of manufacturer. Not necessary usually but maybe with Epson projectors.
 * `instance`: string. define instance name, each device needs an individual instance name!
 * `tcp`: list of values. if you use TCP connection define IP address and port, separated by a ","
 * `rs232`: list of values. if you use a RS232 cable to communicate with your device (highly recommended!) define port, baudrate, timeout and write timeout separated by ","
@@ -60,11 +61,10 @@ avdevice:
 * `sendretries`: integer. This value defines how often a command should be sent when receiving a wrong answer from the device.
 * `resendwait`: float. Seconds the plugin should wait between each resend retry.
 * `reconnectretries`: integer. If the plugin can not connect to the device it retries this often. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device. 
-* `reconnectcycle`: integer. Seconds the plugin should wait between each reconnect retry.
 * `secondstokeep`: integer. Seconds the plugin should temporarily save a command to retry later on after establishing a connection. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device. 
 * `responsebuffer`: integer or boolean. Set this to a negative number to collect quickly received responses in a buffer and evaluate them collectively. The standard value should be fine and prevent responses getting lost. Some receivers might first respond to a command with an update of the display and then with the actual value. The buffer ensures the correct evaluation of the response. 
 * `autoreconnect`: boolean. Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command.
-
+* `verboselevel`: int 0-3. Value between 0 and 3 to define the verbose level of the debug logger. The higher the value, the more debug messages. 
 
 ### items.yaml
 
