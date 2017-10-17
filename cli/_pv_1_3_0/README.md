@@ -1,4 +1,4 @@
-# CLI (up to shNG v1.3)
+# CLI v1.3.0 (up to shNG v1.3)
 
 ## Configuration
 
