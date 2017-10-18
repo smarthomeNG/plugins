@@ -211,7 +211,7 @@ class KNX(lib.connection.Client,SmartPlugin):
             ga = kwargs['ga']
             interval = int(kwargs['interval'])
             next = self._sh.now() + timedelta(seconds=interval)
-            self._sh.scheduler.add('KNX[{0}] poll {1}'.format(self.get_instance_name(), item), self._poll,
+            self._sh.scheduler.add('KNX poll {}'.format(item), self._poll,
                                    value={'instance': self.get_instance_name(), ITEM: item, 'ga': ga, 'interval': interval},
                                    next=next)
 
@@ -489,7 +489,7 @@ class KNX(lib.connection.Client,SmartPlugin):
                                                                                       poll_interval))
                 randomwait = random.randrange(15)
                 next = self._sh.now() + timedelta(seconds=poll_interval + randomwait)
-                self._sh.scheduler.add('KNX[{0}] poll {1}'.format(self.get_instance_name(), item), self._poll,
+                self._sh.scheduler.add('KNX poll {}'.format(item), self._poll,
                                        value={ITEM: item, 'ga': poll_ga, 'interval': poll_interval}, next=next)
             else:
                 self.logger.warning(
