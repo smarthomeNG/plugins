@@ -107,15 +107,24 @@
 		</tr>
 		<tr>
 			<td><strong>{{ _('Cycle') }}</strong></td>
-			<td><input type="text" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.cycle }}"></td>
+			<td>
+				<input type="text" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.cycle }}"/>
+				<input type="hidden" id="original_cycle" value="{{ thislogic.cycle }}"/>
+			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Crontab(s)') }}</strong></td>
-			<td><input type="text" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.crontab }}"></td>
+			<td>
+				<input type="text" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.crontab }}"/>
+				<input type="hidden" id="original_crontab" value="{{ thislogic.crontab }}"/>
+			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Watch_Item(s)') }}</strong></td>
-			<td><input type="text" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"></td>
+			<td>
+				<input type="text" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"/>
+				<input type="hidden" id="original_watch_item" value="{{ thislogic.watch_item }}"/>
+			</td>
 		</tr>
 	</table>
 <input type="hidden" id="originalcontent" value="{% for line in logic_lines %}{{ line }}
