@@ -123,7 +123,7 @@
 			<td><strong>{{ _('Watch_Item(s)') }}</strong></td>
 			<td>
 				<input type="text" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"/>
-				<input type="hidden" id="original_watch_item" value="{{ thislogic.watch_item }}"/>
+				<input type="hidden" id="original_watch" value="{{ thislogic.watch_item }}"/>
 			</td>
 		</tr>
 	</table>
@@ -185,21 +185,32 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
 });
 
 {% if updates %}
+$('#crontab').keyup( function() {
+	if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+});
+$('#watch').keyup( function() {
+	if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+});
+$('#cycle').keyup( function() {
+	if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+});
 logicsCodeMirror.on("keyup", function (cm, event) {
     if (checkChangedContent()) {
-        $('#savereloadtrigger').removeClass('btn-success');
-        $('#savereload').removeClass('btn-success');
-        $('#save').removeClass('btn-success');
-        $('#savereloadtrigger').addClass('btn-danger');
-        $('#savereload').addClass('btn-danger');
-        $('#save').addClass('btn-danger');
+        markChangedContent();
     } else {
-    	$('#savereloadtrigger').removeClass('btn-danger');
-        $('#savereload').removeClass('btn-danger');
-        $('#save').removeClass('btn-danger');
-        $('#savereloadtrigger').addClass('btn-success');
-        $('#savereload').addClass('btn-success');
-        $('#save').addClass('btn-success');
+		markIdenticalContent();
     }
 
 	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/

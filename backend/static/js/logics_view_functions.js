@@ -82,9 +82,27 @@ function switchRulers() {
 };
 
 function checkChangedContent() {
-    if ($('#original_content').val() != logicsCodeMirror.getValue() ) {
+    if ($('#original_content').val() != logicsCodeMirror.getValue() || ($('#original_cycle').val() != $('#cycle').val()) || ($('#original_crontab').val() != $('#crontab').val()) || ($('#original_watch').val() != $('#watch').val())) {
         return true;
     } else {
         return false;
     }
 };
+
+function markChangedContent() {
+    $('#savereloadtrigger').removeClass('btn-success');
+    $('#savereload').removeClass('btn-success');
+    $('#save').removeClass('btn-success');
+    $('#savereloadtrigger').addClass('btn-danger');
+    $('#savereload').addClass('btn-danger');
+    $('#save').addClass('btn-danger');
+}
+
+function markIdenticalContent() {
+    $('#savereloadtrigger').removeClass('btn-danger');
+    $('#savereload').removeClass('btn-danger');
+    $('#save').removeClass('btn-danger');
+    $('#savereloadtrigger').addClass('btn-success');
+    $('#savereload').addClass('btn-success');
+    $('#save').addClass('btn-success');
+}
