@@ -219,6 +219,10 @@ class BackendLogics:
         
 #        self.logger.info("logics_view_html: logicname = {}, trigger = {}, enable = {}, disable = {}, save = {},  savereload = {},  savereloadtrigger = {}".format( logicname, trigger, enable, disable, save, savereload, savereloadtrigger ))
 #        self.logger.info("logics_view_html: logicname = {}, cycle = {}, crontab = {}, watch = {}".format( logicname, cycle, crontab, watch ))
+
+        # assemble data for displaying/etiting of a logic
+        mylogic = self.fill_logicdict(logicname)
+
         # process actions triggerd by buttons on the web page
         if trigger is not None:
             self.logics.trigger_logic(logicname)
@@ -239,13 +243,17 @@ class BackendLogics:
             self.logics.load_logic(logicname)
             self.logics.trigger_logic(logicname)
 
-        # assemble data for displaying/etiting of a logic
-        mylogic = self.fill_logicdict(logicname)
-        if save is not None:
-            # Fill editor fields with edit results, needed because logic is not reloaded
-            mylogic['cycle'] = cycle
-            mylogic['crontab'] = crontab
-            mylogic['watch'] = watch
+        config_list = self.logics.read_config_section(logicname)
+        for config in config_list:
+            if config[0] == 'cycle':
+                mylogic['cycle'] = config[1]
+            if config[0] == 'crontab':
+                mylogic['crontab'] = config[1]
+            if config[0] == 'watch_item':
+                # Attention: watch_items are always stored as a list in logic object
+                mylogic['watch'] = Utils.strip_quotes_fromlist(str(config[1]))
+                mylogic['watch_item'] = Utils.strip_quotes_fromlist(str(config[1]))
+                mylogic['watch_item_list'] = config[1]
         
         if os.path.splitext(file_path)[1] == '.blockly':
             mode = 'xml'
