@@ -34,16 +34,16 @@
 				</tr>
 			<tr>
 				<td><img src="static/img/knxd_service.png" alt="Icon knxd service" width="48" height="48"></td>
-				<td style="padding-top:23px;">{{ _('Dienst für die KNX Unterstützung') }}:&nbsp;
+				<td style="padding-top:23px;">{{ _('Dienst für die KNX Unterstützung') }}:&nbsp;<strong>
 				{% if knxdeamon %}
-				{{ knxdeamon }}
+					{{ knxdeamon }}
 				{% else %}
-				{{ _('Nicht aktiv') }}
+					{{ _('Nicht aktiv') }}
 				{% endif %}
-				</td>
+				</strong></td>
 				<td></td>
 			</tr>
-		{% if develop %}
+		{% if 1 == 2 %}
 			<tr>
 				<td><img src="static/img/logo_small_76x76.png" alt="SmartHomeNG logo small" width="48" height="48"></td>
 				<td style="padding-top:23px;"><pre>{{ smarthome_service }}</pre>
@@ -149,6 +149,13 @@
 					<div id="hash_value" style="margin-top: 5px; width: 900px;"></div>
 				</td>
 			</tr>
+			<tr>
+				<td><img src="static/img/tree.png" alt="Icon cache" width="48" height="48"></td>
+				<td colspan="2" style="padding-top:15px;">
+					<span class="btn btn-default" onclick="convertYaml()">{{ _('CONF-YAML Konverter') }}</span>
+					<div id="cache_check" style="margin-top: 5px; width: 1000px;"></div>
+				</td>
+			</tr>
 		</tbody>
 	</table>
 </div>
@@ -165,6 +172,10 @@ function checkCache() {
 		temp = temp + '</tbody></table></div>';
 		$('#cache_check').html(temp);
 	});
+}
+
+function convertYaml() {
+	window.location = "conf_yaml_converter.html";
 }
 
 function deleteFromCache(filename) {

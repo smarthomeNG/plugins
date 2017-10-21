@@ -161,6 +161,7 @@
 	"der Logik": "de la logique",
 	"Bitte bei Bedarf anschließend": "Connecter en cas de besoin s.v.p.",
 	"drücken": "pousser",
+	"CONF-YAML Konverter": "Convertisseur .conf vers .yaml",
 
 	"_items": {
 		"path": "Chemin",
