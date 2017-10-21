@@ -82,7 +82,7 @@ function switchRulers() {
 };
 
 function checkChangedContent() {
-    if ($('#originalcontent').val() != logicsCodeMirror.getValue() ) {
+    if ($('#original_content').val() != logicsCodeMirror.getValue() ) {
         return true;
     } else {
         return false;
