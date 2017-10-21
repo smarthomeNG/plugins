@@ -353,13 +353,13 @@ class BackendLogics:
             if cycle > 0:
                 config_list.append(['cycle', cycle, ''])
 
-            crontab = self.string_to_list(crontab)
-            if crontab != '':
-                config_list.append(['crontab', str(crontab), ''])
+        crontab = self.string_to_list(crontab)
+        if crontab != '':
+            config_list.append(['crontab', str(crontab), ''])
                 
-            watch = self.string_to_list(watch)
-            if watch != '':
-                config_list.append(['watch_item', str(watch), ''])
+        watch = self.string_to_list(watch)
+        if watch != '':
+            config_list.append(['watch_item', str(watch), ''])
 
         self.logics.update_config_section(True, logicname, config_list)
         return
