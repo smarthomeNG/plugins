@@ -26,7 +26,7 @@ import lib.connection
 
 from lib.model.smartplugin import SmartPlugin
 
-REMOTE_ATTRS = ['lirc_instance', 'lirc_remote', 'lirc_key']
+REMOTE_ATTRS = ['lirc_remote', 'lirc_key']
 class LIRC(lib.connection.Client,SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
@@ -73,11 +73,8 @@ class LIRC(lib.connection.Client,SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, REMOTE_ATTRS[0]) and \
-           self.has_iattr(item.conf, REMOTE_ATTRS[1]) and \
-           self.has_iattr(item.conf, REMOTE_ATTRS[2]):
-            if self.get_iattr_value(item.conf,REMOTE_ATTRS[0]).lower() == \
-               self.instance.lower():
-                self.loggercmd("{}: callback assigned".format(item),'e')
+           self.has_iattr(item.conf, REMOTE_ATTRS[1]):
+                self.loggercmd("{}: callback assigned".format(item),'d')
                 return self.update_item
         return None
 
@@ -115,8 +112,8 @@ class LIRC(lib.connection.Client,SmartPlugin):
         if item():
             val = item()
             item(0)
-            remote = self.get_iattr_value(item.conf,REMOTE_ATTRS[1])
-            key = self.get_iattr_value(item.conf,REMOTE_ATTRS[2])
+            remote = self.get_iattr_value(item.conf,REMOTE_ATTRS[0])
+            key = self.get_iattr_value(item.conf,REMOTE_ATTRS[1])
             self.loggercmd("update_item, val: {}".format(val),'d')
             self.loggercmd("remote: {}".format(remote),'d')
             self.loggercmd("key: {}".format(key),'d')
@@ -147,6 +144,9 @@ class LIRC(lib.connection.Client,SmartPlugin):
             self._reply_lock.wait(1)
         self._reply_lock.release()
         self._cmd_lock.release()
+        if self._error:
+            self.loggercmd("error from lircd: {}".format(self._responseStr),'e')
+            self._error = False
         self.loggercmd("response: {}".format(self._responseStr),'d')
         return self._responseStr
 

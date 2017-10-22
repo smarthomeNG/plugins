@@ -1,6 +1,6 @@
 # lirc
 
-Send commands to lircd that sends IR-signals to any device that has an IR-interface.
+Sends commands to lircd that sends IR-signals to any device that has an IR-interface.
 
 ## Requirements
 
@@ -45,8 +45,8 @@ You could specify a port to connect to. By default port 8765 is used.
 
 If the value of an item configured in items.yaml is set or updated the plugin will send an command to lircd to send the related lirc_key n times
 whereby n means the value that has been assigned to the item. The plugin will reset the item to 0.
-e.g. DVDLIVINGROOM_POWER ist set to 5  => lircd will send 5x POWER via IR
-     DVDLIVINGROOM_POWER ist set to 1  => lircd will send 1x POWER via IR
+e.g. DVDLIVINGROOM_POWER is set to 5  => lircd will send 5x POWER via IR
+     DVDLIVINGROOM_POWER is set to 1  => lircd will send 1x POWER via IR
 
 
 ```
@@ -54,19 +54,17 @@ LIRC:
     REMOTE_DVDLIVINGROOM:
         DVDLIVINGROOM_POWER:
             type: num
-            lirc_instance: "livingroom"
-            lirc_remote: "PHILIPSDVD"
-            lirc_key: "POWER"
+            lirc_remote@instancename: "PHILIPSDVD"
+            lirc_key@instancename: "POWER"
 ```
 
-#### lirc_instance
-the relation to an instance configured in plugin.yaml.
+#### lirc_remote@instancename
+The name of the remote. This name has to match the name of the remote in lircd.
+Add @instancename to assign the item to an specific instance configured in plugin.yaml
 
-#### lirc_remote
-the name of the remote. This name has to match the name of the remote in lircd.
-
-#### lirc_key
-the name of the key on the given remote. This name has to match the name of the key in lircd.
+#### lirc_key@instancename
+The name of the key on the given remote. This name has to match the name of the key in lircd.
+Add @instancename to assign the item to an specific instance configured in plugin.yaml
 
 #### Example
 ```
@@ -74,42 +72,49 @@ LIRC:
     REMOTE_DVDLIVINGROOM:
         DVDLIVINGROOM_POWER:
             type: num
-            lirc_instance: "livingroom"
-            lirc_remote: "PHILIPSDVD"
-            lirc_key: "POWER"
+            lirc_remote@livingroom: "PHILIPSDVD"
+            lirc_key@livingroom: "POWER"
 
     REMOTE_RADIOOFFICE:
         TEVION_RCD9211_POWER:
             type: num
-            lirc_instance: "hifisystem"
-            lirc_remote: "TEVION_RCD9211"
-            lirc_key: "POWER"
+            lirc_remote@hifisystem: "TEVION_RCD9211"
+            lirc_key@hifisystem: "POWER"
         TEVION_RCD9211_FUNCTION:
             type: num
-            lirc_instance: "hifisystem"
-            lirc_remote: "TEVION_RCD9211"
-            lirc_key: "FUNCTION"
+            lirc_remote@hifisystem: "TEVION_RCD9211"
+            lirc_key@hifisystem: "FUNCTION"
         TEVION_RCD9211_VOLUP:
             type: num
-            lirc_instance: "hifisystem"
-            lirc_remote: "TEVION_RCD9211"
-            lirc_key: "VOLUP"
+            lirc_remote@hifisystem: "TEVION_RCD9211"
+            lirc_key@hifisystem: "VOLUP"
         TEVION_RCD9211_VOLDOWN:
             type: num
-            lirc_instance: "hifisystem"
-            lirc_remote: "TEVION_RCD9211"
-            lirc_key: "VOLDOWN"
+            lirc_remote@hifisystem: "TEVION_RCD9211"
+            lirc_key@hifisystem: "VOLDOWN"
 ```
 
 ## Logging
 
 You can configure the logger to see specific outputs of the plugin. That's helpfull when setting up the plugin. To see e.g. the debug-outputs of
-the plugin you have to configure the logging.yaml file. The name of logger for every instance is created by "plugins.lirc" + "_instancename" 
-e.g. plugins.lirc_livingroom or plugins.lirc_hifisystem
+the plugin you have to configure the logging.yaml file. 
 
 
 ```
 loggers:
-    plugins.lirc_livingroom:
+    plugins.lirc:
        level: DEBUG
+```
+
+That configured loglevel is used for all instances of the plugin. All output lines of the plulgin have a prefix to identify which instance gave the output.
+e.g. 
+
+the output of the instance livingroom:
+```
+1970-01-01  00:00:00 INFO     Connections  lirc_hifisystem: connected to lircd 0.9.4c on 127.0.0.1:8765
+```
+
+the output of the instance hifisystem:
+```
+1970-01-01  00:00:00 INFO     Connections  lirc_hifisystem: connected to lircd 0.9.4c on 192.168.1.10:8765
 ```
