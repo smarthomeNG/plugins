@@ -34,7 +34,7 @@ class LIRC(lib.connection.Client,SmartPlugin):
 
     def __init__(self, sh, lirc_Host, lirc_Port=8765):
         self.instance = self.get_instance_name()
-        self.logger = logging.getLogger(__name__ + '_' + self.instance)
+        self.logger = logging.getLogger(__name__)
         self.lircHost = lirc_Host
         self.lircPort = lirc_Port
         lib.connection.Client.__init__(self, self.lircHost, self.lircPort, monitor=True)
