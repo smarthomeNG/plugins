@@ -98,7 +98,7 @@ class BackendSysteminfo:
         req_dict = self.get_requirements_info()
 
         self.pypi_json()
-
+        
         return self.render_template('system.html', 
                                     now=now, system=system, sh_vers=shngversion.get_shng_version(), plg_vers=shngversion.get_plugins_version(), sh_dir=self._sh_dir,
                                     vers=vers, node=node, arch=arch, user=user, freespace=freespace, 
@@ -159,6 +159,14 @@ class BackendSysteminfo:
         return req_dict
         
 
+    def check_requirement(self, package, req):
+    
+        pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
+                                             sys.version_info[3])
+        req_list = req.split('<br/>')
+        self.logger.info("check_requirement: package {}, pyversion {}: required, req_list = {}".format(package, pyversion, req_list))
+
+    
     @cherrypy.expose
     def pypi_json(self):
         """
@@ -214,6 +222,13 @@ class BackendSysteminfo:
             package['required'] = False
             if req_dict.get(package['name'], '') != '':
                 package['required'] = True
+                # tests for min, max versions
+                self.check_requirement(package['name'], req_dict.get(package['name'], ''))
+                
+            package['vers_req_min'] = ''
+            package['vers_req_max'] = ''
+            package['vers_ok'] = False
+            package['pypi_forreq_ok'] = True
 
 
             if package['required']:
