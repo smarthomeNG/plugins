@@ -99,6 +99,17 @@ $('#tab_pypi').on('click', function(event){
 
 $.getJSON('pypi.json', function(result) {
     $.each(result, function(index, element) {
+        if (index == 0) {
+            oldSort = element['sort'].substr(0,1);
+            newSort = element['sort'].substr(0,1);
+        } else {
+            oldSort = newSort;
+            newSort = newSort = element['sort'].substr(0,1);
+        }
+        if (oldSort != newSort) {
+            $('#package_check').find("tbody").append("<tr><td style=\"height: 2px; background:#333;\" colspan=\"4\"></td></tr>");
+        }
+
         if (element['vers_ok']) {
             fontColor = "green";
         } else {
@@ -122,7 +133,7 @@ $.getJSON('pypi.json', function(result) {
         }
 
         $('#package_check').find("tbody").append(
-        "<tr><td style=\""+fontWeight+"\">"+element['name']+"("+element['sort']+")</td>"+
+        "<tr><td style=\""+fontWeight+"\">"+element['name']+"</td>"+
         "<td style=\"color: "+fontColor+"\">"+element['vers_installed']+"</td>"+
         "<td>"+reqString+"</td>"+
         "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version']+"</td></tr>");
