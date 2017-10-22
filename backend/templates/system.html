@@ -8,7 +8,11 @@
 {% block content %}
  <ul class="nav nav-tabs">
   <li id="tab_systemproperties" class="active"><a href="#">{{ _('Systemeigenschaften') }}</a></li>
-  <li id="tab_pypi"><a href="#">{{ _('PyPI Check') }}</a></li>
+  <li id="tab_pypi" class="disabled">
+      <a href="#">
+          {{ _('PyPI Check') }}
+          <i id="spinner" class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+  </a></li>
  </ul>
 
  <div id="systemproperties">
@@ -96,7 +100,6 @@ $('#tab_pypi').on('click', function(event){
 	$('#pypi').show();
 });
 
-
 $.getJSON('pypi.json', function(result) {
     $.each(result, function(index, element) {
         if (index == 0) {
@@ -138,6 +141,8 @@ $.getJSON('pypi.json', function(result) {
         "<td>"+reqString+"</td>"+
         "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version']+"</td></tr>");
     });
+    $('#spinner').hide();
+    $('#tab_pypi').removeClass("disabled");
 });
 /*
 package['name'] = ''
