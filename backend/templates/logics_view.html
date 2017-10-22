@@ -226,7 +226,7 @@ logicsCodeMirror.on("keyup", function (cm, event) {
 		CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
 	};
 });
-var answer;
+var answer = false;
 $('a').mousedown(function(e) {
     if(checkChangedContent()) {
         if(confirm("{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}")) {
