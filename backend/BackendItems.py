@@ -91,11 +91,17 @@ class BackendItems:
         from os import listdir
         from os.path import isfile, join
         onlyfiles = [f for f in listdir(cache_path) if isfile(join(cache_path, f))]
-        not_item_related_cache_files = []
+        unused_cache_files = []
         for file in onlyfiles:
             if not file.find(".") == 0:  # filter .gitignore etc.
                 item = self._sh.return_item(file)
+                no_cache_file = False;
                 if item is None:
+                    no_cache_file = True
+                elif not item._cache:
+                    no_cache_file = True
+
+                if no_cache_file:
                     file_data = {}
                     file_data['last_modified'] = datetime.datetime.fromtimestamp(
                         int(os.path.getmtime(cache_path + file))
@@ -104,9 +110,10 @@ class BackendItems:
                         int(os.path.getctime(cache_path + file))
                     ).strftime('%Y-%m-%d %H:%M:%S')
                     file_data['filename'] = file
-                    not_item_related_cache_files.append(file_data)
+                    file_data['filename'] = file
+                    unused_cache_files.append(file_data)
 
-        return json.dumps(not_item_related_cache_files)
+        return json.dumps(unused_cache_files)
 
     @cherrypy.expose
     def cache_file_delete_html(self, filename=''):
