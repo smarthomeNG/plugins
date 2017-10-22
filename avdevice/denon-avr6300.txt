@@ -1,16 +1,52 @@
 ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;TYPE
 0;power on;PWON|PWON;PW?;PW**;RW
-0;power off;PWOFF;PW?;PW***;RW
+0;power off;PWSTANDBY;PW?;PW*******;RW
+0;eco set;ECO*;ECO?;ECO*;RW;;;string
 1;power on;ZMON;ZM?;ZM**;RW
 1;power off;ZMOFF;ZM?;ZM***;RW
 1;mute on;MUON;MU?;MU**;RW
 1;mute off;MUOFF;MU?;MU***;RW
-1;volume set;MV**;MV?;MV**;RW
+1;sleep set;SLP***;SLP?;SLP***;RW;;120;num
+1;standby set;STBY*;STBY?;STBY*;RW;;;string
+1;volume set;MV**;MV?;MV**;RW;;90
 1;volume+;MVUP;MV?;MV;W
 1;volume-;MVDOWN;MV?;MV;W
+1;volumefl set;CVFL **;CV?;CVFL**|CVEND;RW;;62
+1;volumefl+;CVFL UP;CV?;CVFL|CVEND;W
+1;volumefl-;CVFL DOWN;CV?;CVFL|CVEND;W
+1;volumefr set;CVFR **;CV?;CVFR**|CVEND;RW;;62
+1;volumefr+;CVFL UP;CV?;CVFR|CVEND;W
+1;volumefr-;CVFR DOWN;CV?;CVFR|CVEND;W
+1;volumelow;MV50;MV?;MV50;W
+1;volumehigh;MV75;MV?;MV75;W
 1;volumemax;;MV?;MVMAX **;R
+1;input set;SI*;SI?;SI*;RW;;;string
+1;mode set;MS*;MS?;MS*;RW;;;string
+1;audioinput set;SD*;SD?;SD*;RW;;;string
+1;videoinput set;SV*;SV?;SV*;RW;;;string
+1;digitalinput set;DC*;DC?;DC*;RW;;;string
+1;video set;VS*;;VS*;RW;;;string
 2;power on;Z2ON;Z2?;Z2**;RW
 2;power off;Z2OFF;Z2?;Z2***;RW
+2;input set;Z2*;Z2?;Z2*;RW;;;string
+2;mute on;Z2MUON;Z2MU?;Z2MU**;RW
+2;mute off;Z2MUOFF;Z2MU?;Z2MU***;RW
+2;volume+;Z2UP;Z2?;Z2;W
+2;volume-;Z2DOWN;Z2?;Z2;W
+2;volumelow;Z250;MV?;Z250;W
+2;volumehigh;Z275;MV?;Z275;W
+2;volume set;Z2**;Z2?;Z2**;RW;;90
+2;standby set;Z2STBY*;Z2STBY?;Z2STBY*;RW;;;string
+2;sleep set;Z2SLP***;Z2SLP?;Z2SLP***;RW;;120;num
 3;power on;Z3ON;Z3?;Z3**;RW
 3;power off;Z3OFF;Z3?;Z3***;RW
-0;statusupdate;;;;W
+3;input set;Z3*;Z3?;Z3*;RW;;;string
+3;mute on;Z3MUON;Z3MU?;Z3MU**;RW
+3;mute off;Z3MUOFF;Z3MU?;Z3MU***;RW
+3;volume+;Z3UP;Z3?;Z3;W
+3;volume-;Z3DOWN;Z3?;Z3;W
+3;volumelow;Z350;MV?;Z350;W
+3;volumehigh;Z375;MV?;Z375;W
+3;volume set;Z3**;Z3?;Z3**;RW;;90
+3;standby set;Z3STBY*;Z3STBY?;Z3STBY*;RW;;;string
+3;sleep set;Z3SLP***;Z3SLP?;Z3SLP***;RW;;120;num
