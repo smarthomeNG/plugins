@@ -161,9 +161,17 @@ class BackendSysteminfo:
 
     def check_requirement(self, package, req):
     
-        pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
-                                             sys.version_info[3])
-        req_list = req.split('<br/>')
+        pyversion = "{0}.{1}".format(sys.version_info[0], sys.version_info[1])
+        req_templist = req.split('<br/>')
+        
+        req_list = []
+        for req in req_templist:
+            if '|' in req:
+                reqo = req.split('|')
+            else:
+                reqo = [req]
+            req_list.append(reqo)
+            
         self.logger.info("check_requirement: package {}, pyversion {}: required, req_list = {}".format(package, pyversion, req_list))
 
     
@@ -235,6 +243,7 @@ class BackendSysteminfo:
                 package['sort'] = '1'
             else:
                 package['sort'] = '2'
+            package['sort'] += package['name']
             package_list.append(package)
 
         if 1 == 2:
