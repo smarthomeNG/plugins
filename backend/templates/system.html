@@ -67,25 +67,17 @@
     </div>
 </div>
 <div id="pypi" style="display: none;">
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
+    <div class="table-responsive" >
+        <table id="package_check" class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th style="width: 15%; padding-left: 50px;">Python Package</th>
+                    <th style="width: 15%;">Python Package</th>
                     <th style="width: 15%;">{{ _('installierte Version') }}</th>
                     <th style="width: 55%;">{{ _('Anforderungen') }}</th>
                     <th style="width: 15%;">{{ _('Neuste Version') }} (PyPI)</th>
                 </tr>
             </thead>
             <tbody>
-                {% for pack in python_packages|sort %}
-                <tr>
-                    <td style="padding-left: 50px;">{{ pack[0] }}</td>
-                    <td>{% if pack[1] != pack[2] and pack[2] != "-" %}<span style="font-weight:bold; color: red;">{% else %}<span style="font-weight:bold; color: green;">{% endif %}{{ pack[1] }}</span></td>
-                    <td>{{ requirements[pack[0]] }}</td>
-                    <td>{% if pack[2] == "-" %}<span style="font-weight:bold; color: red;">{% endif %}{{ pack[2] }}{% if pack[2] == "-" %}</span>{% endif %}</td>
-                </tr>
-                {% endfor %}
             </tbody>
         </table>
     </div>
@@ -103,5 +95,50 @@ $('#tab_pypi').on('click', function(event){
 	$('#systemproperties').hide()
 	$('#pypi').show();
 });
+
+
+$.getJSON('pypi.json', function(result) {
+    $.each(result, function(index, element) {
+        if (element['vers_ok']) {
+            fontColor = "green";
+        } else {
+            fontColor = "red";
+        }
+        if (element['pypi_forreq_ok']) {
+            fontColorPyPi = "green";
+        } else {
+            fontColorPyPi = "red";
+        }
+        fontWeight = '';
+        if (element['required']) {
+            fontWeight = "font-weight: bold;";
+        }
+        reqString = '-';
+        if (element['vers_req_min'] != '') {
+            reqString = "min: "+element['vers_req_min'];
+        }
+        if (element['vers_req_max'] != '') {
+            reqString += "max: "+element['vers_req_min'];
+        }
+
+        $('#package_check').find("tbody").append(
+        "<tr><td style=\""+fontWeight+"\">"+element['name']+"("+element['sort']+")</td>"+
+        "<td style=\"color: "+fontColor+"\">"+element['vers_installed']+"</td>"+
+        "<td>"+reqString+"</td>"+
+        "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version']+"</td></tr>");
+    });
+});
+/*
+package['name'] = ''
+package['required'] = False
+package['vers_installed'] = ''
+package['vers_req_min'] = ''
+package['vers_req_max'] = ''
+package['vers_ok'] = False
+package['pypi_version'] = ''
+package['pypi_forreq_ok'] = True
+package['pypi_version_available'] = ''
+package['sort'] = ...
+*/
 </script>
 {% endblock %}
