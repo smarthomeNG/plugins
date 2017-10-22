@@ -28,11 +28,15 @@ import logging
 import codecs
 import re
 import threading
+VERBOSE1 = logging.DEBUG - 1
+VERBOSE2 = logging.DEBUG - 2
+logging.addLevelName(logging.DEBUG - 1, 'VERBOSE1')
+logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 
 class Init():
 
-    def __init__(self, smarthome, name, model, items, verboselevel=0):
+    def __init__(self, smarthome, name, model, items):
         self._items = items
         self._name = name
         self._model = model
@@ -40,7 +44,7 @@ class Init():
         self._ignoreresponse = []
 
         self.logger = logging.getLogger(__name__)
-        self.logger.debug("Initializing {}: Started".format(self._name))
+        self.logger.log(VERBOSE1, "Initializing {}: Started".format(self._name))
         self._threadlock_standard = threading.Lock()
         self._lock = threading.Condition(self._threadlock_standard)
 
@@ -51,7 +55,6 @@ class Init():
         self._response_commands = {}
         self._number_of_zones = 0
         self._special_commands = {}
-        self._verboselevel = verboselevel
 
     def _addstatusupdate(self):
         if 'statusupdate' not in self._items['zone0'].keys():
@@ -205,8 +208,7 @@ class Init():
                                     querycommand, querycommand, responsecommand))
                             else:
                                 displaycommand = '{},{},{}'.format(querycommand, querycommand, responsecommand)
-                                if self._verboselevel >= 2:
-                                    self.logger.debug("Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
+                                self.logger.log(VERBOSE1, "Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
                     except Exception as err:
                         self.logger.error("Initializing {}: Problems adding query commands for command {}. Error: {}".format(
                             self._name, command, err))
@@ -220,9 +222,8 @@ class Init():
         finally:
             if self._threadlock_standard.locked():
                 self._lock.release()
-            if self._verboselevel >= 2:
-                self.logger.debug("Initializing {}: Created query commands: {}. Created query zone commands: {}. Lock is now {}".format(
-                    self._name, self._query_commands, self._query_zonecommands, self._threadlock_standard.locked()))
+            self.logger.log(VERBOSE1, "Initializing {}: Created query commands: {}. Created query zone commands: {}. Lock is now {}".format(
+                self._name, self._query_commands, self._query_zonecommands, self._threadlock_standard.locked()))
             self.logger.info("Initializing {}: Created query commands, including {} entries.".format(self._name, length))
             return self._query_commands, self._query_zonecommands
 
@@ -253,9 +254,8 @@ class Init():
             if self._threadlock_standard.locked():
                 self._lock.release()
             self.logger.info("Initializing {}: Created power commands, including {} entries.".format(self._name, len(self._power_commands)))
-            if self._verboselevel >= 2:
-                self.logger.debug("Initializing {}: Finished creating power commands: {}. Lock is released. Lock is now {}".format(
-                    self._name, self._power_commands, self._threadlock_standard.locked()))
+            self.logger.log(VERBOSE1, "Initializing {}: Finished creating power commands: {}. Lock is released. Lock is now {}".format(
+                self._name, self._power_commands, self._threadlock_standard.locked()))
 
             return self._power_commands
 
@@ -271,8 +271,8 @@ class Init():
                         response_to_split = self._functions['zone{}'.format(zone)][command][4].split("|")
                         for response in response_to_split:
                             valuelength = response.count('*')
-                            if response.count('*') == 1 and self._functions['zone{}'.format(zone)][command][8] == 'str':
-                                valuelength = 20
+                            if response.count('*') == 1 and self._functions['zone{}'.format(zone)][command][8].startswith('str'):
+                                valuelength = 30
 
                             if response.find('*') >= 0:
                                 position = response.index('*')
@@ -290,9 +290,8 @@ class Init():
                                 expectedtype = ''
                             function = self._functions['zone{}'.format(zone)][command][1].split(" ")[0]
                             item = self._items['zone{}'.format(zone)][function]['Item']
-                            if self._verboselevel >= 2:
-                                self.logger.debug("Initializing {}: Response: {}, Function: {}, Item: {}, Type: {}".format(
-                                    self._name, response, function, item, expectedtype))
+                            self.logger.log(VERBOSE2, "Initializing {}: Response: {}, Function: {}, Item: {}, Type: {}".format(
+                                self._name, response, function, item, expectedtype))
                             if self._functions['zone{}'.format(zone)][command][5].lower() in ['r', 'rw']:
                                 try:
                                     if function == 'display':
@@ -300,30 +299,26 @@ class Init():
                                             self._special_commands['Display'] = {'Command': response, 'Ignore': 1}
                                         else:
                                             self._special_commands['Display'] = {'Command': response, 'Ignore': 0}
-                                        if self._verboselevel >= 2:
-                                            self.logger.debug("Initializing {}: Found Display Command and updated it: {}".format(self._name, self._special_commands))
+                                        self.logger.log(VERBOSE1, "Initializing {}: Found Display Command and updated it: {}".format(self._name, self._special_commands))
                                     elif function == 'input':
                                         if 'Input' not in self._special_commands:
                                             self._special_commands['Input'] = {'Command': [response], 'Ignore': [0]}
                                         else:
                                             self._special_commands['Input']['Command'].append(response)
                                             self._special_commands['Input']['Ignore'].append(0)
-                                        if self._verboselevel >= 2:
-                                            self.logger.debug("Initializing {}: Found Input Command and added it to display commands.".format(self._name))
+                                        self.logger.log(VERBOSE1, "Initializing {}: Found Input Command and added it to display commands.".format(self._name))
                                     elif (function == 'title' or function == 'station' or function == 'genre'):
                                         if 'Nowplaying' not in self._special_commands:
                                             self._special_commands['Nowplaying'] = {'Command': [response]}
                                         else:
                                             self._special_commands['Nowplaying']['Command'].append(response)
-                                        if self._verboselevel >= 2:
-                                            self.logger.debug("Initializing {}: Found Now Playing Command and updated it: {}".format(self._name, self._special_commands))
+                                        self.logger.log(VERBOSE1, "Initializing {}: Found Now Playing Command and updated it: {}".format(self._name, self._special_commands))
                                     elif (function == 'speakers'):
                                         if 'Speakers' not in self._special_commands:
                                             self._special_commands['Speakers'] = {'Command': [response]}
                                         else:
                                             self._special_commands['Speakers']['Command'].append(response)
-                                        if self._verboselevel >= 2:
-                                            self.logger.debug("Initializing {}: Found Speakers Command and updated it: {}".format(self._name, self._special_commands))
+                                        self.logger.log(VERBOSE1, "Initializing {}: Found Speakers Command and updated it: {}".format(self._name, self._special_commands))
                                 except Exception as err:
                                     self.logger.debug("Initializing {}: No Special Commands set. Message: {}".format(self._name, err))
 
@@ -332,40 +327,31 @@ class Init():
                                     for entry in self._response_commands[response]:
                                         if item not in entry and expectedtype in entry and valuelength == entry[0]:
                                             entry[3].append(item[0])
-                                            if self._verboselevel >= 2:
-                                                self.logger.debug("Initializing {}: Appending Item to response {} for function {} with response {}.".format(
-                                                    self._name, response, function, entry))
+                                            self.logger.log(VERBOSE1, "Initializing {}: Appending Item to response {} for function {} with response {}.".format(
+                                                self._name, response, function, entry))
                                         elif expectedtype not in entry or not valuelength == entry[0]:
                                             toadd -= 1
                                         else:
                                             pass
-                                            if self._verboselevel >= 2:
-                                                self.logger.debug("Initializing {}: Ignoring response {} for function {} because it is already in list.".format(
-                                                    self._name, response, function, entry))
+                                            self.logger.log(VERBOSE1, "Initializing {}: Ignoring response {} for function {} because it is already in list.".format(
+                                                self._name, response, function, entry))
                                     if toadd < len(self._response_commands[response]):
                                         self._response_commands[response].append([
                                             valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype])
-                                        if self._verboselevel >= 2:
-                                            self.logger.debug("Initializing {}: Adding additional list to function {} for response {} with value {}.".format(
-                                                self._name, function, response, self._response_commands[response]))
+                                        self.logger.log(VERBOSE1, "Initializing {}: Adding additional list to function {} for response {} with value {}.".format(
+                                            self._name, function, response, self._response_commands[response]))
                                 except Exception as err:
-                                    if self._verboselevel >= 2:
-                                        self.logger.debug("Initializing {}: Creating response command for: {}. Message: {}".format(self._name, response, err))
+                                    self.logger.log(VERBOSE1, "Initializing {}: Creating response command for: {}. Message: {}".format(self._name, response, err))
                                     self._response_commands[response] = [[
                                         valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype]]
                                 self._response_commands[response] = sorted(self._response_commands[response], key=lambda x: x[0], reverse=True)
-                        else:
-                            if self._verboselevel >= 2:
-                                self.logger.debug("Initializing {}: Item {} is not set to readable, ignoring.".format(self._name, item))
-                            pass
                     except Exception as err:
                         self.logger.warning("Initializing {}: Problems searching functions for {} in zone {}. Either it is not in the textfile or wrong instance name defined. Error: {}".format(self._name, command, zone, err))
         except Exception as err:
             self.logger.error(
                 "Initializing {}: Problems creating response commands. Error: {}".format(self._name, err))
         finally:
-            if self._verboselevel >= 2:
-                self.logger.debug("Initializing {}: Response commands: {}".format(self._name, self._response_commands))
+            self.logger.log(VERBOSE1, "Initializing {}: Response commands: {}".format(self._name, self._response_commands))
             if 'Display' not in self._special_commands:
                 self._special_commands['Display'] = {'Command': '', 'Ignore': 1}
             if 'Input' not in self._special_commands:
@@ -374,9 +360,8 @@ class Init():
                 self._special_commands['Nowplaying'] = {'Command': ''}
             if 'Speakers' not in self._special_commands:
                 self._special_commands['Speakers'] = {'Command': ''}
-            if self._verboselevel >= 1:
-                self.logger.debug("Initializing {}: Special commands for solving Display issues: {}".format(
-                    self._name, self._special_commands))
+            self.logger.debug("Initializing {}: Special commands for solving Display issues: {}".format(
+                self._name, self._special_commands))
             self.logger.info("Initializing {}: Created response commands, including {} entries.".format(
                 self._name, len(self._response_commands)))
             if self._threadlock_standard.locked():
@@ -391,7 +376,7 @@ class Init():
         try:
             self.logger.debug("Initializing {}: Starting to read file {}. Lock is {}".format(
                 self._name, self._model, self._threadlock_standard.locked()))
-            filename = '{}/plugins/avdevice/{}.txt'.format(
+            filename = '{}/plugins/avdevice_dev/{}.txt'.format(
                 self._sh.base_dir, self._model)
 
             commands = codecs.open(filename, 'r', 'utf-8')
@@ -424,10 +409,8 @@ class Init():
                                 else:
                                     row.append('')
                         try:
-                            if row[8] == 'string':
-                                row[8] = 'str'
-                            if row[8] == 'num':
-                                row[8] = 'int,float'
+                            row[8] = row[8].replace('string', 'str')
+                            row[8] = row[8].replace('num', 'int,float')
                             if row[8] == '':
                                 row[8] = 'bool,int,str'
                         except Exception:
@@ -467,8 +450,7 @@ class Init():
             self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W']
             self.logger.info("Initializing {}: Created functions list, including entries for {} zones.".format(
                 self._name, self._number_of_zones))
-            if self._verboselevel >= 2:
-                self.logger.debug("Initializing {}: Functions: {}".format(self._name, self._functions))
+            self.logger.log(VERBOSE1, "Initializing {}: Functions: {}".format(self._name, self._functions))
             if self._threadlock_standard.locked():
                 self._lock.release()
             self.logger.debug("Initializing {}: Finishing reading file. Lock is released. Lock is now {}".format(

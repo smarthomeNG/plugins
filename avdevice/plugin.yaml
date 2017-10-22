@@ -3,7 +3,7 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Steuerung diversen AV Geräten über TCP/IP und RS232 Schnittstelle, **seit SmartHomeNG v1.3**'
+        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle, **seit SmartHomeNG v1.3**'
         en: 'Controlling AV devices via TCP/IP and RS232'
     maintainer: onkelandy
     tester: Foxi352                     # Who tests this plugin?
@@ -147,13 +147,6 @@ parameters:
         description:
             de: "Automatischer Versuch, sich mit dem Gerät zu verbinden, wenn keine Rückmeldung kommt oder die Verbindung verloren wurde. Dies sollte nicht notwendig sein, da das Plugin ohnehin bei jedem neuen Senden eines Befehls einen Verbindungsaufbauversuch startet."
             en: "Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command."
-
-    verboselevel: 
-        type: int
-        default: 0
-        description:
-            de: "Ein Wert zwischen 0 und 3, um das Verboselevel des Debugloggers zu definieren. Je höher, desto mehr Nachrichten werden geloggt."
-            en: "Value between 0 and 3 to define the verbose level of the debug logger. The higher the value, the more debug messages."
   
 item_attributes:
     avdevice_zone[0-4]:
