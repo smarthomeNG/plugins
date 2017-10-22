@@ -172,8 +172,16 @@ def create_hash(plaintext):
 def parse_requirements(file_path):
     fobj = open(file_path)
     req_dict = {}
-    for line in fobj:
-        if len(line) > 0 and '#' not in line:
+    for rline in fobj:
+        line = ''
+        if len(rline) > 0:
+            if rline.find('#') == -1:
+                line = rline.lower().strip()
+            else:
+                line = line[0:line.find("#")].lower().strip()
+            
+#        if len(line) > 0 and '#' not in line:
+        if len(line) > 0:
             if ">" in line:
                 if line[0:line.find(">")].lower().strip() in req_dict:
                     req_dict[line[0:line.find(">")].lower().strip()] += " | " + line[line.find(">"):len(
@@ -192,6 +200,9 @@ def parse_requirements(file_path):
                         line)].lower().strip()
                 else:
                     req_dict[line[0:line.find("=")].lower().strip()] = line[line.find("="):len(line)].lower().strip()
+            else:
+                req_dict[line.lower().strip()] = '==*'
+
     fobj.close()
     return req_dict
 
