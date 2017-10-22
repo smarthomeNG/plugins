@@ -33,7 +33,6 @@
 <script src="static/codemirror/addon/search/matchesonscrollbar.js"></script>
 <script src="static/codemirror/addon/search/jump-to-line.js"></script>
 
-
 <div class="container" style="width: 90%;">
 	<h3>SmartHomeNG {{ _('Logik') }}: {{ logicname }}</h3>
 	<strong>{{ _('Dateiname') }}:</strong> {{ file_path }}
@@ -107,22 +106,31 @@
 		</tr>
 		<tr>
 			<td><strong>{{ _('Cycle') }}</strong></td>
-			<td><input type="text" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.cycle }}"></td>
+			<td>
+				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.cycle }}"/>
+				<input type="hidden" id="original_cycle" value="{{ thislogic.cycle }}"/>
+			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Crontab(s)') }}</strong></td>
-			<td><input type="text" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.crontab }}"></td>
+			<td>
+				<input type="text" autocomplete="off" id="crontab" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.crontab }}"/>
+				<input type="hidden" id="original_crontab" value="{{ thislogic.crontab }}"/>
+			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Watch_Item(s)') }}</strong></td>
-			<td><input type="text" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"></td>
+			<td>
+				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"/>
+				<input type="hidden" id="original_watch" value="{{ thislogic.watch_item }}"/>
+			</td>
 		</tr>
 	</table>
-<input type="hidden" id="originalcontent" value="{% for line in logic_lines %}{{ line }}
+<input type="hidden" id="original_content" value="{% for line in logic_lines %}{{ line }}
 {% endfor %}"/>
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
 		{% if logic_lines %}
-<textarea id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}
+<textarea autocomplete="off" id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}
 {% endfor %}</textarea>
 			{% if updates %}</form>{% endif %}
 		{% else %}{{ _('no data available') }}{% endif %}
@@ -176,22 +184,32 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
 });
 
 {% if updates %}
+$('#crontab').keyup( function() {
+	if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+});
+$('#watch').keyup( function() {
+	if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+});
+$('#cycle').keyup( function() {
+	if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+});
 logicsCodeMirror.on("keyup", function (cm, event) {
     if (checkChangedContent()) {
-        $('#savereloadtrigger').removeClass('btn-success');
-        $('#savereload').removeClass('btn-success');
-        $('#save').removeClass('btn-success');
-        $('#savereloadtrigger').addClass('btn-danger');
-        $('#savereload').addClass('btn-danger');
-        $('#save').addClass('btn-danger');
+        markChangedContent();
     } else {
-    	$('#savereloadtrigger').removeClass('btn-danger');
-    	$('#savereloadtrigger').removeClass('btn-danger');
-        $('#savereload').removeClass('btn-danger');
-        $('#save').removeClass('btn-danger');
-        $('#savereloadtrigger').addClass('btn-success');
-        $('#savereload').addClass('btn-success');
-        $('#save').addClass('btn-success');
+		markIdenticalContent();
     }
 
 	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
@@ -207,10 +225,11 @@ logicsCodeMirror.on("keyup", function (cm, event) {
 		CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
 	};
 });
-var answer;
-$('a').mousedown(function(e) {
+var answer = false;
+$('a').click(function(e) {
     if(checkChangedContent()) {
-        if(confirm("{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}")) {
+        e.preventDefault();
+        if(window.confirm("{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}")) {
         	answer=true;
         	location.href=e.currentTarget;
         }

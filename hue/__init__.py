@@ -1,9 +1,25 @@
 #!/usr/bin/env python3
-# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+# -*- coding: utf8 -*-
+#########################################################################
+# Copyright 2017-       Martin Sinn                         m.sinn@gmx.de
+# Copyright 2014-2016   Michael Würtenberger             
+#########################################################################
+#  Philips Hue plugin for SmartHomeNG
 #
-#  Copyright (C) 2014,2015,2016 Michael Würtenberger
+#  This plugin is free software: you can redistribute it and/or modify
+#  it under the terms of the Apache License APL2.0 as published by
+#  the Apache Software Foundation.
 #
-#  Version 1.83 developNG
+#  This plugin is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  Apache License for more details.
+#
+#  You should have received a copy of the Apache Software License along
+#  with this plugin. If not, see <https://www.apache.org/licenses/>.
+#########################################################################
+
+
 #
 #  Erstanlage mit ersten Tests
 #  Basiert auf den Ueberlegungen des verhandenen Hue Plugins.
@@ -20,7 +36,7 @@
 #
 #  Library for RGB / CIE1931 coversion ported from Bryan Johnson's JavaScript implementation:
 #  https://github.com/bjohnso5/hue-hacking
-#  extension to use differen triangle points depending of the type of the hue system
+#  extension to use different triangle points depending of the type of the hue system
 # 
 
 import logging
@@ -33,6 +49,7 @@ import threading
 
 from lib.tools import Tools
 from lib.model.smartplugin import SmartPlugin
+from lib.utils import Utils
 
 XY = namedtuple('XY', ['x', 'y'])
 client = Tools()
@@ -43,39 +60,36 @@ class HUE(SmartPlugin):
 
     def __init__(self, smarthome, hue_ip = '', hue_user = '', hue_port = '80', cycle_lamps = '10', cycle_bridges = '60', default_transitionTime = '0.4'):
 
-        # parameter zu übergabe aus der konfiguration pulgin.conf
-#        self._sh = smarthome
-        # parmeter übernehmen, aufteilen und leerzeichen herausnehmen
-        self._hue_ip = [hue_ip]
-        self._hue_user = [hue_user]
-        self._hue_port = [hue_port]
+        self.logger = logging.getLogger(__name__)
+
+#        self.logger.warning("self._parameters = {}".format(str(self._parameters)))
+        # parameter zu übergabe aus der konfiguration plugin.conf
+        self._hue_ip = self.get_parameter_value('hue_ip')
+        self._hue_user = self.get_parameter_value('hue_user')
+        self._hue_port = self.get_parameter_value('hue_port')
+#        self.logger.warning("self._hue_ip = {}, self._hue_user = {}, self._hue_port = {}".format(self._hue_ip, self._hue_user, self._hue_port))
+
         # verabreitung der parameter aus der plugin.conf
         self._numberHueBridges = len(self._hue_ip)
+
         if len(self._hue_port) != self._numberHueBridges or len(self._hue_user) != self._numberHueBridges:
             self.logger.error('Error in plugin.conf: if you specify more than 1 bridge, all parameters hue_ip, hue_user and hue_port have to be defined')
-            raise Exception('HUE: Plugin stopped due to configuration fault in plugin.conf') 
+            self._init_complete = False
+            return
         if '' in self._hue_user:
             self.logger.error('Error in plugin.conf: you have to specify all hue_user')
-            raise Exception('HUE: Plugin stopped due to configuration fault in plugin.conf') 
-        if '' in self._hue_ip:
-            self.logger.error('Error in plugin.conf: you have to specify all hue_ip')
-            raise Exception('HUE: Plugin stopped due to configuration fault in plugin.conf') 
+            self._init_complete = False
+            return
         if '' in self._hue_port:
             self.logger.error('Error in plugin.conf: you have to specify all hue_port')
-            raise Exception('HUE: Plugin stopped due to configuration fault in plugin.conf') 
-        self._cycle_lampsGroups = int(cycle_lamps)
-        if self._cycle_lampsGroups < 5:
-            # beschränkung der wiederholrate 
-            self._cycle_lampsGroups = 5
-        self._cycle_bridges = int(cycle_bridges)
-        if self._cycle_bridges < 10:
-            # beschränkung der wiederholrate 
-            self._cycle_bridges = 10
-        self._hueDefaultTransitionTime = float(default_transitionTime)
-        if self._hueDefaultTransitionTime < 0:
-            # beschränkung der wiederholrate 
-            self.logger.warning('Error in plugin.conf: the default_transitionTime parameter cannot be negative. It is set to 0')
-            self._hueDefaultTransitionTime = 0
+            self._init_complete = False
+            return
+
+        self._cycle_lampsGroups = self.get_parameter_value('cycle_lamps')
+        self._cycle_bridges = self.get_parameter_value('cycle_bridges')
+        self._hueDefaultTransitionTime = self.get_parameter_value('default_transitionTime')
+
+
         # variablen zur steuerung des plugins
         # hier werden alle bekannte items für lampen eingetragen
         self._sendLampItems = {}

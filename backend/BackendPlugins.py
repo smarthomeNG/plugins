@@ -67,7 +67,7 @@ class BackendPlugins:
 #            plugin['classpath'] = conf_plugins[x._config_section]['class_path']
             if bool(x._parameters):
                 plugin['attributes'] = x._parameters
-                self.logger.warning("plugins_html: x._parameters = {}".format(str(x._parameters)))
+#                self.logger.warning("plugins_html: x._parameters = {}".format(str(x._parameters)))
             else:
                 plugin['attributes'] = conf_plugins[x._config_section]
             plugin['metadata'] = x._metadata

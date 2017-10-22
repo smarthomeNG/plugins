@@ -28,6 +28,11 @@
                 <td style="vertical-align: middle;">{{ sh_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Benutzer') }}:&nbsp;{{ user }}</td>
             </tr>
             <tr>
+                <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('SmartHomeNG Plugins Version') }}:</td>
+                <td style="vertical-align: middle;">{{ plg_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}/plugins</td>
+            </tr>
+            <tr>
                 <td><img src="static/img/terminal-server.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
                 <td style="vertical-align: middle;">Host:</td>
                 <td style="vertical-align: middle;">{{ node }}&nbsp;&nbsp;-&nbsp;&nbsp;IPv4: {{ ip }}<!--&nbsp;&nbsp;-&nbsp;&nbsp;IPv6: {{ ipv6 }}--></td>
@@ -62,25 +67,17 @@
     </div>
 </div>
 <div id="pypi" style="display: none;">
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
+    <div class="table-responsive" >
+        <table id="package_check" class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th style="width: 15%; padding-left: 50px;">Python Package</th>
+                    <th style="width: 15%;">Python Package</th>
                     <th style="width: 15%;">{{ _('installierte Version') }}</th>
                     <th style="width: 55%;">{{ _('Anforderungen') }}</th>
                     <th style="width: 15%;">{{ _('Neuste Version') }} (PyPI)</th>
                 </tr>
             </thead>
             <tbody>
-                {% for pack in python_packages|sort %}
-                <tr>
-                    <td style="padding-left: 50px;">{{ pack[0] }}</td>
-                    <td>{% if pack[1] != pack[2] and pack[2] != "-" %}<span style="font-weight:bold; color: red;">{% else %}<span style="font-weight:bold; color: green;">{% endif %}{{ pack[1] }}</span></td>
-                    <td>{{ requirements[pack[0]] }}</td>
-                    <td>{% if pack[2] == "-" %}<span style="font-weight:bold; color: red;">{% endif %}{{ pack[2] }}{% if pack[2] == "-" %}</span>{% endif %}</td>
-                </tr>
-                {% endfor %}
             </tbody>
         </table>
     </div>
@@ -98,5 +95,61 @@ $('#tab_pypi').on('click', function(event){
 	$('#systemproperties').hide()
 	$('#pypi').show();
 });
+
+
+$.getJSON('pypi.json', function(result) {
+    $.each(result, function(index, element) {
+        if (index == 0) {
+            oldSort = element['sort'].substr(0,1);
+            newSort = element['sort'].substr(0,1);
+        } else {
+            oldSort = newSort;
+            newSort = newSort = element['sort'].substr(0,1);
+        }
+        if (oldSort != newSort) {
+            $('#package_check').find("tbody").append("<tr><td style=\"height: 2px; background:#333;\" colspan=\"4\"></td></tr>");
+        }
+
+        if (element['vers_ok']) {
+            fontColor = "green";
+        } else {
+            fontColor = "red";
+        }
+        if (element['pypi_forreq_ok']) {
+            fontColorPyPi = "green";
+        } else {
+            fontColorPyPi = "red";
+        }
+        fontWeight = '';
+        if (element['required']) {
+            fontWeight = "font-weight: bold;";
+        }
+        reqString = '-';
+        if (element['vers_req_min'] != '') {
+            reqString = "min: "+element['vers_req_min'];
+        }
+        if (element['vers_req_max'] != '') {
+            reqString += "max: "+element['vers_req_min'];
+        }
+
+        $('#package_check').find("tbody").append(
+        "<tr><td style=\""+fontWeight+"\">"+element['name']+"</td>"+
+        "<td style=\"color: "+fontColor+"\">"+element['vers_installed']+"</td>"+
+        "<td>"+reqString+"</td>"+
+        "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version']+"</td></tr>");
+    });
+});
+/*
+package['name'] = ''
+package['required'] = False
+package['vers_installed'] = ''
+package['vers_req_min'] = ''
+package['vers_req_max'] = ''
+package['vers_ok'] = False
+package['pypi_version'] = ''
+package['pypi_forreq_ok'] = True
+package['pypi_version_available'] = ''
+package['sort'] = ...
+*/
 </script>
 {% endblock %}

@@ -130,7 +130,7 @@
 	"Support": "Support",
 	"Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.": "Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.",
 	"Zeilenumbruch" : "Zeilenumbruch",
-	"Strg + Space: Autovervollständigen von Python Befehlen. Strg + I: Autovervollständigen von Item-Pfaden.": "Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.",
+	"Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.": "Strg + Space: Autovervollständigen von Python Befehlen. Strg + I: Autovervollständigen von Item-Pfaden.",
 	"Hilfe": "Hilfe",
 	"help_search_1": "Strg + F / Cmd + F: Suche starten",
 	"help_search_2": "Strg + G / Cmd + G: Nächsten Treffer finden",
@@ -160,6 +160,7 @@
 	"der Logik": "der Logik",
 	"Bitte bei Bedarf anschließend": "Bitte bei Bedarf anschließend",
 	"drücken": "drücken",
+	"CONF-YAML Konverter": "CONF-YAML Konverter",
 
 	"_items": {
 		"path": "Pfad",
