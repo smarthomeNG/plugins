@@ -93,17 +93,15 @@ class BackendSysteminfo:
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
                                              sys.version_info[3])
 
-        python_packages = self.getpackages()
+        #python_packages = self.getpackages()
         self.logger.info("system_html: calling get_requirements_info()")
-        req_dict = self.get_requirements_info()
+        #req_dict = self.get_requirements_info()
 
-        self.pypi_json()
-        
         return self.render_template('system.html', 
                                     now=now, system=system, sh_vers=shngversion.get_shng_version(), plg_vers=shngversion.get_plugins_version(), sh_dir=self._sh_dir,
                                     vers=vers, node=node, arch=arch, user=user, freespace=freespace, 
                                     uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
-                                    ip=ip, ipv6=ipv6, python_packages=python_packages, requirements=req_dict)
+                                    ip=ip, ipv6=ipv6)
 
 
     def get_process_info(self, command):
