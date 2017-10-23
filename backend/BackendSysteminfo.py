@@ -94,7 +94,6 @@ class BackendSysteminfo:
                                              sys.version_info[3])
 
         #python_packages = self.getpackages()
-        self.logger.info("system_html: calling get_requirements_info()")
         #req_dict = self.get_requirements_info()
 
         return self.render_template('system.html', 
@@ -125,6 +124,10 @@ class BackendSysteminfo:
         return str(result, encoding='utf-8', errors='strict')
 
 
+    # -----------------------------------------------------------------------------------
+    #    SYSTEMINFO: PyPI Check
+    # -----------------------------------------------------------------------------------
+
     def get_requirements_info(self):
         """
         """
@@ -153,7 +156,7 @@ class BackendSysteminfo:
                         req_dict[key] = req_dict[key] + '<br/>' + plugin_dict[key] + ' (' + plugin_name.replace(
                             'plugins.', '') + ')'
 
-            self.logger.info("get_requirements_info: req_dict = {}".format(req_dict))
+        self.logger.info("get_requirements_info: req_dict = {}".format(req_dict))
         return req_dict
             
     
@@ -176,7 +179,7 @@ class BackendSysteminfo:
         if v1 > v2 and operator in ['>','>=']:
             result = True
             
-        self.logger.info("compare_versions: - - - v1 = {}, v2 = {}, operator = '{}', result = {}".format(v1, v2, operator, result))
+        self.logger.debug("compare_versions: - - - v1 = {}, v2 = {}, operator = '{}', result = {}".format(v1, v2, operator, result))
         return result
         
         
@@ -198,6 +201,38 @@ class BackendSysteminfo:
             return Utils.strip_quotes(string.strip())
     
     
+    def split_operator(self, reqstring):
+        """
+        split operator and version from string
+        
+        :param reqstring: string containing operator and version
+        :type reqstring: str
+        
+        :return: operator, version
+        :rtype: str, str
+        """
+        if reqstring.startswith('=='):
+            operator = '=='
+            version = self.strip_operator(reqstring, operator)
+        elif reqstring.startswith('<='):
+            operator = '<='
+            version = self.strip_operator(reqstring, operator)
+        elif reqstring.startswith('>='):
+            operator = '>='
+            version = self.strip_operator(reqstring, operator)
+        elif reqstring.startswith('<'):
+            operator = '<'
+            version = self.strip_operator(reqstring, operator)
+        elif reqstring.startswith('>'):
+            operator = '>='
+            version = self.strip_operator(reqstring, operator)
+        else:
+            operator = ''
+            version = reqstring
+
+        return operator.strip(), version.strip()
+        
+    
     def req_is_pyversion_req_relevant(self, pyreq, package=''):
         """
         Test if requirement has a Python version restriction and if so, test if the restriction
@@ -208,7 +243,7 @@ class BackendSysteminfo:
         pyreq = pyreq.strip().replace('python_version', '')
         pyv_operator = ''
         if pyreq != '':
-            self.logger.info("req_split_source: - - package {}, py_version {}".format(package, pyreq))
+            self.logger.debug("req_is_pyversion_req_relevant: - - package {}, py_version {}".format(package, pyreq))
             if pyreq.startswith('=='):
                 pyv_operator = '=='
                 pyreq = self.strip_operator(pyreq, pyv_operator)
@@ -234,7 +269,7 @@ class BackendSysteminfo:
                 self.logger.error("req_is_pyversion_req_relevant: no operator in front of Python version found - package {}, pyreq = {}".format(package, pyreq))
                 result = False
                 
-        self.logger.info("req_split_source: - - - package {}, py_version_operator {}, py_version {}".format(package, pyv_operator, pyreq))
+        self.logger.debug("req_is_pyversion_req_relevant: - - - package {}, py_version_operator {}, py_version {}".format(package, pyv_operator, pyreq))
         return result
         
         
@@ -251,7 +286,7 @@ class BackendSysteminfo:
         """
         Splits the requirement source from the requirement string
         """
-        self.logger.info("req_split_source: package {}, req = '{}'".format(package, req))
+        self.logger.debug("req_split_source: package {}, req = '{}'".format(package, req))
         req = req.lower().strip()
         
         # seperate requirement from source
@@ -261,7 +296,7 @@ class BackendSysteminfo:
             wrk = req.split('(')
             source = wrk[1][0:wrk[1].find(")")].strip()
             req1 = wrk[0].strip()
-        self.logger.info("req_split_source: - source {}, req1 = '{}'".format(source, req1))
+        self.logger.debug("req_split_source: - source {}, req1 = '{}'".format(source, req1))
 
         # seperate requirements for different Python versions
         req2 = req1.split('|')
@@ -299,8 +334,11 @@ class BackendSysteminfo:
                         rmax = r
                 req_result.append([source, rmin, rmax])
 
-        req_result.insert(0, package)
-        self.logger.info("req_split_source: - req_result = {}".format(req_result))
+        self.logger.info("req_split_source: - package {} req_result = {}".format(package, req_result))
+        if len(req_result) > 1:
+            self.logger.warning("req_split_source: Cannot reconcile multiple version requirements for package {} for running Python version".format(package))
+        else:
+            req_result = req_result[0]
         return req_result
 
     
@@ -317,12 +355,47 @@ class BackendSysteminfo:
         req_result = []
         for req in req_templist:
             req_result.append( self.req_split_source(req, package) )
+        self.logger.info("check_requirement: package {}, len(req_result)={}, req_result = '{}'".format(package, len(req_result), req_result))
 
+        # Check if requirements from all sources are the same
+        if len(req_result) > 1:
+            are_equal = True
+            for req in req_result:
+                if req[1] != req_result[0][1]:
+                    are_equal = False
+                if req[2] != req_result[0][2]:
+                    are_equal = False
+            if are_equal:
+                req_result = [req_result[0]]
+                
+        req_txt = req_result
         # Now we have a list of [ requirement_source, min_version (with operator), max_version (with operator) ]
+        if len(req_result) == 1:
+            result = req_result[0]
+            self.logger.info("check_requirement: package {}, req_result = >{}<".format(package, req_result))
+            self.logger.info("check_requirement: package {}, result = >{}<".format(package, result))
+            #handle min
+            op, req_min = self.split_operator(result[1])
+            if req_min == '*':
+                req_min = ''
+                req_txt = ''
+            else:
+                if op == '>':
+                    req_min += '.0'
+
+            #handle max
+            op, req_max = self.split_operator(result[2])
+            if req_max == '*':
+                req_max = ''
+                req_txt = ''
+#            else:
+#            if op == '<':
+#                req_max = ?
         
         
-        self.logger.info("check_requirement: package {}, req_result = '{}'".format(package, req_result))
-#        req_min = req_result
+        self.logger.info("check_requirement: package {} ({}), req_result = '{}'".format(package, len(req_result), req_result))
+        if req_min != '' or req_max != '':
+            req_txt = ''
 
 #        # split single requirement (within list) and normalise pyversion
 #        req_list = []
@@ -353,13 +426,13 @@ class BackendSysteminfo:
 #            
 #        req_min = str(req_list)
 #        self.logger.info("check_requirement (x): package {}, pyversion {}: required, req_list = {}".format(package, pyversion, req_list))
-        return req_min, req_max
+        return req_min, req_max, req_txt
+    
     
     @cherrypy.expose
     def pypi_json(self):
         """
         returns a list of python package information dicts as json structure
-
         """
         self.logger.info("pypi_json")
 
@@ -396,6 +469,7 @@ class BackendSysteminfo:
 
             package['vers_req_min'] = ''
             package['vers_req_max'] = ''
+            package['vers_req_msg'] = ''
             package['vers_req_text'] = ''
 
             package['vers_ok'] = False
@@ -418,10 +492,11 @@ class BackendSysteminfo:
             if req_dict.get(package['name'], '') != '':
                 package['required'] = True
                 # tests for min, max versions
-                min, max = self.check_requirement(package['name'], req_dict.get(package['name'], ''))
+                rmin, rmax, rtxt = self.check_requirement(package['name'], req_dict.get(package['name'], ''))
                 package['vers_req_text'] = req_dict.get(package['name'], '')
-                package['vers_req_min'] = min
-                package['vers_req_max'] = max
+                package['vers_req_min'] = rmin
+                package['vers_req_max'] = rmax
+                package['vers_req_msg'] = rtxt
 
             if package['required']:
                 package['sort'] = '1'
