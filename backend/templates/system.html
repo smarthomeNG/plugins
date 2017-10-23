@@ -132,11 +132,18 @@ $.getJSON('pypi.json', function(result) {
             fontWeight = "font-weight: bold;";
         }
         reqString = '';
-        if (element['vers_req_min'] != '') {
-            reqString += "min: "+element['vers_req_min'];
+        if (element['vers_req_min'] != '' && element['vers_req_min'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
+            if (element['vers_req_min'] != '') {
+                reqString += ">= "+element['vers_req_min'];
+            }
+            if (element['vers_req_max'] != '') {
+                reqString += "<= "+element['vers_req_max'];
+            }
         }
-        if (element['vers_req_max'] != '') {
-            reqString += "max: "+element['vers_req_max'];
+        if (element['vers_req_min'] != '') {
+            reqString += "== "+element['vers_req_min'];
+        } else if (element['vers_req_max'] != '') {
+            reqString += "== "+element['vers_req_max'];
         }
 		if (reqString == '') {
 	        reqString = '-';
