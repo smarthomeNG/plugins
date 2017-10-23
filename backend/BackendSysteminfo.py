@@ -155,23 +155,205 @@ class BackendSysteminfo:
 
             self.logger.info("get_requirements_info: req_dict = {}".format(req_dict))
         return req_dict
-        
-
-    def check_requirement(self, package, req):
-    
-        pyversion = "{0}.{1}".format(sys.version_info[0], sys.version_info[1])
-        req_templist = req.split('<br/>')
-        
-        req_list = []
-        for req in req_templist:
-            if '|' in req:
-                reqo = req.split('|')
-            else:
-                reqo = [req]
-            req_list.append(reqo)
             
-        self.logger.info("check_requirement: package {}, pyversion {}: required, req_list = {}".format(package, pyversion, req_list))
+    
+    def compare_versions(self, vers1, vers2, operator):
+        """
+        Compare two version numbers and return if the condition is met
+        """
+        v1 = vers1.split('.')
+        while len(v1) < 4:
+            v1.append('0')
+        v2 = vers2.split('.')
+        while len(v2) < 4:
+            v2.append('0')
+            
+        result = False
+        if v1 == v2 and operator in ['>=','==','<=']:
+            result = True
+        if v1 < v2 and operator in ['<','<=']:
+            result = True
+        if v1 > v2 and operator in ['>','>=']:
+            result = True
+            
+        self.logger.info("compare_versions: - - - v1 = {}, v2 = {}, operator = '{}', result = {}".format(v1, v2, operator, result))
+        return result
+        
+        
+    def strip_operator(self, string, operator):
+        """
+        Strip a leading operator from a string and remove quotes, if they exist
+        
+        :param string: string to remove the operator from
+        :param operator: operator to remove
+        :type string: str
+        :type operator: str
+        
+        :return: string without the operator
+        :rtype: str
+        """
+        if string.startswith(operator):
+            return Utils.strip_quotes(string[len(operator):].strip())
+        else:
+            return Utils.strip_quotes(string.strip())
+    
+    
+    def req_is_pyversion_req_relevant(self, pyreq, package=''):
+        """
+        Test if requirement has a Python version restriction and if so, test if the restriction
+        is relevant.
+        """
+        pyversion = "{0}.{1}".format(sys.version_info[0], sys.version_info[1])
 
+        pyreq = pyreq.strip().replace('python_version', '')
+        pyv_operator = ''
+        if pyreq != '':
+            self.logger.info("req_split_source: - - package {}, py_version {}".format(package, pyreq))
+            if pyreq.startswith('=='):
+                pyv_operator = '=='
+                pyreq = self.strip_operator(pyreq, pyv_operator)
+                result = self.compare_versions(pyversion, pyreq, pyv_operator)
+            elif pyreq.startswith('<='):
+                pyv_operator = '<='
+                pyreq = self.strip_operator(pyreq, pyv_operator)
+                result = self.compare_versions(pyversion, pyreq, pyv_operator)
+            elif pyreq.startswith('>='):
+                pyv_operator = '>='
+                pyreq = self.strip_operator(pyreq, pyv_operator)
+                result = self.compare_versions(pyversion, pyreq, pyv_operator)
+            elif pyreq.startswith('<'):
+                pyv_operator = '<'
+                pyreq = self.strip_operator(pyreq, pyv_operator)
+                result = self.compare_versions(pyversion, pyreq, pyv_operator)
+            elif pyreq.startswith('>'):
+                pyv_operator = '>'
+                result = pyreq = self.strip_operator(pyreq, pyv_operator)
+                self.compare_versions(pyversion, pyreq, pyv_operator)
+            else:
+                pyv_operator = ''
+                self.logger.error("req_is_pyversion_req_relevant: no operator in front of Python version found - package {}, pyreq = {}".format(package, pyreq))
+                result = False
+                
+        self.logger.info("req_split_source: - - - package {}, py_version_operator {}, py_version {}".format(package, pyv_operator, pyreq))
+        return result
+        
+        
+# operator: <, <=, ==, >=, >>
+# source: <name of plugin> or 'core'
+# version_relation: <operator><version>
+# pyversion_relation: <operator><pyversion>
+# version_relations: <version_relation>,<version_relation>
+# py_vers_requirement: <version_relations>;<pyversion_relation>
+# py_vers_requirements: <py_vers_requirement> | <py_vers_requirement>
+# requirement_string: <py_vers_requirements> (<source>)
+
+    def req_split_source(self, req, package=''):
+        """
+        Splits the requirement source from the requirement string
+        """
+        self.logger.info("req_split_source: package {}, req = '{}'".format(package, req))
+        req = req.lower().strip()
+        
+        # seperate requirement from source
+        source = 'core'
+        req1 = req
+        if '(' in req:
+            wrk = req.split('(')
+            source = wrk[1][0:wrk[1].find(")")].strip()
+            req1 = wrk[0].strip()
+        self.logger.info("req_split_source: - source {}, req1 = '{}'".format(source, req1))
+
+        # seperate requirements for different Python versions
+        req2 = req1.split('|')
+        reql = []
+        for r in req2:
+            reql.append(r.strip())
+        self.logger.info("req_split_source: - source {}, reql = {}".format(source, reql))
+
+        req_result = []
+        for req in reql:
+            # isolate and handle Python version
+            wrk = req.split(';')
+            sreq = wrk[0].strip()
+            if len(wrk) > 1:
+                valid = self.req_is_pyversion_req_relevant(wrk[1], package)
+            else:
+                valid = True
+            
+#            self.logger.info("req_split_source: - - - source {}, py_version_operator {}, py_version {}, sreq = {}".format(source, pyv_operator, pyreq, sreq))
+            
+            if valid:
+                # check and handle version requirements
+                wrkl = sreq.split(',')
+                if len(wrkl) > 2:
+                    self.logger.error("req_split_source: More that two requirements for package {} req = {}".format(package, reql))
+                rmin = ''
+                rmax = ''
+                for r in wrkl:
+                    if r.find('<') != -1 or r.find('<=') != -1:
+                        rmax = r
+                    if r.find('>') != -1 or r.find('>=') != -1:
+                        rmin = r
+                    if r.find('==') != -1:
+                        rmin = r
+                        rmax = r
+                req_result.append([source, rmin, rmax])
+
+        req_result.insert(0, package)
+        self.logger.info("req_split_source: - req_result = {}".format(req_result))
+        return req_result
+
+    
+    def check_requirement(self, package, req_str):
+        """
+        """
+        pyversion = "{0}.{1}".format(sys.version_info[0], sys.version_info[1])
+        self.logger.info("check_requirement (in): package {}, pyversion {}, req_str = '{}'".format(package, pyversion, req_str))
+        req_min = ''
+        req_max = ''
+        # split requirements
+        req_templist = req_str.split('<br/>')   # split up requirements from different plugins and the core
+        
+        req_result = []
+        for req in req_templist:
+            req_result.append( self.req_split_source(req, package) )
+
+        # Now we have a list of [ requirement_source, min_version (with operator), max_version (with operator) ]
+        
+        
+        self.logger.info("check_requirement: package {}, req_result = '{}'".format(package, req_result))
+#        req_min = req_result
+
+#        # split single requirement (within list) and normalise pyversion
+#        req_list = []
+#        for req in req_templist:
+#            if '|' in req:
+#                reqo = req.split('|')
+#            else:
+#                reqo = [req]
+#            
+#            reqoo = []
+#            for reqoi in reqo:
+#              if reqoi.find(';') == -1:
+#                 reqoi += ';python_version==*'
+#            reqoo.append(reqoi)
+#            req_list.append(reqoo)
+#            
+#        # Loop through all requirements of this package
+#        for req_str_list in req_list:
+#            for req_str in req_str_list:
+#                wrk = req_str.split(';')
+#                pkg_req = wrk[0]
+#                pkg_py = wrk[1]
+#                if pkg_py.find('python_version') != 0:
+#                    self.logger.error("check_requirement (x): Invalid requirement for package {} (python_version)".format(package))
+#                else:
+#                    pkg_py = pkg_py.replace('python_version', '')            
+#                self.logger.info("check_requirement (x): package {}, pyversion {}: pkg_req = {}, pkg_py = {}".format(package, pyversion, pkg_req, pkg_py))
+#            
+#        req_min = str(req_list)
+#        self.logger.info("check_requirement (x): package {}, pyversion {}: required, req_list = {}".format(package, pyversion, req_list))
+        return req_min, req_max
     
     @cherrypy.expose
     def pypi_json(self):
@@ -179,6 +361,7 @@ class BackendSysteminfo:
         returns a list of python package information dicts as json structure
 
         """
+        self.logger.info("pypi_json")
 
         # check if pypi service is reachable
         if self.pypi_timeout <= 0:
@@ -209,10 +392,17 @@ class BackendSysteminfo:
             package = dict()
             package['name'] = dist.key
             package['vers_installed'] = dist.version
+            package['required'] = False
 
+            package['vers_req_min'] = ''
+            package['vers_req_max'] = ''
+            package['vers_req_text'] = ''
+
+            package['vers_ok'] = False
             package['pypi_version'] = ''
             package['pypi_version_available'] = ''
             package['pypi_forreq_ok'] = True
+
             if pypi_available:
                 try:
                     available = pypi.package_releases(dist.project_name)
@@ -225,17 +415,13 @@ class BackendSysteminfo:
             else:
                 package['pypi_version_available'] = pypi_unavailable_message
 
-            package['required'] = False
             if req_dict.get(package['name'], '') != '':
                 package['required'] = True
                 # tests for min, max versions
-                self.check_requirement(package['name'], req_dict.get(package['name'], ''))
-                
-            package['vers_req_min'] = ''
-            package['vers_req_max'] = ''
-            package['vers_ok'] = False
-            package['pypi_forreq_ok'] = True
-
+                min, max = self.check_requirement(package['name'], req_dict.get(package['name'], ''))
+                package['vers_req_text'] = req_dict.get(package['name'], '')
+                package['vers_req_min'] = min
+                package['vers_req_max'] = max
 
             if package['required']:
                 package['sort'] = '1'
