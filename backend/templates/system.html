@@ -154,7 +154,8 @@ $.getJSON('pypi.json', function(result) {
             "<td>"+reqTextString+"</td>"+
             "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
 
-        if (element['pypi_forreq_ok'] && (element['pypi_version'] != element['vers_installed'])) {
+        if (element['pypi_forreq_ok'] && element['pypi_version'] != '' && element['pypi_version'] != '-' &&
+            (element['pypi_version'] != element['vers_installed'])) {
             table_row += "&nbsp;<i class=\"fa fa-bell-o\"></i>";
         }
 
