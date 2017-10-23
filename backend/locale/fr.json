@@ -162,6 +162,7 @@
 	"Bitte bei Bedarf anschließend": "Connecter en cas de besoin s.v.p.",
 	"drücken": "pousser",
 	"CONF-YAML Konverter": "Convertisseur .conf vers .yaml",
+	"Pakete ohne Requirements": "",
 
 	"_items": {
 		"path": "Chemin",

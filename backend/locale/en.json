@@ -160,6 +160,7 @@
 	"Bitte bei Bedarf anschließend": "If needed, please press",
 	"drücken": " ",
 	"CONF-YAML Konverter": "CONF-YAML Converter",
+	"Pakete ohne Requirements": "Packages without Requirements",
 
 	"_items": {
 		"path": "Pfad",

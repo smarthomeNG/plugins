@@ -110,7 +110,7 @@ $.getJSON('pypi.json', function(result) {
             newSort = newSort = element['sort'].substr(0,1);
         }
         if (oldSort != newSort) {
-            $('#package_check').find("tbody").append("<tr><td style=\"height: 1px; background:#bbb;\" colspan=\"5\"></td></tr>");
+            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
         }
 
 		if (element['required']) {
@@ -147,12 +147,20 @@ $.getJSON('pypi.json', function(result) {
             reqTextString = "";
         }
 
-        $('#package_check').find("tbody").append(
-        "<tr><td style=\""+fontWeight+"\">"+element['name']+"</td>"+
-        "<td style=\"color: "+fontColor+"\">"+element['vers_installed']+"</td>"+
-        "<td>"+reqString+"</td>"+
-		"<td>"+reqTextString+"</td>"+
-        "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version']+"</td></tr>");
+
+        var table_row =  "<tr><td style=\""+fontWeight+"\">"+element['name']+"</td>"+
+            "<td style=\"color: "+fontColor+"\">"+element['vers_installed']+"</td>"+
+            "<td>"+reqString+"</td>"+
+            "<td>"+reqTextString+"</td>"+
+            "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
+
+        if (element['pypi_forreq_ok'] && (element['pypi_version'] != element['vers_installed'])) {
+            table_row += "&nbsp;<i class=\"fa fa-bell-o\"></i>";
+        }
+
+        table_row += "</td></tr>";
+
+        $('#package_check').find("tbody").append(table_row);
     });
     $('#spinner').hide();
     $('#tab_pypi').removeClass("disabled");
