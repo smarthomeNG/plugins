@@ -191,7 +191,7 @@ class Init():
                         responselist = []
                         splitresponse = self._functions['zone{}'.format(zone)][command][4].split("|")
                         for split in splitresponse:
-                            if split.count('*') > 0:
+                            if split.count('*') > 0 or 'R' in self._functions['zone{}'.format(zone)][command][5]:
                                 responselist.append(split.strip())
                         responsestring = "|".join(responselist)
                         responsecommand = re.sub('[*]', '', responsestring)
@@ -222,8 +222,6 @@ class Init():
         finally:
             if self._threadlock_standard.locked():
                 self._lock.release()
-            self.logger.log(VERBOSE1, "Initializing {}: Created query commands: {}. Created query zone commands: {}. Lock is now {}".format(
-                self._name, self._query_commands, self._query_zonecommands, self._threadlock_standard.locked()))
             self.logger.info("Initializing {}: Created query commands, including {} entries.".format(self._name, length))
             return self._query_commands, self._query_zonecommands
 
@@ -254,8 +252,6 @@ class Init():
             if self._threadlock_standard.locked():
                 self._lock.release()
             self.logger.info("Initializing {}: Created power commands, including {} entries.".format(self._name, len(self._power_commands)))
-            self.logger.log(VERBOSE1, "Initializing {}: Finished creating power commands: {}. Lock is released. Lock is now {}".format(
-                self._name, self._power_commands, self._threadlock_standard.locked()))
 
             return self._power_commands
 
@@ -289,6 +285,10 @@ class Init():
                             except Exception:
                                 expectedtype = ''
                             function = self._functions['zone{}'.format(zone)][command][1].split(" ")[0]
+                            try:
+                                functiontype = self._functions['zone{}'.format(zone)][command][1].split(" ")[1]
+                            except Exception:
+                                functiontype = ''
                             item = self._items['zone{}'.format(zone)][function]['Item']
                             self.logger.log(VERBOSE2, "Initializing {}: Response: {}, Function: {}, Item: {}, Type: {}".format(
                                 self._name, response, function, item, expectedtype))
@@ -325,11 +325,11 @@ class Init():
                                 try:
                                     toadd = len(self._response_commands[response])
                                     for entry in self._response_commands[response]:
-                                        if item not in entry and expectedtype in entry and valuelength == entry[0]:
+                                        if (item not in entry and expectedtype in entry and valuelength == entry[0]) and function == entry[4]:
                                             entry[3].append(item[0])
                                             self.logger.log(VERBOSE1, "Initializing {}: Appending Item to response {} for function {} with response {}.".format(
                                                 self._name, response, function, entry))
-                                        elif expectedtype not in entry or not valuelength == entry[0]:
+                                        elif expectedtype not in entry or not valuelength == entry[0] or not function == entry[4]:
                                             toadd -= 1
                                         else:
                                             pass
@@ -337,13 +337,13 @@ class Init():
                                                 self._name, response, function, entry))
                                     if toadd < len(self._response_commands[response]):
                                         self._response_commands[response].append([
-                                            valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype])
+                                            valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype, functiontype])
                                         self.logger.log(VERBOSE1, "Initializing {}: Adding additional list to function {} for response {} with value {}.".format(
                                             self._name, function, response, self._response_commands[response]))
                                 except Exception as err:
                                     self.logger.log(VERBOSE1, "Initializing {}: Creating response command for: {}. Message: {}".format(self._name, response, err))
                                     self._response_commands[response] = [[
-                                        valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype]]
+                                        valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype, functiontype]]
                                 self._response_commands[response] = sorted(self._response_commands[response], key=lambda x: x[0], reverse=True)
                     except Exception as err:
                         self.logger.warning("Initializing {}: Problems searching functions for {} in zone {}. Either it is not in the textfile or wrong instance name defined. Error: {}".format(self._name, command, zone, err))
@@ -351,7 +351,6 @@ class Init():
             self.logger.error(
                 "Initializing {}: Problems creating response commands. Error: {}".format(self._name, err))
         finally:
-            self.logger.log(VERBOSE1, "Initializing {}: Response commands: {}".format(self._name, self._response_commands))
             if 'Display' not in self._special_commands:
                 self._special_commands['Display'] = {'Command': '', 'Ignore': 1}
             if 'Input' not in self._special_commands:
@@ -366,8 +365,6 @@ class Init():
                 self._name, len(self._response_commands)))
             if self._threadlock_standard.locked():
                 self._lock.release()
-            self.logger.debug("Initializing {}: Finished creating response commands. Lock is released. Lock is now {}".format(
-                self._name, self._threadlock_standard.locked()))
             return self._response_commands, self._special_commands
 
     def _read_commandfile(self):
@@ -450,9 +447,8 @@ class Init():
             self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W']
             self.logger.info("Initializing {}: Created functions list, including entries for {} zones.".format(
                 self._name, self._number_of_zones))
-            self.logger.log(VERBOSE1, "Initializing {}: Functions: {}".format(self._name, self._functions))
             if self._threadlock_standard.locked():
                 self._lock.release()
-            self.logger.debug("Initializing {}: Finishing reading file. Lock is released. Lock is now {}".format(
+            self.logger.log(VERBOSE1, "Initializing {}: Finishing reading file. Lock is released. Lock is now {}".format(
                 self._name, self._threadlock_standard.locked()))
             return self._functions, self._number_of_zones

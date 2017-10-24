@@ -223,7 +223,7 @@ class AVDevice(SmartPlugin):
             if self._manufacturer.lower() == 'epson':
                 try:
                     receivedvalue = max(min(int(receivedvalue), 1), 0)
-                    self.logger.log(VERBOSE1, "Storing Values {}: Limiting bool value for {}.".format(
+                    self.logger.log(VERBOSE1, "Converting Values {}: Limiting bool value for {}.".format(
                         self._name, receivedvalue))
                 except Exception:
                     pass
@@ -234,14 +234,14 @@ class AVDevice(SmartPlugin):
                         receivedvalue = False
                     elif (int(receivedvalue) == 0 and len(receivedvalue) <= 1):
                         receivedvalue = True
-                    self.logger.log(VERBOSE1, "Parsing Input {}: Receivedvalue {} reversed".format(self._name, receivedvalue))
+                    self.logger.log(VERBOSE1, "Converting Values {}: Receivedvalue {} reversed".format(self._name, receivedvalue))
                 else:
                     if (int(receivedvalue) == 1 and len(receivedvalue) <= 1):
                         receivedvalue = True
-                        self.logger.log(VERBOSE1, "Parsing Input {}: Receivedvalue {} converted to bool.".format(self._name, receivedvalue))
+                        self.logger.log(VERBOSE1, "Converting Values {}: Receivedvalue {} converted to bool.".format(self._name, receivedvalue))
                     elif (int(receivedvalue) == 0 and len(receivedvalue) <= 1):
                         receivedvalue = False
-                        self.logger.log(VERBOSE1, "Parsing Input {}: Receivedvalue {} converted to bool.".format(self._name, receivedvalue))
+                        self.logger.log(VERBOSE1, "Converting Values {}: Receivedvalue {} converted to bool.".format(self._name, receivedvalue))
             except Exception:
                 pass
         if 'bool' in expectedtype:
@@ -291,6 +291,9 @@ class AVDevice(SmartPlugin):
             updated = 0
             for command in sorted_response_commands:
                 self.logger.log(VERBOSE1, "Storing Values {}: Comparing command {}.".format(self._name, command))
+                if data == command:
+                    self.logger.debug("Storing Values {}: Response is identical to expected response. Skipping Storing: {}".format(self._name, data))
+                    break
                 for entry in self._response_commands[command]:
                     self.logger.log(VERBOSE1, "Storing Values {}: Comparing entry {}.".format(self._name, entry))
                     if entry[1] == entry[2]:
@@ -626,8 +629,6 @@ class AVDevice(SmartPlugin):
                 if 'statusupdate' not in self._items['zone0'].keys():
                     self._items['zone0']['statusupdate'] = {'Item': ['self._statusupdate'], 'Value': False}
                     self.logger.debug("Initializing {}: No statusupdate Item set, creating dummy item.".format(self._name))
-                self.logger.log(VERBOSE1, "Initializing {}: Items: {}".format(self._name, self._items))
-                self.logger.log(VERBOSE1, "Initializing {}: Speaker Items: {}".format(self._name, self._items_speakers))
             except Exception as err:
                 self.logger.error("Initializing {}: Problem running and creating items. Error: {}".format(self._name, err))
             finally:
@@ -637,6 +638,8 @@ class AVDevice(SmartPlugin):
     # Triggering TCP or RS232 connection schedulers
     def connect(self, trigger):
         self._trigger_reconnect = True
+        if self._is_connected == []:
+            self._parsinginput = []
         self.logger.log(VERBOSE1, "Connecting {}: Starting to connect. Triggered by {}. Current Connections: {}".format(self._name, trigger, self._is_connected))
         try:
             dependsvalue = self._dependson()
@@ -813,6 +816,7 @@ class AVDevice(SmartPlugin):
     def _parse_input(self, trigger):
         self.logger.log(VERBOSE1, "Parsing Input {}: Triggerd by {}".format(self._name, trigger))
         while self.alive:
+            connectionproblem = False
             if not self._parsinginput == [] and not self._is_connected == []:
                 if not self._sendingcommand == '' and not self._sendingcommand == 'done' and not self._sendingcommand == 'gaveup':
                     self.logger.log(VERBOSE1, "Parsing Input {}: Starting to parse input. Alive: {}. Connected: {}. Sendcommand: {}".format(
@@ -850,7 +854,7 @@ class AVDevice(SmartPlugin):
                                         self._keep_commands[time.time()] = self._send_commands[0]
                                         self.logger.debug("Parsing Input {}: Removing item from send command, storing in keep commands: {}.".format(self._name, self._keep_commands))
                                     elif self._send_commands[0] in self._query_commands:
-                                        self.logger.debug("Parsing Input {}: Giving up {}, because no answer received.".format(self._name, self._sendingcommand))
+                                        self.logger.debug("Parsing Input {}: Giving up {}, because no answer received 1.".format(self._name, self._sendingcommand))
                                     self._send_commands.pop(0)
                                     if not self._send_commands == []:
                                         sending = self._send('command', 'parseinput')
@@ -893,9 +897,9 @@ class AVDevice(SmartPlugin):
                                             if data[:datalength].startswith(expectedpart) and len(data[:datalength]) == len(expectedpart):
                                                 found.append(expectedpart)
                                                 self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited: {}.".format(self._name, found))
-                                    except Exception:
-                                        found = expectedlist
-                                        self.logger.log(VERBOSE1, "Parsing Input {}: Expected response after splitting: {}.".format(self._name, found))
+                                    except Exception as err:
+                                        found.append(expectedlist[0])
+                                        self.logger.debug("Parsing Input {}: Expected response EXCEPTION: {}. Problem: {}".format(self._name, found, err))
                                     if data.startswith(tuple(found)):
                                         entry, value = self._write_itemsdict(data)
                                         self._sendingcommand = 'done'
@@ -948,15 +952,9 @@ class AVDevice(SmartPlugin):
                                         temp_sendcommand = self._sendingcommand
                                         self._sendingcommand = 'gaveup'
                                         if data == 'ERROR':
-                                            if 'Serial' in self._is_connected:
-                                                self._is_connected.remove('Serial')
-                                                self._trigger_reconnect = True
-                                            if 'TCP' in self._is_connected:
-                                                self._is_connected.remove('TCP')
-                                                self._trigger_reconnect = True
-                                            if self._trigger_reconnect is True:
-                                                self.logger.log(VERBOSE1, "Parsing Input {}: Trying to connect while parsing item".format(self._name))
-                                                self.connect('parse_dataerror')
+                                            connectionproblem = True
+                                        else:
+                                            connectionproblem = False
 
                                         if self._send_commands[0] not in self._query_commands and not self._send_commands[0] in self._special_commands['Display']['Command']:
                                             self._keep_commands[time.time()] = self._send_commands[0]
@@ -994,142 +992,150 @@ class AVDevice(SmartPlugin):
                             for key in sorted_response_commands:
                                 self.logger.log(VERBOSE1, "Parsing Input {}: Starting comparing values for data {} with key: {}.".format(self._name, data, key))
                                 if data == key:
-                                    self.logger.log(VERBOSE1, "Parsing Input {}: Response is identical to expected response (without value). Clearing.".format(self._name))
-                                    updated = 1
-                                    self._send_commands.pop(0)
-                                    self._sendingcommand = 'done'
+                                    tempcommands = []
+                                    for entry in self._send_commands:
+                                        if key not in entry:
+                                            tempcommands.append(entry)
+                                    self._send_commands = tempcommands
+                                    if self._sendingcommand not in self._send_commands and not self._send_commands == []:
+                                        self._sendingcommand = self._send_commands[0]
+                                    self.logger.debug("Parsing Input {}: Response is identical to expected response. Cleaned Send Commands: {}".format(self._name, self._send_commands))
                                     break
-                                for entry in self._response_commands[key]:
-                                    commandlength = entry[1]
-                                    valuelength = entry[0]
-                                    item = entry[3]
-                                    expectedtype = entry[7]
-                                    index = data.find(key)
-                                    self.logger.log(VERBOSE1, "Parsing Input {}: Entry: {}, Valuelength: {}, Expected Type: {}. ".format(
-                                        self._name, entry, valuelength, expectedtype))
-                                    if not index == -1:
-                                        sametype = False
-                                        inputcommands = self._special_commands['Input']['Command']
-                                        function = entry[4]
-                                        zone = entry[5]
-                                        if data.startswith(self._special_commands['Display']['Command']) and not self._special_commands['Display']['Command'] == '':
-                                            self.logger.debug("Parsing Input {}: Displaycommand found in response {}.".format(self._name, data))
-                                            try:
-                                                content = data[2:][:28]
-                                                self.logger.log(VERBOSE1, "AVDevice {}: Display Data {}. Item: {}".format(self._name, content, item))
-                                                tempvalue = "".join(
-                                                    list(map(lambda i: chr(int(content[2 * i:][: 2], 0x10)), range(14)))).strip()
-                                                receivedvalue = re.sub(r'^[^A-Z0-9]*', '', tempvalue)
-                                                self.logger.debug("AVDevice {}: Display Output {}".format(self._name, receivedvalue))
-                                            except Exception as err:
-                                                self.logger.warning("AVDevice {}: Problems getting display info. Error: {}".format(self._name, err))
-
-                                        elif data.startswith(tuple(self._special_commands['Nowplaying']['Command'])) and not self._special_commands['Nowplaying']['Command'] == '':
-                                            self.logger.debug("AVDevice {}: Now playing info found in response {}.".format(self._name, data))
-                                            try:
-                                                m = re.search('"(.+?)"', data)
-                                                if m:
-                                                    receivedvalue = m.group(1)
-                                                else:
-                                                    receivedvalue = ''
-                                            except Exception as err:
-                                                self.logger.debug("AVDevice {}: Problems reading Now Playing info. Error:{}".format(self._name, err))
-                                        elif data.startswith(tuple(self._special_commands['Speakers']['Command'])) and not self._special_commands['Speakers']['Command'] == '':
-                                            self.logger.debug("AVDevice {}: Speakers info found in response {}. Command: {}".format(
-                                                self._name, data, self._special_commands['Speakers']['Command']))
-                                            receivedvalue = self._convertvalue(data[index + commandlength:index + commandlength + valuelength], expectedtype, False)
-                                            try:
-                                                for speakercommand in self._special_commands['Speakers']['Command']:
-                                                    for zone in self._items_speakers:
-                                                        for speakerlist in self._items_speakers[zone]:
-                                                            speakerAB = sum(map(int, self._items_speakers[zone].keys()))
-                                                            self.logger.debug("AVDevice {}: Received value: {}. Speaker {}. SpeakerAB: {}".format(
-                                                                self._name, receivedvalue, speakerlist, speakerAB))
-                                                            if receivedvalue == int(speakerlist) or receivedvalue == speakerAB:
-                                                                for speaker in self._items_speakers[zone][speakerlist]['Item']:
-                                                                    self.logger.info("AVDevice {}: Speaker {} is on.".format(self._name, speaker))
-                                                                    speaker(1, 'AVDevice', self._tcp)
-                                                            else:
-                                                                for speaker in self._items_speakers[zone][speakerlist]['Item']:
-                                                                    self.logger.info("AVDevice {}: Speaker {} is off.".format(self._name, speaker))
-                                                                    speaker(0, 'AVDevice', self._tcp)
-
-                                            except Exception as err:
-                                                self.logger.warning("AVDevice {}: Problems reading Speakers info. Error:{}".format(self._name, err))
-                                        else:
-                                            value = receivedvalue = data[index + commandlength:index + commandlength + valuelength]
-                                            self.logger.log(VERBOSE1, "Parsing Input {}: Neither Display nor Now Playing in response. receivedvalue: {}.".format(
-                                                self._name, receivedvalue))
-
-                                            invert = True if entry[6].lower() in ['1', 'true', 'yes', 'on'] else False
-                                            receivedvalue = self._convertvalue(value, expectedtype, invert)
-
-                                        if isinstance(receivedvalue, eval(expectedtype)):
-                                            sametype = True
-                                        else:
+                                else:
+                                    for entry in self._response_commands[key]:
+                                        commandlength = entry[1]
+                                        valuelength = entry[0]
+                                        item = entry[3]
+                                        expectedtype = entry[7]
+                                        index = data.find(key)
+                                        self.logger.log(VERBOSE1, "Parsing Input {}: Entry: {}, Valuelength: {}, Expected Type: {}. ".format(
+                                            self._name, entry, valuelength, expectedtype))
+                                        if not index == -1:
                                             sametype = False
+                                            inputcommands = self._special_commands['Input']['Command']
+                                            function = entry[4]
+                                            zone = entry[5]
+                                            if data.startswith(self._special_commands['Display']['Command']) and not self._special_commands['Display']['Command'] == '':
+                                                self.logger.debug("Parsing Input {}: Displaycommand found in response {}.".format(self._name, data))
+                                                try:
+                                                    content = data[2:][:28]
+                                                    self.logger.log(VERBOSE1, "AVDevice {}: Display Data {}. Item: {}".format(self._name, content, item))
+                                                    tempvalue = "".join(
+                                                        list(map(lambda i: chr(int(content[2 * i:][: 2], 0x10)), range(14)))).strip()
+                                                    receivedvalue = re.sub(r'^[^A-Z0-9]*', '', tempvalue)
+                                                    self.logger.debug("AVDevice {}: Display Output {}".format(self._name, receivedvalue))
+                                                except Exception as err:
+                                                    self.logger.warning("AVDevice {}: Problems getting display info. Error: {}".format(self._name, err))
 
-                                        if sametype is False:
-                                            self.logger.log(VERBOSE1, "Parsing Input {}: Receivedvalue {} does not match type {} - ignoring it.".format(self._name, receivedvalue, expectedtype))
-                                        else:
-                                            self.logger.log(VERBOSE1, "Parsing Input {}: Receivedvalue {} does match type {} - going on.".format(self._name, receivedvalue, expectedtype))
-                                            if data.startswith(tuple(inputcommands)) and receivedvalue in self._ignoredisplay and '' not in self. _ignoredisplay:
-                                                for i in range(0, len(inputcommands)):
-                                                    if data.startswith(inputcommands[i]):
-                                                        self._special_commands['Input']['Ignore'][i] = 1
-                                                if self._special_commands['Display']['Command'] not in self._ignore_response and not self._special_commands['Display']['Command'] == '' and '' not in self._ignore_response:
-                                                    self._ignore_response.append(self._special_commands['Display']['Command'])
-                                                self.logger.error("Parsing Input {}: Data {} has value in ignoredisplay {}. Ignorecommands are now: {}. Display Ignore is {}. Input Ignore is {}".format(self._name, data, self._ignoredisplay, self._ignore_response, self._special_commands['Display']['Ignore'], self._special_commands['Input']['Ignore']))
-                                            elif data.startswith(tuple(inputcommands)) and receivedvalue not in self._ignoredisplay and '' not in self. _ignoredisplay:
-                                                for i in range(0, len(inputcommands)):
-                                                    if data.startswith(inputcommands[i]):
-                                                        self._special_commands['Input']['Ignore'][i] = 0
-                                                self.logger.log(VERBOSE2, "Parsing Input {}: Data {} has NO value in ignoredisplay {}. Ignorecommands are now: {}. Display Ignore is {}. Input Ignore is {}".format(self._name, data, self._ignoredisplay, self._ignore_response, self._special_commands['Display']['Ignore'], self._special_commands['Input']['Ignore']))
-                                                if self._special_commands['Display']['Ignore'] == 0 and 1 not in self._special_commands['Input']['Ignore']:
-                                                    while self._special_commands['Display']['Command'] in self._ignore_response:
-                                                        self._ignore_response.remove(self._special_commands['Display']['Command'])
-                                                    self.logger.log(VERBOSE2, "Parsing Input {}: Removing {} from ignore.".format(self._name, self._special_commands['Display']['Command']))
-                                            value = receivedvalue
-                                            self.logger.debug("Parsing Input {}: Found key {} in response at position {} with value {}.".format(
-                                                self._name, key, index, value))
+                                            elif data.startswith(tuple(self._special_commands['Nowplaying']['Command'])) and not self._special_commands['Nowplaying']['Command'] == '':
+                                                self.logger.debug("AVDevice {}: Now playing info found in response {}.".format(self._name, data))
+                                                try:
+                                                    m = re.search('"(.+?)"', data)
+                                                    if m:
+                                                        receivedvalue = m.group(1)
+                                                    else:
+                                                        receivedvalue = ''
+                                                except Exception as err:
+                                                    self.logger.debug("AVDevice {}: Problems reading Now Playing info. Error:{}".format(self._name, err))
+                                            elif data.startswith(tuple(self._special_commands['Speakers']['Command'])) and not self._special_commands['Speakers']['Command'] == '':
+                                                self.logger.debug("AVDevice {}: Speakers info found in response {}. Command: {}".format(
+                                                    self._name, data, self._special_commands['Speakers']['Command']))
+                                                receivedvalue = self._convertvalue(data[index + commandlength:index + commandlength + valuelength], expectedtype, False)
+                                                try:
+                                                    for speakercommand in self._special_commands['Speakers']['Command']:
+                                                        for zone in self._items_speakers:
+                                                            for speakerlist in self._items_speakers[zone]:
+                                                                speakerAB = sum(map(int, self._items_speakers[zone].keys()))
+                                                                self.logger.debug("AVDevice {}: Received value: {}. Speaker {}. SpeakerAB: {}".format(
+                                                                    self._name, receivedvalue, speakerlist, speakerAB))
+                                                                if receivedvalue == int(speakerlist) or receivedvalue == speakerAB:
+                                                                    for speaker in self._items_speakers[zone][speakerlist]['Item']:
+                                                                        self.logger.info("AVDevice {}: Speaker {} is on.".format(self._name, speaker))
+                                                                        speaker(1, 'AVDevice', self._tcp)
+                                                                else:
+                                                                    for speaker in self._items_speakers[zone][speakerlist]['Item']:
+                                                                        self.logger.info("AVDevice {}: Speaker {} is off.".format(self._name, speaker))
+                                                                        speaker(0, 'AVDevice', self._tcp)
 
-                                            if function in self._items[zone].keys():
-                                                self._items[zone][function]['Value'] = value
-                                                self.logger.log(VERBOSE1, "Parsing Input {}: Updated Item dict {}".format(self._name, self._items[zone][function]))
+                                                except Exception as err:
+                                                    self.logger.warning("AVDevice {}: Problems reading Speakers info. Error:{}".format(self._name, err))
+                                            else:
+                                                value = receivedvalue = data[index + commandlength:index + commandlength + valuelength]
+                                                self.logger.log(VERBOSE1, "Parsing Input {}: Neither Display nor Now Playing in response. receivedvalue: {}.".format(
+                                                    self._name, receivedvalue))
 
-                                            for singleitem in item:
-                                                singleitem(value, 'AVDevice', self._tcp)
-                                                self.logger.debug("Parsing Input {}: Updating Item {} with {} Value: {}.".format(
-                                                    self._name, singleitem, expectedtype, value))
-                                                updated = 1
-                                                self._wait(0.15)
+                                                invert = True if entry[6].lower() in ['1', 'true', 'yes', 'on'] else False
+                                                receivedvalue = self._convertvalue(value, expectedtype, invert)
 
+                                            if isinstance(receivedvalue, eval(expectedtype)):
+                                                sametype = True
+                                            else:
+                                                sametype = False
+
+                                            if sametype is False:
+                                                self.logger.log(VERBOSE1, "Parsing Input {}: Receivedvalue {} does not match type {} - ignoring it.".format(self._name, receivedvalue, expectedtype))
+                                            else:
+                                                self.logger.log(VERBOSE1, "Parsing Input {}: Receivedvalue {} does match type {} - going on.".format(self._name, receivedvalue, expectedtype))
+                                                if data.startswith(tuple(inputcommands)) and receivedvalue in self._ignoredisplay and '' not in self. _ignoredisplay:
+                                                    for i in range(0, len(inputcommands)):
+                                                        if data.startswith(inputcommands[i]):
+                                                            self._special_commands['Input']['Ignore'][i] = 1
+                                                    if self._special_commands['Display']['Command'] not in self._ignore_response and not self._special_commands['Display']['Command'] == '' and '' not in self._ignore_response:
+                                                        self._ignore_response.append(self._special_commands['Display']['Command'])
+                                                    self.logger.error("Parsing Input {}: Data {} has value in ignoredisplay {}. Ignorecommands are now: {}. Display Ignore is {}. Input Ignore is {}".format(self._name, data, self._ignoredisplay, self._ignore_response, self._special_commands['Display']['Ignore'], self._special_commands['Input']['Ignore']))
+                                                elif data.startswith(tuple(inputcommands)) and receivedvalue not in self._ignoredisplay and '' not in self. _ignoredisplay:
+                                                    for i in range(0, len(inputcommands)):
+                                                        if data.startswith(inputcommands[i]):
+                                                            self._special_commands['Input']['Ignore'][i] = 0
+                                                    self.logger.log(VERBOSE2, "Parsing Input {}: Data {} has NO value in ignoredisplay {}. Ignorecommands are now: {}. Display Ignore is {}. Input Ignore is {}".format(self._name, data, self._ignoredisplay, self._ignore_response, self._special_commands['Display']['Ignore'], self._special_commands['Input']['Ignore']))
+                                                    if self._special_commands['Display']['Ignore'] == 0 and 1 not in self._special_commands['Input']['Ignore']:
+                                                        while self._special_commands['Display']['Command'] in self._ignore_response:
+                                                            self._ignore_response.remove(self._special_commands['Display']['Command'])
+                                                        self.logger.log(VERBOSE2, "Parsing Input {}: Removing {} from ignore.".format(self._name, self._special_commands['Display']['Command']))
+                                                value = receivedvalue
+                                                self.logger.debug("Parsing Input {}: Found key {} in response at position {} with value {}.".format(
+                                                    self._name, key, index, value))
+
+                                                if function in self._items[zone].keys():
+                                                    self._items[zone][function]['Value'] = value
+                                                    self.logger.log(VERBOSE1, "Parsing Input {}: Updated Item dict {}".format(self._name, self._items[zone][function]))
+
+                                                for singleitem in item:
+                                                    singleitem(value, 'AVDevice', self._tcp)
+                                                    self.logger.debug("Parsing Input {}: Updating Item {} with {} Value: {}.".format(
+                                                        self._name, singleitem, expectedtype, value))
+                                                    updated = 1
+                                                    self._wait(0.15)
+
+                                                if updated == 1:
+                                                    self.logger.log(VERBOSE1, "Parsing Input {}: Updated all relevant items from item {}. step 1".format(self._name, item))
+                                                    break
                                             if updated == 1:
-                                                self.logger.log(VERBOSE1, "Parsing Input {}: Updated all relevant items from item {}. step 1".format(self._name, item))
+                                                self.logger.log(VERBOSE1, "Parsing Input {}: Updated all relevant items from {}. step 2".format(self._name, item))
+                                                break
+                                        elif key.lower() == 'string':
+                                            value = data
+                                            if value.startswith(tuple(sorted_response_commands)):
+                                                self.logger.log(VERBOSE1, "Parsing Input {}: Found string for Item {} with Value {} but ignored because it is a legit response for another command.".format(
+                                                    self._name, item, value))
+                                                pass
+                                            else:
+                                                for singleitem in item:
+                                                    singleitem(value, 'AVDevice', self._tcp)
+                                                    self._wait(0.15)
+                                                    self.logger.debug("Parsing Input {}: Updating item {} with value {}".format(
+                                                        self._name, singleitem, value))
                                                 break
                                         if updated == 1:
-                                            self.logger.log(VERBOSE1, "Parsing Input {}: Updated all relevant items from {}. step 2".format(self._name, item))
+                                            self.logger.log(VERBOSE1, "Parsing Input {}: Updated all relevant items from {}. step 3".format(self._name, item))
                                             break
-                                    elif key.lower() == 'string':
-                                        value = data
-                                        if value.startswith(tuple(sorted_response_commands)):
-                                            self.logger.log(VERBOSE1, "Parsing Input {}: Found string for Item {} with Value {} but ignored because it is a legit response for another command.".format(
-                                                self._name, item, value))
-                                            pass
-                                        else:
-                                            for singleitem in item:
-                                                singleitem(value, 'AVDevice', self._tcp)
-                                                self._wait(0.15)
-                                                self.logger.debug("Parsing Input {}: Updating item {} with value {}".format(
-                                                    self._name, singleitem, value))
-                                            break
-                                    if updated == 1:
-                                        self.logger.log(VERBOSE1, "Parsing Input {}: Updated all relevant items from {}. step 3".format(self._name, item))
-                                        break
                                 if updated == 1:
                                     self.logger.log(VERBOSE1, "Parsing Input {}: Updated all relevant items from {}. step 4".format(self._name, item))
                                     break
                             self.logger.log(VERBOSE1, "Parsing Input {}: Finished. ".format(self._name))
+                            if self._trigger_reconnect is True:
+                                self.logger.log(VERBOSE1, "Parsing Input {}: Trying to connect while parsing item".format(self._name))
+                                self.connect('parse_end')
                 except Exception as err:
                     self.logger.error("Parsing Input {}: Problems parsing input. Error: {}".format(self._name, err))
                 finally:
@@ -1153,7 +1159,7 @@ class AVDevice(SmartPlugin):
                         self.logger.debug('Parsing Input {}: Newly sorted send commands at end of parsing: {}'.format(self._name, self._send_commands))
                         if self._is_connected == []:
                             for command in self._send_commands:
-                                self.logger.log(VERBOSE1, "Parsing Input {}: Going to reset {}.".format(self._name, command))
+                                self.logger.log(VERBOSE1, "Parsing Input {}: Going to reset in the end because connection is lost: {}.".format(self._name, command))
                                 if command not in self._query_commands and command not in self._special_commands['Display']['Command']:
                                     self._keep_commands[time.time()] = self._sendingcommand = command
                                     self.logger.debug("Parsing Input {}: Removing item {} from send command because not connected, storing in keep commands: {}.".format(
@@ -1166,6 +1172,15 @@ class AVDevice(SmartPlugin):
                             sending = self._send('{}'.format(to_send), 'parseinput_final')
                             self.logger.log(VERBOSE1, "Parsing Input {}: Sending again because list is not empty yet. Sending return is {}.".format(
                                 self._name, sending))
+                        if 'Serial' in self._is_connected and connectionproblem is True:
+                            self._is_connected.remove('Serial')
+                            self._trigger_reconnect = True
+                        if 'TCP' in self._is_connected and connectionproblem is True:
+                            self._is_connected.remove('TCP')
+                            self._trigger_reconnect = True
+                        if self._trigger_reconnect is True and self._is_connected == []:
+                            self.logger.log(VERBOSE1, "Parsing Input {}: Trying to connect while parsing item".format(self._name))
+                            self.connect('parse_dataerror')
 
     # Updating items based on value changes via Visu, CLI, etc.
     def update_item(self, item, caller=None, source=None, dest=None):
