@@ -135,22 +135,22 @@ class BackendSysteminfo:
         
         The json response contains the following information:
         
-            name                    str    Name of package
-            vers_installed          str    Installed version of that package
-            is_required             bool   is required by SmartHomeNH
-            vers_req_souce          str    requirements as defined inrequirements.txt
-            vers_req_min            str    required minimum version
-            vers_req_max            str    required maximum version
--            vers_req_msg            str
--            vers_req_txt            str
-            vers_ok                 str    installed version meeds requirements
-            vers_recent             str    installed version is the req_max or the newest on PyPI
+            name                             str    Name of package
+            vers_installed                   str    Installed version of that package
+            is_required                      bool   is package required by SmartHomeNG?
+            vers_req_souce                   str    requirements as defined inrequirements.txt
+            vers_req_min                     str    required minimum version
+            vers_req_max                     str    required maximum version
+-            vers_req_msg                     str
+            vers_ok                          bool   installed version meeds requirements
+            vers_recent                      bool   installed version is the req_max or the newest on PyPI
             
-            pypi_version            str    newest package version on PyPI
--            pypi_version_available
--            pypi_doc_url            str    url of the package's documentation on PyPI
+            pypi_version                     str    newest package version on PyPI
+            pypi_version_ok                  bool   is newest package version on PyPI ok for install on SmartHomeNG?
+            pypi_version_not_available_msg   str    error message or empty
+            pypi_doc_url                     str    url of the package's documentation on PyPI
             
-            sort                    str    string for sorting (is_required + name)
+            sort                             str    string for sorting (is_required + name)
          
 
         :return: information about packahge requirements including PyPI information
@@ -197,8 +197,10 @@ class BackendSysteminfo:
             package['vers_ok'] = False
             package['vers_recent'] = False
             package['pypi_version'] = ''
-            package['pypi_version_available'] = ''
-
+            package['pypi_version_ok'] = True
+            package['pypi_version_not_available_msg'] = ''
+            package['pypi_doc_url'] = ''
+            
             if pypi_available:
                 try:
                     available = pypi.package_releases(dist.project_name)
@@ -206,12 +208,13 @@ class BackendSysteminfo:
                     try:
                         package['pypi_version'] = available[0]
                     except:
-                        package['pypi_version_available'] = '?'
+                        package['pypi_version_not_available_msg'] = '?'
                 except:
                     package['pypi_version'] = '--'
-                    package['pypi_version_available'] = [translate('Keine Antwort von PyPI')]
+                    package['pypi_version_not_available_msg'] = [translate('Keine Antwort von PyPI')]
             else:
-                package['pypi_version_available'] = pypi_unavailable_message
+                package['pypi_version_not_available_msg'] = pypi_unavailable_message
+            package['pypi_doc_url'] = 'https://pypi.python.org/pypi/' + dist.project_name
 
             if req_dict.get(package['name'], '') != '':
                 package['is_required'] = True
@@ -252,6 +255,9 @@ class BackendSysteminfo:
                     package['vers_ok'] = False
                 if self.compare_versions(max, package['vers_installed'], '=='):
                     package['vers_recent'] = True
+                    if package['pypi_version_ok'] != '':
+                        if self.compare_versions(package['pypi_version'], package['vers_installed'], '>'):
+                            package['pypi_version_ok'] = False
 
             package_list.append(package)
 

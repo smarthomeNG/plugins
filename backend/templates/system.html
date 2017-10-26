@@ -113,12 +113,21 @@ $.getJSON('pypi.json', function(result) {
             $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
         }
 
+        fontWeight = '';
+        if (element['is_required']) {
+            fontWeight = "font-weight: bold;";
+        }
+
         fontColorPyPi = "green";
 		if (element['is_required']) {
 	        if (element['vers_ok']) {
 	            if (element['vers_recent']) {
 	    	        fontColor = "green";
-                    fontColorPyPi = "black";
+	    	        if (element['pypi_version_ok']) {
+	                    fontColorPyPi = "black";
+	                } else {
+	                    fontColorPyPi = "red";
+	                }
 	            } else {
 	    	        fontColor = "black";
 	    	    }
@@ -133,10 +142,6 @@ $.getJSON('pypi.json', function(result) {
     	        fontColor = "black";
     	    }
 		}
-        fontWeight = '';
-        if (element['required']) {
-            fontWeight = "font-weight: bold;";
-        }
         reqString = '';
         if (element['vers_req_min'] != '' && element['vers_req_min'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
             if (element['vers_req_min'] != '') {
