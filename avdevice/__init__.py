@@ -334,6 +334,7 @@ class AVDevice(SmartPlugin):
         except Exception as err:
             self.logger.error("Storing Values {}: Problems creating items dictionary. Error: {}".format(self._name, err))
         finally:
+            return 'empty', 'empty'
             self.logger.log(VERBOSE1, "Storing Values {}: Finished.".format(self._name))
 
     # Finding relevant items for the plugin based on the avdevice keyword
@@ -877,7 +878,6 @@ class AVDevice(SmartPlugin):
                         self.logger.debug("Parsing Input {}: Response: {}.".format(self._name, data))
                         if not self._send_commands == [] and not data == 'ERROR':
                             expectedresponse = []
-                            self.logger.log(VERBOSE1, "Parsing Input {}: Parsing input while waiting for response.".format(self._name))
                             try:
                                 for response in self._send_commands:
                                     if not response.split(",")[2] == '':
@@ -885,6 +885,7 @@ class AVDevice(SmartPlugin):
                                 self.logger.debug("Parsing Input {}: Expected response while parsing: {}.".format(self._name, expectedresponse))
                             except Exception as err:
                                 self.logger.error("Parsing Input {}: Problems creating expected response list. Error: {}".format(self._name, err))
+                            self.logger.log(VERBOSE1, "Parsing Input {}: Parsing input while waiting for response {}.".format(self._name, expectedresponse))
                             try:
                                 to_send = 'command'
                                 updatedcommands = []
@@ -908,31 +909,34 @@ class AVDevice(SmartPlugin):
                                         except Exception as err:
                                             found.append(expected)
                                             self.logger.debug("Parsing Input {}: Expected response after exception: {}. Problem: {}".format(self._name, found, err))
-                                        if data.startswith(tuple(found)):
-                                            entry, value = self._write_itemsdict(data)
-                                            self._sendingcommand = 'done'
-                                            self._requery_counter = 0
-                                            self._resend_counter = 0
-                                        elif expectedlist[0] == '' or expectedlist[0] == ' ' or expectedlist[0] == 'none':
-                                            self._sendingcommand = 'done'
-                                            self._requery_counter = 0
-                                            self._resend_counter = 0
-                                            self.logger.log(VERBOSE1, "Parsing Input {}: No response expected".format(self._name))
-                                        elif expectedlist[0].lower() == 'string':
-                                            value = data
-                                            self.logger.log(VERBOSE1, "Parsing Input {}: String found and testing... ".format(self._name))
-                                            if value.startswith(tuple(self._response_commands.keys())):
-                                                self.logger.log(
-                                                    VERBOSE1, "Parsing Input {}: Found string but ignored because it is a legit response for another command.".format(self._name))
-                                            else:
+                                        try:
+                                            if data.startswith(tuple(found)):
                                                 entry, value = self._write_itemsdict(data)
-                                                self.logger.debug("Parsing Input {}: String FOUND. Written to dict: {}.".format(self._name, entry))
                                                 self._sendingcommand = 'done'
                                                 self._requery_counter = 0
                                                 self._resend_counter = 0
-                                        else:
-                                            expectedindex = expectedresponse.index(expected)
-                                            updatedcommands.append(self._send_commands[expectedindex])
+                                            elif expectedlist[0] == '' or expectedlist[0] == ' ' or expectedlist[0] == 'none':
+                                                self._sendingcommand = 'done'
+                                                self._requery_counter = 0
+                                                self._resend_counter = 0
+                                                self.logger.log(VERBOSE1, "Parsing Input {}: No response expected".format(self._name))
+                                            elif expectedlist[0].lower() == 'string':
+                                                value = data
+                                                self.logger.log(VERBOSE1, "Parsing Input {}: String found and testing... ".format(self._name))
+                                                if value.startswith(tuple(self._response_commands.keys())):
+                                                    self.logger.log(
+                                                        VERBOSE1, "Parsing Input {}: Found string but ignored because it is a legit response for another command.".format(self._name))
+                                                else:
+                                                    entry, value = self._write_itemsdict(data)
+                                                    self.logger.debug("Parsing Input {}: String FOUND. Written to dict: {}.".format(self._name, entry))
+                                                    self._sendingcommand = 'done'
+                                                    self._requery_counter = 0
+                                                    self._resend_counter = 0
+                                            else:
+                                                expectedindex = expectedresponse.index(expected)
+                                                updatedcommands.append(self._send_commands[expectedindex])
+                                        except Exception as err:
+                                            self.logger.log(VERBOSE1, "Parsing Input {}: Write to dict problems: {}".format(self._name, err))
 
                                 self._send_commands = updatedcommands
                                 self.logger.log(VERBOSE1, "Parsing Input {}: Sendcommands: {}. Sendingcommand: {}".format(self._name, self._send_commands, self._sendingcommand))
