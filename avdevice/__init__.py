@@ -640,6 +640,7 @@ class AVDevice(SmartPlugin):
         self._trigger_reconnect = True
         if self._is_connected == []:
             self._parsinginput = []
+            self._is_connected.append('Connecting')
         self.logger.log(VERBOSE1, "Connecting {}: Starting to connect. Triggered by {}. Current Connections: {}".format(self._name, trigger, self._is_connected))
         try:
             dependsvalue = self._dependson()
@@ -679,6 +680,7 @@ class AVDevice(SmartPlugin):
                 self._tcpsocket.connect(('{}'.format(self._tcp), int(self._port)))
                 self._tcpsocket.settimeout(self._tcp_timeout)
                 self._is_connected.append('TCP')
+                self._is_connected.remove('Connecting')
                 self.logger.info("Connecting TCP {}: Connected to {}:{}".format(
                     self._name, self._tcp, self._port))
 
@@ -744,6 +746,7 @@ class AVDevice(SmartPlugin):
                     self._serial = ser
                     self._trigger_reconnect = False
                     self._is_connected.append('Serial')
+                    self._is_connected.remove('Connecting')
                     self.logger.info("Connecting Serial {}: Connected to {} with baudrate {}.".format(
                         self._name, ser, self._baud))
                 else:
@@ -792,7 +795,7 @@ class AVDevice(SmartPlugin):
 
     # Parsing the response and comparing it with expected response
     def _parse_input_init(self, trigger):
-        if not self._is_connected == []:
+        if not self._is_connected == [] and not self._is_connected == ['Connecting']:
             self._parsinginput.append(trigger)
         else:
             self._parsinginput = []
@@ -817,7 +820,7 @@ class AVDevice(SmartPlugin):
         self.logger.log(VERBOSE1, "Parsing Input {}: Triggerd by {}".format(self._name, trigger))
         while self.alive:
             connectionproblem = False
-            if not self._parsinginput == [] and not self._is_connected == []:
+            if not self._parsinginput == [] and not self._is_connected == [] and not self._is_connected == ['Connecting']:
                 if not self._sendingcommand == '' and not self._sendingcommand == 'done' and not self._sendingcommand == 'gaveup':
                     self.logger.log(VERBOSE1, "Parsing Input {}: Starting to parse input. Alive: {}. Connected: {}. Sendcommand: {}".format(
                         self._name, self.alive, self._is_connected, self._sendingcommand))
@@ -834,8 +837,7 @@ class AVDevice(SmartPlugin):
                         try:
                             databuffer = self._processing_response(self._tcpsocket)
                         except Exception as err:
-                            self.logger.error(
-                                "Parsing Input {}: Problem receiving TCP data {}.".format(self._name, err))
+                            self.logger.error("Parsing Input {}: Problem receiving TCP data {}.".format(self._name, err))
                     for data in databuffer:
                         data = data.strip()
                         if data == '' and not self._sendingcommand == '' and not self._sendingcommand == 'done' and not self._sendingcommand == 'gaveup':
@@ -873,7 +875,7 @@ class AVDevice(SmartPlugin):
 
                         sorted_response_commands = sorted(self._response_commands, key=len, reverse=True)
                         self.logger.debug("Parsing Input {}: Response: {}.".format(self._name, data))
-                        if not self._send_commands == []:
+                        if not self._send_commands == [] and not data == 'ERROR':
                             expectedresponse = []
                             self.logger.log(VERBOSE1, "Parsing Input {}: Parsing input while waiting for response.".format(self._name))
                             try:
@@ -886,45 +888,51 @@ class AVDevice(SmartPlugin):
                             try:
                                 to_send = 'command'
                                 updatedcommands = []
-                                for expected in expectedresponse:
-                                    expectedlist = expected.split("|")
-                                    if self._manufacturer == 'epson' and (data == ':PWR=02' or data == 'PWR=02'):
-                                        data = 'PWR=01'
-                                    found = []
-                                    try:
-                                        for expectedpart in expectedlist:
-                                            datalength = self._response_commands[expectedpart][0][1]
-                                            if data[:datalength].startswith(expectedpart) and len(data[:datalength]) == len(expectedpart):
-                                                found.append(expectedpart)
-                                                self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited: {}.".format(self._name, found))
-                                    except Exception as err:
-                                        found.append(expectedlist[0])
-                                        self.logger.debug("Parsing Input {}: Expected response EXCEPTION: {}. Problem: {}".format(self._name, found, err))
-                                    if data.startswith(tuple(found)):
-                                        entry, value = self._write_itemsdict(data)
-                                        self._sendingcommand = 'done'
-                                        self._requery_counter = 0
-                                        self._resend_counter = 0
-                                    elif expectedlist[0] == '' or expectedlist[0] == ' ' or expectedlist[0] == 'none':
-                                        self._sendingcommand = 'done'
-                                        self._requery_counter = 0
-                                        self._resend_counter = 0
-                                        self.logger.log(VERBOSE1, "Parsing Input {}: No response expected".format(self._name))
-                                    elif expectedlist[0].lower() == 'string':
-                                        value = data
-                                        self.logger.log(VERBOSE1, "Parsing Input {}: String found and testing... ".format(self._name))
-                                        if value.startswith(tuple(self._response_commands.keys())):
-                                            self.logger.log(
-                                                VERBOSE1, "Parsing Input {}: Found string but ignored because it is a legit response for another command.".format(self._name))
-                                        else:
+                                if not expectedresponse == []:
+                                    for expected in expectedresponse:
+                                        if self._manufacturer == 'epson' and (data == ':PWR=02' or data == 'PWR=02'):
+                                            data = 'PWR=01'
+                                        found = []
+                                        expectedlist = expected.split("|")
+                                        try:
+                                            for expectedpart in expectedlist:
+                                                try:
+                                                    datalength = self._response_commands[expectedpart][0][1]
+                                                    self.logger.log(VERBOSE2, "Parsing Input {}: Datalength: {}.".format(self._name, datalength))
+                                                    if data[:datalength].startswith(expectedpart) and len(data[:datalength]) == len(expectedpart):
+                                                        found.append(expectedpart)
+                                                        self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited: {}.".format(self._name, found))
+                                                except Exception:
+                                                    found.append(expectedpart)
+                                                    self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited: {}.".format(self._name, found))
+                                        except Exception as err:
+                                            found.append(expected)
+                                            self.logger.debug("Parsing Input {}: Expected response after exception: {}. Problem: {}".format(self._name, found, err))
+                                        if data.startswith(tuple(found)):
                                             entry, value = self._write_itemsdict(data)
-                                            self.logger.debug("Parsing Input {}: String FOUND. Written to dict: {}.".format(self._name, entry))
                                             self._sendingcommand = 'done'
                                             self._requery_counter = 0
                                             self._resend_counter = 0
-                                    else:
-                                        expectedindex = expectedresponse.index(expected)
-                                        updatedcommands.append(self._send_commands[expectedindex])
+                                        elif expectedlist[0] == '' or expectedlist[0] == ' ' or expectedlist[0] == 'none':
+                                            self._sendingcommand = 'done'
+                                            self._requery_counter = 0
+                                            self._resend_counter = 0
+                                            self.logger.log(VERBOSE1, "Parsing Input {}: No response expected".format(self._name))
+                                        elif expectedlist[0].lower() == 'string':
+                                            value = data
+                                            self.logger.log(VERBOSE1, "Parsing Input {}: String found and testing... ".format(self._name))
+                                            if value.startswith(tuple(self._response_commands.keys())):
+                                                self.logger.log(
+                                                    VERBOSE1, "Parsing Input {}: Found string but ignored because it is a legit response for another command.".format(self._name))
+                                            else:
+                                                entry, value = self._write_itemsdict(data)
+                                                self.logger.debug("Parsing Input {}: String FOUND. Written to dict: {}.".format(self._name, entry))
+                                                self._sendingcommand = 'done'
+                                                self._requery_counter = 0
+                                                self._resend_counter = 0
+                                        else:
+                                            expectedindex = expectedresponse.index(expected)
+                                            updatedcommands.append(self._send_commands[expectedindex])
 
                                 self._send_commands = updatedcommands
                                 self.logger.log(VERBOSE1, "Parsing Input {}: Sendcommands: {}. Sendingcommand: {}".format(self._name, self._send_commands, self._sendingcommand))
@@ -941,7 +949,6 @@ class AVDevice(SmartPlugin):
                                     except Exception as err:
                                         depending = False
                                         self.logger.log(VERBOSE1, "Parsing Input {}: Depending is false. Message {}.".format(self._name, err))
-
                                     if self._requery_counter >= self._resend_retries:
                                         self._requery_counter = 0
                                         self._resend_counter = 0
@@ -966,19 +973,22 @@ class AVDevice(SmartPlugin):
                                     elif depending is True:
                                         self._requery_counter = 0
                                         self._resend_counter = 0
-                                        if not self._send_commands[0] in self._query_commands and not self._send_commands == []:
-                                            self._sendingcommand = self._send_commands[0]
-                                            self.logger.warning("Parsing Input {}: Reset item {} because dependency not fulfilled.".format(self._name, self._sendingcommand))
-                                            self._resetitem()
-                                        self._sendingcommand = 'gaveup'
-                                        if self._send_commands[0] not in self._query_commands and not self._send_commands[0] in self._special_commands['Display']['Command']:
-                                            self._keep_commands[time.time()] = self._send_commands[0]
-                                            self.logger.debug("Parsing Input {}: Removing item from send command, storing in keep commands: {}.".format(self._name, self._keep_commands))
-                                        elif self._send_commands[0] in self._query_commands:
-                                            self.logger.debug("Parsing Input {}: Giving  up {}, because no answer received.".format(self._name, self._sendingcommand))
-                                        self._send_commands.pop(0)
-                                        self.logger.log(VERBOSE1, "Parsing Input {}: Keepcommands: {}. Sendcommands: {}".format(
-                                            self._name, self._keep_commands, self._send_commands))
+                                        try:
+                                            if not self._send_commands[0] in self._query_commands and not self._send_commands == []:
+                                                self._sendingcommand = self._send_commands[0]
+                                                self.logger.warning("Parsing Input {}: Reset item {} because dependency not fulfilled.".format(self._name, self._sendingcommand))
+                                                self._resetitem()
+                                            self._sendingcommand = 'gaveup'
+                                            if self._send_commands[0] not in self._query_commands and not self._send_commands[0] in self._special_commands['Display']['Command']:
+                                                self._keep_commands[time.time()] = self._send_commands[0]
+                                                self.logger.debug("Parsing Input {}: Removing item from send command, storing in keep commands: {}.".format(self._name, self._keep_commands))
+                                            elif self._send_commands[0] in self._query_commands:
+                                                self.logger.debug("Parsing Input {}: Giving  up {}, because no answer received.".format(self._name, self._sendingcommand))
+                                            self._send_commands.pop(0)
+                                            self.logger.log(VERBOSE1, "Parsing Input {}: Keepcommands: {}. Sendcommands: {}".format(
+                                                self._name, self._keep_commands, self._send_commands))
+                                        except Exception as err:
+                                            self.logger.log(VERBOSE1, "Parsing Input {}: Nothing to reset as send commands is empty: {}. Message: {}".format(self._name, self._send_commands, err))
                                     elif not self._sendingcommand == 'gaveup':
                                         to_send = 'query' if self._requery_counter % 2 == 1 else 'command'
                                         self._wait(self._resend_wait)
@@ -1174,9 +1184,11 @@ class AVDevice(SmartPlugin):
                                 self._name, sending))
                         if 'Serial' in self._is_connected and connectionproblem is True:
                             self._is_connected.remove('Serial')
+                            self._is_connected.remove('Connecting')
                             self._trigger_reconnect = True
                         if 'TCP' in self._is_connected and connectionproblem is True:
                             self._is_connected.remove('TCP')
+                            self._is_connected.remove('Connecting')
                             self._trigger_reconnect = True
                         if self._trigger_reconnect is True and self._is_connected == []:
                             self.logger.log(VERBOSE1, "Parsing Input {}: Trying to connect while parsing item".format(self._name))
@@ -1269,8 +1281,9 @@ class AVDevice(SmartPlugin):
                                     command = '{} set'.format(command)
                                 if self._functions['zone{}'.format(zone)][command][2] == '':
                                     emptycommand = True
-                                    self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Function is empty. Sending nothing. Command: {} Item: {}".format(
-                                        self._name.lower(), command, item))
+                                    if not self._is_connected == []:
+                                        self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Function is empty. Sending nothing. Command: {} Item: {}".format(
+                                            self._name.lower(), command, item))
                                     if command == 'statusupdate':
                                         try:
                                             checkvalue = item()
@@ -1297,7 +1310,8 @@ class AVDevice(SmartPlugin):
                                             self._reconnect_counter = 0
                                             self._requery_counter = 0
                                             self._trigger_reconnect = True
-                                            self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Updating status. Sendcommands: {}. Reconnecttrigger: {}. Display Ignore: {}".format(self._name.lower(), self._send_commands, self._trigger_reconnect, self._special_commands['Display']['Ignore']))
+                                            if not self._is_connected == []:
+                                                self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Updating status. Sendcommands: {}. Reconnecttrigger: {}. Display Ignore: {}".format(self._name.lower(), self._send_commands, self._trigger_reconnect, self._special_commands['Display']['Ignore']))
                                         elif checkvalue is False and not self._special_commands['Display']['Ignore'] >= 5:
                                             try:
                                                 dependsvalue = self._dependson()
@@ -1309,7 +1323,7 @@ class AVDevice(SmartPlugin):
                                             except Exception as e:
                                                 depending = False
                                                 self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Depending is false. Message: {}".format(self._name.lower(), e))
-                                            if depending is True or self._is_connected == []:
+                                            if depending is True or self._is_connected == [] or self._is_connected == ['Connecting']:
                                                 self._resetondisconnect('statusupdate')
                                         elif self._special_commands['Display']['Ignore'] >= 5:
                                             sending = False
@@ -1539,10 +1553,11 @@ class AVDevice(SmartPlugin):
                                 index += 1
                         self._send_commands = reorderlist
                         self._sendingcommand = self._send_commands[0]
-                    self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Updating item. Command list is {}. Sendingcommand: {}. ".format(
-                        self._name.lower(), self._send_commands, self._sendingcommand))
+
                     try:
-                        if not self._is_connected == [] and not self._send_commands == []:
+                        if not self._is_connected == [] and not self._send_commands == [] and not self._is_connected == ['Connecting']:
+                            self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Updating item. Command list is {}. Sendingcommand: {}. ".format(
+                                self._name.lower(), self._send_commands, self._sendingcommand))
                             sending = self._send('command', 'updateitem')
 
                             self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Updating item. Command list is {}. Return from send is {}".format(
@@ -1657,6 +1672,7 @@ class AVDevice(SmartPlugin):
                     self.logger.log(VERBOSE1, "Sending {}: No TCP socket to close.".format(self._name))
                 try:
                     self._is_connected.remove('TCP')
+                    self._is_connected.remove('Connecting')
                     self.logger.log(VERBOSE1, "Sending {}: reconnect TCP started.".format(self._name))
                     self.connect('send_IOError_TCP')
 
@@ -1669,6 +1685,7 @@ class AVDevice(SmartPlugin):
                     self.logger.log(VERBOSE1, "Sending {}: No Serial socket to close.".format(self._name))
                 try:
                     self._is_connected.remove('Serial')
+                    self._is_connected.remove('Connecting')
                     self.logger.log(VERBOSE1, "Sending {}: reconnect Serial started.".format(self._name))
                     self.connect('send_IOError_RS232')
                 except Exception:
