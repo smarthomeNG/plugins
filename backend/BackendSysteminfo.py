@@ -128,6 +128,142 @@ class BackendSysteminfo:
     #    SYSTEMINFO: PyPI Check
     # -----------------------------------------------------------------------------------
 
+    @cherrypy.expose
+    def pypi_json(self):
+        """
+        returns a list of python package information dicts as json structure:
+        
+        The json response contains the following information:
+        
+            name                    str    Name of package
+            vers_installed          str    Installed version of that package
+            is_required             bool   is required by SmartHomeNH
+            vers_req_souce          str    requirements as defined inrequirements.txt
+            vers_req_min            str    required minimum version
+            vers_req_max            str    required maximum version
+-            vers_req_msg            str
+-            vers_req_txt            str
+            vers_ok                 str    installed version meeds requirements
+            vers_recent             str    installed version is the req_max or the newest on PyPI
+            
+            pypi_version            str    newest package version on PyPI
+-            pypi_version_available
+-            pypi_doc_url            str    url of the package's documentation on PyPI
+            
+            sort                    str    string for sorting (is_required + name)
+         
+
+        :return: information about packahge requirements including PyPI information
+        :rtype: json structure
+        """
+        self.logger.info("pypi_json")
+
+        # check if pypi service is reachable
+        if self.pypi_timeout <= 0:
+            pypi_available = False
+            pypi_unavailable_message = translate('PyPI Prüfung deaktiviert')
+        else:
+            pypi_available = True
+            try:
+                import socket
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(self.pypi_timeout)
+                sock.connect(('pypi.python.org', 443))
+                sock.close()
+            except:
+                pypi_available = False
+                pypi_unavailable_message = translate('PyPI nicht erreichbar')
+
+        import pip
+        import xmlrpc
+        installed_packages = pip.get_installed_distributions()
+        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+
+        req_dict = self.get_requirements_info()
+
+        package_list = []
+
+        for dist in installed_packages:
+            package = dict()
+            package['name'] = dist.key
+            package['vers_installed'] = dist.version
+            package['is_required'] = False
+
+            package['vers_req_min'] = ''
+            package['vers_req_max'] = ''
+            package['vers_req_msg'] = ''
+            package['vers_req_souce'] = ''
+
+            package['vers_ok'] = False
+            package['vers_recent'] = False
+            package['pypi_version'] = ''
+            package['pypi_version_available'] = ''
+
+            if pypi_available:
+                try:
+                    available = pypi.package_releases(dist.project_name)
+                    self.logger.info("pypi_json: pypi package: project_name {}, availabe = {}".format(dist.project_name, available))
+                    try:
+                        package['pypi_version'] = available[0]
+                    except:
+                        package['pypi_version_available'] = '?'
+                except:
+                    package['pypi_version'] = '--'
+                    package['pypi_version_available'] = [translate('Keine Antwort von PyPI')]
+            else:
+                package['pypi_version_available'] = pypi_unavailable_message
+
+            if req_dict.get(package['name'], '') != '':
+                package['is_required'] = True
+                # tests for min, max versions
+                rmin, rmax, rtxt = self.check_requirement(package['name'], req_dict.get(package['name'], ''))
+                package['vers_req_souce'] = req_dict.get(package['name'], '')
+                package['vers_req_min'] = rmin
+                package['vers_req_max'] = rmax
+                package['vers_req_msg'] = rtxt
+
+            if package['is_required']:
+                package['sort'] = '1'
+            else:
+                package['sort'] = '2'
+            package['sort'] += package['name']
+
+            # check if installed verison is recent (compared to PyPI)
+            if package['is_required']:
+                self.logger.info("compare PyPI package {}:".format(package['name']))
+                if self.compare_versions(package['vers_installed'], package['pypi_version'], '>='):
+                    package['vers_recent'] = True
+            else:
+                self.logger.info("compare PyPI package {} (for non required):".format(package['name']))
+                if package['pypi_version'] != '':
+                    if self.compare_versions(package['vers_installed'], package['pypi_version'], '>='):
+                        package['vers_recent'] = True        
+            
+            # check if installed verison is ok
+            if package['is_required']:
+                self.logger.info("required package {}:".format(package['name']))
+                package['vers_ok'] = True
+                if self.compare_versions(package['vers_req_min'], package['vers_installed'], '>'):
+                    package['vers_ok'] = False
+                max = package['vers_req_max']
+                if max == '':
+                    max = '99999'
+                if self.compare_versions(max, package['vers_installed'], '<'):
+                    package['vers_ok'] = False
+                if self.compare_versions(max, package['vers_installed'], '=='):
+                    package['vers_recent'] = True
+
+            package_list.append(package)
+
+    
+#        sorted_package_list = sorted([(i['name'], i['version_installed'], i['version_available']) for i in package_list])
+        sorted_package_list = sorted(package_list, key=lambda k: k['sort'], reverse=False)
+        self.logger.info("pypi_json: sorted_package_list = {}".format(sorted_package_list))
+        self.logger.info("pypi_json: json.dumps(sorted_package_list) = {}".format(json.dumps(sorted_package_list)))
+        
+        return json.dumps(sorted_package_list)
+
+
     def get_requirements_info(self):
         """
         """
@@ -164,12 +300,27 @@ class BackendSysteminfo:
         """
         Compare two version numbers and return if the condition is met
         """
-        v1 = vers1.split('.')
-        while len(v1) < 4:
-            v1.append('0')
-        v2 = vers2.split('.')
-        while len(v2) < 4:
-            v2.append('0')
+        v1s = vers1.split('.')
+        while len(v1s) < 4:
+            v1s.append('0')
+        v1 = []
+        for v in v1s:
+            vi = 0
+            try:
+                vi = int(v)
+            except: pass
+            v1.append(vi)
+
+        v2s = vers2.split('.')
+        while len(v2s) < 4:
+            v2s.append('0')
+        v2 = []
+        for v in v2s:
+            vi = 0
+            try:
+                vi = int(v)
+            except: pass
+            v2.append(vi)
             
         result = False
         if v1 == v2 and operator in ['>=','==','<=']:
@@ -179,7 +330,7 @@ class BackendSysteminfo:
         if v1 > v2 and operator in ['>','>=']:
             result = True
             
-        self.logger.debug("compare_versions: - - - v1 = {}, v2 = {}, operator = '{}', result = {}".format(v1, v2, operator, result))
+        self.logger.info("compare_versions: - - - v1 = {}, v2 = {}, operator = '{}', result = {}".format(v1, v2, operator, result))
         return result
         
         
@@ -429,108 +580,6 @@ class BackendSysteminfo:
         return req_min, req_max, req_txt
     
     
-    @cherrypy.expose
-    def pypi_json(self):
-        """
-        returns a list of python package information dicts as json structure
-        """
-        self.logger.info("pypi_json")
-
-        # check if pypi service is reachable
-        if self.pypi_timeout <= 0:
-            pypi_available = False
-            pypi_unavailable_message = translate('PyPI Prüfung deaktiviert')
-        else:
-            pypi_available = True
-            try:
-                import socket
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(self.pypi_timeout)
-                sock.connect(('pypi.python.org', 443))
-                sock.close()
-            except:
-                pypi_available = False
-                pypi_unavailable_message = translate('PyPI nicht erreichbar')
-
-        import pip
-        import xmlrpc
-        installed_packages = pip.get_installed_distributions()
-        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
-
-        req_dict = self.get_requirements_info()
-
-        package_list = []
-
-        for dist in installed_packages:
-            package = dict()
-            package['name'] = dist.key
-            package['vers_installed'] = dist.version
-            package['required'] = False
-
-            package['vers_req_min'] = ''
-            package['vers_req_max'] = ''
-            package['vers_req_msg'] = ''
-            package['vers_req_text'] = ''
-
-            package['vers_ok'] = False
-            package['pypi_version'] = ''
-            package['pypi_version_available'] = ''
-            package['pypi_forreq_ok'] = True
-
-            if pypi_available:
-                try:
-                    available = pypi.package_releases(dist.project_name)
-                    try:
-                        package['pypi_version'] = available[0]
-                    except:
-                        package['pypi_version_available'] = '-'
-                except:
-                    package['pypi_version_available'] = [translate('Keine Antwort von PyPI')]
-            else:
-                package['pypi_version_available'] = pypi_unavailable_message
-
-            if req_dict.get(package['name'], '') != '':
-                package['required'] = True
-                # tests for min, max versions
-                rmin, rmax, rtxt = self.check_requirement(package['name'], req_dict.get(package['name'], ''))
-                package['vers_req_text'] = req_dict.get(package['name'], '')
-                package['vers_req_min'] = rmin
-                package['vers_req_max'] = rmax
-                package['vers_req_msg'] = rtxt
-
-            if package['required']:
-                package['sort'] = '1'
-            else:
-                package['sort'] = '2'
-            package['sort'] += package['name']
-            package_list.append(package)
-
-        if 1 == 2:
-            package = dict()
-#            package['name'] = ''
-#            package['required'] = False
-#            package['vers_installed'] = ''
-            package['vers_req_min'] = ''
-            package['vers_req_max'] = ''
-            package['vers_ok'] = False
-#            package['pypi_version'] = ''
-            package['pypi_forreq_ok'] = True
-#            package['pypi_version_available'] = ''
-#            if package['required']:
-#                package['sort'] = '1'
-#            else
-#                package['sort'] = '2'
-#            package['sort'] += package['name']
-#            package_list.append(package)
-    
-#        sorted_package_list = sorted([(i['name'], i['version_installed'], i['version_available']) for i in package_list])
-        sorted_package_list = sorted(package_list, key=lambda k: k['sort'], reverse=False)
-        self.logger.info("pypi_json: sorted_package_list = {}".format(sorted_package_list))
-        self.logger.info("pypi_json: json.dumps(sorted_package_list) = {}".format(json.dumps(sorted_package_list)))
-        
-        return json.dumps(sorted_package_list)
-
-
     def getpackages(self):
         """
         returns a list with the installed python packages and its versions

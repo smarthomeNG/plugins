@@ -113,20 +113,26 @@ $.getJSON('pypi.json', function(result) {
             $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
         }
 
-		if (element['required']) {
+        fontColorPyPi = "green";
+		if (element['is_required']) {
 	        if (element['vers_ok']) {
-    	        fontColor = "green";
+	            if (element['vers_recent']) {
+	    	        fontColor = "green";
+                    fontColorPyPi = "black";
+	            } else {
+	    	        fontColor = "black";
+	    	    }
         	} else {
             	fontColor = "red";
 	        }
 		} else {
-   	        fontColor = "black";
+            if (element['vers_recent']) {
+    	        fontColor = "green";
+	            fontColorPyPi = "black";
+            } else {
+    	        fontColor = "black";
+    	    }
 		}
-        if (element['pypi_forreq_ok']) {
-            fontColorPyPi = "green";
-        } else {
-            fontColorPyPi = "red";
-        }
         fontWeight = '';
         if (element['required']) {
             fontWeight = "font-weight: bold;";
@@ -134,10 +140,13 @@ $.getJSON('pypi.json', function(result) {
         reqString = '';
         if (element['vers_req_min'] != '' && element['vers_req_min'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
             if (element['vers_req_min'] != '') {
-                reqString += element['vers_req_min']+" <= ";
+                reqString += element['vers_req_min']+" <= ...";
             }
             if (element['vers_req_max'] != '') {
-                reqString += "... <= "+element['vers_req_max'];
+            	if (reqString == "") {
+            		reqString += "..."
+            	}
+                reqString += " <= "+element['vers_req_max'];
             }
         } else if (element['vers_req_min'] != '' && element['vers_req_min'] != '' && (element['vers_req_min'] == element['vers_req_max'])) {
             reqString += "== "+element['vers_req_min'];
@@ -151,8 +160,8 @@ $.getJSON('pypi.json', function(result) {
 		if (reqString == '') {
 	        reqString = '-';
         }
-        if (element['vers_req_text'] != '') {
-            reqTextString = element['vers_req_text'];
+        if (element['vers_req_souce'] != '') {
+            reqTextString = element['vers_req_souce'];
         } else {
             reqTextString = "";
         }
@@ -164,9 +173,10 @@ $.getJSON('pypi.json', function(result) {
             "<td>"+reqTextString+"</td>"+
             "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
 
-        if (element['pypi_forreq_ok'] && element['pypi_version'] != '' && element['pypi_version'] != '-' &&
-            (element['pypi_version'] != element['vers_installed'])) {
-            table_row += "&nbsp;<i class=\"fa fa-bell-o\"></i>";
+		if (element['is_required'] && element['vers_recent'] != true) {
+	        if ((element['pypi_version'] != '-') && (element['pypi_version'] != element['vers_installed'])) {
+    	        table_row += "&nbsp;<i class=\"fa fa-bell-o\"></i>";
+        	}
         }
 
         table_row += "</td></tr>";
