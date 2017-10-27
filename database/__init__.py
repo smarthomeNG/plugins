@@ -88,9 +88,7 @@ class Database(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'database'):
-            self._buffer_lock.acquire()
-            self._buffer[item] = []
-            self._buffer_lock.release()
+            self._buffer_insert(item, [])
             item.series = functools.partial(self._series, item=item.id())
             item.db = functools.partial(self._single, item=item.id())
             item.dbplugin = self
@@ -109,9 +107,7 @@ class Database(SmartPlugin):
                         prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id', {'id':cache[COL_ITEM_ID]}, cur=cur)
                         if value is not None and prev_change is not None:
                             item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
-                        self._buffer_lock.acquire()
-                        self._buffer[item].append((last_change_ts, None, value))
-                        self._buffer_lock.release()
+                        self._buffer_insert(item, [(last_change_ts, None, value)])
                 except Exception as e:
                     self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 cur.close()
@@ -306,10 +302,7 @@ class Database(SmartPlugin):
             self._buffer_lock.release()
 
         for item in items:
-            self._buffer_lock.acquire()
-            tuples = self._buffer[item]
-            self._buffer[item] = self._buffer[item][len(tuples):]
-            self._buffer_lock.release()
+            tuples = self._buffer_remove(item)
 
             if len(tuples) or finalize:
 
@@ -321,12 +314,7 @@ class Database(SmartPlugin):
 
                 # Can't lock, restore data
                 if not self._db.lock(300):
-                    self._buffer_lock.acquire()
-                    if item in self._buffer:
-                        self._buffer[item] = tuples + self._buffer[item]
-                    else:
-                        self._buffer[item] = tuples
-                    self._buffer_lock.release()
+                    self._buffer_insert(item, tuples)
                     if finalize:
                         self.logger.error("Database: can't dump {} items due to fail to acquire lock!".format(len(self._buffer)))
                     else:
@@ -380,6 +368,22 @@ class Database(SmartPlugin):
                 self._db.release()
         self.logger.debug('Dump completed')
         self._dump_lock.release()
+
+    def _buffer_remove(self, item):
+        self._buffer_lock.acquire()
+        tuples = self._buffer[item]
+        self._buffer[item] = self._buffer[item][len(tuples):]
+        self._buffer_lock.release()
+        return tuples
+
+    def _buffer_insert(self, item, tuples):
+        self._buffer_lock.acquire()
+        if item in self._buffer:
+            self._buffer[item] = tuples + self._buffer[item]
+        else:
+            self._buffer[item] = tuples
+        self._buffer_lock.release()
+        return tuples
 
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
         init = not update
