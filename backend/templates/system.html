@@ -145,16 +145,16 @@ $.getJSON('pypi.json', function(result) {
         reqString = '';
         if (element['vers_req_min'] != '' && element['vers_req_min'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
             if (element['vers_req_min'] != '') {
-                reqString += element['vers_req_min']+" <= ...";
+                reqString += element['vers_req_min']+" <= <i class=\"fa fa-check-square-o\" title=\"{{ _('installierte Version') }}\"></i>";
             }
             if (element['vers_req_max'] != '') {
             	if (reqString == "") {
-            		reqString += "..."
+            		reqString += "<i class=\"fa fa-check-square-o\" title=\"{{ _('installierte Version') }}\"></i>"
             	}
                 reqString += " <= "+element['vers_req_max'];
             }
         } else if (element['vers_req_min'] != '' && element['vers_req_min'] != '' && (element['vers_req_min'] == element['vers_req_max'])) {
-            reqString += "== "+element['vers_req_min'];
+            reqString += "<i class=\"fa fa-check-square-o\" title=\"{{ _('installierte Version') }}\"></i> == "+element['vers_req_min'];
          } else {
             if (element['vers_req_min'] != '') {
                 reqString += ">= "+element['vers_req_min'];
