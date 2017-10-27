@@ -308,6 +308,7 @@ class Database(SmartPlugin):
 
                 # Test connectivity
                 if self._db.verify(5) == 0:
+                    self._buffer_insert(item, tuples)
                     self.logger.error("Database: Connection not recovered, skipping dump");
                     self._dump_lock.release()
                     return
