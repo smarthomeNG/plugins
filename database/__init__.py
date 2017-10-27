@@ -390,9 +390,17 @@ class Database(SmartPlugin):
         init = not update
         if sid is None:
             sid = item + '|' + func + '|' + str(start) + '|' + str(end)  + '|' + str(count)
+        sum_args = ['!=', '0']
+        if func.startswith('count'):
+            sum_parts = re.match('(count)(<>|!=|<|>)(\d+)', func)
+            func = 'count'
+            if sum_parts:
+                sum_args[0] = sum_parts.group(2)
+                sum_args[1] = sum_parts.group(3)
         queries = {
             'avg' : 'MIN(time), ROUND(AVG(val_num * duration) / AVG(duration), 2)',
             'avg.order' : 'ORDER BY time ASC',
+            'count' : 'MIN(time), SUM(CASE WHEN val_num{}{} THEN 1 ELSE 0 END)'.format(*sum_args),
             'min' : 'MIN(time), MIN(val_num)',
             'max' : 'MIN(time), MAX(val_num)',
             'on'  : 'MIN(time), ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
