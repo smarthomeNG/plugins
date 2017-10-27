@@ -26,6 +26,7 @@ The `log` table contains the following columns:
 
   * Column `time` - the unix timestamp in microseconds of value
   * Column `item_id` - the reference to the unique ID in `item` table
+  * Column `duration` - the duration in microseconds
   * Column `val_str` - the string value if type is `str`
   * Column `val_num` - the number value if type is `num`
   * Column `val_bool` - the boolean value if type is `bool` or `num`
