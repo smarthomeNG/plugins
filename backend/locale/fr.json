@@ -164,6 +164,8 @@
 	"drücken": "pousser",
 	"CONF-YAML Konverter": "Convertisseur .conf vers .yaml",
 	"Pakete ohne Requirements": "",
+	"Version unterstützt!": "",
+	"Version nicht zulässig!": "",
 
 	"_items": {
 		"path": "Chemin",

@@ -180,7 +180,7 @@ $.getJSON('pypi.json', function(result) {
 
 		if (element['is_required'] && element['vers_recent'] != true) {
 	        if ((element['pypi_version'] != '-') && (element['pypi_version'] != element['vers_installed'])) {
-    	        table_row += "&nbsp;<i class=\"fa fa-bell-o\"></i>";
+    	        table_row += "&nbsp;<i class=\"fa fa-info-circle\" title=\"{{ _('Version unterstützt!') }}\"></i>";
         	}
         }
 

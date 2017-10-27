@@ -163,6 +163,8 @@
 	"drücken": "drücken",
 	"CONF-YAML Konverter": "CONF-YAML Konverter",
 	"Pakete ohne Requirements": "Pakete ohne Requirements",
+	"Version unterstützt!": "Version unterstützt!",
+	"Version nicht zulässig!": "Version nicht zulässig!",
 
 	"_items": {
 		"path": "Pfad",
