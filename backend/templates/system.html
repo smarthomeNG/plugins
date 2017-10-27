@@ -180,8 +180,10 @@ $.getJSON('pypi.json', function(result) {
 
 		if (element['is_required'] && element['vers_recent'] != true) {
 	        if ((element['pypi_version'] != '-') && (element['pypi_version'] != element['vers_installed'])) {
-    	        table_row += "&nbsp;<i class=\"fa fa-info-circle\" title=\"{{ _('Version unterstützt!') }}\"></i>";
+    	        table_row += "&nbsp;<i class=\"fa fa-check-circle\" title=\"{{ _('Version unterstützt!') }}\"></i>";
         	}
+        } else if (element['is_required'] && element['pypi_version'] != '-' && !element['pypi_version_ok']) {
+            table_row += "&nbsp;<i class=\"fa fa-exclamation-circle\" title=\"{{ _('Version nicht zulässig!') }}\"></i>";
         }
 
         table_row += "</td></tr>";

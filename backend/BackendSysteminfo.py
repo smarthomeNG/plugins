@@ -142,7 +142,7 @@ class BackendSysteminfo:
             vers_req_min                     str    required minimum version
             vers_req_max                     str    required maximum version
 -            vers_req_msg                     str
-            vers_ok                          bool   installed version meeds requirements
+            vers_ok                          bool   installed version meets requirements
             vers_recent                      bool   installed version is the req_max or the newest on PyPI
             
             pypi_version                     str    newest package version on PyPI
