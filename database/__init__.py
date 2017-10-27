@@ -392,7 +392,7 @@ class Database(SmartPlugin):
             sid = item + '|' + func + '|' + str(start) + '|' + str(end)  + '|' + str(count)
         sum_args = ['!=', '0']
         if func.startswith('count'):
-            sum_parts = re.match('(count)(<>|!=|<|>)(\d+)', func)
+            sum_parts = re.match('(count)(<>|!=|<|=|>)(\d+)', func)
             func = 'count'
             if sum_parts:
                 sum_args[0] = sum_parts.group(2)
