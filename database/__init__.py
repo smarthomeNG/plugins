@@ -396,7 +396,8 @@ class Database(SmartPlugin):
             'min' : 'MIN(time), MIN(val_num)',
             'max' : 'MIN(time), MAX(val_num)',
             'on'  : 'MIN(time), ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
-            'on.order' : 'ORDER BY time ASC'
+            'on.order' : 'ORDER BY time ASC',
+            'sum' : 'MIN(time), SUM(val_num)'
         }
         if func not in queries:
             raise NotImplementedError
@@ -432,7 +433,8 @@ class Database(SmartPlugin):
             'avg' : 'ROUND(AVG(val_num * duration) / AVG(duration), 2)',
             'min' : 'MIN(val_num)',
             'max' : 'MAX(val_num)',
-            'on'  : 'ROUND(SUM(val_bool * duration) / SUM(duration), 2)'
+            'on'  : 'ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
+            'sum' : 'SUM(val_num)'
         }
         if func not in queries:
             self.logger.warning("Unknown export function: {0}".format(func))
