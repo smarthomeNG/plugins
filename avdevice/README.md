@@ -46,6 +46,7 @@ avdevice:
 #### Attributes:
 
 * `model`: string. name of AV device. Has to correspond to a text file with the same name in the folder plugins/avdevice.
+* `manufacturer`: string. Name of manufacturer. Not necessary usually but maybe with Epson projectors.
 * `instance`: string. define instance name, each device needs an individual instance name!
 * `tcp`: list of values. if you use TCP connection define IP address and port, separated by a ","
 * `rs232`: list of values. if you use a RS232 cable to communicate with your device (highly recommended!) define port, baudrate, timeout and write timeout separated by ","
@@ -60,11 +61,9 @@ avdevice:
 * `sendretries`: integer. This value defines how often a command should be sent when receiving a wrong answer from the device.
 * `resendwait`: float. Seconds the plugin should wait between each resend retry.
 * `reconnectretries`: integer. If the plugin can not connect to the device it retries this often. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device. 
-* `reconnectcycle`: integer. Seconds the plugin should wait between each reconnect retry.
 * `secondstokeep`: integer. Seconds the plugin should temporarily save a command to retry later on after establishing a connection. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device. 
 * `responsebuffer`: integer or boolean. Set this to a negative number to collect quickly received responses in a buffer and evaluate them collectively. The standard value should be fine and prevent responses getting lost. Some receivers might first respond to a command with an update of the display and then with the actual value. The buffer ensures the correct evaluation of the response. 
 * `autoreconnect`: boolean. Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command.
-
 
 ### items.yaml
 
@@ -174,7 +173,7 @@ Each line holds one specific command that should be sent to the device. You also
 
 * `query`: Query command. This is usually useful after setting up the connection or turning on the power. This command gets also used if the plugin doesn't receive the correct answer after sending a command.
 
-* `response`: The expected response after sending a command. Use "none" if you don't want to wait for the correct response. You can use stars "\*" again to ensure that the exact correct value is set. Example: You set the volume to 100. If you want to ensure that the device responds with any value for volume just use "VOL" here (or whatever response your device sends). If you want to ensure that the device is set to a volume of 100, use stars as placeholders, e.g. "VOL\*\*\*" for 3 digits.
+* `response`: The expected response after sending a command. Use "none" if you don't want to wait for the correct response. You can use stars "\*" again to ensure that the exact correct value is set. Example: You set the volume to 100. If you want to ensure that the device responds with any value for volume just use "VOL" here (or whatever response your device sends). If you want to ensure that the device is set to a volume of 100, use stars as placeholders, e.g. "VOL\*\*\*" for 3 digits. You can even specify multiple response possibilities separated by "|".
 
 * `readwrite`: R for read only, W for write only, RW for Read and Write. E.g. display values are read only whereas turning the volume up might be a write operation only. Setting this correctly ensures a fast and reliable plugin operation
 
@@ -187,7 +186,7 @@ Each line holds one specific command that should be sent to the device. You also
 #### Example
 
 ```
-# plugins/avdevice/model.txt
+# plugins/avdevice/pioneer.txt
 ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE
 1;power on;PO|PO;?P;PWR*;RW;yes
 1;power off;PF;?P;PWR*;RW;yes
@@ -230,3 +229,7 @@ ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE
 0;display;?FL;?FL;FL******************************;R
 
 ```
+
+### Debugging
+
+You can use level 9 (VERBOSE1) and 8 (VERBOSE2) as debugging levels in logging.yaml
