@@ -141,12 +141,8 @@ $.getJSON('pypi.json', function(result) {
             	var versionInstalledIcon = "fa-times-rectangle-o";
 	        }
 		} else {
-            if (element['vers_recent']) {
-    	        fontColorInstalled = "green";
-	            fontColorPyPi = "black";
-            } else {
-    	        fontColorInstalled = "black";
-    	    }
+		    fontColorPyPi = "black";
+		    fontColorInstalled = "black";
 		}
         reqString = '';
         /* MIN and MAX filled, MIN != MAX */
