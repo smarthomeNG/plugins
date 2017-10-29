@@ -386,7 +386,7 @@ class BackendLogics:
                 
             fobj = open(pathname)
             for line in fobj:
-                file_lines.append(self.html_escape(line))
+                file_lines.append(html.escape(line))
             fobj.close()
         return file_lines
 
