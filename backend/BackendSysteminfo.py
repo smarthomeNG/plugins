@@ -140,7 +140,7 @@ class BackendSysteminfo:
             is_required                      bool   is package required by SmartHomeNG?
             is_required_for_testsuite        bool   is package required for the testsuite?
             is_required_for_docbuild         bool   is package required for building documentation with Sphinx?
-            vers_req_souce                   str    requirements as defined inrequirements.txt
+            vers_req_source                   str    requirements as defined inrequirements.txt
             vers_req_min                     str    required minimum version
             vers_req_max                     str    required maximum version
 -            vers_req_msg                     str
@@ -199,7 +199,7 @@ class BackendSysteminfo:
             package['vers_req_min'] = ''
             package['vers_req_max'] = ''
             package['vers_req_msg'] = ''
-            package['vers_req_souce'] = ''
+            package['vers_req_source'] = ''
 
             package['vers_ok'] = False
             package['vers_recent'] = False
@@ -231,7 +231,7 @@ class BackendSysteminfo:
                 package['is_required'] = True
                 # tests for min, max versions
                 rmin, rmax, rtxt = self.check_requirement(package['name'], req_dict.get(package['name'], ''))
-                package['vers_req_souce'] = req_dict.get(package['name'], '')
+                package['vers_req_source'] = req_dict.get(package['name'], '')
                 package['vers_req_min'] = rmin
                 package['vers_req_max'] = rmax
                 package['vers_req_msg'] = rtxt
@@ -240,7 +240,7 @@ class BackendSysteminfo:
                 package['is_required_for_docbuild'] = True
                 # tests for min, max versions
                 rmin, rmax, rtxt = self.check_requirement(package['name'], req_doc_dict.get(package['name'], ''))
-                package['vers_req_souce'] = req_doc_dict.get(package['name'], '')
+                package['vers_req_source'] = req_doc_dict.get(package['name'], '')
                 package['vers_req_min'] = rmin
                 package['vers_req_max'] = rmax
                 package['vers_req_msg'] = rtxt
@@ -249,7 +249,7 @@ class BackendSysteminfo:
                 package['is_required_for_testsuite'] = True
                 # tests for min, max versions
                 rmin, rmax, rtxt = self.check_requirement(package['name'], req_test_dict.get(package['name'], ''))
-                package['vers_req_souce'] = req_test_dict.get(package['name'], '')
+                package['vers_req_source'] = req_test_dict.get(package['name'], '')
                 package['vers_req_min'] = rmin
                 package['vers_req_max'] = rmax
                 package['vers_req_msg'] = rtxt

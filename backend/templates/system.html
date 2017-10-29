@@ -118,6 +118,7 @@ $.getJSON('pypi.json', function(result) {
 			}
         }
 
+
         fontWeight = '';
         if (element['is_required']) {
             fontWeight = "font-weight: bold;";
@@ -128,7 +129,8 @@ $.getJSON('pypi.json', function(result) {
         var versionInstalledIcon = "";
         var versionInstalledText = "{{ _('Version nicht zulässig!') }}";
 
-		if (element['is_required'] || element['is_required_for_testsuite'] || element['is_required_for_docbuild']) {
+        /* color codes and icons */
+		if (element['is_required'] || element['is_required_for_docbuild'] || element['is_required_for_testsuite'] ) {
 	        if (element['vers_ok']) {
                 versionInstalledIcon = "fa-check-square-o";
                 versionInstalledText = "{{ _('Version unterstützt!') }}";
@@ -158,38 +160,43 @@ $.getJSON('pypi.json', function(result) {
 			    fontColorInstalled = "black";
 			}
 		}
+
+		/* Build String for requirements column */
         reqString = '';
         /* MIN and MAX filled, MIN != MAX */
-        if (element['vers_req_min'] != '' && element['vers_req_max'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
-            reqString += element['vers_req_min']+" <= <i class=\"fa "+versionInstalledIcon+"\" title=\"{{ _('installierte Version') }}\"></i>"
-            if (reqString == "") {
-            	reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\" style=\"color: "+fontColorInstalled+"\"></i>"
+        if (element['is_required'] || element['is_required_for_docbuild'] || element['is_required_for_testsuite'] ) {
+            if (element['vers_req_min'] != '' && element['vers_req_max'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
+                reqString += element['vers_req_min']+" <= <i class=\"fa "+versionInstalledIcon+"\" title=\"{{ _('installierte Version') }}\"></i>"
+                if (reqString == "") {
+                    reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\" style=\"color: "+fontColorInstalled+"\"></i>";
+                }
+                reqString += " <= "+element['vers_req_max'];
             }
-            reqString += " <= "+element['vers_req_max'];
+            /* ELSE: MIN and MAX filled, MIN == MAX */
+            else if (element['vers_req_min'] != '' && element['vers_req_max'] != '' && (element['vers_req_min'] == element['vers_req_max'])) {
+                reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> == "+element['vers_req_min'];
+            }
+            /* ELSE: MIN or MAX filled */
+            else {
+                if (element['vers_req_min'] != '') {
+                    reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> "+" >= "+element['vers_req_min'];
+                } else if (element['vers_req_max'] != '') {
+                    reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> "+"<= "+element['vers_req_max'];
+                }
+            }
+            /* Element required due to Doku, Testsuite or SmartHomeNG in general, but no MIN and MAX version -> all versions valid */
+            if (reqString == '') {
+                reqString = "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> == *";
+            }
+            if (element['vers_req_source'] != '') {
+                reqTextString = element['vers_req_source'];
+            } else {
+                reqTextString = "";
+            }
         }
-        /* ELSE: MIN and MAX filled, MIN == MAX */
-        else if (element['vers_req_min'] != '' && element['vers_req_max'] != '' && (element['vers_req_min'] == element['vers_req_max'])) {
-            reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> == "+element['vers_req_min'];
-        }
-        /* ELSE: MIN or MAX filled */
+        /* Element not required, requirements unclear, set "-" */
         else {
-            if (element['vers_req_min'] != '') {
-                reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> "+" >= "+element['vers_req_min'];
-            } else if (element['vers_req_max'] != '') {
-                reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> "+"<= "+element['vers_req_max'];
-            }
-        }
-		if (reqString == '') {
-		    if (element['is_required']) {
-	            reqString = "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> == *";
-	        } else {
-	            reqString = "-";
-	        }
-        }
-        if (element['vers_req_souce'] != '') {
-            reqTextString = element['vers_req_souce'];
-        } else {
-            reqTextString = "";
+            reqString = "-"
         }
 
         /* If there is detailed content, set folding layout */
@@ -200,6 +207,7 @@ $.getJSON('pypi.json', function(result) {
             foldingStyle = "cursor: pointer;";
         }
 
+        /* Link package PyPi URL */
         var packageName = element['name'];
         if (element['pypi_doc_url'] != '') {
             packageName = "<a target=\"_blank\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
@@ -214,7 +222,7 @@ $.getJSON('pypi.json', function(result) {
             "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
 		if (element['vers_recent'] != true && element['pypi_version_ok']) {
 	        if ((element['pypi_version'] != '') && (element['pypi_version'] != element['vers_installed'])) {
-	            if (!element['is_required'] && !element['is_required_for_testsuite'] && !element['is_required_for_docbuild']) {
+	            if (!element['is_required']) {
 	                table_row += "&nbsp;<i class=\"fa fa-info-circle\" title=\"{{ _('Neuste Version!') }}\"></i>";
 	            } else {
 	                table_row += "&nbsp;<i class=\"fa fa-check-circle\" title=\"{{ _('Version unterstützt!') }}\"></i>";
