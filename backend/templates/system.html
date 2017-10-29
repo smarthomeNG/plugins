@@ -222,7 +222,8 @@ $.getJSON('pypi.json', function(result) {
             "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
 		if (element['vers_recent'] != true && element['pypi_version_ok']) {
 	        if ((element['pypi_version'] != '') && (element['pypi_version'] != element['vers_installed'])) {
-	            if (!element['is_required']) {
+	            /* Element not required? Don't set that the PyPi version is supported */
+	            if (!element['is_required'] && !element['is_required_for_docbuild'] && !element['is_required_for_testsuite'] ) {
 	                table_row += "&nbsp;<i class=\"fa fa-info-circle\" title=\"{{ _('Neuste Version!') }}\"></i>";
 	            } else {
 	                table_row += "&nbsp;<i class=\"fa fa-check-circle\" title=\"{{ _('Version unterstützt!') }}\"></i>";
