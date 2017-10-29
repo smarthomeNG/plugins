@@ -278,7 +278,7 @@ class BackendSysteminfo:
                         package['vers_recent'] = True        
             
             # check if installed verison is ok
-            if package['is_required']:
+            if package['is_required'] or package['is_required_for_testsuite'] or package['is_required_for_docbuild']:
                 self.logger.info("required package {}:".format(package['name']))
                 package['vers_ok'] = True
                 if self.compare_versions(package['vers_req_min'], package['vers_installed'], '>'):
