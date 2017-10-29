@@ -178,13 +178,21 @@ $.getJSON('pypi.json', function(result) {
             reqTextString = "";
         }
 
+        /* If there is detailed content, set folding layout */
+        var foldingElement = '';
+        var foldingStyle = '';
+        if (reqTextString != '') {
+            foldingElement = "onClick=\"$('#"+index+"_requirements_detail').toggle();\"";
+            foldingStyle = "cursor: pointer;";
+        }
 
-        var table_row =  "<tr style=\"cursor: pointer;\" onClick=\"$('#"+index+"_requirements_detail').toggle();\">"+
+        /* Build row for normal content */
+        var table_row = '';
+        table_row =  "<tr style=\""+foldingStyle+"\" "+foldingElement+"\">"+
             "<td style=\""+fontWeight+"\">"+element['name']+"</td>"+
             "<td style=\"color: "+fontColorInstalled+"\">"+element['vers_installed']+"</td>"+
             "<td>"+reqString+"</td>"+
             "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
-
 		if (element['vers_recent'] != true && element['pypi_version_ok']) {
 	        if ((element['pypi_version'] != '') && (element['pypi_version'] != element['vers_installed'])) {
     	        table_row += "&nbsp;<i class=\"fa fa-check-circle\" title=\"{{ _('Version unterstützt!') }}\"></i>";
@@ -192,15 +200,25 @@ $.getJSON('pypi.json', function(result) {
         } else if (element['pypi_version'] != '-' && !element['pypi_version_ok']) {
             table_row += "&nbsp;<i class=\"fa fa-exclamation-circle\" title=\"{{ _('Version nicht zulässig!') }}\"></i>";
         }
+        table_row += "</td></tr>"
 
-        table_row += "</td></tr>";
-        var table_row_requiremtents_detail = "<tr id=\""+index+"_requirements_detail\" "+
-            "style=\"display: none; cursor: pointer; background: #333;\" onClick=\"$('#"+index+"_requirements_detail').toggle();\">"+
-            "<td colspan=\"4\"><div class=\"panel panel-default\" style=\"margin-bottom: 5px;\">"+
-            "<div class=\"panel-heading\">{{ _('Anforderungen') }} (requirements.txt)</div>"+
-            "<div class=\"panel-body\">"+reqTextString+"</div></div><td></tr>";
+        /* Build row for foldable content */
+        var table_row_requirements_detail = '';
+        if (reqTextString != '') {
+            table_row_requirements_detail =
+                "<tr id=\""+index+"_requirements_detail\" "+
+                "style=\"display: none; "+foldingStyle+" background: #333;\" "+foldingElement+"\">";
+            table_row_requirements_detail +=
+                "<td colspan=\"4\">";
+            table_row_requirements_detail +=
+                "<div class=\"panel panel-default\" style=\"margin-bottom: 5px;\">"+
+                "<div class=\"panel-heading\">{{ _('Anforderungen') }} (requirements.txt)</div>"+
+                "<div class=\"panel-body\">"+reqTextString+"</div></div>";
+            table_row_requirements_detail +=
+                "</td></tr>";
+        }
 
-        $('#package_check').find("tbody").append(table_row + table_row_requiremtents_detail);
+        $('#package_check').find("tbody").append(table_row + table_row_requirements_detail);
     });
     $('#spinner').hide();
     $('#tab_pypi').removeClass("disabled");
