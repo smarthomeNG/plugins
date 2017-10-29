@@ -117,7 +117,7 @@ $.getJSON('pypi.json', function(result) {
             fontWeight = "font-weight: bold;";
         }
 
-        var fontColorPyPi = "green";
+        var fontColorPyPi = "black";
         var fontColorInstalled = "";
         var versionInstalledIcon = "";
         var versionInstalledText = "{{ _('Version nicht zulässig!') }}";
@@ -135,9 +135,13 @@ $.getJSON('pypi.json', function(result) {
 	                }
 	            } else {
 	    	        fontColorInstalled = "black";
+					fontColorPyPi = "green";
 	    	    }
         	} else {
             	fontColorInstalled = "red";
+	   	        if (!element['pypi_version_ok']) {
+                    fontColorPyPi = "red";
+                }
             	var versionInstalledIcon = "fa-times-rectangle-o";
 	        }
 		} else {

@@ -253,11 +253,12 @@ class BackendSysteminfo:
                     max = '99999'
                 if self.compare_versions(max, package['vers_installed'], '<'):
                     package['vers_ok'] = False
+                    package['vers_recent'] = False
                 if self.compare_versions(max, package['vers_installed'], '=='):
                     package['vers_recent'] = True
-                    if package['pypi_version_ok'] != '':
-                        if self.compare_versions(package['pypi_version'], package['vers_installed'], '>'):
-                            package['pypi_version_ok'] = False
+                if package['pypi_version'] != '':
+                    if self.compare_versions(package['pypi_version'], package['vers_installed'], '<') or self.compare_versions(package['pypi_version'], max, '>'):
+                        package['pypi_version_ok'] = False
 
             package_list.append(package)
 
