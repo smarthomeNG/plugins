@@ -204,19 +204,18 @@ $.getJSON('pypi.json', function(result) {
         var foldingElement = '';
         var foldingStyle = '';
         if (reqTextString != '') {
-            foldingElement = "onClick=\"$('#"+index+"_requirements_detail').toggle();\"";
             foldingStyle = "cursor: pointer;";
         }
 
         /* Link package PyPi URL */
         var packageName = element['name'];
         if (element['pypi_doc_url'] != '') {
-            packageName = "<a target=\"_blank\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
+            packageName = "<a target=\"_blank\" class=\"pypi_link\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
         }
 
         /* Build row for normal content */
         var table_row = '';
-        table_row =  "<tr style=\""+foldingStyle+"\" "+foldingElement+"\">"+
+        table_row =  "<tr style=\""+foldingStyle+"\" id=\""+index+"_unfold"+"\">"+
             "<td style=\""+fontWeight+"\">"+packageName+"</td>"+
             "<td style=\"color: "+fontColorInstalled+"\">"+element['vers_installed']+"</td>"+
             "<td>"+reqString+"</td>"+
@@ -244,7 +243,7 @@ $.getJSON('pypi.json', function(result) {
         if (reqTextString != '') {
             table_row_requirements_detail =
                 "<tr id=\""+index+"_requirements_detail\" "+
-                "style=\"display: none; "+foldingStyle+"\" "+foldingElement+"\">";
+                "style=\"display: none; "+foldingStyle+"\">";
             table_row_requirements_detail +=
                 "<td colspan=\"4\">";
             table_row_requirements_detail +=
@@ -257,6 +256,17 @@ $.getJSON('pypi.json', function(result) {
 
         /* Append assembled content */
         $('#package_check').find("tbody").append(table_row + table_row_requirements_detail);
+
+        /* Add onclick for table row, stop unfolding when clicking pypi link inside. */
+        $('#'+index+'_unfold').click(function(){
+            $('#'+index+'_requirements_detail').toggle();
+        });
+        $('#'+index+'_requirements_detail').click(function(){
+            $('#'+index+'_requirements_detail').toggle();
+        });
+        $('#'+index+'_unfold .pypi_link').click(function(e){
+            e.stopPropagation();
+        });
     });
 
     /* Hide spinner, activate tab, show DIV with content */
