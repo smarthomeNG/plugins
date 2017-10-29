@@ -109,7 +109,13 @@ $.getJSON('pypi.json', function(result) {
             newSort = newSort = element['sort'].substr(0,1);
         }
         if (oldSort != newSort) {
-            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
+            if (element['is_required_for_testsuite']) {
+	            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für die Testsuite') }}</td></tr>");
+			} else if (element['is_required_for_docbuild']) {
+	            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für den Bau der Dokumentation') }}</td></tr>");
+            } else {
+	            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
+			}
         }
 
         fontWeight = '';

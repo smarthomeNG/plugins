@@ -173,6 +173,8 @@ def create_hash(plaintext):
 def parse_requirements(file_path):
     fobj = open(file_path)
     req_dict = {}
+    logger = logging.getLogger(__name__)
+    logger.warning("parse_requirements: file_path = {}, fobj = {}".format(file_path, fobj))
     for rline in fobj:
         line = ''
         if len(rline) > 0:

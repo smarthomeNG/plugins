@@ -138,6 +138,8 @@ class BackendSysteminfo:
             name                             str    Name of package
             vers_installed                   str    Installed version of that package
             is_required                      bool   is package required by SmartHomeNG?
+            is_required_for_testsuite        bool   is package required for the testsuite?
+            is_required_for_docbuild         bool   is package required for building documentation with Sphinx?
             vers_req_souce                   str    requirements as defined inrequirements.txt
             vers_req_min                     str    required minimum version
             vers_req_max                     str    required maximum version
@@ -179,7 +181,10 @@ class BackendSysteminfo:
         installed_packages = pip.get_installed_distributions()
         pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
 
-        req_dict = self.get_requirements_info()
+        req_dict = self.get_requirements_info('base')
+        req_test_dict = self.get_requirements_info('test')
+        req_doc_dict = self.get_requirements_info('doc')
+        self.logger.info("pypi_json: req_doc_dict {}".format(req_doc_dict))
 
         package_list = []
 
@@ -188,6 +193,8 @@ class BackendSysteminfo:
             package['name'] = dist.key
             package['vers_installed'] = dist.version
             package['is_required'] = False
+            package['is_required_for_testsuite'] = False
+            package['is_required_for_docbuild'] = False
 
             package['vers_req_min'] = ''
             package['vers_req_max'] = ''
@@ -216,6 +223,10 @@ class BackendSysteminfo:
                 package['pypi_version_not_available_msg'] = pypi_unavailable_message
             package['pypi_doc_url'] = 'https://pypi.python.org/pypi/' + dist.project_name
 
+            if package['name'].startswith('url'):
+                self.logger.info("pypi_json: urllib: package['name'] = >{}<, req_dict.get(package['name'] = >{}<".format(package['name'], req_dict.get(package['name'])))
+
+            # test if package belongs to to SmartHomeNG requirements
             if req_dict.get(package['name'], '') != '':
                 package['is_required'] = True
                 # tests for min, max versions
@@ -225,10 +236,34 @@ class BackendSysteminfo:
                 package['vers_req_max'] = rmax
                 package['vers_req_msg'] = rtxt
 
+            if req_doc_dict.get(package['name'], '') != '':
+                package['is_required_for_docbuild'] = True
+                # tests for min, max versions
+                rmin, rmax, rtxt = self.check_requirement(package['name'], req_doc_dict.get(package['name'], ''))
+                package['vers_req_souce'] = req_doc_dict.get(package['name'], '')
+                package['vers_req_min'] = rmin
+                package['vers_req_max'] = rmax
+                package['vers_req_msg'] = rtxt
+
+            if req_test_dict.get(package['name'], '') != '':
+                package['is_required_for_testsuite'] = True
+                # tests for min, max versions
+                rmin, rmax, rtxt = self.check_requirement(package['name'], req_test_dict.get(package['name'], ''))
+                package['vers_req_souce'] = req_test_dict.get(package['name'], '')
+                package['vers_req_min'] = rmin
+                package['vers_req_max'] = rmax
+                package['vers_req_msg'] = rtxt
+
             if package['is_required']:
                 package['sort'] = '1'
-            else:
+            elif package['is_required_for_testsuite']:
                 package['sort'] = '2'
+            elif package['is_required_for_docbuild']:
+                package['sort'] = '3'
+            else:
+                package['sort'] = '4'
+                self.logger.info("pypi_json: sort=4, package['name'] = >{}<".format(package['name']))
+                
             package['sort'] += package['name']
 
             # check if installed verison is recent (compared to PyPI)
@@ -271,35 +306,50 @@ class BackendSysteminfo:
         return json.dumps(sorted_package_list)
 
 
-    def get_requirements_info(self):
+    def get_requirements_info(self, req_group='base'):
         """
         """
         req_dict = {}
-        req_dict_base = parse_requirements("%s/requirements/base.txt" % self._sh_dir)
+        if req_group == 'base':
+#            req_dict_base = parse_requirements("%s/requirements/base.txt" % self._sh_dir)
+            req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'requirements', 'base.txt'))
+        elif req_group == 'test':
+            req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'tests', 'requirements.txt'))
+            self.logger.info("get_requirements_info: filepath = {}".format(os.path.join(self._sh_dir, 'tests', 'requirements.txt')))
+        elif req_group == 'doc':
+            req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'doc', 'requirements.txt'))
+            self.logger.info("get_requirements_info: filepath = {}".format(os.path.join(self._sh_dir, 'doc', 'requirements.txt')))
+        else:
+            self.logger.error("get_requirements_info: Unknown requirements group '{}' requested".format(req_group))
 
-        # parse loaded plugins and look for requirements
-        _conf = lib.config.parse(self._sh._plugin_conf)
-        plugin_names = []
-        for plugin in _conf:
-            plugin_name = _conf[plugin].get('class_path', '').strip()
-            if plugin_name == '':
-                plugin_name = 'plugins.' + _conf[plugin].get('plugin_name', '').strip() 
-            if not plugin_name in plugin_names:  # only unique plugin names, e.g. if multiinstance is used
-                plugin_names.append(plugin_name)
+        if req_group == 'base':
+            # parse loaded plugins and look for requirements
+            _conf = lib.config.parse(self._sh._plugin_conf)
+            plugin_names = []
+            for plugin in _conf:
+                plugin_name = _conf[plugin].get('class_path', '').strip()
+                if plugin_name == '':
+                    plugin_name = 'plugins.' + _conf[plugin].get('plugin_name', '').strip() 
+                if not plugin_name in plugin_names:  # only unique plugin names, e.g. if multiinstance is used
+                    plugin_names.append(plugin_name)
+            self.logger.info("get_requirements_info: len(_conf) = {}, len(plugin_names) = {}, plugin_names = {}".format(len(_conf), len(plugin_names), plugin_names))
 
-        req_dict = req_dict_base.copy()
-        for plugin_name in plugin_names:
-            file_path = "%s/%s/requirements.txt" % (self._sh_dir, plugin_name.replace("plugins.", "plugins/"))
-            if os.path.isfile(file_path):
-                plugin_dict = parse_requirements(file_path)
-                for key in plugin_dict:
-                    if key not in req_dict:
-                        req_dict[key] = plugin_dict[key] + ' (' + plugin_name.replace('plugins.', '') + ')'
-                    else:
-                        req_dict[key] = req_dict[key] + '<br/>' + plugin_dict[key] + ' (' + plugin_name.replace(
-                            'plugins.', '') + ')'
+            req_dict = req_dict_base.copy()
+            for plugin_name in plugin_names:
+                file_path = "%s/%s/requirements.txt" % (self._sh_dir, plugin_name.replace("plugins.", "plugins/"))
+                if os.path.isfile(file_path):
+                    plugin_dict = parse_requirements(file_path)
+                    for key in plugin_dict:
+                        if key not in req_dict:
+                            req_dict[key] = plugin_dict[key] + ' (' + plugin_name.replace('plugins.', '') + ')'
+                        else:
+                            req_dict[key] = req_dict[key] + '<br/>' + plugin_dict[key] + ' (' + plugin_name.replace(
+                                'plugins.', '') + ')'
 
-        self.logger.info("get_requirements_info: req_dict = {}".format(req_dict))
+        if req_group in ['doc','test']:
+            req_dict = req_dict_base.copy()
+
+        self.logger.info("get_requirements_info: req_dict for group {} = {}".format(req_group, req_dict))
         return req_dict
             
     
@@ -337,7 +387,7 @@ class BackendSysteminfo:
         if v1 > v2 and operator in ['>','>=']:
             result = True
             
-        self.logger.info("compare_versions: - - - v1 = {}, v2 = {}, operator = '{}', result = {}".format(v1, v2, operator, result))
+        self.logger.debug("compare_versions: - - - v1 = {}, v2 = {}, operator = '{}', result = {}".format(v1, v2, operator, result))
         return result
         
         
@@ -461,7 +511,7 @@ class BackendSysteminfo:
         reql = []
         for r in req2:
             reql.append(r.strip())
-        self.logger.info("req_split_source: - source {}, reql = {}".format(source, reql))
+        self.logger.debug("req_split_source: - source {}, reql = {}".format(source, reql))
 
         req_result = []
         for req in reql:
@@ -492,7 +542,7 @@ class BackendSysteminfo:
                         rmax = r
                 req_result.append([source, rmin, rmax])
 
-        self.logger.info("req_split_source: - package {} req_result = {}".format(package, req_result))
+        self.logger.debug("req_split_source: - package {} req_result = {}".format(package, req_result))
         if len(req_result) > 1:
             self.logger.warning("req_split_source: Cannot reconcile multiple version requirements for package {} for running Python version".format(package))
         else:
@@ -504,7 +554,6 @@ class BackendSysteminfo:
         """
         """
         pyversion = "{0}.{1}".format(sys.version_info[0], sys.version_info[1])
-        self.logger.info("check_requirement (in): package {}, pyversion {}, req_str = '{}'".format(package, pyversion, req_str))
         req_min = ''
         req_max = ''
         # split requirements
@@ -530,8 +579,7 @@ class BackendSysteminfo:
         # Now we have a list of [ requirement_source, min_version (with operator), max_version (with operator) ]
         if len(req_result) == 1:
             result = req_result[0]
-            self.logger.info("check_requirement: package {}, req_result = >{}<".format(package, req_result))
-            self.logger.info("check_requirement: package {}, result = >{}<".format(package, result))
+            self.logger.info("check_requirement: package {}, req_result = >{}<, result = >{}<".format(package, req_result, result))
             #handle min
             op, req_min = self.split_operator(result[1])
             if req_min == '*':
@@ -555,35 +603,6 @@ class BackendSysteminfo:
         if req_min != '' or req_max != '':
             req_txt = ''
 
-#        # split single requirement (within list) and normalise pyversion
-#        req_list = []
-#        for req in req_templist:
-#            if '|' in req:
-#                reqo = req.split('|')
-#            else:
-#                reqo = [req]
-#            
-#            reqoo = []
-#            for reqoi in reqo:
-#              if reqoi.find(';') == -1:
-#                 reqoi += ';python_version==*'
-#            reqoo.append(reqoi)
-#            req_list.append(reqoo)
-#            
-#        # Loop through all requirements of this package
-#        for req_str_list in req_list:
-#            for req_str in req_str_list:
-#                wrk = req_str.split(';')
-#                pkg_req = wrk[0]
-#                pkg_py = wrk[1]
-#                if pkg_py.find('python_version') != 0:
-#                    self.logger.error("check_requirement (x): Invalid requirement for package {} (python_version)".format(package))
-#                else:
-#                    pkg_py = pkg_py.replace('python_version', '')            
-#                self.logger.info("check_requirement (x): package {}, pyversion {}: pkg_req = {}, pkg_py = {}".format(package, pyversion, pkg_req, pkg_py))
-#            
-#        req_min = str(req_list)
-#        self.logger.info("check_requirement (x): package {}, pyversion {}: required, req_list = {}".format(package, pyversion, req_list))
         return req_min, req_max, req_txt
     
     
