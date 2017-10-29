@@ -128,7 +128,7 @@ $.getJSON('pypi.json', function(result) {
         var versionInstalledIcon = "";
         var versionInstalledText = "{{ _('Version nicht zulässig!') }}";
 
-		if (element['is_required']) {
+		if (element['is_required'] || element['is_required_for_testsuite'] || element['is_required_for_docbuild']) {
 	        if (element['vers_ok']) {
                 versionInstalledIcon = "fa-check-square-o";
                 versionInstalledText = "{{ _('Version unterstützt!') }}";
@@ -214,7 +214,7 @@ $.getJSON('pypi.json', function(result) {
             "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
 		if (element['vers_recent'] != true && element['pypi_version_ok']) {
 	        if ((element['pypi_version'] != '') && (element['pypi_version'] != element['vers_installed'])) {
-	            if (!element['is_required']) {
+	            if (!element['is_required'] && !element['is_required_for_testsuite'] && !element['is_required_for_docbuild']) {
 	                table_row += "&nbsp;<i class=\"fa fa-info-circle\" title=\"{{ _('Neuste Version!') }}\"></i>";
 	            } else {
 	                table_row += "&nbsp;<i class=\"fa fa-check-circle\" title=\"{{ _('Version unterstützt!') }}\"></i>";
