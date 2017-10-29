@@ -62,6 +62,7 @@
 	"Python Version": "Wersja Pythona",
 	"installierte Version": "Zainstalowana wersja",
 	"Neuste Version": "Najnowsza wersja",
+	"Neuste Version!": "",
 	"Keine Antwort von PyPI": "Brak odpowiedzi z  PyPI",
 	"PyPI nicht erreichbar": "PyPI niedostępne",
 	"PyPI Prüfung deaktiviert": "sprawdzanie PyPI wyłączone",

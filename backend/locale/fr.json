@@ -66,6 +66,7 @@
 	"in": "dans",
 	"installierte Version": "Version installée",
 	"Neuste Version": "Dernière version",
+	"Neuste Version!": "",
 	"Keine Antwort von PyPI": "Pas de réponse de PyPI",
 	"PyPI nicht erreichbar": "PyPI non accessible",
 	"PyPI Prüfung deaktiviert": "Vérification PyPI désactivée",

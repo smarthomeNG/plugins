@@ -146,7 +146,11 @@ $.getJSON('pypi.json', function(result) {
 	        }
 		} else {
 		    fontColorPyPi = "black";
-		    fontColorInstalled = "black";
+            if (element['vers_recent']) {
+    	        fontColorInstalled = "green";
+    	    } else {
+			    fontColorInstalled = "black";
+			}
 		}
         reqString = '';
         /* MIN and MAX filled, MIN != MAX */
