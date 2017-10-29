@@ -118,48 +118,56 @@ $.getJSON('pypi.json', function(result) {
             fontWeight = "font-weight: bold;";
         }
 
-        fontColorPyPi = "green";
+        var fontColorPyPi = "green";
+        var fontColorInstalled = "";
+        var versionInstalledIcon = "";
+        var versionInstalledText = "{{ _('Version nicht zulässig!') }}";
+
 		if (element['is_required']) {
 	        if (element['vers_ok']) {
+                versionInstalledIcon = "fa-check-square-o";
+                versionInstalledText = "{{ _('Version unterstützt!') }}";
 	            if (element['vers_recent']) {
-	    	        fontColor = "green";
+	    	        fontColorInstalled = "green";
 	    	        if (element['pypi_version_ok']) {
 	                    fontColorPyPi = "black";
 	                } else {
 	                    fontColorPyPi = "red";
 	                }
 	            } else {
-	    	        fontColor = "black";
+	    	        fontColorInstalled = "black";
 	    	    }
         	} else {
-            	fontColor = "red";
+            	fontColorInstalled = "red";
+            	var versionInstalledIcon = "fa-times-rectangle-o";
 	        }
 		} else {
             if (element['vers_recent']) {
-    	        fontColor = "green";
+    	        fontColorInstalled = "green";
 	            fontColorPyPi = "black";
             } else {
-    	        fontColor = "black";
+    	        fontColorInstalled = "black";
     	    }
 		}
         reqString = '';
-        if (element['vers_req_min'] != '' && element['vers_req_min'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
-            if (element['vers_req_min'] != '') {
-                reqString += element['vers_req_min']+" <= <i class=\"fa fa-check-square-o\" title=\"{{ _('installierte Version') }}\"></i>";
+        /* MIN and MAX filled, MIN != MAX */
+        if (element['vers_req_min'] != '' && element['vers_req_max'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
+            reqString += element['vers_req_min']+" <= <i class=\"fa "+versionInstalledIcon+"\" title=\"{{ _('installierte Version') }}\"></i>"
+            if (reqString == "") {
+            	reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\" style=\"color: "+fontColorInstalled+"\"></i>"
             }
-            if (element['vers_req_max'] != '') {
-            	if (reqString == "") {
-            		reqString += "<i class=\"fa fa-check-square-o\" title=\"{{ _('installierte Version') }}\"></i>"
-            	}
-                reqString += " <= "+element['vers_req_max'];
-            }
-        } else if (element['vers_req_min'] != '' && element['vers_req_min'] != '' && (element['vers_req_min'] == element['vers_req_max'])) {
-            reqString += "<i class=\"fa fa-check-square-o\" title=\"{{ _('installierte Version') }}\"></i> == "+element['vers_req_min'];
-         } else {
+            reqString += " <= "+element['vers_req_max'];
+        }
+        /* ELSE: MIN and MAX filled, MIN == MAX */
+        else if (element['vers_req_min'] != '' && element['vers_req_max'] != '' && (element['vers_req_min'] == element['vers_req_max'])) {
+            reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> == "+element['vers_req_min'];
+        }
+        /* ELSE: MIN or MAX filled */
+        else {
             if (element['vers_req_min'] != '') {
-                reqString += ">= "+element['vers_req_min'];
+                reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> "+" >= "+element['vers_req_min'];
             } else if (element['vers_req_max'] != '') {
-                reqString += "<= "+element['vers_req_max'];
+                reqString += "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> "+"<= "+element['vers_req_max'];
             }
         }
 		if (reqString == '') {
@@ -173,7 +181,7 @@ $.getJSON('pypi.json', function(result) {
 
 
         var table_row =  "<tr><td style=\""+fontWeight+"\">"+element['name']+"</td>"+
-            "<td style=\"color: "+fontColor+"\">"+element['vers_installed']+"</td>"+
+            "<td style=\"color: "+fontColorInstalled+"\">"+element['vers_installed']+"</td>"+
             "<td>"+reqString+"</td>"+
             "<td>"+reqTextString+"</td>"+
             "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
