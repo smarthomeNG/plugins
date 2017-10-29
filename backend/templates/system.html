@@ -170,7 +170,11 @@ $.getJSON('pypi.json', function(result) {
             }
         }
 		if (reqString == '') {
-	        reqString = '-';
+		    if (element['is_required']) {
+	            reqString = '*';
+	        } else {
+	            reqString = "-";
+	        }
         }
         if (element['vers_req_souce'] != '') {
             reqTextString = element['vers_req_souce'];
