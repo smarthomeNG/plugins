@@ -255,8 +255,11 @@ $.getJSON('pypi.json', function(result) {
                 "</td></tr>";
         }
 
+        /* Append assembled content */
         $('#package_check').find("tbody").append(table_row + table_row_requirements_detail);
     });
+
+    /* Hide spinner, activate tab, show DIV with content */
     $('#spinner').hide();
     $('#tab_pypi').removeClass("disabled");
     activateTab('#system_tabs a[href="#pypi"]');
