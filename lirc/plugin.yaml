@@ -3,7 +3,7 @@ plugin:
     # Global plugin attributes
     type: gateway                  # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Sendet Kommandos and lircd das wiederum IR-Signale an Geräte mit IR-Schnittstelle versendet'
+        de: 'Sendet Kommandos an lircd das wiederum IR-Signale an Geräte mit IR-Schnittstelle versendet'
         en: 'Sends commands to lircd that sends IR-signals to any device that has an IR-interface'
     maintainer: E3EAT
 #    tester:                       # Who tests this plugin?
@@ -27,13 +27,6 @@ parameters:
         description:
             de: 'Name der Plugin Instanz (SmartHomeNG Standard-Parameter). Die Angabe ist notwendig um den passenden lircd zu ermitteln wenn ein Befehl versendet werden soll.'
             en: 'Name of the plugin instance (SmartHomeNG standard parameter). This is mandatory to identify the matching lircd for a pending command.'
-
-    instance:
-        type: str
-        mandatory: True
-        description:
-            de: 'Eindeutiger Bezeichner der die Instanz benennt'
-            en: 'unique identifier that names the given instance'
 
     lirc_host:
         type: str
