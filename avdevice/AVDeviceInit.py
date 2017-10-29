@@ -373,7 +373,7 @@ class Init():
         try:
             self.logger.debug("Initializing {}: Starting to read file {}. Lock is {}".format(
                 self._name, self._model, self._threadlock_standard.locked()))
-            filename = '{}/plugins/avdevice_dev/{}.txt'.format(
+            filename = '{}/plugins/avdevice/{}.txt'.format(
                 self._sh.base_dir, self._model)
 
             commands = codecs.open(filename, 'r', 'utf-8')
