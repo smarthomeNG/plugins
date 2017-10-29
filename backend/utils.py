@@ -25,6 +25,7 @@
 import logging
 import json
 import os
+import html
 import collections
 from collections import OrderedDict
 
@@ -98,11 +99,11 @@ def load_translation(language):
     return True
 
 
-def html_escape(str):
-    str = str.rstrip().replace('<', '&lt;').replace('>', '&gt;')
-    str = str.rstrip().replace('(', '&#40;').replace(')', '&#41;')
-    html = str.rstrip().replace("'", '&#39;').replace('"', '&quot;')
-    return html
+#def html_escape(str):
+#    str = str.rstrip().replace('<', '&lt;').replace('>', '&gt;')
+#    str = str.rstrip().replace('(', '&#40;').replace(')', '&#41;')
+#    html = str.rstrip().replace("'", '&#39;').replace('"', '&quot;')
+#    return html
 
 
 def _get_translation_for_block(lang, txt, block):
@@ -159,7 +160,7 @@ def translate(txt, block=''):
         if tr == '':
             logger.info("Backend: -> Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
             tr = txt
-    return html_escape(tr)
+    return html.escape(tr)
 
 
 def create_hash(plaintext):

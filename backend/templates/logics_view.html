@@ -126,12 +126,10 @@
 			</td>
 		</tr>
 	</table>
-<input type="hidden" id="original_content" value="{% for line in logic_lines %}{{ line }}
-{% endfor %}"/>
+	<input type="hidden" id="original_content" value="{% for line in logic_lines %}{{ line }}{% endfor %}"/>
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
 		{% if logic_lines %}
-<textarea autocomplete="off" id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}
-{% endfor %}</textarea>
+			<textarea autocomplete="off" id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}{% endfor %}</textarea>
 			{% if updates %}</form>{% endif %}
 		{% else %}{{ _('no data available') }}{% endif %}
 	</div>

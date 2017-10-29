@@ -34,8 +34,7 @@
     <br style="clear:both;"/>
     <div class="container" style="width: 90%;">
 <pre id="log_print" class="prettyprint linenums{% if current_page > 1 %}:{{ (current_page-1) * 1000 +1}}{% endif %}" style="max-height: 600px;">
-{% if log_lines %}{% for line in log_lines %}{{ line }}
-{% endfor %}{% else %}{{ _('no data available') }}{% endif %}</pre></div>
+{% if log_lines %}{% for line in log_lines %}{{ line }}{% endfor %}{% else %}{{ _('no data available') }}{% endif %}</pre></div>
 <div class="container" style="width: 90%;">
 <table>
     <tr><td style="width: 50px; text-align: center;">

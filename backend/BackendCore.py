@@ -360,7 +360,7 @@ class BackendCore:
         log_level_hit = False
         total_counter = 0
         for line in fobj:
-            line_text = self.html_escape(line)
+            line_text = html.escape(line)
             if log_level_filter != "ALL" and not self.validate_date(line_text[0:10]) and log_level_hit:
                 if start <= counter < end:
                     log_lines.append(line_text)

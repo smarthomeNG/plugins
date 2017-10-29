@@ -247,16 +247,16 @@ class BackendItems:
 
             item_conf_sorted = collections.OrderedDict(sorted(item.conf.items(), key=lambda t: str.lower(t[0])))
             if item_conf_sorted.get('sv_widget', '') != '':
-                item_conf_sorted['sv_widget'] = self.html_escape(item_conf_sorted['sv_widget'])
+                item_conf_sorted['sv_widget'] = html.escape(item_conf_sorted['sv_widget'])
 
             logics = []
             for trigger in item.get_logic_triggers():
-                logics.append(self.html_escape(format(trigger)))
+                logics.append(html.escape(format(trigger)))
             triggers = []
             for trigger in item.get_method_triggers():
                 trig = format(trigger)
                 trig = trig[1:len(trig) - 27]
-                triggers.append(self.html_escape(format(trig.replace("<", ""))))
+                triggers.append(html.escape(format(trig.replace("<", ""))))
 
             data_dict = {'path': item._path,
                          'name': item._name,
