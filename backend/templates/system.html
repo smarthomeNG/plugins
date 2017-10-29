@@ -162,7 +162,8 @@ $.getJSON('pypi.json', function(result) {
 		}
 
 		/* Build String for requirements column */
-        reqString = '';
+        var reqString = '';
+        var reqTextString = '';
         /* MIN and MAX filled, MIN != MAX */
         if (element['is_required'] || element['is_required_for_docbuild'] || element['is_required_for_testsuite'] ) {
             if (element['vers_req_min'] != '' && element['vers_req_max'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
@@ -220,6 +221,8 @@ $.getJSON('pypi.json', function(result) {
             "<td style=\"color: "+fontColorInstalled+"\">"+element['vers_installed']+"</td>"+
             "<td>"+reqString+"</td>"+
             "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
+
+        /* Checks for icon next to PyPi Version */
 		if (element['vers_recent'] != true && element['pypi_version_ok']) {
 	        if ((element['pypi_version'] != '') && (element['pypi_version'] != element['vers_installed'])) {
 	            /* Element not required? Don't set that the PyPi version is supported */
@@ -232,6 +235,8 @@ $.getJSON('pypi.json', function(result) {
         } else if (element['pypi_version'] != '-' && !element['pypi_version_ok']) {
             table_row += "&nbsp;<i class=\"fa fa-exclamation-circle\" title=\"{{ _('Version nicht zulässig!') }}\"></i>";
         }
+
+        /* Close table row */
         table_row += "</td></tr>"
 
         /* Build row for foldable content */
