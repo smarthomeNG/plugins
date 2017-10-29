@@ -23,6 +23,7 @@
             </thead>
             <tbody>
                 {% for p in plugins  %}
+                {% set outer_loop = loop %}
                 <tr id="{{ loop.index }}_click" style="cursor: pointer;">
                     <td width="30px">{{ loop.index }}</td>
                     <td width="30px">
@@ -45,7 +46,13 @@
                         <td>
                             {% for webif in webifs %}
                             {% if webif['Instance'] == '' or webif['Instance'] == p.instancename %}
-                            <img src="static/img/html.svg" onClick="window.open('http://{{mod_http.get_local_ip_address()}}:{{mod_http.get_local_port()}}/{{ webif['Webifname'] }}')" style="width: 25px;"/>
+                            <img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="width: 25px;"/>
+                            <script>
+                                $('#webif_link_{{outer_loop.index}}_{{loop.index}}').click(function(e){
+                                    window.open('http://{{mod_http.get_local_ip_address()}}:{{mod_http.get_local_port()}}/{{ webif['Webifname'] }}')
+                                    e.stopPropagation();
+                                });
+                            </script>
                             {%endif%}
                             {% endfor %}
                         </td>
@@ -118,13 +125,13 @@
                     </td>
                 </tr>
                 <script>
-                $(document).on('click', 'tr', function(event){
-                    if (event.target.closest('tr').id == '{{ loop.index }}_click') {
-                        $('#'+event.target.closest('tr').id.replace('click', 'additional')).toggle();
-                    } else if (event.target.closest('tr').id == '{{ loop.index }}_additional') {
-                        $('#'+event.target.closest('tr').id).toggle();
-                    }
-                });
+                    /* If foldable content: add onclick for table row, stop unfolding when clicking pypi link inside. */
+                    $('#{{ loop.index }}_click').click(function(){
+                        $('#{{ loop.index }}_additional').toggle();
+                    });
+                    $('#{{ loop.index }}_additional').click(function(){
+                        $('#{{ loop.index }}_additional').toggle();
+                    });
                 </script>
                 {% endfor %}
             </tbody>
