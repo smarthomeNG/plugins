@@ -171,7 +171,7 @@ $.getJSON('pypi.json', function(result) {
         }
 		if (reqString == '') {
 		    if (element['is_required']) {
-	            reqString = '*';
+	            reqString = "<i class=\"fa "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i>";
 	        } else {
 	            reqString = "-";
 	        }
