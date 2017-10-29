@@ -20,20 +20,20 @@ plugin:
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     model: 
-        type: string
+        type: str
         description:
             de: 'Name des Geräts. Muss mit dem Namen der Textdatei unter plugins/avdevice korrelieren, die sämtliche Befehle beinhaltet.'
             en: 'Name of AV device. Has to correspond to a text file with the same name in the folder plugins/avdevice including all commands.'
 
     manufacturer: 
-        type: string
+        type: str
         default: ''
         description:
             de: 'Name des Herstellers. Normalerweise nicht notwendig, bei Epson Beamern sollte hier aber epson angegeben werden.'
             en: 'Name of manufacturer. Not necessary usually but maybe with Epson projectors'
 
     instance:
-        type: string
+        type: str
         description:
             de: 'Der Name der Instanz. Jedes Gerät muss als eigene Instanz eingetragen werden!'
             en: 'Define instance name, each device needs an individual instance name!'
