@@ -257,16 +257,18 @@ $.getJSON('pypi.json', function(result) {
         /* Append assembled content */
         $('#package_check').find("tbody").append(table_row + table_row_requirements_detail);
 
-        /* Add onclick for table row, stop unfolding when clicking pypi link inside. */
-        $('#'+index+'_unfold').click(function(){
-            $('#'+index+'_requirements_detail').toggle();
-        });
-        $('#'+index+'_requirements_detail').click(function(){
-            $('#'+index+'_requirements_detail').toggle();
-        });
-        $('#'+index+'_unfold .pypi_link').click(function(e){
-            e.stopPropagation();
-        });
+        if (reqTextString != '') {
+            /* Add onclick for table row, stop unfolding when clicking pypi link inside. */
+            $('#'+index+'_unfold').click(function(){
+                $('#'+index+'_requirements_detail').toggle();
+            });
+            $('#'+index+'_requirements_detail').click(function(){
+                $('#'+index+'_requirements_detail').toggle();
+            });
+            $('#'+index+'_unfold .pypi_link').click(function(e){
+                e.stopPropagation();
+            });
+        }
     });
 
     /* Hide spinner, activate tab, show DIV with content */
