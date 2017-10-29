@@ -29,7 +29,7 @@ from lib.model.smartplugin import SmartPlugin
 class NokiaHealth(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.3.1"
-    BASE_URL = "http://api.health.nokia.com/"
+    BASE_URL = "https://api.health.nokia.com/"
     ALLOWED_MEASURE_TYPES = [1, 4, 5, 6, 8, 11]
 
     # see https://developer.health.nokia.com/api/doc
