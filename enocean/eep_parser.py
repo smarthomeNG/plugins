@@ -187,6 +187,19 @@ class EEP_Parser():
         results['AD_1'] = (payload[1] >> 2) * 1.8 / pow(2, 6)
         results['AD_2'] = payload[0] * 1.8 / pow(2, 8)
         return results
+    
+    def _parse_eep_D2_01_07(self, payload, status):
+        #ORG = 0xD2
+        #logger.debug("enocean: processing D2_01_07: VLD Switch")
+        results = {}
+        #self.logger.info('enocean: D2 Switch Feedback  0:{} 1:{} 2:{}').format(payload[0],payload[1],payload[2])
+        if (payload[2] == 0x80):               # Switch is off
+            results['STAT'] = 0
+            self.logger.debug('enocean: D2 Switch off')
+        elif (payload[2] == 0xe4):             # Switch is on
+            results['STAT'] = 1
+            self.logger.debug('enocean: D2 Switch on')
+        return results
 
     def _parse_eep_D5_00_01(self, payload, status):
         #ORG = 0x06
@@ -240,6 +253,9 @@ class EEP_Parser():
             results['A'] = True
         elif (payload[0] == 0x10):
             results['A'] = False
+        # special extension for ELTAKO FSB61NP-230V status message compatibility:
+        elif (payload[0] == 0x02): 
+            results['B'] = False
         return results
 
     def _parse_eep_F6_10_00(self, payload, status):

@@ -10,14 +10,14 @@
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
 			</button>
-		<a class="navbar-brand" href="main.html"><img src="../static/img/logo_long.png" alt="SmartHomeNG Logo"></a>
+		<a class="navbar-brand" href="main.html"><img src="static/img/logo_long.png" alt="SmartHomeNG Logo"></a>
 		</div>
 
 	<!-- Collect the nav links, forms, and other content for toggling -->
 		<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 			<ul class="nav navbar-nav">
 				<li class="nav-item"><a href="system.html">{{ _('Systeminfo', 'menu') }}</a></li>
-				{% if yaml_converter %}
+				{% if yaml_converter and 1 == 2 %}
 				<li class="nav-item dropdown">
 					<a class="nav-link dropdown-toggle" href="services.html" id="supportedContentDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{ _('Dienste', 'menu') }}<span class="caret"></span></a>
 				 	<ul class="dropdown-menu" aria-labelledby="supportedContentDropdown">

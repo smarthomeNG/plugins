@@ -37,27 +37,30 @@ Telnet to the configured IP adress and port.
 
 Enter ``help`` for a list of available commands.
 
+You can enter ``help [commandgroup]`` to see only commands belonging to that group (and global commands). Commandgroups are ``item``, ``logic``, ``log`` and ``scheduler``. 
+
 command | function
 --- | ---
-``cl [log]`` | clean (memory) log
-``dl [logic]`` | dl logic: disables logic
-``dump [item]`` | dump details about given item
-``el [logic]`` | el logic: enables logic
-``la`` | list all items (with values)
-``ld [log]`` | log dump of (memory) log
-``lo`` | list all logics and next execution time
-``ls`` | list the first level items
-``ls [item]`` | list item and every child item (with values)
-``lt`` | list current thread names
-``rl [logic]`` | reload logic
-``rr [logic]`` | reload and run logic
+``if`` | list the first level items
+``if [item]`` | list item and every child item (with values)
+``ii [item]`` | dump detail-information about a given item - command alias: dump
+``il`` | list all items (with values) - command alias: la
+``iup`` | alias for iupdate
+``iupdate [item] = [value]`` | update the item with value - command alias: update
+``ld [logic]`` | disables logic - command alias: dl
+``le [logic]`` | enables logic - command alias: el
+``li [logic]`` | dump details about a given logic (new in v1.4)
+``ll`` | list all logics and next execution time - command alias: lo
+``lr [logic]`` | reload a logic - command alias: rl
+``lrr [logic]`` | reload and run a logic - command alias: rr
+``lt [logic]`` | trigger a logic - command alias: tr
+``logc [log]`` | clean (memory) log
+``logd [log]`` | log dump of (memory) log
 ``rt`` | return runtime
 ``si [task]`` | show details for given task
 ``sl`` | list all scheduler tasks by name
 ``st`` | list all scheduler tasks by execution time
-``tr [logic]`` | trigger logic
-``up`` | alias for update
-``update [item] = [value]`` | update the specified item with the specified value
+``tl`` | list current thread names
 ``quit`` | quit the session
 ``q`` | alias for quit
 

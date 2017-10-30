@@ -5,7 +5,7 @@ This plugin has no requirements or dependencies.
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / .yaml
 
 ```
 [luxtronic2]
@@ -13,6 +13,14 @@ This plugin has no requirements or dependencies.
     class_path = plugins.luxtronic2
     host = 192.168.0.123
     # port = 8888
+```
+
+```
+luxtronic2:
+    class_name: Luxtronic2
+    class_path: plugins.luxtronic2
+    host: 192.168.0.123
+    # port: 8888
 ```
 
 #### Attributes
@@ -48,6 +56,7 @@ Defines a mapping to a attribute (read-only). All attribute values are bytes (nu
 Defines a mapping to a calculated value (read-only). All calculated values are integer (numbers).
 
 ```
+#.conf (deprecated)
 [heating]
     [[temp_outside]]
         type = num
@@ -58,6 +67,20 @@ Defines a mapping to a calculated value (read-only). All calculated values are i
     [[state]]
         type = str
         lux2 = 119
+```
+
+```
+#.yaml
+heating:
+    temp_outside:
+        type: num
+        lux2: 10
+    state_numeric:
+        type: num
+        lux2_c: 119
+    state:
+        type: str
+        lux2: 119
 ```
 
 ### logic.conf

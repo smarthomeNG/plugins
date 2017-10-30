@@ -134,6 +134,34 @@
 
 
 /**
+ * Enigma2 StatusInfo Widget (only channel and program)
+ *
+ * This widget can be used, if the items for the enigma2 box are defined  
+ * following the naming conventions as defined in the README of the plugin
+ * 
+ * @param       unique id for this widget 
+ * @param       the gad/item for the receiver (parent item of the enigma2 item definition tree)
+ *
+ */
+
+{% macro status_channel(id, gad_box) %}
+	{% import "basic.html" as basic %}
+	{% set uid = uid(page, id) %}
+
+	<div id="{{ uid }}">
+		<table width=90%> 
+			<tr><td align=left style="padding-left: 15px;">Sender:</td> <td align=right> {{ basic.value(id~'2servicename', gad_box~'.current.servicename') }} </td></tr>
+			<tr><td align=left style="padding-left: 15px;"><strong>Sendung</strong></td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventtitle', gad_box~'.current.eventtitle') }} </td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventdesc', gad_box~'.current.eventdescription') }} </td></tr>
+		</table>
+
+	</div>
+
+{% endmacro %}
+
+
+/**
  * Enigma2 Remote Widget
  * 
  * @param       unique id for this widget

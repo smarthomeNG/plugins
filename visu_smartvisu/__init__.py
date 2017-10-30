@@ -40,7 +40,7 @@ import sys
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.3.2"
+    PLUGIN_VERSION="1.3.3"
     ALLOW_MULTIINSTANCE = False
 
 
@@ -77,6 +77,7 @@ class SmartVisu(SmartPlugin):
 #                self.logger.warning("Starting smartVISU handling")
                 if self._handle_widgets:
                     sv_iwdg = SmartVisuInstallWidgets(self._sh, self.smartvisu_dir)
+
                 if self._generate_pages:
                     svgen = SmartVisuGenerator(self._sh, self.smartvisu_dir, self.overwrite_templates, self.visu_style)
 #                self.logger.warning("Finished smartVISU handling")
@@ -119,7 +120,7 @@ class SmartVisuGenerator:
             self.visu_style = 'std'
             self.logger.warning("SmartVisuGenerator: visu_style '{0}' unknown, using visu_style '{1}'".format(visu_style, self.visu_style))
 
-        self.logger.log(logging.WARNING, "Generating pages for smartVISU")
+        self.logger.log(logging.INFO, "Generating pages for smartVISU")
 
         self.outdir = self.smartvisu_dir + '/pages/smarthome'
         self.tpldir = self.smartvisu_dir + '/pages/base/tplNG'
@@ -391,7 +392,7 @@ class SmartVisuGenerator:
         # Open file for twig import statements (for root.html)
         for fn in os.listdir(srcdir):
             if (self.overwrite_templates) or (not os.path.isfile(self.tpldir + '/' + fn) ):
-                self.logger.info("copy_templates: Copying template '{0}' from plugin to smartVISU".format(fn))
+                self.logger.debug("copy_templates: Copying template '{0}' from plugin to smartVISU".format(fn))
                 shutil.copy2( srcdir + '/' + fn, self.tpldir )
         return
 
@@ -408,7 +409,7 @@ class SmartVisuInstallWidgets:
         self._sh = smarthome
         self.smartvisu_dir = smartvisu_dir
 
-        self.logger.log(logging.WARNING, "Installing widgets into smartVISU")
+        self.logger.log(logging.INFO, "Installing widgets into smartVISU")
         
         # sv directories
         self.shwdgdir = 'sh_widgets'
@@ -416,7 +417,7 @@ class SmartVisuInstallWidgets:
         self.tmpdir = self.smartvisu_dir + '/temp'
         self.pgbdir = self.smartvisu_dir + '/pages/base'          # pages/base directory
 
-        self.logger.info("install_widgets: Installing from '{0}' to '{1}'".format(smarthome.base_dir, smartvisu_dir))
+        self.logger.debug("install_widgets: Installing from '{0}' to '{1}'".format(smarthome.base_dir, smartvisu_dir))
 
         self.install_widgets(self._sh)
 
@@ -444,10 +445,13 @@ class SmartVisuInstallWidgets:
         # copy widgets from plugin directories of configured plugins
         # read plungin.conf
         _conf = lib.config.parse(smarthome._plugin_conf)
+        self.logger.debug( "install_widgets: _conf = {0}".format(str(_conf)) )
         mypluginlist = []
         for plugin in _conf:
-    #        self.logger.warning("install_widgets: Plugin class {0}, path {1}".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
-            plgdir = _conf[plugin]['class_path']
+            self.logger.debug("install_widgets: Plugin section '{}', class_path = '{}', plugin_name = '{}'".format(plugin, str(_conf[plugin].get('class_path', '')), str(_conf[plugin].get('plugin_name', ''))))
+            plgdir = _conf[plugin].get('class_path', '')
+            if plgdir == '':
+                plgdir = 'plugins.' + _conf[plugin].get('plugin_name', '')
             if plgdir not in mypluginlist:
                 # process each plugin only once
                 mypluginlist.append( plgdir )
@@ -485,7 +489,7 @@ class SmartVisuInstallWidgets:
         # Open file for twig import statements (for root.html)
         for fn in os.listdir(srcdir):
             if (fn[-3:] != ".md"):
-                self.logger.info("copy_widgets: Copying widget-file: {0}".format(fn))
+                self.logger.debug("copy_widgets: Copying widget-file: {0}".format(fn))
                 shutil.copy2( srcdir + '/' + fn, self.outdir )
                 if (fn[0:7] == "widget_") and (fn[-5:] == ".html"):
                     self.logger.info("- Installing from '{0}': {1}".format(plgdir, '\t' + fn))
@@ -551,7 +555,7 @@ class SmartVisuInstallWidgets:
                 self.logger.warning("Could not delete directory {0}: {1}".format(fp, e))
             
         # create destination directory for widgets
-        self.logger.info("install_widgets: Creating  directory for widgets")
+        self.logger.debug("install_widgets: Creating  directory for widgets")
         try:
             os.mkdir(self.outdir)
         except:
@@ -562,7 +566,7 @@ class SmartVisuInstallWidgets:
             return False
 
         # remove old dynamic widget files
-        self.logger.info("install_widgets: Removing old dynamic widget files")
+        self.logger.debug("install_widgets: Removing old dynamic widget files")
         for fn in os.listdir(self.outdir):
             fp = os.path.join(self.outdir, fn)
             try:

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
-#
-# Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
-#
+#########################################################################
+#  Copyright 2013-     Oliver Hinckel                  github@ollisnet.de
+#########################################################################
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
@@ -17,13 +17,20 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
-#
+#########################################################################
 
 import logging
 import time
 import threading
 
-class DataLog():
+from lib.model.smartplugin import SmartPlugin
+
+
+class DataLog(SmartPlugin):
+
+    ALLOW_MULTIINSTANCE = True
+    PLUGIN_VERSION = '1.3.0'
+
     filepatterns = {}
     logpatterns = {}
     cycle = 0
@@ -86,11 +93,12 @@ class DataLog():
         self._dump()
 
     def parse_item(self, item):
-        if 'datalog' in item.conf:
-            if type(item.conf['datalog']) is list:
-                logs = item.conf['datalog']
+        if self.has_iattr(item.conf, 'datalog'):
+            datalog = self.get_iattr_value(item.conf, 'datalog')
+            if type(datalog) is list:
+                logs = datalog
             else:
-                logs = [item.conf['datalog']]
+                logs = [datalog]
 
             found = False
             for log in logs:
@@ -147,7 +155,7 @@ class DataLog():
                             handles[filename] = open(self.path + '/' + filename, 'a')
 
                         data = entry
-                        data['stamp'] = data['time'].time();
+                        data['stamp'] = data['time'].timestamp();
                         handles[filename].write(logpattern.format(**data))
 
                 except Exception as e:

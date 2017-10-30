@@ -115,7 +115,7 @@ Example configuration which shows the current unit mode, the actual week program
 
 No logic related stuff implemented.
 
-# Methods
+## Methods
 
 No methods provided currently.
 

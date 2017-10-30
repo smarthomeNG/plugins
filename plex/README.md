@@ -1,4 +1,4 @@
-# smarthome-plex
+# plex
 
 Plugin to send push notifications to Plex clients like RasPlex.
 I only have tested the plugin with RasPlex, the notification module should also be compatible with OpenElec, XBMC / Kodi Frodo and higher.

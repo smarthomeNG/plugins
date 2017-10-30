@@ -522,11 +522,12 @@ class mlgwlistener(threading.Thread):
     #
     def __init__( self, mymlgwbase ): 
         self.logger = logging.getLogger(__name__)
-        threading.Thread.__init__(self)
+        self._mythread = threading.Thread.__init__(self)
         self.name = 'mlgwListener'
         self._mlgwbase = mymlgwbase
         self._mlgwbase._mysocket.settimeout(5)
 
+         
     ## Run thread
     #  @param self The object pointer.
     #
@@ -658,6 +659,7 @@ class mlgwlistener(threading.Thread):
     #  @param self The object pointer.
     #
     def stop( self ):
+#        self._mythread.join()
         pass
         
         
@@ -665,7 +667,7 @@ class mlgwlistener(threading.Thread):
 
 ## Class mlgw: Implements the plugin for smarthome.py
 #
-class mlgw(SmartPlugin):
+class Mlgw(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION='1.1.1'
 

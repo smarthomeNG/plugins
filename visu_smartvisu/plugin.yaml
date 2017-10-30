@@ -1,0 +1,139 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: system                  # plugin type (gateway, interface, protocol, system, web)
+    description:                  # Alternative: description in multiple languages
+        de: 'smartVISU Unterstützung: Autogenerierung von Seiten; Widget Handling'
+        en: 'Support for smartVISU: Automatic generation of pages; widget handling'
+    maintainer: msinn
+    tester: psilo909
+#    keywords: iot xyz
+    documentation: https://github.com/smarthomeNG/smarthome/wiki/Visu_Unterstuetzung        # url of documentation (wiki) page
+
+    version: 1.3.3                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    classname: SmartVisu           # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    smartvisu_dir:
+        type: str
+        description:
+            de: 'Basisverzeichnis der smartVISU. Nur wenn dieser Wert konfiguriert ist, kann das Plugin Seiten für die smartVISU generieren.'
+            en: 'You could generate pages for the smartVISU visualisation if you specify the smartvisu_dir which should be set to the root directory of your smartVISU installation.'
+  
+    generate_pages:
+        type: bool
+        default: True
+        description:
+            de: 'Falls True, werden Seiten für smartVISU generiert'
+            en: 'If True, pages for smartVISU are generated'
+  
+    overwrite_templates:
+        type: bool
+        default: True
+        description:
+            de: 'Sollen in der smartVISU bereits existierende Templates überschrieben werden?'
+            en: 'Should templates already that already exist in smartVISU bi overwritten?'
+  
+    visu_style:
+        type: str
+        default: std
+        valid_list:
+          - std
+          - blk
+        description:
+            de: 'Benutzer Style für die generierten Visualisierungs-Seiten'
+            en: 'Style used for the generated visualization'
+  
+    handle_widgets:
+        type: bool
+        default: True
+        description:
+            de: 'Standardmäßig werden Widgets aus den Plugins in die smartVISU kopiert und eingebunden. Dieses kann verhindert werden, wenn dieser Parameter auf False gesetzt wird.'
+            en: 'By default, the visu plugin handles smartVISU widgets. If your run into problems, you can disable the widget handling by setting this attribute to False.'
+    
+    
+item_attributes:
+    # Definition of item attributes defined by this plugin
+#    visu_acl:    # defined in visu_websocket
+#        type: bool
+#        description:
+#            de: ''
+#            en: ''
+    
+    sv_page:
+        type: str
+        valid_list:
+          - room
+          - seperator
+          - overview
+          - category
+          - cat_seperator
+          - room_lite
+        description:
+            de: ''
+            en: ''
+    
+    sv_overview:
+        type: str
+        description:
+            de: ''
+            en: 'If a page has defined sv_page as overview, it shows items of a specific type. The name/identifier of the type is defined by setting sv_overview to an unique name. For items to be displayed on this page, the items have to define sv_item_type and set it to the value of sv_overview.'
+    
+    sv_item_type:
+        type: str
+        description:
+            de: ''
+            en: 'sv_item_type allows items to be displayed on an overview page.'
+    
+    sv_img:
+        type: str
+        description:
+            de: ''
+            en: ''
+    
+    sv_widget:
+        type: str
+        description:
+            de: ''
+            en: ''
+    
+    sv_widget2:
+        type: str
+        description:
+            de: ''
+            en: ''
+    
+    sv_nav_aside:
+        type: str
+        description:
+            de: ''
+            en: ''
+    
+    sv_nav_aside2:
+        type: str
+        description:
+            de: ''
+            en: ''
+    
+    sv_heading_left:
+        type: str
+        description:
+            de: ''
+            en: ''
+    
+    sv_heading_center:
+        type: str
+        description:
+            de: ''
+            en: ''
+    
+    sv_heading_right:
+        type: str
+        description:
+            de: ''
+            en: ''
+    

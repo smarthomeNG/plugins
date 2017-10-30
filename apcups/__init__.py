@@ -46,7 +46,7 @@ class APCUPS(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, ITEM_TAG[0]):
-            apcups_key = (self.get_iattr_value(ITEM_TAG[0])).lower()
+            apcups_key = (self.get_iattr_value(item.conf, ITEM_TAG[0])).lower()
             self._items[apcups_key]=item
             logger.debug("item {0} added with apcupd_key {1}".format(item,apcups_key))
             return self.update_item

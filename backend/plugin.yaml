@@ -1,13 +1,97 @@
+# Metadata for the Smart-Plugin
 plugin:
-    type: system                # plugin type (system, gateway, interface, protocol, cloud)
-    subtype: core               # plugin subtype (if applicable)
-    version: 1.3.5              # Plugin version
-#   keywords:                   # keywords, where applicable
-    sh_minversion: 1.3          # minimum shNG version to use this plugin
-#   sh_maxversion:              # maximum shNG version to use this plugin (if not latest)
-    multi_instance: false       # plugin supports multi instance
-    description: 'Web Interface zur Anzeige von Informationen zum System und SmartHomeNG Backend-Daten'
-#   documentation:              # url of wiki page
-    maintainer: psilo909, msinn, bmxp, cmalo      # Who maintains this plugin?
-    tester: Sandman60           # Who tests this plugin?
+    # Global plugin attributes
+    type: system                  # plugin type (gateway, interface, protocol, system, web)
+    subtype: core                 # plugin subtype (if applicable)
+    description:                  # Alternative: description in multiple languages
+        de: 'Web Interface zur Anzeige von Informationen zum System und SmartHomeNG Backend-Daten'
+        en: 'webinterface for displaying system information and SmartHomeNG backend data'
+    maintainer: psilo909, msinn, bmxp
+    tester: Sandman60
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
 
+    version: 1.4.7                 # Plugin version
+    sh_minversion: 1.3b            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    classname: BackendServer       # class containing the plugin
+    
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+#    ip:    # moved to http module
+#        type: ipv4
+#        default: ''
+#        description:
+#            de: 'IP Adresse, falls nicht auf allen IPs des hosts gelauscht werden soll'
+#            en: 'ip address to use, if not listening on all ip addresses of the host'
+    
+#    port:    # moved to http module
+#        type: int
+#        default: 8383
+#        description:
+#            de: ''
+#            en: ''
+    
+#    threads:    # moved to http module
+#        type: int
+#        default: 8
+#        description:
+#            de: ''
+#            en: ''
+    
+    language:    # to be moved to smarthome.yaml (global setting)
+        type: str
+        default: de
+        valid_list:
+          - en
+          - de
+          - fr
+          - pl
+        description:
+            de: ''
+            en: ''
+
+    updates_allowed:
+        type: bool
+        default: True
+        description:
+            de: 'Update von Werten durch das Backend Plugin ist erlaubt'
+            en: 'Update of values through the backend plugin is allowed'
+    user:
+        type: str
+        default: admin
+        description:
+            de: 'Benutzername für Basic Auth, falls ein Passwort definiert ist'
+            en: 'username for basic auth, if a password is defined'
+
+    password:
+        type: str
+        description:
+            de: 'Passwort (im Klartext) für Basic Auth'
+            en: 'Password (unencrypted) for basic auth'
+
+    hashed_password:
+        type: str
+        description:
+            de: 'Passwort (verschlüsselt) für Basic Auth'
+            en: 'Password (encrypted) for basic auth'
+
+    developer_mode:
+        type: bool
+        default: no
+        description:
+            de: 'Entwickler Modus aktiviert'
+            en: 'Developer mode is activated'
+
+    pypi_timeout:
+        type: int
+        default: 5
+        description:
+            de: 'Timeout bei der Abfrage der pypi Website'
+            en: 'Timeout for getting data from the pypi website'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    

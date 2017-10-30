@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="panel panel-default" style="padding: 20px;">
+            <h1 class="margin-base-vertical">
+            <img src="/static/img/logo_big.png" width="150" height="75">
+            &nbsp; SmartHomeNG WebService Plugin</h1>
+            <br/>
+            <div style="width: 1600px;">
+                The following items can be accessed by the REST and the Simple WebService interface:<br/><br/>
+                <br/>
+                <table>
+                    <tr>
+                        <th>
+                            REST
+                        </th>
+                        <th>
+                            Simple
+                        </th>
+                    </tr>
+                    <tr style="border-bottom: 1px solid grey;">
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/rest/items/">Full list in JSON Format</a>
+                        </td>
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/ws/items/">Full list in JSON Format</a>
+                        </td>
+                    </tr>
+                    {% for item in item_data %}
+                    <tr>
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/rest/items/{{item._path}}/">{{item._path}}</a>
+                        </td>
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/ws/items/{{item._path}}/">{{item._path}}</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div><!-- //main content -->
+    </div><!-- //row -->
+</div> <!-- //container -->
+{% endblock %}

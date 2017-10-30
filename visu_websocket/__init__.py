@@ -43,7 +43,7 @@ class WebSocket(SmartPlugin):
     """
     Main class of the Plugin. Does the plugin specific stuff.
     """
-    PLUGIN_VERSION = "1.1.3"
+    PLUGIN_VERSION = "1.4.3"
     ALLOW_MULTIINSTANCE = False
 
     def my_to_bool(self, value, attr='', default=False):
@@ -90,7 +90,8 @@ class WebSocket(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('series', self.websocket._update_series, cycle=10, prio=5)
+#        self._sh.scheduler.add('series', self.websocket._update_series, cycle=10, prio=5)
+        self.scheduler_add('series', self.websocket._update_series, cycle=10, prio=5)
 
 
     def stop(self):

@@ -12,7 +12,7 @@ OLA supports most USB -> DMX Adapters available at the moment.
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / .yaml
 
 ```
 [dmx1]
@@ -23,6 +23,17 @@ OLA supports most USB -> DMX Adapters available at the moment.
 	artnet_universe = 0
 	ip = 192.168.1.123
 	port = 6454
+```
+
+```
+dmx1:
+	class_name: ArtNet
+	class_path: plugins.artnet
+	artnet_subnet: 0
+	artnet_net: 0
+	artnet_universe: 0
+	ip: 192.168.1.123
+	port: 6454
 ```
 
 ### items.conf

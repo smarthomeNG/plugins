@@ -10,16 +10,16 @@
       <strong>{{ _('Items') }} ({{ _('gesamt') }}: {{ item_count }})</strong><span id="search-results"></span><br/><br/>
       <div class="form-group">
           <input type="input" class="form-control" id="input-search" placeholder="{{ _('Itempfad suchen...') }}" value=""><br/>
-          <button type="button" class="btn btn-default" id="btn-search">{{ _('Suchen') }}</button>
-          <button type="button" class="btn btn-default" id="btn-clear-search">{{ _('Suche zurücksetzen') }}</button>
-          <button type="button" class="btn btn-default" id="btn-expand-all">{{ _('Alle aufklappen') }}</button>
-          <button type="button" class="btn btn-default" id="btn-collapse-all">{{ _('Alle zuklappen') }}</button>
+          <button type="button" class="btn btn-default" id="btn-search"><i class="fa fa-search"></i>&nbsp;{{ _('Suchen') }}</button>
+          <button type="button" class="btn btn-default" id="btn-clear-search"><i class="fa fa-circle-o-notch"></i>&nbsp;{{ _('Suche zurücksetzen') }}</button>
+          <button type="button" class="btn btn-default" id="btn-expand-all"><i class="fa fa-folder-open-o"></i>&nbsp;{{ _('Alle aufklappen') }}</button>
+          <button type="button" class="btn btn-default" id="btn-collapse-all"><i class="fa fa-folder-o"></i>&nbsp;{{ _('Alle zuklappen') }}</button>
       </div>
 
       <div class="pre-scrollable" id="tree" style="float:left; border: 1px solid #ccc; height:650px; max-height:650px; width:600px;"></div>
       <div class=container" style="float:left; margin-left: 5px;">
         <!--refresh widget-->
-        <div class="panel panel-default" data-url="/item_detail_json.html?item_path=" data-item="child1">
+        <div class="panel panel-default" data-url="item_detail_json.html?item_path=" data-item="child1">
           <div class="panel-heading"><a class="pull-right" href="#"><span id="refresh-element" class="fa fa-refresh"></span></a> {{ _('Item-Informationen') }}</div>
           <div class="panel-body panel-refresh">
             <div class="refresh-container" style="padding-top: 220px;"><i class="refresh-spinner fa fa-spinner fa-spin fa-5x"></i></div>
@@ -31,9 +31,9 @@
     <!--refresh widget-->
      </div>
  </div>
- 
-<script type="text/javascript" language="javascript">
 
+<script src="static/js/item_tree_functions.js"></script>
+<script type="text/javascript" language="javascript">
 function getDetailInfo(result) {
     var temp ='';
     $.each(result, function(index, element) {
@@ -123,7 +123,7 @@ function getDetailInfo(result) {
                 }
             }
             $.ajax({
-                url: '/item_change_value.html',
+                url: 'item_change_value.html',
                 type: 'POST',
                 data: {
                     'item_path': element.path,
@@ -139,113 +139,6 @@ function getDetailInfo(result) {
         });
     });
 }
-
-function build_item_subtree_recursive(data) {
-    var result = [];
-    var tree_element = {};
-    tree_element['text'] = data.path;
-    var node_length = data.nodes.length;
-    if (data.nodes.length > 0) {
-        var child_nodes = [];
-        for (var i = 0; i < node_length; i++) {
-            var new_child_node = build_item_subtree_recursive(data.nodes[i]);
-            child_nodes.push(new_child_node);
-        }
-        tree_element['tags'] = data.tags;
-        tree_element['nodes'] = child_nodes;
-    }
-
-    return tree_element;
-}
-
-function reload(data) {
-    panel = $(".panel").reload({
-        autoReload: false,
-        time: 3000,
-        refreshContainer: '.refresh-container',
-        dataContainer: '#tree_detail',
-        beforeReload: function() {},
-        afterReload: function() {},
-        parseData: getDetailInfo,
-        parameterString: data.text
-    });
-}
-
-function changeSearchButtonColor(active) {
-    if (active) {
-        $('#btn-search').removeClass("btn-default");
-        $('#btn-search').addClass("btn-primary");
-    } else {
-        $('#btn-search').removeClass("btn-primary");
-        $('#btn-search').addClass("btn-default");
-    }
-}
-
-function getTree() {
-    var item_tree = [];
-
-    $.getJSON('/items_json.html', function(result) {
-        $.each(result, function(index, element) {
-            item_tree.push(build_item_subtree_recursive(element));
-        });
-        $('#tree').treeview({
-            data: item_tree,
-			levels: 1,
-            showTags: true,
-            onNodeSelected: function(event, data) {
-                reload(data)
-            }
-        });
-    });
-    var search = function(e) {
-          results = [];
-          var pattern = $('#input-search').val();
-          var options = {
-            ignoreCase: true,
-            exactMatch: false,
-            revealResults: true
-          };
-          var results = $('#tree').treeview('search', [ pattern, options ]);
-          $('#search-results').html(' - Treffer: '+results.length);
-
-
-          $('#btn-clear-search').on('click', function (e) {
-            $('#tree').treeview('clearSearch');
-            $('#tree').treeview('collapseAll', { silent: false });
-            $('#btn-search').removeClass("btn-primary");
-            $('#btn-search').addClass("btn-default");
-            $('#input-search').val('');
-            $('#search-output').html('');
-            results = [];
-            $('#search-results').html('');
-          });
-    }
-    if ($('#input-search').val() != '') {
-        changeSearchButtonColor(true);
-    }
-    $('#btn-search').on('click', search);
-    $("#input-search").keypress(function(event){
-        if(event.keyCode == 13){
-            $("#btn-search").click();
-        }
-        if ($('#input-search').val() == '') {
-            changeSearchButtonColor(false);
-        } else {
-            changeSearchButtonColor(true);
-        }
-    });
-
-    // Expand/collapse all
-    $('#btn-expand-all').on('click', function (e) {
-      var levels = $('#select-expand-all-levels').val();
-      $('#tree').treeview('expandAll', { levels: levels, silent: false });
-    });
-    $('#btn-collapse-all').on('click', function (e) {
-      $('#tree').treeview('collapseAll', { silent: false });
-    });
-}
-
 getTree();
-
 </script>
 {% endblock %}

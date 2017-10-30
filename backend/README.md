@@ -1,4 +1,4 @@
-# Backend GUI
+# Backend GUI (beyond shNG v1.3)
 
 This plugin delivers information about the current SmartHomeNG installation. Right now it serves as a support tool for helping other users with an installation that does not run properly. Some highlights:
 
@@ -33,15 +33,7 @@ And please pay attention that the libs are installed for Python3 and not an olde
 
 The log level filter in the log file view will only work with "%(asctime)s %(levelname)-8s" in the beginning of the configured format! Dateformat needs to be datefmt: '%Y-%m-%d %H:%M:%S'
 
-### Running this plugin under Python 3.2
-If you really need to run this plugin under Python 3.2 you may not use the newest version of all packages. The packages **Jinja2** and **MarkupSafe** have dropped support for Python 3.2. Make sure to install the following older versions into your Phython3.2 environment, as newer versions are not compatible with Python 3.2 any more:
-
-```
-- Jinja2	    v2.6
-- MarkupSafe	v0.15
-```
-
-
+> Note: This plugin needs the SmartHomeNG loadable module `http` to be installed/configured.
 
 To support visualization, the visu_websocket plugin has to be used. It has to be PLUGIN_VERSION >= "1.1.2".
 
@@ -51,6 +43,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 ### plugin.conf (deprecated) / plugin.yaml
 
 ```
+# /etc/plugin.conf
 [BackendServer]
 	class_name = BackendServer
 	class_path = plugins.backend
@@ -67,6 +60,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 ```
 
 ```yaml
+# /etc/plugin.yaml
 BackendServer:
     class_name: BackendServer
     class_path: plugins.backend

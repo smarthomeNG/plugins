@@ -1,4 +1,4 @@
-# Visualisation plugin (smartVISU support)
+# Visualisation (smartVISU support)
 
 ```
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
@@ -83,13 +83,13 @@ Valid values are:
 |  **room**         |  The page appears in the room view of smartVISU         	  |  
 | **seperator**     | Inserts a seperator between entries in the room navigation  |
 | **overview**      | The page groups of different items together                 |  
-
+|                   |                                                             |
 |  **category**     | The page appears in the category view of smartVISU          |  
 | **cat_seperator** | Inserts a seperator between entries in the category         |  
 |                   | navigation                                                  |
 | **cat_overview**  | The page groups of different items together and is added    |
 |	                | to the category navigation                                  |  
-
+|                   |                                                             |
 |  **room_lite**    |  The page appears in a lite view of the visualization       |  
 [values for **`sv_page`**]
 
