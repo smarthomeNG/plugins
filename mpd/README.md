@@ -37,6 +37,10 @@ You could see a full featured item configuration at the end of this file.
             type = bool
             mpd_file = http://jungletrain.net/64kbps.m3u
             enforce_updates = yes
+        [[[heavy]]]
+            type = bool
+            mpd_localplaylist = heavymetal # will play the playlist heavymetal.m3u in the MPD's playlist directory
+            enforce_updates = yes
 ```
 
 
@@ -86,7 +90,8 @@ The following `mpd_send` attributes could be defined to send changes to the syst
 #### mpd_file
 You could specify a file, directory or URL which will be played if the value of this item change.
 
-
+#### mpd_localplaylist
+You could specify a local playlist file which will be played if the value of this item change.
 
 ## Functions
 
@@ -157,6 +162,11 @@ Adding the specified file, directory or URL to the playlist.
             type = str
             mpd_file = value  # plays the item value
             enforce_updates = yes
+        [[[heavy]]]
+            type = bool
+            mpd_localplaylist = heavymetal # will play the playlist heavymetal.m3u in the MPD's playlist directory
+            enforce_updates = yes
+
 [office]
     [[mp2]]
         type = str
