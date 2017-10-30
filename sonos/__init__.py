@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2016 <AUTHOR>                                        <EMAIL>
+#  Copyright 2016 pfischi                                               #
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
@@ -27,9 +27,17 @@
 import os
 import logging
 import re
+import socketserver
 import subprocess
 import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from queue import Empty
+import sys
+from urllib.parse import unquote
+
+import requests
+from requests.utils import quote
+from tinytag import TinyTag
 
 from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
@@ -38,11 +46,109 @@ from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
 from plugins.sonos.soco.data_structures import to_didl_string, DidlItem, DidlMusicTrack
 from plugins.sonos.soco.events import event_listener
+from plugins.sonos.soco.snapshot import Snapshot
 from plugins.sonos.soco.xml import XML
 import time
 
+from plugins.sonos.tts import gTTS
+from plugins.sonos.utils import file_size, get_tts_local_file_path, get_free_diskspace, get_folder_size
+
 _create_speaker_lock = threading.Lock()  # make speaker object creation thread-safe
 sonos_speaker = {}
+
+
+class WebserviceHttpHandler(BaseHTTPRequestHandler):
+    webroot = None
+
+    def __init__(self, request, client_address, server):
+        self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
+        super().__init__(request, client_address, server)
+
+    def _get_mime_type_by_filetype(self, file_path):
+        try:
+            mapping = {
+                "audio/aac": "aac",
+                "audio/mp4": "mp4",
+                "audio/mpeg": "mp3",
+                "audio/ogg": "ogg",
+                "audio/wav": "wav",
+            }
+
+            filename, extension = os.path.splitext(file_path)
+            extension = extension.strip('.').lower()
+
+            for mime_type, key in mapping.items():
+                if extension == key:
+                    return mime_type
+            raise Exception("Could not found mime-type for extension '{ext}'.".format(ext=extension))
+
+        except Exception as err:
+            self._logger.warning(err)
+            return None
+
+    def do_GET(self):
+        try:
+            if WebserviceHttpHandler.webroot is None:
+                self.send_error(404, 'Service Not Enabled')
+                return
+
+            file_name = unquote(self.path)
+            # prevent path traversal
+            file_name = os.path.normpath('/' + file_name).lstrip('/')
+            file_path = os.path.join(WebserviceHttpHandler.webroot, file_name)
+
+            if not os.path.exists(file_path):
+                self.send_error(404, 'File Not Found: %s' % self.path)
+                return
+
+            # get registered mime-type
+            mime_type = self._get_mime_type_by_filetype(file_path)
+
+            if mime_type is None:
+                self.send_error(406, 'File With Unsupported Media-Type : %s' % self.path)
+                return
+
+            client = "{ip}:{port}".format(ip=self.client_address[0], port=self.client_address[1])
+            self._logger.debug("Webservice: delivering file '{path}' to client ip {client}.".format(path=file_path,
+                                                                                                    client=client))
+            file = open(file_path, 'rb').read()
+            self.send_response(200)
+            self.send_header('Content-Type', mime_type)
+            self.send_header('Content-Length', sys.getsizeof(file))
+            self.end_headers()
+            self.wfile.write(file)
+        except Exception as ex:
+            self._logger.error("Error delivering file {file}".format(file=file_path))
+            self._logger.error(ex)
+        finally:
+            self.connection.close()
+
+
+class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
+    allow_reuse_address = True
+
+    def shutdown(self):
+        self.socket.close()
+        HTTPServer.shutdown(self)
+
+
+class SimpleHttpServer:
+    def __init__(self, ip, port, root_path):
+        self.server = ThreadedHTTPServer((ip, port), WebserviceHttpHandler)
+        self.thread = threading.Thread(target=self.server.serve_forever)
+        self.thread.daemon = True
+        WebserviceHttpHandler.webroot = root_path
+
+    def start(self):
+        self.thread.start()
+
+    def waitForThread(self):
+        self.thread.join()
+
+    def stop(self):
+        self.server.shutdown()
+        self.waitForThread()
+
 
 class SubscriptionHandler(object):
     def __init__(self, endpoint, service):
@@ -89,6 +195,7 @@ class SubscriptionHandler(object):
         if self._event:
             return self._event.is_subscribed
         return False
+
 
 class Speaker(object):
     def __init__(self, uid, logger):
@@ -167,7 +274,7 @@ class Speaker(object):
         self.sonos_playlists_items = []
         self._is_initialized = False
         self.is_initialized_items = []
-
+        self._snippet_queue_lock = threading.Lock()
         self.av_subscription = None
         self.render_subscription = None
         self.system_subscription = None
@@ -938,7 +1045,7 @@ class Speaker(object):
             # check volume range
             if volume < 0 or volume > 100:
                 return
-                # donot raise error here polluting the log file
+                # don ot raise error here polluting the log file
                 # dpt3 handling can trigger negative values
                 # raise Exception('Sonos: Volume has to be an integer between 0 and 100.')
 
@@ -1547,7 +1654,6 @@ class Speaker(object):
             return False
         return sonos_speaker[self.coordinator].current_track
 
-
     @current_track.setter
     def current_track(self, current_track: int) -> None:
         """
@@ -1970,6 +2076,105 @@ class Speaker(object):
         for item in self.sonos_playlists_items:
             item(p_l, 'Sonos')
 
+    def _play_snippet(self, file_path: str, webservice_url: str, volume: int=-1, fade_in=False) -> None:
+        if not self._check_property():
+            return
+        if not self.is_coordinator:
+            sonos_speaker[self.coordinator]._play_snippet(file_path, webservice_url, volume, fade_in)
+        else:
+            with self._snippet_queue_lock:
+                snap = None
+                volumes = {}
+                # save all volumes from zone_member
+                for member in self.zone_group_members:
+                    volumes[member] = sonos_speaker[member].volume
+
+                tag = TinyTag.get(file_path)
+                duration = int(round(tag.duration))
+                self._logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
+                file_name = quote(os.path.split(file_path)[1])
+                snippet_url = "{url}/{file}".format(url=webservice_url, file=file_name)
+
+                # was GoogleTTS the last track? do not snapshot
+                last_station = self.radio_station.lower()
+                if last_station != "snippet":
+                    snap = Snapshot(self.soco)
+                    snap.snapshot()
+
+                time.sleep(0.5)
+                self.set_stop()
+                if volume == -1:
+                    volume = self.volume
+
+                self.set_volume(volume, True)
+                self.soco.play_uri(snippet_url, title="snippet")
+                time.sleep(duration)
+                self.set_stop()
+
+                # Restore the Sonos device back to it's previous state
+                if last_station != "snippet":
+                    if snap is not None:
+                        snap.restore()
+                else:
+                    self.radio_station = ""
+                for member in self.zone_group_members:
+                    if member in volumes:
+                        if fade_in:
+                            vol_to_ramp = volumes[member]
+                            sonos_speaker[member].soco.volume = 0
+                            sonos_speaker[member].soco.renderingControl.RampToVolume(
+                                [('InstanceID', 0), ('Channel', 'Master'),
+                                 ('RampType', 'SLEEP_TIMER_RAMP_TYPE'),
+                                 ('DesiredVolume', vol_to_ramp),
+                                 ('ResetVolumeAfter', False), ('ProgramURI', '')])
+                        else:
+                            sonos_speaker[member].set_volume(volumes[member], group_command=False)
+
+    def play_snippet(self, audio_file, local_webservice_path: str, webservice_url: str, volume: int = -1, fade_in=False)\
+            -> None:
+        if not self._check_property():
+            return
+        if not self.is_coordinator:
+            sonos_speaker[self.coordinator].play_tts(audio_file, local_webservice_path, webservice_url, volume, fade_in)
+        else:
+            if "tinytag" not in sys.modules:
+                self._logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
+                                   "install tinytag'.")
+                return
+            file_path = os.path.join(local_webservice_path, audio_file)
+
+            if not os.path.exists(file_path):
+                self._logger.error("Sonos: Snippet file '{file_path}' does not exists.".format(file_path=file_path))
+                return
+            self._play_snippet(file_path, webservice_url, volume, fade_in)
+
+    def play_tts(self, tts: str, tts_language: str, local_webservice_path: str, webservice_url: str, volume: int = -1,
+                 fade_in=False) -> None:
+        if not self._check_property():
+            return
+        if not self.is_coordinator:
+            sonos_speaker[self.coordinator].play_tts(tts, tts_language, local_webservice_path, webservice_url,
+                                                     volume, fade_in)
+        else:
+            if "tinytag" not in sys.modules:
+                self._logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
+                                   "install tinytag'.")
+                return
+            file_path = get_tts_local_file_path(local_webservice_path, tts, tts_language)
+
+            # only do a tts call if file not exists
+            if not os.path.exists(file_path):
+                tts = gTTS(tts, self._logger, tts_language)
+                try:
+                    tts.save(file_path)
+                except Exception as err:
+                    self._logger.error("Sonos: Could not obtain TTS file from Google. Error: {ex}".format(ex=err))
+                    return
+            else:
+                self._logger.debug("Sonos: File {file} already exists. No TTS request necessary.".format(
+                    file=file_path))
+            self._play_snippet(file_path, webservice_url, volume, fade_in)
+
     def load_sonos_playlist(self, name: str, start: bool = False, clear_queue: bool = False, track: int = 0) -> None:
         """
         Loads a Sonos playlist.
@@ -2004,25 +2209,90 @@ class Speaker(object):
                     except SoCoUPnPException as ex:
                         self._logger.warning("Sonos: {ex}".format(ex=ex))
                         return
-                    #  bug here? no event, we have to trigger it manually
+                    # bug here? no event, we have to trigger it manually
                     if start:
                         self.play = True
             except Exception as ex:
                 self._logger.warning("Sonos: No Sonos playlist found with title '{title}'.".format(title=name))
 
+
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.1.0"
+    PLUGIN_VERSION = "1.3.2.0"
 
-    def __init__(self, sh, discover_cycle=120):
+    def __init__(self, sh, tts=False, local_webservice_path=None, discover_cycle="120",
+                 webservice_ip=None, webservice_port=23500, **kwargs):
+        super().__init__(**kwargs)
         self._sh = sh
-        self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
+        self._logger = logging.getLogger('sono')  # get a unique logger for the plugin and provide it internally
         self.zero_zone = False  # sometime a discovery scan fails, so try it two times; we need to save the state
         self._sonos_dpt3_step = 2  # default value for dpt3 volume step (step(s) per time period)
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
+        self._tts = self.to_bool(tts, default=False)
+        self._local_webservice_path = local_webservice_path
+
+        auto_ip = utils.get_local_ip_address()
+
+        if webservice_ip is not None:
+            if self.is_ip(webservice_ip):
+                self._webservice_ip = webservice_ip
+            else:
+                self._logger.error("Sonos: Your webservice_ip parameter is invalid. '{ip}' is not a vaild ip address. "
+                                   "Disabling TTS.".format(ip=webservice_ip))
+                self._tts = False
+        else:
+            self._webservice_ip = auto_ip
+
+        if utils.is_valid_port(str(webservice_port)):
+            self._webservice_port = int(webservice_port)
+            if not utils.is_open_port(self._webservice_port):
+                self._logger.error("Sonos: Your chosen webservice port {port} is already in use. "
+                                   "TTS disabled!".format(port=self._webservice_port))
+                self._tts = False
+        else:
+            self._logger.error("Sonos: Your webservice_port parameter is invalid. '{port}' is not within port range "
+                               "1024-65535. TTS disabled!".format(port=webservice_port))
+            self._tts = False
 
         discover_cycle_default = 120
 
+        if self._tts:
+            if self._local_webservice_path:
+                # check access rights
+                try:
+                    os.makedirs(self._local_webservice_path, exist_ok=True)
+                    if os.path.exists(self._local_webservice_path):
+                        self._logger.debug("Sonos: Local webservice path set to '{path}'".format(
+                            path=self._local_webservice_path))
+                        if os.access(self._local_webservice_path, os.W_OK):
+                            self._logger.debug("Sonos: Write permissions ok for tts on path {path}".format(
+                                path=self._local_webservice_path))
+
+                            free_diskspace = get_free_diskspace(self._local_webservice_path)
+                            human_readable_diskspace = file_size(free_diskspace)
+                            self._logger.debug("Sonos: Free diskspace: {disk}".format(disk=human_readable_diskspace))
+
+                            self._webservice_url = "http://{ip}:{port}".format(ip=self._webservice_ip,
+                                                                               port=self._webservice_port)
+                            self._logger.debug("Sonos: Starting webservice for TTS on {url}".format(
+                                url=self._webservice_url))
+                            self.webservice = SimpleHttpServer(self._webservice_ip, self._webservice_port,
+                                                               self._local_webservice_path)
+                            self.webservice.start()
+                        else:
+                            self._logger.warning(
+                                "Sonos: Local webservice path '{path}' is not writeable for current user. "
+                                "TTS disabled!".format(path=self._local_webservice_path))
+                    else:
+                        self._logger.warning("Sonos: Local webservice path '{path}' for TTS not exists. "
+                                             "TTS disabled!".format(path=self._local_webservice_path))
+                except OSError:
+                    self._logger.warning("Sonos: Could not create local webserver path '{path}'. Wrong permissions? "
+                                         "TTS disabled!".format(path=self._local_webservice_path))
+            else:
+                self._logger.debug("Sonos: Local webservice path for TTS has to be set. TTS disabled!")
+        else:
+            self._logger.debug("Sonos: TTS disabled")
         try:
             self._discover_cycle = int(discover_cycle)
         except:
@@ -2031,7 +2301,7 @@ class Sonos(SmartPlugin):
             ))
             self._discover_cycle = discover_cycle_default
 
-        self._logger.info("Sonos: setting discover cycle to {val} seconds.".format(val=self._discover_cycle))
+        self._logger.info("Sonos: Setting discover cycle to {val} seconds.".format(val=self._discover_cycle))
 
     def run(self):
         self._logger.debug("Sonos: run method called")
@@ -2118,12 +2388,12 @@ class Sonos(SmartPlugin):
             if not self.has_iattr(item.conf, 'sonos_dpt3_step'):
                 item.conf['sonos_dpt3_step'] = self._sonos_dpt3_step
                 self._logger.debug("Sonos: No sonos_dpt3_step defined, using default value {step}.".
-                                     format(step=self._sonos_dpt3_step))
+                                   format(step=self._sonos_dpt3_step))
 
             if not self.has_iattr(item.conf, 'sonos_dpt3_time'):
                 item.conf['sonos_dpt3_time'] = self._sonos_dpt3_time
                 self._logger.debug("Sonos: no sonos_dpt3_time defined, using default value {time}.".
-                                     format(time=self._sonos_dpt3_time))
+                                   format(time=self._sonos_dpt3_time))
 
             return self._handle_dpt3
 
@@ -2152,7 +2422,7 @@ class Sonos(SmartPlugin):
                     volume_helper.fade(vol_max, vol_step, vol_time)
                 else:
                     # down
-                    volume_helper.fade(0-vol_step, vol_step, vol_time)
+                    volume_helper.fade(0 - vol_step, vol_step, vol_time)
             else:
                 volume_helper(int(volume_helper() + 1))
                 volume_helper(int(volume_helper() - 1))
@@ -2246,10 +2516,40 @@ class Sonos(SmartPlugin):
                     clear_queue = self._resolve_child_command_bool(item, 'clear_queue')
                     track = self._resolve_child_command_int(item, 'start_track')
                     sonos_speaker[uid].load_sonos_playlist(item(), start, clear_queue, track)
+                if command == 'play_tts':
+                    if item() == "":
+                        return
+                    language = self._resolve_child_command_str(item, 'tts_language', 'de')
+                    volume = self._resolve_child_command_int(item, 'tts_volume', -1)
+                    fade_in = self._resolve_child_command_bool(item, 'tts_fade_in')
+                    sonos_speaker[uid].play_tts(item(), language, self._local_webservice_path, self._webservice_url,
+                                                volume, fade_in)
+                if command == 'play_snippet':
+                    if item() == "":
+                        return
+                    volume = self._resolve_child_command_int(item, 'snippet_volume', -1)
+                    fade_in = self._resolve_child_command_bool(item, 'snippet_fade_in')
+                    sonos_speaker[uid].play_snippet(item(), self._local_webservice_path, self._webservice_url, volume,
+                                                fade_in)
+
+    def _resolve_child_command_str(self, item: Item, child_command, default_value="") -> str:
+        """
+        Resolves a child command of type str for an item
+        :type child_command: The sonos_attrib name for the child
+        :type default_value: the default value, if the child not exists or an error occurred
+        :param item: The item for which a child item is to be searched
+        :rtype: str
+        :return: String value of the child item or the given default value.
+        """
+        for child in item.return_children():
+            if self.has_iattr(child.conf, 'sonos_attrib'):
+                if self.get_iattr_value(child.conf, 'sonos_attrib') == child_command:
+                    return child()
+        return default_value
 
     def _resolve_child_command_bool(self, item: Item, child_command) -> bool:
         """
-        Resolves a child command for an item
+        Resolves a child command of type bool for an item
         :type child_command: The sonos_attrib name for the child
         :param item: The item for which a child item is to be searched
         :rtype: bool
@@ -2261,23 +2561,24 @@ class Sonos(SmartPlugin):
                     return child()
         return False
 
-    def _resolve_child_command_int(self, item: Item, child_command) -> int:
+    def _resolve_child_command_int(self, item: Item, child_command, default_value=0) -> int:
         """
-        Resolves a child command for an item
+        Resolves a child command of type int for an item
+        :type default_value: the default value, if the child not exists or an error occurred
         :type child_command: The sonos_attrib name for the child
         :param item: The item for which a child item is to be searched
         :rtype: int
-        :return: value as int
+        :return: value as int or if no item was found the given default value
         """
         try:
             for child in item.return_children():
                 if self.has_iattr(child.conf, 'sonos_attrib'):
                     if self.get_iattr_value(child.conf, 'sonos_attrib') == child_command:
                         return int(child())
-            return 0
+            return default_value
         except:
             self._logger.warning("Sonos: Could not cast value [{val}] to 'int', using default value '0'")
-            return 0
+            return default_value
 
     def _resolve_group_command(self, item: Item) -> bool:
         """

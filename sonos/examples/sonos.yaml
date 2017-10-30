@@ -272,3 +272,34 @@ MySonos:
       type: str
       sonos_recv: uid
 
+    play_tts:
+      type: str
+      sonos_send: play_tts
+      enforce_updates: True
+
+      tts_language:
+        type: str
+        sonos_attrib: tts_language
+
+      tts_volume:
+        type: num
+        sonos_attrib: tts_volume
+
+      tts_fade_in:
+        type: bool
+        sonos_attrib: tts_fade_in
+
+    play_snippet:
+      type: str
+      sonos_send: play_snippet
+      enforce_updates: True
+
+      snippet_volume:
+        type: num
+        value: 25
+        sonos_attrib: snippet_volume
+
+      snippet_fade_in:
+        type: bool
+        value: True
+        sonos_attrib: snippet_fade_in
