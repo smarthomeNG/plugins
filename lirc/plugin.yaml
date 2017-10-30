@@ -3,7 +3,7 @@ plugin:
     # Global plugin attributes
     type: gateway                  # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Sendet Kommandos an lircd das wiederum IR-Signale an Ger‰te mit IR-Schnittstelle versendet'
+        de: 'Sendet Kommandos an lircd das wiederum IR-Signale an Ger√§te mit IR-Schnittstelle versendet'
         en: 'Sends commands to lircd that sends IR-signals to any device that has an IR-interface'
     maintainer: E3EAT
 #    tester:                       # Who tests this plugin?
