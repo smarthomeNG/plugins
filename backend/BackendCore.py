@@ -191,8 +191,8 @@ class BackendCore:
             if ydata != None:
                 yaml_code = lib.item_conversion.convert_yaml(ydata)
         else:
-            conf_code = ''
-            yaml_code = ''
+            conf_code = '\n\n\n\n\n\n\n\n'
+            yaml_code = '\n\n\n\n\n\n\n\n'
         return self.render_template('conf_yaml_converter.html', conf_code=conf_code, yaml_code=yaml_code)
 
 
