@@ -2,6 +2,8 @@ import hashlib
 import os
 import socket
 import re
+from collections import Set
+
 
 def is_valid_port(port):
     valid_port = re.compile(
@@ -9,6 +11,24 @@ def is_valid_port(port):
     if valid_port.match(port):
         return True
     return False
+
+
+def unique_list(seq, idfun=None):
+    # order preserving
+    if idfun is None:
+        def idfun(x): return x
+    seen = {}
+    result = []
+    for item in seq:
+        marker = idfun(item)
+        # in old Python versions:
+        # if seen.has_key(marker)
+        # but in new ones:
+        if marker in seen: continue
+        seen[marker] = 1
+        result.append(item)
+    return result
+
 
 def is_open_port(port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

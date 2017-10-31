@@ -2218,7 +2218,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.2.0"
+    PLUGIN_VERSION = "1.4"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, discover_cycle="120",
                  webservice_ip=None, webservice_port=23500, **kwargs):
@@ -2231,6 +2231,19 @@ class Sonos(SmartPlugin):
         self._tts = self.to_bool(tts, default=False)
         self._local_webservice_path = local_webservice_path
 
+        speaker_ips = self.get_parameter_value("speaker_ips")
+        self._speaker_ips = []
+        if speaker_ips:
+            self._logger.debug("Sonos: User-defined speaker IPs set. Auto-discover disabled.")
+        # check user specified sonos speaker ips
+        for ip in speaker_ips:
+            if self.is_ip(ip):
+                self._speaker_ips.append(ip)
+            else:
+                self._logger.warning("Sonos: Invalid Sonos speaker ip '{ip}'. Ignoring.".format(ip=ip))
+
+        # unique items in list
+        self._speaker_ips = utils.unique_list(self._speaker_ips)
         auto_ip = utils.get_local_ip_address()
 
         if webservice_ip is not None:
@@ -2640,11 +2653,18 @@ class Sonos(SmartPlugin):
 
     def _discover(self) -> None:
         """
-        Discover Sonos speaker in the network
+        Discover Sonos speaker in the network. If the plugin parameter 'speaker_ips' no discover package is sent over
+        the network.
         :rtype: None
         """
         handled_speaker = {}
-        zones = soco.discover(timeout=5)
+
+        zones = []
+        if self._speaker_ips:
+            for ip in self._speaker_ips:
+                zones.append(SoCo(ip))
+        else:
+            zones = soco.discover(timeout=5)
 
         # 1. attempt: don't touch our speaker, return and wait for next interval
         # 2. attempt: ok, no speaker found, go on
