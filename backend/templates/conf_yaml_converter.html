@@ -8,7 +8,9 @@
 {% block content %}
 <script src="static/codemirror/lib/codemirror.js"></script>
 <link rel="stylesheet" href="static/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="static/css/codemirror_custom.css">
 <script src="static/codemirror/mode/python/python.js"></script>
+
 <style>
 li.L0, li.L1, li.L2, li.L3,
 li.L5, li.L6, li.L7, li.L8
@@ -17,14 +19,13 @@ li.L5, li.L6, li.L7, li.L8
 
 <form name="input" action="conf_yaml_converter.html" method="POST" enctype="multipart/form-data">
     <div class="container" style="width: 100%;">
-    <div class="container" style="width: 100%;">
     <div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px; margin-right: 5px;">
         <div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Eingabe im .CONF Format') }}</div>
         <textarea id="conf_code" name="conf_code">{{ conf_code }}</textarea>
     </div>
     <div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px;">
         <div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ergebnis im .YAML Format') }}</div>
-        <textarea id="yaml_code" name="yaml_code">{{ yaml_code }}</textarea>
+        <textarea id="yaml_code" autocomplete="off" name="yaml_code">{{ yaml_code }}</textarea>
     </div>
     </div>
     <div class="container" style="width: 100%;">
@@ -32,13 +33,48 @@ li.L5, li.L6, li.L7, li.L8
     </div>
 </form>
 <script>
+     var minLines = 10;
+     var startingValue = '';
+     for (var i = 0; i < minLines; i++) {
+        startingValue += '\n';
+     }
+
      var myCodeMirrorConf = CodeMirror.fromTextArea(document.getElementById("conf_code"), {
-       lineNumbers: true
+        lineNumbers: true,
+        lineSeparator: '\n',
+        indentUnit: 4,
+        lineWrapping: false,
+        indentWithTabs: false
      });
      var myCodeMirrorYaml = CodeMirror.fromTextArea(document.getElementById("yaml_code"), {
-       lineNumbers: true,
-       readOnly: true,
-       mode: "yaml"
+        lineNumbers: true,
+        lineSeparator: '\n',
+        indentUnit: 4,
+        lineWrapping: false,
+        indentWithTabs: false,
+        readOnly: true,
+        mode: "yaml"
      });
+     myCodeMirrorConf.setValue(startingValue);
+     myCodeMirrorYaml.setValue(startingValue);
+
+
+     function resizeCodeMirrors() {
+        if (!myCodeMirrorConf.getOption("fullScreen")) {
+            var browserHeight = $( window ).height();
+            offsetTop = $('.CodeMirror').offset().top;
+            myCodeMirrorConf.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -60 + browserHeight)+ 'px';
+            myCodeMirrorConf.refresh();
+        }
+        if (!myCodeMirrorYaml.getOption("fullScreen")) {
+            var browserHeight = $( window ).height();
+            offsetTop = $('.CodeMirror').offset().top;
+            myCodeMirrorYaml.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -60 + browserHeight)+ 'px';
+            myCodeMirrorYaml.refresh();
+        }
+     }
+
+     window.addEventListener("resize", resizeCodeMirrors, false);
+     resizeCodeMirrors();
 </script>
 {% endblock %}
