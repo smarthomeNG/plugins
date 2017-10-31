@@ -2224,7 +2224,7 @@ class Sonos(SmartPlugin):
                  webservice_ip=None, webservice_port=23500, **kwargs):
         super().__init__(**kwargs)
         self._sh = sh
-        self._logger = logging.getLogger('sono')  # get a unique logger for the plugin and provide it internally
+        self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
         self.zero_zone = False  # sometime a discovery scan fails, so try it two times; we need to save the state
         self._sonos_dpt3_step = 2  # default value for dpt3 volume step (step(s) per time period)
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
