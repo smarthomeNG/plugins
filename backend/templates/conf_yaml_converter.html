@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="static/codemirror/lib/codemirror.css">
 <link rel="stylesheet" href="static/css/codemirror_custom.css">
 <script src="static/codemirror/mode/python/python.js"></script>
+<script src="static/codemirror/addon/display/rulers.js"></script>
 
 <style>
 li.L0, li.L1, li.L2, li.L3,
@@ -33,10 +34,16 @@ li.L5, li.L6, li.L7, li.L8
     </div>
 </form>
 <script>
+     var rulers = [];
+     for (var i = 1; i <= 100; i++) {
+        rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
+     }
+
      var myCodeMirrorConf = CodeMirror.fromTextArea(document.getElementById("conf_code"), {
         lineNumbers: true,
         lineSeparator: '\n',
         indentUnit: 4,
+        rulers: rulers,
         lineWrapping: false,
         indentWithTabs: false
      });
@@ -44,6 +51,7 @@ li.L5, li.L6, li.L7, li.L8
         lineNumbers: true,
         lineSeparator: '\n',
         indentUnit: 4,
+        rulers: rulers,
         lineWrapping: false,
         indentWithTabs: false,
         readOnly: true,
