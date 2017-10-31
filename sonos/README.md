@@ -67,15 +67,18 @@ Edit the file ```/usr/local/smarthome/etc/plugins.yaml``` (might differ) and add
 Sonos:
     class_name: Sonos
     class_path: plugins.sonos
-    # tts: true                       # default:  false
-    # local_webservice_path: /tmp/tts # default:  empty [If 'tts' is enabled, this option is mandatory. All tts files 
-    #                                             will be stored here.]
-    # webservice_ip: 192.168.1.40     # default:  automatic [You can set a specific ip address.
-    #                                             If you're using a docker container, you have to set the host ip address here.]  
-    # webservice_port: 23500          # default:  23500
-    # discover_cycle: 120             # default:  120 [in seconds]
+    # tts: true                          # optional, default:  false
+    # local_webservice_path: /tmp/tts    # optional, default:  empty. If 'tts' is enabled, this option is mandatory. 
+                                         # All tts files will be stored here.
+    # webservice_ip: 192.168.1.40        # optional, default:  automatic. You can set a specific ip address.
+                                         # If you're using a docker container, you have to set the host 
+                                         # ip address here.  
+    # webservice_port: 23500             # optional, default:  23500
+    # discover_cycle: 120                # optional, default:  120 (in seconds)
+    # speaker_ips:                       # optional. You can set static IP addresses for your Sonos speaker. This
+    #   - 192.168.1.10                   # will disable auto-discovery. This is useful if you're using a 
+    #   - 192.168.1.77                   # containerized environment with restricted network access.
 ```
-
 
 After that you have to create an item configuration file under ```/usr/local/smarthome/items```, e.g. ```sonos.yaml```.
 You can use the full-featured example configuration in the example sub folder. Just change the [Sonos UID](#uid) to your
@@ -762,6 +765,21 @@ becomes
 If you want to use either the ```play_tts``` or ```play_snippet``` functionality, you have to enable the ```tts```
 option for the Sonos plugin in your ```plugin.yaml```. In addition to that, you have to set a valid local path for the
 ```local_webservice_path``` option. A very simple Webservice will be started to serve Sonos requests.
+
+### Configure Speaker IPs manually
+
+You can set the IP addresses of your speakers statically to avoid using the internal discover function.
+This can be useful if you're using Docker or Rkt and you don't want to allow UDP and/or Multicast packets.  
+To do so, edit your ```etc/plugin.yaml``` and configure it like this:
+
+```yaml
+Sonos:
+    class_name: Sonos
+    class_path: plugins.sonos
+    speaker_ips:                       
+      - 192.168.1.10                    
+      - 192.168.1.77                   
+```
 
 ### Debug on error
 
