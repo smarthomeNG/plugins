@@ -378,7 +378,7 @@ class BackendCore:
         if num_pages == 0:
             num_pages = 1
         return self.render_template('log_view.html', 
-                                    current_page=int(page), pages=num_pages, 
+                                    current_page=int(page), pages=num_pages, log_level_filter=log_level_filter,
                                     logfile=os.path.basename(log_name), log_lines=log_lines, text_filter=text_filter)
 
 
