@@ -215,7 +215,7 @@ Adding the specified file, directory or URL to the playlist.
         [[[track]]]
             type = str
             mpd_listen = track
-
+```
 ```yaml
 living:
     mpd:
