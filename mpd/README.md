@@ -6,7 +6,7 @@ You only need one or more Music Player Daemons (MPD).
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 ```
 [mpd]
@@ -14,7 +14,13 @@ You only need one or more Music Player Daemons (MPD).
     class_path = plugins.mpd
 ```
 
-### items.conf
+```yaml
+mpd:
+    class_name: MPD
+    class_path: plugins.mpd
+```
+
+### items.conf (deprecated) / items.yaml
 
 You could see a full featured item configuration at the end of this file.
 
@@ -37,8 +43,36 @@ You could see a full featured item configuration at the end of this file.
             type = bool
             mpd_file = http://jungletrain.net/64kbps.m3u
             enforce_updates = yes
+        [[[heavy]]]
+            type = bool
+            mpd_localplaylist = heavymetal # will play the playlist heavymetal.m3u in the MPD's playlist directory
+            enforce_updates = yes
 ```
 
+```yaml
+living:
+    type: bool
+    mpd:
+        type: str
+        mpd_host: 127.0.0.1
+        mpd_port: 6600
+        state:
+            type: str
+            mpd_listen: state
+            mpd_send: value  # sends the item value. e.g. sh.dev.mpd.state('play') will send 'play'
+        volume:
+            type: num
+            mpd_listen: volume
+            mpd_send: volume
+        jungle:
+            type: bool
+            mpd_file: http://jungletrain.net/64kbps.m3u
+            enforce_updates: yes
+        heavy:
+            type: bool
+            mpd_localplaylist: heavymetal # will play the playlist heavymetal.m3u in the MPD's playlist directory
+            enforce_updates: yes
+```
 
 #### mpd_host
 This attribute is mandatory. You have to provide the IP address or host name of a MPD system.
@@ -86,7 +120,8 @@ The following `mpd_send` attributes could be defined to send changes to the syst
 #### mpd_file
 You could specify a file, directory or URL which will be played if the value of this item change.
 
-
+#### mpd_localplaylist
+You could specify a local playlist file which will be played if the value of this item change.
 
 ## Functions
 
@@ -100,8 +135,7 @@ Plays the specified file, directory or URL.
 ### add(file)
 Adding the specified file, directory or URL to the playlist.
 
-
-## Example item.conf
+## Example item.conf (deprecated) / item.yaml
 ```
 [living]
     [[mpd]]
@@ -157,8 +191,13 @@ Adding the specified file, directory or URL to the playlist.
             type = str
             mpd_file = value  # plays the item value
             enforce_updates = yes
+        [[[heavy]]]
+            type = bool
+            mpd_localplaylist = heavymetal # will play the playlist heavymetal.m3u in the MPD's playlist directory
+            enforce_updates = yes
+
 [office]
-    [[mp2]]
+    [[mpd2]]
         type = str
         mpd_host = 127.0.0.1
         mpd_port = 6601
@@ -176,4 +215,84 @@ Adding the specified file, directory or URL to the playlist.
         [[[track]]]
             type = str
             mpd_listen = track
+```
+```yaml
+living:
+    mpd:
+        type: str
+        mpd_host: 127.0.0.1
+        mpd_port: 6600
+        state:
+            type: str
+            mpd_listen: state
+            mpd_send: value  # sends the item value. e.g. sh.dev.mpd.state('play') will send 'play'
+        volume:
+            type: num
+            mpd_listen: volume
+            mpd_send: volume
+        play: # any call of dev.mpd.play will send 'play'
+            type: bool
+            # knx_listen ....
+            mpd_send: play
+            enforce_updates: yes
+#       time:
+#          type: num
+#          mpd_listen: time
+        total:
+            type: num
+            mpd_listen: total
+        percent:
+            type: num
+            mpd_listen: percent
+        repeat:
+            type: bool
+            mpd_listen: repeat
+            mpd_send: repeat
+        title:
+            type: str
+            mpd_listen: title
+        album:
+            type: str
+            mpd_listen: album
+        artist:
+            type: str
+            mpd_listen: artist
+        name:
+            type: str
+            mpd_listen: name
+        track:
+            type: str
+            mpd_listen: track
+        rick:
+            type: bool
+            mpd_file: http://rick.net/roll.m3u
+            enforce_updates: yes
+        url:
+            type: str
+            mpd_file: value  # plays the item value
+            enforce_updates: yes
+        heavy:
+            type: bool
+            mpd_localplaylist: heavymetal # will play the playlist heavymetal.m3u in the MPD's playlist directory
+            enforce_updates: yes
+
+office:
+    mpd2:
+        type: str
+        mpd_host: 127.0.0.1
+        mpd_port: 6601
+        state:
+            type: str
+            mpd_listen: state
+            mpd_send: value
+        volume:
+            type: num
+            mpd_listen: volume
+            mpd_send: volume
+        name:
+            type: str
+            mpd_listen: name
+        track:
+            type: str
+            mpd_listen: track
 ```
