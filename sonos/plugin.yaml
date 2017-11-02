@@ -11,8 +11,8 @@ plugin:
   documentation: https://knx-user-forum.de/forum/supportforen/smarthome-py/35587-immer-aktuell-sonos-broker-und-sonos-plugin-howto        # url of documentation (wiki) page
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.4.0                 # Plugin version
-  sh_minversion: 1.3c            # minimum shNG version to use this plugin
+  version: 1.4.2                 # Plugin version
+  sh_minversion: 1.3             # minimum shNG version to use this plugin
   multi_instance: False          # plugin supports multi instance
   classname: Sonos               # class containing the plugin
 
