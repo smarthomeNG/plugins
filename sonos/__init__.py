@@ -2218,7 +2218,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4"
+    PLUGIN_VERSION = "1.4.2"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, discover_cycle="120",
                  webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
