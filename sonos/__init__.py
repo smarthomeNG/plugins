@@ -2076,7 +2076,7 @@ class Speaker(object):
         for item in self.sonos_playlists_items:
             item(p_l, 'Sonos')
 
-    def _play_snippet(self, file_path: str, webservice_url: str, volume: int=-1, fade_in=False) -> None:
+    def _play_snippet(self, file_path: str, webservice_url: str, volume: int = -1, fade_in=False) -> None:
         if not self._check_property():
             return
         if not self.is_coordinator:
@@ -2130,7 +2130,7 @@ class Speaker(object):
                         else:
                             sonos_speaker[member].set_volume(volumes[member], group_command=False)
 
-    def play_snippet(self, audio_file, local_webservice_path: str, webservice_url: str, volume: int = -1, fade_in=False)\
+    def play_snippet(self, audio_file, local_webservice_path: str, webservice_url: str, volume: int = -1, fade_in=False) \
             -> None:
         if not self._check_property():
             return
@@ -2221,7 +2221,7 @@ class Sonos(SmartPlugin):
     PLUGIN_VERSION = "1.4"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, discover_cycle="120",
-                 webservice_ip=None, webservice_port=23500, **kwargs):
+                 webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
         super().__init__(**kwargs)
         self._sh = sh
         self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
@@ -2231,7 +2231,12 @@ class Sonos(SmartPlugin):
         self._tts = self.to_bool(tts, default=False)
         self._local_webservice_path = local_webservice_path
 
-        speaker_ips = self.get_parameter_value("speaker_ips")
+        get_param_func = getattr(self, "get_parameter_value", None)
+        if callable(get_param_func):
+            speaker_ips = self.get_parameter_value("speaker_ips")
+        else:
+            speaker_ips = re.findall(r'[0-9]+(?:\.[0-9]+){3}', speaker_ips)
+
         self._speaker_ips = []
         if speaker_ips:
             self._logger.debug("Sonos: User-defined speaker IPs set. Auto-discover disabled.")
@@ -2543,7 +2548,7 @@ class Sonos(SmartPlugin):
                     volume = self._resolve_child_command_int(item, 'snippet_volume', -1)
                     fade_in = self._resolve_child_command_bool(item, 'snippet_fade_in')
                     sonos_speaker[uid].play_snippet(item(), self._local_webservice_path, self._webservice_url, volume,
-                                                fade_in)
+                                                    fade_in)
 
     def _resolve_child_command_str(self, item: Item, child_command, default_value="") -> str:
         """
@@ -2677,19 +2682,21 @@ class Sonos(SmartPlugin):
         self.zero_zone = False
 
         for zone in zones:
-            uid = zone.uid.lower()
-
-            # don't trust the discover function, offline speakers can be cached
-            # we try to ping the speaker
-            with open(os.devnull, 'w') as DEVNULL:
-                try:
-                    subprocess.check_call(['ping', '-i', '0.2', '-c', '2', zone.ip_address],
-                                          stdout=DEVNULL, stderr=DEVNULL, timeout=1)
-                    is_up = True
-                except subprocess.CalledProcessError:
-                    is_up = False
-                except subprocess.TimeoutExpired:
-                    is_up = False
+            if zone.uid is None:
+                is_up = False
+            else:
+                uid = zone.uid.lower()
+                # don't trust the discover function, offline speakers can be cached
+                # we try to ping the speaker
+                with open(os.devnull, 'w') as DEVNULL:
+                    try:
+                        subprocess.check_call(['ping', '-i', '0.2', '-c', '2', zone.ip_address],
+                                              stdout=DEVNULL, stderr=DEVNULL, timeout=1)
+                        is_up = True
+                    except subprocess.CalledProcessError:
+                        is_up = False
+                    except subprocess.TimeoutExpired:
+                        is_up = False
 
             if is_up:
                 self._logger.debug("Sonos: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
