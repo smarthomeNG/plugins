@@ -273,6 +273,8 @@ class BackendItems:
                          'cache': cache,
                          'eval': html.escape(self.disp_str(item._eval)),
                          'eval_trigger': self.disp_str(item._eval_trigger),
+                         'on_update': html.escape(self.disp_str(item._on_update)),
+                         'on_change': html.escape(self.disp_str(item._on_change)),
                          'cycle': str(cycle),
                          'crontab': str(crontab),
                          'autotimer': self.disp_str(item._autotimer),

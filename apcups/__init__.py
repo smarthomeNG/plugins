@@ -58,7 +58,10 @@ class APCUPS(SmartPlugin):
             logger.debug("update item: {0}".format(item.id()))
 
     def update_status(self):
-        # go and grab
+        """
+        Start **apcaccess** on a shell, capture the output and parse it.
+        The items attribut parameter will be matched against the shell output
+        """
         command = '/sbin/apcaccess status {0}:{1}'.format(self._host, self._port)   # the command goes here
         output = subprocess.check_output(command.split(), shell=False)
         # decode byte string to string
