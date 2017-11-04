@@ -102,101 +102,6 @@ class BackendCore:
 
 
     # -----------------------------------------------------------------------------------
-    #    SERVICES
-    # -----------------------------------------------------------------------------------
-
-    @cherrypy.expose
-    def services_html(self):
-        """
-        shows a page with info about some services needed by smarthome
-        """
-        knxd_service = self.get_process_info("systemctl status knxd.service")
-        smarthome_service = self.get_process_info("systemctl status smarthome.service")
-        knxd_socket = self.get_process_info("systemctl status knxd.socket")
-
-        knxdeamon = ''
-        if self.get_process_info("ps cax|grep eibd") != '':
-            knxdeamon = 'eibd'
-        if self.get_process_info("ps cax|grep knxd") != '':
-            if knxdeamon != '':
-                knxdeamon += ' and '
-            knxdeamon += 'knxd'
-
-        sql_plugin = False
-        database_plugin = []
-
-        for x in self._sh._plugins:
-            if x.__class__.__name__ == "SQL":
-                sql_plugin = True
-                break
-            elif x.__class__.__name__ == "Database":
-                database_plugin.append(x.get_instance_name())
-
-        return self.render_template('services.html', 
-                                    knxd_service=knxd_service, knxd_socket=knxd_socket, knxdeamon=knxdeamon,
-                                    smarthome_service=smarthome_service, lang=get_translation_lang(), 
-                                    sql_plugin=sql_plugin, database_plugin=database_plugin)
-
-
-    @cherrypy.expose
-    def reload_translation_html(self, lang=''):
-        if lang != '':
-            load_translation(lang)
-        else:
-            load_translation(get_translation_lang())
-        return self.index()
-
-    @cherrypy.expose
-    def reboot(self):
-        passwd = request.form['password']
-        rbt1 = subprocess.Popen(["echo", passwd], stdout=subprocess.PIPE)
-        rbt2 = subprocess.Popen(["sudo", "-S", "reboot"], stdin=rbt1.
-                                stdout, stdout=subprocess.PIPE)
-        print(rbt2.communicate()[0])
-        return redirect('/services.html')
-
-    def validate_date(self, date_text):
-        try:
-            datetime.datetime.strptime(date_text, '%Y-%m-%d')
-            return True
-        except ValueError:
-            return False
-
-    @cherrypy.expose
-    def db_dump_html(self, plugin):
-        """
-        returns the smarthomeNG sqlite database as download
-        """
-        if (plugin == "sqlite_old"):
-            self._sh.sql.dump('%s/var/db/smarthomedb.dump' % self._sh_dir)
-            mime = 'application/octet-stream'
-            return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump" % self._sh_dir, mime,
-                                                  "%s/var/db/" % self._sh_dir)
-        elif plugin != "":
-            for x in self._sh._plugins:
-                if isinstance(x, SmartPlugin):
-                    if x.get_instance_name() == plugin:
-                        x.dump('%s/var/db/smarthomedb_%s.dump' % (self._sh_dir, plugin))
-                        mime = 'application/octet-stream'
-                        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb_%s.dump" % (self._sh_dir, plugin),
-                                                              mime, "%s/var/db/" % self._sh_dir)
-        return
-
-    # -----------------------------------------------------------------------------------
-
-    @cherrypy.expose
-    def conf_yaml_converter_html(self, convert=None, conf_code=None, yaml_code=None):
-        if convert is not None:
-            ydata = lib.item_conversion.parse_for_convert(conf_code=conf_code)
-            if ydata != None:
-                yaml_code = lib.item_conversion.convert_yaml(ydata)
-        else:
-            conf_code = '\n\n\n\n\n\n\n\n'
-            yaml_code = '\n\n\n\n\n\n\n\n'
-        return self.render_template('conf_yaml_converter.html', conf_code=conf_code, yaml_code=yaml_code)
-
-
-    # -----------------------------------------------------------------------------------
     #    SCHEDULERS
     # -----------------------------------------------------------------------------------
 
@@ -233,6 +138,23 @@ class BackendCore:
                     
         schedule_list_sorted = sorted(schedule_list, key=lambda k: k['fullname'].lower())
         return self.render_template('schedules.html', schedule_list=schedule_list_sorted)
+
+
+    # -----------------------------------------------------------------------------------
+    #    SCENES
+    # -----------------------------------------------------------------------------------
+
+    @cherrypy.expose
+    def scenes_html(self):
+
+        from lib.scene import Scenes
+        get_param_func = getattr(Scenes, "get_instance", None)
+        if callable(get_param_func):
+            self.scenes = Scenes.get_instance()
+            supported = True
+        else:
+            supported = False
+        return self.render_template('scenes.html', supported=supported)
 
 
     # -----------------------------------------------------------------------------------

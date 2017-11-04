@@ -155,8 +155,16 @@
 			<tr>
 				<td><img src="static/img/tree.png" alt="Icon cache" width="48" height="48"></td>
 				<td colspan="2" style="padding-top:15px;">
+					<span class="btn btn-default" onclick="checkYaml()">{{ _('YAML Syntax Checker') }}</span>
 					<span class="btn btn-default" onclick="convertYaml()">{{ _('CONF-YAML Konverter') }}</span>
-					<div id="cache_check" style="margin-top: 5px; width: 1000px;"></div>
+					<div id="yaml_check" style="margin-top: 5px; width: 1000px;"></div>
+				</td>
+			</tr>
+			<tr>
+				<td><img src="static/img/eval.svg" alt="Icon cache" width="48" height="48"></td>
+				<td colspan="2" style="padding-top:15px;">
+					<span class="btn btn-default" onclick="checkEval()">{{ _('Eval Syntax Checker') }}</span>
+					<div id="yaml_check" style="margin-top: 5px; width: 1000px;"></div>
 				</td>
 			</tr>
 		</tbody>
@@ -179,6 +187,14 @@ function checkCache() {
 
 function convertYaml() {
 	window.location = "conf_yaml_converter.html";
+}
+
+function checkYaml() {
+	window.location = "yaml_syntax_checker.html";
+}
+
+function checkEval() {
+	window.location = "eval_syntax_checker.html";
 }
 
 function deleteFromCache(filename) {

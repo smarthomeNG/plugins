@@ -45,6 +45,7 @@ from lib.model.smartplugin import SmartPlugin
 
 from .BackendCore import BackendCore
 from .BackendSysteminfo import BackendSysteminfo
+from .BackendServices import BackendServices
 from .BackendItems import BackendItems
 from .BackendLogics import BackendLogics
 from .BackendPlugins import BackendPlugins
@@ -184,7 +185,7 @@ class BackendServer(SmartPlugin):
 
     
 
-class Backend(BackendCore, BackendSysteminfo, BackendItems, BackendLogics, BackendPlugins):
+class Backend(BackendCore, BackendSysteminfo, BackendServices, BackendItems, BackendLogics, BackendPlugins):
 
     env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))+'/templates'))
     from os.path import basename as get_basename

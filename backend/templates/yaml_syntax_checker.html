@@ -18,19 +18,23 @@ li.L5, li.L6, li.L7, li.L8
 { list-style-type: decimal !important }
 </style>
 
-<form name="input" action="conf_yaml_converter.html" method="POST" enctype="multipart/form-data">
+<form name="input" action="yaml_syntax_checker.html" method="POST" enctype="multipart/form-data">
     <div class="container" style="width: 100%;">
-    <div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px; margin-right: 5px;">
-        <div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Eingabe im .CONF Format') }}</div>
-        <textarea id="conf_code" name="conf_code">{{ conf_code }}</textarea>
-    </div>
-    <div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px;">
-        <div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ergebnis im .YAML Format') }}</div>
-        <textarea id="yaml_code" autocomplete="off" name="yaml_code">{{ yaml_code }}</textarea>
-    </div>
+		<div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px; margin-right: 5px;">
+			<div title="{{ _('Hier den YAML Code eingeben, der geprüft werden soll.') }}">
+    		    <div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Eingabe im .YAML Format') }}</div>
+				<textarea id="yaml_code" name="yaml_code">{{ yaml_code }}</textarea>
+			</div>
+		</div>
+    	<div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px;">
+			<div title="{{ _('Hier wird das Ergebnis Ausdruck angezeigt.') }}">
+	        	<div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ergebnis: Aufbereitetes .YAML Format') }}</div>
+    		    <textarea id="check_result" autocomplete="off" name="check_result">{{ check_result }}</textarea>
+		    </div>
+	    </div>
     </div>
     <div class="container" style="width: 100%;">
-    <input name="convert" value="{{ _('Konvertieren','button') }}" type="submit" class="btn btn-default btn-xs">
+	    <input name="check" value="{{ _('Prüfen','button') }}" type="submit" class="btn btn-default btn-xs">
     </div>
 </form>
 <script>
@@ -39,15 +43,16 @@ li.L5, li.L6, li.L7, li.L8
         rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
      }
 
-     var myCodeMirrorConf = CodeMirror.fromTextArea(document.getElementById("conf_code"), {
+     var myCodeMirrorConf = CodeMirror.fromTextArea(document.getElementById("yaml_code"), {
         lineNumbers: true,
         lineSeparator: '\n',
         indentUnit: 4,
         rulers: rulers,
         lineWrapping: false,
-        indentWithTabs: false
+        indentWithTabs: false,
+        mode: "yaml"
      });
-     var myCodeMirrorYaml = CodeMirror.fromTextArea(document.getElementById("yaml_code"), {
+     var myCodeMirrorYaml = CodeMirror.fromTextArea(document.getElementById("check_result"), {
         lineNumbers: true,
         lineSeparator: '\n',
         indentUnit: 4,
