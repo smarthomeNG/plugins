@@ -405,13 +405,17 @@ class Database(SmartPlugin):
             'max' : 'MIN(time), MAX(val_num)',
             'on'  : 'MIN(time), ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
             'on.order' : 'ORDER BY time ASC',
-            'sum' : 'MIN(time), SUM(val_num)'
+            'sum' : 'MIN(time), SUM(val_num)',
+            'val' : 'time, val_num',
+            'val.order' : 'ORDER BY time ASC',
+            'val.group' : ''
         }
         if func not in queries:
             raise NotImplementedError
 
         order = '' if func+'.order' not in queries else queries[func+'.order']
-        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group="GROUP BY ROUND(time / :step)", order=order)
+        group = 'GROUP BY ROUND(time / :step)' if func+'.group' not in queries else queries[func+'.group']
+        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group=group, order=order)
         tuples = logs['tuples']
         if tuples:
             if logs['istart'] > tuples[0][0]:
