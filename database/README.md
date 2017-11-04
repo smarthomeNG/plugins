@@ -138,6 +138,15 @@ Supported functions are:
    * `min`: for the minimum value
    * `on`: percentage (as float from 0.00 to 1.00) where the value has been greater than 0.
    * `sum`: for the summarized value
+   * `val`: for the raw values
+
+Additionally to the aggregation function a finalizer function can be specified when
+fetching series to apply to the results before returning them. Specify the function
+as prefix to the actual aggregation function (e.g. "diff:avg").
+
+Supported finalizer functions are:
+
+   * diff: return the differences between values
 
 For the timeframe you have to specify a start point and a optional end point. By default it ends 'now'.
 The time point could be specified with `<number><interval>`, where interval could be:
