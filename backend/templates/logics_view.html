@@ -107,21 +107,21 @@
 		<tr>
 			<td><strong>{{ _('Cycle') }}</strong></td>
 			<td>
-				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.cycle }}"/>
+				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.cycle }}"/>
 				<input type="hidden" id="original_cycle" value="{{ thislogic.cycle }}"/>
 			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Crontab(s)') }}</strong></td>
 			<td>
-				<input type="text" autocomplete="off" id="crontab" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.crontab }}"/>
+				<input type="text" autocomplete="off" id="crontab" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.crontab }}"/>
 				<input type="hidden" id="original_crontab" value="{{ thislogic.crontab }}"/>
 			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Watch_Item(s)') }}</strong></td>
 			<td>
-				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"/>
+				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.watch_item }}"/>
 				<input type="hidden" id="original_watch" value="{{ thislogic.watch_item }}"/>
 			</td>
 		</tr>

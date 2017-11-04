@@ -254,14 +254,14 @@ class BackendLogics:
                 mylogic['watch'] = Utils.strip_quotes_fromlist(str(config[1]))
                 mylogic['watch_item'] = Utils.strip_quotes_fromlist(str(config[1]))
                 mylogic['watch_item_list'] = config[1]
-        
+
         if os.path.splitext(file_path)[1] == '.blockly':
             mode = 'xml'
             updates = False
         else:
             mode = 'python'
             updates=self.updates_allowed
-            if not hasattr(mylogic, 'userlogic'):
+            if not 'userlogic' in mylogic:
                 mylogic['userlogic'] = True
             if mylogic['userlogic'] == False:
                 updates = False
