@@ -22,13 +22,18 @@ avdevice:
     class_name: AVDevice
     class_path: plugins.avdevice
     model: sc-lx86
-    instance: pioneer_one
-    tcp: 10.0.0.130, 9009
-    rs232: /dev/ttyUSB1, 9600, 0.1, 0.2
-    #ignoreresponse: 
-    #forcebuffer: 
-    #inputignoredisplay: Source values
-    #dependson: item, value
+    #instance: pioneer_one
+    tcp_ip: 10.0.0.130
+    #tcp_port: 23
+    #tcp_timeout: 1
+    rs232_port: /dev/ttyUSB1
+    #rs232_baudrate: 9600
+    #rs232_timeout: 0.1
+    #ignoreresponse: 'RGB,RGC,RGD,GBH,GHH,LM0,VTA,AUA,AUB'
+    #forcebuffer: 'GEH01020, GEH04022, GEH05024'
+    #inputignoredisplay: ''
+    #dependson_item: ''
+    #dependson_value: True
     #errorresponse: E02, E04, E06
     #resetonerror: False
     #depend0_power0: False
@@ -38,7 +43,7 @@ avdevice:
     #reconnectretries: 13
     #reconnectcycle: 10
     #secondstokeep: 50
-    #responsebuffer: -5
+    #responsebuffer: 5
     #autoreconnect: false    
 ```
 
@@ -46,14 +51,18 @@ avdevice:
 #### Attributes:
 
 * `model`: string. name of AV device. Has to correspond to a text file with the same name in the folder plugins/avdevice.
-* `manufacturer`: string. Name of manufacturer. Not necessary usually but maybe with Epson projectors.
 * `instance`: string. define instance name, each device needs an individual instance name!
-* `tcp`: list of values. if you use TCP connection define IP address and port, separated by a ","
-* `rs232`: list of values. if you use a RS232 cable to communicate with your device (highly recommended!) define port, baudrate, timeout and write timeout separated by ","
+* `tcp_ip`: IP address
+* `tcp_port`: TCP/IP port
+* `tcp_timeout`: TCP/IP timeout
+* `rs232_port`: If you use a RS232 cable to communicate with your device (highly recommended!) define the interface port
+* `rs232_baudrate`: baudrate for RS232
+* `rs232_timeout`: timeout for RS232
 * `ignoreresponse`: list of values. the plugin doesn't care about responses from the device starting with the given values. List responses for menu navigation, etc. For Pioneer receivers the following list is recommended: RGB, RGC, RGD, GBH, GHH, LM0, VTA, AUA, AUB
 * `forcedbuffer`: list of strings. If for whatever reason you don't want to buffer the response from your device you can still define specific responses that should get buffered. This is important for responses that change or get sent very quickly. Artist, title, radio station, etc. are examples that should be put here. For Pioneer receivers the following list is recommended: GEH01020, GEH04022, GEH05024
 * `inputignoredisplay`: list of int. The value of the LCD display on your receiver might get updated very often, e.g. when it shows song titles as a scrolling text. To avoid constant display updates and therefore possible confusion with relevant answers of your device listing source inputs like internet radio, LAN streaming, etc. here is highly recommended. For Pioneer receivers the following list is recommended: 26,38,40,41,44,17,02,48,0
-* `dependson`: item, value. If given item has given value the commands are sent to the device, otherwise they are not. Relevant if you have your device connected to a power socket that can be turned off.
+* `dependson_item`: item. If given item has given value the commands are sent to the device, otherwise they are not. Relevant if you have your device connected to a power socket that can be turned off.
+* `dependson_value`: boolean. If given item has given value the commands are sent to the device, otherwise they are not. Relevant if you have your device connected to a power socket that can be turned off.
 * `errorresponse`: list of strings. The standard error responses from your device. For Pioneer receivers they are "E" followed by a number. If no values are provided error answers from your device might get recognized much slower but actually should still get recognized. 
 * `resetonerror`: boolean. Reset the value of the item that could not be updated. E.g. you set the volume of zone 2 to "100". If either the dependson item is off or the device sends an error response or after several connection and send retries the expected response is not received, the volume item gets set to value it had before you sent the command. That way you avoid having a wrong value displayed in your Visu.
 * `depend0_power0`: boolean. If the dependson item is off the power off all zones are set to off. This is especially relevant for a correct representation in your Visu when you have a powered on device but turn off the power socket.
@@ -62,7 +71,7 @@ avdevice:
 * `resendwait`: float. Seconds the plugin should wait between each resend retry.
 * `reconnectretries`: integer. If the plugin can not connect to the device it retries this often. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device. 
 * `secondstokeep`: integer. Seconds the plugin should temporarily save a command to retry later on after establishing a connection. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device. 
-* `responsebuffer`: integer or boolean. Set this to a negative number to collect quickly received responses in a buffer and evaluate them collectively. The standard value should be fine and prevent responses getting lost. Some receivers might first respond to a command with an update of the display and then with the actual value. The buffer ensures the correct evaluation of the response. 
+* `responsebuffer`: integer or boolean. Set this to a number to collect quickly received responses in a buffer and evaluate them collectively. The standard value should be fine and prevent responses getting lost. Some receivers might first respond to a command with an update of the display and then with the actual value. The buffer ensures the correct evaluation of the response. 
 * `autoreconnect`: boolean. Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command.
 
 ### items.yaml
