@@ -391,6 +391,11 @@ class Database(SmartPlugin):
         if sid is None:
             sid = item + '|' + func + '|' + str(start) + '|' + str(end)  + '|' + str(count)
         sum_args = ['!=', '0']
+        if func.startswith('diff:'):
+            final_func = func[:6]
+            func = func[7:]
+        else:
+            final_func = None
         if func.startswith('count'):
             sum_parts = re.match('(count)(<>|!=|<|=|>)(\d+)', func)
             func = 'count'
@@ -433,6 +438,15 @@ class Database(SmartPlugin):
                 tuples.append((item_change, value))
             if init:
                 tuples.append((logs['iend'], value))
+
+        if final_func:
+            final_tuples = []
+            for i in range(1, len(tuples)-1):
+                if final_func == 'diff':
+                    final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i-1][1]))
+                else:
+                    final_tuples.append(tuples[i])
+            tuples = final_tuples
 
         return {
             'cmd': 'series', 'series': tuples, 'sid': sid,
