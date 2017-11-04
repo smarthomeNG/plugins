@@ -173,8 +173,6 @@ class BackendCore:
                     for action in action_list:
                         if not isinstance(action[0], str):
                             action[0] = action[0].id()
-                        if not isinstance(action[1], int):
-                            action[1] = int(action[1])
                     value_dict['action_list'] = sorted(action_list)
 
                     disp_value_list.append(value_dict)
