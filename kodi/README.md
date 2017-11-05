@@ -1,106 +1,65 @@
-# Kodi
+# XBMC
 
 ## Requirements
 
-You only need one or more Kodi (12 a.k.a. Frodo or above) with
-System-Settings-Service "Allow programs on other systems to control Kodi" enabled.
+You only need one or more XBMC (12 a.k.a. Frodo or above) with
+System-Settings-Service "Allow programs on other systems to control XBMC" enabled.
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
+### plugin.conf
 
 ```
-# /etc/plugin.conf
-[kodi]
-    class_name = Kodi
-    class_path = plugins.kodi
-    instance = living
-    host = xxx.xxx.xxx.xxx
-    port = 9090
+[xbmc]
+    class_name = XBMC
+    class_path = plugins.xbmc
 ```
 
-```yaml
-# /etc/plugin.yaml
-kodi:
-    class_name: Kodi
-    class_path: plugins.kodi
-    instance: mediacenter
-    host: xxx.xxx.xxx.xxx
-    port: 9090
-```
-
-#### host
-This attribute is mandatory. You have to provide the IP address of the Kodi system.
-
-#### port
-You could specify a port to connect to. By default port 9090 is used.
-
-### items.conf (deprecated) / items.yaml
+### items.conf
 
 ```
-# /items/items.conf
 [living]
-    [[kodi]]
+    [[xbmc]]
         type = str
-        kodi_item@mediacenter = state
+        xbmc_host = xbmc.home
+        # xbmc_port = 9090
+        xbmc_listen = state
         [[[title]]]
             type = str
-            kodi_item@mediacenter = title
+            xbmc_listen = title
         [[[media]]]
             type = str
-            kodi_item@mediacenter = media
+            xbmc_listen = media
         [[[volume]]]
             type = num
-            kodi_item@mediacenter = volume
+            xbmc_listen = volume
+            xbmc_send = volume
         [[[mute]]]
             type = bool
-            kodi_item@mediacenter = mute
+            xbmc_listen = mute
+            xbmc_send = mute
 ```
 
-```yaml
-# /items/items.yaml
-living:
-    kodi:
-        type: str
-        kodi_item@mediacenter: state        
-        volume:
-            type: num
-            kodi_item@mediacenter: volume
-        mute:
-            type: bool
-            kodi_item@mediacenter: mute
-        title:
-            type: str
-            kodi_item@mediacenter: title
-        media:
-            type: str
-            kodi_item@mediacenter: media
-        favorites:
-            type: dict
-            kodi_item@mediacenter: favorites
-```
+#### xbmc_host
+This attribute is mandatory. You have to provide the IP address or host name of the XBMC system.
 
-#### kodi_item
-You could assign the following values to `kodi_item`:
+#### xbmc_port
+You could specify a port to connect to. By default port 9090 is used.
+
+#### xbmc_listen
+You could assign the following values to `xbmc_listen`:
 
    * `volume` a numeric value (0 -100)
    * `mute` a bool flag
    * `title` a string with the name of the movie, song or picture
    * `media` a string with the current media type (Video, Audio, Picture)
    * `state` current state as string (Menu, Playing, Pause)
-   * `favorites` the favorites of your Kodi system (must be of type dict)
-   * `play_pause` request Kodi to pause or restart the current players (should be of type bool and `enforce_updates: true`)
-   * `stop` request Kodi to stop all players (should be of type bool and `enforce_updates: true`)
-   * `left` send a left request to Kodi, same as pressing the left arrow on the keyboard (should be of type bool and `enforce_updates: true`)
-   * `right` send a right request to Kodi, same as pressing the right arrow on the keyboard (should be of type bool and `enforce_updates: true`)
-   * `up` send an up request to Kodi, same as pressing the up arrow on the keyboard (should be of type bool and `enforce_updates: true`)
-   * `down` send a down request to Kodi, same as pressing the down arrow on the keyboard (should be of type bool and `enforce_updates: true`)
-   * `home` go to the home menu (should be of type bool and `enforce_updates: true`)
-   * `back` go to the previous menu (should be of type bool and `enforce_updates: true`)
-   * `select` select the currently highlightes item in Kodi (should be of type bool and `enforce_updates: true`)
 
-The `volume` and `mute` items influence Kodi when their value changes.
-All items that are marked as "should be of type bool" are essentially commands which are usually send to Kodi over an attached keyboard. The keyboard behavior can be simulated through boolean items with `enforce_updates: true`.
+#### xbmc_send
+The following `xbmc_send` attributes could be defined to send changes to the system:
+
+   * `volume` a numeric value (0 -100)
+   * `mute` a bool flag
 
 
 ### logic.conf
@@ -108,8 +67,13 @@ All items that are marked as "should be of type bool" are essentially commands w
 Nothing so far
 
 ## Functions
-This plugin provides the function to send notification messages to Kodi.
+=========
+This plugin provides the function to send notification messages to xbmc. 
+``notify_all(title, message, picture)`` to send the notification to all xbmc systems and extends the item with the notify method.
+The picture attribute is optional.
 
 ```python
-sh.living.kodi.notify('Door', 'Ding Dong')
+sh.xbmc.notify_all('Phone', 'Sister in law calling', 'http://smarthome.local/img/phone.png') 
+# or for a dedicated xbmc
+sh.living.xbmc.notify('Door', 'Ding Dong')
 ```
