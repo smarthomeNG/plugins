@@ -226,26 +226,26 @@ class AVDevice(SmartPlugin):
 		if 'bool' in expectedtype and not receivedvalue == '':
 			try:
 				receivedvalue = max(min(int(receivedvalue), 1), 0)
-				self.logger.log(VERBOSE1, "Converting Values {}: Limiting bool value for {}.".format(
-					self._name, receivedvalue))
+				self.logger.log(VERBOSE1, "Converting Values {}: Limiting bool value for {}.".format(self._name, receivedvalue))
 			except Exception:
 				pass
 
 			try:
 				if invert is True:
-					if (int(receivedvalue) == 1 and len(receivedvalue) <= 1):
+					if (int(receivedvalue) == 1 and len(str(receivedvalue)) <= 1):
 						receivedvalue = False
-					elif (int(receivedvalue) == 0 and len(receivedvalue) <= 1):
+					elif (int(receivedvalue) == 0 and len(str(receivedvalue)) <= 1):
 						receivedvalue = True
 					self.logger.log(VERBOSE1, "Converting Values {}: Receivedvalue {} reversed".format(self._name, receivedvalue))
 				else:
-					if (int(receivedvalue) == 1 and len(receivedvalue) <= 1):
+					if (int(receivedvalue) == 1 and len(str(receivedvalue)) <= 1):
 						receivedvalue = True
 						self.logger.log(VERBOSE1, "Converting Values {}: Receivedvalue {} converted to bool.".format(self._name, receivedvalue))
-					elif (int(receivedvalue) == 0 and len(receivedvalue) <= 1):
+					elif (int(receivedvalue) == 0 and len(str(receivedvalue)) <= 1):
 						receivedvalue = False
 						self.logger.log(VERBOSE1, "Converting Values {}: Receivedvalue {} converted to bool.".format(self._name, receivedvalue))
-			except Exception:
+			except Exception as err:
+				self.logger.log(VERBOSE2, "Converting Values {}: Receivedvalue {} not converted. Problem: {}.".format(self._name, receivedvalue, err))
 				pass
 		if 'bool' in expectedtype:
 			try:
@@ -717,21 +717,9 @@ class AVDevice(SmartPlugin):
 				self._sh.scheduler.change('avdevice-tcp-reconnect', active=False)
 				self._reconnect_counter = 0
 				self._trigger_reconnect = True
-				keeptemp = []
-				for zeit in self._keep_commands:
-					keeping = False
-					if time.time() - zeit <= self._secondstokeep and self._keep_commands[zeit] not in keeptemp:
-						keeptemp.append(self._keep_commands[zeit])
-						keeping = True
-					self.logger.debug("Connecting TCP {}: Age {}s of command {}. Secondstokeep: {}. Keeping command: {}".format(
-						self._name, int(time.time() - zeit), self._keep_commands[zeit], self._secondstokeep, keeping))
-				self._send_commands = list(set(keeptemp)) + self._send_commands
-				seen = set()
-				self._send_commands = [x for x in self._send_commands if x not in seen and not seen.add(x)]
-				self.keep_commands = {}
-				keeptemp = []
+				self._addkeepcommands('connect_tcp', 'all')
 				self.logger.debug("Connecting TCP {}: Deactivating reconnect scheduler. Command list while connecting: {}. Keep Commands: {}".format(
-					self._name, self._send_commands, self.keep_commands))
+					self._name, self._send_commands, self._keep_commands))
 			self._reconnect_counter += 1
 			if 'TCP' in self._is_connected:
 				self.logger.debug("Connecting TCP {}: TCP is connected.".format(self._name))
@@ -792,21 +780,9 @@ class AVDevice(SmartPlugin):
 				self._sh.scheduler.change('avdevice-serial-reconnect', active=False)
 				self._reconnect_counter = 0
 				self._trigger_reconnect = True
-				keeptemp = []
-				for zeit in self._keep_commands:
-					keeping = False
-					if time.time() - zeit <= self._secondstokeep and self._keep_commands[zeit] not in keeptemp:
-						keeptemp.append(self._keep_commands[zeit])
-						keeping = True
-					self.logger.info("Connecting Serial {}: Age {}s of command {}. Secondstokeep: {}. Keeping command: {}".format(
-						self._name, int(time.time() - zeit), self._keep_commands[zeit], self._secondstokeep, keeping))
-				self._send_commands = list(set(keeptemp)) + self._send_commands
-				seen = set()
-				self._send_commands = [x for x in self._send_commands if x not in seen and not seen.add(x)]
-				self.keep_commands = {}
-				keeptemp = []
+				self._addkeepcommands('connect_serial', 'all')
 				self.logger.debug("Connecting Serial {}: Deactivating reconnect scheduler. Command list while connecting: {}. Keep commands: {}".format(
-					self._name, self._send_commands, self.keep_commands))
+					self._name, self._send_commands, self._keep_commands))
 			self._reconnect_counter += 1
 			if 'Serial' in self._is_connected:
 				self.logger.debug("Connecting Serial {}: Serial is connected.".format(self._name))
@@ -818,6 +794,26 @@ class AVDevice(SmartPlugin):
 	def _statusupdate(self, value, trigger, caller):
 		self.logger.debug("Statusupdate {}: Value: {}. Trigger from {}. Caller: {}".format(self._name, value, trigger, caller))
 		self.update_item('statusupdate', 'Init')
+
+	# Adding Keep Commands to Send Commands
+	def _addkeepcommands(self, trigger, zone):
+		self.logger.log(VERBOSE1, "Keep Commands {}: Trigger from {} for zone {}. Send Commands: {}".format(self._name, trigger, zone, self._send_commands))
+		keeptemp = []
+		for zeit in self._keep_commands:
+			keeping = False
+			if time.time() - zeit <= self._secondstokeep and not self._keep_commands[zeit] in keeptemp:
+				for item in self._query_zonecommands['{}'.format(zone)]:
+					if item.split(',')[1] == self._keep_commands[zeit].split(',')[1]:
+						keeping = True
+				if zone == 'all' or keeping == True:
+					keeptemp.append(self._keep_commands[zeit])
+			self.logger.debug("Keep Commands {}: Age {}s of command {}. Secondstokeep: {}. Keeping command: {}".format(
+				self._name.lower(), int(time.time() - zeit), self._keep_commands[zeit], self._secondstokeep, keeping))
+		self._send_commands = self._send_commands + list(set(keeptemp))
+		seen = set()
+		self._send_commands = [x for x in self._send_commands if x not in seen and not seen.add(x)]
+		self._keep_commands = {}
+		keeptemp = []
 
 	# Parsing the response and comparing it with expected response
 	def _parse_input_init(self, trigger):
@@ -872,6 +868,7 @@ class AVDevice(SmartPlugin):
 							self.logger.warning("Parsing Input {}: Giving up Sending {} and removing from list. Received Data: {}. Original Commandlist: {}".format(
 								self._name, self._sendingcommand, data, self._send_commands))
 							self._resend_counter = 0
+							self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because maximum retries exceeded.".format(self._name))
 							# Resetting Item if Send not successful
 							if self._reset_onerror is True:
 								self._resetitem()
@@ -937,7 +934,7 @@ class AVDevice(SmartPlugin):
 										elif expectedlist[0] == '' or expectedlist[0] == ' ' or expectedlist[0] == 'none':
 											self._sendingcommand = 'done'
 											self._resend_counter = 0
-											self.logger.log(VERBOSE1, "Parsing Input {}: No response expected".format(self._name))
+											self.logger.log(VERBOSE1, "Parsing Input {}: No response expected. Resend Counter reset.".format(self._name))
 										elif expectedlist[0].lower() == 'string':
 											value = data
 											self.logger.log(VERBOSE1, "Parsing Input {}: String found and testing... ".format(self._name))
@@ -946,7 +943,7 @@ class AVDevice(SmartPlugin):
 													VERBOSE1, "Parsing Input {}: Found string but ignored because it is a legit response for another command.".format(self._name))
 											else:
 												entry, value = self._write_itemsdict(data)
-												self.logger.debug("Parsing Input {}: String FOUND. Written to dict: {}.".format(self._name, entry))
+												self.logger.debug("Parsing Input {}: String FOUND. Written to dict: {}. Resend Counter reset.".format(self._name, entry))
 												self._sendingcommand = 'done'
 												self._resend_counter = 0
 										else:
@@ -973,6 +970,7 @@ class AVDevice(SmartPlugin):
 									self.logger.log(VERBOSE1, "Parsing Input {}: Depending is false. Message {}.".format(self._name, err))
 								if self._resend_counter >= self._resend_retries:
 									self._resend_counter = 0
+									self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because maximum retries exceeded.".format(self._name))
 									if not self._send_commands[0] in self._query_commands and not self._send_commands == []:
 										self._sendingcommand = self._send_commands[0]
 										self.logger.warning("Parsing Input {}: Going to reset item {}.".format(self._name, self._sendingcommand))
@@ -993,6 +991,7 @@ class AVDevice(SmartPlugin):
 									self.logger.log(VERBOSE1, "Parsing Input {}: Send commands are now: {}".format(self._name, self._send_commands))
 								elif depending is True:
 									self._resend_counter = 0
+									self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because dependency not fulfilled.".format(self._name))
 									try:
 										if not self._send_commands[0] in self._query_commands and not self._send_commands == []:
 											self._sendingcommand = self._send_commands[0]
@@ -1039,7 +1038,7 @@ class AVDevice(SmartPlugin):
 									item = entry[3]
 									expectedtype = entry[7]
 									index = data.find(key)
-									self.logger.log(VERBOSE1, "Parsing Input {}: Entry: {}, Valuelength: {}, Expected Type: {}. ".format(
+									self.logger.log(VERBOSE2, "Parsing Input {}: Entry: {}, Valuelength: {}, Expected Type: {}. ".format(
 										self._name, entry, valuelength, expectedtype))
 									if not index == -1:
 										sametype = False
@@ -1126,8 +1125,8 @@ class AVDevice(SmartPlugin):
 											value = receivedvalue
 											self.logger.debug("Parsing Input {}: Found key {} in response at position {} with value {}.".format(
 												self._name, key, index, value))
-											self._resend_counter = 0
-											self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because data is same as expected.".format(self._name))
+											# self._resend_counter = 0
+											# self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because data is same as expected.".format(self._name))
 											
 											for entry in self._keep_commands:
 												self.logger.log(VERBOSE1, "Parsing Input {}: Testing Keep Command entry {}".format(
@@ -1189,8 +1188,7 @@ class AVDevice(SmartPlugin):
 						if command in self._query_commands:
 							reorderlist.append(command)
 						elif command in self._power_commands:
-							self.logger.log(VERBOSE1, "Parsing Input {}: Ordering power command {} to first position.".format(
-								self._name, command))
+							self.logger.log(VERBOSE1, "Parsing Input {}: Ordering power command {} to first position.".format(self._name, command))
 							reorderlist.insert(0, command)
 							index += 1
 						else:
@@ -1329,19 +1327,7 @@ class AVDevice(SmartPlugin):
 												checkvalue = True
 											if (checkvalue is True or caller == 'Init') and not self._special_commands['Display']['Ignore'] >= 5:
 												if not self._is_connected == []:
-													keeptemp = []
-													for zeit in self._keep_commands:
-														keeping = False
-														if time.time() - zeit <= self._secondstokeep and not self._keep_commands[zeit] in keeptemp:
-															keeptemp.append(self._keep_commands[zeit])
-															keeping = True
-														self.logger.debug("Updating Item for avdevice_{}: Age {}s of command {}. Secondstokeep: {}. Keeping command: {}".format(
-															self._name.lower(), int(time.time() - zeit), self._keep_commands[zeit], self._secondstokeep, keeping))
-													self._send_commands = list(set(keeptemp)) + self._send_commands
-													seen = set()
-													self._send_commands = [x for x in self._send_commands if x not in seen and not seen.add(x)]
-													self._keep_commands = {}
-													keeptemp = []
+													self._addkeepcommands('statusupdate', 'all')
 												for query in self._query_commands:
 													if query not in self._send_commands:
 														self._send_commands.append(query)
@@ -1373,8 +1359,7 @@ class AVDevice(SmartPlugin):
 										updating = False
 										# Re-query Item to update value
 										commandinfo = self._functions['zone{}'.format(zone)][command]
-										self._send_commands.append('{},{},{},{}'.format(
-											commandinfo[2], commandinfo[3], commandinfo[4], commandinfo[8]))
+										self._send_commands.append('{},{},{},{}'.format(commandinfo[2], commandinfo[3], commandinfo[4], commandinfo[8]))
 
 								except Exception as err:
 									self.logger.log(VERBOSE2, "Updating Item for avdevice_{}: Command {} is a standard command. Message: {}".format(
@@ -1427,13 +1412,14 @@ class AVDevice(SmartPlugin):
 											self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: New Commandlist {}.".format(
 												self._name.lower(), self._send_commands))
 											self._resend_counter = 0
-											self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because data is same as expected.".format(self._name))
+											self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter due to new command.".format(self._name))
 										else:
 											self._send_commands.append(appendcommand)
 											self._sendingcommand = appendcommand
 											self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Update Zone {} Command On {} for {}".format(
 												self._name.lower(), zone, commandinfo[2], item))
 											if command_on == 'power on':
+												self._addkeepcommands('powercommand', 'zone{}'.format(zone))
 												self.logger.debug("Updating Item for avdevice_{}: Command Power On for zone: {}. Appending relevant query commands: {}".format(
 													self._name.lower(), zone, self._query_zonecommands['zone{}'.format(zone)]))
 												for query in self._query_zonecommands['zone{}'.format(zone)]:
@@ -1474,7 +1460,7 @@ class AVDevice(SmartPlugin):
 											self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: New Commandlist {}.".format(
 												self._name.lower(), self._send_commands))
 											self._resend_counter = 0
-											self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because data is same as expected.".format(self._name))
+											self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter due to new command.".format(self._name))
 										else:
 											self._send_commands.append(appendcommand)
 											self._sendingcommand = appendcommand
@@ -1564,7 +1550,7 @@ class AVDevice(SmartPlugin):
 													self._send_commands[self._send_commands.index(sendcommand)] = '{},{},{},{}'.format(command_re, commandinfo[3], response, commandinfo[8])
 													self._resend_counter = 0
 													appending = False
-													self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because data is same as expected.".format(self._name))
+													self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter due to replaced command.".format(self._name))
 													break
 												else:
 													self.logger.log(VERBOSE2, "Updating Item for avdevice_{}: Command Set {} already in Commandlist {} but value is not same type. Continue...".format(
@@ -1573,11 +1559,13 @@ class AVDevice(SmartPlugin):
 											self._send_commands.append('{},{},{},{}'.format(command_re, commandinfo[3], response, commandinfo[8]))
 											self._sendingcommand = '{},{},{},{}'.format(command_re, commandinfo[3], response, commandinfo[8])
 											self._resend_counter = 0
+											self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Resetting Resend Counter because appending new set command.".format(self._name))
 											self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Update Zone {} Command Set {} for {}. Command: {}".format(
 												self._name.lower(), zone, commandinfo[2], item, command_re))
 									elif setting is True:
 										self._send_commands.append('{},{},{},{}'.format(command_re, commandinfo[3], response, commandinfo[8]))
 										self._resend_counter = 0
+										self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Resetting Resend Counter because adding new set command.".format(self._name))
 										self.logger.debug("Updating Item for avdevice_{}: Update Zone {} Command Set, adding to empty Commandlist {} for {}. Command: {}".format(
 											self._name.lower(), zone, self._send_commands, item, command_re))
 

@@ -200,10 +200,9 @@ class Init():
                                 self.logger.debug("Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
                         if not '{},{},{}'.format(querycommand, querycommand, responsecommand) in self._query_commands and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
                             if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_commands.append('{},{},{}'.format(
-                                    querycommand, querycommand, responsecommand))
+                                self._query_commands.append('{},{},{}'.format(querycommand, querycommand, responsecommand))
                             else:
-                                displaycommand = '{},{},{}'.format(querycommand, querycommand, responsecommand)
+                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, self._functions['zone{}'.format(zone)][command][8])
                                 self.logger.log(VERBOSE1, "Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
                     except Exception as err:
                         self.logger.error("Initializing {}: Problems adding query commands for command {}. Error: {}".format(
@@ -231,14 +230,12 @@ class Init():
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         if command.startswith('power on'):
-                            try:
-                                value = re.sub('\*\*', 'ON', self._functions['zone{}'.format(zone)][command][4])
-                            except Exception:
-                                if self._functions['zone{}'.format(zone)][command][6] == 'yes':
-                                    value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
-                                else:
-                                    value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
-                            combined = '{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2], self._functions['zone{}'.format(zone)][command][3], value)
+                            value = re.sub('\*\*', 'ON', self._functions['zone{}'.format(zone)][command][4])
+                            if self._functions['zone{}'.format(zone)][command][6] == 'yes':
+                                value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
+                            else:
+                                value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
+                            combined = '{},{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2], self._functions['zone{}'.format(zone)][command][3], value, self._functions['zone{}'.format(zone)][command][8])
                             self._power_commands.append(combined)
                     except Exception as err:
                         self.logger.warning("Initializing {}: Problems searching power commands for {} in zone {}. Error: {}".format(self._name, command, zone, err))
