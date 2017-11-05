@@ -22,8 +22,11 @@
 			<tbody>
 				{% for scene in scene_list %}
 					<tr>
-						<td colspan="3"><strong>{{ scene['name'] }}</strong></td>
-						<td></td>
+					    if {% if scene['name'] == '' %}
+							<td colspan="4"><strong>{{ scene['path'] }}</strong></td>
+						{% else %}
+							<td colspan="4"><strong>{{ scene['path'] }}</strong> &nbsp; ({{ scene['name'] }})</td>
+						{% endif %}
 						<td></td>
 					</tr>
 					{% for value in scene['values'] %}

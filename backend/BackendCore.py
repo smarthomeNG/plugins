@@ -152,24 +152,26 @@ class BackendCore:
         if callable(get_param_func):
             supported = True
             self.scenes = Scenes.get_instance()
-            scene_list = self.scenes.return_loaded_scenes()
-            self.logger.warning("scenes_html: scene_list = {}".format(scene_list))
+            scene_list = self.scenes.get_loaded_scenes()
+#            self.logger.warning("scenes_html: scene_list = {}".format(scene_list))
 
             disp_scene_list = []
             for scene in scene_list:
                 scene_dict = {}
-                scene_dict['name'] = scene
-                value_list = self.scenes.return_scene_values(scene)
+                scene_dict['path'] = scene
+                scene_dict['name'] = str(self._sh.return_item(scene))
+
+                value_list = self.scenes.get_scene_values(scene)
                 scene_dict['value_list'] = value_list
                 scene_dict[scene] = value_list
-                self.logger.warning("scenes_html: value_list for scene {} = {}".format(scene, value_list))
+#                self.logger.warning("scenes_html: value_list for scene {} = {}".format(scene, value_list))
             
                 disp_value_list = []
                 for value in value_list:
                     value_dict = {}
                     value_dict['value'] = value
                     action_list = self.scenes.return_scene_value_actions(scene, value)
-                    self.logger.warning("scenes_html: action_list for scene {} / value {} = {}".format(scene, value, action_list))
+#                    self.logger.warning("scenes_html: action_list for scene {} / value {} = {}".format(scene, value, action_list))
                     for action in action_list:
                         if not isinstance(action[0], str):
                             action[0] = action[0].id()
