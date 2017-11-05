@@ -927,9 +927,9 @@ class AVDevice(SmartPlugin):
 										if data.startswith(tuple(found)):									
 											entry, value = self._write_itemsdict(data)
 											self._sendingcommand = 'done'
-											if data in found:
-												self._resend_counter = 0
-												self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because data is same as expected.".format(self._name))
+											# if data in found:
+											self._resend_counter = 0
+											self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because data is same as expected.".format(self._name))
 											self.logger.log(VERBOSE1, "Parsing Input {}: Data {} found in {}.".format(self._name, data, found))
 										elif expectedlist[0] == '' or expectedlist[0] == ' ' or expectedlist[0] == 'none':
 											self._sendingcommand = 'done'
