@@ -94,24 +94,28 @@ class LIRC(lib.connection.Client,SmartPlugin):
             return None
         if self._parseLine >= 0:
             self._parseLine += 1
-            if (self._parseLine == 1):
+            if self._parseLine == 1:
                 self._responseStr = str(data) + '\n'
-            elif (self._parseLine == 2):
+            elif self._parseLine == 2:
                 if data.startswith('ERROR'):
                     self._error = True
                 else:
                     self._error = False
-            elif (self._parseLine == 3):
+            elif self._parseLine == 3:
                 pass #ignore field DATA
-            elif (self._parseLine == 4):
+            elif self._parseLine == 4:
                 pass #ignore field n
             else:
                 self._responseStr += str(data) + '\n'
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if item():
-            val = item()
-            item(0)
+        val = item()
+        if val == 0:
+            return None
+        item(0)
+        if val < 0:
+            self.loggercmd("ignoring invalid value {}".format(val),'w')
+        else:
             remote = self.get_iattr_value(item.conf,REMOTE_ATTRS[0])
             key = self.get_iattr_value(item.conf,REMOTE_ATTRS[1])
             self.loggercmd("update_item, val: {}".format(val),'d')

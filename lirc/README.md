@@ -111,7 +111,7 @@ e.g.
 
 the output of the instance livingroom:
 ```
-1970-01-01  00:00:00 INFO     Connections  lirc_hifisystem: connected to lircd 0.9.4c on 127.0.0.1:8765
+1970-01-01  00:00:00 INFO     Connections  lirc_livingroom: connected to lircd 0.9.4c on 127.0.0.1:8765
 ```
 
 the output of the instance hifisystem:
