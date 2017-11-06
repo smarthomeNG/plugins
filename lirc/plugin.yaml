@@ -6,7 +6,7 @@ plugin:
         de: 'Sendet Kommandos an lircd das wiederum IR-Signale an Geräte mit IR-Schnittstelle versendet'
         en: 'Sends commands to lircd that sends IR-signals to any device that has an IR-interface'
     maintainer: E3EAT
-#    tester:                       # Who tests this plugin?
+    tester: Onkelandy
     keywords: infrared
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/lirc/....md
 #    support:
