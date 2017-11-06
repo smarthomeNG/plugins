@@ -184,6 +184,7 @@ class Init():
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         querycommand = self._functions['zone{}'.format(zone)][command][3]
+                        valuetype = self._functions['zone{}'.format(zone)][command][8]
                         responselist = []
                         splitresponse = self._functions['zone{}'.format(zone)][command][4].split("|")
                         for split in splitresponse:
@@ -191,16 +192,20 @@ class Init():
                                 responselist.append(split.strip())
                         responsestring = "|".join(responselist)
                         responsecommand = re.sub('[*]', '', responsestring)
-                        if not '{},{},{}'.format(querycommand, querycommand, responsecommand) in self._query_zonecommands['zone{}'.format(zone)] and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
+                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_zonecommands['zone{}'.format(zone)] \
+                            and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' \
+                            and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
                             if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_zonecommands['zone{}'.format(zone)].append('{},{},{}'.format(
-                                    querycommand, querycommand, responsecommand))
+                                self._query_zonecommands['zone{}'.format(zone)].append('{},{},{},{}'.format(
+                                    querycommand, querycommand, responsecommand, valuetype))
                             else:
-                                displaycommand = '{},{},{}'.format(querycommand, querycommand, responsecommand)
+                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype)
                                 self.logger.debug("Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
-                        if not '{},{},{}'.format(querycommand, querycommand, responsecommand) in self._query_commands and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
+                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_commands \
+                            and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' \
+                            and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
                             if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_commands.append('{},{},{}'.format(querycommand, querycommand, responsecommand))
+                                self._query_commands.append('{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype))
                             else:
                                 displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, self._functions['zone{}'.format(zone)][command][8])
                                 self.logger.log(VERBOSE1, "Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
@@ -212,8 +217,7 @@ class Init():
                 self._query_commands.append(displaycommand)
                 length += 1
         except Exception as err:
-            self.logger.error(
-                "Initializing {}: Problems searching for query commands. Error: {}".format(self._name, err))
+            self.logger.error("Initializing {}: Problems searching for query commands. Error: {}".format(self._name, err))
         finally:
             if self._threadlock_standard.locked():
                 self._lock.release()
@@ -230,11 +234,13 @@ class Init():
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         if command.startswith('power on'):
-                            value = re.sub('\*\*', 'ON', self._functions['zone{}'.format(zone)][command][4])
-                            if self._functions['zone{}'.format(zone)][command][6] == 'yes':
-                                value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
+                            if '**' in self._functions['zone{}'.format(zone)][command][4]:
+                                value = re.sub('\*\*', 'ON', self._functions['zone{}'.format(zone)][command][4])
                             else:
-                                value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
+                                if self._functions['zone{}'.format(zone)][command][6] == 'yes':
+                                    value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
+                                else:
+                                    value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
                             combined = '{},{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2], self._functions['zone{}'.format(zone)][command][3], value, self._functions['zone{}'.format(zone)][command][8])
                             self._power_commands.append(combined)
                     except Exception as err:
@@ -437,7 +443,7 @@ class Init():
         except Exception as err:
             self.logger.error("Initializing {}: Problems loading command file. Error: {}".format(self._name, err))
         finally:
-            self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W']
+            self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W', '', '', 'bool']
             self.logger.info("Initializing {}: Created functions list, including entries for {} zones.".format(
                 self._name, self._number_of_zones))
             if self._threadlock_standard.locked():

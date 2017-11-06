@@ -225,12 +225,6 @@ class AVDevice(SmartPlugin):
 		self.logger.debug("Converting Values {}: Received Value is: {} with expected type {}. Invert: {}".format(self._name, receivedvalue, expectedtype, invert))
 		if 'bool' in expectedtype and not receivedvalue == '':
 			try:
-				receivedvalue = max(min(int(receivedvalue), 1), 0)
-				self.logger.log(VERBOSE1, "Converting Values {}: Limiting bool value for {}.".format(self._name, receivedvalue))
-			except Exception:
-				pass
-
-			try:
 				if invert is True:
 					if (int(receivedvalue) == 1 and len(str(receivedvalue)) <= 1):
 						receivedvalue = False
@@ -245,7 +239,7 @@ class AVDevice(SmartPlugin):
 						receivedvalue = False
 						self.logger.log(VERBOSE1, "Converting Values {}: Receivedvalue {} converted to bool.".format(self._name, receivedvalue))
 			except Exception as err:
-				self.logger.log(VERBOSE2, "Converting Values {}: Receivedvalue {} not converted. Problem: {}.".format(self._name, receivedvalue, err))
+				self.logger.log(VERBOSE2, "Converting Values {}: Receivedvalue {} not converted further. Message: {}.".format(self._name, receivedvalue, err))
 				pass
 		if 'bool' in expectedtype:
 			try:
@@ -255,14 +249,6 @@ class AVDevice(SmartPlugin):
 					receivedvalue = False
 			except Exception:
 				pass
-			try:
-				if str(receivedvalue).lower() == 'on':
-					receivedvalue = True
-				elif str(receivedvalue).lower() == 'off' or str(receivedvalue).lower() == 'standby':
-					receivedvalue = False
-			except Exception:
-				pass
-
 		if 'int' in expectedtype:
 			try:
 				if str(receivedvalue).lower() == 'on':
@@ -271,7 +257,14 @@ class AVDevice(SmartPlugin):
 					receivedvalue = 0
 			except Exception:
 				pass
-
+		elif not (('bool' in expectedtype and 'int' in expectedtype) or ('str' in expectedtype and 'bool' in expectedtype)):
+			try:
+				if str(receivedvalue).lower() == 'on':
+					receivedvalue = True
+				elif str(receivedvalue).lower() == 'off' or str(receivedvalue).lower() == 'standby':
+					receivedvalue = False
+			except Exception:
+				pass
 		try:
 			receivedvalue = eval(receivedvalue.lstrip('0'))
 		except Exception:
@@ -319,9 +312,9 @@ class AVDevice(SmartPlugin):
 
 						if isinstance(receivedvalue, eval(expectedtype)):
 							self._items[zone][function]['Value'] = receivedvalue
-							self.logger.debug("Storing Values {}: Found writeable dict key: {}. Zone: {}. Value {} with type {}. Function: {}.".format(self._name, command, zone, receivedvalue, entry[7], function))
-							return self._items[zone][function], receivedvalue
+							self.logger.debug("Storing Values {}: Found writeable dict key: {}. Zone: {}. Value {} with type {}. Function: {}.".format(self._name, command, zone, receivedvalue, expectedtype, function))
 							updated = 1
+							return self._items[zone][function], receivedvalue	, expectedtype						
 							break
 						else:
 							self.logger.debug("Storing Values {}: Found writeable dict key: {} with type {}, but received value {} is type {}. Not writing value!".format(self._name, command, expectedtype, receivedvalue, type(receivedvalue)))
@@ -337,7 +330,10 @@ class AVDevice(SmartPlugin):
 		except Exception as err:
 			self.logger.error("Storing Values {}: Problems creating items dictionary. Error: {}".format(self._name, err))
 		finally:
-			return 'empty', 'empty'
+			if updated == 1:
+				return self._items[zone][function], receivedvalue, expectedtype
+			else:
+				return 'empty', 'empty', 'empty'
 			self.logger.log(VERBOSE1, "Storing Values {}: Finished.".format(self._name))
 
 	# Finding relevant items for the plugin based on the avdevice keyword
@@ -479,6 +475,9 @@ class AVDevice(SmartPlugin):
 
 			while buffering:
 				if '\r\n' in buffer:
+					self.logger.log(VERBOSE2, "Processing Response {}: Buffer before removing duplicates: {}".format(self._name, re.sub('[\r\n]', ' ', buffer)))
+					# remove duplicates
+					buffer = '\r\n'.join(sorted(set(buffer.split('\r\n')), key=buffer.split('\r\n').index))
 					(line, buffer) = buffer.split("\r\n", 1)
 					self.logger.log(VERBOSE2, "Processing Response {}: \r\nBuffer: {} Line: {}. Response buffer: {}, force buffer: {}".format(self._name, buffer, line, self._response_buffer, self._force_buffer))
 					if not ('' in self._force_buffer and len(self._force_buffer) == 1) and (self._response_buffer is False or self._response_buffer == 0):
@@ -506,7 +505,7 @@ class AVDevice(SmartPlugin):
 							else:
 								self.logger.log(VERBOSE2, "Processing Response {}: No forced buffer found.".format(self._name))
 					# Delete consecutive duplicates
-					buffer = '\r\n'.join([x[0] for x in groupby(buffer.split('\r\n'))])
+					# buffer = '\r\n'.join([x[0] for x in groupby(buffer.split('\r\n'))])
 
 					if '{}\r\n'.format(line) == buffer:
 						buffer = ''
@@ -840,6 +839,19 @@ class AVDevice(SmartPlugin):
 	# Parsing the response and comparing it with expected response
 	def _parse_input(self, trigger):
 		self.logger.log(VERBOSE1, "Parsing Input {}: Triggerd by {}".format(self._name, trigger))
+		def _duplicateindex(seq,item):
+			start_at = -1
+			locs = []
+			while True:
+				try:
+					loc = seq.index(item,start_at+1)
+				except ValueError:
+					break
+				else:
+					locs.append(loc)
+					start_at = loc
+			return locs
+
 		while self.alive and not self._parsinginput == [] and not self._is_connected == [] and not self._is_connected == ['Connecting']:
 			connectionproblem = False
 			if not self._sendingcommand == '' and not self._sendingcommand == 'done' and not self._sendingcommand == 'gaveup':
@@ -906,52 +918,68 @@ class AVDevice(SmartPlugin):
 						try:
 							to_send = 'command'
 							updatedcommands = []
+							runthrough = []
 							if not expectedresponse == []:
 								for expected in expectedresponse:
-									found = []
-									expectedlist = expected.split("|")
-									try:
-										for expectedpart in expectedlist:
-											try:
-												datalength = self._response_commands[expectedpart][0][1]
-												if data[:datalength].startswith(expectedpart) and len(data[:datalength]) == len(expectedpart):
+									if expected not in runthrough:
+										runthrough.append(expected)
+										found = []
+										expectedlist = expected.split("|")
+										try:
+											for expectedpart in expectedlist:
+												try:
+													datalength = self._response_commands[expectedpart][0][1]
+													if data[:datalength].startswith(expectedpart) and len(data[:datalength]) == len(expectedpart):
+														found.append(expectedpart)
+														self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited: {}.".format(self._name, found))
+												except Exception as err:
 													found.append(expectedpart)
-													self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited: {}.".format(self._name, found))
-											except Exception:
-												found.append(expectedpart)
-												self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited: {}.".format(self._name, found))
-									except Exception as err:
-										found.append(expected)
-										self.logger.debug("Parsing Input {}: Expected response after exception: {}. Problem: {}".format(self._name, found, err))
-									try:
-										if data.startswith(tuple(found)):									
-											entry, value = self._write_itemsdict(data)
-											self._sendingcommand = 'done'
-											# if data in found:
-											self._resend_counter = 0
-											self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because data is same as expected.".format(self._name))
-											self.logger.log(VERBOSE1, "Parsing Input {}: Data {} found in {}.".format(self._name, data, found))
-										elif expectedlist[0] == '' or expectedlist[0] == ' ' or expectedlist[0] == 'none':
-											self._sendingcommand = 'done'
-											self._resend_counter = 0
-											self.logger.log(VERBOSE1, "Parsing Input {}: No response expected. Resend Counter reset.".format(self._name))
-										elif expectedlist[0].lower() == 'string':
-											value = data
-											self.logger.log(VERBOSE1, "Parsing Input {}: String found and testing... ".format(self._name))
-											if value.startswith(tuple(self._response_commands.keys())):
-												self.logger.log(
-													VERBOSE1, "Parsing Input {}: Found string but ignored because it is a legit response for another command.".format(self._name))
-											else:
-												entry, value = self._write_itemsdict(data)
-												self.logger.debug("Parsing Input {}: String FOUND. Written to dict: {}. Resend Counter reset.".format(self._name, entry))
+													self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited: {}. Message: {}".format(self._name, found, err))
+										except Exception as err:
+											found.append(expected)
+											self.logger.debug("Parsing Input {}: Expected response after exception: {}. Problem: {}".format(self._name, found, err))
+										try:
+											valuetype = 'empty'
+											if data.startswith(tuple(found)):
+												entry, value, valuetype = self._write_itemsdict(data)
 												self._sendingcommand = 'done'
 												self._resend_counter = 0
-										else:
-											expectedindex = expectedresponse.index(expected)
-											updatedcommands.append(self._send_commands[expectedindex])
-									except Exception as err:
-										self.logger.log(VERBOSE1, "Parsing Input {}: Write to dict problems: {}".format(self._name, err))
+												self.logger.log(VERBOSE1, "Parsing Input {}: Resetting Resend Counter because data is same as expected.".format(self._name))
+												self.logger.log(VERBOSE1, "Parsing Input {}: Data {} found in {}. Entry: {}, Value: {}. Expected Type: {}".format(self._name, data, found, entry, value, valuetype))
+											elif expectedlist[0] == '' or expectedlist[0] == ' ' or expectedlist[0] == 'none':
+												self._sendingcommand = 'done'
+												self._resend_counter = 0
+												self.logger.log(VERBOSE1, "Parsing Input {}: No response expected. Resend Counter reset.".format(self._name))
+											elif expectedlist[0].lower() == 'string':
+												value = data
+												self.logger.log(VERBOSE1, "Parsing Input {}: String found and testing... ".format(self._name))
+												if value.startswith(tuple(self._response_commands.keys())):
+													self.logger.log(
+														VERBOSE1, "Parsing Input {}: Found string but ignored because it is a legit response for another command.".format(self._name))
+												else:
+													entry, value, valuetype = self._write_itemsdict(data)
+													self.logger.debug("Parsing Input {}: String FOUND. Written to dict: {}. Resend Counter reset.".format(self._name, entry))
+													self._sendingcommand = 'done'
+													self._resend_counter = 0
 
+											expectedindices = _duplicateindex(expectedresponse, expected)
+											for expectedindex in expectedindices:
+												if self._send_commands[expectedindex] not in updatedcommands:											
+													expectedtype = self._send_commands[expectedindex].split(',')
+													try:
+														expectedtype[3:] = [','.join(expectedtype[3:])]
+														testvalue = expectedtype[3]
+													except Exception:
+														testvalue = ''
+													if not valuetype == testvalue:
+														updatedcommands.append(self._send_commands[expectedindex])
+													else:
+														self.logger.log(VERBOSE2, "Parsing Input {}: Test Value is same as Valuetype: {}. Not adding to Sendcommands again.".format(self._name, testvalue, valuetype))
+														pass
+										except Exception as err:
+											self.logger.log(VERBOSE1, "Parsing Input {}: Write to dict problems: {}".format(self._name, err))
+
+								self.logger.log(VERBOSE2, "Parsing Input {}: Updated Command list {}.".format(self._name, updatedcommands))
 							self._send_commands = updatedcommands
 							self.logger.log(VERBOSE1, "Parsing Input {}: Sendcommands: {}. Sendingcommand: {}".format(self._name, self._send_commands, self._sendingcommand))
 							if not self._send_commands == [] and not self._sendingcommand == 'done':
@@ -1163,8 +1191,7 @@ class AVDevice(SmartPlugin):
 											for singleitem in item:
 												singleitem(value, 'AVDevice', self._tcp)
 												self._wait(0.15)
-												self.logger.debug("Parsing Input {}: Updating item {} with value {}".format(
-													self._name, singleitem, value))
+												self.logger.debug("Parsing Input {}: Updating item {} with value {}".format(self._name, singleitem, value))
 											break
 									if updated == 1:
 										self.logger.log(VERBOSE1, "Parsing Input {}: Updated all relevant items from {}. step 3".format(self._name, item))
@@ -1468,7 +1495,18 @@ class AVDevice(SmartPlugin):
 												self._name.lower(), zone, commandinfo[2], item))
 									elif command_set in self._functions['zone{}'.format(zone)]:
 										commandinfo = self._functions['zone{}'.format(zone)][command_set]
-										if isinstance(value, int) and (commandinfo[8] == 'int,float' or commandinfo[8] == 'int' or commandinfo[8] == 'float'):
+										if value == 0 and 'bool' in commandinfo[8]:
+											setting = True
+											value = 'OFF'
+											try:
+												command_re = re.sub('\*+', '{}'.format(value), commandinfo[2])
+												response = re.sub('\*+', '{}'.format(value), commandinfo[4])
+											except Exception:
+												command_re = commandinfo[2]
+												response = commandinfo[4]
+											self.logger.debug("Updating Item for avdevice_{}: Value 0 is converted to OFF. command_re: {}, response: {}".format(self._name.lower(), command_re, response))
+
+										elif (isinstance(value, int) and 'int' in commandinfo[8]) or (isinstance(value, float) and 'float' in commandinfo[8]):
 											setting = True
 											try:
 												value = max(min(value, int(commandinfo[7])), 0)
@@ -1485,7 +1523,7 @@ class AVDevice(SmartPlugin):
 												command_re = re.sub(r'(\*)\1+', '{0:0{1}d}'.format(value, anzahl), commandinfo[2])
 												response = re.sub(r'(\*)\1+', '{0:0{1}d}'.format(value, anzahl), commandinfo[4])
 											elif commandinfo[2].count('*') == 1:
-												if command.startswith('speakers'):
+												if command.lower().startswith('speakers'):
 													currentvalue = int(self._items['zone{}'.format(zone)]['speakers']['Item'][0]())
 													multiply = -1 if item() == 0 else 1
 													multiply = 0 if (currentvalue == 0 and item() == 0) else multiply
@@ -1494,7 +1532,7 @@ class AVDevice(SmartPlugin):
 													self.logger.log(VERBOSE1, "Updating Item for avdevice_{}: Speaker {} current value is {}. Item: {} with value {}. Multiply: {}. Value: {}".format(self._name.lower(), self._items['zone{}'.format(zone)]['speakers']['Item'][0], currentvalue, item, item(), multiply, value))
 													if not currentvalue == value or multiply == -1:
 														value = currentvalue + (value * multiply)
-													elif value > 0:
+													if value > 0:
 														if powercommands[6].lower() in ['1', 'true', 'yes', 'on']:
 															replacedvalue = '0'
 														else:
@@ -1514,7 +1552,7 @@ class AVDevice(SmartPlugin):
 											elif commandinfo[2].count('*') == 0:
 												self.logger.error("Updating Item for avdevice_{}: Set command {} does not have any placeholder *.".format(self._name.lower(), commandinfo))
 
-										elif isinstance(value, str) and (commandinfo[8] == 'str' or commandinfo[8] == 'string'):
+										elif isinstance(value, str) and 'str' in commandinfo[8]:
 											setting = True
 											value = value.upper()
 											self.logger.debug("Updating Item for avdevice_{}: Value has to be string. Value is {}".format(self._name.lower(), value))
