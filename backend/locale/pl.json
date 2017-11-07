@@ -240,10 +240,11 @@
 		"Speichern_Neu_Laden_und_Triggern": "",
 		"Löschen" : "Skasuj"
 		"Konvertieren": "Konwertuj",
-    "Neue Blockly Logik": "",
+    	"Neue Blockly Logik": "",
 		"Neue Python Logik": "",
 		"Erstellen": "",
-		"Entladen": ""
+		"Entladen": "",
+		"Nach unten scrollen": ""
 	},
 	
 	"_menu": {

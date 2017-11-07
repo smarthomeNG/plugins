@@ -244,7 +244,8 @@
         "Neue Blockly Logik": "New Blockly logic",
 		"Neue Python Logik": "New Python logic",
 		"Erstellen": "Create",
-		"Entladen": "Unload"
+		"Entladen": "Unload",
+		"Nach unten scrollen": "Scroll down"
 	},
 	
 	"_menu": {
