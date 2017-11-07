@@ -221,6 +221,7 @@ class Kodi(SmartPlugin, Client):
     '''
     
     PLUGIN_VERSION='1.3c.0'
+    ALLOW_MULTIINSTANCE = True
 
     _listen_keys = ['volume', 'mute', 'title', 'media', 'state']
     _send_keys = {'volume': dict(method='Application.SetVolume', params=dict(volume='ITEM_VALUE')),
