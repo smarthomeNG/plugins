@@ -1,66 +1,96 @@
-# XBMC
+# Kodi
 
 ## Requirements
 
-You only need one or more XBMC (12 a.k.a. Frodo or above) with
-System-Settings-Service "Allow programs on other systems to control XBMC" enabled.
+You only need one or more Kodi (12 a.k.a. Frodo or above) with
+System-Settings-Service "Allow programs on other systems to control Kodi" enabled.
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / plugin.yaml
 
 ```
-[xbmc]
-    class_name = XBMC
-    class_path = plugins.xbmc
+# /etc/plugin.conf
+[kodi]
+    class_name = Kodi
+    class_path = plugins.kodi
+    instance = living
+    host = xxx.xxx.xxx.xxx
+    port = 9090
 ```
 
-### items.conf
-
-```
-[living]
-    [[xbmc]]
-        type = str
-        xbmc_host = xbmc.home
-        # xbmc_port = 9090
-        xbmc_listen = state
-        [[[title]]]
-            type = str
-            xbmc_listen = title
-        [[[media]]]
-            type = str
-            xbmc_listen = media
-        [[[volume]]]
-            type = num
-            xbmc_listen = volume
-            xbmc_send = volume
-        [[[mute]]]
-            type = bool
-            xbmc_listen = mute
-            xbmc_send = mute
+```yaml
+# /etc/plugin.yaml
+kodi:
+    class_name: Kodi
+    class_path: plugins.kodi
+    instance: mediacenter
+    host: xxx.xxx.xxx.xxx
+    port: 9090
 ```
 
-#### xbmc_host
-This attribute is mandatory. You have to provide the IP address or host name of the XBMC system.
+#### host
+This attribute is mandatory. You have to provide the IP address of the Kodi system.
 
-#### xbmc_port
+#### port
 You could specify a port to connect to. By default port 9090 is used.
 
-#### xbmc_listen
-You could assign the following values to `xbmc_listen`:
+### items.conf (deprecated) / items.yaml
+
+```
+# /items/items.conf
+[living]
+    [[kodi]]
+        type = str
+        kodi_item@mediacenter = state
+        [[[title]]]
+            type = str
+            kodi_item@mediacenter = title
+        [[[media]]]
+            type = str
+            kodi_item@mediacenter = media
+        [[[volume]]]
+            type = num
+            kodi_item@mediacenter = volume
+        [[[mute]]]
+            type = bool
+            kodi_item@mediacenter = mute
+```
+
+```yaml
+# /items/items.yaml
+living:
+    kodi:
+        type: str
+        kodi_item@mediacenter: state        
+        volume:
+            type: num
+            kodi_item@mediacenter: volume
+        mute:
+            type: bool
+            kodi_item@mediacenter: mute
+        title:
+            type: str
+            kodi_item@mediacenter: title
+        media:
+            type: str
+            kodi_item@mediacenter: media
+        favorites:
+            type: dict
+            kodi_item@mediacenter: favorites
+```
+
+#### kodi_item
+You could assign the following values to `kodi_item`:
 
    * `volume` a numeric value (0 -100)
    * `mute` a bool flag
    * `title` a string with the name of the movie, song or picture
    * `media` a string with the current media type (Video, Audio, Picture)
    * `state` current state as string (Menu, Playing, Pause)
+   * `favorites` the favorites of your Kodi system (must be of type dict)
 
-#### xbmc_send
-The following `xbmc_send` attributes could be defined to send changes to the system:
-
-   * `volume` a numeric value (0 -100)
-   * `mute` a bool flag
-
+The `volume` and `mute` items influence Kodi when their value changes.
 
 ### logic.conf
 
@@ -68,12 +98,8 @@ Nothing so far
 
 ## Functions
 =========
-This plugin provides the function to send notification messages to xbmc. 
-``notify_all(title, message, picture)`` to send the notification to all xbmc systems and extends the item with the notify method.
-The picture attribute is optional.
+This plugin provides the function to send notification messages to Kodi.
 
 ```python
-sh.xbmc.notify_all('Phone', 'Sister in law calling', 'http://smarthome.local/img/phone.png') 
-# or for a dedicated xbmc
-sh.living.xbmc.notify('Door', 'Ding Dong')
+sh.living.kodi.notify('Door', 'Ding Dong')
 ```
