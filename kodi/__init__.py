@@ -38,7 +38,7 @@ class Kodi(SmartPlugin, Client):
     PLUGIN_VERSION='1.3c.0'
     ALLOW_MULTIINSTANCE = True
 
-    _get_items = ['volume', 'mute', 'title', 'media', 'state']
+    _get_items = ['volume', 'mute', 'title', 'media', 'state', 'favorites']
     
     _set_items = {'volume': dict(method='Application.SetVolume', params=dict(volume='ITEM_VALUE')),
                   'mute'  : dict(method='Application.SetMute', params = dict(mute='ITEM_VALUE')),
@@ -52,20 +52,7 @@ class Kodi(SmartPlugin, Client):
     
     def __init__(self, sh, *args, **kwargs):
         '''
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**! 
-        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
-        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
-        
-        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
-        a reference to the sh object any more.
-        
-        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are implemented
-        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
-        use the SmartPlugin method `get_parameter_value(parameter_name)` instead. Anywhere within the Plugin you can get
-        the configured (and checked) value for a parameter by calling `self.get_parameter_value(parameter_name)`. It
-        returns the value in the datatype that is defined in the metadata.
+        Initalizes the plugin.
         '''
         # init logger
         self.logger = logging.getLogger(__name__)
@@ -109,22 +96,21 @@ class Kodi(SmartPlugin, Client):
             elem(result['muted'], caller='Kodi')
         for elem in self.registered_items['volume']:
             elem(result['volume'], caller='Kodi')
-        
+        # get the list of favorites
+        result = self.send_kodi_rpc(method='Favourites.GetFavourites',
+                                    params=dict(properties=['window', 'path', 'thumbnail', 'windowparameter']))['result']
+        item_dict = {elem['title']: elem for elem in result['favourites']}
+        for elem in self.registered_items['favorites']:
+            elem(item_dict, caller='Kodi')        
         # parse active player (if present)
         self._get_player_info()
 
     def parse_item(self, item):
         '''
-        Default plugin parse_item method. Is called when the plugin is initialized.
-        The plugin can, corresponding to its attribute keywords, decide what to do with
-        the item in future, like adding it to an internal array for future reference
+        Method for parsing Kodi items.
+        If the item carries the kodi_item field, this item is registered to the plugin.
         :param item:    The item to process.
-        :return:        If the plugin needs to be informed of an items change you should return a call back function
-                        like the function update_item down below. An example when this is needed is the knx plugin
-                        where parse_item returns the update_item function when the attribute knx_send is found.
-                        This means that when the items value is about to be updated, the call back function is called
-                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
-                        can be sent to the knx with a knx write function within the knx plugin.
+        :return:        The item update method to be triggered if the kodi_item is in the set item dict.
         '''
         if self.has_iattr(item.conf, 'kodi_item'):
             kodi_item = self.get_iattr_value(item.conf, 'kodi_item')
@@ -140,10 +126,7 @@ class Kodi(SmartPlugin, Client):
         '''
         Default plugin parse_logic method
         '''
-        if 'xxx' in logic.conf:
-            # self.function(logic['name'])
-            pass
-
+        pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
         '''
@@ -188,6 +171,17 @@ class Kodi(SmartPlugin, Client):
         self.send_kodi_rpc(method='GUI.ShowNotification', params=params)
 
     def send_kodi_rpc(self, method, params=None, message_id=None, wait=True):
+        '''
+        Send a JSON RPC to Kodi.
+        
+        The  JSON string is extracted from the supplied method and the given parameters.        
+        :param method: the Kodi method to be triggered
+        :param params: parameters dictionary
+        :param message_id: the message ID to be used. If none, use the internal counter
+        :param wait: whether to wait for the reply from Kodi or send off the RPC asynchronously
+                     If wait is True, this method returns a dictionary parsed from the JSON
+                     response from Kodi
+        '''
         self.cmd_lock.acquire()
         self.reply = None
         if message_id is None:
@@ -212,6 +206,10 @@ class Kodi(SmartPlugin, Client):
         return reply
 
     def found_balance(self, data):
+        '''
+        This method is called whenever data is received from the connection to
+        Kodi.
+        '''
         event = json.loads(data.decode())
         self.logger.debug('Kodi receiving: {0}'.format(event))
         if 'id' in event:
@@ -246,6 +244,10 @@ class Kodi(SmartPlugin, Client):
                     elem(event['params']['data']['volume'], caller='Kodi')
 
     def _get_player_info(self):
+        '''
+        Extract information from Kodi reagrding the active player and save it
+        to the respective items
+        '''
         result = self.send_kodi_rpc(method='Player.GetActivePlayers')['result']
         if len(result) == 0:
             self.logger.info('Kodi: no active player found.')
@@ -258,7 +260,6 @@ class Kodi(SmartPlugin, Client):
             return
         playerid = result[0]['playerid']
         typ = result[0]['type']
-#             self._items['state']('Playing', 'Kodi')
         for elem in self.registered_items['state']:
             elem('Playing', caller='Kodi')
         if typ == 'video':
@@ -269,14 +270,9 @@ class Kodi(SmartPlugin, Client):
             typ = result['item']['type']
             if not title and 'label' in result['item']:
                 title = result['item']['label']
-#                 if 'media' in self._items:
-#                     typ = result['item']['type']
-#                     self._items['media'](typ.capitalize(), 'Kodi')
             for elem in self.registered_items['media']:
                 elem(typ.capitalize(), caller='Kodi')
         elif typ == 'audio':
-#                 if 'media' in self._items:
-#                     self._items['media'](typ.capitalize(), 'Kodi')
             for elem in self.registered_items['media']:
                 elem('Audio', caller='Kodi')                
             result = self.send_kodi_rpc(method='Player.GetItem',
@@ -288,15 +284,11 @@ class Kodi(SmartPlugin, Client):
                 artist = result['item']['artist'][0]
             title = artist + ' - ' + result['item']['title']
         elif typ == 'picture':
-#                 if 'media' in self._items:
-#                     self._items['media'](typ.capitalize(), 'Kodi')
             for elem in self.registered_items['media']:
                 elem('Picture', caller='Kodi')
             title = ''
         else:
             self.logger.warning('Kodi: Unknown type: {0}'.format(typ))
             return
-#             if 'title' in self._items:
-#                 self._items['title'](title, 'Kodi')
         for elem in self.registered_items['title']:
             elem(title, caller='Kodi')
