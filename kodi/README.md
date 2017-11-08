@@ -89,15 +89,25 @@ You could assign the following values to `kodi_item`:
    * `media` a string with the current media type (Video, Audio, Picture)
    * `state` current state as string (Menu, Playing, Pause)
    * `favorites` the favorites of your Kodi system (must be of type dict)
+   * `play_pause` request Kodi to pause or restart the current players (should be of type bool and `enforce_updates: true`)
+   * `stop` request Kodi to stop all players (should be of type bool and `enforce_updates: true`)
+   * `left` send a left request to Kodi, same as pressing the left arrow on the keyboard (should be of type bool and `enforce_updates: true`)
+   * `right` send a right request to Kodi, same as pressing the right arrow on the keyboard (should be of type bool and `enforce_updates: true`)
+   * `up` send an up request to Kodi, same as pressing the up arrow on the keyboard (should be of type bool and `enforce_updates: true`)
+   * `down` send a down request to Kodi, same as pressing the down arrow on the keyboard (should be of type bool and `enforce_updates: true`)
+   * `home` go to the home menu (should be of type bool and `enforce_updates: true`)
+   * `back` go to the previous menu (should be of type bool and `enforce_updates: true`)
+   * `select` select the currently highlightes item in Kodi (should be of type bool and `enforce_updates: true`)
 
 The `volume` and `mute` items influence Kodi when their value changes.
+All items that are marked as "should be of type bool" are essentially commands which are usually send to Kodi over an attached keyboard. The keyboard behavior can be simulated through boolean items with `enforce_updates: true`.
+
 
 ### logic.conf
 
 Nothing so far
 
 ## Functions
-=========
 This plugin provides the function to send notification messages to Kodi.
 
 ```python

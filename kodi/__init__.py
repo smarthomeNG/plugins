@@ -40,15 +40,17 @@ class Kodi(SmartPlugin, Client):
 
     _get_items = ['volume', 'mute', 'title', 'media', 'state', 'favorites']
     
-    _set_items = {'volume': dict(method='Application.SetVolume', params=dict(volume='ITEM_VALUE')),
-                  'mute'  : dict(method='Application.SetMute', params = dict(mute='ITEM_VALUE')),
-                  'left'  : dict(method='Input.Left', params=None),
-                  'right' : dict(method='Input.Right', params=None),
-                  'up'    : dict(method='Input.Up', params=None),
-                  'down'  : dict(method='Input.Down', params=None),
-                  'home'  : dict(method='Input.Home', params=None),
-                  'back'  : dict(method='Input.Back', params=None),
-                  'select': dict(method='Input.Select', params=None)}
+    _set_items = {'volume'    : dict(method='Application.SetVolume', params=dict(volume='ITEM_VALUE')),
+                  'mute'      : dict(method='Application.SetMute', params = dict(mute='ITEM_VALUE')),
+                  'left'      : dict(method='Input.Left', params=None),
+                  'right'     : dict(method='Input.Right', params=None),
+                  'up'        : dict(method='Input.Up', params=None),
+                  'down'      : dict(method='Input.Down', params=None),
+                  'home'      : dict(method='Input.Home', params=None),
+                  'back'      : dict(method='Input.Back', params=None),
+                  'select'    : dict(method='Input.Select', params=None),
+                  'play_pause': dict(method='Player.PlayPause', params=None),
+                  'stop'      : dict(method='Player.Stop', params=None)}
     
     def __init__(self, sh, *args, **kwargs):
         '''
@@ -99,7 +101,9 @@ class Kodi(SmartPlugin, Client):
         # get the list of favorites
         result = self.send_kodi_rpc(method='Favourites.GetFavourites',
                                     params=dict(properties=['window', 'path', 'thumbnail', 'windowparameter']))['result']
-        item_dict = {elem['title']: elem for elem in result['favourites']}
+        item_dict = dict()                                    
+        if result['favourites'] is not None:
+            item_dict = {elem['title']: elem for elem in result['favourites']}
         for elem in self.registered_items['favorites']:
             elem(item_dict, caller='Kodi')        
         # parse active player (if present)
@@ -114,7 +118,10 @@ class Kodi(SmartPlugin, Client):
         '''
         if self.has_iattr(item.conf, 'kodi_item'):
             kodi_item = self.get_iattr_value(item.conf, 'kodi_item')
-            self.logger.debug('Plugin \'{}\': parse item: {}'.format(self.get_shortname(), item))
+            self.logger.debug('Plugin \'%s\', instance \'%s\': registering item: %s',
+                              self.get_shortname(),
+                              self.get_instance_name(),
+                              item)            
             if kodi_item in self.registered_items:
                 self.registered_items[kodi_item].append(item)
             else:
@@ -139,9 +146,13 @@ class Kodi(SmartPlugin, Client):
         '''
         if item():
             if caller != 'Kodi' and self.has_iattr(item.conf, 'kodi_item'):
-                # update item was triggered from sometthing else then this plugin -> send to Kodi
+                # update item was triggered from something else then this plugin -> send to Kodi
                 kodi_item = self.get_iattr_value(item.conf, 'kodi_item')
-                if kodi_item in Kodi._set_items:
+                # handle play/pause and stop separately as we need to find the active player
+                if kodi_item in ['play_pause', 'stop']:
+                    self.get_sh().trigger('kodi-%s' % kodi_item, self._send_player_command, 'Kodi', value=dict(kodi_item=kodi_item))
+                # all other Items can be handled through a standard interface
+                elif kodi_item in Kodi._set_items:
                     self.logger.debug('Plugin \'{}\': update_item ws called with item \'{}\' from caller \'{}\', source \'{}\' and dest \'{}\''.format(self.get_shortname(), item, caller, source, dest))
                     method = self._set_items[kodi_item]['method']
                     params = self._set_items[kodi_item]['params']
@@ -152,7 +163,7 @@ class Kodi(SmartPlugin, Client):
                         for key, value in params.items():
                             if value == 'ITEM_VALUE':
                                 params[key] = item()
-                    self._send(method, params, wait=False)
+                    self.send_kodi_rpc(method, params, wait=False)
                 else:
                     self.logger.info('kodi_item \'%s\' not in send_keys, skipping!', kodi_item)
     
@@ -236,16 +247,36 @@ class Kodi(SmartPlugin, Client):
                     elem('Screensaver', caller='Kodi')
             if event['method'] in ['Player.OnPlay']:
                 # use a different thread for event handling
-                self.get_sh().trigger('kodi-event', self._get_player_info, 'Kodi')
+                self.get_sh().trigger('kodi-player-start', self._get_player_info, 'Kodi')
             elif event['method'] in ['Application.OnVolumeChanged']:
                 for elem in self.registered_items['mute']:
                     elem(event['params']['data']['muted'], caller='Kodi')
                 for elem in self.registered_items['volume']:
                     elem(event['params']['data']['volume'], caller='Kodi')
+    
+    def _send_player_command(self, kodi_item):
+        '''
+        This method should only be called from the update item method in
+        a new thread in order to handle Play/Pause and Stop commands to
+        the active Kodi players
+        '''
+        # get the currently active players
+        result = self.send_kodi_rpc(method='Player.GetActivePlayers')
+        result = result['result']
+        if len(result) == 0:
+            self.logger.warning('Kodi: no active player found, skipping request!')
+        else:
+            if len(result) > 1:
+                self.logger.info('Kodi: there is more than one active player. Sending request to each player!')
+            for player in result:
+                player_id = player['playerid']
+                self.send_kodi_rpc(method=self._set_items[kodi_item]['method'],
+                                   params=dict(playerid=player_id),
+                                   wait=False)
 
     def _get_player_info(self):
         '''
-        Extract information from Kodi reagrding the active player and save it
+        Extract information from Kodi regarding the active player and save it
         to the respective items
         '''
         result = self.send_kodi_rpc(method='Player.GetActivePlayers')['result']
