@@ -137,6 +137,11 @@ class BackendItems:
         item_data = []
         item = self._sh.return_item(item_path)
         if self.updates_allowed:
+            if 'num' in item.type():
+                if "." in value or "," in value:
+                    value = float(value)
+                else:
+                    value = int(value)
             item(value, caller='Backend')
 
         return
