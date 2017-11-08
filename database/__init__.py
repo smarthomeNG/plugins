@@ -386,26 +386,42 @@ class Database(SmartPlugin):
         self._buffer_lock.release()
         return tuples
 
+    def _expression(self, func):
+        expression = {'params' : {'op':'!=', 'value':'0'}, 'finalizer' : None}
+        if ':' in func:
+            expression['finalizer'] = func[:func.index(":")]
+            func = func[func.index(":")+1:]
+        if func is 'count' or func.startswith('count'):
+            parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
+            func = 'count'
+            self.logger.debug(parts)
+            self.logger.debug(parts.groups())
+            self.logger.debug(parts.group(3))
+            self.logger.debug(parts.group(4))
+            if parts and parts.group(3) is not None:
+                expression['params']['op'] = parts.group(3)
+            if parts and parts.group(4) is not None:
+                expression['params']['value'] = parts.group(4)
+        return func, expression
+
+    def _finalize(self, func, tuples):
+        if func is 'diff':
+            final_tuples = []
+            for i in range(1, len(tuples)-1):
+                final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i-1][1]))
+            return final_tuples
+        else:
+            return tuples
+
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
         init = not update
         if sid is None:
             sid = item + '|' + func + '|' + str(start) + '|' + str(end)  + '|' + str(count)
-        sum_args = ['!=', '0']
-        if func.startswith('diff:'):
-            final_func = func[:6]
-            func = func[7:]
-        else:
-            final_func = None
-        if func.startswith('count'):
-            sum_parts = re.match('(count)(<>|!=|<|=|>)(\d+)', func)
-            func = 'count'
-            if sum_parts:
-                sum_args[0] = sum_parts.group(2)
-                sum_args[1] = sum_parts.group(3)
+        func, expression = self._expression(func)
         queries = {
             'avg' : 'MIN(time), ROUND(AVG(val_num * duration) / AVG(duration), 2)',
             'avg.order' : 'ORDER BY time ASC',
-            'count' : 'MIN(time), SUM(CASE WHEN val_num{}{} THEN 1 ELSE 0 END)'.format(*sum_args),
+            'count' : 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'min' : 'MIN(time), MIN(val_num)',
             'max' : 'MIN(time), MAX(val_num)',
             'on'  : 'MIN(time), ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
@@ -439,14 +455,8 @@ class Database(SmartPlugin):
             if init:
                 tuples.append((logs['iend'], value))
 
-        if final_func:
-            final_tuples = []
-            for i in range(1, len(tuples)-1):
-                if final_func == 'diff':
-                    final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i-1][1]))
-                else:
-                    final_tuples.append(tuples[i])
-            tuples = final_tuples
+        if expression['finalizer']:
+            tuples = self._finalize(expression['finalizer'], tuples)
 
         return {
             'cmd': 'series', 'series': tuples, 'sid': sid,
@@ -455,17 +465,23 @@ class Database(SmartPlugin):
         }
 
     def _single(self, func, start, end='now', item=None):
+        func, expression = self._expression(func)
         queries = {
             'avg' : 'ROUND(AVG(val_num * duration) / AVG(duration), 2)',
+            'count' : 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'min' : 'MIN(val_num)',
             'max' : 'MAX(val_num)',
             'on'  : 'ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
-            'sum' : 'SUM(val_num)'
+            'sum' : 'SUM(val_num)',
+            'val' : 'val_num',
+            'val.order' : 'ORDER BY time DESC',
+            'val.group' : ''
         }
         if func not in queries:
             self.logger.warning("Unknown export function: {0}".format(func))
             return
-        logs = self._fetch_log(item, queries[func], start, end)
+        order = '' if func+'.order' not in queries else queries[func+'.order']
+        logs = self._fetch_log(item, queries[func], start, end, order=order)
         if logs['tuples'] is None:
             return
         return logs['tuples'][0][0]
