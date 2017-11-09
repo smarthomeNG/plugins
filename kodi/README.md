@@ -33,7 +33,7 @@ kodi:
 This attribute is mandatory. You have to provide the IP address of the Kodi system.
 
 #### port
-The port to connect to. This must be Kodi's TCP port not its HTTP port (see [Kodi JSON-RPC API](http://kodi.wiki/?title=JSON-RPC_API)]. Default is 9090.
+The port to connect to. This must be Kodi's TCP port not its HTTP port (see [Kodi JSON-RPC API](http://kodi.wiki/?title=JSON-RPC_API)). Default is 9090.
 
 ### items.conf (deprecated) / items.yaml
 
@@ -119,7 +119,7 @@ living:
 ```
 
 #### kodi_item
-You could assign the following values to `kodi_item`:
+You can assign the following values to `kodi_item`:
 
    * `volume` a numeric value (0 -100)
    * `mute` a bool flag
@@ -135,7 +135,7 @@ You could assign the following values to `kodi_item`:
    * `down` send a down request to Kodi, same as pressing the down arrow on the keyboard (should be of type bool and `enforce_updates: true`)
    * `home` go to the home menu (should be of type bool and `enforce_updates: true`)
    * `back` go to the previous menu (should be of type bool and `enforce_updates: true`)
-   * `select` select the currently highlightes item in Kodi (should be of type bool and `enforce_updates: true`)
+   * `select` select the currently highlighted item in Kodi (should be of type bool and `enforce_updates: true`)
 
 The `volume` and `mute` items influence Kodi when their value changes.
 All items that are marked as "should be of type bool" are essentially input commands which are usually send to Kodi over an attached keyboard. The keyboard behavior can be simulated through boolean items with `enforce_updates: true`.
