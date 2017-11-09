@@ -14,7 +14,7 @@ System-Settings-Service "Allow programs on other systems to control Kodi" enable
 [kodi]
     class_name = Kodi
     class_path = plugins.kodi
-    instance = living
+    instance = mediacenter
     host = xxx.xxx.xxx.xxx
     port = 9090
 ```
@@ -33,7 +33,7 @@ kodi:
 This attribute is mandatory. You have to provide the IP address of the Kodi system.
 
 #### port
-The port to connect to. This must be Kodi's TCP port not its HTTP port (see [Kodi JSON-RPC API(http://kodi.wiki/?title=JSON-RPC_API)]. Ddefault is 9090.
+The port to connect to. This must be Kodi's TCP port not its HTTP port (see [Kodi JSON-RPC API](http://kodi.wiki/?title=JSON-RPC_API)]. Default is 9090.
 
 ### items.conf (deprecated) / items.yaml
 
@@ -55,6 +55,7 @@ The port to connect to. This must be Kodi's TCP port not its HTTP port (see [Kod
         [[[mute]]]
             type = bool
             kodi_item@mediacenter = mute
+...
 ```
 
 ```yaml
@@ -78,6 +79,43 @@ living:
         favorites:
             type: dict
             kodi_item@mediacenter: favorites
+        # input commands
+        left:
+            type: bool
+            enforce_updates: true
+            kodi_item@mediacenter: left
+        right:
+            type: bool
+            enforce_updates: true
+            kodi_item@mediacenter: right
+        up:
+            type: bool
+            enforce_updates: true
+            kodi_item@mediacenter: up
+        down:
+            type: bool
+            enforce_updates: true
+            kodi_item@mediacenter: down
+        home:
+            type: bool
+            enforce_updates: true
+            kodi_item@mediacenter: home
+        back:
+            type: bool
+            enforce_updates: true
+            kodi_item@mediacenter: back
+        select:
+            type: bool
+            enforce_updates: true
+            kodi_item@mediacenter: select
+        play_pause:
+            type: bool
+            enforce_updates: true
+            kodi_item@mediacenter: play_pause
+        stop:
+            type: bool
+            enforce_updates: true
+            kodi_item@mediacenter: stop
 ```
 
 #### kodi_item
@@ -89,15 +127,25 @@ You could assign the following values to `kodi_item`:
    * `media` a string with the current media type (Video, Audio, Picture)
    * `state` current state as string (Menu, Playing, Pause)
    * `favorites` the favorites of your Kodi system (must be of type dict)
+   * `play_pause` request Kodi to pause or restart the current players (should be of type bool and `enforce_updates: true`)
+   * `stop` request Kodi to stop all players (should be of type bool and `enforce_updates: true`)
+   * `left` send a left request to Kodi, same as pressing the left arrow on the keyboard (should be of type bool and `enforce_updates: true`)
+   * `right` send a right request to Kodi, same as pressing the right arrow on the keyboard (should be of type bool and `enforce_updates: true`)
+   * `up` send an up request to Kodi, same as pressing the up arrow on the keyboard (should be of type bool and `enforce_updates: true`)
+   * `down` send a down request to Kodi, same as pressing the down arrow on the keyboard (should be of type bool and `enforce_updates: true`)
+   * `home` go to the home menu (should be of type bool and `enforce_updates: true`)
+   * `back` go to the previous menu (should be of type bool and `enforce_updates: true`)
+   * `select` select the currently highlightes item in Kodi (should be of type bool and `enforce_updates: true`)
 
 The `volume` and `mute` items influence Kodi when their value changes.
+All items that are marked as "should be of type bool" are essentially input commands which are usually send to Kodi over an attached keyboard. The keyboard behavior can be simulated through boolean items with `enforce_updates: true`.
+
 
 ### logic.conf
 
 Nothing so far
 
 ## Functions
-=========
 This plugin provides the function to send notification messages to Kodi.
 
 ```python
