@@ -38,20 +38,50 @@ class Kodi(SmartPlugin, Client):
     
     PLUGIN_VERSION='1.3c.0'
     ALLOW_MULTIINSTANCE = True
+    
+    # list of all possible input actions for Kodi
+    _possible_input_actions = [
+        'left','right','up','down','pageup','pagedown','select','highlight',
+        'parentdir','parentfolder','back','menu','previousmenu','info',
+        'pause','stop','skipnext','skipprevious','fullscreen','aspectratio',
+        'stepforward','stepback','bigstepforward','bigstepback',
+        'chapterorbigstepforward','chapterorbigstepback','osd','showsubtitles',
+        'nextsubtitle','cyclesubtitle','playerdebug','codecinfo','playerprocessinfo',
+        'nextpicture','previouspicture','zoomout','zoomin','playlist','queue',
+        'zoomnormal','zoomlevel1','zoomlevel2','zoomlevel3','zoomlevel4',
+        'zoomlevel5','zoomlevel6','zoomlevel7','zoomlevel8','zoomlevel9',
+        'nextcalibration','resetcalibration','analogmove','analogmovex',
+        'analogmovey','rotate','rotateccw','close','subtitledelayminus',
+        'subtitledelay','subtitledelayplus','audiodelayminus','audiodelay',
+        'audiodelayplus','subtitleshiftup','subtitleshiftdown','subtitlealign',
+        'audionextlanguage','verticalshiftup','verticalshiftdown','nextresolution',
+        'audiotoggledigital','number0','number1','number2','number3','number4',
+        'number5','number6','number7','number8','number9','smallstepback',
+        'fastforward','rewind','play','playpause','switchplayer','delete','copy',
+        'move','screenshot','rename','togglewatched','scanitem','reloadkeymaps',
+        'volumeup','volumedown','mute','backspace','scrollup','scrolldown',
+        'analogfastforward','analogrewind','moveitemup','moveitemdown','contextmenu',
+        'shift','symbols','cursorleft','cursorright','showtime','analogseekforward',
+        'analogseekback','showpreset','nextpreset','previouspreset','lockpreset','randompreset',
+        'increasevisrating','decreasevisrating','showvideomenu','enter','increaserating',
+        'decreaserating','setrating','togglefullscreen','nextscene','previousscene','nextletter',
+        'prevletter','jumpsms2','jumpsms3','jumpsms4','jumpsms5','jumpsms6','jumpsms7','jumpsms8',
+        'jumpsms9','filter','filterclear','filtersms2','filtersms3','filtersms4','filtersms5',
+        'filtersms6','filtersms7','filtersms8','filtersms9','firstpage','lastpage','guiprofile',
+        'red','green','yellow','blue','increasepar','decreasepar','volampup','volampdown',
+        'volumeamplification','createbookmark','createepisodebookmark','settingsreset',
+        'settingslevelchange','stereomode','nextstereomode','previousstereomode',
+        'togglestereomode','stereomodetomono','channelup','channeldown','previouschannelgroup',
+        'nextchannelgroup','playpvr','playpvrtv','playpvrradio','record','togglecommskip',
+        'showtimerrule','leftclick','rightclick','middleclick','doubleclick','longclick',
+        'wheelup','wheeldown','mousedrag','mousemove','tap','longpress','pangesture',
+        'zoomgesture','rotategesture','swipeleft','swiperight','swipeup','swipedown','error','noop']
 
     _get_items = ['volume', 'mute', 'title', 'media', 'state', 'favorites']
     
-    _set_items = {'volume'    : dict(method='Application.SetVolume', params=dict(volume='ITEM_VALUE')),
-                  'mute'      : dict(method='Application.SetMute', params = dict(mute='ITEM_VALUE')),
-                  'left'      : dict(method='Input.Left', params=None),
-                  'right'     : dict(method='Input.Right', params=None),
-                  'up'        : dict(method='Input.Up', params=None),
-                  'down'      : dict(method='Input.Down', params=None),
-                  'home'      : dict(method='Input.Home', params=None),
-                  'back'      : dict(method='Input.Back', params=None),
-                  'select'    : dict(method='Input.Select', params=None),
-                  'play_pause': dict(method='Player.PlayPause', params=None),
-                  'stop'      : dict(method='Player.Stop', params=None)}
+    _set_items = {'volume': dict(method='Application.SetVolume', params=dict(volume='ITEM_VALUE')),
+                  'mute'  : dict(method='Application.SetMute', params = dict(mute='ITEM_VALUE')),
+                  'input' : dict(method='Input.ExecuteAction', params=dict(action='ITEM_VALUE'))}
     
     def __init__(self, sh, *args, **kwargs):
         '''
@@ -154,26 +184,28 @@ class Kodi(SmartPlugin, Client):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         '''
-        if item():
+        item_value = item()
+        if item_value:
             if caller != 'Kodi' and self.has_iattr(item.conf, 'kodi_item'):
                 # update item was triggered from something else then this plugin -> send to Kodi
                 kodi_item = self.get_iattr_value(item.conf, 'kodi_item')
-                # handle play/pause and stop separately as we need to find the active player
-                if kodi_item in ['play_pause', 'stop']:
-                    self.get_sh().trigger('kodi-%s' % kodi_item, self._send_player_command, 'Kodi', value=dict(kodi_item=kodi_item))
-                # all other Items can be handled through a standard interface
-                elif kodi_item in Kodi._set_items:
-                    self.logger.debug('Plugin \'{}\': update_item ws called with item \'{}\' from caller \'{}\', source \'{}\' and dest \'{}\''.format(self.get_shortname(), item, caller, source, dest))
-                    method = self._set_items[kodi_item]['method']
-                    params = self._set_items[kodi_item]['params']
-                    if params is not None:
-                        # copy so we don't interfer with the class variable
-                        params = params.copy()
-                        # replace the wild card ITEM_VALUE with the item's value
-                        for key, value in params.items():
-                            if value == 'ITEM_VALUE':
-                                params[key] = item()
-                    self.send_kodi_rpc(method, params, wait=False)
+                
+                if kodi_item in Kodi._set_items:
+                    if kodi_item == 'input' and item() not in self._possible_input_actions:
+                        self.logger.error('The action \'%s\' for the kodi_item \'input\' is not allowed, skipping!', item_value)
+                    else:
+                        self.logger.debug('Plugin \'%s\': update_item ws called with item \'%s\' from caller \'%s\', source \'%s\' and dest \'%s\'',
+                                          self.get_shortname(), item, caller, source, dest)
+                        method = self._set_items[kodi_item]['method']
+                        params = self._set_items[kodi_item]['params']
+                        if params is not None:
+                            # copy so we don't interfer with the class variable
+                            params = params.copy()
+                            # replace the wild card ITEM_VALUE with the item's value
+                            for key, value in params.items():
+                                if value == 'ITEM_VALUE':
+                                    params[key] = item_value
+                        self.send_kodi_rpc(method, params, wait=False)
                 else:
                     self.logger.info('kodi_item \'%s\' not in send_keys, skipping!', kodi_item)
     
