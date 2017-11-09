@@ -33,7 +33,7 @@ kodi:
 This attribute is mandatory. You have to provide the IP address of the Kodi system.
 
 #### port
-You could specify a port to connect to. By default port 9090 is used.
+The port to connect to. This must be Kodi's TCP port not its HTTP port (see [Kodi JSON-RPC API(http://kodi.wiki/?title=JSON-RPC_API)]. Ddefault is 9090.
 
 ### items.conf (deprecated) / items.yaml
 
