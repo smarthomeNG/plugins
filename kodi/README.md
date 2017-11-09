@@ -108,7 +108,7 @@ Item type `str`. This item displays information about the current state of Kodi 
 Item type `dict`. The item stores information about favorites defined in Kodi in a dictionary. Changing its value has no effect as it is only set by the plugin and not read on updates.
 
 ##### input
-Item type `str`. This item gives complete control over sending inputs to Kodi and can be seen as simulating keyboard events and shotcuts.
+Item type `str`. This item gives complete control over sending inputs to Kodi and can be seen as simulating keyboard events and shortcuts.
 If the item is set to an allowed Kodi input action, the respective action is send to Kodi. 
 The item should be set to enforce updates in order to allow for sending consecutive commands of the same action.
 There is a huge amount of actions possible. Listed below are a number of oft-used input actions this item may be set to. For all allowed actions see the plugin's source code (most of them are pretty self-explanatory).
