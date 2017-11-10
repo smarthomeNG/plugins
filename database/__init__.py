@@ -427,9 +427,9 @@ class Database(SmartPlugin):
             'on'  : 'MIN(time), ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
             'on.order' : 'ORDER BY time ASC',
             'sum' : 'MIN(time), SUM(val_num)',
-            'val' : 'time, val_num',
-            'val.order' : 'ORDER BY time ASC',
-            'val.group' : ''
+            'raw' : 'time, val_num',
+            'raw.order' : 'ORDER BY time ASC',
+            'raw.group' : ''
         }
         if func not in queries:
             raise NotImplementedError
@@ -473,9 +473,9 @@ class Database(SmartPlugin):
             'max' : 'MAX(val_num)',
             'on'  : 'ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
             'sum' : 'SUM(val_num)',
-            'val' : 'val_num',
-            'val.order' : 'ORDER BY time DESC',
-            'val.group' : ''
+            'raw' : 'val_num',
+            'raw.order' : 'ORDER BY time DESC',
+            'raw.group' : ''
         }
         if func not in queries:
             self.logger.warning("Unknown export function: {0}".format(func))

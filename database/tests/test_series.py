@@ -208,8 +208,8 @@ class TestDatabaseSeries(TestDatabaseBase):
         res = plugin._series('sum', start=self.t(10), end=self.t(50), item='main.num', count=5)
         self.assertSeries([(10, 550.0), (16, 200.0), (24, 640.0), (32, 360.0), (40, 360.0), (48, 290.0), (50, 290.0)], res)
 
-    def test_series_val_aggregation(self):
-        """ Test VAL selection with aggregation and last value copied to end.
+    def test_series_raw_aggregation(self):
+        """ Test RAW selection with aggregation and last value copied to end.
         """
         values = self.log_slice(0, 1,
             self.log_slice_values_delta( 10, 100,  10),
@@ -217,7 +217,7 @@ class TestDatabaseSeries(TestDatabaseBase):
         )
         plugin = self.plugin()
         self.create_log(plugin, 'main.num', values)
-        res = plugin._series('val', start=self.t(10), end=self.t(50), item='main.num', count=5)
+        res = plugin._series('raw', start=self.t(10), end=self.t(50), item='main.num', count=5)
         self.assertSeries([(10, 100.0), (10, 100.0), (11, 90.0), (12, 80.0), (13, 70.0), (14, 60.0), (15, 50.0), (16, 40.0), (17, 30.0), (18, 20.0), (19, 10.0), (50, 10.0)], res)
 
     @pytest.mark.skip(reason="series does not return last value currently")

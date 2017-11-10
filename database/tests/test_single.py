@@ -82,13 +82,13 @@ class TestDatabaseSingle(TestDatabaseBase):
         res = plugin._single('count<20', start=self.t(0), end='now', item='main.num')
         self.assertSingle(1, res)
 
-    def test_single_val(self):
+    def test_single_raw(self):
         plugin = self.plugin()
         self.create_log(plugin, 'main.num', [
           (1, 2, 10),
           (2, 3, 20)
         ])
-        res = plugin._single('val', start=self.t(0), end='now', item='main.num')
+        res = plugin._single('raw', start=self.t(0), end='now', item='main.num')
         self.assertSingle(20, res)
 
     def test_single_on(self):
