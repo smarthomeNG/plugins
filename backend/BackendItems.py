@@ -126,10 +126,6 @@ class BackendItems:
         return
 
     @cherrypy.expose
-    def create_hash_json_html(self, plaintext):
-        return json.dumps(create_hash(plaintext))
-
-    @cherrypy.expose
     def item_change_value_html(self, item_path, value):
         """
         Is called by items.html when an item value has been changed

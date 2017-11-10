@@ -206,7 +206,7 @@ function deleteFromCache(filename) {
 
 function createHash() {
 	$.ajax({
-		url: '/create_hash_json.html',
+		url: 'create_hash_json.html',
 		type: 'GET',
 		data: { plaintext: $('#showtext')[0].checked ? plaintext.val() : plainpass.val()} ,
 		contentType: 'application/json; charset=utf-8',

@@ -218,4 +218,8 @@ class BackendServices:
         return self.render_template('eval_syntax_checker.html', eval_code=eval_code, expanded_code=expanded_code, relative_to=relative_to, check_result=check_result)
 
 
+    @cherrypy.expose
+    def create_hash_json_html(self, plaintext):
+        return json.dumps(create_hash(plaintext))
+
 
