@@ -405,7 +405,7 @@ class Database(SmartPlugin):
         return func, expression
 
     def _finalize(self, func, tuples):
-        if func is 'diff':
+        if func == 'diff':
             final_tuples = []
             for i in range(1, len(tuples)-1):
                 final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i-1][1]))
