@@ -30,7 +30,6 @@ class TestDatabaseSeries(TestDatabaseBase):
         self.assertSeriesCount(2, res)
         self.assertSeries([(item_change_ts/TestDatabaseBase.TIME_FACTOR, 0.0), (res['series'][1][0]/TestDatabaseBase.TIME_FACTOR,0.0)], res)
 
-
     def test_series_avg(self):
         """ Test AVG selection with no aggregation and last value copied to end.
         """
@@ -41,6 +40,21 @@ class TestDatabaseSeries(TestDatabaseBase):
         ])
         res = plugin._series('avg', start=self.t(0), end=self.t(12), item='main.num')
         self.assertSeries([(1, 10), (11, 20), (12, 20)], res)
+
+    def test_series_avg_diff(self):
+        """ Test DIFF:AVG selection with no aggregation and last value copied to end.
+        """
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          ( 1, 10, 10),
+          (11, 10, 20),
+          (21, 10, 30),
+          (31, 10, 40),
+          (41, 10, 50),
+          (51, 10, 60)
+        ])
+        res = plugin._series('diff:avg', start=self.t(0), end=self.t(52), item='main.num')
+        self.assertSeries([(11, 10.0), (21, 10.0), (31, 10.0), (41, 10.0), (51, 10.0)], res)
 
     def test_series_min(self):
         """ Test MIN selection with no aggregation and last value copied to end.
