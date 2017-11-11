@@ -10,11 +10,13 @@
 		<table class="table table-striped table-hover">
 			<col width="25px">
 			<col width="40px">
+			<col width="80px">
 			<col width="400px">
-			<col width="200px">
+			<col minwidth="300px">
 			<thead>
 				<tr>
 					<th colspan="2">{{ _('Szene') }}</th>
+					<th>{{ _('Lernen') }}</th>
 					<th>{{ _('Item') }}</th>
 					<th>{{ _('Wert') }}</th>
 				</tr>
@@ -22,24 +24,41 @@
 			<tbody>
 				{% for scene in scene_list %}
 					<tr>
-					    if {% if scene['name'] == '' %}
-							<td colspan="4"><strong>{{ scene['path'] }}</strong></td>
+					    {% if scene['name'] == '' %}
+							<td colspan="5"><strong>{{ scene['path'] }}</strong></td>
 						{% else %}
-							<td colspan="4"><strong>{{ scene['path'] }}</strong> &nbsp; ({{ scene['name'] }})</td>
+							<td colspan="5"><strong>{{ scene['path'] }}</strong> &nbsp; ({{ scene['name'] }})</td>
 						{% endif %}
 						<td></td>
 					</tr>
 					{% for value in scene['values'] %}
 						{% for action in value['action_list'] %}
+							{% if (action == value['action_list'][0]) and (value['action_name'] != '') %}
+								<tr>
+									<td></td>
+									<td colspan="3"><strong>{{ value['action'] }}</strong>: {{ value['action_name'] }}</td>
+									<td></td>
+									<td></td>
+								</tr>
+							{% endif %}
 							<tr>
 								<td></td>
-								{% if action == value['action_list'][0] %}
-									<td><strong>{{ value['value'] }}</strong>:</td>
+								{% if (action == value['action_list'][0]) and (value['action_name'] == '') %}
+									<td><strong>{{ value['action'] }}</strong>:</td>
 								{% else %}
 									<td></td>
 								{% endif %}
+								{% if action[2] %}
+									<td>ja</td>
+								{% else %}
+									<td>nein</td>
+								{% endif %}
 								<td>{{ action[0] }}</td>
-								<td>{{ action[1] }}</td>
+								{% if (action[3] == None) or (action[3] == action[1]) %}
+									<td>{{ action[1] }}</td>
+								{% else %}
+									<td>{{ action[3] }} (default: {{ action[1] }})</td>
+								{% endif %}
 								<td></td>
 							</tr>
 						{% endfor %}

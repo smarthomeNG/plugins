@@ -9,6 +9,7 @@
 <script src="static/codemirror/lib/codemirror.js"></script>
 <link rel="stylesheet" href="static/codemirror/lib/codemirror.css">
 <link rel="stylesheet" href="static/css/codemirror_custom.css">
+<script src="static/codemirror/mode/python/python.js"></script>
 <script src="static/codemirror/mode/yaml/yaml.js"></script>
 <script src="static/codemirror/addon/display/rulers.js"></script>
 
@@ -28,13 +29,20 @@ li.L5, li.L6, li.L7, li.L8
 		</div>
     	<div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px;">
 			<div title="{{ _('Hier wird das Ergebnis Ausdruck angezeigt.') }}">
-	        	<div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ergebnis: Aufbereitetes .YAML Format') }}</div>
+				{% if output_format == 'python' %}
+	        		<div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ergebnis: Aufbereitet als Python Source Code') }}</div>
+				{% else %}
+	        		<div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ergebnis: Aufbereitetes .YAML Format') }}</div>
+				{% endif %}
     		    <textarea id="check_result" autocomplete="off" name="check_result">{{ check_result }}</textarea>
 		    </div>
 	    </div>
     </div>
     <div class="container" style="width: 100%;">
 	    <input name="check" value="{{ _('Prüfen','button') }}" type="submit" class="btn btn-default btn-xs">
+		{% if develop %}
+		    <input name="check2" value="{{ _('Prüfen','button') }} ({{ _('Python Code Ausgabe') }})" type="submit" class="btn btn-default btn-xs">
+		{% endif %}
     </div>
 </form>
 <script>
@@ -60,7 +68,7 @@ li.L5, li.L6, li.L7, li.L8
         lineWrapping: false,
         indentWithTabs: false,
         readOnly: true,
-        mode: "yaml"
+        mode: "{{ output_format }}"
      });
 
      function resizeCodeMirrors() {

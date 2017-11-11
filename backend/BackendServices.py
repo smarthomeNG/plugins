@@ -168,8 +168,9 @@ class BackendServices:
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def yaml_syntax_checker_html(self, check=None, yaml_code=None, check_result=None):
+    def yaml_syntax_checker_html(self, check=None, check2=None, yaml_code=None, check_result=None):
         check_result = ''
+        output_format = 'yaml'
         if check is not None:
             yaml_code = self.strip_empty_lines(yaml_code)
                 
@@ -179,14 +180,29 @@ class BackendServices:
             if estr != '':
                 check_result = 'ERROR: \n\n'+ estr
             if ydata != None:
-                check_result += lib.item_conversion.convert_yaml(ydata)
+                check_result += lib.item_conversion.convert_yaml(ydata).replace('\n\n', '\n')
 
             yaml_code = self.append_empty_lines(yaml_code, 15)
             check_result = self.append_empty_lines(check_result, 15)
+        elif check2 is not None:
+            yaml_code = self.strip_empty_lines(yaml_code)
+
+            import lib.shyaml as shyaml
+            ydata, estr = shyaml.yaml_load_fromstring(yaml_code, True)
+
+            if estr != '':
+                check_result = 'ERROR: \n\n'+ estr
+            if ydata != None:
+                import pprint
+                check_result += pprint.pformat(ydata)
+
+            yaml_code = self.append_empty_lines(yaml_code, 15)
+            check_result = self.append_empty_lines(check_result, 15)
+            output_format = 'python'
         else:
             yaml_code = self.append_empty_lines('', 15)
             check_result = self.append_empty_lines('', 15)
-        return self.render_template('yaml_syntax_checker.html', yaml_code=yaml_code, check_result=check_result)
+        return self.render_template('yaml_syntax_checker.html', yaml_code=yaml_code, check_result=check_result, output_format=output_format)
 
 
     # -----------------------------------------------------------------------------------
@@ -221,5 +237,4 @@ class BackendServices:
     @cherrypy.expose
     def create_hash_json_html(self, plaintext):
         return json.dumps(create_hash(plaintext))
-
 

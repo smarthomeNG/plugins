@@ -96,6 +96,8 @@
 	"Hier den YAML Code eingeben, der geprüft werden soll.": "",
 	"Eingabe im .YAML Format": "",
 	"Ergebnis: Aufbereitetes .YAML Format": "",
+	"Ergebnis: Aufbereitet als Python Source Code": "",
+	"Python Code Ausgabe": "",
 
 	"Nr.": "Nr",
 	"Type": "Typ",
@@ -106,6 +108,10 @@
 	"Mehrere Instanzen möglich": "Możliwe wiele instancji",
 	"Ja": "Tak",
 	"Nein": "Nie",
+
+	"Szene": "",
+	"Lernen": "",
+	
 	"Thread": "Wątki",
 	"Thread-Id": "Id Wątku",
 	"Aktiv": "Aktywny",

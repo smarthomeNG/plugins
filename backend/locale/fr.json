@@ -99,6 +99,8 @@
 	"Hier den YAML Code eingeben, der geprüft werden soll.": "",
 	"Eingabe im .YAML Format": "",
 	"Ergebnis: Aufbereitetes .YAML Format": "",
+	"Ergebnis: Aufbereitet als Python Source Code": "",
+	"Python Code Ausgabe": "",
 
 	"Nr.": "N°",
 	"Type": "Type",
@@ -109,6 +111,10 @@
 	"Mehrere Instanzen möglich": "Supporte plusieurs instances",
 	"Ja": "Oui",
 	"Nein": "Non",
+
+	"Szene": "",
+	"Lernen": "",
+	
 	"Thread": "Tâche",
 	"Thread-Id": "Id de tâche",
 	"Aktiv": "Active",

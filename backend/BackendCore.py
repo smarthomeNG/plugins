@@ -161,24 +161,26 @@ class BackendCore:
                 scene_dict['path'] = scene
                 scene_dict['name'] = str(self._sh.return_item(scene))
 
-                value_list = self.scenes.get_scene_values(scene)
-                scene_dict['value_list'] = value_list
-                scene_dict[scene] = value_list
+                action_list = self.scenes.get_scene_actions(scene)
+                scene_dict['value_list'] = action_list
+                scene_dict[scene] = action_list
 #                self.logger.warning("scenes_html: value_list for scene {} = {}".format(scene, value_list))
             
-                disp_value_list = []
-                for value in value_list:
-                    value_dict = {}
-                    value_dict['value'] = value
+                disp_action_list = []
+                for value in action_list:
+                    action_dict = {}
+                    action_dict['action'] = value
+                    action_dict['action_name'] = self.scenes.get_scene_action_name(scene, value)
                     action_list = self.scenes.return_scene_value_actions(scene, value)
 #                    self.logger.warning("scenes_html: action_list for scene {} / value {} = {}".format(scene, value, action_list))
                     for action in action_list:
                         if not isinstance(action[0], str):
                             action[0] = action[0].id()
-                    value_dict['action_list'] = sorted(action_list)
+                    action_dict['action_list'] = sorted(action_list)
 
-                    disp_value_list.append(value_dict)
-                scene_dict['values'] = disp_value_list
+                    disp_action_list.append(action_dict)
+                scene_dict['values'] = disp_action_list
+                self.logger.warning("scenes_html: disp_action_list for scene {} = {}".format(scene, disp_action_list))
                 
                 disp_scene_list.append(scene_dict)
         else:

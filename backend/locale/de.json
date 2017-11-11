@@ -98,7 +98,8 @@
 	"Hier den YAML Code eingeben, der geprüft werden soll.": "Hier den YAML Code eingeben, der geprüft werden soll.",
 	"Eingabe im .YAML Format": "Eingabe im .YAML Format",
 	"Ergebnis: Aufbereitetes .YAML Format": "Ergebnis: Aufbereitetes .YAML Format",
-
+	"Ergebnis: Aufbereitet als Python Source Code": "Ergebnis: Aufbereitet als Python Source Code",
+	"Python Code Ausgabe": "Python Code Ausgabe",
 	
 	"Nr.": "Nr.",
 	"Type": "Type",
@@ -109,6 +110,10 @@
 	"Mehrere Instanzen möglich": "Mehrere Instanzen möglich",
 	"Ja": "Ja",
 	"Nein": "Nein",
+	
+	"Szene": "Szene",
+	"Lernen": "Lernen",
+	
 	"Thread": "Thread",
 	"Thread-Id": "Thread-Id",
 	"Aktiv": "Aktiv",
