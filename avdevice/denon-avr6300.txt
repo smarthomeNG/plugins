@@ -1,12 +1,12 @@
 ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;TYPE
 0;power on;PWON|PWON;PW?;PW**;RW
 0;power off;PWSTANDBY;PW?;PW*******;RW
-0;eco set;ECO*;ECO?;ECO*;RW;;;string
+0;eco set;ECO*;ECO?;ECO*;RW;;;string,bool
 1;power on;ZMON;ZM?;ZM**;RW
 1;power off;ZMOFF;ZM?;ZM***;RW
 1;mute on;MUON;MU?;MU**;RW
 1;mute off;MUOFF;MU?;MU***;RW
-1;sleep set;SLP***;SLP?;SLP***;RW;;120;num
+1;sleep set;SLP***;SLP?;SLP***;RW;;120;num,bool
 1;standby set;STBY*;STBY?;STBY*;RW;;;string
 1;volume set;MV**;MV?;MV**;RW;;90
 1;volume+;MVUP;MV?;MV;W
@@ -22,8 +22,8 @@ ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;TYPE
 1;volumemax;MVMAX **;MV?;MVMAX **;RW
 1;input set;SI*;SI?;SI*;RW;;;string
 1;mode set;MS*;MS?;MS*;RW;;;string
-1;audioinput set;SD*;SD?;SD*;RW;;;string
-1;videoinput set;SV*;SV?;SV*;RW;;;string
+1;audioinput set;SD*;SD?;SD*;RW;;;string,bool
+1;videoinput set;SV*;SV?;SV*;RW;;;string,bool
 1;digitalinput set;DC*;DC?;DC*;RW;;;string
 1;video set;VS*;;VS*;RW;;;string
 2;power on;Z2ON;Z2?;Z2**;RW
@@ -37,7 +37,7 @@ ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;TYPE
 2;volumehigh;Z275;MV?;Z275;W
 2;volume set;Z2**;Z2?;Z2**;RW;;90
 2;standby set;Z2STBY*;Z2STBY?;Z2STBY*;RW;;;string
-2;sleep set;Z2SLP***;Z2SLP?;Z2SLP***;RW;;120;num
+2;sleep set;Z2SLP***;Z2SLP?;Z2SLP***;RW;;120;num,bool
 3;power on;Z3ON;Z3?;Z3**;RW
 3;power off;Z3OFF;Z3?;Z3***;RW
 3;input set;Z3*;Z3?;Z3*;RW;;;string
@@ -49,4 +49,4 @@ ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;TYPE
 3;volumehigh;Z375;MV?;Z375;W
 3;volume set;Z3**;Z3?;Z3**;RW;;90
 3;standby set;Z3STBY*;Z3STBY?;Z3STBY*;RW;;;string
-3;sleep set;Z3SLP***;Z3SLP?;Z3SLP***;RW;;120;num
+3;sleep set;Z3SLP***;Z3SLP?;Z3SLP***;RW;;120;num,bool
