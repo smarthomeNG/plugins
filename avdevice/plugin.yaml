@@ -27,15 +27,9 @@ parameters:
             de: 'Name des Geräts. Muss mit dem Namen der Textdatei unter plugins/avdevice korrelieren, die sämtliche Befehle beinhaltet.'
             en: 'Name of AV device. Has to correspond to a text file with the same name in the folder plugins/avdevice including all commands.'
 
-    instance:
-        type: str
-        default: ''
-        description:
-            de: 'Der Name der Instanz. Jedes Gerät muss als eigene Instanz eingetragen werden!'
-            en: 'Define instance name, each device needs an individual instance name!'
     tcp_ip: 
         type: ip
-        default: ''
+        default: 0.0.0.0
         description:
             de: 'Beim Nutzen der TCP Verbindungen ist die IP Adresse des Endgeräts anzugeben.'
             en: 'If you use TCP connection define IP address of your device.'
@@ -84,7 +78,7 @@ parameters:
 
     forcebuffer:
         type: str
-        default: 'GEH01020, GEH04022, GEH05024'
+        default: 'GEH01020,GEH04022,GEH05024'
         description:
             de: "Wenn aus irgendeinem Grund die Antworten nicht gepuffert werden sollen, können hier dennoch Antworten definiert werden, die sehr wohl gepuffert werden. Dies ist besonders wichtig bei Informationen, die schnell hintereinander gesendet werden bzw. wechseln wie Künstler, Musiktitel, Radiostation, etc. Der Defaultwert ist für Pioneer Receiver empfohlen."
             en: "If for whatever reason you don't want to buffer the response from your device you can still define specific responses that should get buffered. This is important for responses that change or get sent very quickly. Artist, title, radio station, etc. are examples that should be put here. The default value is recommended for Pioneer receivers."

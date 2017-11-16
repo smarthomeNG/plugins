@@ -234,7 +234,6 @@ ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE
 0;title;;;GEH01020;R
 0;station;;;GEH04022;R
 0;genre;;;GEH05024;R
-0;statusupdate;;;;W
 0;display;?FL;?FL;FL******************************;R
 
 ```

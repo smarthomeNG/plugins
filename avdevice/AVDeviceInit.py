@@ -90,7 +90,7 @@ class Init():
         elif vartype == 'tcp':
             try:
                 tcp = re.sub('[ ]', '', value[0])
-                if tcp == 'None' or tcp == '':
+                if tcp == 'None' or tcp == '' or tcp == '0.0.0.0':
                     tcp = port = tcp_timeout = None
                 self.logger.debug("Initializing TCP {}: IP is {}.".format(self._name, tcp))
             except Exception as err:
@@ -150,7 +150,7 @@ class Init():
                 response_buffer = True
             elif str(value).lower() in ['0', 'no', 'false', 'off']:
                 response_buffer = False
-            elif value.lstrip("-").isdigit():
+            else:
                 response_buffer = abs(int(value)) * -1
             return response_buffer
 

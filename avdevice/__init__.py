@@ -47,9 +47,8 @@ class AVDevice(SmartPlugin):
 	ALLOW_MULTIINSTANCE = True
 	PLUGIN_VERSION = "1.3.2"
 
-	def __init__(self,
-				 smarthome,
-				 model='',
+	def __init__(self, smarthome, 
+                 model='',
 				 ignoreresponse='RGB,RGC,RGD,GBH,GHH,LM0,VTA,AUA,AUB',
 				 errorresponse='E02,E04,E06',
 				 forcebuffer='GEH01020, GEH04022, GEH05024',
@@ -70,16 +69,14 @@ class AVDevice(SmartPlugin):
 				 reconnectretries=13,
 				 secondstokeep=50,
 				 responsebuffer='5',
-				 autoreconnect=False
-				 ):
+				 autoreconnect=False):
 		self.logger = logging.getLogger(__name__)
 		self._sh = smarthome
-		self._model = model
+		self.alive = False
 		self._name = self.get_instance_name()
 		self._serialwrapper = None
 		self._serial = None
 		self._tcpsocket = None
-		self.alive = False
 		self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
 		self._items = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
 		self._query_zonecommands = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
@@ -94,15 +91,41 @@ class AVDevice(SmartPlugin):
 		self._reconnect_counter = 0
 		self._resend_counter = 0
 		self._resend_on_empty_counter = 0
-		self._resend_wait = float(resendwait)
-		self._secondstokeep = int(secondstokeep)
 		self._sendingcommand = 'done'
-		self._auto_reconnect = autoreconnect
-		self._resend_retries = int(sendretries)
-		self._reconnect_retries = int(reconnectretries)
 		self._special_commands = {}
 		self._is_connected = []
 		self._parsinginput = []
+
+		try:
+			self._model = self.get_parameter_value('model')			
+			self._resend_wait = float(self.get_parameter_value('resendwait'))
+			self._secondstokeep = int(self.get_parameter_value('secondstokeep'))
+			self._auto_reconnect = self.get_parameter_value('autoreconnect')
+			self._resend_retries = int(self.get_parameter_value('sendretries'))
+			self._reconnect_retries = int(self.get_parameter_value('reconnectretries'))
+			ignoreresponse = self.get_parameter_value('ignoreresponse')
+			errorresponse = self.get_parameter_value('errorresponse')
+			forcebuffer = self.get_parameter_value('forcebuffer')
+			inputignoredisplay = self.get_parameter_value('inputignoredisplay')
+			resetonerror = self.get_parameter_value('resetonerror')
+			responsebuffer = self.get_parameter_value('responsebuffer')
+			depend0_power0 = self.get_parameter_value('depend0_power0')
+			depend0_volume0 = self.get_parameter_value('depend0_volume0')
+			dependson_item = self.get_parameter_value('dependson_item')
+			dependson_value = self.get_parameter_value('dependson_value')
+			tcp_ip = self.get_parameter_value('tcp_ip')
+			tcp_port = self.get_parameter_value('tcp_port')
+			tcp_timeout = self.get_parameter_value('tcp_timeout')
+			rs232_port = self.get_parameter_value('rs232_port')
+			rs232_baudrate = self.get_parameter_value('rs232_baudrate')
+			rs232_timeout = self.get_parameter_value('rs232_timeout')
+		except:
+			self._model = model
+			self._resend_wait = float(resendwait)
+			self._secondstokeep = int(secondstokeep)
+			self._auto_reconnect = autoreconnect
+			self._resend_retries = int(sendretries)
+			self._reconnect_retries = int(reconnectretries)
 
 		# Initializing all variables
 		self.logger.debug("Initializing {}: Resendwait: {}. Seconds to keep: {}.".format(self._name, self._resend_wait, self._secondstokeep))
@@ -618,10 +641,10 @@ class AVDevice(SmartPlugin):
 			self.logger.error("Initializing {}: Neither IP address nor RS232 port given. Not running.".format(self._name))
 		else:
 			self._functions, self._number_of_zones = self.init._read_commandfile()
+			self._items = self.init._addstatusupdate()
 			self._response_commands, self._special_commands = self.init._create_responsecommands()
 			self._power_commands = self.init._create_powercommands()
-			self._query_commands, self._query_zonecommands = self.init._create_querycommands()
-			self._items = self.init._addstatusupdate()
+			self._query_commands, self._query_zonecommands = self.init._create_querycommands()			
 			self.logger.log(VERBOSE1, "Initializing {}: Functions: {}, Number of Zones: {}".format(self._name, self._functions, self._number_of_zones))
 			self.logger.log(VERBOSE1, "Initializing {}: Responsecommands: {}.".format(self._name, self._response_commands))
 			self.logger.log(VERBOSE1, "Initializing {}: Special Commands: {}".format(self._name, self._special_commands))
@@ -1158,7 +1181,7 @@ class AVDevice(SmartPlugin):
 											
 											for entry in self._keep_commands:
 												self.logger.log(VERBOSE1, "Parsing Input {}: Testing Keep Command entry {}".format(
-													self._name, entry,  self._keep_commands.get(entry)))
+													self._name, entry,	self._keep_commands.get(entry)))
 												if data in self._keep_commands.get(entry).split(",")[2].split("|"):
 													self.logger.debug("Parsing Input {}: Removing {} from Keep Commands {} because corresponding value received.".format(
 														self._name, entry, self._keep_commands.get(entry), self._keep_commands))
