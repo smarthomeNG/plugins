@@ -168,7 +168,7 @@ Pioneer:
 
 ### model.txt
 
-#### ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;TYPE
+#### ZONE;FUNCTION;FUNCTIONTYPE;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE;RESPONSETYPE
 
 Configure your commands depending on your model and manufacturer. You have to name the file the same as configured in the plugin.yaml as "model". E.g. if you've configured "model: vsx-923" you name the file "vsx-923.txt"
 
@@ -176,11 +176,13 @@ Each line holds one specific command that should be sent to the device. You also
 
 * `zone`: Number of zone. Has to correspond to the attribute in item.yaml. E.g. for zone 1 use "avdevice_zone1: command". Zone 0 holds special commands like navigating in the menu, display reponse, information about currently playing songs, etc.
 
-* `function`: name of the function. You can name them whatever you like but keep in mind the following scheme: for boolean functions add a " on" or " off" to the function name. For commands setting a specific value like source, input mode, volume, etc. add a " set"
+* `function`: name of the function. You can name them whatever you like. You reference this value in the item using avdevice_zoneX: function. 
+
+* `functiontype`: for boolean functions use "on" or "off". For commands setting a specific value like source, input mode, volume, etc. use "set". To increase ot decrease a value use the corresponding "increase" or "decrease". For everything else leave empty!
 
 * `send`: the command to be sent, e.g. power off is "PF" for Pioneer receivers. You can use a pipe "|" if more than one command should be sent. That might be necessary for power on commands via RS232, e.g. for Pioneer receivers to power on "PO|PO" forces the plugin to send the "PO" command twice. Use stars "\*" to specify the format of the value to be sent. Let's say your device expects the value for volume as 3 digits, a "\*\*\*VL" ensures that even setting the volume to "5" sends the command as "005VL"
 
-* `query`: Query command. This is usually useful after setting up the connection or turning on the power. This command gets also used if the plugin doesn't receive the correct answer after sending a command.
+* `query`: Query command. This is usually useful after setting up the connection or turning on the power. This command gets also used if the plugin doesn't receive the correct answer after sending a command. It is recommended to leave this value empty for all functions except on, off and set.
 
 * `response`: The expected response after sending a command. Use "none" if you don't want to wait for the correct response. You can use stars "\*" again to ensure that the exact correct value is set. Example: You set the volume to 100. If you want to ensure that the device responds with any value for volume just use "VOL" here (or whatever response your device sends). If you want to ensure that the device is set to a volume of 100, use stars as placeholders, e.g. "VOL\*\*\*" for 3 digits. You can even specify multiple response possibilities separated by "|".
 
@@ -190,52 +192,38 @@ Each line holds one specific command that should be sent to the device. You also
 
 * `maxvalue`: You can define the maximum value for setting a specific function. This might be most relevant for setting the volume. If you configure this with "100" and set the volume to "240" (via Visu or CLI) the value will get clamped by the plugin and set to "100". 
 
-* `type`: If you want to force a function to deal with boolean values, use "bool" here. This might be necessary when your device responds in a weird way like an Epson projector does. It responds with "PWR=01" or "PWR=02" when turned on.. depending on it's mood ;)
+* `responsetype`: Defines the type of the response value and can be set to "bool", "num" or "string" or a mixture of them. Most response types are set automatically on startup but you can force specific type using this value. It is recommended to use the values suggested in the txt files that come with the plugin. 
 
 #### Example
 
 ```
 # plugins/avdevice/pioneer.txt
-ZONE;FUNCTION;SEND;QUERY;RESPONSE;READWRITE;INVERTRESPONSE;MAXVALUE
-1;power on;PO|PO;?P;PWR*;RW;yes
-1;power off;PF;?P;PWR*;RW;yes
-1;volume+;VU;?V;VOL;W
-1;volume-;VD;?V;VOL;W
-1;volumehigh;150VL;?V;VOL150;W
-1;volumelow;110VL;?V;VOL110;W
-1;volume set;***VL;?V;VOL***;RW;;161
-1;mute on;MO;?M;MUT*;RW;yes
-1;mute off;MF;?M;MUT*;RW;yes
-1;mode set;****SR;?S;SR****;RW
-1;input set;**FN;?F;FN**;RW
-2;power on;APO|APO;?AP;APR*;RW;yes
-2;power off;APF;?AP;APR*;RW;yes
-2;volume+;ZU;?ZV;ZV;W
-2;volume-;ZD;?ZV;ZV;W
-2;volumehigh;70ZV;?ZV;ZV70;W
-2;volumelow;45ZV;?ZV;ZV45;W
-2;volume set;**ZV;?ZV;ZV**;RW;;81
-2;mute on;Z2MO;?Z2M;Z2MUT*;RW;yes
-2;mute off;Z2MF;?Z2M;Z2MUT*;RW;yes
-2;input set;**ZS;?ZS;Z2F**;RW
-3;power on;BPO|BPO;?BP;BPR*;RW;yes
-3;power off;BPF;?BP;BPR*;RW;yes
-3;volume+;YU;?YV;YV;W
-3;volume-;YD;?YV;YV;W
-3;volumehigh;75YV;?YV;YV75;W
-3;volumelow;45YV;?YV;YV45;W
-3;volume set;**YV;?YV;YV**;RW;;81
-3;mute on;Z3MO;?Z3M;Z3MUT*;RW;yes
-3;mute off;Z3MF;?Z3M;Z3MUT*;RW;yes
-3;input set;**ZT;?ZT;Z3F**;RW
-4;power on;ZEO;?ZEP;ZEP*;RW;yes
-4;power off;ZEF;?ZEP;ZEP*;RW;yes
-4;input set;**ZEA;?ZEA;ZEA**;RW
-0;title;;;GEH01020;R
-0;station;;;GEH04022;R
-0;genre;;;GEH05024;R
-0;display;?FL;?FL;FL******************************;R
-
+ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; MAXVALUE; RESPONSETYPE
+1; power; on; PO|PO; ?P; PWR*; RW; yes
+1; power; off; PF; ?P; PWR*; RW; yes
+1; volume+; VU; ; VOL; W
+1; volume-; VD; ; VOL; W
+1; volumehigh; 150VL; ?V; VOL150; W
+1; volumelow; 110VL; ?V; VOL110; W
+1; volume; set; ***VL; ?V; VOL***; RW; ; 185
+1; mute; on; MO; ?M; MUT*; RW; yes
+1; mute; off; MF; ?M; MUT*; RW; yes
+1; input; set; **FN; ?F; FN**; RW
+2; power; on; APO|APO; ?AP; APR*; RW; yes
+2; power; off; APF; ?AP; APR*; RW; yes
+2; volume+; ZU; ; ZV; W
+2; volume-; ZD; ; ZV; W
+2; volumehigh; 75ZV; ?ZV; ZV75; W
+2; volumelow; 45ZV; ?ZV; ZV45; W
+2; volume; set; **ZV; ?ZV; ZV**; RW; ; 81
+2; mute; on; Z2MO; ?Z2M; Z2MUT*; RW; yes
+2; mute; off; Z2MF; ?Z2M; Z2MUT*; RW; yes
+2; input; set; **ZS; ?ZS; Z2F**; RW
+0; title; ; ; GEH01020; R
+0; station; ; ; GEH04022; R
+0; genre; ; ; GEH05024; R
+0; display; ?FL; ?FL; FL******************************; R
+1; speakers; set; *SPK; ?SPK; SPK*; RW
 ```
 
 ### Debugging
