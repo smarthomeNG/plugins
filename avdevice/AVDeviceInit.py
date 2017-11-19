@@ -380,14 +380,20 @@ class Init():
             for line in commands:
                 try:
                     line = re.sub('[!@#$\\n\\r]', '', line)
+                    line = re.sub('; ', ';', line)
+                    line = re.sub(' ;', ';', line)
                     if line == '':
                         function = ''
                     else:
                         row = line.split(";")
                         if row[0] == '':
                             row[0] = '0'
+                        if row[2] == '':
+                            row[1:3] = [''.join(row[1:3])]
+                        else:
+                            row[1:3] = [' '.join(row[1:3])]
                         function = row[1]
-                        itemtest = re.sub(' set| on| off', '', function)
+                        itemtest = re.sub(' set| on| off| increase| decrease', '', function)
                         for i in range(0, 9):
                             try:
                                 test = row[i]
@@ -400,8 +406,8 @@ class Init():
                                     row.append('int,float')
                                 elif i == 8 and ("on" in function or "off" in function):
                                     row.append('bool')
-                                elif i == 8 and ("+" in function or "-" in function):
-                                    row.append('bool')
+                                elif i == 8 and ("increase" in function or "decrease" in function):
+                                    row.append('int,float')
                                 else:
                                     row.append('')
                         try:
@@ -415,7 +421,7 @@ class Init():
                             itemkeys = self._items['zone{}'.format(row[0])].keys()
                         except Exception:
                             itemkeys = []
-                    if (function == "FUNCTION") or function == '':
+                    if function == "FUNCTION" or function == '' or function == "FUNCTION FUNCTIONTYPE":
                         pass
                     elif itemtest in itemkeys:
                         if row[0] == '0' or row[0] == '':
@@ -444,8 +450,7 @@ class Init():
             self.logger.error("Initializing {}: Problems loading command file. Error: {}".format(self._name, err))
         finally:
             self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W', '', '', 'bool']
-            self.logger.info("Initializing {}: Created functions list, including entries for {} zones.".format(
-                self._name, self._number_of_zones))
+            self.logger.info("Initializing {}: Created functions list, including entries for {} zones.".format(self._name, self._number_of_zones))
             if self._threadlock_standard.locked():
                 self._lock.release()
             self.logger.log(VERBOSE1, "Initializing {}: Finishing reading file. Lock is released. Lock is now {}".format(
