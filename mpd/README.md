@@ -3,7 +3,7 @@
 ## Requirements
 
 You only need one or more Music Player Daemons (MPD).
-For more information about MPD it's commands see http://www.musicpd.org/doc/protocol/command_reference.html
+For more information about MPD and it's commands see http://www.musicpd.org/doc/protocol/command_reference.html
 
 ## Configuration
 
