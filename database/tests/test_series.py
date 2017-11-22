@@ -30,7 +30,6 @@ class TestDatabaseSeries(TestDatabaseBase):
         self.assertSeriesCount(2, res)
         self.assertSeries([(item_change_ts/TestDatabaseBase.TIME_FACTOR, 0.0), (res['series'][1][0]/TestDatabaseBase.TIME_FACTOR,0.0)], res)
 
-
     def test_series_avg(self):
         """ Test AVG selection with no aggregation and last value copied to end.
         """
@@ -41,6 +40,21 @@ class TestDatabaseSeries(TestDatabaseBase):
         ])
         res = plugin._series('avg', start=self.t(0), end=self.t(12), item='main.num')
         self.assertSeries([(1, 10), (11, 20), (12, 20)], res)
+
+    def test_series_avg_diff(self):
+        """ Test DIFF:AVG selection with no aggregation and last value copied to end.
+        """
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          ( 1, 10, 10),
+          (11, 10, 20),
+          (21, 10, 30),
+          (31, 10, 40),
+          (41, 10, 50),
+          (51, 10, 60)
+        ])
+        res = plugin._series('diff:avg', start=self.t(0), end=self.t(52), item='main.num')
+        self.assertSeries([(11, 10.0), (21, 10.0), (31, 10.0), (41, 10.0), (51, 10.0)], res)
 
     def test_series_min(self):
         """ Test MIN selection with no aggregation and last value copied to end.
@@ -62,6 +76,72 @@ class TestDatabaseSeries(TestDatabaseBase):
           (11, 10, 20)
         ])
         res = plugin._series('max', start=self.t(0), end=self.t(12), item='main.num')
+        self.assertSeries([(1, 10), (11, 20), (12, 20)], res)
+
+    def test_series_sum(self):
+        """ Test SUM selection with no aggregation and last value copied to end.
+        """
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          ( 1, 10, 10),
+          (11, 10, 20)
+        ])
+        res = plugin._series('sum', start=self.t(0), end=self.t(12), item='main.num')
+        self.assertSeries([(1, 10), (11, 20), (12, 20)], res)
+
+    def test_series_count(self):
+        """ Test COUNT selection with no aggregation and last value copied to end.
+        """
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          ( 1, 10, 10),
+          (11, 10, 20)
+        ])
+        res = plugin._series('count', start=self.t(0), end=self.t(12), item='main.num')
+        self.assertSeries([(1, 1), (11, 1), (12, 1)], res)
+
+    def test_series_count_eq_10(self):
+        """ Test COUNT selection with no aggregation and last value copied to end.
+        """
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          ( 1, 10, 10),
+          (11, 10, 20)
+        ])
+        res = plugin._series('count=10', start=self.t(0), end=self.t(12), item='main.num')
+        self.assertSeries([(1, 1), (11, 0), (12, 0)], res)
+
+    def test_series_count_gt_10(self):
+        """ Test COUNT selection with no aggregation and last value copied to end.
+        """
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          ( 1, 10, 10),
+          (11, 10, 20)
+        ])
+        res = plugin._series('count>10', start=self.t(0), end=self.t(12), item='main.num')
+        self.assertSeries([(1, 0), (11, 1), (12, 1)], res)
+
+    def test_series_count_lt_20(self):
+        """ Test COUNT selection with no aggregation and last value copied to end.
+        """
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          ( 1, 10, 10),
+          (11, 10, 20)
+        ])
+        res = plugin._series('count<20', start=self.t(0), end=self.t(12), item='main.num')
+        self.assertSeries([(1, 1), (11, 0), (12, 0)], res)
+
+    def test_series_val(self):
+        """ Test VAL selection with no aggregation and last value copied to end.
+        """
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          ( 1, 10, 10),
+          (11, 10, 20)
+        ])
+        res = plugin._series('sum', start=self.t(0), end=self.t(12), item='main.num')
         self.assertSeries([(1, 10), (11, 20), (12, 20)], res)
 
     def test_series_avg_aggregation(self):
@@ -111,6 +191,34 @@ class TestDatabaseSeries(TestDatabaseBase):
         self.create_log(plugin, 'main.num', values)
         res = plugin._series('max', start=self.t(10), end=self.t(50), item='main.num', count=5)
         self.assertSeries([(10, 100.0), (16, 40.0), (24, 100.0), (32, 80.0), (40, 80.0), (48, 100.0), (50, 100.0)], res)
+
+    def test_series_sum_aggregation(self):
+        """ Test SUM selection with aggregation and last value copied to end.
+        """
+        values = self.log_slice(0, 1,
+            self.log_slice_values_delta( 10, 100,  10),
+            self.log_slice_values_delta(100,  10, -10),
+            self.log_slice_values_delta( 10, 100,  10),
+            self.log_slice_values_delta(100,  10, -10),
+            self.log_slice_values_delta( 10, 100,  10),
+            self.log_slice_values_delta(100,  10, -10),
+        )
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', values)
+        res = plugin._series('sum', start=self.t(10), end=self.t(50), item='main.num', count=5)
+        self.assertSeries([(10, 550.0), (16, 200.0), (24, 640.0), (32, 360.0), (40, 360.0), (48, 290.0), (50, 290.0)], res)
+
+    def test_series_raw_aggregation(self):
+        """ Test RAW selection with aggregation and last value copied to end.
+        """
+        values = self.log_slice(0, 1,
+            self.log_slice_values_delta( 10, 100,  10),
+            self.log_slice_values_delta(100,  10, -10)
+        )
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', values)
+        res = plugin._series('raw', start=self.t(10), end=self.t(50), item='main.num', count=5)
+        self.assertSeries([(10, 100.0), (10, 100.0), (11, 90.0), (12, 80.0), (13, 70.0), (14, 60.0), (15, 50.0), (16, 40.0), (17, 30.0), (18, 20.0), (19, 10.0), (50, 10.0)], res)
 
     @pytest.mark.skip(reason="series does not return last value currently")
     def test_series_returns_last_value_outside_range(self):

@@ -133,9 +133,12 @@ for the specified function and timeframe.
 Supported functions are:
 
    * `avg`: for the average value
+   * `count`: for the amount of values not "0" (more examples: `count>10`, `count<10`, `count=10`)
    * `max`: for the maximum value
    * `min`: for the minimum value
    * `on`: percentage (as float from 0.00 to 1.00) where the value has been greater than 0.
+   * `sum`: for the summarized value
+   * `raw`: for the raw values
 
 For the timeframe you have to specify a start point and a optional end point. By default it ends 'now'.
 The time point could be specified with `<number><interval>`, where interval could be:
@@ -163,6 +166,20 @@ e.g.
 sh.outside.temperature.series('min', '1d', count=10)  # returns 10 minimum values within the last day
 sh.outside.temperature.series('avg', '2w', '1w')  # returns the average values of the week before last week
 </pre>
+
+Additionally to the aggregation function a finalizer function can be specified when
+fetching series to apply to the results before returning them. Specify the function
+as prefix to the actual aggregation function (e.g. "diff:avg").
+
+Supported finalizer functions are:
+
+   * `diff`: return the differences between values
+
+e.g.
+<pre>
+sh.outside.temperature.series('diff:avg', '2w', '1w')  # returns the differences between average values
+</pre>
+
 
 ### sh.item.dbplugin
 This property returns the associated `database` plugin instance. See the list of method below
