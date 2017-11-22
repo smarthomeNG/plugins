@@ -71,7 +71,7 @@ class DataLog(SmartPlugin):
             ext = newfilepatterns[log].split('.')[-1]
             if ext in newlogpatterns:
                 self.filepatterns[log] = newfilepatterns[log]
-                self.logpatterns[log] = logpatterns[ext]
+                self.logpatterns[log] = newlogpatterns[ext]
             else:
                 self.logger.warn('DataLog: Ignoring log "{}", log pattern missing!'.format(log))
 
