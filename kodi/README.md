@@ -84,10 +84,16 @@ living:
             type: str
             enforce_updates: true
             kodi_item@mediacenter: input
+        on_off:
+            type: bool
+            kodi_item@mediacenter: on_off
 ```
 
 #### kodi_item
 If an item carries a `kodi_item` it should be of a specific type. Listed below are the types depending on the value that is assigned to `kodi_item`:
+
+##### on_off
+Item type `bool`. If the item is set to `False`, a shutdown request is send to Kodi. If the item is set to `True`, the plugin tries to establish a connection to Kodi (this does not include Wake on LAN or anything else).
 
 ##### volume
 Item type `num`. Changing the item controls the volume of Kodi. The allowed range is 0 to 100.

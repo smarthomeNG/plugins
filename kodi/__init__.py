@@ -27,61 +27,63 @@ import threading
 import json
 
 from lib.model.smartplugin import SmartPlugin
-from lib.connection import Client
+from lib.network import Tcp_client
+import time
 
 
-class Kodi(SmartPlugin, Client):
+class Kodi(SmartPlugin):
     '''
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     '''
     
-    PLUGIN_VERSION='1.3c.0'
+    PLUGIN_VERSION = '1.3c.0'
     ALLOW_MULTIINSTANCE = True
     
     # list of all possible input actions for Kodi
     _possible_input_actions = [
-        'left','right','up','down','pageup','pagedown','select','highlight',
-        'parentdir','parentfolder','back','menu','previousmenu','info',
-        'pause','stop','skipnext','skipprevious','fullscreen','aspectratio',
-        'stepforward','stepback','bigstepforward','bigstepback',
-        'chapterorbigstepforward','chapterorbigstepback','osd','showsubtitles',
-        'nextsubtitle','cyclesubtitle','playerdebug','codecinfo','playerprocessinfo',
-        'nextpicture','previouspicture','zoomout','zoomin','playlist','queue',
-        'zoomnormal','zoomlevel1','zoomlevel2','zoomlevel3','zoomlevel4',
-        'zoomlevel5','zoomlevel6','zoomlevel7','zoomlevel8','zoomlevel9',
-        'nextcalibration','resetcalibration','analogmove','analogmovex',
-        'analogmovey','rotate','rotateccw','close','subtitledelayminus',
-        'subtitledelay','subtitledelayplus','audiodelayminus','audiodelay',
-        'audiodelayplus','subtitleshiftup','subtitleshiftdown','subtitlealign',
-        'audionextlanguage','verticalshiftup','verticalshiftdown','nextresolution',
-        'audiotoggledigital','number0','number1','number2','number3','number4',
-        'number5','number6','number7','number8','number9','smallstepback',
-        'fastforward','rewind','play','playpause','switchplayer','delete','copy',
-        'move','screenshot','rename','togglewatched','scanitem','reloadkeymaps',
-        'volumeup','volumedown','mute','backspace','scrollup','scrolldown',
-        'analogfastforward','analogrewind','moveitemup','moveitemdown','contextmenu',
-        'shift','symbols','cursorleft','cursorright','showtime','analogseekforward',
-        'analogseekback','showpreset','nextpreset','previouspreset','lockpreset','randompreset',
-        'increasevisrating','decreasevisrating','showvideomenu','enter','increaserating',
-        'decreaserating','setrating','togglefullscreen','nextscene','previousscene','nextletter',
-        'prevletter','jumpsms2','jumpsms3','jumpsms4','jumpsms5','jumpsms6','jumpsms7','jumpsms8',
-        'jumpsms9','filter','filterclear','filtersms2','filtersms3','filtersms4','filtersms5',
-        'filtersms6','filtersms7','filtersms8','filtersms9','firstpage','lastpage','guiprofile',
-        'red','green','yellow','blue','increasepar','decreasepar','volampup','volampdown',
-        'volumeamplification','createbookmark','createepisodebookmark','settingsreset',
-        'settingslevelchange','stereomode','nextstereomode','previousstereomode',
-        'togglestereomode','stereomodetomono','channelup','channeldown','previouschannelgroup',
-        'nextchannelgroup','playpvr','playpvrtv','playpvrradio','record','togglecommskip',
-        'showtimerrule','leftclick','rightclick','middleclick','doubleclick','longclick',
-        'wheelup','wheeldown','mousedrag','mousemove','tap','longpress','pangesture',
-        'zoomgesture','rotategesture','swipeleft','swiperight','swipeup','swipedown','error','noop']
+        'left', 'right', 'up', 'down', 'pageup', 'pagedown', 'select', 'highlight',
+        'parentdir', 'parentfolder', 'back', 'menu', 'previousmenu', 'info',
+        'pause', 'stop', 'skipnext', 'skipprevious', 'fullscreen', 'aspectratio',
+        'stepforward', 'stepback', 'bigstepforward', 'bigstepback',
+        'chapterorbigstepforward', 'chapterorbigstepback', 'osd', 'showsubtitles',
+        'nextsubtitle', 'cyclesubtitle', 'playerdebug', 'codecinfo', 'playerprocessinfo',
+        'nextpicture', 'previouspicture', 'zoomout', 'zoomin', 'playlist', 'queue',
+        'zoomnormal', 'zoomlevel1', 'zoomlevel2', 'zoomlevel3', 'zoomlevel4',
+        'zoomlevel5', 'zoomlevel6', 'zoomlevel7', 'zoomlevel8', 'zoomlevel9',
+        'nextcalibration', 'resetcalibration', 'analogmove', 'analogmovex',
+        'analogmovey', 'rotate', 'rotateccw', 'close', 'subtitledelayminus',
+        'subtitledelay', 'subtitledelayplus', 'audiodelayminus', 'audiodelay',
+        'audiodelayplus', 'subtitleshiftup', 'subtitleshiftdown', 'subtitlealign',
+        'audionextlanguage', 'verticalshiftup', 'verticalshiftdown', 'nextresolution',
+        'audiotoggledigital', 'number0', 'number1', 'number2', 'number3', 'number4',
+        'number5', 'number6', 'number7', 'number8', 'number9', 'smallstepback',
+        'fastforward', 'rewind', 'play', 'playpause', 'switchplayer', 'delete', 'copy',
+        'move', 'screenshot', 'rename', 'togglewatched', 'scanitem', 'reloadkeymaps',
+        'volumeup', 'volumedown', 'mute', 'backspace', 'scrollup', 'scrolldown',
+        'analogfastforward', 'analogrewind', 'moveitemup', 'moveitemdown', 'contextmenu',
+        'shift', 'symbols', 'cursorleft', 'cursorright', 'showtime', 'analogseekforward',
+        'analogseekback', 'showpreset', 'nextpreset', 'previouspreset', 'lockpreset', 'randompreset',
+        'increasevisrating', 'decreasevisrating', 'showvideomenu', 'enter', 'increaserating',
+        'decreaserating', 'setrating', 'togglefullscreen', 'nextscene', 'previousscene', 'nextletter',
+        'prevletter', 'jumpsms2', 'jumpsms3', 'jumpsms4', 'jumpsms5', 'jumpsms6', 'jumpsms7', 'jumpsms8',
+        'jumpsms9', 'filter', 'filterclear', 'filtersms2', 'filtersms3', 'filtersms4', 'filtersms5',
+        'filtersms6', 'filtersms7', 'filtersms8', 'filtersms9', 'firstpage', 'lastpage', 'guiprofile',
+        'red', 'green', 'yellow', 'blue', 'increasepar', 'decreasepar', 'volampup', 'volampdown',
+        'volumeamplification', 'createbookmark', 'createepisodebookmark', 'settingsreset',
+        'settingslevelchange', 'stereomode', 'nextstereomode', 'previousstereomode',
+        'togglestereomode', 'stereomodetomono', 'channelup', 'channeldown', 'previouschannelgroup',
+        'nextchannelgroup', 'playpvr', 'playpvrtv', 'playpvrradio', 'record', 'togglecommskip',
+        'showtimerrule', 'leftclick', 'rightclick', 'middleclick', 'doubleclick', 'longclick',
+        'wheelup', 'wheeldown', 'mousedrag', 'mousemove', 'tap', 'longpress', 'pangesture',
+        'zoomgesture', 'rotategesture', 'swipeleft', 'swiperight', 'swipeup', 'swipedown', 'error', 'noop']
 
     _get_items = ['volume', 'mute', 'title', 'media', 'state', 'favorites']
     
     _set_items = {'volume': dict(method='Application.SetVolume', params=dict(volume='ITEM_VALUE')),
-                  'mute'  : dict(method='Application.SetMute', params = dict(mute='ITEM_VALUE')),
-                  'input' : dict(method='Input.ExecuteAction', params=dict(action='ITEM_VALUE'))}
+                  'mute'  : dict(method='Application.SetMute', params=dict(mute='ITEM_VALUE')),
+                  'input' : dict(method='Input.ExecuteAction', params=dict(action='ITEM_VALUE')),
+                  'on_off': dict(method='System.Shutdown', params=None)}
     
     def __init__(self, sh, *args, **kwargs):
         '''
@@ -90,12 +92,18 @@ class Kodi(SmartPlugin, Client):
         # init logger
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Kodi Plugin')
-        Client.__init__(self,
-                        self.get_parameter_value('host'),
-                        self.get_parameter_value('port'),
-                        monitor=True)
-        self.terminator = 0
-        self.balance(b'{', b'}')
+        self.kodi_tcp_connection = Tcp_client(host=self.get_parameter_value('host'),
+                                              port=self.get_parameter_value('port'),
+                                              name='KodiTCPConnection',
+                                              autoreconnect=False,
+                                              connect_retries=5,
+                                              connect_cycle=5)
+        self.kodi_tcp_connection.set_callbacks(connected=None,
+                                               data_received=self.received_data,
+                                               disconnected=self.on_disconnect)
+        self.kodi_server_alive = False
+#         self.terminator = 0
+#         self.balance(b'{', b'}')
         self.message_id = 1
         self.response_id = None
         self.cmd_lock = threading.Lock()
@@ -108,6 +116,7 @@ class Kodi(SmartPlugin, Client):
         Run method for the plugin
         '''        
         self.logger.debug('Plugin \'{}\': run method called'.format(self.get_shortname()))
+        self.connect_to_kodi()
         self.alive = True
 
     def stop(self):
@@ -115,9 +124,11 @@ class Kodi(SmartPlugin, Client):
         Stop method for the plugin
         '''
         self.logger.debug('Plugin \'{}\': stop method called'.format(self.get_shortname()))
+        self.kodi_tcp_connection.close()
+        self.kodi_server_alive = False
         self.alive = False
     
-    def handle_connect(self):
+    def on_connect(self):
         '''
         This method is called on a succesful connect to Kodi        
         On a connect first check if the JSON-RPC API is available.
@@ -148,6 +159,34 @@ class Kodi(SmartPlugin, Client):
                 elem(item_dict, caller='Kodi')        
             # parse active player (if present)
             self._get_player_info()
+    
+    def on_disconnect(self):
+        ''' function called when TCP connection to Kodi is disconnected '''
+        self.logger.debug('Received disconnect from Kodi server')
+        self.kodi_server_alive = False
+        for elem in self.registered_items['on_off']:
+            elem(self.kodi_server_alive, caller='Kodi')
+    
+    def connect_to_kodi(self):
+        '''
+        try to establish a new connection to Kodi
+        
+        While this method is called during the start-up phase of the plugin,
+        it can also be used to establish a connection to the Kodi server if the
+        plugin was initialized before the server went up.
+        '''
+        self.kodi_tcp_connection.connect()
+        # we allow for 2 seconds to connect
+        time.sleep(2)
+        if not self.kodi_tcp_connection.connected():
+            # no connection could be established, Kodi may be offline
+            self.logger.info('Could not establish a connection to Kodi Server')
+            self.kodi_server_alive = False
+        else:
+            self.kodi_server_alive = True
+            self.on_connect()            
+        for elem in self.registered_items['on_off']:
+            elem(self.kodi_server_alive, caller='Kodi')
 
     def parse_item(self, item):
         '''
@@ -188,9 +227,15 @@ class Kodi(SmartPlugin, Client):
         if item_value:
             if caller != 'Kodi' and self.has_iattr(item.conf, 'kodi_item'):
                 # update item was triggered from something else then this plugin -> send to Kodi
-                kodi_item = self.get_iattr_value(item.conf, 'kodi_item')
+                kodi_item = self.get_iattr_value(item.conf, 'kodi_item')                
                 
-                if kodi_item in Kodi._set_items:
+                if kodi_item == 'on_off' and item():
+                    # handle the on_off item as special case:                    
+                    # if item is on, try to establish a connection to Kodi
+                    self.connect_to_kodi()
+                    # if item is off send shutdown command to Kodi. This is
+                    # handled in the standard block below though
+                elif kodi_item in Kodi._set_items:
                     if kodi_item == 'input' and item() not in self._possible_input_actions:
                         self.logger.error('The action \'%s\' for the kodi_item \'input\' is not allowed, skipping!', item_value)
                     else:
@@ -218,7 +263,7 @@ class Kodi(SmartPlugin, Client):
         :param image: an optional image to be displayed alongside the message
         :param display_time: how long the message is displayed in milli seconds
         '''
-        params = dict(title=title, message=message,displaytime=display_time)
+        params = dict(title=title, message=message, displaytime=display_time)
         if image is not None:
             params['image'] = image
         self.send_kodi_rpc(method='GUI.ShowNotification', params=params)
@@ -235,35 +280,39 @@ class Kodi(SmartPlugin, Client):
                      If wait is True, this method returns a dictionary parsed from the JSON
                      response from Kodi
         '''
-        self.cmd_lock.acquire()
-        self.reply = None
-        if message_id is None:
-            self.message_id += 1
-            message_id = self.message_id
-            if message_id > 99:
-                self.message_id = 0
-        self.response_id = message_id
-        if params is not None:
-            data = {'jsonrpc': '2.0', 'id': message_id, 'method': method, 'params': params}
+        reply = None
+        if self.kodi_server_alive:
+            self.cmd_lock.acquire()
+            self.reply = None
+            if message_id is None:
+                self.message_id += 1
+                message_id = self.message_id
+                if message_id > 99:
+                    self.message_id = 0
+            self.response_id = message_id
+            if params is not None:
+                data = {'jsonrpc': '2.0', 'id': message_id, 'method': method, 'params': params}
+            else:
+                data = {'jsonrpc': '2.0', 'id': message_id, 'method': method}
+            self.reply_lock.acquire()
+            self.logger.debug('Kodi sending: {0}'.format(json.dumps(data, separators=(',', ':'))))
+            self.kodi_tcp_connection.send((json.dumps(data, separators=(',', ':')) + '\r\n').encode())
+            if wait:
+                self.reply_lock.wait(2)
+            self.reply_lock.release()
+            reply = self.reply
+            self.reply = None
+            self.cmd_lock.release()
         else:
-            data = {'jsonrpc': '2.0', 'id': message_id, 'method': method}
-        self.reply_lock.acquire()
-        self.logger.debug('Kodi sending: {0}'.format(json.dumps(data, separators=(',', ':'))))
-        self.send((json.dumps(data, separators=(',', ':')) + '\r\n').encode())
-        if wait:
-            self.reply_lock.wait(2)
-        self.reply_lock.release()
-        reply = self.reply
-        self.reply = None
-        self.cmd_lock.release()
+            self.logger.debug('JSON-RPC command requested without an established connection to Kodi.')
         return reply
 
-    def found_balance(self, data):
+    def received_data(self, connection, data):
         '''
         This method is called whenever data is received from the connection to
         Kodi.
         '''
-        event = json.loads(data.decode())
+        event = json.loads(data)
         self.logger.debug('Kodi receiving: {0}'.format(event))
         if 'id' in event:
             if event['id'] == self.response_id:
