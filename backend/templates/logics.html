@@ -64,12 +64,9 @@
 							<td>{{ loop.index }}</td>
 							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
 							<td>
-								<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text"></td>
-							{% if smarthome.scheduler.return_next(logic.name) %}
-								<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ smarthome.scheduler.return_next(logic.name).strftime('%Y-%m-%d %H:%M:%S%z') }}{% if not logic.enabled %}</span>{% endif %}</td>
-							{% else %}
-								<td></td>
-							{% endif %}
+								<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text">
+							</td>
+							<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.next_exec }}{% if not logic.enabled %}</span>{% endif %}</td>
 							<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
 								{% if logic.cycle == None %}-{% else %}{{ logic.cycle}} {% endif %}{% if not logic.enabled %}</span>{% endif %}
 							</td>

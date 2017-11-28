@@ -7,6 +7,7 @@
 	"Systemlogiken": "Systemlogiken",
 	"Nutzerlogiken": "Nutzerlogiken",
 	"Neue Logiken (nicht geladen)": "Neue Logiken (nicht geladen)",
+	"letzte Ausführung": "letzte Ausführung",
 	"nächste Ausführung": "nächste Ausführung",
 	"Cycle": "Cycle",
 	"Crontab": "Crontab",
@@ -33,7 +34,8 @@
 	"Letztes Update": "Letztes Update",
 	"Letzte Änderung": "Letzte Änderung",
 	"Geändert durch": "Geändert durch",
-	"age": "Alter",
+	"age": "Alter (Änderung)",
+	"update_age": "Alter (Update)",
 	"vorheriger Wert": "vorheriger Wert",
 	"previous change": "vorherige Änderung",
 	"previous age": "vorheriges Alter",
@@ -268,6 +270,6 @@
 		"Threads": "Threads",
 		"Logging": "Logging",
 		"Visu": "Visu",
-		"Disclosure": "Disclosure"
+		"Disclosure": "Urheberrechtshinweise"
 	}
 }

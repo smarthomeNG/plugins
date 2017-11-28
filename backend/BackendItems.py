@@ -258,11 +258,18 @@ class BackendItems:
                 trig = trig[1:len(trig) - 27]
                 triggers.append(html.escape(format(trig.replace("<", ""))))
 
+            try:
+                upd_age = item.update_age()
+            except:
+                # if used lib.items doesn't support update_age() function
+                upd_age = item.age()
+            
             data_dict = {'path': item._path,
                          'name': item._name,
                          'type': item.type(),
                          'value': value,
                          'age': self.disp_age(item.age()),
+                         'update_age': self.disp_age(item.update_age()),
                          'last_update': str(item.last_update()),
                          'last_change': str(item.last_change()),
                          'changed_by': changed_by,

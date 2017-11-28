@@ -98,6 +98,13 @@
 			</td>
 		</tr>
 		<tr>
+			<td><strong>{{ _('letzte Ausführung') }}</strong></td>
+			<td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
+				{{ thislogic.last_run }}
+				{% if not thislogic.enabled %}</span>{% endif %}
+			</td>
+		</tr>
+		<tr>
 			<td><strong>{{ _('nächste Ausführung') }}</strong></td>
 			<td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
 				{{ thislogic.next_exec }}

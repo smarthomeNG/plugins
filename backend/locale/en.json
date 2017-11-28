@@ -6,6 +6,7 @@
 	"Logik": "Logic",
 	"Systemlogiken": "System Logics",
 	"Nutzerlogiken": "User Logics",
+	"letzte Ausführung": "last execution",
 	"nächste Ausführung": "next execution",
 	"Cycle": "Cycle",
 	"Crontab": "Crontab",
@@ -32,7 +33,9 @@
 	"Letztes Update": "last update",
 	"Letzte Änderung": "last change",
 	"Geändert durch": "changed by",
-	"age": "age",
+    "age": "age (change)",
+	"update_age": "age (update)",
+
 	"vorheriger Wert": "previous value",
 	"previous change": "previous change",
 	"previous age": "previous age",

@@ -188,7 +188,7 @@ class BackendServices:
             yaml_code = self.strip_empty_lines(yaml_code)
 
             import lib.shyaml as shyaml
-            ydata, estr = shyaml.yaml_load_fromstring(yaml_code, True)
+            ydata, estr = shyaml.yaml_load_fromstring(yaml_code, False)
 
             if estr != '':
                 check_result = 'ERROR: \n\n'+ estr
