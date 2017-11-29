@@ -70,8 +70,7 @@ class BackendItems:
             parent_items_sorted = []
             for item in items_sorted:
                 if "." not in item._path:
-                    if item._name not in ['env_daily', 'env_init', 'env_loc', 'env_stat'] and item._type == 'foo':
-                        parent_items_sorted.append(item)
+                    parent_items_sorted.append(item)
 
             item_data = self._build_item_tree(parent_items_sorted)
             return json.dumps(item_data)
@@ -127,10 +126,6 @@ class BackendItems:
         return
 
     @cherrypy.expose
-    def create_hash_json_html(self, plaintext):
-        return json.dumps(create_hash(plaintext))
-
-    @cherrypy.expose
     def item_change_value_html(self, item_path, value):
         """
         Is called by items.html when an item value has been changed
@@ -138,6 +133,11 @@ class BackendItems:
         item_data = []
         item = self._sh.return_item(item_path)
         if self.updates_allowed:
+            if 'num' in item.type():
+                if "." in value or "," in value:
+                    value = float(value)
+                else:
+                    value = int(value)
             item(value, caller='Backend')
 
         return
@@ -258,11 +258,18 @@ class BackendItems:
                 trig = trig[1:len(trig) - 27]
                 triggers.append(html.escape(format(trig.replace("<", ""))))
 
+            try:
+                upd_age = item.update_age()
+            except:
+                # if used lib.items doesn't support update_age() function
+                upd_age = item.age()
+            
             data_dict = {'path': item._path,
                          'name': item._name,
                          'type': item.type(),
                          'value': value,
                          'age': self.disp_age(item.age()),
+                         'update_age': self.disp_age(item.update_age()),
                          'last_update': str(item.last_update()),
                          'last_change': str(item.last_change()),
                          'changed_by': changed_by,
@@ -273,6 +280,8 @@ class BackendItems:
                          'cache': cache,
                          'eval': html.escape(self.disp_str(item._eval)),
                          'eval_trigger': self.disp_str(item._eval_trigger),
+                         'on_update': html.escape(self.disp_str(item._on_update)),
+                         'on_change': html.escape(self.disp_str(item._on_change)),
                          'cycle': str(cycle),
                          'crontab': str(crontab),
                          'autotimer': self.disp_str(item._autotimer),

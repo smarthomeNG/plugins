@@ -200,6 +200,38 @@ class WebServiceInterface:
 
 class SimpleWebServiceInterface(WebServiceInterface):
     @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def itemset(self, set_id=None):
+        """
+        REST function for items
+        """
+        if set_id is not None:
+            self.logger.debug(cherrypy.request.method)
+            if cherrypy.request.method not in 'GET':
+                return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
+
+            elif cherrypy.request.method == 'GET':
+                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                                      reverse=False)
+                items = {}
+                for item in items_sorted:
+                    if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
+                        if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                            items[item._path] = item()
+                        else:
+                            item_data = self.assemble_item_data(item)
+                            if item_data is not None:
+                                item_data['url'] = "http://%s:%s/ws/items/%s" % (
+                                self.plugin.mod_http.get_local_ip_address(),
+                                self.plugin.mod_http.get_local_port(), item._path)
+                                items[item._path] = item_data
+                return items
+        else:
+            return {"Error": "No set-ID for item set is given."}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def items(self, item_path=None, value=None):
         """
         Simpole WS functions for item
@@ -207,7 +239,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
         if item_path is None:
             self.logger.debug(cherrypy.request.method)
             if cherrypy.request.method not in 'GET':
-                return json.dumps({"Error": "%s requests not allowed for this URL" % cherrypy.request.method})
+                return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
                 items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
@@ -218,26 +250,54 @@ class SimpleWebServiceInterface(WebServiceInterface):
                         item_data['url'] = "http://%s:%s/ws/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
                                                                 self.plugin.mod_http.get_local_servicesport(), item._path)
                         items.append(item_data)
-                return json.dumps(items)
+                return items
         else:
             item = self.plugin._sh.return_item(item_path)
             if item is not None:
                 if item.type() in ['str', 'bool', 'num']:
                     if value is not None:
                         item(value)
-                        return json.dumps({"Success": "Item with item path %s set to %s." % (item_path, value)})
+                        return {"Success": "Item with item path %s set to %s." % (item_path, value)}
                     else:
                         item_data = self.assemble_item_data(item)
                         if item_data is not None:
-                            return json.dumps(item_data)
+                            return item_data
                 else:
-                    return json.dumps(
-                        {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
-                                  (item_path, item.type())})
+                    return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
+                                  (item_path, item.type())}
             else:
-                return json.dumps({"Error": "No item with item path %s found." % item_path})
+                return {"Error": "No item with item path %s found." % item_path}
 
 class RESTWebServicesInterface(WebServiceInterface):
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def itemset(self, set_id=None):
+        """
+        REST function for items
+        """
+        if set_id is not None:
+            self.logger.debug(cherrypy.request.method)
+            if cherrypy.request.method not in 'GET':
+                return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
+
+            elif cherrypy.request.method == 'GET':
+                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+                items = {}
+                for item in items_sorted:
+                    if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
+                        if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                            items[item._path] = item()
+                        else:
+                            item_data = self.assemble_item_data(item)
+                            if item_data is not None:
+                                item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
+                                                                        self.plugin.mod_http.get_local_port(), item._path)
+                                items[item._path] = item_data
+                return items
+        else:
+            return {"Error": "No set-ID for item set is given."}
+
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
@@ -248,7 +308,7 @@ class RESTWebServicesInterface(WebServiceInterface):
         if item_path is None:
             self.logger.debug(cherrypy.request.method)
             if cherrypy.request.method not in 'GET':
-                return json.dumps({"Error": "%s requests not allowed for this URL" % cherrypy.request.method})
+                return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
                 items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
@@ -259,12 +319,12 @@ class RESTWebServicesInterface(WebServiceInterface):
                         item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
                                                                 self.plugin.mod_http.get_local_port(), item._path)
                         items.append(item_data)
-                return json.dumps(items)
+                return items
         else:
             item = self.plugin._sh.return_item(item_path)
 
             if item is None:
-                return json.dumps({"Error": "No item with item path %s found." % item_path})
+                return {"Error": "No item with item path %s found." % item_path}
 
             if cherrypy.request.method == 'PUT':
                 data = cherrypy.request.json
@@ -274,37 +334,35 @@ class RESTWebServicesInterface(WebServiceInterface):
                         item(data)
                         self.logger.debug("Item with item path %s set to %s." % (item_path, data))
                     else:
-                        return json.dumps(
-                            {"Error": "Item with item path %s is type num, value is %s." % (item_path, data)})
+                        return {"Error": "Item with item path %s is type num, value is %s." % (item_path, data)}
                 elif 'bool' in item.type():
                     if self.plugin.is_int(data):
                         if data == 0 or data == 1:
                             item(data)
                             self.logger.debug("Item with item path %s set to %s." % (item_path, data))
                         else:
-                            return json.dumps({
+                            return {
                                 "Error": "Item with item path %s is type bool, only 0 and 1 are accepted as integers, "
                                          "value is %s." % (
                                              item_path,
-                                             data)})
+                                             data)}
                     else:
                         try:
                             data = self.plugin.to_bool(data)
                             item(data)
                             self.logger.debug("Item with item path %s set to %s." % (item_path, data))
                         except Exception as e:
-                            return json.dumps(
-                                {"Error": "Item with item path %s is type bool, value is %s." % (item_path,
-                                                                                                 data)})
+                            return {"Error": "Item with item path %s is type bool, value is %s." % (item_path,
+                                                                                                 data)}
                 elif 'str' in item.type():
                     item(data)
                     self.logger.debug("Item with item path %s set to %s." % (item_path, data))
                 else:
-                    return json.dumps({
+                    return {
                         "Error": "Only str, num and bool items are supported by the REST PUT interface. Item with item path %s is %s"
                                  % (
                                      item_path,
-                                     item.type())})
+                                     item.type())}
 
             elif cherrypy.request.method == 'GET':
                 item_data = self.assemble_item_data(item)
@@ -312,8 +370,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                     item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
                                                                        self.plugin.mod_http.get_local_servicesport(),
                                                                        item._path)
-                    return json.dumps(item_data)
+                    return item_data
                 else:
-                    return json.dumps(
-                        {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
-                                  (item_path, item.type())})
+                    return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
+                                  (item_path, item.type())}

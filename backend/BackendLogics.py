@@ -48,6 +48,7 @@ import lib.item_conversion
 class BackendLogics:
 
     logics = None
+    _logicname_prefix = 'logics.'     # prefix for scheduler names
 
     def __init__(self):
 
@@ -119,8 +120,12 @@ class BackendLogics:
                 mylogic['watch_item_list'] = loaded_logic.watch_item
 
             mylogic['next_exec'] = ''
-            if self._sh.scheduler.return_next(loaded_logic.name):
-                mylogic['next_exec'] = self._sh.scheduler.return_next(loaded_logic.name).strftime('%Y-%m-%d %H:%M:%S%z')
+            if self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name):
+                mylogic['next_exec'] = self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name).strftime('%Y-%m-%d %H:%M:%S%z')
+                
+            mylogic['last_run'] = ''
+            if loaded_logic.last_run():
+                mylogic['last_run'] = loaded_logic.last_run().strftime('%Y-%m-%d %H:%M:%S%z')
 
         return mylogic
 
@@ -254,14 +259,14 @@ class BackendLogics:
                 mylogic['watch'] = Utils.strip_quotes_fromlist(str(config[1]))
                 mylogic['watch_item'] = Utils.strip_quotes_fromlist(str(config[1]))
                 mylogic['watch_item_list'] = config[1]
-        
+
         if os.path.splitext(file_path)[1] == '.blockly':
             mode = 'xml'
             updates = False
         else:
             mode = 'python'
             updates=self.updates_allowed
-            if not hasattr(mylogic, 'userlogic'):
+            if not 'userlogic' in mylogic:
                 mylogic['userlogic'] = True
             if mylogic['userlogic'] == False:
                 updates = False

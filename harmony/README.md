@@ -191,7 +191,7 @@ the attribute ```harmony_item = current_activity_id```
 
 ```
 [MyItem]
-    type = num
+    type = str
     enforce_updates = true
     harmony_item = current_activity_name
 ```

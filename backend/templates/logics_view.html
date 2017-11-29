@@ -98,6 +98,13 @@
 			</td>
 		</tr>
 		<tr>
+			<td><strong>{{ _('letzte Ausführung') }}</strong></td>
+			<td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
+				{{ thislogic.last_run }}
+				{% if not thislogic.enabled %}</span>{% endif %}
+			</td>
+		</tr>
+		<tr>
 			<td><strong>{{ _('nächste Ausführung') }}</strong></td>
 			<td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
 				{{ thislogic.next_exec }}
@@ -107,21 +114,21 @@
 		<tr>
 			<td><strong>{{ _('Cycle') }}</strong></td>
 			<td>
-				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.cycle }}"/>
+				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.cycle }}"/>
 				<input type="hidden" id="original_cycle" value="{{ thislogic.cycle }}"/>
 			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Crontab(s)') }}</strong></td>
 			<td>
-				<input type="text" autocomplete="off" id="crontab" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.crontab }}"/>
+				<input type="text" autocomplete="off" id="crontab" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.crontab }}"/>
 				<input type="hidden" id="original_crontab" value="{{ thislogic.crontab }}"/>
 			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Watch_Item(s)') }}</strong></td>
 			<td>
-				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates %}readonly="true"{% endif %} value="{{ thislogic.watch_item }}"/>
+				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.watch_item }}"/>
 				<input type="hidden" id="original_watch" value="{{ thislogic.watch_item }}"/>
 			</td>
 		</tr>
@@ -132,9 +139,7 @@
 			<textarea autocomplete="off" id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}{% endfor %}</textarea>
 			{% if updates %}</form>{% endif %}
 		{% else %}{{ _('no data available') }}{% endif %}
-	</div>
-</div>
-<script>
+	<script>
 var rulers = [];
 for (var i = 1; i <= 100; i++) {
 	rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
@@ -224,6 +229,7 @@ logicsCodeMirror.on("keyup", function (cm, event) {
 	};
 });
 var answer = false;
+var unloadCheck = true;
 $('a').click(function(e) {
     if(checkChangedContent()) {
         e.preventDefault();
@@ -233,19 +239,42 @@ $('a').click(function(e) {
         }
     }
 });
+
+var inFocus = false;
+$('#save').click(function() {
+  inFocus = true;
+});
+$('#savereload').focus(function() {
+  inFocus = true;
+});
+$('#savereloadtrigger').focus(function() {
+  inFocus = true;
+});
+
+$('#save').blur(function() {
+  inFocus = false;
+});
+$('#savereload').blur(function() {
+  inFocus = false;
+});
+$('#savereloadtrigger').blur(function() {
+  inFocus = false;
+});
+
 window.onbeforeunload = function(e) {
-	if (document.activeElement.id == 'save' ||
-	 document.activeElement.id == 'savereload' ||
-	 document.activeElement.id == 'savereloadtrigger') {
+	if (inFocus) {
 		return;
 	} else if (!answer && checkChangedContent()) {
-        return "{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}";
+		return '{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}';
     } else {
         return;
     }
 }
+
 {% endif %}
 </script>
+</div>
+ </div>
 <script src="static/js/logics_view_functions.js"></script>
 {% endblock %}
 

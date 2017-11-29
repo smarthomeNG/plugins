@@ -7,6 +7,7 @@
 	"Systemlogiken": "Systemlogiken",
 	"Nutzerlogiken": "Nutzerlogiken",
 	"Neue Logiken (nicht geladen)": "Neue Logiken (nicht geladen)",
+	"letzte Ausführung": "letzte Ausführung",
 	"nächste Ausführung": "nächste Ausführung",
 	"Cycle": "Cycle",
 	"Crontab": "Crontab",
@@ -33,7 +34,8 @@
 	"Letztes Update": "Letztes Update",
 	"Letzte Änderung": "Letzte Änderung",
 	"Geändert durch": "Geändert durch",
-	"age": "Alter",
+	"age": "Alter (Änderung)",
+	"update_age": "Alter (Update)",
 	"vorheriger Wert": "vorheriger Wert",
 	"previous change": "vorherige Änderung",
 	"previous age": "vorheriges Alter",
@@ -85,6 +87,22 @@
 	"Auf Englisch wechseln": "Auf Englisch wechseln",
 	"Auf Französisch wechseln": "Auf Französisch wechseln",
 	"Auf Polnisch wechseln": "Auf Polnisch wechseln",
+	"YAML Syntax Checker": "YAML Syntax Checker",
+	"Eval Syntax Checker": "Eval Syntax Checker",
+	"Ausdruck (Eingabe im Python Eval-Format)": "Ausdruck (Eingabe im Python Eval-Format)",
+	"Relativ zu (Eingabe des Item-Path)": "Relativ zu (Eingabe des Item-Path)",
+	"Expandierter Ausdruck": "Expandierter Ausdruck",
+	"Ergebnis": "Ergebnis",
+	"Hier den Ausdruck eingeben, der ausgewertet werden soll. Items können mit absolutem Pfad oder relativem Pfad angegeben werden.": "Hier den Ausdruck eingeben, der ausgewertet werden soll. Items können mit absolutem Pfad oder relativem Pfad angegeben werden.",
+	"Um relative Itempfade aufzulösen, hier das Item eingeben, zu dem die Pfade relativ sind.": "Um relative Itempfade aufzulösen, hier das Item eingeben, zu dem die Pfade relativ sind.",
+	"Hier wird der Ausdruck angezeigt, nachdem die relativen Itempfade aufgelöst wurden.": "Hier wird der Ausdruck angezeigt, nachdem die relativen Itempfade aufgelöst wurden.",
+	"Hier wird das Ergebnis Ausdruck angezeigt.": "Hier wird das Ergebnis Ausdruck angezeigt.",
+	"Hier den YAML Code eingeben, der geprüft werden soll.": "Hier den YAML Code eingeben, der geprüft werden soll.",
+	"Eingabe im .YAML Format": "Eingabe im .YAML Format",
+	"Ergebnis: Aufbereitetes .YAML Format": "Ergebnis: Aufbereitetes .YAML Format",
+	"Ergebnis: Aufbereitet als Python Source Code": "Ergebnis: Aufbereitet als Python Source Code",
+	"Python Code Ausgabe": "Python Code Ausgabe",
+	
 	"Nr.": "Nr.",
 	"Type": "Type",
 	"Plugin": "Plugin",
@@ -94,6 +112,10 @@
 	"Mehrere Instanzen möglich": "Mehrere Instanzen möglich",
 	"Ja": "Ja",
 	"Nein": "Nein",
+	
+	"Szene": "Szene",
+	"Lernen": "Lernen",
+	
 	"Thread": "Thread",
 	"Thread-Id": "Thread-Id",
 	"Aktiv": "Aktiv",
@@ -204,6 +226,7 @@
 		"smarthomeNG beenden": "SmartHomeNG beenden",
 		"knxd service beenden": "knxd service beenden",
 		"knxd socket beenden": "knxd socket beenden",
+		"Datenbank-Dump": "Datenbank-Dump",
 		"Filter anwenden": "Filter anwenden",
 		"Cacheprüfung": "Cacheprüfung",
 		"Passwort-Hash erzeugen": "Passwort-Hash erzeugen",
@@ -213,6 +236,7 @@
 		"Polnisch": "Polish",
 		"Auslösen": "Auslösen",
 		"Neu Laden": "Neu Laden",
+		"Prüfen": "Prüfen",
 		"Deaktivieren": "Deaktivieren",
 		"Aktivieren": "Aktivieren",
 		"Hinzufügen": "Hinzufügen",
@@ -229,7 +253,8 @@
         "Neue Blockly Logik": "Neue Blockly Logik",
 		"Neue Python Logik": "Neue Python Logik",
 		"Erstellen": "Erstellen",
-		"Entladen": "Entladen"
+		"Entladen": "Entladen",
+		"Nach unten scrollen": "Nach unten scrollen"
 	},
 
 	"_menu": {
@@ -241,9 +266,10 @@
 		"Blockly-Logiken-Editor": "Blockly-Logiken-Editor",
 		"Scheduler": "Scheduler",
 		"Plugins": "Plugins",
+		"Szenen": "Szenen",
 		"Threads": "Threads",
 		"Logging": "Logging",
 		"Visu": "Visu",
-		"Disclosure": "Disclosure"
+		"Disclosure": "Urheberrechtshinweise"
 	}
 }

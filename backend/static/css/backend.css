@@ -1,0 +1,12 @@
+.table.table-striped.pluginList>tbody>tr:nth-child(even) {
+    background-color:#fff;
+}
+
+.table.table-striped.logicsList>tbody>tr:nth-child(4n+3) {
+    background-color:#fff;
+}
+
+.table-hover>tbody>tr:hover>td,
+.table-hover>tbody>tr:hover>th {
+  background-color: #ecf3f8;
+}

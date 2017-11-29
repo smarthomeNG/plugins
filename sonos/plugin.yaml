@@ -1,25 +1,60 @@
 # Metadata for the Smart-Plugin
 plugin:
-    # Global plugin attributes
-    type: gateway                 # plugin type (gateway, interface, protocol, system, web)
-    description:                  # Alternative: description in multiple languages
-        de: 'Anbindung von Sonos Geräten'
-        en: ''
-    maintainer: pfischi
-#    tester:                        # Who tests this plugin?
-#    keywords: iot xyz
-    documentation: https://knx-user-forum.de/forum/supportforen/smarthome-py/35587-immer-aktuell-sonos-broker-und-sonos-plugin-howto        # url of documentation (wiki) page
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
+  # Global plugin attributes
+  type: gateway                 # plugin type (gateway, interface, protocol, system, web)
+  description:                  # Alternative: description in multiple languages
+      de: 'Anbindung von Sonos Lautsprechern'
+      en: ''
+  maintainer: pfischi
+  tester: pfischi
+  keywords: Sonos sonos multimedia
+  documentation: https://knx-user-forum.de/forum/supportforen/smarthome-py/35587-immer-aktuell-sonos-broker-und-sonos-plugin-howto        # url of documentation (wiki) page
+  support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-    version: 1.3.1.0               # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
-    classname: Sonos               # class containing the plugin
+  version: 1.4.2                 # Plugin version
+  sh_minversion: 1.3             # minimum shNG version to use this plugin
+  multi_instance: False          # plugin supports multi instance
+  classname: Sonos               # class containing the plugin
 
 parameters:
-    # Definition of parameters to be configured in etc/plugin.yaml
-    
+  tts:
+    type: bool
+    default: False
+    description:
+      de: "(optiona) Aktiviert die Google TTS Funktionalität."
+      en: "(optional) Enables the Google TTS functionality"
+
+  local_webservice_path:
+    type: str
+    description:
+      de: "(optional) In dieses Verzeichnis werden alle TTS-Dateien automatisch gespeichert. Is die Option 'tts' aktiviert, dann muss diese Option gesetzt sein."
+      en: "(optional) All tts files will be stored here automatically. If 'tts' is enabled, this option is mandatory."
+
+  webservice_ip:
+    type: str
+    description:
+      de: "(optional) Für TTS und die Audio-Snippet-Funktionalität wird ein simpler Webservice gestartet. Die IP-Adresse wird per default automatisch ermittelt, kann hier aber manuell gesetzt werden."
+      en: "(optional) FOr the TTS and audio snippet functionality, a simple webservice is started. By default the IP is detected automatically and can be manually overridden here."
+
+  webservice_port:
+    type: int
+    default: 23500
+    description:
+      de: "(optional) Webservice-Port"
+      en: "(optional) Webservice port"
+
+  speaker_ips:
+    type: list
+    description:
+      de: "(optional) Die IPs der Lautsprecher können manuell gesetzt werden. Dies kann in einer Container-Umgebung (z.B Docker) mit eingeschränkten Netzwerkzugriff sinnvoll sein."
+      en: "(optional) You can set static IP addresses for your Sonos speaker. This will disable auto-discovery. This is useful if you're using a containerized environment with restricted network access."
+
+  discover_cycle:
+      type: int
+      description:
+        de: "Zeitintervall, in dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
+        en: "Time interval in which (again) searches are made for (new) speakers in the network."
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     
