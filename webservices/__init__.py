@@ -200,6 +200,37 @@ class WebServiceInterface:
 
 class SimpleWebServiceInterface(WebServiceInterface):
     @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def itemset(self, set_id=None):
+        """
+        REST function for items
+        """
+        if set_id is not None:
+            self.logger.debug(cherrypy.request.method)
+            if cherrypy.request.method not in 'GET':
+                return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
+
+            elif cherrypy.request.method == 'GET':
+                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                                      reverse=False)
+                items = []
+                for item in items_sorted:
+                    if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
+                        if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                            items.append({item._path: item()})
+                        else:
+                            item_data = self.assemble_item_data(item)
+                            if item_data is not None:
+                                item_data['url'] = "http://%s:%s/rest/items/%s" % (
+                                self.plugin.mod_http.get_local_ip_address(),
+                                self.plugin.mod_http.get_local_port(), item._path)
+                                items.append(item_data)
+                return items
+        else:
+            return {"Error": "No set-ID for item set is given."}
+
+    @cherrypy.expose
     @cherrypy.tools.json_out()
     def items(self, item_path=None, value=None):
         """
@@ -238,6 +269,35 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 return {"Error": "No item with item path %s found." % item_path}
 
 class RESTWebServicesInterface(WebServiceInterface):
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def itemset(self, set_id=None):
+        """
+        REST function for items
+        """
+        if set_id is not None:
+            self.logger.debug(cherrypy.request.method)
+            if cherrypy.request.method not in 'GET':
+                return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
+
+            elif cherrypy.request.method == 'GET':
+                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+                items = []
+                for item in items_sorted:
+                    if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
+                        if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                            items.append({item._path : item()})
+                        else:
+                            item_data = self.assemble_item_data(item)
+                            if item_data is not None:
+                                item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
+                                                                        self.plugin.mod_http.get_local_port(), item._path)
+                                items.append(item_data)
+                return items
+        else:
+            return {"Error": "No set-ID for item set is given."}
+
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
