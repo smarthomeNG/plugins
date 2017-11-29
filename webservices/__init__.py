@@ -214,18 +214,18 @@ class SimpleWebServiceInterface(WebServiceInterface):
             elif cherrypy.request.method == 'GET':
                 items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
-                items = []
+                items = {}
                 for item in items_sorted:
                     if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
                         if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
-                            items.append({item._path: item()})
+                            items[item._path] = item()
                         else:
                             item_data = self.assemble_item_data(item)
                             if item_data is not None:
-                                item_data['url'] = "http://%s:%s/rest/items/%s" % (
+                                item_data['url'] = "http://%s:%s/ws/items/%s" % (
                                 self.plugin.mod_http.get_local_ip_address(),
                                 self.plugin.mod_http.get_local_port(), item._path)
-                                items.append(item_data)
+                                items[item._path] = item_data
                 return items
         else:
             return {"Error": "No set-ID for item set is given."}
@@ -283,17 +283,17 @@ class RESTWebServicesInterface(WebServiceInterface):
 
             elif cherrypy.request.method == 'GET':
                 items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
-                items = []
+                items = {}
                 for item in items_sorted:
                     if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
                         if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
-                            items.append({item._path : item()})
+                            items[item._path] = item()
                         else:
                             item_data = self.assemble_item_data(item)
                             if item_data is not None:
                                 item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
                                                                         self.plugin.mod_http.get_local_port(), item._path)
-                                items.append(item_data)
+                                items[item._path] = item_data
                 return items
         else:
             return {"Error": "No set-ID for item set is given."}
