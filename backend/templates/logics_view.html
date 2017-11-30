@@ -93,43 +93,48 @@
 	<table class="table table-bordered table-hover table-striped">
 		<tr>
 			<td style="min-width:200px;"><strong>{{ _('Status') }}:</strong></td>
-			<td><span style="color: {% if not thislogic.enabled %}red{% else %}green{% endif %};" class="fa {% if not thislogic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span>
+			<td colspan="3"><span style="color: {% if not thislogic.enabled %}red{% else %}green{% endif %};" class="fa {% if not thislogic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span>
 			{% if not thislogic.enabled %}{{ _('Nicht aktiv') }}{% else %}{{ _('Aktiv') }}{% endif %}
 			</td>
 		</tr>
 		<tr>
-			<td><strong>{{ _('letzte Ausführung') }}</strong></td>
-			<td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
+			<td style="width:200px;"><strong>{{ _('letzte Ausführung') }}</strong></td>
+			<td style="min-width:200px;">{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
 				{{ thislogic.last_run }}
 				{% if not thislogic.enabled %}</span>{% endif %}
 			</td>
-		</tr>
-		<tr>
-			<td><strong>{{ _('nächste Ausführung') }}</strong></td>
-			<td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
+			<td style="width:200px;"><strong>{{ _('nächste Ausführung') }}</strong></td>
+			<td style="min-width:200px;">{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
 				{{ thislogic.next_exec }}
 				{% if not thislogic.enabled %}</span>{% endif %}
 			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Cycle') }}</strong></td>
-			<td>
+			<td colspan="3">
 				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.cycle }}"/>
 				<input type="hidden" id="original_cycle" value="{{ thislogic.cycle }}"/>
 			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Crontab(s)') }}</strong></td>
-			<td>
+			<td colspan="3">
 				<input type="text" autocomplete="off" id="crontab" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.crontab }}"/>
 				<input type="hidden" id="original_crontab" value="{{ thislogic.crontab }}"/>
 			</td>
 		</tr>
 		<tr>
 			<td><strong>{{ _('Watch_Item(s)') }}</strong></td>
-			<td>
+			<td colspan="3">
 				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.watch_item }}"/>
 				<input type="hidden" id="original_watch" value="{{ thislogic.watch_item }}"/>
+			</td>
+		</tr>
+		<tr>
+			<td><strong>{{ 'visu_acl' }}</strong></td>
+			<td colspan="3">
+				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="visu_acl" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.visu_acl }}"/>
+				<input type="hidden" id="original_visu_acl" value="{{ thislogic.visu_acl }}"/>
 			</td>
 		</tr>
 	</table>
