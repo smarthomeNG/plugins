@@ -109,7 +109,9 @@ class BackendLogics:
                 if loaded_logic.crontab == None:
                     mylogic['crontab'] = ''
                 else:
-                    mylogic['crontab'] = Utils.strip_quotes_fromlist(str(loaded_logic.crontab))
+#                    mylogic['crontab'] = Utils.strip_quotes_fromlist(str(loaded_logic.crontab))
+                    mylogic['crontab'] = Utils.strip_quotes_fromlist(self.list_to_editstring(loaded_logic.crontab))
+
                 mylogic['crontab'] = Utils.strip_square_brackets(mylogic['crontab'])
 
             mylogic['watch_item'] = ''
@@ -126,6 +128,10 @@ class BackendLogics:
             mylogic['last_run'] = ''
             if loaded_logic.last_run():
                 mylogic['last_run'] = loaded_logic.last_run().strftime('%Y-%m-%d %H:%M:%S%z')
+
+            mylogic['visu_acl'] = ''
+            if hasattr(loaded_logic, 'visu_acl'):
+                mylogic['visu_acl'] = Utils.strip_quotes_fromlist(str(loaded_logic.visu_acl))
 
         return mylogic
 
@@ -216,7 +222,7 @@ class BackendLogics:
     @cherrypy.expose
     def logics_view_html(self, file_path, logicname, 
                                trigger=None, enable=None, disable=None, save=None, savereload=None, savereloadtrigger=None, 
-                               logics_code=None, cycle=None, crontab=None, watch=None):
+                               logics_code=None, cycle=None, crontab=None, watch=None, visu_acl=None):
         """
         returns information to display a logic in an editor window
         """
@@ -237,14 +243,14 @@ class BackendLogics:
             self.logics.disable_logic(logicname)
         elif save is not None:
             self.logic_save_code(logicname, logics_code)
-            self.logic_save_config(logicname, cycle, crontab, watch)
+            self.logic_save_config(logicname, cycle, crontab, watch, visu_acl)
         elif savereload is not None:
             self.logic_save_code(logicname, logics_code)
-            self.logic_save_config(logicname, cycle, crontab, watch)
+            self.logic_save_config(logicname, cycle, crontab, watch, visu_acl)
             self.logics.load_logic(logicname)
         elif savereloadtrigger is not None:
             self.logic_save_code(logicname, logics_code)
-            self.logic_save_config(logicname, cycle, crontab, watch)
+            self.logic_save_config(logicname, cycle, crontab, watch, visu_acl)
             self.logics.load_logic(logicname)
             self.logics.trigger_logic(logicname)
 
@@ -253,12 +259,18 @@ class BackendLogics:
             if config[0] == 'cycle':
                 mylogic['cycle'] = config[1]
             if config[0] == 'crontab':
-                mylogic['crontab'] = config[1]
+#                mylogic['crontab'] = config[1]
+                self.logger.info("logics_view_html: crontab = >{}<".format(config[1]))
+                edit_string = self.list_to_editstring(config[1])
+                mylogic['crontab'] = Utils.strip_quotes_fromlist(edit_string)
             if config[0] == 'watch_item':
                 # Attention: watch_items are always stored as a list in logic object
-                mylogic['watch'] = Utils.strip_quotes_fromlist(str(config[1]))
-                mylogic['watch_item'] = Utils.strip_quotes_fromlist(str(config[1]))
+                edit_string = self.list_to_editstring(config[1])
+                mylogic['watch'] = Utils.strip_quotes_fromlist(edit_string)
+                mylogic['watch_item'] = Utils.strip_quotes_fromlist(edit_string)
                 mylogic['watch_item_list'] = config[1]
+            if config[0] == 'visu_acl':
+                mylogic['visu_acl'] = config[1]
 
         if os.path.splitext(file_path)[1] == '.blockly':
             mode = 'xml'
@@ -323,12 +335,28 @@ class BackendLogics:
     # -----------------------------------------------------------------------------------
 
 
-    def string_to_list(self, param_string):
+    def list_to_editstring(self, l):
+        """
+        """
+        if type(l) is str:
+            self.logger.info("list_to_editstring: >{}<  -->  >{}<".format(l, l))
+            return l
+        
+        edit_string = ''
+        for entry in l:
+            if edit_string != '':
+                edit_string += ' | '
+            edit_string += str(entry)
+        self.logger.info("list_to_editstring: >{}<  -->  >{}<".format(l, edit_string))
+        return edit_string
+        
+
+    def editstring_to_list(self, param_string):
 
         if param_string is None:
             return ''
         else:
-            l1 = param_string.split(',')
+            l1 = param_string.split('|')
             if len(l1) > 1:
                 # string contains a list
                 l2 = []
@@ -349,10 +377,11 @@ class BackendLogics:
         config_list.append(['filename', filename, ''])
         config_list.append(['enabled', False, ''])
         self.logics.update_config_section(True, logicname, config_list)
+#        self.logics.set_config_section_key(logicname, 'visu_acl', False)
         return
          
 
-    def logic_save_config(self, logicname, cycle, crontab, watch):
+    def logic_save_config(self, logicname, cycle, crontab, watch, visu_acl):
         """
         Save configuration data of a logic
         
@@ -366,15 +395,18 @@ class BackendLogics:
             if cycle > 0:
                 config_list.append(['cycle', cycle, ''])
 
-        crontab = self.string_to_list(crontab)
+        crontab = self.editstring_to_list(crontab)
         if crontab != '':
             config_list.append(['crontab', str(crontab), ''])
                 
-        watch = self.string_to_list(watch)
+        watch = self.editstring_to_list(watch)
         if watch != '':
             config_list.append(['watch_item', str(watch), ''])
 
         self.logics.update_config_section(True, logicname, config_list)
+        if visu_acl == '':
+            visu_acl = None
+        self.logics.set_config_section_key(logicname, 'visu_acl', visu_acl)
         return
          
 
