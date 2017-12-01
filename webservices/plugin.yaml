@@ -7,7 +7,7 @@ plugin:
         en: 'Implementation of a webservice interface'
     maintainer: psilo909
 #    tester:                        # Who tests this plugin?
-#    keywords: iot xyz
+    keywords: REST, API, Webservice
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
@@ -22,4 +22,14 @@ parameters:
     
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    webservices_set:
+        type: str
+        description:
+            de: 'webservices_set (optional) enthält eine Zeichenkette, die zum Bündeln von Items in sets genutzt wird. Das Set steht unter http://<SmartHomeNG URL>;<WS Port>/[rest|ws]/itemset/<setname> bereit.'
+            en: 'webservices_set (optional) contains a String, which is used to provide multiple item data via one webservice call. The set is available at http://<SmartHomeNG URL>;<WS Port>/[rest|ws]/itemset/<setname>.'
+
+    webservices_data:
+        type: str
+        description:
+            de: 'webservices_data (optional) dient dazu, die Rückgabedaten von Items zu limitieren. Wird als Wert "val" eingegeben, so wird nur der Pfadname und der Wert zurückgegeben, sonst zus. alle Metainformationen.'
+            en: 'webservices_data (optional) is used, to limit the returned values for an item. If the attribut value "val" is set, only the path name and the item value is returned. Otherwise, also all meta information is returned.'

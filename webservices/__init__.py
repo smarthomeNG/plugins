@@ -61,27 +61,27 @@ class WebServices(SmartPlugin):
 
         # Register the REST interface as a cherrypy app
         self.mod_http.register_service(RESTWebServicesInterface(webif_dir, self),
-                                   self.get_shortname(),
-                                   config,
-                                   self.get_classname(), self.get_instance_name(),
-                                   description='WebService Plugin für SmartHomeNG (REST)',
-                                   servicename='rest')
-
-        # Register the simple WebService interface as a cherrypy app
-        self.mod_http.register_service(SimpleWebServiceInterface(webif_dir, self),
-                                   self.get_shortname(),
-                                   config,
-                                   self.get_classname(), self.get_instance_name(),
-                                   description='Webservice-Plugin für SmartHomeNG (simple)',
-                                   servicename='ws')
-
-        # Register the web overview of the webservices interfaces as a cherrypy app
-        self.mod_http.register_webif(WebGuiInterface(self),
                                        self.get_shortname(),
                                        config,
                                        self.get_classname(), self.get_instance_name(),
-                                       description='Webservice-Plugin für SmartHomeNG (Frontend)',
-                                       webifname='ws_gui')
+                                       description='WebService Plugin für SmartHomeNG (REST)',
+                                       servicename='rest')
+
+        # Register the simple WebService interface as a cherrypy app
+        self.mod_http.register_service(SimpleWebServiceInterface(webif_dir, self),
+                                       self.get_shortname(),
+                                       config,
+                                       self.get_classname(), self.get_instance_name(),
+                                       description='Webservice-Plugin für SmartHomeNG (simple)',
+                                       servicename='ws')
+
+        # Register the web overview of the webservices interfaces as a cherrypy app
+        self.mod_http.register_webif(WebGuiInterface(self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='Webservice-Plugin für SmartHomeNG (Frontend)',
+                                     webifname='ws_gui')
 
     def run(self):
         """
@@ -132,71 +132,75 @@ class WebServiceInterface:
         self.logger = logging.getLogger(__name__)
         self.plugin = plugin
 
-    def assemble_item_data(self, item):
+    def assemble_item_data(self, item, webservices_data='full'):
         if item is not None:
             if item.type() in ['str', 'bool', 'num']:
-                prev_value = item.prev_value()
-                value = item._value
+                if webservices_data == 'full':
+                    prev_value = item.prev_value()
+                    value = item._value
 
-                if isinstance(prev_value, datetime.datetime):
-                    prev_value = str(prev_value)
+                    if isinstance(prev_value, datetime.datetime):
+                        prev_value = str(prev_value)
 
-                cycle = ''
-                crontab = ''
-                for entry in self.plugin._sh.scheduler._scheduler:
-                    if entry == item._path:
-                        if self.plugin._sh.scheduler._scheduler[entry]['cycle']:
-                            cycle = self.plugin._sh.scheduler._scheduler[entry]['cycle']
-                        if self.plugin._sh.scheduler._scheduler[entry]['cron']:
-                            crontab = str(self.plugin._sh.scheduler._scheduler[entry]['cron'])
-                        break
+                    cycle = ''
+                    crontab = ''
+                    for entry in self.plugin._sh.scheduler._scheduler:
+                        if entry == item._path:
+                            if self.plugin._sh.scheduler._scheduler[entry]['cycle']:
+                                cycle = self.plugin._sh.scheduler._scheduler[entry]['cycle']
+                            if self.plugin._sh.scheduler._scheduler[entry]['cron']:
+                                crontab = str(self.plugin._sh.scheduler._scheduler[entry]['cron'])
+                            break
 
-                changed_by = item.changed_by()
-                if changed_by[-5:] == ':None':
-                    changed_by = changed_by[:-5]
+                    changed_by = item.changed_by()
+                    if changed_by[-5:] == ':None':
+                        changed_by = changed_by[:-5]
 
-                item_conf_sorted = collections.OrderedDict(sorted(item.conf.items(), key=lambda t: str.lower(t[0])))
+                    item_conf_sorted = collections.OrderedDict(sorted(item.conf.items(), key=lambda t: str.lower(t[0])))
 
-                if item.prev_age() < 0:
-                    prev_age = ''
-                else:
-                    prev_age = item.prev_age()
+                    if item.prev_age() < 0:
+                        prev_age = ''
+                    else:
+                        prev_age = item.prev_age()
 
-                logics = []
-                for trigger in item.get_logic_triggers():
-                    logics.append(format(trigger))
-                triggers = []
-                for trigger in item.get_method_triggers():
-                    trig = format(trigger)
-                    trig = trig[1:len(trig) - 27]
-                    triggers.append(format(trig.replace("<", "")))
+                    logics = []
+                    for trigger in item.get_logic_triggers():
+                        logics.append(format(trigger))
+                    triggers = []
+                    for trigger in item.get_method_triggers():
+                        trig = format(trigger)
+                        trig = trig[1:len(trig) - 27]
+                        triggers.append(format(trig.replace("<", "")))
 
-                data_dict = {'path': item._path,
-                             'name': item._name,
-                             'type': item.type(),
-                             'value': value,
-                             'age': item.age(),
-                             'last_update': str(item.last_update()),
-                             'last_change': str(item.last_change()),
-                             'changed_by': changed_by,
-                             'previous_value': prev_value,
-                             'previous_age': prev_age,
-                             'previous_change': str(item.prev_change()),
-                             'enforce_updates': str(item._enforce_updates),
-                             'cache': str(item._cache),
-                             'eval': str(item._eval),
-                             'eval_trigger': str(item._eval_trigger),
-                             'cycle': str(cycle),
-                             'crontab': str(crontab),
-                             'autotimer': str(item._autotimer),
-                             'threshold': str(item._threshold),
-                             'config': item_conf_sorted,
-                             'logics': logics,
-                             'triggers': triggers
-                             }
-                return data_dict
+                    data_dict = {'path': item._path,
+                                 'name': item._name,
+                                 'type': item.type(),
+                                 'value': value,
+                                 'age': item.age(),
+                                 'last_update': str(item.last_update()),
+                                 'last_change': str(item.last_change()),
+                                 'changed_by': changed_by,
+                                 'previous_value': prev_value,
+                                 'previous_age': prev_age,
+                                 'previous_change': str(item.prev_change()),
+                                 'enforce_updates': str(item._enforce_updates),
+                                 'cache': str(item._cache),
+                                 'eval': str(item._eval),
+                                 'eval_trigger': str(item._eval_trigger),
+                                 'cycle': str(cycle),
+                                 'crontab': str(crontab),
+                                 'autotimer': str(item._autotimer),
+                                 'threshold': str(item._threshold),
+                                 'config': item_conf_sorted,
+                                 'logics': logics,
+                                 'triggers': triggers
+                                 }
+                    return data_dict
+                elif webservices_data == 'val':
+                    return {'path': item._path, 'value': item._value}
             else:
                 return None
+
 
 class SimpleWebServiceInterface(WebServiceInterface):
     @cherrypy.expose
@@ -218,13 +222,14 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 for item in items_sorted:
                     if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
                         if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
-                            items[item._path] = item()
+                            item_data = self.assemble_item_data(item, 'val')
+                            items[item_data['path']] = item_data['value']
                         else:
-                            item_data = self.assemble_item_data(item)
+                            item_data = self.assemble_item_data(item, 'full')
                             if item_data is not None:
                                 item_data['url'] = "http://%s:%s/ws/items/%s" % (
-                                self.plugin.mod_http.get_local_ip_address(),
-                                self.plugin.mod_http.get_local_port(), item._path)
+                                    self.plugin.mod_http.get_local_ip_address(),
+                                    self.plugin.mod_http.get_local_port(), item._path)
                                 items[item._path] = item_data
                 return items
         else:
@@ -242,14 +247,20 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
-                items = []
+                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                                      reverse=False)
+                items = {}
                 for item in items_sorted:
-                    item_data = self.assemble_item_data(item)
+                    mode = "full"
+                    if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                        mode = "val"
+                    item_data = self.assemble_item_data(item, mode)
                     if item_data is not None:
-                        item_data['url'] = "http://%s:%s/ws/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
-                                                                self.plugin.mod_http.get_local_servicesport(), item._path)
-                        items.append(item_data)
+                        if mode != "val":
+                            item_data['url'] = "http://%s:%s/ws/items/%s" % (
+                            self.plugin.mod_http.get_local_ip_address(),
+                            self.plugin.mod_http.get_local_servicesport(), item._path)
+                        items[item_data['path']] = item_data
                 return items
         else:
             item = self.plugin._sh.return_item(item_path)
@@ -259,14 +270,18 @@ class SimpleWebServiceInterface(WebServiceInterface):
                         item(value)
                         return {"Success": "Item with item path %s set to %s." % (item_path, value)}
                     else:
-                        item_data = self.assemble_item_data(item)
+                        mode = "full"
+                        if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                            mode = "val"
+                        item_data = self.assemble_item_data(item, mode)
                         if item_data is not None:
                             return item_data
                 else:
                     return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
-                                  (item_path, item.type())}
+                                     (item_path, item.type())}
             else:
                 return {"Error": "No item with item path %s found." % item_path}
+
 
 class RESTWebServicesInterface(WebServiceInterface):
     @cherrypy.expose
@@ -282,18 +297,21 @@ class RESTWebServicesInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                                      reverse=False)
                 items = {}
                 for item in items_sorted:
                     if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
                         if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
-                            items[item._path] = item()
+                            item_data = self.assemble_item_data(item, 'val')
+                            items[item_data['path']] = item_data['value']
                         else:
-                            item_data = self.assemble_item_data(item)
+                            item_data = self.assemble_item_data(item, 'full')
                             if item_data is not None:
-                                item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
-                                                                        self.plugin.mod_http.get_local_port(), item._path)
-                                items[item._path] = item_data
+                                item_data['url'] = "http://%s:%s/rest/items/%s" % (
+                                self.plugin.mod_http.get_local_ip_address(),
+                                self.plugin.mod_http.get_local_port(), item._path)
+                                items[item_data['path']] = item_data
                 return items
         else:
             return {"Error": "No set-ID for item set is given."}
@@ -311,14 +329,20 @@ class RESTWebServicesInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
-                items = []
+                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                                      reverse=False)
+                items = {}
                 for item in items_sorted:
-                    item_data = self.assemble_item_data(item)
+                    mode = "full"
+                    if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                        mode = "val"
+                    item_data = self.assemble_item_data(item, mode)
                     if item_data is not None:
-                        item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
-                                                                self.plugin.mod_http.get_local_port(), item._path)
-                        items.append(item_data)
+                        if mode != 'val':
+                            item_data['url'] = "http://%s:%s/rest/items/%s" % (
+                            self.plugin.mod_http.get_local_ip_address(),
+                            self.plugin.mod_http.get_local_port(), item._path)
+                        items[item_data['path']] = item_data
                 return items
         else:
             item = self.plugin._sh.return_item(item_path)
@@ -353,7 +377,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                             self.logger.debug("Item with item path %s set to %s." % (item_path, data))
                         except Exception as e:
                             return {"Error": "Item with item path %s is type bool, value is %s." % (item_path,
-                                                                                                 data)}
+                                                                                                    data)}
                 elif 'str' in item.type():
                     item(data)
                     self.logger.debug("Item with item path %s set to %s." % (item_path, data))
@@ -365,12 +389,16 @@ class RESTWebServicesInterface(WebServiceInterface):
                                      item.type())}
 
             elif cherrypy.request.method == 'GET':
-                item_data = self.assemble_item_data(item)
+                mode = "full"
+                if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                    mode = "val"
+                item_data = self.assemble_item_data(item, mode)
                 if item_data is not None:
-                    item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
-                                                                       self.plugin.mod_http.get_local_servicesport(),
-                                                                       item._path)
+                    if mode != 'val':
+                        item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
+                                                                           self.plugin.mod_http.get_local_servicesport(),
+                                                                           item._path)
                     return item_data
                 else:
                     return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
-                                  (item_path, item.type())}
+                                     (item_path, item.type())}
