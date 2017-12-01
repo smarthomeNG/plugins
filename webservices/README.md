@@ -41,7 +41,7 @@ There are two item-attributes in items.yaml/items.conf that are specific to the 
 **`webservices_set`** contains a string description of the item set, the item shall be added to. A set can be requested as whole by the webservice api. An item can be added to several sets via a yaml list of set identifiers.
 
 #### webservices_data
-**`webservices_data`** is used, to limit the returned values for an item. If the attribute value "val" is set, only the path name and the item value is returned. Otherwise, also all meta information is returned..
+**`webservices_data`** is used to limit the returned values for an item. If the attribute value "val" is set, only the path name and the item value is returned. Otherwise, also all meta information is returned..
 
 ## Usage
 
