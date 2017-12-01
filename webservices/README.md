@@ -53,6 +53,8 @@ In case of an error (e.g. item is not found), the plugin returns an error format
 
 In case a request is successful, it returns a SUCCESS message as JSON.
 
+### Web-GUI (overview of services)
+
 A web gui with a list of all available items is provided via
 http://<your_server_ip>:<your_backend_port>/ws_gui/
 
