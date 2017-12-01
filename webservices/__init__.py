@@ -116,8 +116,9 @@ class WebGuiInterface:
         items_filtered = []
         items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         for item in items_sorted:
-            if item.type() in ['str', 'bool', 'num']:
-                items_filtered.append(item)
+            if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
+                if item.type() in ['str', 'bool', 'num']:
+                    items_filtered.append(item)
         return self.render_template('main.html', item_data=items_filtered,
                                     ip=self.plugin.mod_http.get_local_ip_address(),
                                     port=self.plugin.mod_http.get_local_port(),
