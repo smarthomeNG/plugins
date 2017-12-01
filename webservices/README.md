@@ -2,9 +2,9 @@
 
 ## Description
 
-This plugin makes use of the new SmartHomeNG module system. It provides a Webservice API based on REST and is 
-built upon Cherrpy.
-Basic REST command such as PUT and GET are supported.
+This plugin makes use of the new SmartHomeNG module system. It provides a Webservice API based on REST and on a URL-based simple version and is
+built upon CherryPy.
+For REST, basic REST command such as PUT and GET are supported.
 
 ## Requirements
 
@@ -27,6 +27,8 @@ WebServices:
     class_path: plugins.webservices
     mode: all
 ```
+#### Attributes
+  * `mode`: Optional mode for the plugin - "all" (default) means you can access all your items via the API. "set" means only defined item sets are accessible.
 
 ### items.conf (deprecated) / items.yaml
 
