@@ -30,7 +30,16 @@ WebServices:
 
 ### items.conf (deprecated) / items.yaml
 
-Currently access to all items is provided via the REST api, no setting has to be made in items.conf (deprecated) / items.yaml
+Currently access to all items is provided via the REST api in case the plugin is set via mode attribute to "all". In case that is not wanted, the attribute "webservices_set" can be used to group selected items to be accessible.
+
+There are two item-attributes in items.yaml/items.conf that are specific to the webservices plugin. These parameters beginn with **`webservices_`**.
+
+#### webservices_set
+
+**`webservices_set`** contains a string description of the item set, the item shall be added to. A set can be requested as whole by the webservice api. An item can be added to several sets via a yaml list of set identifiers.
+
+#### webservices_data
+**`webservices_data`** is used, to limit the returned values for an item. If the attribute value "val" is set, only the path name and the item value is returned. Otherwise, also all meta information is returned..
 
 ## Usage
 
@@ -42,13 +51,16 @@ In case of an error (e.g. item is not found), the plugin returns an error format
 
 In case a request is successful, it returns a SUCCESS message as JSON.
 
+A web gui with a list of all available items is provided via
+http://<your_server_ip>:<your_backend_port>/ws_gui/
+
 ### Simple Interface
 
 #### Get Value
 
-Gets the data of an item, enriched by meta data, as json object.
+Gets the data of an item, enriched by meta data (if webservices_data is not set to "val"), as json object.
 
-http://<your_server_ip>:<your_backend_port>/ws/items/<item_path>
+http://<your_server_ip>:<your_services_port>/ws/items/<item_path>
 
 E.g. http://192.168.178.100:1234/ws/items/office.light retuns:
 
@@ -58,9 +70,15 @@ E.g. http://192.168.178.100:1234/ws/items/office.light retuns:
 
 Sets a value of an item.
 
-http://<your_server_ip>:<your_backend_port>/items/<item_path>/<value>
+http://<your_server_ip>:<your_services_port>/items/<item_path>/<value>
 
 E.g. http://192.168.178.100:1234/ws/items/office.light/0 or http://192.168.178.100:1234/ws/items/office.light/False turns off the light.
+
+#### Get Item Set
+
+Gets the data of an item set, enriched by meta data (if webservices_data is not set to "val"), as json object. The key for the items is the item path.
+
+http://<your_server_ip>:<your_services_port>/ws/itemset/<set_name>
 
 ### REST Compliant Interface
 
@@ -70,7 +88,7 @@ E.g. http://192.168.178.100:1234/ws/items/office.light/0 or http://192.168.178.1
 
 Gets the value of an item, enriched by meta data, as json object. Here, also the REST Url is provided as URL field.
 
-http://<your_server_ip>:<your_backend_port>/rest/items/<item_path>
+http://<your_server_ip>:<your_services_port>/rest/items/<item_path>
 
 E.g. http://192.168.178.100:1234/rest/items/office.light 
 
@@ -83,9 +101,15 @@ returns
 The following URL prints out a list of all items, that can be requested or modified by the plugin (all str, num and bool items).
 For each item, the detail information is also delivered.
 
-http://<your_server_ip>:<your_backend_port>/rest/items/
+http://<your_server_ip>:<your_services_port>/rest/items/
 
 E.g. http://192.168.178.100:1234/rest/items/ returns the list of all available (str, num, bool) items.
+
+##### Item Set
+
+Gets the data of an item set, enriched by meta data (if webservices_data is not set to "val"), as json object. The key for the items is the item path.
+
+http://<your_server_ip>:<your_services_port>/rest/itemset/<set_name>
 
 #### HTTP PUT
 
@@ -93,6 +117,6 @@ A HTTP PUT request to the URL sets a value of an item. Only num, bool and str it
 For bool items you can use int values 0 and 1, but also "yes", "no", "y", "n", "true", "false", "t", "f", "on", "off".
 In case you send a string (or a string bool representation), take care it is provided in "...".
 
-http://<your_server_ip>:<your_backend_port>/rest/items/<item_path>
+http://<your_server_ip>:<your_services_port>/rest/items/<item_path>
 
 E.g. a PUT request with 0 as payload to http://192.168.178.100:1234/rest/items/office.light turns off the light.

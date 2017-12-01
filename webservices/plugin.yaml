@@ -38,4 +38,4 @@ item_attributes:
         type: str
         description:
             de: 'webservices_data (optional) dient dazu, die Rückgabedaten von Items zu limitieren. Wird als Wert "val" eingegeben, so wird nur der Pfadname und der Wert zurückgegeben, sonst zusätzlich alle Metainformationen.'
-            en: 'webservices_data (optional) is used, to limit the returned values for an item. If the attribut value "val" is set, only the path name and the item value is returned. Otherwise, also all meta information is returned.'
+            en: 'webservices_data (optional) is used, to limit the returned values for an item. If the attribute value "val" is set, only the path name and the item value is returned. Otherwise, also all meta information is returned.'
