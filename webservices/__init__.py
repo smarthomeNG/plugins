@@ -35,10 +35,11 @@ class WebServices(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = '1.4.0.1'
 
-    def __init__(self, smarthome):
+    def __init__(self, smarthome, mode="all"):
         self.logger = logging.getLogger(__name__)
         self.logger.debug('Backend.__init__')
         self._sh = smarthome
+        self._mode = mode
 
         try:
             self.mod_http = self._sh.get_module('http')
@@ -251,20 +252,24 @@ class SimpleWebServiceInterface(WebServiceInterface):
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
-                    mode = "full"
-                    if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
-                        mode = "val"
-                    item_data = self.assemble_item_data(item, mode)
-                    if item_data is not None:
-                        if mode != "val":
-                            item_data['url'] = "http://%s:%s/ws/items/%s" % (
-                            self.plugin.mod_http.get_local_ip_address(),
-                            self.plugin.mod_http.get_local_servicesport(), item._path)
-                        items[item_data['path']] = item_data
+                    if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
+                        mode = "full"
+                        if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                            mode = "val"
+                        item_data = self.assemble_item_data(item, mode)
+                        if item_data is not None:
+                            if mode != "val":
+                                item_data['url'] = "http://%s:%s/ws/items/%s" % (
+                                    self.plugin.mod_http.get_local_ip_address(),
+                                    self.plugin.mod_http.get_local_servicesport(), item._path)
+                            items[item_data['path']] = item_data
                 return items
         else:
             item = self.plugin._sh.return_item(item_path)
-            if item is not None:
+            if item is None:
+                return {"Error": "No item with item path %s found." % item_path}
+
+            if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
                 if item.type() in ['str', 'bool', 'num']:
                     if value is not None:
                         item(value)
@@ -280,7 +285,8 @@ class SimpleWebServiceInterface(WebServiceInterface):
                     return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
                                      (item_path, item.type())}
             else:
-                return {"Error": "No item with item path %s found." % item_path}
+                return {"Error": "Item with path %s not allowed for access via Webservice plugin." %
+                                 item_path}
 
 
 class RESTWebServicesInterface(WebServiceInterface):
@@ -309,8 +315,8 @@ class RESTWebServicesInterface(WebServiceInterface):
                             item_data = self.assemble_item_data(item, 'full')
                             if item_data is not None:
                                 item_data['url'] = "http://%s:%s/rest/items/%s" % (
-                                self.plugin.mod_http.get_local_ip_address(),
-                                self.plugin.mod_http.get_local_port(), item._path)
+                                    self.plugin.mod_http.get_local_ip_address(),
+                                    self.plugin.mod_http.get_local_port(), item._path)
                                 items[item_data['path']] = item_data
                 return items
         else:
@@ -333,6 +339,64 @@ class RESTWebServicesInterface(WebServiceInterface):
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
+                    if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
+                        mode = "full"
+                        if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                            mode = "val"
+                        item_data = self.assemble_item_data(item, mode)
+                        if item_data is not None:
+                            if mode != 'val':
+                                item_data['url'] = "http://%s:%s/rest/items/%s" % (
+                                    self.plugin.mod_http.get_local_ip_address(),
+                                    self.plugin.mod_http.get_local_port(), item._path)
+                            items[item_data['path']] = item_data
+                return items
+        else:
+            item = self.plugin._sh.return_item(item_path)
+
+            if item is None:
+                return {"Error": "No item with item path %s found." % item_path}
+
+            if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
+                if cherrypy.request.method == 'PUT':
+                    data = cherrypy.request.json
+                    self.logger.error(data)
+                    if 'num' in item.type():
+                        if self.plugin.is_int(data) or self.plugin.is_float(data):
+                            item(data)
+                            self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+                        else:
+                            return {"Error": "Item with item path %s is type num, value is %s." % (item_path, data)}
+                    elif 'bool' in item.type():
+                        if self.plugin.is_int(data):
+                            if data == 0 or data == 1:
+                                item(data)
+                                self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+                            else:
+                                return {
+                                    "Error": "Item with item path %s is type bool, only 0 and 1 are accepted as integers, "
+                                             "value is %s." % (
+                                                 item_path,
+                                                 data)}
+                        else:
+                            try:
+                                data = self.plugin.to_bool(data)
+                                item(data)
+                                self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+                            except Exception as e:
+                                return {"Error": "Item with item path %s is type bool, value is %s." % (item_path,
+                                                                                                        data)}
+                    elif 'str' in item.type():
+                        item(data)
+                        self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+                    else:
+                        return {
+                            "Error": "Only str, num and bool items are supported by the REST PUT interface. Item with item path %s is %s"
+                                     % (
+                                         item_path,
+                                         item.type())}
+
+                elif cherrypy.request.method == 'GET':
                     mode = "full"
                     if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
                         mode = "val"
@@ -341,64 +405,12 @@ class RESTWebServicesInterface(WebServiceInterface):
                         if mode != 'val':
                             item_data['url'] = "http://%s:%s/rest/items/%s" % (
                             self.plugin.mod_http.get_local_ip_address(),
-                            self.plugin.mod_http.get_local_port(), item._path)
-                        items[item_data['path']] = item_data
-                return items
-        else:
-            item = self.plugin._sh.return_item(item_path)
-
-            if item is None:
-                return {"Error": "No item with item path %s found." % item_path}
-
-            if cherrypy.request.method == 'PUT':
-                data = cherrypy.request.json
-                self.logger.error(data)
-                if 'num' in item.type():
-                    if self.plugin.is_int(data) or self.plugin.is_float(data):
-                        item(data)
-                        self.logger.debug("Item with item path %s set to %s." % (item_path, data))
+                            self.plugin.mod_http.get_local_servicesport(),
+                            item._path)
+                        return item_data
                     else:
-                        return {"Error": "Item with item path %s is type num, value is %s." % (item_path, data)}
-                elif 'bool' in item.type():
-                    if self.plugin.is_int(data):
-                        if data == 0 or data == 1:
-                            item(data)
-                            self.logger.debug("Item with item path %s set to %s." % (item_path, data))
-                        else:
-                            return {
-                                "Error": "Item with item path %s is type bool, only 0 and 1 are accepted as integers, "
-                                         "value is %s." % (
-                                             item_path,
-                                             data)}
-                    else:
-                        try:
-                            data = self.plugin.to_bool(data)
-                            item(data)
-                            self.logger.debug("Item with item path %s set to %s." % (item_path, data))
-                        except Exception as e:
-                            return {"Error": "Item with item path %s is type bool, value is %s." % (item_path,
-                                                                                                    data)}
-                elif 'str' in item.type():
-                    item(data)
-                    self.logger.debug("Item with item path %s set to %s." % (item_path, data))
-                else:
-                    return {
-                        "Error": "Only str, num and bool items are supported by the REST PUT interface. Item with item path %s is %s"
-                                 % (
-                                     item_path,
-                                     item.type())}
-
-            elif cherrypy.request.method == 'GET':
-                mode = "full"
-                if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
-                    mode = "val"
-                item_data = self.assemble_item_data(item, mode)
-                if item_data is not None:
-                    if mode != 'val':
-                        item_data['url'] = "http://%s:%s/rest/items/%s" % (self.plugin.mod_http.get_local_ip_address(),
-                                                                           self.plugin.mod_http.get_local_servicesport(),
-                                                                           item._path)
-                    return item_data
-                else:
-                    return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
-                                     (item_path, item.type())}
+                        return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
+                                         (item_path, item.type())}
+            else:
+                return {"Error": "Item with path %s not allowed for access via Webservice plugin." %
+                                 item_path}
