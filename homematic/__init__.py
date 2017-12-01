@@ -27,6 +27,7 @@ import xmlrpc
 import xmlrpc.server
 import xmlrpc.client
 
+
 class Homematic():
 
     def __init__(self, smarthome, host='0.0.0.0', port='2001', cycle='60'):
@@ -42,7 +43,8 @@ class Homematic():
         """
         Run method for the plugin
         """
-        self.scheduler_add('update', self._update_loop, cycle=self._cycle)
+        self.sh.scheduler.add(__name__, self._update_loop, cycle=self._cycle)
+#        self.scheduler_add('update', self._update_loop, cycle=self._cycle)
         self.alive = True
 
 
