@@ -222,17 +222,18 @@ class SimpleWebServiceInterface(WebServiceInterface):
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
-                    if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
-                        if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
-                            item_data = self.assemble_item_data(item, 'val')
-                            items[item_data['path']] = item_data['value']
-                        else:
-                            item_data = self.assemble_item_data(item, 'full')
-                            if item_data is not None:
-                                item_data['url'] = "http://%s:%s/ws/items/%s" % (
-                                    self.plugin.mod_http.get_local_ip_address(),
-                                    self.plugin.mod_http.get_local_port(), item._path)
-                                items[item._path] = item_data
+                    if self.plugin.has_iattr(item.conf, 'webservices_set'):
+                        if set_id in self.plugin.get_iattr_value(item.conf, 'webservices_set'):
+                            if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                                item_data = self.assemble_item_data(item, 'val')
+                                items[item_data['path']] = item_data['value']
+                            else:
+                                item_data = self.assemble_item_data(item, 'full')
+                                if item_data is not None:
+                                    item_data['url'] = "http://%s:%s/ws/items/%s" % (
+                                        self.plugin.mod_http.get_local_ip_address(),
+                                        self.plugin.mod_http.get_local_port(), item._path)
+                                    items[item._path] = item_data
                 return items
         else:
             return {"Error": "No set-ID for item set is given."}
@@ -308,17 +309,18 @@ class RESTWebServicesInterface(WebServiceInterface):
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
-                    if self.plugin.get_iattr_value(item.conf, 'webservices_set') == set_id:
-                        if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
-                            item_data = self.assemble_item_data(item, 'val')
-                            items[item_data['path']] = item_data['value']
-                        else:
-                            item_data = self.assemble_item_data(item, 'full')
-                            if item_data is not None:
-                                item_data['url'] = "http://%s:%s/rest/items/%s" % (
-                                    self.plugin.mod_http.get_local_ip_address(),
-                                    self.plugin.mod_http.get_local_port(), item._path)
-                                items[item_data['path']] = item_data
+                    if self.plugin.has_iattr(item.conf, 'webservices_set'):
+                        if set_id in self.plugin.get_iattr_value(item.conf, 'webservices_set'):
+                            if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
+                                item_data = self.assemble_item_data(item, 'val')
+                                items[item_data['path']] = item_data['value']
+                            else:
+                                item_data = self.assemble_item_data(item, 'full')
+                                if item_data is not None:
+                                    item_data['url'] = "http://%s:%s/rest/items/%s" % (
+                                        self.plugin.mod_http.get_local_ip_address(),
+                                        self.plugin.mod_http.get_local_port(), item._path)
+                                    items[item_data['path']] = item_data
                 return items
         else:
             return {"Error": "No set-ID for item set is given."}

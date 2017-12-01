@@ -18,12 +18,14 @@ This plugin requires CherryPy to be installed via pip.
 [WebServices]
    class_name = WebServices
    class_path = plugins.webservices
+   mode = all
 ```
 
 ```yaml
 WebServices:
     class_name: WebServices
     class_path: plugins.webservices
+    mode: all
 ```
 
 ### items.conf (deprecated) / items.yaml
