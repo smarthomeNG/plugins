@@ -6,9 +6,12 @@ This plugin makes use of the new SmartHomeNG module system. It provides a Webser
 built upon CherryPy.
 For REST, basic REST command such as PUT and GET are supported.
 
+Support-Thread für das Plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/1163886-support-thread-f%C3%BCr-das-webservices-plugin
+
 ## Requirements
 
 This plugin requires CherryPy to be installed via pip.
+It requires SmartHomeNG 1.4 or higher!
 
 ## Configuration
 
