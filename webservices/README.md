@@ -79,9 +79,8 @@ Gets the data of an item, enriched by meta data (if webservices_data is not set 
 
 http://<your_server_ip>:<your_services_port>/ws/items/<item_path>
 
-E.g. http://192.168.178.100:1234/ws/items/office.light retuns:
-
-{"name": "office.light", "last_update": "2017-08-20 16:53:01.914540+02:00", "path": "office.light", "eval": "None", "previous_age": "", "enforce_updates": "False", "threshold": "False", "previous_change": "2017-08-20 17:03:18.041298+02:00", "changed_by": "Cache", "logics": ["LightCheckLogic"], "last_change": "2017-08-20 16:53:01.914540+02:00", "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "previous_value": true, "type": "bool", "cycle": "", "autotimer": "False", "cache": "/python/smarthome_dev/var/cache/office.light", "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "age": 10441.073385, "value": true, "eval_trigger": "False", "crontab": ""}
+E.g. http://192.168.178.100:1234/ws/items/knx.gf.office.light retuns:
+{"changed_by": "Cache", "enforce_updates": "False", "age": 1896.412548, "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "last_change": "2017-12-02 06:53:56.310862+01:00", "autotimer": "False", "eval": "None", "value": true, "previous_age": "", "previous_value": true, "type": "bool", "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "name": "knx.gf.office.light", "path": "knx.gf.office.light", "threshold": "False", "cache": "/python/smarthome/var/cache/knx.gf.office.light", "cycle": "", "last_update": "2017-12-02 06:53:56.310862+01:00", "previous_change": "2017-12-02 07:18:22.911165+01:00", "eval_trigger": "False", "crontab": "", "logics": ["LightCheckLogic"]}
 
 #### Set Value
 
@@ -93,7 +92,7 @@ E.g. http://192.168.178.100:1234/ws/items/office.light/0 or http://192.168.178.1
 
 #### Get Item Set
 
-Gets the data of an item set, enriched by meta data (if webservices_data is not set to "val"), as json object. The key for the items is the item path.
+Gets the data of an item set, enriched by meta data (if webservices_data is not set to "val"), as json object. The key for accessing the items is the item path.
 
 http://<your_server_ip>:<your_services_port>/ws/itemset/<set_name>
 
@@ -107,11 +106,9 @@ Gets the value of an item, enriched by meta data, as json object. Here, also the
 
 http://<your_server_ip>:<your_services_port>/rest/items/<item_path>
 
-E.g. http://192.168.178.100:1234/rest/items/office.light 
+E.g. http://192.168.178.100:1234/rest/items/knx.gf.office.light retuns:
 
-returns
-
-{"value": true, "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "previous_age": "", "crontab": "", "last_change": "2017-08-20 16:53:01.914540+02:00", "previous_change": "2017-08-20 19:49:54.424230+02:00", "cycle": "", "enforce_updates": "False", "name": "office.light", "threshold": "False", "age": 10631.105385, "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "type": "bool", "eval_trigger": "False", "autotimer": "False", "logics": ["LightCheckLogic"], "changed_by": "Cache", "cache": "/python/smarthome_dev/var/cache/office.light", "path": "office.light", "last_update": "2017-08-20 16:53:01.914540+02:00", "url": "http://192.168.178.100:1234/rest/items/office.light", "previous_value": true, "eval": "None"}
+{"changed_by": "Cache", "enforce_updates": "False", "age": 1896.412548, "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "last_change": "2017-12-02 06:53:56.310862+01:00", "autotimer": "False", "eval": "None", "value": true, "previous_age": "", "previous_value": true, "type": "bool", "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "name": "knx.gf.office.light", "path": "knx.gf.office.light", "threshold": "False", "cache": "/python/smarthome/var/cache/knx.gf.office.light", "cycle": "", "last_update": "2017-12-02 06:53:56.310862+01:00", "previous_change": "2017-12-02 07:18:22.911165+01:00", "eval_trigger": "False", "crontab": "", "logics": ["LightCheckLogic"]}
 
 ##### Item List
 
@@ -120,11 +117,11 @@ For each item, the detail information is also delivered.
 
 http://<your_server_ip>:<your_services_port>/rest/items/
 
-E.g. http://192.168.178.100:1234/rest/items/ returns the list of all available (str, num, bool) items.
+E.g. http://192.168.178.100:1234/rest/items/ returns the list of all available (str, num, bool) items. The key for accessing the items is the item path.
 
 ##### Item Set
 
-Gets the data of an item set, enriched by meta data (if webservices_data is not set to "val"), as json object. The key for the items is the item path.
+Gets the data of an item set, enriched by meta data (if webservices_data is not set to "val"), as json object. The key for accessing the items is the item path.
 
 http://<your_server_ip>:<your_services_port>/rest/itemset/<set_name>
 
