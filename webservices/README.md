@@ -59,7 +59,7 @@ MyItem2:
      - 'MySet1'
      - 'MySet2'
     webservices_data: 'full'
- ```
+```
 
 There are two item-attributes in items.yaml/items.conf that are specific to the webservices plugin. These parameters beginn with **`webservices_`**.
 
