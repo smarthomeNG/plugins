@@ -1,4 +1,6 @@
-# Visualisation plugin (smartVISU support) - for developers
+# visu_smartvisu
+
+## Visualisation plugin (smartVISU support) - for developers
 
 ```
 Copyright 2012-2013 Marcus Popp                  marcus@popp.mx

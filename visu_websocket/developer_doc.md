@@ -1,4 +1,6 @@
-# Visualisation plugin (Websocket Protocol) - for developers
+# visu_websocket
+
+## Visualisation plugin (Websocket Protocol) - for developers
 
 ```
  
