@@ -47,11 +47,25 @@ WebServices:
 
 Currently access to all items is provided via the REST api in case the plugin is set via mode attribute to "all". In case that is not wanted, the attribute "webservices_set" can be used to group selected items to be accessible.
 
+```yaml
+MyItem:
+    type: str
+    webservices_set: 'MySet1'
+    webservices_data: 'val'
+
+MyItem2:
+    type: num
+    webservices_set:
+     - 'MySet1'
+     - 'MySet2'
+    webservices_data: 'full'
+ ```
+
 There are two item-attributes in items.yaml/items.conf that are specific to the webservices plugin. These parameters beginn with **`webservices_`**.
 
 #### webservices_set
 
-**`webservices_set`** contains a string description of the item set, the item shall be added to. A set can be requested as whole by the webservice api. An item can be added to several sets via a yaml list of set identifiers.
+**`webservices_set`** contains a string description of the item set, the item shall be added to. A set can be requested as whole by the webservice api. An item can be added to several sets via a yaml list of set identifiers [as Strings].
 
 #### webservices_data
 **`webservices_data`** is used to limit the returned values for an item. If the attribute value "val" is set, only the path name and the item value is returned. Otherwise, also all meta information is returned..
