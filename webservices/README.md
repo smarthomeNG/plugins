@@ -6,6 +6,17 @@ This plugin makes use of the new SmartHomeNG module system. It provides a Webser
 built upon CherryPy.
 For REST, basic REST command such as PUT and GET are supported.
 
+### etc/module.yaml
+Basic configuration for the webservices plugin needs to be done in etc/module.yaml. Here the port, user, and plain text password (or alternatively hashed password) can be configured for the service interface in general.
+The webservice plugin is one functionality that builds upon the service interface, but there may be more in the future. If user and password are left empty, none are set. This may be e.g. suitable in case a reverse proxy is used.
+
+```yaml
+    servicesport: 8384
+    service_user: serviceuser
+    service_password: ''
+    service_hashed_password: 'xxx'
+```
+
 ## Requirements
 
 This plugin requires CherryPy to be installed via pip.
