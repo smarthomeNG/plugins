@@ -824,10 +824,14 @@ class AVDevice(SmartPlugin):
 		for zeit in self._keep_commands:
 			keeping = False
 			if time.time() - zeit <= self._secondstokeep and not self._keep_commands[zeit] in keeptemp:
-				for item in self._query_zonecommands['{}'.format(zone)]:
-					if item.split(',')[1] == self._keep_commands[zeit].split(',')[1]:
-						keeping = True
-				if zone == 'all' or keeping == True:
+				try:
+				    for item in self._query_zonecommands['{}'.format(zone)]:
+					    if item.split(',')[1] == self._keep_commands[zeit].split(',')[1]:
+						    keeping = True
+				except:
+				    self.logger.log(VERBOSE2, "Keep Commands {}: Zone is set to all.".format(self._name))
+				if zone == 'all' or keeping == True or trigger == 'powercommand':
+					keeping = True
 					keeptemp.append(self._keep_commands[zeit])
 			self.logger.debug("Keep Commands {}: Age {}s of command {}. Secondstokeep: {}. Keeping command: {}".format(
 				self._name.lower(), int(time.time() - zeit), self._keep_commands[zeit], self._secondstokeep, keeping))
