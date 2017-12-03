@@ -13,16 +13,17 @@ For more information about MPD and it's commands see http://www.musicpd.org/doc/
 mpd:
     class_name: MPD
     class_path: plugins.mpd
-    instance: "bathroom"
-    host: "192.168.177.164"
+    instance: bathroom
+    host: 192.168.177.164
+    host: 192.168.177.164
     port: 6601
 #    cycle: 2
 
 mpd:
     class_name: MPD
     class_path: plugins.mpd
-    instance: "kitchen"
-    host: "192.168.177.164"
+    instance: kitchen
+    host: 192.168.177.164
     port: 6602
 #    cycle: 2
 ```
@@ -505,16 +506,3 @@ EG:
                 mpd_command@kitchen: stop
                 enforce_updates: true
 ```
-
-## Logging
-
-You can configure the logger to see specific outputs of the plugin. That's helpfull when setting up the plugin. To see e.g. the debug-outputs of
-the plugin you have to configure the logging.yaml file. 
-
-```
-loggers:
-    plugins.mpd:
-       level: DEBUG
-```
-
-That configured loglevel is used for all instances of the plugin. All output lines of the plulgin have a prefix to identify which instance gave the output.
