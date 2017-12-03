@@ -196,6 +196,8 @@
 		"enforce_updates": "wymuszone aktualizacje",
 		"eval": "ewaluacja",
 		"eval_trigger": "wyzwalacze ewaluacji",
+		"on_update": "on_update",
+		"on_change": "on_change",
 		"cycle": "cykl",
 		"crontab": "harmonogram",
 		"autotimer": "autotimer",

@@ -198,6 +198,8 @@
 		"enforce_updates": "enforce_updates",
 		"eval": "eval",
 		"eval_trigger": "eval_trigger",
+		"on_update": "on_update",
+		"on_change": "on_change",
 		"cycle": "cycle",
 		"crontab": "crontab",
 		"autotimer": "autotimer",

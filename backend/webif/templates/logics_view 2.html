@@ -1,0 +1,287 @@
+ <!DOCTYPE html>
+{% extends "base.html" %}
+{% import "navbar.html" as nav with context %}
+{% block navbar %}
+	{{ nav }}
+{% endblock navbar %}
+
+{% block content %}
+<link rel="stylesheet" href="static/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="static/codemirror/addon/display/fullscreen.css">
+<link rel="stylesheet" href="static/codemirror/addon/hint/show-hint.css">
+<link rel="stylesheet" href="static/css/codemirror_custom.css">
+<link rel="stylesheet" href="static/codemirror/addon/dialog/dialog.css">
+<link rel="stylesheet" href="static/codemirror/addon/search/matchesonscrollbar.css">
+<link rel="stylesheet" href="static/codemirror/addon/fold/foldgutter.css" />
+<script src="static/codemirror/lib/codemirror.js"></script>
+<script src="static/codemirror/mode/python/python.js"></script>
+<script src="static/codemirror/mode/xml/xml.js"></script>
+<script src="static/codemirror/addon/fold/foldcode.js"></script>
+<script src="static/codemirror/addon/fold/foldgutter.js"></script>
+<script src="static/codemirror/addon/fold/comment-fold.js"></script>
+<script src="static/codemirror/addon/fold/brace-fold.js"></script>
+<script src="static/codemirror/addon/fold/xml-fold.js"></script>
+<script src="static/codemirror/addon/fold/indent-fold.js"></script>
+<script src="static/codemirror/addon/display/fullscreen.js"></script>
+<script src="static/codemirror/addon/display/rulers.js"></script>
+<script src="static/codemirror/addon/hint/show-hint.js"></script>
+<script src="static/codemirror/addon/hint/anyword-hint.js"></script>
+<script src="static/codemirror/addon/dialog/dialog.js"></script>
+<script src="static/codemirror/addon/search/searchcursor.js"></script>
+<script src="static/codemirror/addon/search/search.js"></script>
+<script src="static/codemirror/addon/scroll/annotatescrollbar.js"></script>
+<script src="static/codemirror/addon/search/matchesonscrollbar.js"></script>
+<script src="static/codemirror/addon/search/jump-to-line.js"></script>
+
+<div class="container" style="width: 90%;">
+	<h3>SmartHomeNG {{ _('Logik') }}: {{ logicname }}</h3>
+	<strong>{{ _('Dateiname') }}:</strong> {{ file_path }}
+	<br/><br/>
+</div>
+
+<div class="container" style="width: 90%;">
+	<div style="margin-bottom: 5px;">
+	{% if updates %}
+		<form name="input" action="logics_view.html" method="POST" enctype="multipart/form-data">
+		<input type="hidden" name="logicname" readonly="true" value="{{ logicname }}" type="text"/>
+		<input type="hidden" name="file_path" readonly="true" value="{{ file_path }}" type="text"/>
+			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-default btn-xs"><i class="fa fa-hand-pointer-o"></i> {{ _('Auslösen','button') }}</button>
+
+		{% if thislogic.enabled %}
+			<button name="disable" class="btn btn-default btn-xs"><i class="fa fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
+		{% else %}
+			<button name="enable" class="btn btn-default btn-xs"><i class="fa fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
+		{% endif %}
+		&nbsp;|&nbsp;|&nbsp;
+			<button id="save" name="save" class="btn btn-default btn-xs btn-success"><i class="fa fa-floppy-o"></i>&nbsp;&nbsp;{{ _('Speichern','button') }}</button>
+			<button id="savereload" name="savereload" class="btn btn-default btn-xs btn-success"><i class="fa fa-floppy-o"></i>&nbsp;&nbsp;{{ _('Speichern_und_Neu_Laden','button') }}</button>
+<!--
+		<input id="savereloadtrigger" name="savereloadtrigger" value="{{ _('Speichern_Neu_Laden_und_Triggern','button') }}" type="submit" class="btn btn-default btn-xs btn-success"/>
+-->
+		 |&nbsp;|&nbsp;
+			<button id="linewrapping" type="button" class="btn btn-default btn-xs active">{{ _('Zeilenumbruch') }}</button>
+			<button id="rulers" type="button" class="btn btn-default btn-xs active">{{ _('Hilfslinien') }}</button>
+			<button id="help" type="button" class="btn btn-default btn-xs"><i class="fa fa-info"></i>&nbsp;&nbsp;{{ _('Hilfe') }}</button>
+	{% endif %}
+    </div>
+	<div id="help_text" style="display:none;">
+		<p>
+		<ul>
+			<li>
+			<strong>{{ _('Speichern','button') }}</strong> {{ _('sowie') }} <strong>{{ _('Speichern_und_Neu_Laden','button') }}</strong> {{ _('führen nicht zum') }} {{ _('Auslösen','button') }} {{ _('der Logik') }}. 
+			{{ _('Bitte bei Bedarf anschließend') }} <strong>{{ _('Auslösen','button') }}</strong> {{ _('drücken') }}.<br/>
+			</li>
+			<li>
+			{{ _('Strg + Space: Autovervollständigen von Python Befehlen. Strg + i: Autovervollständigen von Item-Pfaden.') }}<br/>
+			</li>
+			<li>
+			{{ _('Drücken Sie F11 für den Vollbildmodus, wenn der Cursor im Editorfenster ist. Mit F11 oder ESC verlassen Sie den Vollbildmodus wieder.') }}
+			</li>
+			<li>{{_('Suche') }}:<ul>
+				<li>{{ _('help_search_1') }}</li>
+				<li>{{ _('help_search_2') }}</li>
+				<li>{{ _('help_search_3') }}</li>
+				<li>{{ _('help_search_4') }}</li>
+				<li>{{ _('help_search_5') }}</li>
+				<li>{{ _('help_search_6') }}</li>
+				<li>{{ _('help_search_7') }}</li>
+			</ul></li>
+		</ul>
+		</p>
+	</div>
+
+	<table class="table table-bordered table-hover table-striped">
+		<tr>
+			<td style="min-width:200px;"><strong>{{ _('Status') }}:</strong></td>
+			<td><span style="color: {% if not thislogic.enabled %}red{% else %}green{% endif %};" class="fa {% if not thislogic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span>
+			{% if not thislogic.enabled %}{{ _('Nicht aktiv') }}{% else %}{{ _('Aktiv') }}{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<td><strong>{{ _('letzte Ausführung') }}</strong></td>
+			<td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
+				{{ thislogic.last_run }}
+				{% if not thislogic.enabled %}</span>{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<td><strong>{{ _('nächste Ausführung') }}</strong></td>
+			<td>{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
+				{{ thislogic.next_exec }}
+				{% if not thislogic.enabled %}</span>{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<td><strong>{{ _('Cycle') }}</strong></td>
+			<td>
+				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.cycle }}"/>
+				<input type="hidden" id="original_cycle" value="{{ thislogic.cycle }}"/>
+			</td>
+		</tr>
+		<tr>
+			<td><strong>{{ _('Crontab(s)') }}</strong></td>
+			<td>
+				<input type="text" autocomplete="off" id="crontab" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.crontab }}"/>
+				<input type="hidden" id="original_crontab" value="{{ thislogic.crontab }}"/>
+			</td>
+		</tr>
+		<tr>
+			<td><strong>{{ _('Watch_Item(s)') }}</strong></td>
+			<td>
+				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.watch_item }}"/>
+				<input type="hidden" id="original_watch" value="{{ thislogic.watch_item }}"/>
+			</td>
+		</tr>
+		<tr>
+			<td><strong>{{ 'visu_acl' }}</strong></td>
+			<td>
+				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.visu_acl }}"/>
+				<input type="hidden" id="original_visu_acl" value="{{ thislogic.visu_acl }}"/>
+			</td>
+		</tr>
+	</table>
+	<input type="hidden" id="original_content" value="{% for line in logic_lines %}{{ line }}{% endfor %}"/>
+	<div style="border: 1px solid #ddd; margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
+		{% if logic_lines %}
+			<textarea autocomplete="off" id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}{% endfor %}</textarea>
+			{% if updates %}</form>{% endif %}
+		{% else %}{{ _('no data available') }}{% endif %}
+	<script>
+var rulers = [];
+for (var i = 1; i <= 100; i++) {
+	rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
+}
+
+var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
+    lineNumbers: true,
+
+    extraKeys: {
+        "F11": function(cm) {
+          logicsCodeMirror.getScrollerElement().style.maxHeight = 'none';
+          cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+          if (!cm.getOption("fullScreen")) {
+              resizeCodeMirror();
+          }
+        },
+        "Esc": function(cm, fullScreen) {
+          if (cm.getOption("fullScreen")) {
+              cm.setOption("fullScreen", false);
+              resizeCodeMirror();
+          }
+        }{% if updates %},
+        "Ctrl-Space": "autocomplete",
+        "Ctrl-I": "autocomplete_item",
+        "Alt-F": "findPersistent",
+        "Tab": function(cm) {
+			var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+			cm.replaceSelection(spaces, "end", "+input");
+		},
+		"Ctrl-Q": function(cm){
+			cm.foldCode(cm.getCursor());
+		}{% endif %}
+    },
+    mode: "{{ mode }}",
+    {% if not updates %}
+    readOnly: true,
+    {% endif %}
+    lineSeparator: '\n',
+    indentUnit: 4,
+    {% if mode == 'python' %}rulers: rulers,{% endif %}
+    lineWrapping: true,
+    indentWithTabs: false,
+    foldGutter: true,
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+});
+
+{% if updates %}
+$('#crontab').keyup( function() {
+	if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+});
+$('#watch').keyup( function() {
+	if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+});
+$('#cycle').keyup( function() {
+	if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+});
+logicsCodeMirror.on("keyup", function (cm, event) {
+    if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+
+	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
+		(event.keyCode != 8 &&
+		event.keyCode != 9 &&
+		event.keyCode != 13 &&
+		event.keyCode != 27 &&
+		event.keyCode != 37 &&
+		event.keyCode != 38 &&
+		event.keyCode != 39 &&
+		event.keyCode != 40 &&
+		event.keyCode != 46)) {
+		CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
+	};
+});
+var answer = false;
+var unloadCheck = true;
+$('a').click(function(e) {
+    if(checkChangedContent()) {
+        e.preventDefault();
+        if(window.confirm("{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}")) {
+        	answer=true;
+        	location.href=e.currentTarget;
+        }
+    }
+});
+
+var inFocus = false;
+$('#save').click(function() {
+  inFocus = true;
+});
+$('#savereload').focus(function() {
+  inFocus = true;
+});
+$('#savereloadtrigger').focus(function() {
+  inFocus = true;
+});
+
+$('#save').blur(function() {
+  inFocus = false;
+});
+$('#savereload').blur(function() {
+  inFocus = false;
+});
+$('#savereloadtrigger').blur(function() {
+  inFocus = false;
+});
+
+window.onbeforeunload = function(e) {
+	if (inFocus) {
+		return;
+	} else if (!answer && checkChangedContent()) {
+		return '{{ _('Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!')}}';
+    } else {
+        return;
+    }
+}
+
+{% endif %}
+</script>
+</div>
+ </div>
+<script src="static/js/logics_view_functions.js"></script>
+{% endblock %}
+

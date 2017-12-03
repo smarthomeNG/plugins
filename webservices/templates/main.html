@@ -12,7 +12,7 @@
                 The following items can be accessed by the REST and the Simple WebService interface:<br/><br/>
                 <br/>
                 <table>
-                    <tr>
+                    <tr style="border-bottom: 1px solid grey;">
                         <th>
                             REST
                         </th>
@@ -20,13 +20,25 @@
                             Simple
                         </th>
                     </tr>
-                    <tr style="border-bottom: 1px solid grey;">
-                        <td>
-                            <a href="http://{{ip}}:{{servicesport}}/rest/items/">Full list in JSON Format</a>
-                        </td>
-                        <td>
-                            <a href="http://{{ip}}:{{servicesport}}/ws/items/">Full list in JSON Format</a>
-                        </td>
+                    {% for key, value in item_sets.items() %}
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold;"><a href="http://{{ip}}:{{servicesport}}/rest/itemset/{{key}}/">Item-Set: {{key}}</a></td>
+                        <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold;"><a href="http://{{ip}}:{{servicesport}}/ws/itemset/{{key}}/">Item-Set: {{key}}</a></td>
+                    </tr>
+                         {% for item in value %}
+                            <tr>
+                                <td>
+                                    <a href="http://{{ip}}:{{servicesport}}/rest/items/{{item._path}}/">{{item._path}}</a>
+                                </td>
+                                <td>
+                                    <a href="http://{{ip}}:{{servicesport}}/ws/items/{{item._path}}/">{{item._path}}</a>
+                                </td>
+                            </tr>
+                         {% endfor %}
+                    {% endfor %}
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold;"><a href="http://{{ip}}:{{servicesport}}/rest/items/">All Accessible Items</a></td>
+                        <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold;"><a href="http://{{ip}}:{{servicesport}}/ws/items/">All Accessible Items</a></td>
                     </tr>
                     {% for item in item_data %}
                     <tr>
