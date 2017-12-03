@@ -121,7 +121,13 @@ class WebGuiInterface:
                 if item.type() in ['str', 'bool', 'num']:
                     items_filtered.append(item)
                     if self.plugin.has_iattr(item.conf, 'webservices_set'):
-                        for item_set in self.plugin.get_iattr_value(item.conf, 'webservices_set'):
+                        if isinstance(self.plugin.get_iattr_value(item.conf, 'webservices_set'), list):
+                            for item_set in self.plugin.get_iattr_value(item.conf, 'webservices_set'):
+                                if item_set not in item_sets:
+                                    item_sets[item_set] = []
+                                item_sets[item_set].append(item)
+                        else:
+                            item_set = self.plugin.get_iattr_value(item.conf, 'webservices_set')
                             if item_set not in item_sets:
                                 item_sets[item_set] = []
                             item_sets[item_set].append(item)
@@ -141,6 +147,18 @@ class WebServiceInterface:
         self.webif_dir = webif_dir
         self.logger = logging.getLogger(__name__)
         self.plugin = plugin
+
+    def check_set(self, set_id, item_sets):
+        if isinstance(item_sets, list):
+            if set_id in item_sets:
+                return True
+            else:
+                return False
+        else:
+            if set_id == item_sets:
+                return True
+            else:
+                return False
 
     def assemble_item_data(self, item, webservices_data='full'):
         if item is not None:
@@ -231,7 +249,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 items = {}
                 for item in items_sorted:
                     if self.plugin.has_iattr(item.conf, 'webservices_set'):
-                        if set_id in self.plugin.get_iattr_value(item.conf, 'webservices_set'):
+                        if self.check_set(set_id, self.plugin.get_iattr_value(item.conf, 'webservices_set')):
                             if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
                                 item_data = self.assemble_item_data(item, 'val')
                                 items[item_data['path']] = item_data['value']
@@ -318,7 +336,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                 items = {}
                 for item in items_sorted:
                     if self.plugin.has_iattr(item.conf, 'webservices_set'):
-                        if set_id in self.plugin.get_iattr_value(item.conf, 'webservices_set'):
+                        if self.check_set(set_id, self.plugin.get_iattr_value(item.conf, 'webservices_set')):
                             if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
                                 item_data = self.assemble_item_data(item, 'val')
                                 items[item_data['path']] = item_data['value']
