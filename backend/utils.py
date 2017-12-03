@@ -99,13 +99,6 @@ def load_translation(language):
     return True
 
 
-#def html_escape(str):
-#    str = str.rstrip().replace('<', '&lt;').replace('>', '&gt;')
-#    str = str.rstrip().replace('(', '&#40;').replace(')', '&#41;')
-#    html = str.rstrip().replace("'", '&#39;').replace('"', '&quot;')
-#    return html
-
-
 def _get_translation_for_block(lang, txt, block):
     """
     """
@@ -185,7 +178,6 @@ def parse_requirements(file_path):
             else:
                 line = line[0:line.find("#")].lower().strip()
             
-#        if len(line) > 0 and '#' not in line:
         if len(line) > 0:
             if ">" in line:
                 if line[0:line.find(">")].lower().strip() in req_dict:

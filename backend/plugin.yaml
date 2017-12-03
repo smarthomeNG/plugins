@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
 
-    version: 1.4.7                 # Plugin version
+    version: 1.4.8                 # Plugin version
     sh_minversion: 1.3d            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -20,63 +20,12 @@ plugin:
     
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-#    ip:    # moved to http module
-#        type: ipv4
-#        default: ''
-#        description:
-#            de: 'IP Adresse, falls nicht auf allen IPs des hosts gelauscht werden soll'
-#            en: 'ip address to use, if not listening on all ip addresses of the host'
-    
-#    port:    # moved to http module
-#        type: int
-#        default: 8383
-#        description:
-#            de: ''
-#            en: ''
-    
-#    threads:    # moved to http module
-#        type: int
-#        default: 8
-#        description:
-#            de: ''
-#            en: ''
-    
-    language:    # to be moved to smarthome.yaml (global setting)
-        type: str
-        default: de
-        valid_list:
-          - en
-          - de
-          - fr
-          - pl
-        description:
-            de: ''
-            en: ''
-
     updates_allowed:
         type: bool
         default: True
         description:
             de: 'Update von Werten durch das Backend Plugin ist erlaubt'
             en: 'Update of values through the backend plugin is allowed'
-    user:
-        type: str
-        default: admin
-        description:
-            de: 'Benutzername für Basic Auth, falls ein Passwort definiert ist'
-            en: 'username for basic auth, if a password is defined'
-
-    password:
-        type: str
-        description:
-            de: 'Passwort (im Klartext) für Basic Auth'
-            en: 'Password (unencrypted) for basic auth'
-
-    hashed_password:
-        type: str
-        description:
-            de: 'Passwort (verschlüsselt) für Basic Auth'
-            en: 'Password (encrypted) for basic auth'
 
     developer_mode:
         type: bool

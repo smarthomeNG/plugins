@@ -1,4 +1,4 @@
-# Backend GUI (beyond shNG v1.3)
+# Backend GUI
 
 This plugin delivers information about the current SmartHomeNG installation. Right now it serves as a support tool for helping other users with an installation that does not run properly. Some highlights:
 
@@ -21,7 +21,9 @@ Support is provided trough the support thread within the smarthomeNG forum:
 
 ## Requirements
 
-This plugin is running under Python >= 3.4 as well as the libs cherrypy and jinja2. You can install them with:
+This version of the plugin needs **SmartHomeNG v1.4 or newer**.
+
+This plugin is running under **Python >= 3.4** as well as the libs cherrypy and jinja2. You can install them with:
 ```
 (sudo apt-get install python-cherrypy)
 sudo pip3 install cherrypy
@@ -40,73 +42,31 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
+### plugin.yaml / plugin.conf (deprecated)
+
+```yaml
+# /etc/plugin.yaml
+BackendServer:
+    plugin_name: backend
+    #updates_allowed: 'True'
+    #developer_mode: 'on'
+    #pypi_timeout: 5
+```
 
 ```
 # /etc/plugin.conf
 [BackendServer]
 	class_name = BackendServer
 	class_path = plugins.backend
-	#ip = xxx.xxx.xxx.xxx
-	#port = 8383
 	#updates_allowed = True
-	#threads = 8
-	#user = admin
-	#password = very_secure_password
-	#hashed_password = 1245a9633edf47b7091f37c4d294b5be5a9936c81c5359b16d1c4833729965663f1943ef240959c53803fedef7ac19bd59c66ad7e7092d7dbf155ce45884607d
-	#language = en
 	#developer_mode = on
 	#pypi_timeout = 5
 ```
 
-```yaml
-# /etc/plugin.yaml
-BackendServer:
-    class_name: BackendServer
-    class_path: plugins.backend
-    #ip: xxx.xxx.xxx.xxx
-    #port: 8383
-    #updates_allowed: 'True'
-    #threads: 8
-    #user: admin
-    #password: very_secure_password
-    #hashed_password: 1245a9633edf47b7091f37c4d294b5be5a9936c81c5359b16d1c4833729965663f1943ef240959c53803fedef7ac19bd59c66ad7e7092d7dbf155ce45884607d
-    #language: en
-    #developer_mode: 'on'
-    #pypi_timeout: 5
-```
-
-#### ip
-IP address to start the backend server. Usually it doesnot need to be configured.
-
-If not configured the standard ip address of the system is used. If you like to restrict the usage of the BackendServer to the system itself (the browser ist running on the smarthomeNG system itself), you can configure the ip to 127.0.0.1. In this case, the BackendServer is only available through the localhost address.
-
-#### port
-The port on which the backend server listens. By default port **`8383`** is used.
 
 #### updates_allowed
 
 By default, the backend server allows updates to the running smarthomeNG instance. For instance, it is possible to trigger or to reload a logic. Setting **`updates_allowed`** to **`False`**, you can disable these features.
-
-####  threads
-
-Number of worker threads to start by cherrypy (default 8, which may be too much for slow CPUs)
-
-#### user (optional)
-
-The user for basic authentication. If left out, the user name is set as "admin"
-
-#### password (optional)
-
-The plaintext password for basic authentication. If you want to store your password as hash, use 'hashed_password' instead. If both "password" and "hashed_password" are left out, basic authentication is disabled.
-
-#### hashed_password (optional)
-
-The password for basic authentication as hash value. Can be used instead of "password" if you do not want a plaintext password in your config file. If both "password" and "hashed_password" are left out, basic authentication is disabled. Currently hashed_password is the SHA-512 hash value of the password. To create the hash for your password, you can use function "Create password hash" on page "Services" in the backend.
-
-#### language (optional)
-
-You can specify a language to use for the plugin. Besides the standard language (german) which is used, if this parameter isn't set, you can specify english (for the time being). The language is specified by  **``en``**
 
 #### developer_mode (optional)
 

@@ -23,23 +23,13 @@
 #########################################################################
 
 import cherrypy
-import platform
-import collections
-import datetime
-import pwd
-import html
-import subprocess
-import socket
-import sys
-import threading
-import os
+
 import lib.config
-from lib.logic import Logics
-import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.model.smartplugin import SmartPlugin
+
 from .utils import *
 
-import lib.item_conversion
+#import lib.item_conversion
 
 class BackendPlugins:
 
@@ -55,19 +45,15 @@ class BackendPlugins:
         """
         conf_plugins = {}
         _conf = lib.config.parse(self._sh._plugin_conf)
-#        self.logger.warning("plugins_html: _conf = {0}".format(_conf))
         for plugin in _conf:
-            # self.logger.warning("plugins_html: class_name='{0}', class_path='{1}'".format(_conf[plugin]['class_name'], _conf[plugin]['class_path']))
             conf_plugins[plugin] = {}
             conf_plugins[plugin] = _conf[plugin]
 
         plugins = []
         for x in self._sh._plugins:
             plugin = dict()
-#            plugin['classpath'] = conf_plugins[x._config_section]['class_path']
             if bool(x._parameters):
                 plugin['attributes'] = x._parameters
-#                self.logger.warning("plugins_html: x._parameters = {}".format(str(x._parameters)))
             else:
                 plugin['attributes'] = conf_plugins[x._config_section]
             plugin['metadata'] = x._metadata
@@ -84,7 +70,6 @@ class BackendPlugins:
                 plugin['shortname'] = x._shortname
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
-#            plugin['classpath'] = 'plugins.'+plugin['classname']
             plugins.append(plugin)
         plugins_sorted = sorted(plugins, key=lambda k: k['classpath'])
 

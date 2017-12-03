@@ -24,27 +24,26 @@
 
 import cherrypy
 import platform
-import collections
+#import collections
 import datetime
 import time
 import pwd
-import html
-import subprocess
+#import html
+#import subprocess
 import socket
 import sys
-import threading
+#import threading
 import os
 import psutil
 
 import bin.shngversion as shngversion
 import lib.config
-from lib.logic import Logics
-import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
-from lib.model.smartplugin import SmartPlugin
+#from lib.logic import Logics
+#from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
 from .utils import *
 
-import lib.item_conversion
+#import lib.item_conversion
 
 class BackendSysteminfo:
 
