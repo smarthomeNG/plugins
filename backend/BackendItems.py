@@ -196,6 +196,45 @@ class BackendItems:
                     hours = hours - 24 * days
         return self.age_to_string(days, hours, minutes, seconds)
 
+
+    def list_to_displaystring(self, l):
+        """
+        """
+        if type(l) is str:
+            self.logger.info("list_to_displaystring: >{}<  -->  >{}<".format(l, l))
+            return l
+        
+        edit_string = ''
+        for entry in l:
+            if edit_string != '':
+                edit_string += ' | '
+            edit_string += str(entry)
+        if edit_string == '':
+            edit_string = '-'
+        self.logger.info("list_to_displaystring: >{}<  -->  >{}<".format(l, edit_string))
+        return edit_string
+
+
+    def build_on_list(self, on_dest_list, on_eval_list):
+        """
+        build on_xxx data
+        """
+        on_list = []
+        if on_dest_list is not None:
+            if isinstance(on_dest_list, list):
+                for on_dest, on_eval in zip(on_dest_list, on_eval_list):
+                    if on_dest != '':
+                        on_list.append( on_dest + ' = ' + on_eval )
+                    else:
+                        on_list.append( on_eval )
+            else:
+                if on_dest_list != '':
+                    on_list.append( on_dest_list + ' = ' + on_eval_list )
+                else:
+                    on_list.append( on_eval_list )
+        return on_list
+
+
     @cherrypy.expose
     def item_detail_json_html(self, item_path):
         """
@@ -227,6 +266,10 @@ class BackendItems:
                     if self._sh.scheduler._scheduler[entry]['cron']:
                         crontab = html.escape(str(self._sh.scheduler._scheduler[entry]['cron']))
                     break
+            if cycle == '':
+                cycle = '-'
+            if crontab == '':
+                crontab = '-'
 
             changed_by = item.changed_by()
             if changed_by[-5:] == ':None':
@@ -264,6 +307,10 @@ class BackendItems:
                 # if used lib.items doesn't support update_age() function
                 upd_age = item.age()
             
+            # build on_update and on_change data
+            on_update_list = self.build_on_list(item._on_update_dest_var, item._on_update)
+            on_change_list = self.build_on_list(item._on_change_dest_var, item._on_change)
+            
             data_dict = {'path': item._path,
                          'name': item._name,
                          'type': item.type(),
@@ -280,8 +327,8 @@ class BackendItems:
                          'cache': cache,
                          'eval': html.escape(self.disp_str(item._eval)),
                          'eval_trigger': self.disp_str(item._eval_trigger),
-                         'on_update': html.escape(self.disp_str(item._on_update)),
-                         'on_change': html.escape(self.disp_str(item._on_change)),
+                         'on_update': html.escape(self.list_to_displaystring(on_update_list)),
+                         'on_change': html.escape(self.list_to_displaystring(on_change_list)),
                          'cycle': str(cycle),
                          'crontab': str(crontab),
                          'autotimer': self.disp_str(item._autotimer),
