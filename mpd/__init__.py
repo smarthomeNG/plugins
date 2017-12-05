@@ -147,10 +147,12 @@ class MPD(lib.connection.Client,SmartPlugin):
 
     def update_statusitems(self,warn):
         if not self.connected:
-            self.loggercmd("update_status while not connected",'e')
+            if warn:
+                self.loggercmd("update_status while not connected",'e')
             return
         if (len(self._status_items) <= 0):
-            self.loggercmd("status: no items to refresh",'w')
+            if warn:
+                self.loggercmd("status: no items to refresh",'w')
             return
         self.loggercmd("requesting status",'d')
         status = self._send('status')
@@ -158,10 +160,12 @@ class MPD(lib.connection.Client,SmartPlugin):
 
     def update_currentsong(self,warn):
         if not self.connected:
-            self.loggercmd("update_currentsong while not connected",'e')
+            if warn:
+                self.loggercmd("update_currentsong while not connected",'e')
             return
         if (len(self._currentsong_items) <= 0):
-            self.loggercmd("currentsong: no items to refresh",'e')
+            if warn:
+                self.loggercmd("currentsong: no items to refresh",'e')
             return
         self.loggercmd("requesting currentsong",'d')
         currentsong = self._send('currentsong')
@@ -169,10 +173,12 @@ class MPD(lib.connection.Client,SmartPlugin):
 
     def update_statistic(self,warn):
         if not self.connected:
-            self.loggercmd("update_statistic while not connected",'e')
+            if warn:
+                self.loggercmd("update_statistic while not connected",'e')
             return
         if (len(self._statistic_items) <= 0):
-            self.loggercmd("statistic: no items to refresh",'e')
+            if warn:
+                self.loggercmd("statistic: no items to refresh",'e')
             return
         self.loggercmd("requesting statistic",'d')
         stats = self._send('stats')

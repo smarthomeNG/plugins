@@ -15,7 +15,6 @@ mpd:
     class_path: plugins.mpd
     instance: bathroom
     host: 192.168.177.164
-    host: 192.168.177.164
     port: 6601
 #    cycle: 2
 
