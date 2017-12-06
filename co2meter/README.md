@@ -8,7 +8,7 @@ The CO2Meter Plugin allows to access a Dostmann TFA Dostmann AirCO2ntrol device 
 
 There are no requirements for this plugin.
 
-Forum thread to the plugin: https://knx-user-forum.de/forum/...
+Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/1165010-supportthread-f%C3%BCr-das-co2meter-plugin
 
 The code was adapted from the CO2Meter project Copyright 2017 by Michael Heinemann under MIT License 
 (https://github.com/heinemml/CO2Meter/).
