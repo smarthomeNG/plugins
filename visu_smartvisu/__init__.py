@@ -309,6 +309,7 @@ class SmartVisuGenerator:
 #########################################################################
 
     def parse_tpl(self, template, replace):
+        self.logger.debug("try to parse template file '{0}'".format(template))
         try:
             with open(self.tpldir + '/' + template, 'r', encoding='utf-8') as f:
                 tpl = f.read()
@@ -393,7 +394,10 @@ class SmartVisuGenerator:
         for fn in os.listdir(srcdir):
             if (self.overwrite_templates) or (not os.path.isfile(self.tpldir + '/' + fn) ):
                 self.logger.debug("copy_templates: Copying template '{0}' from plugin to smartVISU".format(fn))
-                shutil.copy2( srcdir + '/' + fn, self.tpldir )
+                try:
+                    shutil.copy2( srcdir + '/' + fn, self.tpldir )
+                except Exception as e:
+                    self.logger.error("Could not copy {0} from {1} to {2}".format(fn, srcdir, self.tpldir))
         return
 
 
@@ -429,7 +433,11 @@ class SmartVisuInstallWidgets:
         # make a backup copy of root.html if it doesn't exist (for full integeration)
         if not os.path.isfile( self.pgbdir + '/root_master.html' ):
             self.logger.warning( "install_widgets: Creating a copy of root.html" )
-            shutil.copy2( self.pgbdir + '/root.html', self.pgbdir + '/root_master.html' )
+            try:
+                shutil.copy2( self.pgbdir + '/root.html', self.pgbdir + '/root_master.html' )
+            except Exception as e:
+                self.logger.error("Could not copy {0} from {1} to {2}".format('root.html', self.pgbdir, self.pgbdir + '/root_master.html'))
+                return
 
         # read the unmodified root.html (from root_master.html)
         f_root = open(self.pgbdir + '/root_master.html', "r")
@@ -443,7 +451,7 @@ class SmartVisuInstallWidgets:
         iln_css = self.findinsertline( root_contents, "{% if isfile('pages/'~config_pages~'/visu.css') %}" )
     
         # copy widgets from plugin directories of configured plugins
-        # read plungin.conf
+        # read plugin.conf
         _conf = lib.config.parse(smarthome._plugin_conf)
         self.logger.debug( "install_widgets: _conf = {0}".format(str(_conf)) )
         mypluginlist = []
