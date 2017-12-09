@@ -214,18 +214,18 @@ The following status EEPs are supported:
 ```
 * A5_02_01 - A5_02_0B	Temperature Sensors (40°C overall range, various starting offsets, 1/6°C resolution)
 * A5_02_10 - A5_02_1B	Temperature Sensors (80°C overall range, various starting offsets, 1/3°C resolution)
-* A5_02_20		                High Precision Temperature Sensor (ranges -10*C to +41.2°C, 1/20°C resolution)
-* A5_02_30				High Precision Temperature Sensor (ranges -40*C to +62.3°C, 1/10°C resolution)
-* A5_04_02				Energy (optional), humidity and temperature sensor
-* A5_08_01				Brightness and movement sensor
-* A5_11_04				Dimmer status feedback
-* A5_12_01				Power Measurement
-* D2_01_07                              Simple electronic switch
-* D5_00_01				Door/Window Contact, e.g. Eltako FTK, FTKB
-* F6_02_01				2-Button-Rocker
-* F6_02_02				2-Button-Rocker
-* F6_02_03				2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V, FSB61NP-230V or Gira switches.
-* F6_10_00				Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
+* A5_02_20		High Precision Temperature Sensor (ranges -10*C to +41.2°C, 1/20°C resolution)
+* A5_02_30		High Precision Temperature Sensor (ranges -40*C to +62.3°C, 1/10°C resolution)
+* A5_04_02		Energy (optional), humidity and temperature sensor
+* A5_08_01		Brightness and movement sensor
+* A5_11_04		Dimmer status feedback
+* A5_12_01		Power Measurement
+* D2_01_07              Simple electronic switch
+* D5_00_01		Door/Window Contact, e.g. Eltako FTK, FTKB
+* F6_02_01		2-Button-Rocker
+* F6_02_02		2-Button-Rocker
+* F6_02_03		2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V, FSB61NP-230V or Gira switches.
+* F6_10_00		Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
 ```
 A complete list of available EEPs is documented at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
 
@@ -233,11 +233,11 @@ A complete list of available EEPs is documented at [EnOcean Alliance](http://www
 ### Send commands: Tx EEPs
 
 ```
-* A5_38_08_01			Regular switch actor command (on/off)
-* A5_38_08_02			Dimmer command with fix on off command (on: 100, off:0)
-* A5_38_08_03			Dimmer command with specified dim level (0-100)
-* A5_3F_7F			Universal actuator command, e.g. blind control
-* D2_01_07                      Simple electronic switch
+* A5_38_08_01		Regular switch actor command (on/off)
+* A5_38_08_02		Dimmer command with fix on off command (on: 100, off:0)
+* A5_38_08_03		Dimmer command with specified dim level (0-100)
+* A5_3F_7F		Universal actuator command, e.g. blind control
+* D2_01_07              Simple electronic switch
 ```
 
 The optional ref_level parameter defines default dim value when dimmer is switched on via on command.
