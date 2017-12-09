@@ -764,86 +764,59 @@ class EnOcean(SmartPlugin):
 ####################################################
 ### --- START - Definitions of Learn Methods --- ###
 ####################################################
-    def send_learn_dim(self, id_offset=0):
-        #self.logger.debug('enocean: send_learn_dim()')
-        # Prepare Data
+    def send_learn_protocol(self, id_offset=0, device=10):
+        # define RORG
         rorg = 0xA5
-        # Only for Eltako FSUD-230V
-        payload = [0x02, 0x00, 0x00, 0x00]
-        # For other Eltako Dim Devices use this payload
-        #payload = [0xE0, 0x40, 0x0D, 0x80]
-
+        
+        # check offset range between 0 and 127
         if (id_offset < 0) or (id_offset > 127):
             self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
             return None
-        else:
-            self.logger.info('enocean: sending learn telegram for dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
-            self._send_radio_packet(id_offset, rorg, payload)
-            return None
-
-
-    def send_learn_rgbw_dim(self, id_offset=0):
-        #self.logger.debug('enocean: send_learn_rgbw_dim()')
-        # Prepare Data
-        rorg = 0xA5
-        payload = [0xFF, 0xF8, 0x0D, 0x87]
-
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
-            return None
-        else:
-            self.logger.info('enocean: sending learn telegram for rgbw dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
-            self._send_radio_packet(id_offset, rorg, payload)
-            return None
-
-
-    def send_learn_switch(self, id_offset=0):
-        #self.logger.debug('enocean: send_learn_switch()')
-        # Prepare Data
-        rorg = 0xA5
-        payload = [0xE0, 0x40, 0x0D, 0x80]
-
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
-            return None
-        else:
+        # device range 10 - 19 --> Learn protocol for switch actuators
+        elif (device == 10):
+            # Prepare Data for Eltako switch FSR61
+            payload = [0xE0, 0x40, 0x0D, 0x80]
             self.logger.info('enocean: sending learn telegram for switch command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
-            self._send_radio_packet(id_offset, rorg, payload)
             return None
-
-
-    def send_learn_radiator_valve(self, id_offset=0):
-        #self.logger.debug('enocean: send_learn_radiator_valve()')
-        # Prepare Data
-        rorg = 0xA5
-        payload = [0x00, 0x00, 0x00, 0x00]
-
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
+        # device range 20 - 29 --> Learn protocol for dim actuators
+        elif (device == 20):
+            # Only for Eltako FSUD-230V
+            payload = [0x02, 0x00, 0x00, 0x00]
+            self.logger.info('enocean: sending learn telegram for dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
             return None
-        else:
+        elif (device == 21):
+            # For Eltako FHK61SSR dim device (EEP A5-38-08)
+            payload = [0xE0, 0x40, 0x0D, 0x80]
+            self.logger.info('enocean: sending learn telegram for dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            return None
+        elif (device == 22):
+            # For Eltako FRGBW71L RGB dim devices (EEP 07-3F-7F)
+            payload = [0xFF, 0xF8, 0x0D, 0x87]
+            self.logger.info('enocean: sending learn telegram for rgbw dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            return None
+        # device range 30 - 39 --> Learn protocol for radiator valves
+        elif (device == 30):
+            # Radiator Valve
+            payload = [0x00, 0x00, 0x00, 0x00]
             self.logger.info('enocean: sending learn telegram for radiator valve with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
-            self._send_radio_packet(id_offset, rorg, payload)
             return None
+        # device range 40 - 49 --> Learn protocol for other actuators
+        elif (device == 40):
+            # Eltako shutter actor FSB14, FSB61, FSB71
+             payload = [0xFF, 0xF8, 0x0D, 0x80]
+             self.logger.info('enocean: sending learn telegram for actuator with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+             return None
+        else:
+            self.logger.error('enocean: no such device defined for learning!')
+            return None
+        # Send radio package
+        self._send_radio_packet(id_offset, rorg, payload)
 
 
     def start_UTE_learnmode(self, id_offset=0):
         self.UTE_listen = True
         self.learn_id = id_offset
         self.logger.info("enocean: Listeining for UTE package ('D4')")
-        
-    def send_learn_actuator(self, id_offset=0):
-        #Prepare Data
-        rorg = 0xA5
-        payload = [0xFF, 0xF8, 0x0D, 0x80]
-        
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return None
-        else:
-            self.logger.info('enocean: sending learn telegram for actuator with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
-            self._send_radio_packet(id_offset, rorg, payload)
-        return None
         
         
     def enter_learn_mode(self, onoff=1):

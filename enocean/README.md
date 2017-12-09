@@ -256,16 +256,27 @@ sudo systemctl stop smarthome
 sudo ./smarthome.py -i
 ```
 	
-Then use one of the following learn-in command methods, depending on your enocean device:
+Then use one of the following learn-in commands, depending on your enocean device:
 
 ```python
-sh.enocean.send_learn_dim(ID_Offset)
-sh.enocean.send_learn_rgbw_dim(ID_Offset)
-sh.enocean.send_learn_switch(ID_Offset)
-sh.enocean.send_learn_actuator(ID_Offset) , e.g. for Eltako FSB61NP-230V 
+sh.enocean.send_learn_protocol(id_offset, device)
+```
+With device are different actuators defined:
+
+10: Eltako Switch FSR61
+20: Eltako FSUD-230V
+21: Eltako FHK61SSR dim device (EEP A5-38-08)
+22: Eltako FRGBW71L RGB dim devices (EEP 07-3F-7F)
+30: Radiator Valve
+40: Eltako shutter actors FSB61NP-230V, FSB14, FSB61, FSB71
+
+Examples are:
+```python
+sh.enocean.send_learn_protocol() or sh.enocean.send_learn_protocol(0,10)
+sh.enocean.send_learn_protocol(id_offset,20)
 ```
 
-where ID_Offset, range (0-127), specifies the sending ID offset with respect to the BaseID.
+Where id_offset, range (0-127), specifies the sending ID offset with respect to the BaseID.
 Later, the ID offset is specified in the <item.conf> for every outgoing send command, see example below.
 
 Use different ID offsets for different groups of actors.
@@ -279,4 +290,4 @@ When activated on Enocean device the device will send a ``D4`` teach in request.
 To do so enable the UTE learnmode prior to the activation on the device: Start smarthome with the interactive console - see above. ``sh.enocean.start_UTE_learnmode(ID_Offset)``
 The device will be teached in and the learn mode will be ended automatically
 
-Docu v 1.4a
+Docu v 1.5
