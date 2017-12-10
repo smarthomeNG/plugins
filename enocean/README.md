@@ -264,10 +264,15 @@ sh.enocean.send_learn_protocol(id_offset, device)
 With device are different actuators defined:
 
 10: Eltako Switch FSR61
+
 20: Eltako FSUD-230V
+
 21: Eltako FHK61SSR dim device (EEP A5-38-08)
+
 22: Eltako FRGBW71L RGB dim devices (EEP 07-3F-7F)
+
 30: Radiator Valve
+
 40: Eltako shutter actors FSB61NP-230V, FSB14, FSB61, FSB71
 
 Examples are:
