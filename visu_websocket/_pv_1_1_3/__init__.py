@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2016- Martin Sinn                              m.sinn@gmx.de
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
+#  Copyright 2016- Martin Sinn                              m.sinn@gmx.de
 #########################################################################
 #  This file is part of SmartHomeNG.  
 #  Visit:  https://github.com/smarthomeNG/
@@ -33,8 +33,6 @@ import ssl
 import struct
 import threading
 
-import collections
-
 import lib.connection
 from lib.model.smartplugin import SmartPlugin
 
@@ -43,74 +41,65 @@ from lib.model.smartplugin import SmartPlugin
 
 class WebSocket(SmartPlugin):
     """
-    Main class of the Plugin. Does all plugin specific stuff and provides
-    the update functions for the items
+    Main class of the Plugin. Does the plugin specific stuff.
     """
+    PLUGIN_VERSION = "1.1.3"
+    ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.4.4"
+    def my_to_bool(self, value, attr='', default=False):
+        try:
+            result = self.to_bool(value)
+        except:
+            result = default
+            self.logger.error("WebSocket: Invalid value '"+str(value)+"' configured for attribute "+attr+" in plugin.conf, using '"+str(result)+"' instead")
+        return result
 
 
-    def __init__(self, sh, *args, **kwargs):
-#    def __init__(self, smarthome, ip='0.0.0.0', port=2424, tls='no', acl='ro', wsproto='3' ):
-        """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
-        a reference to the sh object any more.
-        
-        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are implemented
-        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
-        use the SmartPlugin method `get_parameter_value(parameter_name)` instead. Anywhere within the Plugin you can get
-        the configured (and checked) value for a parameter by calling `self.get_parameter_value(parameter_name)`. It
-        returns the value in the datatype that is defined in the metadata.
-        """
+    def __init__(self, smarthome, ip='0.0.0.0', port=2424, tls='no', acl='ro', wsproto='3' ):
         self.logger = logging.getLogger(__name__)
+        self._sh = smarthome
 
-        # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        #   self.param1 = self.get_parameter_value('param1')
-        self.ip = self.get_parameter_value('ip')
-        self.port = self.get_parameter_value('port')
-        self.tls = self.get_parameter_value('tls')
-        self.acl = self.get_parameter_value('acl')
-        self.wsproto = self.get_parameter_value('wsproto')
-        self.querydef = self.get_parameter_value('querydef')
+#        if not self.is_ip(ip):
+#            self.logger.error("WebSocket: Invalid value '"+str(ip)+"' configured for attribute ip in plugin.conf, using '"+str('0.0.0.0')+"' instead")
+#            ip = '0.0.0.0'
 
-        if self.acl in ('true', 'yes'):
-            self.acl = 'rw'
+        if self.is_int(port):
+        	self.port = int(port)
+        else:
+            self.port = 2424
+            self.logger.error("WebSocket: Invalid value '"+str(port)+"' configured for attribute port in plugin.conf, using '"+str(self.port)+"' instead")
 
-        self.websocket = _websocket(self.get_sh(), self.ip, self.port, self.tls, self.wsproto, self.querydef)
-        return
+        self.tls = self.my_to_bool(tls, 'tls', False)
+
+        if acl.lower() in ('true', 'yes', 'rw'):
+            self._acl = 'rw'
+        elif acl.lower() == 'ro': 
+            self._acl = 'ro'
+        else:
+            self._acl = 'ro'
+            self.logger.error("WebSocket: Invalid value '"+str(alc)+"' configured for attribute acl in plugin.conf, using '"+str(self.acl)+"' instead")
+
+        if self.is_int(wsproto):
+        	proto = int(wsproto)
+        else:
+            proto = 3
+            self.logger.error("WebSocket: Invalid value '"+str(wsproto)+"' configured for attribute wsproto in plugin.conf, using '"+str(proto)+"' instead")
+
+        self.websocket = _websocket(smarthome, ip, port, self.tls, proto)
         
 
     def run(self):
-        """
-        Run method for the plugin - called once to start the plugins processing
-        """        
         self.alive = True
-        self.scheduler_add('series', self.websocket._update_series, cycle=10, prio=5)
-        return
+        self._sh.scheduler.add('series', self.websocket._update_series, cycle=10, prio=5)
 
 
     def stop(self):
-        """
-        Stop method for the plugin
-        """
         self.alive = False
         self.websocket.stop()
-        return
 
 
     def parse_item(self, item):
-        """
-        Plugin's parse_item method. Is called for every item when the plugin is initialized.
-        
-        :param item:    The item to process.
-        :return:        If the plugin needs to be informed of an items change you should return a call back function
-                        like the function update_item down below. 
-                        This means that when the items value is about to be updated, the call back function is called
-                        with the item, caller, source and dest as arguments.
-        """
-        acl = self.acl
+        acl = self._acl
         if 'visu_acl' in item.conf:
             if item.conf['visu_acl'].lower() in ('true', 'yes', 'rw'):
                 acl = 'rw'
@@ -122,43 +111,19 @@ class WebSocket(SmartPlugin):
         return self.update_item
 
 
-    def parse_logic(self, logic):
-        """
-        Plugin's parse_logic method
-        """
-#        if hasattr(logic, 'visu_acl'):
-#            if logic.conf['visu_acl'].lower() in ('true', 'yes', 'rw'):
-#                self.websocket.visu_logics[logic.name] = logic
-        return
-
-
     def update_item(self, item, caller=None, source=None, dest=None):
-        """
-        Write items values
-        
-        :param item: item to be updated towards the plugin
-        :param caller: if given it represents the callers name
-        :param source: if given it represents the source
-        :param dest: if given it represents the dest
-        """
         self.websocket.update_item(item.id(), item(), source)
-        return
-        
 
     def url(self, url, clientip=''):
-        """
-        Tell the websocket client (visu) to load a specific url
-        """
         self.websocket.url(url, clientip)
-        return
-
 		
+    def parse_logic(self, logic):
+        if hasattr(logic, 'visu_acl'):
+            if logic.conf['visu_acl'].lower() in ('true', 'yes', 'rw'):
+                self.websocket.visu_logics[logic.name] = logic
+
+
     def return_clients(self):
-        """
-        Returns connected clients
-        
-        :return: list of dicts with client information 
-        """
         for client in self.websocket.clients:
             infos = {}
             infos['addr'] = client.addr
@@ -167,10 +132,20 @@ class WebSocket(SmartPlugin):
             infos['hostname'] = client.hostname
             infos['browser'] = client.browser
             infos['browserversion'] = client.browserversion
+            if self.PLUGIN_VERSION == "1.1.2":
+                yield client.addr			# v1.1.2
+            else:
+                # v1.1.3 and up
+                yield infos
 
-            yield infos
-        return
-        
+#    def return_clients(self):
+#        for client in self.websocket.clients:
+#            if self.PLUGIN_VERSION == "1.1.2":
+#                yield client.addr			# v1.1.2
+#            else:
+#                # v1.1.3 and up
+#                yield client.addr, client.sw, client.swversion, client.hostname, client.browser, client.browserversion
+
 
 #########################################################################
 
@@ -179,14 +154,13 @@ class _websocket(lib.connection.Server):
     Websocket specific class of the Plugin. Handles the websocket connections
     """
 
-    def __init__(self, sh, ip, port, tls, wsproto, querydef ):
+    def __init__(self, smarthome, ip, port, tls, wsproto ):
         lib.connection.Server.__init__(self, ip, port)
         self.logger = logging.getLogger(__name__)
-        self._sh = sh
+        self._sh = smarthome
         self.tls = tls
         self.proto = wsproto
-        self.querydef = querydef
-        self._sh.add_event_listener(['log'], self._send_event)
+        smarthome.add_event_listener(['log'], self._send_event)
         self.clients = []
         self.visu_items = {}
         self.visu_logics = {}
@@ -194,13 +168,9 @@ class _websocket(lib.connection.Server):
         self.tls_crt = '/usr/local/smarthome/etc/home.crt'
         self.tls_key = '/usr/local/smarthome/etc/home.key'
         self.tls_ca = '/usr/local/smarthome/etc/ca.crt'
-        return
 
 
     def return_clients(self):
-        """
-        Returns connected websocket clients to the plugin
-        """
         for client in self.clients:
             yield client.addr
 
@@ -219,7 +189,7 @@ class _websocket(lib.connection.Server):
             except Exception as e:
                 self.logger.exception(e)
                 return
-        client = websockethandler(self._sh, self, sock, address, self.visu_items, self.visu_logics, self.proto, self.querydef)
+        client = websockethandler(self._sh, self, sock, address, self.visu_items, self.visu_logics, self.proto)
         self.clients.append(client)
 
     def stop(self):
@@ -283,7 +253,7 @@ class websockethandler(lib.connection.Stream):
     Websocket handler class of the Plugin. Each instance handles one client connection
     """
 
-    def __init__(self, smarthome, dispatcher, sock, addr, items, visu_logics, proto, querydef):
+    def __init__(self, smarthome, dispatcher, sock, addr, items, logics, proto=4):
         lib.connection.Stream.__init__(self, sock, addr)
         self.terminator = b"\r\n\r\n"
         self.logger = logging.getLogger(__name__)
@@ -298,22 +268,16 @@ class websockethandler(lib.connection.Stream):
         self.items = items
         self.rrd = False
         self.log = False
-        self.logs = self._sh.return_logs()
+        self.logs = smarthome.return_logs()
         self._series_lock = threading.Lock()
-        self.visu_logics = visu_logics
+        self.logics = logics
         self.proto = proto
-        self.querydef = querydef
         self.logger.info("VISU: Websocket handler uses protocol version {0}".format(self.proto))
         self.sw = ''
         self.swversion = ''
         self.hostname = ''
         self.browser = ''
         self.browserversion = ''
-        
-        # get access to the logics api
-        from lib.logic import Logics
-        self.logics = Logics.get_instance()
-        return
         
 
     def send_event(self, event, data):
@@ -367,15 +331,7 @@ class websockethandler(lib.connection.Stream):
     def difference(self, a, b):
         return list(set(b).difference(set(a)))
 
-
     def json_parse(self, data):
-        """
-        Parse the received request
-        
-        :param data: json data structure with the request
-        :type data: json structure
-        
-        """
         self.logger.debug("{0} sent {1}".format(self.addr, repr(data)))
         try:
             data = json.loads(data)
@@ -383,7 +339,6 @@ class websockethandler(lib.connection.Stream):
             self.logger.debug("Problem decoding {0} from {1}: {2}".format(repr(data), self.addr, e))
             return
         command = data['cmd']
-        
         if command == 'item':
             path = data['id']
             value = data['val']
@@ -394,7 +349,6 @@ class websockethandler(lib.connection.Stream):
                     self.logger.warning("Client {0} want to update read only item: {1}".format(self.addr, path))
             else:
                 self.logger.warning("Client {0} want to update invalid item: {1}".format(self.addr, path))
-                
         elif command == 'monitor':
             if data['items'] == [None]:
                 return
@@ -404,13 +358,31 @@ class websockethandler(lib.connection.Stream):
                     items.append([path, self.items[path]['item']()])
                 else:
                     self.logger.warning("Client {0} requested invalid item: {1}".format(self.addr, path))
-            self.logger.debug("json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'item', 'items': items})))	# MSinn
+            self.logger.debug("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'item', 'items': items})))	# MSinn
             self.json_send({'cmd': 'item', 'items': items})
             self.monitor['item'] = data['items']
-            
+        elif command == 'ping':
+            self.logger.debug("VISU json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))
+            self.json_send({'cmd': 'pong'})
         elif command == 'logic':
-            self.request_logic(data)
-
+            if 'name' not in data:
+                return
+            name = data['name']
+            if name in self.logics:
+                if 'val' in data:
+                    value = data['val']
+                    self.logger.info("Client {0} triggerd logic {1} with '{2}'".format(self.addr, name, value))
+                    self.logics[name].trigger(by='Visu', value=value, source=self.addr)
+                if 'enabled' in data:
+                    if data['enabled']:
+                        self.logger.info("Client {0} enabled logic {1}".format(self.addr, name))
+                        self.logics[name].enable()
+                    else:
+                        self.logger.info("Client {0} disabled logic {1}".format(self.addr, name))
+                        self.logics[name].disable()
+            else:
+#                self.logger.warning("VISU: Defined logics {0}".format(self.logics))
+                self.logger.warning("Client {0} requested invalid logic: {1}".format(self.addr, name))
         elif command == 'series':
             path = data['item']
             series = data['series']
@@ -427,6 +399,7 @@ class websockethandler(lib.connection.Stream):
                 if hasattr(self.items[path]['item'], 'series'):
                     try:
                         reply = self.items[path]['item'].series(series, start, end, count)
+#                        self.logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, reply))	# MSinn
                     except Exception as e:
                         self.logger.error("Problem fetching series for {0}: {1} - Wrong sqlite plugin?".format(path, e))
                     else:
@@ -442,7 +415,6 @@ class websockethandler(lib.connection.Stream):
                             self.logger.info("WebSocket: no entries for series {} {}".format(path, series))
                 else:
                     self.logger.warning("Client {0} requested invalid series: {1}.".format(self.addr, path))
-                    
         elif command == 'log':
             self.log = True
             name = data['name']
@@ -455,11 +427,6 @@ class websockethandler(lib.connection.Stream):
                 self.logger.warning("Client {0} requested invalid log: {1}".format(self.addr, name))
             if name not in self.monitor['log']:
                 self.monitor['log'].append(name)
-                
-        elif command == 'ping':
-            self.logger.debug("json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))
-            self.json_send({'cmd': 'pong'})
-            
         elif command == 'proto':  # protocol version
             proto = data['ver']
             if proto > self.proto:
@@ -468,7 +435,6 @@ class websockethandler(lib.connection.Stream):
                 self.logger.warning("WebSocket: protocol mismatch. Update your client: {0}".format(self.addr))
             self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()})
 #            self.logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, "{'cmd': 'proto', 'ver': " + str(self.proto) + ", 'time': " + str(self._sh.now()) + "}"))
-
         elif command == 'identity':  # identify client
             self.sw = data.get('sw','')
             self.swversion = data.get('ver','')
@@ -476,107 +442,6 @@ class websockethandler(lib.connection.Stream):
             self.browser = data.get('browser','')
             self.browserversion = data.get('bver','')
             self.logger.debug("VISU json_parse: received 'identify' from {0}: {1}".format(self.addr, data))
-
-        elif command == 'list_items':
-            if self.querydef:
-                path = data.get('path', '')
-                response = self.request_list_items(path)
-                self.json_send(response)
-
-        elif command == 'list_logics':
-            if self.querydef:
-                enabled = data.get('enabled', 0)
-                response = self.request_list_logics((enabled==1))
-                self.json_send(response)
-
-        else:
-            self.json_send({'cmd': command, 'error': 'Unknown Command'})
-        return
-        
-
-    def request_list_items(self, path):
-        """
-        Build the requested list of logics
-        """
-        self.logger.info("Client {0} requested a list of defined items.".format(self.addr))
-        myitems = []
-        for i in self._sh.return_items():
-            include = False
-#            if i.get('visu_acl', '').lower() != 'no': 
-            if (path == '') and (not '.' in i._path):
-                include = True
-            else:
-                if i._path.startswith(path+'.'):
-                    p = i._path[len(path+'.'):]
-                    if not '.' in p:
-                        include = True
-            if include:
-                myitem = collections.OrderedDict()
-                myitem['path'] = i._path
-                myitem['name'] = i._name
-                myitem['type'] = i.type()
-                myitems.append(myitem)
-
-        response = collections.OrderedDict([('cmd','list_items'), ('items',myitems)])
-        self.logger.info("Requested a list of defined items: {}".format(response))
-        return response
-
-
-    def request_logic(self, data):
-        """
-        Request logic (trigger, enable, disable)
-        """
-        if 'name' not in data:
-            return
-        name = data['name']
-        mylogic = self.logics.return_logic(name)
-        if mylogic is not None:
-            linfo = self.logics.get_logic_info(name)
-            if linfo['visu_access']:
-                if 'val' in data:
-                    value = data['val']
-                    self.logger.info("Client {0} triggerd logic {1} with '{2}'".format(self.addr, name, value))
-                    mylogic.trigger(by='Visu', value=value, source=self.addr)
-                if 'enabled' in data:
-                    if data['enabled']:
-                        self.logger.info("Client {0} enabled logic {1}".format(self.addr, name))
-                        self.logics.enable_logic(name)
-                        # non-persistant enable
-                        #self.visu_logics[name].enable()
-                    else:
-                        self.logger.info("Client {0} disabled logic {1}".format(self.addr, name))
-                        self.logics.disable_logic(name)
-                        # non-persistant disable
-                        #self.visu_logics[name].disable()
-            else:
-                self.logger.warning("Client {0} requested logic without visu-access: {1}".format(self.addr, name))
-        else:
-            self.logger.warning("Client {0} requested invalid logic: {1}".format(self.addr, name))
-
-
-    def request_list_logics(self, enabled):
-        """
-        Build the requested list of logics
-        """
-        self.logger.info("Client {0} requested a list of defined logics.".format(self.addr))
-        logiclist = []
-        for l in self.logics.return_loaded_logics():
-            linfo = self.logics.get_logic_info(l)
-            if linfo['visu_access']:
-                if linfo['userlogic']:
-                    logic_def = collections.OrderedDict()
-                    logic_def['name'] = l
-                    logic_def['desc'] = linfo['description']
-                    logic_def['enabled'] = 1
-                    if not linfo['enabled']:
-                        logic_def['enabled'] = 0
-                    if (not enabled) or (logic_def['enabled'] == 1):
-                        logiclist.append(logic_def)
-        
-        response = collections.OrderedDict([('cmd','list_logics'), ('logics',logiclist)])
-        self.logger.info("Requested a list of defined logics: {}".format(response))
-        return response
-        
 
     def parse_header(self, data):
         data = bytes(data)
@@ -650,11 +515,7 @@ class websockethandler(lib.connection.Stream):
                 payload[i] ^= key[i % 4]
         else:
             payload = data[header:]
-
-        try:
-            self.json_parse(payload.decode())
-        except Exception as e:
-            self.logger.exception("_websocket.json_parse exception: {}".format(e))
+        self.json_parse(payload.decode())
         self.terminator = 8
 
     def rfc6455_send(self, data):
@@ -685,10 +546,7 @@ class websockethandler(lib.connection.Stream):
         self.send(packet)
 
     def hixie76_parse(self, data):
-        try:
-            self.json_parse(data.decode().lstrip('\x00'))
-        except Exception as e:
-            self.logger.exception("_websocket.json_parse exception: {}".format(e))
+        self.json_parse(data.decode().lstrip('\x00'))
 
     def hixie76_handshake(self, key3):
         self.logger.debug("Hixie76 Handshake")
@@ -729,5 +587,4 @@ class JSONEncoder(json.JSONEncoder):
         elif isinstance(obj, decimal.Decimal):
             return float(obj)
         return json.JSONEncoder.default(self, obj)
-
 

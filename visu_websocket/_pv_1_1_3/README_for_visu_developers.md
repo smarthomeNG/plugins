@@ -1,6 +1,4 @@
-# visu_websocket
-
-## Visualisation plugin (Websocket Protocol) - for developers
+# Visualisation plugin (Websocket Protocol) - for developers
 
 ```
  
@@ -25,7 +23,6 @@ For information about the configuration of the plugin refer to **README.md**.
 
 The visa plugin implements a WebSocket server. This section describes the implemented protocol. The messages of the protocol consist of data in json format. Following are the request commands which the visu plugin handles. 
 
-## Requests sent from the Visu to SmartHomeNG 
 
 ### item
 With the **`item`** command a client requests to change the value of an item. The example requests the item with the id "wohnung.buero.schreibtischleuchte.onoff" to be turned off:
@@ -110,8 +107,6 @@ With the **`logic`** command a client requests a logic to be triggered. **`name`
 ```
 	{"cmd":"logic",  "name":"az_licht",  "val":0}
 ```
-
-**Optional**: **enabled** can be used to disable or enable logics.
 
 Following information is passed to the logic via the trigger variable:
 
@@ -261,62 +256,6 @@ The following example shows, what a smartVISU v2.7 running in a Safari Browser w
 ```
 
 
-### list_items
---> This command is new with **SmartHomeNG 1.4**
-
-With the **`list_items `** command a client requests the list of items that are defined in SmartHomeNG:
-
-```
-	{"cmd":"list_items", "path":""}
-```
-
-The plugin does not answer unless it has been configured with **querydef: True**.
-
-**path** defines the level for which item definitions are requested. if **path** is empty, the top level itmes are returned.
-
-The plugin answers with a dict containing the information about accessible logics. Additionally it sends the actual date time and timezone:
-
-
-```
-	{
-	 "cmd": "list_items", 
-	 "items": [
-	   {"path":"root.child", "name":"child", "type":"num"},
-	   {"path":"root.another", "name":"another child", "type":"bool"}
-	 ]
-	}
-```
-
-
-### list_logics
---> This command is new with **SmartHomeNG 1.4**
-
-With the **`list_logics `** command a client requests the list of logics that can be triggered by the client:
-
-```
-	{"cmd":"list_logics", "enabled":1}
-```
-
-The plugin does not answer unless it has been configured with **querydef: True**.
-
-**enabled** is optional. As default, the request returns information for all loaded user logics. When **"enabled":1** is specified, only enabled user logics are being returned.
-
-The plugin answers with a dict containing the information about accessible logics. Additionally it sends the actual date time and timezone:
-
-
-```
-	{
-	 "cmd": "list_logics", 
-	 "logics": [
-	   {"name":"az_licht", "desc":"...", "enabled":1},
-	   {"name":"gz_licht", "desc":"...", "enabled":0}
-	 ]
-	}
-```
-
-
-## Requests sent from SmartHomeNG to the Visu
-
 ### url
 --> This command is new with **SmartHomeNG 1.3**
 
@@ -331,5 +270,4 @@ The following command instructs smartVISU to change to the main page:
 ```
 
 The smartVISU client does not send an answer to the **`url`** command.
-
 

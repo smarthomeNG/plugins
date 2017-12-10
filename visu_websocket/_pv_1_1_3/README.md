@@ -1,4 +1,4 @@
-# Visualisation (Websocket Protocol)
+# Visualisation plugin (Websocket Protocol)
 
 ```
  
@@ -60,9 +60,6 @@ The version of the web socket protocol can be specified. By default the plugin u
 
 #### acl
 The plugin provides by default read only (**`ro`**) access to every item. By changing the **`acl`** attribute to **`rw`** you could modify this default behaviour to gain write access to the items in smarthomeNG.
-
-#### querydef
-If set to True, the plugin can be queried by a websocket client (a visu) for the item- and logic-definitions.
 
 
 ### items.conf (deprecated) / items.yaml
@@ -160,4 +157,3 @@ Example:
 ```
 
 This command expects the visu_websocket plugin to be configured in a section named **`visu`** in the configuration file **`etc/plugin.yaml`** or **`etc/plugin.conf`**.
-

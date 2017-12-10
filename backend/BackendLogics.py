@@ -405,7 +405,7 @@ class BackendLogics:
 
         self.logics.update_config_section(True, logicname, config_list)
         if visu_acl == '':
-            visu_acl = None
+            visu_acl = 'false'
         self.logics.set_config_section_key(logicname, 'visu_acl', visu_acl)
         return
          
