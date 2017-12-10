@@ -204,6 +204,166 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
             type = bool
 ```
 
+#### Example item.yaml
+
+```
+Enocean_Item:
+    Outside_Temperature:
+        type: num
+        enocean_rx_id: 0180924D
+        enocean_rx_eep: A5_02_05
+        enocean_rx_key: TMP
+    
+    Door:
+        enocean_rx_id: 01234567
+        enocean_rx_eep: D5_00_01
+        status:
+            type: bool
+            enocean_rx_key: STATUS
+    
+    FT55switch
+        enocean_rx_id: 012345AA
+        enocean_rx_eep: F6_02_03
+            up:
+                type: bool
+                enocean_rx_key: BO
+            down:
+                type: bool
+                enocean_rx_key: BI
+    
+    dimmer1:
+        enocean_rx_id: 00112233
+        enocean_rx_eep: A5_11_04
+        light:
+            type: bool
+            enocean_rx_key: STAT
+            enocean_tx_eep: A5_38_08_02
+            enocean_tx_id_offset: 1
+            level:
+                type: num
+                enocean_rx_key: D
+                enocean_tx_eep: A5_38_08_03
+                enocean_tx_id_offset: 1
+                ref_level: 80
+    
+    handle:
+        enocean_rx_id: 01234567
+        enocean_rx_eep: F6_10_00
+        status:
+            type: num
+            enocean_rx_key: STATUS
+    
+    actor1:
+        enocean_rx_id: FFAABBCC
+        enocean_rx_eep: A5_12_01
+        power:
+            type: num
+            enocean_rx_key: VALUE
+    
+    actor1B:
+        enocean_rx_id: FFAABBCD
+        enocean_rx_eep: F6_02_03
+        light:
+            type: bool
+            enocean_rx_key: B
+            enocean_tx_eep: A5_38_08_01
+            enocean_tx_id_offset: 2
+    
+    actorD2:
+        enocean_rx_id: FFDB7381
+        enocean_rx_eep: D2_01_07
+        move:
+            type=bool
+            enocean_rx_key: STAT
+            enocean_tx_eep: D2_01_07
+            enocean_pulsewidth: 0.1  // optional; turn off after 0.1 sed
+            enocean_tx_id_offset: 1  
+    
+    awning:
+        enocean_rx_id: 0500E508
+        enocean_rx_eep: F6_02_03
+        move:
+            enocean_tx_eep: A5_3F_7F
+            enocean_rtime: 60  // move awning for 60sec
+            type: num
+            visu: yes
+        
+        stat:
+            enocean_rx_key: B
+            enforce_updates: on
+            cache: on
+            type: bool
+            visu: yes
+    
+    rocker:
+        enocean_rx_id: 0029894A
+        enocean_rx_eep: F6_02_01
+        short_800ms_directly_to_knx:
+            type: bool
+            enocean_rx_key: AI
+            enocean_rocker_action: **toggle**
+            enocean_rocker_sequence: released **within** 0.8
+            knx_dpt: 1
+            knx_send: 3/0/60
+        
+        long_800ms_directly_to_knx:
+            type: bool
+            enocean_rx_key: AI
+            enocean_rocker_action: toggle
+            enocean_rocker_sequence: released **after** 0.8
+            knx_dpt: 1
+            knx_send: 3/0/61
+        
+        rocker_double_800ms_to_knx_send_1:
+            type: bool
+            enforce_updates: true
+            enocean_rx_key: AI
+            enocean_rocker_action: **set**
+            enocean_rocker_sequence: **released within 0.4, pressed within 0.4**
+            knx_dpt: 1
+            knx_send: 3/0/62
+    
+    brightness_sensor:
+        enocean_rx_id: 01234567
+        enocean_rx_eep: A5_08_01
+        lux:
+            type: num
+            enocean_rx_key: BRI
+        
+        movement:
+            type: bool
+            enocean_rx_key: MOV
+    
+    temperature_sensor:
+        enocean_rx_id: 01234567
+        enocean_rx_eep: A5_04_02
+        temperature:
+            type: num
+            enocean_rx_key: TMP
+        
+        humidity:
+            type: num
+            enocean_rx_key: HUM
+        
+        power_status:
+            type: num
+            enocean_rx_key: ENG
+    sunblind:
+        enocean_rx_id: 0500xxxx
+        enocean_rx_eep: F6_02_03
+        move:
+            enocean_tx_eep: A5_3F_7F
+            enocean_rtime: 60
+            type: num
+        
+        status:
+            name: blind retrated
+            enocean_rx_key: B
+            enforce_updates: on
+            cache: on
+            type: bool
+```
+
 ### Add new listening enocean devices
 
 You have to know about the EnOcean RORG of your device (please search the internet or ask the vendor). 
