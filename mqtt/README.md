@@ -42,7 +42,7 @@ This plugin needs the following following software to be installed and running:
 - A MQTT broker for communication with other MQTT clients. The broker may be running on the hardware SmartHomeNG is running on, or on another hardware that can be reached via TCP/IP. The open souce broker [Mosquitto](https://mosquitto.org) is a good choice. 
 
 ### Using Mosquitto Broker on Raspberry Pi
-If want to run the broker on a Raspberry Pi you should be aware, that the broker on the raspbian repository is quite old. You should add the morquito.org repository as a trusted site to your **`apt-get`** to get a recent version of mosquitto installed.
+If want to run the broker on a Raspberry Pi you should be aware, that the broker on the raspbian repository is quite old. You should add the mosquitto.org repository as a trusted site to your **`apt-get`** to get a recent version of mosquitto installed.
 
 
 ## Configuration

@@ -272,10 +272,9 @@ With the **`list_items `** command a client requests the list of items that are 
 
 The plugin does not answer unless it has been configured with **querydef: True**.
 
-**path** defines the level for which item definitions are requested. if **path** is empty, the top level itmes are returned.
+**path** defines the level for which item definitions are requested. if **path** is empty, the top level items are returned.
 
-The plugin answers with a dict containing the information about accessible logics. Additionally it sends the actual date time and timezone:
-
+The plugin answers with a dict containing the information about accessible items.
 
 ```
 	{
@@ -301,8 +300,7 @@ The plugin does not answer unless it has been configured with **querydef: True**
 
 **enabled** is optional. As default, the request returns information for all loaded user logics. When **"enabled":1** is specified, only enabled user logics are being returned.
 
-The plugin answers with a dict containing the information about accessible logics. Additionally it sends the actual date time and timezone:
-
+The plugin answers with a dict containing the information about accessible logics. 
 
 ```
 	{

@@ -1,3 +1,9 @@
+<?php
+define ('const_path_system', dirname(__FILE__).'/');
+define ('const_path', substr(const_path_system, 0, -4));
+require_once const_path.'version-info.php';
+?>
+
 /**
  * Enigma2 ConfigurationInfo Widget
  * 
@@ -33,6 +39,7 @@
 	</div>
 
 {% endmacro %}
+
 
 
 /**
@@ -161,6 +168,7 @@
 {% endmacro %}
 
 
+
 /**
  * Enigma2 Remote Widget
  * 
@@ -173,6 +181,12 @@
 	{% import "basic.html" as basic %}
 	{% set uid = uid(page, id) %}
 	
+	{% if config_version == 2.9 %}
+        {% set icon_path = '' %}
+	{% else %}
+        {% set icon_path = 'widgets/sh_widgets/' %}
+	{% endif %}
+
 	<div id="{{ uid }}">
 		<table width="100%">
 			<tr>
@@ -268,13 +282,13 @@
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.GREEN', gad_boxremote~'.GREEN', ' Green ', 'widgets/sh_widgets/control_centr_arrow_up_left_green_fill.png', '', gad_size) }}
+					 {{ basic.button(id~'.GREEN', gad_boxremote~'.GREEN', ' Green ', icon_path~'control_centr_arrow_up_left_green_fill.png', '', gad_size) }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
 					{{ basic.button(id~'.UpTV', gad_boxremote~'.UP', 'rauf', icon0~'control_centr_arrow_up.png', '', gad_size) }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.YELLOW', gad_boxremote~'.YELLOW', ' Yellow ', 'widgets/sh_widgets/control_centr_arrow_up_right_yellow_fill.png', '', gad_size) }}
+					 {{ basic.button(id~'.YELLOW', gad_boxremote~'.YELLOW', ' Yellow ', icon_path~'control_centr_arrow_up_right_yellow_fill.png', '', gad_size) }}
 					</span>
 				</td>
 			</tr>
@@ -334,13 +348,13 @@
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.RED', gad_boxremote~'.RED', 'Red', 'widgets/sh_widgets/control_centr_arrow_down_left_red_fill.png', '', gad_size) }}
+					 {{ basic.button(id~'.RED', gad_boxremote~'.RED', 'Red', icon_path~'control_centr_arrow_down_left_red_fill.png', '', gad_size) }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
 					{{ basic.button(id~'.DOWN', gad_boxremote~'.DOWN', 'runter', icon0~'control_centr_arrow_down.png', '', gad_size) }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.BLUE', gad_boxremote~'.BLUE', ' Blue ', 'widgets/sh_widgets/control_centr_arrow_down_right_blue_fill.png', '', gad_size) }}
+					 {{ basic.button(id~'.BLUE', gad_boxremote~'.BLUE', ' Blue ', icon_path~'control_centr_arrow_down_right_blue_fill.png', '', gad_size) }}
 					</span>
 				</td>
 			</tr>
@@ -383,16 +397,16 @@
 			  <td align="middle" width="70%">
 				<span data-role="controlgroup" data-type="horizontal">
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.RED', gad_boxremote~'.RED', 'Red', 'widgets/sh_widgets/circle_red.png', '', gad_size) }}
+					 {{ basic.button(id~'.RED', gad_boxremote~'.RED', 'Red', icon_path~'circle_red.png', '', gad_size) }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.GREEN', gad_boxremote~'.GREEN', ' Green ', 'widgets/sh_widgets/circle_green2.png', '', gad_size) }}
+					 {{ basic.button(id~'.GREEN', gad_boxremote~'.GREEN', ' Green ', icon_path~'circle_green2.png', '', gad_size) }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.YELLOW', gad_boxremote~'.YELLOW', ' Yellow ', 'widgets/sh_widgets/circle_yellow.png', '', gad_size) }}
+					 {{ basic.button(id~'.YELLOW', gad_boxremote~'.YELLOW', ' Yellow ', icon_path~'circle_yellow.png', '', gad_size) }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.BLUE', gad_boxremote~'.BLUE', ' Blue ', 'widgets/sh_widgets/circle_blue.png', '', gad_size) }}
+					 {{ basic.button(id~'.BLUE', gad_boxremote~'.BLUE', ' Blue ', icon_path~'circle_blue.png', '', gad_size) }}
 					</span>
 				</span>
 			  </td>
