@@ -28,11 +28,11 @@ With the specification of the BaseID, 128 different transmit IDs are available, 
 
 ### Getting ID of an EnOcean device
 
-1.) reboot the pi or restart the smarthome (sudo reboot; sudo systemctl restart smarthome)
-2.) wait some time for comming up of the service
-3.) have a look into the log file an look for ``enocean: Base ID = 0xYYYYZZZZ``
-4.) now you have the right BaseID and you can place it into the plugin.conf-first
-5.) alternating you will also find the ChipID in the log-file
+1. reboot the pi or restart the smarthome (sudo reboot; sudo systemctl restart smarthome)
+2. wait some time for comming up of the service
+3. have a look into the log file an look for ``enocean: Base ID = 0xYYYYZZZZ``
+4. now you have the right BaseID and you can place it into the plugin.conf-first
+5. alternating you will also find the ChipID in the log-file
 
 The following example is for a rocker/switch with two rocker (EEP F6_02_01 or F6_02_02).
 
@@ -263,17 +263,12 @@ sh.enocean.send_learn_protocol(id_offset, device)
 ```
 With device are different actuators defined:
 
-10: Eltako Switch FSR61
-
-20: Eltako FSUD-230V
-
-21: Eltako FHK61SSR dim device (EEP A5-38-08)
-
-22: Eltako FRGBW71L RGB dim devices (EEP 07-3F-7F)
-
-30: Radiator Valve
-
-40: Eltako shutter actors FSB61NP-230V, FSB14, FSB61, FSB71
+- 10: Eltako Switch FSR61
+- 20: Eltako FSUD-230V
+- 21: Eltako FHK61SSR dim device (EEP A5-38-08)
+- 22: Eltako FRGBW71L RGB dim devices (EEP 07-3F-7F)
+- 30: Radiator Valve
+- 40: Eltako shutter actors FSB61NP-230V, FSB14, FSB61, FSB71
 
 Examples are:
 ```python
