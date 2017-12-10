@@ -36,7 +36,9 @@
 	"age": "czas aktualnej wartości",
 	"update_age": "",
 	"vorheriger Wert": "poprzednia wartość",
+	"previous update": "",
 	"previous change": "poprzednia zmiana",
+	"previous update age": "",
 	"previous age": "czas poprzedniej wartości",
 	
 	"Evaluation und Trigger": "Inicjalizacja, ewaluacja i wyzwalacze",

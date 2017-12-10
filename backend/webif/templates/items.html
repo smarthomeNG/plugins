@@ -70,11 +70,13 @@ function getDetailInfo(result) {
 	    temp = temp + '<tr><th colspan="2">{{ _('Änderungsinformationen') }}:</th></tr>';
         temp = temp + '<tr><th>{{ _('Letztes Update') }}</th><td>'+element.last_update+'</td></tr>';
         temp = temp + '<tr><th>{{ _('Letzte Änderung') }}</th><td>'+element.last_change+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Geändert durch') }}</th><td>'+element.changed_by+'</td></tr>';
         temp = temp + '<tr><th>{{ _('update_age') }}</th><td>'+element.update_age+'</td></tr>';
         temp = temp + '<tr><th>{{ _('age') }}</th><td>'+element.age+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('Geändert durch') }}</th><td>'+element.changed_by+'</td></tr>';
         temp = temp + '<tr><th>{{ _('vorheriger Wert') }}</th><td>'+element.previous_value+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('previous update') }}</th><td>'+element.previous_update+'</td></tr>';
         temp = temp + '<tr><th>{{ _('previous change') }}</th><td>'+element.previous_change+'</td></tr>';
+        temp = temp + '<tr><th>{{ _('previous update age') }}</th><td>'+element.previous_update_age+'</td></tr>';
         temp = temp + '<tr><th>{{ _('previous age') }}</th><td>'+element.previous_age+'</td></tr>';
 
         temp = temp + '<tr><th></th><td></td></tr>';

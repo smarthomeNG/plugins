@@ -40,7 +40,9 @@
 	"aktueller": "actuel",
 	"vorheriger": "précédent",
 	"vorheriger Wert": "Valeur précédente",
+	"previous update": "",
 	"previous change": "Modification précédente",
+	"previous update age": "",
 	"previous age": "Âge précédent",
 	
 	"Evaluation und Trigger": "Configuration de l'initialisation, de l'évaluation et des déclencheurs",

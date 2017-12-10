@@ -201,7 +201,6 @@ class BackendItems:
         """
         """
         if type(l) is str:
-            self.logger.info("list_to_displaystring: >{}<  -->  >{}<".format(l, l))
             return l
         
         edit_string = ''
@@ -211,7 +210,7 @@ class BackendItems:
             edit_string += str(entry)
         if edit_string == '':
             edit_string = '-'
-        self.logger.info("list_to_displaystring: >{}<  -->  >{}<".format(l, edit_string))
+#        self.logger.info("list_to_displaystring: >{}<  -->  >{}<".format(l, edit_string))
         return edit_string
 
 
@@ -278,7 +277,12 @@ class BackendItems:
             if item.prev_age() < 0:
                 prev_age = ''
             else:
-                prev_age = self.disp_age(item.prev_age())
+                prev_age = self.disp_age(item.prev_update_age())
+            if item.prev_update_age() < 0:
+                prev_update_age = ''
+            else:
+                prev_update_age = self.disp_age(item.prev_update_age())
+
             if str(item._cache) == 'False':
                 cache = 'off'
             else:
@@ -322,6 +326,8 @@ class BackendItems:
                          'changed_by': changed_by,
                          'previous_value': prev_value,
                          'previous_age': prev_age,
+                         'previous_update_age': prev_update_age,
+                         'previous_update': str(item.prev_update()),
                          'previous_change': str(item.prev_change()),
                          'enforce_updates': enforce_updates,
                          'cache': cache,

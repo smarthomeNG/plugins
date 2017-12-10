@@ -37,8 +37,10 @@
 	"age": "Alter (Änderung)",
 	"update_age": "Alter (Update)",
 	"vorheriger Wert": "vorheriger Wert",
+	"previous update": "vorheriges Update",
 	"previous change": "vorherige Änderung",
-	"previous age": "vorheriges Alter",
+	"previous update age": "vorh. Alter (Update)",
+	"previous age": "vorh. Alter (Änderung)",
 	
 	"Evaluation und Trigger": "Initialisierungs-, Evaluations- und Trigger-Konfiguration",
 	"Plugin spezifische Attribute": "Plugin spezifische Konfigurationen",

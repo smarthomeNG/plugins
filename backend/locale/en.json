@@ -37,7 +37,9 @@
 	"update_age": "age (update)",
 
 	"vorheriger Wert": "previous value",
+	"previous update": "previous update",
 	"previous change": "previous change",
+	"previous update age": "previous update age",
 	"previous age": "previous age",
 	
 	"Evaluation und Trigger": "Initialization, Evaluation and Trigger Configuration",
