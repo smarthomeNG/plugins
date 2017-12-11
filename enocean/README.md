@@ -231,6 +231,16 @@ Enocean_Item:
                 type: bool
                 enocean_rx_key: BI
     
+    Brightness_Sensor:
+                name: HelligkeitssensorOst
+                remark: Eltako FAH60
+                type: num
+                enocean_rx_id: 01A51DE6
+                enocean_rx_eep: A5_06_01
+                enocean_rx_key: BRI
+                visu_acl: rw
+                sqlite: 'yes'
+    
     dimmer1:
         enocean_rx_id: 00112233
         enocean_rx_eep: A5_11_04
