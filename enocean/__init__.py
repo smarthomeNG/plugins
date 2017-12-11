@@ -776,35 +776,35 @@ class EnOcean(SmartPlugin):
         elif (device == 10):
             # Prepare Data for Eltako switch FSR61
             payload = [0xE0, 0x40, 0x0D, 0x80]
-            self.logger.info('enocean: sending learn telegram for switch command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self.logger.info('enocean: sending learn telegram for switch command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
             return None
         # device range 20 - 29 --> Learn protocol for dim actuators
         elif (device == 20):
             # Only for Eltako FSUD-230V
             payload = [0x02, 0x00, 0x00, 0x00]
-            self.logger.info('enocean: sending learn telegram for dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self.logger.info('enocean: sending learn telegram for dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
             return None
         elif (device == 21):
             # For Eltako FHK61SSR dim device (EEP A5-38-08)
             payload = [0xE0, 0x40, 0x0D, 0x80]
-            self.logger.info('enocean: sending learn telegram for dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self.logger.info('enocean: sending learn telegram for dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
             return None
         elif (device == 22):
             # For Eltako FRGBW71L RGB dim devices (EEP 07-3F-7F)
             payload = [0xFF, 0xF8, 0x0D, 0x87]
-            self.logger.info('enocean: sending learn telegram for rgbw dim command with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self.logger.info('enocean: sending learn telegram for rgbw dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
             return None
         # device range 30 - 39 --> Learn protocol for radiator valves
         elif (device == 30):
             # Radiator Valve
             payload = [0x00, 0x00, 0x00, 0x00]
-            self.logger.info('enocean: sending learn telegram for radiator valve with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+            self.logger.info('enocean: sending learn telegram for radiator valve with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
             return None
         # device range 40 - 49 --> Learn protocol for other actuators
         elif (device == 40):
             # Eltako shutter actor FSB14, FSB61, FSB71
              payload = [0xFF, 0xF8, 0x0D, 0x80]
-             self.logger.info('enocean: sending learn telegram for actuator with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+             self.logger.info('enocean: sending learn telegram for actuator with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
              return None
         else:
             self.logger.error('enocean: sending learn telegram with invalid device! Device {} actually not defined!'.format(device))
