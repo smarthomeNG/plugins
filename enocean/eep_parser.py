@@ -208,6 +208,7 @@ class EEP_Parser():
         results['AD_1'] = (payload[1] >> 2) * 1.8 / pow(2, 6)
         results['AD_2'] = payload[0] * 1.8 / pow(2, 8)
         return results
+
     def _parse_eep_D2_01_07(self, payload, status):
         #ORG = 0xD2
         #logger.debug("enocean: processing D2_01_07: VLD Switch")
