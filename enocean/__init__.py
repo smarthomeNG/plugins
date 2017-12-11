@@ -807,7 +807,7 @@ class EnOcean(SmartPlugin):
              self.logger.info('enocean: sending learn telegram for actuator with [ID-Offset], [RORG], [payload] / [{:#04x}], [{:#04x}], [{}]'.format(id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
              return None
         else:
-            self.logger.error('enocean: Invalid Device! Device {} actually not defined!'.format(device))
+            self.logger.error('enocean: sending learn telegram with invalid device! Device {} actually not defined!'.format(device))
             return None
         # Send radio package
         self._send_radio_packet(id_offset, rorg, payload)
