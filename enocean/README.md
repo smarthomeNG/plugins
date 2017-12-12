@@ -71,12 +71,14 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
         enocean_rx_id = 0180924D
         enocean_rx_eep = A5_02_05
         enocean_rx_key = TMP
+    
     [[Door]]
         enocean_rx_id = 01234567
         enocean_rx_eep = D5_00_01
         [[[status]]]
             type = bool
             enocean_rx_key = STATUS
+    
     [[FT55switch]]
         enocean_rx_id = 012345AA
         enocean_rx_eep = F6_02_03
@@ -86,6 +88,17 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
             [[[down]]]
                 type = bool
                 enocean_rx_key = BI
+    
+    [[Brightness_Sensor]]
+        name = brightness_sensor_east
+        remark = Eltako FAH60
+        type = num
+        enocean_rx_id = 01A51DE6
+        enocean_rx_eep = A5_06_01
+        enocean_rx_key = BRI
+        visu_acl = rw
+        sqlite = yes
+    
     [[dimmer1]]
         enocean_rx_id = 00112233
         enocean_rx_eep = A5_11_04
@@ -100,18 +113,21 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
                 enocean_tx_eep = A5_38_08_03
                 enocean_tx_id_offset = 1
                 ref_level = 80
+    
     [[handle]]
         enocean_rx_id = 01234567
         enocean_rx_eep = F6_10_00
         [[[status]]]
             type = num
             enocean_rx_key = STATUS
+    
     [[actor1]]
         enocean_rx_id = FFAABBCC
         enocean_rx_eep = A5_12_01
         [[[power]]]
             type = num
             enocean_rx_key = VALUE
+    
     [[actor1B]]
         enocean_rx_id = FFAABBCD
         enocean_rx_eep = F6_02_03
@@ -120,6 +136,7 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
             enocean_rx_key = B
             enocean_tx_eep = A5_38_08_01
             enocean_tx_id_offset = 2
+    
     [[actorD2]]
         enocean_rx_id = FFDB7381
         enocean_rx_eep = D2_01_07
@@ -129,6 +146,7 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
             enocean_tx_eep = D2_01_07
             enocean_pulsewidth = 0.1  // optional; turn off after 0.1 sed
             enocean_tx_id_offset = 1  
+    
     [[awning]]
         enocean_rx_id = 0500E508
         enocean_rx_eep = F6_02_03
@@ -143,6 +161,7 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
             cache = on
             type = bool
             visu = yes
+    
     [[rocker]]
         enocean_rx_id = 0029894A
         enocean_rx_eep = F6_02_01
@@ -168,6 +187,7 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
             enocean_rocker_sequence = **released within 0.4, pressed within 0.4**
             knx_dpt = 1
             knx_send = 3/0/62
+    
     [[brightness_sensor]]
         enocean_rx_id = 01234567
         enocean_rx_eep = A5_08_01
@@ -177,6 +197,7 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
         [[[movement]]]
             type = bool
             enocean_rx_key = MOV
+    
     [[temperature_sensor]]
         enocean_rx_id = 01234567
         enocean_rx_eep = A5_04_02
@@ -189,6 +210,7 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
         [[[power_status]]]
             type = num
             enocean_rx_key = ENG
+    
     [[sunblind]]
         enocean_rx_id = 0500xxxx
         enocean_rx_eep = F6_02_03
@@ -232,7 +254,7 @@ Enocean_Item:
                 enocean_rx_key: BI
     
     Brightness_Sensor:
-                name: HelligkeitssensorOst
+                name: brightness_sensor_east
                 remark: Eltako FAH60
                 type: num
                 enocean_rx_id: 01A51DE6
@@ -390,7 +412,7 @@ The following status EEPs are supported:
 * A5_08_01		Brightness and movement sensor
 * A5_11_04		Dimmer status feedback
 * A5_12_01		Power Measurement
-* D2_01_07              Simple electronic switch
+* D2_01_07		Simple electronic switch
 * D5_00_01		Door/Window Contact, e.g. Eltako FTK, FTKB
 * F6_02_01		2-Button-Rocker
 * F6_02_02		2-Button-Rocker
@@ -407,7 +429,7 @@ A complete list of available EEPs is documented at [EnOcean Alliance](http://www
 * A5_38_08_02		Dimmer command with fix on off command (on: 100, off:0)
 * A5_38_08_03		Dimmer command with specified dim level (0-100)
 * A5_3F_7F		Universal actuator command, e.g. blind control
-* D2_01_07              Simple electronic switch
+* D2_01_07		Simple electronic switch
 ```
 
 The optional ref_level parameter defines default dim value when dimmer is switched on via on command.
@@ -425,7 +447,7 @@ cd /usr/local/smarthome/bin
 sudo systemctl stop smarthome
 sudo ./smarthome.py -i
 ```
-	
+
 Then use one of the following learn-in commands, depending on your enocean device:
 
 ```python
