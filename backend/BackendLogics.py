@@ -231,9 +231,6 @@ class BackendLogics:
 #        self.logger.info("logics_view_html: logicname = {}, trigger = {}, enable = {}, disable = {}, save = {},  savereload = {},  savereloadtrigger = {}".format( logicname, trigger, enable, disable, save, savereload, savereloadtrigger ))
 #        self.logger.info("logics_view_html: logicname = {}, cycle = {}, crontab = {}, watch = {}".format( logicname, cycle, crontab, watch ))
 
-        # assemble data for displaying/etiting of a logic
-        mylogic = self.fill_logicdict(logicname)
-
         # process actions triggerd by buttons on the web page
         if trigger is not None:
             self.logics.trigger_logic(logicname)
@@ -253,6 +250,9 @@ class BackendLogics:
             self.logic_save_config(logicname, cycle, crontab, watch, visu_acl)
             self.logics.load_logic(logicname)
             self.logics.trigger_logic(logicname)
+
+        # assemble data for displaying/editing of a logic
+        mylogic = self.fill_logicdict(logicname)
 
         config_list = self.logics.read_config_section(logicname)
         for config in config_list:
