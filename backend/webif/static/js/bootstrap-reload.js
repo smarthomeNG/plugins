@@ -25,15 +25,15 @@
 		// Set the container to update the data with
 		self.config.dataContainer = $(self.config.dataContainer) || self.$elem.find('.data-container');
 
-		self.$elem.find('.fa-refresh').click(self.reload());
-		self.$elem.find('.fa-refresh').off('click');
-		self.$elem.find('.fa-refresh').on('click', function() {
+		self.$elem.find('.panel-heading').click(self.reload());
+		self.$elem.find('.panel-heading').off('click');
+		self.$elem.find('.panel-heading').on('click', function() {
             self.reload()
         });
 
 		if(self.config.autoReload) {
 			setInterval(self.reload,self.config.time);
-			_self.$elem.find('.fa-refresh').addClass('fa-spin');
+			_self.$elem.find('.fa-sync').addClass('fa-spin');
 		}
 
 		return self;
@@ -41,7 +41,7 @@
 
 	Reload.prototype.reload = function(){
 		var _self = this;
-        _self.$elem.find('.fa-refresh').addClass('fa-spin');
+        _self.$elem.find('.fa-sync').addClass('fa-spin');
 		_self.config.refreshContainer.fadeIn('fast');
   		// Send the AJAX request to fetch the data
   		$.getJSON(_self.$elem.data('url')+_self.config.parameterString, function(result) {
@@ -49,7 +49,7 @@
 		    if(_self.config.autoReload) {
 		        _self.config.refreshContainer.fadeOut("done", function() {});
 		    } else {
-                _self.config.refreshContainer.fadeOut("done", function() {_self.$elem.find('.fa-refresh').removeClass('fa-spin');});
+                _self.config.refreshContainer.fadeOut("done", function() {_self.$elem.find('.fa-sync').removeClass('fa-spin');});
 		    }
 		});
 	};
