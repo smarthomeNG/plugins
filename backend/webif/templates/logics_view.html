@@ -45,23 +45,23 @@
 		<form name="input" action="logics_view.html" method="POST" enctype="multipart/form-data">
 		<input type="hidden" name="logicname" readonly="true" value="{{ logicname }}" type="text"/>
 		<input type="hidden" name="file_path" readonly="true" value="{{ file_path }}" type="text"/>
-			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-default btn-xs"><i class="fa fa-hand-pointer-o"></i> {{ _('Auslösen','button') }}</button>
+			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-default btn-xs"><i class="fas fa-hand-pointer"></i> {{ _('Auslösen','button') }}</button>
 
 		{% if thislogic.enabled %}
-			<button name="disable" class="btn btn-default btn-xs"><i class="fa fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
+			<button name="disable" class="btn btn-default btn-xs"><i class="fas fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
 		{% else %}
-			<button name="enable" class="btn btn-default btn-xs"><i class="fa fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
+			<button name="enable" class="btn btn-default btn-xs"><i class="fas fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
 		{% endif %}
 		&nbsp;|&nbsp;|&nbsp;
-			<button id="save" name="save" class="btn btn-default btn-xs btn-success"><i class="fa fa-floppy-o"></i>&nbsp;&nbsp;{{ _('Speichern','button') }}</button>
-			<button id="savereload" name="savereload" class="btn btn-default btn-xs btn-success"><i class="fa fa-floppy-o"></i>&nbsp;&nbsp;{{ _('Speichern_und_Neu_Laden','button') }}</button>
+			<button id="save" name="save" class="btn btn-default btn-xs btn-success"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern','button') }}</button>
+			<button id="savereload" name="savereload" class="btn btn-default btn-xs btn-success"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern_und_Neu_Laden','button') }}</button>
 <!--
 		<input id="savereloadtrigger" name="savereloadtrigger" value="{{ _('Speichern_Neu_Laden_und_Triggern','button') }}" type="submit" class="btn btn-default btn-xs btn-success"/>
 -->
 		 |&nbsp;|&nbsp;
 			<button id="linewrapping" type="button" class="btn btn-default btn-xs active">{{ _('Zeilenumbruch') }}</button>
 			<button id="rulers" type="button" class="btn btn-default btn-xs active">{{ _('Hilfslinien') }}</button>
-			<button id="help" type="button" class="btn btn-default btn-xs"><i class="fa fa-info"></i>&nbsp;&nbsp;{{ _('Hilfe') }}</button>
+			<button id="help" type="button" class="btn btn-default btn-xs"><i class="fas fa-info"></i>&nbsp;&nbsp;{{ _('Hilfe') }}</button>
 	{% endif %}
     </div>
 	<div id="help_text" style="display:none;">
