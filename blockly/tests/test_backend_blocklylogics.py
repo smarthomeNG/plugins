@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 import lib.item
 
-from plugins.backend import Backend as Root
+from plugins.backend import WebInterface as Root
 from plugins.backend.tests.cptestcase import BaseCherryPyTestCase
 from tests.mock.core import MockSmartHome
 
