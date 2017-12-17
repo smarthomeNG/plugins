@@ -11,15 +11,17 @@ from tests.mock.core import MockSmartHome
 
 
 def setUpModule():
-    bs = MockBackendServer()
-    sh = bs._sh
-    cherrypy.tree.mount(Root(backendserver=bs,developer_mode=True), '/')
-    cherrypy.engine.start()
+#    bs = MockBackendServer()
+#    sh = bs._sh
+#    cherrypy.tree.mount(Root(backendserver=bs,developer_mode=True), '/')
+#    cherrypy.engine.start()
+    pass
 setup_module = setUpModule
 
 
 def tearDownModule():
-    cherrypy.engine.exit()
+#    cherrypy.engine.exit()
+    pass
 teardown_module = tearDownModule
 
 
