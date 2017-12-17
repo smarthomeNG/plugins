@@ -106,9 +106,7 @@ class BackendLogics:
 
             mylogic['crontab'] = ''
             if hasattr(loaded_logic, 'crontab'):
-                if loaded_logic.crontab == None:
-                    mylogic['crontab'] = ''
-                else:
+                if loaded_logic.crontab is not None:
 #                    mylogic['crontab'] = Utils.strip_quotes_fromlist(str(loaded_logic.crontab))
                     mylogic['crontab'] = Utils.strip_quotes_fromlist(self.list_to_editstring(loaded_logic.crontab))
 
@@ -131,7 +129,8 @@ class BackendLogics:
 
             mylogic['visu_acl'] = ''
             if hasattr(loaded_logic, 'visu_acl'):
-                mylogic['visu_acl'] = Utils.strip_quotes_fromlist(str(loaded_logic.visu_acl))
+                if loaded_logic.visu_acl != 'None':
+                    mylogic['visu_acl'] = Utils.strip_quotes_fromlist(str(loaded_logic.visu_acl))
 
         return mylogic
 
@@ -405,7 +404,8 @@ class BackendLogics:
 
         self.logics.update_config_section(True, logicname, config_list)
         if visu_acl == '':
-            visu_acl = 'false'
+            visu_acl = None
+#            visu_acl = 'false'
         self.logics.set_config_section_key(logicname, 'visu_acl', visu_acl)
         return
          
