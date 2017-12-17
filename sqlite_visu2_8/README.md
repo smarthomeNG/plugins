@@ -1,4 +1,4 @@
-# SQLite (für SmartVisu >= 2.8)
+# SQLite (for SmartVisu >= 2.8)
 
 ## Configuration
 

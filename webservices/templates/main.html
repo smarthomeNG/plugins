@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="panel panel-default" style="padding: 20px;">
+            <h1 class="margin-base-vertical">
+            <img src="/static/img/logo_big.png" width="150" height="75">
+            &nbsp; SmartHomeNG WebService Plugin</h1>
+            <br/>
+            <div style="width: 1600px;">
+                The following items can be accessed by the REST and the Simple WebService interface:<br/><br/>
+                <br/>
+                <table>
+                    <tr style="border-bottom: 1px solid grey;">
+                        <th>
+                            REST
+                        </th>
+                        <th>
+                            Simple
+                        </th>
+                    </tr>
+                    {% for key, value in item_sets.items() %}
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold;"><a href="http://{{ip}}:{{servicesport}}/rest/itemset/{{key}}/">Item-Set: {{key}}</a></td>
+                        <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold;"><a href="http://{{ip}}:{{servicesport}}/ws/itemset/{{key}}/">Item-Set: {{key}}</a></td>
+                    </tr>
+                         {% for item in value %}
+                            <tr>
+                                <td>
+                                    <a href="http://{{ip}}:{{servicesport}}/rest/items/{{item._path}}/">{{item._path}}</a>
+                                </td>
+                                <td>
+                                    <a href="http://{{ip}}:{{servicesport}}/ws/items/{{item._path}}/">{{item._path}}</a>
+                                </td>
+                            </tr>
+                         {% endfor %}
+                    {% endfor %}
+                    <tr>
+                        <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold;"><a href="http://{{ip}}:{{servicesport}}/rest/items/">All Accessible Items</a></td>
+                        <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold;"><a href="http://{{ip}}:{{servicesport}}/ws/items/">All Accessible Items</a></td>
+                    </tr>
+                    {% for item in item_data %}
+                    <tr>
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/rest/items/{{item._path}}/">{{item._path}}</a>
+                        </td>
+                        <td>
+                            <a href="http://{{ip}}:{{servicesport}}/ws/items/{{item._path}}/">{{item._path}}</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div><!-- //main content -->
+    </div><!-- //row -->
+</div> <!-- //container -->
+{% endblock %}

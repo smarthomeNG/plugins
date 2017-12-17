@@ -21,7 +21,9 @@ Support is provided trough the support thread within the smarthomeNG forum:
 
 ## Requirements
 
-This plugin is running under Python >= 3.4 as well as the libs cherrypy and jinja2. You can install them with:
+This version of the plugin needs **SmartHomeNG v1.4 or newer**.
+
+This plugin is running under **Python >= 3.4** as well as the libs cherrypy and jinja2. You can install them with:
 ```
 (sudo apt-get install python-cherrypy)
 sudo pip3 install cherrypy
@@ -33,86 +35,38 @@ And please pay attention that the libs are installed for Python3 and not an olde
 
 The log level filter in the log file view will only work with "%(asctime)s %(levelname)-8s" in the beginning of the configured format! Dateformat needs to be datefmt: '%Y-%m-%d %H:%M:%S'
 
-### Running this plugin under Python 3.2
-If you really need to run this plugin under Python 3.2 you may not use the newest version of all packages. The packages **Jinja2** and **MarkupSafe** have dropped support for Python 3.2. Make sure to install the following older versions into your Phython3.2 environment, as newer versions are not compatible with Python 3.2 any more:
-
-```
-- Jinja2	    v2.6
-- MarkupSafe	v0.15
-```
-
-
+> Note: This plugin needs the SmartHomeNG loadable module `http` to be installed/configured.
 
 To support visualization, the visu_websocket plugin has to be used. It has to be PLUGIN_VERSION >= "1.1.2".
 
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[BackendServer]
-	class_name = BackendServer
-	class_path = plugins.backend
-	#ip = xxx.xxx.xxx.xxx
-	#port = 8383
-	#updates_allowed = True
-	#threads = 8
-	#user = admin
-	#password = very_secure_password
-	#hashed_password = 1245a9633edf47b7091f37c4d294b5be5a9936c81c5359b16d1c4833729965663f1943ef240959c53803fedef7ac19bd59c66ad7e7092d7dbf155ce45884607d
-	#language = en
-	#developer_mode = on
-	#pypi_timeout = 5
-```
+### plugin.yaml / plugin.conf (deprecated)
 
 ```yaml
+# /etc/plugin.yaml
 BackendServer:
-    class_name: BackendServer
-    class_path: plugins.backend
-    #ip: xxx.xxx.xxx.xxx
-    #port: 8383
+    plugin_name: backend
     #updates_allowed: 'True'
-    #threads: 8
-    #user: admin
-    #password: very_secure_password
-    #hashed_password: 1245a9633edf47b7091f37c4d294b5be5a9936c81c5359b16d1c4833729965663f1943ef240959c53803fedef7ac19bd59c66ad7e7092d7dbf155ce45884607d
-    #language: en
     #developer_mode: 'on'
     #pypi_timeout: 5
 ```
 
-#### ip
-IP address to start the backend server. Usually it doesnot need to be configured.
+```
+# /etc/plugin.conf
+[BackendServer]
+	class_name = BackendServer
+	class_path = plugins.backend
+	#updates_allowed = True
+	#developer_mode = on
+	#pypi_timeout = 5
+```
 
-If not configured the standard ip address of the system is used. If you like to restrict the usage of the BackendServer to the system itself (the browser ist running on the smarthomeNG system itself), you can configure the ip to 127.0.0.1. In this case, the BackendServer is only available through the localhost address.
-
-#### port
-The port on which the backend server listens. By default port **`8383`** is used.
 
 #### updates_allowed
 
 By default, the backend server allows updates to the running smarthomeNG instance. For instance, it is possible to trigger or to reload a logic. Setting **`updates_allowed`** to **`False`**, you can disable these features.
-
-####  threads
-
-Number of worker threads to start by cherrypy (default 8, which may be too much for slow CPUs)
-
-#### user (optional)
-
-The user for basic authentication. If left out, the user name is set as "admin"
-
-#### password (optional)
-
-The plaintext password for basic authentication. If you want to store your password as hash, use 'hashed_password' instead. If both "password" and "hashed_password" are left out, basic authentication is disabled.
-
-#### hashed_password (optional)
-
-The password for basic authentication as hash value. Can be used instead of "password" if you do not want a plaintext password in your config file. If both "password" and "hashed_password" are left out, basic authentication is disabled. Currently hashed_password is the SHA-512 hash value of the password. To create the hash for your password, you can use function "Create password hash" on page "Services" in the backend.
-
-#### language (optional)
-
-You can specify a language to use for the plugin. Besides the standard language (german) which is used, if this parameter isn't set, you can specify english (for the time being). The language is specified by  **``en``**
 
 #### developer_mode (optional)
 

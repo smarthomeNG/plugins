@@ -26,11 +26,16 @@ import re
 import threading
 from . import commands
 
-logger = logging.getLogger('ComfoAir')
+from lib.model.smartplugin import SmartPlugin
 
-class ComfoAir():
+
+class ComfoAir(SmartPlugin):
+
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = '1.3.0'
 
     def __init__(self, smarthome, host=None, port=0, serialport=None, kwltype='comfoair350'):
+        self.logger = logging.getLogger('ComfoAir')
         self.connected = False
         self._sh = smarthome
         self._params = {}
@@ -157,8 +162,8 @@ class ComfoAir():
  
     def parse_item(self, item):
         # Process the read config
-        if 'comfoair_read' in item.conf:
-            commandname = item.conf['comfoair_read']
+        if self.has_iattr(item.conf, 'comfoair_read'):
+            commandname = self.get_iattr_value(item.conf, 'comfoair_read')
             if (commandname == None or commandname not in self._commandset):
                 self.log_err('Item {} contains invalid read command \'{}\'!'.format(item, commandname))
                 return None
@@ -175,15 +180,15 @@ class ComfoAir():
                 self._params[commandcode]['items'].append(item)
 
             # Allow items to be automatically initiated on startup
-            if ('comfoair_init' in item.conf and item.conf['comfoair_init'] == 'true'):
+            if (self.has_iattr(item.conf, 'comfoair_init') and self.get_iattr_value(item.conf, 'comfoair_init') == 'true'):
                 self.log_info('Item {} is initialized on startup.'.format(item))
                 # Only add the item to the initial commands if it is not cyclic. Cyclic commands get called on init because this is the first cycle...
-                if not commandcode in self._init_cmds and 'comfoair_read_cycle' not in item.conf:
+                if not commandcode in self._init_cmds and not self.has_iattr(item.conf, 'comfoair_read_cycle'):
                     self._init_cmds.append(commandcode)
 
             # Allow items to be cyclically updated
-            if ('comfoair_read_cycle' in item.conf):
-                cycle = int(item.conf['comfoair_read_cycle'])
+            if (self.has_iattr(item.conf, 'comfoair_read_cycle')):
+                cycle = int(self.get_iattr_value(item.conf, 'comfoair_read_cycle'))
                 self.log_info('Item {} should read cyclic every {} seconds.'.format(item, cycle))
 
                 if not commandcode in self._cyclic_cmds:
@@ -194,8 +199,8 @@ class ComfoAir():
                         self._cyclic_cmds[commandcode]['cycle'] = cycle
 
         # Process the send config
-        if 'comfoair_send' in item.conf:
-            commandname = item.conf['comfoair_send']
+        if self.has_iattr(item.conf, 'comfoair_send'):
+            commandname = self.get_iattr_value(item.conf, 'comfoair_send')
             if commandname == None:
                 return None
             elif commandname not in self._commandset:
@@ -211,8 +216,8 @@ class ComfoAir():
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'ComfoAir' and 'comfoair_send' in item.conf:
-            commandname = item.conf['comfoair_send']
+        if caller != 'ComfoAir' and self.has_iattr(item.conf, 'comfoair_send'):
+            commandname = self.get_iattr_value(item.conf, 'comfoair_send')
 
             if type(item) != int:
                 value = int(item())
@@ -223,9 +228,9 @@ class ComfoAir():
             self.send_command(commandname, value)
 
             # If a read command should be sent after write
-            if 'comfoair_read' in item.conf and 'comfoair_read_afterwrite' in item.conf:
-                readcommandname = item.conf['comfoair_read']
-                readafterwrite = item.conf['comfoair_read_afterwrite']
+            if self.has_iattr(item.conf, 'comfoair_read') and self.has_iattr(item.conf, 'comfoair_read_afterwrite'):
+                readcommandname = self.get_iattr_value(item.conf, 'comfoair_read')
+                readafterwrite = self.get_iattr_value(item.conf, 'comfoair_read_afterwrite')
                 self.log_debug('Attempting read after write for item {}, command {}, delay {}'.format(item, readcommandname, readafterwrite))
                 if readcommandname is not None and readafterwrite is not None:
                     aw = float(readafterwrite)
@@ -233,14 +238,14 @@ class ComfoAir():
                     self.send_command(readcommandname)
             
             # If commands should be triggered after this write        
-            if 'comfoair_trigger' in item.conf:
-                trigger = item.conf['comfoair_trigger']
+            if self.has_iattr_value(item.conf, 'comfoair_trigger'):
+                trigger = self.get_iattr_value(item.conf, 'comfoair_trigger')
                 if trigger == None:
                     self.log_err('Item {} contains invalid trigger command list \'{}\'!'.format(item, trigger))
                 else:
                     tdelay = 5 # default delay
-                    if 'comfoair_trigger_afterwrite' in item.conf:
-                        tdelay = float(item.conf['comfoair_trigger_afterwrite'])
+                    if self.has_iattr(item.conf, 'comfoair_trigger_afterwrite'):
+                        tdelay = float(self.get_iattr_value(item.conf, 'comfoair_trigger_afterwrite'))
                     if type(trigger) != list:
                         trigger = [trigger] 
                     for triggername in trigger:
@@ -492,13 +497,13 @@ class ComfoAir():
         return (sum(packetpart) + 173) % 256
     
     def log_debug(self, text):    
-        logger.debug('ComfoAir: {}'.format(text))    
+        self.logger.debug('ComfoAir: {}'.format(text))
 
     def log_info(self, text):    
-        logger.info('ComfoAir: {}'.format(text))    
+        self.logger.info('ComfoAir: {}'.format(text))
 
     def log_err(self, text):    
-        logger.error('ComfoAir: {}'.format(text))    
+        self.logger.error('ComfoAir: {}'.format(text))
     
     def int2bytes(self, value, length):
         # Limit value to the passed byte length

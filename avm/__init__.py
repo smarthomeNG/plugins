@@ -70,8 +70,10 @@ class MonitoringService():
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.conn.connect((self._host, self._port))
+#            self._listen_thread = threading.Thread(target=self._listen,
+#                                                   name="MonitoringService_%s" % self._plugin_instance.get_instance_name()).start()
             self._listen_thread = threading.Thread(target=self._listen,
-                                                   name="MonitoringService_%s" % self._plugin_instance.get_instance_name()).start()
+                                                   name="MonitoringService_{}".format(self._plugin_instance.get_fullname())).start()
         except Exception as e:
             self.conn = None
             self.logger.error("MonitoringService: Cannot connect to " + self._host + " on port: " + str(
@@ -438,7 +440,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.2.3"
+    PLUGIN_VERSION = "1.4.3"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -519,7 +521,8 @@ class AVM(SmartPlugin):
         """
         Run method for the plugin
         """
-        self._sh.scheduler.add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
+#        self._sh.scheduler.add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
+        self.scheduler_add('update', self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
     def stop(self):

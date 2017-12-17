@@ -37,6 +37,60 @@ class TestDatabaseSingle(TestDatabaseBase):
         res = plugin._single('max', start=self.t(0), end='now', item='main.num')
         self.assertSingle(20, res)
 
+    def test_single_sum(self):
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          (1, 2, 10),
+          (2, 3, 20)
+        ])
+        res = plugin._single('sum', start=self.t(0), end='now', item='main.num')
+        self.assertSingle(30, res)
+
+    def test_single_count(self):
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          (1, 2, 10),
+          (2, 3, 20)
+        ])
+        res = plugin._single('count', start=self.t(0), end='now', item='main.num')
+        self.assertSingle(2, res)
+
+    def test_single_count_eq_10(self):
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          (1, 2, 10),
+          (2, 3, 20)
+        ])
+        res = plugin._single('count=10', start=self.t(0), end='now', item='main.num')
+        self.assertSingle(1, res)
+
+    def test_single_count_gt_10(self):
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          (1, 2, 10),
+          (2, 3, 20)
+        ])
+        res = plugin._single('count>10', start=self.t(0), end='now', item='main.num')
+        self.assertSingle(1, res)
+
+    def test_single_count_lt_20(self):
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          (1, 2, 10),
+          (2, 3, 20)
+        ])
+        res = plugin._single('count<20', start=self.t(0), end='now', item='main.num')
+        self.assertSingle(1, res)
+
+    def test_single_raw(self):
+        plugin = self.plugin()
+        self.create_log(plugin, 'main.num', [
+          (1, 2, 10),
+          (2, 3, 20)
+        ])
+        res = plugin._single('raw', start=self.t(0), end='now', item='main.num')
+        self.assertSingle(20, res)
+
     def test_single_on(self):
         plugin = self.plugin()
         self.create_log(plugin, 'main.num', [

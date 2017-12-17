@@ -1,0 +1,34 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: system                  # plugin type (gateway, interface, protocol, system, web)
+#    subtype: core                 # plugin subtype (if applicable)
+    description:                  # Alternative: description in multiple languages
+        de: 'Blockly - graphischer Editor für Logiken - Noch in der Entwicklung, nicht für die Nutzung gedacht'
+        en: 'Blockly - graphical editor for logics - Still in development, not for use'
+    maintainer: msinn, psilo909
+#    tester: '?'
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
+
+    version: 1.4.0                # Plugin version
+    sh_minversion: 1.3b            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    classname: Blockly             # class containing the plugin
+
+    
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    section_prefix:
+        type: str
+        default: blockly_
+        description:
+            de: 'Prefix, der dem Sektionsnamen in /etc/logic.yaml vorangstellt wird'
+            en: 'Prefix that is added to the beginning of the section name in /etc/logic.yaml'
+
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    

@@ -1,0 +1,66 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: system                  # plugin type (gateway, interface, protocol, system, web)
+    description:                  # Alternative: description in multiple languages
+        de: 'Websocket Protokoll für Visus (smartVISU, etc.)'
+        en: 'Support for a websocket protocol (for smartVISU, etc.)'
+    maintainer: msinn
+    tester: psilo909
+#    keywords: iot xyz
+    documentation: https://github.com/smarthomeNG/smarthome/wiki/Visu_Unterstuetzung        # url of documentation (wiki) page
+
+    version: 1.1.3                 # Plugin version
+    sh_minversion: 1.2             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    classname: WebSocket           # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    ip:
+        type: ipv4
+        default: '0.0.0.0'
+        description:
+            de: 'IP Adresse, falls nicht auf allen IPs des hosts gelauscht werden soll'
+            en: 'ip address to use, if not listening on all ip addresses of the host'
+    
+    port:
+        type: int
+        default: 2424
+        valid_min: 0
+        description:
+            de: 'Port der für den Websocket Zugriff verwendet wird'
+            en: 'Port that is used for the websocket protocol'
+    
+    tls:
+        type: bool
+        default: False
+        description:
+            de: 'TLS benutzen? Falls auf True gesetzt, muss SmartHomeNGs /etc Directory die Zertifikat-Dateien home.crt, home.key und ca.crt enthalten'
+            en: 'Use TLS? If set to True, SmartHomeNGs /etc directory must contain the certificate files: home.crt, home.key, ca.crt'
+    
+    acl:
+        type: str
+        default: ro
+        valid_list:
+          - rw
+          - ro
+          - deny
+          - true
+          - yes
+          - no
+        description:
+            de: 'Erlaube den Zugriff über Websocket Protokoll (rw=Lesen/Schreiben, ro=Nur Lesen, deny=Kein Zugriff) - Voreinstellung für alle Items'
+            en: 'Allow access through wbsocket protocol (rw=Read/Write, ro=Read Only, deny=Deny access) - Default for all items'
+    
+    wsproto:
+        type: int
+        default: 3
+        valid_list:
+          - 3
+          - 4
+        description:
+            de: 'Verwendete Version des Websocket Protokolls'
+            en: 'Used version of the websocket protocol'
+    

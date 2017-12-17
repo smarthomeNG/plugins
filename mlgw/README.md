@@ -43,7 +43,7 @@ This plugin need a Bang & Olufsen Masterlink Gateway and can connect to it via T
 
 ```
 [mlgw]
-    class_name = mlgw
+    class_name = Mlgw
     class_path = plugins.mlgw
 #    host = 'mlgw.local'
 #    port = 9000

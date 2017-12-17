@@ -1,4 +1,4 @@
-# Notify My Android
+# nma - Notify My Android
 
 ## Requirements
 

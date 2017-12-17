@@ -19,7 +19,7 @@ This plugin has no requirements or dependencies.
 
 ## Configuration
 
-### plugin.conf
+### plugin.conf (deprecated) / .yaml
 
 ```
 [comfoair]
@@ -29,6 +29,16 @@ This plugin has no requirements or dependencies.
     host = 192.168.123.6        # Provide host and port if you want to use TCP connection (for a TCP to serial converter)
     port = 5555                 # Port
     #serialport = /dev/ttyUSB0  # Enable this if you want to use a serial connection
+```
+
+```
+comfoair:
+    class_name: ComfoAir
+    class_path: plugins.comfoair
+    kwltype: comfoair350       # Currently supported: comfoair350 and comfoair500
+    host: 192.168.123.6        # Provide host and port if you want to use TCP connection (for a TCP to serial converter)
+    port: 5555                 # Port
+    #serialport: /dev/ttyUSB0  # Enable this if you want to use a serial connection
 ```
 
 ### items.conf
@@ -89,6 +99,7 @@ e.g. comfoair_trigger_afterwrite = 10 # seconds
 Here you can find a sample configuration using the ComfoAir 350 commands:
 
 ```
+# .conf (deprecated)
 [kwl]
     [[level]]
         type = num
@@ -221,8 +232,148 @@ Here you can find a sample configuration using the ComfoAir 350 commands:
         type = num
         eval = (sh.kwl.temp.supplyair() - sh.kwl.temp.freshair()) / (sh.kwl.temp.extractair() - sh.kwl.temp.exhaustair()) * 100
         eval_trigger = kwl.temp.supplyair | kwl.temp.freshair | kwl.temp.extractair | kwl.temp.exhaustair
+```
 
 ```
+# .yaml
+kwl:
+    level:
+        type: num
+        comfoair_send: WriteVentilationLevel
+        comfoair_read: ReadCurrentVentilationLevel
+        comfoair_read_afterwrite: 1 # seconds
+        comfoair_trigger: ReadSupplyAirRPM
+        comfoair_trigger_afterwrite: 6 # seconds
+        comfoair_init: true
+        sqlite: yes
+    extractair:
+        rpm:
+            type: num
+            comfoair_read: ReadExtractAirRPM
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+        level:
+            type: num
+            comfoair_read: ReadExtractAirPercentage
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+    supplyair:
+        rpm:
+            type: num
+            comfoair_read: ReadSupplyAirRPM
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+        level:
+            type: num
+            comfoair_read: ReadSupplyAirPercentage
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+    filter:
+        reset:
+            type: bool
+            comfoair_send: WriteFilterReset
+    temp:
+        comfort:
+            type: num
+            comfoair_send: WriteComfortTemperature
+            comfoair_read: ReadComfortTemperature
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+        freshair:
+            type: num
+            comfoair_read: ReadFreshAirTemperature
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+            sqlite: yes
+        supplyair:
+            type: num
+            comfoair_read: ReadSupplyAirTemperature
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+            sqlite: yes
+        extractair:
+            type: num
+            comfoair_read: ReadExtractAirTemperature
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+            sqlite: yes
+        exhaustair:
+            type: num
+            comfoair_read: ReadExhaustAirTemperature
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+            sqlite: yes
+        preheater:
+            type: num
+            comfoair_read: ReadPreHeatingTemperature
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+        groundheat:
+            type: num
+            comfoair_read: ReadGroundHeatTemperature
+            comfoair_read_cycle: 60 # seconds
+            comfoair_init: true
+    bypass:
+        type: num
+        comfoair_read: ReadBypassPercentage
+        comfoair_read_cycle: 600 # seconds
+        comfoair_init: true
+    preheater:
+        type: num
+        comfoair_read: ReadPreHeatingStatus
+        comfoair_read_cycle: 600 # seconds
+        comfoair_init: true
+    operatinghours:
+        away:
+            type: num
+            comfoair_read: ReadOperatingHoursAway
+            comfoair_read_cycle: 3600 # seconds
+            comfoair_init: true
+        low:
+            type: num
+            comfoair_read: ReadOperatingHoursLow
+            comfoair_read_cycle: 3600 # seconds
+            comfoair_init: true
+        medium:
+            type: num
+            comfoair_read: ReadOperatingHoursMedium
+            comfoair_read_cycle: 3600 # seconds
+            comfoair_init: true
+        high:
+            type: num
+            comfoair_read: ReadOperatingHoursHigh
+            comfoair_read_cycle: 3600 # seconds
+            comfoair_init: true
+        antifreeze:
+            type: num
+            comfoair_read: ReadOperatingHoursAntiFreeze
+            comfoair_read_cycle: 3600 # seconds
+            comfoair_init: true
+        preheater:
+            type: num
+            comfoair_read: ReadOperatingHoursPreHeating
+            comfoair_read_cycle: 3600 # seconds
+            comfoair_init: true
+        bypass:
+            type: num
+            comfoair_read: ReadOperatingHoursBypass
+            comfoair_read_cycle: 3600 # seconds
+            comfoair_init: true
+        filter:
+            type: num
+            comfoair_read: ReadOperatingHoursFilter
+            comfoair_read_cycle: 3600 # seconds
+            comfoair_init: true
+    heatpreparationratio:
+        type: num
+        eval: (sh.kwl.temp.supplyair() - sh.kwl.temp.freshair()) / (sh.kwl.temp.extractair() - sh.kwl.temp.exhaustair()) * 100
+        eval_trigger:
+          - kwl.temp.supplyair
+          - kwl.temp.freshair
+          - kwl.temp.extractair
+          - kwl.temp.exhaustair
+```
+
 
 ### logic.conf
 Currently there is no logic configuration for this plugin.

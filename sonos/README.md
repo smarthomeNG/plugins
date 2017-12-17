@@ -19,8 +19,9 @@
 ## <a name="req"></a>Requirements
 
 * SmarthomeNG v1.3 or newer
-* Python3 libraries ```requests``` and ```xmltodict```
+* Python3 libraries ```requests```, ```tinytag``` and ```xmltodict```
 * available ```ping``` executable on the host system
+* tested on Sonos software 8.1
 
 To install all necessary libraries for SmarthomeNG, you can run following bash command:
 
@@ -60,17 +61,28 @@ The first line of each entry is our UID (rincon_xxxxxxxxxxxxxx) we were looking 
 
 ## <a name="sh"></a>Smarthome Integration
 
-Edit the file ```/usr/local/smarthome/etc/plugins.conf``` (might differ) and add the following entry:
+Edit the file ```/usr/local/smarthome/etc/plugins.yaml``` (might differ) and add the following entry:
 ```yaml
-[sonos]
-    class_name = Sonos
-    class_path = plugins.sonos
-    discover_cycle = 120 # can be omitted, default 120 seconds
+
+Sonos:
+    class_name: Sonos
+    class_path: plugins.sonos
+    # tts: true                          # optional, default:  false
+    # local_webservice_path: /tmp/tts    # optional, default:  empty. If 'tts' is enabled, this option is mandatory. 
+                                         # All tts files will be stored here.
+    # webservice_ip: 192.168.1.40        # optional, default:  automatic. You can set a specific ip address.
+                                         # If you're using a docker container, you have to set the host 
+                                         # ip address here.  
+    # webservice_port: 23500             # optional, default:  23500
+    # discover_cycle: 120                # optional, default:  120 (in seconds)
+    # speaker_ips:                       # optional. You can set static IP addresses for your Sonos speaker. This
+    #   - 192.168.1.10                   # will disable auto-discovery. This is useful if you're using a 
+    #   - 192.168.1.77                   # containerized environment with restricted network access.
 ```
 
 After that you have to create an item configuration file under ```/usr/local/smarthome/items```, e.g. ```sonos.yaml```.
 You can use the full-featured example configuration in the example sub folder. Just change the [Sonos UID](#uid) to your
-needs.
+needs.<
 
 ### <a name="struc"></a>Item Structure 
 The first thing to mention is that you don't have to implement all items / functions for a speaker. Choose your
@@ -248,18 +260,18 @@ Loads a Sonos playlist by its name. The item ```sonos_playlists``` shows all ava
 command can be executed on any speaker of a group.
  
 _child item_ ```start_after```:
-If you add an child item (type ```bool```) with an attribute ```sonos_attrib = start_after``` you can control the 
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib: start_after``` you can control the 
 behaviour after the playlist was loaded. If you set this item to ```True```, the speaker starts playing
 immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
 setting is 'False'.
 
 _child item_ ```clear_queue```:
-If you add an child item (type ```bool```) with an attribute ```sonos_attrib = clear_queue```, the Sonos queue will be 
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib: clear_queue```, the Sonos queue will be 
 cleared before loading the new playlist if you set this item to ```True```, ```False``` otherwise. (see example item 
 configuration). You can omit this child item, the default setting is 'False'.
 
 _child item_ ```start_track```:
-If you add an child item (type ```num```) with an attribute ```sonos_attrib = start_track```, you can define the track 
+If you add an child item (type ```num```) with an attribute ```sonos_attrib: start_track```, you can define the track 
 to start play from. First item in the queue is 0. You can omit this child item, the default setting is 0.
 
 #### loudness
@@ -327,17 +339,56 @@ Sets / gets the play mode for a speaker. Allowed values are 'NORMAL', 'REPEAT_AL
 'SHUFFLE_REPEAT_ONE', 'REPEAT_ONE'. This is a group command and effects all speakers in the group. This item is changed 
 by Sonos events and should always be up-to-date.
 
+#### play_snippet
+```write```
+
+Plays a snippet audio file by a given audio filename (e.g. 'alarm.mp3'). You have to set at least two parameters in the 
+```plugin.yaml```: ```tts``` and the ```local_webservice_path``` to enable this feature. You have to save the audio file
+ to the value of parameter ```local_webservice_path```. Following audio formats should be supported: 'mp3', 'mp4', 'ogg', 'wav', 'aac' (tested
+ only with 'mp3'). This is a group command and effects all speakers in the group.
+
+_child item_ ```snippet_volume```:
+If you add an child item (type ```num```) with an attribute ```sonos_attrib: snippet_volume``` you can set the volume 
+for the audio snippet. This does not affect the normal ```volume``` and will be resetted to the normal ```volume``` 
+level after the audio file was played. If a speaker group is in use, the volume level for each speaker is restored 
+separately.
+
+_child item_ ```snippet_fade_in```:
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib: snippet_fade_in``` the normal ```volume``` 
+will be increased from 0 to the desired volume level after the audio file was played.
+
+#### play_tts
+```write```
+
+Sets a message which will be parsed by the Google TTS API. You have to set at least two parameters in the 
+```plugin.yaml```: ```tts``` and the ```local_webservice_path```. This is a group command and effects all speakers in 
+the group.
+
+_child item_ ```tts_language```:
+If you add an child item (type ```str```) with an attribute ```sonos_attrib: tts_language``` you set the TTS language.
+Valid values are 'en', 'de', 'es', 'fr', 'it'. You can omit this child item, the default setting is 'de'.
+ 
+_child item_ ```tts_volume```:
+If you add an child item (type ```num```) with an attribute ```sonos_attrib: tts_volume``` you can set the volume for 
+the TTS message. This does not affect the normal ```volume``` and will be resetted to the normal ```volume``` level 
+after the TTS message was played. If a speaker group is in use, the volume level for each speaker is restored 
+separately.
+
+_child item_ ```tts_fade_in```:
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib: tts_fade_in``` the normal ```volume``` 
+will be increased from 0 to the desired volume level after the TTS message was played.
+
 #### play_tunein
 ```write```
 
 Plays a radio station by a give name. Keep in mind that Sonos searches for an appropiate radio station. If more than one
-station was found, the first result will be used. 
+station was found, the first result will be used. This is a group command and effects all speakers in the group. 
 
 _child item_ ```start_after```:
-If you add an child item (type ```bool```) with an attribute ```sonos_attrib =start_after``` you can control the behaviour
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib: start_after``` you can control the behaviour
 after the radio station was added to the Sonos speaker. If you set this item to ```True```, the speaker starts playing
 immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
-setting is 'True'.
+setting is 'True'. 
 
 #### play_url
 ```write```
@@ -345,10 +396,10 @@ setting is 'True'.
 Plays a given url. 
 
 _child item_ ```start_after```:
-If you add an child item (type ```bool```) with an attribute ```sonos_attrib =start_after``` you can control the behaviour
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib: start_after``` you can control the behaviour
 after the url was added to the Sonos speaker. If you set this item to ```True```, the speaker starts playing
 immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
-setting is 'True'.
+setting is 'True'. This is a group command and effects all speakers in the group.
 
 #### previous
 ```write``` ```visu```
@@ -383,7 +434,7 @@ real-time. For each speaker discover cycle the item will be updated.
 
 Returns a list of Sonos playlists. These playlists can be loaded by the ```load_sonos_playlist``` item. 
 
-#### status_light**
+#### status_light
 ```read``` ```write```
 
 Sets / gets the status light indicator of a speaker. 'True' to turn the light on, 'False' to turn it off. The value is 
@@ -459,7 +510,7 @@ Returns the UID of a Sonos speaker.
 Unjoins a speaker from a group. 
 
 _child item_ ```start_after```:
-If you add an child item (type ```bool```) with an attribute ```sonos_attrib =start_after``` you can control the 
+If you add an child item (type ```bool```) with an attribute ```sonos_attrib: start_after``` you can control the 
 behaviour after the speaker was unjoined from a group.. If you set this item to ```True```, the speaker starts playing
 immediately, ```False``` otherwise. (see example item configuration). You can omit this child item, the default
 setting is 'False'.
@@ -503,7 +554,7 @@ step in seconds ```[sonos_dpt3_time]```. Both values can be omitted. In this cas
 ```sonos_dpt3_step: 2``` and ```sonos_dpt3_step: 1```. The ```group_command``` and ```max_volume``` items will be 
 considered.
 
-#### zone_group_members**
+#### zone_group_members
 ```read```
 
 Returns a list of all UIDs of the group the speaker is a member in. The list contains always the current speaker. This 
@@ -708,6 +759,26 @@ becomes
           sonos_attrib: dpt3_helper
           type: num
           sonos_send: volume
+```
+### TTS and Snippet functionality
+
+If you want to use either the ```play_tts``` or ```play_snippet``` functionality, you have to enable the ```tts```
+option for the Sonos plugin in your ```plugin.yaml```. In addition to that, you have to set a valid local path for the
+```local_webservice_path``` option. A very simple Webservice will be started to serve Sonos requests.
+
+### Configure Speaker IPs manually
+
+You can set the IP addresses of your speakers statically to avoid using the internal discover function.
+This can be useful if you're using Docker or Rkt and you don't want to allow UDP and/or Multicast packets.  
+To do so, edit your ```etc/plugin.yaml``` and configure it like this:
+
+```yaml
+Sonos:
+    class_name: Sonos
+    class_path: plugins.sonos
+    speaker_ips:                       
+      - 192.168.1.10                    
+      - 192.168.1.77                   
 ```
 
 ### Debug on error

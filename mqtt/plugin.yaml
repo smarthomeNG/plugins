@@ -1,17 +1,175 @@
+# Metadata for the Smart-Plugin
 plugin:
-    type: protocol              # plugin type (system, gateway, interface, protocol, cloud)
-#    subtype: ...               # plugin subtype (if applicable)
-    version: 1.3.3              # Plugin version
-    keywords: iot               # keywords, where applicable
-    sh_minversion: 1.3          # minimum shNG version to use this plugin
-#   sh_maxversion:              # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: true        # plugin supports multi instance
-    description: 'Implementierung eines MQTT Clients'    # description (one language only, german preferred)
-#   description:               # Alternative: description in multiple languages
-#       de: 'Abfrage der Daten des Wetterdienstes Wunderground.com'
-#       en: 'Get weather data from wunderground.com'
-   documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of wiki page
-    maintainer: msinn           # Who maintains this plugin?
-#   tester:                     # Who tests this plugin?
+    # Global plugin attributes
+    type: protocol                 # plugin type (gateway, interface, protocol, system, web)
+    description:                  # Alternative: description in multiple languages
+        de: 'Implementierung eines MQTT Clients. Umfassendere Implementierung des MQTT Protokolls, **seit SmartHomeNG v1.3**'
+        en: 'Implementation of a MQTT client. Feature enriched implementation of the MQTT protocol, **since SmartHomeNG v1.3**'
+    maintainer: msinn
+#    tester:                        # Who tests this plugin?
+    keywords: iot
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin
 
+    version: 1.3c.4                # Plugin version
+    sh_minversion: 1.3c            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    classname: Mqtt                # class containing the plugin
 
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    
+    host:
+        type: ip
+        default: '127.0.0.1'
+        description:
+            de: 'IP Adresse / Hostname des MQTT Brokers'
+            en: 'ip address / hostname of the MQTT broker'
+        
+    port:
+        type: int
+        default: 1883
+        valid_min: 0
+        description:
+            de: 'Port des MQTT Brokers'
+            en: 'port of MQTT broker'
+        
+    qos:
+        type: int
+        default: 1
+        valid_list:
+          - 0
+          - 1
+          - 2
+        description:
+            de: 'Quality of Service'
+            en: 'Quality of Service'
+        
+    last_will_topic:
+        type: str
+        default: ''
+        description:
+            de: 'Topic für Last-Will Telegramm'
+            en: 'Topic for the last will telegram'
+        
+    last_will_payload:
+        type: str
+        default: ''
+        description:
+            de: 'Payload für Last-Will Telegramm'
+            en: 'Payload for the last will telegram'
+        
+    birth_topic:
+        type: str
+        default: ''
+        description:
+            de: 'Topic für Birth Telegramm'
+            en: 'Topic for the birth telegram'
+        
+    birth_payload:
+        type: str
+        default: ''
+        description:
+            de: 'Payload für Birth Telegramm'
+            en: 'Payload for the birth telegram'
+        
+    publish_items:
+        type: bool
+        default: False
+        description:
+            de: 'Publiziere die Items'
+            en: 'Publish Items'
+        
+    items_topic_prefix:
+        type: str
+        default: 'devices/shng'
+        description:
+            de: 'Prefix für die publizierten Items'
+            en: 'Prefix for the published items'
+    
+    user:
+        type: str
+        default: ''
+        description:
+            de: 'Username für das Broker Login'
+            en: 'Username for login to the broker'
+        
+    password:
+        type: str
+        default: ''
+        description:
+            de: 'Passwort für das Broker Login'
+            en: 'Password for login to the broker'
+        
+#    tls:    # Not yet implemented
+#        type: bool
+#        default: False
+#        description:
+#            de: ''
+#            en: ''
+        
+#    ca_certs:    # Not yet implemented
+#        type: str
+#        default: '/etc/'
+#        description:
+#            de: ''
+#            en: ''
+        
+    acl:
+        type: str
+        default: 'none'
+        valid_list:
+          - 'none'
+          - 'pub'
+          - 'sub'
+          - 'pubsub'
+        description:
+            de: 'Zugriffskontrolle (none/publish/subscribe)'
+            en: 'Accesscontrol (none/publish/subscribe)'
+        
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    mqtt_topic:
+        type: str
+        description:
+            de: 'Topic für Senden und Empfangen'
+            en: 'Topic for send and receive'
+        
+    mqtt_topic_in:
+        type: str
+        description:
+            de: 'Topic für Empfangen'
+            en: 'Topic for receive'
+        
+    mqtt_topic_out:
+        type: str
+        description:
+            de: 'Topic für Senden'
+            en: 'Topic for send'
+        
+    mqtt_topic_init:
+        type: str
+        description:
+            de: 'Topic für Senden (Initial beim Start von SmartHomeNG senden)'
+            en: 'Topic for send (send initially when starting up SmartHomeNG'
+        
+    mqtt_qos:
+        type: int
+        default: 1
+        valid_list:
+          - 0
+          - 1
+          - 2
+        description:
+            de: 'Quality of Service'
+            en: 'Quality of Service'
+        
+    mqtt_retain:
+        type: bool
+        default: ''
+        description:
+            de: 'Retention Flag für gesendete Telegramme setzen'
+            en: 'Set retention flag for sent telegrams'
+        

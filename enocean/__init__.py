@@ -433,24 +433,22 @@ class EnOcean(SmartPlugin):
     def stop(self):
         self.alive = False
         self.logger.info("enocean: Thread stopped")
-        
-    def start_UTE_learnmode(self, id_offset=0):
-        self.UTE_listen = True
-        self.learn_id = id_offset
-        self.logger.info("enocean: Listeining for UTE package ('D4')")
 
+        
     def _send_UTE_response(self, data, optional):
         choice = data[0]
-        #payload = data[1:-5]
+        payload = data[1:-5]
         #sender_id = int.from_bytes(data[-5:-1], byteorder='big', signed=False)
         #status = data[-1]
         #repeater_cnt = status & 0x0F
         SubTel = 0x03
         db = 0xFF
         Secu = 0x0
+
         self._send_radio_packet(self.learn_id, choice, [0x91, payload[1], payload[2], payload[3], payload[4], payload[5], payload[6]],[SubTel, data[-5], data[-4], data[-3], data[-2], db, Secu] )#payload[0] = 0x91: EEP Teach-in response, Request accepted, teach-in successful, bidirectional
         self.UTE_listen = False
         self.logger.info("enocean: sending UTE response and end listening")
+
     def parse_item(self, item):
         if 'enocean_rx_key' in item.conf:
             # look for info from the most specific info to the broadest (key->eep->id) - one id might use multiple eep might define multiple keys
@@ -526,6 +524,22 @@ class EnOcean(SmartPlugin):
                         self.logger.debug('enocean: item is A5_38_08_03 type')
                         self.send_dim(id_offset, item(), 0)
                         self.logger.debug('enocean: sent dim command')
+                    elif(tx_eep == 'D2_01_07'):
+                        if 'enocean_rx_id' in item.conf:
+                            rx_id = int(item.conf['enocean_rx_id'],16)
+                            self.logger.debug('enocean:  enocean_rx_id found')
+                        else:
+                            rx_id=0
+                            self.logger.debug('enocean:  NO enocean_rx_id found')
+                        if 'enocean_pulsewidth' in item.conf:
+                            pulsew = float(item.conf['enocean_pulsewidth'])
+                            self.logger.debug('enocean:  pulsewidth found')
+                        else:
+                            pulsew=0
+                            self.logger.debug('enocean:  NO pulsewidth found')
+                        self.logger.debug('enocean: item is D2_01_07_01 type')
+                        self.send_switch_D2(id_offset, rx_id, pulsew, item())
+                        self.logger.debug('enocean: sent switch command for D2 VLD')
                     elif(tx_eep == 'A5_38_08_01'):
                         self.logger.debug('enocean: item is A5_38_08_01 type')
                         self.send_switch(id_offset, item(), 0)
@@ -535,8 +549,12 @@ class EnOcean(SmartPlugin):
                         self.send_rgbw_dim(id_offset, item(), 0)
                         self.logger.debug('enocean: sent RGBW dim command')
                     elif(tx_eep == 'A5_3F_7F'):
+                        rtime=5
+                        if 'enocean_rtime' in item.conf:
+                            rtime = int(item.conf['enocean_rtime'])
+                            self.logger.debug('enocean:  actuator runtime specified.')
                         self.logger.debug('enocean: item is A5_3F_7F type')
-                        self.send_actuator_cmd(id_offset, item())
+                        self.send_generic_actuator_cmd(id_offset, rtime, item())
                         self.logger.debug('enocean: sent actuator command')
                     else:
                         self.logger.error('enocean: error: Unknown tx eep command')
@@ -549,24 +567,8 @@ class EnOcean(SmartPlugin):
         self._send_common_command(CO_RD_NUMSECUREDEVICES)
         self.logger.info("enocean: Read number of secured devices")
 
-    def enter_learn_mode(self, onoff=1):
-        if (onoff == 1):
-            self._send_common_command(CO_WR_LEARNMODE, [0x01, 0x00, 0x00, 0x00, 0x00],[0xFF])
-            self.logger.info("enocean: entering learning mode")
-        else:
-            self._send_common_command(CO_WR_LEARNMODE, [0x00, 0x00, 0x00, 0x00, 0x00],[0xFF])
-            self.logger.info("enocean: leaving learning mode")
 
-    #This function enables/disables the controller's smart acknowledge mode
-    def set_smart_ack_learn_mode(self, onoff=1):
-        if (onoff == 1):
-            self._send_smart_ack_command(SA_WR_LEARNMODE, [0x01, 0x00, 0x00, 0x00, 0x00, 0x00])
-            self.logger.info("enocean: enabling smart acknowledge learning mode")
-        else:
-            self._send_smart_ack_command(SA_WR_LEARNMODE, [0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-            self.logger.info("enocean: disabling smart acknowledge learning mode")
-
-    # Request all taught in smart acknowledge devices that have a mailbox
+        # Request all taught in smart acknowledge devices that have a mailbox
     def get_smart_ack_devices(self):
         self._send_smart_ack_command(SA_RD_LEARNEDCLIENTS)
         self.logger.info("enocean: Requesting all available smart acknowledge mailboxes")
@@ -609,7 +611,7 @@ class EnOcean(SmartPlugin):
         packet += bytes([self._calc_crc8(packet[1:5])])
         packet += bytes(data + optional)
         packet += bytes([self._calc_crc8(packet[6:])])
-        self.logger.debug("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
+        self.logger.info("enocean: sending packet with len = {} / data = [{}]!".format(len(packet), ', '.join(['0x%02x' % b for b in packet])))
         self._tcm.write(packet)
 
     def _send_smart_ack_command(self, _code, data=[]):
@@ -676,13 +678,6 @@ class EnOcean(SmartPlugin):
         status2 = (BLC << 5) + (LRNB << 4) + (DSO << 2) 
         self._send_radio_packet(id_offset, 0xA5, [valve_position, TSP, status , status2])
 
-    def send_learn_radiator_valve(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending learn telegram for radiator valve")
-        self._send_radio_packet(id_offset, 0xA5, [0x00, 0x00, 0x00, 0x00])
-
 
     def send_dim(self,id_offset=0, dim=0, dimspeed=0):
         if (dimspeed < 0) or (dimspeed > 255):
@@ -695,10 +690,6 @@ class EnOcean(SmartPlugin):
             self._send_radio_packet(id_offset, 0xA5, [0x02, int(dim), int(dimspeed), 0x09])
         else:
             self.logger.error("enocean: sending command A5_38_08: invalid dim value")
-
-    def send_actuator_cmd(self,id_offset=0, command=0):
-        pass
-
 
     def send_rgbw_dim(self,id_offset=0, color='red', dim=0, dimspeed=0):
         if(color == str(red)):
@@ -718,6 +709,21 @@ class EnOcean(SmartPlugin):
         self._send_radio_packet(id_offset, 0x07, [ list(dim.to_bytes(2, byteorder='big')), color_hex_code, 0x0F])
         self.logger.debug("enocean: sent dim command 07_3F_7F")
 
+    def send_generic_actuator_cmd(self,id_offset=0, rtime=0, command=0):
+        if (rtime < 0) or (rtime > 255):
+            self.logger.error("enocean: sending switch command A5_3F_7F: invalid runtime range (0-255)")
+            return
+        if(command == 0):
+            command_hex_code = 0x00
+        elif(command == 1):
+            command_hex_code = 0x01
+        elif(command == 2):
+            command_hex_code = 0x02
+        else:
+            self.logger.error("enocean: sending actuator command failed: invalid command" + command)
+            return
+        self._send_radio_packet(id_offset, 0xA5, [0x00, rtime, command_hex_code, 0x0c])
+        self.logger.debug("enocean: sending actuator command A5_3F_7F")
 
     def send_switch(self,id_offset=0, on=0, block=0):
         if (block < 0) and (block > 1):
@@ -731,33 +737,109 @@ class EnOcean(SmartPlugin):
         else:
             self.logger.error("enocean: sending command A5_38_08: error")
 
-    def send_learn_dim(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending learn telegram for dim command")
-        self._send_radio_packet(id_offset, 0xA5, [0x02, 0x00, 0x00, 0x00])
 
-    def send_learn_rgbw_dim(self, id_offset=0):
+    def send_switch_D2(self, id_offset=0, rx_id=0, pulsew=0, on=0):
         if (id_offset < 0) or (id_offset > 127):
             self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
             return
-        self.logger.info("enocean: sending learn telegram for rgbw dim command")
-        self._send_radio_packet(id_offset, 0x07, [0xFF, 0xF8, 0x0D, 0x87])
+        if (rx_id < 0) or (rx_id > 0xFFFFFFFF):
+            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
+            return
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        #self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x01],[0x03, 0xFF, 0xBA, 0xD0, 0x00, 0xFF, 0x0])
+        self.logger.info("enocean: sending switch command D2_01_07")
+        if (on == 0):
+            self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x00],[0x03, rx_id, 0xFF, 0x0])
+        elif (on == 1):
+            self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x01],[0x03, rx_id, 0xFF, 0x0])
+            if (pulsew  > 0):
+                time.sleep(pulsew)
+                self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x00],[0x03, rx_id, 0xFF, 0x0])
+        else:
+            self.logger.error("enocean: sending command D2_01_07: error")
+        
 
-    def send_learn_switch(self, id_offset=0):
+####################################################
+### --- START - Definitions of Learn Methods --- ###
+####################################################
+    def send_learn_protocol(self, id_offset=0, device=10):
+        # define RORG
+        rorg = 0xA5
+        
+        # check offset range between 0 and 127
         if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending learn telegram for switch command")
-        self._send_radio_packet(id_offset, 0xA5, [0x01, 0x00, 0x00, 0x00])
+            self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
+            return None
+        # device range 10 - 19 --> Learn protocol for switch actuators
+        elif (device == 10):
+            # Prepare Data for Eltako switch FSR61
+            payload = [0xE0, 0x40, 0x0D, 0x80]
+            self.logger.info('enocean: sending learn telegram for switch command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+        # device range 20 - 29 --> Learn protocol for dim actuators
+        elif (device == 20):
+            # Only for Eltako FSUD-230V
+            payload = [0x02, 0x00, 0x00, 0x00]
+            self.logger.info('enocean: sending learn telegram for dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+        elif (device == 21):
+            # For Eltako FHK61SSR dim device (EEP A5-38-08)
+            payload = [0xE0, 0x40, 0x0D, 0x80]
+            self.logger.info('enocean: sending learn telegram for dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+        elif (device == 22):
+            # For Eltako FRGBW71L RGB dim devices (EEP 07-3F-7F)
+            payload = [0xFF, 0xF8, 0x0D, 0x87]
+            self.logger.info('enocean: sending learn telegram for rgbw dim command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+        # device range 30 - 39 --> Learn protocol for radiator valves
+        elif (device == 30):
+            # Radiator Valve
+            payload = [0x00, 0x00, 0x00, 0x00]
+            self.logger.info('enocean: sending learn telegram for radiator valve with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+        # device range 40 - 49 --> Learn protocol for other actuators
+        elif (device == 40):
+            # Eltako shutter actor FSB14, FSB61, FSB71
+             payload = [0xFF, 0xF8, 0x0D, 0x80]
+             self.logger.info('enocean: sending learn telegram for actuator with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
+        else:
+            self.logger.error('enocean: sending learn telegram with invalid device! Device {} actually not defined!'.format(device))
+            return None
+        # Send radio package
+        self._send_radio_packet(id_offset, rorg, payload)
+        return None
 
-    def send_learn_actuator(self, id_offset=0):
-        if (id_offset < 0) or (id_offset > 127):
-            self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
-            return
-        self.logger.info("enocean: sending learn telegram for actuator")
-        self._send_radio_packet(id_offset, 0xA5, [0xFF, 0xF8, 0x0D, 0x80])
+
+    def start_UTE_learnmode(self, id_offset=0):
+        self.UTE_listen = True
+        self.learn_id = id_offset
+        self.logger.info("enocean: Listeining for UTE package ('D4')")
+        
+        
+    def enter_learn_mode(self, onoff=1):
+        if (onoff == 1):
+            self._send_common_command(CO_WR_LEARNMODE, [0x01, 0x00, 0x00, 0x00, 0x00],[0xFF])
+            self.logger.info("enocean: entering learning mode")
+            return None
+        else:
+            self._send_common_command(CO_WR_LEARNMODE, [0x00, 0x00, 0x00, 0x00, 0x00],[0xFF])
+            self.logger.info("enocean: leaving learning mode")
+            return None
+
+            
+    # This function enables/disables the controller's smart acknowledge mode
+    def set_smart_ack_learn_mode(self, onoff=1):
+        if (onoff == 1):
+            self._send_smart_ack_command(SA_WR_LEARNMODE, [0x01, 0x00, 0x00, 0x00, 0x00, 0x00])
+            self.logger.info("enocean: enabling smart acknowledge learning mode")
+            return None
+        else:
+            self._send_smart_ack_command(SA_WR_LEARNMODE, [0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+            self.logger.info("enocean: disabling smart acknowledge learning mode")
+            return None
+
+##################################################
+### --- END - Definitions of Learn Methods --- ###
+##################################################
+
 
 #################################
 ### --- START - Calc CRC8 --- ###

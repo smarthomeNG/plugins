@@ -21,6 +21,7 @@ This plugins has no requirements.
    class_name = Simulation
    class_path = plugins.simulation
    data_file = /usr/smarthome/var/db/simulation.txt
+#   callers = KNX | Visu
 ```
 
 ```yaml
@@ -28,9 +29,19 @@ simulation:
     class_name: Simulation
     class_path: plugins.simulation
     data_file: /usr/smarthome/var/db/simulation.txt
+    # callers:
+    #   - KNX
+    #   - Visu
 ```
 
 `data_file`: This is the file where all recorded events are stored.
+
+`callers`: Is an optional list of event sources for recording of events. When an item is changed, the change is done
+by someone, e.g. knx for changes from the bus. The caller name is set by the plugin programmer and has to be
+found out manually.
+Only item changes with a caller in the list are recorded to the simulation file. In the example above e.g. uzsu is
+ignored.
+Be aware that the caller in the list has to be case sensitive. Otherwise it won't trigger.
 
 ### items.conf (deprecated) / items.yaml
 

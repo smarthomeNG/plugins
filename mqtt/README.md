@@ -1,6 +1,6 @@
 # MQTT
 
-#### Version 1.3.3
+#### Version 1.3.4
 
 This plugin implements the the functionality for SmartHomeNG to act as a MQTT client.
 
@@ -14,6 +14,10 @@ Details on the protocol can be found on [mqtt.org](http://mqtt.org).
 Support is provided trough the support thread within the smarthomeNG forum: [Support-Thread](https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin)
 
 ## Change History
+
+### Changes since version 1.3.3
+
+- Fixed error not initializing subscriptions for items, if the broker was slow to respond on connect
 
 ### Changes since version 1.3.2
 
@@ -38,7 +42,7 @@ This plugin needs the following following software to be installed and running:
 - A MQTT broker for communication with other MQTT clients. The broker may be running on the hardware SmartHomeNG is running on, or on another hardware that can be reached via TCP/IP. The open souce broker [Mosquitto](https://mosquitto.org) is a good choice. 
 
 ### Using Mosquitto Broker on Raspberry Pi
-If want to run the broker on a Raspberry Pi you should be aware, that the broker on the raspbian repository is quite old. You should add the morquito.org repository as a trusted site to your **`apt-get`** to get a recent version of mosquitto installed.
+If want to run the broker on a Raspberry Pi you should be aware, that the broker on the raspbian repository is quite old. You should add the mosquitto.org repository as a trusted site to your **`apt-get`** to get a recent version of mosquitto installed.
 
 
 ## Configuration

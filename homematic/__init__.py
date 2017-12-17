@@ -27,20 +27,35 @@ import xmlrpc
 import xmlrpc.server
 import xmlrpc.client
 
+
 class Homematic():
 
-    def __init__(self, smarthome, host='0.0.0.0', port='2001'):
+    def __init__(self, smarthome, host='0.0.0.0', port='2001', cycle='60'):
         self.logger = logging.getLogger(__name__)
         self.sh = smarthome
         self.host = host
         self.port = port
+        self._cycle = int(cycle)
         self.korrektur = 0
-    
+
+
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.sh.scheduler.add(__name__, self._update_loop, cycle=self._cycle)
+#        self.scheduler_add('update', self._update_loop, cycle=self._cycle)
+        self.alive = True
+
+
+    def _update_loop(self):
+        """
+        Starts the update loop for all known items.
+        """
         server_url = 'http://' + self.host + ':' + self.port + '/'
         self.server = xmlrpc.client.ServerProxy(server_url)
         self.load_status()
-        self.alive = True
+
 
     def load_status(self):
         for hm_devices in self.sh.find_items('hm_type'):

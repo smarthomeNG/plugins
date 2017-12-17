@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf8 -*-
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 # Copyright 2016-       René Frieß                  rene.friess@gmail.com
 #                       Martin Sinn                         m.sinn@gmx.de
@@ -8,208 +8,304 @@
 #########################################################################
 #  Backend plugin for SmartHomeNG
 #
+#  It runs with SmartHomeNG version 1.4 and upwards.
+#
 #  This plugin is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  This plugin is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
 
-import cherrypy
 import logging
-import platform
-import collections
-import datetime
-import pwd
-import html
-import os
-import json
-import subprocess
-import socket
-import sys
-import threading
-import lib.config
-from lib.model.smartplugin import SmartPlugin
-from lib.utils import Utils
-from jinja2 import Environment, FileSystemLoader
 
-from .BackendCore import Backend as BackendCore
-from .BackendBlockly import BackendBlocklyLogics
+from lib.model.smartplugin import SmartPlugin
+
 from .utils import *
+
+from .BackendSysteminfo import BackendSysteminfo
+from .BackendServices import BackendServices
+from .BackendItems import BackendItems
+from .BackendLogics import BackendLogics
+from .BackendSchedulers import BackendSchedulers
+from .BackendPlugins import BackendPlugins
+from .BackendScenes import BackendScenes
+from .BackendThreads import BackendThreads
+from .BackendLogging import BackendLogging
+from .BackendVisu import BackendVisu
 
 
 
 class BackendServer(SmartPlugin):
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION='1.3.5'
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
+    
+    PLUGIN_VERSION='1.4.8'
 
-    def my_to_bool(self, value, attr='', default=False):
-        try:
-            result = self.to_bool(value)
-        except:
-            result = default
-            self.logger.error("BackendServer: Invalid value '"+str(value)+"' configured for attribute "+attr+" in plugin.conf, using '"+str(result)+"' instead")
-        return result
 
-    def get_local_ip_address(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("10.10.10.10", 80))
-        return s.getsockname()[0]
+    def __init__(self, sh, updates_allowed='True', developer_mode="no", pypi_timeout=5):
+        """
+        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
-    def __init__(self, sh, port=None, threads=8, ip='', updates_allowed='True', user="admin", password="", hashed_password="", language="", developer_mode="no", pypi_timeout=5):
+        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**! 
+        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
+        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
+        
+        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
+        a reference to the sh object any more.
+        
+        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
+        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
+        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
+        returns the value in the datatype that is defined in the metadata.
+        """
         self.logger = logging.getLogger(__name__)
-        self._user = user
-        self._password = password
-        self._hashed_password = hashed_password
 
-        if self._password is not None and self._password != "" and self._hashed_password is not None and self._hashed_password != "":
-            self.logger.warning("BackendServer: Both 'password' and 'hashed_password' given. Ignoring 'password' and using 'hashed_password'!")
-            self._password = None
+        self.updates_allowed = self.get_parameter_value('updates_allowed')
+        self.developer_mode = self.get_parameter_value('developer_mode')
+        self.pypi_timeout = self.get_parameter_value('pypi_timeout')
+        
+        self.language = self.get_sh().get_defaultlanguage()
+        if self.language != '':
+            if not load_translation(self.language):
+                self.logger.warning("Language '{}' not found, using standard language instead".format(self.language))
 
-        if self._password is not None and self._password != "" and (self._hashed_password is None or self._hashed_password == ""):
-            self.logger.warning("BackendServer: Giving plaintext password in configuration is insecure. Consider using 'hashed_password' instead!")
-            self._hashed_password = None
+        if not self.init_webinterface():
+            self._init_complete = False
+            
+        return
 
-        if (self._password is not None and self._password != "") or (self._hashed_password is not None and self._hashed_password != ""):
-            self._basic_auth = True
-        else:
-            self._basic_auth = False
-        self._sh = sh
 
-        if self.is_int(port):
-            self.port = int(port)
-        else:
-            self.port = 8383
-            if port is not None:
-                self.logger.error("BackendServer: Invalid value '"+str(port)+"' configured for attribute 'port' in plugin.conf, using '"+str(self.port)+"' instead")
+    def run(self):
+        """
+        Run method for the plugin
+        """        
+        self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
+        self.alive = True
+        # if you want to create child threads, do not make them daemon = True!
+        # They will not shutdown properly. (It's a python bug)
 
-        if self.is_int(threads):
-            self.threads = int(threads)
-        else:
-            self.threads = 8
-            self.logger.error("BackendServer: Invalid value '"+str(threads)+"' configured for attribute 'thread' in plugin.conf, using '"+str(self.threads)+"' instead")
 
-        if ip == '':
-            ip = self.get_local_ip_address()
-            self.logger.debug("BackendServer: Using local ip address '{0}'".format(ip))
-        else:
-            pass
-        #    if not self.is_ip(ip):
-        #         self.logger.error("BackendServer: Invalid value '"+str(ip)+"' configured for attribute ip in plugin.conf, using '"+str('0.0.0.0')+"' instead")
-        #         ip = '0.0.0.0'
-        language = language.lower()
-        if language != '':
-            if not load_translation(language):
-                self.logger.warning("BackendServer: Language '{0}' not found, using standard language instead".format(language))
-        self.developer_mode =  self.my_to_bool(developer_mode, 'developer_mode', False)
+    def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
+        self.alive = False
 
-        self.updates_allowed = self.my_to_bool(updates_allowed, 'updates_allowed', True)
 
-        if self.is_int(pypi_timeout):
-            self.pypi_timeout = int(pypi_timeout)
-        else:
-            self.pypi_timeout = 5
-            if pypi_timeout is not None:
-                self.logger.error("BackendServer: Invalid value '" + str(pypi_timeout) + "' configured for attribute 'pypi_timeout' in plugin.conf, using '" + str(self.pypi_timeout) + "' instead")
+    def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change you should return a call back function
+                        like the function update_item down below. An example when this is needed is the knx plugin
+                        where parse_item returns the update_item function when the attribute knx_send is found.
+                        This means that when the items value is about to be updated, the call back function is called
+                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                        can be sent to the knx with a knx write function within the knx plugin.
+        """
+        pass
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.logger.debug("BackendServer running from '{}'".format(current_dir))
 
-        config = {'global': {
-            'engine.autoreload.on': False,
-            'tools.staticdir.debug': True,
-            'tools.trailing_slash.on': False,
-            'log.screen': False
-            },
+    def parse_logic(self, logic):
+        """
+        Default plugin parse_logic method
+        """
+        pass
+
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        """
+        Write items values
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        pass
+
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = self.get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
+
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_fullname()))
+            return False
+        
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
             '/': {
-                'tools.auth_basic.on': self._basic_auth,
-                'tools.auth_basic.realm': 'earth',
-                'tools.auth_basic.checkpassword': self.validate_password,
-                'tools.staticdir.root': current_dir,
+                'tools.staticdir.root': webif_dir,
             },
             '/static': {
                 'tools.staticdir.on': True,
-                'tools.staticdir.dir': os.path.join(current_dir, 'static')
+                'tools.staticdir.dir': 'static'
             }
         }
-        from cherrypy._cpserver import Server
-        self._server = Server()
-        self._server.socket_host = ip
-        self._server.socket_port = int(self.port)
-        self._server.thread_pool = self.threads
-        self._server.subscribe()
+        
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self), 
+                                     self.get_shortname(), 
+                                     config, 
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='Administrationsoberfläche für SmartHomeNG',
+                                     webifname='')
+                                   
+        return True
 
-        self._cherrypy = cherrypy
-        self._cherrypy.config.update(config)
-        self._cherrypy.tree.mount(Backend(self, self.updates_allowed, language, self.developer_mode, self.pypi_timeout), '/', config = config)
 
-    def run(self):
-        self.logger.debug("BackendServer: rest run")
-        self._server.start()
-        #self._cherrypy.engine.start()
-        self.logger.debug("BackendServer: engine started")
-        #cherrypy.engine.block()
-        self.alive = True
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
 
-    def stop(self):
-        self.logger.debug("BackendServer: shutting down")
-        self._server.stop()
-        #self._cherrypy.engine.exit()
-        self.logger.debug("BackendServer: engine exited")
-        self.alive = False
+import os
 
-    def parse_item(self, item):
-        pass
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
 
-    def parse_logic(self, logic):
-        pass
+from lib.logic import Logics
+import lib.item_conversion
 
-    def update_item(self, item, caller=None, source=None, dest=None):
-        pass
+class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogics, 
+                   BackendSchedulers, BackendPlugins, BackendScenes, BackendThreads, 
+                   BackendLogging, BackendVisu):
 
-    def validate_password(self, realm, username, password):
-        if username != self._user or password is None or password == "":
-            return False
+    blockly_plugin_loaded = None    # None = load state is unknown
 
-        if self._hashed_password is not None:
-            return Utils.check_hashed_password(password, self._hashed_password)
-        elif self._password is not None:
-            return password == self._password
-
-        return False
-
-    
-
-class Backend(BackendCore, BackendBlocklyLogics):
-    env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__))+'/templates'))
-    env.globals['get_basename'] = get_basename
-    env.globals['is_userlogic'] = is_userlogic
-    env.globals['_'] = translate
-    
-    def __init__(self, backendserver=None, updates_allowed=True, language='', developer_mode=False, pypi_timeout = 5):
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
         self.logger = logging.getLogger(__name__)
-        self._bs = backendserver
-        self._sh = backendserver._sh
-        self.language = language
-        self.updates_allowed = updates_allowed
-        self.developer_mode = developer_mode
-        self.pypi_timeout = pypi_timeout
+
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.logger.info("{}: Running from '{}'".format(self.__class__.__name__, self.webif_dir))
+        
+        self.tplenv = Environment(loader=FileSystemLoader(self.plugin.path_join( self.webif_dir, 'templates' ) ))   
+        from os.path import basename as get_basename
+        self.tplenv.globals['get_basename'] = get_basename
+        self.tplenv.globals['is_userlogic'] = Logics.is_userlogic
+        self.tplenv.globals['_'] = translate
+
+        self.env = self.tplenv    # because the new naming isn't globally implemented
+        
+        self.logger = logging.getLogger(__name__)
+        self._bs = plugin
+        self._sh = plugin.get_sh()
+        self.language = plugin.language
+        self.updates_allowed = plugin.updates_allowed
+        self.developer_mode = plugin.developer_mode
+        self.pypi_timeout = plugin.pypi_timeout
 
         self._sh_dir = self._sh.base_dir
         self.visu_plugin = None
         self.visu_plugin_version = '1.0.0'
+        
 
     def html_escape(self, str):
+        """
+        escape characters in html
+        """
         return html_escape(str)
 
 
-#if __name__ == "__main__":
-#    server = BackendServer( None, port=8080, ip='0.0.0.0')
-#    server.run()
+    def find_visu_plugin(self):
+        """
+        look for the configured instance of the visu protocol plugin.
+        """
+        if self.visu_plugin is not None:
+            return
+
+        for p in self._sh._plugins:
+            if p.__class__.__name__ == "WebSocket":
+                self.visu_plugin = p
+        if self.visu_plugin is not None:
+            try:
+                self.visu_plugin_version = self.visu_plugin.get_version()
+            except:
+                self.visu_plugin_version = '1.0.0'
+            self.visu_plugin_build = self.visu_plugin_version[4:]
+            if self.visu_plugin_build < '2':
+                self.visu_plugin = None
+                self.logger.warning(
+                    "Visu protocol plugin v{} is too old to support backend, please update".format(
+                        self.visu_plugin_version))
+
+
+    def render_template(self, tmpl_name, **kwargs):
+        """
+
+        Render a template and add vars needed gobally (for navigation, etc.)
+    
+        :param tmpl_name: Name of the template file to be rendered
+        :param **kwargs: keyworded arguments to use while rendering
+        
+        :return: contents of the template after beeing rendered 
+
+        """
+        self.find_visu_plugin()
+        tmpl = self.tplenv.get_template(tmpl_name)
+        return tmpl.render(develop=self.developer_mode,
+                           smarthome=self._sh, 
+                           visu_plugin=(self.visu_plugin is not None), 
+                           yaml_converter=lib.item_conversion.is_ruamelyaml_installed(),
+                           **kwargs)
+
+
+    # -----------------------------------------------------------------------------------
+    #    MAIN
+    # -----------------------------------------------------------------------------------
+
+    @cherrypy.expose
+    def index(self):
+        """
+        display index page
+        """
+        return self.render_template('index.html')
+
+    @cherrypy.expose
+    def main_html(self):
+
+        return self.render_template('main.html')
+
+
+    # -----------------------------------------------------------------------------------
+    #    DISCLOSURE
+    # -----------------------------------------------------------------------------------
+
+    @cherrypy.expose
+    def disclosure_html(self):
+        """
+        display disclosure
+        """
+        return self.render_template('disclosure.html')
+

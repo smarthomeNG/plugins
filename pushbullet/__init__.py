@@ -20,13 +20,14 @@
 #########################################################################
 
 import logging
-
+import sys
 import json
 import requests
 import magic
 import os
 import re
 from lib.model.smartplugin import SmartPlugin
+
 
 class Pushbullet(SmartPlugin):
     _apiurl = "https://api.pushbullet.com/v2/pushes"
@@ -53,7 +54,9 @@ class Pushbullet(SmartPlugin):
             apikey = self._apikey
 
         try:
-            response = requests.delete(self._apiurl + "/" + pushid, headers={"User-Agent": "SmartHomeNG", "Content-Type": "application/json"}, auth=(apikey,""))
+            response = requests.delete(self._apiurl + "/" + pushid,
+                                       headers={"User-Agent": "SmartHomeNG", "Content-Type": "application/json"},
+                                       auth=(apikey, ""))
             if self._is_response_ok(response):
                 return response.json()
 
@@ -67,7 +70,8 @@ class Pushbullet(SmartPlugin):
         return self._push(data={"type": "note", "title": title, "body": body}, deviceid=deviceid, apikey=apikey)
 
     def link(self, title, url, deviceid=None, apikey=None, body=None):
-        return self._push(data={"type": "link", "title": title, "url": url, "body": body}, deviceid=deviceid, apikey=apikey)
+        return self._push(data={"type": "link", "title": title, "url": url, "body": body}, deviceid=deviceid,
+                          apikey=apikey)
 
     def address(self, name, address, deviceid=None, apikey=None):
         return self._push(data={"type": "address", "name": name, "address": address}, deviceid=deviceid, apikey=apikey)
@@ -89,17 +93,29 @@ class Pushbullet(SmartPlugin):
             if apikey is None:
                 apikey = self._apikey
 
-            upload_request_response = requests.post(self._upload_apiurl, data=json.dumps({"file_name": os.path.basename(filepath), "file_type": magic.from_file(filepath, mime=True).decode("UTF-8")}), headers=headers, auth=(apikey,""))
+            if sys.version_info < (3, 5):
+                upload_request_response = requests.post(self._upload_apiurl, data=json.dumps(
+                    {"file_name": os.path.basename(filepath),
+                     "file_type": magic.from_file(filepath, mime=True).decode("UTF-8")}), headers=headers,
+                                                        auth=(apikey, ""))
+            else:
+                upload_request_response = requests.post(self._upload_apiurl, data=json.dumps(
+                    {"file_name": os.path.basename(filepath), "file_type": magic.from_file(filepath, mime=True)}),
+                                                        headers=headers, auth=(apikey, ""))
 
             if self._is_response_ok(upload_request_response):
                 data = upload_request_response.json()
-                upload_response = requests.post(data["upload_url"], data=data["data"], headers={"User-Agent": "SmartHomeNG"}, files={"file": open(filepath, "rb")})
+                upload_response = requests.post(data["upload_url"], data=data["data"],
+                                                headers={"User-Agent": "SmartHomeNG"},
+                                                files={"file": open(filepath, "rb")})
 
                 if self._is_response_ok(upload_response):
                     if body is None:
                         body = ""
 
-                    return self._push(data={"type": "file", "file_name": data["file_name"], "file_type": data["file_type"], "file_url": data["file_url"], "body": body}, deviceid=deviceid, apikey=apikey)
+                    return self._push(
+                        data={"type": "file", "file_name": data["file_name"], "file_type": data["file_type"],
+                              "file_url": data["file_url"], "body": body}, deviceid=deviceid, apikey=apikey)
                 else:
                     self.logger.error("Error while uploading file: {0}".format(upload_response.text))
             else:
@@ -122,7 +138,9 @@ class Pushbullet(SmartPlugin):
             data["device_iden"] = deviceid
 
         try:
-            response = requests.post(self._apiurl, data=json.dumps(data), headers={"User-Agent": "SmartHomeNG", "Content-Type": "application/json"}, auth=(apikey,""))
+            response = requests.post(self._apiurl, data=json.dumps(data),
+                                     headers={"User-Agent": "SmartHomeNG", "Content-Type": "application/json"},
+                                     auth=(apikey, ""))
             if self._is_response_ok(response):
                 return response.json()
 

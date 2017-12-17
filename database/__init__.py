@@ -88,9 +88,7 @@ class Database(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'database'):
-            self._buffer_lock.acquire()
-            self._buffer[item] = []
-            self._buffer_lock.release()
+            self._buffer_insert(item, [])
             item.series = functools.partial(self._series, item=item.id())
             item.db = functools.partial(self._single, item=item.id())
             item.dbplugin = self
@@ -109,9 +107,7 @@ class Database(SmartPlugin):
                         prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id', {'id':cache[COL_ITEM_ID]}, cur=cur)
                         if value is not None and prev_change is not None:
                             item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
-                        self._buffer_lock.acquire()
-                        self._buffer[item].append((last_change_ts, None, value))
-                        self._buffer_lock.release()
+                        self._buffer_insert(item, [(last_change_ts, None, value)])
                 except Exception as e:
                     self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 cur.close()
@@ -306,27 +302,20 @@ class Database(SmartPlugin):
             self._buffer_lock.release()
 
         for item in items:
-            self._buffer_lock.acquire()
-            tuples = self._buffer[item]
-            self._buffer[item] = self._buffer[item][len(tuples):]
-            self._buffer_lock.release()
+            tuples = self._buffer_remove(item)
 
             if len(tuples) or finalize:
 
                 # Test connectivity
                 if self._db.verify(5) == 0:
+                    self._buffer_insert(item, tuples)
                     self.logger.error("Database: Connection not recovered, skipping dump");
                     self._dump_lock.release()
                     return
 
                 # Can't lock, restore data
                 if not self._db.lock(300):
-                    self._buffer_lock.acquire()
-                    if item in self._buffer:
-                        self._buffer[item] = tuples + self._buffer[item]
-                    else:
-                        self._buffer[item] = tuples
-                    self._buffer_lock.release()
+                    self._buffer_insert(item, tuples)
                     if finalize:
                         self.logger.error("Database: can't dump {} items due to fail to acquire lock!".format(len(self._buffer)))
                     else:
@@ -381,23 +370,73 @@ class Database(SmartPlugin):
         self.logger.debug('Dump completed')
         self._dump_lock.release()
 
+    def _buffer_remove(self, item):
+        self._buffer_lock.acquire()
+        tuples = self._buffer[item]
+        self._buffer[item] = self._buffer[item][len(tuples):]
+        self._buffer_lock.release()
+        return tuples
+
+    def _buffer_insert(self, item, tuples):
+        self._buffer_lock.acquire()
+        if item in self._buffer:
+            self._buffer[item] = tuples + self._buffer[item]
+        else:
+            self._buffer[item] = tuples
+        self._buffer_lock.release()
+        return tuples
+
+    def _expression(self, func):
+        expression = {'params' : {'op':'!=', 'value':'0'}, 'finalizer' : None}
+        if ':' in func:
+            expression['finalizer'] = func[:func.index(":")]
+            func = func[func.index(":")+1:]
+        if func is 'count' or func.startswith('count'):
+            parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
+            func = 'count'
+            self.logger.debug(parts)
+            self.logger.debug(parts.groups())
+            self.logger.debug(parts.group(3))
+            self.logger.debug(parts.group(4))
+            if parts and parts.group(3) is not None:
+                expression['params']['op'] = parts.group(3)
+            if parts and parts.group(4) is not None:
+                expression['params']['value'] = parts.group(4)
+        return func, expression
+
+    def _finalize(self, func, tuples):
+        if func == 'diff':
+            final_tuples = []
+            for i in range(1, len(tuples)-1):
+                final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i-1][1]))
+            return final_tuples
+        else:
+            return tuples
+
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
         init = not update
         if sid is None:
             sid = item + '|' + func + '|' + str(start) + '|' + str(end)  + '|' + str(count)
+        func, expression = self._expression(func)
         queries = {
             'avg' : 'MIN(time), ROUND(AVG(val_num * duration) / AVG(duration), 2)',
             'avg.order' : 'ORDER BY time ASC',
+            'count' : 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'min' : 'MIN(time), MIN(val_num)',
             'max' : 'MIN(time), MAX(val_num)',
             'on'  : 'MIN(time), ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
-            'on.order' : 'ORDER BY time ASC'
+            'on.order' : 'ORDER BY time ASC',
+            'sum' : 'MIN(time), SUM(val_num)',
+            'raw' : 'time, val_num',
+            'raw.order' : 'ORDER BY time ASC',
+            'raw.group' : ''
         }
         if func not in queries:
             raise NotImplementedError
 
         order = '' if func+'.order' not in queries else queries[func+'.order']
-        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group="GROUP BY ROUND(time / :step)", order=order)
+        group = 'GROUP BY ROUND(time / :step)' if func+'.group' not in queries else queries[func+'.group']
+        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group=group, order=order)
         tuples = logs['tuples']
         if tuples:
             if logs['istart'] > tuples[0][0]:
@@ -416,6 +455,9 @@ class Database(SmartPlugin):
             if init:
                 tuples.append((logs['iend'], value))
 
+        if expression['finalizer']:
+            tuples = self._finalize(expression['finalizer'], tuples)
+
         return {
             'cmd': 'series', 'series': tuples, 'sid': sid,
             'params' : {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end, 'step': logs['step'], 'sid': sid},
@@ -423,16 +465,23 @@ class Database(SmartPlugin):
         }
 
     def _single(self, func, start, end='now', item=None):
+        func, expression = self._expression(func)
         queries = {
             'avg' : 'ROUND(AVG(val_num * duration) / AVG(duration), 2)',
+            'count' : 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'min' : 'MIN(val_num)',
             'max' : 'MAX(val_num)',
-            'on'  : 'ROUND(SUM(val_bool * duration) / SUM(duration), 2)'
+            'on'  : 'ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
+            'sum' : 'SUM(val_num)',
+            'raw' : 'val_num',
+            'raw.order' : 'ORDER BY time DESC',
+            'raw.group' : ''
         }
         if func not in queries:
             self.logger.warning("Unknown export function: {0}".format(func))
             return
-        logs = self._fetch_log(item, queries[func], start, end)
+        order = '' if func+'.order' not in queries else queries[func+'.order']
+        logs = self._fetch_log(item, queries[func], start, end, order=order)
         if logs['tuples'] is None:
             return
         return logs['tuples'][0][0]

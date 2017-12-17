@@ -1,0 +1,281 @@
+ <!DOCTYPE html>
+
+{% extends "base.html" %}
+{% import "navbar.html" as nav with context %}
+{% block navbar %}
+	{{ nav }}
+{% endblock navbar %}
+
+{% block content %}
+<div style="display:inline;">
+	<ul class="nav nav-tabs">
+		<li id="tab_userlogics" class="active"><a href="#">{{ _('Nutzerlogiken') }}</a></li>
+		<li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
+		{% if updates and yaml_updates %}
+			<li style="padding-left:20px; padding-top:10px;">
+				<button id="newPl" class="btn btn-primary btn-xs" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fas fa-code"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</button>
+			</li>
+			{% if blockly_loaded %}
+			<li style="padding-left:20px; padding-top:10px;">
+				<button id="newBl" class="btn btn-primary btn-xs" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fas fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
+			</li>
+			{% endif %}
+		{% endif %}
+	 </ul>
+</div>
+
+<script type="text/javascript" language="javascript">
+
+	function newPythonLogic() {
+		window.location = 'logics_new.html';
+	};
+
+	function newBlocklyLogic() {
+		window.open('/blockly/edit.html?cmd=new', '_blank');
+	};
+
+</script>
+
+ <div id="userlogics">
+	<div class="table-responsive">
+		<table class="table table-striped table-hover logicsList">
+			<thead>
+				<tr>
+					<th style="width: 30px;"></th>
+					<th style="width: 30px;">{{ _('Nr.') }}</th>
+					<th style="width: 270px;">{{ _('Logik') }}</th>
+					<th style="width: 200px;">{{ _('nächste Ausführung') }}</th>
+					<th style="width: 70px;">{{ _('Cycle') }}</th>
+					<th style="width: 150px;">{{ _('Crontab') }}</th>
+					<th style="width: 70px;">{{ _('Watch_Items') }}</th>
+					<th style="width: 250px;">{{ _('Dateiname') }}</th>
+					{% if updates %}
+						<th style="width:260px;">{{ _('Aktionen') }} &nbsp;  &nbsp;  &nbsp;
+						</th>
+					{% endif %}
+				</tr>
+			</thead>
+			<tbody>
+				{% if smarthome %}
+					{% for logic in logics %}
+						{% if logic.userlogic %}
+						<tr>
+							<td><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fas {% if not logic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
+							<td>{{ loop.index }}</td>
+							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
+							<td>
+								<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text">
+							</td>
+							<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.next_exec }}{% if not logic.enabled %}</span>{% endif %}</td>
+							<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
+								{% if logic.cycle == None %}-{% else %}{{ logic.cycle}} {% endif %}{% if not logic.enabled %}</span>{% endif %}
+							</td>
+							<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
+								{% if logic.crontab == None %}-{% else %}{{ logic.crontab}} {% endif %}{% if not logic.enabled %}</span>{% endif %}
+							</td>
+							<td {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
+								{% if logic.watch_item_list|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_item_list|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fas fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
+							</td>
+							{% if logic.logictype == 'Blockly' and blockly_loaded %}
+								<td><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+							{% else %}
+								<td><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+							{% endif %}
+							{% if updates and logic.userlogic %}
+								<td>
+								    <button {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-default btn-xs"><i class="fas fa-hand-pointer"></i></button>
+									<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-default btn-xs"><i class="fas fa-sync"></i></button>
+								{% if logic.enabled %}
+									<button name="disable" title="{{ _('Deaktivieren','button') }}" class="btn btn-default btn-xs"><i class="fas fa-pause"></i></button>
+								{% else %}
+									<button name="enable" title="{{ _('Aktivieren','button') }}" class="btn btn-default btn-xs"><i class="fas fa-play"></i></button>
+								{% endif %}
+								{% if 1 == 1 %}
+									<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-default btn-xs"><i class="fas fa-eject"></i></button>
+									&nbsp; &nbsp; &nbsp;
+									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ logic.name }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true" style="color: #c40808;"></i></button>
+								{% endif %}
+								</td>
+							{% else %}
+							    <td></td>
+							{% endif %}
+							</form>
+						</tr>
+						<tr id="{{ logic.name }}_additional3" style="display: none; cursor: pointer;" onClick="$('#{{ logic.name }}_additional3').toggle();">
+							<td colspan="{% if updates %}9{% else %}8{% endif %}">
+								<div class="panel panel-default" style="margin-bottom: 5px;">
+									<div class="panel-heading">{{ _('Watch_Items') }}</div>
+  									<div class="panel-body">
+										<table>
+										{% for value in logic.watch_item_list %}
+											{% set first = True %}
+											{% if (loop.index-1) % 3 == 0 and first%}
+											<tr>
+											{% endif %}
+											<td style="width: 300px;">{{ value }}</td>
+											{% if (loop.index-1) == 0 and not first %}
+											</tr>
+											{% else %}
+											{% set first = False %}
+											{% endif %}
+										{% endfor %}
+										</table>
+									</div>
+								</div>
+							</td>
+						</tr>
+						{% endif %}
+					{% endfor %}
+					{% if newlogics|length > 0 %}
+    					<tr><th colspan="{% if updates %}9{% else %}8{% endif %}">{{ _('Neue Logiken (nicht geladen)') }}</th><tr>
+						{% for logic in newlogics %}
+							<tr>
+								<td></td>
+								<td></td>
+								<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
+								<td>
+									<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text">
+								</td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td></td>
+
+								{% if logic.logictype == 'Blockly' and blockly_loaded %}
+									<td><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+								{% else %}
+									<td><a href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
+								{% endif %}
+								{% if updates %}
+									<td>
+									{% if logic.filename != '' %}
+										<button name="add" title="{{ _('Hinzufügen','button') }}" type="submit" class="btn btn-default btn-xs"><i class="fas fa-plus"></i></button>
+										&nbsp; &nbsp; &nbsp;
+									{% endif %}
+									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-danger btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ logic.name }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true"></i></button>
+									</td>
+								{% else %}
+									<td></td>
+								{% endif %}
+								</form>
+							</tr>
+						{% endfor %}
+					{% endif %}
+				{% else %}
+					<tr>
+						<td>{{ _('no data available') }}</td>
+					</tr>
+				{% endif %}
+			</tbody>
+		</table>
+	</div>
+ </div>
+ 
+<div id="systemlogics" style="display: none;">
+	<div class="table-responsive">
+		<table class="table table-striped table-hover logicsList">
+			<thead>
+				<tr>
+					<th style="width: 30px;"></th>
+					<th style="width: 30px;">{{ _('Nr.') }}</th>
+					<th style="width: 270px;">{{ _('Logik') }}</th>
+					<th style="width: 200px;">{{ _('nächste Ausführung') }}</th>
+					<th style="width: 70px;">{{ _('Cycle') }}</th>
+					<th style="width: 150px;">{{ _('Crontab') }}</th>
+					<th style="width: 70px;">{{ _('Watch_Items') }}</th>
+					<th style="width: 250px;">{{ _('Dateiname') }}</th>
+					{% if updates %}
+						<th style="width:260px;">{{ _('Aktionen') }}</th>
+					{% endif %}
+				</tr>
+			</thead>
+			<tbody>
+				{% if smarthome %}
+					{% for logic in logics %}
+						{% if not logic.userlogic %}
+						<tr>
+							<td><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fas {% if not logic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
+							<td>{{ loop.index }}</td>
+							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
+							<td>
+								<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text"></td>
+							{% if smarthome.scheduler.return_next(logic.name) %}
+								<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ smarthome.scheduler.return_next(logic.name).strftime('%Y-%m-%d %H:%M:%S%z') }}{% if not logic.enabled %}</span>{% endif %}</td>
+							{% else %}
+								<td></td>
+							{% endif %}
+							<td>
+								{% if logic.cycle == None %}-{% else %}{{ logic.cycle}} {% endif %}
+							</td>
+							<td>
+								{% if logic.crontab == None %}-{% else %}{{ logic.crontab}} {% endif %}
+							</td>
+							<td {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
+								{% if logic.watch_item_list|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_item_list|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fas fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
+							</td>
+							<td><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+							{% if updates and logic.userlogic %}
+								<td>
+								<input {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs">
+								<input name="reload" value="{{ _('Neu Laden','button') }}" type="submit" class="btn btn-default btn-xs">
+								<input name="enable" value="{% if logic.enabled %}{{ _('Deaktivieren','button') }}{% else %}{{ _('Aktivieren','button') }}{% endif %}" type="submit" class="btn btn-default btn-xs">
+								{% if 1 == 2 %}
+									<input name="unload" value="{{ 'Entladen' }}" type="submit" class="btn btn-default btn-xs">
+									<input name="configload" value="{{ 'gemäß config laden' }}" type="submit" class="btn btn-default btn-xs">
+								{% endif %}
+								</td>
+							{% else %}
+							    <td></td>
+							{% endif %}
+							</form>
+						</tr>
+						<tr id="{{ logic.name }}_additional3" style="display: none; cursor: pointer;" onClick="$('#{{ logic.name }}_additional3').toggle();">
+							<td colspan="{% if updates %}8{% else %}7{% endif %}">
+								<div class="panel panel-default" style="margin-bottom: 5px;">
+									<div class="panel-heading">{{ _('Watch_Items') }}</div>
+  									<div class="panel-body">
+										<table>
+										{% set first = True %}
+										{% for value in logic.watch_item_list %}
+											{% if loop.index % 2 > 0 %}
+											<tr>
+											{% endif %}
+											<td style="width: 300px;">{{ value }}</td>
+											{% if loop.index % 2 > 0 and not first %}
+											</tr>
+											{% else %}
+											{% set first = False %}
+											{% endif %}
+										{% endfor %}
+										</table>
+									</div>
+								</div>
+							</td>
+						</tr>
+						{% endif %}
+					{% endfor %}
+				{% else %}
+					<tr>
+						<td>{{ _('no data available') }}</td>
+					</tr>
+				{% endif %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<script>
+$('#tab_userlogics').on('click', function(event){
+	$('#tab_userlogics').addClass('active');
+	$('#tab_systemlogics').removeClass('active');
+	$('#userlogics').show();
+	$('#systemlogics').hide();
+});
+$('#tab_systemlogics').on('click', function(event){
+	$('#tab_userlogics').removeClass('active');
+	$('#tab_systemlogics').addClass('active');
+	$('#userlogics').hide()
+	$('#systemlogics').show();
+});
+</script>
+{% endblock %}
