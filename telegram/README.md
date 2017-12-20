@@ -109,7 +109,8 @@ state_name:
 #### telegram_info
 
 read (broadcast) a list with specific item-values provided with the attribute.
-The attribute parameter is also the command. e.g. /wetter
+The attribute parameter is also the command. 
+e.g. /wetter
 All attribute parameters (commands) are listed with the /info-command in a keyboard menu
 
 #### Simple Example
@@ -141,21 +142,21 @@ Aussentemperatur:
     knx_dpt: 9
     telegram_info: wetter
 Wind_kmh:
-	name: Wingeschwindigkeit in kmh
-	type: num
-	knx_dpt: 9
-	telegram_info: "wetter"
+    name: Wingeschwindigkeit in kmh
+    type: num
+    knx_dpt: 9
+    telegram_info: "wetter"
 
 
 Raumtemperatur
-	name: Raumtemperatur Wohnzimmer in °C
-	type: num
-	knx_dpt: 9
-	telegram_info: rtr_ist
+    name: Raumtemperatur Wohnzimmer in °C
+    type: num
+    knx_dpt: 9
+    telegram_info: rtr_ist
 
 ```
-/info broadcast all info-commands in a bot-keyboard-menu
-    e.g.
+/info broadcast all info-commands in a bot-keyboard-menu e.g.
+    
     [ /wetter] [/rtr_ist]
 
 /wetter broadcast all items and values provided with the attribute 'telegram_info = "wetter"'
