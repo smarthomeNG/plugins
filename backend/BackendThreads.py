@@ -39,7 +39,7 @@ class BackendThreads:
             thread['name'] = name
             thread['sort'] = str(thread['name']).lower()
             thread['id'] = "(" + str(count) + " threads" + ")"
-            thread['alive'] = 'Ja'
+            thread['alive'] = 'True'
         return thread
 
     @cherrypy.expose
@@ -68,9 +68,9 @@ class BackendThreads:
                 thread['id'] = t.ident
                 try:
                     if t.is_alive():
-                        thread['alive'] = 'Ja'
+                        thread['alive'] = 'True'
                     else:
-                        thread['alive'] = 'Nein'
+                        thread['alive'] = 'False'
                 except AssertionError:
                     thread['alive'] = 'AssertionError'
                 

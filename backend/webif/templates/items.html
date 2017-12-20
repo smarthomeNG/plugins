@@ -49,6 +49,12 @@ function getDetailInfo(result) {
             case 'str':
                 var input = '<textarea type="text" class="form-control" id="item_value">'+element.value+'</textarea>';
                 break;
+            case 'list':
+                var input = '<textarea type="text" class="form-control" id="item_value">'+element.value+'</textarea>';
+                break;
+            case 'dict':
+                var input = '<textarea type="text" class="form-control" id="item_value">'+element.value+'</textarea>';
+                break;
             case 'num':
                 var input = '<input type="text" class="form-control" value="'+element.value+'" id="item_value"/>';
                 break;
@@ -118,6 +124,10 @@ function getDetailInfo(result) {
 	        	temp = temp + '<tr><td colspan="2">'+triggers[i]+'</td></tr>';
 			};
 		};
+		if (element.filename != 'None') {
+			temp = temp + '<tr><th></th><td></td></tr>';
+			temp = temp + '<tr><th>{{ _('filename', 'items') }}</th><td>'+element.filename+'</td></tr>';
+		}
 
         temp = temp + '</tbody></table></div>';
 

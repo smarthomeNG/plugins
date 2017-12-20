@@ -207,7 +207,8 @@
 		"cycle": "cycle",
 		"crontab": "crontab",
 		"autotimer": "autotimer",
-		"threshold": "threshold"
+		"threshold": "threshold",
+		"filename": ""
 	},
 	
 	"_threads": {
