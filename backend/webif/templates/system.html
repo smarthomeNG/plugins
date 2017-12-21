@@ -29,12 +29,16 @@
             <tr>
                 <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
                 <td style="vertical-align: middle;">{{ _('SmartHomeNG Version') }}:</td>
-                <td style="vertical-align: middle;">{{ sh_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Benutzer') }}:&nbsp;{{ user }}</td>
+                <td style="vertical-align: middle;">{{ sh_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}&nbsp;&nbsp;-&nbsp;&nbsp; {{ sh_desc }} &nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Benutzer') }}:&nbsp;{{ user }}</td>
             </tr>
             <tr>
                 <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
                 <td style="vertical-align: middle;">{{ _('SmartHomeNG Plugins Version') }}:</td>
-                <td style="vertical-align: middle;">{{ plg_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}/plugins</td>
+                <td style="vertical-align: middle;">{{ plg_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}/plugins
+                    {% if plg_desc != '' %}
+						&nbsp;&nbsp;-&nbsp;&nbsp; {{ plg_desc }}
+					{% endif %}
+                </td>
             </tr>
             <tr>
                 <td><img src="static/img/terminal-server.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>

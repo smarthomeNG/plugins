@@ -96,7 +96,7 @@ class BackendSysteminfo:
         #req_dict = self.get_requirements_info()
 
         return self.render_template('system.html', 
-                                    now=now, system=system, sh_vers=shngversion.get_shng_version(), plg_vers=shngversion.get_plugins_version(), sh_dir=self._sh_dir,
+                                    now=now, system=system, sh_vers=shngversion.get_shng_version(), sh_desc=shngversion.get_shng_description(), plg_vers=shngversion.get_plugins_version(), plg_desc=shngversion.get_plugins_description(), sh_dir=self._sh_dir,
                                     vers=vers, node=node, arch=arch, user=user, freespace=freespace, 
                                     uptime=uptime, sh_uptime=sh_uptime, pyversion=pyversion,
                                     ip=ip, ipv6=ipv6)
@@ -261,7 +261,7 @@ class BackendSysteminfo:
                 package['sort'] = '3'
             else:
                 package['sort'] = '4'
-                self.logger.info("pypi_json: sort=4, package['name'] = >{}<".format(package['name']))
+                self.logger.debug("pypi_json: sort=4, package['name'] = >{}<".format(package['name']))
                 
             package['sort'] += package['name']
 
@@ -578,7 +578,7 @@ class BackendSysteminfo:
         # Now we have a list of [ requirement_source, min_version (with operator), max_version (with operator) ]
         if len(req_result) == 1:
             result = req_result[0]
-            self.logger.info("check_requirement: package {}, req_result = >{}<, result = >{}<".format(package, req_result, result))
+            self.logger.debug("check_requirement: package {}, req_result = >{}<, result = >{}<".format(package, req_result, result))
             #handle min
             op, req_min = self.split_operator(result[1])
             if req_min == '*':

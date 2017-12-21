@@ -79,8 +79,11 @@ class BackendLogging:
                 except:
                     fn = ''
                 l['filenames'].append(fn)
-
-            loggers.append(l)
+                
+            if l['handlers'] == ['NullHandler']:
+                self.logger.warning("logging_html: Filtered out logger {}: l['handlers'] = {}".format(l['name'], l['handlers']))
+            else:
+                loggers.append(l)
 
         return self.render_template('logging.html', loggers=loggers)
 
