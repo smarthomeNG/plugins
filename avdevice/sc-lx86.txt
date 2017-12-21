@@ -22,6 +22,10 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; trebble-; decrease; TD; ; TR; W
 1; dialog; set; *ATH; ?ATH; ATH*; RW
 1; HDMI; set; *HO; ?HO; HO*; RW
+1; input+; increase; FU; ?F; FN; W
+1; input-; decrease; FD; ?F; FN; W
+1; radiof+; ; TPI; ; PR; W; ; ; str
+1; radiof-; ; TPD; ; PR; W; ; ; str
 2; power; on; APO|APO; ?AP; APR*; RW; yes
 2; power; off; APF; ?AP; APR*; RW; yes
 2; volume+; increase; ZU; ; ZV; W

@@ -408,6 +408,7 @@ class Init():
                                     row.append('bool')
                                 elif i == 8 and ("increase" in function or "decrease" in function):
                                     row.append('int,float')
+                                    row[5] = row[5].replace('*', '')
                                 else:
                                     row.append('')
                         try:
