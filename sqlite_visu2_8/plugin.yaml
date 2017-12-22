@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: system                  # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Integration einer SQLite Datenbank - zu verwenden für smartVISU 2.8'
-        en: ''
+        de: 'Integration einer SQLite Datenbank - zu verwenden für smartVISU v2.8 und höher'
+        en: 'Integration of a SQLite database - use this version of the plugin for smartVISU v2.8 and above'
     maintainer: '?'
 #    tester:                        # Who tests this plugin?
     keywords: database

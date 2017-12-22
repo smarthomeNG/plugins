@@ -76,24 +76,35 @@ Simply set the **`visu_acl`** attribute to something to allow read/write access 
 #### sv_page
  Set **`sv_page`** to to one of the following values generate a page for this item. Every widget beneath this item will be included in the page.
 
-Valid values are:
+Valid values for **`sv_page`** are:
 
-| value             | description                                                 |  
-| :---------------- | :---------------------------------------------------------- |  
-|  **room**         |  The page appears in the room view of smartVISU         	  |  
-| **seperator**     | Inserts a seperator between entries in the room navigation  |
-| **overview**      | The page groups of different items together                 |  
-|                   |                                                             |
-|  **category**     | The page appears in the category view of smartVISU          |  
-| **cat_seperator** | Inserts a seperator between entries in the category         |  
-|                   | navigation                                                  |
-| **cat_overview**  | The page groups of different items together and is added    |
-|	                | to the category navigation                                  |  
-|                   |                                                             |
-|  **room_lite**    |  The page appears in a lite view of the visualization       |  
-[values for **`sv_page`**]
+```
++---------------+-----------------------------------------------------+
+| value         | description                                         |
++===============+=====================================================+
+| room          |  The page appears in the room view of smartVISU     |
++---------------+-----------------------------------------------------+
+| seperator     | Inserts a seperator between entries in the room     |
+|               | navigation                                          |
++---------------+-----------------------------------------------------+
+| overview      | The page groups of different items together         |
++---------------+-----------------------------------------------------+
+|               |                                                     |
+| category      | The page appears in the category view of smartVISU  |
++---------------+-----------------------------------------------------+
+| cat_seperator | Inserts a seperator between entries in the category |
+|               | navigation                                          |
++---------------+-----------------------------------------------------+
+| cat_overview  | The page groups of different items together and is  |
+|               | added to the category navigation                    |
++---------------+-----------------------------------------------------+
+|  room_lite    |  The page appears in a lite view of the             |
+|               | visualization                                       |
++---------------+-----------------------------------------------------+
 
---> Beschreibung für overview und separater vervollständigen
+```
+
+--> Beschreibung für overview und separator vervollständigen
 
 #### sv_overview
 If a page has defined **`sv_page`** as **`overview`**, it shows items of a specific type. The name/identifier of the type is defined by setting **`sv_overview`** to an unique name. For items to be displayed on this page, the items have to define  **`sv_item_type`** and set it to the value of **`sv_overview`**.
