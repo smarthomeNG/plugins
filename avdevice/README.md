@@ -83,7 +83,9 @@ The command has to correspond to a "base" command in the relevant text configura
 It is important to set the correct type for each item. The Pioneer RS232 codeset expects bool and int types only.
 For example to set the listening mode to "pure direct", the item has to be int and you set it to the value "8".
 
-Full item examples are included as separate yaml files for Pioneer and Denon devices. In general the items are setup the same independent of the AV device model. The example include the tested items/commands and allow easy copy/paste.
+Full item examples are included as separate yaml files for Pioneer and Denon devices. In general the items are setup the same independent of the AV device model. The examples include the tested items/commands and allow easy copy/paste.
+
+Speakers Items are special and should be set up the way mentioned in the following example. 1 and 2 correspond to the value the speaker command expects.
 
 #### Example
 
@@ -98,6 +100,22 @@ Pioneer:
         avdevice_zone1@pioneer_one: power
         enforce_updates: 'no'
         knx_dpt: 1
+
+    Speakers:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: speakers
+
+    SpeakerA:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1_speakers: 1
+
+    SpeakerB:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1_speakers: 2
+
 ```
 
 ### model.txt
@@ -152,8 +170,10 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 ### Troubleshooting
 1.) Have a look at the smarthome logfile. If you can't figure out the reason for your problem, change the verbose level in logging.yaml.
 You can use level 10 (=DEBUG), 9 (VERBOSE1) and 8 (VERBOSE2) as debugging levels.
+
 2.) Concerning send and response entries in the textfile, make sure the number of stars correspond to the way your device wants to receive the command or sends the response.
 Example 1: Your Pioneer receiver expects the value for the volume as three digits. So the command needs three stars. If you now set the item to a value with only two digits, like 90, the plugin converts the command automatically to have a leading 0.
 Example 2: Your Denon receiver responds with values like ON, OFF or STANDBY to power commands. Replace every character with a star! ON = 2 stars, OFF = 3 stars, etc.
 Example 3: Sending or receiving strings of different length like "CD", "GAME", etc. should be set up with one star only. Set the responsetype accordingly!
-3.) Set the response type in the textfile to the correct value. The plugin tries to anticipate the correct value but that doesn't always work. The sleep timer of Denon devices is a wonderfully sick example: You can set values betwwen 1 and 120 to set the timer in minutes. If you want to turn it off, the receiver expects the value "OFF" instead of a zero. The plugin fixes that problem if you set the responsetype to bool|num. As soon as you set the item to 0, it magically converts that value to "OFF" and the other way around when receiving "OFF". 
+
+3.) Set the response type in the textfile to the correct value. The plugin tries to anticipate the correct value but that doesn't always work. The sleep timer of Denon devices is a wonderfully sick example: You can set values betwwen 1 and 120 to set the timer in minutes. If you want to turn it off, the receiver expects the value "OFF" instead of a zero. The plugin fixes that problem if you set the responsetype to bool|num. As soon as you set the item to 0, it magically converts that value to "OFF" and the other way around when receiving "OFF".
