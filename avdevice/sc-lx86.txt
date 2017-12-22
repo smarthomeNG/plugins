@@ -9,7 +9,7 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; mute; on; MO; ?M; MUT*; RW; yes
 1; mute; off; MF; ?M; MUT*; RW; yes
 1; mode; set; ****SR; ?S; SR****; RW
-1; playingmode; ; ?L; ?L; LM****; R
+1; playingmode; ; ?L; ?L; LM****; R; ; ; str
 1; speakers; set; *SPK; ?SPK; SPK*; RW
 1; input; set; **FN; ?F; FN**; RW
 1; tone; on; 1TO; ?TO; TO*; RW
@@ -49,7 +49,7 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 4; power; on; ZEO; ?ZEP; ZEP*; RW; yes
 4; power; off; ZEF; ?ZEP; ZEP*; RW; yes
 4; input; set; **ZEA; ?ZEA; ZEA**; RW
-0; title; ; ; ; GEH01020; R
-0; station; ; ; ; GEH04022; R
-0; genre; ; ; ; GEH05024; R
+0; title; ; ; ; GEH01020; R; ; ; str
+0; station; ; ; ; GEH04022; R; ; ; str
+0; genre; ; ; ; GEH05024; R; ; ; str
 0; display; ; ?FL; ?FL; FL******************************; R
