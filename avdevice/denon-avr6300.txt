@@ -1,13 +1,13 @@
 ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; MAXVALUE; RESPONSETYPE
 0; power; on; PWON|PWON; PW?; PW**; RW
 0; power; off; PWSTANDBY; PW?; PW*******; RW
-0; eco; set; ECO*; ECO?; ECO*; RW; ; ; string,bool
+0; eco; set; ECO*; ECO?; ECO*; RW; ; ; str|bool
 1; power; on; ZMON; ZM?; ZM**; RW
 1; power; off; ZMOFF; ZM?; ZM***; RW
 1; mute; on; MUON; MU?; MU**; RW
 1; mute; off; MUOFF; MU?; MU***; RW
-1; sleep; set; SLP***; SLP?; SLP***; RW; ; 120; num,bool
-1; standby; set; STBY*; STBY?; STBY*; RW; ; ; string
+1; sleep; set; SLP***; SLP?; SLP***; RW; ; 120; num|bool
+1; standby; set; STBY*; STBY?; STBY*; RW; ; ; str
 1; volume; set; MV**; MV?; MV**; RW; ; 90
 1; volume+; increase; MVUP; ; MV; W
 1; volume-; decrease; MVDOWN; ; MV; W
@@ -20,15 +20,31 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; volumelow; ; MV50; MV?; MV50; W; ; ; num
 1; volumehigh; ; MV75; MV?; MV75; W; ; ; num
 1; volumemax; ; MVMAX **; MV?; MVMAX **; RW
-1; input; set; SI*; SI?; SI*; RW; ; ; string
-1; mode; set; MS*; MS?; MS*; RW; ; ; string
-1; audioinput; set; SD*; SD?; SD*; RW; ; ; string,bool
-1; videoinput; set; SV*; SV?; SV*; RW; ; ; string,bool
-1; digitalinput; set; DC*; DC?; DC*; RW; ; ; string
-1; video; set; VS*; ; VS*; RW; ; ; string
+1; input; set; SI*; SI?; SI*; RW; ; ; str
+1; mode; set; MS*; MS?; MS*; RW; ; ; str
+1; audioinput; set; SD*; SD?; SD*; RW; ; ; str
+1; videoinput; set; SV*; SV?; SV*; RW; ; ; str|bool
+1; videoparams; set; VS*; ; VS*; RW; ; ; str
+1; tone; on; PSTONE CTRL ON; PSTONE CTRL ?; PSTONE CTRL **; RW
+1; tone; off; PSTONE CTRL OFF; PSTONE CTRL ?; PSTONE CTRL ***; RW
+1; bass; set; PSBAS **; PSBAS ?; PSBAS **; RW; ; 99
+1; trebble; set; PSTRE **; PSTRE ?; PSTRE **; RW; ; 99
+1; bass+; increase; PSBAS UP; ; PSBAS; W
+1; bass-; decrease; PSBAS DOWN; ; PSBAS; W
+1; trebble+; increase; PSTRE UP; ; PSTRE; W
+1; trebble-; decrease; PSTRE DOWN; ; PSTRE; W
+1; dialogtoggle; on; PSDIL ON; PSDIL ?; PSDIL **; RW
+1; dialogtoggle; off; PSDIL OFF; PSDIL ?; PSDIL ***; RW
+1; dialog; set; PSDIL **; PSDIL ?; PSDIL **; RW; ; 62
+1; subwoofertoggle; on; PSSWL ON; PSSWL ?; PSSWL **; RW
+1; subwoofertoggle; off; PSSWL OFF; PSSWL ?; PSSWL ***; RW
+1; subwoofer; set; PSSWL **; PSSWL ?; PSSWL **; RW; ; 62
+1; cinemaeq; on; PSCINEMA EQ.ON; PSCINEMA EQ. ?; PSCINEMA EQ.**; RW
+1; cinemaeq; off; PSCINEMA EQ.OFF; PSCINEMA EQ. ?; PSCINEMA EQ.***; RW
+1; mainspeakers; set; PSSP:*; PSSP: ?; PSSP:*; RW; ; ; str
 2; power; on; Z2ON; Z2?; Z2**; RW
 2; power; off; Z2OFF; Z2?; Z2***; RW
-2; input; set; Z2*; Z2?; Z2*; RW; ; ; string
+2; input; set; Z2*; Z2?; Z2*; RW; ; ; str
 2; mute; on; Z2MUON; Z2MU?; Z2MU**; RW
 2; mute; off; Z2MUOFF; Z2MU?; Z2MU***; RW
 2; volume+; increase; Z2UP; ; Z2; W
@@ -36,11 +52,11 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 2; volumelow; ; Z250; MV?; Z250; W; ; ; num
 2; volumehigh; ; Z275; MV?; Z275; W; ; ; num
 2; volume; set; Z2**; Z2?; Z2**; RW; ; 90
-2; standby; set; Z2STBY*; Z2STBY?; Z2STBY*; RW; ; ; string
-2; sleep; set; Z2SLP***; Z2SLP?; Z2SLP***; RW; ; 120; num,bool
+2; standby; set; Z2STBY*; Z2STBY?; Z2STBY*; RW; ; ; str
+2; sleep; set; Z2SLP***; Z2SLP?; Z2SLP***; RW; ; 120; num|bool
 3; power; on; Z3ON; Z3?; Z3**; RW
 3; power; off; Z3OFF; Z3?; Z3***; RW
-3; input; set; Z3*; Z3?; Z3*; RW; ; ; string
+3; input; set; Z3*; Z3?; Z3*; RW; ; ; str
 3; mute; on; Z3MUON; Z3MU?; Z3MU**; RW
 3; mute; off; Z3MUOFF; Z3MU?; Z3MU***; RW
 3; volume+; increase; Z3UP; ; Z3; W
@@ -48,5 +64,5 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 3; volumelow; ; Z350; MV?; Z350; W; ; ; num
 3; volumehigh; ; Z375; MV?; Z375; W; ; ; num
 3; volume; set; Z3**; Z3?; Z3**; RW; ; 90
-3; standby; set; Z3STBY*; Z3STBY?; Z3STBY*; RW; ; ; string
-3; sleep; set; Z3SLP***; Z3SLP?; Z3SLP***; RW; ; 120; num,bool
+3; standby; set; Z3STBY*; Z3STBY?; Z3STBY*; RW; ; ; str
+3; sleep; set; Z3SLP***; Z3SLP?; Z3SLP***; RW; ; 120; num|bool

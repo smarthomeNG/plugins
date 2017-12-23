@@ -19,7 +19,7 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    model: 
+    model:
         type: str
         default: ''
         mandatory: True
@@ -27,51 +27,51 @@ parameters:
             de: 'Name des Geräts. Muss mit dem Namen der Textdatei unter plugins/avdevice korrelieren, die sämtliche Befehle beinhaltet.'
             en: 'Name of AV device. Has to correspond to a text file with the same name in the folder plugins/avdevice including all commands.'
 
-    tcp_ip: 
+    tcp_ip:
         type: ip
         default: 0.0.0.0
         description:
             de: 'Beim Nutzen der TCP Verbindungen ist die IP Adresse des Endgeräts anzugeben.'
             en: 'If you use TCP connection define IP address of your device.'
 
-    tcp_port: 
+    tcp_port:
         type: int
         default: 23
         description:
             de: 'Beim Nutzen der TCP Verbindungen ist der Port anzugeben, auf dem das Gerät Verbindungen zulässt. Für Denon: 23, für Pioneer: 8002.'
             en: 'If you use TCP connection define the port where your device accepts TCPIP connections. For Denon use 23, for Pioneer 8002.'
 
-    tcp_timeout: 
+    tcp_timeout:
         type: int
         default: 1
         description:
             de: 'Beim Nutzen der TCP Verbindungen kann ein Timeout angegeben werden.'
             en: 'If you use TCP connection you can define a connection timeout.'
 
-    rs232_port: 
+    rs232_port:
         type: str
         default: ''
         description:
             de: "Beim Nutzen einer RS232 Schnittstelle (empfohlen!) ist die serielle Schnittstelle anzugeben."
             en: "If you use a RS232 cable to communicate with your device (highly recommended!) define the serial port."
 
-    rs232_baudrate: 
+    rs232_baudrate:
         type: int
         default: 9600
         description:
             de: "Beim Nutzen einer RS232 Schnittstelle ist die benötigte Baudrate anzugeben."
             en: "If you use a RS232 interface define the baudrate."
 
-    rs232_timeout: 
+    rs232_timeout:
         type: float
         default: 0.1
         description:
             de: "Beim Nutzen einer RS232 Schnittstelle kann ein Timeout zum Lesen und Schreiben definiert werden."
             en: "If you use a RS232 interface you can define read and write timeout."
 
-    ignoreresponse: 
+    ignoreresponse:
         type: str
-        default: 'RGB,RGC,RGD,GBH,GHH,LM0,VTA,AUA,AUB'
+        default: 'RGB,RGC,RGD,GBH,GHH,VTA,AUA,AUB'
         description:
             de: "Das Plugin ignoriert Antworten die mit den hier angegebenen Werten starten, beispielsweise Rückmeldungen für die Menünavigation, etc. Der Defaultwert ist für Pioneer Receiver empfohlen."
             en: "The plugin doesn't care about responses from the device starting with the given values. List responses for menu navigation, etc. The default value is recommended for Pioneer receivers."
@@ -82,8 +82,8 @@ parameters:
         description:
             de: "Wenn aus irgendeinem Grund die Antworten nicht gepuffert werden sollen, können hier dennoch Antworten definiert werden, die sehr wohl gepuffert werden. Dies ist besonders wichtig bei Informationen, die schnell hintereinander gesendet werden bzw. wechseln wie Künstler, Musiktitel, Radiostation, etc. Der Defaultwert ist für Pioneer Receiver empfohlen."
             en: "If for whatever reason you don't want to buffer the response from your device you can still define specific responses that should get buffered. This is important for responses that change or get sent very quickly. Artist, title, radio station, etc. are examples that should be put here. The default value is recommended for Pioneer receivers."
-            
-    inputignoredisplay: 
+
+    inputignoredisplay:
         type: str
         default: ''
         description:
@@ -103,81 +103,80 @@ parameters:
         description:
             de: "Wenn das angegebene Item den angegebenen Wert erhält, werden die Befehle gesendet, ansonsten nicht. Das ist insbesondere dann sinnvoll, wenn das Gerät an einer schaltbaren Steckdose hängt."
             en: " If given item has given value the commands are sent to the device, otherwise they are not. Relevant if you have your device connected to a power socket that can be turned off."
-            
-    errorresponse: 
+
+    errorresponse:
         type: str
         default: 'E02,E04,E06'
         description:
             de: "Standard Fehlermeldungen des Geräts, bei Pioneer beispielsweise ein 'E' gefolgt von einer Nummer. Werden diese Antworten hier nicht angegeben, werden Rückmeldungen unter Umständen deutlich langsamer verarbeitet, aber voraussichtlich trotzdem erkannt."
             en: "The standard error responses from your device. For Pioneer receivers they are 'E' followed by a number. If no values are provided error answers from your device might get recognized much slower but actually should still get recognized."
-            
+
     resetonerror:
         type: bool
         default: False
         description:
             de: "Zurücksetzen des Items auf den vorigen Wert, wenn kein Update durchgeführt werden konnte, zB das Setzen der Lautstärke in einer abgeschalteten Zone. Sobald das dependson Item ausgeschaltet wird oder mehrere Verbindungs- und Sendeversuche fehlgeschlagen sind, wird das Item zurückgesetzt, damit keine falschen Werte in der Visu angezeigt werden."
             en: "Reset the value of the item that could not be updated. E.g. you set the volume of zone 2 when it is not powered on. If either the dependson item is off or the device sends an error response or after several connection and send retries the expected response is not received, the item gets set to the value it had before you sent the command. That way you avoid having a wrong value displayed in your Visu."
-            
-    depend0_power0: 
+
+    depend0_power0:
         type: bool
         default: False
         description:
             de: "Wenn das dependson Item abgeschaltet ist, werden alle Poweritems ebenfalls auf 0 gesetzt. Das ist dann relevant, wenn beispielsweise das Gerät eingeschaltet ist, die Steckdose aber ausgeschaltet wird. Durch Aktivieren dieser Funktion werden automatisch die Poweritems auf 0 gesetzt."
             en: "If the dependson item is off the power off all zones are set to off. This is especially relevant for a correct representation in your Visu when you have a powered on device but turn off the power socket."
-            
-    depend0_volume0: 
+
+    depend0_volume0:
         type: bool
         default: False
         description:
             de: "Wie beim obigen Attribut dient auch diese Funktion zum korrekten Update der Visu auf den Lautstärkewert 0, sobald das dependson Item deaktiviert wird (zB Ausschalten der Steckdose)."
             en: "Same as above but in this case the volume is set to 0 for all zones. This is for Visu purposes only."
-            
-    sendretries: 
+
+    sendretries:
         type: int
         default: 10
         description:
             de: "Dieser Wert definiert, wie oft bei einer falschen Antwort versucht werden soll, den Befehl nochmals zu senden."
             en: "This value defines how often a command should be sent when receiving a wrong answer from the device."
-            
+
     resendwait:
         type: float
         default: 1.0
         description:
             de: "Angabe der Pause zwischen Resend Versuchen in Sekunden"
             en: "Seconds the plugin should wait between each resend retry."
-            
-    reconnectretries: 
+
+    reconnectretries:
         type: int
         default: 13
         description:
             de: "Anzahl der Verbindungsversuche bei Verbindungsproblemen. Das ist insbesondere bei TCP Verbindungen von Geräten relevant, die an schaltbaren Steckdosen hängen, da diese oftmals 30-40 Sekunden zum Hochfahren benötigen."
             en: "If the plugin can not connect to the device it retries this often. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device."
-            
-    secondstokeep: 
+
+    secondstokeep:
         type: int
         default: 50
         description:
             de: "Dauer in Sekunden, wie lange ein Kommando, das nicht erfolgreich war in einem Zwischenspeicher aufbewahrt werden soll. Dies ist besonders bei TCP Verbindungen mit Geräten an schaltbaren Steckdosen relevant, da diese ofmals 30-40 Sekunden zum Hochfahren benötigen."
             en: "Seconds the plugin should temporarily save a command to retry later on after establishing a connection. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device."
-            
+
     responsebuffer:
         type: int
         default: 5
         description:
             de: "Schnell hintereinander empfangene Werte werden bei einer negativen Attributangabe im Puffer gespeichert und gemeinsam verarbeitet. Der Standardwert sollte dafür sorgen, dass keine Antworten verloren gehen. Einige Receiver antworten unter Umständen immer zuerst mit der Angabe zum auf dem Display gezeigten Wert. Der Puffer sorgt dafür, dass auch eine nachfolgende Rückmeldung evaluiert wird."
             en: "Set this to a number to collect quickly received responses in a buffer and evaluate them collectively. The standard value should be fine and prevent responses getting lost. Some receivers might first respond to a command with an update of the display and then with the actual value. The buffer ensures the correct evaluation of the response."
-    
-    autoreconnect: 
+
+    autoreconnect:
         type: bool
         default: False
         description:
             de: "Automatischer Versuch, sich mit dem Gerät zu verbinden, wenn keine Rückmeldung kommt oder die Verbindung verloren wurde. Dies sollte nicht notwendig sein, da das Plugin ohnehin bei jedem neuen Senden eines Befehls einen Verbindungsaufbauversuch startet."
             en: "Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command."
-  
+
 item_attributes:
     avdevice_zone[0-4]:
         type: str
         description:
             de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
             en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
-    
