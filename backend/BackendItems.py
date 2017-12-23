@@ -342,6 +342,7 @@ class BackendItems:
                          'config': json.dumps(item_conf_sorted),
                          'logics': json.dumps(logics),
                          'triggers': json.dumps(triggers),
+                         'filename': str(item._filename),
                          }
 
             # cast raw data to a string

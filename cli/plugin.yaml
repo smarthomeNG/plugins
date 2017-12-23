@@ -9,7 +9,7 @@ plugin:
     maintainer: msinn
     tester: onkelandy, Sandman60, ohinckel
 #    keywords: iot xyz
-    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
     version: 1.4.0                 # Plugin version
     sh_minversion: 1.3b            # minimum shNG version to use this plugin

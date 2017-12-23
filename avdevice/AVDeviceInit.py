@@ -27,6 +27,7 @@ import logging
 
 import codecs
 import re
+import os
 import threading
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
@@ -305,7 +306,7 @@ class Init():
                                         else:
                                             self._special_commands['Input']['Command'].append(response)
                                             self._special_commands['Input']['Ignore'].append(0)
-                                        self.logger.log(VERBOSE1, "Initializing {}: Found Input Command and added it to display commands.".format(self._name))
+                                        self.logger.log(VERBOSE2, "Initializing {}: Found Input Command and added it to display commands.".format(self._name))
                                     elif (function == 'title' or function == 'station' or function == 'genre'):
                                         if 'Nowplaying' not in self._special_commands:
                                             self._special_commands['Nowplaying'] = {'Command': [response]}
@@ -340,7 +341,7 @@ class Init():
                                         self.logger.log(VERBOSE1, "Initializing {}: Adding additional list to function {} for response {} with value {}.".format(
                                             self._name, function, response, self._response_commands[response]))
                                 except Exception as err:
-                                    self.logger.log(VERBOSE1, "Initializing {}: Creating response command for: {}. Message: {}".format(self._name, response, err))
+                                    self.logger.log(VERBOSE2, "Initializing {}: Creating response command for: {}. Message: {}".format(self._name, response, err))
                                     self._response_commands[response] = [[
                                         valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype, functiontype]]
                                 self._response_commands[response] = sorted(self._response_commands[response], key=lambda x: x[0], reverse=True)
@@ -372,8 +373,7 @@ class Init():
         try:
             self.logger.debug("Initializing {}: Starting to read file {}. Lock is {}".format(
                 self._name, self._model, self._threadlock_standard.locked()))
-            filename = '{}/plugins/avdevice/{}.txt'.format(
-                self._sh.base_dir, self._model)
+            filename = '{}/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
 
             commands = codecs.open(filename, 'r', 'utf-8')
             zones = [0]
@@ -408,11 +408,13 @@ class Init():
                                     row.append('bool')
                                 elif i == 8 and ("increase" in function or "decrease" in function):
                                     row.append('int,float')
+                                    row[5] = row[5].replace('*', '')
                                 else:
                                     row.append('')
                         try:
                             row[8] = row[8].replace('string', 'str')
                             row[8] = row[8].replace('num', 'int,float')
+                            row[8] = row[8].replace('|', ',')
                             if row[8] == '':
                                 row[8] = 'bool,int,str'
                         except Exception:

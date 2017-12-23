@@ -203,7 +203,8 @@
 		"cycle": "cykl",
 		"crontab": "harmonogram",
 		"autotimer": "autotimer",
-		"threshold": "próg"
+		"threshold": "próg",
+		"filename": ""
 	},
 	
 	"_threads": {

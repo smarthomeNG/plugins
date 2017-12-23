@@ -1,26 +1,42 @@
 ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; MAXVALUE; RESPONSETYPE
 1; power; on; PO|PO; ?P; PWR*; RW; yes
 1; power; off; PF; ?P; PWR*; RW; yes
-1; volume+; ; VU; ; VOL; W
-1; volume-; ; VD; ; VOL; W
+1; volume+; increase; VU; ; VOL; W
+1; volume-; decrease; VD; ; VOL; W
 1; volumehigh; ; 150VL; ?V; VOL150; W
 1; volumelow; ; 110VL; ?V; VOL110; W
 1; volume; set; ***VL; ?V; VOL***; RW; ; 185
 1; mute; on; MO; ?M; MUT*; RW; yes
 1; mute; off; MF; ?M; MUT*; RW; yes
 1; input; set; **FN; ?F; FN**; RW
+1; mode; set; ****SR; ?S; SR****; RW
+1; playingmode; ; ?L; ?L; LM****; R; ; ; num
+1; speakers; set; *SPK; ?SPK; SPK*; RW
+1; tone; on; 1TO; ?TO; TO*; RW
+1; tone; off; 0TO; ?TO; TO*; RW
+1; bass; set; **BA; ?BA; BA**; RW; ; 12
+1; trebble; set; **TR; ?TR; TR**; RW; ; 12
+1; bass+; increase; BI; ; BA; W
+1; bass-; decrease; BD; ; BA; W
+1; trebble+; increase; TI; ; TR; W
+1; trebble-; decrease; TD; ; TR; W
+1; dialog; set; *ATH; ?ATH; ATH*; RW
+1; HDMI; set; *HO; ?HO; HO*; RW
+1; input+; increase; FU; ?F; FN; W
+1; input-; decrease; FD; ?F; FN; W
+1; radiof+; ; TPI; ; PR; W; ; ; str
+1; radiof-; ; TPD; ; PR; W; ; ; str
 2; power; on; APO|APO; ?AP; APR*; RW; yes
 2; power; off; APF; ?AP; APR*; RW; yes
-2; volume+; ; ZU; ; ZV; W
-2; volume-; ; ZD; ; ZV; W
+2; volume+; increase; ZU; ; ZV; W
+2; volume-; decrease; ZD; ; ZV; W
 2; volumehigh; ; 75ZV; ?ZV; ZV75; W
 2; volumelow; ; 45ZV; ?ZV; ZV45; W
 2; volume; set; **ZV; ?ZV; ZV**; RW; ; 81
 2; mute; on; Z2MO; ?Z2M; Z2MUT*; RW; yes
 2; mute; off; Z2MF; ?Z2M; Z2MUT*; RW; yes
 2; input; set; **ZS; ?ZS; Z2F**; RW
-0; title; ; ; ; GEH01020; R
-0; station; ; ; ; GEH04022; R
-0; genre; ; ; ; GEH05024; R
+0; title; ; ; ; GEH01020; R; ; ; str
+0; station; ; ; ; GEH04022; R; ; ; str
+0; genre; ; ; ; GEH05024; R; ; ; str
 0; display; ; ?FL; ?FL; FL******************************; R
-1; speakers; set; *SPK; ?SPK; SPK*; RW

@@ -22,17 +22,25 @@
 
 # Item Data Format
 # 
-# Each UZSU item is of type list. Each list entry has to be a dict with specific key and value pairs. Here are the possible keys and what their for:
+# Each UZSU item is of type list. Each list entry has to be a dict with specific key and value pairs. 
+# Here are the possible keys and their purpose:
 # 
-#     dtstart: a datetime object. Exact datetime as start value for the rrule algorithm. Important e.g. for FREQ=MINUTELY rrules (optional).
+#     dtstart:  a datetime object. Exact datetime as start value for the rrule algorithm. Important e.g. for FREQ=MINUTELY rrules (optional).
 # 
-#     value: the value which will be set to the item.
+#     value:    the value which will be set to the item.
 # 
-#     active: True if the entry is activated, False if not. A deactivated entry is stored to the database but doesn't trigger the setting of the value. It can be enabled later with the update method.
+#     active:   True if the entry is activated, False if not. 
+#               A deactivated entry is stored to the database but doesn't trigger the setting of the value.
+#               It can be enabled later with the update method.
 # 
-#     time: time as string to use sunrise/sunset arithmetics like in the crontab eg. 17:00<sunset, sunrise>8:00, 17:00<sunset. You also can set the time with 17:00.
+#     time:     time as string to use sunrise/sunset arithmetics like in the crontab 
+#               examples: 
+#               17:00<sunset
+#               sunrise>8:00
+#               17:00<sunset. 
+#               You also can set the time with 17:00
 # 
-#     rrule: You can use the recurrence rules documented in the iCalendar RFC for recurrence use of a switching entry.
+#     rrule:    You can use the recurrence rules documented in the iCalendar RFC for recurrence use of a switching entry.
 # 
 # Example
 # 
@@ -48,6 +56,7 @@ from lib.model.smartplugin import SmartPlugin
 from datetime import datetime, timedelta
 from dateutil.rrule import rrulestr
 from dateutil import parser
+from dateutil.tz import tzutc
 import lib.orb
 
 ITEM_TAG = ['uzsu_item']
@@ -76,14 +85,14 @@ class UZSU(SmartPlugin):
 
     def run(self):
         """
-		This is called once at the beginning after all items are already parsed from smarthome.py
+        This is called once at the beginning after all items are already parsed from smarthome.py
         All active uzsu items are registered to the scheduler
         """
         self.logger.debug("run method called")
         self.alive = True
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
-		
+
         for item in self._items:
             if 'active' in self._items[item]:
                 if self._items[item]['active']:
@@ -109,9 +118,8 @@ class UZSU(SmartPlugin):
                         This means that when the items value is about to be updated, the call back function is called
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
-
         """
-        if self.has_iattr(item.conf, ITEM_TAG[0]):	
+        if self.has_iattr(item.conf, ITEM_TAG[0]):
             self._items[item] = item()
             return self.update_item
 
@@ -132,7 +140,7 @@ class UZSU(SmartPlugin):
     def _schedule(self, item):
         """
         This function schedules an item: First the item is removed from the scheduler.
-		If the item is active then the list is searched for the nearest next execution time
+        If the item is active then the list is searched for the nearest next execution time
         """
         self._sh.scheduler.remove('uzsu_{}'.format(item))
         _next = None
@@ -141,13 +149,18 @@ class UZSU(SmartPlugin):
             if self._items[item]['active']:
                 for entry in self._items[item]['list']:
                     next, value = self._next_time(entry)
+                    self.logger.debug("uzsu active entry for item {} with datetime {}, value {} and tzinfo {}".format(item, next, value, next.tzinfo))
                     if _next is None:
                         _next = next
                         _value = value
                     elif next and next < _next:
+                        self.logger.debug("uzsu active entry for item {} using now {}, value {} and tzinfo {}".format(item, next, value, next.tzinfo))
                         _next = next
                         _value = value
-        if _next and not _value is None:
+                    else:
+                        self.logger.debug("uzsu active entry for item {} keep {}, value {} and tzinfo {}".format(item, _next, _value, _next.tzinfo))
+        if _next and _value is not None:
+            self.logger.debug("will add scheduler named uzsu_{} with datetime {} and tzinfo {}".format(item, _next, _next.tzinfo))
             self._sh.scheduler.add('uzsu_{}'.format(item), self._set, value={'item': item, 'value': _value}, next=_next)
 
 
@@ -159,7 +172,13 @@ class UZSU(SmartPlugin):
 
     def _next_time(self, entry):
         """
-        Here we examine an entry of the list of points in time and return the next execution time and the next value
+        Returns the next execution time and value
+        :param entry:   a dictionary that may contain the following keys:
+                        value
+                        active
+                        date
+                        rrule
+                        dtstart
         """
         try:
             if not isinstance(entry, dict):
@@ -186,13 +205,13 @@ class UZSU(SmartPlugin):
                 else:
                     try:
                         rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(yesterday, parser.parse(time.strip()).time()))
-                    except Exception as e:
-                        self.logger.debug("Tolerated Exception '{}' while examining '{}' with function rrulestr()".format(e,time))
+                    except ValueError:
+                        self.logger.debug("Could not create a rrule from rrule:'{}'and time:'{}'".format(entry['rrule'],time))
                         if 'sun' in time:
-                            self.logger.debug("Looking for next sun-related time with rulestr()")
+                            self.logger.debug("Looking for next sun-related time with rrulestr()")
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(yesterday, self._sun(datetime.combine(yesterday.date(), datetime.min.time()).replace(tzinfo=self._sh.tzinfo()), time).time()))
                         else:
-                            self.logger.debug("Looking for next time with rulestr()")
+                            self.logger.debug("Looking for next time with rrulestr()")
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(yesterday, datetime.min.time()))
                 dt = now
                 while self.alive:
@@ -201,14 +220,14 @@ class UZSU(SmartPlugin):
                         return None, None
                     if 'sun' in time:
                         next = self._sun(datetime.combine(dt.date(), datetime.min.time()).replace(tzinfo=self._sh.tzinfo()), time)
-                        self.logger.debug("Result parsing time (rrule){}: {}".format(time, next))                 
+                        self.logger.debug("Result parsing time (rrule){}: {}".format(time, next))
                     else:
                         next = datetime.combine(dt.date(), parser.parse(time.strip()).time()).replace(tzinfo=self._sh.tzinfo())
                     if next and next.date() == dt.date() and next > datetime.now(self._sh.tzinfo()):
                         return next, value
             if 'sun' in time:
-                next = self.sun(datetime.combine(today, datetime.min.time()).replace(tzinfo=self._sh.tzinfo()), time)
-                self.logger.debug("Result parsing time (sun) {}: {}".format(time, next))              
+                next = self._sun(datetime.combine(today, datetime.min.time()).replace(tzinfo=self._sh.tzinfo()), time)
+                self.logger.debug("Result parsing time (sun) {}: {}".format(time, next))
             else:
                 next = datetime.combine(today, parser.parse(time.strip()).time()).replace(tzinfo=self._sh.tzinfo())
             if next and next.date() == today and next > datetime.now(self._sh.tzinfo()):
@@ -218,9 +237,14 @@ class UZSU(SmartPlugin):
         return None, None
 
     def _sun(self, dt, tstr):
-        #dt contains a datetime object, whereas tstr should contain a string like '6:00<sunrise<8:00'
-        #syntax is [H:M<](sunrise|sunset)[+|-][offset][<H:M]
-
+        """
+        parses a given string with a time range to determine it's timely boundaries and 
+        returns a time 
+        
+        :param: dt contains a datetime object, 
+        :param: tstr contains a string with '[H:M<](sunrise|sunset)[+|-][offset][<H:M]' like e.g. '6:00<sunrise<8:00'
+        
+        """
         # checking preconditions from configuration:
         if not self._sh.sun:  # no sun object created
             self.logger.error('No latitude/longitude specified. You could not use sunrise/sunset as UZSU entry.')
@@ -228,9 +252,6 @@ class UZSU(SmartPlugin):
 
         # create an own sun object:
         try:
-            #longitude = self._sh.sun.long
-            #latitude = self._sh.sun.lat
-            #elevation = self._sh.sun.elevation
             longitude = self._sh.sun._obs.long
             latitude = self._sh.sun._obs.lat
             elevation = self._sh.sun._obs.elev
@@ -240,8 +261,10 @@ class UZSU(SmartPlugin):
             self.logger.error("Error '{}' creating a new sun object. You could not use sunrise/sunset as UZSU entry.".format(e))
             return
 
+        self.logger.debug("Given param dt={}, tz=".format(dt, dt.tzinfo)) 
+
         # now start into parsing details
-        self.logger.debug('Examine time string: {0}'.format(tstr))
+        self.logger.debug('Examine param time string: {0}'.format(tstr))
             
         # find min/max times
         tabs = tstr.split('<')
@@ -283,19 +306,31 @@ class UZSU(SmartPlugin):
                 else:
                     doff = -float(offs)
 
-        # see if sunset or sunrise are included 
+        # see if sunset or sunrise are included in give tstr param
         dmin = None
         dmax = None
         if cron.startswith('sunrise'):
             next_time = uzsu_sun.rise(doff, moff, dt=dt)
+            # time in next_time will be in utctime. So we need to adjust it
+            if next_time.tzinfo == tzutc():
+                next_time = next_time.astimezone(self._sh.tzinfo())
+            else:
+                self.logger.warning("next_time.tzinfo was not given as utc!") 
+            self.logger.debug("next_time.tzinfo gives {}".format(next_time.tzinfo)) 
             self.logger.debug("Sunrise is included and calculated as {}".format(next_time)) 
         elif cron.startswith('sunset'):
             next_time = uzsu_sun.set(doff, moff, dt=dt)
+            # time in next_time will be in utctime. So we need to adjust it
+            if next_time.tzinfo == tzutc():
+                next_time = next_time.astimezone(self._sh.tzinfo())
+            else:
+                self.logger.warning("next_time.tzinfo was not given as utc!") 
             self.logger.debug("Sunset is included and calculated as {}".format(next_time)) 
         else:
             self.logger.error('Wrong syntax: {0}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(tstr))
             return
 
+        
         if smin is not None:
             h, sep, m = smin.partition(':')
             try:
