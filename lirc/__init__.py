@@ -30,13 +30,13 @@ REMOTE_ATTRS = ['lirc_remote', 'lirc_key']
 class LIRC(lib.connection.Client,SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.4.1"
 
-    def __init__(self, sh, lirc_Host, lirc_Port=8765):
+    def __init__(self, sh, lirc_host, lirc_port=8765):
         self.instance = self.get_instance_name()
         self.logger = logging.getLogger(__name__)
-        self.lircHost = lirc_Host
-        self.lircPort = lirc_Port
+        self.lircHost = lirc_host
+        self.lircPort = lirc_port
         lib.connection.Client.__init__(self, self.lircHost, self.lircPort, monitor=True)
         self._sh = sh
         self._cmd_lock = threading.Lock()

@@ -19,8 +19,8 @@ lirc1:
     class_name: LIRC
     class_path: plugins.lirc
     instance: "livingroom"
-    lirc_Host: "127.0.0.1"
-#    lirc_Port: 6610
+    lirc_host: "127.0.0.1"
+#    lirc_port: 6610
 
 lirc2:
     class_name: LIRC
