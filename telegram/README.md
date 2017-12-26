@@ -115,6 +115,7 @@ All attribute parameters (commands) are listed with the /info-command in a keybo
 
 #### Simple Example
 
+my_item_config.yaml
 ```
 [Aussentemperatur]
 	name = Aussentemperatur in °C
@@ -134,7 +135,7 @@ All attribute parameters (commands) are listed with the /info-command in a keybo
 	telegram_info = "rtr_ist"
 
 ```
-
+my_item_config.conf
 ```
 Aussentemperatur:
     name: Aussentemperatur in °C
