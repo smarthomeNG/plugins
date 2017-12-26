@@ -219,6 +219,17 @@ rc_code = code of device [00000 - 11111]
 ```
 
 ----------------------------
+
+## Troubleshooting
+If the switch does not work, but you are sure that the installation was done properly, make sure that the user (normally) smarthome is part of the group gpio.
+
+If not, it is easy to do this.
+
+```
+sudo usermod -aG gpio smarthome
+sudo reboot
+```
+
 ## Changelog
 
 ### v0.1
@@ -230,6 +241,8 @@ rc_code = code of device [00000 - 11111]
 * usage of subprocess module instead of the os module
 * support of literal device numbers
 
+### v0.3
+* add import os at the init
 ----------------------------
 ## Further information
 For discussion see https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen 
