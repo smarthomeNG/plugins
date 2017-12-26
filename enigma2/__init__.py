@@ -369,7 +369,28 @@ class Enigma2(SmartPlugin):
 
         :param value: value of the volume (int from 0 to 100)
         """
-        xml = self.box_request(self._url_suffix_map['vol'], 'set=set%s' % (value))
+        xml = self.box_request(self._url_suffix_map['vol'], 'set=set%s' % value)
+
+        e2result_xml = xml.getElementsByTagName('e2result')
+        e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
+        if len(e2resulttext_xml) > 0 and len(e2result_xml) > 0:
+            if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
+                if e2result_xml[0].firstChild.data == 'True':
+                    self.logger.debug(e2resulttext_xml[0].firstChild.data)
+
+    def set_power_state(self, value):
+        """
+        Sets the power state to a specific value
+        0 = Toggle Standby
+        1 = Deepstandby
+        2 = Reboot
+        3 = Restart Enigma2
+        4 = Wakeup from Standby
+        5 = Standby
+
+        :param value: value of the power state (int from 0 to 5)
+        """
+        xml = self.box_request(self._url_suffix_map['powerstate'], 'newstate=%s' % value)
 
         e2result_xml = xml.getElementsByTagName('e2result')
         e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
