@@ -223,7 +223,7 @@ rc_code = code of device [00000 - 11111]
 ## Troubleshooting
 If the switch does not work, but you are sure that the installation was done properly, make sure that the user (normally) smarthome is part of the group gpio.
 
-If not it ist easy to do this.
+If not, it is easy to do this.
 
 ```
 sudo usermod -aG gpio smarthome
