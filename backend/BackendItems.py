@@ -44,6 +44,11 @@ import lib.item_conversion
 class BackendItems:
 
 
+    def __init__(self):
+
+        self.logger.debug("BackendItems __init__ {}".format(''))        
+
+
     # -----------------------------------------------------------------------------------
     #    ITEMS
     # -----------------------------------------------------------------------------------
@@ -274,6 +279,10 @@ class BackendItems:
             if changed_by[-5:] == ':None':
                 changed_by = changed_by[:-5]
 
+            updated_by = item.updated_by()
+            if updated_by[-5:] == ':None':
+                updated_by = updated_by[:-5]
+
             if item.prev_age() < 0:
                 prev_age = ''
             else:
@@ -324,6 +333,7 @@ class BackendItems:
                          'last_update': str(item.last_update()),
                          'last_change': str(item.last_change()),
                          'changed_by': changed_by,
+                         'updated_by': updated_by,
                          'previous_value': prev_value,
                          'previous_age': prev_age,
                          'previous_update_age': prev_update_age,
