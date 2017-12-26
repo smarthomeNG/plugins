@@ -220,8 +220,9 @@ rc_code = code of device [00000 - 11111]
 
 ----------------------------
 
-#### Troubleshooting
+## Troubleshooting
 If the switch does not work, but you are sure that the installation was done properly, make sure that the user (normally) smarthome is part of the group gpio.
+
 If not it ist easy to do this.
 
 ```
