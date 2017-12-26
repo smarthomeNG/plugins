@@ -173,34 +173,29 @@ class Telegram(SmartPlugin):
             #    self._bot.sendMessage(cid, msg_txt)
 
     def _msg_broadcast(self, msg, chat_id=None):
-        chat_ids_to_send = []
-        if chat_id is None:
-            chat_ids_to_send = self._chat_ids
-        else:
-            if isinstance(chat_id, list):
-                chat_ids_to_send = chat_id
-            else:
-                chat_ids_to_send.append(chat_id)
-        for cid in chat_ids_to_send:
+         for cid in self.get_chat_id_list(chat_id):
             try:
                 self._bot.sendMessage(cid, msg)
             except:
                 self.logger.error("could not broadcast to chat id [%d]" % cid)
                 
     def _photo_broadcast(self, photofile, msg, chat_id=None):
-        chat_ids_to_send = []
-        if chat_id is None:
-            chat_ids_to_send = self._chat_ids
-        else:
-            if isinstance(chat_id, list):
-                chat_ids_to_send = chat_id
-            else:
-                chat_ids_to_send.append(chat_id)
-        for cid in chat_ids_to_send:
+        for cid in self.get_chat_id_list(chat_id):
             try:
                 self._bot.sendPhoto(cid, open(str(photofile),'rb'), msg)
             except:
                 self.logger.error("could not broadcast to chat id [%d]" % cid)
+    
+    def get_chat_id_list(self, att_chat_id):
+        chat_ids_to_send = []                           # new list
+        if att_chat_id is None:                         # no attribute specified
+            chat_ids_to_send = self._chat_ids           # chat_ids from plugin configuration
+        else:
+            if isinstance(att_chat_id, list):           # if attribute is a list
+                chat_ids_to_send = att_chat_id
+            else:                                       # if attrubute is a single chat_id
+                chat_ids_to_send.append(att_chat_id)    # append to list
+        return chat_ids_to_send
     
     # def _photo_url_broadcast(self, url, msg):
         # for cid in self._chat_ids:
