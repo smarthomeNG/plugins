@@ -44,6 +44,11 @@ import lib.item_conversion
 class BackendServices:
 
 
+    def __init__(self):
+
+        self.logger.info("BackendServices __init__ {}".format(''))        
+
+
     # -----------------------------------------------------------------------------------
     #    SERVICES
     # -----------------------------------------------------------------------------------

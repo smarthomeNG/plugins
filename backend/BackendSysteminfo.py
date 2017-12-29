@@ -47,13 +47,20 @@ from .utils import *
 
 class BackendSysteminfo:
 
+
+    def __init__(self):
+
+        self.logger.info("BackendSysteminfo __init__ {}".format(''))        
+
+
     # -----------------------------------------------------------------------------------
     #    SYSTEMINFO
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def system_html(self):
-        now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
+#        now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
+        now = self.plugin.shtime.now().strftime('%d.%m.%Y %H:%M')
         system = platform.system()
         vers = platform.version()
         # node = platform.node()
@@ -210,7 +217,7 @@ class BackendSysteminfo:
             if pypi_available:
                 try:
                     available = pypi.package_releases(dist.project_name)
-                    self.logger.info("pypi_json: pypi package: project_name {}, availabe = {}".format(dist.project_name, available))
+                    self.logger.debug("pypi_json: pypi package: project_name {}, availabe = {}".format(dist.project_name, available))
                     try:
                         package['pypi_version'] = available[0]
                     except:
@@ -278,7 +285,6 @@ class BackendSysteminfo:
             
             # check if installed verison is ok
             if package['is_required'] or package['is_required_for_testsuite'] or package['is_required_for_docbuild']:
-                self.logger.info("required package {}:".format(package['name']))
                 package['vers_ok'] = True
                 if self.compare_versions(package['vers_req_min'], package['vers_installed'], '>'):
                     package['vers_ok'] = False
@@ -561,7 +567,7 @@ class BackendSysteminfo:
         req_result = []
         for req in req_templist:
             req_result.append( self.req_split_source(req, package) )
-        self.logger.info("check_requirement: package {}, len(req_result)={}, req_result = '{}'".format(package, len(req_result), req_result))
+        self.logger.debug("check_requirement: package {}, len(req_result)={}, req_result = '{}'".format(package, len(req_result), req_result))
 
         # Check if requirements from all sources are the same
         if len(req_result) > 1:
@@ -598,7 +604,7 @@ class BackendSysteminfo:
 #                req_max = ?
         
         
-        self.logger.info("check_requirement: package {} ({}), req_result = '{}'".format(package, len(req_result), req_result))
+        self.logger.debug("check_requirement: package {} ({}), req_result = '{}'".format(package, len(req_result), req_result))
         if req_min != '' or req_max != '':
             req_txt = ''
 

@@ -25,6 +25,7 @@
 import cherrypy
 
 import lib.config
+from lib.plugin import Plugins
 from lib.model.smartplugin import SmartPlugin
 
 from .utils import *
@@ -33,6 +34,14 @@ from .utils import *
 
 class BackendPlugins:
 
+    plugins = None
+
+    def __init__(self):
+
+        self.plugins = Plugins.get_instance()
+        self.logger.info("BackendPlugins __init__ self.plugins = {}".format(str(self.plugins)))
+        
+        
 
     # -----------------------------------------------------------------------------------
     #    PLUGINS
@@ -44,14 +53,19 @@ class BackendPlugins:
         display a list of all known plugins
         """
         conf_plugins = {}
-        _conf = lib.config.parse(self._sh._plugin_conf)
+#        _conf = lib.config.parse(self._sh._plugin_conf)
+        _conf = lib.config.parse(self.plugins._get_plugin_conf_filename())
+
         for plugin in _conf:
             conf_plugins[plugin] = {}
             conf_plugins[plugin] = _conf[plugin]
 
-        plugins = []
-        for x in self._sh._plugins:
+        plugin_list = []
+#        for x in self._sh._plugins:
+#        for x in self._sh.return_plugins():
+        for x in self.plugins.return_plugins():
             plugin = dict()
+            plugin['stopped'] = False
             if bool(x._parameters):
                 plugin['attributes'] = x._parameters
             else:
@@ -70,8 +84,11 @@ class BackendPlugins:
                 plugin['shortname'] = x._shortname
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
-            plugins.append(plugin)
-        plugins_sorted = sorted(plugins, key=lambda k: k['classpath'])
+            
+            if  plugin['shortname'] in ['cli','blockly']:
+                plugin['stopped'] = True
+            plugin_list.append(plugin)
+        plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])
 
         return self.render_template('plugins.html', plugins=plugins_sorted, lang=get_translation_lang(), mod_http=self._bs.mod_http)
 
