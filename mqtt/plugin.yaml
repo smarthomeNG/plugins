@@ -22,29 +22,31 @@ plugin:
              Details on the protocol can be found on http://mqtt.org.\n
              '
     requirements:
+        de: 'MQTT python module: paho-mqtt'
+        en: 'MQTT python module: paho-mqtt'
+    requirements_long:
         de: 'Das Plugin benötigt die folgende Software:\n
              \n
-              - MQTT python module: paho-mqtt\n
+              - MQTT python module: paho-mqtt - Auf Linux Systemen kann die Software mit **pip3 install paho-mqtt** installiert werden.\n
              \n
-             Auf Linux Systemen kann die Software mit **pip3 install paho-mqtt** installiert werden.\n
-             \n
-             Ein MQTT Broker wird für die Kommunikation mit anderen MQTT Clients benötigt. Der Broker kann auf des selben Hardware laufen wie SmartHomeNG. Alternativ kann der Broker auf anderer per TCP/IP erreichbarer Hardwae laufen. Der Open Source Broker Mosquitto ist eine gute Wahl.\n
+              - Ein MQTT Broker wird für die Kommunikation mit anderen MQTT Clients benötigt. Der Broker kann auf des selben Hardware laufen wie SmartHomeNG. Alternativ kann der Broker auf anderer per TCP/IP erreichbarer Hardwae laufen. Der Open Source Broker Mosquitto ist eine gute Wahl.\n
              '
         en: 'This plugin needs the following software to be installed and running:\n
              \n
-              - MQTT python module: paho-mqtt\n
+              - MQTT python module: paho-mqtt - On Linux systems use **pip3 install paho-mqtt** to install it.\n
              \n
-             In Linux systems use **pip3 install paho-mqtt** to install it.\n
-             \n
-             A MQTT broker is needed for communication with other MQTT clients. The broker may be running on the hardware SmartHomeNG is running on, or on another hardware that can be reached via TCP/IP. The open souce broker Mosquitto is a good choice.\n
+              - A MQTT broker is needed for communication with other MQTT clients. The broker may be running on the hardware SmartHomeNG is running on, or on another hardware that can be reached via TCP/IP. The open souce broker Mosquitto is a good choice.\n
              '
+    hardware:
+        de: ''
+        en: ''
     maintainer: msinn
 #    tester:                        # Who tests this plugin?
     keywords: iot
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin
 
-    version: 1.3c.4                # Plugin version
+    version: 1.4.4                # Plugin version
     sh_minversion: 1.3c            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
