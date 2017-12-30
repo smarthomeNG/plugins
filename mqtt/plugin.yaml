@@ -3,8 +3,41 @@ plugin:
     # Global plugin attributes
     type: protocol                 # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Implementierung eines MQTT Clients. Umfassendere Implementierung des MQTT Protokolls, **seit SmartHomeNG v1.3**'
-        en: 'Implementation of a MQTT client. Feature enriched implementation of the MQTT protocol, **since SmartHomeNG v1.3**'
+        de: 'Implementierung eines MQTT Clients. Umfassendere Implementierung des MQTT Protokolls'
+        en: 'Implementation of a MQTT client. Feature enriched implementation of the MQTT protocol'
+    description_long:                  # Alternative: description in multiple languages
+        de: 'Dieses Plugin implementiert die Funktionalität, damit SmartHomeNG als ein MQTT Client agieren kann.\n
+             \n
+             Dieses Plugin ist ein kompletter Re-Write, der das initiale MQTT plugin aus smarthome.py ersetzt.\n
+             MQTT ist ein leichtgewichtiges Maschinen-zu-Maschinen (M2M)/"Internet of Things" Konnektivitäts-Protokoll. Das MQTT Protokoll wurde urspünglich von IBM entwickelt. Seit der Protokoll Version v3.1.1 wurde es im Jahre 2014 zum offiziellen OASIS Standard.\n
+             \n
+             Details zu dem Protokoll können unter http://mqtt.org gefunden werden.\n
+             '
+        en: 'This plugin implements the the functionality for SmartHomeNG to act as a MQTT client.\n
+             \n
+             This plugin is a complete rewrite, replacing the initial MQTT plugin from smarthome.py.\n
+             \n
+             MQTT is a lightweight machine-to-machine (M2M)/"Internet of Things" connectivity protocol. The MQTT protocol was initially developed by IBM. Since protocol version v3.1.1 it has become an official OASIS standard.\n
+             \n
+             Details on the protocol can be found on http://mqtt.org.\n
+             '
+    requirements:
+        de: 'Das Plugin benötigt die folgende Software:\n
+             \n
+              - MQTT python module: paho-mqtt\n
+             \n
+             Auf Linux Systemen kann die Software mit **pip3 install paho-mqtt** installiert werden.\n
+             \n
+             Ein MQTT Broker wird für die Kommunikation mit anderen MQTT Clients benötigt. Der Broker kann auf des selben Hardware laufen wie SmartHomeNG. Alternativ kann der Broker auf anderer per TCP/IP erreichbarer Hardwae laufen. Der Open Source Broker Mosquitto ist eine gute Wahl.\n
+             '
+        en: 'This plugin needs the following software to be installed and running:\n
+             \n
+              - MQTT python module: paho-mqtt\n
+             \n
+             In Linux systems use **pip3 install paho-mqtt** to install it.\n
+             \n
+             A MQTT broker is needed for communication with other MQTT clients. The broker may be running on the hardware SmartHomeNG is running on, or on another hardware that can be reached via TCP/IP. The open souce broker Mosquitto is a good choice.\n
+             '
     maintainer: msinn
 #    tester:                        # Who tests this plugin?
     keywords: iot
@@ -24,17 +57,35 @@ parameters:
         type: ip
         default: '127.0.0.1'
         description:
-            de: 'IP Adresse / Hostname des MQTT Brokers'
-            en: 'ip address / hostname of the MQTT broker'
+            de: 'Adresse des MQTT Brokers'
+            en: 'Address of MQTT broker'
+        description_long:
+            de: '**Adresse des MQTT Brokers**: Spezifiziert die IP Adresse des MQTT Brokers. Wenn der MQTT Broker auf dem selben Rechner auf dem auch SmartHomeNG läuft, muss dieser Parameter nicht angegeben werden.'
+            en: "**Address of MQTT broker**: Specifies the IP adress of the MQTT broker to use. If you use a broker on the computer you are running SmartHomeNG on, you don't need to specify this parameter. In this case it is assumed, that the MQTT broker runs on the same machine as SmartHomeNG and 127.0.0.1 (for localhost) is used."
         
     port:
         type: int
         default: 1883
         valid_min: 0
         description:
-            de: 'Port des MQTT Brokers'
-            en: 'port of MQTT broker'
-        
+            de: 'Vom Broker benutzter Port'
+            en: 'Port used by broker'
+        description_long:
+            de: '**Vom Broker benutzter Port**: Port 1883 und 8883 sind bei der IANA reservierte Ports für MQTT.\n
+                 \n
+                  - 1883: Der Standard MQTT Port. Er ist bei IANA definiert als **MQTT over TCP**\n
+                  - 8883: Der Standard MQTT Port. Er ist bei IANA definiert als **Secure MQTT**\n
+                 \n
+                 In einem Standard Setup muss dieser Parameter nicht angegeben werden.
+                 '
+            en: '**Port used by broker**: Port 1883 and 8883 are the IANA reserved ports for MQTT.\n
+                 \n
+                  - 1883: This is the default MQTT port. It is defined at IANA as MQTT over TCP\n
+                  - 8883: This is the default MQTT port for MQTT over TLS. It’s registered at IANA for Secure MQTT\n
+                 \n
+                 In a standard setup you should not need to configure this parameter.
+                 ' 
+
     qos:
         type: int
         default: 1
@@ -45,6 +96,19 @@ parameters:
         description:
             de: 'Quality of Service'
             en: 'Quality of Service'
+        description_long:
+            de: '**Quality-Of-Service**: QoS definiert den Standard Quality-of-Service Level für die Kommunikation mit dem Broker. Der Level kann durch setzen des ** mqtt_qos** Attributes in den individuellen Items überschrieben werden.\n
+                 \n
+                 MQTT unterstützt drei Level für den Quality-of-Service (0=at most once, 1=at least once, 2=excactly once). QoS 2 hat den meisten Overhead und sollte nur genutzt werden, wenn unbedingt nötig.\n
+                 \n
+                 Eine gute Erläuterung zu QoS im MQTT Protokoll kann hier gefunden werden:  http://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels (Englisch).\n 
+                 '
+            en: "**Quality-Of-Service**: qos defines the default quality of service level used when communicating with the broker. It can be overwritten by setting the mqtt_qos attribute on an individual item.\n
+                 \n
+                 MQTT supports three levels for Quality-Of-Service (0=at most once, 1=at least once, 2=excactly once). QoS 2 has the most overhead and should be used only if needed.\n
+                 \n
+                 A good explanation about Quality-of-Service in MQTT can be found here: http://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels.\n
+                 "
         
     last_will_topic:
         type: str
@@ -52,6 +116,9 @@ parameters:
         description:
             de: 'Topic für Last-Will Telegramm'
             en: 'Topic for the last will telegram'
+        description_long:
+            de: '**MQTT testament message**: Topic für Last-Will Telegramm'
+            en: '**MQTT testament message**: Topic for the last will telegram'
         
     last_will_payload:
         type: str
