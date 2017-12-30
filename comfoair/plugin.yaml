@@ -4,23 +4,81 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Unterstützung für Zehnder ComfoAir 350 & 500 KWL'
-        en: ''
+        en: 'Suppprt for Zehnder ComfoAir 350 & 500 KWL'
     maintainer: '? (SvStefan)'
     tester: ohinckel
 #    keywords: kwd1 kwd2            # keywords, where applicable
     documentation: https://github.com/smarthomeNG/smarthome/wiki/Comfoair-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/31291-neues-plugin-comfoair-kwl-wohnraumlüftung-zehnder-paul-wernig
 
-# Following entries are for Smart-Plugins:
-#    version: 1.3.3                 # Plugin version
-#    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.3.0                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    multi_instance: False
+    multi_instance: False
     classname: ComfoAir             # class containing the plugin
 
-#parameters:
+parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+    kwltype:
+        type: str
+        default: comfoair350
+        description:
+            de: 'Legt den Typ des KWL Systems fest'
+            en: 'The type of the KWL system'
+        valid_list:
+          - comfoair350
+          - comfoair500
+    host:
+        type: ip
+        description:
+            de: 'Netzwerverbindung: Hostname/IP des KWL Systems'
+            en: 'Network connection: Hostname/IP of KWL system'
+    port:
+        type: num
+        description:
+            de: 'Netzwerkverbindung: Port des KWL Systems'
+            en: 'Network connection: Port of KWL system'
+    serialport:
+        type: str
+        description:
+            de: 'Serielle Verbindung: Device/Port der serielle Schnittstelle zum KWL Systems'
+            en: 'Serial connection: Device/port of serial interface to KWL system'
     
-#item_attributes:
+item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    comfoair_send:
+        type: str
+        description:
+            de: 'Änderung des Items wird mit konfiguriertem Kommando an das KWL System geschickt.'
+            en: 'Changes to this item result in sending the configured command to the KWL system.'
+    comfoair_read:
+        type: str
+        description:
+            de: 'Liest Wert mit konfiguriertem Kommand aus dem KWL System aus.'
+            en: 'The item value should be read by using the configured command.' 
+    comfoair_read_afterwrite:
+        type: num
+        description:
+            de: 'Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando an das KWL System geschickt wird.'
+            en: 'Configures delay in seconds to issue a read command after write command.'
+    comfoair_read_cycle:
+        type: num
+        description:
+            de: 'Konfiguriert ein Interval in Sekunden für das Lesekommando.'
+            en: 'Configures a interval in seconds for the read command.'
+    comfoair_init:
+        type: bool
+        description:
+            de: 'Konfiguriert ob der Wert aus dem KWL System initialisiert werden soll.'
+            en: 'Configures to initialize the item value with the value from the KWL system.'
+    comfoair_trigger:
+        type: list(string)
+        description:
+            de: 'Konfiguriert Lesekommandos die nach einem Schreibvorgang auf das Item aufgerufen werden.'
+            en: 'Configures read commands after an update to the item.'
+    comfoair_trigger_afterwrite:
+        type: num
+        description:
+            de: 'Konfiguriert eine Verzögerung in Sekunden bis ein Trigger ausgeführt werden soll nachdem ein Wert gesetzt wurde.'
+            en: 'Configures delay in seconds to run trigger commands after item update.'
+
