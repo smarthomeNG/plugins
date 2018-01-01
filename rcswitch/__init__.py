@@ -32,7 +32,7 @@ import shlex
 class RCswitch(SmartPlugin):
 
 	ALLOW_MULTIINSTANCE = False
-	PLUGIN_VERSION = "1.2.0.3"
+	PLUGIN_VERSION = "1.2.0.2"
 
 	def __init__(self, smarthome, rcswitch_dir='/usr/local/bin/rcswitch-pi', rcswitch_sendDuration='0.5', rcswitch_host='', rcswitch_user='', rcswitch_password=''):
 		self.logger = logging.getLogger(__name__)
