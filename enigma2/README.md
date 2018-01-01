@@ -910,8 +910,23 @@ timeout: Number of seconds the message should stay on the device, default: 10
 sh.vusolo2.send_message("Testnachricht",1,10)
 </pre>       
 
+### set_power_state(value)
+Sets the power state to a specific value:
+0 = Toggle Standby
+1 = Deepstandby
+2 = Reboot
+3 = Restart Enigma2
+4 = Wakeup from Standby
+5 = Standby
+
+E.g. toggle standby:
+<pre>
+sh.vusolo2.set_power_state(0)
+</pre>       
+
 ### get_answer()
 This function checks for an answer to a sent message. If you call this method, take into account the timeout until the message can be answered and e.g. set a "while (count < 0)"
 <pre>
 sh.vusolo2.get_answer()
 </pre>
+

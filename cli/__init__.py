@@ -447,11 +447,11 @@ class CLICommands:
         handler.push("Logics:\n")
         for logic in sorted(self.logics.return_loaded_logics()):
             data = []
-            nt = self.sh.scheduler.return_next(logic)
-            if self.logics.is_logic_enabled(logic) == False:
+            info = self.logics.get_logic_info(logic)
+            if not info['enabled']:
                 data.append("disabled")
-            if nt is not None:
-                data.append("scheduled for {0}".format(nt.strftime('%Y-%m-%d %H:%M:%S%z')))
+            if 'next_exec' in info:
+                data.append("scheduled for {0}".format(info['next_exec']))
             handler.push("{0}".format(logic))
             if len(data):
                 handler.push(" ({0})".format(", ".join(data)))

@@ -6,6 +6,45 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Web Interface zur Anzeige von Informationen zum System und SmartHomeNG Backend-Daten'
         en: 'webinterface for displaying system information and SmartHomeNG backend data'
+        
+    description_long:         # Alternative: long description in multiple languages
+        de: 'Dieses Plugin liefert Informationen über die aktuell laufende SmartHomeNG Installation. Bisher dient es vorwiegend als Support Tool um Anwendern zu helfen, deren Installation nicht richtig läuft.\n
+             \n
+             Einige Highlights:\n
+                \n
+                - eine Liste der installierten Python Module wird angezeigt und die Versionen werden gegenüber den Requirements und den verfügbaren Versions von PyPI abgeglichen\n
+                - eine Liste der Items und ihrer Attribute wird angezeigt. Für diverse Item Typen ist der Wert änderbar\n
+                - eine Liste der Logiken mit nächster Ausführungszeit wird angezeit\n
+                - Logiken können aktiviert/deaktiviert oder getriggert werden\n
+                - Logiken können erstellt und editiert werden\n
+                - eine Liste der aktuellen Scheduler und ihr nächster Ausführungszeitpunkt wird angezeigt\n
+                - Ein direktes Download der Sqlite Datenbank (nutzt das sqlite Plugins) und der SmartHomeNG Log-Dateien ist möglich\n
+                - Einige Informationen über häufig genutzte Daemons wie knxd bzw. eibd werden angezeigt\n
+                - Unterstützt Basic Authentication bei Web-Browser Zugriff\n
+                - Unterstützt mehrere Sprachen\n
+                \n
+             Es gibt bisher nur eine Basic Absicherung gegen nicht-authorisierten Zugriff oder Nutzung des Plugins. Deshalb ist Vorsicht geboten, wenn das Plugin im Netzwerk (evtl. sogar über WAN) zugreifbar ist.\n
+             \n
+             Der Aufruf des Backend-Webservers erfolgt standardmäßig durch: http://<ip of your SmartHomeNG server>:8383
+             '
+
+        en: 'This plugin delivers information about the current SmartHomeNG installation. Right now it serves as a support tool for helping other users with an installation that does not run properly.\n
+             \n
+             Some highlights:\n
+                \n
+                - a list of installed python modules is shown versus the available versions from PyPI\n
+                - a list of items and their attributes is shown\n
+                - a list of logics and their next execution time\n
+                - a list of current schedulers and their next execution time\n
+                - direct download of sqlite database (if plugin is used) and smarthome.log\n
+                - some information about frequently used daemons like knxd/eibd is included\n
+                - supports basic authentication\n
+                - multi-language support\n
+                \n
+             There is however only basic protection against unauthorized access or use of the plugin so be careful when enabling it with your network.\n
+             \n
+             Call the backend-webserver: http://<ip of your SmartHomeNG server>:8383
+             '
     maintainer: psilo909, msinn, bmxp
     tester: Sandman60
 #    keywords: iot xyz
@@ -13,7 +52,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
 
     version: 1.4.9                 # Plugin version
-    sh_minversion: 1.4.1           # minimum shNG version to use this plugin
+    sh_minversion: 1.4a            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: BackendServer       # class containing the plugin
@@ -29,10 +68,10 @@ parameters:
 
     developer_mode:
         type: bool
-        default: no
+        default: False
         description:
-            de: 'Entwickler Modus aktiviert'
-            en: 'Developer mode is activated'
+            de: 'Entwickler Modus aktivieren'
+            en: 'Activate developer mode'
 
     pypi_timeout:
         type: int

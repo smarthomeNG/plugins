@@ -238,7 +238,7 @@ class ComfoAir(SmartPlugin):
                     self.send_command(readcommandname)
             
             # If commands should be triggered after this write        
-            if self.has_iattr_value(item.conf, 'comfoair_trigger'):
+            if self.has_iattr(item.conf, 'comfoair_trigger'):
                 trigger = self.get_iattr_value(item.conf, 'comfoair_trigger')
                 if trigger == None:
                     self.log_err('Item {} contains invalid trigger command list \'{}\'!'.format(item, trigger))

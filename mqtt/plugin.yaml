@@ -3,15 +3,57 @@ plugin:
     # Global plugin attributes
     type: protocol                 # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Implementierung eines MQTT Clients. Umfassendere Implementierung des MQTT Protokolls, **seit SmartHomeNG v1.3**'
-        en: 'Implementation of a MQTT client. Feature enriched implementation of the MQTT protocol, **since SmartHomeNG v1.3**'
+        de: 'Implementierung eines MQTT Clients. Umfassendere Implementierung des MQTT Protokolls'
+        en: 'Implementation of a MQTT client. Feature enriched implementation of the MQTT protocol'
+    description_long:                  # Alternative: description in multiple languages
+        de: 'Dieses Plugin implementiert die Funktionalität, damit SmartHomeNG als ein MQTT 
+             Client agieren kann.\n
+             \n
+             Dieses Plugin ist ein kompletter Re-Write, der das initiale MQTT plugin aus smarthome.py ersetzt.\n
+             MQTT ist ein leichtgewichtiges Maschinen-zu-Maschinen (M2M)/"Internet of Things" 
+             Konnektivitäts-Protokoll. Das MQTT Protokoll wurde urspünglich von IBM entwickelt. 
+             Seit der Protokoll Version v3.1.1 wurde es im Jahre 2014 zum offiziellen OASIS Standard.\n
+             \n
+             Details zu dem Protokoll können unter http://mqtt.org gefunden werden.\n
+             '
+        en: 'This plugin implements the the functionality for SmartHomeNG to act as a MQTT client.\n
+             \n
+             This plugin is a complete rewrite, replacing the initial MQTT plugin from smarthome.py.\n
+             \n
+             MQTT is a lightweight machine-to-machine (M2M)/"Internet of Things" connectivity protocol. 
+             The MQTT protocol was initially developed by IBM. Since protocol version v3.1.1 it has 
+             become an official OASIS standard.\n
+             \n
+             Details on the protocol can be found on http://mqtt.org.\n
+             '
+    requirements:
+        de: 'MQTT python module: **paho-mqtt**'
+        en: 'MQTT python module: **paho-mqtt**'
+    requirements_long:
+        de: 'Das Plugin benötigt die folgende Software:\n
+             \n
+              - MQTT python module: **paho-mqtt** - Auf Linux Systemen kann die Software mit 
+                **pip3 install paho-mqtt** installiert werden.\n
+              - Ein MQTT Broker wird für die Kommunikation mit anderen MQTT Clients benötigt. 
+                Der Broker kann auf des selben Hardware laufen wie SmartHomeNG. Alternativ kann 
+                der Broker auf anderer per TCP/IP erreichbarer Hardwae laufen. Der Open Source 
+                Broker Mosquitto ist eine gute Wahl.\n
+             '
+        en: 'This plugin needs the following software to be installed and running:\n
+             \n
+              - MQTT python module: **paho-mqtt** - On Linux systems use **pip3 install paho-mqtt** to install it.\n
+              - A MQTT broker is needed for communication with other MQTT clients. The broker may be running on the hardware SmartHomeNG is running on, or on another hardware that can be reached via TCP/IP. The open souce broker Mosquitto is a good choice.\n
+             '
+    hardware:
+        de: ''
+        en: ''
     maintainer: msinn
 #    tester:                        # Who tests this plugin?
     keywords: iot
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin
 
-    version: 1.3c.4                # Plugin version
+    version: 1.4.4                # Plugin version
     sh_minversion: 1.3c            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -24,17 +66,42 @@ parameters:
         type: ip
         default: '127.0.0.1'
         description:
-            de: 'IP Adresse / Hostname des MQTT Brokers'
-            en: 'ip address / hostname of the MQTT broker'
+            de: 'Adresse des MQTT Brokers'
+            en: 'Address of MQTT broker'
+        description_long:
+            de: '**Adresse des MQTT Brokers**: Spezifiziert die IP Adresse des MQTT Brokers. 
+                 Wenn der MQTT Broker auf dem selben Rechner auf dem auch SmartHomeNG läuft, 
+                 muss dieser Parameter nicht angegeben werden.
+                 '
+            en: "**Address of MQTT broker**: Specifies the IP adress of the MQTT broker to use. 
+                 If you use a broker on the computer you are running SmartHomeNG on, you don't 
+                 need to specify this parameter. In this case it is assumed, that the MQTT broker 
+                 runs on the same machine as SmartHomeNG and 127.0.0.1 (for localhost) is used.
+                 "
         
     port:
         type: int
         default: 1883
         valid_min: 0
         description:
-            de: 'Port des MQTT Brokers'
-            en: 'port of MQTT broker'
-        
+            de: 'Vom Broker benutzter Port'
+            en: 'Port used by broker'
+        description_long:
+            de: '**Vom Broker benutzter Port**: Port 1883 und 8883 sind bei der IANA reservierte Ports für MQTT.\n
+                 \n
+                  - 1883: Der Standard MQTT Port. Er ist bei IANA definiert als **MQTT over TCP**\n
+                  - 8883: Der Standard MQTT Port. Er ist bei IANA definiert als **Secure MQTT**\n
+                 \n
+                 In einem Standard Setup muss dieser Parameter nicht angegeben werden.
+                 '
+            en: '**Port used by broker**: Port 1883 and 8883 are the IANA reserved ports for MQTT.\n
+                 \n
+                  - 1883: This is the default MQTT port. It is defined at IANA as MQTT over TCP\n
+                  - 8883: This is the default MQTT port for MQTT over TLS. It’s registered at IANA for Secure MQTT\n
+                 \n
+                 In a standard setup you should not need to configure this parameter.
+                 ' 
+
     qos:
         type: int
         default: 1
@@ -45,6 +112,19 @@ parameters:
         description:
             de: 'Quality of Service'
             en: 'Quality of Service'
+        description_long:
+            de: '**Quality-Of-Service**: QoS definiert den Standard Quality-of-Service Level für die Kommunikation mit dem Broker. Der Level kann durch setzen des ** mqtt_qos** Attributes in den individuellen Items überschrieben werden.\n
+                 \n
+                 MQTT unterstützt drei Level für den Quality-of-Service (0=at most once, 1=at least once, 2=excactly once). QoS 2 hat den meisten Overhead und sollte nur genutzt werden, wenn unbedingt nötig.\n
+                 \n
+                 Eine gute Erläuterung zu QoS im MQTT Protokoll kann hier gefunden werden:  http://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels (Englisch).\n 
+                 '
+            en: "**Quality-Of-Service**: qos defines the default quality of service level used when communicating with the broker. It can be overwritten by setting the mqtt_qos attribute on an individual item.\n
+                 \n
+                 MQTT supports three levels for Quality-Of-Service (0=at most once, 1=at least once, 2=excactly once). QoS 2 has the most overhead and should be used only if needed.\n
+                 \n
+                 A good explanation about Quality-of-Service in MQTT can be found here: http://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels.\n
+                 "
         
     last_will_topic:
         type: str
@@ -52,27 +132,55 @@ parameters:
         description:
             de: 'Topic für Last-Will Telegramm'
             en: 'Topic for the last will telegram'
+        description_long:
+            de: '**MQTT testament Message**: Wenn kein **last_will_topic** angegeben wird, 
+                 wird keine MQTT last-will-message gesendet.  Als Standard wird eine last-will 
+                 message durch den Broker nur versendet wenn die Verbindung des Clients zum Broker 
+                 abbricht (sie also nicht ordnungsgemäß geschlossen wird).\n
+                 \n
+                  -> Last-will-messages werden mit dem Standard QoS gesendet.\n
+                 \n
+                 Falls eine birth-message konfiguriert ist, wird die last-will-message mit 
+                 gesetztem retain Flag gesendet und die last-will-message wird auch gesendet 
+                 wenn die Verbindung ordnungsgemäß geschlossen wird (z.B. beim Beenden 
+                 von SmartHomeNG).
+                '
+            en: '**MQTT testament message**: if **last_will_topic** is not specified, there will 
+                 be no MQTT last-will-message sent. As a standard the last-will message will only 
+                 be sent if the connection to the broker aborts (is not closed in an orderly manner).\n
+                 \n
+                 Last-will-messages will be sent with the default QoS.\n
+                 \n
+                 If you specify a birth-message, the last-will-message will be sent with the 
+                 retain flag set and the last-will-message will also be sent if the connection 
+                 is closed orderly (by shutting down SmartHomeNG).
+                 '
         
     last_will_payload:
         type: str
         default: ''
         description:
-            de: 'Payload für Last-Will Telegramm'
-            en: 'Payload for the last will telegram'
+            de: 'Payload für die MQTT testament message. Wenn keine **last_will_payload** angegeben wird, wird kein Last-Will Telegramm gesendet.'
+            en: 'Payload for the MQTT testament message. If **last_will_payload** is not specified, there will be no last-will message sent.'
         
     birth_topic:
         type: str
         default: ''
+        type: str
+        default: ''
         description:
-            de: 'Topic für Birth Telegramm'
-            en: 'Topic for the birth telegram'
+            de: 'Topic für das Birth Telegramm'
+            en: 'Topic for the birth telegramm'
+        description_long:
+            de: 'Die birth-Message ist das Gegenteil zur MQTT Testament Message und wird gesendet, wenn das Plugin startet. Falls kein **birth_topic** konfiguriert ist, wird das **last_will_topic** auch für die Birth-Message verwendet. Birth-Messages werden mit der Standard QoS und gesetztem Retain Flag gesendet.'
+            en: 'The birth message is the opposite to the MQTT Testament message and sent, when the plugin starts up. if birth_topic is not specified, the last_will_topic will be used for the birth message too. Birth-messages will be sent with the default QoS and the retain flag set.'
         
     birth_payload:
         type: str
         default: ''
         description:
-            de: 'Payload für Birth Telegramm'
-            en: 'Payload for the birth telegram'
+            de: 'Payload für das Birth Telegramm. Wenn keine birth_payload konfiguriert ist, wird keine Birth Message gesendet. In diesem Fall wird auch keine last-will message gesendet, falls die Verbindung ordnungsgemäß geschlossen wird (beim Beenden von SmartHomeNG).'
+            en: 'Payload for the birth telegram. if birth_payload is not specified, no birth message will be sent. In this case there will be no last-will message sent, if the connection is closed orderly (by shutting down SmartHomeNG).'
         
     publish_items:
         type: bool
@@ -80,6 +188,20 @@ parameters:
         description:
             de: 'Publiziere die Items'
             en: 'Publish Items'
+        description_long:
+            de: '-> ***Noch nicht implementiert***\n
+                 \n
+                 **publish_items** steuert ob die Items mit ihrem Item-Path publiziert werden
+                 sollen. Falls publish_items auf True gesetzt ist, werden Items publiziert (unter 
+                 Verwendung von **items_topic_prefix**), falls die ACL-Settings für das Item es
+                 erlauben. 
+                 '
+            en: '-> ***not yet implemented***\n
+                 \n
+                 **publish_items** controls weather the items should be published by their 
+                 item-path. If publish_items is set to True, items are published (using items_topic_prefix) 
+                 if the acl-setting for that items allows it.
+                 '
         
     items_topic_prefix:
         type: str
@@ -87,20 +209,57 @@ parameters:
         description:
             de: 'Prefix für die publizierten Items'
             en: 'Prefix for the published items'
+        description_long:
+            de: '-> ***Noch nicht implementiert***\n
+                 \n
+                 items_topic_prefix definiert den Präfix beim Erstellen des MQTT Topic vom Item Pathfrom item-path.
+                 '
+            en: '-> ***not yet implemented***\n
+                 \n
+                 items_topic_prefix defines the prefix when building the MQTT topic from item-path.
+                 '
     
     user:
         type: str
         default: ''
         description:
-            de: 'Username für das Broker Login'
-            en: 'Username for login to the broker'
-        
+            de: 'Username für das Broker Login (optional)'
+            en: 'Username for login to the broker (optional)'
+        description_long:
+            de: 'Username zum Login beim MQTT Broker, falls der Broker für user/password Authentifizierung konfiguriert ist.\n
+                 \n
+                 **ACHTUNG**: Bis zur Implementierung von TLS, werden Username und Password unverschlüsselt übertragen.
+                '        
+            en: 'Username to login to the MQTT broker, if the broker is configured for user/password authentication.\n
+                 \n
+                 **NOTICE**: Until Implementation of TLS, username and password are transmitted unencrypted.
+                '        
+
     password:
         type: str
         default: ''
         description:
             de: 'Passwort für das Broker Login'
             en: 'Password for login to the broker'
+        description_long:
+            de: 'Passwort zum Login beim MQTT Broker, falls der Broker für user/password Authentifizierung konfiguriert ist.\n
+                 \n
+                 **ACHTUNG**:\n
+                 \n
+                  - Bis zur Implementierung von TLS, werden Username und Password unverschlüsselt übertragen.\n
+                  - Bei der jetzigen Implementierung wird das Passwort in **../etc/plugin.yaml** im Klartext gespeichert.\n
+                 \n
+                 \n
+                '
+            en: 'Password to login to the MQTT broker, if the broker is configured for user/password authentication.\n
+                 \n
+                 **NOTICE**:\n
+                 \n
+                  - Until Implementation of TLS, username and password are transmitted unencrypted.\n
+                  - At this stage of implementation the Password is stored in the plugin.yaml file as clear text.\n
+                 \n
+                 \n
+                '        
         
 #    tls:    # Not yet implemented
 #        type: bool
@@ -108,6 +267,11 @@ parameters:
 #        description:
 #            de: ''
 #            en: ''
+#        description_long:
+#            de: '
+#                '        
+#            en: '
+#                '        
         
 #    ca_certs:    # Not yet implemented
 #        type: str
@@ -115,6 +279,11 @@ parameters:
 #        description:
 #            de: ''
 #            en: ''
+#        description_long:
+#            de: '
+#                '        
+#            en: '
+#                '        
         
     acl:
         type: str
@@ -127,6 +296,31 @@ parameters:
         description:
             de: 'Zugriffskontrolle (none/publish/subscribe)'
             en: 'Accesscontrol (none/publish/subscribe)'
+        description_long:
+            de: '-> ***Noch nicht implementiert***\n
+                 \n
+                 **acl** definiert den globalen Default für die Zugriffskontrolle zu den Items. 
+                 Access control ist nur aktiv, wenn die Item-Tree Struktur von SmartHomeNG publiziert wird.\n
+                 \n
+                  - none=kein Zugriff\n
+                  - pub=Publiziere als Topic (Read-Only von anderen Clients aus)\n
+                  - sub=Abonniere (subscribe) ein Topic (Akzeptiere Daten von anderen Clients)\n
+                  - pubsub=Publiziere und Abonniere (publish and subscribe) ein Topic.\n
+                 \n
+                 Dieser Parameter definert die Standard Zugriffskontrolle für Items, welche keine individuelle Zugriffskontrolle konfiguriert haben.
+                 '        
+            en: '-> ***not yet implemented***\n
+                 \n
+                 **acl** defines the global default setting for the access control to the items. 
+                 Access control is only active, when publishing the item-tree structure of SmartHomeNG.\n
+                 \n
+                  - none=no access\n
+                  - pub=publish as topic (read only from other client)\n
+                  - sub=subscribe to topic (accept data from other clients)\n
+                  - pubsub=publish and subscribe topic.\n
+                 \n
+                 This parameter defines the default access control for items, which have no individual access control configured.
+                 '        
         
 
 item_attributes:
@@ -136,28 +330,58 @@ item_attributes:
         description:
             de: 'Topic für Senden und Empfangen'
             en: 'Topic for send and receive'
+        description_long:
+            de: 'Wenn mqtt_topic konfiguriert ist, wird das Topic für ein- und ausgehende Messages 
+                 verwendet. Dabei werden evtl. konfigurierte seperate Werte für mqtt_topic_out und 
+                 mqtt_topic_in überschrieben.
+                '        
+            en: 'If you specify mqtt_topic, it set this topic for in- and outgoing messages. 
+                 Thus it overwrites seperate values you might have specified for mqtt_topic_out 
+                 or mqtt_topic_in.
+                '        
         
     mqtt_topic_in:
         type: str
         description:
             de: 'Topic für Empfangen'
             en: 'Topic for receive'
+        description_long:
+            de: 'mqtt_topic_in definiert das MQTT Topic, welches abonniert wird. Bei Empfang
+                 einer Message mit diesem Topic, wird die Payload benutzt um den Wert des Items
+                 zu setzen.
+                '        
+            en: "mqtt_topic_in defines the MQTT topic to subscribe to. Upon receiving a message 
+                 with this topic, the payload is used to set the item's value.
+                "        
         
     mqtt_topic_out:
         type: str
         description:
             de: 'Topic für Senden'
             en: 'Topic for send'
+        description_long:
+            de: 'mqtt_topic_out definiert das MQTT Topic unter dem der Wert des Items als 
+                 Payload publiziert wird.
+                '        
+            en: 'mqtt_topic_out defines the MQTT topic under which the items value is to be 
+                 published as payload.
+                '        
         
     mqtt_topic_init:
         type: str
         description:
             de: 'Topic für Senden (Initial beim Start von SmartHomeNG senden)'
             en: 'Topic for send (send initially when starting up SmartHomeNG'
+        description_long:
+            de: 'mqtt_topic_init ist äquivalent zu mqtt_topic_out, außer dass das Topic beim 
+                 Start von SmartHomeNG initialisiert (also eine MQTT message gesendet) wird.
+                '        
+            en: 'mqtt_topic_init is equivalent to mqtt_topic_out, except it initializes the 
+                 topic when SmartHomeNG ist started.
+                '        
         
     mqtt_qos:
         type: int
-        default: 1
         valid_list:
           - 0
           - 1
@@ -165,6 +389,14 @@ item_attributes:
         description:
             de: 'Quality of Service'
             en: 'Quality of Service'
+        description_long:
+            de: 'mqtt_qos definert den Quality of Service Level, der für dieses Item bei der 
+                 Kommunikation mit dem Broker genutzt wird. Falls nicht angegeben, wird das
+                 globale Setting des Plugins genutzt.
+                '        
+            en: "mqtt_qos defines the quality of service level for this item used when communicating 
+                 with the broker. If not specified, the plugin's default is used.
+                "        
         
     mqtt_retain:
         type: bool
@@ -172,4 +404,10 @@ item_attributes:
         description:
             de: 'Retention Flag für gesendete Telegramme setzen'
             en: 'Set retention flag for sent telegrams'
+        description_long:
+            de: 'Wenn mqtt_retain auf True gesetzt ist, werden MQTT Messages für dieses Item mit
+                 gesetztem Reatin Flag gesendet.\n
+                '        
+            en: 'When set to True, the MQTT message is sent with the retain flag set.\n
+                '        
         

@@ -2,6 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 # Copyright 2011-2013 Niko Will
+# Copyright 2017 Bernd Meiners                      Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
@@ -149,7 +150,8 @@ class UZSU(SmartPlugin):
             if self._items[item]['active']:
                 for entry in self._items[item]['list']:
                     next, value = self._next_time(entry)
-                    self.logger.debug("uzsu active entry for item {} with datetime {}, value {} and tzinfo {}".format(item, next, value, next.tzinfo))
+                    if next is not None:
+                        self.logger.debug("uzsu active entry for item {} with datetime {}, value {} and tzinfo {}".format(item, next, value, next.tzinfo))
                     if _next is None:
                         _next = next
                         _value = value
@@ -159,6 +161,10 @@ class UZSU(SmartPlugin):
                         _value = value
                     else:
                         self.logger.debug("uzsu active entry for item {} keep {}, value {} and tzinfo {}".format(item, _next, _value, _next.tzinfo))
+            else:
+                self.logger.debug("uzsu item '{}' is not active".format(item))
+        else:
+            self.logger.debug("uzsu item '{}' does not have an 'active' attribute".format(item))
         if _next and _value is not None:
             self.logger.debug("will add scheduler named uzsu_{} with datetime {} and tzinfo {}".format(item, _next, _next.tzinfo))
             self._sh.scheduler.add('uzsu_{}'.format(item), self._set, value={'item': item, 'value': _value}, next=_next)
@@ -243,7 +249,7 @@ class UZSU(SmartPlugin):
         
         :param: dt contains a datetime object, 
         :param: tstr contains a string with '[H:M<](sunrise|sunset)[+|-][offset][<H:M]' like e.g. '6:00<sunrise<8:00'
-        
+        :return: the calculated date and time in timezone aware format
         """
         # checking preconditions from configuration:
         if not self._sh.sun:  # no sun object created
