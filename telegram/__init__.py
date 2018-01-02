@@ -33,6 +33,7 @@ import urllib3
 import telepot
 import telepot.api
 from lib.model.smartplugin import SmartPlugin
+from lib.logic import Logics
 
 PLUGIN_ATTR_TOKEN		= 'token'
 PLUGIN_ATTR_CHAT_IDS	= 'trusted_chat_ids'
@@ -92,6 +93,7 @@ class Telegram(SmartPlugin):
     # called once at startup after all items are loaded
     def run(self):
         self.alive = True
+	self.logics = Logics.get_instance() # Returns the instance of the Logics class, to be used to access the logics-api
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
@@ -247,7 +249,7 @@ class Telegram(SmartPlugin):
         elif command == '/lo':
             tmp_msg = "";
             tmp_msg+="Logics:\n"
-            for logic in sorted(self._sh.return_logics()):
+            for logic in sorted(self.logics.return_loaded_logics()):    # list with the names of all logics that are currently loaded
                 data = []
                 lo = self._sh.return_logic(logic)
                 nt = self._sh.scheduler.return_next(logic)
@@ -265,7 +267,7 @@ class Telegram(SmartPlugin):
         # /tr xx: trigger logic xx
         elif command == '/tr':
             try:
-                self._sh.trigger(para, by='telegram')
+                self.logics.trigger_logic(para, by='telegram')      # Trigger a logic
             except Exception as e:
                 tmp_msg = ("could not trigger logic %s error %s" % (para, e))
                 self._bot.sendMessage(self._chat_id, tmp_msg)
