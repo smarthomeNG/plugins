@@ -34,7 +34,7 @@ parameters:
             en: 'used network interface, e.g. 127.0.0.1 (localhost) or listen on all network interfaces: 0.0.0.0'
             
     port:
-        type: num
+        type: int
         default: 2323
         description:
             de: 'Netzwerk Port der für die Verbindung genutzt wird'
