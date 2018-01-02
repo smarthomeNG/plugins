@@ -55,7 +55,7 @@ class Mqtt(SmartPlugin):
     
     ALLOW_MULTIINSTANCE = True
     
-    PLUGIN_VERSION = "1.3c.4"
+    PLUGIN_VERSION = "1.4.4"
 
     __plugif_CallbackTopics = {}         # for plugin interface
     __plugif_Sub = None
@@ -437,7 +437,7 @@ class Mqtt(SmartPlugin):
         item = self.topics.get(message.topic, None)
         if item != None:
             payload = self.cast_mqtt(item.type(), message.payload)
-            self.logger.warning(self.get_loginstance()+"Received topic '{}', payload '{}' (type {}), QoS '{}', retain '{}' for item '{}'".format( message.topic, str(payload), item.type(), str(message.qos), str(message.retain), str(item.id()) ))
+            self.logger.info(self.get_loginstance()+"Received topic '{}', payload '{}' (type {}), QoS '{}', retain '{}' for item '{}'".format( message.topic, str(payload), item.type(), str(message.qos), str(message.retain), str(item.id()) ))
             item(payload, 'MQTT')
         logic = self.logictopics.get(message.topic, None)
         if logic != None:
