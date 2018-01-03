@@ -9,6 +9,7 @@ If you have special hardware not supported yet please feel free to improve and c
 
 ## Version / Change History
 Version: 1.6
+
 Change History: actually not maintained.
 
 ## Requirements
@@ -101,7 +102,7 @@ STATUS = handle_status
 ### items.yaml / items.conf (deprecated)
 
 #### Attributes
-For attributes see the examples.
+For attributes have a look to the examples.
 
 #### Example item.yaml
 ```
@@ -119,7 +120,7 @@ Enocean_Item:
             type: bool
             enocean_rx_key: STATUS
     
-    FT55switch
+    FT55switch:
         enocean_rx_id: 012345AA
         enocean_rx_eep: F6_02_03
             up:
@@ -438,6 +439,7 @@ Enocean_Item:
 ### Add new listening enocean devices
 
 You have to know about the EnOcean RORG of your device (please search the internet or ask the vendor). 
+
 Further the RORG must be declared in the plugin.
 
 The following status EEPs are supported:
@@ -458,7 +460,7 @@ The following status EEPs are supported:
 * F6_02_03		2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V, FSB61NP-230V or Gira switches.
 * F6_10_00		Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
 ```
-A complete list of available EEPs is documented at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
+A complete list of available EEP's is documented at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
 
 
 ### Send commands: Tx EEPs
@@ -477,8 +479,14 @@ The optional ref_level parameter defines default dim value when dimmer is switch
 ### Learning Mode
 
 Devices that shall receive commands from the smarthome plugin, i.e. the encoean gateway must be subscribed first.
-Generally follow the teach in procedure as described by enocean.
-Usually, the enocean device, e.g. enocean actor, is set to teach in mode. See the manual of the respective device for further information. Once being in teach in mode, trigger a learn-in command from smarthomeNG.
+Generally follow the teach in procedure as described by enocean:
+1. set the enocean device/actor into learn mode
+2. send the learn telegram
+3. exit the learn mode of the actor
+
+Usually, the enocean device, e.g. enocean actor, is set to teach in mode.
+See the manual of the respective device for further information.
+Once being in teach in mode, trigger a learn-in command from smarthomeNG.
 
 In order to send a special learning message, start smarthome with the interactive console:
 
