@@ -49,16 +49,21 @@ body:
         type: num
         visu_acl: ro
         nh_type@nokia_health: weight
- 
+
     height:
         type: num
         visu_acl: ro
         nh_type@nokia_health: height
-  
+
     bmi:
         type: num
         visu_acl: ro
         nh_type@nokia_health: bmi
+
+    bmi_text:
+        type: str
+        visu_acl: ro
+        nh_type@nokia_health: bmi_text
 
     fat_ratio:
         type: num
