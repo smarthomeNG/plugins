@@ -6,9 +6,9 @@ plugin:
         # Alternative: description in multiple languages
         de: 'Plugin für Enocean Unterstützung'
         en: 'Plugin for enocean support'
-    maintainer: 'hasenradball'
+    maintainer: '? (Robert Budde / aschwith)'
     # Who tests this plugin?
-    tester: 'hasenradball'
+    tester: '? (Robert Budde / aschwith)'
     keywords: enocean
     # url of documentation (wiki) page
     documentation: https://github.com/smarthomeNG/plugins/tree/master/enocean
