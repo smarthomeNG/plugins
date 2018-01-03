@@ -521,14 +521,17 @@ Where `id_offset`, range (0-127), specifies the sending ID-offset with respect t
 Later, the ID-offset is specified in the <item.yaml> for every outgoing send command, see the examples above.
 
 Use different ID-offsets for different groups of actors.
-After complete the teach-in procedure, leave the interactive console by `STRG+C` and add the applied ID_Offset to the respective enocean send item (enocean_tx_id_offset = ID_Offset).
+After complete the teach-in procedure, leave the interactive console by `STRG+C` and add the applied id_offset to the respective enocean send item (enocean_tx_id_offset = ID_Offset).
 
 
 ### UTE teach-in
 
 UTE does mean "Universal Uni- and Bidirectional Teach in".
-When activated on Enocean device the device will send a ``D4`` teach in request. An automatic answer within 500ms is expected.
-To do so enable the UTE learnmode prior to the activation on the device: Start smarthome with the interactive console - see above. ``sh.enocean.start_UTE_learnmode(ID_Offset)``
+When activated on Enocean device the device will send a `D4` teach in request. An automatic answer within 500 ms is expected.
+To do so enable the UTE learnmode prior to the activation on the device: Start smarthome with the interactive console - see above. 
+
+`sh.enocean.start_UTE_learnmode(ID_Offset)`
+
 The device will be teached in and the learn mode will be ended automatically
 
 That's it!
