@@ -229,7 +229,7 @@ class Telegram(SmartPlugin):
 
         # /help: show available commands als keyboard
         elif command == '/help':
-	        self._bot.sendMessage(self._chat_id, "choose", reply_markup={"keyboard":[["/roll","/hide"], ["/time","/list"], ["/lo","/info"]]})
+            self._bot.sendMessage(self._chat_id, "choose", reply_markup={"keyboard":[["/roll","/hide"], ["/time","/list"], ["/lo","/info"]]})
 
         # /hide: hide keyboard
         elif command == '/hide':
