@@ -93,7 +93,7 @@ class Telegram(SmartPlugin):
     # called once at startup after all items are loaded
     def run(self):
         self.alive = True
-	self.logics = Logics.get_instance() # Returns the instance of the Logics class, to be used to access the logics-api
+        self.logics = Logics.get_instance() # Returns the instance of the Logics class, to be used to access the logics-api
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
@@ -251,12 +251,11 @@ class Telegram(SmartPlugin):
             tmp_msg+="Logics:\n"
             for logic in sorted(self.logics.return_loaded_logics()):    # list with the names of all logics that are currently loaded
                 data = []
-                lo = self._sh.return_logic(logic)
-                nt = self._sh.scheduler.return_next(logic)
-                if lo.enabled == False:
+                info = self.logics.get_logic_info(logic)
+                if not info['enabled']:
                     data.append("disabled")
-                if nt is not None:
-                    data.append("scheduled for {0}".format(nt.strftime('%Y-%m-%d %H:%M:%S%z')))
+                if 'next_exec' in info:
+                    data.append("scheduled for {0}".format(info['next_exec']))
                 tmp_msg+=("{0}".format(logic))
                 if len(data):
                     tmp_msg+=(" ({0})".format(", ".join(data)))
