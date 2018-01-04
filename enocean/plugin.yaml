@@ -73,7 +73,7 @@ item_attributes:
         mandatory: 'False'
     
     enocean_rx_key:
-        type: str
+        type: num
         default: A
         description:
             de: 'Knopf/Schalter-Bezeichnung des EnOcean Gerätes'
