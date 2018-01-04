@@ -4,8 +4,8 @@ plugin:
     type: gateway                 # plugin type (gateway, interface, protocol, system, web)
     description:
         # Alternative: description in multiple languages
-        de: 'Plugin für Enocean Unterstützung'
-        en: 'Plugin for enocean support'
+        de: 'Plugin für EnOcean Unterstützung'
+        en: 'Plugin for EnOcean support'
     maintainer: '? (Robert Budde / aschwith)'
     # Who tests this plugin?
     tester: '? (Robert Budde / aschwith)'
@@ -26,21 +26,16 @@ parameters:
         type: str
         default: /dev/ttyAMA0
         description:
-            de: 'Name der Schnittstelle an der sich der Enocean Adapter befindet'
-            en: 'name of the port where the enocean adapter is plugged'
-        valid_list:
-          - /dev/ttyAMA0
-          - /dev/ttyS0
-          - /dev/ttyS1
-          - ...
+            de: 'Name der Schnittstelle an der sich der EnOcean Adapter befindet'
+            en: 'name of the port where the EnOcean adapter is plugged'
         mandatory: 'True'
           
     tx_id:
         type: int
         default: FFFF4680
         description:
-            de: 'Unique-ID oder Base-ID des enocean Moduls (8-stelliger hex Wert)'
-            en: 'Unique-ID or Base-ID of the enocean Module(8-digit hex value)'
+            de: 'Unique-ID oder Base-ID des EnOcean Moduls (8-stelliger hex Wert)'
+            en: 'Unique-ID or Base-ID of the EnOcean Module (8-digit hex value)'
         mandatory: 'True'
         
 item_attributes:
@@ -49,8 +44,8 @@ item_attributes:
         type: int
         default: 1A794D3
         description:
-            de: 'ID des enocean Gerätes (Aktor oder Sensor)'
-            en: 'ID of the enocean device (actor or sensor)'
+            de: 'ID des EnOcean Gerätes (Aktor oder Sensor)'
+            en: 'ID of the EnOcean device (actor or sensor)'
         mandatory: 'True'
         
     enocean_rx_eep:
@@ -58,7 +53,7 @@ item_attributes:
         default: F6_02_03
         description:
             de: 'EEP Profile des Response Telegramms'
-            en: 'EEP Profile of the repeat meassage'
+            en: 'EEP Profile of the response meassage'
         mandatory: 'True'
         
     enocean_tx_eep:
@@ -81,14 +76,6 @@ item_attributes:
         type: str
         default: A
         description:
-            de: 'Knopf/Schalter-Bezeichnung des Enocean Gerätes'
-            en: 'actor button name of the enocean device'
-        valid_list:
-          - A
-          - AI
-          - A0
-          - B
-          - BI
-          - B0
-          - ...
+            de: 'Knopf/Schalter-Bezeichnung des EnOcean Gerätes'
+            en: 'actor button name of the EnOcean device'
         mandatory: 'False'

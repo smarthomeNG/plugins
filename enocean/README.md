@@ -1,7 +1,7 @@
 # EnOcean
 
 ## Description
-This plugin allows you to interact with enocean devices via SmarthomeNG and SmartVisu.
+This plugin allows you to interact with EnOcean devices via SmarthomeNG and SmartVisu.
 
 This plugin is still under development.
 
@@ -11,13 +11,13 @@ If you have special hardware not supported yet please feel free to improve and c
 ## Version / Change History
 Version: 1.6
 
-Change History: actually not maintained.
+Change History: currently not maintained.
 
 ## Requirements
-For use of this plugin you need an enocean radio transceiver module like:
+For use of this plugin you need an EnOcean radio transceiver module like:
 - Fam4Pi
 - USB 300
-- ENOCEAN PI 868 Funk Modul
+- EnOcean PI 868 Funk Modul
 - etc.
 
 ## Configuration
@@ -27,14 +27,14 @@ Add the following lines to your `plugin.yaml` or `plugin.conf`.
 
 #### Parameters
 ##### serialport
-You have to specify the `serialport` to your port name of your enocean-adpater.
-Creating **udev-rules** for the enocean-adapter is recommend, when using different uart devices.
+You have to specify the `serialport` to your port name of your EnOcean-adpater.
+Creating **udev-rules** for the EnOcean-adapter is recommend, when using different uart devices.
 
 ##### tx_id
-The specification of the enocean `tx_id` is optional **but** mandatory for sending control commands from the enocean-adapter to an enocean device. 
+The specification of the EnOcean `tx_id` is optional **but** mandatory for sending control commands from the enocean-adapter to an EnOcean device. 
 It is defined as a 8-digit hex value.
 
-When controlling multiple devices, it is recommended to use the enocean-adapter's Base-ID (not Unique-ID or Chip-ID) as transmitting ID.
+When controlling multiple devices, it is recommended to use the EnOcean-adapter's Base-ID (not Unique-ID or Chip-ID) as transmitting ID.
 For further information regarding the difference between Base-ID and Chip-ID, see
 [Knowledge Base](https://www.enocean.com/en/knowledge-base-doku/enoceansystemspecification%3Aissue%3Awhat_is_a_base_id/)
 
@@ -46,7 +46,7 @@ With the specification of the Base-ID, 128 different transmit ID's are available
 2. wait some time for comming up of the service
 3. have a look into the log file an look for `enocean: Base ID = 0xYYYYZZZZ`
 4. now you have the right Base-ID and you can place it into the plugin.yaml/plugin.conf file.
-5. alternating you will also find the enocean-adapter's Unique-ID / Chip-ID in the log-file.
+5. alternating you will also find the EnOcean-adapter's Unique-ID / Chip-ID in the log-file.
 
 #### Example plugin.yaml
 ```
@@ -68,12 +68,12 @@ With the specification of the Base-ID, 128 different transmit ID's are available
 
 ### Items
 #### enocean_rx_id, enocean_rx_eep and enocean_tx_id_offset
-An Enocean item must specify at minimum an `enocean_rx_id` (Enocean Identification Number (hex code)) and an `enocean_rx_eep` (Enocean Equipment Profile).
+An EnOcean item must specify at minimum an `enocean_rx_id` (EnOcean Identification Number (hex code)) and an `enocean_rx_eep` (EnOcean Equipment Profile).
 Send items additionally hold an `enocean_tx_id_offset`.
 
 #### enocean_rx_key
-The status of an enocean device can be read by using the shortcut names of the Button which should be defined under `enocean_rx_key`.
-Therefor see [Enocean Equippment Profile](http://www.enocean-alliance.org/eep/)
+The status of an EnOcean device can be read by using the shortcut names of the Button which should be defined under `enocean_rx_key`.
+Therefor see [EnOcean Equippment Profile](http://www.enocean-alliance.org/eep/)
 
 The following example explaines the button shortcut and its meaning for a rocker/switch with two rocker (EEP-Profile: F6_02_01 or F6_02_02).
 
@@ -84,7 +84,7 @@ BI = right rocker down
 B0 = right rocker up
 ```
 
-The following example example explaines the button shortcut and its meaning for a rocker/switch with two rocker and 6 available combinations (EEP F6_02_03).
+The following example explaines the button shortcut and its meaning for a rocker/switch with two rocker and 6 available combinations (EEP F6_02_03).
 
 ```
 AI = left rocker down
@@ -107,7 +107,7 @@ For attributes have a look to the examples.
 
 #### Example item.yaml
 ```
-Enocean_Item:
+EnOcean_Item:
     Outside_Temperature:
         type: num
         enocean_rx_id: 0180924D
@@ -186,7 +186,8 @@ Enocean_Item:
             type=bool
             enocean_rx_key: STAT
             enocean_tx_eep: D2_01_07
-            enocean_pulsewidth: 0.1  // optional; turn off after 0.1 sed
+            # optional; turn off after 0.1 s
+            enocean_pulsewidth: 0.1
             enocean_tx_id_offset: 1  
     
     awning:
@@ -276,7 +277,7 @@ Enocean_Item:
 
 #### Example item.conf (deprecated)
 ```
-[Enocean_Item]
+[EnOcean_Item]
     [[Outside_Temperature]]
         type = num
         enocean_rx_id = 0180924D
@@ -437,7 +438,7 @@ Enocean_Item:
             type = bool
 ```
 
-### Add new listening enocean devices
+### Add new listening EnOcean devices
 
 You have to know about the EnOcean RORG of your device (please search the internet or ask the vendor). 
 
@@ -461,7 +462,7 @@ The following status EEPs are supported:
 * F6_02_03		2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V, FSB61NP-230V or Gira switches.
 * F6_10_00		Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
 ```
-A complete list of available EEP's is documented at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
+A complete list of available EEPs is documented at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
 
 
 ### Send commands: Tx EEPs
@@ -481,11 +482,11 @@ The optional ref_level parameter defines default dim value when dimmer is switch
 
 Devices that shall receive commands from the smarthome plugin, i.e. the encoean gateway must be subscribed first.
 Generally follow the teach in procedure as described by enocean:
-1. set the enocean device/actor into learn mode
+1. set the EnOcean device/actor into learn mode
 2. send the learn telegram
 3. exit the learn mode of the actor
 
-Usually, the enocean device, e.g. enocean actor, is set to teach in mode.
+Usually, the EnOcean device, e.g. enocean actor, is set to teach in mode.
 See the manual of the respective device for further information.
 Once being in teach in mode, trigger a learn-in command from smarthomeNG.
 
@@ -497,7 +498,7 @@ sudo systemctl stop smarthome
 sudo ./smarthome.py -i
 ```
 
-Then use one of the following learn-in commands, depending on your enocean device:
+Then use one of the following learn-in commands, depending on your EnOcean device:
 
 ```python
 sh.enocean.send_learn_protocol(id_offset, device)
@@ -527,7 +528,7 @@ After complete the teach-in procedure, leave the interactive console by `STRG+C`
 ### UTE teach-in
 
 UTE does mean "Universal Uni- and Bidirectional Teach in".
-When activated on Enocean device the device will send a `D4` teach in request. An automatic answer within 500 ms is expected.
+When activated on EnOcean device the device will send a `D4` teach in request. An automatic answer within 500 ms is expected.
 To do so enable the UTE learnmode prior to the activation on the device: Start smarthome with the interactive console - see above. 
 
 `sh.enocean.start_UTE_learnmode(ID_Offset)`
