@@ -195,7 +195,8 @@ EnOcean_Item:
         enocean_rx_eep: F6_02_03
         move:
             enocean_tx_eep: A5_3F_7F
-            enocean_rtime: 60  // move awning for 60sec
+            # move awning for 60sec
+            enocean_rtime: 60
             type: num
             visu: yes
         
@@ -356,7 +357,8 @@ EnOcean_Item:
             type=bool
             enocean_rx_key = STAT
             enocean_tx_eep = D2_01_07
-            enocean_pulsewidth = 0.1  // optional; turn off after 0.1 sed
+            # optional; turn off after 0.1 s
+            enocean_pulsewidth = 0.1
             enocean_tx_id_offset = 1  
     
     [[awning]]
@@ -364,7 +366,8 @@ EnOcean_Item:
         enocean_rx_eep = F6_02_03
         [[[move]]]
             enocean_tx_eep = A5_3F_7F
-            enocean_rtime = 60  // move awning for 60sec
+            # move awning for 60 s
+            enocean_rtime = 60
             type = num
             visu = yes
         [[[stat]]]
