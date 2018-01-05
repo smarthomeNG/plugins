@@ -83,11 +83,29 @@ class NokiaHealth(SmartPlugin):
             if 'height' in last_measure and 'height' in self._items:
                 self._items['height'](last_measure['height'])
 
-            if 'height' in self._items and 'bmi' in self._items:
+            if 'height' in self._items and ('bmi' in self._items or 'bmi_text' in self._items):
                 if self._items['height']() > 0:
                     bmi = round(
                         last_measure['weight'] / ((self._items['height']()) * (self._items['height']())), 2)
-                    self._items['bmi'](bmi)
+                    if 'bmi' in self._items:
+                        self._items['bmi'](bmi)
+                    if 'bmi_text' in self._items:
+                        if bmi < 16:
+                            self._items['bmi_text']('starkes Untergewicht')
+                        elif 16 <= bmi < 17:
+                            self._items['bmi_text']('mäßiges Untergewicht ')
+                        elif 17 <= bmi < 18.5:
+                            self._items['bmi_text']('leichtes Untergewicht ')
+                        elif 18.5 <= bmi < 25:
+                            self._items['bmi_text']('Normalgewicht')
+                        elif 25 <= bmi < 30:
+                            self._items['bmi_text']('Präadipositas (Übergewicht)')
+                        elif 30 <= bmi < 35:
+                            self._items['bmi_text']('Adipositas Grad I')
+                        elif 35 <= bmi < 40:
+                            self._items['bmi_text']('Adipositas Grad II')
+                        elif 40 <= bmi:
+                            self._items['bmi_text']('Adipositas Grad III')
                 else:
                     self.logger.error(
                         "Cannot calculate BMI: height is 0, please set height (in m) for height item manually.")
@@ -116,7 +134,7 @@ class NokiaHealth(SmartPlugin):
         :param item: The item to process.
         """
         # items specific to call monitor
-        if self.get_iattr_value(item.conf, 'nh_type') in ['weight', 'height', 'bmi', 'fat_ratio', 'fat_free_mass',
+        if self.get_iattr_value(item.conf, 'nh_type') in ['weight', 'height', 'bmi', 'bmi_text', 'fat_ratio', 'fat_free_mass',
                                                           'fat_mass_weight', 'heart_pulse', 'last_update']:
             self._items[self.get_iattr_value(item.conf, 'nh_type')] = item
 
