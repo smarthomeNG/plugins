@@ -4,21 +4,35 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Auslesen von Xiaomi Mi Flora Pflanzensensoren, **seit SmartHomeNG v1.3**'
-        en: ''
+        en: 'Read from Xiaomi MiFlora plant sensors.'
     maintainer: psilo909
     tester: Sandman60
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1027133-plugin-xiaomi-mi-plant-flowers-tester-light-monitor
 
-    version: 1.3.0.1               # Plugin version
+    version: 1.3.0.2               # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     classname: Xiaomi              # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+     bt_addr:
+        type: str
+        mandatory: True
+        description:
+            de: 'Bluetooth-Adresse des MiFlora Pflanzensensors.'
+            en: 'Bluetooth address of MiFlora plant sensor.'
+
+     cycle:
+        type: int
+        default: 300
+        description:
+            de: 'Dieser Parameter muss normalerweise nicht angegeben werden. Er erlaubt es die Update-Frquenz anzupassen (Standard: alle 300 Sekunden).'
+            en: "This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 300 seconds)."
+
     
 item_attributes:
     # Definition of item attributes defined by this plugin
