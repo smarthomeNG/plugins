@@ -32,7 +32,7 @@ ITEM_TAG = ['mpd_status','mpd_songinfo','mpd_statistic','mpd_command', 'mpd_url'
 class MPD(lib.connection.Client,SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.4.1"
 
     def __init__(self, sh, host, port=6600, cycle=2):
         self._sh = sh
