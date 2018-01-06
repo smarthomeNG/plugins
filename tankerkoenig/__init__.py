@@ -121,15 +121,17 @@ class TankerKoenig(SmartPlugin):
         json_obj = response.json()
         keys = ['e5', 'e10', 'diesel', 'status']
         for id in ids:
-            result_station = dict()
-            result_station['id'] = id
-            for key in keys:
-                if key in json_obj['prices'][id]:
-                    result_station[key] = json_obj['prices'][id][key]
-                else:
-                    result_station[key] = ""
-            result_station_prices.append(result_station)
-
+            if id in json_obj['prices']:
+                result_station = dict()
+                result_station['id'] = id
+                for key in keys:
+                    if key in json_obj['prices'][id]:
+                        result_station[key] = json_obj['prices'][id][key]
+                    else:
+                        result_station[key] = ""
+                result_station_prices.append(result_station)
+            else:
+                self.logger.error("No result for station with id %s. Check manually!" % id)
         return result_station_prices
 
     def _build_url(self, suffix):
