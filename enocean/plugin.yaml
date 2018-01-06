@@ -2,23 +2,80 @@
 plugin:
     # Global plugin attributes
     type: gateway                 # plugin type (gateway, interface, protocol, system, web)
-    description:                  # Alternative: description in multiple languages
-        de: 'Enocean Unterstützung'
-        en: ''
+    description:
+        # Alternative: description in multiple languages
+        de: 'Plugin für EnOcean Unterstützung'
+        en: 'Plugin for EnOcean support'
     maintainer: '? (Robert Budde / aschwith)'
-#    tester:                        # Who tests this plugin?
+    # Who tests this plugin?
+    tester: '? (Robert Budde / aschwith)'
     keywords: enocean
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    # url of documentation (wiki) page
+    documentation: https://github.com/smarthomeNG/plugins/tree/master/enocean
+    
 
     version: 1.3.3                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: EnOcean             # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    serialport:
+        type: str
+        default: /dev/ttyAMA0
+        description:
+            de: 'Name der Schnittstelle an der sich der EnOcean Adapter befindet'
+            en: 'name of the port where the EnOcean adapter is plugged'
+        mandatory: 'True'
+          
+    tx_id:
+        type: int
+        default: FFFF4680
+        description:
+            de: 'Unique-ID oder Base-ID des EnOcean Moduls (8-stelliger hex Wert)'
+            en: 'Unique-ID or Base-ID of the EnOcean Module (8-digit hex value)'
+        mandatory: 'True'
+        
 item_attributes:
     # Definition of item attributes defined by this plugin
+    enocean_rx_id:
+        type: int
+        default: 1A794D3
+        description:
+            de: 'ID des EnOcean Gerätes (Aktor oder Sensor)'
+            en: 'ID of the EnOcean device (actor or sensor)'
+        mandatory: 'True'
+        
+    enocean_rx_eep:
+        type: str
+        default: F6_02_03
+        description:
+            de: 'EEP Profile des Response Telegramms'
+            en: 'EEP Profile of the response meassage'
+        mandatory: 'True'
+        
+    enocean_tx_eep:
+        type: str
+        default: A5_38_08
+        description:
+            de: 'EEP Profile des Sende Telegramms'
+            en: 'EEP Profile of the send meassage'
+        mandatory: 'True'
     
+    enocean_tx_id_offset:
+        type: int
+        default: 0
+        description:
+            de: 'Offset zur Base-ID auf welche der Aktor reagiert'
+            en: 'offset to the Base-ID on which the actor responds to'
+        mandatory: 'False'
+    
+    enocean_rx_key:
+        type: num
+        default: A
+        description:
+            de: 'Knopf/Schalter-Bezeichnung des EnOcean Gerätes'
+            en: 'actor button name of the EnOcean device'
+        mandatory: 'False'
