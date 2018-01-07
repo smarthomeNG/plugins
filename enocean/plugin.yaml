@@ -31,7 +31,7 @@ parameters:
         mandatory: 'True'
           
     tx_id:
-        type: int
+        type: str
         default: FFFF4680
         description:
             de: 'Unique-ID oder Base-ID des EnOcean Moduls (8-stelliger hex Wert)'
@@ -41,7 +41,7 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
     enocean_rx_id:
-        type: int
+        type: str
         default: 1A794D3
         description:
             de: 'ID des EnOcean Gerätes (Aktor oder Sensor)'
@@ -73,7 +73,7 @@ item_attributes:
         mandatory: 'False'
     
     enocean_rx_key:
-        type: num
+        type: str
         default: A
         description:
             de: 'Knopf/Schalter-Bezeichnung des EnOcean Gerätes'
