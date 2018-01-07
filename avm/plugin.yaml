@@ -4,7 +4,7 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Ansteuerung von AVM FRITZ!Boxen, WLAN-Repeatern, DECT Steckdosen, etc.'
-        en: ''
+        en: 'Get and send data from/to AVM devices such as the FRITZ!Box, Wifi Repeaters or DECT sockets.'
     maintainer: psilo909
     tester: Sandman60, cmalo
 #    keywords: iot xyz
