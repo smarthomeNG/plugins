@@ -35,7 +35,10 @@ import threading
 import os
 
 import lib.config
+from lib.plugin import Plugins
 from lib.logic import Logics
+from lib.scheduler import Scheduler
+
 import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.utils import Utils
 
@@ -52,8 +55,13 @@ class BackendLogics:
 
     def __init__(self):
 
+        # !! Cannot initialze self.logics here, because at startup logics are initialized after plugins !!
         self.logics = Logics.get_instance()
-        self.logger.warning("BackendLogics __init__ self.logics = {}".format(str(self.logics)))
+        self.logger.info("BackendLogics __init__ self.logics = {}".format(self.logics))
+        self.plugins = Plugins.get_instance()
+        self.logger.info("BackendLogics __init__ self.plugins = {}".format(str(self.plugins)))
+        self.scheduler = Scheduler.get_instance()
+        self.logger.info("BackendLogics __init__ self.scheduler = {}".format(self.scheduler))
         
         
     def logics_initialize(self):
@@ -72,7 +80,9 @@ class BackendLogics:
         # find out if blockly plugin is loaded
         if self.blockly_plugin_loaded == None:
             self.blockly_plugin_loaded = False
-            for x in self._sh._plugins:
+#            for x in self._sh._plugins:
+#            for x in self._sh.return_plugins():
+            for x in self.plugins.return_plugins():
                 try:
                     if x.get_shortname() == 'blockly':
                         self.blockly_plugin_loaded = True
@@ -120,8 +130,10 @@ class BackendLogics:
                 mylogic['watch_item_list'] = loaded_logic.watch_item
 
             mylogic['next_exec'] = ''
-            if self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name):
-                mylogic['next_exec'] = self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name).strftime('%Y-%m-%d %H:%M:%S%z')
+#            if self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name):
+#                mylogic['next_exec'] = self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name).strftime('%Y-%m-%d %H:%M:%S%z')
+            if self.scheduler.return_next(self._logicname_prefix+loaded_logic.name):
+                mylogic['next_exec'] = self.scheduler.return_next(self._logicname_prefix+loaded_logic.name).strftime('%Y-%m-%d %H:%M:%S%z')
                 
             mylogic['last_run'] = ''
             if loaded_logic.last_run():
@@ -183,7 +195,8 @@ class BackendLogics:
         Find new logics (logics defined in /etc/logic.yaml but not loaded)
         """
         _config = {}
-        _config.update(self._sh._logics._read_logics(self._sh._logic_conf_basename, self._sh._logic_dir))
+#        _config.update(self._sh._logics._read_logics(self._sh._logic_conf_basename, self._sh._logic_dir))
+        _config.update(self.logics._read_logics(self.logics._get_logic_conf_basename(), self.logics.get_logics_dir()))
 
         self.logger.info("logic_findnew: _config = '{}'".format(_config))
         newlogics = []
@@ -259,7 +272,7 @@ class BackendLogics:
                 mylogic['cycle'] = config[1]
             if config[0] == 'crontab':
 #                mylogic['crontab'] = config[1]
-                self.logger.info("logics_view_html: crontab = >{}<".format(config[1]))
+                self.logger.debug("logics_view_html: crontab = >{}<".format(config[1]))
                 edit_string = self.list_to_editstring(config[1])
                 mylogic['crontab'] = Utils.strip_quotes_fromlist(edit_string)
             if config[0] == 'watch_item':
@@ -338,7 +351,7 @@ class BackendLogics:
         """
         """
         if type(l) is str:
-            self.logger.info("list_to_editstring: >{}<  -->  >{}<".format(l, l))
+            self.logger.debug("list_to_editstring: >{}<  -->  >{}<".format(l, l))
             return l
         
         edit_string = ''
@@ -346,7 +359,7 @@ class BackendLogics:
             if edit_string != '':
                 edit_string += ' | '
             edit_string += str(entry)
-        self.logger.info("list_to_editstring: >{}<  -->  >{}<".format(l, edit_string))
+        self.logger.debug("list_to_editstring: >{}<  -->  >{}<".format(l, edit_string))
         return edit_string
         
 

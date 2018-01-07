@@ -34,6 +34,7 @@ import sys
 import threading
 import os
 import lib.config
+from lib.item import Items
 from lib.logic import Logics
 import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.model.smartplugin import SmartPlugin
@@ -46,7 +47,8 @@ class BackendItems:
 
     def __init__(self):
 
-        self.logger.debug("BackendItems __init__ {}".format(''))        
+        self.items = Items.get_instance()
+        self.logger.info("BackendItems __init__ {}".format(self.items))        
 
 
     # -----------------------------------------------------------------------------------
@@ -59,7 +61,7 @@ class BackendItems:
         display a list of items
         """
         return self.render_template('items.html', item_count=self._sh.item_count, 
-                                    items=sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False) )
+                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False) )
 
 
     @cherrypy.expose
@@ -69,7 +71,7 @@ class BackendItems:
 
         :param mode:             tree (default) or list structure
         """
-        items_sorted = sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+        items_sorted = sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
 
         if mode == 'tree':
             parent_items_sorted = []

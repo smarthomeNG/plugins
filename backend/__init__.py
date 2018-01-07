@@ -27,6 +27,7 @@
 
 import logging
 
+from lib.module import Modules
 from lib.model.smartplugin import SmartPlugin
 
 from .utils import *
@@ -146,7 +147,8 @@ class BackendServer(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = self.get_module('http')   # try/except to handle running in a core version that does not support modules
+#            self.mod_http = self.get_module('http')   # try/except to handle running in a core version that does not support modules
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
         except:
              self.mod_http = None
 
@@ -230,6 +232,17 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         self.visu_plugin = None
         self.visu_plugin_version = '1.0.0'
         
+        BackendSysteminfo.__init__(self)
+        BackendServices.__init__(self)
+        BackendItems.__init__(self)
+        BackendLogics.__init__(self)
+        BackendSchedulers.__init__(self)
+        BackendPlugins.__init__(self)
+        BackendScenes.__init__(self)
+        BackendThreads.__init__(self)
+        BackendLogging.__init__(self)
+        BackendVisu.__init__(self)
+
 
     def html_escape(self, str):
         """
@@ -245,7 +258,7 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         if self.visu_plugin is not None:
             return
 
-        for p in self._sh._plugins:
+        for p in self.plugins:
             if p.__class__.__name__ == "WebSocket":
                 self.visu_plugin = p
         if self.visu_plugin is not None:

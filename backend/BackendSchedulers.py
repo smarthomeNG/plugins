@@ -24,8 +24,17 @@
 
 import cherrypy
 
+from lib.scheduler import Scheduler
+
+
 class BackendSchedulers:
 
+
+    def __init__(self):
+
+        self.scheduler = Scheduler.get_instance()
+        self.logger.info("BackendSchedulers __init__ self.scheduler = {}".format(self.scheduler))
+        
 
     # -----------------------------------------------------------------------------------
     #    SCHEDULERS
@@ -38,9 +47,11 @@ class BackendSchedulers:
         """
         
         schedule_list = []
-        for entry in self._sh.scheduler._scheduler:
+#        for entry in self._sh.scheduler._scheduler:
+        for entry in self.scheduler._scheduler:
             schedule = dict()
-            s = self._sh.scheduler._scheduler[entry]
+#            s = self._sh.scheduler._scheduler[entry]
+            s = self.scheduler._scheduler[entry]
             if s['next'] != None and s['cycle'] != '' and s['cron'] != '':
                 schedule['fullname'] = entry
                 schedule['name'] = entry

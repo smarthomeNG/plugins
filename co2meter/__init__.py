@@ -35,7 +35,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class CO2Meter(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0.1"
+    PLUGIN_VERSION = "1.3.1"
 
     CO2METER_CO2 = 0x50
     CO2METER_TEMP = 0x42
@@ -80,11 +80,11 @@ class CO2Meter(SmartPlugin):
         while self.alive:
             data = self.get_data()
             self.logger.debug(data)
-            if 'temperature' in self._items:
+            if 'temperature' in self._items and 'temperature' in data:
                 self._items['temperature'](data['temperature'])
-            if 'co2' in self._items:
+            if 'co2' in self._items and 'co2' in data:
                 self._items['co2'](data['co2'])
-            if 'humidity' in self._items:
+            if 'humidity' in self._items and 'humidity' in data:
                 self._items['humidity'](data['humidity'])
             time.sleep(self._time_sleep)
 

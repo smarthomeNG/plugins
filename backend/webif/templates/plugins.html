@@ -2,139 +2,165 @@
 {% extends "base.html" %}
 {% import "navbar.html" as nav with context %}
 {% block navbar %}
-    {{ nav }}
+	{{ nav }}
 {% endblock navbar %}
 
 {% block content %}
 <div class="table-responsive">
-        <table class="table table-striped table-hover pluginList">
-            <thead>
-                <tr>
-                    <th>{{ _('Nr.') }}</th>
-                    <th></th>
-                    <th>{{ _('Type') }}</th>
-                    <th>{{ _('Plugin') }}</th>
-                    <th>{{ _('Classname') }}</th>
-                    <th>{{ _('Instanz') }}</th>
-                    <th>{{ _('Version') }}</th>
-                    <th>{{ _('Mehrere Instanzen möglich') }}</th>
-                    <th>{{ _('Aktionen') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in plugins  %}
-                {% set outer_loop = loop %}
-                <tr id="{{ loop.index }}_click" style="cursor: pointer;">
-                    <td width="30px">{{ loop.index }}</td>
-                    <td width="30px">
-                        {% if p.metadata.get_string('type') in ['web', 'protocol', 'interface', 'gateway', 'system'] %}
-                        <img src="static/img/{{ p.metadata.get_string('type') }}.svg" style="width: 25px;"/>
-                        {% else %}
-                        -
-                        {% endif %}
-                    </td>
-                    <td width="30px">{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}
-                    <td width="200px">{{ p.shortname }}</td>
-                    <td width="160px">{{ p.classname }}</td>
-                    {% if p.smartplugin %}
-                        {% set webifs = mod_http.get_webifs_for_plugin(p.shortname) %}
-                        <td width="200px">
-                        {% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
-                        </td>
-                        <td width="150px">{{ p.metadata.get_string('version') }}</td>
-                        <td width="210px">{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
-                        <td>
-                            {% for webif in webifs %}
-                            {% if webif['Instance'] == '' or webif['Instance'] == p.instancename %}
-                            <img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="width: 25px;"/>
-                            <script>
-                                $('#webif_link_{{outer_loop.index}}_{{loop.index}}').click(function(e){
-                                    window.open('http://{{mod_http.get_local_ip_address()}}:{{mod_http.get_local_port()}}/{{ webif['Webifname'] }}')
-                                    e.stopPropagation();
-                                });
-                            </script>
-                            {%endif%}
-                            {% endfor %}
-                        </td>
-                    {% else %}
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                    {%endif%}
-                </tr>
-                <tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
-                    <td colspan="9">
-                        <div class="panel panel-default" style="margin-bottom: 5px;">
-                            <div class="panel-heading">{{ _('Plugin spezifische Attribute') }}:</div>
-                            <div class="panel-body">
-                                <table style="width: 90%;">
-                                {% set first = True %}
-                                {% for key, value in p.attributes.items() %}
-                                    {% if loop.index % 2 > 0 %}
-                                    <tr>
-                                    {% endif %}
-                                    {% if p['metadata'].get_parameter_type(key) != 'foo' %}
-                                        <td style="width: 50%;"><strong>{{ key }}</strong> ( {{ p['metadata'].get_parameter_type_with_subtype(key) }} ): {{ value }}
-                                        {% if p['metadata'].get_parameter_defaultvalue(key) == value %}
-                                        &nbsp; [default]
-                                        {% endif %}
-                                        </td>
-                                    {% else %}
-                                        <td style="width: 400px;"><strong>{{ key }}</strong>: {{ value }}</td>
-                                    {% endif %}
-                                    {% if loop.index % 2 > 0 and not first %}
-                                    </tr>
-                                    {% else %}
-                                    {% set first = False %}
-                                    {% endif %}
-                                {% endfor %}
-                                </table>
-                            </div>
-                            <div class="panel-heading">{{ _('Plugin Metadaten') }}:</div>
-                            <div class="panel-body">
-                                {% if p.metadata.get_mlstring('description') %}
-                                <strong>{{ _('Beschreibung') }}:</strong> {{ p.metadata.get_mlstring('description') }}<br/>
-                                {% endif %}
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr>
+					<th style="width: 30px;">{{ _('Nr.') }}</th>
+					<th style="width: 30px;"></th>
+					<th style="width: 30px;"></th>
+					<th style="width: 30px;">{{ _('Type') }}</th>
+					<th style="width: 200px;">{{ _('Plugin') }}</th>
+					<th style="width: 160x;">{{ _('Classname') }}</th>
+					<th style="width: 200px;">{{ _('Instanz') }}</th>
+					<th style="width: 150px;">{{ _('Version') }}</th>
+					<th style="width: 150px;">{{ _('Mehrere Instanzen möglich') }}</th>
+					<th style="width: 150px;">{{ _('Aktionen') }}</th>
+					<th>{{ _('Web Interface') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for p in plugins	 %}
+				{% set outer_loop = loop %}
+				<tr id="{{ loop.index }}_click" style="cursor: pointer;">
+					<td>{{ loop.index }}</td>
+					<td><span style="color: {% if p.stopped %}red{% else %}green{% endif %};" class="fas {% if p.stopped %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
+					<td>
+						{% if p.metadata.get_string('type') in ['web', 'protocol', 'interface', 'gateway', 'system'] %}
+						<img src="static/img/{{ p.metadata.get_string('type') }}.svg" style="width: 25px;"/>
+						{% else %}
+						-
+						{% endif %}
+					</td>
+					<td width="30px">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}
+					<td>{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.shortname }}</td>
+					<td>{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.classname }}</td>
+					{% if p.smartplugin %}
+						{% set webifs = mod_http.get_webifs_for_plugin(p.shortname) %}
+						<td>
+						{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
+						</td>
+						<td>{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.metadata.get_string('version') }}</td>
+						<td>{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
 
-                                {% if p.metadata.get_string('documentation') %}
-                                <strong>{{ _('Documentation') }}:</strong>
-                                <a target="_blank" href="{{ p.metadata.get_string('documentation') }}">{{ p.metadata.get_string('documentation') }}</a><br/>
-                                {% endif %}
+						{% if updates or 1==1 %}
+							<td>
+								{% if 1==2 %}
+								    <button {% if p.stopped %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-default btn-xs"><i class="fas fa-hand-pointer"></i></button>
+								{% endif %}
+								<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-default btn-xs"><i class="fas fa-sync"></i></button>
+							{% if not p.stopped %}
+								<button name="disable" title="{{ _('Deaktivieren','button') }}" class="btn btn-default btn-xs"><i class="fas fa-pause"></i></button>
+							{% else %}
+								<button name="enable" title="{{ _('Aktivieren','button') }}" class="btn btn-default btn-xs"><i class="fas fa-play"></i></button>
+							{% endif %}
+							{% if 1 == 2 %}
+								<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-default btn-xs"><i class="fas fa-eject"></i></button>
+								&nbsp; &nbsp; &nbsp;
+								<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ p.shortname }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true" style="color: #c40808;"></i></button>
+							{% endif %}
+							</td>
+						{% else %}
+						    <td></td>
+						{% endif %}
 
-                                {% if p.metadata.get_string('support') %}
-                                <strong>{{ _('Support') }}:</strong>
-                                <a target="_blank" href="{{ p.metadata.get_string('support') }}">{{ p.metadata.get_string('support') }}</a><br/>
-                                {% endif %}
+						<td>{% if not p.stopped %}
+								{% for webif in webifs %}
+									{% if webif['Instance'] == '' or webif['Instance'] == p.instancename %}
+										<img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="width: 25px;"/>
+										<script>
+											$('#webif_link_{{outer_loop.index}}_{{loop.index}}').click(function(e){
+												window.open('http://{{mod_http.get_local_ip_address()}}:{{mod_http.get_local_port()}}/{{ webif['Webifname'] }}')
+												e.stopPropagation();
+											});
+										</script>
+									{%endif%}
+								{% endfor %}
+							{%endif%}
+						</td>
+					{% else %}
+						<td>-</td>
+						<td>-</td>
+						<td>-</td>
+						<td>-</td>
+					{%endif%}
+				</tr>
+				<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
+					<td colspan="11">
+						<div class="panel panel-default" style="margin-bottom: 5px;">
+							<div class="panel-heading">{{ _('Plugin spezifische Attribute') }}:</div>
+							<div class="panel-body">
+								<table style="width: 90%;">
+								{% set first = True %}
+								{% for key, value in p.attributes.items() %}
+									{% if loop.index % 2 > 0 %}
+									<tr>
+									{% endif %}
+									{% if p['metadata'].get_parameter_type(key) != 'foo' %}
+										<td style="width: 50%;"><strong>{{ key }}</strong> ( {{ p['metadata'].get_parameter_type_with_subtype(key) }} ): {{ value }}
+										{% if p['metadata'].get_parameter_defaultvalue(key) == value %}
+										&nbsp; [default]
+										{% endif %}
+										</td>
+									{% else %}
+										<td style="width: 400px;"><strong>{{ key }}</strong>: {{ value }}</td>
+									{% endif %}
+									{% if loop.index % 2 > 0 and not first %}
+									</tr>
+									{% else %}
+									{% set first = False %}
+									{% endif %}
+								{% endfor %}
+								</table>
+							</div>
+							<div class="panel-heading">{{ _('Plugin Metadaten') }}:</div>
+							<div class="panel-body">
+								{% if p.metadata.get_mlstring('description') %}
+								<strong>{{ _('Beschreibung') }}:</strong> {{ p.metadata.get_mlstring('description') }}<br/>
+								{% endif %}
 
-                                <strong>{{ _('Wartung') }}:</strong>
-                                {% if p.metadata.get_string('maintainer') %}
-                                    {{ p.metadata.get_string('maintainer') }}
-                                {% else %}
-                                -
-                                {% endif %}
-                                <br/>
-                                <strong>{{ _('Tester') }}:</strong>
-                                {% if p.metadata.get_string('tester') %}
-                                    {{ p.metadata.get_string('tester') }}
-                                {% else %}
-                                -
-                                {% endif %}
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                <script>
-                    /* If foldable content: add onclick for table row, stop unfolding when clicking pypi link inside. */
-                    $('#{{ loop.index }}_click').click(function(){
-                        $('#{{ loop.index }}_additional').toggle();
-                    });
-                    $('#{{ loop.index }}_additional').click(function(){
-                        $('#{{ loop.index }}_additional').toggle();
-                    });
-                </script>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+								{% if p.metadata.get_string('documentation') %}
+								<strong>{{ _('Documentation') }}:</strong>
+								<a target="_blank" href="{{ p.metadata.get_string('documentation') }}">{{ p.metadata.get_string('documentation') }}</a><br/>
+								{% endif %}
+
+								{% if p.metadata.get_string('support') %}
+								<strong>{{ _('Support') }}:</strong>
+								<a target="_blank" href="{{ p.metadata.get_string('support') }}">{{ p.metadata.get_string('support') }}</a><br/>
+								{% endif %}
+
+								<strong>{{ _('Wartung') }}:</strong>
+								{% if p.metadata.get_string('maintainer') %}
+									{{ p.metadata.get_string('maintainer') }}
+								{% else %}
+								-
+								{% endif %}
+								<br/>
+								<strong>{{ _('Tester') }}:</strong>
+								{% if p.metadata.get_string('tester') %}
+									{{ p.metadata.get_string('tester') }}
+								{% else %}
+								-
+								{% endif %}
+							</div>
+						</div>
+					</td>
+				</tr>
+				<script>
+					/* If foldable content: add onclick for table row, stop unfolding when clicking pypi link inside. */
+					$('#{{ loop.index }}_click').click(function(){
+						$('#{{ loop.index }}_additional').toggle();
+					});
+					$('#{{ loop.index }}_additional').click(function(){
+						$('#{{ loop.index }}_additional').toggle();
+					});
+				</script>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
 {% endblock %}

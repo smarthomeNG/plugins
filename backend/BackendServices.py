@@ -44,6 +44,11 @@ import lib.item_conversion
 class BackendServices:
 
 
+    def __init__(self):
+
+        self.logger.info("BackendServices __init__ {}".format(''))        
+
+
     # -----------------------------------------------------------------------------------
     #    SERVICES
     # -----------------------------------------------------------------------------------
@@ -68,7 +73,7 @@ class BackendServices:
         sql_plugin = False
         database_plugin = []
 
-        for x in self._sh._plugins:
+        for x in self._sh.plugins:
             if x.__class__.__name__ == "SQL":
                 sql_plugin = True
                 break
@@ -116,7 +121,7 @@ class BackendServices:
             return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump" % self._sh_dir, mime,
                                                   "%s/var/db/" % self._sh_dir)
         elif plugin != "":
-            for x in self._sh._plugins:
+            for x in self._sh.plugins:
                 if isinstance(x, SmartPlugin):
                     if x.get_instance_name() == plugin:
                         x.dump('%s/var/db/smarthomedb_%s.dump' % (self._sh_dir, plugin))
