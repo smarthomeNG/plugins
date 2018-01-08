@@ -55,7 +55,7 @@ class MPD(lib.connection.Client,SmartPlugin):
         self.orphanItems = []
         self.lastWarnTime = None
         self.warnInterval = 3600 #warn once per hour for orphaned items if some exist
-        self._internal_tems = { 'isPlaying' : False, 'isMuted' : False, 'lastVolume' : 20, 'currentName' : ''}
+        self._internal_tems = { 'isPlaying' : False, 'isPaused' : False, 'isStopped' : False, 'isMuted' : False, 'lastVolume' : 20, 'currentName' : ''}
         self._mpd_statusRequests = ['volume','repeat','random','single','consume','playlist','playlistlength'
                                     ,'mixrampdb','state','song','songid','time','elapsed','bitrate','audio','nextsong'
                                     ,'nextsongid','duration','xfade','mixrampdelay','updating_db','error','playpause','mute']
@@ -190,10 +190,20 @@ class MPD(lib.connection.Client,SmartPlugin):
             val = response['state']
             if val == 'play':
                 self._internal_tems['isPlaying'] = True
-            else:
+                self._internal_tems['isPaused'] = False
+                self._internal_tems['isStopped'] = False
+            elif val == 'pause':
                 self._internal_tems['isPlaying'] = False
+                self._internal_tems['isPaused'] = True
+                self._internal_tems['isStopped'] = False
+            elif val == 'stop':
+                self._internal_tems['isPlaying'] = False
+                self._internal_tems['isPaused'] = False
+                self._internal_tems['isStopped'] = True
+            else:
+                self.loggercmd("unknown state: {}".format(val),'e')
         if 'volume' in response:
-            val = int(response['volume'])
+            val = float(response['volume'])
             if val <= 0:
                 self._internal_tems['isMuted'] = True
             else:
@@ -205,12 +215,19 @@ class MPD(lib.connection.Client,SmartPlugin):
                 self._internal_tems['currentName'] = val
         #2. check response for subscribed items and refresh them
         for key in subscribedItems:
-            #update subscribed items which exist directly in the response from MPD
+            #update subscribed items (if value has changed) which exist directly in the response from MPD
             if key in response:
                 val = response[key]
-                self.loggercmd("update item {} with {}".format(key,val),'d')
                 item = subscribedItems[key]
-                self.setItemValue(item,val)
+                if item.type() == 'num':
+                    try:
+                        val = float(val)
+                    except:
+                        self.loggercmd("can't parse {} to float".format(val),'e')
+                        continue
+                if item() != val:
+                    self.loggercmd("update item {} with {}".format(key,val),'d')
+                    self.setItemValue(item,val)
             #update subscribed items which do not exist in the response from MPD
             elif key == 'playpause':
                 item = subscribedItems[key]
@@ -221,7 +238,7 @@ class MPD(lib.connection.Client,SmartPlugin):
             elif key == 'Artist':
                 item = subscribedItems[key]
                 self.setItemValue(item,self._internal_tems['currentName'])
-            #do net reset these items when the tags are missing in the response from MPD
+            #do not reset these items when the tags are missing in the response from MPD
             #that happens while MPD switches the current track!
             elif key == 'volume' or \
               key == 'repeat' or \
@@ -240,10 +257,12 @@ class MPD(lib.connection.Client,SmartPlugin):
             if value is None or not value:
                 value = ''
             item(str(value), 'MPD')
-        else:
+        elif item.type() == 'num':
             if value is None:
                 value = 0
             item(float(value), 'MPD')
+        else:
+            item(value, 'MPD')
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'MPD':
@@ -251,13 +270,22 @@ class MPD(lib.connection.Client,SmartPlugin):
             if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'next':
                 self._send('next')
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'pause' or \
-              self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'playpause': #own-defined item
-                self._send("pause {}".format(1 if self._internal_tems['isPlaying'] else 0))
-                return
             if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'play':
                 self._send("play {}".format(item()))
                 return
+            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'pause':
+                self._send("pause {}".format(item()))
+                return
+            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'stop':
+                self._send('stop')
+                return
+            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'playpause':
+                if self._internal_tems['isPlaying']:
+                    self._send("pause 1")
+                elif self._internal_tems['isPaused']:
+                    self._send("pause 0")
+                elif self._internal_tems['isStopped']:
+                    self._send("play")
             if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'playid':
                 self._send("playid {}".format(item()))
                 return
@@ -290,9 +318,6 @@ class MPD(lib.connection.Client,SmartPlugin):
                         self._send("seekcur {}".format(val))
                         return
                 self.loggercmd("ignoring invalid seekcur value",'w')
-                return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'stop':
-                self._send('stop')
                 return
             if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'mute': #own-defined item
                 if self._internal_tems['lastVolume'] < 0: #can be -1 if MPD can't detect the current volume
