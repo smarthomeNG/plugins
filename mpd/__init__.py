@@ -165,7 +165,7 @@ class MPD(lib.connection.Client,SmartPlugin):
             return
         if (len(self._currentsong_items) <= 0):
             if warn:
-                self.loggercmd("currentsong: no items to refresh",'e')
+                self.loggercmd("currentsong: no items to refresh",'w')
             return
         self.loggercmd("requesting currentsong",'d')
         currentsong = self._send('currentsong')
@@ -178,7 +178,7 @@ class MPD(lib.connection.Client,SmartPlugin):
             return
         if (len(self._statistic_items) <= 0):
             if warn:
-                self.loggercmd("statistic: no items to refresh",'e')
+                self.loggercmd("statistic: no items to refresh",'w')
             return
         self.loggercmd("requesting statistic",'d')
         stats = self._send('stats')
