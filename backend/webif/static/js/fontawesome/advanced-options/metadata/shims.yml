@@ -287,6 +287,3 @@ window-restore:
 youtube-play:
   name: youtube
   prefix: fab
-youtube-square:
-  name: youtube
-  prefix: fab

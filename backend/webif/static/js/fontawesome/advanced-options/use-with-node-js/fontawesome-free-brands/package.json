@@ -33,6 +33,10 @@
     {
       "name": "Geremia Taglialatela",
       "web": "http://twitter.com/gtagliala"
+    },
+    {
+      "name": "Mike Wilkerson",
+      "web": "http://twitter.com/mw77"
     }
   ],
   "repository": {
@@ -42,7 +46,13 @@
   "engines": {
     "node": ">=6"
   },
-  "dependencies": {},
-  "version": "5.0.1",
-  "name": "@fortawesome/fontawesome-free-brands"
+  "dependencies": {
+    "@fortawesome/fontawesome-common-types": "^0.1.0"
+  },
+  "version": "5.0.3",
+  "name": "@fortawesome/fontawesome-free-brands",
+  "main": "index.js",
+  "module": "index.es.js",
+  "jsnext:main": "index.es.js",
+  "types": "./index.d.ts"
 }
