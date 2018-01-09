@@ -1,0 +1,43 @@
+plugin:
+    type: interface               # Interface
+    description:
+        de: 'Abfrage von Tecalor Wärmepumpen'
+        en: 'read values of a Tecalor heatpump'
+    maintainer: realhik
+    tester: realhik
+    keywords: THZ, Tecalor
+    version: 0.2.1                # Plugin version
+    sh_minversion: 1.4
+    multi_instance: False
+    classname: THZ
+
+parameters:
+    serial_port: 
+        type: str
+        default: /dev/ttyUSB0     
+        descrption: 
+            en: "serial port connected to the heatpump"
+
+    baudrate: 
+        type: int 
+        default: 115200              
+        descrption:
+            en: "port speed, recent models use 115200 bps, older heatpumps may use 57600 bps or even 9600 bps"
+
+    poll_period: 
+        type: int
+        default: 30               
+        description:
+            en: "interval in seconds how often the data is read from the heatpump"
+
+    min_update_period: 
+        type: int
+        default: 300
+        descrption:
+            en: "interval in seconds for updating the values changing frequently (e.g. temperature), it should be higher than the poll period"
+
+    max_update_period: 
+         type: int
+         default: 43200
+         description:
+             en: "interval in seconds for updating the values with infrequent changes (e.g. counters updated once per day)"
