@@ -231,7 +231,9 @@ class MPD(lib.connection.Client,SmartPlugin):
             #update subscribed items which do not exist in the response from MPD
             elif key == 'playpause':
                 item = subscribedItems[key]
-                self.setItemValue(item,self._internal_tems['isPlaying'])
+                val = self._internal_tems['isPlaying']
+                if item() != val:
+                    self.setItemValue(item,val)
             elif key == 'mute':
                 item = subscribedItems[key]
                 self.setItemValue(item,self._internal_tems['isMuted'])
