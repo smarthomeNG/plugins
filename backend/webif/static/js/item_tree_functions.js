@@ -18,9 +18,16 @@ function build_item_subtree_recursive(data) {
 }
 
 function reload(data) {
-    $.getJSON('item_detail_json.html?item_path='+data.text, function(result) {
-        getDetailInfo(result);
-    })
+    if (data) {
+        $('#refresh-element').addClass('fa-spin');
+        $.getJSON('item_detail_json.html?item_path='+data.text, function(result) {
+            getDetailInfo(result);
+            window.setTimeout(function(){
+                $('#refresh-element').removeClass('fa-spin');
+            }, 500);
+
+        });
+    }
 }
 
 var selectedNode;
