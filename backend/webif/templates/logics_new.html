@@ -8,13 +8,13 @@
 {% block content %}
 
 
-<div class="container" style="width: 90%;">
+<div class="container-fluid navBorder">
 	<h3>SmartHomeNG: {{ _('Neue Logik erstellen') }}</h3>
 	<strong>{{ '' }}</strong>
 	<br/><br/>
 </div>
 
-<div class="container" style="width: 90%;">
+<div class="container-fluid">
 	<div style="margin-bottom: 5px;">
 	{% if updates and yaml_updates %}
 		<form name="input" action="logics_new.html" method="POST" enctype="multipart/form-data">
@@ -24,7 +24,7 @@
 
 	<table class="table table-bordered table-hover table-striped">
 		<tr>
-			<td style="min-width:200px;">{{ _('Angaben für die Erzeugung einer neuen Python Logik') }}</td>
+			<td style="min-width:200px; width: 300px;">{{ _('Angaben für die Erzeugung einer neuen Python Logik') }}</td>
 			<td style="width: 900px;">{{ message }}</td>
 		</tr>
 		<tr>

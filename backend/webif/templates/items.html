@@ -8,11 +8,11 @@
 {% endblock navbar %}
 
 {% block content %}
-<div class="container-fluid">
-    <h3>{{ _('Items') }} ({{ _('gesamt') }}: {{ item_count }})</><span id="search-results"></h3>
+<div class="container-fluid navBorder">
     <div class="container-fluid">
         <div class="row">
             <div class="col">
+                <h3>{{ _('Items') }} ({{ _('gesamt') }}: {{ item_count }})</><span id="search-results"></h3>
                 <div class="form-group">
                     <input type="input" class="form-control" id="input-search" placeholder="{{ _('Itempfad suchen...') }}" value=""><br/>
                     <button type="button" class="btn btn-primary" id="btn-search"><i class="fas fa-search"></i>&nbsp;{{ _('Suchen') }}</button>

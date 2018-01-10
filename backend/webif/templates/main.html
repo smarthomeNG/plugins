@@ -6,21 +6,23 @@
 {% endblock navbar %}
 
 {% block content %}
-<div class="container" style="width: 800px; margin-top: 50px;">
-     <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-auto">
-                  <img src="static/img/logo_big.png" alt="" style="width: 150px;">
-                </div>
-                <div class="col-md-auto">
-                    <h1>SmartHomeNG backend</h1>
-                    <p >
-                    {{ _('Willkommen im Backend von') }} SmartHomeNG.
-                    </p>
+<div class="container-fluid navBorder">
+    <div class="container" style="width: 800px; margin-top: 50px;">
+         <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-auto">
+                      <img src="static/img/logo_big.png" alt="" style="width: 150px;">
+                    </div>
+                    <div class="col-md-auto">
+                        <h1>SmartHomeNG backend</h1>
+                        <p >
+                        {{ _('Willkommen im Backend von') }} SmartHomeNG.
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-     </div>
+         </div>
+    </div>
 </div>
 {% endblock %}
