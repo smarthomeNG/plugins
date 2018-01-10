@@ -18,27 +18,12 @@ function build_item_subtree_recursive(data) {
 }
 
 function reload(data) {
-    panel = $(".panel").reload({
-        autoReload: false,
-        time: 3000,
-        refreshContainer: '.refresh-container',
-        dataContainer: '#tree_detail',
-        beforeReload: function() {},
-        afterReload: function() {},
-        parseData: getDetailInfo,
-        parameterString: data.text
-    });
+    $.getJSON('item_detail_json.html?item_path='+data.text, function(result) {
+        getDetailInfo(result);
+    })
 }
 
-function changeSearchButtonColor(active) {
-    if (active) {
-        $('#btn-search').removeClass("btn-default");
-        $('#btn-search').addClass("btn-primary");
-    } else {
-        $('#btn-search').removeClass("btn-primary");
-        $('#btn-search').addClass("btn-default");
-    }
-}
+var selectedNode;
 
 function getTree() {
     var item_tree = [];
@@ -51,11 +36,13 @@ function getTree() {
             data: item_tree,
 			levels: 1,
             showTags: true,
-            onNodeSelected: function(event, data) {
-                reload(data)
+            onNodeSelected: function(event, node) {
+                selectedNode = node;
+                reload(node);
             }
         });
     });
+
     var search = function(e) {
           results = [];
           var pattern = $('#input-search').val();
@@ -66,13 +53,9 @@ function getTree() {
           };
           var results = $('#tree').treeview('search', [ pattern, options ]);
           $('#search-results').html(' - Treffer: '+results.length);
-
-
           $('#btn-clear-search').on('click', function (e) {
             $('#tree').treeview('clearSearch');
             $('#tree').treeview('collapseAll', { silent: false });
-            $('#btn-search').removeClass("btn-primary");
-            $('#btn-search').addClass("btn-default");
             $('#input-search').val('');
             $('#search-output').html('');
             results = [];
@@ -87,17 +70,11 @@ function getTree() {
         if(event.keyCode == 13){
             $("#btn-search").click();
         }
-        if ($('#input-search').val() == '') {
-            changeSearchButtonColor(false);
-        } else {
-            changeSearchButtonColor(true);
-        }
     });
 
     // Expand/collapse all
     $('#btn-expand-all').on('click', function (e) {
-      var levels = $('#select-expand-all-levels').val();
-      $('#tree').treeview('expandAll', { levels: levels, silent: false });
+      $('#tree').treeview('expandAll', { silent: false });
     });
     $('#btn-collapse-all').on('click', function (e) {
       $('#tree').treeview('collapseAll', { silent: false });

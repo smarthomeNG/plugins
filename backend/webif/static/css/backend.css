@@ -10,3 +10,24 @@
 .table-hover>tbody>tr:hover>th {
   background-color: #ecf3f8;
 }
+
+.plus {
+
+}
+
+
+.minusIcon {
+  position: relative;
+  display: inline-block;
+  height: 12px;
+  width: 12px;
+  background-image: url("/backend/static/img/minus.png");
+}
+
+.plusIcon {
+  position: relative;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-image: url("/backend/static/img/plus.png");
+}

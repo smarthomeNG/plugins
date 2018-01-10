@@ -1,23 +1,23 @@
  <!DOCTYPE html>
-
 {% extends "base.html" %}
-{% import "navbar.html" as nav with context %}
 {% block navbar %}
-	{{ nav }}
+	{% with active_page="logics" %}
+	{% include "navbar.html" %}
+	{% endwith %}
 {% endblock navbar %}
 
 {% block content %}
-<div style="display:inline;">
+<div class="container-fluid" style="margin-top:10px;">
 	<ul class="nav nav-tabs">
-		<li id="tab_userlogics" class="active"><a href="#">{{ _('Nutzerlogiken') }}</a></li>
-		<li id="tab_systemlogics"><a href="#">{{ _('Systemlogiken') }}</a></li>
+		<li id="tab_userlogics" class="nav-item"><a class="nav-link active" data-toggle="tab" href="#">{{ _('Nutzerlogiken') }}</a></li>
+		<li id="tab_systemlogics" class="nav-item"><a class="nav-link" data-toggle="tab" href="#">{{ _('Systemlogiken') }}</a></li>
 		{% if updates and yaml_updates %}
-			<li style="padding-left:20px; padding-top:10px;">
-				<button id="newPl" class="btn btn-primary btn-xs" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fas fa-code"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</button>
+			<li style="padding-left:20px; padding-top:5px;">
+				<button id="newPl" class="btn btn-primary btn-sm" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fas fa-code"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</button>
 			</li>
 			{% if blockly_loaded %}
-			<li style="padding-left:20px; padding-top:10px;">
-				<button id="newBl" class="btn btn-primary btn-xs" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fas fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
+			<li style="padding-left:20px; padding-top:5px;">
+				<button id="newBl" class="btn btn-primary btn-sm" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fas fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
 			</li>
 			{% endif %}
 		{% endif %}
@@ -43,8 +43,8 @@
 				<tr>
 					<th style="width: 30px;">{{ _('Nr.') }}</th>
 					<th style="width: 30px;"></th>
-					<th style="width: 270px;">{{ _('Logik') }}</th>
-					<th style="width: 200px;">{{ _('nächste Ausführung') }}</th>
+					<th style="width: 350px;">{{ _('Logik') }}</th>
+					<th style="width: 120px;">{{ _('nächste Ausführung') }}</th>
 					<th style="width: 70px;">{{ _('Cycle') }}</th>
 					<th style="width: 150px;">{{ _('Crontab') }}</th>
 					<th style="width: 70px;">{{ _('Watch_Items') }}</th>
@@ -83,17 +83,17 @@
 							{% endif %}
 							{% if updates and logic.userlogic %}
 								<td>
-								    <button {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-default btn-xs"><i class="fas fa-hand-pointer"></i></button>
-									<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-default btn-xs"><i class="fas fa-sync"></i></button>
+								    <button {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-hand-pointer"></i></button>
+									<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-sync"></i></button>
 								{% if logic.enabled %}
-									<button name="disable" title="{{ _('Deaktivieren','button') }}" class="btn btn-default btn-xs"><i class="fas fa-pause"></i></button>
+									<button name="disable" title="{{ _('Deaktivieren','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-pause"></i></button>
 								{% else %}
-									<button name="enable" title="{{ _('Aktivieren','button') }}" class="btn btn-default btn-xs"><i class="fas fa-play"></i></button>
+									<button name="enable" title="{{ _('Aktivieren','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-play"></i></button>
 								{% endif %}
 								{% if 1 == 1 %}
-									<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-default btn-xs"><i class="fas fa-eject"></i></button>
+									<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-eject"></i></button>
 									&nbsp; &nbsp; &nbsp;
-									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ logic.name }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true" style="color: #c40808;"></i></button>
+									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-outline-danger btn-sm" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ logic.name }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true" style="color: #c40808;"></i></button>
 								{% endif %}
 								</td>
 							{% else %}
@@ -149,7 +149,7 @@
 								{% if updates %}
 									<td>
 									{% if logic.filename != '' %}
-										<button name="add" title="{{ _('Hinzufügen','button') }}" type="submit" class="btn btn-default btn-xs"><i class="fas fa-plus"></i></button>
+										<button name="add" title="{{ _('Hinzufügen','button') }}" type="submit" class="btn btn-outline-primary btn-sm"><i class="fas fa-plus"></i></button>
 										&nbsp; &nbsp; &nbsp;
 									{% endif %}
 									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-danger btn-default btn-xs" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ logic.name }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true"></i></button>
@@ -216,12 +216,12 @@
 							<td><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 							{% if updates and logic.userlogic %}
 								<td>
-								<input {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-default btn-xs">
-								<input name="reload" value="{{ _('Neu Laden','button') }}" type="submit" class="btn btn-default btn-xs">
-								<input name="enable" value="{% if logic.enabled %}{{ _('Deaktivieren','button') }}{% else %}{{ _('Aktivieren','button') }}{% endif %}" type="submit" class="btn btn-default btn-xs">
+								<input {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" value="{{ _('Auslösen','button') }}" type="submit" class="btn btn-outline-primary btn-sm">
+								<input name="reload" value="{{ _('Neu Laden','button') }}" type="submit" class="btn btn-outline-primary btn-sm">
+								<input name="enable" value="{% if logic.enabled %}{{ _('Deaktivieren','button') }}{% else %}{{ _('Aktivieren','button') }}{% endif %}" type="submit" class="btn btn-outline-primary btn-sm">
 								{% if 1 == 2 %}
-									<input name="unload" value="{{ 'Entladen' }}" type="submit" class="btn btn-default btn-xs">
-									<input name="configload" value="{{ 'gemäß config laden' }}" type="submit" class="btn btn-default btn-xs">
+									<input name="unload" value="{{ 'Entladen' }}" type="submit" class="btn btn-outline-primary btn-sm">
+									<input name="configload" value="{{ 'gemäß config laden' }}" type="submit" class="btn btn-outline-primary btn-sm">
 								{% endif %}
 								</td>
 							{% else %}

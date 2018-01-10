@@ -1,8 +1,9 @@
  <!DOCTYPE html>
 {% extends "base.html" %}
-{% import "navbar.html" as nav with context %}
 {% block navbar %}
-	{{ nav }}
+	{% with active_page="visu" %}
+	{% include "navbar.html" %}
+	{% endwith %}
 {% endblock navbar %}
 
 {% block content %}

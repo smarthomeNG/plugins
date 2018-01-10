@@ -2,35 +2,53 @@
 {% extends "base.html" %}
 {% import "navbar.html" as nav with context %}
 {% block navbar %}
-    {{ nav }}
+	{% with active_page="items" %}
+	{% include "navbar.html" %}
+	{% endwith %}
 {% endblock navbar %}
+
 {% block content %}
-
- <div class="container">
-      <strong>{{ _('Items') }} ({{ _('gesamt') }}: {{ item_count }})</strong><span id="search-results"></span><br/><br/>
-      <div class="form-group">
-          <input type="input" class="form-control" id="input-search" placeholder="{{ _('Itempfad suchen...') }}" value=""><br/>
-          <button type="button" class="btn btn-default" id="btn-search"><i class="fas fa-search"></i>&nbsp;{{ _('Suchen') }}</button>
-          <button type="button" class="btn btn-default" id="btn-clear-search"><i class="fas fa-circle-notch"></i>&nbsp;{{ _('Suche zurücksetzen') }}</button>
-          <button type="button" class="btn btn-default" id="btn-expand-all"><i class="fas fa-folder-open"></i>&nbsp;{{ _('Alle aufklappen') }}</button>
-          <button type="button" class="btn btn-default" id="btn-collapse-all"><i class="fas fa-folder"></i>&nbsp;{{ _('Alle zuklappen') }}</button>
-      </div>
-
-      <div class="pre-scrollable" id="tree" style="float:left; border: 1px solid #ccc; height:650px; max-height:650px; width:600px;"></div>
-      <div class=container" style="float:left; margin-left: 5px;">
-        <!--refresh widget-->
-        <div class="panel panel-default" data-url="item_detail_json.html?item_path=" data-item="child1">
-          <div class="panel-heading"><a class="pull-right" href="#"><span id="refresh-element" class="fas fa-sync"></span></a> {{ _('Item-Informationen') }}</div>
-          <div class="panel-body panel-refresh">
-            <div class="refresh-container" style="padding-top: 220px;"><i class="refresh-spinner fa fa-spinner fa-spin fa-5x"></i></div>
-            <div id="tree_detail" class="data-container refresh-data pre-scrollable" style="height:575px; max-height:575px; width:500px;">
-                {{ _('Item im Baum auswählen um Details einzusehen!') }}
+<div class="container-fluid">
+    <h3>{{ _('Items') }} ({{ _('gesamt') }}: {{ item_count }})</><span id="search-results"></h3>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <input type="input" class="form-control" id="input-search" placeholder="{{ _('Itempfad suchen...') }}" value=""><br/>
+                    <button type="button" class="btn btn-primary" id="btn-search"><i class="fas fa-search"></i>&nbsp;{{ _('Suchen') }}</button>
+                    <button type="button" class="btn btn-primary" id="btn-clear-search"><i class="fas fa-circle-notch"></i>&nbsp;{{ _('Suche zurücksetzen') }}</button>
+                    <button type="button" class="btn btn-primary" id="btn-expand-all"><i class="fas fa-folder-open"></i>&nbsp;{{ _('Alle aufklappen') }}</button>
+                    <button type="button" class="btn btn-primary" id="btn-collapse-all"><i class="fas fa-folder"></i>&nbsp;{{ _('Alle zuklappen') }}</button>
+                </div>
             </div>
-          </div>
         </div>
-    <!--refresh widget-->
-     </div>
- </div>
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="pre-scrollable" id="tree" style="height:655px; max-height:655px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card" >
+                    <div class="card-header">
+                        <a class="float-sm-right" href="#" onclick="reload(selectedNode);"><span id="refresh-element" class="fas fa-sync"></span></a>
+                        {{ _('Item-Informationen') }}
+                    </div>
+                    <div class="card-body">
+                        <!--<div class="refresh-container"><i class="refresh-spinner fa fa-spinner fa-spin fa-5x"></i></div>-->
+                        <p class="card-text">
+                            <div id="tree_detail" class="data-container refresh-data pre-scrollable" style="height:575px; max-height:575px;">
+                            {{ _('Item im Baum auswählen um Details einzusehen!') }}
+                            </div>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="static/js/item_tree_functions.js"></script>
 <script type="text/javascript" language="javascript">
