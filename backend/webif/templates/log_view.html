@@ -23,6 +23,7 @@
         </select>
     </div>
     <button type="button" class="btn btn-primary" style="float:left; margin-left: 10px;" onclick="location.href='log_view.html?logfile={{ logfile }}&text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()">{{ _('Filter anwenden','button') }}</button>
+    <button id="linewrapping" type="button" class="btn btn-secondary" style="float:left; margin-left: 10px;">{{ _('Zeilenumbruch') }}</button>&nbsp;
     <button type="button" title="{{ _('Neu Laden', 'button') }}" class="btn btn-primary" style="float:left; margin-left: 10px;" onclick="location.href='log_view.html?logfile={{ logfile }}&text_filter='+$('#text_filter').val()+'&log_level_filter='+$('#log_level_filter').val()+'&page={{ current_page }}'"><i class="fas fa-sync" aria-hidden="true"></i></button>
     <button type="button" title="{{ _('Nach unten scrollen', 'button') }}" class="btn btn-primary" style="float:left; margin-left: 10px;" onclick="document.getElementById('log_print').scrollTop = 9999999;"><i class="fa fa-arrow-circle-down" aria-hidden="true"></i></button>
 </div>
@@ -72,6 +73,10 @@ var logCodeMirror = CodeMirror.fromTextArea(document.getElementById("log_file"),
 
 window.addEventListener("resize", function(){resizeCodeMirror(logCodeMirror, 75)}, false);
 resizeCodeMirror(logCodeMirror, 75);
+
+$('#linewrapping').click(function(e) {
+    switchLineWrapping(logCodeMirror)
+});
 
 {% if current_page <= 1 %}$('#fast-backward').prop('disabled', true);$('#step-backward').prop('disabled', true);{% endif %}
 {% if current_page >= pages %}$('#fast-forward').prop('disabled', true);$('#step-forward').prop('disabled', true);{% endif %}

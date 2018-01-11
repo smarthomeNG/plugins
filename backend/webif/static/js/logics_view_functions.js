@@ -3,7 +3,7 @@ $('#help').click(function(e) {
   resizeCodeMirror()
 });
 $('#linewrapping').click(function(e) {
-    switchLineWrapping()
+    switchLineWrapping(logicsCodeMirror)
 });
 $('#rulers').click(function(e) {
     switchRulers();
@@ -49,15 +49,6 @@ CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
 
 CodeMirror.commands.autocomplete_item = function(cm) {
     CodeMirror.showHint(cm, CodeMirror.hint.itemsHint);
-};
-
-function switchLineWrapping() {
-	logicsCodeMirror.setOption('lineWrapping', !logicsCodeMirror.getOption('lineWrapping'));
-	if (logicsCodeMirror.getOption('lineWrapping')) {
-		$('#linewrapping').addClass('active');
-	} else {
-		$('#linewrapping').removeClass('active');
-	}
 };
 
 function switchRulers() {
