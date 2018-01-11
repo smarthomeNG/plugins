@@ -29,10 +29,9 @@
 </div>
 <br style="clear:both;"/><br/>
 <div class="container-fluid" style="overflow: none;">
-    <div style="border: 1px solid #ddd; margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
-    {% autoescape false %}
+    <div style="border: 1px solid #ddd; margin-bottom: 10px;">
 {% if log_lines %}<textarea autocomplete="off" id="log_file" name="log_file">{% for line in log_lines %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
-    {% endautoescape %}
+    </div>
 </div>
 <div class="container-fluid">
     <table>
