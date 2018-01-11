@@ -38,7 +38,7 @@ function reload(data) {
                 $('#refresh-element').removeClass('fa-spin');
                 $('#reload-element').removeClass('fa-spin');
                 $('#cardOverlay').hide();
-            }, 500);
+            }, 300);
 
         });
     }
