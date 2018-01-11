@@ -6,11 +6,6 @@
 {% endblock navbar %}
 
 {% block content %}
-<style>
-li.L0, li.L1, li.L2, li.L3,
-li.L5, li.L6, li.L7, li.L8
-{ list-style-type: decimal !important }
-</style>
 <div class="container-fluid navBorder">
 <h3>SmarthomeNG {{ _('Logfile') }}: {{ logfile }}</h3><br/>
 </div>
@@ -32,11 +27,13 @@ li.L5, li.L6, li.L7, li.L8
     <button type="button" title="{{ _('Nach unten scrollen', 'button') }}" class="btn btn-primary" style="float:left; margin-left: 10px;" onclick="document.getElementById('log_print').scrollTop = 9999999;"><i class="fa fa-arrow-circle-down" aria-hidden="true"></i></button>
 </div>
 <br style="clear:both;"/><br/>
-<div class="container-fluid">
-<pre id="log_print" class="prettyprint linenums{% if current_page > 1 %}:{{ (current_page-1) * 1000 +1}}{% endif %}" style="max-height: 600px;">
-{% if log_lines %}{% for line in log_lines %}{{ line }}{% endfor %}{% else %}{{ _('no data available') }}{% endif %}</pre>
+<div class="container-fluid" style="overflow: none;">
+    <div style="border: 1px solid #ddd; margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
+    {% autoescape false %}
+{% if log_lines %}<textarea autocomplete="off" id="log_file" name="log_file">{% for line in log_lines %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
+    {% endautoescape %}
 </div>
- <div class="container-fluid">
+<div class="container-fluid">
     <table>
         <tr>
             <td style="width: 50px; text-align: center;">
@@ -60,12 +57,30 @@ li.L5, li.L6, li.L7, li.L8
         </tr>
     </table>
 </div>
-<style type="text/css">
-    li.L0, li.L1, li.L2, li.L3, li.L4, li.L5, li.L6, li.L7, li.L8, li.L9 {
-        margin-left: 10px
-    }
-</style>
 <script type="text/javascript" language="javascript">
+var logCodeMirror = CodeMirror.fromTextArea(document.getElementById("log_file"), {
+    lineNumbers: true,
+    mode: "{{ mode }}",
+    readOnly: true,
+    indentUnit: 4,
+    lineSeparator: '\n',
+    mode: 'ttcn',
+    lineWrapping: false,
+    firstLineNumber: {% if current_page > 1 %}{{ (current_page-1) * 1000 +1}}{% else %}1{% endif %},
+    indentWithTabs: false
+});
+
+window.addEventListener("resize", resizeLogCodeMirror, false);
+
+function resizeLogCodeMirror() {
+    var browserHeight = $( window ).height();
+    offsetTop = $('.CodeMirror').offset().top;
+    logCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) - 75 + browserHeight)+ 'px';
+    logCodeMirror.refresh();
+}
+
+resizeLogCodeMirror();
+
  {% if current_page <= 1 %}$('#fast-backward').prop('disabled', true);$('#step-backward').prop('disabled', true);{% endif %}
  {% if current_page >= pages %}$('#fast-forward').prop('disabled', true);$('#step-forward').prop('disabled', true);{% endif %}
 </script>

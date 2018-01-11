@@ -49,6 +49,7 @@
   border: 1px solid #eee;
   height: auto;
 }
+
 .CodeMirror-scroll {
   overflow-x: auto;
   overflow-y: auto;
