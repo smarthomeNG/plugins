@@ -26,22 +26,27 @@
             <div class="col">
                 <div class="card">
                     <div class="card-body">
-                        <div class="pre-scrollable" id="tree" style="height:655px; max-height:655px;"></div>
+                        <div class="pre-scrollable" id="tree" style="height:625px; max-height:625px;"></div>
                     </div>
                 </div>
             </div>
             <div class="col">
                 <div class="card" >
                     <div class="card-header">
-                        <a class="float-sm-right" href="#" onclick="reload(selectedNode);"><span id="refresh-element" class="fas fa-sync"></span></a>
+                        <a class="float-sm-right" href="#" onclick="reload(selectedNode);" title="{{ _('Neu Laden') }}"><span id="refresh-element" class="fas fa-sync"></span></a>
                         {{ _('Item-Informationen') }}
                     </div>
-                    <div class="card-body">
-                        <p class="card-text">
+                    <div class="card-body" style="position: relative;">
+                        <div class="card-text" >
+                            <div id="cardOverlay" class="cardOverlay">
+                                <div style="position: relative; top: 45%; left:45%;">
+                                    <span id="reload-element" class="fas fa-sync fa-4x"/>
+                                </div>
+                            </div>
                             <div id="tree_detail" class="data-container refresh-data pre-scrollable" style="height:575px; max-height:575px;">
                             {{ _('Item im Baum auswählen um Details einzusehen!') }}
                             </div>
-                        </p>
+                        </div>
                     </div>
                 </div>
             </div>

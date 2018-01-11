@@ -31,3 +31,16 @@
   border-top: 1px solid #dee2e6;
   padding-top: 10px;
 }
+
+.cardOverlay {
+  position: absolute;
+  background: black;
+  display: none;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom-right-radius: .25rem;
+  border-bottom-left-radius: .25rem;
+}

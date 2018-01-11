@@ -20,10 +20,14 @@ function build_item_subtree_recursive(data) {
 function reload(data) {
     if (data) {
         $('#refresh-element').addClass('fa-spin');
+        $('#reload-element').addClass('fa-spin');
+        $('#cardOverlay').show();
         $.getJSON('item_detail_json.html?item_path='+data.text, function(result) {
             getDetailInfo(result);
             window.setTimeout(function(){
                 $('#refresh-element').removeClass('fa-spin');
+                $('#reload-element').removeClass('fa-spin');
+                $('#cardOverlay').hide();
             }, 500);
 
         });
