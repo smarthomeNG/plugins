@@ -8,7 +8,7 @@
 {% endblock navbar %}
 
 {% block content %}
-<div class="container-fluid navBorder">
+<div class="container-fluid navBorder" style="overflow: hidden;">
     <div class="container-fluid">
         <div class="row">
             <div class="col">
@@ -26,7 +26,7 @@
             <div class="col">
                 <div class="card">
                     <div class="card-body">
-                        <div class="pre-scrollable" id="tree" style="height:625px; max-height:625px;"></div>
+                        <div id="tree" style="overflow-y: scroll;"></div>
                     </div>
                 </div>
             </div>
@@ -37,13 +37,13 @@
                         {{ _('Item-Informationen') }}
                     </div>
                     <div class="card-body" style="position: relative;">
-                        <div class="card-text" >
+                        <div class="card-text" style="">
                             <div id="cardOverlay" class="cardOverlay">
                                 <div style="position: relative; top: 45%; left:45%;">
                                     <span id="reload-element" class="fas fa-sync fa-4x"/>
                                 </div>
                             </div>
-                            <div id="tree_detail" class="data-container refresh-data pre-scrollable" style="height:575px; max-height:575px;">
+                            <div id="tree_detail" class="data-container refresh-data pre-scrollable">
                             {{ _('Item im Baum auswählen um Details einzusehen!') }}
                             </div>
                         </div>
@@ -56,6 +56,17 @@
 
 <script src="static/js/item_tree_functions.js"></script>
 <script type="text/javascript" language="javascript">
+window.addEventListener("resize", resizeItemTree, false);
+
+function resizeItemTree() {
+    var browserHeight = $( window ).height();
+    offsetTop = $('#tree').offset().top;
+    offsetTopDetail = $('#tree_detail').offset().top;
+    $('#tree').css("maxHeight", ((-1)*(offsetTop) - 35 + browserHeight)+ 'px');
+    $('#tree_detail').css("maxHeight", ((-1)*(offsetTopDetail) - 35 + browserHeight)+ 'px');
+}
+resizeItemTree();
+
 function getDetailInfo(result) {
     var temp ='';
     $.each(result, function(index, element) {
