@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% import "navbar.html" as nav with context %}
+{% block navbar %}
+	{{ nav }}
+{% endblock navbar %}
+
+{% block content %}
+<script src="static/codemirror/lib/codemirror.js"></script>
+<link rel="stylesheet" href="static/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="static/css/codemirror_custom.css">
+<script src="static/codemirror/mode/python/python.js"></script>
+<script src="static/codemirror/addon/display/rulers.js"></script>
+
+<style>
+li.L0, li.L1, li.L2, li.L3,
+li.L5, li.L6, li.L7, li.L8
+{ list-style-type: decimal !important }
+</style>
+
+<form name="input" action="eval_syntax_checker.html" method="POST" enctype="multipart/form-data">
+	<div class="container" style="width: 100%;">
+		<div style="width: 600px; float: left; border: 1px solid #ccc; margin-bottom: 10px; margin-right: 5px;">
+			<div title="{{ _('Hier den Ausdruck eingeben, der ausgewertet werden soll. Items können mit absolutem Pfad oder relativem Pfad angegeben werden.') }}">
+				<div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ausdruck (Eingabe im Python Eval-Format)') }}</div>
+				<textarea id="eval_code" name="eval_code">{{ eval_code }}</textarea>
+			</div>
+			<div title="{{ _('Um relative Itempfade aufzulösen, hier das Item eingeben, zu dem die Pfade relativ sind.') }}">
+				<div style="font-weight: bold; padding-left: 5px; border-top: 2px solid #ccc;">{{ _('Relativ zu (Eingabe des Item-Path)') }}</div>
+				<input type="text" style="width: 599px; border: 1px solid #ccc;" name="relative_to" value="{{ relative_to }}"/>
+			</div>
+
+			<div title="{{ _('Hier wird der Ausdruck angezeigt, nachdem die relativen Itempfade aufgelöst wurden.') }}">
+				<div style="font-weight: bold; padding-left: 5px; border-bottom: 0px solid #ccc;">&nbsp;</div>
+				<div style="font-weight: bold; padding-left: 5px; border-bottom: 1px solid #ccc;">{{ _('Expandierter Ausdruck') }}</div>
+				<div style="padding-left: 5px; border-bottom: 0px solid #ccc;">{{ expanded_code }}&nbsp;</div>
+			</div>
+			<div title="{{ _('Hier wird das Ergebnis Ausdruck angezeigt.') }}">
+				<div style="font-weight: bold; padding-left: 5px; border-bottom: 0px solid #ccc;">&nbsp;</div>
+				<div style="font-weight: bold; padding-left: 5px; border-bottom: 1px solid #ccc;">{{ _('Ergebnis') }}</div>
+				<div style="padding-left: 5px; border-bottom: 1px solid #ccc;">{{ check_result }}&nbsp;</div>
+			</div>
+		</div>
+	</div>
+    <br>
+	<div class="container" style="width: 100%;">
+		<input name="check" value="{{ _('Prüfen','button') }}" type="submit" class="btn btn-default btn-xs">
+    </div>
+</form>
+<script>
+     var rulers = [];
+     for (var i = 1; i <= 100; i++) {
+        rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
+     }
+
+     var myCodeMirrorConf = CodeMirror.fromTextArea(document.getElementById("eval_code"), {
+        lineNumbers: true,
+        lineSeparator: '\n',
+        indentUnit: 4,
+        rulers: rulers,
+        lineWrapping: true,
+        indentWithTabs: false,
+        mode: "python"
+     });
+
+     function resizeCodeMirrors() {
+        if (!myCodeMirrorConf.getOption("fullScreen")) {
+            var browserHeight = $( window ).height();
+            offsetTop = $('.CodeMirror').offset().top;
+            myCodeMirrorConf.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -300 + browserHeight)+ 'px';
+            myCodeMirrorConf.refresh();
+        }
+        if (!myCodeMirrorYaml.getOption("fullScreen")) {
+            var browserHeight = $( window ).height();
+            offsetTop = $('.CodeMirror').offset().top;
+            myCodeMirrorYaml.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -300 + browserHeight)+ 'px';
+            myCodeMirrorYaml.refresh();
+        }
+     }
+
+     window.addEventListener("resize", resizeCodeMirrors, false);
+     resizeCodeMirrors();
+</script>
+{% endblock %}
