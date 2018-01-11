@@ -9,18 +9,8 @@ $('#rulers').click(function(e) {
     switchRulers();
 });
 
-window.addEventListener("resize", resizeCodeMirror, false);
-
-function resizeCodeMirror() {
-    if (!logicsCodeMirror.getOption("fullScreen")) {
-        var browserHeight = $( window ).height();
-        offsetTop = $('.CodeMirror').offset().top;
-        logicsCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) - 15 + browserHeight)+ 'px';
-        logicsCodeMirror.refresh();
-    }
-}
-
-resizeCodeMirror();
+window.addEventListener("resize", function(){resizeCodeMirror(logicsCodeMirror, 15)}, false);
+resizeCodeMirror(logicsCodeMirror, 15);
 
 var dict = [];
 function getItemDictionary() {

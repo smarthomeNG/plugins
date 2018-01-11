@@ -6,21 +6,9 @@
 {% endblock navbar %}
 
 {% block content %}
-<script src="static/codemirror/lib/codemirror.js"></script>
-<link rel="stylesheet" href="static/codemirror/lib/codemirror.css">
-<link rel="stylesheet" href="static/css/codemirror_custom.css">
-<script src="static/codemirror/mode/python/python.js"></script>
-<script src="static/codemirror/mode/yaml/yaml.js"></script>
-<script src="static/codemirror/addon/display/rulers.js"></script>
-
-<style>
-li.L0, li.L1, li.L2, li.L3,
-li.L5, li.L6, li.L7, li.L8
-{ list-style-type: decimal !important }
-</style>
-
+<div class="container-fluid navBorder"></div>
 <form name="input" action="yaml_syntax_checker.html" method="POST" enctype="multipart/form-data">
-    <div class="container" style="width: 100%;">
+    <div class="container-fluid" style="width: 100%;">
 		<div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px; margin-right: 5px;">
 			<div title="{{ _('Hier den YAML Code eingeben, der geprüft werden soll.') }}">
     		    <div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Eingabe im .YAML Format') }}</div>
@@ -38,7 +26,7 @@ li.L5, li.L6, li.L7, li.L8
 		    </div>
 	    </div>
     </div>
-    <div class="container" style="width: 100%;">
+    <div class="container-fluid" style="width: 100%;">
 	    <input name="check" value="{{ _('Prüfen','button') }}" type="submit" class="btn btn-default btn-xs">
 		{% if develop %}
 		    <input name="check2" value="{{ _('Prüfen','button') }} ({{ _('Python Code Ausgabe') }})" type="submit" class="btn btn-default btn-xs">
@@ -71,22 +59,9 @@ li.L5, li.L6, li.L7, li.L8
         mode: "{{ output_format }}"
      });
 
-     function resizeCodeMirrors() {
-        if (!myCodeMirrorConf.getOption("fullScreen")) {
-            var browserHeight = $( window ).height();
-            offsetTop = $('.CodeMirror').offset().top;
-            myCodeMirrorConf.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -60 + browserHeight)+ 'px';
-            myCodeMirrorConf.refresh();
-        }
-        if (!myCodeMirrorYaml.getOption("fullScreen")) {
-            var browserHeight = $( window ).height();
-            offsetTop = $('.CodeMirror').offset().top;
-            myCodeMirrorYaml.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -60 + browserHeight)+ 'px';
-            myCodeMirrorYaml.refresh();
-        }
-     }
-
-     window.addEventListener("resize", resizeCodeMirrors, false);
-     resizeCodeMirrors();
+     window.addEventListener("resize", function(){resizeCodeMirror(myCodeMirrorConf, 60)}, false);
+     resizeCodeMirror(myCodeMirrorConf, 60);
+     window.addEventListener("resize", function(){resizeCodeMirror(myCodeMirrorYaml, 60)}, false);
+     resizeCodeMirror(myCodeMirrorYaml, 60);
 </script>
 {% endblock %}

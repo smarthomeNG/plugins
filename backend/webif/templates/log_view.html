@@ -70,18 +70,10 @@ var logCodeMirror = CodeMirror.fromTextArea(document.getElementById("log_file"),
     indentWithTabs: false
 });
 
-window.addEventListener("resize", resizeLogCodeMirror, false);
+window.addEventListener("resize", function(){resizeCodeMirror(logCodeMirror, 75)}, false);
+resizeCodeMirror(logCodeMirror, 75);
 
-function resizeLogCodeMirror() {
-    var browserHeight = $( window ).height();
-    offsetTop = $('.CodeMirror').offset().top;
-    logCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) - 75 + browserHeight)+ 'px';
-    logCodeMirror.refresh();
-}
-
-resizeLogCodeMirror();
-
- {% if current_page <= 1 %}$('#fast-backward').prop('disabled', true);$('#step-backward').prop('disabled', true);{% endif %}
- {% if current_page >= pages %}$('#fast-forward').prop('disabled', true);$('#step-forward').prop('disabled', true);{% endif %}
+{% if current_page <= 1 %}$('#fast-backward').prop('disabled', true);$('#step-backward').prop('disabled', true);{% endif %}
+{% if current_page >= pages %}$('#fast-forward').prop('disabled', true);$('#step-forward').prop('disabled', true);{% endif %}
 </script>
 {% endblock %}
