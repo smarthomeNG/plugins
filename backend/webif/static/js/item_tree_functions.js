@@ -1,3 +1,13 @@
+window.addEventListener("resize", resizeItemTree, false);
+
+function resizeItemTree() {
+    var browserHeight = $( window ).height();
+    offsetTop = $('#tree').offset().top;
+    offsetTopDetail = $('#tree_detail').offset().top;
+    $('#tree').css("maxHeight", ((-1)*(offsetTop) - 35 + browserHeight)+ 'px');
+    $('#tree_detail').css("maxHeight", ((-1)*(offsetTopDetail) - 35 + browserHeight)+ 'px');
+}
+resizeItemTree();
 
 function build_item_subtree_recursive(data) {
     var result = [];
