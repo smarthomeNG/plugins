@@ -23,6 +23,7 @@
 import logging
 import threading
 import re
+import time
 import datetime
 import lib.connection
 from lib.model.smartplugin import SmartPlugin
@@ -44,7 +45,6 @@ class MPD(lib.connection.Client,SmartPlugin):
 
         lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self.terminator = b'\n'
-        self.found_terminator = self.handshake
         self._cmd_lock = threading.Lock()
         self._reply_lock = threading.Condition()
         self._reply = {}
@@ -91,12 +91,8 @@ class MPD(lib.connection.Client,SmartPlugin):
         self.alive = False
 
     def handle_connect(self):
-        self.found_terminator = self.handshake
-
-    def handshake(self, data):
-        data = data.decode()
-        if data.startswith('OK MPD'):
-            self.found_terminator = self.parse_reply
+        self.loggercmd("handle_connect",'d')
+        self.found_terminator = self.parse_reply
 
     def parse_reply(self, data):
         data = data.decode()
@@ -106,7 +102,7 @@ class MPD(lib.connection.Client,SmartPlugin):
             self._reply_lock.notify()
             self._reply_lock.release()
         elif data.startswith('ACK'):
-            self.loggercmd(data,'w')
+            self.loggercmd(data,'e')
         else:
             key, sep, value = data.partition(': ')
             self._reply[key] = value
@@ -225,8 +221,16 @@ class MPD(lib.connection.Client,SmartPlugin):
                     except:
                         self.loggercmd("can't parse {} to float".format(val),'e')
                         continue
+                elif item.type() == 'bool':
+                    if val == '0':
+                        val = False
+                    elif val == '1':
+                        val = True
+                    else:
+                        self.loggercmd("can't parse {} to bool".format(val),'e')
+                        continue
                 if item() != val:
-                    self.loggercmd("update item {} with {}".format(key,val),'d')
+                    self.loggercmd("update item {}, old value:{} type:{}, new value:{} type:{}".format(item,item(),item.type(),val,type(val)),'d')
                     self.setItemValue(item,val)
             #update subscribed items which do not exist in the response from MPD
             elif key == 'playpause':
@@ -272,6 +276,7 @@ class MPD(lib.connection.Client,SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'MPD':
+            self.loggercmd("update_item called for item {}".format(item),'d')
             #playbackCommands
             if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'next':
                 self._send('next')
@@ -328,7 +333,7 @@ class MPD(lib.connection.Client,SmartPlugin):
             if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'mute': #own-defined item
                 if self._internal_tems['lastVolume'] < 0: #can be -1 if MPD can't detect the current volume
                     self._internal_tems['lastVolume'] = 20
-                self._send("setvol {}".format(self._internal_tems['lastVolume'] if self._internal_tems['isMuted'] else 0))
+                self._send("setvol {}".format(int(self._internal_tems['lastVolume']) if self._internal_tems['isMuted'] else 0))
                 return
             #playbackoptions
             if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'consume':
