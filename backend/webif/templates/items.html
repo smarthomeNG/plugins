@@ -25,18 +25,18 @@
         <div class="row">
             <div class="col">
                 <div class="card">
-                    <div class="card-body">
+                    <div class="card-body p-1">
                         <div id="tree" style="overflow-y: scroll;"></div>
                     </div>
                 </div>
             </div>
             <div class="col">
                 <div class="card" >
-                    <div class="card-header">
+                    <div class="card-header p-1">
                         <a class="float-sm-right" href="#" onclick="reload(selectedNode);" title="{{ _('Neu Laden', 'button') }}"><span id="refresh-element" class="fas fa-sync"></span></a>
-                        {{ _('Item-Informationen') }}
+                        <strong>{{ _('Item-Informationen') }}</strong>
                     </div>
-                    <div class="card-body" style="position: relative;">
+                    <div class="card-body p-1" style="position: relative;">
                         <div class="card-text" style="">
                             <div id="cardOverlay" class="cardOverlay">
                                 <div style="position: relative; top: 45%; left:45%;">
