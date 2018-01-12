@@ -27,12 +27,12 @@ function build_item_subtree_recursive(data) {
     return tree_element;
 }
 
-function reload(data) {
-    if (data) {
+function reload(item_path) {
+    if (item_path) {
         $('#refresh-element').addClass('fa-spin');
         $('#reload-element').addClass('fa-spin');
         $('#cardOverlay').show();
-        $.getJSON('item_detail_json.html?item_path='+data.text, function(result) {
+        $.getJSON('item_detail_json.html?item_path='+item_path, function(result) {
             getDetailInfo(result);
             window.setTimeout(function(){
                 $('#refresh-element').removeClass('fa-spin');
@@ -59,7 +59,7 @@ function getTree() {
             showTags: true,
             onNodeSelected: function(event, node) {
                 selectedNode = node;
-                reload(node);
+                reload(node.text);
             }
         });
     });
@@ -82,9 +82,6 @@ function getTree() {
             results = [];
             $('#search-results').html('');
           });
-    }
-    if ($('#input-search').val() != '') {
-        changeSearchButtonColor(true);
     }
     $('#btn-search').on('click', search);
     $("#input-search").keypress(function(event){

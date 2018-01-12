@@ -181,5 +181,10 @@ function getDetailInfo(result) {
     });
 }
 getTree();
+
+{% if item_path %}
+    $('#input-search').val("{{ item_path }}");
+    reload("{{ item_path }}");
+{% endif %}
 </script>
 {% endblock %}
