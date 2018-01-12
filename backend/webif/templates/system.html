@@ -9,9 +9,9 @@
 {% block content %}
 <div class="container-fluid navBorder">
     <ul id="system_tabs" class="nav nav-tabs">
-        <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#systemproperties">{{ _('Systemeigenschaften') }}</a></li>
+        <li class="nav-item"><a class="text-dark nav-link active" data-toggle="tab" href="#systemproperties">{{ _('Systemeigenschaften') }}</a></li>
         <li id="tab_pypi" class="nav-item">
-            <a class="nav-link disabled" data-toggle="tab" href="#pypi">
+            <a id="tab_pypi_link" class="nav-link disabled" data-toggle="tab" href="#pypi">
               {{ _('PyPI Check') }}
             <i id="spinner" class="fas fa-circle-notch fa-spin fa-fw"></i>
             </a>
@@ -105,7 +105,6 @@ function activateTab(selector) {
     $(selector).on('click.twbstab',function() { $(this).tab('show'); })
         .closest('.disabled').removeClass('disabled');
 }
-
 
 $.getJSON('pypi.json', function(result) {
     $.each(result, function(index, element) {
@@ -218,7 +217,7 @@ $.getJSON('pypi.json', function(result) {
         /* Link package PyPi URL */
         var packageName = element['name'];
         if (element['pypi_doc_url'] != '') {
-            packageName = "<a target=\"_blank\" class=\"pypi_link\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
+            packageName = "<a target=\"_blank\" class=\"text-info pypi_link\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
         }
 
         /* Build row for normal content */
@@ -281,6 +280,7 @@ $.getJSON('pypi.json', function(result) {
 
     /* Hide spinner, activate tab, show DIV with content */
     $('#spinner').hide();
+    $('#tab_pypi_link').addClass("text-dark");
     $('#tab_pypi').removeClass("disabled");
     activateTab('#system_tabs a[href="#pypi"]');
 });

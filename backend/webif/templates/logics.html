@@ -9,8 +9,8 @@
 {% block content %}
 <div class="container-fluid navBorder">
 	<ul class="nav nav-tabs">
-		<li id="tab_userlogics" class="nav-item"><a class="nav-link active" data-toggle="tab" href="#userlogics">{{ _('Nutzerlogiken') }}</a></li>
-		<li id="tab_systemlogics" class="nav-item"><a class="nav-link" data-toggle="tab" href="#systemlogics">{{ _('Systemlogiken') }}</a></li>
+		<li id="tab_userlogics" class="nav-item"><a class="text-dark nav-link active" data-toggle="tab" href="#userlogics">{{ _('Nutzerlogiken') }}</a></li>
+		<li id="tab_systemlogics" class="nav-item"><a class="text-dark nav-link" data-toggle="tab" href="#systemlogics">{{ _('Systemlogiken') }}</a></li>
 		{% if updates and yaml_updates %}
 			<li style="padding-left:20px; padding-top:5px;">
 				<button id="newPl" class="btn btn-dark btn-sm" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fas fa-code"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</button>
@@ -75,9 +75,9 @@
 									{% if logic.watch_item_list|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_item_list|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fas fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
 								</td>
 								{% if logic.logictype == 'Blockly' and blockly_loaded %}
-									<td class="p-1"><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+									<td class="p-1"><a class="text-info" target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 								{% else %}
-									<td class="p-1"><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+									<td class="p-1"><a class="text-info" href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 								{% endif %}
 								{% if updates and logic.userlogic %}
 									<td class="p-1">
@@ -128,9 +128,9 @@
 									<td class="p-1"></td>
 
 									{% if logic.logictype == 'Blockly' and blockly_loaded %}
-										<td class="p-1"><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+										<td class="p-1"><a class="text-info" target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 									{% else %}
-										<td class="p-1"><a href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
+										<td class="p-1"><a class="text-info" href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
 									{% endif %}
 									{% if updates %}
 										<td class="p-1">
