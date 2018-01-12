@@ -13,11 +13,11 @@
 		<li id="tab_systemlogics" class="nav-item"><a class="nav-link" data-toggle="tab" href="#">{{ _('Systemlogiken') }}</a></li>
 		{% if updates and yaml_updates %}
 			<li style="padding-left:20px; padding-top:5px;">
-				<button id="newPl" class="btn btn-outline-dark btn-sm" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fas fa-code"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</button>
+				<button id="newPl" class="btn btn-dark btn-sm" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fas fa-code"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</button>
 			</li>
 			{% if blockly_loaded %}
 			<li style="padding-left:20px; padding-top:5px;">
-				<button id="newBl" class="btn btn-outline-dark btn-sm" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fas fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
+				<button id="newBl" class="btn btn-dark btn-sm" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fas fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
 			</li>
 			{% endif %}
 		{% endif %}
