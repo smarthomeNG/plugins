@@ -102,7 +102,7 @@
 										<div class="card-header p-1"><strong>{{ _('Watch_Items') }}</strong></div>
 										<div class="card-body p-1">
 											{% for value in logic.watch_item_list %}
-												 <div class="item-box m-1 p-1">{{ value }}</div>
+											<div class="item-box m-1 p-1"><a class="text-dark" href="items.html?item_path={{ value }}">{{ value }}</a></div>
 											{% endfor %}
 										</div>
 									</div>
@@ -199,23 +199,12 @@
 							</tr>
 							<tr id="{{ logic.name }}_additional3" style="display: none; cursor: pointer;" onClick="$('#{{ logic.name }}_additional3').toggle();">
 								<td class="p-1" colspan="{% if updates %}7{% else %}6{% endif %}">
-									<div class="panel panel-default" style="margin-bottom: 5px;">
-										<div class="panel-heading">{{ _('Watch_Items') }}</div>
-										<div class="panel-body">
-											<table>
-											{% set first = True %}
+									<div class="card" style="margin-bottom: 5px;">
+										<div class="card-header p-1"><strong>{{ _('Watch_Items') }}</strong></div>
+										<div class="card-body p-1">
 											{% for value in logic.watch_item_list %}
-												{% if loop.index % 2 > 0 %}
-												<tr>
-												{% endif %}
-												<td style="width: 300px;">{{ value }}</td>
-												{% if loop.index % 2 > 0 and not first %}
-												</tr>
-												{% else %}
-												{% set first = False %}
-												{% endif %}
+											<div class="item-box m-1 p-1"><a class="text-dark" href="items.html?item_path={{ value }}">{{ value }}</a></div>
 											{% endfor %}
-											</table>
 										</div>
 									</div>
 								</td>
