@@ -13,11 +13,11 @@
 		<li id="tab_systemlogics" class="nav-item"><a class="nav-link" data-toggle="tab" href="#">{{ _('Systemlogiken') }}</a></li>
 		{% if updates and yaml_updates %}
 			<li style="padding-left:20px; padding-top:5px;">
-				<button id="newPl" class="btn btn-primary btn-sm" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fas fa-code"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</button>
+				<button id="newPl" class="btn btn-outline-dark btn-sm" title="{{ _('Neue Python Logik','button') }}" onclick="newPythonLogic();" ><i class="fas fa-code"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Python Logik','button') }}</button>
 			</li>
 			{% if blockly_loaded %}
 			<li style="padding-left:20px; padding-top:5px;">
-				<button id="newBl" class="btn btn-primary btn-sm" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fas fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
+				<button id="newBl" class="btn btn-outline-dark btn-sm" title="{{ _('Neue Blockly Logik','button') }}" onclick="newBlocklyLogic();" ><i class="fas fa-puzzle-piece"></i>&nbsp;&nbsp;&nbsp;{{ _('Neue Blockly Logik','button') }}</button>
 			</li>
 			{% endif %}
 		{% endif %}
@@ -81,15 +81,15 @@
 							{% endif %}
 							{% if updates and logic.userlogic %}
 								<td class="py-1">
-								    <button {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-hand-pointer"></i></button>
-									<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-sync"></i></button>
+								    <button {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-hand-pointer"></i></button>
+									<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-sync"></i></button>
 								{% if logic.enabled %}
-									<button name="disable" title="{{ _('Deaktivieren','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-pause"></i></button>
+									<button name="disable" title="{{ _('Deaktivieren','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-pause"></i></button>
 								{% else %}
-									<button name="enable" title="{{ _('Aktivieren','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-play"></i></button>
+									<button name="enable" title="{{ _('Aktivieren','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-play"></i></button>
 								{% endif %}
 								{% if 1 == 1 %}
-									<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-eject"></i></button>
+									<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-eject"></i></button>
 									&nbsp; &nbsp; &nbsp;
 									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-outline-danger btn-sm" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ logic.name }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true" style="color: #c40808;"></i></button>
 								{% endif %}
