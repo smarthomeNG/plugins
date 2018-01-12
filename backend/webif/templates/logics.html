@@ -58,29 +58,29 @@
 					{% for logic in logics %}
 						{% if logic.userlogic %}
 						<tr>
-							<td>{{ loop.index }}</td>
-							<td><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fas {% if not logic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
+							<td class="py-2">{{ loop.index }}</td>
+							<td class="py-2"><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fas {% if not logic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
 							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
-							<td>
+							<td class="py-2">
 								<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text">
 							</td>
-							<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.next_exec }}{% if not logic.enabled %}</span>{% endif %}</td>
-							<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
+							<td class="py-2">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.next_exec }}{% if not logic.enabled %}</span>{% endif %}</td>
+							<td class="py-2">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
 								{% if logic.cycle == None %}-{% else %}{{ logic.cycle}} {% endif %}{% if not logic.enabled %}</span>{% endif %}
 							</td>
-							<td>{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
+							<td class="py-2">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
 								{% if logic.crontab == None %}-{% else %}{{ logic.crontab}} {% endif %}{% if not logic.enabled %}</span>{% endif %}
 							</td>
-							<td {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
+							<td class="py-2" {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
 								{% if logic.watch_item_list|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_item_list|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fas fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
 							</td>
 							{% if logic.logictype == 'Blockly' and blockly_loaded %}
-								<td><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+								<td class="py-2"><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 							{% else %}
-								<td><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+								<td class="py-2"><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 							{% endif %}
 							{% if updates and logic.userlogic %}
-								<td>
+								<td class="py-2">
 								    <button {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-hand-pointer"></i></button>
 									<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-sync"></i></button>
 								{% if logic.enabled %}
@@ -95,7 +95,7 @@
 								{% endif %}
 								</td>
 							{% else %}
-							    <td></td>
+							    <td class="py-2"></td>
 							{% endif %}
 							</form>
 						</tr>
