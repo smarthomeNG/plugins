@@ -232,7 +232,7 @@ class BackendLogics:
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def logics_view_html(self, file_path, logicname, 
+    def logics_view_html(self, logicname, file_path=None,
                                trigger=None, enable=None, disable=None, save=None, savereload=None, savereloadtrigger=None, 
                                logics_code=None, cycle=None, crontab=None, watch=None, visu_acl=None):
         """
@@ -265,6 +265,12 @@ class BackendLogics:
 
         # assemble data for displaying/editing of a logic
         mylogic = self.fill_logicdict(logicname)
+
+        if file_path is None:
+            if 'pathname' in mylogic:
+                file_path = mylogic['pathname']
+            else:
+                self.logger.error('No pathname for logic given or pathname cannot be retrieved via logic name!')
 
         config_list = self.logics.read_config_section(logicname)
         for config in config_list:
