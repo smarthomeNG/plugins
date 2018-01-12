@@ -26,41 +26,41 @@
 				{% for scene in scene_list %}
 					<tr>
 					    {% if scene['name'] == '' %}
-							<td colspan="5"><strong>{{ scene['path'] }}</strong></td>
+							<td class="p-1" colspan="5"><strong>{{ scene['path'] }}</strong></td>
 						{% else %}
-							<td colspan="5"><strong>{{ scene['path'] }}</strong> &nbsp; ({{ scene['name'] }})</td>
+							<td class="p-1" colspan="5"><strong>{{ scene['path'] }}</strong> &nbsp; ({{ scene['name'] }})</td>
 						{% endif %}
-						<td></td>
+						<td class="p-1"></td>
 					</tr>
 					{% for value in scene['values'] %}
 						{% for action in value['action_list'] %}
 							{% if (action == value['action_list'][0]) and (value['action_name'] != '') %}
 								<tr>
-									<td></td>
-									<td colspan="3"><strong>{{ value['action'] }}</strong>: {{ value['action_name'] }}</td>
-									<td></td>
-									<td></td>
+									<td class="p-1"></td>
+									<td class="p-1" colspan="3"><strong>{{ value['action'] }}</strong>: {{ value['action_name'] }}</td>
+									<td class="p-1"></td>
+									<td class="p-1"></td>
 								</tr>
 							{% endif %}
 							<tr>
-								<td></td>
+								<td class="p-1"></td>
 								{% if (action == value['action_list'][0]) and (value['action_name'] == '') %}
-									<td><strong>{{ value['action'] }}</strong>:</td>
+									<td class="p-1"><strong>{{ value['action'] }}</strong>:</td>
 								{% else %}
-									<td></td>
+									<td class="p-1"></td>
 								{% endif %}
 								{% if action[2] %}
-									<td>ja</td>
+									<td class="p-1">ja</td>
 								{% else %}
-									<td>nein</td>
+									<td class="p-1">nein</td>
 								{% endif %}
-								<td>{{ action[0] }}</td>
+								<td class="p-1">{{ action[0] }}</td>
 								{% if (action[3] == None) or (action[3] == action[1]) %}
-									<td>{{ action[1] }}</td>
+									<td class="p-1">{{ action[1] }}</td>
 								{% else %}
-									<td>{{ action[3] }} (default: {{ action[1] }})</td>
+									<td class="p-1">{{ action[3] }} (default: {{ action[1] }})</td>
 								{% endif %}
-								<td></td>
+								<td class="p-1"></td>
 							</tr>
 						{% endfor %}
 					{% endfor %}
