@@ -92,24 +92,27 @@
 				</tr>
 				<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
 					<td class="py-1" colspan="11">
-						<div class="panel panel-default" style="margin-bottom: 5px;">
-							<div class="panel-heading">{{ _('Plugin spezifische Attribute') }}:</div>
-							<div class="panel-body">
-								<table style="width: 90%;">
+						<div class="card">
+							<div class="card-header p-1"><strong>{{ _('Plugin spezifische Attribute') }}:</strong></div>
+							<div class="card-body p-1">
+								<table class="table mb-0">
 								{% set first = True %}
 								{% for key, value in p.attributes.items() %}
 									{% if loop.index % 2 > 0 %}
 									<tr>
 									{% endif %}
 									{% if p['metadata'].get_parameter_type(key) != 'foo' %}
-										<td class="py-1" style="width: 50%;"><strong>{{ key }}</strong> ( {{ p['metadata'].get_parameter_type_with_subtype(key) }} ): {{ value }}
+										<td class="p-0" style="width: 50%;">{{ key }} ( {{ p['metadata'].get_parameter_type_with_subtype(key) }} ): {{ value }}
 										{% if p['metadata'].get_parameter_defaultvalue(key) == value %}
 										&nbsp; [default]
 										{% endif %}
 										</td>
 									{% else %}
-										<td class="py-1" style="width: 400px;"><strong>{{ key }}</strong>: {{ value }}</td>
+										<td class="p-0" style="width: 400px;">{{ key }}: {{ value }}</td>
 									{% endif %}
+										{% if loop.index %2 > 0 and loop.last %}
+										<td></td>
+										{% endif %}
 									{% if loop.index % 2 > 0 and not first %}
 									</tr>
 									{% else %}
@@ -118,30 +121,30 @@
 								{% endfor %}
 								</table>
 							</div>
-							<div class="panel-heading">{{ _('Plugin Metadaten') }}:</div>
-							<div class="panel-body">
+							<div class="card-header p-1"><strong>{{ _('Plugin Metadaten') }}:</strong></div>
+							<div class="card-body p-1">
 								{% if p.metadata.get_mlstring('description') %}
-								<strong>{{ _('Beschreibung') }}:</strong> {{ p.metadata.get_mlstring('description') }}<br/>
+								{{ _('Beschreibung') }}: {{ p.metadata.get_mlstring('description') }}<br/>
 								{% endif %}
 
 								{% if p.metadata.get_string('documentation') %}
-								<strong>{{ _('Documentation') }}:</strong>
+								{{ _('Documentation') }}:
 								<a target="_blank" href="{{ p.metadata.get_string('documentation') }}">{{ p.metadata.get_string('documentation') }}</a><br/>
 								{% endif %}
 
 								{% if p.metadata.get_string('support') %}
-								<strong>{{ _('Support') }}:</strong>
+								{{ _('Support') }}:
 								<a target="_blank" href="{{ p.metadata.get_string('support') }}">{{ p.metadata.get_string('support') }}</a><br/>
 								{% endif %}
 
-								<strong>{{ _('Wartung') }}:</strong>
+								{{ _('Wartung') }}:
 								{% if p.metadata.get_string('maintainer') %}
 									{{ p.metadata.get_string('maintainer') }}
 								{% else %}
 								-
 								{% endif %}
 								<br/>
-								<strong>{{ _('Tester') }}:</strong>
+								{{ _('Tester') }}:
 								{% if p.metadata.get_string('tester') %}
 									{{ p.metadata.get_string('tester') }}
 								{% else %}
