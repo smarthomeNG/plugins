@@ -39,16 +39,16 @@
 		<table class="table table-striped table-hover logicsList">
 			<thead>
 				<tr>
-					<th style="width: 30px;">{{ _('Nr.') }}</th>
-					<th style="width: 30px;"></th>
-					<th style="width: 350px;">{{ _('Logik') }}</th>
-					<th style="width: 120px;">{{ _('nächste Ausführung') }}</th>
-					<th style="width: 70px;">{{ _('Cycle') }}</th>
-					<th style="width: 150px;">{{ _('Crontab') }}</th>
-					<th style="width: 70px;">{{ _('Watch_Items') }}</th>
-					<th style="width: 250px;">{{ _('Dateiname') }}</th>
+					<th class="p-1 m-1" style="width: 30px;">{{ _('Nr.') }}</th>
+					<th class="p-1 m-1" style="width: 30px;"></th>
+					<th class="p-1 m-1" style="width: 350px;">{{ _('Logik') }}</th>
+					<th class="p-1 m-1" style="width: 165px;">{{ _('nächste Ausführung') }}</th>
+					<th class="p-1 m-1" style="width: 70px;">{{ _('Cycle') }}</th>
+					<th class="p-1 m-1" style="width: 150px;">{{ _('Crontab') }}</th>
+					<th class="p-1 m-1" style="width: 70px;">{{ _('Watch_Items') }}</th>
+					<th class="p-1 m-1" style="width: 250px;">{{ _('Dateiname') }}</th>
 					{% if updates %}
-						<th style="width:260px;">{{ _('Aktionen') }} &nbsp;  &nbsp;  &nbsp;
+						<th class="p-1 m-1" style="width:260px;">{{ _('Aktionen') }} &nbsp;  &nbsp;  &nbsp;
 						</th>
 					{% endif %}
 				</tr>
@@ -58,29 +58,29 @@
 					{% for logic in logics %}
 						{% if logic.userlogic %}
 						<tr>
-							<td class="py-1">{{ loop.index }}</td>
-							<td class="py-1"><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fas {% if not logic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
+							<td class="p-1">{{ loop.index }}</td>
+							<td class="p-1"><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fas {% if not logic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
 							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
-							<td class="py-1">
+							<td class="p-1">
 								<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text">
 							</td>
-							<td class="py-1">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.next_exec }}{% if not logic.enabled %}</span>{% endif %}</td>
-							<td class="py-1">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
+							<td class="p-1">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.next_exec }}{% if not logic.enabled %}</span>{% endif %}</td>
+							<td class="p-1">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
 								{% if logic.cycle == None %}-{% else %}{{ logic.cycle}} {% endif %}{% if not logic.enabled %}</span>{% endif %}
 							</td>
-							<td class="py-1">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
+							<td class="p-1">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}
 								{% if logic.crontab == None %}-{% else %}{{ logic.crontab}} {% endif %}{% if not logic.enabled %}</span>{% endif %}
 							</td>
-							<td class="py-1" {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
+							<td class="p-1" {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
 								{% if logic.watch_item_list|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_item_list|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fas fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
 							</td>
 							{% if logic.logictype == 'Blockly' and blockly_loaded %}
-								<td class="py-1"><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+								<td class="p-1"><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 							{% else %}
-								<td class="py-1"><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+								<td class="p-1"><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 							{% endif %}
 							{% if updates and logic.userlogic %}
-								<td class="py-1">
+								<td class="p-1">
 								    <button {% if not logic.enabled %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-hand-pointer"></i></button>
 									<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-sync"></i></button>
 								{% if logic.enabled %}
@@ -95,7 +95,7 @@
 								{% endif %}
 								</td>
 							{% else %}
-							    <td class="py-1"></td>
+							    <td class="p-1"></td>
 							{% endif %}
 							</form>
 						</tr>
@@ -117,24 +117,24 @@
     					<tr><th colspan="{% if updates %}9{% else %}8{% endif %}">{{ _('Neue Logiken (nicht geladen)') }}</th><tr>
 						{% for logic in newlogics %}
 							<tr>
-								<td class="py-1"></td>
-								<td class="py-1"></td>
+								<td class="p-1"></td>
+								<td class="p-1"></td>
 								<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
-								<td class="py-1">
+								<td class="p-1">
 									<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text">
 								</td>
-								<td class="py-1"></td>
-								<td class="py-1"></td>
-								<td class="py-1"></td>
-								<td class="py-1"></td>
+								<td class="p-1"></td>
+								<td class="p-1"></td>
+								<td class="p-1"></td>
+								<td class="p-1"></td>
 
 								{% if logic.logictype == 'Blockly' and blockly_loaded %}
-									<td class="py-1"><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+									<td class="p-1"><a target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 								{% else %}
-									<td class="py-1"><a href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
+									<td class="p-1"><a href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
 								{% endif %}
 								{% if updates %}
-									<td class="py-1">
+									<td class="p-1">
 									{% if logic.filename != '' %}
 										<button name="add" title="{{ _('Hinzufügen','button') }}" type="submit" class="btn btn-outline-dark btn-sm"><i class="fas fa-plus"></i></button>
 										&nbsp; &nbsp; &nbsp;
@@ -142,7 +142,7 @@
 									<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-danger btn-xs" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ logic.name }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true"></i></button>
 									</td>
 								{% else %}
-									<td class="py-1"></td>
+									<td class="p-1"></td>
 								{% endif %}
 								</form>
 							</tr>
@@ -150,7 +150,7 @@
 					{% endif %}
 				{% else %}
 					<tr>
-						<td class="py-1">{{ _('no data available') }}</td>
+						<td class="p-1">{{ _('no data available') }}</td>
 					</tr>
 				{% endif %}
 			</tbody>
@@ -163,16 +163,16 @@
 		<table class="table table-striped table-hover logicsList">
 			<thead>
 				<tr>
-					<th style="width: 30px;"></th>
-					<th style="width: 30px;">{{ _('Nr.') }}</th>
-					<th style="width: 270px;">{{ _('Logik') }}</th>
-					<th style="width: 200px;">{{ _('nächste Ausführung') }}</th>
-					<th style="width: 70px;">{{ _('Cycle') }}</th>
-					<th style="width: 150px;">{{ _('Crontab') }}</th>
-					<th style="width: 70px;">{{ _('Watch_Items') }}</th>
-					<th style="width: 250px;">{{ _('Dateiname') }}</th>
+					<th class="p-1 m-1" style="width: 30px;"></th>
+					<th class="p-1 m-1" style="width: 30px;">{{ _('Nr.') }}</th>
+					<th class="p-1 m-1" style="width: 270px;">{{ _('Logik') }}</th>
+					<th class="p-1 m-1" style="width: 200px;">{{ _('nächste Ausführung') }}</th>
+					<th class="p-1 m-1" style="width: 70px;">{{ _('Cycle') }}</th>
+					<th class="p-1 m-1" style="width: 150px;">{{ _('Crontab') }}</th>
+					<th class="p-1 m-1" style="width: 70px;">{{ _('Watch_Items') }}</th>
+					<th class="p-1 m-1" style="width: 250px;">{{ _('Dateiname') }}</th>
 					{% if updates %}
-						<th style="width:260px;">{{ _('Aktionen') }}</th>
+						<th class="p-1 m-1" style="width:260px;">{{ _('Aktionen') }}</th>
 					{% endif %}
 				</tr>
 			</thead>
@@ -181,31 +181,31 @@
 					{% for logic in logics %}
 						{% if not logic.userlogic %}
 						<tr>
-							<td class="py-1">{{ loop.index }}</td>
-							<td class="py-1"><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fas {% if not logic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
+							<td class="p-1">{{ loop.index }}</td>
+							<td class="p-1"><span style="color: {% if not logic.enabled %}red{% else %}green{% endif %};" class="fas {% if not logic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
 							<form name="input" action="logics.html" method="POST" enctype="multipart/form-data">
-							<td class="py-1">
+							<td class="p-1">
 								<input style="border:none; background-color:transparent; width:100%" name="logic" readonly="true" value="{{ logic.name }}" type="text"></td>
 							{% if smarthome.scheduler.return_next(logic.name) %}
-								<td class="py-1">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ smarthome.scheduler.return_next(logic.name).strftime('%Y-%m-%d %H:%M:%S%z') }}{% if not logic.enabled %}</span>{% endif %}</td>
+								<td class="p-1">{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ smarthome.scheduler.return_next(logic.name).strftime('%Y-%m-%d %H:%M:%S%z') }}{% if not logic.enabled %}</span>{% endif %}</td>
 							{% else %}
-								<td class="py-1"></td>
+								<td class="p-1"></td>
 							{% endif %}
-							<td class="py-1">
+							<td class="p-1">
 								{% if logic.cycle == None %}-{% else %}{{ logic.cycle}} {% endif %}
 							</td>
-							<td class="py-1">
+							<td class="p-1">
 								{% if logic.crontab == None %}-{% else %}{{ logic.crontab}} {% endif %}
 							</td>
-							<td class="py-1" {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
+							<td class="p-1" {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
 								{% if logic.watch_item_list|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_item_list|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fas fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
 							</td>
-							<td class="py-1"><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
-							<td class="py-1"></td>
+							<td class="p-1"><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+							<td class="p-1"></td>
 							</form>
 						</tr>
 						<tr id="{{ logic.name }}_additional3" style="display: none; cursor: pointer;" onClick="$('#{{ logic.name }}_additional3').toggle();">
-							<td class="py-1" colspan="{% if updates %}8{% else %}7{% endif %}">
+							<td class="p-1" colspan="{% if updates %}8{% else %}7{% endif %}">
 								<div class="panel panel-default" style="margin-bottom: 5px;">
 									<div class="panel-heading">{{ _('Watch_Items') }}</div>
   									<div class="panel-body">
@@ -231,7 +231,7 @@
 					{% endfor %}
 				{% else %}
 					<tr>
-						<td class="py-1">{{ _('no data available') }}</td>
+						<td class="p-1">{{ _('no data available') }}</td>
 					</tr>
 				{% endif %}
 			</tbody>
