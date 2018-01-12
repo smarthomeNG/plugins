@@ -36,33 +36,33 @@ import os
 import lib.config
 from lib.item import Items
 from lib.logic import Logics
-import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
+import lib.logic  # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.model.smartplugin import SmartPlugin
 from .utils import *
 
 import lib.item_conversion
 
-class BackendItems:
 
+class BackendItems:
 
     def __init__(self):
 
         self.items = Items.get_instance()
-        self.logger.info("BackendItems __init__ {}".format(self.items))        
+        self.logger.info("BackendItems __init__ {}".format(self.items))
 
+        # -----------------------------------------------------------------------------------
 
-    # -----------------------------------------------------------------------------------
     #    ITEMS
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def items_html(self):
+    def items_html(self, item_path=None):
         """
         display a list of items
         """
-        return self.render_template('items.html', item_count=self._sh.item_count, 
-                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False) )
-
+        return self.render_template('items.html', item_count=self._sh.item_count, item_path=item_path,
+                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
+                                                 reverse=False))
 
     @cherrypy.expose
     def items_json(self, mode="tree"):
@@ -86,7 +86,6 @@ class BackendItems:
             for item in items_sorted:
                 item_list.append(item._path)
             return json.dumps(item_list)
-
 
     @cherrypy.expose
     def cache_check_json_html(self):
@@ -203,13 +202,12 @@ class BackendItems:
                     hours = hours - 24 * days
         return self.age_to_string(days, hours, minutes, seconds)
 
-
     def list_to_displaystring(self, l):
         """
         """
         if type(l) is str:
             return l
-        
+
         edit_string = ''
         for entry in l:
             if edit_string != '':
@@ -217,9 +215,8 @@ class BackendItems:
             edit_string += str(entry)
         if edit_string == '':
             edit_string = '-'
-#        self.logger.info("list_to_displaystring: >{}<  -->  >{}<".format(l, edit_string))
+        #        self.logger.info("list_to_displaystring: >{}<  -->  >{}<".format(l, edit_string))
         return edit_string
-
 
     def build_on_list(self, on_dest_list, on_eval_list):
         """
@@ -230,16 +227,15 @@ class BackendItems:
             if isinstance(on_dest_list, list):
                 for on_dest, on_eval in zip(on_dest_list, on_eval_list):
                     if on_dest != '':
-                        on_list.append( on_dest + ' = ' + on_eval )
+                        on_list.append(on_dest + ' = ' + on_eval)
                     else:
-                        on_list.append( on_eval )
+                        on_list.append(on_eval)
             else:
                 if on_dest_list != '':
-                    on_list.append( on_dest_list + ' = ' + on_eval_list )
+                    on_list.append(on_dest_list + ' = ' + on_eval_list)
                 else:
-                    on_list.append( on_eval_list )
+                    on_list.append(on_eval_list)
         return on_list
-
 
     @cherrypy.expose
     def item_detail_json_html(self, item_path):
@@ -266,7 +262,7 @@ class BackendItems:
             cycle = ''
             crontab = ''
             for entry in self._sh.scheduler._scheduler:
-                if entry == "items."+item._path:
+                if entry == "items." + item._path:
                     if self._sh.scheduler._scheduler[entry]['cycle']:
                         cycle = self._sh.scheduler._scheduler[entry]['cycle']
                     if self._sh.scheduler._scheduler[entry]['cron']:
@@ -321,11 +317,11 @@ class BackendItems:
             except:
                 # if used lib.items doesn't support update_age() function
                 upd_age = item.age()
-            
+
             # build on_update and on_change data
             on_update_list = self.build_on_list(item._on_update_dest_var, item._on_update)
             on_change_list = self.build_on_list(item._on_change_dest_var, item._on_change)
-            
+
             data_dict = {'path': item._path,
                          'name': item._name,
                          'type': item.type(),
@@ -378,4 +374,3 @@ class BackendItems:
             item_data.append({'path': item._path, 'name': item._name, 'tags': tags, 'nodes': nodes})
 
         return item_data
-
