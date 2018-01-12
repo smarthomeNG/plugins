@@ -24,25 +24,25 @@
                 {% for l in loggers  %}
                 <tr>
                     {% if l.name == 'root' %}
-                        <th>{{ l.name }}</th>
-                        <th>{{ l.disabled }}</th>
-                        <th>{{ l.level }}</th>
+                    <td class="py-1"><strong>{{ l.name }}</strong></td>
+                    <td class="py-1"><strong>{{ l.disabled }}</strong></td>
+                    <td class="py-1"><strong>{{ l.level }}</strong></td>
                     {% else %}
-                        <td>{{ l.name }}</td>
-                        <td>{{ l.disabled }}</td>
-                        <td>{{ l.level }}</td>
+                    <td class="py-1">{{ l.name }}</td>
+                    <td class="py-1">{{ l.disabled }}</td>
+                    <td class="py-1">{{ l.level }}</td>
                     {% endif %}
-                    <td>{% for f in l.filters %}
+                    <td class="py-1">{% for f in l.filters %}
                         {% if (f != '') and (not loop.first) %}, {% endif %}
                         {{ f }}
                         {% endfor %}
                     </td>
-                    <td>{% for h in l.handlers %}
+                    <td class="py-1">{% for h in l.handlers %}
                         {% if (h != '') and (not loop.first) %}, {% endif %}
                         {{ h }}
                         {% endfor %}
                     </td>
-                    <td>{% for fn in l.filenames %}
+                    <td class="py-1">{% for fn in l.filenames %}
                         {% if (fn != '') and (not loop.first) %}, {% endif %}
                         <a href="log_view.html?logfile={{ get_basename(fn) }}">{{ fn }}</a>
                         {% endfor %}
