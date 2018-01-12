@@ -29,7 +29,7 @@
 						</select>
 					<td style="padding-top:15px;">
 					{% if develop %}
-						<button type="button" class="btn btn-outline-dark" onclick="location.href='reload_translation.html'">{{ _('Übersetzung neu laden') }}</button>
+						<button type="button" class="btn btn-dark" onclick="location.href='reload_translation.html'">{{ _('Übersetzung neu laden') }}</button>
 					{% endif %}
 					</td>
 				</tr>
@@ -53,11 +53,11 @@
 				<td style="padding-top:15px;">
 					{% if knxd_active %}
 						<form action="stop_smarthome" method="post">
-						<input type="submit" class="btn btn-outline-dark" value="{{ _('smarthomeNG beenden','button') }}"/>
+						<input type="submit" class="btn btn-dark" value="{{ _('smarthomeNG beenden','button') }}"/>
 						</form>
 					{% else %}
 						<form action="start_smarthome" method="post">
-						<input type="submit" class="btn btn-outline-dark" value="{{ _('smarthomeNG starten','button') }}"/>
+						<input type="submit" class="btn btn-dark" value="{{ _('smarthomeNG starten','button') }}"/>
 						</form>
 					{% endif %}
 				</td>
@@ -69,11 +69,11 @@
 				<td style="padding-top:15px;">
 					{% if knxd_active %}
 						<form action="stop_knxd_service" method="post">
-						<input type="submit" class="btn btn-outline-dark" value="{{ _('knxd service beenden','button') }}"/>
+						<input type="submit" class="btn btn-dark" value="{{ _('knxd service beenden','button') }}"/>
 						</form>
 					{% else %}
 						<form action="start_knxd" method="post">
-						<input type="submit" class="btn btn-outline-dark" value="{{ _('knxd service starten','button') }}"/>
+						<input type="submit" class="btn btn-dark" value="{{ _('knxd service starten','button') }}"/>
 						</form>
 					{% endif %}
 				</td>
@@ -85,11 +85,11 @@
 				<td style="padding-top:15px;">
 					{% if knxd_active %}
 						<form action="stop_knxd" method="post">
-						<input type="submit" class="btn btn-outline-dark" value="{{ _('knxd socket beenden','button') }}"/>
+						<input type="submit" class="btn btn-dark" value="{{ _('knxd socket beenden','button') }}"/>
 						</form>
 					{% else %}
 						<form action="start_knxd" method="post">
-						<input type="submit" class="btn btn-outline-dark" value="{{ _('knxd socket starten','button') }}"/>
+						<input type="submit" class="btn btn-dark" value="{{ _('knxd socket starten','button') }}"/>
 						</form>
 					{% endif %}
 				</td>
@@ -101,7 +101,7 @@
 					<div class="form-group">
 						<input type="password" class="form-control" name="password" maxlength="128" placeholder="{{ _('Root-Passwort') }}"/>
 					</div>
-						<input type="submit" class="btn btn-outline-dark" value="{{ _('Neu starten','button') }}"/>
+						<input type="submit" class="btn btn-dark" value="{{ _('Neu starten','button') }}"/>
 					</form>
 				</td>
 				<td>{% if rbt1 %}
@@ -125,21 +125,21 @@
 			{% if sql_plugin %}
 			<tr>
 				<td><img src="static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>
-				<td style="padding-top:15px;"><button type="button" class="btn btn-outline-dark" onclick="window.open('/db_dump.html?plugin=sqlite_old')">{{ _('Datenbank-Dump','button') }} (SQLite Plugin)</button></td>
+				<td style="padding-top:15px;"><button type="button" class="btn btn-dark" onclick="window.open('/db_dump.html?plugin=sqlite_old')">{{ _('Datenbank-Dump','button') }} (SQLite Plugin)</button></td>
 			</tr>
 			{% endif %}
 			{% if database_plugin %}
 				{% for p in database_plugin  %}
 				<tr>
 					<td><img src="static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>
-					<td style="padding-top:15px;"><button type="button" class="btn btn-outline-dark" onclick="window.open('/db_dump.html?plugin={{ p }}')">{{ _('Datenbank-Dump','button') }} - {{ _('Instanz') }}: ({{ p }})</button></td>
+					<td style="padding-top:15px;"><button type="button" class="btn btn-dark" onclick="window.open('/db_dump.html?plugin={{ p }}')">{{ _('Datenbank-Dump','button') }} - {{ _('Instanz') }}: ({{ p }})</button></td>
 				</tr>
 				{% endfor %}
 			{% endif %}
 			<tr>
 				<td><img src="static/img/cache.svg" alt="Icon cache" width="48" height="48"></td>
 				<td colspan="2" style="padding-top:15px;">
-					<span class="btn btn-outline-dark" onclick="checkCache()">{{ _('Cacheprüfung','button') }}</span>
+					<span class="btn btn-dark" onclick="checkCache()">{{ _('Cacheprüfung','button') }}</span>
 					<div id="cache_check" style="margin-top: 5px; width: 1000px;"></div>
 				</td>
 			</tr>
@@ -147,7 +147,7 @@
 				<td><img src="static/img/password.svg" alt="Icon password" width="48" height="48"></td>
 				<td colspan="2" style="padding-top:15px;">
 					<input type="text" id="plaintext" size="20" maxlength="50"/><input type="password" id="plainpass" size="20" maxlength="50"/>
-					<span class="btn btn-outline-dark" onclick="createHash()">{{ _('Passwort-Hash erzeugen','button') }}</span><br/>
+					<span class="btn btn-dark" onclick="createHash()">{{ _('Passwort-Hash erzeugen','button') }}</span><br/>
 					<input type="checkbox" style="..." id="showtext"  onclick="togglePlainFields();"> {{ _('Passwort anzeigen') }}
 					<div id="hash_value" style="margin-top: 5px; width: 900px;"></div>
 				</td>
@@ -155,15 +155,15 @@
 			<tr>
 				<td><img src="static/img/tree.png" alt="Icon cache" width="48" height="48"></td>
 				<td colspan="2" style="padding-top:15px;">
-					<span class="btn btn-outline-dark" onclick="checkYaml()">{{ _('YAML Syntax Checker') }}</span>
-					<span class="btn btn-outline-dark" onclick="convertYaml()">{{ _('CONF-YAML Konverter') }}</span>
+					<span class="btn btn-dark" onclick="checkYaml()">{{ _('YAML Syntax Checker') }}</span>
+					<span class="btn btn-dark" onclick="convertYaml()">{{ _('CONF-YAML Konverter') }}</span>
 					<div id="yaml_check" style="margin-top: 5px; width: 1000px;"></div>
 				</td>
 			</tr>
 			<tr>
 				<td><img src="static/img/eval.svg" alt="Icon cache" width="48" height="48"></td>
 				<td colspan="2" style="padding-top:15px;">
-					<span class="btn btn-outline-dark" onclick="checkEval()">{{ _('Eval Syntax Checker') }}</span>
+					<span class="btn btn-dark" onclick="checkEval()">{{ _('Eval Syntax Checker') }}</span>
 					<div id="yaml_check" style="margin-top: 5px; width: 1000px;"></div>
 				</td>
 			</tr>
@@ -178,7 +178,7 @@ function checkCache() {
 		temp = temp + '<thead><tr><th style="width: 550px;">{{ _('Dateiname') }}</th><th>{{ _('Letzte Modifikation') }}</th><th>{{ _('Erstellungsdatum') }}</th><th>{{ _('Aktionen') }}</th></td></thead><tbody>';
 		$.each(result, function(index, element) {
 			temp = temp + '<tr><td>'+element.filename+'</td><td>'+element.last_modified+'</td><td>'+element.created+'</td>';
-			temp = temp + '<td><input name="delete" value="{{ _('Löschen','button') }}" type="submit" class="btn btn-outline-dark btn-sm" onClick="deleteFromCache(\''+element.filename+'\');">';
+			temp = temp + '<td><input name="delete" value="{{ _('Löschen','button') }}" type="submit" class="btn btn-dark btn-sm" onClick="deleteFromCache(\''+element.filename+'\');">';
 		});
 		temp = temp + '</tbody></table></div>';
 		$('#cache_check').html(temp);

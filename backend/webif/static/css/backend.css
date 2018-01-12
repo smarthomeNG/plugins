@@ -60,3 +60,10 @@
   background-position: right;
   background-repeat: no-repeat;
 }
+
+.item-box {
+  float:left;
+  border: 1px solid rgba(0,0,0,.125);
+  background-color: rgba(0,0,0,.03);
+  border-radius: .25rem;
+}
