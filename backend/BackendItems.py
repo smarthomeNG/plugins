@@ -266,7 +266,7 @@ class BackendItems:
             cycle = ''
             crontab = ''
             for entry in self._sh.scheduler._scheduler:
-                if entry == item._path:
+                if entry == "items."+item._path:
                     if self._sh.scheduler._scheduler[entry]['cycle']:
                         cycle = self._sh.scheduler._scheduler[entry]['cycle']
                     if self._sh.scheduler._scheduler[entry]['cron']:
