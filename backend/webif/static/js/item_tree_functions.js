@@ -83,6 +83,19 @@ function getTree() {
                 $('#search-results').html('');
             });
         }
+
+        var searchExact = function(e) {
+            results = [];
+            var pattern = $('#input-search').val();
+            var options = {
+                ignoreCase: true,
+                exactMatch: true,
+                revealResults: true
+            };
+            var results = $('#tree').treeview('search', [ pattern, options ]);
+            $('#search-results').html(' - Treffer: '+results.length);
+        }
+
         $('#btn-search').on('click', search);
         $("#input-search").keypress(function(event){
             if(event.keyCode == 13){
@@ -99,7 +112,7 @@ function getTree() {
         });
 
         if ($("#input-search") != "") {
-            $('#btn-search').click();
+            searchExact();
         }
     });
 }
