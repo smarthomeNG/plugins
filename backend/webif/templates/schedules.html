@@ -30,11 +30,11 @@
 				<tbody>
 					{% for entry in schedule_list	 %}
 							<tr>
-								<td>{{ entry['fullname'] }}</td>
-								<td>{{ entry['next'] }}</td>
-								<td>{{ entry['cycle'] }}</td>
-								<td>{{ entry['cron'] }}</td>
-								<td></td>
+								<td class="py-1">{{ entry['fullname'] }}</td>
+								<td class="py-1">{{ entry['next'] }}</td>
+								<td class="py-1">{{ entry['cycle'] }}</td>
+								<td class="py-1">{{ entry['cron'] }}</td>
+								<td class="py-1"></td>
 							</tr>
 					{% endfor %}
 				</tbody>
@@ -57,11 +57,11 @@
 					{% for entry in schedule_list	 %}
 						{% if entry['group'] == 'items' %}
 							<tr>
-								<td>{{ entry['name'] }}</td>
-								<td>{{ entry['next'] }}</td>
-								<td>{{ entry['cycle'] }}</td>
-								<td>{{ entry['cron'] }}</td>
-								<td></td>
+								<td class="py-1">{{ entry['name'] }}</td>
+								<td class="py-1">{{ entry['next'] }}</td>
+								<td class="py-1">{{ entry['cycle'] }}</td>
+								<td class="py-1">{{ entry['cron'] }}</td>
+								<td class="py-1"></td>
 							</tr>
 						{% endif %}
 					{% endfor %}
@@ -85,11 +85,11 @@
 					{% for entry in schedule_list	 %}
 						{% if entry['group'] == 'logics' %}
 							<tr>
-								<td>{{ entry['name'] }}</td>
-								<td>{{ entry['next'] }}</td>
-								<td>{{ entry['cycle'] }}</td>
-								<td>{{ entry['cron'] }}</td>
-								<td></td>
+								<td class="py-1">{{ entry['name'] }}</td>
+								<td class="py-1">{{ entry['next'] }}</td>
+								<td class="py-1">{{ entry['cycle'] }}</td>
+								<td class="py-1">{{ entry['cron'] }}</td>
+								<td class="py-1"></td>
 							</tr>
 						{% endif %}
 					{% endfor %}
@@ -113,11 +113,11 @@
 					{% for entry in schedule_list	 %}
 						{% if entry['group'] == 'plugins' %}
 							<tr>
-								<td>{{ entry['name'] }}</td>
-								<td>{{ entry['next'] }}</td>
-								<td>{{ entry['cycle'] }}</td>
-								<td>{{ entry['cron'] }}</td>
-								<td></td>
+								<td class="py-1">{{ entry['name'] }}</td>
+								<td class="py-1">{{ entry['next'] }}</td>
+								<td class="py-1">{{ entry['cycle'] }}</td>
+								<td class="py-1">{{ entry['cron'] }}</td>
+								<td class="py-1"></td>
 							</tr>
 						{% endif %}
 					{% endfor %}
@@ -141,11 +141,11 @@
 					{% for entry in schedule_list	 %}
 						{% if entry['group'] != 'items' and entry['group'] != 'logics' and entry['group'] != 'plugins' %}
 							<tr>
-								<td>{{ entry['fullname'] }}</td>
-								<td>{{ entry['next'] }}</td>
-								<td>{{ entry['cycle'] }}</td>
-								<td>{{ entry['cron'] }}</td>
-								<td></td>
+								<td class="py-1">{{ entry['fullname'] }}</td>
+								<td class="py-1">{{ entry['next'] }}</td>
+								<td class="py-1">{{ entry['cycle'] }}</td>
+								<td class="py-1">{{ entry['cron'] }}</td>
+								<td class="py-1"></td>
 							</tr>
 						{% endif %}
 					{% endfor %}

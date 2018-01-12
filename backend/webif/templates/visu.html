@@ -33,23 +33,23 @@
 					{% if clients %}
 						{% for client in clients %}
 						<tr>
-							<td>{{ client.name }}</td>
-							<td>{{ client.ip }}</td>
-							<td>{{ client.port }}</td>
-							<td>{{ client.sw }} {{ client.swversion }}</td>
-							<td>{{ client.browser }} {{ client.browserversion }}</td>
-							<td>{{ client.hostname }}</td>
-							<td></td>
+							<td class="py-1">{{ client.name }}</td>
+							<td class="py-1">{{ client.ip }}</td>
+							<td class="py-1">{{ client.port }}</td>
+							<td class="py-1">{{ client.sw }} {{ client.swversion }}</td>
+							<td class="py-1">{{ client.browser }} {{ client.browserversion }}</td>
+							<td class="py-1">{{ client.hostname }}</td>
+							<td class="py-1"></td>
 						</tr>
 						{% endfor %}
 					{% else %}
 						<tr>
-							<td colspan="7">{{ _('No active clients') }}</td>
+							<td class="py-1" colspan="7">{{ _('No active clients') }}</td>
 						</tr>
 					{% endif %}
 				{% else %}
 					<tr>
-						<td>Plugin for visu-protocol is not configured - {{ _('no data available') }}</td>
+						<td class="py-1">Plugin for visu-protocol is not configured - {{ _('no data available') }}</td>
 					</tr>
 				{% endif %}
 			</tbody>

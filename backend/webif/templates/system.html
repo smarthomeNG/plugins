@@ -31,48 +31,48 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                        <td style="vertical-align: middle;">{{ _('SmartHomeNG Version') }}:</td>
-                        <td style="vertical-align: middle;">{{ sh_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}&nbsp;&nbsp;-&nbsp;&nbsp; {{ sh_desc }} &nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Benutzer') }}:&nbsp;{{ user }}</td>
+                        <td class="py-1"><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                        <td class="py-1" style="vertical-align: middle;">{{ _('SmartHomeNG Version') }}:</td>
+                        <td class="py-1" style="vertical-align: middle;">{{ sh_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}&nbsp;&nbsp;-&nbsp;&nbsp; {{ sh_desc }} &nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Benutzer') }}:&nbsp;{{ user }}</td>
                     </tr>
                     <tr>
-                        <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                        <td style="vertical-align: middle;">{{ _('SmartHomeNG Plugins Version') }}:</td>
-                        <td style="vertical-align: middle;">{{ plg_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}/plugins
+                        <td class="py-1"><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                        <td class="py-1" style="vertical-align: middle;">{{ _('SmartHomeNG Plugins Version') }}:</td>
+                        <td class="py-1" style="vertical-align: middle;">{{ plg_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}/plugins
                             {% if plg_desc != '' %}
                                 &nbsp;&nbsp;-&nbsp;&nbsp; {{ plg_desc }}
                             {% endif %}
                         </td>
                     </tr>
                     <tr>
-                        <td><img src="static/img/terminal-server.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                        <td style="vertical-align: middle;">Host:</td>
-                        <td style="vertical-align: middle;">{{ node }}&nbsp;&nbsp;-&nbsp;&nbsp;IPv4: {{ ip }}<!--&nbsp;&nbsp;-&nbsp;&nbsp;IPv6: {{ ipv6 }}--></td>
+                        <td class="py-1"><img src="static/img/terminal-server.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                        <td class="py-1" style="vertical-align: middle;">Host:</td>
+                        <td class="py-1" style="vertical-align: middle;">{{ node }}&nbsp;&nbsp;-&nbsp;&nbsp;IPv4: {{ ip }}<!--&nbsp;&nbsp;-&nbsp;&nbsp;IPv6: {{ ipv6 }}--></td>
                     </tr>
                     <tr>
-                        <td><img src="static/img/tux_hdd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                        <td style="vertical-align: middle;">{{ _('Betriebssystem') }}:</td>
-                        <td style="vertical-align: middle;">{{ system }} {{ vers }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Architektur') }}:&nbsp;{{ arch }}</td>
+                        <td class="py-1"><img src="static/img/tux_hdd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                        <td class="py-1" style="vertical-align: middle;">{{ _('Betriebssystem') }}:</td>
+                        <td class="py-1" style="vertical-align: middle;">{{ system }} {{ vers }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Architektur') }}:&nbsp;{{ arch }}</td>
                     </tr>
                     <tr>
-                        <td><img src="static/img/python.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                        <td style="vertical-align: middle;">{{ _('Python Version') }}:</td>
-                        <td style="vertical-align: middle;">{{ pyversion }}</td>
+                        <td class="py-1"><img src="static/img/python.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                        <td class="py-1" style="vertical-align: middle;">{{ _('Python Version') }}:</td>
+                        <td class="py-1" style="vertical-align: middle;">{{ pyversion }}</td>
                     </tr>
                     <tr>
-                        <td><img src="static/img/hd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                        <td style="vertical-align: middle;">{{ _('Freier Speicher') }}:</td>
-                        <td style="vertical-align: middle;">{{ (freespace)|round|int }} MByte</td>
+                        <td class="py-1"><img src="static/img/hd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                        <td class="py-1" style="vertical-align: middle;">{{ _('Freier Speicher') }}:</td>
+                        <td class="py-1" style="vertical-align: middle;">{{ (freespace)|round|int }} MByte</td>
                     </tr>
                     <tr>
-                        <td><img src="static/img/clock.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                        <td style="vertical-align: middle;">{{ _('Datum') }} / {{ _('Zeit') }}:</td>
-                        <td style="vertical-align: middle;">{{ now }}</td>
+                        <td class="py-1"><img src="static/img/clock.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                        <td class="py-1" style="vertical-align: middle;">{{ _('Datum') }} / {{ _('Zeit') }}:</td>
+                        <td class="py-1" style="vertical-align: middle;">{{ now }}</td>
                     </tr>
                     <tr>
-                        <td><img src="static/img/preferences.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
-                        <td style="vertical-align: middle;">{{ _('Betriebszeit') }}:</td>
-                        <td style="vertical-align: middle;">Host:&nbsp;{{ uptime }}&nbsp;&nbsp;-&nbsp;&nbsp;SmartHomeNG:&nbsp;{{ sh_uptime }}</td>
+                        <td class="py-1"><img src="static/img/preferences.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                        <td class="py-1" style="vertical-align: middle;">{{ _('Betriebszeit') }}:</td>
+                        <td class="py-1" style="vertical-align: middle;">Host:&nbsp;{{ uptime }}&nbsp;&nbsp;-&nbsp;&nbsp;SmartHomeNG:&nbsp;{{ sh_uptime }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -118,11 +118,11 @@ $.getJSON('pypi.json', function(result) {
         }
         if (oldSort != newSort) {
             if (element['is_required_for_testsuite']) {
-	            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für die Testsuite') }}</td></tr>");
+	            $('#package_check').find("tbody").append("<tr><td class=\"py-1\" style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für die Testsuite') }}</td></tr>");
 			} else if (element['is_required_for_docbuild']) {
-	            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für den Bau der Dokumentation') }}</td></tr>");
+	            $('#package_check').find("tbody").append("<tr><td class=\"py-1\" style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für den Bau der Dokumentation') }}</td></tr>");
             } else {
-	            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
+	            $('#package_check').find("tbody").append("<tr><td class=\"py-1\" style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
 			}
         }
 
@@ -224,10 +224,10 @@ $.getJSON('pypi.json', function(result) {
         /* Build row for normal content */
         var table_row = '';
         table_row =  "<tr style=\""+foldingStyle+"\" id=\""+index+"_unfold"+"\">"+
-            "<td style=\""+fontWeight+"\">"+packageName+"</td>"+
-            "<td style=\"color: "+fontColorInstalled+"\">"+element['vers_installed']+"</td>"+
-            "<td>"+reqString+"</td>"+
-            "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
+            "<td class=\"py-1\" style=\""+fontWeight+"\">"+packageName+"</td>"+
+            "<td class=\"py-1\" style=\"color: "+fontColorInstalled+"\">"+element['vers_installed']+"</td>"+
+            "<td class=\"py-1\">"+reqString+"</td>"+
+            "<td class=\"py-1\" style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
 
         /* Checks for icon next to PyPi Version */
 		if (element['vers_recent'] != true && element['pypi_version_ok']) {
@@ -253,7 +253,7 @@ $.getJSON('pypi.json', function(result) {
                 "<tr id=\""+index+"_requirements_detail\" "+
                 "style=\"display: none; "+foldingStyle+"\">";
             table_row_requirements_detail +=
-                "<td colspan=\"4\">";
+                "<td class=\"py-1\" colspan=\"4\">";
             table_row_requirements_detail +=
                 "<div class=\"panel panel-default\" style=\"margin-bottom: 5px;\">"+
                 "<div class=\"panel-heading\">{{ _('Anforderungen') }} (requirements.txt)</div>"+

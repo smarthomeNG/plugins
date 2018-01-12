@@ -28,28 +28,28 @@
 				{% for p in plugins	 %}
 				{% set outer_loop = loop %}
 				<tr id="{{ loop.index }}_click" style="cursor: pointer;">
-					<td>{{ loop.index }}</td>
-					<td><span style="color: {% if p.stopped %}red{% else %}green{% endif %};" class="fas {% if p.stopped %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
-					<td>
+					<td class="py-1">{{ loop.index }}</td>
+					<td class="py-1"><span style="color: {% if p.stopped %}red{% else %}green{% endif %};" class="fas {% if p.stopped %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
+					<td class="py-1">
 						{% if p.metadata.get_string('type') in ['web', 'protocol', 'interface', 'gateway', 'system'] %}
 						<img src="static/img/{{ p.metadata.get_string('type') }}.svg" style="width: 25px;"/>
 						{% else %}
 						-
 						{% endif %}
 					</td>
-					<td width="30px">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}
-					<td>{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.shortname }}</td>
-					<td>{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.classname }}</td>
+					<td class="py-1" width="30px">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}
+					<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.shortname }}</td>
+					<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.classname }}</td>
 					{% if p.smartplugin %}
 						{% set webifs = mod_http.get_webifs_for_plugin(p.shortname) %}
-						<td>
+						<td class="py-1">
 						{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
 						</td>
-						<td>{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.metadata.get_string('version') }}</td>
-						<td>{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
+						<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.metadata.get_string('version') }}</td>
+						<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
 
 						{% if updates or 1==1 %}
-							<td>
+							<td class="py-1">
 								{% if 1==2 %}
 								    <button {% if p.stopped %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-outline-primary btn-sm"><i class="fas fa-hand-pointer"></i></button>
 								{% endif %}
@@ -66,10 +66,10 @@
 							{% endif %}
 							</td>
 						{% else %}
-						    <td></td>
+						    <td class="py-1"></td>
 						{% endif %}
 
-						<td>{% if not p.stopped %}
+						<td class="py-1">{% if not p.stopped %}
 								{% for webif in webifs %}
 									{% if webif['Instance'] == '' or webif['Instance'] == p.instancename %}
 										<img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="width: 25px;"/>
@@ -84,14 +84,14 @@
 							{%endif%}
 						</td>
 					{% else %}
-						<td>-</td>
-						<td>-</td>
-						<td>-</td>
-						<td>-</td>
+						<td class="py-1">-</td>
+						<td class="py-1">-</td>
+						<td class="py-1">-</td>
+						<td class="py-1">-</td>
 					{%endif%}
 				</tr>
 				<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
-					<td colspan="11">
+					<td class="py-1" colspan="11">
 						<div class="panel panel-default" style="margin-bottom: 5px;">
 							<div class="panel-heading">{{ _('Plugin spezifische Attribute') }}:</div>
 							<div class="panel-body">
@@ -102,13 +102,13 @@
 									<tr>
 									{% endif %}
 									{% if p['metadata'].get_parameter_type(key) != 'foo' %}
-										<td style="width: 50%;"><strong>{{ key }}</strong> ( {{ p['metadata'].get_parameter_type_with_subtype(key) }} ): {{ value }}
+										<td class="py-1" style="width: 50%;"><strong>{{ key }}</strong> ( {{ p['metadata'].get_parameter_type_with_subtype(key) }} ): {{ value }}
 										{% if p['metadata'].get_parameter_defaultvalue(key) == value %}
 										&nbsp; [default]
 										{% endif %}
 										</td>
 									{% else %}
-										<td style="width: 400px;"><strong>{{ key }}</strong>: {{ value }}</td>
+										<td class="py-1" style="width: 400px;"><strong>{{ key }}</strong>: {{ value }}</td>
 									{% endif %}
 									{% if loop.index % 2 > 0 and not first %}
 									</tr>

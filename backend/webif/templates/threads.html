@@ -19,10 +19,10 @@
             <tbody>
                 {% for t in threads  %}
                 <tr>
-                    <td>{{ t.name }}</td>
-                    <td>{{ t.id }}</td>
-                    <td>{{ _(t.alive, 'threads') }}</td>
-                    <td width="200px"></td>
+                    <td class="py-1">{{ t.name }}</td>
+                    <td class="py-1">{{ t.id }}</td>
+                    <td class="py-1">{{ _(t.alive, 'threads') }}</td>
+                    <td class="py-1" width="200px"></td>
                 </tr>
                 {% endfor %}
             </tbody>
