@@ -11,7 +11,6 @@
 	<table class="table table-striped table-hover pluginList">
 		<thead>
 			<tr>
-				<th style="width: 30px;">{{ _('Nr.') }}</th>
 				<th style="width: 30px;"></th>
 				<th style="width: 30px;"></th>
 				<th style="width: 30px;">{{ _('Type') }}</th>
@@ -28,7 +27,6 @@
 			{% for p in plugins	 %}
 			{% set outer_loop = loop %}
 			<tr id="{{ loop.index }}_click" style="cursor: pointer;">
-				<td class="py-1">{{ loop.index }}</td>
 				<td class="py-1"><span style="color: {% if p.stopped %}red{% else %}green{% endif %};" class="fas {% if p.stopped %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
 				<td class="py-1">
 					{% if p.metadata.get_string('type') in ['web', 'protocol', 'interface', 'gateway', 'system'] %}
@@ -91,7 +89,7 @@
 				{%endif%}
 			</tr>
 			<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
-				<td class="py-1" colspan="11">
+				<td class="py-1" colspan="10">
 					<div class="card">
 						<div class="card-header p-1"><strong>{{ _('Plugin spezifische Attribute') }}:</strong></div>
 						<div class="card-body p-1">
