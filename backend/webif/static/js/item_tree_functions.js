@@ -53,6 +53,7 @@ function getTree() {
         $.each(result, function(index, element) {
             item_tree.push(build_item_subtree_recursive(element));
         });
+
         $('#tree').treeview({
             data: item_tree,
 			levels: 1,
@@ -62,39 +63,43 @@ function getTree() {
                 reload(node.text);
             }
         });
-    });
 
-    var search = function(e) {
-          results = [];
-          var pattern = $('#input-search').val();
-          var options = {
-            ignoreCase: true,
-            exactMatch: false,
-            revealResults: true
-          };
-          var results = $('#tree').treeview('search', [ pattern, options ]);
-          $('#search-results').html(' - Treffer: '+results.length);
-          $('#btn-clear-search').on('click', function (e) {
-            $('#tree').treeview('clearSearch');
-            $('#tree').treeview('collapseAll', { silent: false });
-            $('#input-search').val('');
-            $('#search-output').html('');
+        var search = function(e) {
             results = [];
-            $('#search-results').html('');
-          });
-    }
-    $('#btn-search').on('click', search);
-    $("#input-search").keypress(function(event){
-        if(event.keyCode == 13){
-            $("#btn-search").click();
+            var pattern = $('#input-search').val();
+            var options = {
+                ignoreCase: true,
+                exactMatch: false,
+                revealResults: true
+            };
+            var results = $('#tree').treeview('search', [ pattern, options ]);
+            $('#search-results').html(' - Treffer: '+results.length);
+            $('#btn-clear-search').on('click', function (e) {
+                $('#tree').treeview('clearSearch');
+                $('#tree').treeview('collapseAll', { silent: false });
+                $('#input-search').val('');
+                $('#search-output').html('');
+                results = [];
+                $('#search-results').html('');
+            });
         }
-    });
+        $('#btn-search').on('click', search);
+        $("#input-search").keypress(function(event){
+            if(event.keyCode == 13){
+                $("#btn-search").click();
+            }
+        });
 
-    // Expand/collapse all
-    $('#btn-expand-all').on('click', function (e) {
-      $('#tree').treeview('expandAll', { silent: false });
-    });
-    $('#btn-collapse-all').on('click', function (e) {
-      $('#tree').treeview('collapseAll', { silent: false });
+        // Expand/collapse all
+        $('#btn-expand-all').on('click', function (e) {
+          $('#tree').treeview('expandAll', { silent: false });
+        });
+        $('#btn-collapse-all').on('click', function (e) {
+          $('#tree').treeview('collapseAll', { silent: false });
+        });
+
+        if ($("#input-search") != "") {
+            $('#btn-search').click();
+        }
     });
 }
