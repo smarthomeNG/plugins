@@ -67,17 +67,22 @@ Edit the file ```/usr/local/smarthome/etc/plugins.yaml``` (might differ) and add
 Sonos:
     class_name: Sonos
     class_path: plugins.sonos
-    # tts: true                          # optional, default:  false
-    # local_webservice_path: /tmp/tts    # optional, default:  empty. If 'tts' is enabled, this option is mandatory. 
-                                         # All tts files will be stored here.
-    # webservice_ip: 192.168.1.40        # optional, default:  automatic. You can set a specific ip address.
-                                         # If you're using a docker container, you have to set the host 
-                                         # ip address here.  
-    # webservice_port: 23500             # optional, default:  23500
-    # discover_cycle: 120                # optional, default:  120 (in seconds)
-    # speaker_ips:                       # optional. You can set static IP addresses for your Sonos speaker. This
-    #   - 192.168.1.10                   # will disable auto-discovery. This is useful if you're using a 
-    #   - 192.168.1.77                   # containerized environment with restricted network access.
+    # tts: true                                     # optional, default:  false
+    # local_webservice_path: /tmp/tts               # optional, default:  empty. If 'tts' is enabled, this option is mandatory. 
+                                                    # All tts files will be stored here.
+    # local_webservice_path_snippet: /tmp/snippet   # optional, default:  empty. For some reasons it could be necessary to have 
+                                                    # separated paths for TTS files and your own snippet files. You can define the
+                                                    # local path for your snippets here. If 'tts' is enabled and 
+                                                    # 'local_webservice_path_snippet' is empty, the value for 
+                                                    # 'local_webservice_path' is used for your snippet audio files.
+    # webservice_ip: 192.168.1.40                   # optional, default:  automatic. You can set a specific ip address.
+                                                    # If you're using a docker container, you have to set the host 
+                                                    # ip address here.  
+    # webservice_port: 23500                        # optional, default:  23500
+    # discover_cycle: 120                           # optional, default:  120 (in seconds)
+    # speaker_ips:                                  # optional. You can set static IP addresses for your Sonos speaker. This
+    #   - 192.168.1.10                              # will disable auto-discovery. This is useful if you're using a 
+    #   - 192.168.1.77                              # containerized environment with restricted network access.
 ```
 
 After that you have to create an item configuration file under ```/usr/local/smarthome/items```, e.g. ```sonos.yaml```.
@@ -342,10 +347,11 @@ by Sonos events and should always be up-to-date.
 #### play_snippet
 ```write```
 
-Plays a snippet audio file by a given audio filename (e.g. 'alarm.mp3'). You have to set at least two parameters in the 
-```plugin.yaml```: ```tts``` and the ```local_webservice_path``` to enable this feature. You have to save the audio file
- to the value of parameter ```local_webservice_path```. Following audio formats should be supported: 'mp3', 'mp4', 'ogg', 'wav', 'aac' (tested
- only with 'mp3'). This is a group command and effects all speakers in the group.
+Plays a snippet audio file by a given audio filename (e.g. 'alarm.mp3').
+You have to set at least two parameters in the ```plugin.yaml```: ```tts``` and the ```local_webservice_path``` to 
+enable this feature. You have to save the audio file to the value of parameter ```local_webservice_path``` or 
+```local_webservice_path_snippet```. Following audio formats should be supported: 'mp3', 'mp4', 'ogg', 'wav', 'aac' 
+(tested only with 'mp3'). This is a group command and effects all speakers in the group.
 
 _child item_ ```snippet_volume```:
 If you add an child item (type ```num```) with an attribute ```sonos_attrib: snippet_volume``` you can set the volume 
@@ -764,7 +770,9 @@ becomes
 
 If you want to use either the ```play_tts``` or ```play_snippet``` functionality, you have to enable the ```tts```
 option for the Sonos plugin in your ```plugin.yaml```. In addition to that, you have to set a valid local path for the
-```local_webservice_path``` option. A very simple Webservice will be started to serve Sonos requests.
+```local_webservice_path``` option. If you want to separate your audio snippets from the automatic generated TTS audio
+files, you have to set the ```local_webservice_path_snippet``` option. 
+A very simple Webservice will be started to serve Sonos requests.
 
 ### Configure Speaker IPs manually
 
