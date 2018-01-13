@@ -135,6 +135,13 @@
 							<a target="_blank" href="{{ p.metadata.get_string('support') }}">{{ p.metadata.get_string('support') }}</a><br/>
 							{% endif %}
 
+							{{ _('Schlüsselwörter') }}:
+							{% if p.metadata.get_string('keywords') %}
+								{{ p.metadata.get_string('keywords') }}
+							{% else %}
+							-
+							{% endif %}
+							<br/>
 							{{ _('Wartung') }}:
 							{% if p.metadata.get_string('maintainer') %}
 								{{ p.metadata.get_string('maintainer') }}
