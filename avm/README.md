@@ -97,7 +97,7 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
   * `password`: Required login information
   * `host`: Hostname or ip address of the FritzDevice.
   * `port`: Port of the FritzDevice, typically 49433 for https or 49000 for http
-  * `cycle`: timeperiod between two update cycles. Default is 240 seconds.
+  * `cycle`: timeperiod between two update cycles. Default is 300 seconds.
   * `ssl`: True or False => True will add "https", False "http" to the URLs in the plugin
   * `verify`: True or False => Turns certificate verification on or off. Typically False
   * `call_monitor`: True or False => Activates or deactivates the MonitoringService, which connects to the FritzDevice's call monitor
