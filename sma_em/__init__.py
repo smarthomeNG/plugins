@@ -72,14 +72,136 @@ class SMA_EM(SmartPlugin):
             if self._serial == format(emparts['serial']):
                 if 'pregard' in self._items:
                     self._items['pregard'](emparts['pregard'])
-                if 'psurplus' in self._items:
-                    self._items['psurplus'](emparts['psurplus'])
                 if 'pregardcounter' in self._items:
                     self._items['pregardcounter'](emparts['pregardcounter'])
+                if 'psurplus' in self._items:
+                    self._items['psurplus'](emparts['psurplus'])
                 if 'psurpluscounter' in self._items:
                     self._items['psurpluscounter'](emparts['psurpluscounter'])
+
+                if 'sregard' in self._items:
+                    self._items['sregard'](emparts['sregard'])
+                if 'sregardcounter' in self._items:
+                    self._items['sregardcounter'](emparts['sregardcounter'])
+                if 'ssurplus' in self._items:
+                    self._items['ssurplus'](emparts['ssurplus'])
+                if 'ssurpluscounter' in self._items:
+                    self._items['ssurpluscounter'](emparts['ssurpluscounter'])
+
+                if 'qregard' in self._items:
+                    self._items['qregard'](emparts['qregard'])
+                if 'qregardcounter' in self._items:
+                    self._items['qregardcounter'](emparts['qregardcounter'])
+                if 'qsurplus' in self._items:
+                    self._items['qsurplus'](emparts['qsurplus'])
+                if 'qsurpluscounter' in self._items:
+                    self._items['qsurpluscounter'](emparts['qsurpluscounter'])
+
                 if 'cosphi' in self._items:
                     self._items['cosphi'](emparts['cosphi'])
+
+                if 'p1regard' in self._items:
+                    self._items['p1regard'](emparts['p1regard'])
+                if 'p1regardcounter' in self._items:
+                    self._items['p1regardcounter'](emparts['p1regardcounter'])
+                if 'p1surplus' in self._items:
+                    self._items['p1surplus'](emparts['p1surplus'])
+                if 'p1surpluscounter' in self._items:
+                    self._items['p1surpluscounter'](emparts['p1surpluscounter'])
+
+                if 's1regard' in self._items:
+                    self._items['s1regard'](emparts['s1regard'])
+                if 's1regardcounter' in self._items:
+                    self._items['s1regardcounter'](emparts['s1regardcounter'])
+                if 's1surplus' in self._items:
+                    self._items['s1surplus'](emparts['s1surplus'])
+                if 's1surpluscounter' in self._items:
+                    self._items['s1surpluscounter'](emparts['s1surpluscounter'])
+
+                if 'q1regard' in self._items:
+                    self._items['q1regard'](emparts['q1regard'])
+                if 'q1regardcounter' in self._items:
+                    self._items['q1regardcounter'](emparts['q1regardcounter'])
+                if 'q1surplus' in self._items:
+                    self._items['q1surplus'](emparts['q1surplus'])
+                if 'q1surpluscounter' in self._items:
+                    self._items['q1surpluscounter'](emparts['q1surpluscounter'])
+
+                if 'v1' in self._items:
+                    self._items['v1'](emparts['v1'])
+                if 'thd1' in self._items:
+                    self._items['thd1'](emparts['thd1'])
+                if 'cosphi1' in self._items:
+                    self._items['cosphi1'](emparts['cosphi1'])
+
+                if 'p2regard' in self._items:
+                    self._items['p2regard'](emparts['p2regard'])
+                if 'p2regardcounter' in self._items:
+                    self._items['p2regardcounter'](emparts['p2regardcounter'])
+                if 'p2surplus' in self._items:
+                    self._items['p2surplus'](emparts['p2surplus'])
+                if 'p2surpluscounter' in self._items:
+                    self._items['p2surpluscounter'](emparts['p2surpluscounter'])
+
+                if 's2regard' in self._items:
+                    self._items['s2regard'](emparts['s2regard'])
+                if 's2regardcounter' in self._items:
+                    self._items['s2regardcounter'](emparts['s2regardcounter'])
+                if 's2surplus' in self._items:
+                    self._items['s2surplus'](emparts['s2surplus'])
+                if 's2surpluscounter' in self._items:
+                    self._items['s2surpluscounter'](emparts['s2surpluscounter'])
+
+                if 'q2regard' in self._items:
+                    self._items['q2regard'](emparts['q2regard'])
+                if 'q2regardcounter' in self._items:
+                    self._items['q2regardcounter'](emparts['q2regardcounter'])
+                if 'q2surplus' in self._items:
+                    self._items['q2surplus'](emparts['q2surplus'])
+                if 'q2surpluscounter' in self._items:
+                    self._items['q2surpluscounter'](emparts['q2surpluscounter'])
+
+                if 'v2' in self._items:
+                    self._items['v2'](emparts['v2'])
+                if 'thd2' in self._items:
+                    self._items['thd2'](emparts['thd2'])
+                if 'cosphi2' in self._items:
+                    self._items['cosphi2'](emparts['cosphi2'])
+
+                if 'p3regard' in self._items:
+                    self._items['p3regard'](emparts['p3regard'])
+                if 'p3regardcounter' in self._items:
+                    self._items['p3regardcounter'](emparts['p3regardcounter'])
+                if 'p3surplus' in self._items:
+                    self._items['p3surplus'](emparts['p3surplus'])
+                if 'p3surpluscounter' in self._items:
+                    self._items['p3surpluscounter'](emparts['p3surpluscounter'])
+
+                if 's3regard' in self._items:
+                    self._items['s3regard'](emparts['s3regard'])
+                if 's3regardcounter' in self._items:
+                    self._items['s3regardcounter'](emparts['s3regardcounter'])
+                if 's3surplus' in self._items:
+                    self._items['s3surplus'](emparts['s3surplus'])
+                if 's3surpluscounter' in self._items:
+                    self._items['s3surpluscounter'](emparts['s3surpluscounter'])
+
+                if 'q3regard' in self._items:
+                    self._items['q3regard'](emparts['q3regard'])
+                if 'q3regardcounter' in self._items:
+                    self._items['q3regardcounter'](emparts['q3regardcounter'])
+                if 'q3surplus' in self._items:
+                    self._items['q3surplus'](emparts['q3surplus'])
+                if 'q3surpluscounter' in self._items:
+                    self._items['q3surpluscounter'](emparts['q3surpluscounter'])
+
+                if 'v3' in self._items:
+                    self._items['v3'](emparts['v3'])
+                if 'thd3' in self._items:
+                    self._items['thd3'](emparts['thd3'])
+                if 'cosphi3' in self._items:
+                    self._items['cosphi3'](emparts['cosphi3'])
+
             time.sleep(self._time_sleep)
 
     def stop(self):
