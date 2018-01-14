@@ -217,7 +217,7 @@ $.getJSON('pypi.json', function(result) {
         /* Link package PyPi URL */
         var packageName = element['name'];
         if (element['pypi_doc_url'] != '') {
-            packageName = "<a target=\"_blank\" class=\"text-dark pypi_link\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
+            packageName = "<a target=\"_blank\" class=\"text-smarthomeng pypi_link\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
         }
 
         /* Build row for normal content */
