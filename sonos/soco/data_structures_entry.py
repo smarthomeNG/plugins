@@ -6,7 +6,6 @@ objects from both music library and music service data structures
 
 from __future__ import absolute_import
 
-import sys
 import logging
 
 from .xml import (
@@ -20,8 +19,7 @@ from .music_services.music_service import desc_from_uri
 
 
 _LOG = logging.getLogger(__name__)
-if not (sys.version_info[0] == 2 or sys.version_info[1] == 6):
-    _LOG.addHandler(logging.NullHandler())
+_LOG.addHandler(logging.NullHandler())
 _LOG.debug('%s imported', __name__)
 
 
@@ -46,6 +44,7 @@ def from_didl_string(string):
             # subclass, ignore it by stripping it from item_class
             if '.#' in item_class:
                 item_class = item_class[:item_class.find('.#')]
+
             try:
                 cls = _DIDL_CLASS_TO_CLASS[item_class]
             except KeyError:
@@ -73,6 +72,7 @@ DIDL_NAME_TO_QUALIFIED_MS_NAME = {
     'DidlMusicTrack': 'MediaMetadataTrack'
 }
 
+
 def attempt_datastructure_upgrade(didl_item):
     """Attempt to upgrade a didl_item to a music services data structure
     if it originates from a music services
@@ -97,20 +97,12 @@ def attempt_datastructure_upgrade(didl_item):
 
         # Ignore other metadata for now, in future ask ms data
         # structure to upgrade metadata from the service
-
-################## MY CHANGES - IMPORTANT #######################################################################
         metadata = {}
-        if hasattr(didl_item, 'title'):
+        try:
             metadata['title'] = didl_item.title
+        except AttributeError:
+            pass
 
-################## MY ADDITIONS - IMPORTANT #######################################################################
-        if hasattr(didl_item, 'creator'):
-            metadata['creator'] = didl_item.creator
-        if hasattr(didl_item, 'album'):
-            metadata['album'] = didl_item.album
-        if hasattr(didl_item, 'album_art_uri'):
-            metadata['album_art_uri'] = didl_item.album_art_uri
-####################################################################################################################
         # Get class
         try:
             cls = get_class(DIDL_NAME_TO_QUALIFIED_MS_NAME[

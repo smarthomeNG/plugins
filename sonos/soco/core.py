@@ -142,9 +142,6 @@ class SoCo(_SocoSingletonBase):
         add_multiple_to_queue
         remove_from_queue
         clear_queue
-        get_favorite_radio_shows
-        get_favorite_radio_stations
-        get_sonos_favorites
         create_sonos_playlist
         create_sonos_playlist_from_queue
         remove_sonos_playlist
@@ -337,7 +334,6 @@ class SoCo(_SocoSingletonBase):
         self._parse_zone_group_state()
         return self._is_coordinator
 
-
     @property
     def play_mode(self):
         """str: The queue's play mode.
@@ -392,6 +388,45 @@ class SoCo(_SocoSingletonBase):
             ('InstanceID', 0),
             ('CrossfadeMode', crossfade_value)
         ])
+
+    def ramp_to_volume(self, volume, ramp_type='SLEEP_TIMER_RAMP_TYPE'):
+        """Smoothly change the volume.
+
+        There are three ramp types available:
+            * ``'SLEEP_TIMER_RAMP_TYPE'`` (default): Linear ramp from the
+              current volume up or down to the new volume. The ramp rate is
+              1.25 steps per second. For example: To change from volume 50 to
+              volume 30 would take 16 seconds.
+            * ``'ALARM_RAMP_TYPE'``: Resets the volume to zero, waits for about
+              30 seconds, and then ramps the volume up to the desired value at
+              a rate of 2.5 steps per second. For example: Volume 30 would take
+              12 seconds for the ramp up (not considering the wait time).
+            * `'AUTOPLAY_RAMP_TYPE'``: Resets the volume to zero and then
+              quickly ramps up at a rate of 50 steps per second. For example:
+              Volume 30 will take only 0.6 seconds.
+
+        The ramp rate is selected by Sonos based on the chosen ramp type and
+        the resulting transition time returned.
+        This method is non blocking and has no network overhead once sent.
+
+        Args:
+            volume (int): The new volume.
+            ramp_type (str, optional): The desired ramp type, as described
+                above.
+
+        Returns:
+            int: The ramp time in seconds, rounded down. Note that this does
+                not include the wait time.
+        """
+        response = self.renderingControl.RampToVolume([
+            ('InstanceID', 0),
+            ('Channel', 'Master'),
+            ('RampType', ramp_type),
+            ('DesiredVolume', volume),
+            ('ResetVolumeAfter', False),
+            ('ProgramURI', '')
+        ])
+        return int(response['RampTime'])
 
     @only_on_master
     def play_from_queue(self, index, start=True):
@@ -449,27 +484,61 @@ class SoCo(_SocoSingletonBase):
         ])
 
     @only_on_master
-    def play_uri(self, uri='', meta='', title='', start=True):
-        """Play a given stream. Pauses the queue. If there is no metadata
-        passed in and there is a title set then a metadata object will be
-        created. This is often the case if you have a custom stream, it will
-        need at least the title in the metadata in order to play.
+    # pylint: disable=too-many-arguments
+    def play_uri(self, uri='', meta='', title='', start=True,
+                 force_radio=False):
+        """Play a URI
 
-        .. note:: A change in Sonos® (as of at least version 6.4.2) means that
-           the devices no longer accepts ordinary "http://" and "https://"
-           URIs. This method automatically replaces these prefixes with the
-           one that Sonos® expects: "x-rincon-mp3radio://".
+        Playing a URI will replace what was playing with the stream given by
+        the URI. For some streams at least a title is required as metadata.
+        This can be provided using the `meta` argument or the `title` argument.
+        If the `title` argument is provided minimal metadata will be generated.
+        If `meta` argument is provided the `title` argument is ignored.
 
         Args:
             uri (str): URI of the stream to be played.
-            meta (str): The track metadata to show in the player, DIDL format.
-            title (str): The track title to show in the player
-            start (bool): If the URI that has been set should start playing
-            convert_internet_uris (bool): FIXME
+            meta (str): The metadata to show in the player, DIDL format.
+            title (str): The title to show in the player (if no meta).
+            start (bool): If the URI that has been set should start playing.
+            force_radio (bool): forces a uri to play as a radio stream.
 
         Raises:
             SoCoException: (or a subclass) upon errors.
 
+        On a Sonos controller music is shown with one of the following display
+        formats and controls:
+
+        * Radio format: Shows the name of the radio station and other available
+          data. No seek, next, previous, or voting capability.
+          Examples: TuneIn, radioPup
+        * Smart Radio:  Shows track name, artist, and album. Limited seek, next
+          and sometimes voting capability depending on the Music Service.
+          Examples: Amazon Prime Stations, Pandora Radio Stations.
+        * Track format: Shows track name, artist, and album the same as when
+          playing from a queue. Full seek, next and previous capabilities.
+          Examples: Spotify, Napster, Rhapsody.
+
+        How it is displayed is determined by the URI prefix:
+        `x-sonosapi-stream:`, `x-sonosapi-radio:`, `x-rincon-mp3radio:`,
+        `hls-radio:` default to radio or smart radio format depending on the
+        stream. Others default to track format: `x-file-cifs:`, `aac:`,
+        `http:`, `https:`, `x-sonos-spotify:` (used by Spotify),
+        `x-sonosapi-hls-static:` (Amazon Prime),
+        `x-sonos-http:` (Google Play & Napster).
+
+        Some URIs that default to track format could be radio streams,
+        typically `http:`, `https:` or `aac:`.
+        To force display and controls to Radio format set `force_radio=True`
+
+        .. note:: Other URI prefixes exist but are less common.
+           If you have information on these please add to this doc string.
+
+        .. note:: A change in Sonos® (as of at least version 6.4.2) means that
+           the devices no longer accepts ordinary `http:` and `https:` URIs for
+           radio stations. This method has the option to replaces these
+           prefixes with the one that Sonos® expects: `x-rincon-mp3radio:` by
+           using the "force_radio=True" parameter.
+           A few streams may fail if not forced to to Radio format.
         """
         if meta == '' and title != '':
             meta_template = '<DIDL-Lite xmlns:dc="http://purl.org/dc/elements'\
@@ -485,10 +554,11 @@ class SoCo(_SocoSingletonBase):
             # Radio stations need to have at least a title to play
             meta = meta_template.format(title=title, service=tunein_service)
 
-        for prefix in ('http://', 'https://'):
-            if uri.startswith(prefix):
-                # Replace only the first instance
-                uri = uri.replace(prefix, 'x-rincon-mp3radio://', 1)
+        # change uri prefix to force radio style display and commands
+        if force_radio:
+            colon = uri.find(':')
+            if colon > 0:
+                uri = 'x-rincon-mp3radio{0}'.format(uri[colon:])
 
         self.avTransport.SetAVTransportURI([
             ('InstanceID', 0),
@@ -1001,23 +1071,27 @@ class SoCo(_SocoSingletonBase):
         zone_group_state_shared_cache.clear()
         self._parse_zone_group_state()
 
-    def switch_to_line_in(self):
+    def switch_to_line_in(self, source=None):
         """ Switch the speaker's input to line-in.
 
-        Returns:
-        True if the Sonos speaker successfully switched to line-in.
+        Args:
+            source (SoCo): The speaker whose line-in should be played.
+                Default is line-in from the speaker itself.
 
-        If an error occurs, we'll attempt to parse the error and return a UPnP
-        error code. If that fails, the raw response sent back from the Sonos
-        speaker will be returned.
-
-        Raises SoCoException (or a subclass) upon errors.
+        Raises:
+             SoCoException: Upon errors, we'll attempt to parse the error and
+                return a UPnP error code. If that fails, the raw response sent
+                back from the Sonos speaker will be returned.
 
         """
+        if source:
+            uid = source.uid
+        else:
+            uid = self.uid
 
         self.avTransport.SetAVTransportURI([
             ('InstanceID', 0),
-            ('CurrentURI', 'x-rincon-stream:{0}'.format(self.uid)),
+            ('CurrentURI', 'x-rincon-stream:{0}'.format(uid)),
             ('CurrentURIMetaData', '')
         ])
 
@@ -1236,6 +1310,7 @@ class SoCo(_SocoSingletonBase):
             self.speaker_info['mac_address'] = mac
 
             return self.speaker_info
+        return None
 
     def get_current_transport_info(self):
         """Get the current playback state.
@@ -1243,7 +1318,8 @@ class SoCo(_SocoSingletonBase):
         Returns:
         A dictionary containing the following information about the speakers
         playing state
-        current_transport_state (PLAYING, PAUSED_PLAYBACK, STOPPED),
+        current_transport_state (PLAYING, TRANSITIONING, PAUSED_PLAYBACK,
+                                 STOPPED),
         current_trasnport_status (OK, ?), current_speed(1,?)
 
         This allows us to know if speaker is playing or not. Don't know other
@@ -1344,28 +1420,36 @@ class SoCo(_SocoSingletonBase):
                                                                 **kwargs)
 
     @only_on_master
-    def add_uri_to_queue(self, uri):
+    def add_uri_to_queue(self, uri, position=0, as_next=False):
         """Adds the URI to the queue.
 
-        :param uri: The URI to be added to the queue
-        :type uri: str
+        For arguments and return value see `add_to_queue`.
         """
         # FIXME: The res.protocol_info should probably represent the mime type
         # etc of the uri. But this seems OK.
         res = [DidlResource(uri=uri, protocol_info="x-rincon-playlist:*:*:*")]
         item = DidlObject(resources=res, title='', parent_id='', item_id='')
-        return self.add_to_queue(item)
+        return self.add_to_queue(item, position, as_next)
 
     @only_on_master
-    def add_to_queue(self, queueable_item):
-        """Adds a queueable item to the queue."""
+    def add_to_queue(self, queueable_item, position=0, as_next=False):
+        """Adds a queueable item to the queue.
+
+        Args:
+            queueable_item (DidlObject or MusicServiceItem): The item to be
+                added to the queue
+            position (int): The index (1-based) at which the URI should be
+                added. Default is 0 (add URI at the end of the queue).
+            as_next (bool): Whether this URI should be played as the next
+                track in shuffle mode. This only works if `play_mode=SHUFFLE`.
+        """
         metadata = to_didl_string(queueable_item)
         response = self.avTransport.AddURIToQueue([
             ('InstanceID', 0),
             ('EnqueuedURI', queueable_item.resources[0].uri),
             ('EnqueuedURIMetaData', metadata),
-            ('DesiredFirstTrackNumberEnqueued', 0),
-            ('EnqueueAsNext', 1)
+            ('DesiredFirstTrackNumberEnqueued', position),
+            ('EnqueueAsNext', int(as_next))
         ])
         qnumber = response['FirstTrackNumberEnqueued']
         return int(qnumber)
@@ -1377,31 +1461,31 @@ class SoCo(_SocoSingletonBase):
             items (list): A sequence of items to the be added to the queue
             container (DidlObject, optional): A container object which
                 includes the items.
-
-        Returns:
-            int: The index at which the items were enqueued.
         """
-        uris = ' '.join([item.resources[0].uri for item in items])
-        uri_metadata = ' '.join([to_didl_string(item) for item in items])
         if container is not None:
             container_uri = container.resources[0].uri
             container_metadata = to_didl_string(container)
         else:
-            container_uri = ''
+            container_uri = ''  # Sonos seems to accept this as well
             container_metadata = ''  # pylint: disable=redefined-variable-type
-        response = self.avTransport.AddMultipleURIsToQueue([
-            ('InstanceID', 0),
-            ('UpdateID', 0),
-            ('NumberOfURIs', len(items)),
-            ('EnqueuedURIs', uris),
-            ('EnqueuedURIsMetaData', uri_metadata),
-            ('ContainerURI', container_uri),
-            ('ContainerMetaData', container_metadata),
-            ('DesiredFirstTrackNumberEnqueued', 0),
-            ('EnqueueAsNext', 0)
-        ])
-        qnumber = response['FirstTrackNumberEnqueued']
-        return int(qnumber)
+
+        chunk_size = 16  # With each request, we can only add 16 items
+        item_list = list(items)  # List for slicing
+        for index in range(0, len(item_list), chunk_size):
+            chunk = item_list[index:index + chunk_size]
+            uris = ' '.join([item.resources[0].uri for item in chunk])
+            uri_metadata = ' '.join([to_didl_string(item) for item in chunk])
+            self.avTransport.AddMultipleURIsToQueue([
+                ('InstanceID', 0),
+                ('UpdateID', 0),
+                ('NumberOfURIs', len(chunk)),
+                ('EnqueuedURIs', uris),
+                ('EnqueuedURIsMetaData', uri_metadata),
+                ('ContainerURI', container_uri),
+                ('ContainerMetaData', container_metadata),
+                ('DesiredFirstTrackNumberEnqueued', 0),
+                ('EnqueueAsNext', 0)
+            ])
 
     @only_on_master
     def remove_from_queue(self, index):
@@ -1438,6 +1522,7 @@ class SoCo(_SocoSingletonBase):
             ('InstanceID', 0),
         ])
 
+    @deprecated('0.13', "soco.music_library.get_favorite_radio_shows", '0.15')
     def get_favorite_radio_shows(self, start=0, max_items=100):
         """Get favorite radio shows from Sonos' Radio app.
 
@@ -1456,6 +1541,8 @@ class SoCo(_SocoSingletonBase):
         warnings.warn(message, stacklevel=2)
         return self.__get_favorites(RADIO_SHOWS, start, max_items)
 
+    @deprecated('0.13', "soco.music_library.get_favorite_radio_stations",
+                '0.15')
     def get_favorite_radio_stations(self, start=0, max_items=100):
         """Get favorite radio stations from Sonos' Radio app.
 
@@ -1474,6 +1561,7 @@ class SoCo(_SocoSingletonBase):
         warnings.warn(message, stacklevel=2)
         return self.__get_favorites(RADIO_STATIONS, start, max_items)
 
+    @deprecated('0.13', "soco.music_library.get_sonos_favorites", '0.15')
     def get_sonos_favorites(self, start=0, max_items=100):
         """Get Sonos favorites.
 

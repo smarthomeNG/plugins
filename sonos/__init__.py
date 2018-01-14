@@ -34,11 +34,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from queue import Empty
 import sys
 from urllib.parse import unquote
-
-import requests
 from requests.utils import quote
 from tinytag import TinyTag
-
 from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
 from lib.item import Item
@@ -95,11 +92,14 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             file_name = unquote(self.path)
             # prevent path traversal
             file_name = os.path.normpath('/' + file_name).lstrip('/')
-            file_path = os.path.join(WebserviceHttpHandler.webroot, file_name)
 
+            # search file in snippet and tts folder
+            file_path = os.path.join(WebserviceHttpHandler.snippet_folder, file_name)
             if not os.path.exists(file_path):
-                self.send_error(404, 'File Not Found: %s' % self.path)
-                return
+                file_path = os.path.join(WebserviceHttpHandler.webroot, file_name)
+                if not os.path.exists(file_path):
+                    self.send_error(404, 'File Not Found: %s' % self.path)
+                    return
 
             # get registered mime-type
             mime_type = self._get_mime_type_by_filetype(file_path)
@@ -133,11 +133,12 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
 
 
 class SimpleHttpServer:
-    def __init__(self, ip, port, root_path):
+    def __init__(self, ip, port, tts_folder, snippet_folder):
         self.server = ThreadedHTTPServer((ip, port), WebserviceHttpHandler)
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.daemon = True
-        WebserviceHttpHandler.webroot = root_path
+        WebserviceHttpHandler.webroot = tts_folder
+        WebserviceHttpHandler.snippet_folder = snippet_folder
 
     def start(self):
         self.thread.start()
@@ -2130,18 +2131,19 @@ class Speaker(object):
                         else:
                             sonos_speaker[member].set_volume(volumes[member], group_command=False)
 
-    def play_snippet(self, audio_file, local_webservice_path: str, webservice_url: str, volume: int = -1, fade_in=False) \
-            -> None:
+    def play_snippet(self, audio_file, local_webservice_path_snippet: str, webservice_url: str, volume: int = -1,
+                     fade_in=False) -> None:
         if not self._check_property():
             return
         if not self.is_coordinator:
-            sonos_speaker[self.coordinator].play_tts(audio_file, local_webservice_path, webservice_url, volume, fade_in)
+            sonos_speaker[self.coordinator].play_tts(audio_file, local_webservice_path_snippet, webservice_url, volume,
+                                                     fade_in)
         else:
             if "tinytag" not in sys.modules:
                 self._logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
                                    "install tinytag'.")
                 return
-            file_path = os.path.join(local_webservice_path, audio_file)
+            file_path = os.path.join(local_webservice_path_snippet, audio_file)
 
             if not os.path.exists(file_path):
                 self._logger.error("Sonos: Snippet file '{file_path}' does not exists.".format(file_path=file_path))
@@ -2218,10 +2220,10 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.2"
+    PLUGIN_VERSION = "1.4.3"
 
-    def __init__(self, sh, tts=False, local_webservice_path=None, discover_cycle="120",
-                 webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
+    def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
+                 discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
         super().__init__(**kwargs)
         self._sh = sh
         self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
@@ -2230,6 +2232,12 @@ class Sonos(SmartPlugin):
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
         self._tts = self.to_bool(tts, default=False)
         self._local_webservice_path = local_webservice_path
+
+        # see documentation: if no exclusive snippet path is set, we use the global one
+        if local_webservice_path_snippet is None:
+            self._local_webservice_path_snippet = self._local_webservice_path
+        else:
+            self._local_webservice_path_snippet = local_webservice_path_snippet
 
         get_param_func = getattr(self, "get_parameter_value", None)
         if callable(get_param_func):
@@ -2241,11 +2249,12 @@ class Sonos(SmartPlugin):
         if speaker_ips:
             self._logger.debug("Sonos: User-defined speaker IPs set. Auto-discover disabled.")
         # check user specified sonos speaker ips
-        for ip in speaker_ips:
-            if self.is_ip(ip):
-                self._speaker_ips.append(ip)
-            else:
-                self._logger.warning("Sonos: Invalid Sonos speaker ip '{ip}'. Ignoring.".format(ip=ip))
+        if speaker_ips:
+            for ip in speaker_ips:
+                if self.is_ip(ip):
+                    self._speaker_ips.append(ip)
+                else:
+                    self._logger.warning("Sonos: Invalid Sonos speaker ip '{ip}'. Ignoring.".format(ip=ip))
 
         # unique items in list
         self._speaker_ips = utils.unique_list(self._speaker_ips)
@@ -2275,6 +2284,15 @@ class Sonos(SmartPlugin):
         discover_cycle_default = 120
 
         if self._tts:
+            if self._local_webservice_path_snippet:
+                # we just need an existing path with read rights, this can be done by the user while shNG is running
+                # just throw some warnings
+                if not os.path.exists(self._local_webservice_path_snippet):
+                    self._logger.warning("Sonos: Local webservice snippet path was set to '{path}' but don't "
+                                         "exists".format(path=self._local_webservice_path))
+                if not os.access(self._local_webservice_path, os.R_OK):
+                    self._logger.warning("Sonos: Local webservice snippet path '{path}' is not readable.".format(
+                        path=self._local_webservice_path))
             if self._local_webservice_path:
                 # check access rights
                 try:
@@ -2294,8 +2312,10 @@ class Sonos(SmartPlugin):
                                                                                port=self._webservice_port)
                             self._logger.debug("Sonos: Starting webservice for TTS on {url}".format(
                                 url=self._webservice_url))
-                            self.webservice = SimpleHttpServer(self._webservice_ip, self._webservice_port,
-                                                               self._local_webservice_path)
+                            self.webservice = SimpleHttpServer(self._webservice_ip,
+                                                               self._webservice_port,
+                                                               self._local_webservice_path,
+                                                               self._local_webservice_path_snippet)
                             self.webservice.start()
                         else:
                             self._logger.warning(
@@ -2547,7 +2567,7 @@ class Sonos(SmartPlugin):
                         return
                     volume = self._resolve_child_command_int(item, 'snippet_volume', -1)
                     fade_in = self._resolve_child_command_bool(item, 'snippet_fade_in')
-                    sonos_speaker[uid].play_snippet(item(), self._local_webservice_path, self._webservice_url, volume,
+                    sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume,
                                                     fade_in)
 
     def _resolve_child_command_str(self, item: Item, child_command, default_value="") -> str:
@@ -2562,6 +2582,8 @@ class Sonos(SmartPlugin):
         for child in item.return_children():
             if self.has_iattr(child.conf, 'sonos_attrib'):
                 if self.get_iattr_value(child.conf, 'sonos_attrib') == child_command:
+                    if child() == "":
+                        return default_value
                     return child()
         return default_value
 

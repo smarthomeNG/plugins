@@ -4,7 +4,18 @@
 """Functionality to support saving and restoring the current Sonos state.
 
 This is useful for scenarios such as when you want to switch to radio
-and then back again to what was playing previously.
+or an announcement and then back again to what was playing previously.
+
+Warning:
+    Sonos has introduced control via Amazon Alexa. A new cloud queue is
+    created and at present there appears no way to restart this
+    queue from snapshot. Currently if a cloud queue was playing it will
+    not restart.
+
+Warning:
+    This class is designed to be created used and destroyed. It is not
+    designed to be reused or long lived. The init sets up defaults for
+    one use.
 """
 
 
@@ -45,6 +56,7 @@ class Snapshot(object):
         self.media_uri = None
         self.is_coordinator = False
         self.is_playing_queue = False
+        self.is_playing_cloud_queue = False
 
         self.volume = None
         self.mute = None
@@ -55,7 +67,7 @@ class Snapshot(object):
         # For coordinator zone playing from Queue:
         self.play_mode = None
         self.cross_fade = None
-        self.playlist_position = None
+        self.playlist_position = 0
         self.track_position = None
 
         # For coordinator zone playing a Stream:
@@ -77,15 +89,32 @@ class Snapshot(object):
                 Useful for determining whether playing an alert on a device
                 will ungroup it.
         """
+        # get if device coordinator (or slave) True (or False)
+        self.is_coordinator = self.device.is_coordinator
+
         # Get information about the currently playing media
         media_info = self.device.avTransport.GetMediaInfo([('InstanceID', 0)])
         self.media_uri = media_info['CurrentURI']
+        # Extract source from media uri - below some media URI value examples:
+        #  'x-rincon-queue:RINCON_000E5859E49601400#0'
+        #       - playing a local queue always #0 for local queue)
+        #
+        #  'x-rincon-queue:RINCON_000E5859E49601400#6'
+        #       - playing a cloud queue where #x changes with each queue)
+        #
+        #  -'x-rincon:RINCON_000E5859E49601400'
+        #       - a slave player pointing to coordinator player
 
-        # extract source from media uri
-        if self.media_uri.split(':')[0] != 'x-rincon':
-            self.is_coordinator = True
         if self.media_uri.split(':')[0] == 'x-rincon-queue':
-            self.is_playing_queue = True
+            # The pylint error below is a false positive, see about removing it
+            # in the future
+            # pylint: disable=simplifiable-if-statement
+            if self.media_uri.split('#')[1] == '0':
+                # playing local queue
+                self.is_playing_queue = True
+            else:
+                # playing cloud queue - started from Alexa
+                self.is_playing_cloud_queue = True
 
         # Save the volume, mute and other sound settings
         self.volume = self.device.volume
@@ -155,7 +184,6 @@ class Snapshot(object):
                 # was playing from playlist
 
                 if self.playlist_position is not None:
-
                     # The position in the playlist returned by
                     # get_current_track_info starts at 1, but when
                     # playing from playlist, the index starts at 0
@@ -171,6 +199,12 @@ class Snapshot(object):
                 # Need to make sure there is a proper track selected first
                 self.device.play_mode = self.play_mode
                 self.device.cross_fade = self.cross_fade
+
+            elif self.is_playing_cloud_queue:
+                # was playing a cloud queue started by Alexa
+                # No way yet to re-start this so prevent it throwing an error!
+                pass
+
             else:
                 # was playing a stream (radio station, file, or nothing)
                 # reinstate uri and meta data
@@ -202,11 +236,7 @@ class Snapshot(object):
                 # if fade requested in restore
                 # set volume to 0 then fade up to saved volume (non blocking)
                 self.device.volume = 0
-                self.device.renderingControl.RampToVolume(
-                    [('InstanceID', 0), ('Channel', 'Master'),
-                     ('RampType', 'SLEEP_TIMER_RAMP_TYPE'),
-                     ('DesiredVolume', self.volume),
-                     ('ResetVolumeAfter', False), ('ProgramURI', '')])
+                self.device.ramp_to_volume(self.volume)
             else:
                 # set volume
                 self.device.volume = self.volume

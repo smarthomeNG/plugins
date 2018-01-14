@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=not-context-manager
+
+# NOTE: The pylint not-content-manager warning is disabled pending the fix of
+# a bug in pylint: https://github.com/PyCQA/pylint/issues/782
 
 """Classes to handle Sonos UPnP Events and Subscriptions."""
 
@@ -25,6 +29,7 @@ from .xml import XML
 log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 
+# pylint: disable=too-many-branches
 def parse_event_xml(xml_event):
     """Parse the body of a UPnP event.
 
@@ -87,7 +92,7 @@ def parse_event_xml(xml_event):
     # uses this namespace
     properties = tree.findall(
         '{urn:schemas-upnp-org:event-1-0}property')
-    for prop in properties:
+    for prop in properties:  # pylint: disable=too-many-nested-blocks
         for variable in prop:
             # Special handling for a LastChange event specially. For details on
             # LastChange events, see
@@ -99,13 +104,17 @@ def parse_event_xml(xml_event):
                 # We assume there is only one InstanceID tag. This is true for
                 # Sonos, as far as we know.
                 # InstanceID can be in one of two namespaces, depending on
-                # whether we are looking at an avTransport event or a
-                # renderingControl event, so we need to look for both
+                # whether we are looking at an avTransport event, a
+                # renderingControl event, or a Queue event
+                # (there, it is named QueueID)
                 instance = last_change_tree.find(
                     "{urn:schemas-upnp-org:metadata-1-0/AVT/}InstanceID")
                 if instance is None:
                     instance = last_change_tree.find(
                         "{urn:schemas-upnp-org:metadata-1-0/RCS/}InstanceID")
+                if instance is None:
+                    instance = last_change_tree.find(
+                        "{urn:schemas-sonos-com:metadata-1-0/Queue/}QueueID")
                 # Look at each variable within the LastChange event
                 for last_change_var in instance:
                     tag = last_change_var.tag
@@ -244,7 +253,7 @@ class EventNotifyHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
-    def log_message(self, fmt, *args):
+    def log_message(self, fmt, *args):  # pylint: disable=arguments-differ
         # Divert standard webserver logging to the debug log
         log.debug(fmt, *args)
 
@@ -452,11 +461,11 @@ class Subscription(object):
         # pylint: disable=unbalanced-tuple-unpacking
         ip_address, port = event_listener.address
         headers = {
-            'Callback': '<http://{0}:{1}>'.format(ip_address, port),
+            'Callback': '<http://{}:{}>'.format(ip_address, port),
             'NT': 'upnp:event'
         }
         if requested_timeout is not None:
-            headers["TIMEOUT"] = "Second-{0}".format(requested_timeout)
+            headers["TIMEOUT"] = "Second-{}".format(requested_timeout)
         response = requests.request(
             'SUBSCRIBE', service.base_url + service.event_subscription_url,
             headers=headers)
@@ -530,17 +539,12 @@ class Subscription(object):
         if requested_timeout is None:
             requested_timeout = self.requested_timeout
         if requested_timeout is not None:
-            headers["TIMEOUT"] = "Second-{0}".format(requested_timeout)
-
-        try:
-            response = requests.request(
-                'SUBSCRIBE',
-                self.service.base_url + self.service.event_subscription_url,
-                headers=headers, timeout=1)
-        except:
-            log.warning("Could not subscribe event: {sid}".format(sid=self.sid))
-            return
-
+            headers["TIMEOUT"] = "Second-{}".format(requested_timeout)
+        response = requests.request(
+            'SUBSCRIBE',
+            self.service.base_url + self.service.event_subscription_url,
+            headers=headers)
+        response.raise_for_status()
         timeout = response.headers['timeout']
         # According to the spec, timeout can be "infinite" or "second-123"
         # where 123 is a number of seconds.  Sonos uses "Second-123" (with a
@@ -575,15 +579,11 @@ class Subscription(object):
         headers = {
             'SID': self.sid
         }
-        try:
-            response = requests.request(
-                'UNSUBSCRIBE',
-                self.service.base_url + self.service.event_subscription_url,
-                headers=headers, timeout=1)
-            response.raise_for_status()
-        except Exception:
-            log.debug("Could not unsubscribe. Speaker seems to be offline.")
-
+        response = requests.request(
+            'UNSUBSCRIBE',
+            self.service.base_url + self.service.event_subscription_url,
+            headers=headers)
+        response.raise_for_status()
         self.is_subscribed = False
         self._timestamp = None
         log.info(
