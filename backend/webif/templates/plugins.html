@@ -127,12 +127,12 @@
 
 							{% if p.metadata.get_string('documentation') %}
 							{{ _('Documentation') }}:
-							<a target="_blank" href="{{ p.metadata.get_string('documentation') }}">{{ p.metadata.get_string('documentation') }}</a><br/>
+							<a class="text-smarthomeng" target="_blank" href="{{ p.metadata.get_string('documentation') }}">{{ p.metadata.get_string('documentation') }}</a><br/>
 							{% endif %}
 
 							{% if p.metadata.get_string('support') %}
 							{{ _('Support') }}:
-							<a target="_blank" href="{{ p.metadata.get_string('support') }}">{{ p.metadata.get_string('support') }}</a><br/>
+							<a class="text-smarthomeng" target="_blank" href="{{ p.metadata.get_string('support') }}">{{ p.metadata.get_string('support') }}</a><br/>
 							{% endif %}
 
 							{{ _('Schlüsselwörter') }}:
