@@ -193,7 +193,7 @@
 								<td class="p-1" {% if logic.watch_item_list|length > 0 %}onClick="$('#{{ logic.name }}_additional3').toggle();" style="cursor: pointer;"{% endif %}>
 									{% if logic.watch_item_list|length == 0 %}-{% else %}{% if not logic.enabled %}<span style="color:#bbb;">{% endif %}{{ logic.watch_item_list|length}}{% if not logic.enabled %}</span>{% endif %} <span class="fas fa-arrow-circle-down" {% if not logic.enabled %}style="color: #ddd;"{% endif %}></span>{% endif %}
 								</td>
-								<td class="p-1"><a href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
+								<td class="p-1"><a class="text-smarthomeng" href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 								<td class="p-1"></td>
 								</form>
 							</tr>
