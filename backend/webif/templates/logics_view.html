@@ -17,11 +17,11 @@
 		<form name="input" action="logics_view.html" method="POST" enctype="multipart/form-data">
 		<input type="hidden" name="logicname" readonly="true" value="{{ logicname }}" type="text"/>
 		<input type="hidden" name="file_path" readonly="true" value="{{ file_path }}" type="text"/>
-			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-dark btn-sm"><i class="fas fa-hand-pointer"></i> {{ _('Auslösen','button') }}</button>&nbsp;
+			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-smarthomeng btn-sm"><i class="fas fa-hand-pointer"></i> {{ _('Auslösen','button') }}</button>&nbsp;
 		{% if thislogic.enabled %}
-			<button name="disable" class="btn btn-dark btn-sm"><i class="fas fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
+			<button name="disable" class="btn btn-smarthomeng btn-sm"><i class="fas fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
 		{% else %}
-			<button name="enable" class="btn btn-dark btn-xs"><i class="fas fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
+			<button name="enable" class="btn btn-smarthomeng btn-xs"><i class="fas fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
 		{% endif %}
 		&nbsp;|&nbsp;|&nbsp;
 			<button id="save" name="save" class="btn btn-success btn-sm"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern','button') }}</button>&nbsp;
