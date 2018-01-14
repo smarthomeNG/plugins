@@ -11,7 +11,7 @@ from lib.utils import Utils
 
 
 class Harmony(SmartPlugin):
-    PLUGIN_VERSION = "1.4.0"smar
+    PLUGIN_VERSION = "1.4.0"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, harmony_ip, harmony_port=5222, sleekxmpp_debug=False):
