@@ -11,7 +11,7 @@ from lib.utils import Utils
 
 
 class Harmony(SmartPlugin):
-    PLUGIN_VERSION = "1.3.0.5"
+    PLUGIN_VERSION = "1.4.0"smar
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, harmony_ip, harmony_port=5222, sleekxmpp_debug=False):
@@ -38,8 +38,13 @@ class Harmony(SmartPlugin):
         self._scheduler_name = "harmony_init"
 
     def _message(self, message):
+        self._logger.debug("Harmony: message: {msg}".format(msg=message))
+        # we have to check two response due to some version changes in harmony device
         match = re.match(r".*?startActivityFinished\">activityId=(\d+):errorCode=200.*",
                          html.unescape(str(message)))
+        if not match:
+            match = re.match(r".*?startActivityFinished\">errorCode=200:errorString=OK:activityId=(\d+)",
+                             html.unescape(str(message)))
         if match:
             self._set_current_activity(int(match.group(1)))
 
@@ -114,9 +119,12 @@ class Harmony(SmartPlugin):
             item(activity_name)
 
     def _send_activity(self, activity):
+        activity = int(activity)
         label = "unknown"
-        if activity in self._activities:
-            label = self._activities[activity]
+        for activity_id, activity_name in self._activities.items():
+            if activity_id == activity:
+                label = activity_name
+                break
 
         self._logger.debug("Trigger activity '{label}' with id '{activity}'".format(label=label, activity=activity))
         if self._client.start_activity(activity):
