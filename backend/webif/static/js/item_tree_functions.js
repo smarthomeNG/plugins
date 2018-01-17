@@ -57,6 +57,8 @@ function getTree() {
         $('#tree').treeview({
             data: item_tree,
 			levels: 1,
+			expandIcon: 'plusIcon',
+		    collapseIcon: 'minusIcon',
             showTags: true,
             onNodeSelected: function(event, node) {
                 selectedNode = node;
