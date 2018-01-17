@@ -1194,6 +1194,11 @@ dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_
 ### is_host_active(mac_address)
 This function checks, if a device running on a given mac address is active on the FritzDevice. Can be used for presence detection.
 
+CURL for this function:
+```bash
+curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/hosts" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:Hosts:1#GetSpecificHostEntry" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:GetSpecificHostEntry xmlns:u='urn:dslforum-org:service:Hosts:1'><s:NewMACAddress>XX:XX:XX:XX:XX:XX</s:NewMACAddress></u:GetSpecificHostEntry></s:Body></s:Envelope>" -s -k
+```
+
 ### get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book
 
