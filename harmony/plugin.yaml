@@ -33,7 +33,7 @@ parameters:
     type: bool
     description:
       de: "(optional) Debug-Ausgaben der sleekxmpp-Klasse. Default: false"
-      en: "(optional) Debug print of ht esleekxmpp class. Default: false"
+      en: "(optional) Debug print of the sleekxmpp class. Default: false"
 
 item_attributes:
     # Definition of item attributes defined by this plugin

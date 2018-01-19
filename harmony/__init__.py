@@ -121,10 +121,8 @@ class Harmony(SmartPlugin):
     def _send_activity(self, activity):
         activity = int(activity)
         label = "unknown"
-        for activity_id, activity_name in self._activities.items():
-            if activity_id == activity:
-                label = activity_name
-                break
+        if activity in self._activities:
+            label = self._activities[activity]
 
         self._logger.debug("Trigger activity '{label}' with id '{activity}'".format(label=label, activity=activity))
         if self._client.start_activity(activity):
