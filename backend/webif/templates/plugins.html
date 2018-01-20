@@ -10,7 +10,7 @@
 <div class="table-responsive">
 	<table class="table table-striped table-hover pluginList">
 		<thead>
-			<tr>
+			<tr class="shng_heading">
 				<th style="width: 30px;"></th>
 				<th style="width: 30px;"></th>
 				<th style="width: 30px;">{{ _('Type') }}</th>
@@ -85,7 +85,8 @@
 					<td class="py-1">-</td>
 					<td class="py-1">-</td>
 					<td class="py-1">-</td>
-					<td class="py-1">-</td>
+					<td class="py-1"></td>
+					<td class="py-1"></td>
 				{%endif%}
 			</tr>
 			<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
@@ -127,12 +128,12 @@
 
 							{% if p.metadata.get_string('documentation') %}
 							{{ _('Documentation') }}:
-							<a class="text-smarthomeng" target="_blank" href="{{ p.metadata.get_string('documentation') }}">{{ p.metadata.get_string('documentation') }}</a><br/>
+							<a class="text-shng" target="_blank" href="{{ p.metadata.get_string('documentation') }}">{{ p.metadata.get_string('documentation') }}</a><br/>
 							{% endif %}
 
 							{% if p.metadata.get_string('support') %}
 							{{ _('Support') }}:
-							<a class="text-smarthomeng" target="_blank" href="{{ p.metadata.get_string('support') }}">{{ p.metadata.get_string('support') }}</a><br/>
+							<a class="text-shng" target="_blank" href="{{ p.metadata.get_string('support') }}">{{ p.metadata.get_string('support') }}</a><br/>
 							{% endif %}
 
 							{{ _('Schlüsselwörter') }}:

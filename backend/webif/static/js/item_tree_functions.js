@@ -59,6 +59,7 @@ function getTree() {
 			levels: 1,
 			expandIcon: 'plusIcon',
 		    collapseIcon: 'minusIcon',
+			selectedBackColor: '#709cc2',
             showTags: true,
             onNodeSelected: function(event, node) {
                 selectedNode = node;

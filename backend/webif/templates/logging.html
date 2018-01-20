@@ -10,7 +10,7 @@
 <div class="table-responsive">
         <table class="table table-striped table-hover loggerList">
             <thead>
-                <tr>
+                <tr class="shng_heading">
                     <th>{{ _('logger name') }}</th>
                     <th>{{ _('disabled') }}</th>
                     <th>{{ _('level') }}</th>
@@ -44,7 +44,7 @@
                     </td>
                     <td class="py-1">{% for fn in l.filenames %}
                         {% if (fn != '') and (not loop.first) %}, {% endif %}
-                        <a class="text-smarthomeng" href="log_view.html?logfile={{ get_basename(fn) }}">{{ fn }}</a>
+                        <a class="text-shng" href="log_view.html?logfile={{ get_basename(fn) }}">{{ fn }}</a>
                         {% endfor %}
                     </td>
                 </tr>

@@ -23,9 +23,9 @@
         <div class="table-responsive">
             <table class="table table-striped table-hover">
                 <thead>
-                    <tr>
+                    <tr class="shng_heading">
                         <th scope="col" style="width: 100px;"></th>
-                        <th scope="col" style="width: 250px;">{{ _('Eigenschaft') }}</th>
+                        <th scope="col" style="width: 280px;">{{ _('Eigenschaft') }}</th>
                         <th scope="col">{{ _('Status') }}</th>
                     </tr>
                 </thead>
@@ -82,7 +82,7 @@
         <div class="table-responsive" >
             <table id="package_check" class="table table-hover">
                 <thead>
-                    <tr>
+                    <tr class="shng_heading">
                         <th scope="col" style="width: 25%;">Python Package</th>
                         <th scope="col" style="width: 25%;">{{ _('installierte Version') }}</th>
                         <th scope="col" style="width: 25%;">{{ _('Anforderungen') }}</th>
@@ -117,11 +117,11 @@ $.getJSON('pypi.json', function(result) {
         }
         if (oldSort != newSort) {
             if (element['is_required_for_testsuite']) {
-	            $('#package_check').find("tbody").append("<tr><td class=\"py-1\" style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für die Testsuite') }}</td></tr>");
+	            $('#package_check').find("tbody").append("<tr class=\"shng_heading\"><td class=\"py-1\" style=\"background:#eee;\" colspan=\"5\">{{ _('Pakete für die Testsuite') }}</td></tr>");
 			} else if (element['is_required_for_docbuild']) {
-	            $('#package_check').find("tbody").append("<tr><td class=\"py-1\" style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für den Bau der Dokumentation') }}</td></tr>");
+	            $('#package_check').find("tbody").append("<tr class=\"shng_heading\"><td class=\"py-1\" style=\"background:#eee;\" colspan=\"5\">{{ _('Pakete für den Bau der Dokumentation') }}</td></tr>");
             } else {
-	            $('#package_check').find("tbody").append("<tr><td class=\"py-1\" style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
+	            $('#package_check').find("tbody").append("<tr class=\"shng_heading\"><td class=\"py-1\" style=\"background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
 			}
         }
 
@@ -217,7 +217,7 @@ $.getJSON('pypi.json', function(result) {
         /* Link package PyPi URL */
         var packageName = element['name'];
         if (element['pypi_doc_url'] != '') {
-            packageName = "<a target=\"_blank\" class=\"text-smarthomeng pypi_link\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
+            packageName = "<a target=\"_blank\" class=\"text-shng pypi_link\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
         }
 
         /* Build row for normal content */
