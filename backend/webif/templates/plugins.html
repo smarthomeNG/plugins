@@ -69,7 +69,7 @@
 
 					<td class="py-1">{% if not p.stopped %}
 							{% for webif in webifs %}
-								{% if webif['Instance'] == '' or webif['Instance'] == p.instancename %}
+								{% if webif['Instance'] == p.instancename %}
 									<img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="width: 25px;"/>
 									<script>
 										$('#webif_link_{{outer_loop.index}}_{{loop.index}}').click(function(e){
