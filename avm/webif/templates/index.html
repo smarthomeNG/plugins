@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block content %}
+<body>
+<div class="container-fluid m-3">
+	<div style="margin-left: 2px; margin-right: 2px;" class="row">
+		<div align="center" class="col-sm-2">
+			&nbsp;<img src="static/img/plugin_logo.png" width="150" height="150">
+		</div>
+		<div class="col-sm-4">
+			<h3>SmartHomeNG</h3>
+			<h5>{{ plugin_shortname }} Plugin v{{ plugin_version }}</h5>
+			{% if p.get_instance_name() != '' %}
+			<h5>instance: {{p.get_instance_name() }}</h5>
+			{% endif %}
+			<br>
+			<h6>host: {{ p._fritz_device.get_host() }}</h6>
+			<h6>port: {{ p._fritz_device.get_port() }}</h6>
+		</div>
+		<div class="col-sm-6">
+
+			<table class="table table-striped table-hover">
+				<tbody>
+					<tr>
+						<td class="py-1"><strong>Verbunden</strong></td>
+						<td class="py-1">Ja</td>
+						<td class="py-1" width="300px"></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<h5>AVM Items</h5>
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>Pfad</th>
+					<th>Typ</th>
+					<th>Wert</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in p._fritz_device.get_items() %}
+					<tr id="{{ loop.index }}_click" style="cursor: pointer;">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item() }}</td>
+					</tr>
+					<script>
+						/* If foldable content: add onclick for table row, stop unfolding when clicking pypi link inside. */
+						$('#{{ loop.index }}_click').click(function(){
+							$('#{{ loop.index }}_additional').toggle();
+						});
+						$('#{{ loop.index }}_additional').click(function(){
+							$('#{{ loop.index }}_additional').toggle();
+						});
+					</script>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+
+	</div>
+</div>
+</div>
+
+{% endblock %}
