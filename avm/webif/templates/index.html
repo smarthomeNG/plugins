@@ -23,6 +23,9 @@
 			{% if p._fritz_device.get_password() %}
 			<h6>user: {{ p._fritz_device.get_password() }}</h6>
 			{% endif %}
+			{% if p._call_monitor %}
+			<h6>Call Monitor: an</h6>
+			{% endif %}
 		</div>
 		<div class="col-sm-6">
 
