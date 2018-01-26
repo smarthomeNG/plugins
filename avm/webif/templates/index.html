@@ -48,20 +48,11 @@
 			</thead>
 			<tbody>
 				{% for item in p._fritz_device.get_items() %}
-					<tr id="{{ loop.index }}_click" style="cursor: pointer;">
+					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item._path }}</td>
 						<td class="py-1">{{ item._type }}</td>
 						<td class="py-1">{{ item() }}</td>
 					</tr>
-					<script>
-						/* If foldable content: add onclick for table row, stop unfolding when clicking pypi link inside. */
-						$('#{{ loop.index }}_click').click(function(){
-							$('#{{ loop.index }}_additional').toggle();
-						});
-						$('#{{ loop.index }}_additional').click(function(){
-							$('#{{ loop.index }}_additional').toggle();
-						});
-					</script>
 				{% endfor %}
 			</tbody>
 		</table>
