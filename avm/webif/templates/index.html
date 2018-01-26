@@ -16,7 +16,7 @@
 			{% endif %}
 			<br>
 			<h6>host: {{ p._fritz_device.get_host() }}</h6>
-			<h6>port: {{ p._fritz_device.get_port() }}</h6>
+			<h6>port: {{ p._fritz_device.get_port() }} {% if p._fritz_device.is_ssl() %}(HTTPS){% endif %}</h6>
 			{% if p._fritz_device.get_user() %}
 			<h6>user: {{ p._fritz_device.get_user() }}</h6>
 			{% endif %}
