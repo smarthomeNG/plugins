@@ -61,14 +61,21 @@
 				<tr class="shng_heading">
 					<th>Pfad</th>
 					<th>Typ</th>
+					<th>AVM Data Type</th>
 					<th>Wert</th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for item in p._fritz_device.get_items() %}
+					{% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item._path }}</td>
 						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 					</tr>
 				{% endfor %}
@@ -81,35 +88,60 @@
 				<tr class="shng_heading">
 					<th>Pfad</th>
 					<th>Typ</th>
+					<th>AVM Data Type</th>
 					<th>Wert</th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for item in p._monitoring_service.get_items() %}
+				    {% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item._path }}</td>
 						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 					</tr>
 				{% endfor %}
 				{% for item in p._monitoring_service.get_trigger_items() %}
+					{% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item._path }}</td>
 						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 					</tr>
 				{% endfor %}
 				{% for item in p._monitoring_service.get_items_incoming() %}
+					{% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item._path }}</td>
 						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 					</tr>
 				{% endfor %}
 				{% for item in p._monitoring_service.get_items_outgoing() %}
+					{% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item._path }}</td>
 						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 					</tr>
 				{% endfor %}
