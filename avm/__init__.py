@@ -150,7 +150,7 @@ class MonitoringService():
         self._listen_active = True
         buffer = ""
         data = True
-        while self._listen_active == True:
+        while self._listen_active:
             data = self.conn.recv(recv_buffer)
             buffer += data.decode("utf-8")
             while buffer.find("\n") != -1:
@@ -163,13 +163,13 @@ class MonitoringService():
     def _start_counter(self, timestamp, direction):
         if direction == 'incoming':
             self._call_connect_timestamp = time.mktime(
-                datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
+                datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_incoming = threading.Thread(target=self._count_duration_incoming,
                                                                       name="MonitoringService_Duration_Incoming_%s" % self._plugin_instance.get_instance_name()).start()
             self.logger.debug('Counter incoming - STARTED')
         elif direction == 'outgoing':
             self._call_connect_timestamp = time.mktime(
-                datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
+                datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_outgoing = threading.Thread(target=self._count_duration_outgoing,
                                                                       name="MonitoringService_Duration_Outgoing_%s" % self._plugin_instance.get_instance_name()).start()
             self.logger.debug('Counter outgoing - STARTED')
@@ -190,7 +190,7 @@ class MonitoringService():
 
     def _count_duration_incoming(self):
         self._call_active['incoming'] = True
-        while (self._call_active['incoming']):
+        while self._call_active['incoming']:
             if not self._duration_item['call_duration_incoming'] is None:
                 duration = time.time() - self._call_connect_timestamp
                 self._duration_item['call_duration_incoming'](int(duration))
@@ -198,7 +198,7 @@ class MonitoringService():
 
     def _count_duration_outgoing(self):
         self._call_active['outgoing'] = True
-        while (self._call_active['outgoing']):
+        while self._call_active['outgoing']:
             if not self._duration_item['call_duration_outgoing'] is None:
                 duration = time.time() - self._call_connect_timestamp
                 self._duration_item['call_duration_outgoing'](int(duration))
@@ -219,17 +219,17 @@ class MonitoringService():
         self.logger.debug(line)
         line = line.split(";")
 
-        if (line[1] == "RING"):
+        if line[1] == "RING":
             call_from = line[3]
             call_to = line[4]
             self._trigger(call_from, call_to, line[0], line[2], line[1], '')
-        elif (line[1] == "CALL"):
+        elif line[1] == "CALL":
             call_from = line[4]
             call_to = line[5]
             self._trigger(call_from, call_to, line[0], line[2], line[1], line[3])
-        elif (line[1] == "CONNECT"):
+        elif line[1] == "CONNECT":
             self._trigger('', '', line[0], line[2], line[1], line[3])
-        elif (line[1] == "DISCONNECT"):
+        elif line[1] == "DISCONNECT":
             self._trigger('', '', '', line[2], line[1], '')
 
     def _trigger(self, call_from, call_to, time, callid, event, branch):
@@ -630,7 +630,7 @@ class AVM(SmartPlugin):
         :return: Array of calllist entries
         """
         # request and cache calllist
-        if (self._calllist_cache is None):
+        if self._calllist_cache is None:
             self._calllist_cache = self.get_calllist(self._call_monitor_incoming_filter)
         elif len(self._calllist_cache) == 0:
             self._calllist_cache = self.get_calllist(self._call_monitor_incoming_filter)
