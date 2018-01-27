@@ -11,10 +11,10 @@ from lib.utils import Utils
 
 
 class Harmony(SmartPlugin):
-    PLUGIN_VERSION = "1.3.0.5"
+    PLUGIN_VERSION = "1.4.0"
     ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, sh, harmony_ip, harmony_port=5222, sleekxmpp_debug=False):
+    def __init__(self, sh):
         self._is_active = False
         self._get_config_reconnect = 300  # scheduler time to get config from Hub and for possible reconnect
         self._scheduler = sched.scheduler(time.time, time.sleep)
@@ -25,21 +25,26 @@ class Harmony(SmartPlugin):
         self._current_activity_id_items = []
         self._current_activity_name_items = []
 
-        if Utils.to_bool(sleekxmpp_debug):
+        if Utils.to_bool(self.get_parameter_value("sleekxmpp_debug")):
             self._logger.debug("debug output for sleekxmpp library")
             logging.getLogger("sleekxmpp").setLevel(logging.DEBUG)
         else:
             logging.getLogger("sleekxmpp").setLevel(logging.ERROR)
 
         self._sh = sh
-        self._ip = harmony_ip
-        self._port = harmony_port
+        self._ip = self.get_parameter_value("harmony_ip")
+        self._port = self.get_parameter_value("harmony_port")
         self._reconnect_timeout = 60
         self._scheduler_name = "harmony_init"
 
     def _message(self, message):
+        self._logger.debug("Harmony: message: {msg}".format(msg=message))
+        # we have to check two response due to some version changes in harmony device
         match = re.match(r".*?startActivityFinished\">activityId=(\d+):errorCode=200.*",
                          html.unescape(str(message)))
+        if not match:
+            match = re.match(r".*?startActivityFinished\">errorCode=200:errorString=OK:activityId=(\d+)",
+                             html.unescape(str(message)))
         if match:
             self._set_current_activity(int(match.group(1)))
 
@@ -114,6 +119,7 @@ class Harmony(SmartPlugin):
             item(activity_name)
 
     def _send_activity(self, activity):
+        activity = int(activity)
         label = "unknown"
         if activity in self._activities:
             label = self._activities[activity]
