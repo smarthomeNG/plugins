@@ -11,6 +11,12 @@
 		<div class="col-sm-4">
 			<h3>SmartHomeNG</h3>
 			<h5>{{ plugin_shortname }} Plugin v{{ plugin_version }}</h5>
+			{% if p.get_instance_name() != '' %}
+                <h5>Instanz: {{ p.get_instance_name() }}</h5>
+            {% else %}
+                <br/>
+            {% endif %}
+			<h6>serial: {{ p.get_serial() }}</h6>
 		</div>
 		<div class="col-sm-6">
 			<table class="table table-striped table-hover">

@@ -63,6 +63,12 @@ class SMA_EM(SmartPlugin):
         if not self.init_webinterface():
             self._init_complete = False
 
+    def get_serial(self):
+        return self._serial
+
+    def get_time_sleep(self):
+        return self._time_sleep
+
     def run(self):
         """
         Run method for the plugin
