@@ -2046,8 +2046,10 @@ class WebInterface:
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
-        self.tplenv = Environment(loader=FileSystemLoader(self.plugin.path_join(self.webif_dir, 'templates')))
-
+        mytemplates = self.plugin.path_join(self.webif_dir, 'templates')
+        globaltemplates = self.plugin.mod_http.gtemplates_dir
+        self.tplenv = Environment(loader=FileSystemLoader([mytemplates, globaltemplates]))
+        
     @cherrypy.expose
     def index(self):
         """
