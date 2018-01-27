@@ -337,3 +337,6 @@ class SMA_EM(SmartPlugin):
                    'q3surpluscounter': q3surpluscounter,
                    'v3': v3, 'thd3': thd3, 'cosphi3': cosphi3}
         return emparts
+
+    def get_items(self):
+        return self._items

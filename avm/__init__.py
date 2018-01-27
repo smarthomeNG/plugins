@@ -367,7 +367,7 @@ class MonitoringService():
                 self._call_incoming_cid = None
 
 
-class FritzDevice():
+class FritzDevice:
     """
     This class encapsulates information related to a specific FritzDevice, such has host, port, ssl, username, password, or related items
     """
@@ -2024,7 +2024,6 @@ class AVM(SmartPlugin):
 
         return True
 
-
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
@@ -2062,4 +2061,3 @@ class WebInterface:
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
                            p=self.plugin)
-
