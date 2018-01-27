@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block content %}
+<body>
+<div class="container-fluid m-3">
+	<div style="margin-left: 2px; margin-right: 2px;" class="row">
+		<div align="center" class="col-sm-2">
+			&nbsp;<img src="static/img/plugin_logo.png" width="150" height="150">
+		</div>
+		<div class="col-sm-4">
+			<h3>SmartHomeNG</h3>
+			<h5>{{ plugin_shortname }} Plugin v{{ plugin_version }}</h5>
+		</div>
+		<div class="col-sm-6">
+
+			<table class="table table-striped table-hover">
+				<tbody>
+					<tr>
+						<td class="py-1"><strong>Verbunden</strong></td>
+						<td class="py-1">Ja</td>
+						<td class="py-1" width="300px"></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<h5>SMA EM Items ({{ p.get_items()|length }})</h5>
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>Pfad</th>
+					<th>Typ</th>
+					<th>SMA EM Data Type</th>
+					<th>Wert</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key, item in p.get_items().items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ key }}</td>
+						<td class="py-1">{{ item() }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+{% endblock %}
