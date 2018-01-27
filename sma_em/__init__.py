@@ -33,7 +33,7 @@ from lib.module import Modules
 
 class SMA_EM(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0.2"
+    PLUGIN_VERSION = "1.5.0.3"
 
     # listen to the Multicast; SMA-Energymeter sends its measurements to 239.12.255.254:9522
     MCAST_GRP = '239.12.255.254'
