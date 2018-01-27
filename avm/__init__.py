@@ -125,6 +125,18 @@ class MonitoringService():
         else:
             self._items.append(item)
 
+    def get_items(self):
+        return self._items
+
+    def get_trigger_items(self):
+        return self._trigger_items
+
+    def get_items_incoming(self):
+        return self._items_incoming
+
+    def get_items_outgoing(self):
+        return self._items_outgoing
+
     def set_duration_item(self, item):
         """
         Sets specific items which count the duration of an incoming or outgoing call
