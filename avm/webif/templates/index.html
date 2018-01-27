@@ -4,24 +4,22 @@
 {% block content %}
 <body>
 <div class="container-fluid m-3">
-	<div style="margin-left: 2px; margin-right: 2px;" class="row">
-		<div align="center" class="col-sm-2">
-			&nbsp;<img src="static/img/plugin_logo.png" width="150" height="150">
+	<div style="margin-right: 2px;" class="row">
+		<div class="card col-sm-2">
+			<img src="static/img/plugin_logo.png" width="150" height="150" style="margin-left: auto; margin-right: auto; display: block;">
 		</div>
 		<div class="col-sm-4">
 			<h3>SmartHomeNG</h3>
 			<h5>{{ plugin_shortname }} Plugin v{{ plugin_version }}</h5>
 			{% if p.get_instance_name() != '' %}
-			<h5>instance: {{p.get_instance_name() }}</h5>
-			{% endif %}
-			<br>
+                <h5>Instanz: {{ p.get_instance_name() }}</h5>
+            {% else %}
+                <br/>
+            {% endif %}
 			<h6>host: {{ p._fritz_device.get_host() }}</h6>
 			<h6>port: {{ p._fritz_device.get_port() }} {% if p._fritz_device.is_ssl() %}(HTTPS){% endif %}</h6>
 			{% if p._fritz_device.get_user() %}
 			<h6>user: {{ p._fritz_device.get_user() }}</h6>
-			{% endif %}
-			{% if p._fritz_device.get_password() %}
-			<h6>password: {{ p._fritz_device.get_password() }}</h6>
 			{% endif %}
 		</div>
 		<div class="col-sm-6">
