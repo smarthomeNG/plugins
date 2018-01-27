@@ -23,9 +23,6 @@
 			{% if p._fritz_device.get_password() %}
 			<h6>user: {{ p._fritz_device.get_password() }}</h6>
 			{% endif %}
-			{% if p._call_monitor %}
-			<h6>Call Monitor: an</h6>
-			{% endif %}
 		</div>
 		<div class="col-sm-6">
 
@@ -34,6 +31,18 @@
 					<tr>
 						<td class="py-1"><strong>Verbunden</strong></td>
 						<td class="py-1">Ja</td>
+						<td class="py-1" width="300px"></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td class="py-1"><strong>Call Monitor</strong></td>
+						<td class="py-1">{% if p._call_monitor %}Ja{% else %}Nein{% endif %}</td>
+						<td class="py-1" width="300px"></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td class="py-1"><strong>SSL</strong></td>
+						<td class="py-1">{% if p._fritz_device.is_ssl() %}Ja{% else %}Nein{% endif %}</td>
 						<td class="py-1" width="300px"></td>
 						<td></td>
 					</tr>
