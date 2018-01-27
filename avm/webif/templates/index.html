@@ -74,6 +74,48 @@
 				{% endfor %}
 			</tbody>
 		</table>
+		{% if p._call_monitor %}
+		<h5>Call Monitor Items</h5>
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>Pfad</th>
+					<th>Typ</th>
+					<th>Wert</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in p._monitoring_service.get_items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item() }}</td>
+					</tr>
+				{% endfor %}
+				{% for item in p._monitoring_service.get_trigger_items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item() }}</td>
+					</tr>
+				{% endfor %}
+				{% for item in p._monitoring_service.get_items_incoming() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item() }}</td>
+					</tr>
+				{% endfor %}
+				{% for item in p._monitoring_service.get_items_outgoing() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item() }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endif %}
 	</div>
 
 	</div>
