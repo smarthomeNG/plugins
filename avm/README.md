@@ -499,18 +499,18 @@ are parsed as child items. In the example below there is a comment in the respec
             ain = 14324 0432601 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl = rw
             [[[[energy]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = energy
+                avm_data_type@fritzbox_7490 = energy
                 type = num
                 visu_acl = ro
             [[[[power]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = power
+                avm_data_type@fritzbox_7490 = power
                 type = num
                 sqlite = yes
                 enforce_updates=true
                 visu_acl = ro
                 eval = value / 100
             [[[[temperature]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = temperature
+                avm_data_type@fritzbox_7490 = temperature
                 type = num
                 visu_acl = ro
         [[[socket_office]]]
@@ -872,19 +872,19 @@ avm:
                 # these items need to be child items from network_device, an @... must not be set
                 ip:
                     type: str
-                    avm_data_type: device_ip
+                    avm_data_type@fritzbox_7490: device_ip
                     visu_acl: ro
 
                 # these items need to be child items from network_device, an @... must not be set
                 connection_type:
                     type: str
-                    avm_data_type: device_connection_type
+                    avm_data_type@fritzbox_7490: device_connection_type
                     visu_acl: ro
 
                 # these items need to be child items from network_device, an @... must not be set
                 hostname:
                     type: str
-                    avm_data_type: device_hostname
+                    avm_data_type@fritzbox_7490: device_hostname
                     visu_acl: ro
 
             iPhone:
