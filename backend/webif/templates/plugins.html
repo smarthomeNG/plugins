@@ -7,6 +7,7 @@
 {% endblock navbar %}
 
 {% block content %}
+<div style="margin-left: 10px; margin-right: 10px;">
 <div class="table-responsive">
 	<table class="table table-striped table-hover pluginList">
 		<thead>
@@ -43,7 +44,10 @@
 					<td class="py-1">
 					{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
 					</td>
+<!--
 					<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.metadata.get_string('version') }}</td>
+-->
+					<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.version }}</td>
 					<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
 
 					{% if updates or 1==1 %}
@@ -172,5 +176,6 @@
 			{% endfor %}
 		</tbody>
 	</table>
+</div>
 </div>
 {% endblock %}
