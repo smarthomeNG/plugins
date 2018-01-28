@@ -164,7 +164,7 @@ class WebInterface:
                            ip=self.plugin.mod_http.get_local_ip_address(),
                            port=self.plugin.mod_http.get_local_port(),
                            servicesport=self.plugin.mod_http.get_local_servicesport(),
-                           item_sets=item_sets)
+                           item_sets=item_sets,p=self.plugin)
 
 
 class WebServiceInterface:
