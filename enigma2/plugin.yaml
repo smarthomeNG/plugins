@@ -8,7 +8,7 @@ plugin:
     maintainer: psilo909
     tester: Sandman60, cmalo
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins_doc/config/enigma2.html        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
     version: 1.4.11                # Plugin version
