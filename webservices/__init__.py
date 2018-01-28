@@ -87,6 +87,8 @@ class WebServices(SmartPlugin):
                                      self.get_classname(), self.get_instance_name(),
                                      description='Webservice-Plugin für SmartHomeNG (Frontend)')
 
+        return True
+
     def run(self):
         """
         Run method for the plugin
