@@ -40,6 +40,10 @@ class WebServices(SmartPlugin):
         self._sh = smarthome
         self._mode = mode
 
+        if not self.init_webinterfaces():
+            self._init_complete = False
+
+    def init_webinterfaces(self):
         try:
             self.mod_http = Modules.get_instance().get_module(
                 'http')  # try/except to handle running in a core version that does not support modules
@@ -97,12 +101,14 @@ class WebServices(SmartPlugin):
         self.logger.debug("Plugin '{}': stop method called".format(self.get_shortname()))
         self.alive = False
 
+
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
 
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
+
 
 class WebInterface:
 
