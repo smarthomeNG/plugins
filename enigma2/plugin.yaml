@@ -4,7 +4,7 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Plugin zur Einbindung von Enigma2 kompatiblen Sat-Receivern mit openwebif'
-        en: ''
+        en: 'Plugin to include Enigma2 sat receivers compatible to openwebif'
     maintainer: psilo909
     tester: Sandman60, cmalo
 #    keywords: iot xyz
@@ -19,7 +19,78 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+    username:
+        type: str
+        default: ''
+        description:
+            de: '(optional) Nutzername für den Login.'
+            en: '(optional) Login information (user).'
+    password:
+        type: str
+        default: ''
+        description:
+            de: '(optional) Passwort für den Login. Wird aus Sicherheitsgründen empfohlen.'
+            en: '(optional) Password for login. Is recommended due to security reasons'
+    host:
+        type: str
+        default: 'dreambox'
+        description:
+            de: '(optional) Hostname oder IP-Adresse des Geräts auf dem OpenWebIF läuft.'
+            en: '(optional) Hostname or ip address of the device on which OpenWebIF is running.'
+    port:
+        type: int
+        default: 80
+        description:
+            de: 'Port des OpenWebIF.'
+            en: 'Port on which the OpenWebIF is accessible.'
+    ssl:
+        type: bool
+        default: True
+        description:
+            de: '(optional) Mit True wird das OpenWebIF via https, mit False via http angesprochen.'
+            en: '(optional) True will add "https", False "http" to the URLs in the plugin.'
+    verify:
+        type: bool
+        default: False
+        description:
+            de: '(optional) Schaltet die Zertifikate-Prüfung an oder aus. Normalerweise False.'
+            en: '(optional) Turns certificate verification on or off. Typically False'
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
+            en: '(optional) Timeperiod between two update cycles. Default is 300 seconds.'
+    fast_cycle:
+        type: int
+        default: 10
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen für besondere Items, die schneller geupdated werden. Default ist 10 Sekunden.'
+            en: '(optional) Timeperiod between two update cycles for items, which are updated faster. Default is 10 seconds.'
+    instance:
+        type: str
+        default: ''
+        description:
+            de: '(optional) Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einem Gerät / Single Instance Betrieb des Plugins entfallen.'
+            en: '(optional) Unique identifier for each instance of the plugin. Can be skipped if only one device is used / the plugin is operated single instance.'
+
     
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    enigma2_data_type:
+        type: str
+        description:
+            de: 'Datentyp für Plugin-Items. Siehe README.'
+            en: 'Data type for plugin items. See README.'
+
+    enigma2_page:
+        type: str
+        description:
+            de: 'Notwendig für bestimmte Plugin-Items. Siehe README.'
+            en: 'Required for specific plugin items. See README.'
+
+    sref:
+        type: str
+        description:
+            de: 'Referenz auf Services (bspw. Sender), siehe README.'
+            en: 'Service reference, see README.'
