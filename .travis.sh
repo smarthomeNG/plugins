@@ -57,9 +57,6 @@ for REPO in $REPOSITORIES ; do
     cd $REPO
     git checkout $REPOSITORY_BRANCH
     cd ..
-  else
-    echo "Moving checkout $TRAVIS_REPO_SLUG to $REPO ..."
-    mv ../$TRAVIS_REPO_SLUG $REPO
   fi
 done
 
@@ -99,3 +96,14 @@ cd ..
 
 echo "travis_fold:end:Suite"
 
+
+#######################################################################
+# 4. Docs
+
+#echo -e "travis_fold:start:Docs\nBuilding documentation"
+
+#cd smarthome/doc
+#yes | bash build_doc.sh
+#cd ../..
+
+#echo "travis_fold:end:Docs"
