@@ -172,12 +172,30 @@ Raumtemperatur
     Dg.Bad.Raumtemperatur = 23.5
     Dg.Schlafzimmer.Raumtemperatur = 20.1
 
+#### telegram_text
+
+write message-text into the SH-item whit this attribut
+
+#### Simple Example
+
+```
+[telegram_message]
+	name = Textnachricht von Telegram
+	type = str
+	telegram_text = "true"
+```
+
+```
+telegram_message:
+    name: Textnachricht von Telegram
+    type: str
+    telegram_text: true
+```
 
 ## Todo and feature requests
 
 * The connection is resetted by the server time by time. Improve internal error handling, because the reset is not really an "error"
 * Implement full /subscribe meachanism to join broadcast messages
-* Implement codition based messaging. Messages are only sent, if a condition is fulfilled, e.g. a bool value is true. 
 * Implement interface to operationlog plugin for message broadcast
 * Implement fast and menu based (read-only) navigation through item-tree
 * Implement r/w access to items
