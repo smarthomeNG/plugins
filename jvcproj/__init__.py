@@ -100,15 +100,16 @@ class JVC_DILA_Control(SmartPlugin):
     PLUGIN_VERSION='1.0.0'
 
 
-    def __init__(self, smarthome, host='0.0.0.0', port='20554', gammaconf_dir='/usr/local/smarthome/etc/jvcproj/'):
+    def __init__(self, smarthome, host='0.0.0.0', gammaconf_dir='/usr/local/smarthome/etc/jvcproj/'):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-        :param host:               JVC DILA Projectors IP
-        :param port:               JVC DILA Projectors Communication Port ( normally: 20554)
+        :param host:               JVC DILA Projectors IP address
+        :param gammaconf_dir:      location where the gamma.conf files are saved
+        :port is fixed to 20554
         """
         self.logger = logging.getLogger(__name__)
         self._sh=smarthome
-        self.host_port = (host, int(port))
+        self.host_port = (host, 20554))
         self.gammaconf_dir = gammaconf_dir
         self.logger.debug("Plugin '{}': configured for host: '{}'".format(self.get_fullname(), self.host_port))
 

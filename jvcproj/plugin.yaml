@@ -6,7 +6,7 @@ plugin:
         de: 'Plugin um JVC D-ILA Projektoren zu kontrollieren und durch jvcprojectortools erstellte Gammakurven zu uebertragen'
         en: 'plugin to control JVC D-ILA projectors and transfer gammatables generated with jvcprojectortools'
     maintainer: NPortz
-#    tester: 
+#    tester:  NPortz
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1188479-plugin-steuerung-von-jvc-d-ila-projektoren
@@ -19,7 +19,20 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    host:
+        type: ip
+        default: 0.0.0.0
+        description:
+            de: 'Die IP Adresse des JVC Projektors ist anzugeben.'
+            en: 'Define IP address of your JVC projector.'
+
+    gammaconf_dir:
+        type: dict
+        default: '/usr/local/smarthome/etc/jvcproj/'
+        description:
+            de: 'Speicherort der Gamma- Konfigurationsdateien'
+            en: 'Location where the gamma configuration files are saved.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     

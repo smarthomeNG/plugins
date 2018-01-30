@@ -20,13 +20,11 @@ jvcproj:
     class_name: JVC_DILA_Control
     class_path: plugins.jvcproj
     host: 1.1.1.1 # host address of the projector
-    port: ... # optional, default port is 20554
     gammaconf_dir: ... # optional, location gamma table configuration files
 ```
 
 #### Attributes
   * `host`: the host address of the projector
-  * `port`: the port the projector listens to. Default is 20554
   * `gammaconf_dir`: location where the gammatable configuration files are saved. Default is '/usr/local/smarthome/etc/jvcproj/'
 
 ### items.yaml
