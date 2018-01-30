@@ -17,11 +17,11 @@ install telepot library (see requirements.txt)
 
 ```
 [telegram]
-        name = My Home
-        class_name = Telegram
-        class_path = plugins.telegram
-        token = 123456789:BBCCfd78dsf98sd9ds-_HJKShh4z5z4zh22
-        trusted_chat_ids = 123456789,9876543210
+    name = My Home
+    class_name = Telegram
+    class_path = plugins.telegram
+    token = 123456789:BBCCfd78dsf98sd9ds-_HJKShh4z5z4zh22
+    trusted_chat_ids = 123456789,9876543210
 ```
 
 ```
@@ -61,14 +61,14 @@ Available tags:
 [SOURCE]
 [DEST]
 
-#### Simple Example
+Simple Example
 
 ```
-[doorbell]
-	name = Türklingel (entprellt)
-	type = bool
-	knx_dpt = 1
-	telegram_message = "Es klingelt an der Tür"
+[doorbell
+    name = Türklingel (entprellt)
+    type = bool
+    knx_dpt = 1
+    telegram_message = "Es klingelt an der Tür"
 ```
 
 ```
@@ -79,7 +79,7 @@ doorbell:
     telegram_message: Es klingelt an der Tür
 ```
 	
-#### Example with tags
+Example with tags
 
 The following example shows an integration in AutoBlind.
 If the state changes, a message with the current state name is broadcasted 
@@ -106,7 +106,8 @@ state_name:
 
 In some cases it is usefull to check a value against a condition before sending the message. Messages are used to monitor defined value groups. Therefore messaging is limited with this attribute to matching regular expressions only.
 
-#### Simple Example
+Simple Example
+```
 TestNum:
     type: num
     cache: True
@@ -117,7 +118,7 @@ TestNum:
     cache: True
     telegram_message: TestBool: [VALUE]
     telegram_value_match_regex: 1              # nur Nachricht senden wenn 1 (True)
-
+```
 
 #### telegram_info
 
@@ -126,29 +127,27 @@ The attribute parameter is also the command.
 e.g. /wetter
 All attribute parameters (commands) are listed with the /info-command in a keyboard menu
 
-#### Simple Example
+Simple Example
 
-my_item_config.conf
 ```
 [Aussentemperatur]
-	name = Aussentemperatur in °C
-	type = num
-	knx_dpt = 9
-	telegram_info = "wetter"
+    name = Aussentemperatur in °C
+    type = num
+    knx_dpt = 9
+    telegram_info = "wetter"
 [Wind_kmh]
-	name = Wingeschwindigkeit in kmh
-	type = num
-	knx_dpt = 9
-	telegram_info = "wetter"
-
+    name = Wingeschwindigkeit in kmh
+    type = num
+    knx_dpt = 9
+    telegram_info = "wetter"
 [Raumtemperatur]
-	name = Raumtemperatur Wohnzimmer in °C
-	type = num
-	knx_dpt = 9
-	telegram_info = "rtr_ist"
+    name = Raumtemperatur Wohnzimmer in °C
+    type = num
+    knx_dpt = 9
+    telegram_info = "rtr_ist"
 
 ```
-my_item_config.yaml
+
 ```
 Aussentemperatur:
     name: Aussentemperatur in °C
@@ -160,8 +159,6 @@ Wind_kmh:
     type: num
     knx_dpt: 9
     telegram_info: "wetter"
-
-
 Raumtemperatur
     name: Raumtemperatur Wohnzimmer in °C
     type: num
@@ -189,13 +186,13 @@ Raumtemperatur
 
 write message-text into the SH-item whit this attribut
 
-#### Simple Example
+Simple Example
 
 ```
 [telegram_message]
-	name = Textnachricht von Telegram
-	type = str
-	telegram_text = "true"
+    name = Textnachricht von Telegram
+    type = str
+    telegram_text = "true"
 ```
 
 ```
