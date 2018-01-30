@@ -79,6 +79,7 @@ class Telegram(SmartPlugin):
         
         # Dispatcher that handles the updates and dispatches them to the handlers.
         dispatcher = self._updater.dispatcher
+        dispatcher.add_error_handler(self.eHandler)
         dispatcher.add_handler(CommandHandler('time', self.cHandler_time))
         dispatcher.add_handler(CommandHandler('help', self.cHandler_help))
         dispatcher.add_handler(CommandHandler('hide', self.cHandler_hide))
@@ -87,7 +88,7 @@ class Telegram(SmartPlugin):
         dispatcher.add_handler(CommandHandler('lo', self.cHandler_lo))
         dispatcher.add_handler(CommandHandler('tr', self.cHandler_tr, pass_args=True))
         
-        dispatcher.add_handler( MessageHandler(Filters.text, self.messageHandler))
+        dispatcher.add_handler( MessageHandler(Filters.text, self.mHandler))
         
         #self._updater.start_polling()   # (poll_interval=0.0, timeout=10, network_delay=None, clean=False, bootstrap_retries=0, read_latency=2.0, allowed_updates=None)
 
@@ -233,8 +234,15 @@ class Telegram(SmartPlugin):
                 chat_ids_to_send.append(att_chat_id)    # append to list
         return chat_ids_to_send
     
+    # Error Handler
+    def eHandler(self, bot, update, error, dummy):
+        try:
+            self.logger.warning('Update {} caused error {}'.format(update, error))
+        except:
+            pass
+        
     # write the content (text) of the message in an SH-item
-    def messageHandler(self, bot, update):
+    def mHandler(self, bot, update):
         text = update.message.from_user.name + ": "     # add username
         text += update.message.text                     # add the message.text
         for item in self._items_text_message:
