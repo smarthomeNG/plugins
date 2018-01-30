@@ -61,10 +61,6 @@ Available tags:
 [SOURCE]
 [DEST]
 
-#### telegram_value_match_regex
-
-In some cases it is usefull to check a value against a condition before sending the message. Messages are used to monitor defined value groups. Therefore messaging is limited with this attribute to matching regular expressions only.
-
 #### Simple Example
 
 ```
@@ -90,11 +86,11 @@ If the state changes, a message with the current state name is broadcasted
 
 ```
 [state_name]
-        name = Name des aktuellen Zustands
-        type = str
-        visu_acl = r
-        cache = on
-        telegram_message = "New AutoBlind state: [VALUE]"
+    name = Name des aktuellen Zustands
+    type = str
+    visu_acl = r
+    cache = on
+    telegram_message = "New AutoBlind state: [VALUE]"
 ```
 
 ```
@@ -106,6 +102,23 @@ state_name:
     telegram_message: 'New AutoBlind state: [VALUE]'
 ```
 
+#### telegram_value_match_regex
+
+In some cases it is usefull to check a value against a condition before sending the message. Messages are used to monitor defined value groups. Therefore messaging is limited with this attribute to matching regular expressions only.
+
+#### Simple Example
+TestNum:
+    type: num
+    cache: True
+    telegram_message: TestNum: [VALUE]
+    telegram_value_match_regex: [0-1][0-9]    # nur Nachrichten senden wenn Zahlen von 0 - 19
+:TestBool
+    type: bool
+    cache: True
+    telegram_message: TestBool: [VALUE]
+    telegram_value_match_regex: 1              # nur Nachricht senden wenn 1 (True)
+
+
 #### telegram_info
 
 read (broadcast) a list with specific item-values provided with the attribute.
@@ -115,7 +128,7 @@ All attribute parameters (commands) are listed with the /info-command in a keybo
 
 #### Simple Example
 
-my_item_config.yaml
+my_item_config.conf
 ```
 [Aussentemperatur]
 	name = Aussentemperatur in °C
@@ -135,7 +148,7 @@ my_item_config.yaml
 	telegram_info = "rtr_ist"
 
 ```
-my_item_config.conf
+my_item_config.yaml
 ```
 Aussentemperatur:
     name: Aussentemperatur in °C
