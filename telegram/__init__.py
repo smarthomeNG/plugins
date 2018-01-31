@@ -235,7 +235,7 @@ class Telegram(SmartPlugin):
         return chat_ids_to_send
     
     # Error Handler
-    def eHandler(self, bot, update, error, dummy):
+    def eHandler(self, bot, update, error):
         try:
             self.logger.warning('Update {} caused error {}'.format(update, error))
         except:
