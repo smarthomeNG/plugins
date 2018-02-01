@@ -27,7 +27,7 @@ parameters:
             en: 'Define IP address of your JVC projector.'
 
     gammaconf_dir:
-        type: dict
+        type: str
         default: '/usr/local/smarthome/etc/jvcproj/'
         description:
             de: 'Speicherort der Gamma- Konfigurationsdateien'
@@ -35,4 +35,14 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    jvcproj_cmd:
+        type: str
+        description:
+            de: 'Bei Aenderung des Items auf WAHR wird der angegebene Befehl (oder mehrere Befehle) an den Projektor gesendet. Die Befehle muessen durch | getrennt werden.'
+            en: 'Changing this item to true results in sending the declared command(s) to the projector. Commands need to be seperated with a | .'
+
+    jvcproj_gamma:
+        type: str
+        description:
+            de: 'Bei Aenderung des Items auf WAHR werden die Gammadaten aus der aufgefuehrten Datei in den angegebenen Custom Gammaspeicher (1-3) geladen. Die beiden Attribute muessen durch | getrennt werden.'
+            en: 'Changing this item to true results in sending the gamma table from the declared file to the declared custom gamma table (1-3). The two attributes need to be seperated with a | .'
