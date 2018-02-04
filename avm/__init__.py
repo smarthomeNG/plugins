@@ -70,8 +70,6 @@ class MonitoringService():
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.conn.connect((self._host, self._port))
-#            self._listen_thread = threading.Thread(target=self._listen,
-#                                                   name="MonitoringService_%s" % self._plugin_instance.get_instance_name()).start()
             self._listen_thread = threading.Thread(target=self._listen,
                                                    name="MonitoringService_{}".format(self._plugin_instance.get_fullname())).start()
         except Exception as e:
