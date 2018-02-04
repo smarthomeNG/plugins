@@ -33,7 +33,8 @@ from requests.auth import HTTPDigestAuth
 from lib.model.smartplugin import SmartPlugin
 from lib.module import Modules
 
-class MonitoringService():
+
+class MonitoringService:
     """
     Class which connects to the FritzBox service of the Callmonitor: http://www.wehavemorefun.de/fritzbox/Callmonitor
 
@@ -71,7 +72,8 @@ class MonitoringService():
         try:
             self.conn.connect((self._host, self._port))
             self._listen_thread = threading.Thread(target=self._listen,
-                                                   name="MonitoringService_{}".format(self._plugin_instance.get_fullname())).start()
+                                                   name="MonitoringService_{}".format(
+                                                       self._plugin_instance.get_fullname())).start()
         except Exception as e:
             self.conn = None
             self.logger.error("MonitoringService: Cannot connect to " + self._host + " on port: " + str(
@@ -159,7 +161,7 @@ class MonitoringService():
                 line, buffer = buffer.split("\n", 1)
                 self._parse_line(line)
 
-            #time.sleep(1)
+            # time.sleep(1)
         return
 
     def _start_counter(self, timestamp, direction):
@@ -238,7 +240,8 @@ class MonitoringService():
         """
         Triggers the event: sets item values and looks up numbers in the phone book.
         """
-        self.logger.debug("Event: %s, Call From: %s, Call To: %s, Time: %s, CallID: %s" %(event, call_from, call_to, time, callid))
+        self.logger.debug(
+            "Event: %s, Call From: %s, Call To: %s, Time: %s, CallID: %s" % (event, call_from, call_to, time, callid))
         # in each case set current call event and direction
         for item in self._items:
             if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event':
@@ -255,7 +258,9 @@ class MonitoringService():
             for trigger_item in self._trigger_items:
                 if self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') == 'monitor_trigger':
                     trigger_item(0)
-                    # self.logger.debug(self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +trigger_item.conf['avm_incoming_allowed']+" "+trigger_item.conf['avm_target_number'])
+                    self.logger.debug(self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +
+                                      trigger_item.conf['avm_incoming_allowed'] + " " + trigger_item.conf[
+                                          'avm_target_number'])
                     if 'avm_incoming_allowed' not in trigger_item.conf or 'avm_target_number' not in trigger_item.conf:
                         self.logger.error(
                             "both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes in a trigger item.")
@@ -332,7 +337,7 @@ class MonitoringService():
             # handle OUTGOING calls
             if callid == self._call_outgoing_cid:
                 if not self._duration_item[
-                    'call_duration_outgoing'] is None:  # start counter thread only if duration item set and call is outgoing
+                           'call_duration_outgoing'] is None:  # start counter thread only if duration item set and call is outgoing
                     self._stop_counter('outgoing')  # stop potential running counter for parallel (older) outgoing call
                     self._start_counter(time, 'outgoing')
                 for item in self._items_outgoing:
@@ -342,7 +347,7 @@ class MonitoringService():
             # handle INCOMING calls
             elif callid == self._call_incoming_cid:
                 if not self._duration_item[
-                    'call_duration_incoming'] is None:  # start counter thread only if duration item set and call is incoming
+                           'call_duration_incoming'] is None:  # start counter thread only if duration item set and call is incoming
                     self._stop_counter('incoming')  # stop potential running counter for parallel (older) incoming call
                     self.logger.debug("Starting Counter for Call Time")
                     self._start_counter(time, 'incoming')
@@ -548,7 +553,7 @@ class AVM(SmartPlugin):
         """
         Run method for the plugin
         """
-#        self._sh.scheduler.add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
+        #        self._sh.scheduler.add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.scheduler_add('update', self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
@@ -574,7 +579,7 @@ class AVM(SmartPlugin):
             arguments = [
                 self._argument % {'name': name, 'value': value}
                 for name, value in argument.items()
-                ]
+            ]
             argument_string = argument_string.join(arguments)
         body = self._body.strip() % {'action': action, 'service': service, 'arguments': argument_string}
         soap_data = self._envelope.strip() % body
@@ -1005,7 +1010,7 @@ class AVM(SmartPlugin):
 
             calllist_entries = calllist_xml.getElementsByTagName('Call')
             result_entries = []
-            if (len(calllist_entries) > 0):
+            if len(calllist_entries) > 0:
                 for calllist_entry in calllist_entries:
                     result_entry = {}
 
@@ -2036,6 +2041,7 @@ class AVM(SmartPlugin):
 
         return True
 
+
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
@@ -2061,7 +2067,7 @@ class WebInterface:
         mytemplates = self.plugin.path_join(self.webif_dir, 'templates')
         globaltemplates = self.plugin.mod_http.gtemplates_dir
         self.tplenv = Environment(loader=FileSystemLoader([mytemplates, globaltemplates]))
-        
+
     @cherrypy.expose
     def index(self):
         """
