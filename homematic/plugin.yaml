@@ -1,0 +1,81 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Ansteuerung von HomeMatic Komponenten über eine HomeMatic CCU2 Zentrale'
+        en: 'Control HomeMatic devices through a HomeMatic CCU2 (used as gateway)'
+    maintainer: msinn             # Who maintains this plugin?
+#    tester: efgh                   # Who tests this plugin?
+#    keywords: kwd1 kwd2            # keywords, where applicable
+#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+# Following entries are for Smart-Plugins:
+    version: 1.5.0                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True
+    classname: Homematic            # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    host:
+        type: ip
+        default: 'homematic-ccu2.local'
+        description:
+            de: 'IP Adresse bzw. Hostname der HomeMatic CCU2 Zentrale'
+            en: 'ip address or hostname of the HomeMatic CCU2 gateway'
+        
+    port:
+        type: int
+        default: 2001
+        valid_min: 0
+        description:
+            de: 'Port Nummer der HomeMatic CCU2 Zentrale'
+            en: 'port number of the HomeMatic CCU2 gateway'
+        
+    username:
+        type: str
+        default: 'Admin'
+        description:
+            de: 'Username für das Login'
+            en: 'Username for the login'
+        
+    password:
+        type: str
+        default: ''
+        description:
+            de: 'Passwort für das Login'
+            en: 'Password for the login'
+        
+    learnmode_length:
+        type: int
+        default: 60
+        description:
+            de: 'Dauer des Anlernmodus der HomeMatic CCU2 Zentrale nach Aktivierung durch das Web Interface'
+            en: 'Duration of learnmode of the HomeMatic CCU2 gateway after activation through the web interface'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    
+    hm_address:
+        type: str
+        description:
+            de: 'Adresse des HomeMatic Devices, welches über die HomeMatic CCU2 Zentrale angesteuert werden soll'
+            en: 'Adress of the HomeMatic device that shall be controlled (through the HomeMatic CCU2 central unit)'
+        
+    hm_function:
+        type: str
+        description:
+            de: 'Name der Funktion des HomeMatic Devices, welche genutzt werden soll'
+            en: 'Name of the function of the HomeMatic Device that shall be used'
+        
+    hm_channel: 
+        type: int
+        description:
+            de: 'Optional: Kanal des Devices auf dem die Funktion angesteuert werden soll. 
+                 Muss nur angegeben werden, wenn die gewünschte Funktion von dem Device mehrfach zur Verfügung gestellt wird'
+            en: 'Optional: Channel of the devicemon which the function shall be used.
+                 Has only to be specified, if the requested function is implemented more than once on the device.'
+        
