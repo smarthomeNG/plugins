@@ -236,7 +236,7 @@ class MonitoringService():
         """
         Triggers the event: sets item values and looks up numbers in the phone book.
         """
-
+        self.logger.debug("Event: %s, Call From: %s, Call To: %s, Time: %s, CallID: %s" %(event, call_from, call_to, time, callid))
         # in each case set current call event and direction
         for item in self._items:
             if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event':
@@ -271,7 +271,8 @@ class MonitoringService():
                 # process items specific to incoming calls
                 for item in self._items_incoming:  # update items for incoming calls
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_incoming']:
-                        item(1)
+                        self.logger.debug("Setting is_call_incoming: %s" % True)
+                        item(True)
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_caller_incoming']:
                         if call_from != '' and call_from is not None:
                             name = self._callback(call_from)
@@ -283,13 +284,17 @@ class MonitoringService():
                             item("Unbekannt")
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in [
                         'last_call_date_incoming']:
+                        self.logger.debug("Setting last_call_date_incoming: %s" % time)
                         item(time)
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
+                        self.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_number_incoming']:
+                        self.logger.debug("Setting last_number_incoming: %s" % call_from)
                         item(call_from)
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in [
                         'last_called_number_incoming']:
+                        self.logger.debug("Setting last_called_number_incoming: %s" % call_to)
                         item(call_to)
 
         # call is outgoing
@@ -303,7 +308,7 @@ class MonitoringService():
             # process items specific to outgoing calls
             for item in self._items_outgoing:
                 if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_outgoing']:
-                    item(1)
+                    item(True)
                 elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_caller_outgoing']:
                     name = self._callback(call_to)
                     if name != '' and not name is None:
@@ -337,9 +342,11 @@ class MonitoringService():
                 if not self._duration_item[
                     'call_duration_incoming'] is None:  # start counter thread only if duration item set and call is incoming
                     self._stop_counter('incoming')  # stop potential running counter for parallel (older) incoming call
+                    self.logger.debug("Starting Counter for Call Time")
                     self._start_counter(time, 'incoming')
                 for item in self._items_incoming:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
+                        self.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
 
         # connection ended
@@ -350,7 +357,7 @@ class MonitoringService():
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_outgoing':
                         item(event.lower())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_outgoing':
-                        item(0)
+                        item(False)
                 if not self._duration_item['call_duration_outgoing'] is None:  # stop counter threads
                     self._stop_counter('outgoing')
                 self._call_outgoing_cid = None
@@ -359,10 +366,13 @@ class MonitoringService():
             elif callid == self._call_incoming_cid:
                 for item in self._items_incoming:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_incoming':
+                        self.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_incoming':
-                        item(0)
+                        self.logger.debug("Setting is_call_incoming: %s" % 0)
+                        item(False)
                 if not self._duration_item['call_duration_incoming'] is None:  # stop counter threads
+                    self.logger.debug("Stopping Counter for Call Time")
                     self._stop_counter('incoming')
                 self._call_incoming_cid = None
 
