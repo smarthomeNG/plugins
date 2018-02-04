@@ -137,6 +137,14 @@ class MonitoringService:
     def get_items_outgoing(self):
         return self._items_outgoing
 
+    def get_item_count_total(self):
+        """
+        Returns number of added items (all items of MonitoringService service
+
+        :return: number of items hold by the MonitoringService
+        """
+        return len(self._items)+len(self._trigger_items)+len(self._items_incoming)+len(self._items_outgoing)
+
     def set_duration_item(self, item):
         """
         Sets specific items which count the duration of an incoming or outgoing call
