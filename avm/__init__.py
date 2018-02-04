@@ -150,12 +150,16 @@ class MonitoringService():
         data = True
         while self._listen_active:
             data = self.conn.recv(recv_buffer)
+            if data == "":
+                self.logger.error("CallMonitor connection not open anymore.")
+            else:
+                self.logger.debug("Data Received from CallMonitor: %s" % data.decode("utf-8"))
             buffer += data.decode("utf-8")
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
                 self._parse_line(line)
 
-            time.sleep(1)
+            #time.sleep(1)
         return
 
     def _start_counter(self, timestamp, direction):
