@@ -37,7 +37,7 @@ parameters:
             de: 'Unique-ID oder Base-ID des EnOcean Moduls (8-stelliger hex Wert)'
             en: 'Unique-ID or Base-ID of the EnOcean Module (8-digit hex value)'
         mandatory: 'True'
-       
+        
 item_attributes:
     # Definition of item attributes defined by this plugin
     enocean_rx_id:
