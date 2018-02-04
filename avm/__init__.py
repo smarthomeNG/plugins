@@ -369,7 +369,7 @@ class MonitoringService():
                         self.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_incoming':
-                        self.logger.debug("Setting is_call_incoming: %s" % 0)
+                        self.logger.debug("Setting is_call_incoming: %s" % False)
                         item(False)
                 if not self._duration_item['call_duration_incoming'] is None:  # stop counter threads
                     self.logger.debug("Stopping Counter for Call Time")
