@@ -20,7 +20,7 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 import logging
-import time
+#import time
 from lib.utils import Utils
 from lib.model.smartplugin import SmartPlugin
 
@@ -157,9 +157,9 @@ class Prepare_Packet_Data(SmartPlugin):
                 block = 4
         # check if item has attribite dim_speed
         if self.has_iattr(item.level.conf, 'dim_speed'):
-            dim_speed = self.get_iattr_value(item.level.conf, 'dim_speed') 
+            dim_speed = self.get_iattr_value(item.level.conf, 'dim_speed')
             # bound dim_speed values to [0 - 100] %
-            dim_speed = max(0, min(100, dim_speed))
+            dim_speed = max(0, min(100, int(dim_speed)))
             self.logger.debug('enocean-PrepareData: {} use dim_speed = {} %'.format(tx_eep, dim_speed))
             # calculate dimspeed from percent into integer
             # 0x01 --> fastest speed --> 100 %
@@ -172,20 +172,20 @@ class Prepare_Packet_Data(SmartPlugin):
         if not item():
             # if value is False --> Switch off
             dim_value = 0
-            payload = [0x02, dim_value, dim_speed, int(8 + block)]
+            payload = [0x02, int(dim_value), int(dim_speed), int(8 + block)]
             self.logger.debug('enocean-PrepareData: prepare data to switch off for command for A5_38_08_02')
         else:
             # check if reference dim value exists
             if 'ref_level' in item.level.conf:
                 dim_value = int(item.level.conf['ref_level'])
                 # check range of dim_value [0 - 100] %
-                dim_value = max(0, min(100, dim_value))
+                dim_value = max(0, min(100, int(dim_value)))
                 self.logger.debug('enocean-PrepareData: {} ref_level {} % found for A5_38_08_02'.format(tx_eep, dim_value))
             else:
                 # set dim_value on 100 % == 0x64
                 dim_value = 0x64
                 self.logger.debug('enocean-PrepareData: {} no ref_level found! Setting to default 100 %'.format(tx_eep))
-            payload = [0x02, dim_value, dim_speed, int(9 + block)]
+            payload = [0x02, int(dim_value), int(dim_speed), int(9 + block)]
         optional = []
         return rorg, payload, optional
         
@@ -211,12 +211,12 @@ class Prepare_Packet_Data(SmartPlugin):
         if self.has_iattr(item.conf, 'dim_speed'):
             dim_speed = self.get_iattr_value(item.conf, 'dim_speed')
             # bound dim_speed values to [0 - 100] %
-            dim_speed = max(0, min(100, dim_speed))
+            dim_speed = max(0, min(100, int(dim_speed)))
             self.logger.debug('enocean-PrepareData: {} use dim_speed = {} %'.format(tx_eep, dim_speed))
             # calculate dimspeed from percent into hex
             # 0x01 --> fastest speed --> 100 %
             # 0xFF --> slowest speed --> 0 %
-            dim_speed = hex(255 - (254 * dim_speed/100))
+            dim_speed = (255 - (254 * dim_speed/100))
         else:
             # use intern dim_speed of the dim device
             dim_speed = 0x00
@@ -224,7 +224,7 @@ class Prepare_Packet_Data(SmartPlugin):
         if item() == 0:
             # if value is == 0 switch off dimmer
             dim_value = 0x00
-            payload = [0x02, dim_value, dim_speed, int(8 + block)]
+            payload = [0x02, int(dim_value), int(dim_speed), int(8 + block)]
             self.logger.debug('enocean-PrepareData: {} prepare data to switch off'.format(tx_eep))
         else:
             dim_value = item()
@@ -232,7 +232,7 @@ class Prepare_Packet_Data(SmartPlugin):
             dim_value = max(0, min(100, dim_value))
             self.logger.debug('enocean-PrepareData: {} dim_value set to {} %'.format(tx_eep, dim_value))
             dim_value = dim_value
-            payload = [0x02, dim_value, dim_speed, int(9 + block)]
+            payload = [0x02, int(dim_value), int(dim_speed), int(9 + block)]
         optional = []
         return rorg, payload, optional
     
@@ -255,9 +255,9 @@ class Prepare_Packet_Data(SmartPlugin):
                 block = 4
         # check if item has attribite enocean_rtime 
         if self.has_iattr(item.conf, 'enocean_rtime'):
-            rtime = int(self.get_iattr_value(item.conf, 'enocean_rtime'))
+            rtime = self.get_iattr_value(item.conf, 'enocean_rtime')
             # rtime [0 - 255] s
-            rtime = max(0, min(255, rtime))
+            rtime = max(0, min(255, int(rtime)))
             self.logger.debug('enocean-PrepareData: {} actuator runtime of {} s specified.'.format(tx_eep, rtime))
         else:
             # set rtime to 5 s
@@ -281,7 +281,7 @@ class Prepare_Packet_Data(SmartPlugin):
         payload = [0x00, rtime, command_hex_code, int(8 + block)]
         optional = []
         return rorg, payload, optional
-####        
+        
     
     def _prepare_data_for_tx_eep_07_3F_7F(self, item, tx_eep):    
         """
@@ -300,26 +300,49 @@ class Prepare_Packet_Data(SmartPlugin):
         # check if item has attribite dim_speed 
         if self.has_iattr(item.conf, 'dim_speed'):
             dim_speed = self.get_iattr_value(item.conf, 'dim_speed')
-            dim_speed = max(0, min(100, dim_speed))
+            dim_speed = max(0, min(100, int(dim_speed)))
             self.logger.debug('enocean-PrepareData: {} use dim_speed = {} %'.format(tx_eep, dim_speed))
             # calculate dimspeed from percent into hex
             # 0x01 --> fastest speed --> 100 %
             # 0xFF --> slowest speed --> 0 %
-            dim_speed = hex(255 - (254 * dim_speed/100))
+            dim_speed = (255 - (254 * dim_speed/100))
         else:
             # use intern dim_speed of the dim device
             dim_speed = 0x00
-            self.logger.debug('enocean-PrepareData: {} no attribute dim_speed --> use intern dim speed',format(tx_eep))
+            self.logger.debug('enocean-PrepareData: {} no attribute dim_speed --> use intern dim speed'.format(tx_eep))
         # check the color of the item
         if self.has_iattr(item.conf, 'color'):
             color = self.get_iattr_value(item.conf, 'color')
-        # Aufdimmen: [dim_speed, Color, 0x30, 0x0F]
-        # Abdimmen:  [dim_speed, Color, 0x31, 0x0F]
-        # Dimmstop:  [dim_speed, Color, 0x32, 0x0F]
-        # --> definition of direction
-        # -->
+            if (color == 'red'):
+                color_hex = 0x01
+            elif (color == 'green'):
+                color_hex = 0x02
+            elif (color == 'blue'):
+                color_hex = 0x04
+            elif (color == 'white'):
+                color_hex = 0x08
+        else:
+            self.logger.error('enocean-PrepareData: {} has no attribute color --> please specify color!'.format(item))
+            return None
+        # Aufdimmen: [dim_speed, color_hex, 0x30, 0x0F]
+        # Abdimmen:  [dim_speed, color_hex, 0x31, 0x0F]
+        # Dimmstop:  [dim_speed, color_hex, 0x32, 0x0F]
+        # check command (up, stop, or down)
+        command = int(item())
+        if(command == 0):
+            # dim up
+            command_hex_code = 0x30
+        elif(command == 1):
+            # dim down
+            command_hex_code = 0x31
+        elif(command == 2):
+            # stop dim
+            command_hex_code = 0x32
+        else:
+            self.logger.error('enocean-PrepareData: {} sending actuator command failed: invalid command {}'.format(tx_eep, command))
+            return None
         # define payload
-        payload = [ dim_speed, color, direction,  0x0F]
+        payload = [int(dim_speed), color_hex, command_hex_code, 0x0F]
         optional = []
         return rorg, payload, optional
     

@@ -292,6 +292,62 @@ EnOcean_Item:
             enforce_updates: 'True'
             cache: 'True'
             visu_acl: rw
+    
+    RGBdimmer:
+        type: num
+        # name: Eltako FRGBW71L
+        remark: Eltako FRGBW71L - RGB Dimmer 
+        enocean_rx_id: 1A869C3
+        enocean_rx_eep: A5_3F_7F
+        enocean_rx_key: DI_0
+        red:
+            # dim Wert = [0 - 100] %
+            type: num
+            enocean_tx_eep: 07_3F_7F
+            enocean_tx_id_offset: 1
+            enocean_rx_key: DI_0
+            # dim_value when switched on in [0 - 100]%
+            ref_level: 80
+            # dim_speed in [0 - 100]%
+            dim_speed: 100
+            # color
+            color: red
+        green:
+            # dim Wert = [0 - 100] %
+            type: num
+            enocean_tx_eep: 07_3F_7F
+            enocean_tx_id_offset: 1
+            enocean_rx_key: DI_1
+            # dim_value when switched on in [0 - 100]%
+            ref_level: 80
+            # dim_speed in [0 - 100]%
+            dim_speed: 100
+            # color
+            color: green
+        blue:
+            # dim Wert = [0 - 100] %
+            type: num
+            enocean_tx_eep: 07_3F_7F
+            enocean_tx_id_offset: 1
+            enocean_rx_key: DI_2
+            # dim_value when switched on in [0 - 100]%
+            ref_level: 80
+            # dim_speed in [0 - 100]%
+            dim_speed: 100
+            # color
+            color: blue
+        white:
+            # dim Wert = [0 - 100] %
+            type: num
+            enocean_tx_eep: 07_3F_7F
+            enocean_tx_id_offset: 1
+            enocean_rx_key: DI_3
+            # dim_value when switched on in [0 - 100]%
+            ref_level: 80
+            # dim_speed in [0 - 100]%
+            dim_speed: 100
+            # color
+            color: white   
 ```
 
 #### Example item.conf (deprecated)
@@ -470,6 +526,62 @@ EnOcean_Item:
             enforce_updates = True
             cache = True
             visu_acl = rw
+
+    [[RGBdimmer]]
+        type = num
+        # name = Eltako FRGBW71L
+        remark = Eltako FRGBW71L - RGB Dimmer 
+        enocean_rx_id = 1A869C3
+        enocean_rx_eep = A5_3F_7F
+        enocean_rx_key = DI_0
+        [[[red]]]
+            # dim Wert = [0 - 100] %
+            type = num
+            enocean_tx_eep = 07_3F_7F
+            enocean_tx_id_offset = 1
+            enocean_rx_key = DI_0
+            # dim_value when switched on in [0 - 100]%
+            ref_level = 80
+            # dim_speed in [0 - 100]%
+            dim_speed = 100
+            # color
+            color = red
+        [[[green]]]
+            # dim Wert = [0 - 100] %
+            type = num
+            enocean_tx_eep = 07_3F_7F
+            enocean_tx_id_offset = 1
+            enocean_rx_key = DI_1
+            # dim_value when switched on in [0 - 100]%
+            ref_level = 80
+            # dim_speed in [0 - 100]%
+            dim_speed = 100
+            # color
+            color = green
+        [[[blue]]]
+            # dim Wert = [0 - 100] %
+            type = num
+            enocean_tx_eep = 07_3F_7F
+            enocean_tx_id_offset = 1
+            enocean_rx_key = DI_2
+            # dim_value when switched on in [0 - 100]%
+            ref_level = 80
+            # dim_speed in [0 - 100]%
+            dim_speed = 100
+            # color
+            color = blue
+        [[[white]]]
+            # dim Wert = [0 - 100] %
+            type = num
+            enocean_tx_eep = 07_3F_7F
+            enocean_tx_id_offset = 1
+            enocean_rx_key = DI_3
+            # dim_value when switched on in [0 - 100]%
+            ref_level = 80
+            # dim_speed in [0 - 100]%
+            dim_speed = 100
+            # color
+            color = white
 ```
 
 ### Add new listening EnOcean devices
