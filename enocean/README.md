@@ -190,16 +190,18 @@ EnOcean_Item:
             enforce_updates: 'True'
             visu_acl: rw
     
-    actorD2:
+    actor_D2:
+        name: ???
+        remark: Actor with VLD Command
         enocean_rx_id: FFDB7381
         enocean_rx_eep: D2_01_07
         move:
-            type=bool
+            type: bool
             enocean_rx_key: STAT
             enocean_tx_eep: D2_01_07
-            # optional; turn off after 0.1 s
-            enocean_pulsewidth: 0.1
-            enocean_tx_id_offset: 1  
+            enocean_tx_id_offset: 1
+            # pulsewith-attribute removed use autotimer functionality instead
+            autotimer: 1 = 0  
     
     awning:
         remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
@@ -430,15 +432,17 @@ EnOcean_Item:
             visu_acl = rw
     
     [[actorD2]]
+        name: ???
+        remark = Actor with VLD Command
         enocean_rx_id = FFDB7381
         enocean_rx_eep = D2_01_07
         [[[move]]]
-            type=bool
+            type = bool
             enocean_rx_key = STAT
             enocean_tx_eep = D2_01_07
-            # optional; turn off after 0.1 s
-            enocean_pulsewidth = 0.1
-            enocean_tx_id_offset = 1  
+            enocean_tx_id_offset = 1
+            # pulsewith-attribute removed use autotimer functionality instead
+            autotimer = 1 = 0  
     
     [[awning]]
         remark = Eltako FSB14, FSB61, FSB71 - actor for Shutter
