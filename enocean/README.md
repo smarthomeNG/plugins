@@ -133,7 +133,7 @@ EnOcean_Item:
     
     Brightness_Sensor:
         name: brightness_sensor_east
-        remark: Eltako FAH60
+        comment: Eltako FAH60
         type: num
         enocean_rx_id: 01A51DE6
         enocean_rx_eep: A5_06_01
@@ -142,7 +142,7 @@ EnOcean_Item:
         sqlite: 'yes'
     
     dimmer1:
-        remark: Eltako FDG14 - Dimmer 
+        comment: Eltako FDG14 - Dimmer 
         enocean_rx_id: 00112233
         enocean_rx_eep: A5_11_04
         light:
@@ -177,7 +177,7 @@ EnOcean_Item:
             enocean_rx_key: VALUE
     
     actor1B:
-        remark: Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
+        comment: Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
         enocean_rx_id: 1A794D3
         enocean_rx_eep: F6_02_03
         light:
@@ -191,8 +191,7 @@ EnOcean_Item:
             visu_acl: rw
     
     actor_D2:
-        name: ???
-        remark: Actor with VLD Command
+        comment: Actor with VLD Command
         enocean_rx_id: FFDB7381
         enocean_rx_eep: D2_01_07
         move:
@@ -204,7 +203,7 @@ EnOcean_Item:
             autotimer: 1 = 0  
     
     awning:
-        remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        comment: Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type: str
         enocean_rx_id: 1A869C3
         enocean_rx_eep: F6_02_03_01
@@ -277,7 +276,7 @@ EnOcean_Item:
             enocean_rx_key: ENG
     
     sunblind:
-        remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        comment: Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type: str
         enocean_rx_id: 1A869C3
         enocean_rx_eep: F6_02_03_01
@@ -297,8 +296,7 @@ EnOcean_Item:
     
     RGBdimmer:
         type: num
-        # name: Eltako FRGBW71L
-        remark: Eltako FRGBW71L - RGB Dimmer 
+        comment: Eltako FRGBW71L - RGB Dimmer 
         enocean_rx_id: 1A869C3
         enocean_rx_eep: A5_3F_7F
         enocean_rx_key: DI_0
@@ -380,7 +378,7 @@ EnOcean_Item:
     
     [[Brightness_Sensor]]
         name = brightness_sensor_east
-        remark = Eltako FAH60
+        comment = Eltako FAH60
         type = num
         enocean_rx_id = 01A51DE6
         enocean_rx_eep = A5_06_01
@@ -418,7 +416,7 @@ EnOcean_Item:
             enocean_rx_key = VALUE
     
     [[actor1B]]
-        remark = Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
+        comment = Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
         enocean_rx_id = 1A794D3
         enocean_rx_eep = F6_02_03
         [[[light]]]
@@ -426,14 +424,13 @@ EnOcean_Item:
             enocean_tx_eep = A5_38_08_01
             enocean_tx_id_offset = 1
             enocean_rx_key = B
-            block_switch = 'False'
-            cache = 'True'
-            enforce_updates = 'True'
+            block_switch = False
+            cache = True
+            enforce_updates = True
             visu_acl = rw
     
     [[actorD2]]
-        name: ???
-        remark = Actor with VLD Command
+        comment = Actor with VLD Command
         enocean_rx_id = FFDB7381
         enocean_rx_eep = D2_01_07
         [[[move]]]
@@ -445,7 +442,7 @@ EnOcean_Item:
             autotimer = 1 = 0  
     
     [[awning]]
-        remark = Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        comment = Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type = str
         enocean_rx_id = 1A869C3
         enocean_rx_eep = F6_02_03_01
@@ -513,7 +510,7 @@ EnOcean_Item:
             enocean_rx_key = ENG
     
     [[sunblind]]
-        remark = Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        comment = Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type = str
         enocean_rx_id = 1A869C3
         enocean_rx_eep = F6_02_03_01
@@ -533,8 +530,7 @@ EnOcean_Item:
 
     [[RGBdimmer]]
         type = num
-        # name = Eltako FRGBW71L
-        remark = Eltako FRGBW71L - RGB Dimmer 
+        comment = Eltako FRGBW71L - RGB Dimmer 
         enocean_rx_id = 1A869C3
         enocean_rx_eep = A5_3F_7F
         enocean_rx_key = DI_0
