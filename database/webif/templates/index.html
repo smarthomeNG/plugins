@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+{% extends "base_plugin.html" %}
+{% block content %}
+<div class="container-fluid m-3">
+	<div style="margin-right: 2px;" class="row">
+		<div class="card col-sm-2">
+			<img src="static/img/plugin_logo.png" width="150" height="150" style="margin-left: auto; margin-right: auto; display: block;">
+		</div>
+		<div class="col-sm-3">
+			<h3>SmartHomeNG</h3>
+			<h5>{{ plugin_shortname }} Plugin v{{ plugin_version }}</h5>
+			{% if p.get_instance_name() != '' %}
+                <h5>Instanz: {{ p.get_instance_name() }}</h5>
+            {% else %}
+                <br/>
+            {% endif %}
+			<h6>
+				{% for key, value in p._db._params.items() %}
+				{% if key != "passwd" %}
+				{{ key }}: {{ value }}
+				{% else %}
+				{{ key }}:  ********
+				{% endif %}<br/>
+				{% endfor %}
+			</h6>
+		</div>
+		<div class="col-sm-7">
+			<table class="table table-striped table-hover">
+				<tbody>
+					<tr>
+						<td class="py-1"><strong>Verbunden</strong></td>
+						<td class="py-1">{% if p._db._connected %}Ja{% else %}Nein{% endif %}</td>
+						<td class="py-1" width="300px"></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+<div class="container-fluid">
+        <div class="card" style="padding: 20px;">
+            <div>
+                <div class="mb-2">
+                The following items are assigned to this instance of the database plugin:
+                </div>
+				{% for item in sh.return_items() %}
+					{% if p.has_iattr(item.conf, 'database') %}
+					{{ item._path }}
+					{% endif %}
+				{% endfor %}
+            </div>
+        </div><!-- //main content -->
+</div> <!-- //container -->
+{% endblock %}

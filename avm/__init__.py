@@ -143,7 +143,7 @@ class MonitoringService:
 
         :return: number of items hold by the MonitoringService
         """
-        return len(self._items)+len(self._trigger_items)+len(self._items_incoming)+len(self._items_outgoing)
+        return len(self._items) + len(self._trigger_items) + len(self._items_incoming) + len(self._items_outgoing)
 
     def set_duration_item(self, item):
         """
@@ -2075,6 +2075,13 @@ class WebInterface:
         mytemplates = self.plugin.path_join(self.webif_dir, 'templates')
         globaltemplates = self.plugin.mod_http.gtemplates_dir
         self.tplenv = Environment(loader=FileSystemLoader([mytemplates, globaltemplates]))
+        self.tplenv.globals['isfile'] = self.my_isfile
+
+    def my_isfile(self, path):
+        complete_path = self.plugin.path_join(self.webif_dir, path)
+        from os.path import isfile as isfile
+        result = isfile(complete_path)
+        return result
 
     @cherrypy.expose
     def index(self):
@@ -2085,7 +2092,15 @@ class WebInterface:
 
         :return: contents of the template after beeing rendered
         """
+        tabcount = 1
+        tab2title = ""
+        if self.plugin._call_monitor:
+            tab2title = "Call Monitor Items (%s)" % self.plugin._monitoring_service.get_item_count_total()
+            tabcount = 2
+
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
+                           plugin_info=self.plugin.get_info(), tabcount=tabcount,
+                           tab1title="AVM Items (%s)" % self.plugin._fritz_device.get_item_count(),
+                           tab2title=tab2title,
                            p=self.plugin)
