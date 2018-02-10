@@ -410,6 +410,14 @@ class WebInterface:
         mytemplates = self.plugin.path_join(self.webif_dir, 'templates')
         globaltemplates = self.plugin.mod_http.gtemplates_dir
         self.tplenv = Environment(loader=FileSystemLoader([mytemplates, globaltemplates]))
+        self.tplenv.globals['isfile'] = self.my_isfile
+
+    def my_isfile(self, path):
+        complete_path = self.plugin.path_join(self.webif_dir, path)
+        from os.path import isfile as isfile
+        result = isfile(complete_path)
+        #        self.logger.warning("my_isfile: complete_path = {}, result = {}".format(complete_path, result))
+        return result
 
     @cherrypy.expose
     def index(self):
@@ -422,5 +430,6 @@ class WebInterface:
         """
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
+                           interface=None, item_count=len(self.plugin.get_items()),
+                           plugin_info=self.plugin.get_info(), tabcount=1, tab1title="SMA EM Items (%s)" % len(self.plugin.get_items()),
                            p=self.plugin)

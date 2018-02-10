@@ -1,36 +1,33 @@
 <!DOCTYPE html>
-{% extends "base.html" %}
+{% extends "base_plugin.html" %}
 
-{% block content %}
-<div class="container-fluid m-3">
-	<div style="margin-right: 2px;" class="row">
-		<div class="card col-sm-2">
-			<img src="static/img/plugin_logo.png" width="150" height="150" style="margin-left: auto; margin-right: auto; display: block;">
-		</div>
-		<div class="col-sm-3">
-			<h3>SmartHomeNG</h3>
-			<h5>{{ plugin_shortname }} Plugin v{{ plugin_version }}</h5>
-			{% if p.get_instance_name() != '' %}
-                <h5>Instanz: {{ p.get_instance_name() }}</h5>
-            {% else %}
-                <br/>
-            {% endif %}
-			<h6>serial: {{ p.get_serial() }}</h6>
-		</div>
-		<div class="col-sm-7">
-			<table class="table table-striped table-hover">
-				<tbody>
-					<tr>
-						<td class="py-1"><strong>Verbunden</strong></td>
-						<td class="py-1">Ja</td>
-						<td class="py-1" width="300px"></td>
-						<td></td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</div>
-</div>
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Serial</strong></td>
+			<td class="py-1">{{ p.get_serial() }}</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>time_sleep</strong></td>
+			<td class="py-1">
+				{{ p.get_time_sleep() }}
+			</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock %}
+
+{% block bodytab1 %}
 
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 	<div class="col-sm-12">
