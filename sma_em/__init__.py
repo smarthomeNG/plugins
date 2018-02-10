@@ -416,7 +416,6 @@ class WebInterface:
         complete_path = self.plugin.path_join(self.webif_dir, path)
         from os.path import isfile as isfile
         result = isfile(complete_path)
-        #        self.logger.warning("my_isfile: complete_path = {}, result = {}".format(complete_path, result))
         return result
 
     @cherrypy.expose

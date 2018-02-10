@@ -31,6 +31,7 @@ import threading
 import lib.db
 
 from lib.model.smartplugin import SmartPlugin
+from lib.module import Modules
 
 # Constants for item table
 COL_ITEM = ('id', 'name', 'time', 'val_str', 'val_num', 'val_bool', 'changed')
@@ -51,6 +52,7 @@ COL_LOG_VAL_STR = 3
 COL_LOG_VAL_NUM = 4
 COL_LOG_VAL_BOOL = 5
 COL_LOG_CHANGED = 6
+
 
 class Database(SmartPlugin):
 
@@ -85,6 +87,9 @@ class Database(SmartPlugin):
         self._db.setup({i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
 
         smarthome.scheduler.add('Database dump ' + self._name + ("" if prefix == "" else " [" + prefix + "]"), self._dump, cycle=self._dump_cycle, prio=5)
+
+        if not self.init_webinterface():
+            self._init_complete = False
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'database'):
@@ -615,3 +620,86 @@ class Database(SmartPlugin):
 
     def _timestamp(self, dt):
         return int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface:
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        mytemplates = self.plugin.path_join(self.webif_dir, 'templates')
+        globaltemplates = self.plugin.mod_http.gtemplates_dir
+        self.tplenv = Environment(loader=FileSystemLoader([mytemplates, globaltemplates]))
+        self.tplenv.globals['isfile'] = self.my_isfile
+
+    def my_isfile(self, path):
+        complete_path = self.plugin.path_join(self.webif_dir, path)
+        from os.path import isfile as isfile
+        result = isfile(complete_path)
+        return result
+
+    @cherrypy.expose
+    def index(self):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
+                           plugin_info=self.plugin.get_info(), sh=self.plugin._sh, tabcount=1,
+                           p=self.plugin)
