@@ -1,7 +1,7 @@
 # Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: interface                # plugin type (gateway, interface, protocol, system, web)
+    type: gateway                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Ansteuerung von HomeMatic Komponenten über eine HomeMatic CCU2 Zentrale'
         en: 'Control HomeMatic devices through a HomeMatic CCU2 (used as gateway)'

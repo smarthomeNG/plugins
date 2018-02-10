@@ -444,10 +444,14 @@ class WebInterface:
 
 
     def my_isfile(self, path):
-        complete_path = self.plugin.path_join(self.webif_dir, path)
+        if path.startswith('/gstatic/'):
+            complete_path = self.plugin.path_join(Modules.get_instance().get_module('http')._gstatic_dir, path[len('/gstatic/'):])
+            self.logger.warning("my_isfile(g): path={}, _gstatic_dir={}".format(path, Modules.get_instance().get_module('http')._gstatic_dir))
+        else:
+            complete_path = self.plugin.path_join(self.webif_dir, path)
         from os.path import isfile as isfile
         result = isfile(complete_path)
-#        self.logger.warning("my_isfile: complete_path = {}, result = {}".format(complete_path, result))
+        self.logger.warning("my_isfile: path={}, complete_path={}, result={}, _gstatic_dir={}".format(path, complete_path, result, Modules.get_instance().get_module('http')._gstatic_dir))
         return result
         
 
@@ -495,8 +499,9 @@ class WebInterface:
         device_count = len(devices)
         
         tmpl = self.tplenv.get_template('index.html')
+        # The first paramter for the render method has to be specified. the base template 
+        # for the web interface relys on the instance of the plugin to be passed as p
         return tmpl.render(p=self.plugin, 
-                           username=username, host=host, 
                            interface=interface,
                            devices=devices, device_count=device_count, 
                            items=sorted(self.plugin.hm_items), item_count=len(self.plugin.hm_items),
