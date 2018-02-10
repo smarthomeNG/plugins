@@ -1,46 +1,24 @@
 <!DOCTYPE html>
-{% extends "base.html" %}
-{% block content %}
-<div class="container-fluid m-3">
-	<div style="margin-right: 2px;" class="row">
-		<div class="card col-sm-2">
-			<img src="static/img/plugin_logo.png" width="150" height="150" style="margin-left: auto; margin-right: auto; display: block;">
-		</div>
-		<div class="col-sm-3">
-			<h3>SmartHomeNG</h3>
-			<h5>{{ p.get_shortname() }} Plugin v{{ p.get_version() }}</h5>
-			{% if p.get_instance_name() != '' %}
-                <h5>Instanz: {{ p.get_instance_name() }}</h5>
-            {% else %}
-                <br/>
-            {% endif %}
-		</div>
-		<div class="col-sm-7">
-			<table class="table table-striped table-hover">
-				<tbody>
-					<tr>
-						<td class="py-1"><strong>Verbunden</strong></td>
-						<td class="py-1">Ja</td>
-						<td class="py-1" width="300px"></td>
-						<td></td>
-					</tr>
-                    <tr>
-						<td class="py-1"><strong>Mode</strong></td>
-						<td class="py-1">
-                            {% if p._mode == 'all' %}
-                            Alle Items
-                            {% else %}
-                            Nur in Sets definierte Items
-                            {% endif %}
-                        </td>
-						<td class="py-1" width="300px"></td>
-						<td></td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</div>
-</div>
+{% extends "base_plugin.html" %}
+{% block headtable %}
+<table class="table table-striped table-hover">
+    <tbody>
+        <tr>
+            <td class="py-1"><strong>Mode</strong></td>
+            <td class="py-1">
+                {% if p._mode == 'all' %}
+                Alle Items
+                {% else %}
+                Nur in Sets definierte Items
+                {% endif %}
+            </td>
+            <td class="py-1" width="300px"></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}
+{% block bodytab1 %}
 <div class="container-fluid">
         <div class="card" style="padding: 20px;">
             <div>

@@ -130,6 +130,13 @@ class WebInterface:
         mytemplates = self.plugin.path_join(self.webif_dir, 'templates')
         globaltemplates = self.plugin.mod_http.gtemplates_dir
         self.tplenv = Environment(loader=FileSystemLoader([mytemplates, globaltemplates]))
+        self.tplenv.globals['isfile'] = self.my_isfile
+
+    def my_isfile(self, path):
+        complete_path = self.plugin.path_join(self.webif_dir, path)
+        from os.path import isfile as isfile
+        result = isfile(complete_path)
+        return result
 
     @cherrypy.expose
     def index(self):
@@ -164,6 +171,7 @@ class WebInterface:
                            ip=self.plugin.mod_http.get_local_ip_address(),
                            port=self.plugin.mod_http.get_local_port(),
                            servicesport=self.plugin.mod_http.get_local_servicesport(),
+                           tabcount=1, tab1title="WebServices",
                            item_sets=item_sets,p=self.plugin)
 
 
