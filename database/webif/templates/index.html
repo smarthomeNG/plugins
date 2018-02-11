@@ -57,7 +57,7 @@ The following items are assigned to this instance of the database plugin:
 		<td class="py-1">{{ p.id(item, create=False) }}</td>
 		<td class="py-1">
 			<button type="button" class="btn btn-shng btn-sm" title="CSV Export der Werte" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
-			<button type="button" class="btn btn-shng btn-sm" title="Wertehistorie löschen" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}','Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?')"><i class="fas fa-history"></i></button>
+			<button type="button" class="btn btn-danger btn-sm" title="Wertehistorie löschen" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}','Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?')"><i class="fas fa-history"></i></button>
 		</td>
 	</tr>
 	{% endif %}
