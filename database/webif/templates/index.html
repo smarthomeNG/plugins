@@ -39,7 +39,8 @@ function confirmDelete(url, text) {
 </script>
 {% if action == 'delete_log' %}
 <div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
-  <strong>Delete log table entries for Item ID {{ item_id }} initiated!</strong>
+  <strong>Löschauftrag für die Einträge von Item ID {{ item_id }} in der Tabelle "log" wurde erfolgreich initiiert!</strong><br/>
+Das Löschen kann noch kurze Zeit dauern, da die DELETE Anfrage erst nach Abschluß der bestehenden Transaktionen erfolgen kann.
   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
     <span aria-hidden="true">&times;</span>
   </button>
