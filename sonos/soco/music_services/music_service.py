@@ -11,6 +11,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 
 import requests
+import xmltodict
 
 from xmltodict import parse
 
@@ -27,7 +28,6 @@ log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 # pylint: disable=too-many-instance-attributes, protected-access
 class MusicServiceSoapClient(object):
-
     """A SOAP client for accessing Music Services.
 
     This class handles all the necessary authentication for accessing
@@ -184,17 +184,15 @@ class MusicServiceSoapClient(object):
 
         # The top key in the OrderedDict will be the methodResult. Its
         # value may be None if no results were returned.
-        result = list(parse(
-            XML.tostring(result_elt), process_namespaces=True,
-            namespaces={'http://www.sonos.com/Services/1.1': None}
-        ).values())[0]
+        result = list(parse(XML.tostring(result_elt), process_namespaces=True,
+                                      namespaces={'http://www.sonos.com/Services/1.1': None}
+                                      ).values())[0]
 
         return result if result is not None else {}
 
 
 # pylint: disable=too-many-instance-attributes
 class MusicService(object):
-
     """The MusicService class provides access to third party music services.
 
     Example:
@@ -335,6 +333,7 @@ class MusicService(object):
         self.service_id = data['Id']
         # Auth_type can be 'Anonymous', 'UserId, 'DeviceLink'
         self.auth_type = data['Auth']
+        self.auth_type = "DeviceLink"
         self.presentation_map_uri = data.get('PresentationMapUri', None)
         self._search_prefix_map = None
         self.service_type = data['ServiceType']

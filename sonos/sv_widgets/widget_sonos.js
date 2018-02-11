@@ -1,177 +1,164 @@
-// ----- sonos.music_control ---------------------------------------------------------
-$(document).delegate('span[data-widget="sonos.music_control"]', {
-	'update': function (event, response) {
-		event.stopPropagation();
-		$(this).val(response);
-		var action = $(this).attr('data-action');
-		var active = false;
-		if (response[0].toLowerCase().indexOf(action.toLowerCase()) >= 0){
-			active = "true";
-		}
-		$(this).attr('data-val', response[1]);
-		$(this).attr('data-active', active);
-		$(this).trigger('draw', response);
-	},
-	'draw': function (event, response) {
-		event.stopPropagation();
-		var val_on = $(this).attr('data-val-on');
-		var val_off = $(this).attr('data-val-off');
-		var active = $(this).attr('data-active');
 
-		if(active == "true") {
-			if(val_on == $(this).attr('data-val')) {
-				$(this).find('#' + this.id + '-inactive').hide();
-				$(this).find('#' + this.id + '-active-on').show();
-				$(this).find('#' + this.id + '-active-off').hide();
+$.widget("sv.sonos_playlists", $.sv.widget, {
+	initSelector: 'div[data-widget="sonos.playlists"]',
+
+	options: {
+		'data_item': $(this).attr('data-send')
+	},
+
+	_update: function (response) {
+		var ul = this.element.children('ul:first').empty();
+		var line = '';
+		for (var i in response[0]) {
+			var ret = '<a href="#" class="favorite">' + response[0][i] + '</a>';
+			$('<li data-icon="false">' + ret + '</li>').appendTo(ul)
+		}
+		ul.trigger('prepare').listview('refresh').trigger('redraw');
+	},
+	_events: {
+		'click > ul > li': function (event) {
+				var playlist = $(event.target).html();
+				var data_item = this.element.attr('data-send');
+				io.write(data_item, playlist);
+				$("#popup_sonos_playlists").popup('close');
+		}
+	}
+});
+
+$.widget("sv.sonos_cover", $.sv.widget, {
+	initSelector: 'img[data-widget="sonos.cover"]',
+	_update: function (response) {
+		if (!response[0].trim()) {
+			this.element.attr('src', this.element.attr('data-default'));
+		}
+		else {
+			this.element.attr('src', response[0]);
+		}
+	}
+});
+
+$.widget("sv.sonos_title", $.sv.widget, {
+	initSelector: 'div[data-widget="sonos.title"]',
+	_update: function (response) {
+		if (!response[1].trim()) {
+			this.element.removeClass('title');
+			this.element.addClass('nomusic');
+			this.element.html('No music');
+		}
+		else {
+			this.element.removeClass('nomusic')
+			this.element.addClass('title')
+			if (response[3].toLowerCase().indexOf('radio') == -1){
+				this.element.html(response[0]);
 			}
 			else {
-				$(this).find('#' + this.id + '-inactive').hide();
-				$(this).find('#' + this.id + '-active-on').hide();
-				$(this).find('#' + this.id + '-active-off').show();
+				this.element.html(response[2]);
 			}
 		}
-		else {
-			$(this).find('#' + this.id + '-active-on').hide();
-			$(this).find('#' + this.id + '-active-off').hide();
-			$(this).find('#' + this.id + '-inactive').show();
-		}
-	},
-	'click': function (event) {
-		if ($(this).attr('data-active') == 'true') {
-			io.write($(this).attr('data-send'), ($(this).val()[1] == $(this).attr('data-val-off') ? $(this).attr('data-val-on') : $(this).attr('data-val-off')) );
-		}
-	},
-	'touchstart mousedown': function (event, response) {
-		event.stopPropagation();
-		if ($(this).attr('data-active') == 'true') {
-			$(this).css({ transform: 'scale(.8)' });
-		}
-	},
-	'touchend mouseup': function (event, response) {
-		event.stopPropagation();
-		$(this).css({ transform: 'scale(1)' });
 	}
 });
 
-$(document).delegate('img[data-widget="sonos.cover"]', {
-	'update': function (event, response) {
-		event.stopPropagation();
-		if (!response[0].trim()) {
-		    $(this).attr('src', $(this).attr('data-cover'));
+$.widget("sv.sonos_artist", $.sv.widget, {
+	initSelector: 'div[data-widget="sonos.artist"]',
+	_update: function (response) {
+		if (response[2].toLowerCase().indexOf('radio') == -1){
+			this.element.html(response[0]);
 		}
 		else {
-			$(this).attr('src', response[0]);
+			this.element.html(response[1]);
 		}
 	}
 });
 
-$(document).delegate('div[data-widget="sonos.artist"]', {
-	'update': function (event, response) {
-		event.stopPropagation();
-        $(this).html(response[0]);
+$.widget("sv.sonos_album", $.sv.widget, {
+	initSelector: 'div[data-widget="sonos.album"]',
+	_update: function (response) {
+			this.element.html(response[0]);
 	}
 });
 
-$(document).delegate('div[data-widget="sonos.title"]', {
-	'update': function (event, response) {
-		event.stopPropagation();
-		if (!response[1].trim()) {
-			$(this).html('No music');
 
-		}
-		else {
-			$(this).html(response[0]);
-		}
-	}
-});
+$.widget("sv.sonos_play", $.sv.widget, {
 
-$(document).delegate('div[data-widget="sonos.radio_station"]', {
-	'update': function (event, response) {
-		event.stopPropagation();
-		if (!response[1].trim()) {
-			$(this).html('No music');
+	initSelector: 'div[data-widget="sonos.play"]',
+
+	_update: function (response) {
+		if (response[1].toLowerCase().indexOf('play') == -1){
+			this.element.addClass('inactive');
 		}
 		else {
-			$(this).html(response[0]);
+			this.element.removeClass('inactive');
 		}
-	}
-});
-
-$(document).delegate('div[data-widget="sonos.stream_content"]', {
-	'update': function (event, response) {
-		event.stopPropagation();
-		$(this).html(response[0]);
-	}
-});
-
-$(document).delegate('div[data-widget="sonos.album"]', {
-	'update': function (event, response) {
-		event.stopPropagation();
-		$(this).html(response[0]);
-	}
-});
-
-$(document).delegate('div[class="play"]', {
-	'touchstart mousedown': function (event, response) {
-		event.stopPropagation();
-		$(this).css({ transform: 'scale(.8)' });
 	},
 
-	'touchend mouseup': function (event, response) {
-		event.stopPropagation();
-		$(this).css({ transform: 'scale(1)' });
+	_create: function() {
+		this._super();
+
+		this._on(this.element.find('a[data-widget="basic.stateswitch"]'), {
+			'mousedown': function (event) {
+				this.element.css({ '-webkit-transform': 'scale(.8)' });
+			},
+
+			'mouseup': function (event) {
+				this.element.css({ '-webkit-transform': 'scale(1.4)' });
+			}
+		})
 	}
 });
 
-$(document).delegate('div[class="next"]', {
+$.widget("sv.sonos_previous", $.sv.widget, {
 
-	'touchstart mousedown': function (event, response) {
-		event.stopPropagation();
-		$(this).css({ transform: 'scale(.8)' });
-	},
+	initSelector: 'div[data-widget="sonos.previous"]',
 
-	'touchend mouseup': function (event, response) {
-		event.stopPropagation();
-		$(this).css({ transform: 'scale(1)' });
-	}
-});
-
-
-$(document).delegate('div[data-widget="sonos.streamtype"]', {
-	'update': function (event, response) {
-		event.stopPropagation();
-		console.log(response[0]);
-		var uid = $(this).attr('data-uid');
-		var music = "#" + uid + "-div-music";
-		var radio = "#" + uid + "-div-radio";
-		if (response[0] === 'music') {
-			$(music).show();
-    		$(radio).hide();
+	_update: function (response) {
+		if (response[1].toLowerCase().indexOf('previous') == -1){
+			this.element.addClass('inactive');
 		}
 		else {
-		    $(music).hide();
-    		$(radio).show();
-        }
+			this.element.removeClass('inactive');
+		}
+	},
+
+	_create: function() {
+		this._super();
+
+		this._on(this.element.find('a[data-widget="basic.stateswitch"]'), {
+			'mousedown': function (event) {
+				this.element.css({ '-webkit-transform': 'scale(.8)' });
+			},
+
+			'mouseup': function (event) {
+				this.element.css({ '-webkit-transform': 'scale(1)' });
+			}
+		})
 	}
 });
 
-$(document).delegate('div[data-widget="sonos.playlists"]', {
-	'update': function (event, response) {
-        event.stopPropagation();
-        var line = '';
-        for (var i in response[0]) {
-            var ret = '<a href="#" class="favorite">' + response[0][i] + '</a>';
-            line += '<li data-icon="false">' + ret + '</li>';
-        }
-        $(this).find("ul").html(line).trigger('prepare').listview('refresh').trigger('redraw');
-    },
-	'click': function (event, response) {
-	    var target = $( event.target );
-        if ( target.is( "a" ) ) {
-            if (target.hasClass( "favorite" )) {
-                io.write($(this).attr('data-send'), target.html());
-            }
-        }
+
+$.widget("sv.sonos_next", $.sv.widget, {
+
+	initSelector: 'div[data-widget="sonos.next"]',
+
+	_update: function (response) {
+		if (response[1].toLowerCase().indexOf('next') == -1){
+			this.element.addClass('inactive');
+		}
+		else {
+			this.element.removeClass('inactive');
+		}
+	},
+
+	_create: function() {
+		this._super();
+
+		this._on(this.element.find('a[data-widget="basic.stateswitch"]'), {
+			'mousedown': function (event) {
+				this.element.css({ '-webkit-transform': 'scale(.8)' });
+			},
+
+			'mouseup': function (event) {
+				this.element.css({ '-webkit-transform': 'scale(1)' });
+			}
+		})
 	}
 });
-

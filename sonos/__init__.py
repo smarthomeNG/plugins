@@ -30,10 +30,13 @@ import re
 import socketserver
 import subprocess
 import threading
+from collections import OrderedDict
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from queue import Empty
 import sys
 from urllib.parse import unquote
+import requests
+import xmltodict
 from requests.utils import quote
 from tinytag import TinyTag
 from plugins.sonos.soco.exceptions import SoCoUPnPException
@@ -43,6 +46,7 @@ from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
 from plugins.sonos.soco.data_structures import to_didl_string, DidlItem, DidlMusicTrack
 from plugins.sonos.soco.events import event_listener
+from plugins.sonos.soco.music_services.data_structures import get_class
 from plugins.sonos.soco.snapshot import Snapshot
 from plugins.sonos.soco.xml import XML
 import time
@@ -630,6 +634,8 @@ class Speaker(object):
                                 cover_url = metadata['album_art_uri']
                                 if not cover_url.startswith(('http:', 'https:')):
                                     self.track_album_art = 'http://' + self.soco.ip_address + ':1400' + cover_url
+                                else:
+                                    self.track_album_art = cover_url
                             else:
                                 self.track_album_art = ''
 
@@ -1998,21 +2004,81 @@ class Speaker(object):
         :param start: Start playing after setting the radio stream? Default: True
         :return: None
         """
+
+        # ------------------------------------------------------------------------------------------------------------ #
+
+        # This code here is a quick workaround for issue https://github.com/SoCo/SoCo/issues/557 and will be fixed
+        # if a patch is applied.
+
+        # ------------------------------------------------------------------------------------------------------------ #
+
         if not self._check_property():
             return
         if not self.is_coordinator:
             sonos_speaker[self.coordinator].play_tunein(station_name, start)
         else:
-            service = MusicService('TuneIn')
-            result = service.search(category='stations', term=station_name)
-            if not result:
-                self._logger.warning("No radio station found for search string '{term}'.".format(term=station_name))
-                return
-            item = result[0]
-            meta = to_didl_string(item)
-            account = service.account
-            uri = "x-sonosapi-stream:{0}?sid={1}&sn={2}".format(item.metadata['id'], service.service_id,
-                                                                account.serial_number)
+
+            data = '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Header><credentials ' \
+                   'xmlns="http://www.sonos.com/Services/1.1"><deviceId>anon</deviceId>' \
+                   '<deviceProvider>Sonos</deviceProvider></credentials></s:Header><s:Body>' \
+                   '<search xmlns="http://www.sonos.com/Services/1.1"><id>search:station</id><term>{search}</term>' \
+                   '<index>0</index><count>100</count></search></s:Body></s:Envelope>'.format(
+                search=station_name)
+
+            headers = {
+                "SOAPACTION": "http://www.sonos.com/Services/1.1#search",
+                "USER-AGENT": "Linux UPnP/1.0 Sonos/40.5-49250 (WDCR:Microsoft Windows NT 10.0.16299)",
+                "CONTENT-TYPE": 'text/xml; charset="utf-8"'
+            }
+
+            response = requests.post("http://legato.radiotime.com/Radio.asmx", data=data.encode("utf-8"),
+                                     headers=headers)
+            test = XML.fromstring(response.content)
+            body = test.find("{http://schemas.xmlsoap.org/soap/envelope/}Body")[0]
+
+            t = XML.tostring(body)
+
+            response = list(xmltodict.parse(XML.tostring(body), process_namespaces=True,
+                                            namespaces={'http://www.sonos.com/Services/1.1': None}).values())[0]
+
+            items = []
+            # The result to be parsed is in either searchResult or getMetadataResult
+            if 'searchResult' in response:
+                response = response['searchResult']
+            elif 'getMetadataResult' in response:
+                response = response['getMetadataResult']
+            else:
+                raise ValueError('"response" should contain either the key '
+                                 '"searchResult" or "getMetadataResult"')
+
+            for result_type in ('mediaCollection', 'mediaMetadata'):
+                # Upper case the first letter (used for the class_key)
+                result_type_proper = result_type[0].upper() + result_type[1:]
+                raw_items = response.get(result_type, [])
+                # If there is only 1 result, it is not put in an array
+                if isinstance(raw_items, OrderedDict):
+                    raw_items = [raw_items]
+
+                for raw_item in raw_items:
+                    # Form the class_key, which is a unique string for this type,
+                    # formed by concatenating the result type with the item type. Turns
+                    # into e.g: MediaMetadataTrack
+                    class_key = result_type_proper + raw_item['itemType'].title()
+                    cls = get_class(class_key)
+                    from plugins.sonos.soco.music_services import Account
+                    items.append(
+                        cls.from_music_service(MusicService(service_name='TuneIn', account=Account()), raw_item))
+
+            if not items:
+                exit(0)
+
+            item_id = items[0].metadata['id']
+            sid = 254  # hard-coded TuneIn service id ?
+            sn = 0
+            meta = to_didl_string(items[0])
+
+            uri = "x-sonosapi-stream:{0}?sid={1}&sn={2}".format(item_id, sid, sn)
+
             self.soco.avTransport.SetAVTransportURI([('InstanceID', 0),
                                                      ('CurrentURI', uri), ('CurrentURIMetaData', meta)])
             if start:
@@ -2091,7 +2157,7 @@ class Speaker(object):
                     volumes[member] = sonos_speaker[member].volume
 
                 tag = TinyTag.get(file_path)
-                duration = int(round(tag.duration))
+                duration = int(round(tag.duration)) + 0.4
                 self._logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
                 file_name = quote(os.path.split(file_path)[1])
                 snippet_url = "{url}/{file}".format(url=webservice_url, file=file_name)
@@ -2220,7 +2286,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.3"
+    PLUGIN_VERSION = "1.4.4"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
                  discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
@@ -2680,8 +2746,8 @@ class Sonos(SmartPlugin):
 
     def _discover(self) -> None:
         """
-        Discover Sonos speaker in the network. If the plugin parameter 'speaker_ips' no discover package is sent over
-        the network.
+        Discover Sonos speaker in the network. If the plugin parameter 'speaker_ips' has IP addresses, no discover
+        package is sent over the network.
         :rtype: None
         """
         handled_speaker = {}
