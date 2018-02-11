@@ -17,7 +17,7 @@
 				{% if key != "passwd" %}
 				{{ key }}: {{ value }}
 				{% else %}
-				{{ key }}:  ********
+				{{ key }}:  {% for letter in value %}*{% endfor %}
 				{% endif %}<br/>
 				{% endfor %}
 			</td>

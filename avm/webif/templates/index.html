@@ -14,7 +14,7 @@
 			<td class="py-1"><strong>Call Monitor</strong></td>
 			<td class="py-1">{% if p._call_monitor %}Ja{% else %}Nein{% endif %}</td>
 			<td class="py-1">{% if p._fritz_device.get_password() %}Passwort{% endif %}</td>
-			<td class="py-1">{% if p._fritz_device.get_password() %}*****{% endif %}</td>
+			<td class="py-1">{% if p._fritz_device.get_password() %}{% for letter in p._fritz_device.get_password() %}*{% endfor %}{% endif %}</td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Host</strong></td>
