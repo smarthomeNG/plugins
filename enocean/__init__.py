@@ -185,7 +185,7 @@ class EnOcean(SmartPlugin):
         # call init of eep_parser
         self.eep_parser = eep_parser.EEP_Parser()
         # call init of prepare_packet_data
-        self.prepare_packet_data = prepare_packet_data.Prepare_Packet_Data()
+        self.prepare_packet_data = prepare_packet_data.Prepare_Packet_Data(self)
 
     def eval_telegram(self, sender_id, data, opt):
         self.logger.debug("enocean: call function << eval_telegram >>")

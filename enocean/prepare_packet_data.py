@@ -20,22 +20,20 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 import logging
-#import time
 from lib.utils import Utils
-from lib.model.smartplugin import SmartPlugin
 
 
 
-class Prepare_Packet_Data(SmartPlugin):
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.3"
+class Prepare_Packet_Data():
 
-    def __init__(self):
+    def __init__(self, plugin_instance):
         """
         Init Method
         """
         self.logger = logging.getLogger(__name__)
-        self.logger.info('enocean: prepare packet data instantiated')
+        self.logger.info('enocean-Prepare_Packet_Data-init: Init of Prepare_Packet_Data')
+        # Get the plugin instance from encocean class
+        self._plugin_instance = plugin_instance
 
     def CanDataPrepare(self, tx_eep):
         """
@@ -53,9 +51,9 @@ class Prepare_Packet_Data(SmartPlugin):
         """
         self.logger.debug('enocean-PrepareData: data-preparer called with tx_eep = {}'.format(tx_eep))
         # Prepare ID-Offset
-        if self.has_iattr(item.conf, 'enocean_tx_id_offset'):
+        if self._plugin_instance.has_iattr(item.conf, 'enocean_tx_id_offset'):
             self.logger.debug('enocean-PrepareData: item has valid enocean_tx_id_offset')
-            id_offset = int(self.get_iattr_value(item.conf, 'enocean_tx_id_offset'))
+            id_offset = int(self._plugin_instance.get_iattr_value(item.conf, 'enocean_tx_id_offset'))
             if (id_offset < 0) or (id_offset > 127):
                 self.logger.error('enocean-PrepareData: ID offset out of range (0-127). Aborting.')
                 return None
@@ -122,8 +120,8 @@ class Prepare_Packet_Data(SmartPlugin):
         rorg = 0xa5
         block = 0
         # check if item has attribute block_switch
-        if self.has_iattr(item.conf, 'block_switch'):
-            block_value = self.get_iattr_value(item.conf, 'block_switch')
+        if self._plugin_instance.has_iattr(item.conf, 'block_switch'):
+            block_value = self._plugin_instance.get_iattr_value(item.conf, 'block_switch')
             self.logger.debug('enocean-PrepareData: {} block_value has the value {}'.format(tx_eep, block_value))
             if Utils.to_bool(block_value):
                 block = 4
@@ -151,13 +149,13 @@ class Prepare_Packet_Data(SmartPlugin):
         rorg = 0xa5
         block = 0
         # check if item has attribute block_dim_value
-        if self.has_iattr(item.level.conf, 'block_dim_value'):
-            block_value = self.get_iattr_value(item.level.conf, 'block_dim_value')
+        if self._plugin_instance.has_iattr(item.level.conf, 'block_dim_value'):
+            block_value = self._plugin_instance.get_iattr_value(item.level.conf, 'block_dim_value')
             if Utils.to_bool(block_value):
                 block = 4
         # check if item has attribite dim_speed
-        if self.has_iattr(item.level.conf, 'dim_speed'):
-            dim_speed = self.get_iattr_value(item.level.conf, 'dim_speed')
+        if self._plugin_instance.has_iattr(item.level.conf, 'dim_speed'):
+            dim_speed = self._plugin_instance.get_iattr_value(item.level.conf, 'dim_speed')
             # bound dim_speed values to [0 - 100] %
             dim_speed = max(0, min(100, int(dim_speed)))
             self.logger.debug('enocean-PrepareData: {} use dim_speed = {} %'.format(tx_eep, dim_speed))
@@ -203,13 +201,13 @@ class Prepare_Packet_Data(SmartPlugin):
         rorg = 0xa5
         block = 0
         # check if item has attribute block_dim_value
-        if self.has_iattr(item.conf, 'block_dim_value'):
-            block_value = self.get_iattr_value(item.conf, 'block_dim_value')
+        if self._plugin_instance.has_iattr(item.conf, 'block_dim_value'):
+            block_value = self._plugin_instance.get_iattr_value(item.conf, 'block_dim_value')
             if Utils.to_bool(block_value):
                 block = 4
         # check if item has attribite dim_speed 
-        if self.has_iattr(item.conf, 'dim_speed'):
-            dim_speed = self.get_iattr_value(item.conf, 'dim_speed')
+        if self._plugin_instance.has_iattr(item.conf, 'dim_speed'):
+            dim_speed = self._plugin_instance.get_iattr_value(item.conf, 'dim_speed')
             # bound dim_speed values to [0 - 100] %
             dim_speed = max(0, min(100, int(dim_speed)))
             self.logger.debug('enocean-PrepareData: {} use dim_speed = {} %'.format(tx_eep, dim_speed))
@@ -249,13 +247,13 @@ class Prepare_Packet_Data(SmartPlugin):
         rorg = 0xa5
         block = 0
         # check if item has attribute block_actuator
-        if self.has_iattr(item.conf, 'block_actuator'):
-            block_value = self.get_iattr_value(item.conf, 'block_actuator')
+        if self._plugin_instance.has_iattr(item.conf, 'block_actuator'):
+            block_value = self._plugin_instance.get_iattr_value(item.conf, 'block_actuator')
             if Utils.to_bool(block_value):
                 block = 4
         # check if item has attribite enocean_rtime 
-        if self.has_iattr(item.conf, 'enocean_rtime'):
-            rtime = self.get_iattr_value(item.conf, 'enocean_rtime')
+        if self._plugin_instance.has_iattr(item.conf, 'enocean_rtime'):
+            rtime = self._plugin_instance.get_iattr_value(item.conf, 'enocean_rtime')
             # rtime [0 - 255] s
             rtime = max(0, min(255, int(rtime)))
             self.logger.debug('enocean-PrepareData: {} actuator runtime of {} s specified.'.format(tx_eep, rtime))
@@ -298,8 +296,8 @@ class Prepare_Packet_Data(SmartPlugin):
         self.logger.debug('enocean-PrepareData: prepare data for tx_eep {}'.format(tx_eep))
         rorg = 0x07
         # check if item has attribite dim_speed 
-        if self.has_iattr(item.conf, 'dim_speed'):
-            dim_speed = self.get_iattr_value(item.conf, 'dim_speed')
+        if self._plugin_instance.has_iattr(item.conf, 'dim_speed'):
+            dim_speed = self._plugin_instance.get_iattr_value(item.conf, 'dim_speed')
             dim_speed = max(0, min(100, int(dim_speed)))
             self.logger.debug('enocean-PrepareData: {} use dim_speed = {} %'.format(tx_eep, dim_speed))
             # calculate dimspeed from percent into hex
@@ -311,8 +309,8 @@ class Prepare_Packet_Data(SmartPlugin):
             dim_speed = 0x00
             self.logger.debug('enocean-PrepareData: {} no attribute dim_speed --> use intern dim speed'.format(tx_eep))
         # check the color of the item
-        if self.has_iattr(item.conf, 'color'):
-            color = self.get_iattr_value(item.conf, 'color')
+        if self._plugin_instance.has_iattr(item.conf, 'color'):
+            color = self._plugin_instance.get_iattr_value(item.conf, 'color')
             if (color == 'red'):
                 color_hex = 0x01
             elif (color == 'green'):
@@ -365,8 +363,8 @@ class Prepare_Packet_Data(SmartPlugin):
         SubTel = 0x03
         db = 0xFF
         Secu = 0x0
-        if self.has_iattr(item.conf, 'enocean_rx_id'):
-            rx_id = int(self.get_iattr_value(item.conf, 'enocean_rx_id'), 16)
+        if self._plugin_instance.has_iattr(item.conf, 'enocean_rx_id'):
+            rx_id = int(self._plugin_instance.get_iattr_value(item.conf, 'enocean_rx_id'), 16)
             if (rx_id < 0) or (rx_id > 0xFFFFFFFF):
                 self.logger.error('enocean-PrepareData: {} rx-ID-Offset out of range (0-127). Aborting.'.format(tx_eep))
                 return None

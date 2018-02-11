@@ -286,7 +286,6 @@ EnOcean_Item:
             enocean_tx_eep: A5_3F_7F
             enocean_tx_id_offset: 0
             enocean_rx_key: B
-            # runtime Range [0 - 255] s
             enocean_rtime: 60
             # block actuator
             block_actuator: 'False'
@@ -425,7 +424,7 @@ EnOcean_Item:
             enocean_tx_id_offset = 1
             enocean_rx_key = B
             block_switch = False
-            cache = True
+            cache = 'True'
             enforce_updates = True
             visu_acl = rw
     
