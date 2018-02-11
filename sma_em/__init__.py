@@ -28,7 +28,7 @@ import socket
 import time
 import struct
 import binascii
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 from lib.module import Modules
 
 class SMA_EM(SmartPlugin):
@@ -393,12 +393,12 @@ import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
 
-class WebInterface:
+class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-
+        
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str
@@ -407,16 +407,9 @@ class WebInterface:
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
-        mytemplates = self.plugin.path_join(self.webif_dir, 'templates')
-        globaltemplates = self.plugin.mod_http.gtemplates_dir
-        self.tplenv = Environment(loader=FileSystemLoader([mytemplates, globaltemplates]))
-        self.tplenv.globals['isfile'] = self.my_isfile
 
-    def my_isfile(self, path):
-        complete_path = self.plugin.path_join(self.webif_dir, path)
-        from os.path import isfile as isfile
-        result = isfile(complete_path)
-        return result
+        self.tplenv = self.init_template_ennvironment()
+
 
     @cherrypy.expose
     def index(self):

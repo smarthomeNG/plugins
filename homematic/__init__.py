@@ -28,7 +28,7 @@ import logging
 from pyhomematic import HMConnection
 
 from lib.module import Modules
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 
 from time import sleep
 
@@ -222,7 +222,7 @@ class Homematic(SmartPlugin):
                     self.logger.error("parse_item{}: Not initializing {}: Unknown hm_node='{}' for address={}:{}, function={}".format(self.log_instance_str, item, hm_node, hm_address, hm_channel, hm_function))
 
                 if value is not None:
-                    self.logger.warning("parse_item{}: Initializing {} with '{}' from address={}:{}, function={}".format(self.log_instance_str, item, value, hm_address, hm_channel, hm_function))
+                    self.logger.info("parse_item{}: Initializing {} with '{}' from address={}:{}, function={}".format(self.log_instance_str, item, value, hm_address, hm_channel, hm_function))
                     item(value, 'HomeMatic', 'Init')
                 else:
                     if not init_error:
@@ -414,8 +414,7 @@ import cherrypy
 from jinja2 import Environment, FileSystemLoader
 from jinja2.utils import open_if_exists
 
-class WebInterface:
-
+class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
         """
@@ -429,31 +428,11 @@ class WebInterface:
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
-#        self.tplenv = Environment(loader=FileSystemLoader(self.plugin.path_join( self.webif_dir, 'templates' ) ))
-        mytemplates = self.plugin.path_join( self.webif_dir, 'templates' )
-        globaltemplates = self.plugin.mod_http.gtemplates_dir
-        self.tplenv = Environment(loader=FileSystemLoader([mytemplates,globaltemplates]))
 
-        self.tplenv.globals['isfile'] = self.my_isfile
-
+        self.tplenv = self.init_template_ennvironment()
+        
         self.hm_id = self.plugin.hm_id
 
-#        self.logger.warning("WebInterface __init__: instance = '{}', full name = '{}'".format(self.plugin.get_instance_name(), self.plugin.get_fullname()))
-#        self.logger.warning("WebInterface __init__: self.hm.devices = {}".format(self.plugin.hm.devices))
-
-
-
-    def my_isfile(self, path):
-        if path.startswith('/gstatic/'):
-            complete_path = self.plugin.path_join(Modules.get_instance().get_module('http')._gstatic_dir, path[len('/gstatic/'):])
-            self.logger.warning("my_isfile(g): path={}, _gstatic_dir={}".format(path, Modules.get_instance().get_module('http')._gstatic_dir))
-        else:
-            complete_path = self.plugin.path_join(self.webif_dir, path)
-        from os.path import isfile as isfile
-        result = isfile(complete_path)
-        self.logger.warning("my_isfile: path={}, complete_path={}, result={}, _gstatic_dir={}".format(path, complete_path, result, Modules.get_instance().get_module('http')._gstatic_dir))
-        return result
-        
 
     @cherrypy.expose
     def index(self, learn=None, reload=None):

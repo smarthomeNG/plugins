@@ -6,7 +6,7 @@
 	<tbody>
 		<tr>
 			<td class="py-1"><strong>Verbunden</strong></td>
-			<td class="py-1">Ja</td>
+			<td class="py-1">{% if p._fritz_device.is_ssl() %}SSL{% else %}Ja{% endif %}</td>
 			<td class="py-1">{% if p._fritz_device.get_user() %}User{% endif %}</td>
 			<td class="py-1">{{ p._fritz_device.get_user() }}</td>
 		</tr>
@@ -15,12 +15,6 @@
 			<td class="py-1">{% if p._call_monitor %}Ja{% else %}Nein{% endif %}</td>
 			<td class="py-1">{% if p._fritz_device.get_password() %}Passwort{% endif %}</td>
 			<td class="py-1">{% if p._fritz_device.get_password() %}*****{% endif %}</td>
-		</tr>
-		<tr>
-			<td class="py-1"><strong>SSL</strong></td>
-			<td class="py-1">{% if p._fritz_device.is_ssl() %}Ja{% else %}Nein{% endif %}</td>
-			<td class="py-1"></td>
-			<td></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Host</strong></td>

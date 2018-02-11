@@ -19,15 +19,17 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-from lib.model.smartplugin import SmartPlugin
 import logging
 import datetime
 from collections import OrderedDict
 import collections
-from lib.module import Modules
 import json
 import html
 import os
+
+from lib.model.smartplugin import *
+
+from lib.module import Modules
 
 
 class WebServices(SmartPlugin):
@@ -109,15 +111,15 @@ class WebServices(SmartPlugin):
 # ------------------------------------------
 
 import cherrypy
-from jinja2 import Environment, FileSystemLoader
+#from jinja2 import Environment, FileSystemLoader
 
 
-class WebInterface:
+class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-
+        
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str
@@ -127,16 +129,8 @@ class WebInterface:
         self.webif_dir = webif_dir
         self.plugin = plugin
 
-        mytemplates = self.plugin.path_join(self.webif_dir, 'templates')
-        globaltemplates = self.plugin.mod_http.gtemplates_dir
-        self.tplenv = Environment(loader=FileSystemLoader([mytemplates, globaltemplates]))
-        self.tplenv.globals['isfile'] = self.my_isfile
+        self.tplenv = self.init_template_ennvironment()
 
-    def my_isfile(self, path):
-        complete_path = self.plugin.path_join(self.webif_dir, path)
-        from os.path import isfile as isfile
-        result = isfile(complete_path)
-        return result
 
     @cherrypy.expose
     def index(self):
