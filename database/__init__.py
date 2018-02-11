@@ -724,10 +724,12 @@ class WebInterface(SmartPluginWebIf):
                 for dataset in log_array:
                     writer.writerow([dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6]])
 
-            mime = 'application/octet-stream'
-            return cherrypy.lib.static.serve_file(
-                "%s/var/db/%s_item_%s.csv" % (self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id),
-                mime, "%s/var/db/" % self.plugin._sh.base_dir)
+            cherrypy.request.fileName = csv_file_path
+            cherrypy.request.hooks.attach('on_end_request', self.download_complete)
+            return cherrypy.lib.static.serve_download(csv_file_path)
+
+    def download_complete(self):
+        os.unlink(cherrypy.request.fileName)
 
     @cherrypy.expose
     def db_dump(self):
