@@ -568,11 +568,14 @@ item is changed by Sonos events and should always be up-to-date.
 
 ## <a name="visu"></a>SmartVISU Integration
 
+**This widget is only compatible with SmartVisu 2.9 or higher.**
+
 The Sonos Plugin fulfills all requirements for an automatic integration in SmartVISU via the **visu_websocket** and
 **visu_smartvisu** plugins (for detailed information follow this 
 [link](https://github.com/smarthomeNG/smarthome/wiki/Visu_smartvisu_autogen_in_v1.2)). 
 
 ### Sonos widget via plugin
+
 To install / show the Sonos widget via the ```visu_smartvisu``` plugin, you have to [set up the mentioned plugin 
 properly](https://github.com/smarthomeNG/plugins/blob/develop/visu_smartvisu/README.md). After that you can define a 
 page item like that:
@@ -599,8 +602,8 @@ Copy the file ```widget_sonos.html``` from the ```sv_widget``` folder to your sm
 /var/www/smartvisu/pages/YOUR_PATH_HERE 
 ```
 
-Change to this directory and append the content of ```widget_sonos.js``` (also located in the sv_widget directory) 
-to ```visu.js``` and ```widget_sonos.css``` to ```visu.css```. Create both files if they do not not exist.
+Change to this directory and create two directories (if not exists) ```css``` and ```js```. 
+Copy ```widget_sonos.css``` to the css folder and  ```widget_sonos.js``` to the js folder.
 
 Edit your page where you want to display the widget and add the following code snippet:
 
@@ -619,6 +622,8 @@ Edit your page where you want to display the widget and add the following code s
 {% endblock %}
 
 ```
+Change the item to your needs.
+
 
 ## <a name="best"></a>Best practice
 
