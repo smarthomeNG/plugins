@@ -37,6 +37,14 @@ function confirmDelete(url, text) {
   return false;
 }
 </script>
+{% if action == 'delete_log' %}
+<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+  <strong>Delete log table entries for Item ID {{ item_id }} initiated!</strong>
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% endif %}
 <div class="mb-2">
 The following items are assigned to this instance of the database plugin:
 </div>
