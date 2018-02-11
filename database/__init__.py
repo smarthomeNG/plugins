@@ -691,7 +691,7 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def index(self):
+    def index(self, action=None, item_id=None):
         """
         Build index.html for cherrypy
 
@@ -699,12 +699,14 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        if action is not None:
+            if action == "delete_log" and item_id is not None:
+                self.plugin.deleteLog(item_id)
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
                            tabcount=1)
-
 
     @cherrypy.expose
     def item_csv(self, item_id):
