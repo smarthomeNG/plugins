@@ -110,26 +110,6 @@ class BackendServices:
         except ValueError:
             return False
 
-    @cherrypy.expose
-    def db_dump_html(self, plugin):
-        """
-        returns the smarthomeNG sqlite database as download
-        """
-        if (plugin == "sqlite_old"):
-            self._sh.sql.dump('%s/var/db/smarthomedb.dump' % self._sh_dir)
-            mime = 'application/octet-stream'
-            return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump" % self._sh_dir, mime,
-                                                  "%s/var/db/" % self._sh_dir)
-        elif plugin != "":
-            for x in self._sh.plugins:
-                if isinstance(x, SmartPlugin):
-                    if x.get_instance_name() == plugin:
-                        x.dump('%s/var/db/smarthomedb_%s.dump' % (self._sh_dir, plugin))
-                        mime = 'application/octet-stream'
-                        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb_%s.dump" % (self._sh_dir, plugin),
-                                                              mime, "%s/var/db/" % self._sh_dir)
-        return
-
     # -----------------------------------------------------------------------------------
 
     def strip_empty_lines(self, txt):
