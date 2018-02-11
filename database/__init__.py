@@ -29,6 +29,7 @@ import functools
 import time
 import threading
 import lib.db
+from lib.shtime import Shtime
 
 from lib.model.smartplugin import *
 from lib.module import Modules
@@ -57,7 +58,7 @@ COL_LOG_CHANGED = 6
 class Database(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.3.0'
+    PLUGIN_VERSION = '1.3.1'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -72,6 +73,7 @@ class Database(SmartPlugin):
 
     def __init__(self, smarthome, driver, connect, prefix="", cycle=60):
         self._sh = smarthome
+        self.shtime = Shtime(self)
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
         self._name = self.get_instance_name()
@@ -330,7 +332,7 @@ class Database(SmartPlugin):
 
                 cur = None
                 try:
-                    changed = self._timestamp(self._sh.now())
+                    changed = self._timestamp(self.shtime.now())
 
                     # Get current values of item
                     start = self._timestamp(item.last_change())
@@ -466,7 +468,7 @@ class Database(SmartPlugin):
         return {
             'cmd': 'series', 'series': tuples, 'sid': sid,
             'params' : {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end, 'step': logs['step'], 'sid': sid},
-            'update' : self._sh.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
+            'update' : self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
         }
 
     def _single(self, func, start, end='now', item=None):
@@ -603,7 +605,7 @@ class Database(SmartPlugin):
             return int(frame)
         except:
             pass
-        ts = self._timestamp(self._sh.now())
+        ts = self._timestamp(self.shtime.now())
         if frame == 'now':
             fac = 0
             frame = 0
@@ -693,6 +695,9 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+
+#        items_sorted = sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(), sh=self.plugin._sh, tabcount=1,
