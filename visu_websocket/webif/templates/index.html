@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+{% block headtable %}	
+			<table class="table table-striped table-hover">
+				<tbody>
+					<tr>
+						<td class="py-1"><strong>Port</strong></td>
+						<td class="py-1">{{ p.get_parameter_value('port') }}</td>
+						<td class="py-1" width="50px"></td>
+						<td class="py-1"><strong>Websocket Protokoll</strong></td>
+						<td class="py-1">{{ p.get_parameter_value('wsproto') }}</td>
+						<td class="py-1" width="50px"></td>
+					</tr>
+					<tr>
+						<td class="py-1"><strong>Standard Zugriff</strong></td>
+						<td class="py-1">{{ p.get_parameter_value('acl') }}</td>
+						<td></td>
+						<td class="py-1"><strong>Definitions-Abfrage</strong></td>
+						<td class="py-1">{% if p.get_parameter_value('querydef') %}Ja{% else %}Nein{% endif %}</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td class="py-1"><strong>Anzahl Clients</strong></td>
+						<td class="py-1">{{ client_count }}</td>
+						<td></td>
+						<td class="py-1"></td>
+						<td class="py-1"></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+{% endblock headtable %}
+
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% endblock %}
+
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 1 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% block bodytab1 %}
+<div style="margin-left: 10px; margin-right: 10px;">
+	<div class="table-responsive">
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr class="shng_heading">
+					<th width="180px">{{ _('Visu Client') }}</th>
+					<th width="80px">{{ _('IP') }}</th>
+					<th width="50px">{{ _('Port') }}</th>
+					<th width="50px">{{ _('Client Software') }}</th>
+					<th width="50px">{{ _('Browser') }}</th>
+					<th	 width="50px">{{ '' }}</th>
+					<th width="150px"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% if clients %}
+					{% for client in clients %}
+					<tr>
+						<td class="py-1">{{ client.name }}</td>
+						<td class="py-1">{{ client.ip }}</td>
+						<td class="py-1">{{ client.port }}</td>
+						<td class="py-1">{{ client.sw }} {{ client.swversion }}</td>
+						<td class="py-1">{{ client.browser }} {{ client.browserversion }}</td>
+						<td class="py-1">{{ client.hostname }}</td>
+						<td class="py-1"></td>
+					</tr>
+					{% endfor %}
+				{% else %}
+					<tr>
+						<td class="py-1" colspan="7">{{ _('No active clients') }}</td>
+					</tr>
+				{% endif %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% block bodytab2 %}
+{% endblock %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab3
+-->
+{% block bodytab3 %}
+{% endblock %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab4
+-->
+{% block bodytab4 %}
+{% endblock %}
