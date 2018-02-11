@@ -662,6 +662,7 @@ class Database(SmartPlugin):
 # ------------------------------------------
 
 import cherrypy
+import csv
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -714,8 +715,19 @@ class WebInterface(SmartPluginWebIf):
                 for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM, COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
                     value_dict[key] = row[key]
                 log_array.append(value_dict)
-            tmpl = self.tplenv.get_template('item.csv')
-            return tmpl.render(log_array=log_array)
+
+            csv_file_path = '%s/var/db/%s_item_%s.csv' % (self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
+
+            with open(csv_file_path, 'w') as f:
+                writer = csv.writer(f, delimiter=",")
+                writer.writerow(['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed'])
+                for dataset in log_array:
+                    writer.writerow([dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6]])
+
+            mime = 'application/octet-stream'
+            return cherrypy.lib.static.serve_file(
+                "%s/var/db/%s_item_%s.csv" % (self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id),
+                mime, "%s/var/db/" % self.plugin._sh.base_dir)
 
     @cherrypy.expose
     def db_dump(self):
