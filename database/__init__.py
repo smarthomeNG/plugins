@@ -29,7 +29,9 @@ import functools
 import time
 import threading
 import lib.db
+
 from lib.shtime import Shtime
+from lib.item import Items
 
 from lib.model.smartplugin import *
 from lib.module import Modules
@@ -74,6 +76,7 @@ class Database(SmartPlugin):
     def __init__(self, smarthome, driver, connect, prefix="", cycle=60):
         self._sh = smarthome
         self.shtime = Shtime(self)
+        
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
         self._name = self.get_instance_name()
@@ -682,6 +685,7 @@ class WebInterface(SmartPluginWebIf):
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self.items = Items.get_instance()
 
         self.tplenv = self.init_template_ennvironment()
 
@@ -696,12 +700,11 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
 
-#        items_sorted = sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
-
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(), sh=self.plugin._sh, tabcount=1,
-                           p=self.plugin)
+        return tmpl.render(p=self.plugin,
+                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
+                           tabcount=1)
+
 
     @cherrypy.expose
     def item_csv(self, item_id):
@@ -733,8 +736,10 @@ class WebInterface(SmartPluginWebIf):
             cherrypy.request.hooks.attach('on_end_request', self.download_complete)
             return cherrypy.lib.static.serve_download(csv_file_path)
 
+
     def download_complete(self):
         os.unlink(cherrypy.request.fileName)
+
 
     @cherrypy.expose
     def db_dump(self):

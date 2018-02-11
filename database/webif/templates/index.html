@@ -40,7 +40,7 @@ The following items are assigned to this instance of the database plugin:
 		<th>Aktionen</th>
 	</tr>
 	</thead>
-{% for item in sh.return_items() %}
+{% for item in items %}
 	{% if p.has_iattr(item.conf, 'database') %}
 	<tr>
 		<td class="py-1">{{ item._path }}</td>
