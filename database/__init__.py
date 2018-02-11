@@ -696,3 +696,35 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(), sh=self.plugin._sh, tabcount=1,
                            p=self.plugin)
+
+    @cherrypy.expose
+    def item_csv(self, item_id):
+        """
+        Returns CSV Output for item log data
+
+        :return: item log data as CSV
+        """
+        if item_id is None:
+            return None
+        else:
+            rows = self.plugin.readLogs(item_id)
+            log_array = []
+            for row in rows:
+                value_dict = {}
+                for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM, COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                    value_dict[key] = row[key]
+                log_array.append(value_dict)
+            tmpl = self.tplenv.get_template('item.csv')
+            return tmpl.render(log_array=log_array)
+
+    @cherrypy.expose
+    def db_dump(self):
+        """
+        returns the smarthomeNG sqlite database as download
+        """
+
+        self.plugin.dump('%s/var/db/smarthomedb_%s.dump' % (self.plugin._sh.base_dir, self.plugin.get_instance_name()))
+        mime = 'application/octet-stream'
+        return cherrypy.lib.static.serve_file(
+            "%s/var/db/smarthomedb_%s.dump" % (self.plugin._sh.base_dir, self.plugin.get_instance_name()),
+            mime, "%s/var/db/" % self.plugin._sh.base_dir)

@@ -1,0 +1,4 @@
+time, item_id, duration, val_str, val_num, val_bool, changed
+{% for dataset in log_array %}{{ dataset[0] }},{{ dataset[1] }},{{ dataset[2] }},{{ dataset[3] }},{{ dataset[4] }},{{ dataset[5] }},{{ dataset[6] }}
+{% endfor %}
+

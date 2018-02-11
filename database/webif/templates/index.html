@@ -26,6 +26,9 @@
 	</tbody>
 </table>
 {% endblock %}
+{% block buttons %}
+<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.dump')">Datenbank-Dump</button>
+{% endblock %}
 {% block bodytab1 %}
 <div class="mb-2">
 The following items are assigned to this instance of the database plugin:
@@ -34,14 +37,18 @@ The following items are assigned to this instance of the database plugin:
 	<thead>
 	<tr>
 		<th>Pfad</th>
+		<th>Wert</th>
 		<th>Item-ID in der Datenbank</th>
+		<th>Aktionen</th>
 	</tr>
 	</thead>
 {% for item in sh.return_items() %}
 	{% if p.has_iattr(item.conf, 'database') %}
 	<tr>
 		<td class="py-1">{{ item._path }}</td>
+		<td class="py-1">{{ item() }}</td>
 		<td class="py-1">{{ p.id(item, create=False) }}</td>
+		<td class="py-1"><button type="button" class="btn btn-shng btn-sm" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button></td>
 	</tr>
 	{% endif %}
 {% endfor %}
