@@ -31,7 +31,7 @@
 				<td class="py-1"><span style="color: {% if p.stopped %}red{% else %}green{% endif %};" class="fas {% if p.stopped %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
 				<td class="py-1">
 					{% if p.metadata.get_string('type') in ['web', 'protocol', 'interface', 'gateway', 'system'] %}
-					<img src="static/img/{{ p.metadata.get_string('type') }}.svg" style="width: 25px;"/>
+					<img src="/gstatic/img/plugin_{{ p.metadata.get_string('type') }}.svg" style="width: 25px;"/>
 					{% else %}
 					-
 					{% endif %}
