@@ -726,8 +726,8 @@ class WebInterface(SmartPluginWebIf):
 
             csv_file_path = '%s/var/db/%s_item_%s.csv' % (self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
 
-            with open(csv_file_path, 'w') as f:
-                writer = csv.writer(f, delimiter=",")
+            with open(csv_file_path, 'w', encoding='utf-8') as f:
+                writer = csv.writer(f, dialect="excel")
                 writer.writerow(['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed'])
                 for dataset in log_array:
                     writer.writerow([dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6]])
