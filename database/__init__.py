@@ -710,7 +710,11 @@ class WebInterface(SmartPluginWebIf):
                     value_dict = {}
                     for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
                                 COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
-                        value_dict[key] = row[key]
+                        if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
+                            value_dict[key] = row[key]
+                        else:
+                            value_dict[key] = datetime.datetime.fromtimestamp(row[key]/1000)
+
                     log_array.append(value_dict)
                 return tmpl.render(p=self.plugin,
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),

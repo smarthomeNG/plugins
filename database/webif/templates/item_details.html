@@ -68,13 +68,13 @@ The following entries are in the (historical) log table for the item with item-i
 	</thead>
 {% for dataset in log_array %}
 	<tr>
-		<td class="py-1">{{ dataset[0] }}</td>
+		<td class="py-1">{{ dataset[0].strftime('%d.%m.%Y %H:%M:%S') }}</td>
 		<td class="py-1">{{ dataset[1] }}</td>
 		<td class="py-1">{{ dataset[2] }}</td>
 		<td class="py-1">{{ dataset[3] }}</td>
 		<td class="py-1">{{ dataset[4] }}</td>
 		<td class="py-1">{{ dataset[5] }}</td>
-		<td class="py-1">{{ dataset[6] }}</td>
+		<td class="py-1">{{ dataset[6].strftime('%d.%m.%Y %H:%M:%S') }}</td>
 	</tr>
 {% endfor %}
 </table>
