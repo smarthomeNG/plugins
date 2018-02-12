@@ -716,11 +716,11 @@ class WebInterface(SmartPluginWebIf):
                             value_dict[key] = datetime.datetime.fromtimestamp(row[key]/1000)
 
                     log_array.append(value_dict)
+                reversed_arr = log_array[::-1]
                 return tmpl.render(p=self.plugin,
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
                                                 reverse=False),
-                                   tabcount=1, action=action, item_id=item_id, log_array=log_array)
-
+                                   tabcount=1, action=action, item_id=item_id, log_array=reversed_arr)
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
@@ -745,13 +745,13 @@ class WebInterface(SmartPluginWebIf):
                 for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM, COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
                     value_dict[key] = row[key]
                 log_array.append(value_dict)
-
+            reversed_arr = log_array[::-1]
             csv_file_path = '%s/var/db/%s_item_%s.csv' % (self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
 
             with open(csv_file_path, 'w', encoding='utf-8') as f:
                 writer = csv.writer(f, dialect="excel")
                 writer.writerow(['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed'])
-                for dataset in log_array:
+                for dataset in reversed_arr:
                     writer.writerow([dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6]])
 
             cherrypy.request.fileName = csv_file_path
