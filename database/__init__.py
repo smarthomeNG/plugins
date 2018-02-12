@@ -702,11 +702,27 @@ class WebInterface(SmartPluginWebIf):
         if action is not None:
             if action == "delete_log" and item_id is not None:
                 self.plugin.deleteLog(item_id)
+            if action == "item_details" and item_id is not None:
+                tmpl = self.tplenv.get_template('item_details.html')
+                rows = self.plugin.readLogs(item_id)
+                log_array = []
+                for row in rows:
+                    value_dict = {}
+                    for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
+                                COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                        value_dict[key] = row[key]
+                    log_array.append(value_dict)
+                return tmpl.render(p=self.plugin,
+                                   items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
+                                                reverse=False),
+                                   tabcount=1, action=action, item_id=item_id, log_array=log_array)
+
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
                            tabcount=1, action=action, item_id=item_id)
+
 
     @cherrypy.expose
     def item_csv(self, item_id):
