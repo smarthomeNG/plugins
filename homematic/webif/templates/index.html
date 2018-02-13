@@ -39,12 +39,9 @@
 	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
 -->
 {% block buttons %}
-{% if interface.CONNECTED %}
 	<form action="" method="post">
 	<button id="btn1" class="btn btn-shng btn-sm" name="learn" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;Device Anlernen&nbsp;</button>
-	<button id="btn1" class="btn btn-shng btn-sm" name="reload" type="submit" value="on"><i class="fas fa-redo"></i>&nbsp;&nbsp;&nbsp;neu laden&nbsp;</button>
 	</form>
-{% endif %}
 {% endblock %}
 
 <!--

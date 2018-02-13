@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2017 Martin Sinn                               m.sinn@gmx.de
+#  Copyright 2017-2018  Martin Sinn                         m.sinn@gmx.de
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
@@ -174,6 +174,7 @@ class Mqtt(SmartPlugin):
         # ca_certs ...
 
         self.ConnectToBroker()
+        self.init_webinterface()
         
 
     def run(self):
@@ -308,6 +309,42 @@ class Mqtt(SmartPlugin):
                     retain = 'False'
                 self.logger.info(self.get_loginstance()+"Item '{}': Publishing topic '{}', payload '{}', QoS '{}', retain '{}'".format( item.id(), topic, str(item()), str(self.get_qos_forTopic(item)), retain ))
                 self._client.publish(topic=topic, payload=str(item()), qos=self.get_qos_forTopic(item), retain=(retain=='True'))
+
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+        
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+        
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self), 
+                                     self.get_shortname(), 
+                                     config, 
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+                                   
+        return True
 
 
     def cast_mqtt(self, datatype, raw_data):
@@ -536,5 +573,44 @@ class Mqtt(SmartPlugin):
             qos = self.qos
         self._client.subscribe(topic, qos=qos)
         self.logger.info(self.get_loginstance()+"(interface): Plugin '{}' is subscribing to topic '{}'".format( str(plug), str(topic) ))
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_ennvironment()
+
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+        
+        Render the template and return the html file to be delivered to the browser
+            
+        :return: contents of the template after beeing rendered 
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin)
 
 
