@@ -246,9 +246,9 @@ class Prepare_Packet_Data():
         self.logger.debug('enocean-PrepareData: prepare data for tx_eep {}'.format(tx_eep))
         rorg = 0xa5
         block = 0
-        # check if item has attribute block_actuator
-        if self._plugin_instance.has_iattr(item.conf, 'block_actuator'):
-            block_value = self._plugin_instance.get_iattr_value(item.conf, 'block_actuator')
+        # check if item has attribute block_switch
+        if self._plugin_instance.has_iattr(item.conf, 'block_switch'):
+            block_value = self._plugin_instance.get_iattr_value(item.conf, 'block_switch')
             if Utils.to_bool(block_value):
                 block = 4
         # check if item has attribite enocean_rtime 

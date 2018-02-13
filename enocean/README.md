@@ -155,11 +155,8 @@ EnOcean_Item:
             enocean_rx_key: D
             enocean_tx_eep: A5_38_08_03
             enocean_tx_id_offset: 1
-            # dim_value when switched on in [0 - 100]%
             ref_level: 80
-            # dim_speed in [0 - 100]%
             dim_speed: 100
-            # blocking of dim_value
             block_dim_value: 'False'
     
     handle:
@@ -213,10 +210,8 @@ EnOcean_Item:
             enocean_tx_eep: A5_3F_7F
             enocean_tx_id_offset: 0
             enocean_rx_key: B
-            # runtime Range [0 - 255] s
             enocean_rtime: 60
-            # block actuator
-            block_actuator: 'False'
+            block_switch: 'False'
             enforce_updates: 'True'
             cache: 'True'
             visu_acl: rw
@@ -287,8 +282,7 @@ EnOcean_Item:
             enocean_tx_id_offset: 0
             enocean_rx_key: B
             enocean_rtime: 60
-            # block actuator
-            block_actuator: 'False'
+            block_switch: 'False'
             enforce_updates: 'True'
             cache: 'True'
             visu_acl: rw
@@ -300,52 +294,36 @@ EnOcean_Item:
         enocean_rx_eep: A5_3F_7F
         enocean_rx_key: DI_0
         red:
-            # dim Wert = [0 - 100] %
             type: num
             enocean_tx_eep: 07_3F_7F
             enocean_tx_id_offset: 1
             enocean_rx_key: DI_0
-            # dim_value when switched on in [0 - 100]%
             ref_level: 80
-            # dim_speed in [0 - 100]%
             dim_speed: 100
-            # color
             color: red
         green:
-            # dim Wert = [0 - 100] %
             type: num
             enocean_tx_eep: 07_3F_7F
             enocean_tx_id_offset: 1
             enocean_rx_key: DI_1
-            # dim_value when switched on in [0 - 100]%
             ref_level: 80
-            # dim_speed in [0 - 100]%
             dim_speed: 100
-            # color
             color: green
         blue:
-            # dim Wert = [0 - 100] %
             type: num
             enocean_tx_eep: 07_3F_7F
             enocean_tx_id_offset: 1
             enocean_rx_key: DI_2
-            # dim_value when switched on in [0 - 100]%
             ref_level: 80
-            # dim_speed in [0 - 100]%
             dim_speed: 100
-            # color
             color: blue
         white:
-            # dim Wert = [0 - 100] %
             type: num
             enocean_tx_eep: 07_3F_7F
             enocean_tx_id_offset: 1
             enocean_rx_key: DI_3
-            # dim_value when switched on in [0 - 100]%
             ref_level: 80
-            # dim_speed in [0 - 100]%
             dim_speed: 100
-            # color
             color: white   
 ```
 
@@ -452,8 +430,7 @@ EnOcean_Item:
             enocean_tx_id_offset = 0
             enocean_rx_key = B
             enocean_rtime = 60
-            # block actuator
-            block_actuator = False
+            block_switch = False
             enforce_updates = True
             cache = True
             visu_acl = rw
@@ -518,10 +495,8 @@ EnOcean_Item:
             enocean_tx_eep = A5_3F_7F
             enocean_tx_id_offset = 0
             enocean_rx_key = B
-            # runtime Range [0 - 255] s
             enocean_rtime = 60
-            # block actuator
-            block_actuator = False
+            block_switch = False
             enforce_updates = True
             cache = True
             visu_acl = rw
@@ -533,52 +508,36 @@ EnOcean_Item:
         enocean_rx_eep = A5_3F_7F
         enocean_rx_key = DI_0
         [[[red]]]
-            # dim Wert = [0 - 100] %
             type = num
             enocean_tx_eep = 07_3F_7F
             enocean_tx_id_offset = 1
             enocean_rx_key = DI_0
-            # dim_value when switched on in [0 - 100]%
             ref_level = 80
-            # dim_speed in [0 - 100]%
             dim_speed = 100
-            # color
             color = red
         [[[green]]]
-            # dim Wert = [0 - 100] %
             type = num
             enocean_tx_eep = 07_3F_7F
             enocean_tx_id_offset = 1
             enocean_rx_key = DI_1
-            # dim_value when switched on in [0 - 100]%
             ref_level = 80
-            # dim_speed in [0 - 100]%
             dim_speed = 100
-            # color
             color = green
         [[[blue]]]
-            # dim Wert = [0 - 100] %
             type = num
             enocean_tx_eep = 07_3F_7F
             enocean_tx_id_offset = 1
             enocean_rx_key = DI_2
-            # dim_value when switched on in [0 - 100]%
             ref_level = 80
-            # dim_speed in [0 - 100]%
             dim_speed = 100
-            # color
             color = blue
         [[[white]]]
-            # dim Wert = [0 - 100] %
             type = num
             enocean_tx_eep = 07_3F_7F
             enocean_tx_id_offset = 1
             enocean_rx_key = DI_3
-            # dim_value when switched on in [0 - 100]%
             ref_level = 80
-            # dim_speed in [0 - 100]%
             dim_speed = 100
-            # color
             color = white
 ```
 
