@@ -133,7 +133,7 @@ EnOcean_Item:
     
     Brightness_Sensor:
         name: brightness_sensor_east
-        comment: Eltako FAH60
+        remark: Eltako FAH60
         type: num
         enocean_rx_id: 01A51DE6
         enocean_rx_eep: A5_06_01
@@ -142,7 +142,7 @@ EnOcean_Item:
         sqlite: 'yes'
     
     dimmer1:
-        comment: Eltako FDG14 - Dimmer 
+        remark: Eltako FDG14 - Dimmer 
         enocean_rx_id: 00112233
         enocean_rx_eep: A5_11_04
         light:
@@ -174,7 +174,7 @@ EnOcean_Item:
             enocean_rx_key: VALUE
     
     actor1B:
-        comment: Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
+        remark: Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
         enocean_rx_id: 1A794D3
         enocean_rx_eep: F6_02_03
         light:
@@ -188,7 +188,7 @@ EnOcean_Item:
             visu_acl: rw
     
     actor_D2:
-        comment: Actor with VLD Command
+        remark: Actor with VLD Command
         enocean_rx_id: FFDB7381
         enocean_rx_eep: D2_01_07
         move:
@@ -200,7 +200,7 @@ EnOcean_Item:
             autotimer: 1 = 0  
     
     awning:
-        comment: Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type: str
         enocean_rx_id: 1A869C3
         enocean_rx_eep: F6_02_03_01
@@ -271,7 +271,7 @@ EnOcean_Item:
             enocean_rx_key: ENG
     
     sunblind:
-        comment: Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type: str
         enocean_rx_id: 1A869C3
         enocean_rx_eep: F6_02_03_01
@@ -289,7 +289,7 @@ EnOcean_Item:
     
     RGBdimmer:
         type: num
-        comment: Eltako FRGBW71L - RGB Dimmer 
+        remark: Eltako FRGBW71L - RGB Dimmer 
         enocean_rx_id: 1A869C3
         enocean_rx_eep: A5_3F_7F
         enocean_rx_key: DI_0
@@ -355,7 +355,7 @@ EnOcean_Item:
     
     [[Brightness_Sensor]]
         name = brightness_sensor_east
-        comment = Eltako FAH60
+        remark = Eltako FAH60
         type = num
         enocean_rx_id = 01A51DE6
         enocean_rx_eep = A5_06_01
@@ -393,7 +393,7 @@ EnOcean_Item:
             enocean_rx_key = VALUE
     
     [[actor1B]]
-        comment = Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
+        remark = Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
         enocean_rx_id = 1A794D3
         enocean_rx_eep = F6_02_03
         [[[light]]]
@@ -407,7 +407,7 @@ EnOcean_Item:
             visu_acl = rw
     
     [[actorD2]]
-        comment = Actor with VLD Command
+        remark = Actor with VLD Command
         enocean_rx_id = FFDB7381
         enocean_rx_eep = D2_01_07
         [[[move]]]
@@ -419,7 +419,7 @@ EnOcean_Item:
             autotimer = 1 = 0  
     
     [[awning]]
-        comment = Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        remark = Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type = str
         enocean_rx_id = 1A869C3
         enocean_rx_eep = F6_02_03_01
@@ -485,7 +485,7 @@ EnOcean_Item:
             enocean_rx_key = ENG
     
     [[sunblind]]
-        comment = Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        remark = Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type = str
         enocean_rx_id = 1A869C3
         enocean_rx_eep = F6_02_03_01
@@ -503,7 +503,7 @@ EnOcean_Item:
 
     [[RGBdimmer]]
         type = num
-        comment = Eltako FRGBW71L - RGB Dimmer 
+        remark = Eltako FRGBW71L - RGB Dimmer 
         enocean_rx_id = 1A869C3
         enocean_rx_eep = A5_3F_7F
         enocean_rx_key = DI_0
