@@ -7,23 +7,23 @@
 			<table class="table table-striped table-hover">
 				<tbody>
 					<tr>
-						<td class="py-1"><strong>Port</strong></td>
+						<td class="py-1"><strong>{{ _('Port') }}</strong></td>
 						<td class="py-1">{{ p.get_parameter_value('port') }}</td>
 						<td class="py-1" width="50px"></td>
-						<td class="py-1"><strong>Websocket Protokoll</strong></td>
+						<td class="py-1"><strong>{{ _('Websocket Protokoll') }}</strong></td>
 						<td class="py-1">{{ p.get_parameter_value('wsproto') }}</td>
 						<td class="py-1" width="50px"></td>
 					</tr>
 					<tr>
-						<td class="py-1"><strong>Standard Zugriff</strong></td>
+						<td class="py-1"><strong>{{ _('Standard Zugriff') }}</strong></td>
 						<td class="py-1">{{ p.get_parameter_value('acl') }}</td>
 						<td></td>
-						<td class="py-1"><strong>Definitions-Abfrage</strong></td>
-						<td class="py-1">{% if p.get_parameter_value('querydef') %}Erlaubt{% else %}Verboten{% endif %}</td>
+						<td class="py-1"><strong>{{ _('Definitions-Abfrage') }}</strong></td>
+						<td class="py-1">{% if p.get_parameter_value('querydef') %}{{ _('Erlaubt') }}{% else %}{{ _('Verboten') }}{% endif %}</td>
 						<td></td>
 					</tr>
 					<tr>
-						<td class="py-1"><strong>Anzahl Clients</strong></td>
+						<td class="py-1"><strong>{{ _('Anzahl Clients') }}</strong></td>
 						<td class="py-1">{{ client_count }}</td>
 						<td></td>
 						<td class="py-1"></td>
@@ -90,7 +90,7 @@
 					{% endfor %}
 				{% else %}
 					<tr>
-						<td class="py-1" colspan="7">{{ _('No active clients') }}</td>
+						<td class="py-1" colspan="7">{{ _('Keine aktiven Clients') }}</td>
 					</tr>
 				{% endif %}
 			</tbody>

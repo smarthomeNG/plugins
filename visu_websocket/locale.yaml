@@ -1,0 +1,13 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Websocket Protokoll':         {'de': '=', 'en': 'Websocket protocol'}
+    'Standard Zugriff':            {'de': '=', 'en': 'Default Access'}
+    'Definitions-Abfrage':         {'de': '=', 'en': 'Query definitions'}
+    'Erlaubt':                     {'de': '=', 'en': 'Allowed'}
+    'Verboten':                    {'de': '=', 'en': 'Forbidden'}
+    'Anzahl Clients':              {'de': '=', 'en': 'Number of clients'}
+    
+    'Visu Client':                 {'de': '=', 'en': '='}
+    'Client Software':             {'de': '=', 'en': '='}
+
+    'Keine aktiven Clients':       {'de': '=', 'en': 'No active clients'}
