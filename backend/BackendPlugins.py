@@ -61,8 +61,6 @@ class BackendPlugins:
             conf_plugins[plugin] = _conf[plugin]
 
         plugin_list = []
-#        for x in self._sh._plugins:
-#        for x in self._sh.return_plugins():
         for x in self.plugins.return_plugins():
             plugin = dict()
             plugin['stopped'] = False
@@ -85,8 +83,8 @@ class BackendPlugins:
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
             
-            if  plugin['shortname'] in ['cli','blockly']:
-                plugin['stopped'] = True
+#            if  plugin['shortname'] in ['cli','blockly']:
+#                plugin['stopped'] = True
             plugin_list.append(plugin)
         plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])
 

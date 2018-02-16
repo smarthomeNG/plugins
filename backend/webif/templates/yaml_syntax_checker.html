@@ -5,6 +5,10 @@
 	{{ nav }}
 {% endblock navbar %}
 
+{% block title %}
+{{ _('Dienste', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
 {% block content %}
 <div class="container-fluid navBorder"></div>
 <form name="input" action="yaml_syntax_checker.html" method="POST" enctype="multipart/form-data">

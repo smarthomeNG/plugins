@@ -5,6 +5,10 @@
 	{{ nav }}
 {% endblock navbar %}
 
+{% block title %}
+{{ _('Logging', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
 {% block content %}
 <div class="container-fluid navBorder">
 <h4>SmarthomeNG {{ _('Logfile') }}: {{ logfile }}</h4>

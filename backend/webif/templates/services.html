@@ -6,6 +6,10 @@
 	{% endwith %}
 {% endblock navbar %}
 
+{% block title %}
+{{ _('Dienste', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
 {% block content %}
 <div style="margin-left: 10px; margin-right: 10px;">
 <div class="table-responsive">
@@ -123,6 +127,20 @@
 			</tr>
 		</thead>
 		<tbody>
+			{% if sql_plugin %}
+			<tr>
+				<td><img src="static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>
+				<td style="min-width:190px;" style="padding-top:15px;"><button type="button" class="btn btn-shng btn-sm" onclick="window.open('db_dump.html?plugin=sqlite_old')">{{ _('Datenbank-Dump','button') }} (SQLite)</button></td>
+			</tr>
+			{% endif %}
+			{% if database_plugin %}
+				{% for p in database_plugin  %}
+				<tr>
+					<td><img src="static/img/db_backup.svg" alt="Icon database backup" width="48" height="48"></td>
+					<td style="min-width:190px;" style="padding-top:15px;"><button type="button" class="btn btn-shng btn-sm" onclick="window.open('/db_dump.html?plugin={{ p }}')">{{ _('Datenbank-Dump','button') }} - {{ _('Instanz') }}: ({{ p }})</button></td>
+				</tr>
+				{% endfor %}
+			{% endif %}
 			<tr>
 				<td><img src="static/img/cache.svg" alt="Icon cache" width="48" height="48"></td>
 				<td colspan="2" style="padding-top:15px;">

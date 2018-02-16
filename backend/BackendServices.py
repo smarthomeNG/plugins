@@ -90,6 +90,7 @@ class BackendServices:
     def reload_translation_html(self, lang=''):
         if lang != '':
             load_translation(lang)
+            self.plugin.get_sh().set_defaultlanguage(lang)
         else:
             load_translation(get_translation_lang())
         return self.index()
