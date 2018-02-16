@@ -317,6 +317,11 @@ class Homematic(SmartPlugin):
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
         
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            return False
+
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
@@ -335,7 +340,6 @@ class Homematic(SmartPlugin):
                                      config, 
                                      self.get_classname(), self.get_instance_name(),
                                      description='')
-                                   
         return True
 
 
@@ -412,7 +416,6 @@ class Homematic(SmartPlugin):
 
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
-from jinja2.utils import open_if_exists
 
 class WebInterface(SmartPluginWebIf):
 
