@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+{% block headtable %}	
+	<table class="table table-striped table-hover">
+		<tbody>
+			<tr>
+				<td class="py-1"><strong>{{ _('Service für KNX den Support') }}</strong></td>
+				<td class="py-1">{{ knxdeamon }}</td>
+				<td class="py-1" width="50px"></td>
+				<td class="py-1"><strong></strong></td>
+				<td class="py-1"></td>
+				<td class="py-1" width="50px"></td>
+			</tr>
+			<tr>
+				<td class="py-1"><strong>Prompt 2</strong></td>
+				<td class="py-1">-</td>
+				<td></td>
+				<td class="py-1"><strong></strong></td>
+				<td class="py-1"></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td class="py-1"><strong>Prompt 3</strong></td>
+				<td class="py-1">-</td>
+				<td></td>
+				<td class="py-1"><strong></strong></td>
+				<td class="py-1"></td>
+				<td></td>
+			</tr>
+		</tbody>
+	</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<form action="" method="post">
+	<button id="btn1" class="btn btn-shng btn-sm" name="learn" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;Mach was&nbsp;</button>
+	</form>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ items|length ~ ")" %}
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr>
+					<th>{{ _('Item') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th style="width: 100;">{{ _('Wert') }}</th>
+					<th>{{ _('knx_dpt') }}</th>
+					<th>cache/init/listen</th>
+					<th>{{ _('knx_send') }}</th>
+					<th>{{ _('knx_reply') }}</th>
+					<th>{{ _('knx_status') }}</th>
+					<th>{{ _('knx_poll') }}</th>
+					</tr>
+			</thead>
+			<tbody>
+			{% for item in items %}
+				<tr>
+					<td class="py-1">{{ item._path }}</td>
+					<td class="py-1">{{ item._type }}</td>
+					<td class="py-1">{{ item() }}</td>
+					<td class="py-1">{{ item.conf['knx_dpt'] }}</td>
+					<td class="py-1">
+					{% if 'knx_cache' in item.conf %}
+						knx_cache: {{ item.conf['knx_cache'] }}<br>
+					{% endif %}
+					{% if 'knx_init' in item.conf %}
+						knx_init: {{ item.conf['knx_init'] }}<br>
+					{% endif %}
+					{% if 'knx_listen' in item.conf %}
+						knx_listen: {{ item.conf['knx_listen'] }}<br>
+					{% endif %}
+					</td>
+					<td class="py-1">{{ item.conf['knx_send'] }}</td>
+					<td class="py-1">{{ item.conf['knx_reply'] }}</td>
+					<td class="py-1">{{ item.conf['knx_status'] }}</td>
+					<td class="py-1">{{ item.conf['knx_poll'] }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{ % set tab2title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> (" ~ device_count ~ ")" % }
+{% block bodytab2 %}
+{% endblock %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab3
+-->
+{% block bodytab3 %}
+{% endblock %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab4
+-->
+{% block bodytab4 %}
+{% endblock %}

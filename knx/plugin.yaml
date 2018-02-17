@@ -5,20 +5,113 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Anbindung von KNX Bussystemen via EIBD/KNXD'
         en: ''
-    maintainer: cmalo
+    maintainer: cmalo, (msinn)
     tester: psilo909, onkelandy, Sandman60, brandst
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
-    version: 1.3.4                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.4.5                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     classname: KNX                 # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    time_ga:
+        type: str
+        description:
+            de: ''
+            en: 'groupadress to send a timestamp to the knx bus'
+        description_long:
+            de: ''
+            en: ""
+
+    date_ga:
+        type: str
+        description:
+            de: ''
+            en: 'interval to send time and date to the knx bus'
+        description_long:
+            de: ''
+            en: ""
+
+    send_time:
+        type: bool
+        default: False
+        description:
+            de: ''
+            en: 'interval to send time and date to the knx bus'
+        description_long:
+            de: ''
+            en: ""
+
+    busmonitor:
+        type: bool
+        default: False
+        valid_list:
+          - True
+          - False
+          - logger
+        description:
+            de: ''
+            en: ''
+        description_long:
+            de: ''
+            en: ""
+
+    host:
+        type: ipv4
+        default: '127.0.0.1'
+        description:
+            de: ''
+            en: 'eibd or knxd hostname'
+        description_long:
+            de: ''
+            en: ""
+
+    port:
+        type: int
+        default: 6720
+        description:
+            de: ''
+            en: 'eibd or knxd port'
+        description_long:
+            de: ''
+            en: ""
+
+    readonly:
+        type: bool
+        default: False
+        description:
+            de: ''
+            en: 'If set to True, the plugin only read the knx bus and send no group message to the bus.'
+        description_long:
+            de: ''
+            en: ""
+
+    instance:
+        type: str
+        default: 'default'
+        description:
+            de: ''
+            en: ''
+        description_long:
+            de: ''
+            en: ""
+
+    enablestats:
+        type: bool
+        default: True
+        description:
+            de: ''
+            en: 'if set to True, the statistic functions are enabled to collect data'
+        description_long:
+            de: ''
+            en: ""
+
+
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     
