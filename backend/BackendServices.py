@@ -93,7 +93,7 @@ class BackendServices:
             self.plugin.get_sh().set_defaultlanguage(lang)
         else:
             load_translation(get_translation_lang())
-        return self.index()
+        return self.main_html()
 
     @cherrypy.expose
     def reboot(self):
