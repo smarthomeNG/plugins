@@ -51,7 +51,7 @@
                     <tr>
                         <td class="py-1"><img src="static/img/terminal-server.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
                         <td class="py-1" style="vertical-align: middle;">Host:</td>
-                        <td class="py-1" style="vertical-align: middle;">{{ node }}&nbsp;&nbsp;-&nbsp;&nbsp;IPv4: {{ ip }}<!--&nbsp;&nbsp;-&nbsp;&nbsp;IPv6: {{ ipv6 }}--></td>
+                        <td class="py-1" style="vertical-align: middle;">{{ node }}&nbsp;&nbsp;-&nbsp;&nbsp;IPv4: {{ ip }}{% if ipv6 != '::1' %}&nbsp;&nbsp;-&nbsp;&nbsp;IPv6: {{ ipv6 }}</td>{% endif %}
                     </tr>
                     <tr>
                         <td class="py-1"><img src="static/img/tux_hdd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
