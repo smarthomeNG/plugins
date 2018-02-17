@@ -1,0 +1,15 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'API Schlüssel':        {'de': '=', 'en': 'API Key'}
+    'WUG Sprache':          {'de': '=', 'en': 'WUG Languange'}
+    'Lokation':             {'de': '=', 'en': 'Location'}
+    'Item Teilbaum':        {'de': '=', 'en': 'Item Subtree'}
+
+    'Rohdaten':             {'de': '=', 'en': 'Raw Data'}
+    'WUG Vergleichsstring': {'de': '=', 'en': 'WUG Matchstring'}
+
+    # Alternative format for translations of longer texts:
+    'Hier kommt der Inhalt des Webinterfaces hin.':
+        de: '='
+        en: 'Here goes the content of the web interface.'
+

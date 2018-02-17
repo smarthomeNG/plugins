@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+{% block headtable %}	
+			<table class="table table-striped table-hover">
+				<tbody>
+					<tr>
+						<td class="py-1"><strong>{{ _('API Schlüssel') }}</strong></td>
+						<td class="py-1">{{ p.apikey }}</td>
+						<td class="py-1" width="50px"></td>
+						<td class="py-1"><strong>{{ _('WUG Sprache') }}</strong></td>
+						<td class="py-1">{{ p.language }}</td>
+						<td class="py-1" width="50px"></td>
+					</tr>
+					<tr>
+						<td class="py-1"><strong>{{ _('Lokation') }}</strong></td>
+						<td class="py-1">{{ p.location }}</td>
+						<td></td>
+						<td class="py-1"><strong></strong></td>
+						<td class="py-1"></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td class="py-1"><strong>{{ _('Item Teilbaum') }}</strong></td>
+						<td class="py-1">{{ p.item_subtree }}</td>
+						<td></td>
+						<td class="py-1"><strong></strong></td>
+						<td class="py-1"></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<form action="" method="post">
+	<button id="btn1" class="btn btn-shng btn-sm" name="learn" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;Mach was&nbsp;</button>
+	</form>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Items') ~ "</strong> (" ~ items|length ~ ")" %}
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr>
+					<th>{{ _('Item') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('WUG Vergleichsstring') }}</th>
+					</tr>
+			</thead>
+			{% for item in items %}
+				<tr>
+					<td class="py-1">{{ item._path }}</td>
+					<td class="py-1">{{ item._type }}</td>
+					<td class="py-1">{{ item() }}</td>
+					<td class="py-1">{{ item.conf['wug_matchstring'] }}</td>
+				</tr>
+			{% endfor %}
+		</table>
+	</div>
+</div>
+
+
+{% endblock %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Rohdaten') ~ "</strong>" %}
+{% block bodytab2 %}
+<div class="container-fluid m-2">
+	{{ ppwugdata }}
+</div>
+{% endblock %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab3
+-->
+{% block bodytab3 %}
+{% endblock %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab4
+-->
+{% block bodytab4 %}
+{% endblock %}
