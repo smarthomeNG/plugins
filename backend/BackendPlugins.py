@@ -67,7 +67,7 @@ class BackendPlugins:
             if bool(x._parameters):
                 plugin['attributes'] = x._parameters
             else:
-                plugin['attributes'] = conf_plugins[x._config_section]
+                plugin['attributes'] = conf_plugins.get(x._config_section, {})
             plugin['metadata'] = x._metadata
             if isinstance(x, SmartPlugin):
                 plugin['smartplugin'] = True
