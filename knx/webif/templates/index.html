@@ -15,16 +15,16 @@
 				<td class="py-1" width="50px"></td>
 			</tr>
 			<tr>
-				<td class="py-1"><strong>Prompt 2</strong></td>
-				<td class="py-1">-</td>
+				<td class="py-1"><strong>{{ _('Statistiken') }}</strong></td>
+				<td class="py-1">{% if p.enable_stats %}{{ _('aktiviert') }}{% else %}{{ _('deaktiviert') }}{% endif %}</td>
 				<td></td>
 				<td class="py-1"><strong></strong></td>
 				<td class="py-1"></td>
 				<td></td>
 			</tr>
 			<tr>
-				<td class="py-1"><strong>Prompt 3</strong></td>
-				<td class="py-1">-</td>
+				<td class="py-1"><strong>{{ _('Letzte KNX Aktivität') }}</strong></td>
+				<td class="py-1">{{ p.get_stats_last_action().strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
 				<td></td>
 				<td class="py-1"><strong></strong></td>
 				<td class="py-1"></td>
@@ -49,7 +49,10 @@
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
-{% set tabcount = 2 %}
+{% set tabcount = 3 %}
+{% if stats_pa_list|length == 0 %}
+	{% set tabcount = 2 %}
+{% endif %}
 
 
 <!--
@@ -115,9 +118,51 @@
 <!--
 	Content block for the second tab of the Webinterface
 -->
-{ % set tab2title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> (" ~ device_count ~ ")" % }
+{% set tab2title = "<strong>GA " ~ _('Statistiken') ~ " </strong> (" ~ stats_ga_list|length ~ ")" %}
 {% block bodytab2 %}
-{% endblock %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr>
+					<th>{{ _('Gruppen Adresse') }}</th>
+					<th>{{ _('# read') }}</th>
+					<th>{{ _('# write') }}</th>
+					<th>{{ _('# response') }}</th>
+					<th>{{ _('last_read') }}</th>
+					<th>{{ _('last_write') }}</th>
+					<th>{{ _('last_response') }}</th>
+					</tr>
+			</thead>
+			<tbody>
+			{% for ga in stats_ga_list %}
+				<tr>
+					<td class="py-1">{{ ga }}</td>
+					<td class="py-1">{{ stats_ga[ga].read }}</td>
+					<td class="py-1">{{ stats_ga[ga].write }}</td>
+					<td class="py-1">{{ stats_ga[ga].response }}</td>
+					{% if stats_ga[ga].last_read %}
+					<td class="py-1">{{ stats_ga[ga].last_read.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					{% else %}
+					<td class="py-1"></td>
+					{% endif %}
+					{% if stats_ga[ga].last_write %}
+					<td class="py-1">{{ stats_ga[ga].last_write.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					{% else %}
+					<td class="py-1"></td>
+					{% endif %}
+					{% if stats_ga[ga].last_response %}
+					<td class="py-1">{{ stats_ga[ga].last_response.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					{% else %}
+					<td class="py-1"></td>
+					{% endif %}
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock bodytab2 %}
 
 
 <!--
@@ -127,8 +172,51 @@
 
 	It has to be defined before (and outside) the block bodytab3
 -->
+{% set tab3title = "<strong>PA " ~ _('Statistiken') ~ " </strong> (" ~ stats_pa_list|length ~ ")" %}
 {% block bodytab3 %}
-{% endblock %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr>
+					<th>{{ _('Physische Adresse') }}</th>
+					<th>{{ _('# read') }}</th>
+					<th>{{ _('# write') }}</th>
+					<th>{{ _('# response') }}</th>
+					<th>{{ _('last_read') }}</th>
+					<th>{{ _('last_write') }}</th>
+					<th>{{ _('last_response') }}</th>
+					</tr>
+			</thead>
+			<tbody>
+			{% for pa in stats_pa_list %}
+				<tr>
+					<td class="py-1">{{ pa }}</td>
+					<td class="py-1">{{ stats_pa[pa].read }}</td>
+					<td class="py-1">{{ stats_pa[pa].write }}</td>
+					<td class="py-1">{{ stats_pa[pa].response }}</td>
+					{% if stats_pa[pa].last_read %}
+					<td class="py-1">{{ stats_pa[pa].last_read.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					{% else %}
+					<td class="py-1"></td>
+					{% endif %}
+					{% if stats_pa[pa].last_write %}
+					<td class="py-1">{{ stats_pa[pa].last_write.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					{% else %}
+					<td class="py-1"></td>
+					{% endif %}
+					{% if stats_pa[pa].last_response %}
+					<td class="py-1">{{ stats_pa[pa].last_response.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					{% else %}
+					<td class="py-1"></td>
+					{% endif %}
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock bodytab3 %}
 
 
 <!--
@@ -139,4 +227,4 @@
 	It has to be defined before (and outside) the block bodytab4
 -->
 {% block bodytab4 %}
-{% endblock %}
+{% endblock bodytab4 %}

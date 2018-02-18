@@ -333,8 +333,10 @@ class KNX(lib.connection.Client,SmartPlugin):
                 self.stats_ga[dst][flg] = 1
             else:
                 self.stats_ga[dst][flg] = self.stats_ga[dst][flg] + 1
+#            self.stats_ga[dst]['last_'+flg] = self._sh.now()
+            self.stats_ga[dst]['last_'+flg] = self.shtime.now()
 
-            # update statistics on used group addresses
+            # update statistics on used physical addresses
             if not src in self.stats_pa:
                 self.stats_pa[src] = {}
 
@@ -342,6 +344,8 @@ class KNX(lib.connection.Client,SmartPlugin):
                 self.stats_pa[src][flg] = 1
             else:
                 self.stats_pa[src][flg] = self.stats_pa[src][flg] + 1
+#            self.stats_pa[src]['last_'+flg] = self._sh.now()
+            self.stats_pa[src]['last_'+flg] = self.shtime.now()
 
         # further inspect what to do next
         if flg == 'write' or flg == 'response':
@@ -644,84 +648,6 @@ class KNX(lib.connection.Client,SmartPlugin):
 
 
 # ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-class WebInterface(SmartPluginWebIf):
-
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-        
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_ennvironment()
-
-        self.items = Items.get_instance()
-
-        self.knxdeamon = ''
-        if self.get_process_info("ps cax|grep eibd") != '':
-            self.knxdeamon = 'eibd'
-        if self.get_process_info("ps cax|grep knxd") != '':
-            if self.knxdeamon != '':
-                self.knxdeamon += ' and '
-            self.knxdeamon += 'knxd'
-
-
-    def get_process_info(self, command):
-        """
-        returns output from executing a given command via the shell.
-        """
-        ## get subprocess module
-        import subprocess
-
-        ## call date command ##
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-
-        # Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
-        # Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.
-        # Wait for process to terminate. The optional input argument should be a string to be sent to the child process, or None, if no data should be sent to the child.
-        (result, err) = p.communicate()
-
-        ## Wait for date to terminate. Get return returncode ##
-        p_status = p.wait()
-        return str(result, encoding='utf-8', errors='strict')
-
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-        
-        Render the template and return the html file to be delivered to the browser
-            
-        :return: contents of the template after beeing rendered 
-        """
-        plgitems = []
-        for item in self.items.return_items():
-            if ((KNX_DPT in item.conf) or (KNX_STATUS in item.conf) or (KNX_SEND in item.conf) or (KNX_REPLY in item.conf) or 
-               (KNX_CACHE in item.conf) or (KNX_INIT in item.conf) or (KNX_LISTEN in item.conf) or (KNX_POLL in item.conf)):
-                plgitems.append(item)
-
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
-                           knxdeamon=self.knxdeamon
-                          )
-
-
-# ------------------------------------------
 #    Statistics functions for KNX
 # ------------------------------------------
 
@@ -849,5 +775,85 @@ class WebInterface(SmartPluginWebIf):
         :return: list of group addresses that did not receive a cache read response
         """
         return self._cache_ga_response_pending
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_ennvironment()
+
+        self.items = Items.get_instance()
+
+        self.knxdeamon = ''
+        if self.get_process_info("ps cax|grep eibd") != '':
+            self.knxdeamon = 'eibd'
+        if self.get_process_info("ps cax|grep knxd") != '':
+            if self.knxdeamon != '':
+                self.knxdeamon += ' and '
+            self.knxdeamon += 'knxd'
+
+
+    def get_process_info(self, command):
+        """
+        returns output from executing a given command via the shell.
+        """
+        ## get subprocess module
+        import subprocess
+
+        ## call date command ##
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
+        # Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
+        # Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.
+        # Wait for process to terminate. The optional input argument should be a string to be sent to the child process, or None, if no data should be sent to the child.
+        (result, err) = p.communicate()
+
+        ## Wait for date to terminate. Get return returncode ##
+        p_status = p.wait()
+        return str(result, encoding='utf-8', errors='strict')
+
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+        
+        Render the template and return the html file to be delivered to the browser
+            
+        :return: contents of the template after beeing rendered 
+        """
+        plgitems = []
+        for item in self.items.return_items():
+            if ((KNX_DPT in item.conf) or (KNX_STATUS in item.conf) or (KNX_SEND in item.conf) or (KNX_REPLY in item.conf) or 
+               (KNX_CACHE in item.conf) or (KNX_INIT in item.conf) or (KNX_LISTEN in item.conf) or (KNX_POLL in item.conf)):
+                plgitems.append(item)
+
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin,
+                           items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
+                           knxdeamon=self.knxdeamon,
+                           stats_ga=self.plugin.get_stats_ga(), stats_ga_list=sorted(self.plugin.get_stats_ga(), key=lambda k: str(int(k.split('/')[0])+100)+str(int(k.split('/')[1])+100)+str(int(k.split('/')[2])+1000) ),
+                           stats_pa=self.plugin.get_stats_pa(), stats_pa_list=sorted(self.plugin.get_stats_pa(), key=lambda k: str(int(k.split('.')[0])+100)+str(int(k.split('.')[1])+100)+str(int(k.split('.')[2])+1000) )
+                          )
 
 
