@@ -19,7 +19,11 @@
 				<td class="py-1">{{ p.username }}</td>
 				<td></td>
 				<td class="py-1"><strong>{{_('Passwort')}}</strong></td>
-				<td class="py-1">{% for letter in p.password %}*{% endfor %}</td>
+				<td class="py-1">
+				{% if p.password %}
+					{% for letter in p.password %}*{% endfor %}
+				{% endif %}
+				</td>
 				<td></td>
 			</tr>
 			<tr>
