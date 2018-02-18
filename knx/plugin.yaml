@@ -5,6 +5,7 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Anbindung von KNX Bussystemen via EIBD/KNXD'
         en: ''
+        fr: 'Connexion de systèmes KNX via EIBD/KNXD'
     maintainer: cmalo, (msinn)
     tester: psilo909, onkelandy, Sandman60, brandst
 #    keywords: iot xyz
