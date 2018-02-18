@@ -1,10 +1,10 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Statistiken':           {'de': '=', 'en': 'Statistics'}
-    'Letzte KNX Aktivität':  {'de': '=', 'en': 'Last KNX activity'}
+    'Statistiken':           {'de': '=', 'en': 'Statistics', 'fr': 'Statistiques'}
+    'Letzte KNX Aktivität':  {'de': '=', 'en': 'Last KNX activity', 'fr': 'Dernière activité KNX'}
     
     # Alternative format for translations of longer texts:
 #    'Hier kommt der Inhalt des Webinterfaces hin.':
 #        de: '='
 #        en: 'Here goes the content of the web interface.'
-
+#        fr: 'Le contenu de l'interface web vient ici.'
