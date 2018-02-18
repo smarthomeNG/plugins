@@ -8,3 +8,8 @@ plugin_translations:
 #        de: '='
 #        en: 'Here goes the content of the web interface.'
 #        fr: 'Le contenu de l'interface web vient ici.'
+
+    'Service für den KNX Support':
+        de: '='
+        en: 'Service deamon for the KNX support'
+        fr: ''
