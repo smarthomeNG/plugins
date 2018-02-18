@@ -37,8 +37,8 @@ parameters:
             en: ""
 
     send_time:
-        type: bool
-        default: False
+        type: int
+        default: 0
         description:
             de: ''
             en: 'interval to send time and date to the knx bus'
