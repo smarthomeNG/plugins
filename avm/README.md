@@ -519,18 +519,18 @@ are parsed as child items. In the example below there is a comment in the respec
             ain = 03456 0221393 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl = rw
             [[[[energy]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = energy
+                avm_data_type@fritzbox_7490 = energy
                 type = num
                 visu_acl = ro
             [[[[power]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = power
+                avm_data_type@fritzbox_7490 = power
                 type = num
                 sqlite = yes
                 enforce_updates=true
                 visu_acl = ro
                 eval = value / 100
             [[[[temperature]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = temperature
+                avm_data_type@fritzbox_7490 = temperature
                 type = num
                 visu_acl = ro
 ```

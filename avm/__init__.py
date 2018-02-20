@@ -1478,6 +1478,7 @@ class AVM(SmartPlugin):
                                           auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                               self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
+
         except Exception as e:
             self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
             return
@@ -1487,8 +1488,8 @@ class AVM(SmartPlugin):
             if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
                 for child in item.return_children():
-                    if 'avm_data_type' in child.conf:
-                        if child.conf['avm_data_type'] == 'temperature':
+                    if self.has_iattr(child.conf, 'avm_data_type'):
+                        if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
                             temp = xml.getElementsByTagName('NewTemperatureCelsius')
                             if len(temp) > 0:
                                 child(int(temp[0].firstChild.data))
@@ -1496,7 +1497,7 @@ class AVM(SmartPlugin):
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
                                                                                                            'avm_data_type'))
-                        elif child.conf['avm_data_type'] == 'power':
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'power':
                             power = xml.getElementsByTagName('NewMultimeterPower')
                             if len(power) > 0:
                                 child(int(power[0].firstChild.data))
@@ -1504,7 +1505,7 @@ class AVM(SmartPlugin):
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
                                                                                                            'avm_data_type'))
-                        elif child.conf['avm_data_type'] == 'energy':
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'energy':
                             energy = xml.getElementsByTagName('NewMultimeterEnergy')
                             if len(energy) > 0:
                                 child(int(energy[0].firstChild.data))
