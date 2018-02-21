@@ -161,12 +161,13 @@ class WebInterface(SmartPluginWebIf):
                             item_sets[item_set].append(item)
 
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(item_data=items_filtered,
+        return tmpl.render(p=self.plugin,
+                           item_data=items_filtered,
                            ip=self.plugin.mod_http.get_local_ip_address(),
                            port=self.plugin.mod_http.get_local_port(),
                            servicesport=self.plugin.mod_http.get_local_servicesport(),
                            tabcount=1, tab1title="WebServices",
-                           item_sets=item_sets,p=self.plugin)
+                           item_sets=item_sets)
 
 
 class WebServiceInterface:
