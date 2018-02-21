@@ -36,7 +36,6 @@ import json
 from urllib.request import urlopen
 
 from lib.item import Items
-
 from lib.model.smartplugin import *
 
 
@@ -382,7 +381,6 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered 
         """
         from pprint import pformat
-        tmpl = self.tplenv.get_template('index.html')
         
         plgitems = []
         for item in self.items.return_items():
@@ -391,6 +389,7 @@ class WebInterface(SmartPluginWebIf):
 
         pf = pformat(self.plugin.wugdata)
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
                            wugdata=self.plugin.wugdata,
