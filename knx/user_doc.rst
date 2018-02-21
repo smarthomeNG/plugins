@@ -1,5 +1,17 @@
+.. index:: Plugins; KNX (KNX Bus Unterstützung)
+.. index:: KNX
+
 knx
 ###
+
+Konfiguration
+=============
+
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/knx` beschrieben.
+
+
+Web Interface
+=============
 
 Das knx Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
 übersichtlich dargestellt werden. Außerdem können Statistiken über die KNX Aktivität angezeigt

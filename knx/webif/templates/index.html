@@ -109,9 +109,17 @@
 						knx_listen: {{ item.conf['knx_listen'] }}<br>
 					{% endif %}
 					</td>
-					<td class="py-1">{{ item.conf['knx_send'] }}</td>
+					{% if item.conf['knx_send']|length == 1 %}
+						<td class="py-1">{{ item.conf['knx_send'][0] }}</td>
+					{% else %}
+						<td class="py-1">{{ item.conf['knx_send'] }}</td>
+					{% endif %}
 					<td class="py-1">{{ item.conf['knx_reply'] }}</td>
-					<td class="py-1">{{ item.conf['knx_status'] }}</td>
+					{% if item.conf['knx_status']|length == 1 %}
+						<td class="py-1">{{ item.conf['knx_status'][0] }}</td>
+					{% else %}
+						<td class="py-1">{{ item.conf['knx_status'] }}</td>
+					{% endif %}
 					<td class="py-1">{{ item.conf['knx_poll'] }}</td>
 				</tr>
 			{% endfor %}
