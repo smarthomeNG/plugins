@@ -24,18 +24,12 @@ parameters:
         description:
             de: ''
             en: 'groupadress to send a timestamp to the knx bus'
-        description_long:
-            de: ''
-            en: ""
 
     date_ga:
         type: str
         description:
             de: ''
             en: 'interval to send time and date to the knx bus'
-        description_long:
-            de: ''
-            en: ""
 
     send_time:
         type: int
@@ -43,33 +37,26 @@ parameters:
         description:
             de: ''
             en: 'interval to send time and date to the knx bus'
-        description_long:
-            de: ''
-            en: ""
 
     busmonitor:
-        type: bool
-        default: False
+        type: str
+        default: 'off'
         valid_list:
-          - True
-          - False
-          - logger
+          - 'on'
+          - 'off'
+          - 'true'
+          - 'false'
+          - 'logger'
         description:
             de: ''
             en: ''
-        description_long:
-            de: ''
-            en: ""
 
     host:
         type: ipv4
         default: '127.0.0.1'
         description:
-            de: ''
-            en: 'eibd or knxd hostname'
-        description_long:
-            de: ''
-            en: ""
+            de: 'IP Adresse des Computers auf dem der EIB Daemon bzw. KNX Daemon läuft. Standard: Auf dem Computer auf dem SmartHomeMG läuft.'
+            en: 'IP address of the computer the eib daemon or knx daemon is running on. Default: The Daemon is running on the computer SmartHomeNG is running on.'
 
     port:
         type: int
@@ -77,9 +64,6 @@ parameters:
         description:
             de: ''
             en: 'eibd or knxd port'
-        description_long:
-            de: ''
-            en: ""
 
     readonly:
         type: bool
@@ -87,29 +71,20 @@ parameters:
         description:
             de: ''
             en: 'If set to True, the plugin only read the knx bus and send no group message to the bus.'
-        description_long:
-            de: ''
-            en: ""
 
-    instance:
-        type: str
-        default: 'default'
-        description:
-            de: ''
-            en: ''
-        description_long:
-            de: ''
-            en: ""
+#    instance:
+#        type: str
+#        default: 'default'
+#        description:
+#            de: ''
+#            en: ''
 
-    enablestats:
+    enable_stats:
         type: bool
         default: True
         description:
             de: ''
             en: 'if set to True, the statistic functions are enabled to collect data'
-        description_long:
-            de: ''
-            en: ""
 
 
 

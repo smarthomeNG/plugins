@@ -24,15 +24,6 @@
 #  along with SmartHomeNG.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-# dict for statistic functions:
-# stats_pa = { ga1 : { 'read' : n-read,
-#                      'write' : n-write,
-#                      'response' : n-response,
-#                      'last_read' : datetime,
-#                      'last_write' : datetime,
-#                      'last_response' : datetime },
-#              ga2 : {...} }
-
 import logging
 import threading
 import struct
@@ -91,26 +82,34 @@ class KNX(lib.connection.Client,SmartPlugin):
     ITEM_TAG = [KNX_DPT, KNX_STATUS, KNX_SEND, KNX_REPLY, KNX_LISTEN, KNX_INIT, KNX_CACHE, KNX_POLL]
     ITEM_TAG_PLUS = [KNX_DTP]
 
-    def __init__(self, smarthome, time_ga=None, date_ga=None, send_time=False, busmonitor=False, host='127.0.0.1',
-                 port=6720, readonly=False, instance='default', enable_stats = True):
-        lib.connection.Client.__init__(self, host, port, monitor=True)
+#    def __init__(self, smarthome, time_ga=None, date_ga=None, send_time=False, busmonitor=None, host='127.0.0.1',
+#                 port=6720, readonly=False, instance='default', enable_stats = True):
+    def __init__(self, smarthome):
+        self.host = self.get_parameter_value('host')
+        self.port = self.get_parameter_value('port')
+        lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self.logger = logging.getLogger(__name__)
         self.logger.debug("init knx")        
-        self._sh = smarthome
+#        self._sh = smarthome
         self.shtime = Shtime.get_instance()
+        
+        busmonitor = self.get_parameter_value('busmonitor')
+
         self.gal = {}                   # group addresses to listen to {DPT: dpt, ITEMS: [item 1, item 2, ..., item n], LOGICS: [ logic 1, logic 2, ..., logic n]}
         self.gar = {}                   # group addresses to reply if requested from knx, {DPT: dpt, ITEM: item, LOGIC: None}
         self._init_ga = []
         self._cache_ga = []             # group addresses which should be initalized by the knxd cache
         self._cache_ga_response_pending = []
-        self.time_ga = time_ga
-        self.date_ga = date_ga
-        self._instance = instance
+        self.time_ga = self.get_parameter_value('time_ga')
+        self.date_ga = self.get_parameter_value('date_ga')
+        send_time = self.get_parameter_value('send_time')
+#        self._instance = instance
         self._lock = threading.Lock()
         self._bm_separatefile = False
-        self._bm_format= "KNX[{0}]: {1} set {2} to {3}"
+        self._bm_format= "KNX[{0}]:'BM': {1} set {2} to {3}"
+        
         # following needed for statistics
-        self.enable_stats = enable_stats
+        self.enable_stats = self.get_parameter_value('enable_stats')
         self.stats_ga = {}              # statistics for used group addresses on the BUS
         self.stats_pa = {}              # statistics for used group addresses on the BUS
         self.stats_last_read = None     # last read request from KNX
@@ -118,37 +117,37 @@ class KNX(lib.connection.Client,SmartPlugin):
         self.stats_last_response = None # last response from KNX
         self.stats_last_action = None   # the newes
 
-        if self.to_bool(busmonitor,default=busmonitor):
+        if busmonitor.lower() in ['on','true']:
             self._busmonitor = self.logger.info
-        else:
+        elif busmonitor.lower() in ['off','false']:
             self._busmonitor = self.logger.debug
-
-            # write bus messages in a separate logger
-            if isinstance(busmonitor, str):
-                if busmonitor.lower() in ['logger']:
-                    self._bm_separatefile = True
-                    self._bm_format = "{0};{1};{2};{3}"
-                    self._busmonitor = logging.getLogger("knx_busmonitor").info
+        elif busmonitor.lower() == 'logger':
+            self._bm_separatefile = True
+            self._bm_format = "{0};{1};{2};{3}"
+            self._busmonitor = logging.getLogger("knx_busmonitor").info
+            self.logger.warning("Using busmonitor (L) = '{}'".format(busmonitor))
+        else:
+            self.logger.warning("Invalid value '{}' configured for parameter 'busmonitor', using 'false'".format(busmonitor))
+            self._busmonitor = self.logger.debug
 
         if send_time:
             self._sh.scheduler.add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(send_time))
 
-        readonly = self.to_bool(readonly)
-        if readonly: 
+        self.readonly = self.get_parameter_value('readonly')
+        if self.readonly: 
             self.logger.warning("!!! KNX Plugin in READONLY mode !!! ")
-        self.readonly = readonly
 
         self.init_webinterface()
         return
         
 
     #### just here until the smartplugin base class is fixed: Unfortunately it does not set it's name if ALLOW_MULTIINSTANCE is False
-    def get_instance_name(self):
-        """
-            return instance name of the plugin
-            :rtype: str
-        """
-        return self._instance
+#    def get_instance_name(self):
+#        """
+#            return instance name of the plugin
+#            :rtype: str
+#        """
+#        return self._instance
 
     def _send(self, data):
         if len(data) < 2 or len(data) > 0xffff:
@@ -764,7 +763,10 @@ class KNX(lib.connection.Client,SmartPlugin):
         ar = [ self.stats_last_response, self.stats_last_write, self.stats_last_read ]
         while None in ar:
             ar.remove(None)
-        return max(ar)
+        if ar == []:
+            return None
+        else:
+            return max(ar)
 
     def get_unsatisfied_cache_read_ga(self):
         """
@@ -843,8 +845,11 @@ class WebInterface(SmartPluginWebIf):
         """
         plgitems = []
         for item in self.items.return_items():
-            if ((KNX_DPT in item.conf) or (KNX_STATUS in item.conf) or (KNX_SEND in item.conf) or (KNX_REPLY in item.conf) or 
-               (KNX_CACHE in item.conf) or (KNX_INIT in item.conf) or (KNX_LISTEN in item.conf) or (KNX_POLL in item.conf)):
+#            if ((KNX_DPT in item.conf) or (KNX_STATUS in item.conf) or (KNX_SEND in item.conf) or (KNX_REPLY in item.conf) or 
+#               (KNX_CACHE in item.conf) or (KNX_INIT in item.conf) or (KNX_LISTEN in item.conf) or (KNX_POLL in item.conf)):
+            if (self.plugin.has_iattr(item.conf, KNX_DPT) or self.plugin.has_iattr(item.conf, KNX_STATUS) or self.plugin.has_iattr(item.conf, KNX_SEND) or 
+                self.plugin.has_iattr(item.conf, KNX_REPLY) or self.plugin.has_iattr(item.conf, KNX_CACHE) or self.plugin.has_iattr(item.conf, KNX_INIT) or
+                self.plugin.has_iattr(item.conf, KNX_LISTEN) or self.plugin.has_iattr(item.conf, KNX_POLL)):
                 plgitems.append(item)
 
         tmpl = self.tplenv.get_template('index.html')
