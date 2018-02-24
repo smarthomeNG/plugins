@@ -40,6 +40,12 @@
           visu_acl: rw
           avdevice_zone1: mute
 
+          Init:
+              visu_acl: rw
+              type: bool
+              cache: 'true'
+              avdevice_zone1_init: mute
+
       Volume:
           type: num
           visu_acl: rw

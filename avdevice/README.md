@@ -78,7 +78,8 @@ avdevice:
 
 #### avdevice_zone[0-4]@[instance]: [command]
 
-specifiy the zone number and instance.
+Specifiy the zone number and instance. If you don't use zones you can either use "avdevice" or "avdevice_zone0" as attributes.
+
 The command has to correspond to a "base" command in the relevant text configuration file in the avdevice plugin folder named the same as the "model" configured in plugin.yaml.
 It is important to set the correct type for each item. The Pioneer RS232 codeset expects bool and int types only.
 For example to set the listening mode to "pure direct", the item has to be int and you set it to the value "8".
@@ -89,6 +90,34 @@ You can use two special avdevice attributes if you want:
 * `avdevice: statusupdate`: Use this item to trigger a full statusupdate. All query commands regarding the currently powered on zones are sent. This is especially useful if you have a power socket you can switch on or off.
 * `avdevice: reload`: Use this item to reload your text configuration. This re-reads the config and recreates all functions and commands. This is useful if you find an error in your configuration file or if you want to add new commands while smarthomeNG is running.
 
+#### Example
+
+```
+# items/my.yaml
+Pioneer:
+  type: foo
+
+  Update:
+      type: bool
+      visu_acl: rw
+      avdevice: statusupdate
+      enforce_updates: 'yes'
+
+  Reload:
+      type: bool
+      visu_acl: rw
+      avdevice: reload
+      enforce_updates: 'yes'
+
+  Power:
+      type: bool
+      visu_acl: rw
+      avdevice_zone1: power
+
+```
+#### avdevice_zone[0-4]_speakers@[instance]: [command]
+
+Specifiy the zone number and instance.
 Speakers Items are special and should be set up the way mentioned in the following example. 1 and 2 correspond to the value the speaker command expects.
 
 #### Example
@@ -97,12 +126,6 @@ Speakers Items are special and should be set up the way mentioned in the followi
 # items/my.yaml
 Pioneer:
     type: foo
-
-    Power:
-        type: bool
-        visu_acl: rw
-        avdevice_zone1@pioneer_one: power
-        enforce_updates: 'no'
 
     Speakers:
         type: num
@@ -118,6 +141,52 @@ Pioneer:
         type: bool
         visu_acl: rw
         avdevice_zone1_speakers: 2
+
+```
+
+#### avdevice_zone[0-4]_init@[instance]: [command]
+
+Specifiy the zone number and instance.
+The init attribute lets you set a specific command to a specific value as soon as the device is connected. For example if you want to always unmute your device as soon as the plugin connects to it (at startup and after turning on the power socket or reconnecting the cable) you can define an additional item with the attribute "avdevice_init". The value of that item (Pioneer.Mute.Init) gets written to the linked item (Pioneer.Mute).
+
+You can use multiple init items and attributes even for different zones.
+
+#### Example
+
+```
+# items/my.yaml
+Pioneer:
+    type: foo
+
+    Zone1:
+        type: foo  
+
+        Mute:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: mute
+
+          Init:
+              visu_acl: rw
+              type: bool
+              cache: 'true'
+              value: True
+              avdevice_zone1_init: mute
+
+    Zone2:
+        type: foo  
+
+        Mute:
+          type: bool
+          visu_acl: rw
+          avdevice_zone2: mute
+
+          Init:
+              visu_acl: rw
+              type: bool
+              cache: 'true'
+              value: True
+              avdevice_zone2_init: mute
 
 ```
 

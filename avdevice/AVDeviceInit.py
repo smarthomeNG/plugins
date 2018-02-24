@@ -183,7 +183,7 @@ class Init():
         if not self._lock.acquire(timeout=2):
             return
         try:
-            self.logger.debug("Initializing {}: Starting to create query commands. Lock is {}".format(
+            self.logger.debug("Initializing {}: Starting to create query commands. Lock is {}.".format(
                 self._name, self._threadlock_standard.locked()))
             displaycommand = ''
             length = 0
@@ -195,26 +195,29 @@ class Init():
                         responselist = []
                         splitresponse = self._functions['zone{}'.format(zone)][command][4].split("|")
                         for split in splitresponse:
+                            valuelength = split.count('*')
                             if split.count('*') > 0 or 'R' in self._functions['zone{}'.format(zone)][command][5]:
                                 responselist.append(split.strip())
                         responsestring = "|".join(responselist)
                         responsecommand = re.sub('[*]', '', responsestring)
-                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_zonecommands['zone{}'.format(zone)] \
+                        if not '{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype, valuelength) in self._query_zonecommands['zone{}'.format(zone)] \
                             and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' \
                             and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
                             if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_zonecommands['zone{}'.format(zone)].append('{},{},{},{}'.format(
-                                    querycommand, querycommand, responsecommand, valuetype))
+                                self._query_zonecommands['zone{}'.format(zone)].append('{},{},{},{},{}'.format(
+                                    querycommand, querycommand, responsecommand, valuetype, valuelength))
+                                self.logger.log(VERBOSE1, "Initializing {}: Added Query Command for zone {}: {},{},{},{},{}".format(self._name, zone, querycommand, querycommand, responsecommand, valuetype, valuelength))
                             else:
-                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype)
+                                displaycommand = '{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype, valuelength)
                                 self.logger.debug("Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
-                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_commands \
+                        if not '{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype, valuelength) in self._query_commands \
                             and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' \
                             and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
                             if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_commands.append('{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype))
+                                self._query_commands.append('{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype, valuelength))
+                                self.logger.log(VERBOSE1, "Initializing {}: Added general Query Command: {},{},{},{},{}".format(self._name, querycommand, querycommand, responsecommand, valuetype, valuelength))
                             else:
-                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, self._functions['zone{}'.format(zone)][command][8])
+                                displaycommand = '{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, self._functions['zone{}'.format(zone)][command][8], valuelength)
                                 self.logger.log(VERBOSE1, "Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
                     except Exception as err:
                         self.logger.error("Initializing {}: Problems adding query commands for command {}. Error: {}".format(
@@ -235,19 +238,23 @@ class Init():
         if not self._lock.acquire(timeout=2):
             return
         try:
-            self.logger.debug("Initializing {}: Starting to create power commands. Lock is {}".format(
-                self._name, self._threadlock_standard.locked()))
+            self.logger.debug("Initializing {}: Starting to create power commands. Lock is {}. Powercommands: {}".format(
+                self._name, self._threadlock_standard.locked(), self._power_commands))
             for zone in range(0, self._number_of_zones + 1):
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         if command.startswith('power on'):
-                            if '**' in self._functions['zone{}'.format(zone)][command][4]:
-                                value = re.sub('\*\*', 'ON', self._functions['zone{}'.format(zone)][command][4])
-                            else:
-                                if self._functions['zone{}'.format(zone)][command][6] == 'yes':
-                                    value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
+                            valuelist = []
+                            for response in self._functions['zone{}'.format(zone)][command][4].split("|"):
+                                if '**' in response:
+                                    value = re.sub('\*\*', 'ON', response)
                                 else:
-                                    value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
+                                    if self._functions['zone{}'.format(zone)][command][6] == 'yes':
+                                        value = re.sub('[*]', '0', response)
+                                    else:
+                                        value = re.sub('[*]', '1', response)
+                                valuelist.append(value)
+                            value = "|".join(valuelist)
                             combined = '{},{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2], self._functions['zone{}'.format(zone)][command][3], value, self._functions['zone{}'.format(zone)][command][8])
                             self._power_commands.append(combined)
                     except Exception as err:
@@ -388,7 +395,7 @@ class Init():
                     line = re.sub('[\\n\\r]', '', line)
                     line = re.sub('; ', ';', line)
                     line = re.sub(' ;', ';', line)
-                    if line == '' or line.startswith('#'):
+                    if line == '' or line.startswith('#') or line.startswith('ZONE;'):
                         function = ''
                     else:
                         row = line.split(";")
