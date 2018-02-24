@@ -27,6 +27,7 @@ import logging
 
 import codecs
 import re
+import os
 import threading
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
@@ -62,41 +63,41 @@ class Init():
             self.logger.debug("Initializing {}: No statusupdate Item set, creating dummy item.".format(self._name))
         return self._items
 
+    def _addreload(self):
+        if 'reload' not in self._items['zone0'].keys():
+            self._items['zone0']['reload'] = {'Item': ['self._reload'], 'Value': False}
+            self.logger.debug("Initializing {}: No Reload Item set, creating dummy item.".format(self._name))
+        return self._items
+
     def _process_variables(self, value, vartype):
         self.logger.debug("Initializing Serial {}: Converting {} as type {}.".format(self._name, value, vartype))
         if vartype == 'rs232':
             try:
-                rs232 = re.sub('[ ]', '', str(value)).split(",")[0]
-                if rs232 == 'None':
-                    rs232 = baud = serial_timeout = writetimeout = None
+                rs232 = re.sub('[ ]', '', value[0])
+                if rs232 == 'None' or rs232 == '':
+                    rs232 = baud = serial_timeout = None
                 self.logger.debug("Initializing Serial {}: Serialport is {}.".format(self._name, rs232))
             except Exception as err:
-                rs232 = baud = serial_timeout = writetimeout = None
+                rs232 = baud = serial_timeout = None
                 self.logger.warning("Initializing Serial {}: Serial Port is {}. Error: {}.".format(self._name, baud, err))
             if rs232 is not None:
                 try:
-                    baud = int(re.sub('[ ]', '', str(value)).split(",")[1])
+                    baud = int(value[1])
                     self.logger.debug("Initializing Serial {}: Baudrate is {}.".format(self._name, baud))
                 except Exception as err:
                     baud = 9600
-                    self.logger.debug("Initializing Serial {}: Using standard Baudrate {}. Because: {}.".format(self._name, baud, err))
+                    self.logger.debug("Initializing Serial {}: Using standard baudrate {} because: {}.".format(self._name, baud, err))
                 try:
-                    serial_timeout = re.sub('[ ]', '', str(value)).split(",")[2]
+                    serial_timeout = float(value[2])
                     self.logger.debug("Initializing Serial {}: Timeout is {}.".format(self._name, serial_timeout))
                 except Exception as err:
                     serial_timeout = 0.1
                     self.logger.debug("Initializing Serial {}: Using standard timeout {}. Because: {}.".format(self._name, serial_timeout, err))
-                try:
-                    writetimeout = re.sub('[ ]', '', str(value)).split(",")[3]
-                    self.logger.debug("Initializing Serial {}: write_timeout is {}.".format(self._name, writetimeout))
-                except Exception as err:
-                    writetimeout = 0.1
-                    self.logger.debug("Initializing Serial {}: Using standard write_timeout {}. Because: {}.".format(self._name, writetimeout, err))
-            return rs232, baud, serial_timeout, writetimeout
+            return rs232, baud, serial_timeout
         elif vartype == 'tcp':
             try:
-                tcp = re.sub('[ ]', '', str(value)).split(",")[0]
-                if tcp == 'None':
+                tcp = re.sub('[ ]', '', value[0])
+                if tcp == 'None' or tcp == '' or tcp == '0.0.0.0':
                     tcp = port = tcp_timeout = None
                 self.logger.debug("Initializing TCP {}: IP is {}.".format(self._name, tcp))
             except Exception as err:
@@ -104,13 +105,13 @@ class Init():
                 self.logger.warning("Initializing TCP {}: Problem setting IP: {}.".format(self._name, err))
             if tcp is not None:
                 try:
-                    port = int(re.sub('[ ]', '', str(value)).split(",")[1])
+                    port = int(value[1])
                     self.logger.debug("Initializing TCP {}: Port is {}.".format(self._name, port))
                 except Exception as err:
                     port = None
-                    self.logger.warning("Initializing TCP {}: Port is {}. Because: {}.".format(self._name, port, err))
+                    self.logger.warning("Initializing TCP {}: Port is {} because: {}.".format(self._name, port, err))
                 try:
-                    tcp_timeout = int(re.sub('[ ]', '', str(value)).split(",")[2])
+                    tcp_timeout = int(value[2])
                     self.logger.debug("Initializing TCP {}: Timeoout is {}.".format(self._name, tcp_timeout))
                 except Exception as err:
                     tcp_timeout = 1
@@ -118,14 +119,17 @@ class Init():
             return tcp, port, tcp_timeout
 
         elif vartype == 'dependson':
-            dependson_info = dependson = value[0]
             try:
-                dependson = re.sub('[ ]', '', dependson_info).split(",")[0]
-                dependson_value = re.sub('[ ]', '', dependson_info).split(",")[1]
-                if str(dependson_value).lower() in ['1', 'yes', 'true', 'on']:
-                    dependson_value = True
-                elif str(dependson_value).lower() in ['0', 'no', 'false', 'off']:
-                    dependson_value = False
+                dependson = re.sub('[ ]', '', value[0])
+                if dependson == 'None' or dependson == '':
+                    dependson = None
+                if dependson is None:
+                    dependson_value = None
+                else:
+                    if re.sub('[ ]', '', str(value[1])).lower() in ['1', 'yes', 'true', 'on']:
+                        dependson_value = True
+                    elif re.sub('[ ]', '', str(value[1])).lower() in ['0', 'no', 'false', 'off']:
+                        dependson_value = False
                 self.logger.debug("Initializing {}: Dependson Item: {}. Value: {}".format(self._name, dependson, dependson_value))
             except Exception:
                 if dependson is not None:
@@ -135,16 +139,15 @@ class Init():
                     dependson_value = None
                     self.logger.debug("Initializing {}: No Dependson Item.".format(self._name))
             if dependson is not None:
-                depend0_power0 = value[1]
-                if str(depend0_power0).lower() in ['1', 'yes', 'true', 'on'] and dependson:
+                if re.sub('[ ]', '', str(value[2])).lower() in ['1', 'yes', 'true', 'on'] and dependson:
                     depend0_power0 = True
-                elif str(depend0_power0).lower() in ['0', 'no', 'false', 'off'] or not dependson:
+                elif re.sub('[ ]', '', str(value[2])).lower() in ['0', 'no', 'false', 'off'] or not dependson:
                     depend0_power0 = False
-                depend0_volume0 = value[2]
-                if str(depend0_volume0).lower() in ['1', 'yes', 'true', 'on'] and dependson:
+                if re.sub('[ ]', '', str(value[3])).lower() in ['1', 'yes', 'true', 'on'] and dependson:
                     depend0_volume0 = True
-                elif str(depend0_volume0).lower() in ['0', 'no', 'false', 'off'] or not dependson:
+                elif re.sub('[ ]', '', str(value[3])).lower() in ['0', 'no', 'false', 'off'] or not dependson:
                     depend0_volume0 = False
+                self.logger.debug("Initializing {}: Resetting volume after dependson is off: {}. Resetting power: {}.".format(self._name, depend0_volume0, depend0_power0))
             else:
                 depend0_power0 = depend0_volume0 = None
             return dependson, dependson_value, depend0_power0, depend0_volume0
@@ -154,8 +157,8 @@ class Init():
                 response_buffer = True
             elif str(value).lower() in ['0', 'no', 'false', 'off']:
                 response_buffer = False
-            elif value.lstrip("-").isdigit():
-                response_buffer = int(value)
+            else:
+                response_buffer = abs(int(value)) * -1
             return response_buffer
 
         elif vartype == 'resetonerror':
@@ -188,6 +191,7 @@ class Init():
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         querycommand = self._functions['zone{}'.format(zone)][command][3]
+                        valuetype = self._functions['zone{}'.format(zone)][command][8]
                         responselist = []
                         splitresponse = self._functions['zone{}'.format(zone)][command][4].split("|")
                         for split in splitresponse:
@@ -195,19 +199,22 @@ class Init():
                                 responselist.append(split.strip())
                         responsestring = "|".join(responselist)
                         responsecommand = re.sub('[*]', '', responsestring)
-                        if not '{},{},{}'.format(querycommand, querycommand, responsecommand) in self._query_zonecommands['zone{}'.format(zone)] and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
+                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_zonecommands['zone{}'.format(zone)] \
+                            and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' \
+                            and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
                             if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_zonecommands['zone{}'.format(zone)].append('{},{},{}'.format(
-                                    querycommand, querycommand, responsecommand))
+                                self._query_zonecommands['zone{}'.format(zone)].append('{},{},{},{}'.format(
+                                    querycommand, querycommand, responsecommand, valuetype))
                             else:
-                                displaycommand = '{},{},{}'.format(querycommand, querycommand, responsecommand)
+                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype)
                                 self.logger.debug("Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
-                        if not '{},{},{}'.format(querycommand, querycommand, responsecommand) in self._query_commands and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
+                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_commands \
+                            and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' \
+                            and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
                             if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_commands.append('{},{},{}'.format(
-                                    querycommand, querycommand, responsecommand))
+                                self._query_commands.append('{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype))
                             else:
-                                displaycommand = '{},{},{}'.format(querycommand, querycommand, responsecommand)
+                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, self._functions['zone{}'.format(zone)][command][8])
                                 self.logger.log(VERBOSE1, "Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
                     except Exception as err:
                         self.logger.error("Initializing {}: Problems adding query commands for command {}. Error: {}".format(
@@ -217,8 +224,7 @@ class Init():
                 self._query_commands.append(displaycommand)
                 length += 1
         except Exception as err:
-            self.logger.error(
-                "Initializing {}: Problems searching for query commands. Error: {}".format(self._name, err))
+            self.logger.error("Initializing {}: Problems searching for query commands. Error: {}".format(self._name, err))
         finally:
             if self._threadlock_standard.locked():
                 self._lock.release()
@@ -235,14 +241,14 @@ class Init():
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         if command.startswith('power on'):
-                            try:
+                            if '**' in self._functions['zone{}'.format(zone)][command][4]:
                                 value = re.sub('\*\*', 'ON', self._functions['zone{}'.format(zone)][command][4])
-                            except Exception:
+                            else:
                                 if self._functions['zone{}'.format(zone)][command][6] == 'yes':
                                     value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
                                 else:
                                     value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
-                            combined = '{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2], self._functions['zone{}'.format(zone)][command][3], value)
+                            combined = '{},{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2], self._functions['zone{}'.format(zone)][command][3], value, self._functions['zone{}'.format(zone)][command][8])
                             self._power_commands.append(combined)
                     except Exception as err:
                         self.logger.warning("Initializing {}: Problems searching power commands for {} in zone {}. Error: {}".format(self._name, command, zone, err))
@@ -306,7 +312,7 @@ class Init():
                                         else:
                                             self._special_commands['Input']['Command'].append(response)
                                             self._special_commands['Input']['Ignore'].append(0)
-                                        self.logger.log(VERBOSE1, "Initializing {}: Found Input Command and added it to display commands.".format(self._name))
+                                        self.logger.log(VERBOSE2, "Initializing {}: Found Input Command and added it to display commands.".format(self._name))
                                     elif (function == 'title' or function == 'station' or function == 'genre'):
                                         if 'Nowplaying' not in self._special_commands:
                                             self._special_commands['Nowplaying'] = {'Command': [response]}
@@ -341,7 +347,7 @@ class Init():
                                         self.logger.log(VERBOSE1, "Initializing {}: Adding additional list to function {} for response {} with value {}.".format(
                                             self._name, function, response, self._response_commands[response]))
                                 except Exception as err:
-                                    self.logger.log(VERBOSE1, "Initializing {}: Creating response command for: {}. Message: {}".format(self._name, response, err))
+                                    self.logger.log(VERBOSE2, "Initializing {}: Creating response command for: {}. Message: {}".format(self._name, response, err))
                                     self._response_commands[response] = [[
                                         valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype, functiontype]]
                                 self._response_commands[response] = sorted(self._response_commands[response], key=lambda x: x[0], reverse=True)
@@ -373,22 +379,27 @@ class Init():
         try:
             self.logger.debug("Initializing {}: Starting to read file {}. Lock is {}".format(
                 self._name, self._model, self._threadlock_standard.locked()))
-            filename = '{}/plugins/avdevice/{}.txt'.format(
-                self._sh.base_dir, self._model)
+            filename = '{}/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
 
             commands = codecs.open(filename, 'r', 'utf-8')
             zones = [0]
             for line in commands:
                 try:
-                    line = re.sub('[!@#$\\n\\r]', '', line)
-                    if line == '':
+                    line = re.sub('[\\n\\r]', '', line)
+                    line = re.sub('; ', ';', line)
+                    line = re.sub(' ;', ';', line)
+                    if line == '' or line.startswith('#'):
                         function = ''
                     else:
                         row = line.split(";")
                         if row[0] == '':
                             row[0] = '0'
+                        if row[2] == '':
+                            row[1:3] = [''.join(row[1:3])]
+                        else:
+                            row[1:3] = [' '.join(row[1:3])]
                         function = row[1]
-                        itemtest = re.sub(' set| on| off', '', function)
+                        itemtest = re.sub(' set| on| off| increase| decrease', '', function)
                         for i in range(0, 9):
                             try:
                                 test = row[i]
@@ -401,13 +412,15 @@ class Init():
                                     row.append('int,float')
                                 elif i == 8 and ("on" in function or "off" in function):
                                     row.append('bool')
-                                elif i == 8 and ("+" in function or "-" in function):
-                                    row.append('bool')
+                                elif i == 8 and ("increase" in function or "decrease" in function):
+                                    row.append('int,float')
+                                    row[5] = row[5].replace('*', '')
                                 else:
                                     row.append('')
                         try:
                             row[8] = row[8].replace('string', 'str')
                             row[8] = row[8].replace('num', 'int,float')
+                            row[8] = row[8].replace('|', ',')
                             if row[8] == '':
                                 row[8] = 'bool,int,str'
                         except Exception:
@@ -416,7 +429,7 @@ class Init():
                             itemkeys = self._items['zone{}'.format(row[0])].keys()
                         except Exception:
                             itemkeys = []
-                    if (function == "FUNCTION") or function == '':
+                    if function == "FUNCTION" or function == '' or function == "FUNCTION FUNCTIONTYPE":
                         pass
                     elif itemtest in itemkeys:
                         if row[0] == '0' or row[0] == '':
@@ -444,9 +457,8 @@ class Init():
         except Exception as err:
             self.logger.error("Initializing {}: Problems loading command file. Error: {}".format(self._name, err))
         finally:
-            self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W']
-            self.logger.info("Initializing {}: Created functions list, including entries for {} zones.".format(
-                self._name, self._number_of_zones))
+            self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W', '', '', 'bool']
+            self.logger.info("Initializing {}: Created functions list, including entries for {} zones.".format(self._name, self._number_of_zones))
             if self._threadlock_standard.locked():
                 self._lock.release()
             self.logger.log(VERBOSE1, "Initializing {}: Finishing reading file. Lock is released. Lock is now {}".format(
