@@ -169,10 +169,10 @@ class Init():
             return reset_onerror
 
         elif vartype == 'responses':
-            ignoreresponse = self._ignoreresponse = re.sub('[ ]', '', value[0]).split(",")
-            errorresponse = re.sub('[ ]', '', value[1]).split(",")
-            force_buffer = re.sub('[ ]', '', value[2]).split(",")
-            ignoredisplay = re.sub('[ ]', '', value[3]).split(",")
+            ignoreresponse = self._ignoreresponse = value[0].split(",").strip()
+            errorresponse = value[1].split(",").strip()
+            force_buffer = value[2].split(",").strip()
+            ignoredisplay = value[3].split(",").strip()
             self.logger.debug("Initializing {}: Special Settings: Ignoring responses {}.".format(self._name, ignoreresponse))
             self.logger.debug("Initializing {}: Special Settings: Error responses {}.".format(self._name, errorresponse))
             self.logger.debug("Initializing {}: Special Settings: Force buffer {}.".format(self._name, force_buffer))
