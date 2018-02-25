@@ -183,8 +183,15 @@ class Init():
         if not self._lock.acquire(timeout=2):
             return
         try:
-            self.logger.debug("Initializing {}: Starting to create query commands. Lock is {}.".format(
-                self._name, self._threadlock_standard.locked()))
+            self._query_zonecommands['zone0'].clear()
+            self._query_zonecommands['zone1'].clear()
+            self._query_zonecommands['zone2'].clear()
+            self._query_zonecommands['zone3'].clear()
+            self._query_zonecommands['zone4'].clear()
+            self._query_zonecommands = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
+            self._query_commands.clear()
+            self.logger.debug("Initializing {}: Starting to create query commands. Lock is {}. Query Commands: {}, Query Zone: {}".format(
+                self._name, self._threadlock_standard.locked(), self._query_commands, self._query_zonecommands))
             displaycommand = ''
             length = 0
             for zone in range(0, self._number_of_zones + 1):
@@ -196,10 +203,13 @@ class Init():
                         splitresponse = self._functions['zone{}'.format(zone)][command][4].split("|")
                         for split in splitresponse:
                             valuelength = split.count('*')
-                            if split.count('*') > 0 or 'R' in self._functions['zone{}'.format(zone)][command][5]:
-                                responselist.append(split.strip())
-                        responsestring = "|".join(responselist)
-                        responsecommand = re.sub('[*]', '', responsestring)
+                            #if split.count('*') > 0 or 'R' in self._functions['zone{}'.format(zone)][command][5]:
+                            #    responselist.append(re.sub('[*]', '', split).strip())
+                            toadd = re.sub('[*]', '', split.strip())
+                            if split.count('?') == 1:
+                                toadd = re.sub('[?]', '', toadd)
+                            responselist.append(toadd)
+                        responsecommand = "|".join(responselist)
                         if not '{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype, valuelength) in self._query_zonecommands['zone{}'.format(zone)] \
                             and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' \
                             and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
@@ -238,6 +248,7 @@ class Init():
         if not self._lock.acquire(timeout=2):
             return
         try:
+            self._power_commands.clear()
             self.logger.debug("Initializing {}: Starting to create power commands. Lock is {}. Powercommands: {}".format(
                 self._name, self._threadlock_standard.locked(), self._power_commands))
             for zone in range(0, self._number_of_zones + 1):
@@ -272,16 +283,20 @@ class Init():
         if not self._lock.acquire(timeout=2):
             return
         try:
-            self.logger.debug("Initializing {}: Starting to create response commands. Lock is {}".format(
-                self._name, self._threadlock_standard.locked()))
+            self._response_commands.clear()
+            self._special_commands.clear()
+            self.logger.debug("Initializing {}: Starting to create response commands. Lock is {}. Response Commands: {}".format(
+                self._name, self._threadlock_standard.locked(), self._response_commands))
             for zone in range(0, self._number_of_zones + 1):
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         response_to_split = self._functions['zone{}'.format(zone)][command][4].split("|")
                         for response in response_to_split:
                             valuelength = response.count('*')
-                            if response.count('*') == 1 and self._functions['zone{}'.format(zone)][command][8].startswith('str'):
+                            if (response.count('?') == 1 or response.count('*') == 1) and \
+                                    self._functions['zone{}'.format(zone)][command][8].startswith('str'):
                                 valuelength = 30
+                                response = re.sub('[?]', '*', response)
 
                             if response.find('*') >= 0:
                                 position = response.index('*')
@@ -384,8 +399,10 @@ class Init():
         if not self._lock.acquire(timeout=2):
             return
         try:
-            self.logger.debug("Initializing {}: Starting to read file {}. Lock is {}".format(
-                self._name, self._model, self._threadlock_standard.locked()))
+            self._functions.clear()
+            self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+            self.logger.debug("Initializing {}: Starting to read file {}. Lock is {}. Functions: {}".format(
+                self._name, self._model, self._threadlock_standard.locked(), self._functions))
             filename = '{}/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
 
             commands = codecs.open(filename, 'r', 'utf-8')
@@ -406,7 +423,7 @@ class Init():
                         else:
                             row[1:3] = [' '.join(row[1:3])]
                         function = row[1]
-                        itemtest = re.sub(' set| on| off| increase| decrease', '', function)
+                        itemtest = re.sub(' set| on| off| increase| decrease| open| close', '', function)
                         for i in range(0, 9):
                             try:
                                 test = row[i]
@@ -417,6 +434,10 @@ class Init():
                                     row.append('no')
                                 if i == 8 and "set" in function:
                                     row.append('int,float')
+                                elif i == 8 and "open" in function:
+                                    row.append('bool')
+                                elif i == 8 and "close" in function:
+                                    row.append('bool')
                                 elif i == 8 and ("on" in function or "off" in function):
                                     row.append('bool')
                                 elif i == 8 and ("increase" in function or "decrease" in function):
@@ -428,7 +449,9 @@ class Init():
                             row[8] = row[8].replace('string', 'str')
                             row[8] = row[8].replace('num', 'int,float')
                             row[8] = row[8].replace('|', ',')
-                            if row[8] == '':
+                            if row[5].count('*') == 0 and row[5].count('?') == 0 and row[8] == '':
+                                row[8] = 'empty'
+                            elif row[8] == '':
                                 row[8] = 'bool,int,str'
                         except Exception:
                             pass
@@ -439,6 +462,10 @@ class Init():
                     if function == "FUNCTION" or function == '' or function == "FUNCTION FUNCTIONTYPE":
                         pass
                     elif itemtest in itemkeys:
+                        function = function.replace('open', 'on')
+                        function = function.replace('close', 'off')
+                        row[1] = row[1].replace('open', 'on')
+                        row[1] = row[1].replace('close', 'off')
                         if row[0] == '0' or row[0] == '':
                             self._functions['zone0'][function] = row
                         elif row[0] == '1':
