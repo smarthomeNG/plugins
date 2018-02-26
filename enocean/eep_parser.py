@@ -274,9 +274,11 @@ class EEP_Parser():
         return self._parse_eep_F6_02_01(payload, status)
 
     def _parse_eep_F6_02_03(self, payload, status):
-        # Repeated switch communication(RPS) Telegramm
-        # Status command from bidirectional actors, for example eltako FSUD-230, FSVA-230V or switches (for example Gira)
-        #self.logger.debug("enocean: processing F6_02_03: Rocker Switch, 2 Rocker")
+        '''
+        Repeated switch communication(RPS) Telegramm
+        Status command from bidirectional actors, for example eltako FSUD-230, FSVA-230V or switches (for example Gira)
+        '''
+        self.logger.debug("enocean: processing F6_02_03: Rocker Switch, 2 Rocker")
         results = {}
         # Button A1: Dimm light down
         results['AI'] = (payload[0]) == 0x10
@@ -294,9 +296,31 @@ class EEP_Parser():
             results['A'] = True
         elif (payload[0] == 0x10):
             results['A'] = False
-        # special extension for ELTAKO FSB61NP-230V status message compatibility:
-        elif (payload[0] == 0x02): 
-            results['B'] = False
+        return results
+    
+    def _parse_eep_F6_02_03_01(self, payload, status):
+        '''
+        Repeated switch communication(RPS) Telegramm
+        Status command from bidirectional shutter actors
+        Repeated switch Command for Eltako FSB61NP-230V, FSB71
+        Key Description:
+        STATUS: status what the shutter does
+        B: status of the shutter actor (command) 
+        '''
+        self.logger.debug("enocean: processing F6_02_03_01: shutter actor")
+        results = {}
+        if (payload[0] == 0x70):
+            results['STATUS'] = 'upper end position'
+            results['B'] = 0
+        elif (payload[0] == 0x50):
+            results['STATUS'] = 'lower end position'
+            results['B'] = 0
+        elif (payload[0] == 0x01):
+            results['STATUS'] = 'Start movin up'
+            results['B'] = 1
+        elif (payload[0] == 0x02):
+            results['STATUS'] = 'Start movin down'
+            results['B'] = 2
         return results
 
     def _parse_eep_F6_10_00(self, payload, status):

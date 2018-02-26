@@ -79,3 +79,57 @@ item_attributes:
             de: 'Knopf/Schalter-Bezeichnung des EnOcean Gerätes'
             en: 'actor button name of the EnOcean device'
         mandatory: 'False'
+    
+    block_switch:
+        type: str
+        default: 'False'
+        description:
+            de: 'Wenn True, blockiert den Aktor, so dass dieser nur mit dem gleichen Schalter ausgeschaltet werden kann'
+            en: 'If true, blocks the actor. The actor can only switched off with the same switch'
+        mandatory: 'False'
+        
+    block_dim_value:
+        type: str
+        default: 'False'
+        description:
+            de: 'Wenn True, blockiert den Aktor, so dass der Dimm-Wert nur mit dem gleichen Dimmer verstellt werden kann'
+            en: 'If true, blocks the actor. The dim value can only controlled with the same dimmer'
+        mandatory: 'False'
+        
+    dim_speed:
+        type: str
+        default: '50'
+        Min: 0
+        Max: 100
+        description:
+            de: 'Dimmgeschwindigkeit in %'
+            en: 'dimm speed in %'
+        mandatory: 'False'
+        
+    ref_level:
+        type: str
+        default: '80'
+        Min: 0
+        Max: 100
+        description:
+            de: 'Referenzwert in % fuer Dimmwert beim Einschalten'
+            en: 'refeence dim value in % when switching on'
+        mandatory: 'False'
+        
+    color:
+        type: str
+        default: 'red'
+        description:
+            de: 'Farbe für RGB-Dimmer'
+            en: 'color for rgb dimmer'
+        mandatory: 'False'
+        
+    enocean_rtime:
+        type: str
+        default: '60'
+        Min: 0
+        Max: 255
+        description:
+            de: 'Rolladenverstellzeit (runtime) in s'
+            en: 'shutter run time in s'
+        mandatory: 'False'
