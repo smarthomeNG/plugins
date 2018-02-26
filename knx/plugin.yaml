@@ -21,13 +21,13 @@ plugin:
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     time_ga:
-        type: str
+        type: knx_ga
         description:
             de: 'Gruppenadresse, um die Uhrzeit an den Knx-Bus zu senden'
             en: 'groupadress to send a timestamp to the knx bus'
 
     date_ga:
-        type: str
+        type: knx_ga
         description:
             de: 'Gruppenadresse, um das Datum an den Knx-Bus zu senden'
             en: 'groupadress to send the date to the knx bus'
@@ -117,44 +117,43 @@ item_attributes:
             en: "This attribute set the KNX datapoint type used for conversion of the KNX messages to internal SmartHomeNG format. It is mandatory. If you don't provide one the item will be ignored by the plugin. The DPT has to match the type of the item! BE CAREFUL to put the value in quotes to ensure they are interpreted as strings and not as numbers!"
 
     knx_send:
-        type: list(str)
+        type: list(knx_ga)
         description:
             de: 'Gruppenadresse, an die gesendet werden soll, wenn das Element geändert wird. Sie können eine oder mehrere Gruppenadressen angeben.'
             en: 'Group address to send to, if the item is changed. You could specify one or more group addresses.'
 
     knx_listen:
-        type: list(str)
+        type: list(knx_ga)
         description:
             de: 'Gruppenadresse (oder Liste von Gruppenadressen), auf die gehört werden soll. KNX-Nachrichten an diese Gruppenadresse(n) ändern den Wert des Items'
             en: "Group address (or list of group addresses) to listen for. KNX messages to this group address(es) will change the item's value"
 
     knx_init:
-        type: str
+        type: knx_ga
         description:
             de: 'Gruppenadresse für die Initialisierung des Items. Der KNX-Bus wird nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden.'
             en: 'Group address to use for initialization of the item. The KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address.'
 
     knx_cache:
-        type: str
+        type: knx_ga
         description:
             de: 'Gruppenadresse für die Initialisierung des Items. Der Wert wird aus dem Cache von KNXD/EIBD gelesen. Wenn kein Cache-Wert vorhanden ist, wird der KNX-Bus nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden.'
             en: 'Group address to use for initialization of the item. The value is read from the cache of KNXD/EIBD. If no cached value exists, the KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address.'
 
     knx_reply:
-        type: list(str)
+        type: list(knx_ga)
         description:
             de: 'Eine oder mehrere Gruppenadressen angeben, um den Objektwert vom KNX-Bus aus lesen zu können.'
             en: 'Specify one or more group addresses to allow reading the item value from the KNX bus.'
 
     knx_status:
-        type: list(str)
+        type: list(knx_ga)
         description:
             de: 'Ähnlich wie bei knx_send, sendet aber auch bei Änderungen über KNX, wenn sich der knx_status GA vom Ziel-GA unterscheidet. Sie können eine oder mehrere Gruppenadressen angeben.'
             en: 'Similar to knx_send but will send updates even for changes via KNX if the knx_status GA differs from the destination GA. You could specify one or more group addresses.'
 
     knx_poll:
-        type: list
-        #type: list(2,str,int) <- noch zu implementieren
+        type: list(2,knx_ga,int)
         description:
             de: 'Geben Sie eine abzurufende Gruppenadresse und das Zeitintervall in Sekunden für eine automatisierte Abfrage vom KNX Bus in Form einer Liste an. Der erste Eintrag ist die Gruppenadresse, der zweite Eintrag ist das Pollintervall in Sekunden. Dies kann für Aktoren oder Sensoren verwendet werden, die keine regelmäßige Übermittlung von Werten unterstützen.'
             en: 'Specify a group address to poll and the time interval in seconds for an automated query of KNX in form of a list. First entry is the group address, second entry is the poll interval in seconds. This may be used for actors or sensors that do no support a regular sending of values themselves.'
@@ -195,13 +194,13 @@ logic_trigger_attributes:
             en: "This attribute set the KNX datapoint type used for conversion of the KNX messages to internal SmartHomeNG format. It is mandatory. If you don't provide one the item will be ignored by the plugin. The DPT has to match the type of the item!"
 
     knx_listen:
-        type: list(str)
+        type: list(knx_ga)
         description:
             de: 'Gruppenadresse (oder Liste von Gruppenadressen), auf die gehört werden soll. KNX-Nachrichten an diese Gruppenadresse(n) ändern den Wert des Items'
             en: "Group address (or list of goup addresses) to listen for. KNX messages to this group address will change the item's value"
 
     knx_reply:
-        type: list(str)
+        type: list(knx_ga)
         description:
             de: 'Eine oder mehrere Gruppenadressen angeben, um den Objektwert vom KNX-Bus aus lesen zu können.'
             en: 'Specify one or more group addresses to allow reading the item value from the KNX bus.'

@@ -23,6 +23,7 @@ parameters:
     apikey:
         type: str
         mandatory: True
+        hide: True
         description:
             de: 'Den bei Wunderground registrierten API Key eingeben'
             en: 'Enter you registered wunderground API key'

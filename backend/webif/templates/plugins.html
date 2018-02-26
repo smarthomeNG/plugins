@@ -100,7 +100,7 @@
 			<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
 				<td class="py-1" colspan="10">
 					<div class="card">
-						<div class="card-header p-1"><strong>{{ _('Plugin spezifische Attribute') }}:</strong></div>
+						<div class="card-header p-1"><strong>{{ _('Plugin spezifische Parameter') }}:</strong></div>
 						<div class="card-body p-1">
 							<table class="table mb-0">
 							{% set first = True %}
@@ -108,9 +108,9 @@
 								{% if loop.index % 2 > 0 %}
 								<tr>
 								{% endif %}
-								{% if p['metadata'].get_parameter_type(key) != 'foo' %}
-									<td class="p-0" style="width: 50%;">{{ key }} ( {{ p['metadata'].get_parameter_type_with_subtype(key) }} ): {{ value }}
-									{% if p['metadata'].get_parameter_defaultvalue(key) == value %}
+								{% if p.metadata.get_parameter_type(key) != 'foo' %}
+									<td class="p-0" style="width: 50%;">{{ key }} ( {{ p.metadata.get_parameter_type_with_subtype(key) }} ): {{ p.instance.get_parameter_value_for_display(key) }}
+									{% if p.metadata.get_parameter_defaultvalue(key) == value %}
 									&nbsp; [default]
 									{% endif %}
 									</td>
@@ -128,6 +128,32 @@
 							{% endfor %}
 							</table>
 						</div>
+						{% if p.metadata.get_itemdefinitionlist()|length > 0 %}
+						<div class="card-header p-1"><strong>{{ _('Plugin spezifische Item Attribute') }}:</strong></div>
+						<div class="card-body p-1">
+							<table class="table mb-0">
+							{{ 'Die folgenden Item Attribute werden durch das Plugin definiert:' }}
+							{% set first = True %}
+							{% for key in p.metadata.get_itemdefinitionlist() %}
+								{% if loop.index % 2 > 0 %}
+								<tr>
+								{% endif %}
+									<td class="p-0" style="width: 50%;">{{ key }} ( {{ p.metadata.get_itemdefinition_type_with_subtype(key) }} )
+									</td>
+
+									{% if loop.index %2 > 0 and loop.last %}
+									<td></td>
+									{% endif %}
+								{% if loop.index % 2 > 0 and not first %}
+								</tr>
+								{% else %}
+								{% set first = False %}
+								{% endif %}
+							{% endfor %}
+							</table>
+						</div>
+						{% endif %}
+
 						<div class="card-header p-1"><strong>{{ _('Plugin Metadaten') }}:</strong></div>
 						<div class="card-body p-1">
 							{% if p.metadata.get_mlstring('description') %}

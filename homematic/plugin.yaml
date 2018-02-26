@@ -45,6 +45,7 @@ parameters:
     password:
         type: str
         default: ''
+        hide: True
         description:
             de: 'Passwort für das Login'
             en: 'Password for the login'

@@ -28,6 +28,7 @@ parameters:
     password:
         type: str
         default: ''
+        hide: True
         description:
             de: '(optional) Passwort für den Login. Wird in der Regel immer benötigt und aus Sicherheitsgründen empfohlen.'
             en: '(optional) Password for login. Is normally always needed and recommended due to security reasons'

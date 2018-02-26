@@ -238,6 +238,7 @@ parameters:
     password:
         type: str
         default: ''
+        hide: True
         description:
             de: 'Passwort für das Broker Login'
             en: 'Password for login to the broker'

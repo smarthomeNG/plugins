@@ -5,21 +5,21 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1"><strong>Verbunden</strong></td>
-			<td class="py-1">{% if p._fritz_device.is_ssl() %}SSL{% else %}Ja{% endif %}</td>
-			<td class="py-1">{% if p._fritz_device.get_user() %}User{% endif %}</td>
-			<td class="py-1">{{ p._fritz_device.get_user() }}</td>
+			<td class="py-1"><strong>{{ _('Verbunden') }}</strong></td>
+			<td class="py-1">{% if p._fritz_device.is_ssl() %}SSL{% else %}{{ _('Ja') }}{% endif %}</td>
+			<td class="py-1"><strong>{{ _('Benutzer') }}</strong></td>
+			<td class="py-1">{{ p.get_parameter_value_for_display('user') }}</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>Call Monitor</strong></td>
-			<td class="py-1">{% if p._call_monitor %}Ja{% else %}Nein{% endif %}</td>
-			<td class="py-1">{% if p._fritz_device.get_password() %}Passwort{% endif %}</td>
-			<td class="py-1">{% if p._fritz_device.get_password() %}{% for letter in p._fritz_device.get_password() %}*{% endfor %}{% endif %}</td>
+			<td class="py-1"><strong>{{ _('Call Monitor') }}</strong></td>
+			<td class="py-1">{% if p._call_monitor %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
+			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>Host</strong></td>
+			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
 			<td class="py-1"><a class="text-shng" href="http://{{ p._fritz_device.get_host() }}" target="_blank">{{ p._fritz_device.get_host() }}</a></td>
-			<td class="py-1"><strong>Port</strong></td>
+			<td class="py-1"><strong>{{ _('Port') }}</strong></td>
 			<td class="py-1">{{ p._fritz_device.get_port() }} {% if p._fritz_device.is_ssl() %}(HTTPS){% endif %}</td>
 			<td></td>
 		</tr>
@@ -32,12 +32,12 @@
 		<table class="table table-striped table-hover pluginList">
 			<thead>
 				<tr class="shng_heading">
-					<th>Pfad</th>
-					<th>Typ</th>
-					<th>AVM Data Type</th>
-					<th>Wert</th>
-					<th>Letztes Update</th>
-					<th>Letzter Change</th>
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('AVM Data Type') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
 				</tr>
 			</thead>
 			<tbody>

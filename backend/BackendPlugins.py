@@ -72,6 +72,7 @@ class BackendPlugins:
             if isinstance(x, SmartPlugin):
                 plugin['smartplugin'] = True
                 plugin['instancename'] = x.get_instance_name()
+                plugin['instance'] = x
                 plugin['multiinstance'] = x.is_multi_instance_capable()
                 plugin['version'] = x.get_version()
                 plugin['shortname'] = x.get_shortname()
