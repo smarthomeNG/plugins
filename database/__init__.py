@@ -294,7 +294,7 @@ class Database(SmartPlugin):
            return None if item_val_tuple[0] is None else str(item_val_tuple[0])
 
     def _datetime(self, ts):
-        return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
+        return datetime.datetime.fromtimestamp(ts / 1000, self.shtime.tzinfo())
 
     def _prepare(self, query):
         return query.format(**self._replace)
