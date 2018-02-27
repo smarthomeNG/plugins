@@ -7,21 +7,28 @@
 		<tr>
 			<td class="py-1" width="150px"><strong>Verbunden</strong></td>
 			<td class="py-1">{% if p._db._connected %}Ja{% else %}Nein{% endif %}</td>
-			<td class="py-1" width="300px"></td>
-			<td></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
 		</tr>
+		{% set first = True %}
+		{% for key, value in p._db._params.items() %}
+		{% if loop.index % 4 == 0 %}
 		<tr>
-			<td class="py-1"><strong>Parameter</strong></td>
-			<td colspan="3" class="py-1">
-			{% for key, value in p._db._params.items() %}
-				{% if key != "passwd" %}
-				{{ key }}: {{ value }}
-				{% else %}
-				{{ key }}:  {% for letter in value %}*{% endfor %}
-				{% endif %}<br/>
-				{% endfor %}
-			</td>
+		{% endif %}
+			{% if key != "passwd" %}
+			<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
+			{% else %}
+			<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
+			{% endif %}
+			{% if loop.index % 3 > 0 and loop.last %}
+				<td class="py-1" colspan="{{ loop.index % 3 }}"></td>
+			{% endif %}
+		{% if loop.index % 4 == 0 and not first %}
 		</tr>
+		{% endif %}
+		{% endfor %}
 	</tbody>
 </table>
 {% endblock headtable %}
