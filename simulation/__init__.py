@@ -38,6 +38,7 @@
 import logging
 from datetime import datetime, timedelta
 from lib.model.smartplugin import SmartPlugin
+from lib.shtime import Shtime
 
 class Simulation(SmartPlugin):
 
@@ -48,6 +49,7 @@ class Simulation(SmartPlugin):
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Simulation release 0.5')
         self._sh = smarthome
+        self.shtime = Shtime.get_instance()
         self._datafile=data_file
         self.lastday=''
         self._callers=callers
@@ -94,7 +96,7 @@ class Simulation(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if (item.conf['sim'] == 'track') and (self.state()==2) and (self._callers and caller in self._callers):
-            now = self._sh.now()
+            now = self.shtime.now()
             day=now.day
             self.file.write(now.strftime('%a;%H:%M:%S'))
             self.file.write(';')
@@ -119,7 +121,7 @@ class Simulation(SmartPlugin):
         tank=self._get_tank()
         self.logger.debug('Tank: {}'.format(tank))
         self.tank(tank)
-        now = self._sh.now()
+        now = self.shtime.now()
         last_entry = self._lastentry.replace(year=now.year, month=now.month, day=now.day,tzinfo=now.tzinfo)
         self.logger.debug('last entry: {}'.format(last_entry))
         self.logger.debug('now: {}'.format(now))
@@ -217,7 +219,7 @@ class Simulation(SmartPlugin):
             hour=int(time.split(':')[0])
             minute=int(time.split(':')[1])
             seconds=int(time.split(':')[2])
-            now = self._sh.now()
+            now = self.shtime.now()
             next=now.replace(hour=hour, minute=minute,second=seconds)
             dif=next-now
             if (self.lastday != '') and (self.lastday != day):
@@ -249,7 +251,7 @@ class Simulation(SmartPlugin):
                 hour=int(time.split(':')[0])
                 minute=int(time.split(':')[1])
                 seconds=int(time.split(':')[2])
-                now = self._sh.now()
+                now = self.shtime.now()
                 next=now.replace(hour=hour, minute=minute,second=seconds)
                 dif=next-now
             else:
