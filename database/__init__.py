@@ -76,6 +76,7 @@ class Database(SmartPlugin):
     def __init__(self, smarthome, driver, connect, prefix="", cycle=60):
         self._sh = smarthome
         self.shtime = Shtime.get_instance()
+        self.items = Items.get_instance()
         
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
@@ -497,7 +498,7 @@ class Database(SmartPlugin):
         return logs['tuples'][0][0]
 
     def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
-        _item = self._sh.return_item(item)
+        _item = self.items.return_item(item)
 
         istart = self._parse_ts(start)
         iend = self._parse_ts(end)
