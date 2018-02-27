@@ -37,6 +37,8 @@ import socket
 import collections
 
 import lib.connection
+from lib.item import Items
+from lib.logic import Logics
 from lib.model.smartplugin import *
 
 
@@ -52,7 +54,6 @@ class WebSocket(SmartPlugin):
 
 
     def __init__(self, sh, *args, **kwargs):
-#    def __init__(self, smarthome, ip='0.0.0.0', port=2424, tls='no', acl='ro', wsproto='3' ):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
@@ -236,6 +237,10 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_ennvironment()
 
+        # try to get API handles
+        self.items = Items.get_instance()
+        self.logics = Logics.get_instance()
+
 
     @cherrypy.expose
     def index(self, reload=None):
@@ -247,6 +252,12 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered 
         """
         
+        # get API handles that were unavailable during __init__
+        if self.items is None:
+            self.items = Items.get_instance()
+        if self.logics is None:
+            self.logics = Logics.get_instance()
+
         clients = []
 
         for clientinfo in self.plugin.return_clients():
@@ -266,10 +277,21 @@ class WebInterface(SmartPluginWebIf):
             client['browserversion'] = clientinfo.get('browserversion', '')
             clients.append(client)
 
+        plgitems = []
+        for item in self.items.return_items():
+            if ('visu_acl' in item.conf):
+                plgitems.append(item)
+
+        plglogics = []
+        for logic in self.logics.return_logics():
+            plglogics.append(self.logics.get_logic_info(logic))
+        
         clients_sorted = sorted(clients, key=lambda k: k['name'])
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
+                           items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
+                           logics=sorted(plglogics, key=lambda k: str.lower(k['name'])),
                            clients=clients_sorted, client_count=len(clients_sorted))
 
 

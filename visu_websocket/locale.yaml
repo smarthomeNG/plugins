@@ -11,3 +11,10 @@ plugin_translations:
     'Client Software':             {'de': '=', 'en': '='}
 
     'Keine aktiven Clients':       {'de': '=', 'en': 'No active clients'}
+    
+    'Visu Zugriff':                {'de': '=', 'en': 'Visu Access'}
+    'aktiv':                       {'de': '=', 'en': 'enabled'}
+    'nicht aktiv':                 {'de': '=', 'en': 'disabled'}
+    'erlaubt':                     {'de': '=', 'en': 'enabled'}
+    'nicht erlaubt':               {'de': '=', 'en': 'disabled'}
+    
