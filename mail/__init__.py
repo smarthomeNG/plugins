@@ -27,6 +27,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 from lib.model.smartplugin import SmartPlugin
 
+
 class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.3.1"
@@ -41,7 +42,7 @@ class IMAP(SmartPlugin):
         self._mail_sub = {}
         self._mail_to = {}
         self._mail = False
-        self._ssl = smarthome.string2bool(ssl)
+        self._ssl = self.to_bool(ssl)
         self.logger = logging.getLogger(__name__)
 
     def _connect(self):
@@ -150,7 +151,7 @@ class SMTP(SmartPlugin):
 
     def __init__(self, smarthome, host, mail_from, username=False, password=False, port=25, ssl=False):
         self._sh = smarthome
-        self._ssl = smarthome.string2bool(ssl)
+        self._ssl = self.to_bool(ssl)
         self._host = host
         self._port = int(port)
         self._from = mail_from
@@ -178,7 +179,7 @@ class SMTP(SmartPlugin):
         finally:
             try:
                 smtp.quit()
-                del(smtp)
+                del (smtp)
             except:
                 pass
 
