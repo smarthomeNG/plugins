@@ -713,7 +713,7 @@ class WebInterface(SmartPluginWebIf):
                         if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
                             value_dict[key] = row[key]
                         else:
-                            value_dict[key] = datetime.datetime.fromtimestamp(row[key]/1000)
+                            value_dict[key] = datetime.datetime.fromtimestamp(row[key]/1000, tz=self.plugin.shtime.tzinfo())
 
                     log_array.append(value_dict)
                 reversed_arr = log_array[::-1]
