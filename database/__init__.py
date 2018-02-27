@@ -75,7 +75,7 @@ class Database(SmartPlugin):
 
     def __init__(self, smarthome, driver, connect, prefix="", cycle=60):
         self._sh = smarthome
-        self.shtime = Shtime(self)
+        self.shtime = Shtime.get_instance()
         
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
