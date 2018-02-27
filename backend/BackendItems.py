@@ -99,7 +99,7 @@ class BackendItems:
         unused_cache_files = []
         for file in onlyfiles:
             if not file.find(".") == 0:  # filter .gitignore etc.
-                item = self._sh.return_item(file)
+                item = self.items.return_item(file)
                 no_cache_file = False;
                 if item is None:
                     no_cache_file = True
@@ -137,7 +137,7 @@ class BackendItems:
         Is called by items.html when an item value has been changed
         """
         item_data = []
-        item = self._sh.return_item(item_path)
+        item = self.items.return_item(item_path)
         if self.updates_allowed:
             if 'num' in item.type():
                 if "." in value or "," in value:
@@ -243,7 +243,7 @@ class BackendItems:
         returns a list of items as json structure
         """
         item_data = []
-        item = self._sh.return_item(item_path)
+        item = self.items.return_item(item_path)
         if item is not None:
             if item.type() is None or item.type() is '':
                 prev_value = ''
