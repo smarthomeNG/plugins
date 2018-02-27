@@ -81,7 +81,7 @@
 									<img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="width: 25px;"/>
 									<script>
 										$('#webif_link_{{outer_loop.index}}_{{loop.index}}').click(function(e){
-											window.open('http://{{mod_http.get_local_ip_address()}}:{{mod_http.get_local_port()}}/{{ webif['Webifname'] }}')
+											window.open('/{{ webif['Webifname'] }}')
 											e.stopPropagation();
 										});
 									</script>
