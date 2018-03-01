@@ -131,7 +131,7 @@
 									{% if logic.logictype == 'Blockly' and blockly_loaded %}
 										<td class="p-1"><a class="text-shng" target="_blank" href="/blockly/edit.html?cmd=edit&filename={{ get_basename(logic.pathname) }}&logicname={{ logic.name }}">{{ get_basename(logic.pathname) }}</a></td>
 									{% else %}
-										<td class="p-1"><a class="text-shng" href="logics_view.html?file_path={{ logic.filename }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
+										<td class="p-1"><a class="text-shng" href="logics_view.html?file_path={{ logic.pathname }}&logicname={{ logic.name }}">{{ get_basename(logic.filename) }}</a></td>
 									{% endif %}
 									{% if updates %}
 										<td class="p-1">
