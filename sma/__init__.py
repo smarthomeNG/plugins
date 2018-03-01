@@ -433,9 +433,9 @@ class SMA(SmartPlugin):
             if msg[4:10] != self._inv_bt_addr_le:
                 self.logger.warning("sma: rx: unknown src addr")
                 return None
-            #if (msg[10:16] != self._own_bt_addr_le) and (msg[10:16] != ZERO_ADDR) and (msg[10:16] != BCAST_ADDR):
-            #    self.logger.warning("sma: rx: wrong dst addr")
-            #    return None
+            if (msg[10:16] != self._own_bt_addr_le) and (msg[10:16] != ZERO_ADDR) and (msg[10:16] != BCAST_ADDR):
+                self.logger.warning("sma: rx: wrong dst addr")
+                return None
 
         except socket.timeout:
             if not no_timeout_warning:
