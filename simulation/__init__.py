@@ -135,7 +135,7 @@ class Simulation(SmartPlugin):
         self.logger.debug('last entry: {}'.format(last_entry))
         self.logger.debug('now: {}'.format(now))
         now -= timedelta(minutes=15)
-        if (now.time() < last_entry.time()):
+        if now.time() < last_entry.time():
             self._schedule_recording_start(last_entry)
         else:
             start = last_entry
