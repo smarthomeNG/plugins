@@ -37,23 +37,29 @@
 
 import logging
 from datetime import datetime, timedelta
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 from lib.shtime import Shtime
-
+from lib.module import Modules
+from lib.item import Items
 
 class Simulation(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.0.5"
+    PLUGIN_VERSION = "1.5.0.6"
 
     def __init__(self, smarthome, data_file, callers=None):
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Init Simulation release 0.5')
+        self.logger.info('Init Simulation release 1.5.0.6')
         self._sh = smarthome
         self.shtime = Shtime.get_instance()
         self._datafile = data_file
         self.lastday = ''
+        self.items = Items.get_instance()
         self._callers = callers
+        self._items = []
         smarthome.scheduler.add('midnight', self._midnight, cron='0 0 * *', prio=3)
+
+        if not self.init_webinterface():
+            self._init_complete = False
 
     def run(self):
         self.logger.info('Starting Simulation')
@@ -82,6 +88,7 @@ class Simulation(SmartPlugin):
                 self.control = item
             if (item.conf['sim'] == 'tank'):
                 self.tank = item
+            self._items.append(item)
             return self.update_item
         else:
             return None
@@ -205,7 +212,7 @@ class Simulation(SmartPlugin):
             value = kwargs['value']
         if target != None and value != None:
             self.logger.debug('Setting {} to {}'.format(target, value))
-            item = self._sh.return_item(target)
+            item = self.items.return_item(target)
             try:
                 item(value, caller='Simulation')
             except:
@@ -355,3 +362,82 @@ class Simulation(SmartPlugin):
                       (4, 1): _stop_playback,
                       (4, 2): _do_nothing,
                       (4, 3): _do_nothing, }
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+    def get_items(self):
+        return self._items
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+
+        self.tplenv = self.init_template_ennvironment()
+
+    @cherrypy.expose
+    def index(self):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
+                           interface=None, item_count=len(self.plugin.get_items()),
+                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           tab1title="Simulation Items (%s)" % len(self.plugin.get_items()),
+                           p=self.plugin)
