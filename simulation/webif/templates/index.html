@@ -38,6 +38,7 @@
 				<tr class="shng_heading">
 					<th>Pfad</th>
 					<th>Typ</th>
+					<th>sim Attribut</th>
 					<th>Wert</th>
 					<th>Letztes Update</th>
 					<th>Letzter Change</th>
@@ -48,6 +49,7 @@
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item._path }}</td>
 						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf['sim'] }}</td>
 						<td class="py-1">{{ item() }}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
