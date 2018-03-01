@@ -10,16 +10,14 @@
 		<tr>
 			<td class="py-1"><strong>Data File:</strong></td>
 			<td class="py-1">{{p._datafile}}</td>
-			<td></td>
-			<td></td>
-			<td></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Last Day</strong></td>
 			<td class="py-1">{% if p.lastday == '' %}-{% else %}{{ p.lastday }}{% endif %}</td>
-			<td></td>
-			<td></td>
-			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>startrecord Scheduler</strong></td>
+			<td class="py-1">{{ p.scheduler.get('startrecord')['next'].strftime('%d.%m.%Y %H:%M:%S') }}</td>
 		</tr>
 	</tbody>
 </table>

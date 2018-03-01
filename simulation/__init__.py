@@ -31,7 +31,8 @@
 #       Added release version to init message
 #  0.4  Changed logging style
 #       corrected serious bug in compare entry with NextDay
-#  0.5  Added feature to select which caller is written to the simulation file 
+#  0.5  Added feature to select which caller is written to the simulation file
+#  0.6  Added WebGUI and Clear Data File function
 #
 ##########################################################################
 
@@ -41,6 +42,8 @@ from lib.model.smartplugin import *
 from lib.shtime import Shtime
 from lib.module import Modules
 from lib.item import Items
+from lib.scheduler import Scheduler
+
 
 class Simulation(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
@@ -54,6 +57,7 @@ class Simulation(SmartPlugin):
         self._datafile = data_file
         self.lastday = ''
         self.items = Items.get_instance()
+        self.scheduler = Scheduler.get_instance()
         self._callers = callers
         self._items = []
         smarthome.scheduler.add('midnight', self._midnight, cron='0 0 * *', prio=3)
@@ -145,15 +149,15 @@ class Simulation(SmartPlugin):
     # ----------------------- _schedule_recording_start ---------------------------
     def _schedule_recording_start(self, time):
         self.state(1, 'Simulation')
-        self._sh.scheduler.remove('startrecord')
+        self.scheduler.remove('startrecord')
         self._message_item('Recording starts {}'.format(time), caller='Simulation')
         self.logger.debug('Scheduling record start {}'.format(time))
-        self._sh.scheduler.add('startrecord', self._start_recording, next=time)
+        self.scheduler.add('startrecord', self._start_recording, next=time)
 
     # ----------------------------- _start_recording --------------------------------
     def _start_recording(self):
         self.state(2, 'Simulation')
-        self._sh.scheduler.remove('startrecord')
+        self.scheduler.remove('startrecord')
         self._message_item('Recording', caller='Simulation')
         self.logger.debug('starting record')
         self.recording = True
@@ -162,12 +166,12 @@ class Simulation(SmartPlugin):
         except IOError as error:
             self.logger.error('Cannot open file {} for writing: {}'.format(self._datafile, error))
             self._message_item('cannot write to file', 'Simulation')
-            self.state(0, 'Smulation')
+            self.state(0, 'Simulation')
 
     # ----------------------------- _stop_recording ---------------------------------
     def _stop_recording(self):
         self.state(0, 'Simulation')
-        self._sh.scheduler.remove('startrecord')
+        self.scheduler.remove('startrecord')
         self._message_item('', caller='Simulation')
         self.logger.debug('stop record')
         try:
@@ -186,13 +190,13 @@ class Simulation(SmartPlugin):
         except IOError as error:
             self.logger.error('NoFile {}'.format(error))
             self._message_item('No File', 'Simulation')
-            self.state(0, 'Smulation')
+            self.state(0, 'Simulation')
 
     # ----------------------------- _stop_playback ---------------------------------
     def _stop_playback(self):
         self.state(0, 'Simulation')
         self.logger.debug('Stopping playback')
-        self._sh.scheduler.remove('simulate')
+        self.scheduler.remove('simulate')
         self._message_item('Playback stopped', 'Simulation')
         try:
             self.file.close()
@@ -236,12 +240,12 @@ class Simulation(SmartPlugin):
                 next = next + timedelta(1)
             self._message_item('Next event: {}<br>{}   {}'.format(time, target, value, 'Simulation'))
             self.logger.debug('Scheduling {} {} {}'.format(target, value, next))
-            self._sh.scheduler.add('simulate', self._set_item, value={'target': target, 'value': value}, next=next)
+            self.scheduler.add('simulate', self._set_item, value={'target': target, 'value': value}, next=next)
             self.lastday = day
         else:
             self.logger.info('End of file reached, simulation ended')
             self._message_item('Simulation ended', 'Simulation')
-            self.state(0, 'Smulation')
+            self.state(0, 'Simulation')
 
     # ------------------------------ windnuntil_now --------------------------------
     # Reads the events from the file and skips until a time stamp is reached
@@ -266,7 +270,7 @@ class Simulation(SmartPlugin):
             else:
                 self.logger.info('End of file reached, simulation ended')
                 self._message_item('Simulation ended', 'Simulation')
-                self.state(0, 'Smulation')
+                self.state(0, 'Simulation')
                 return None
         self.file.seek(pos)
 
@@ -280,10 +284,10 @@ class Simulation(SmartPlugin):
 
     def _midnight(self):
         self.logger.debug('Midnight')
-        if (self.state() == 2):
+        if self.state() == 2:
             self.file.write('NextDay\n')
             self.file.flush()
-            if (self.tank() > 13):
+            if self.tank() > 13:
                 self._remove_first_day()
             else:
                 tank = self.tank()
