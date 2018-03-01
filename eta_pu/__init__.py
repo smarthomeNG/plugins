@@ -140,7 +140,7 @@ class ETA_PU(SmartPlugin):
 
     def run(self):
         self.rebuild_set()
-        self._sh.scheduler.add(__ETA_PU__, self.update_status, cycle=self._cycle)
+        self.scheduler_add(__ETA_PU__, self.update_status, cycle=self._cycle)
         self.alive = True
 
 
