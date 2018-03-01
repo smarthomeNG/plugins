@@ -60,7 +60,7 @@ class Simulation(SmartPlugin):
         self.scheduler = Scheduler.get_instance()
         self._callers = callers
         self._items = []
-        smarthome.scheduler.add('midnight', self._midnight, cron='0 0 * *', prio=3)
+        self.scheduler_add('midnight', self._midnight, cron='0 0 * *', prio=3)
 
         if not self.init_webinterface():
             self._init_complete = False
@@ -149,15 +149,15 @@ class Simulation(SmartPlugin):
     # ----------------------- _schedule_recording_start ---------------------------
     def _schedule_recording_start(self, time):
         self.state(1, 'Simulation')
-        self.scheduler.remove('startrecord')
+        self.scheduler_remove('startrecord')
         self._message_item('Recording starts {}'.format(time), caller='Simulation')
         self.logger.debug('Scheduling record start {}'.format(time))
-        self.scheduler.add('startrecord', self._start_recording, next=time)
+        self.scheduler_add('startrecord', self._start_recording, next=time)
 
     # ----------------------------- _start_recording --------------------------------
     def _start_recording(self):
         self.state(2, 'Simulation')
-        self.scheduler.remove('startrecord')
+        self.scheduler_remove('startrecord')
         self._message_item('Recording', caller='Simulation')
         self.logger.debug('starting record')
         self.recording = True
@@ -171,7 +171,7 @@ class Simulation(SmartPlugin):
     # ----------------------------- _stop_recording ---------------------------------
     def _stop_recording(self):
         self.state(0, 'Simulation')
-        self.scheduler.remove('startrecord')
+        self.scheduler_remove('startrecord')
         self._message_item('', caller='Simulation')
         self.logger.debug('stop record')
         try:
@@ -196,7 +196,7 @@ class Simulation(SmartPlugin):
     def _stop_playback(self):
         self.state(0, 'Simulation')
         self.logger.debug('Stopping playback')
-        self.scheduler.remove('simulate')
+        self.scheduler_remove('simulate')
         self._message_item('Playback stopped', 'Simulation')
         try:
             self.file.close()
@@ -214,7 +214,7 @@ class Simulation(SmartPlugin):
             target = kwargs['target']
         if 'value' in kwargs:
             value = kwargs['value']
-        if target != None and value != None:
+        if target is not None and value is not None:
             self.logger.debug('Setting {} to {}'.format(target, value))
             item = self.items.return_item(target)
             try:
@@ -240,7 +240,7 @@ class Simulation(SmartPlugin):
                 next = next + timedelta(1)
             self._message_item('Next event: {}<br>{}   {}'.format(time, target, value, 'Simulation'))
             self.logger.debug('Scheduling {} {} {}'.format(target, value, next))
-            self.scheduler.add('simulate', self._set_item, value={'target': target, 'value': value}, next=next)
+            self.scheduler_add('simulate', self._set_item, value={'target': target, 'value': value}, next=next)
             self.lastday = day
         else:
             self.logger.info('End of file reached, simulation ended')
