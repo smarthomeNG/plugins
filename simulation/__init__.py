@@ -363,6 +363,14 @@ class Simulation(SmartPlugin):
                       (4, 2): _do_nothing,
                       (4, 3): _do_nothing, }
 
+    def _clear_file(self):
+        self.logger.debug('Clear File')
+        self.file.close()
+
+        self.file = open(self._datafile, 'w')
+        self.file.write('')
+        self.file.close()
+
     def init_webinterface(self):
         """"
         Initialize the web interface for this plugin
@@ -427,7 +435,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_ennvironment()
 
     @cherrypy.expose
-    def index(self):
+    def index(self, cmd=None):
         """
         Build index.html for cherrypy
 
@@ -435,6 +443,10 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        if cmd == 'delete_data_file':
+            if len(self.plugin._datafile) > 0:
+                self.plugin._clear_file()
+
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
