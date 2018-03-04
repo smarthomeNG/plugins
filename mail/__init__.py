@@ -183,6 +183,81 @@ class SMTP(SmartPlugin):
             except:
                 pass
 
+    def extended(self, to, sub, msg, sender_name: str, img_list: list=[], attachments: list=[]):
+        try:
+            smtp = self._connect()
+        except Exception as e:
+            self.logger.warning("Could not connect to {0}: {1}".format(self._host, e))
+            return
+        try:
+            sender_name = Header(sender_name, 'utf-8').encode()
+            msg_root = MIMEMultipart('mixed')
+            msg_root['Subject'] = Header(sub, 'utf-8')
+            msg_root['From'] = email.utils.formataddr((sender_name, self._from))
+            msg_root['Date'] = email.utils.formatdate(localtime=1)
+            if not isinstance(to, list):
+                to = [to]
+            msg_root['To'] = email.utils.COMMASPACE.join(to)
+
+            msg_root.preamble = 'This is a multi-part message in MIME format.'
+
+            msg_related = MIMEMultipart('related')
+            msg_root.attach(msg_related)
+
+            msg_alternative = MIMEMultipart('alternative')
+            msg_related.attach(msg_alternative)
+
+            msg_text = MIMEText(msg.encode('utf-8'), 'plain', 'utf-8')
+            msg_alternative.attach(msg_text)
+
+            html = """
+                <html>
+                <head>
+                <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+                </head>
+                <body>
+                <font face="verdana" size=2>{}<br/></font>
+                <img src="cid:image0" border=0 />
+                </body>
+                </html>
+                """.format(msg)  # template
+
+            msg_html = MIMEText(html.encode('utf-8'), 'html', 'utf-8')
+            msg_alternative.attach(msg_html)
+
+            for i, img in enumerate(img_list):
+                if img.startswith('http://'):
+                    fp = urllib.request.urlopen(img)
+                else:
+                    fp = open(img, 'rb')
+                msg_image = MIMEImage(fp.read())
+                msg_image.add_header('Content-ID', '<image{}>'.format(i))
+                msg_related.attach(msg_image)
+
+            for attachment in attachments:
+                fname = os.path.basename(attachment)
+
+                if attachment.startswith('http://'):
+                    f = urllib.request.urlopen(attachment)
+                else:
+                    f = open(attachment, 'rb')
+                msg_attach = MIMEBase('application', 'octet-stream')
+                msg_attach.set_payload(f.read())
+                encoders.encode_base64(msg_attach)
+                msg_attach.add_header('Content-Disposition', 'attachment',
+                                      filename=(Header(fname, 'utf-8').encode()))
+                msg_root.attach(msg_attach)
+
+            smtp.send_message(msg_root)
+        except Exception as e:
+            self.logger.warning("Could not send message {} to {}: {}".format(sub, to, e))
+        finally:
+            try:
+                smtp.quit()
+                del(smtp)
+            except:
+                pass
+
     def _connect(self):
         smtp = smtplib.SMTP(self._host, self._port)
         if self._ssl:
