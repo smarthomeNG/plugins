@@ -97,7 +97,7 @@ If cycle time is reduced, please carefully watch your device and your sh.log. In
   * `password`: Required login information
   * `host`: Hostname or ip address of the FritzDevice.
   * `port`: Port of the FritzDevice, typically 49433 for https or 49000 for http
-  * `cycle`: timeperiod between two update cycles. Default is 240 seconds.
+  * `cycle`: timeperiod between two update cycles. Default is 300 seconds.
   * `ssl`: True or False => True will add "https", False "http" to the URLs in the plugin
   * `verify`: True or False => Turns certificate verification on or off. Typically False
   * `call_monitor`: True or False => Activates or deactivates the MonitoringService, which connects to the FritzDevice's call monitor
@@ -499,18 +499,18 @@ are parsed as child items. In the example below there is a comment in the respec
             ain = 14324 0432601 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl = rw
             [[[[energy]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = energy
+                avm_data_type@fritzbox_7490 = energy
                 type = num
                 visu_acl = ro
             [[[[power]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = power
+                avm_data_type@fritzbox_7490 = power
                 type = num
                 sqlite = yes
                 enforce_updates=true
                 visu_acl = ro
                 eval = value / 100
             [[[[temperature]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = temperature
+                avm_data_type@fritzbox_7490 = temperature
                 type = num
                 visu_acl = ro
         [[[socket_office]]]
@@ -519,18 +519,18 @@ are parsed as child items. In the example below there is a comment in the respec
             ain = 03456 0221393 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl = rw
             [[[[energy]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = energy
+                avm_data_type@fritzbox_7490 = energy
                 type = num
                 visu_acl = ro
             [[[[power]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = power
+                avm_data_type@fritzbox_7490 = power
                 type = num
                 sqlite = yes
                 enforce_updates=true
                 visu_acl = ro
                 eval = value / 100
             [[[[temperature]]]] # these items need to be child items from aha_device, an @... must not be set
-                avm_data_type = temperature
+                avm_data_type@fritzbox_7490 = temperature
                 type = num
                 visu_acl = ro
 ```
@@ -872,19 +872,19 @@ avm:
                 # these items need to be child items from network_device, an @... must not be set
                 ip:
                     type: str
-                    avm_data_type: device_ip
+                    avm_data_type@fritzbox_7490: device_ip
                     visu_acl: ro
 
                 # these items need to be child items from network_device, an @... must not be set
                 connection_type:
                     type: str
-                    avm_data_type: device_connection_type
+                    avm_data_type@fritzbox_7490: device_connection_type
                     visu_acl: ro
 
                 # these items need to be child items from network_device, an @... must not be set
                 hostname:
                     type: str
-                    avm_data_type: device_hostname
+                    avm_data_type@fritzbox_7490: device_hostname
                     visu_acl: ro
 
             iPhone:
@@ -1193,6 +1193,11 @@ dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_
 
 ### is_host_active(mac_address)
 This function checks, if a device running on a given mac address is active on the FritzDevice. Can be used for presence detection.
+
+CURL for this function:
+```bash
+curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/hosts" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:Hosts:1#GetSpecificHostEntry" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:GetSpecificHostEntry xmlns:u='urn:dslforum-org:service:Hosts:1'><s:NewMACAddress>XX:XX:XX:XX:XX:XX</s:NewMACAddress></u:GetSpecificHostEntry></s:Body></s:Envelope>" -s -k
+```
 
 ### get_contact_name_by_phone_number(phone_number)
 This is a function to search for telephone numbers in the contacts stored on the devices phone book

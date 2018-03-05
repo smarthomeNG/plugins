@@ -29,6 +29,7 @@ import os
 import shutil
 
 import lib.config
+from lib.item import Items
 from lib.model.smartplugin import SmartPlugin
 
 import sys
@@ -147,6 +148,8 @@ class SmartVisuGenerator:
     def __init__(self, smarthome, smartvisu_dir='', overwrite_templates='Yes', visu_style='std', smartvisu_version=''):
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
+        self.items = Items.get_instance()
+
         self.smartvisu_dir = smartvisu_dir
         self.smartvisu_version = smartvisu_version
         self.overwrite_templates = overwrite_templates
@@ -241,11 +244,14 @@ class SmartVisuGenerator:
             items = []
 
         if (room.conf['sv_page'] == 'room') or (room.conf['sv_page'] == 'room_lite'):
-            items.extend(self._sh.find_children(room, 'sv_widget'))
+#            items.extend(self._sh.find_children(room, 'sv_widget'))
+            items.extend(self.items.find_children(room, 'sv_widget'))
         elif room.conf['sv_page'] == 'category':
-            items.extend(self._sh.find_children(room, 'sv_widget'))
+#            items.extend(self._sh.find_children(room, 'sv_widget'))
+            items.extend(self.items.find_children(room, 'sv_widget'))
         elif room.conf['sv_page'] == 'overview':
-            items.extend(self._sh.find_items('sv_item_type'))
+#            items.extend(self._sh.find_items('sv_item_type'))
+            items.extend(self.items.find_items('sv_item_type'))
 
         r = ''
         for item in items:
@@ -293,7 +299,8 @@ class SmartVisuGenerator:
         cat_lis = ''
         lite_lis = ''
                 
-        for item in self._sh.find_items('sv_page'):
+#        for item in self._sh.find_items('sv_page'):
+        for item in self.items.find_items('sv_page'):
             if item.conf['sv_page'] == 'seperator':
                 nav_lis += self.parse_tpl('navi_sep.html', [('{{ name }}', str(item))])
                 continue

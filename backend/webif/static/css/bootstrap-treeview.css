@@ -39,3 +39,13 @@
 .treeview .node-hidden {
 	display: none;
 }
+
+.node-selected {
+	background-color: #c3daee;
+}
+
+.badge-dark {
+	background-color: #999999;
+	width: 30px;
+	text-align: right;
+}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+{% extends "base_plugin.html" %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1" width="150px"><strong>Verbunden</strong></td>
+			<td class="py-1">{% if p._db._connected %}Ja{% else %}Nein{% endif %}</td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+		</tr>
+		{% set first = True %}
+		{% for key, value in p._db._params.items() %}
+		{% if loop.index % 4 == 0 %}
+		<tr>
+		{% endif %}
+			{% if key != "passwd" %}
+			<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
+			{% else %}
+			<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
+			{% endif %}
+			{% if loop.index % 3 > 0 and loop.last %}
+				<td class="py-1" colspan="{{ loop.index % 3 }}"></td>
+			{% endif %}
+		{% if loop.index % 4 == 0 and not first %}
+		</tr>
+		{% endif %}
+		{% endfor %}
+	</tbody>
+</table>
+{% endblock headtable %}
+
+{% block buttons %}
+<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.dump')">Datenbank-Dump</button>
+{% endblock buttons %}
+
+{% block bodytab1 %}
+<script type="text/javascript" language="javascript">
+	function confirmDelete(url, text) {
+		if (confirm(text)) {
+			window.location.href=url;
+		}
+		return false;
+	}
+</script>
+
+{% if action == 'delete_log' %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>Löschauftrag für die Einträge von Item ID {{ item_id }} in der Tabelle "log" wurde erfolgreich initiiert!</strong><br/>
+		Das Löschen kann noch kurze Zeit dauern, da die DELETE Anfrage erst nach Abschluß der bestehenden Transaktionen erfolgen kann.
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+
+<div class="mb-2">
+	The following items are assigned to this instance of the database plugin:
+</div>
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>Pfad</th>
+		<th>Wert</th>
+		<th>Item-ID in der Datenbank</th>
+		<th>Aktionen</th>
+	</tr>
+	</thead>
+	{% for item in items %}
+		{% if p.has_iattr(item.conf, 'database') %}
+			<tr>
+				<td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ item() }}</td>
+				<td class="py-1">{{ p.id(item, create=False) }}</td>
+				<td class="py-1">
+					<button type="button" class="btn btn-shng btn-sm" title="CSV Export der Werte" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
+					<button type="button" class="btn btn-shng btn-sm" title="Data details" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item._path }}';"><i class="fas fa-search"></i></button>
+					<button type="button" class="btn btn-danger btn-sm" title="Wertehistorie löschen" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item._path }}','Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?')"><i class="fas fa-history"></i></button>
+				</td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+</table>
+{% endblock bodytab1 %}

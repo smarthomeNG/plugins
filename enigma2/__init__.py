@@ -31,7 +31,7 @@ from requests.auth import HTTPBasicAuth
 from lib.model.smartplugin import SmartPlugin
 
 
-class Enigma2Device():
+class Enigma2Device:
     """
     This class encapsulates information related to a specific Enigma2Device, such has host, port, ssl, username, password, or related items
     """

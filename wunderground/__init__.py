@@ -35,7 +35,8 @@ import logging
 import json
 from urllib.request import urlopen
 
-from lib.model.smartplugin import SmartPlugin
+from lib.item import Items
+from lib.model.smartplugin import *
 
 
 
@@ -46,7 +47,7 @@ class Wunderground(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION='1.3.6'
+    PLUGIN_VERSION='1.4.7'
 
 
     def __init__(self, sh, apikey='', language='de', location='', cycle='600', item_subtree=''):
@@ -63,6 +64,8 @@ class Wunderground(SmartPlugin):
         """
         self.logger = logging.getLogger(__name__)
         self.__sh = sh
+
+        self.items = Items.get_instance()
 
         languagedict = {"de": "DL", "en": "EN", 'fr': "FR"}
         self.apikey = str(apikey)
@@ -92,6 +95,11 @@ class Wunderground(SmartPlugin):
         if self.item_subtree == '':
             self.logger.warning("Wunderground: item_subtree is not configured, searching complete item-tree instead. Please configure item_subtree to reduce processing overhead" )   
 
+        # if plugin should start even without web interface
+        self.init_webinterface()
+
+        return
+        
 
     def run(self):
         """
@@ -245,7 +253,7 @@ class Wunderground(SmartPlugin):
                 wrk = wrk.get( sp[0] )
             if len(sp) == 1:
                 spl = s.split('/')
-                self.logger.info("_get_item_fromwugdata: wug_matchstring split len={}, content={} -> '{}'".format( str(len(spl)), str(spl), str(wrk) ))
+                self.logger.debug("_get_item_fromwugdata: wug_matchstring split len={}, content={} -> '{}'".format( str(len(spl)), str(spl), str(wrk) ))
             sp.pop(0)
 
         # if a value was found, store it to item
@@ -264,7 +272,8 @@ class Wunderground(SmartPlugin):
         
         This routine is started by the scheduler
         """
-        weatheritems = self.__sh.return_item(self.item_subtree)
+#        weatheritems = self.__sh.return_item(self.item_subtree)
+        weatheritems = self.items.return_item(self.item_subtree)
         if (self.item_subtree != '') and (weatheritems == None):
             self.logger.warning("_update_items: configured item_subtree '{}' not found, searching complete item-tree instead".format(self.item_subtree) )   
 
@@ -282,12 +291,109 @@ class Wunderground(SmartPlugin):
 
             if weatheritems == None:
                 # search complete item-tree
-                self.itemlist = self.__sh.find_items('wug_matchstring')
+#                self.itemlist = self.__sh.find_items('wug_matchstring')
+                self.itemlist = self.items.find_items('wug_matchstring')
             else:
                 # search subtree
-                self.itemlist = self.__sh.find_children(weatheritems, 'wug_matchstring')
+#                self.itemlist = self.__sh.find_children(weatheritems, 'wug_matchstring')
+                self.itemlist = self.items.find_children(weatheritems, 'wug_matchstring')
                 
             for item in self.itemlist:
                 # check every item
                 self._get_item_fromwugdata(item)
+
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+        
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+        
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self), 
+                                     self.get_shortname(), 
+                                     config, 
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+                                   
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_ennvironment()
+        
+        self.items = Items.get_instance()
+
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+        
+        Render the template and return the html file to be delivered to the browser
+            
+        :return: contents of the template after beeing rendered 
+        """
+        from pprint import pformat
+        
+        plgitems = []
+        for item in self.items.return_items():
+            if ('wug_matchstring' in item.conf) and (item._path.startswith(self.plugin.item_subtree)):
+                plgitems.append(item)
+
+        pf = pformat(self.plugin.wugdata)
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(p=self.plugin,
+                           items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
+                           wugdata=self.plugin.wugdata,
+                           ppwugdata=pf.replace('\n','<br>').replace(' ','&nbsp;'),
+                           ppwugdata2=pf.replace('\n','<br>')
+                          )
 

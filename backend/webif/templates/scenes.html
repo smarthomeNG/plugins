@@ -6,7 +6,12 @@
 	{% endwith %}
 {% endblock navbar %}
 
+{% block title %}
+{{ _('Szenen', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
 {% block content %}
+<div style="margin-left: 10px; margin-right: 10px;">
 <div class="table-responsive">
 	<table class="table table-striped table-hover">
 		<col width="25px">
@@ -15,7 +20,7 @@
 		<col width="400px">
 		<col minwidth="300px">
 		<thead>
-			<tr>
+			<tr class="shng_heading">
 				<th colspan="2">{{ _('Szene') }}</th>
 				<th>{{ _('Lernen') }}</th>
 				<th>{{ _('Item') }}</th>
@@ -71,5 +76,6 @@
 			{% endif %}
 		</tbody>
 	</table>
+</div>
 </div>
 {% endblock %}

@@ -5,9 +5,13 @@
 	{{ nav }}
 {% endblock navbar %}
 
+{% block title %}
+{{ _('Logiken', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
 {% block content %}
 <div class="container-fluid navBorder mb-2">
-	<h3>SmartHomeNG {{ _('Logik') }}: {{ logicname }}</h3>
+	<div  class="shng_headline">SmartHomeNG {{ _('Logik') }}: {{ logicname }}</div>
 	<strong>{{ _('Dateiname') }}:</strong> {{ file_path }}
 </div>
 
@@ -17,22 +21,22 @@
 		<form name="input" action="logics_view.html" method="POST" enctype="multipart/form-data">
 		<input type="hidden" name="logicname" readonly="true" value="{{ logicname }}" type="text"/>
 		<input type="hidden" name="file_path" readonly="true" value="{{ file_path }}" type="text"/>
-			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-dark btn-sm"><i class="fas fa-hand-pointer"></i> {{ _('Auslösen','button') }}</button>&nbsp;
+			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-shng btn-sm"><i class="fas fa-hand-pointer"></i> {{ _('Auslösen','button') }}</button>&nbsp;
 		{% if thislogic.enabled %}
-			<button name="disable" class="btn btn-dark btn-sm"><i class="fas fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
+			<button name="disable" class="btn btn-shng btn-sm"><i class="fas fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
 		{% else %}
-			<button name="enable" class="btn btn-dark btn-xs"><i class="fas fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
+			<button name="enable" class="btn btn-shng btn-xs"><i class="fas fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
 		{% endif %}
 		&nbsp;|&nbsp;|&nbsp;
-			<button id="save" name="save" class="btn btn-success btn-sm"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern','button') }}</button>&nbsp;
-			<button id="savereload" name="savereload" class="btn btn-success btn-sm"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern_und_Neu_Laden','button') }}</button>
+			<button id="save" name="save" class="btn btn-shng-success btn-sm"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern','button') }}</button>&nbsp;
+			<button id="savereload" name="savereload" class="btn btn-shng-success btn-sm"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern_und_Neu_Laden','button') }}</button>
 <!--
-		<input id="savereloadtrigger" name="savereloadtrigger" value="{{ _('Speichern_Neu_Laden_und_Triggern','button') }}" type="submit" class="btn btn-default btn-xs btn-success"/>
+		<input id="savereloadtrigger" name="savereloadtrigger" value="{{ _('Speichern_Neu_Laden_und_Triggern','button') }}" type="submit" class="btn btn-default btn-xs btn-shng-success"/>
 -->
 		 |&nbsp;|&nbsp;
-			<button id="linewrapping" type="button" class="btn btn-outline-secondary btn-sm active">{{ _('Zeilenumbruch') }}</button>&nbsp;
-			<button id="rulers" type="button" class="btn btn-outline-secondary btn-sm active">{{ _('Hilfslinien') }}</button>&nbsp;
-			<button id="help" type="button" class="btn btn-outline-secondary btn-sm"><i class="fas fa-info"></i>&nbsp;&nbsp;{{ _('Hilfe') }}</button>
+			<button id="linewrapping" type="button" class="btn btn-shng-outline-secondary btn-sm active">{{ _('Zeilenumbruch') }}</button>&nbsp;
+			<button id="rulers" type="button" class="btn btn-shng-outline-secondary btn-sm active">{{ _('Hilfslinien') }}</button>&nbsp;
+			<button id="help" type="button" class="btn btn-shng-outline-secondary btn-sm"><i class="fas fa-info"></i>&nbsp;&nbsp;{{ _('Hilfe') }}</button>
 	{% endif %}
     </div>
 	<div id="help_text" style="display:none;">
@@ -63,46 +67,46 @@
 
 	<table class="table table-bordered table-hover table-striped mb-1">
 		<tr>
-			<td class="py-1" style="min-width:200px;"><strong>{{ _('Status') }}:</strong></td>
+			<td class="py-1 shng_heading" style="min-width:200px;">{{ _('Status') }}:</td>
 			<td class="py-1" colspan="3"><span style="color: {% if not thislogic.enabled %}red{% else %}green{% endif %};" class="fa {% if not thislogic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span>
 			{% if not thislogic.enabled %}{{ _('Nicht aktiv') }}{% else %}{{ _('Aktiv') }}{% endif %}
 			</td>
 		</tr>
 		<tr>
-			<td class="py-1" style="width:200px;"><strong>{{ _('letzte Ausführung') }}</strong></td>
+			<td class="py-1 shng_heading" style="width:200px;">{{ _('letzte Ausführung') }}</td>
 			<td class="py-1" style="min-width:200px;">{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
 				{{ thislogic.last_run }}
 				{% if not thislogic.enabled %}</span>{% endif %}
 			</td>
-			<td class="py-1" style="width:200px;"><strong>{{ _('nächste Ausführung') }}</strong></td>
+			<td class="py-1 shng_heading" style="width:200px;">{{ _('nächste Ausführung') }}</td>
 			<td class="py-1" style="min-width:200px;">{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
 				{{ thislogic.next_exec }}
 				{% if not thislogic.enabled %}</span>{% endif %}
 			</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ _('Cycle') }}</strong></td>
+			<td class="py-1 shng_heading">{{ _('Cycle') }}</td>
 			<td class="py-1" colspan="3">
 				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.cycle }}"/>
 				<input type="hidden" id="original_cycle" value="{{ thislogic.cycle }}"/>
 			</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ _('Crontab(s)') }}</strong></td>
+			<td class="py-1 shng_heading">{{ _('Crontab(s)') }}</td>
 			<td class="py-1" colspan="3">
 				<input type="text" autocomplete="off" id="crontab" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.crontab }}"/>
 				<input type="hidden" id="original_crontab" value="{{ thislogic.crontab }}"/>
 			</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ _('Watch_Item(s)') }}</strong></td>
+			<td class="py-1 shng_heading">{{ _('Watch_Item(s)') }}</td>
 			<td class="py-1" colspan="3">
 				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.watch_item }}"/>
 				<input type="hidden" id="original_watch" value="{{ thislogic.watch_item }}"/>
 			</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ 'visu_acl' }}</strong></td>
+			<td class="py-1 shng_heading">{{ 'visu_acl' }}</td>
 			<td class="py-1" colspan="3">
 				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="visu_acl" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.visu_acl }}"/>
 				<input type="hidden" id="original_visu_acl" value="{{ thislogic.visu_acl }}"/>

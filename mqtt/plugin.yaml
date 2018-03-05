@@ -238,6 +238,7 @@ parameters:
     password:
         type: str
         default: ''
+        hide: True
         description:
             de: 'Passwort für das Broker Login'
             en: 'Password for login to the broker'
@@ -261,6 +262,14 @@ parameters:
                  \n
                 '        
         
+    broker_monitoring:
+        type: bool
+        default: False
+        description:
+            de: 'Ermöglicht das Monitoring einiger Broker Werte durch das Web Interfase.'
+            en: 'Enables monitoring some broker data through the web interface.'
+
+
 #    tls:    # Not yet implemented
 #        type: bool
 #        default: False
@@ -410,4 +419,3 @@ item_attributes:
                 '        
             en: 'When set to True, the MQTT message is sent with the retain flag set.\n
                 '        
-        

@@ -106,6 +106,73 @@ state_name:
     telegram_message: 'New AutoBlind state: [VALUE]'
 ```
 
+#### telegram_info
+
+read (broadcast) a list with specific item-values provided with the attribute.
+The attribute parameter is also the command. 
+e.g. /wetter
+All attribute parameters (commands) are listed with the /info-command in a keyboard menu
+
+#### Simple Example
+
+my_item_config.yaml
+```
+[Aussentemperatur]
+	name = Aussentemperatur in °C
+	type = num
+	knx_dpt = 9
+	telegram_info = "wetter"
+[Wind_kmh]
+	name = Wingeschwindigkeit in kmh
+	type = num
+	knx_dpt = 9
+	telegram_info = "wetter"
+
+[Raumtemperatur]
+	name = Raumtemperatur Wohnzimmer in °C
+	type = num
+	knx_dpt = 9
+	telegram_info = "rtr_ist"
+
+```
+my_item_config.conf
+```
+Aussentemperatur:
+    name: Aussentemperatur in °C
+    type: num
+    knx_dpt: 9
+    telegram_info: wetter
+Wind_kmh:
+    name: Wingeschwindigkeit in kmh
+    type: num
+    knx_dpt: 9
+    telegram_info: "wetter"
+
+
+Raumtemperatur
+    name: Raumtemperatur Wohnzimmer in °C
+    type: num
+    knx_dpt: 9
+    telegram_info: rtr_ist
+
+```
+/info broadcast all info-commands in a bot-keyboard-menu e.g.
+    
+    [ /wetter] [/rtr_ist]
+
+/wetter broadcast all items and values provided with the attribute 'telegram_info = "wetter"'
+
+    Wetterstation.Aussentemperatur = -10,6
+    Wetterstation.Wind_kmh = 12.6
+
+/rtr_ist broadcast all items and values provided with the attribute 'telegram_info = "rtr_ist"'
+
+    Dg.Wohnzimmer.Raumtemperatur = 22.6
+    Dg.Kueche.Raumtemperatur = 22.3
+    Dg.Bad.Raumtemperatur = 23.5
+    Dg.Schlafzimmer.Raumtemperatur = 20.1
+
+
 ## Todo and feature requests
 
 * The connection is resetted by the server time by time. Improve internal error handling, because the reset is not really an "error"

@@ -5,9 +5,13 @@
 	{{ nav }}
 {% endblock navbar %}
 
+{% block title %}
+{{ _('Logiken', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
 {% block content %}
 <div class="container-fluid navBorder">
-	<h3>SmartHomeNG: {{ _('Neue Logik erstellen') }}</h3>
+	<div  class="shng_headline">SmartHomeNG: {{ _('Neue Logik erstellen') }}</div>
 	<strong>{{ '' }}</strong>
 	<br/><br/>
 </div>
@@ -18,7 +22,7 @@
 	{% endif %}
 	<div style="margin-bottom: 5px;">
 	{% if updates and yaml_updates %}
-		<input id="create" name="create" value="{{ _('Erstellen','button') }}" type="submit" class="btn btn-primary btn-xs"/>
+		<input id="create" name="create" value="{{ _('Erstellen','button') }}" type="submit" class="btn btn-shng btn-xs"/>
 	{% endif %}
     </div>
 	<table class="table table-bordered table-hover table-striped">
@@ -27,12 +31,12 @@
 			<td style="width: 900px;">{{ message }}</td>
 		</tr>
 		<tr>
-			<td>&nbsp; &nbsp; -&nbsp;<strong>{{ _('Dateiname') }}</strong></td>
+			<td class="shng_heading">&nbsp; &nbsp; -&nbsp;{{ _('Dateiname') }}</td>
 			<td><input type="text" style="width: 250px; border: 1px solid #ddd;" name="filename" value="{{ filename }}"/>
 			{{ _("Dateiname des Python Codes der Logik (ohne Extension '.py')") }}</td>
 		</tr>
 		<tr>
-			<td>&nbsp; &nbsp; -&nbsp;<strong>{{ _('Logikname') }}</strong></td>
+			<td class="shng_heading">&nbsp; &nbsp; -&nbsp;{{ _('Logikname') }}</td>
 			<td><input type="text" style="width: 250px; border: 1px solid #ddd;" name="logicname" value="{{ logicname }}"/>
 			{{ _('Logik-Name/Abschnittsnamen in /etc/logic.yaml) - Wenn leer, wird der Dateiname verwendet') }}</td>
 		</tr>

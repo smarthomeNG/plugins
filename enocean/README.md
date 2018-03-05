@@ -132,29 +132,32 @@ EnOcean_Item:
                 enocean_rx_key: BI
     
     Brightness_Sensor:
-                name: brightness_sensor_east
-                remark: Eltako FAH60
-                type: num
-                enocean_rx_id: 01A51DE6
-                enocean_rx_eep: A5_06_01
-                enocean_rx_key: BRI
-                visu_acl: rw
-                sqlite: 'yes'
+        name: brightness_sensor_east
+        remark: Eltako FAH60
+        type: num
+        enocean_rx_id: 01A51DE6
+        enocean_rx_eep: A5_06_01
+        enocean_rx_key: BRI
+        visu_acl: rw
+        sqlite: 'yes'
     
     dimmer1:
+        remark: Eltako FDG14 - Dimmer 
         enocean_rx_id: 00112233
         enocean_rx_eep: A5_11_04
         light:
-            type: bool
-            enocean_rx_key: STAT
-            enocean_tx_eep: A5_38_08_02
+        type: bool
+        enocean_rx_key: STAT
+        enocean_tx_eep: A5_38_08_02
+        enocean_tx_id_offset: 1
+        level:
+            type: num
+            enocean_rx_key: D
+            enocean_tx_eep: A5_38_08_03
             enocean_tx_id_offset: 1
-            level:
-                type: num
-                enocean_rx_key: D
-                enocean_tx_eep: A5_38_08_03
-                enocean_tx_id_offset: 1
-                ref_level: 80
+            ref_level: 80
+            dim_speed: 100
+            block_dim_value: 'False'
     
     handle:
         enocean_rx_id: 01234567
@@ -171,41 +174,47 @@ EnOcean_Item:
             enocean_rx_key: VALUE
     
     actor1B:
-        enocean_rx_id: FFAABBCD
+        remark: Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
+        enocean_rx_id: 1A794D3
         enocean_rx_eep: F6_02_03
         light:
             type: bool
-            enocean_rx_key: B
             enocean_tx_eep: A5_38_08_01
-            enocean_tx_id_offset: 2
+            enocean_tx_id_offset: 1
+            enocean_rx_key: B
+            block_switch: 'False'
+            cache: 'True'
+            enforce_updates: 'True'
+            visu_acl: rw
     
-    actorD2:
+    actor_D2:
+        remark: Actor with VLD Command
         enocean_rx_id: FFDB7381
         enocean_rx_eep: D2_01_07
         move:
-            type=bool
+            type: bool
             enocean_rx_key: STAT
             enocean_tx_eep: D2_01_07
-            # optional; turn off after 0.1 s
-            enocean_pulsewidth: 0.1
-            enocean_tx_id_offset: 1  
+            enocean_tx_id_offset: 1
+            # pulsewith-attribute removed use autotimer functionality instead
+            autotimer: 1 = 0  
     
     awning:
-        enocean_rx_id: 0500E508
-        enocean_rx_eep: F6_02_03
+        remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        type: str
+        enocean_rx_id: 1A869C3
+        enocean_rx_eep: F6_02_03_01
+        enocean_rx_key: STATUS
         move:
-            enocean_tx_eep: A5_3F_7F
-            # move awning for 60sec
-            enocean_rtime: 60
             type: num
-            visu: yes
-        
-        stat:
+            enocean_tx_eep: A5_3F_7F
+            enocean_tx_id_offset: 0
             enocean_rx_key: B
-            enforce_updates: on
-            cache: on
-            type: bool
-            visu: yes
+            enocean_rtime: 60
+            block_switch: 'False'
+            enforce_updates: 'True'
+            cache: 'True'
+            visu_acl: rw
     
     rocker:
         enocean_rx_id: 0029894A
@@ -260,20 +269,62 @@ EnOcean_Item:
         power_status:
             type: num
             enocean_rx_key: ENG
+    
     sunblind:
-        enocean_rx_id: 0500xxxx
-        enocean_rx_eep: F6_02_03
+        remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        type: str
+        enocean_rx_id: 1A869C3
+        enocean_rx_eep: F6_02_03_01
+        enocean_rx_key: STATUS
         move:
-            enocean_tx_eep: A5_3F_7F
-            enocean_rtime: 60
             type: num
-        
-        status:
-            name: blind retrated
+            enocean_tx_eep: A5_3F_7F
+            enocean_tx_id_offset: 0
             enocean_rx_key: B
-            enforce_updates: on
-            cache: on
-            type: bool
+            enocean_rtime: 60
+            block_switch: 'False'
+            enforce_updates: 'True'
+            cache: 'True'
+            visu_acl: rw
+    
+    RGBdimmer:
+        type: num
+        remark: Eltako FRGBW71L - RGB Dimmer 
+        enocean_rx_id: 1A869C3
+        enocean_rx_eep: A5_3F_7F
+        enocean_rx_key: DI_0
+        red:
+            type: num
+            enocean_tx_eep: 07_3F_7F
+            enocean_tx_id_offset: 1
+            enocean_rx_key: DI_0
+            ref_level: 80
+            dim_speed: 100
+            color: red
+        green:
+            type: num
+            enocean_tx_eep: 07_3F_7F
+            enocean_tx_id_offset: 1
+            enocean_rx_key: DI_1
+            ref_level: 80
+            dim_speed: 100
+            color: green
+        blue:
+            type: num
+            enocean_tx_eep: 07_3F_7F
+            enocean_tx_id_offset: 1
+            enocean_rx_key: DI_2
+            ref_level: 80
+            dim_speed: 100
+            color: blue
+        white:
+            type: num
+            enocean_tx_eep: 07_3F_7F
+            enocean_tx_id_offset: 1
+            enocean_rx_key: DI_3
+            ref_level: 80
+            dim_speed: 100
+            color: white   
 ```
 
 #### Example item.conf (deprecated)
@@ -342,40 +393,47 @@ EnOcean_Item:
             enocean_rx_key = VALUE
     
     [[actor1B]]
-        enocean_rx_id = FFAABBCD
+        remark = Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
+        enocean_rx_id = 1A794D3
         enocean_rx_eep = F6_02_03
         [[[light]]]
             type = bool
-            enocean_rx_key = B
             enocean_tx_eep = A5_38_08_01
-            enocean_tx_id_offset = 2
+            enocean_tx_id_offset = 1
+            enocean_rx_key = B
+            block_switch = False
+            cache = 'True'
+            enforce_updates = True
+            visu_acl = rw
     
     [[actorD2]]
+        remark = Actor with VLD Command
         enocean_rx_id = FFDB7381
         enocean_rx_eep = D2_01_07
         [[[move]]]
-            type=bool
+            type = bool
             enocean_rx_key = STAT
             enocean_tx_eep = D2_01_07
-            # optional; turn off after 0.1 s
-            enocean_pulsewidth = 0.1
-            enocean_tx_id_offset = 1  
+            enocean_tx_id_offset = 1
+            # pulsewith-attribute removed use autotimer functionality instead
+            autotimer = 1 = 0  
     
     [[awning]]
-        enocean_rx_id = 0500E508
-        enocean_rx_eep = F6_02_03
+        remark = Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        type = str
+        enocean_rx_id = 1A869C3
+        enocean_rx_eep = F6_02_03_01
+        enocean_rx_key = STATUS
         [[[move]]]
-            enocean_tx_eep = A5_3F_7F
-            # move awning for 60 s
-            enocean_rtime = 60
             type = num
-            visu = yes
-        [[[stat]]]
+            enocean_tx_eep = A5_3F_7F
+            enocean_tx_id_offset = 0
             enocean_rx_key = B
-            enforce_updates = on
-            cache = on
-            type = bool
-            visu = yes
+            enocean_rtime = 60
+            block_switch = False
+            enforce_updates = True
+            cache = True
+            visu_acl = rw
     
     [[rocker]]
         enocean_rx_id = 0029894A
@@ -427,18 +485,60 @@ EnOcean_Item:
             enocean_rx_key = ENG
     
     [[sunblind]]
-        enocean_rx_id = 0500xxxx
-        enocean_rx_eep = F6_02_03
+        remark = Eltako FSB14, FSB61, FSB71 - actor for Shutter
+        type = str
+        enocean_rx_id = 1A869C3
+        enocean_rx_eep = F6_02_03_01
+        enocean_rx_key = STATUS
         [[[move]]]
+             type = num
             enocean_tx_eep = A5_3F_7F
-            enocean_rtime = 60
-            type = num
-        [[[status]]]
-            name = blind retrated
+            enocean_tx_id_offset = 0
             enocean_rx_key = B
-            enforce_updates = on
-            cache = on
-            type = bool
+            enocean_rtime = 60
+            block_switch = False
+            enforce_updates = True
+            cache = True
+            visu_acl = rw
+
+    [[RGBdimmer]]
+        type = num
+        remark = Eltako FRGBW71L - RGB Dimmer 
+        enocean_rx_id = 1A869C3
+        enocean_rx_eep = A5_3F_7F
+        enocean_rx_key = DI_0
+        [[[red]]]
+            type = num
+            enocean_tx_eep = 07_3F_7F
+            enocean_tx_id_offset = 1
+            enocean_rx_key = DI_0
+            ref_level = 80
+            dim_speed = 100
+            color = red
+        [[[green]]]
+            type = num
+            enocean_tx_eep = 07_3F_7F
+            enocean_tx_id_offset = 1
+            enocean_rx_key = DI_1
+            ref_level = 80
+            dim_speed = 100
+            color = green
+        [[[blue]]]
+            type = num
+            enocean_tx_eep = 07_3F_7F
+            enocean_tx_id_offset = 1
+            enocean_rx_key = DI_2
+            ref_level = 80
+            dim_speed = 100
+            color = blue
+        [[[white]]]
+            type = num
+            enocean_tx_eep = 07_3F_7F
+            enocean_tx_id_offset = 1
+            enocean_rx_key = DI_3
+            ref_level = 80
+            dim_speed = 100
+            color = white
 ```
 
 ### Add new listening EnOcean devices

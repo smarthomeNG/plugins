@@ -113,7 +113,6 @@ class BackendSysteminfo:
         """
         returns output from executing a given command via the shell.
         """
-        self.find_visu_plugin()
         ## get subprocess module
         import subprocess
 
@@ -615,7 +614,6 @@ class BackendSysteminfo:
         """
         returns a list with the installed python packages and its versions
         """
-        self.find_visu_plugin()
 
         # check if pypi service is reachable
         if self.pypi_timeout <= 0:

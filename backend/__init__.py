@@ -41,8 +41,6 @@ from .BackendPlugins import BackendPlugins
 from .BackendScenes import BackendScenes
 from .BackendThreads import BackendThreads
 from .BackendLogging import BackendLogging
-from .BackendVisu import BackendVisu
-
 
 
 class BackendServer(SmartPlugin):
@@ -51,7 +49,7 @@ class BackendServer(SmartPlugin):
     the update functions for the items
     """
     
-    PLUGIN_VERSION='1.4.10'
+    PLUGIN_VERSION='1.4.11'
 
 
     def __init__(self, sh, updates_allowed='True', developer_mode="no", pypi_timeout=5):
@@ -193,7 +191,7 @@ import lib.item_conversion
 
 class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogics, 
                    BackendSchedulers, BackendPlugins, BackendScenes, BackendThreads, 
-                   BackendLogging, BackendVisu):
+                   BackendLogging):
 
     blockly_plugin_loaded = None    # None = load state is unknown
 
@@ -229,8 +227,6 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         self.pypi_timeout = plugin.pypi_timeout
 
         self._sh_dir = self._sh.base_dir
-        self.visu_plugin = None
-        self.visu_plugin_version = '1.0.0'
         
         BackendSysteminfo.__init__(self)
         BackendServices.__init__(self)
@@ -241,7 +237,6 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         BackendScenes.__init__(self)
         BackendThreads.__init__(self)
         BackendLogging.__init__(self)
-        BackendVisu.__init__(self)
 
 
     def html_escape(self, str):
@@ -249,29 +244,6 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         escape characters in html
         """
         return html_escape(str)
-
-
-    def find_visu_plugin(self):
-        """
-        look for the configured instance of the visu protocol plugin.
-        """
-        if self.visu_plugin is not None:
-            return
-
-        for p in self.plugins:
-            if p.__class__.__name__ == "WebSocket":
-                self.visu_plugin = p
-        if self.visu_plugin is not None:
-            try:
-                self.visu_plugin_version = self.visu_plugin.get_version()
-            except:
-                self.visu_plugin_version = '1.0.0'
-            self.visu_plugin_build = self.visu_plugin_version[4:]
-            if self.visu_plugin_build < '2':
-                self.visu_plugin = None
-                self.logger.warning(
-                    "Visu protocol plugin v{} is too old to support backend, please update".format(
-                        self.visu_plugin_version))
 
 
     def render_template(self, tmpl_name, **kwargs):
@@ -285,11 +257,9 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         :return: contents of the template after beeing rendered 
 
         """
-        self.find_visu_plugin()
         tmpl = self.tplenv.get_template(tmpl_name)
         return tmpl.render(develop=self.developer_mode,
                            smarthome=self._sh, 
-                           visu_plugin=(self.visu_plugin is not None), 
                            yaml_converter=lib.item_conversion.is_ruamelyaml_installed(),
                            **kwargs)
 

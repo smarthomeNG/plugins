@@ -71,19 +71,19 @@ function checkChangedContent() {
 };
 
 function markChangedContent() {
-    $('#savereloadtrigger').removeClass('btn-success');
-    $('#savereload').removeClass('btn-success');
-    $('#save').removeClass('btn-success');
-    $('#savereloadtrigger').addClass('btn-danger');
-    $('#savereload').addClass('btn-danger');
-    $('#save').addClass('btn-danger');
+    $('#savereloadtrigger').removeClass('btn-shng-success');
+    $('#savereload').removeClass('btn-shng-success');
+    $('#save').removeClass('btn-shng-success');
+    $('#savereloadtrigger').addClass('btn-shng-danger');
+    $('#savereload').addClass('btn-shng-danger');
+    $('#save').addClass('btn-shng-danger');
 }
 
 function markIdenticalContent() {
-    $('#savereloadtrigger').removeClass('btn-danger');
-    $('#savereload').removeClass('btn-danger');
-    $('#save').removeClass('btn-danger');
-    $('#savereloadtrigger').addClass('btn-success');
-    $('#savereload').addClass('btn-success');
-    $('#save').addClass('btn-success');
+    $('#savereloadtrigger').removeClass('btn-shng-danger');
+    $('#savereload').removeClass('btn-shng-danger');
+    $('#save').removeClass('btn-shng-danger');
+    $('#savereloadtrigger').addClass('btn-shng-success');
+    $('#savereload').addClass('btn-shng-success');
+    $('#save').addClass('btn-shng-success');
 }

@@ -19,10 +19,7 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-from lib.model.smartplugin import SmartPlugin
 import logging
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
 import datetime
 from collections import OrderedDict
 import collections
@@ -30,10 +27,14 @@ import json
 import html
 import os
 
+from lib.model.smartplugin import *
+
+from lib.module import Modules
+
 
 class WebServices(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.4.0.1'
+    PLUGIN_VERSION = '1.5.0.2'
 
     def __init__(self, smarthome, mode="all"):
         self.logger = logging.getLogger(__name__)
@@ -41,13 +42,18 @@ class WebServices(SmartPlugin):
         self._sh = smarthome
         self._mode = mode
 
+        if not self.init_webinterfaces():
+            self._init_complete = False
+
+    def init_webinterfaces(self):
         try:
-            self.mod_http = self._sh.get_module('http')
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http is None:
+        if self.mod_http == None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return
+            return False
 
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
@@ -77,12 +83,13 @@ class WebServices(SmartPlugin):
                                        servicename='ws')
 
         # Register the web overview of the webservices interfaces as a cherrypy app
-        self.mod_http.register_webif(WebGuiInterface(self),
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
                                      self.get_shortname(),
                                      config,
                                      self.get_classname(), self.get_instance_name(),
-                                     description='Webservice-Plugin für SmartHomeNG (Frontend)',
-                                     webifname='ws_gui')
+                                     description='Webservice-Plugin für SmartHomeNG (Frontend)')
+
+        return True
 
     def run(self):
         """
@@ -99,20 +106,41 @@ class WebServices(SmartPlugin):
         self.alive = False
 
 
-class WebGuiInterface:
-    exposed = True
-    env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__)) + '/templates'))
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
 
-    def __init__(self, plugin):
+import cherrypy
+#from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
         self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
         self.plugin = plugin
 
-    def render_template(self, tmpl_name, **kwargs):
-        tmpl = self.env.get_template(tmpl_name)
-        return tmpl.render(smarthome=self.plugin._sh, **kwargs)
+        self.tplenv = self.init_template_ennvironment()
+
 
     @cherrypy.expose
-    def index(self):
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
         items_filtered = []
         item_sets = {}
         items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
@@ -132,16 +160,18 @@ class WebGuiInterface:
                                 item_sets[item_set] = []
                             item_sets[item_set].append(item)
 
-        return self.render_template('main.html', item_data=items_filtered,
-                                    ip=self.plugin.mod_http.get_local_ip_address(),
-                                    port=self.plugin.mod_http.get_local_port(),
-                                    servicesport=self.plugin.mod_http.get_local_servicesport(),
-                                    item_sets=item_sets)
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(p=self.plugin,
+                           item_data=items_filtered,
+                           ip=self.plugin.mod_http.get_local_ip_address(),
+                           port=self.plugin.mod_http.get_local_port(),
+                           servicesport=self.plugin.mod_http.get_local_servicesport(),
+                           tabcount=1, tab1title="WebServices",
+                           item_sets=item_sets)
 
 
 class WebServiceInterface:
     exposed = True
-    env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.abspath(__file__)) + '/templates'))
 
     def __init__(self, webif_dir, plugin):
         self.webif_dir = webif_dir
@@ -433,9 +463,9 @@ class RESTWebServicesInterface(WebServiceInterface):
                     if item_data is not None:
                         if mode != 'val':
                             item_data['url'] = "http://%s:%s/rest/items/%s" % (
-                            self.plugin.mod_http.get_local_ip_address(),
-                            self.plugin.mod_http.get_local_servicesport(),
-                            item._path)
+                                self.plugin.mod_http.get_local_ip_address(),
+                                self.plugin.mod_http.get_local_servicesport(),
+                                item._path)
                         return item_data
                     else:
                         return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %

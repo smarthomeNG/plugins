@@ -32,11 +32,14 @@ import struct
 import ssl
 import struct
 import threading
+import socket
 
 import collections
 
 import lib.connection
-from lib.model.smartplugin import SmartPlugin
+from lib.item import Items
+from lib.logic import Logics
+from lib.model.smartplugin import *
 
 
 #########################################################################
@@ -47,11 +50,10 @@ class WebSocket(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = "1.4.4"
+    PLUGIN_VERSION = "1.4.5"
 
 
     def __init__(self, sh, *args, **kwargs):
-#    def __init__(self, smarthome, ip='0.0.0.0', port=2424, tls='no', acl='ro', wsproto='3' ):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
@@ -78,7 +80,9 @@ class WebSocket(SmartPlugin):
         if self.acl in ('true', 'yes'):
             self.acl = 'rw'
 
-        self.websocket = _websocket(self.get_sh(), self.ip, self.port, self.tls, self.wsproto, self.querydef)
+        self.websocket = _websocket(self.get_sh(), self, self.ip, self.port, self.tls, self.wsproto, self.querydef)
+
+        self.init_webinterface()
         return
         
 
@@ -145,6 +149,43 @@ class WebSocket(SmartPlugin):
         return
         
 
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+        
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+        
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self), 
+                                     self.get_shortname(), 
+                                     config, 
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='',
+                                     webifname='')
+                                   
+        return True
+
+
     def url(self, url, clientip=''):
         """
         Tell the websocket client (visu) to load a specific url
@@ -172,6 +213,88 @@ class WebSocket(SmartPlugin):
         return
         
 
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+#from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+
+        self.tplenv = self.init_template_ennvironment()
+
+        # try to get API handles
+        self.items = Items.get_instance()
+        self.logics = Logics.get_instance()
+
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+        
+        Display a list of all connected visu clients
+            
+        :return: contents of the template after beeing rendered 
+        """
+        
+        # get API handles that were unavailable during __init__
+        if self.items is None:
+            self.items = Items.get_instance()
+        if self.logics is None:
+            self.logics = Logics.get_instance()
+
+        clients = []
+
+        for clientinfo in self.plugin.return_clients():
+            c = clientinfo.get('addr', '')
+            client = dict()
+            deli = c.find(':')
+            client['ip'] = c[0:c.find(':')]
+            client['port'] = c[c.find(':') + 1:]
+            try:
+                client['name'] = socket.gethostbyaddr(client['ip'])[0]
+            except:
+                client['name'] = client['ip']
+            client['sw'] = clientinfo.get('sw', '')
+            client['swversion'] = clientinfo.get('swversion', '')
+            client['hostname'] = clientinfo.get('hostname', '')
+            client['browser'] = clientinfo.get('browser', '')
+            client['browserversion'] = clientinfo.get('browserversion', '')
+            clients.append(client)
+
+        plgitems = []
+        for item in self.items.return_items():
+            if ('visu_acl' in item.conf):
+                plgitems.append(item)
+
+        plglogics = []
+        for logic in self.logics.return_logics():
+            plglogics.append(self.logics.get_logic_info(logic))
+        
+        clients_sorted = sorted(clients, key=lambda k: k['name'])
+
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(p=self.plugin,
+                           items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
+                           logics=sorted(plglogics, key=lambda k: str.lower(k['name'])),
+                           clients=clients_sorted, client_count=len(clients_sorted))
+
+
 #########################################################################
 
 class _websocket(lib.connection.Server):
@@ -179,10 +302,11 @@ class _websocket(lib.connection.Server):
     Websocket specific class of the Plugin. Handles the websocket connections
     """
 
-    def __init__(self, sh, ip, port, tls, wsproto, querydef ):
+    def __init__(self, sh, plugin, ip, port, tls, wsproto, querydef ):
         lib.connection.Server.__init__(self, ip, port)
         self.logger = logging.getLogger(__name__)
         self._sh = sh
+        self.shtime = plugin.shtime
         self.tls = tls
         self.proto = wsproto
         self.querydef = querydef
@@ -288,6 +412,7 @@ class websockethandler(lib.connection.Stream):
         self.terminator = b"\r\n\r\n"
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
+        self.shtime = dispatcher.shtime
         self._dp = dispatcher
         self.found_terminator = self.parse_header
         self.addr = addr
@@ -343,7 +468,8 @@ class websockethandler(lib.connection.Stream):
                 self.json_send(data)
 
     def update_series(self):
-        now = self._sh.now()
+#        now = self._sh.now()
+        now = self.shtime.now()
         self._series_lock.acquire()
         remove = []
         for sid, series in self._update_series.items():
@@ -466,7 +592,8 @@ class websockethandler(lib.connection.Stream):
                 self.logger.warning("WebSocket: protocol mismatch. SmartHomeNG protocol version={0}, visu protocol version={1}".format(self.proto, proto))
             elif proto < self.proto:
                 self.logger.warning("WebSocket: protocol mismatch. Update your client: {0}".format(self.addr))
-            self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()})
+#            self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()})
+            self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self.shtime.now()})
 #            self.logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, "{'cmd': 'proto', 'ver': " + str(self.proto) + ", 'time': " + str(self._sh.now()) + "}"))
 
         elif command == 'identity':  # identify client

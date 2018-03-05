@@ -2363,6 +2363,7 @@ class Sonos(SmartPlugin):
                 if not os.access(self._local_webservice_path_snippet, os.R_OK):
                     self._logger.warning("Sonos: Local webservice snippet path '{path}' is not readable.".format(
                         path=self._local_webservice_path_snippet))
+
             if self._local_webservice_path:
                 # check access rights
                 try:

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+{% block headtable %}
+	<table class="table table-striped table-hover">
+		<tbody>
+			<tr>
+				<td class="py-1"><strong>{{_('Broker Host')}}</strong></td>
+				<td class="py-1">{{ p.broker_hostname }}</td>
+				<td class="py-1" width="50px"></td>
+				<td class="py-1"><strong>{{_('Broker Port')}}</strong></td>
+				<td class="py-1">{{ p.broker_port }}</td>
+				<td class="py-1" width="50px"></td>
+			</tr>
+			<tr>
+				<td class="py-1"><strong>{{_('Benutzer')}}</strong></td>
+				<td class="py-1">{{ p.username }}</td>
+				<td></td>
+				<td class="py-1"><strong>{{_('Passwort')}}</strong></td>
+				<td class="py-1">
+				{% if p.password %}
+					{% for letter in p.password %}*{% endfor %}
+				{% endif %}
+				</td>
+				<td></td>
+			</tr>
+			<tr>
+				<td class="py-1"><strong>{{_('QoS')}}</strong></td>
+				<td class="py-1">{{ p.qos }}</td>
+				<td></td>
+				<td class="py-1"><strong>{{_('acl')}}</strong></td>
+				<td class="py-1">{{ p.acl }}</td>
+				<td></td>
+			</tr>
+		</tbody>
+	</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if p.broker_monitoring %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong>" %}
+{% block bodytab1 %}
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>Item</th>
+		<th>Typ</th>
+		<th>Wert</th>
+		<th>Topic In / Out</th>
+		<th>Letztes Update</th>
+		<th>Letzter Change</th>
+	</tr>
+	</thead>
+	{% for item in items %}
+		{% if p.has_iattr(item.conf, 'mqtt_topic_in') or p.has_iattr(item.conf, 'mqtt_topic_out') %}
+			<tr>
+				<td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ item._type }}</td>
+				<td class="py-1">{{ item() }}</td>
+				<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt_topic_in') %}<strong>in &nbsp; : </strong>{{ p.get_iattr_value(item.conf, 'mqtt_topic_in') }}<br>{% endif %}
+					{% if p.has_iattr(item.conf, 'mqtt_topic_out') %}<strong>out: </strong>{{ p.get_iattr_value(item.conf, 'mqtt_topic_out') }}{% endif %}</td>
+				<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+				<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+</table>
+{% endblock %}
+
+get_iattr_value(self, conf, attr)
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ " Broker Information</strong>" %}
+{% block bodytab2 %}
+<table class="table table-striped table-hover pluginList">
+	<tr>
+		<td class="py-1"><strong>{{ 'Broker Version' }}</strong></td>
+		<td class="py-1">{{ p._broker.version }}</td>
+        <td width="500"></td>
+	</tr>
+	<tr>
+		<td class="py-1"><strong>{{ 'Active Clients' }}</strong></td>
+		<td class="py-1">{{ p._broker.active_clients }}</td>
+        <td></td>
+	</tr>
+	<tr>
+		<td class="py-1"><strong>{{ 'Subscriptions' }}</strong></td>
+		<td class="py-1">{{ p._broker.subscriptions }}</td>
+        <td></td>
+	</tr>
+	<tr>
+		<td class="py-1"><strong>{{ 'Messages stored' }}</strong></td>
+		<td class="py-1">{{ p._broker.stored_messages }}</td>
+        <td></td>
+	</tr>
+	<tr>
+		<td class="py-1"><strong>{{ 'Retained Messages' }}</strong></td>
+		<td class="py-1">{{ p._broker.retained_messages }}</td>
+        <td></td>
+	</tr>
+	{% if p.broker_monitoring %}
+	<tr>
+		<td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+	</tr>
+	<tr>
+		<td class="py-1"><strong>{{ _('Laufzeit') }}</strong></td>
+		<td class="py-1">{{ p.broker_uptime() }}</td>
+        <td width="500"></td>
+	</tr>
+	<tr>
+		<td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+	</tr>
+	{% endif %}
+</table>
+
+{% if p.broker_monitoring %}
+<table class="table table-striped table-hover pluginList">
+	<thead>
+		<th class="py-1">{{ _('Message Durchsatz') }}</th>
+		<th class="py-1">{{ _('letzte Minute') }}</th>
+		<th class="py-1">{{ _('letzte 5 Min.') }}</th>
+		<th class="py-1">{{ _('letzte 15 Min.') }}</th>
+		<th width="500"></th>
+	</thead>
+	<tr>
+		<td class="py-1">{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
+		<td class="py-1">{{ p._broker.msg_rcv_1min }}</td>
+		<td class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_5min }}</td>
+		<td class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_15min }}</td>
+		<td></td>
+	</tr>
+	<tr>
+		<td class="py-1">{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
+		<td class="py-1">{{ p._broker.msg_snt_1min }}</td>
+		<td class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_5min }}</td>
+		<td class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_15min }}</td>
+		<td></td>
+	</tr>
+</table>
+{% endif %}
+
+{% endblock %}
+msg_rcv_1min
+
+<!--
+	Content block for the third tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab3
+-->
+{% block bodytab3 %}
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>Item</th>
+		<th>Typ</th>
+		<th>Wert</th>
+		<th>Topic In</th>
+		<th>Letztes Update</th>
+		<th>Letzter Change</th>
+	</tr>
+	</thead>
+	{% for item in items %}
+		{% if p.has_iattr(item.conf, 'mqtt_topic_in') or p.has_iattr(item.conf, 'mqtt_topic_out') %}
+			<tr>
+				<td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ item._type }}</td>
+				<td class="py-1">{{ item() }}</td>
+				<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt_topic_in') %}{{ p.get_iattr_value(item.conf, 'mqtt_topic_in') }}{% endif %}</td>
+				<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+				<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+</table>
+{% endblock %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab4
+-->
+{% block bodytab4 %}
+{% endblock %}
