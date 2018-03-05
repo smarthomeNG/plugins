@@ -343,7 +343,11 @@ class Speaker(object):
             return
 
         for subscription in self._events:
-            subscription.unsubscribe()
+            try:
+                subscription.unsubscribe()
+            except:
+                continue
+
         self._soco = None
 
     def subscribe_base_events(self):
@@ -2286,7 +2290,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.4"
+    PLUGIN_VERSION = "1.4.5"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
                  discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
@@ -2354,11 +2358,11 @@ class Sonos(SmartPlugin):
                 # we just need an existing path with read rights, this can be done by the user while shNG is running
                 # just throw some warnings
                 if not os.path.exists(self._local_webservice_path_snippet):
-                    self._logger.warning("Sonos: Local webservice snippet path was set to '{path}' but don't "
-                                         "exists".format(path=self._local_webservice_path))
-                if not os.access(self._local_webservice_path, os.R_OK):
+                    self._logger.warning("Sonos: Local webservice snippet path was set to '{path}' but doesn't "
+                                         "exists".format(path=self._local_webservice_path_snippet))
+                if not os.access(self._local_webservice_path_snippet, os.R_OK):
                     self._logger.warning("Sonos: Local webservice snippet path '{path}' is not readable.".format(
-                        path=self._local_webservice_path))
+                        path=self._local_webservice_path_snippet))
             if self._local_webservice_path:
                 # check access rights
                 try:
