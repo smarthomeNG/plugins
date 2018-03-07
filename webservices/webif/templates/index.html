@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+{% extends "base_plugin.html" %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+    <tbody>
+        <tr>
+            <td class="py-1"><strong>{{ _('Modus') }}</strong></td>
+            <td class="py-1">
+                {% if p._mode == 'all' %}
+                {{ _('Alle Items') }}
+                {% else %}
+                {{ _('Nur in Sets definierte Items') }}
+                {% endif %}
+            </td>
+            <td class="py-1" width="300px"></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}
+{% block bodytab1 %}
+<div class="container-fluid">
+    <div class="mb-2">
+        {{ _('Die folgenden Items und Sets können über die REST und die Simple WebService API gelesen und (bei Items) verändert werden') }}:
+    </div>
+    <table class="table table-striped table-hover">
+        <tr style="border-bottom: 1px solid grey;">
+            <th>
+                REST
+            </th>
+            <th>
+                Simple
+            </th>
+        </tr>
+        {% for key, value in item_sets.items() %}
+        <tr>
+            <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold; background:#ccc;"><a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/itemset/{{key}}/">Item-Set: {{key}}</a></td>
+            <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold; background:#ccc;"><a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/itemset/{{key}}/">Item-Set: {{key}}</a></td>
+        </tr>
+             {% for item in value %}
+                <tr>
+                    <td class="p-1">
+                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item._path}}/">{{item._path}}</a>
+                    </td>
+                    <td class="p-1">
+                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item._path}}/">{{item._path}}</a>
+                    </td>
+                </tr>
+             {% endfor %}
+        {% endfor %}
+        <tr>
+            <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold; background:#ccc;"><a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/">{{ _('Alle zugreifbaren Items') }}</a></td>
+            <td style="border-bottom: 1px solid #ccc; padding: 5px; font-weight:bold; background:#ccc;"><a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/">{{ _('Alle zugreifbaren Items') }}</a></td>
+        </tr>
+        {% for item in item_data %}
+        <tr>
+            <td class="p-1">
+                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item._path}}/">{{item._path}}</a>
+            </td>
+            <td class="p-1">
+                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item._path}}/">{{item._path}}</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

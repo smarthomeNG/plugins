@@ -30,14 +30,14 @@ from lib.model.smartplugin import SmartPlugin
 class Squeezebox(SmartPlugin,lib.connection.Client):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.3.0"
-    
+
     def __init__(self, smarthome, host='127.0.0.1', port=9090):
         lib.connection.Client.__init__(self, host, port, monitor=True)
         self._sh = smarthome
         self._val = {}
         self._obj = {}
         self._init_cmds = []
-        self.logger = logging.getLogger(__name__)  
+        self.logger = logging.getLogger(__name__)
 
     def _check_mac(self, mac):
         return re.match("[0-9a-fA-F]{2}([:][0-9a-fA-F]{2}){5}", mac)
@@ -46,15 +46,15 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
         # check if PlayerID wildcard is used
         if self.has_iattr(item.conf[attr], '<playerid>'):
             # try to get from parent object
-            parent_item = item.return_parent()            
+            parent_item = item.return_parent()
             if (parent_item is not None) and self.has_iattr(parent_item.conf, 'squeezebox_playerid') and self._check_mac(self.get_iattr_value(parent_item.conf, 'squeezebox_playerid')):
                 item.conf[attr] = item.conf[attr].replace('<playerid>', self.get_iattr_value(parent_item.conf, 'squeezebox_playerid'))
             else:
-                grandparent_item = parent_item.return_parent()            
+                grandparent_item = parent_item.return_parent()
                 if (grandparent_item is not None) and self.has_iattr(grandparent_item.conf, 'squeezebox_playerid') and self._check_mac(self.get_iattr_value(grandparent_item.conf, 'squeezebox_playerid')):
                     item.conf[attr] = item.conf[attr].replace('<playerid>', self.get_iattr_value(grandparent_item.conf, 'squeezebox_playerid'))
                 else:
-                    grandgrandparent_item = grandparent_item.return_parent()            
+                    grandgrandparent_item = grandparent_item.return_parent()
                     if (grandgrandparent_item is not None) and self.has_iattr(grandgrandparent_item.conf, 'squeezebox_playerid') and self._check_mac(self.get_iattr_value(grandgrandparent_item.conf, 'squeezebox_playerid')):
                         item.conf[attr] = item.conf[attr].replace('<playerid>', self.get_iattr_value(grandgrandparent_item.conf, 'squeezebox_playerid'))
                     else:
@@ -208,7 +208,24 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                         [data[0], 'prefset server mute', '1'])
                     data[-1] = data[-1][1:]
                 elif (data[1] == 'playlist'):
-                    if (data[2] == 'jump') and (len(data) == 4):
+                    if (data[2] == 'play'):
+                        self._update_items_with_data([data[0], 'play', '1'])
+                        self._update_items_with_data([data[0], 'stop', '0'])
+                        self._update_items_with_data([data[0], 'pause', '0'])
+                        # play also overrules mute
+                        self._update_items_with_data(
+                            [data[0], 'prefset server mute', '0'])
+                        return
+                    elif (data[2] == 'stop'):
+                        self._update_items_with_data([data[0], 'play', '0'])
+                        self._update_items_with_data([data[0], 'stop', '1'])
+                        self._update_items_with_data([data[0], 'pause', '0'])
+                        return
+                    elif (data[2] == 'pause'):
+                        self._send(data[0] + ' mode ?')
+                        self._send(data[0] + ' mixer muting ?')
+                        return
+                    elif (data[2] == 'jump') and (len(data) == 4):
                         self._update_items_with_data(
                             [data[0], 'playlist index', data[3]])
                     elif (data[2] == 'name') and (len(data) <= 3):

@@ -30,7 +30,11 @@ import time
 import threading
 import lib.db
 
-from lib.model.smartplugin import SmartPlugin
+from lib.shtime import Shtime
+from lib.item import Items
+
+from lib.model.smartplugin import *
+from lib.module import Modules
 
 # Constants for item table
 COL_ITEM = ('id', 'name', 'time', 'val_str', 'val_num', 'val_bool', 'changed')
@@ -52,10 +56,11 @@ COL_LOG_VAL_NUM = 4
 COL_LOG_VAL_BOOL = 5
 COL_LOG_CHANGED = 6
 
+
 class Database(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.3.0'
+    PLUGIN_VERSION = '1.4.1'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -70,6 +75,9 @@ class Database(SmartPlugin):
 
     def __init__(self, smarthome, driver, connect, prefix="", cycle=60):
         self._sh = smarthome
+        self.shtime = Shtime.get_instance()
+        self.items = Items.get_instance()
+        
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
         self._name = self.get_instance_name()
@@ -85,6 +93,9 @@ class Database(SmartPlugin):
         self._db.setup({i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
 
         smarthome.scheduler.add('Database dump ' + self._name + ("" if prefix == "" else " [" + prefix + "]"), self._dump, cycle=self._dump_cycle, prio=5)
+
+        if not self.init_webinterface():
+            self._init_complete = False
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'database'):
@@ -284,7 +295,7 @@ class Database(SmartPlugin):
            return None if item_val_tuple[0] is None else str(item_val_tuple[0])
 
     def _datetime(self, ts):
-        return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
+        return datetime.datetime.fromtimestamp(ts / 1000, self.shtime.tzinfo())
 
     def _prepare(self, query):
         return query.format(**self._replace)
@@ -325,7 +336,7 @@ class Database(SmartPlugin):
 
                 cur = None
                 try:
-                    changed = self._timestamp(self._sh.now())
+                    changed = self._timestamp(self.shtime.now())
 
                     # Get current values of item
                     start = self._timestamp(item.last_change())
@@ -461,7 +472,7 @@ class Database(SmartPlugin):
         return {
             'cmd': 'series', 'series': tuples, 'sid': sid,
             'params' : {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end, 'step': logs['step'], 'sid': sid},
-            'update' : self._sh.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
+            'update' : self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
         }
 
     def _single(self, func, start, end='now', item=None):
@@ -487,7 +498,7 @@ class Database(SmartPlugin):
         return logs['tuples'][0][0]
 
     def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
-        _item = self._sh.return_item(item)
+        _item = self.items.return_item(item)
 
         istart = self._parse_ts(start)
         iend = self._parse_ts(end)
@@ -598,7 +609,7 @@ class Database(SmartPlugin):
             return int(frame)
         except:
             pass
-        ts = self._timestamp(self._sh.now())
+        ts = self._timestamp(self.shtime.now())
         if frame == 'now':
             fac = 0
             frame = 0
@@ -615,3 +626,152 @@ class Database(SmartPlugin):
 
     def _timestamp(self, dt):
         return int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+import csv
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.items = Items.get_instance()
+
+        self.tplenv = self.init_template_ennvironment()
+
+
+    @cherrypy.expose
+    def index(self, reload=None, action=None, item_id=None, item_path=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        if action is not None:
+            if action == "delete_log" and item_id is not None:
+                self.plugin.deleteLog(item_id)
+            if action == "item_details" and item_id is not None:
+                tmpl = self.tplenv.get_template('item_details.html')
+                rows = self.plugin.readLogs(item_id)
+                log_array = []
+                for row in rows:
+                    value_dict = {}
+                    for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
+                                COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                        if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
+                            value_dict[key] = row[key]
+                        else:
+                            value_dict[key] = datetime.datetime.fromtimestamp(row[key]/1000, tz=self.plugin.shtime.tzinfo())
+
+                    log_array.append(value_dict)
+                reversed_arr = log_array[::-1]
+                return tmpl.render(p=self.plugin,
+                                   items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
+                                                reverse=False),
+                                   tabcount=1, action=action, item_id=item_id, item_path=item_path, log_array=reversed_arr)
+
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(p=self.plugin,
+                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
+                           tabcount=1, action=action, item_id=item_id)
+
+
+    @cherrypy.expose
+    def item_csv(self, item_id):
+        """
+        Returns CSV Output for item log data
+
+        :return: item log data as CSV
+        """
+        if item_id is None:
+            return None
+        else:
+            rows = self.plugin.readLogs(item_id)
+            log_array = []
+            for row in rows:
+                value_dict = {}
+                for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM, COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                    value_dict[key] = row[key]
+                log_array.append(value_dict)
+            reversed_arr = log_array[::-1]
+            csv_file_path = '%s/var/db/%s_item_%s.csv' % (self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
+
+            with open(csv_file_path, 'w', encoding='utf-8') as f:
+                writer = csv.writer(f, dialect="excel")
+                writer.writerow(['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed'])
+                for dataset in reversed_arr:
+                    writer.writerow([dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6]])
+
+            cherrypy.request.fileName = csv_file_path
+            cherrypy.request.hooks.attach('on_end_request', self.download_complete)
+            return cherrypy.lib.static.serve_download(csv_file_path)
+
+
+    def download_complete(self):
+        os.unlink(cherrypy.request.fileName)
+
+
+    @cherrypy.expose
+    def db_dump(self):
+        """
+        returns the smarthomeNG sqlite database as download
+        """
+
+        self.plugin.dump('%s/var/db/smarthomedb_%s.dump' % (self.plugin._sh.base_dir, self.plugin.get_instance_name()))
+        mime = 'application/octet-stream'
+        return cherrypy.lib.static.serve_file(
+            "%s/var/db/smarthomedb_%s.dump" % (self.plugin._sh.base_dir, self.plugin.get_instance_name()),
+            mime, "%s/var/db/" % self.plugin._sh.base_dir)

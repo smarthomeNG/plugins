@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2013 TCr82 @ KNX-User-Forum        http://knx-user-forum.de/
+#  Copyright 2017 Thomas Creutz                      thomas.creutz@gmx.de
 #  Copyright 2016 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG
@@ -45,14 +45,14 @@ class RTR(SmartPlugin):
     _defaults = {'currentItem' : None,
                 'setpointItem' : None,
                 'actuatorItem' : None,
-                'stopItem' : None,
+                'stopItems' : None,
                 'eSum' : 0,
                 'Kp' : 0,
                 'Ki' : 0,
-                'Tlast' : time.time(),
+                'Tlast' : 0,
                 'validated' : False}
 
-    def __init__(self, sh, default_Kp = 5, default_Ki = 240):
+    def __init__(self, sh, default_Kp = 10, default_Ki = 15):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
@@ -60,23 +60,25 @@ class RTR(SmartPlugin):
         """
         self._sh = sh
         # get a unique logger for the plugin and provide it internally
-        self.logger = logging.getLogger(__name__) 
-        
+        self.logger = logging.getLogger(__name__)
+
         self.logger.debug("init method called")
-        
+
         # preset the controller defaults
         self._default_Kp = default_Kp
         self._default_Ki = default_Ki
-        self._calc_interval = 60
+        self._cycle_time = 1*60
 
         self._defaults['Tlast'] = time.time()
         self._defaults['Kp'] = default_Kp
         self._defaults['Ki'] = default_Ki
-        
+
+	self._sh.scheduler.add('rtr.scheduler', self.update_items, prio=5, cycle=int(self._cycle_time))
+
     def run(self):
         """
         Run method for the plugin
-        """        
+        """
         self.logger.debug("run method called")
         self.alive = True
         # if you want to create child threads, do not make them daemon = True!
@@ -97,7 +99,7 @@ class RTR(SmartPlugin):
         """
         if self.has_iattr(item.conf, 'rtr_current'):
             if not item.conf['rtr_current'].isdigit():
-                self.logger.error("rtr: error in {0}, rtr_current need to be the controller number" . format(item.id()))
+                self.logger.error("rtr: error in item {0}, rtr_current need to be the controller number" . format(item.id()))
                 return
             c = 'c' + item.conf['rtr_current']
 
@@ -106,33 +108,31 @@ class RTR(SmartPlugin):
                 self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values" . format(c))
                 self._controller[c] = self._defaults.copy()
 
-            # store curstrentItem into controller
+            # store currentItem into controller
             self._controller[c]['currentItem'] = item.id()
-            self.logger.info("rtr: controller '{}' was set to {}". format(c, self._controller[c]['currentItem']))
+            self.logger.info("rtr: bound item '{1}' to currentItem for controller '{0}'". format(c, item.id()))
 
             if not self.has_iattr(item.conf, 'rtr_Kp'):
-                self.logger.info("rtr: missing rtr_Kp in {0}, setting to default: {1}" . format(item.id(), self._default_Kp))
+                self.logger.info("rtr: missing rtr_Kp in item {0}, setting to default: {1}" . format(item.id(), self._default_Kp))
                 self._controller[c]['Kp'] = self._default_Kp
             else:
                 self._controller[c]['Kp'] = float(item.conf['rtr_Kp'])
 
             if not self.has_iattr(item.conf, 'rtr_Ki'):
-                self.logger.info("rtr: missing rtr_Ki in {0}, setting to default: {1}" . format(item.id(), self._default_Ki))
+                self.logger.info("rtr: missing rtr_Ki in item {0}, setting to default: {1}" . format(item.id(), self._default_Ki))
                 self._controller[c]['Ki'] = self._default_Ki
             else:
                 self._controller[c]['Ki'] = float(item.conf['rtr_Ki'])
 
-            if 'rtr.scheduler' not in self._sh.scheduler:
-                self._sh.scheduler.add('rtr.scheduler', self.update_items, prio=5, cycle=int(self._calc_interval))
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
-            
+
             return
 
         if self.has_iattr(item.conf, 'rtr_setpoint'):
             if not item.conf['rtr_setpoint'].isdigit():
-                self.logger.error("rtr: error in {0}, rtr_setpoint need to be the controller number" . format(item.id()))
+                self.logger.error("rtr: error in item {0}, rtr_setpoint need to be the controller number" . format(item.id()))
                 return
 
             c = 'c' + item.conf['rtr_setpoint']
@@ -144,6 +144,7 @@ class RTR(SmartPlugin):
 
             # store setpointItem into controller
             self._controller[c]['setpointItem'] = item.id()
+            self.logger.info("rtr: bound item '{1}' to setpointItem for controller '{0}'". format(c, item.id()))
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
@@ -152,7 +153,7 @@ class RTR(SmartPlugin):
 
         if self.has_iattr(item.conf, 'rtr_actuator'):
             if not item.conf['rtr_actuator'].isdigit():
-                self.logger.error("rtr: error in {0}, rtr_actuator need to be the controller number" . format(item.id()))
+                self.logger.error("rtr: error in item {0}, rtr_actuator need to be the controller number" . format(item.id()))
                 return
 
             c = 'c' + item.conf['rtr_actuator']
@@ -164,6 +165,7 @@ class RTR(SmartPlugin):
 
             # store actuatorItem into controller
             self._controller[c]['actuatorItem'] = item.id()
+            self.logger.info("rtr: bound item '{1}' to actuatorItem for controller '{0}'". format(c, item.id()))
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
@@ -172,12 +174,12 @@ class RTR(SmartPlugin):
 
         if self.has_iattr(item.conf, 'rtr_stop'):
             if not item.conf['rtr_stop'].isdigit():
-                self.logger.error("rtr: error in {0}, rtr_stop need to be the controller number" . format(item.id()))
+                self.logger.error("rtr: error in item {0}, rtr_stop need to be the controller number" . format(item.id()))
                 return
 
             # validate this optional Item
             if item._type is not 'bool':
-                self.logger.error("rtr: error in {0}, rtr_stop Item need to be bool" . format(item.id()))
+                self.logger.error("rtr: error in item {0}, rtr_stop Item need to be bool" . format(item.id()))
                 return
 
             c = 'c' + item.conf['rtr_stop']
@@ -187,9 +189,11 @@ class RTR(SmartPlugin):
                 self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values" . format(c))
                 self._controller[c] = self._defaults.copy()
 
-            # store stopItem into controller
-            self._controller[c]['stopItem'] = item.id()
-
+            # store stopItems into controller
+            if self._controller[c]['stopItems'] is None:
+                self._controller[c]['stopItems'] = []
+            self._controller[c]['stopItems'].append(item)
+            self.logger.info("rtr: add item '{1}' to stopItems for controller '{0}'". format(c, item.id()))
             return
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -201,30 +205,32 @@ class RTR(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-    
+
         self.logger.debug("rtr: update item {}, from caller = {}, with source={} and dest={}" . format(item.id(), caller, source, dest))
         if item() and caller != 'plugin':
-            if 'rtr_setpoint' in item.conf:
+            if 'rtr_setpoint' in item.conf or 'rtr_current' in item.conf:
                 c = 'c' + item.conf['rtr_setpoint']
-                if self._controller[c]['validated'] \
-                and ( self._controller[c]['stopItem'] is None or self._sh.return_item(self._controller[c]['stopItem'])() is True ):
-                    self.pi_controller(c)
+                if self._controller[c]['validated']:
+                    if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
+                        for item in self._controller[c]['stopItems']:
+                            if item():
+                                return
 
-            if 'rtr_current' in item.conf:
-                c = 'c' + item.conf['rtr_current']
-                if self._controller[c]['validated'] \
-                and ( self._controller[c]['stopItem'] is None or self._sh.return_item(self._controller[c]['stopItem'])() is True ):
                     self.pi_controller(c)
 
     def update_items(self):
         """ this is the callback function for the scheduler """
         for c in self._controller.keys():
-            if self._controller[c]['validated'] \
-            and ( self._controller[c]['stopItem'] is None or self._sh.return_item(self._controller[c]['stopItem'])() is True ):
+            if self._controller[c]['validated']:
+                if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
+                    for item in self._controller[c]['stopItems']:
+                        if item():
+                            return
+
                 self.pi_controller(c)
 
     def validate_controller(self, c):
-        """ this function checks wether the needed parameters are set for a given controller 
+        """ this function checks wether the needed parameters are set for a given controller
         :param c: controller to be checked
         """
         if self._controller[c]['setpointItem'] is None:
@@ -240,9 +246,9 @@ class RTR(SmartPlugin):
         self._controller[c]['validated'] = True
 
     def pi_controller(self, c):
-        """ 
+        """
         this function calculates a new actuator value for a given controller
-        
+
         w    = setpoint value / Führungsgröße (Sollwert)
         x    = current value / Regelgröße (Istwert)
         e    = control error / Regelabweichung
@@ -252,10 +258,10 @@ class RTR(SmartPlugin):
         Kp   = proportional gain / Verstärkungsfaktor
         Ki   = integral gain / Integralfaktor
         Ta   = scanning time (given in seconds)/ Abtastzeit
-         
+
         esum = esum + e
         y = Kp * e + Ki * Ta * esum
-        
+
         p_anteil = error * p_gain;
         error_integral = error_integral + error
         i_anteil = error_integral * i_gain
@@ -268,11 +274,18 @@ class RTR(SmartPlugin):
         self.logger.debug("rtr: {0} | Ta = Time() - Tlast | {1} = {2} - {3}" . format(c, Ta, (Ta + self._controller[c]['Tlast']), self._controller[c]['Tlast']))
         self._controller[c]['Tlast'] = int(time.time())
 
+        # get current and set point temp
+        w = self._sh.return_item(self._controller[c]['setpointItem'])()
+        x = self._sh.return_item(self._controller[c]['currentItem'])()
+
+        # skip execution if x is 0
+        if x == 0.00:
+            self.logger.debug("rtr: {0} | skip uninitiated x value (currently zero)" . format(c))
+            return
+
         # calculate control error
-        w = self._sh.return_item(self._controller[c]['setpointItem'])
-        x = self._sh.return_item(self._controller[c]['currentItem'])
-        e = w() - x()
-        self.logger.debug("rtr: {0} | e = w - x | {1} = {2} - {3}" . format(c, e, w(), x()))
+        e = w - x
+        self.logger.debug("rtr: {0} | e = w - x | {1} = {2} - {3}" . format(c, e, w, x))
 
         Kp = 1.0 / self._controller[c]['Kp']
         self._controller[c]['eSum'] = self._controller[c]['eSum'] + e * Ta

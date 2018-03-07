@@ -57,12 +57,26 @@ function getTree() {
         $('#tree').treeview({
             data: item_tree,
 			levels: 1,
+			expandIcon: 'plusIcon',
+		    collapseIcon: 'minusIcon',
+			selectedBackColor: '#709cc2',
             showTags: true,
             onNodeSelected: function(event, node) {
                 selectedNode = node;
                 reload(node.text);
             }
         });
+
+        function clearSearch() {
+            $('#btn-clear-search').on('click', function (e) {
+                $('#tree').treeview('clearSearch');
+                $('#tree').treeview('collapseAll', { silent: false });
+                $('#input-search').val('');
+                $('#search-output').html('');
+                results = [];
+                $('#search-results').html('');
+            });
+        };
 
         var search = function(e) {
             results = [];
@@ -73,15 +87,10 @@ function getTree() {
                 revealResults: true
             };
             var results = $('#tree').treeview('search', [ pattern, options ]);
-            $('#search-results').html(' - Treffer: '+results.length);
-            $('#btn-clear-search').on('click', function (e) {
-                $('#tree').treeview('clearSearch');
-                $('#tree').treeview('collapseAll', { silent: false });
-                $('#input-search').val('');
-                $('#search-output').html('');
-                results = [];
-                $('#search-results').html('');
-            });
+            if ($('#input-search').val() != "") {
+                $('#search-results').html(' - Treffer: '+results.length);
+            }
+            clearSearch();
         }
 
         var searchExact = function(e) {
@@ -93,7 +102,10 @@ function getTree() {
                 revealResults: true
             };
             var results = $('#tree').treeview('search', [ pattern, options ]);
-            $('#search-results').html(' - Treffer: '+results.length);
+            if ($('#input-search').val() != "") {
+                $('#search-results').html(' - Treffer: '+results.length);
+            }
+            clearSearch();
         }
 
         $('#btn-search').on('click', search);
@@ -111,7 +123,7 @@ function getTree() {
           $('#tree').treeview('collapseAll', { silent: false });
         });
 
-        if ($("#input-search") != "") {
+        if ($("#input-search").val() != "") {
             searchExact();
         }
     });

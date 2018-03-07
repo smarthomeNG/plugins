@@ -33,12 +33,14 @@ import urllib3
 import telepot
 import telepot.api
 from lib.model.smartplugin import SmartPlugin
+from lib.logic import Logics
 
 PLUGIN_ATTR_TOKEN		= 'token'
 PLUGIN_ATTR_CHAT_IDS	= 'trusted_chat_ids'
 
 ITEM_ATTR_MESSAGE		= 'telegram_message'
-ITEM_ATTR_MATCHREGEX		= 'telegram_value_match_regex'
+ITEM_ATTR_INFO		    = 'telegram_info'
+ITEM_ATTR_MATCHREGEX	= 'telegram_value_match_regex'
 
 MESSAGE_TAG_ID          = '[ID]'
 MESSAGE_TAG_NAME        = '[NAME]'
@@ -55,6 +57,7 @@ class Telegram(SmartPlugin):
     # Storage Array for all items using telegram attributes
     _items = []
     _chat_ids = []
+    _items_info = {}    # dict used whith the info-command: key = attibute_value, val= item_list
 
     # called, before items are loaded
     def __init__(self, smarthome, token='dummy', trusted_chat_ids='none', name='SH Telegram Gateway', welcome_msg='SmarthomeNG Telegram Plugin is up and running'):
@@ -90,6 +93,7 @@ class Telegram(SmartPlugin):
     # called once at startup after all items are loaded
     def run(self):
         self.alive = True
+        self.logics = Logics.get_instance() # Returns the instance of the Logics class, to be used to access the logics-api
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
@@ -105,6 +109,16 @@ class Telegram(SmartPlugin):
             value = item.conf[ITEM_ATTR_MESSAGE]
             self._items.append(item)
             return self.update_item
+
+        if ITEM_ATTR_INFO in item.conf:
+            key = item.conf[ITEM_ATTR_INFO]
+            self.logger.debug("parse item: {0} {1}".format(item, key))
+            if key in self._items_info:
+                self._items_info[key].append(item)
+            else:
+                self._items_info[key] = [item]  # dem dict neue Liste hinzufuegen
+            return self.update_item
+
         else:
             return None
 
@@ -160,40 +174,103 @@ class Telegram(SmartPlugin):
             # for cid in self._chat_ids:
             #    self._bot.sendMessage(cid, msg_txt)
 
-    def _msg_broadcast(self, msg):
-        for cid in self._chat_ids:
+    def _msg_broadcast(self, msg, chat_id=None):
+         for cid in self.get_chat_id_list(chat_id):
             try:
                 self._bot.sendMessage(cid, msg)
             except:
                 self.logger.error("could not broadcast to chat id [%d]" % cid)
+                
+    def _photo_broadcast(self, photofile, msg, chat_id=None):
+        for cid in self.get_chat_id_list(chat_id):
+            try:
+                self._bot.sendPhoto(cid, open(str(photofile),'rb'), msg)
+            except:
+                self.logger.error("could not broadcast to chat id [%d]" % cid)
+    
+    def get_chat_id_list(self, att_chat_id):
+        chat_ids_to_send = []                           # new list
+        if att_chat_id is None:                         # no attribute specified
+            chat_ids_to_send = self._chat_ids           # chat_ids from plugin configuration
+        else:
+            if isinstance(att_chat_id, list):           # if attribute is a list
+                chat_ids_to_send = att_chat_id
+            else:                                       # if attrubute is a single chat_id
+                chat_ids_to_send.append(att_chat_id)    # append to list
+        return chat_ids_to_send
+    
+    # def _photo_url_broadcast(self, url, msg):
+        # for cid in self._chat_ids:
+            # try:
+                # self._bot.sendPhoto(chat_id=cid, photo=url)
+            # except Exception as e:
+                # self.logger.error("could not broadcast to chat id [%d] %s %s error %s" % (cid, url, msg, e))
 
     def message_handler(self, msg):
         self._chat_id = msg['chat']['id']
         tmp_chat_id = msg['chat']['id']
-        command = msg['text']
-
-        self.logger.info("[%d] command received: %s" % (self._chat_id, command))
+        msg_list = msg['text'].split(' ')
+        para = ""
+        if len(msg_list) > 1:
+            command = msg_list[0]
+            para = msg_list[1]
+            self.logger.info("[%d] command received: %s para: %s" % (self._chat_id, command, para))
+        else:
+            command = msg['text']
+            self.logger.info("[%d] command received: %s" % (self._chat_id, command))
 
         # /roll: just a dummy to test interaction
         if command == '/roll':
-                self._bot.sendMessage(self._chat_id, random.randint(1,6))
+            self._bot.sendMessage(self._chat_id, random.randint(1,6))
 
-	# /time: return server time
+        # /time: return server time
         elif command == '/time':
-                self._bot.sendMessage(self._chat_id, str(datetime.datetime.now()))
+            self._bot.sendMessage(self._chat_id, str(datetime.datetime.now()))
 
         # /help: show available commands als keyboard
         elif command == '/help':
-	        self._bot.sendMessage(self._chat_id, "choose", reply_markup={"keyboard":[["/roll","/hide"], ["/time","/list"]]})
+            self._bot.sendMessage(self._chat_id, "choose", reply_markup={"keyboard":[["/roll","/hide"], ["/time","/list"], ["/lo","/info"]]})
 
         # /hide: hide keyboard
         elif command == '/hide':
-                hide_keyboard = {'hide_keyboard': True}
-                self._bot.sendMessage(self._chat_id, "I'll hide the keyboard", reply_markup=hide_keyboard)
+            hide_keyboard = {'hide_keyboard': True}
+            self._bot.sendMessage(self._chat_id, "I'll hide the keyboard", reply_markup=hide_keyboard)
 
         # /list: show registered items and value
         elif command == '/list':
             self.list_items(self._chat_id)
+            
+        # /info: show item-menu with registered items with specific attribute
+        elif command == '/info':
+            #self._bot.sendMessage(self._chat_id, "Infos from the items:", reply_markup=self.create_info_reply_markup())
+            self._bot.sendMessage(self._chat_id, "Infos from the items:", reply_markup={"keyboard":self.create_info_reply_markup()})
+            
+        # /lo: show logics
+        elif command == '/lo':
+            tmp_msg = "";
+            tmp_msg+="Logics:\n"
+            for logic in sorted(self.logics.return_loaded_logics()):    # list with the names of all logics that are currently loaded
+                data = []
+                info = self.logics.get_logic_info(logic)
+                if not info['enabled']:
+                    data.append("disabled")
+                if 'next_exec' in info:
+                    data.append("scheduled for {0}".format(info['next_exec']))
+                tmp_msg+=("{0}".format(logic))
+                if len(data):
+                    tmp_msg+=(" ({0})".format(", ".join(data)))
+                tmp_msg+=("\n")
+            self.logger.info("send Message: {}".format(tmp_msg))
+            self._bot.sendMessage(self._chat_id, tmp_msg)
+            
+        # /tr xx: trigger logic xx
+        elif command == '/tr':
+            try:
+                self.logics.trigger_logic(para, by='telegram')      # Trigger a logic
+            except Exception as e:
+                tmp_msg = ("could not trigger logic %s error %s" % (para, e))
+                self._bot.sendMessage(self._chat_id, tmp_msg)
+                #self.logger.error("could not broadcast to chat id [%d] %s %s error %s" % (cid, url, msg, e))
 
         # /subscribe: TODO: subscribe to bot
         elif command == '/subscribe':
@@ -208,10 +285,20 @@ class Telegram(SmartPlugin):
                 self._bot.sendMessage(tmp_chat_id, "Welcome at %s! Your are signed up already with chat id [%d]" % (self._name,tmp_chat_id))
             else:
                 self._bot.sendMessage(tmp_chat_id, "Welcome at %s. Please register your ID: [%d]" % (self._name, tmp_chat_id))
+        
+        # /test: test
         elif command == '/test':
             self._bot.sendMessage(tmp_chat_id, "not implemented yet")
+            
+        # /??
         else:
-            self._bot.sendMessage(tmp_chat_id, "unkown command %s" % (command))
+            # info-command: check if command in info_dict
+            c_key = command.replace("/", "", 1)
+            if c_key in self._items_info:
+                self.logger.debug("info-command: {0}".format(c_key))
+                self.list_items_info(self._chat_id, c_key)
+            else:    
+                self._bot.sendMessage(tmp_chat_id, "unkown command %s" % (command))
 
     def list_items(self, chat_id):
         text = ""
@@ -225,6 +312,38 @@ class Telegram(SmartPlugin):
         # self._bot.sendMessage(self._chat_id, "|ABC|DEF|\n|abc|def|", parse_mode='Markdown')
         # self._bot.sendMessage(self._chat_id, "*bold* _italic_ ~deleted~ `code` ````code\nblock```  [link](http://www.google.com)", parse_mode='Markdown')
         self._bot.sendMessage(chat_id, text)
+        
+    # show registered items and value with specific attribute/key
+    def list_items_info(self, chat_id, key):
+        text = ""
+        for item in self._items_info[key]:
+            if item.type():
+                text += "{0} = {1}\n".format(item.id(), item())
+            else:
+                text += "{0}\n".format(item.id())
+        self._bot.sendMessage(chat_id, text)
+        
+    # 
+    def create_info_reply_markup(self):
+        # reply_markup={"keyboard":[["/roll","/hide"], ["/time","/list"], ["/lo","/info"]]})
+        button_list = []
+        for key, value in self._items_info.items():
+            button_list.append("/"+key)
+        #self.logger.debug("button_list: {0}".format(button_list))
+        header = ["/help"]
+        #self.logger.debug("header: {0}".format(header))
+        keyboard = self.build_menu(button_list, n_cols=2, header_buttons=header)
+        #self.logger.debug("keyboard: {0}".format(keyboard))
+        return keyboard
+    
+    # util to create a bot-menu    
+    def build_menu(self, buttons, n_cols, header_buttons=None, footer_buttons=None):
+        menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+        if header_buttons:
+            menu.insert(0, header_buttons)
+        if footer_buttons:
+            menu.append(footer_buttons)
+        return menu
 
 # if __name__ == '__main__':
 #     logging.basicConfig(level=logging.DEBUG)

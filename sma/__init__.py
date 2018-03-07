@@ -290,13 +290,13 @@ class SMA(SmartPlugin):
                 except Exception as e:
                     self.logger.error("sma: adjusting inverter time failed - {}".format(e))
                     return
-                self._sh.scheduler.add('SMA', self._update_values, prio=5, cycle=self._update_cycle)
+                self.scheduler_add('SMA', self._update_values, prio=5, cycle=self._update_cycle)
 
             # disconnect from inverter and stop updates if not active or if not alive
             if self._is_connected and not (self._plugin_active and self.alive):
                 self._cmd_lock.acquire()
                 try:
-                    self._sh.scheduler.remove('SMA')
+                    self.scheduler_remove('SMA')
                 except Exception as e:
                     self.logger.error("sma: removing sma.update from scheduler failed - {}".format(e))
                 else:

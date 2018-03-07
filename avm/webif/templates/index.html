@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+{% extends "base_plugin.html" %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Verbunden') }}</strong></td>
+			<td class="py-1">{% if p._fritz_device.is_ssl() %}SSL{% else %}{{ _('Ja') }}{% endif %}</td>
+			<td class="py-1"><strong>{{ _('Benutzer') }}</strong></td>
+			<td class="py-1">{{ p.get_parameter_value_for_display('user') }}</td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Call Monitor') }}</strong></td>
+			<td class="py-1">{% if p._call_monitor %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
+			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
+			<td class="py-1"><a class="text-shng" href="http://{{ p._fritz_device.get_host() }}" target="_blank">{{ p._fritz_device.get_host() }}</a></td>
+			<td class="py-1"><strong>{{ _('Port') }}</strong></td>
+			<td class="py-1">{{ p._fritz_device.get_port() }} {% if p._fritz_device.is_ssl() %}(HTTPS){% endif %}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock %}
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('AVM Datentyp') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in p._fritz_device.get_items() %}
+					{% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
+						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}
+{% block bodytab2 %}
+		{% if p._call_monitor %}
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('AVM Datentyp') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in p._monitoring_service.get_items() %}
+				    {% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
+						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+				{% for item in p._monitoring_service.get_trigger_items() %}
+					{% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
+						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+				{% for item in p._monitoring_service.get_items_incoming() %}
+					{% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
+						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+				{% for item in p._monitoring_service.get_items_outgoing() %}
+					{% if p.get_instance_name() %}
+				    	{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+					{% else %}
+						{% set instance_key = "avm_data_type" %}
+					{% endif %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.conf[instance_key] }}</td>
+						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endif %}
+	</div>
+</div>
+
+{% endblock %}

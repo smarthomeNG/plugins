@@ -24,25 +24,19 @@
 #  along with SmartHomeNG.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-# dict for statistic functions:
-# stats_pa = { ga1 : { 'read' : n-read,
-#                      'write' : n-write,
-#                      'response' : n-response,
-#                      'last_read' : datetime,
-#                      'last_write' : datetime,
-#                      'last_response' : datetime },
-#              ga2 : {...} }
-
 import logging
 import threading
 import struct
 import binascii
 import random
 import time
+from datetime import timedelta
 
 import lib.connection
-from lib.model.smartplugin import SmartPlugin
-from datetime import timedelta
+from lib.item import Items
+from lib.model.smartplugin import *
+from lib.shtime import Shtime
+
 from . import dpts
 
 # types from knxd\src\include\eibtypes.h
@@ -80,7 +74,7 @@ DPT='dpt'
 
 class KNX(lib.connection.Client,SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.4"
+    PLUGIN_VERSION = "1.4.5"
 
 
     # tags actually used by the plugin are shown here
@@ -88,25 +82,34 @@ class KNX(lib.connection.Client,SmartPlugin):
     ITEM_TAG = [KNX_DPT, KNX_STATUS, KNX_SEND, KNX_REPLY, KNX_LISTEN, KNX_INIT, KNX_CACHE, KNX_POLL]
     ITEM_TAG_PLUS = [KNX_DTP]
 
-    def __init__(self, smarthome, time_ga=None, date_ga=None, send_time=False, busmonitor=False, host='127.0.0.1',
-                 port=6720, readonly=False, instance='default', enable_stats = True):
-        lib.connection.Client.__init__(self, host, port, monitor=True)
+#    def __init__(self, smarthome, time_ga=None, date_ga=None, send_time=False, busmonitor=None, host='127.0.0.1',
+#                 port=6720, readonly=False, instance='default', enable_stats = True):
+    def __init__(self, smarthome):
+        self.host = self.get_parameter_value('host')
+        self.port = self.get_parameter_value('port')
+        lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self.logger = logging.getLogger(__name__)
         self.logger.debug("init knx")        
-        self._sh = smarthome
+#        self._sh = smarthome
+        self.shtime = Shtime.get_instance()
+        
+        busmonitor = self.get_parameter_value('busmonitor')
+
         self.gal = {}                   # group addresses to listen to {DPT: dpt, ITEMS: [item 1, item 2, ..., item n], LOGICS: [ logic 1, logic 2, ..., logic n]}
         self.gar = {}                   # group addresses to reply if requested from knx, {DPT: dpt, ITEM: item, LOGIC: None}
         self._init_ga = []
         self._cache_ga = []             # group addresses which should be initalized by the knxd cache
         self._cache_ga_response_pending = []
-        self.time_ga = time_ga
-        self.date_ga = date_ga
-        self._instance = instance
+        self.time_ga = self.get_parameter_value('time_ga')
+        self.date_ga = self.get_parameter_value('date_ga')
+        send_time = self.get_parameter_value('send_time')
+#        self._instance = instance
         self._lock = threading.Lock()
         self._bm_separatefile = False
-        self._bm_format= "KNX[{0}]: {1} set {2} to {3}"
+        self._bm_format= "KNX[{0}]:'BM': {1} set {2} to {3}"
+        
         # following needed for statistics
-        self.enable_stats = enable_stats
+        self.enable_stats = self.get_parameter_value('enable_stats')
         self.stats_ga = {}              # statistics for used group addresses on the BUS
         self.stats_pa = {}              # statistics for used group addresses on the BUS
         self.stats_last_read = None     # last read request from KNX
@@ -114,33 +117,37 @@ class KNX(lib.connection.Client,SmartPlugin):
         self.stats_last_response = None # last response from KNX
         self.stats_last_action = None   # the newes
 
-        if self.to_bool(busmonitor,default=busmonitor):
+        if busmonitor.lower() in ['on','true']:
             self._busmonitor = self.logger.info
-        else:
+        elif busmonitor.lower() in ['off','false']:
             self._busmonitor = self.logger.debug
-
-            # write bus messages in a separate logger
-            if isinstance(busmonitor, str):
-                if busmonitor.lower() in ['logger']:
-                    self._bm_separatefile = True
-                    self._bm_format = "{0};{1};{2};{3}"
-                    self._busmonitor = logging.getLogger("knx_busmonitor").info
+        elif busmonitor.lower() == 'logger':
+            self._bm_separatefile = True
+            self._bm_format = "{0};{1};{2};{3}"
+            self._busmonitor = logging.getLogger("knx_busmonitor").info
+            self.logger.warning("Using busmonitor (L) = '{}'".format(busmonitor))
+        else:
+            self.logger.warning("Invalid value '{}' configured for parameter 'busmonitor', using 'false'".format(busmonitor))
+            self._busmonitor = self.logger.debug
 
         if send_time:
             self._sh.scheduler.add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(send_time))
 
-        readonly = self.to_bool(readonly)
-        if readonly: 
+        self.readonly = self.get_parameter_value('readonly')
+        if self.readonly: 
             self.logger.warning("!!! KNX Plugin in READONLY mode !!! ")
-        self.readonly = readonly
+
+        self.init_webinterface()
+        return
+        
 
     #### just here until the smartplugin base class is fixed: Unfortunately it does not set it's name if ALLOW_MULTIINSTANCE is False
-    def get_instance_name(self):
-        """
-            return instance name of the plugin
-            :rtype: str
-        """
-        return self._instance
+#    def get_instance_name(self):
+#        """
+#            return instance name of the plugin
+#            :rtype: str
+#        """
+#        return self._instance
 
     def _send(self, data):
         if len(data) < 2 or len(data) > 0xffff:
@@ -210,7 +217,8 @@ class KNX(lib.connection.Client,SmartPlugin):
         if 'interval' in kwargs and 'ga' in kwargs:
             ga = kwargs['ga']
             interval = int(kwargs['interval'])
-            next = self._sh.now() + timedelta(seconds=interval)
+#            next = self._sh.now() + timedelta(seconds=interval)
+            next = self.shtime.now() + timedelta(seconds=interval)
             self._sh.scheduler.add('KNX poll {}'.format(item), self._poll,
                                    value={'instance': self.get_instance_name(), ITEM: item, 'ga': ga, 'interval': interval},
                                    next=next)
@@ -219,7 +227,8 @@ class KNX(lib.connection.Client,SmartPlugin):
         self.send_time(self.time_ga, self.date_ga)
 
     def send_time(self, time_ga=None, date_ga=None):
-        now = self._sh.now()
+#        now = self._sh.now()
+        now = self.shtime.now()
         if time_ga:
             self.groupwrite(time_ga, now, '10')
         if date_ga:
@@ -323,8 +332,10 @@ class KNX(lib.connection.Client,SmartPlugin):
                 self.stats_ga[dst][flg] = 1
             else:
                 self.stats_ga[dst][flg] = self.stats_ga[dst][flg] + 1
+#            self.stats_ga[dst]['last_'+flg] = self._sh.now()
+            self.stats_ga[dst]['last_'+flg] = self.shtime.now()
 
-            # update statistics on used group addresses
+            # update statistics on used physical addresses
             if not src in self.stats_pa:
                 self.stats_pa[src] = {}
 
@@ -332,6 +343,8 @@ class KNX(lib.connection.Client,SmartPlugin):
                 self.stats_pa[src][flg] = 1
             else:
                 self.stats_pa[src][flg] = self.stats_pa[src][flg] + 1
+#            self.stats_pa[src]['last_'+flg] = self._sh.now()
+            self.stats_pa[src]['last_'+flg] = self.shtime.now()
 
         # further inspect what to do next
         if flg == 'write' or flg == 'response':
@@ -366,13 +379,16 @@ class KNX(lib.connection.Client,SmartPlugin):
                 self.logger.warning("KNX[{0}]: Wrong payload '{3}' for ga '{2}' with dpt '{1}'.".format(self.get_instance_name(), dpt, dst, binascii.hexlify(payload).decode()))
             if self.enable_stats:
                 if flg == 'write':
-                    self.stats_last_write = self._sh.now()
+#                    self.stats_last_write = self._sh.now()
+                    self.stats_last_write = self.shtime.now()
                 else:
-                    self.stats_last_response = self._sh.now()
+#                    self.stats_last_response = self._sh.now()
+                    self.stats_last_response = self.shtime.now()
         elif flg == 'read':
             self.logger.debug("KNX[{0}]: {1} read {2}".format(self.get_instance_name(), src, dst))
             if self.enable_stats:
-                self.stats_last_read = self._sh.now()
+#                self.stats_last_read = self._sh.now()
+                self.stats_last_read = self.shtime.now()
             if dst in self.gar:  # read item
                 if self.gar[dst][ITEM] is not None:
                     item = self.gar[dst][ITEM]
@@ -380,18 +396,36 @@ class KNX(lib.connection.Client,SmartPlugin):
                 if self.gar[dst][LOGIC] is not None:
                     self.gar[dst][LOGIC].trigger('KNX', src, None, dst)
 
+
     def run(self):
+        """
+        Run method for the plugin
+        """        
+        self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
 
+
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
         self.alive = False
         self.handle_close()
 
+
     def parse_item(self, item):
         """
-        examines item attributes to see if action is needed by change of the item via SmartHomeNG
-        :param item: a dictionary with item attributes
-        :return: a callback function to be called then item is to be changed
+        Plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change you should return a call back function
+                        like the function update_item down below. An example when this is needed is the knx plugin
+                        where parse_item returns the update_item function when the attribute knx_send is found.
+                        This means that when the items value is about to be updated, the call back function is called
+                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                        can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, KNX_DTP):
             self.logger.error("KNX[{0}]: Ignoring {1}: please change knx_dtp to knx_dpt.".format(self.get_instance_name(), item))
@@ -488,7 +522,8 @@ class KNX(lib.connection.Client,SmartPlugin):
                     "KNX[{0}]: Item {1} is polled on GA {2} every {3} seconds".format(self.get_instance_name(), item, poll_ga,
                                                                                       poll_interval))
                 randomwait = random.randrange(15)
-                next = self._sh.now() + timedelta(seconds=poll_interval + randomwait)
+#                next = self._sh.now() + timedelta(seconds=poll_interval + randomwait)
+                next = self.shtime.now() + timedelta(seconds=poll_interval + randomwait)
                 self._sh.scheduler.add('KNX poll {}'.format(item), self._poll,
                                        value={ITEM: item, 'ga': poll_ga, 'interval': poll_interval}, next=next)
             else:
@@ -499,7 +534,11 @@ class KNX(lib.connection.Client,SmartPlugin):
 
         return None
 
+
     def parse_logic(self, logic):
+        """
+        Plugin parse_logic method
+        """
         if KNX_DPT in logic.conf:
             dpt = logic.conf[KNX_DPT]
             if dpt not in dpts.decode:
@@ -542,11 +581,19 @@ class KNX(lib.connection.Client,SmartPlugin):
                 else:
                     self.gar[ga] = {DPT: dpt, ITEM: None, LOGIC: logic}
 
+
     def update_item(self, item, caller=None, source=None, dest=None):
         """
-        decides what to do with an updates item value
-        :param item: the item with its attributes
-        :param caller: a hint to the originator of the values change
+        Item has been updated
+        
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that 
+        is managed by this plugin.
+        
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
         """
         if self.has_iattr(item.conf, KNX_SEND):
             if caller != 'KNX':
@@ -556,6 +603,52 @@ class KNX(lib.connection.Client,SmartPlugin):
             for ga in self.get_iattr_value(item.conf, KNX_STATUS):  # send status update
                 if ga != dest:
                     self.groupwrite(ga, item(), self.get_iattr_value(item.conf, KNX_DPT))
+
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+        
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+        
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self), 
+                                     self.get_shortname(), 
+                                     config, 
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+                                   
+        return True
+
+
+# ------------------------------------------
+#    Statistics functions for KNX
+# ------------------------------------------
 
     """
     The statistics functions were introduced to watch what is happening on the KNX.
@@ -670,7 +763,10 @@ class KNX(lib.connection.Client,SmartPlugin):
         ar = [ self.stats_last_response, self.stats_last_write, self.stats_last_read ]
         while None in ar:
             ar.remove(None)
-        return max(ar)
+        if ar == []:
+            return None
+        else:
+            return max(ar)
 
     def get_unsatisfied_cache_read_ga(self):
         """
@@ -681,5 +777,88 @@ class KNX(lib.connection.Client,SmartPlugin):
         :return: list of group addresses that did not receive a cache read response
         """
         return self._cache_ga_response_pending
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_ennvironment()
+
+        self.items = Items.get_instance()
+
+        self.knxdeamon = ''
+        if self.get_process_info("ps cax|grep eibd") != '':
+            self.knxdeamon = 'eibd'
+        if self.get_process_info("ps cax|grep knxd") != '':
+            if self.knxdeamon != '':
+                self.knxdeamon += ' and '
+            self.knxdeamon += 'knxd'
+
+
+    def get_process_info(self, command):
+        """
+        returns output from executing a given command via the shell.
+        """
+        ## get subprocess module
+        import subprocess
+
+        ## call date command ##
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
+        # Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
+        # Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.
+        # Wait for process to terminate. The optional input argument should be a string to be sent to the child process, or None, if no data should be sent to the child.
+        (result, err) = p.communicate()
+
+        ## Wait for date to terminate. Get return returncode ##
+        p_status = p.wait()
+        return str(result, encoding='utf-8', errors='strict')
+
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+        
+        Render the template and return the html file to be delivered to the browser
+            
+        :return: contents of the template after beeing rendered 
+        """
+        plgitems = []
+        for item in self.items.return_items():
+#            if ((KNX_DPT in item.conf) or (KNX_STATUS in item.conf) or (KNX_SEND in item.conf) or (KNX_REPLY in item.conf) or 
+#               (KNX_CACHE in item.conf) or (KNX_INIT in item.conf) or (KNX_LISTEN in item.conf) or (KNX_POLL in item.conf)):
+            if (self.plugin.has_iattr(item.conf, KNX_DPT) or self.plugin.has_iattr(item.conf, KNX_STATUS) or self.plugin.has_iattr(item.conf, KNX_SEND) or 
+                self.plugin.has_iattr(item.conf, KNX_REPLY) or self.plugin.has_iattr(item.conf, KNX_CACHE) or self.plugin.has_iattr(item.conf, KNX_INIT) or
+                self.plugin.has_iattr(item.conf, KNX_LISTEN) or self.plugin.has_iattr(item.conf, KNX_POLL)):
+                plgitems.append(item)
+
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin,
+                           items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
+                           knxdeamon=self.knxdeamon,
+                           stats_ga=self.plugin.get_stats_ga(), stats_ga_list=sorted(self.plugin.get_stats_ga(), key=lambda k: str(int(k.split('/')[0])+100)+str(int(k.split('/')[1])+100)+str(int(k.split('/')[2])+1000) ),
+                           stats_pa=self.plugin.get_stats_pa(), stats_pa_list=sorted(self.plugin.get_stats_pa(), key=lambda k: str(int(k.split('.')[0])+100)+str(int(k.split('.')[1])+100)+str(int(k.split('.')[2])+1000) )
+                          )
 
 

@@ -7,7 +7,7 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; mute; on; MUON; MU?; MU**; RW
 1; mute; off; MUOFF; MU?; MU***; RW
 1; sleep; set; SLP***; SLP?; SLP***; RW; ; 120; num|bool
-1; standby; set; STBY*; STBY?; STBY*; RW; ; ; str
+1; standby; set; STBY*; STBY?; STBY*; RW; ; ; str|bool
 1; volume; set; MV**; MV?; MV**; RW; ; 90
 1; volume+; increase; MVUP; ; MV; W
 1; volume-; decrease; MVDOWN; ; MV; W
@@ -52,7 +52,7 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 2; volumelow; ; Z250; MV?; Z250; W; ; ; num
 2; volumehigh; ; Z275; MV?; Z275; W; ; ; num
 2; volume; set; Z2**; Z2?; Z2**; RW; ; 90
-2; standby; set; Z2STBY*; Z2STBY?; Z2STBY*; RW; ; ; str
+2; standby; set; Z2STBY*; Z2STBY?; Z2STBY*; RW; ; ; str|bool
 2; sleep; set; Z2SLP***; Z2SLP?; Z2SLP***; RW; ; 120; num|bool
 3; power; on; Z3ON; Z3?; Z3**; RW
 3; power; off; Z3OFF; Z3?; Z3***; RW
@@ -64,5 +64,5 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 3; volumelow; ; Z350; MV?; Z350; W; ; ; num
 3; volumehigh; ; Z375; MV?; Z375; W; ; ; num
 3; volume; set; Z3**; Z3?; Z3**; RW; ; 90
-3; standby; set; Z3STBY*; Z3STBY?; Z3STBY*; RW; ; ; str
+3; standby; set; Z3STBY*; Z3STBY?; Z3STBY*; RW; ; ; str|bool
 3; sleep; set; Z3SLP***; Z3SLP?; Z3SLP***; RW; ; 120; num|bool

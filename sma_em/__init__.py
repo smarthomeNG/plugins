@@ -28,13 +28,12 @@ import socket
 import time
 import struct
 import binascii
-
-from lib.model.smartplugin import SmartPlugin
-
+from lib.model.smartplugin import *
+from lib.module import Modules
 
 class SMA_EM(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0.2"
+    PLUGIN_VERSION = "1.5.0.3"
 
     # listen to the Multicast; SMA-Energymeter sends its measurements to 239.12.255.254:9522
     MCAST_GRP = '239.12.255.254'
@@ -60,6 +59,15 @@ class SMA_EM(SmartPlugin):
         self.sock.bind(('', self.MCAST_PORT))
         mreq = struct.pack("4sl", socket.inet_aton(self.MCAST_GRP), socket.INADDR_ANY)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+
+        if not self.init_webinterface():
+            self._init_complete = False
+
+    def get_serial(self):
+        return self._serial
+
+    def get_time_sleep(self):
+        return self._time_sleep
 
     def run(self):
         """
@@ -337,3 +345,83 @@ class SMA_EM(SmartPlugin):
                    'q3surpluscounter': q3surpluscounter,
                    'v3': v3, 'thd3': thd3, 'cosphi3': cosphi3}
         return emparts
+
+    def get_items(self):
+        return self._items
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+
+        self.tplenv = self.init_template_ennvironment()
+
+
+    @cherrypy.expose
+    def index(self):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
+                           interface=None, item_count=len(self.plugin.get_items()),
+                           plugin_info=self.plugin.get_info(), tabcount=1, tab1title="SMA EM Items (%s)" % len(self.plugin.get_items()),
+                           p=self.plugin)

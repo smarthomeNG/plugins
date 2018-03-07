@@ -6,23 +6,27 @@
 	{% endwith %}
 {% endblock navbar %}
 
+{% block title %}
+{{ _('Scheduler', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
 {% block content %}
 <div class="container-fluid navBorder">
 	<ul class="nav nav-tabs">
-		<li id="tab_items" class="nav-item"><a class="text-dark nav-link active" data-toggle="tab" href="#item_schedules">{{ _('Item') }} {{ _('Scheduler (plural)') }}</a></li>
-		<li id="tab_logics" class="nav-item"><a class="text-dark nav-link" data-toggle="tab" href="#logic_schedules">{{ _('Logik') }} {{ _('Scheduler (plural)') }}</a></li>
-		<li id="tab_plugins" class="nav-item"><a class="text-dark nav-link" data-toggle="tab" href="#plugin_schedules">{{ _('Plugin') }} {{ _('Scheduler (plural)') }}</a></li>
-		<li id="tab_rest" class="nav-item"><a class="text-dark nav-link" data-toggle="tab" href="#rest_schedules">{{ _('sonstige') }} {{ _('Scheduler (plural)') }}</a></li>
+		<li id="tab_items" class="nav-item"><a class="text-dark nav-link active" data-toggle="tab" href="#item_schedules">{{ _('Item Scheduler') }}</a></li>
+		<li id="tab_logics" class="nav-item"><a class="text-dark nav-link" data-toggle="tab" href="#logic_schedules">{{ _('Logik Scheduler') }}</a></li>
+		<li id="tab_plugins" class="nav-item"><a class="text-dark nav-link" data-toggle="tab" href="#plugin_schedules">{{ _('Plugin Scheduler') }}</a></li>
+		<li id="tab_rest" class="nav-item"><a class="text-dark nav-link" data-toggle="tab" href="#rest_schedules">{{ _('sonstige Scheduler') }}</a></li>
 	</ul>
 </div>
-<div class="tab-content">
+<div style="margin-left: 10px; margin-right: 10px;" class="tab-content">
 	<div id="all_schedules" class="tab-pane" role="tabpanel">
 		<div class="table-responsive">
 			<table class="table table-striped table-hover">
 				<thead>
-					<tr>
+					<tr class="shng_heading">
 						<th style="width: 280px;">{{ _('Scheduler') }}</th>
-						<th style="width: 220px;">{{ _('nächste Ausführung') }}</th>
+						<th style="width: 250px;">{{ _('nächste Ausführung') }}</th>
 						<th style="width: 130px;">{{ _('Cycle') }}</th>
 						<th>{{ _('Crontab') }}</th>
 					</tr>
@@ -46,9 +50,9 @@
 		<div class="table-responsive">
 			<table class="table table-striped table-hover">
 				<thead>
-					<tr>
+					<tr class="shng_heading">
 						<th style="width: 280px;">{{ _('Scheduler') }}</th>
-						<th style="width: 220px;">{{ _('nächste Ausführung') }}</th>
+						<th style="width: 250px;">{{ _('nächste Ausführung') }}</th>
 						<th style="width: 130px;">{{ _('Cycle') }}</th>
 						<th>{{ _('Crontab') }}</th>
 					</tr>
@@ -74,9 +78,9 @@
 		<div class="table-responsive">
 			<table class="table table-striped table-hover">
 				<thead>
-					<tr>
+					<tr class="shng_heading">
 						<th style="width: 280px;">{{ _('Scheduler') }}</th>
-						<th style="width: 220px;">{{ _('nächste Ausführung') }}</th>
+						<th style="width: 250px;">{{ _('nächste Ausführung') }}</th>
 						<th style="width: 130px;">{{ _('Cycle') }}</th>
 						<th>{{ _('Crontab') }}</th>
 					</tr>
@@ -102,9 +106,9 @@
 		<div class="table-responsive">
 			<table class="table table-striped table-hover">
 				<thead>
-					<tr>
+					<tr class="shng_heading">
 						<th style="width: 280px;">{{ _('Scheduler') }}</th>
-						<th style="width: 220px;">{{ _('nächste Ausführung') }}</th>
+						<th style="width: 250px;">{{ _('nächste Ausführung') }}</th>
 						<th style="width: 130px;">{{ _('Cycle') }}</th>
 						<th>{{ _('Crontab') }}</th>
 					</tr>
@@ -130,9 +134,9 @@
 		<div class="table-responsive">
 			<table class="table table-striped table-hover">
 				<thead>
-					<tr>
+					<tr class="shng_heading">
 						<th style="width: 280px;">{{ _('Scheduler') }}</th>
-						<th style="width: 220px;">{{ _('nächste Ausführung') }}</th>
+						<th style="width: 250px;">{{ _('nächste Ausführung') }}</th>
 						<th style="width: 130px;">{{ _('Cycle') }}</th>
 						<th>{{ _('Crontab') }}</th>
 					</tr>

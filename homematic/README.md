@@ -1,46 +1,91 @@
-# homematic
+# Sample Plugin <- put the name of your plugin here
+
+#### Version 1.x.y
+
+Describe the purpose of the plugin right here. (What is the plugin good for?)
+
+## Change history
+
+If you want, you can add a change history here:
+
+### Changes Since version 1.x.x
+
+- Fixed this
+
+### Changes Since version 1.x.w
+
+- Added that feature
+
 
 ## Requirements
 
-Homematic Hardware Gateway
+List the requirements of your plugin. Does it need special software or hardware?
+
+### Needed software
+
+* list
+* the
+* needed
+* software
+
+Including Python modules and SmartHomeNG modules
+
+### Supported Hardware
+
+* list
+* the
+* supported
+* hardware
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-```
-[homematic]
-    class_name = Homematic
-    class_path = plugins.homematic
-    host = 192.168.50.250
-    # port = 2001
-    # cycle = 60
-```
+Please provide a plugin.yaml snippet for your plugin with ever option your plugin supports. Optional attributes should be commented out.
 
-## items.conf
-```
-    [[deckenlicht_sofa]]
-        name = Deckenlicht Sofa
-        visu = yes
-        type = bool
-        hm_address = JEQ0017982
-        hm_type = switch
+```yaml
+My:
+   class_name: MyPlugin
+   class_path: plugins.myplugin
+   host: 10.10.10.10
+#   port: 1010
 ```
 
-### hm_type
+Please provide a description of the attributes.
+This plugin needs an host attribute and you could specify a port attribute which differs from the default '1010'.
 
-Possible values
+### items.yaml
 
-- for switches:
+List and describe the possible item attributes.
 
-  - switch
-  - 2ch_switch
+#### my_attr
 
-- for raffstores:
+Description of the attribute(s)...
 
-  - pos
-  - stop
-  - move
+#### my_attr2
+
+#### Example
+
+Please provide an item configuration with every attribute and usefull settings.
+
+```yaml
+# items/my.yaml
+
+someroom:
+    mydevice:
+        type: bool
+        my_attr: setting
+```
+
+### logic.yaml
+If your plugin support item triggers as well, please describe the attributes like the item attributes.
 
 
+## Methods
+If your plugin provides methods for logics. List and describe them here...
 
+### method1(param1, param2)
+This method enables the logic to send param1 and param2 to the device. You could call it with `sh.my.method1('String', 2)`.
+
+### method2()
+This method does nothing.

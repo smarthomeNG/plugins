@@ -3,14 +3,14 @@ plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Benzinpreise'
-        en: ''
+        de: 'Benzinpreise über die API von Tankerkönig. Bitte sicherstellen, die API nicht zu oft aufzurufen. Bitte Hinweise unter https://creativecommons.tankerkoenig.de/#techInfo beachten!'
+        en: 'Petrol station prices by the API of TankerKönig. Take care not to request the interface too often or for too many petrol stations. Please follow instructions given on https://creativecommons.tankerkoenig.de/#techInfo.'
     maintainer: psilo909
     tester: Sandman60
 #    keywords: iot xyz
-    documentation: https://github.com/smarthomeNG/smarthome/wiki/tankerkoenig        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins_doc/config/tankerkoenig.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/938924-benzinpreis-plugin
-
+    keywords: petrol station, fuel prices, petrol prices
     version: 1.1.1                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
@@ -19,6 +19,12 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+    apikey:
+        type: str
+        mandatory: True
+        description:
+            de: 'Persönlicher API Key für TankerKoenig. Registrierung unter https://creativecommons.tankerkoenig.de.'
+            en: 'Your own personal API key for TankerKoenig. For your own key register to https://creativecommons.tankerkoenig.de.'
     
 item_attributes:
     # Definition of item attributes defined by this plugin

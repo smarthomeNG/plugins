@@ -61,19 +61,18 @@ class BackendPlugins:
             conf_plugins[plugin] = _conf[plugin]
 
         plugin_list = []
-#        for x in self._sh._plugins:
-#        for x in self._sh.return_plugins():
         for x in self.plugins.return_plugins():
             plugin = dict()
             plugin['stopped'] = False
             if bool(x._parameters):
                 plugin['attributes'] = x._parameters
             else:
-                plugin['attributes'] = conf_plugins[x._config_section]
+                plugin['attributes'] = conf_plugins.get(x._config_section, {})
             plugin['metadata'] = x._metadata
             if isinstance(x, SmartPlugin):
                 plugin['smartplugin'] = True
                 plugin['instancename'] = x.get_instance_name()
+                plugin['instance'] = x
                 plugin['multiinstance'] = x.is_multi_instance_capable()
                 plugin['version'] = x.get_version()
                 plugin['shortname'] = x.get_shortname()
@@ -85,8 +84,8 @@ class BackendPlugins:
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
             
-            if  plugin['shortname'] in ['cli','blockly']:
-                plugin['stopped'] = True
+#            if  plugin['shortname'] in ['cli','blockly']:
+#                plugin['stopped'] = True
             plugin_list.append(plugin)
         plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])
 

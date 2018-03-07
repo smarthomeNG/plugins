@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!--
+	table whith essential info (displayed right in the top section)
+-->
+{% block headtable %}	
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1" width="200"><strong>Interface {{ _('Typ') }}</strong></td>
+			<td class="py-1"><a class="text-shng" href="http://{{ p.host }}" target="_blank">{{ interface.TYPE }}</a></td>
+			<td class="py-1" width="200"><strong>{{ _('Verbunden') }}</strong></td>
+			<td class="py-1">{% if interface.CONNECTED %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td width="100"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Adresse') }}</strong></td>
+			<td class="py-1">{{ interface.ADDRESS }}</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Firmware') }}</strong></td>
+			<td class="py-1">{{ interface.FIRMWARE_VERSION }}</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock %}	
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+	<form action="" method="post">
+	<button id="btn1" class="btn btn-shng btn-sm" name="learn" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Device Anlernen') }}&nbsp;</button>
+	</form>
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th class="py-1">Item</th>
+					<th class="py-1">{{ _('Typ') }}</th>
+					<th class="py-1">{{ _('Wert') }}</th>
+					<th class="py-1">HM {{ _('Adresse') }}</th>
+					<th class="py-1">HM {{ _('Kanal') }}</th>
+					<th class="py-1">HM {{ _('Funktion') }}</th>
+					<th class="py-1">HM {{ _('Knoten') }}</th>
+					<th class="py-1" width="200px"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for i in items|sort %}
+					<tr style="cursor: pointer;">
+						<td class="py-1">{{ i[1] }}</td>
+						<td class="py-1">{{ i[1].type() }}</td>
+						<td class="py-1">{{ i[1]() }}</td>
+						<td class="py-1">{{ i[2] }}</td>
+						{% if not i[4] %}
+								<td colspan="3" class="py-1" style="color: red; font-weight: bold;">{{ _('Kein Device mit der Adresse gefunden') }}</td>
+						{% elif not i[3] %}
+								<td colspan="3" class="py-1" style="color: red; font-weight: bold;">{{ _('Funktion') }} {{ i[4] }} {{ _('nicht gefunden') }}</td>
+						{% elif not i[5] %}
+								<td colspan="3" class="py-1" style="color: red; font-weight: bold;">{{ _('Funktion') }} {{ i[4] }} {{ _('existiert nicht für Kanal') }} {{ i[3] }}</td>
+						{% else %}
+							<td class="py-1">{{ i[3] }}</td>
+							<td class="py-1">{{ i[4] }}</td>
+							<td class="py-1">{{ i[5] }}</td>
+						{% endif %}
+						<td class="py-1"></td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " " + _('Geräte') + "</strong> (" ~ device_count ~ ")" %}
+{% block bodytab2 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th class="py-1">{{ _('Name') }}</th>
+					<th class="py-1">{{ _('Adresse') }}</th>
+					<th class="py-1">HM-{{ _('Typ') }}</th>
+					<th class="py-1">{{ _('Typ') }}</th>
+					<th class="py-1">{{ _('Firmware') }}</th>
+					<th class="py-1">{{ _('Version') }}</th>
+					<th class="py-1">RSSI</td>
+					<th class="py-1" width="200px"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for d in devices|sort(attribute='name') %}
+					<tr id="{{ loop.index }}_click" style="cursor: pointer;">
+						<td class="py-1">{{ d.name }}</td>
+						<td class="py-1">{{ d.address }}</td>
+						<td class="py-1">{{ d.hmtype }}</td>
+						<td class="py-1">{{ d.type }}</td>
+						<td class="py-1">{{ d.firmware }}</td>
+						<td class="py-1">{{ d.version }}</td>
+						<td class="py-1">{{ d.dev.getAttributeData('RSSI_DEVICE') }}</td>
+						<td class="py-1"></td>
+					</tr>
+					<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
+						<td class="py-1" colspan="10">
+							<div class="card">
+
+								<div class="card-body p-1">
+									<table class="table mb-0">
+										<thead>
+											<tr>
+												<th class="p-0" width="150">Node</td>
+												<th class="p-0">Data</td>
+											</tr>
+										</thead>
+										    {% if d.dev.ACTIONNODE != {} %}
+											<tr>
+												<td class="p-0">{{ 'ACTIONNODE' }}</td>
+												<td class="p-0">{{ d.dev.ACTIONNODE }}</td>
+											</tr>
+											{% endif %}
+										    {% if d.dev.ATTRIBUTENODE != {} %}
+											<tr>
+												<td class="p-0">{{ 'ATTRIBUTENODE' }}</td>
+												<td class="p-0">{{ d.dev.ATTRIBUTENODE }}</td>
+											</tr>
+											{% endif %}
+										    {% if d.dev.BINARYNODE != {} %}
+											<tr>
+												<td class="p-0">{{ 'BINARYNODE' }}</td>
+												<td class="p-0">{{ d.dev.BINARYNODE }}</td>
+											</tr>
+											{% endif %}
+										    {% if d.dev.EVENTNODE != {} %}
+											<tr>
+												<td class="p-0">{{ 'EVENTNODE' }}</td>
+												<td class="p-0">{{ d.dev.EVENTNODE }}</td>
+											</tr>
+											{% endif %}
+										    {% if d.dev.SENSORNODE != {} %}
+											<tr>
+												<td class="p-0">{{ 'SENSORNODE' }}</td>
+												<td class="p-0">{{ d.dev.SENSORNODE }}</td>
+											</tr>
+											{% endif %}
+										    {% if d.dev.WRITENODE != {} %}
+											<tr>
+												<td class="p-0">{{ 'WRITENODE' }}</td>
+												<td class="p-0">{{ d.dev.WRITENODE }}</td>
+											</tr>
+											{% endif %}
+									</table>
+								</div>
+
+							</div>
+						</td>
+					</tr>
+					<script>
+						/* If foldable content: add onclick for table row, stop unfolding when clicking pypi link inside. */
+						$('#{{ loop.index }}_click').click(function(){
+							$('#{{ loop.index }}_additional').toggle();
+						});
+						$('#{{ loop.index }}_additional').click(function(){
+							$('#{{ loop.index }}_additional').toggle();
+						});
+					</script>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab3
+-->
+{% block bodytab3 %}
+{% endblock %}
+
+
+<!--
+	Content block for the fourth tab of the Webinterface
+	If wanted, a title for the tab can be defined as:
+		{  % set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
+
+	It has to be defined before (and outside) the block bodytab4
+-->
+{% block bodytab4 %}
+{% endblock %}
