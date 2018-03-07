@@ -345,7 +345,8 @@ class Speaker(object):
         for subscription in self._events:
             try:
                 subscription.unsubscribe()
-            except:
+            except Exception as error:
+                self._logger.warning("Sonos: {error}".format(error=error))
                 continue
 
         self._soco = None
