@@ -343,6 +343,7 @@ class BackendItems:
                          'eval_trigger': self.disp_str(item._eval_trigger),
                          'on_update': html.escape(self.list_to_displaystring(on_update_list)),
                          'on_change': html.escape(self.list_to_displaystring(on_change_list)),
+                         'log_change': self.disp_str(item._log_change),
                          'cycle': str(cycle),
                          'crontab': str(crontab),
                          'autotimer': self.disp_str(item._autotimer),
