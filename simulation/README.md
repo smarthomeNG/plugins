@@ -214,6 +214,37 @@ smartVISU. I created a block the looks like in the following picture:
 The code is here. Replace the item names with yours from the item.conf file. 
 The png files for the lamps are in the package. 
 
+#### SmartVisu 2.9:
+
+```html
+/** # Simulations Plugin Bedienung ---------------------------------------------------------*/
+<div class="block">
+	<div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+		<div data-role="collapsible" data-collapsed="false">
+		<h3>Anwesenheitssimulation</h3>
+		<table width=100%>
+			<tr>
+				<td>{{ basic.symbol('','sim.status','','lamp_sim.svg',['4','0','1','2','3'],'',['#0b0','#A4A4A4','#A4A4A4','#A4A4A4','#A4A4A4']) }}</td>
+				<td>Aufgenommene Tage<br>{{ basic.print('', 'sim.tank') }}</td>
+				<td>{{ basic.symbol('','sim.status','','lamp_sim.svg',['0','4','1','2','3'],'',['#A4A4A4','#A4A4A4','#fa3','#f00','#BF00FF']) }}</td>
+				<td rowspan=3 width="20%">{{ basic.tank('P_tank1', 'sim.tank',0,15,1,'cylinder','#0C0') }}</td>
+			</tr><tr>
+				<td>{{ basic.stateswitch('', 'sim.control', 'mini', '2', 'audio_play.svg', '', '') }}</td>
+				<td>{{ basic.stateswitch('', 'sim.control', 'mini', '1', 'audio_stop.svg', '', '') }}</td>
+				<td>{{ basic.stateswitch('', 'sim.control', 'mini', '3', 'audio_rec.svg', '', '') }}</td>
+				<td></td>
+			</tr><tr>
+				<td colspan=3 width="80%">{{basic.print('','sim.message', 'html') }}</td>
+				<td></td>
+			</tr>
+		</table>
+	</div>
+  </div>
+</div>
+```
+
+#### SmartVisu <= 2.8:
+
 ```html
 <h1><img class="icon" src='{{ icon0 }}time_clock.png' />Simulation</h1>
 <div class="block">
