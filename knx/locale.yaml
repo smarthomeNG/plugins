@@ -2,7 +2,11 @@ plugin_translations:
     # Translations for the plugin specially for the web interface
     'Statistiken':           {'de': '=', 'en': 'Statistics', 'fr': 'Statistiques'}
     'Letzte KNX Aktivität':  {'de': '=', 'en': 'Last KNX activity', 'fr': 'Dernière activité KNX'}
-    
+    '# gelesen':             {'de': '=', 'en': '# read', 'fr': ''}
+    '# geschrieben':         {'de': '=', 'en': '# write', 'fr': ''}
+    '# geantwortet':         {'de': '=', 'en': '# response', 'fr': ''}
+    'Gruppen Adresse':       {'de': '=', 'en': 'Group Address', 'fr': ''}
+
     # Alternative format for translations of longer texts:
 #    'Hier kommt der Inhalt des Webinterfaces hin.':
 #        de: '='
