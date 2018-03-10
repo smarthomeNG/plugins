@@ -82,6 +82,9 @@ Die Entwicklungsergebnisse werden in anderer Form in SmartHomeNG einfließen.
 						</td>
 						<td class="p-1">{{ logger.disabled }}</td>
 						<td class="p-1">
+						    {% if logger.handlers|length == 0 %}
+						    {{ levellist[logger.level//10] }}
+						    {% else %}
 							<select class="form-control" name="level" onchange="this.form.submit()">
 								<option value="CRITICAL"{% if levelname == 'CRITICAL' %} selected{% endif %}>CRITICAL</option>
 								<option value="ERROR"{% if levelname == 'ERROR' %} selected{% endif %}>ERROR</option>
@@ -89,6 +92,7 @@ Die Entwicklungsergebnisse werden in anderer Form in SmartHomeNG einfließen.
 								<option value="INFO"{% if levelname == 'INFO' %} selected{% endif %}>INFO</option>
 								<option value="DEBUG"{% if levelname == 'DEBUG' %} selected{% endif %}>DEBUG</option>
 							</select>
+						    {% endif %}
 						</td>
 {#						<td class="p-1">{{ logger.filters }}</td> #}
 						<td></td>
@@ -152,6 +156,9 @@ logging.Logger
 						</td>
 						<td class="p-1">{{ logger.disabled }}</td>
 						<td class="p-1">
+						    {% if logger.handlers|length == 0 %}
+						    {{ levellist[logger.level//10] }}
+						    {% else %}
 							<select class="form-control" name="level" onchange="this.form.submit()">
 								<option value="CRITICAL"{% if levelname == 'CRITICAL' %} selected{% endif %}>CRITICAL</option>
 								<option value="ERROR"{% if levelname == 'ERROR' %} selected{% endif %}>ERROR</option>
@@ -159,6 +166,7 @@ logging.Logger
 								<option value="INFO"{% if levelname == 'INFO' %} selected{% endif %}>INFO</option>
 								<option value="DEBUG"{% if levelname == 'DEBUG' %} selected{% endif %}>DEBUG</option>
 							</select>
+						    {% endif %}
 						</td>
 						<td></td>
 						<td class="p-1">
@@ -211,6 +219,9 @@ logging.Logger
 						</td>
 						<td class="p-1">{{ logger.disabled }}</td>
 						<td class="p-1">
+						    {% if logger.handlers|length == 0 or logger.name == '__main__' %}
+						    {{ levellist[logger.level//10] }}
+						    {% else %}
 							<select class="form-control" name="level" onchange="this.form.submit()">
 								<option value="CRITICAL"{% if levelname == 'CRITICAL' %} selected{% endif %}>CRITICAL</option>
 								<option value="ERROR"{% if levelname == 'ERROR' %} selected{% endif %}>ERROR</option>
@@ -218,6 +229,7 @@ logging.Logger
 								<option value="INFO"{% if levelname == 'INFO' %} selected{% endif %}>INFO</option>
 								<option value="DEBUG"{% if levelname == 'DEBUG' %} selected{% endif %}>DEBUG</option>
 							</select>
+						    {% endif %}
 						</td>
 						<td class="p-1"></td>
 						<td class="p-1">
