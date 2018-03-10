@@ -398,46 +398,27 @@ class Speaker(object):
         self.sonos_playlists()
 
     def check_subscriptions(self) -> None:
-        """
-        Do some subscription checks. If a subscription ist not active, we're trying to re-subscribe.
-        """
-        subs_ok = True
-        zone_subscribed = False
 
-        # check topology, system, alarm event for all speaker:
-        #if not self.zone_subscription.is_subscribed:
-        #    subs_ok = False
         self.zone_subscription.unsubscribe()
         self.zone_subscription.subscribe()
-        #    zone_subscribed = True
-        #if not self.system_subscription.is_subscribed:
-        #    subs_ok = False
+
         self.system_subscription.unsubscribe()
         self.system_subscription.subscribe()
-        #if not self.alarm_subscription.is_subscribed:
-        #   subs_ok = False
+
         self.alarm_subscription.unsubscribe()
         self.alarm_subscription.subscribe()
-        #if not self.render_subscription.is_subscribed:
-        subs_ok = False
+
         self.render_subscription.unsubscribe()
         self.render_subscription.subscribe()
 
-        #if self.is_coordinator:
-        #    if not self.av_subscription.is_subscribed:
-        #        subs_ok = False
         self.av_subscription.unsubscribe()
         self.av_subscription.subscribe()
 
         # sometimes a discover fails --> coordinator is empty --> resubscribe zone topology event
-        #if not zone_subscribed:
-        #if not self.coordinator:
-        #subs_ok = False
         self.zone_subscription.unsubscribe()
         self.zone_subscription.subscribe()
 
-        #if subs_ok:
-        self._logger.debug("Sonos: {uid}: Event subscriptions ok".format(uid=self.uid))
+        self._logger.debug("Sonos: {uid}: Event subscriptions done".format(uid=self.uid))
 
     # Event Handler routines ###########################################################################################
 
