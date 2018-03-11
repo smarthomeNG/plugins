@@ -2074,7 +2074,7 @@ class Speaker(object):
             sn = 0
             meta = to_didl_string(items[0])
 
-            uri = "x-sonosapi-stream:{0}?sid={1}&sn={2}".format(item_id, sid, sn)
+            uri = "x-sonosapi-stream:{0}?sid={1}&flags=8224&sn={2}".format(item_id, sid, sn)
 
             self.soco.avTransport.SetAVTransportURI([('InstanceID', 0),
                                                      ('CurrentURI', uri), ('CurrentURIMetaData', meta)])
