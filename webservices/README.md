@@ -106,7 +106,7 @@ returns:
 
 Sets a value of an item.
 
-http://<your_server_ip>:<your_services_port>/ws/items/<item_path>/<value>
+http://<your_server_ip>:<your_services_port>/ws/items/<item_path>/\<value\>
 
 E.g. http://192.168.178.100:1234/ws/items/office.light/0 or http://192.168.178.100:1234/ws/items/office.light/False turns off the light.
 
