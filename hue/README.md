@@ -60,8 +60,10 @@ Minimal configuration for single bridge an default settings
 HUE:
     class_name: HUE
     class_path: plugins.hue
-    hue_user: 38f625a739562a8bd261ab9c7f5e62c8
-    hue_ip: 192.168.2.2
+    hue_user:
+      - 38f625a739562a8bd261ab9c7f5e62c8
+    hue_ip:
+      - 192.168.2.2
 ```
 
 #### hue_user
