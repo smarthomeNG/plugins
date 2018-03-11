@@ -780,7 +780,7 @@ class HUE(SmartPlugin):
 
     def authorizeuser(self, hueBridgeId='0'):
         data = json.dumps(
-            {"devicetype": "smarthome", "username": self._hue_user[int(hueBridgeId)]})
+            {"devicetype": "smarthome#" + self._hue_user[int(hueBridgeId)]})
         con = http.client.HTTPConnection(self._hue_ip[int(hueBridgeId)])
         con.request("POST", "/api", data)
         resp = con.getresponse()
@@ -788,7 +788,7 @@ class HUE(SmartPlugin):
         if resp.status != 200:
             self.logger.error('authorize: Authenticate request failed')
             return "Authenticate request failed"
-        resp = resp.read()
+        resp = resp.read().decode('utf-8')
         self.logger.debug(resp)
         resp = json.loads(resp)
         self.logger.debug(resp)
