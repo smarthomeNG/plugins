@@ -23,8 +23,12 @@ import logging
 import imaplib
 import smtplib
 import email
+import urllib
 from email.mime.text import MIMEText
 from email.header import Header
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.image import MIMEImage
 from lib.model.smartplugin import SmartPlugin
 
 
