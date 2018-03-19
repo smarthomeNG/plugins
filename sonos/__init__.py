@@ -2207,7 +2207,7 @@ class Speaker(object):
         if not self._check_property():
             return
         if not self.is_coordinator:
-            sonos_speaker[self.coordinator].play_tts(audio_file, local_webservice_path_snippet, webservice_url, volume,
+            sonos_speaker[self.coordinator].play_snippet(audio_file, local_webservice_path_snippet, webservice_url, volume,
                                                      fade_in)
         else:
             if "tinytag" not in sys.modules:
