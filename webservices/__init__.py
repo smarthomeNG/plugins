@@ -417,9 +417,9 @@ class RESTWebServicesInterface(WebServiceInterface):
                 return {"Error": "No item with item path %s found." % item_path}
 
             if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
-                if cherrypy.request.method == 'PUT':
+                if cherrypy.request.method == 'PUT' or cherrypy.request.method == 'POST':
                     data = cherrypy.request.json
-                    self.logger.error(data)
+                    self.logger.debug(data)
                     if 'num' in item.type():
                         if self.plugin.is_int(data) or self.plugin.is_float(data):
                             item(data)

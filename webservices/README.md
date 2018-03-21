@@ -118,6 +118,8 @@ http://<your_server_ip>:<your_services_port>/ws/itemset/<set_name>
 
 ### REST Compliant Interface
 
+The POST and PUT Requests can be easily tested with Chrome Plugin "Postman".
+
 #### HTTP GET (e.g. normal access to the URL)
 
 ##### Reading an Item's Values
@@ -153,6 +155,20 @@ A HTTP PUT request to the URL sets a value of an item. Only num, bool and str it
 For bool items you can use int values 0 and 1, but also "yes", "no", "y", "n", "true", "false", "t", "f", "on", "off".
 In case you send a string (or a string bool representation), take care it is provided in "...".
 
+Ensure in the HTTP HEADER of the Request Content-Type: application/json is set!
+
 http://<your_server_ip>:<your_services_port>/rest/items/<item_path>
 
 E.g. a PUT request with 0 as payload to http://192.168.178.100:1234/rest/items/office.light turns off the light.
+
+#### HTTP POST
+
+A HTTP POST request to the URL sets a value of an item. Only num, bool and str item types are supported.
+For bool items you can use int values 0 and 1, but also "yes", "no", "y", "n", "true", "false", "t", "f", "on", "off".
+In case you send a string (or a string bool representation), take care it is provided in "...".
+
+Ensure in the HTTP HEADER of the Request Content-Type: application/json is set!
+
+http://<your_server_ip>:<your_services_port>/rest/items/<item_path>
+
+E.g. a POST request with 0 as payload to http://192.168.178.100:1234/rest/items/office.light turns off the light.
