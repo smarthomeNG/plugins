@@ -185,11 +185,11 @@ class SubscriptionHandler(object):
                     self._event.unsubscribe()
                 except Exception as err:
                     self._logger.warning("Sonos: {err}".format(err=err))
+                self._signal.set()
                 if self._thread:
-                    self._thread.join(2)
+                    self._thread.join()
                 self._logger.debug("Sonos: event {event} unsubscribed and thread terminated".format(
                     event=self._endpoint))
-                self._signal.set()
 
     @property
     def signal(self):
