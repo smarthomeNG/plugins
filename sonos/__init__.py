@@ -174,6 +174,7 @@ class SubscriptionHandler(object):
                 self._logger.warning("Sonos: {err}".format(err=err))
             if self._event:
                 self._thread = threading.Thread(target=self._endpoint, args=(self,))
+                self._thread.setDaemon(True)
                 self._thread.start()
 
     def unsubscribe(self):
@@ -184,6 +185,10 @@ class SubscriptionHandler(object):
                     self._event.unsubscribe()
                 except Exception as err:
                     self._logger.warning("Sonos: {err}".format(err=err))
+                if self._thread:
+                    self._thread.join(2)
+                self._logger.debug("Sonos: event {event} unsubscribed and thread terminated".format(
+                    event=self._endpoint))
                 self._signal.set()
 
     @property
@@ -197,10 +202,6 @@ class SubscriptionHandler(object):
     @property
     def event(self):
         return self._event
-
-    @property
-    def service(self):
-        return self._service
 
     @property
     def is_subscribed(self):
@@ -2246,7 +2247,7 @@ class Speaker(object):
         :param track: The index of the track to start play from. First item in the queue is 0.
         :param name: playlist name
         :param start: Should the speaker start playing after loading the playlist?
-        :param clear_queue: 'True' to clearthe queue before loading the new playlist, 'False' otherwise.
+        :param clear_queue: 'True' to clear the queue before loading the new playlist, 'False' otherwise.
         :rtype: None
         :return: None
         """
