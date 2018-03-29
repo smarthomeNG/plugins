@@ -73,7 +73,7 @@ class RTR(SmartPlugin):
         self._defaults['Kp'] = default_Kp
         self._defaults['Ki'] = default_Ki
 
-	self._sh.scheduler.add('rtr.scheduler', self.update_items, prio=5, cycle=int(self._cycle_time))
+        self._sh.scheduler.add('rtr.scheduler', self.update_items, prio=5, cycle=int(self._cycle_time))
 
     def run(self):
         """

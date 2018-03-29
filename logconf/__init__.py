@@ -246,7 +246,7 @@ class WebInterface(SmartPluginWebIf):
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
-        self.tplenv = self.init_template_ennvironment()
+        self.tplenv = self.init_template_environment()
 
         # try to get API handles
         self.items = Items.get_instance()

@@ -2073,7 +2073,7 @@ class WebInterface(SmartPluginWebIf):
         self.webif_dir = webif_dir
         self.plugin = plugin
 
-        self.tplenv = self.init_template_ennvironment()
+        self.tplenv = self.init_template_environment()
 
 
     @cherrypy.expose

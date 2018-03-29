@@ -688,7 +688,7 @@ class WebInterface(SmartPluginWebIf):
         self.plugin = plugin
         self.items = Items.get_instance()
 
-        self.tplenv = self.init_template_ennvironment()
+        self.tplenv = self.init_template_environment()
 
 
     @cherrypy.expose
