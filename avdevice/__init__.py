@@ -541,7 +541,7 @@ class AVDevice(SmartPlugin):
 
 			while buffering:
 				if '\r\n' in buffer:
-					self.logger.log(VERBOSE2, "Processing Response {}: Buffer before removing duplicates: {}".format(self._name, re.sub('[\r\n]', ' ', buffer)))
+					self.logger.log(VERBOSE2, "Processing Response {}: Buffer before removing duplicates: {}".format(self._name, re.sub('[\r\n]', ' --- ', buffer)))
 					# remove duplicates
 					buffer = '\r\n'.join(sorted(set(buffer.split('\r\n')), key=buffer.split('\r\n').index))
 					(line, buffer) = buffer.split("\r\n", 1)
@@ -611,7 +611,7 @@ class AVDevice(SmartPlugin):
 									self._name, line, compare, self._send_commands, self._ignore_response))
 								sending = self._send('command', 'commandremoval')
 						except Exception as err:
-							self.logger.log(VERBOSE2, "Processing Response {}: Response {} is ignored. Command list is now: {}. Message: {}".format(self._name, line, self._send_commands, err))
+							self.logger.log(VERBOSE2, "Processing Response {}: Response {} is ignored because ignore responses is {}. Command list is now: {}. Message: {}".format(self._name, line, self._ignore_response, self._send_commands, err))
 					elif not line.startswith(tuple(self._ignore_response)) and line.startswith(self._special_commands['Display']['Command']) and \
 							self._response_buffer is not False and '' not in self._ignore_response and not self._special_commands['Display']['Command'] == '':
 						self.logger.log(VERBOSE1, "Processing Response {}: Detected Display info {}. buffer: \r\n{}".format(self._name, line, buffer))
@@ -831,6 +831,7 @@ class AVDevice(SmartPlugin):
 					command = '?P'
 				while ser.in_waiting == 0:
 					i += 1
+					self._wait(0.5)
 					ser.write(bytes('{}\r'.format(command), 'utf-8'))
 					buffer = bytes()
 					buffer = ser.read().decode('utf-8')
@@ -1033,7 +1034,6 @@ class AVDevice(SmartPlugin):
 							self.logger.debug("Parsing Input {}: Expected response while parsing: {}.".format(self._name, expectedresponse))
 						except Exception as err:
 							self.logger.error("Parsing Input {}: Problems creating expected response list. Error: {}".format(self._name, err))
-						self.logger.log(VERBOSE1, "Parsing Input {}: Parsing input while waiting for response {}.".format(self._name, expectedresponse))
 						try:
 							to_send = 'command'
 							updatedcommands = []
@@ -1048,12 +1048,19 @@ class AVDevice(SmartPlugin):
 											for expectedpart in expectedlist:
 												try:
 													datalength = self._response_commands[expectedpart][0][1]
-													if data[:datalength].startswith(expectedpart) and len(data[:datalength]) == len(expectedpart):
+													expectedlength = []
+													stringvalue = []
+													for vals in self._response_commands[expectedpart]:
+														stringvalue.append(True if int(vals[0]) == 30 else False)
+														expectedlength.append(int(vals[0]) + int(vals[1]))
+													self.logger.log(VERBOSE2, "Parsing Input {}: Comparing Data {} to: {}, expectedlength: {}, datalength: {}, string: {}.".format(self._name, data, expectedpart, expectedlength, len(data), stringvalue))
+													# if data[:datalength].startswith(expectedpart) and len(data[:datalength]) == len(expectedpart):
+													if data[:datalength].startswith(expectedpart) and (len(data) in expectedlength or True in stringvalue):
 														found.append(expectedpart)
 														self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited: {}.".format(self._name, found))
-												except Exception as err:
+												except Exception:
 													found.append(expectedpart)
-													self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited 2nd try: {}. Message: {}".format(self._name, found, err))
+													self.logger.log(VERBOSE1, "Parsing Input {}: Expected response edited 2nd try: {}.".format(self._name, found))
 										except Exception as err:
 											found.append(expected)
 											self.logger.debug("Parsing Input {}: Expected response after exception: {}. Problem: {}".format(self._name, found, err))
@@ -1081,6 +1088,7 @@ class AVDevice(SmartPlugin):
 													self._sendingcommand = 'done'
 													self._resend_counter = 0
 
+											# only add send command to list again if response doesn't fit to corresponding command
 											expectedindices = _duplicateindex(expectedresponse, expected)
 											for expectedindex in expectedindices:
 												if self._send_commands[expectedindex] not in updatedcommands:
@@ -1268,23 +1276,31 @@ class AVDevice(SmartPlugin):
 											self.logger.log(VERBOSE1, "Parsing Input {}: Receivedvalue {} does not match type {} - ignoring it.".format(self._name, receivedvalue, expectedtype))
 										else:
 											self.logger.log(VERBOSE1, "Parsing Input {}: Receivedvalue {} does match type {} - going on.".format(self._name, receivedvalue, expectedtype))
-											if data.startswith(tuple(inputcommands)) and receivedvalue in self._ignoredisplay and '' not in self. _ignoredisplay:
+											displaycommand = self._special_commands['Display']['Command']
+											displayignore = self._special_commands['Display']['Ignore']
+											inputignore = self._special_commands['Input']['Ignore']
+											if data.startswith(tuple(inputcommands)) and str(receivedvalue) in self._ignoredisplay and '' not in self. _ignoredisplay:
 												for i in range(0, len(inputcommands)):
 													if data.startswith(inputcommands[i]):
 														self._special_commands['Input']['Ignore'][i] = 1
-												if self._special_commands['Display']['Command'] not in self._ignore_response and not self._special_commands['Display']['Command'] == '' and '' not in self._ignore_response:
-													self._ignore_response.append(self._special_commands['Display']['Command'])
-												self.logger.error("Parsing Input {}: Data {} has value in ignoredisplay {}. Ignorecommands are now: {}. Display Ignore is {}. Input Ignore is {}".format(self._name, data, self._ignoredisplay, self._ignore_response, self._special_commands['Display']['Ignore'], self._special_commands['Input']['Ignore']))
-											elif data.startswith(tuple(inputcommands)) and receivedvalue not in self._ignoredisplay and '' not in self. _ignoredisplay:
+												if displaycommand not in self._ignore_response and not displaycommand == '' and '' not in self._ignore_response:
+													self._ignore_response.append(displaycommand)
+												self.logger.debug("Parsing Input {}: Data {} has value in ignoredisplay {}. Ignorecommands are now: {}. Display Ignore is {}. Input Ignore is {}".format(self._name, data, self._ignoredisplay, self._ignore_response, displayignore, inputignore))
+											elif data.startswith(tuple(inputcommands)) and str(receivedvalue) not in self._ignoredisplay and '' not in self. _ignoredisplay:
 												for i in range(0, len(inputcommands)):
 													if data.startswith(inputcommands[i]):
 														self._special_commands['Input']['Ignore'][i] = 0
-												self.logger.log(VERBOSE2, "Parsing Input {}: Data {} has NO value in ignoredisplay {}. Ignorecommands are now: {}. Display Ignore is {}. Input Ignore is {}".format(self._name, data, self._ignoredisplay, self._ignore_response, self._special_commands['Display']['Ignore'], self._special_commands['Input']['Ignore']))
-												if self._special_commands['Display']['Ignore'] == 0 and 1 not in self._special_commands['Input']['Ignore']:
-													while self._special_commands['Display']['Command'] in self._ignore_response:
-														self._ignore_response.remove(self._special_commands['Display']['Command'])
-													self.logger.log(VERBOSE2, "Parsing Input {}: Removing {} from ignore.".format(
-														self._name, self._special_commands['Display']['Command']))
+												self.logger.log(VERBOSE2, "Parsing Input {}: Data {} with received value {} has NO value in ignoredisplay {}. Ignored responses are now: {}. Display Ignore is {}. Input Ignore is {}".format(self._name, data, receivedvalue, self._ignoredisplay, self._ignore_response, displayignore, inputignore))
+												if displayignore == 0 and 1 not in inputignore and not displaycommand == '':
+													if displaycommand in self._ignore_response:
+														try:
+															self._ignore_response.remove(displaycommand)
+															self.logger.log(VERBOSE2, "Parsing Input {}: Removing {} from ignore.".format(
+																self._name, displaycommand))
+														except Exception as err:
+															self.logger.log(VERBOSE2, "Parsing Input {}: Cannot remove {} from ignore. Message: {}".format(
+																self._name, displaycommand, err))
+											self.logger.debug("Parsing Input {}: Ignored responses are now: {}.".format(self._name, self._ignore_response))
 											value = receivedvalue
 
 											self.logger.debug("Parsing Input {}: Found key {} in response at position {} with value {}.".format(
@@ -1894,26 +1910,38 @@ class AVDevice(SmartPlugin):
 				if self._parsinginput == []:
 					self.logger.log(VERBOSE1, "Sending {}: Starting Parse Input. Expected response: {}".format(self._name, response))
 					self._parse_input_init('sending')
-
+				displayignore = self._special_commands['Display']['Ignore']
+				displaycommand = self._special_commands['Display']['Command']
+				inputignore = self._special_commands['Input']['Ignore']
 				for resp in response:
-					if resp in self._special_commands['Display']['Command']:
+					if resp in displaycommand:
 						keyfound = True
 					else:
 						keyfound = False
-				if self._send_commands[0] in self._query_commands and len(self._send_commands) > 1 and keyfound is not True and self._special_commands['Display']['Ignore'] < 5:
-					self._special_commands['Display']['Ignore'] = self._special_commands['Display']['Ignore'] + 5
-					if self._special_commands['Display']['Command'] not in self._ignore_response and '' not in self._ignore_response and not self._special_commands['Display']['Command'] == '':
-						self._ignore_response.append(self._special_commands['Display']['Command'])
-					self.logger.log(VERBOSE2, "Sending {}: Querycommand. Command: {}. Querycommand: {}, Display Ignore: {}, Input Ignore: {}".format(
-						self._name, self._send_commands[0], self._query_commands, self._special_commands['Display']['Ignore'], self._special_commands['Input']['Ignore']))
+				if self._send_commands[0] in self._query_commands and len(self._send_commands) > 1 and keyfound is not True and displayignore < 5:
+					self._special_commands['Display']['Ignore'] = displayignore + 5
+					if displaycommand not in self._ignore_response and '' not in self._ignore_response and not displaycommand == '':
+						self._ignore_response.append(displaycommand)
+					self.logger.log(VERBOSE2, "Sending {}: Querycommand. Command: {}. Display Ignore: {}, Input Ignore: {}".format(
+						self._name, self._send_commands[0], self._special_commands['Display']['Ignore'], inputignore))
 
 				elif self._send_commands[0] not in self._query_commands or len(self._send_commands) <= 1 or keyfound is True:
-					if self._special_commands['Display']['Ignore'] >= 5:
-						self._special_commands['Display']['Ignore'] = self._special_commands['Display']['Ignore'] - 5
-					if self._special_commands['Display']['Ignore'] == 0 and 1 not in self._special_commands['Input']['Ignore']:
-						while self._special_commands['Display']['Command'] in self._ignore_response:
-							self._ignore_response.remove(self._special_commands['Display']['Command'])
-						self.logger.log(VERBOSE1, "Sending {}: Removing {} from ignore. Ignored responses are now: {}".format(self._name, self._special_commands['Display']['Command'], self._ignore_response))
+					if displayignore >= 5:
+						self._special_commands['Display']['Ignore'] = displayignore - 5
+						self.logger.log(VERBOSE2, "Sending {}: Init Phase finished, Display Ignore: {}, Input Ignore: {}".format(
+							self._name, self._special_commands['Display']['Ignore'], inputignore))
+					if self._special_commands['Display']['Ignore'] == 0 and 1 not in inputignore and not displaycommand == '':
+						self.logger.log(VERBOSE2, "Sending {}: displaycommand: {}, ignoreresponse: {}".format(
+							self._name, displaycommand, self._ignore_response))
+						if displaycommand in self._ignore_response:
+							try:
+								self._ignore_response.remove(displaycommand)
+								self.logger.log(VERBOSE2, "Parsing Input {}: Removing {} from ignore.".format(
+									self._name, displaycommand))
+							except Exception as err:
+								self.logger.log(VERBOSE2, "Parsing Input {}: Cannot remove {} from ignore. Message: {}".format(
+									self._name, displaycommand, err))
+				self.logger.log(VERBOSE1, "Sending {}: Ignored responses are now: {}".format(self._name, self._ignore_response))
 
 				if self._trigger_reconnect is True:
 					self.logger.log(VERBOSE1, "Sending {}: Trying to connect while sending command".format(self._name))
