@@ -27,8 +27,8 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; videoparams; set; VS*; ; VS*; RW; ; ; ; str
 1; tone; on; PSTONE CTRL ON; PSTONE CTRL ?; PSTONE CTRL **; RW
 1; tone; off; PSTONE CTRL OFF; PSTONE CTRL ?; PSTONE CTRL ***; RW
-1; bass; set; PSBAS **; PSBAS ?; PSBAS **; RW; ; 0; 99
-1; trebble; set; PSTRE **; PSTRE ?; PSTRE **; RW; ; 0; 99
+1; bass; set; PSBAS **; PSBAS ?; PSBAS **; RW; ; 40; 60
+1; trebble; set; PSTRE **; PSTRE ?; PSTRE **; RW; ; 40; 60
 1; bass+; increase; PSBAS UP; ; PSBAS; W
 1; bass-; decrease; PSBAS DOWN; ; PSBAS; W
 1; trebble+; increase; PSTRE UP; ; PSTRE; W
