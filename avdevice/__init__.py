@@ -1900,8 +1900,6 @@ class AVDevice(SmartPlugin):
 						self.logger.log(VERBOSE2, "Display Ignore {}: Init Phase finished, Display Ignore: {}, Input Ignore: {}".format(
 							self._name, self._special_commands['Display']['Ignore'], inputignore))
 					if self._special_commands['Display']['Ignore'] == 0 and 1 not in inputignore and not displaycommand == '':
-						self.logger.log(VERBOSE2, "Display Ignore {}: displaycommand: {}, ignoreresponse: {}".format(
-							self._name, displaycommand, self._ignore_response))
 						if displaycommand in self._ignore_response:
 							try:
 								self._ignore_response.remove(displaycommand)
