@@ -1,4 +1,4 @@
-# XMPP 
+# XMPP
 
 ## Requirements/Description
 
@@ -9,14 +9,14 @@ as the sleekxmpp libraries do not support this as yet.
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-```
-[xmpp]
-    class_name = XMPP
-    class_path = plugins.xmpp
-    jid = 'user account eg skender@somexmppserver.com'
-    password = your xmpp server password
+```yaml
+xmpp:
+    class_name: XMPP
+    class_path: plugins.xmpp
+    jid: 'user account eg skender@somexmppserver.com'
+    password: your xmpp server password
 ```
 
 Description of the attributes:
@@ -24,7 +24,7 @@ Description of the attributes:
 * jid: jabber/xmpp user account
 * password: jabber/xmpp user password
 
-### logic.conf
+### logic.yaml
 At this stage there are no specific logic files. But in order to use this module you can create a logic file for another attribute and execute
 or send messages to your xmpp account via sh.xmpp.send
 

@@ -14,15 +14,7 @@ This plugins has no requirements.
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[simulation]
-   class_name = Simulation
-   class_path = plugins.simulation
-   data_file = /usr/smarthome/var/db/simulation.txt
-#   callers = KNX | Visu
-```
+### plugin.yaml
 
 ```yaml
 simulation:
@@ -43,30 +35,18 @@ Only item changes with a caller in the list are recorded to the simulation file.
 ignored.
 Be aware that the caller in the list has to be case sensitive. Otherwise it won't trigger.
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
- `sim = track` (.conf syntax)
 
- `sim: track` (.yaml syntax)
- 
- Add sim = track to each item that you want to include in the simulation. All items with with the sim
+```yaml
+sim: track
+```
+
+ Add ``sim: track`` to each item that you want to include in the simulation. All items with with the sim
  Attribute are tracked in the data_file. Each change of the item is stored as one line. Only bool
  and number items are supportet.
 
 #### Example
-
-```
-[eg]
-   [[flur]]
-      [[[licht]]]
-         type = bool
-         visu_acl = rw
-         knx_dpt = 1
-         knx_cache = 1/1/1
-         knx_send = 1/1/0
-         enforce_updates = yes
-         sim = track
-```
 
 ```yaml
 eg:
@@ -84,26 +64,6 @@ eg:
 ```
 
 Add to your item tree some adminstrative items:
-
-```
-[sim]
-  [[status]]
-    type=num
-    sim = state
-    visu_acl = ro
-  [[control]]
-    type=num
-    sim = control
-    visu_acl = rw
-  [[message]]
-    type=str
-    sim=message
-    visu_acl = ro
-  [[tank]]
-    type=num
-    sim=tank
-    visu_acl = ro
-```
 
 ```yaml
 sim:
@@ -133,8 +93,8 @@ These items are needed to control the simulation plugin. If they do not exist,
 the plugin will fail to initialize.
 
 **state**: is set by the plugin and can be read in order to see which state the plugin
-       is in. 
-       
+       is in.
+
        00: Stop
            The plugin is inactive. It does not record or play anything
        01: Standby
@@ -144,7 +104,7 @@ the plugin will fail to initialize.
        04: Play
            The plugin plays the event file
 
-**control**: The control item is set by the user to 
+**control**: The control item is set by the user to
 
        01: Stop
            Setting control to 01 will stop recording or playback
@@ -162,7 +122,7 @@ In case of errors, it will contain an error message. Use this in a visualization
 in order to see what the plugin is doing.
 
 **tank**:
-Thank contains the actual value of day that are stored in the events file. The value 
+Thank contains the actual value of day that are stored in the events file. The value
 will grow up to 14 and then stay constant. Put his in the visu in case you want to
 see if there are already enough events to start a playback.
 
@@ -171,10 +131,10 @@ see if there are already enough events to start a playback.
 ### Record
 
 The plugin starts automatically together with smarthome.py. After initialization
-it automatically starts to record all changes to items that have the sim=track
-in the item.conf file. Item datatypes bool and num have been tested. When an
-item is changed it is called an event. All events are stored in a text file. 
-It does not matter where the change is initiated from with one exception: 
+it automatically starts to record all changes to items that have the ``sim: track``
+in the item.yaml file. Item datatypes bool and num have been tested. When an
+item is changed it is called an event. All events are stored in a text file.
+It does not matter where the change is initiated from with one exception:
 The plugin does not record events that are triggered by the plugin itself when
 it is in playback mode.
 When the plugin initializes for the first time, the event file is created. On
@@ -184,24 +144,24 @@ file always contains the recent 14 days plus the rest of today.
 When recording starts, either after startup or after setting control to 03,
 it does not start immediately. In case the event file is empty, recording will start
 at next midnight. Until midnight the plugin will be in stand-by. By that there will
-always be a full day in the file. 
+always be a full day in the file.
 In case the plugin finds events in the file, it compares the last recorded event
 with the actual time. In case the actual time is max. 15 minutes advance the last
-recorded event, recording will start immediately. In case the actual time is 
+recorded event, recording will start immediately. In case the actual time is
 more advance, recording will start one minute after the last event on the next day.
 Ba this behavior empty gaps in the event file are avoided when recording was stopped
-for some time because .eg. playback was active. 
+for some time because .eg. playback was active.
 If control is set to 01, recording stops immediately.
 
 ### Playback
 
 Setting control to 02 will start playback. Recording will stop automatically.
-Item changes triggered by the simulation are not recorded. 
+Item changes triggered by the simulation are not recorded.
 In playback mode, the plugin reads the file line by line and executes the events
 by changing the item as it was recorded. When the file ends, the simulation stops.
-The day of the event is ignored. The plugin just plays the time stamps one after 
-the other. In case the next time stamp is before the actual time the plugin 
-shifts the event to the next day. 
+The day of the event is ignored. The plugin just plays the time stamps one after
+the other. In case the next time stamp is before the actual time the plugin
+shifts the event to the next day.
 
 
 ### Control
@@ -211,8 +171,8 @@ smartVISU. I created a block the looks like in the following picture:
 
 ![screenshot](screenshot.png)
 
-The code is here. Replace the item names with yours from the item.conf file. 
-The png files for the lamps are in the package. 
+The code is here. Replace the item names with yours from the item.yaml file.
+The png files for the lamps are in the package.
 
 #### SmartVisu 2.9:
 
@@ -261,7 +221,7 @@ The png files for the lamps are in the package.
             {{basic.symbol('P_SIM05','ZF.sim.status','',icon0~'lamp_off.png',3)}}
 	  </td>
 	  <td>
-              Days recorded<br>{{ basic.value('P_SIM_T', 'ZF.sim.tank') }} 
+              Days recorded<br>{{ basic.value('P_SIM_T', 'ZF.sim.tank') }}
 	  </td>
 	  <td>
             {{basic.symbol('P_SIM06','ZF.sim.status','',icon0~'lamp_off.png',0)}}
@@ -312,13 +272,12 @@ Day;Time;Item;Value;Trigger e.g:
 Tue;06:05:27;OG.Tobias.Deckenlicht;True;KNX
 ```
 At 00:00 the string "NextDay" is put into one line. The value of Trigger
-is the source from where the item was changed during record. 
-Day and Trigger are ignored for the time being and might be used later. 
+is the source from where the item was changed during record.
+Day and Trigger are ignored for the time being and might be used later.
 
 ### State Diagram
 
 The following state diagram shows the state changes depenging on the control item.
-The state is stored in the state item. 
+The state is stored in the state item.
 
 ![Statediagram](state_diagram.png)
-

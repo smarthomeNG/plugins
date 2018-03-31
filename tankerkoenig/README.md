@@ -4,7 +4,7 @@ Version 0.1
 
 ## Requirements
 
-This plugin requires lib requests. You can install this lib with: 
+This plugin requires lib requests. You can install this lib with:
 
 ```bash
 sudo pip3 install requests --upgrade
@@ -26,13 +26,7 @@ integrating it..
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-```
-[tankerkoenig]
-    class_name = TankerKoenig
-    class_path = plugins.tankerkoenig
-    apikey = <your own api key>
-```
+### plugin.yaml
 
 ```yaml
 tankerkoenig:
@@ -44,33 +38,9 @@ tankerkoenig:
 #### Attributes
   * `apikey`: Your own personal API key for TankerKoenig. For your own key register to https://creativecommons.tankerkoenig.de
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 #### Example (for cheapest station and for one station that is requested via its id):
-```
-[petrol_station]
-    [[cheapest]]
-        [[[isOpen]]]
-            type=bool
-            visu_acl = ro
-        [[[name]]]
-            type=str
-            visu_acl = ro
-        [[[price]]]
-            type=num
-            visu_acl = ro
-    [[DemoBavariaPetrol]]
-        tankerkoenig_id = a07b7f50-6e6f-4e6e-9bce-17d79bf0778c
-        [[[diesel]]]
-            type=num
-            visu_acl = ro
-        [[[name]]]
-            type=str
-            visu_acl = ro
-        [[[isOpen]]]
-            type=bool
-            visu_acl = ro
-```
 
 ```yaml
 petrol_station:
@@ -109,8 +79,7 @@ petrol_station:
 
 ### get_petrol_stations(lat, lon, type, sort, rad):
 Gets a list of petrol stations around provided coordinates, depending on a provided type, sort order and radius.
-In the example, sh._lat and sh.._long are the geocoordinates configured for smarthome in etc/smarthome.conf. You
-can also set your own coordinates!
+In the example, sh._lat and sh.._long are the geocoordinates configured for smarthome in ``etc/smarthome.yaml``. You can also set your own coordinates!
 
 ```python
 cheapest = sh.tankerkoenig.get_petrol_stations(sh._lat, sh._lon, 'diesel', 'price', rad='2')

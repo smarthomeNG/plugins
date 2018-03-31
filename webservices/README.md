@@ -28,14 +28,7 @@ The webservice plugin is one functionality that builds upon the service layer co
     service_hashed_password: 'xxx'
 ```
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[WebServices]
-   class_name = WebServices
-   class_path = plugins.webservices
-   mode = all
-```
+### plugin.yaml
 
 ```yaml
 WebServices:
@@ -46,7 +39,7 @@ WebServices:
 #### Attributes
   * `mode`: Optional mode for the plugin - "all" (default) means you can access all your items via the API. "set" means only defined item sets are accessible.
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 Currently access to all items is provided via the REST api in case the plugin is set via mode attribute to "all". In case that is not wanted, the attribute "webservices_set" can be used to group selected items to be accessible.
 
@@ -64,7 +57,7 @@ MyItem2:
     webservices_data: 'full'
 ```
 
-There are two item-attributes in items.yaml/items.conf that are specific to the webservices plugin. These parameters beginn with **`webservices_`**.
+There are two item-attributes in items.yaml/items.yaml that are specific to the webservices plugin. These parameters beginn with **`webservices_`**.
 
 #### webservices_set
 

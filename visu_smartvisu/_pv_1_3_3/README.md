@@ -5,7 +5,7 @@ Copyright 2016- Martin Sinn                      m.sinn@gmx.de
 Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
 
 This plugin is part of SmartHomeNG.
-  
+
 Visit:  https://github.com/smarthomeNG/
         https://knx-user-forum.de/forum/supportforen/smarthome-py
 
@@ -27,17 +27,9 @@ None.
 
 ## Configuration
 
-The configuration of the plugin itself is done in the file **`etc/plugin.conf`**. The configuration of the visualization of the items is done by defining additional attributes of the item in the file **`items/*.conf`**.
+The configuration of the plugin itself is done in the file **`etc/plugin.yaml`**. The configuration of the visualization of the items is done by defining additional attributes of the item in the file **`items/*.yaml`**.
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[smartvisu]
-    class_name = SmartVisu
-    class_path = plugins.visu_smartvisu
-#    smartvisu_dir = False
-#    handle_widgets = True
-```
+### plugin.yaml
 
 ```yaml
 smartvisu:
@@ -55,7 +47,7 @@ Directory in which the generated web pages of the old visa are stored.
 #### smartvisu_dir
 You could generate pages for the smartVISU visualisation if you specify the **`smartvisu_dir`** which should be set to the root directory of your smartVISU installation.
 
-In the examples directory you could find a configuration with every supported element. `examples/items/smartvisu.conf` 
+In the examples directory you could find a configuration with every supported element. `examples/items/smartvisu.yaml`
 
 #### handle_widgets
 
@@ -66,8 +58,8 @@ Widgets that come with a plugin are stored in in a subdirectory to the plugin fo
 These widgets can be used in auto-generation of visu pages. Therefor they can be included in the **`sv_widget`** attribute of an item.
 
 
-### items.conf
-Most of the entries in item.conf are specific to smartVISU. These parameters beginn with **`sv_`**.
+### items.yaml
+Most of the entries in item.yaml are specific to smartVISU. These parameters beginn with **`sv_`**.
 
 #### visu_acl
 Simply set the **`visu_acl`** attribute to something to allow read/write access to the item.
@@ -115,7 +107,7 @@ Relative item references are supported.
 
 
 #### sv_widget
-**`sv_widget`** allows the specification of a widget. You could define multiple widgets. The widget(s) is/are shown by being encapsulated in a block of type 2 (Collapsable Block). 
+**`sv_widget`** allows the specification of a widget. You could define multiple widgets. The widget(s) is/are shown by being encapsulated in a block of type 2 (Collapsable Block).
 
 Relative item references are supported.
 
@@ -123,7 +115,7 @@ Relative item references are supported.
 #### sv_widget2
 **`sv_widget2`** allows the specification of a widget for widget blocks with two pages. You could define multiple widgets. The widget(s) is/are shown by being encapsulated in a block of type 2 (Collapsable Block) with multiple pages.
 
-Widget blocks with three pages are not supported yet. 
+Widget blocks with three pages are not supported yet.
 
 Relative item references are supported.
 
@@ -155,35 +147,7 @@ If one of the **`sv_heading_...`** parameters is defined, heading.html from the 
 --> tpldir = directory + '/pages/base/tpl'
 --> directory = parameter to pages() in smartvisu.py -> self.smartvisu_dir
 
-#### Example (.conf and .yaml)
-
-```
-[first]
-    . . .
-[menu_divider]
-    sv_page = seperator
-    name = Private area of the house
-[second]
-    [[sleeping]]
-        name = Sleeping Room
-        sv_page = room
-        sv_img = scene_sleeping.png
-        sv_nav_aside = {{ basic.float('sleep_temp_id', 'second.sleeping.temp', '°') }} 
-        [[[light]]]
-            name = Light
-            type = bool
-            visu_acl = rw
-            sv_widget = &#123;&#123; device.dimmer('second.sleeping.light', 'Light', 'second.sleeping.light', 'second.sleeping.light.level') &#125;&#125;
-            knx_dpt = 1
-            knx_listen = 3/2/12
-            knx_send = 3/2/12
-            [[[[level]]]]
-                type = num
-                visu_acl = rw
-                knx_dpt = 5
-                knx_listen = 3/2/14
-                knx_send = 3/2/14
-```
+#### Example
 
 ```yaml
 first:
@@ -221,28 +185,6 @@ But instead of giving the widget distinct options you could use **`item`** as a 
 
 The page generator will replace it with the current path. This way you could easily copy widget calls and don't type the item path every time.
 
-```
-[second]
-    [[sleeping]]
-        name = Sleeping Room
-        sv_page = room
-        sv_img = scene_sleeping.png
-        [[[light]]]
-            name = Light
-            type = bool
-            visu_acl = rw
-            sv_widget = &#123;&#123; device.dimmer('item', 'item.name', 'item', 'item.level') &#125;&#125;
-            knx_dpt = 1
-            knx_listen = 3/2/12
-            knx_send = 3/2/12
-            [[[[level]]]]
-                type = num
-                visu_acl = rw
-                knx_dpt = 5
-                knx_listen = 3/2/14
-                knx_send = 3/2/14
-```
-
 ```yaml
 second:
 
@@ -268,14 +210,8 @@ second:
                 knx_send: 3/2/14
 ```
 
-### logic.conf (deprecated) / logic.yaml
-You could specify the **`visu_acl`** attribute to every logic in your logic.conf. This way you could trigger the logic via the interface.
-
-```
-[dialog]
-    filename = 'dialog.py'
-    visu_acl = true
-```
+### logic.yaml
+You could specify the **`visu_acl`** attribute to every logic in your logic.yaml. This way you could trigger the logic via the interface.
 
 ```yaml
 dialog:

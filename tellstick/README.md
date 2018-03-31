@@ -11,25 +11,25 @@ After installing you need to configure your devices in ``/etc/tellstick.conf`` (
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-```
-[tellstick]
-    class_name = Tellstick
-    class_path = plugins.tellstick
+```yaml
+tellstick:
+    class_name: Tellstick
+    class_path: plugins.tellstick
 ```
 
-### item.conf 
+### item.yaml
 
 #### ts_id
 
 id of the device in /etc/tellstick.conf
- 
+
 #### Example :
- 
-```
-[kitchen]
-    [[light]]
-        type = bool
-        ts_id = 1
+
+```yaml
+kitchen:
+    light:
+        type: bool
+        ts_id: 1
 ```

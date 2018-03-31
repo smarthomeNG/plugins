@@ -12,17 +12,7 @@ Requires PIP Package websocket-client (tested with 0.44.0) for the implementatio
 
 ## Configuration
 
-### plugin.conf
-```
-[smarttv]
-    class_name = SmartTV
-    class_path = plugins.smarttv
-    host = 192.168.0.45
-#    port = 55000
-#    tv_version = classic
-#    delay = 1
-#    instance = smarttv1
-```
+### plugin.yaml
 
 ```yaml
 smarttv:
@@ -42,58 +32,17 @@ smarttv:
   * `delay`: specify a delay in case more than 1 key is sent. Reduces problems when switching e.g. to TV programs with numbers like "135".
   * `instance`: if you want to specify more than 1 instances of the plugin (requires to set @instance_name on the item attribute smarttv.
 
-### items.conf
+### items.yaml
 
 Remark: the old attribute smarttv_id is not needed anymore. For multi-instance use use the common @instance_name syntax of the smartplugin
 
 #### smarttv
-There are two possibilities to use this attribute. 
+There are two possibilities to use this attribute.
   * Define it on a string item and set it to `true`: With this configuration, every string you set to this item will be send to the SmartTV device.
   * Define it on a boolean item and set it to a key value: With this configuration, the specified key value is sent whenever you set the item to `true` (if the item is only for sending a specific command to the tv then you should consider using the `enforce_updates` attribute, too). It is even possible to define several keys separeted with a comma.
 
-Example: items.conf
-
-```
-[tv]
-    type = str
-    smarttv@smarttv1 = true
-    enforce_updates = true
-
-    [[mute]]
-        type = bool
-        smarttv@smarttv1 = KEY_MUTE
-        enforce_updates = true
-
-    [[KIKA]]
-        name = KIKATV
-        type = bool
-        visu_acl = rw
-        smarttv@smarttv1 = KEY_1 | KEY_0 | KEY_6 | KEY_ENTER
-        enforce_updates = true
-        knx_dpt = 1
-        knx_listen = 0/0/7
-
-[tv2]
-    type = str
-    smarttv = true
-    enforce_updates = true
-
-    [[mute]]
-        type = bool
-        smarttv@smarttv2 = KEY_MUTE
-        enforce_updates = true
-
-    [[KIKA]]
-        name = KIKATV
-        type = bool
-        visu_acl = rw
-        smarttv@smarttv2 = KEY_1 | KEY_0 | KEY_6 | KEY_ENTER
-        enforce_updates = true
-        knx_dpt = 1
-        knx_listen = 0/0/7
-```
-
 Example: items.yaml
+
 ```yaml
 tv:
     type: str
@@ -387,12 +336,10 @@ KEY_EXT39
 KEY_EXT40
 KEY_EXT41
 
-### logic.conf
+### logic.yaml
 
 Currently there is no logic configuration for this plugin.
 
 ## Functions
 
 Currently there are no functions offered from this plugin.
-
-

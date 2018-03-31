@@ -2,26 +2,27 @@
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-```
-[sql]
-    class_name = SQL
-    class_path = plugins.sqlite
+```yaml
+sql:
+    class_name: SQL
+    class_path: plugins.sqlite
 ```
 
-### items.conf
+### items.yaml
 
 For num and bool items, you could set the attribute: `sqlite`. By this you enable logging of the item values.
 If you set this attribute to `init`, SmartHomeNG tries to set the item to the last know value (like cache = yes).
 
-```
-[outside]
-    name = Outside
-    [[temperature]]
-        name = Temperatur
-        type = num
-        sqlite = yes
+```yaml
+outside:
+    name: Outside
+
+    temperature:
+        name: Temperatur
+        type: num
+        sqlite: 'yes'
 ```
 
 
