@@ -15,7 +15,7 @@ There is however only basic protection against unauthorized access or use of the
 
 Call the backend-webserver: **```http://<ip of your SmartHomeNG server>:8383```**
 
-Support is provided trough the support thread within the smarthomeNG forum: 
+Support is provided trough the support thread within the smarthomeNG forum:
 
 [knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-f%C3%BCr-das-backend-plugin](https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin)
 
@@ -42,7 +42,7 @@ To support visualization, the visu_websocket plugin has to be used. It has to be
 
 ## Configuration
 
-### plugin.yaml / plugin.conf (deprecated)
+### plugin.yaml
 
 ```yaml
 # /etc/plugin.yaml
@@ -52,17 +52,6 @@ BackendServer:
     #developer_mode: 'on'
     #pypi_timeout: 5
 ```
-
-```
-# /etc/plugin.conf
-[BackendServer]
-	class_name = BackendServer
-	class_path = plugins.backend
-	#updates_allowed = True
-	#developer_mode = on
-	#pypi_timeout = 5
-```
-
 
 #### updates_allowed
 

@@ -12,19 +12,9 @@ No special hardware required.
 
 ## Configuration
 
-### plugin.conf (deprecated) / .yaml
+### plugin.yaml
 
 The plugin can be configured using the following settings:
-
-```
-[datalog]
-    class_name = DataLog
-    class_path = plugins.datalog
-#    path = var/log/data
-#    filepatterns = default:{log}-{year}-{month}-{day}.csv | yearly:{log}-{year}.csv
-#    logpatterns = csv:{time};{item};{value}\n
-#    cycle = 300
-```
 
 ```
 datalog:
@@ -64,23 +54,12 @@ Placeholders which can be used in the `logpatterns` option:
 
 Example:
 
-```
-# .conf (deprecated)
-[datalog]
-   class_name = DataLog
-   class_path = plugins.datalog
-   filepatterns = default:{log}-{year}-{month}-{day}.csv | custom:{log}-{year}-{month}-{day}.txt
-   logpatterns = csv:{time};{item};{value}\n
-```
-
-```
-# .yaml
+```yaml
 datalog:
    class_name = DataLog
    class_path = plugins.datalog
    filepatterns = default:{log}-{year}-{month}-{day}.csv | custom:{log}-{year}-{month}-{day}.txt
    logpatterns = csv:{time};{item};{value}\n
-  
 ```
 
 In this example the `default` log file will use the configured log pattern. The
@@ -115,26 +94,11 @@ A log pattern is used for logging when a file pattern is configured, where
 the extension (part behind the last `.`) matches the key.
 
 
-### items.conf
+### items.yaml
 
 Example configuration using the plugin configuration on top of the page.
 
-```
-# .conf (deprecated)
-[some]
-    [[item1]]
-        type = str
-        datalog = default
-    [[item2]]
-        type = num
-        datalog = default | custom
-    [[item3]]
-        type = num
-        datalog = custom
-```
-
-```
-# .yaml
+```yaml
 some:
     item1:
         type: str
@@ -152,14 +116,13 @@ some:
 This will log the items
 
    * `some.item1` to the `default` log
-   * `some.item2` to the `default` and `custom` log 
+   * `some.item2` to the `default` and `custom` log
    * `some.item3` to the `custom` log
 
-### logic.conf
+### logic.yaml
 
 No logic related stuff implemented.
 
 ## Methods
 
 No methods provided currently.
-

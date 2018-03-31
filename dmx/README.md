@@ -15,14 +15,14 @@ apt-get install python-serial
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-```
-[dmx]
-   class_name = DMX
-   class_path = plugins.dmx
-   tty = /dev/usbtty...
-#  interface = nanodmx
+```yaml
+dmx:
+    class_name: DMX
+    class_path: plugins.dmx
+    tty: /dev/usbtty...
+    # interface = nanodmx
 ```
 
 With ``interface``  you could choose between ``nanodmx`` and ``enttec``. By default nanodmx is used.
@@ -34,18 +34,22 @@ You have to adapt the tty to your local enviroment. In my case it's ``/dev/usbtt
 SUBSYSTEMS=="usb",KERNEL=="ttyACM*",ATTRS{product}=="NanoDMX Interface",SYMLINK+="usbtty-%b"
 ```
 
-### items.conf
+### items.yaml
 
 #### dmx_ch
 
 With this attribute you could specify one or more DMX channels.
 
 ### Example
-```
-[living_room]
-    [[dimlight]]
-        type = num
-        dmx_ch = 10 | 11
+
+```yaml
+living_room:
+
+    dimlight:
+        type: num
+        dmx_ch:
+          - '10'
+          - '11'
 ```
 
 Now you could simply use:

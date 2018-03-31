@@ -51,18 +51,9 @@ Tested drivers (other may work too):
 
 ## Configuration
 
-### plugin.conf (deprecated) / .yaml
+### plugin.yaml
 
-<pre>
-[database]
-    class_name = Database
-    class_path = plugins.database
-    driver = sqlite3
-    connect = database:/path/to/log.db | check_same_thread:0
-    #prefix = log
-</pre>
-
-<pre>
+```yaml
 database:
     class_name: Database
     class_path: plugins.database
@@ -71,7 +62,7 @@ database:
       - database:/path/to/log.db
       - check_same_thread:0
     # prefix: log
-</pre>
+```
 
 The following attributes can be used in the plugin configuration:
 
@@ -86,7 +77,7 @@ The following attributes can be used in the plugin configuration:
    * `prefix` - if you want to log into an existing database with other tables
      you can specify a prefix for the plugins' tables
 
-### items.conf
+### items.yaml
 
 The plugin supports the types `str`, `num` and `bool` which can be logged
 into the database.
@@ -94,24 +85,13 @@ into the database.
 #### database
 This attribute enables the database logging when set (just use value `yes`).
 
-<pre>
-#.conf (deprecated)
-[some]
-    [[item]]
-        type = num
-        database = yes
-        #database_acl = rw
-</pre>
-
-<pre>
-#.yaml
+```yaml
 some:
-
     item:
         type: num
         database: 'yes'
         # database_acl: rw
-</pre>
+```
 
 #### database_acl
 Specifies if the Database plugin should be used for read only or read and write values (which is
@@ -151,22 +131,20 @@ The time point could be specified with `<number><interval>`, where interval coul
    + `m`: month
    * `y`: year
 
-e.g.
-<pre>
+```python
 sh.outside.temperature.db('min', '1d')  # returns the minimum temperature within the last day
 sh.outside.temperature.db('avg', '2w', '1w')  # returns the average temperature of the week before last week
-</pre>
+```
 
 ### sh.item.series(function, start, end='now', count=100)
 This method returns historical values for the specified function and timeframe.
 
 Supported functions and timeframes are same as supported in the `db` function.
 
-e.g.
-<pre>
+```python
 sh.outside.temperature.series('min', '1d', count=10)  # returns 10 minimum values within the last day
 sh.outside.temperature.series('avg', '2w', '1w')  # returns the average values of the week before last week
-</pre>
+```
 
 Additionally to the aggregation function a finalizer function can be specified when
 fetching series to apply to the results before returning them. Specify the function
@@ -176,43 +154,42 @@ Supported finalizer functions are:
 
    * `diff`: return the differences between values
 
-e.g.
-<pre>
+```python
 sh.outside.temperature.series('diff:avg', '2w', '1w')  # returns the differences between average values
-</pre>
+```
 
 
 ### sh.item.dbplugin
 This property returns the associated `database` plugin instance. See the list of method below
 to know what you can do with this instance.
 
-e.g.
-<pre>
+```python
 dbplugin = sh.outside.temperature.dbplugin   # get associated database plugin instance
-</pre>
+```
 
 ## dbplugin.id(item)
 This method returns the ID in the database for the given item.
 
-e.g.
-<pre>
+```python
 dbplugin = sh.outside.temperature.dbplugin   # get associated database plugin instance
 dbplugin.id(sh.outside.temperature)          # returns the ID for the given item
-</pre>
+```
 
 ### dbplugin.db()
+
 This method will return the associated database connection object. This can
 be used to execute native query, but you should use the plugin methods below.
 The database connection object can be used for locking.
 
-<pre>
+```python
 dbplugin = sh.outside.temperature.dbplugin   # get associated database plugin instance
 dbplugin.db().lock()                         # lock the connection for processing
-... do something
+#... do something
 dbplugin.db().release()                      # release lock again after processing
-</pre>
+```
 
 ### dbplugin.dump(dumpfile, id = None, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None)
+
 This method will dump the complete log table if not restricted by some argument.
 The restriction can be specified by specifying some of the criteria arguments
 (e.g. id, time_start, time_end, ...). These arguments only allow one value to
@@ -221,15 +198,15 @@ multiple times).
 
 The parameters have the same meaning as described in `readLogs()` method.
 
-e.g.
-<pre>
+```python
 dbplugin = sh.outside.temperature.dbplugin   # get associated database plugin instance
 dbplugin.dump("/path/dump.csv")              # dump all items
 dbplugin.dump("/path/dump.csv", id=1)        # only dump item with id 1
 dbplugin.dump("/path/dump.csv", id="test")   # only dump item with name "test"
-</pre>
+```
 
 #### dbplugin.insertLog(id, time, duration=0, val=None, it=None, changed=None, cur=None)
+
 This method will insert a new log entry for the given item with the following
 data (in the `log` database table):
 * `id` - the item ID to insert an item for
@@ -241,14 +218,17 @@ data (in the `log` database table):
 * `cur` - specifies an existing cursor
 
 #### dbplugin.updateLog(id, time, duration=0, val=None, it=None, changed=None, cur=None)
+
 This method will update an existing log entry (in the `log` database table)
 identified by item id and time. See `insertLog()` method for the details of the
 parameters.
 
 #### dbplugin.readLog(id, time, cur = None)
+
 This method will read existing log data for given item and time.
 
 #### dbplugin.readLogs(id, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None)
+
 This method will read existing log data for given item and parameters. If
 you omit the parameters it will completely ignored.
 
@@ -259,77 +239,71 @@ you omit the parameters it will completely ignored.
 * `changed_start` / `changed_end` - can be used instead of `changed` parameter to specify a time range
 * `cur` - specifies an existing cursor
 
-e.g.
-<pre>
+```python
 dbplugin.readLogs(1)             # read ALL log entries for item 1
 dbplugin.readLogs(1, 12345)      # read log entry for item 1 and timestamp 12345
-</pre>
+```
 
 #### dbplugin.deleteLog(id, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None)
 This method will delete the given items identified by the given parameters. The
 parameters have the same meaning as described in `readLogs()` method.
 
-e.g.
-<pre>
+```python
 dbplugin.deleteLog(1)            # delete ALL log entries for item 1
 dbplugin.deleteLog(1, 12345)     # delete log entry for item 1 and timestamp 12345
-</pre>
+```
 
 #### dbplugin.insertItem(name, cur=None)
+
 This method will insert a new item entry with the given name/id and return the ID
 of the newly inserted item.
 
-e.g.
-<pre>
+```python
 id = dbplugin.insertItem("some.test.item")   # insert new item
-</pre>
+```
 
 #### dbplugin.updateItem(id, time, duration=0, val=None, it=None, changed=None, cur=None)
+
 This method will register the given value as the last/current value of the
 item (in the `item` database table).
 
-e.g.
-<pre>
+```python
 dbplugin.updateItem(id, 12345, 0, 100)       # update item value in database for timestamp 12345, duration 0, value 100
-</pre>
-
+```
 
 #### dbplugin.readItem(id, cur=None)
+
 This method will read the item data including all fields. When the id
 parameter is a string it is assumed that the item should be selected by
 the items name and not by the items ID.
 
-e.g.
-<pre>
+```python
 data = dbplugin.readItem(1)                  # read all fields of item with ID 1 which contains the last item status
 data = dbplugin.readItem("test.item")        # read all fields of item with name test.item which contains the last item status
-</pre>
+```
 
 #### dbplugin.readItems(cur=None)
+
 This method will read all items data including all fields.
 
-e.g.
-<pre>
+```python
 items = dbplugin.readItems()                 # read all fields of all item which contains the last item status
-</pre>
-
+```
 #### dbplugin.deleteItem(id, cur=None)
+
 This method will delete the item and its log data.
 
-e.g.
-<pre>
+```python
 dbplugin.deleteItem(id)                      # delete the item and log data from database
-</pre>
+```
 
 #### dbplugin.cleanup()
+
 This method will remove all items and logs from database of items which
 are currenlty not configured to be logged to database. Beware of this using
 in a multi-instance setup, since one instance does not know the item of
 the other instance!
 
-e.g.
-<pre>
+```python
 dbplugin.cleanup()                           # cleanup database, remove non-database item from database
-</pre>
-
-
+```

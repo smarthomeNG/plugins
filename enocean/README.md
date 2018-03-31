@@ -22,16 +22,19 @@ For use of this plugin you need an EnOcean radio transceiver module like:
 
 ## Configuration
 
-### plugin.yaml / plugin.conf (deprecated)
-Add the following lines to your `plugin.yaml` or `plugin.conf`.
+### plugin.yaml
+
+Add the following lines to your `plugin.yaml`:
 
 #### Parameters
+
 ##### serialport
+
 You have to specify the `serialport` to your port name of your EnOcean-adpater.
 Creating **udev-rules** for the EnOcean-adapter is recommend, when using different uart devices.
 
 ##### tx_id
-The specification of the EnOcean `tx_id` is optional **but** mandatory for sending control commands from the enocean-adapter to an EnOcean device. 
+The specification of the EnOcean `tx_id` is optional **but** mandatory for sending control commands from the enocean-adapter to an EnOcean device.
 It is defined as a 8-digit hex value.
 
 When controlling multiple devices, it is recommended to use the EnOcean-adapter's Base-ID (not Unique-ID or Chip-ID) as transmitting ID.
@@ -45,35 +48,27 @@ With the specification of the Base-ID, 128 different transmit ID's are available
 1. reboot the pi or restart the smarthome (`sudo reboot` or `sudo systemctl restart smarthome`)
 2. wait some time for comming up of the service
 3. have a look into the log file an look for `enocean: Base ID = 0xYYYYZZZZ`
-4. now you have the right Base-ID and you can place it into the plugin.yaml/plugin.conf file.
+4. now you have the right Base-ID and you can place it into the plugin.yaml file.
 5. alternating you will also find the EnOcean-adapter's Unique-ID / Chip-ID in the log-file.
 
 #### Example plugin.yaml
-```
-[enocean]
+```yaml
+enocean:
     class_name: EnOcean
     class_path: plugins.enocean
     serialport: /dev/ttyUSB0
     tx_id: FFFF4680
 ```
 
-#### Example plugin.conf (deprecated)
-```
-[enocean]
-    class_name = EnOcean
-    class_path = plugins.enocean
-    serialport = /dev/ttyUSB0
-    tx_id      = FFFF4680
-```
-
 ### Items
+
 #### enocean_rx_id, enocean_rx_eep and enocean_tx_id_offset
 An EnOcean item must specify at minimum an `enocean_rx_id` (EnOcean Identification Number (hex code)) and an `enocean_rx_eep` (EnOcean Equipment Profile).
 Send items additionally hold an `enocean_tx_id_offset`.
 
 #### enocean_rx_key
 The status of an EnOcean device can be read by using the shortcut names of the Button which should be defined under `enocean_rx_key`.
-Therefor see [EnOcean Equippment Profile](http://www.enocean-alliance.org/eep/)
+Therefore see [EnOcean Equippment Profile](http://www.enocean-alliance.org/eep/)
 
 The following example explaines the button shortcut and its meaning for a rocker/switch with two rocker (EEP-Profile: F6_02_01 or F6_02_02).
 
@@ -100,7 +95,7 @@ Example of a mechanical handle (F6_10_0):
 STATUS = handle_status
 ```
 
-### items.yaml / items.conf (deprecated)
+### items.yaml
 
 #### Attributes
 For attributes have a look to the examples.
@@ -113,14 +108,14 @@ EnOcean_Item:
         enocean_rx_id: 0180924D
         enocean_rx_eep: A5_02_05
         enocean_rx_key: TMP
-    
+
     Door:
         enocean_rx_id: 01234567
         enocean_rx_eep: D5_00_01
         status:
             type: bool
             enocean_rx_key: STATUS
-    
+
     FT55switch:
         enocean_rx_id: 012345AA
         enocean_rx_eep: F6_02_03
@@ -130,7 +125,7 @@ EnOcean_Item:
             down:
                 type: bool
                 enocean_rx_key: BI
-    
+
     Brightness_Sensor:
         name: brightness_sensor_east
         remark: Eltako FAH60
@@ -140,9 +135,9 @@ EnOcean_Item:
         enocean_rx_key: BRI
         visu_acl: rw
         sqlite: 'yes'
-    
+
     dimmer1:
-        remark: Eltako FDG14 - Dimmer 
+        remark: Eltako FDG14 - Dimmer
         enocean_rx_id: 00112233
         enocean_rx_eep: A5_11_04
         light:
@@ -158,21 +153,21 @@ EnOcean_Item:
             ref_level: 80
             dim_speed: 100
             block_dim_value: 'False'
-    
+
     handle:
         enocean_rx_id: 01234567
         enocean_rx_eep: F6_10_00
         status:
             type: num
             enocean_rx_key: STATUS
-    
+
     actor1:
         enocean_rx_id: FFAABBCC
         enocean_rx_eep: A5_12_01
         power:
             type: num
             enocean_rx_key: VALUE
-    
+
     actor1B:
         remark: Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
         enocean_rx_id: 1A794D3
@@ -186,7 +181,7 @@ EnOcean_Item:
             cache: 'True'
             enforce_updates: 'True'
             visu_acl: rw
-    
+
     actor_D2:
         remark: Actor with VLD Command
         enocean_rx_id: FFDB7381
@@ -198,7 +193,7 @@ EnOcean_Item:
             enocean_tx_id_offset: 1
             # pulsewith-attribute removed use autotimer functionality instead
             autotimer: 1 = 0  
-    
+
     awning:
         remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type: str
@@ -215,7 +210,7 @@ EnOcean_Item:
             enforce_updates: 'True'
             cache: 'True'
             visu_acl: rw
-    
+
     rocker:
         enocean_rx_id: 0029894A
         enocean_rx_eep: F6_02_01
@@ -226,7 +221,7 @@ EnOcean_Item:
             enocean_rocker_sequence: released **within** 0.8
             knx_dpt: 1
             knx_send: 3/0/60
-        
+
         long_800ms_directly_to_knx:
             type: bool
             enocean_rx_key: AI
@@ -234,7 +229,7 @@ EnOcean_Item:
             enocean_rocker_sequence: released **after** 0.8
             knx_dpt: 1
             knx_send: 3/0/61
-        
+
         rocker_double_800ms_to_knx_send_1:
             type: bool
             enforce_updates: true
@@ -243,33 +238,33 @@ EnOcean_Item:
             enocean_rocker_sequence: **released within 0.4, pressed within 0.4**
             knx_dpt: 1
             knx_send: 3/0/62
-    
+
     brightness_sensor:
         enocean_rx_id: 01234567
         enocean_rx_eep: A5_08_01
         lux:
             type: num
             enocean_rx_key: BRI
-        
+
         movement:
             type: bool
             enocean_rx_key: MOV
-    
+
     temperature_sensor:
         enocean_rx_id: 01234567
         enocean_rx_eep: A5_04_02
         temperature:
             type: num
             enocean_rx_key: TMP
-        
+
         humidity:
             type: num
             enocean_rx_key: HUM
-        
+
         power_status:
             type: num
             enocean_rx_key: ENG
-    
+
     sunblind:
         remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type: str
@@ -286,10 +281,10 @@ EnOcean_Item:
             enforce_updates: 'True'
             cache: 'True'
             visu_acl: rw
-    
+
     RGBdimmer:
         type: num
-        remark: Eltako FRGBW71L - RGB Dimmer 
+        remark: Eltako FRGBW71L - RGB Dimmer
         enocean_rx_id: 1A869C3
         enocean_rx_eep: A5_3F_7F
         enocean_rx_key: DI_0
@@ -327,223 +322,9 @@ EnOcean_Item:
             color: white   
 ```
 
-#### Example item.conf (deprecated)
-```
-[EnOcean_Item]
-    [[Outside_Temperature]]
-        type = num
-        enocean_rx_id = 0180924D
-        enocean_rx_eep = A5_02_05
-        enocean_rx_key = TMP
-    
-    [[Door]]
-        enocean_rx_id = 01234567
-        enocean_rx_eep = D5_00_01
-        [[[status]]]
-            type = bool
-            enocean_rx_key = STATUS
-    
-    [[FT55switch]]
-        enocean_rx_id = 012345AA
-        enocean_rx_eep = F6_02_03
-            [[[up]]]
-                type = bool
-                enocean_rx_key = BO
-            [[[down]]]
-                type = bool
-                enocean_rx_key = BI
-    
-    [[Brightness_Sensor]]
-        name = brightness_sensor_east
-        remark = Eltako FAH60
-        type = num
-        enocean_rx_id = 01A51DE6
-        enocean_rx_eep = A5_06_01
-        enocean_rx_key = BRI
-        visu_acl = rw
-        sqlite = yes
-    
-    [[dimmer1]]
-        enocean_rx_id = 00112233
-        enocean_rx_eep = A5_11_04
-        [[[light]]]
-            type = bool
-            enocean_rx_key = STAT
-            enocean_tx_eep = A5_38_08_02
-            enocean_tx_id_offset = 1
-            [[[[level]]]]
-                type = num
-                enocean_rx_key = D
-                enocean_tx_eep = A5_38_08_03
-                enocean_tx_id_offset = 1
-                ref_level = 80
-    
-    [[handle]]
-        enocean_rx_id = 01234567
-        enocean_rx_eep = F6_10_00
-        [[[status]]]
-            type = num
-            enocean_rx_key = STATUS
-    
-    [[actor1]]
-        enocean_rx_id = FFAABBCC
-        enocean_rx_eep = A5_12_01
-        [[[power]]]
-            type = num
-            enocean_rx_key = VALUE
-    
-    [[actor1B]]
-        remark = Eltako FSR61, FSR61NP, FSR61G, FSR61LN, FLC61NP - Switch for Ligths
-        enocean_rx_id = 1A794D3
-        enocean_rx_eep = F6_02_03
-        [[[light]]]
-            type = bool
-            enocean_tx_eep = A5_38_08_01
-            enocean_tx_id_offset = 1
-            enocean_rx_key = B
-            block_switch = False
-            cache = 'True'
-            enforce_updates = True
-            visu_acl = rw
-    
-    [[actorD2]]
-        remark = Actor with VLD Command
-        enocean_rx_id = FFDB7381
-        enocean_rx_eep = D2_01_07
-        [[[move]]]
-            type = bool
-            enocean_rx_key = STAT
-            enocean_tx_eep = D2_01_07
-            enocean_tx_id_offset = 1
-            # pulsewith-attribute removed use autotimer functionality instead
-            autotimer = 1 = 0  
-    
-    [[awning]]
-        remark = Eltako FSB14, FSB61, FSB71 - actor for Shutter
-        type = str
-        enocean_rx_id = 1A869C3
-        enocean_rx_eep = F6_02_03_01
-        enocean_rx_key = STATUS
-        [[[move]]]
-            type = num
-            enocean_tx_eep = A5_3F_7F
-            enocean_tx_id_offset = 0
-            enocean_rx_key = B
-            enocean_rtime = 60
-            block_switch = False
-            enforce_updates = True
-            cache = True
-            visu_acl = rw
-    
-    [[rocker]]
-        enocean_rx_id = 0029894A
-        enocean_rx_eep = F6_02_01
-        [[[short_800ms_directly_to_knx]]]
-            type = bool
-            enocean_rx_key = AI
-            enocean_rocker_action = **toggle**
-            enocean_rocker_sequence = released **within** 0.8
-            knx_dpt = 1
-            knx_send = 3/0/60
-        [[[long_800ms_directly_to_knx]]]
-            type = bool
-            enocean_rx_key = AI
-            enocean_rocker_action = toggle
-            enocean_rocker_sequence = released **after** 0.8
-            knx_dpt = 1
-            knx_send = 3/0/61
-        [[[rocker_double_800ms_to_knx_send_1]]]
-            type = bool
-            enforce_updates = true
-            enocean_rx_key = AI
-            enocean_rocker_action = **set**
-            enocean_rocker_sequence = **released within 0.4, pressed within 0.4**
-            knx_dpt = 1
-            knx_send = 3/0/62
-    
-    [[brightness_sensor]]
-        enocean_rx_id = 01234567
-        enocean_rx_eep = A5_08_01
-        [[[lux]]]
-            type = num
-            enocean_rx_key = BRI
-        [[[movement]]]
-            type = bool
-            enocean_rx_key = MOV
-    
-    [[temperature_sensor]]
-        enocean_rx_id = 01234567
-        enocean_rx_eep = A5_04_02
-        [[[temperature]]]
-            type = num
-            enocean_rx_key = TMP
-        [[[humidity]]]
-            type = num
-            enocean_rx_key = HUM
-        [[[power_status]]]
-            type = num
-            enocean_rx_key = ENG
-    
-    [[sunblind]]
-        remark = Eltako FSB14, FSB61, FSB71 - actor for Shutter
-        type = str
-        enocean_rx_id = 1A869C3
-        enocean_rx_eep = F6_02_03_01
-        enocean_rx_key = STATUS
-        [[[move]]]
-             type = num
-            enocean_tx_eep = A5_3F_7F
-            enocean_tx_id_offset = 0
-            enocean_rx_key = B
-            enocean_rtime = 60
-            block_switch = False
-            enforce_updates = True
-            cache = True
-            visu_acl = rw
-
-    [[RGBdimmer]]
-        type = num
-        remark = Eltako FRGBW71L - RGB Dimmer 
-        enocean_rx_id = 1A869C3
-        enocean_rx_eep = A5_3F_7F
-        enocean_rx_key = DI_0
-        [[[red]]]
-            type = num
-            enocean_tx_eep = 07_3F_7F
-            enocean_tx_id_offset = 1
-            enocean_rx_key = DI_0
-            ref_level = 80
-            dim_speed = 100
-            color = red
-        [[[green]]]
-            type = num
-            enocean_tx_eep = 07_3F_7F
-            enocean_tx_id_offset = 1
-            enocean_rx_key = DI_1
-            ref_level = 80
-            dim_speed = 100
-            color = green
-        [[[blue]]]
-            type = num
-            enocean_tx_eep = 07_3F_7F
-            enocean_tx_id_offset = 1
-            enocean_rx_key = DI_2
-            ref_level = 80
-            dim_speed = 100
-            color = blue
-        [[[white]]]
-            type = num
-            enocean_tx_eep = 07_3F_7F
-            enocean_tx_id_offset = 1
-            enocean_rx_key = DI_3
-            ref_level = 80
-            dim_speed = 100
-            color = white
-```
-
 ### Add new listening EnOcean devices
 
-You have to know about the EnOcean RORG of your device (please search the internet or ask the vendor). 
+You have to know about the EnOcean RORG of your device (please search the internet or ask the vendor).
 
 Further the RORG must be declared in the plugin.
 
@@ -632,7 +413,7 @@ After complete the teach-in procedure, leave the interactive console by `STRG+C`
 
 UTE does mean "Universal Uni- and Bidirectional Teach in".
 When activated on EnOcean device the device will send a `D4` teach in request. An automatic answer within 500 ms is expected.
-To do so enable the UTE learnmode prior to the activation on the device: Start smarthome with the interactive console - see above. 
+To do so enable the UTE learnmode prior to the activation on the device: Start smarthome with the interactive console - see above.
 
 `sh.enocean.start_UTE_learnmode(ID_Offset)`
 

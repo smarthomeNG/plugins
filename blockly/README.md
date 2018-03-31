@@ -17,17 +17,10 @@ And please pay attention that the libs are installed for Python3 and not an olde
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-# /etc/plugin.conf
-[Blockly]
-	plugin_name = blockly
-```
+### plugin.yaml
 
 ```yaml
 # /etc/plugin.yaml
 Blockly:
     plugin_name: blockly
 ```
-
