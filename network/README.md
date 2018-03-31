@@ -3,24 +3,13 @@
 ## Requirements
 
 This plugin has no requirements or dependencies.
-Please be aware that ports need to be higher than 1025 to work. Otherwise an access error might occur. 
+Please be aware that ports need to be higher than 1025 to work. Otherwise an access error might occur.
 Ports up to 1024 are _well defined ports_ and are normally reserved to the system usage.
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
+### plugin.yaml
 
-```
-[nw]
-    class_name = Network
-    class_path = plugins.network
-    # ip = 0.0.0.0
-    # port = 2727
-    tcp = yes
-    tcp_acl= 127.0.0.1 | 192.168.0.34
-    # udp = no
-    # udp_acl= *
-```
 
 ```yaml
 nw:
@@ -48,17 +37,10 @@ nw:
   * `http_acl`: with this attribute you could specify a list or a single IP address to allow HTTP updates from. By default it accepts every incoming request.
 
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 #### nw
 If this attribute is set to 'yes' you could update this item with the generic listener (TCP and/or UDP).
-
-```
-[test]
-    [[item1]]
-        type = str
-        nw = yes
-```
 
 ```yaml
 test:
@@ -76,19 +58,6 @@ This attribute is valid for TCP and UDP and overrides the generic tcp_acl/udp_ac
 #### nw_udp_listen/nw_tcp_listen
 
 You could specify the `nw_udp_listen` and `nw_tcp_listen` attribute to an item to create a dedicated listener. The argument could be a port or ip:port.
-
-```
-[test]
-    [[item1]]
-        type = str
-        # bind to 0.0.0.0:7777 (every IP address)
-        nw_tcp_listen = 7777
-
-    [[item2]]
-        type = str
-        # bind to 0.0.0.0:7777 and 127.0.0.1:8888
-        nw_udp_listen = 127.0.0.1:8888
-```
 
 ```yaml
 test:
@@ -110,21 +79,6 @@ If you send a TCP/UDP packet to the port, the corresponding item will be set to 
 #### nw_udp_send
 This attribute allows you to specify a host and port to send item updates to.
 
-```
-[test]
-    [[item1]]
-        type = str
-        nw_udp_send = 11.11.11.11:7777  # sends an UDP packet with the item value as payload
-
-    [[item2]]
-        type = str
-        nw_udp_send = 11.11.11.11:7777=special data  # sends an UDP packet with 'special data' as payload
-
-    [[item3]]
-        type = str
-        nw_udp_send = 11.11.11.11:7777=command: itemvalue  # sends an UDP packet with 'command: ' and the current item value as payload
-```
-
 ```yaml
 test:
 
@@ -141,15 +95,15 @@ test:
         nw_udp_send: "11.11.11.11:7777=command: itemvalue    ## sends an UDP packet with 'command: ' and the current item value as payload"
 ```
 
-### logic.conf
+### logic.yaml
 
-You could use the same network attributes as in items.conf to trigger logics.
+You could use the same network attributes as in items.yaml to trigger logics.
 
 In the context of the KNX plugin the trigger dictionary consists of the following elements:
 
 * trigger['by']     protocol (tcp, udp, http)
 * trigger['source']     IP adress of the sender
-* trigger['value']     payload 
+* trigger['value']     payload
 
 
 ## Usage

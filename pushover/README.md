@@ -1,35 +1,26 @@
 # Pushover  
 
 Pushover is one out of many push services, which is compatible with Android, IOS and Windows Clients. This plugin make it possible to push messages to your clients from SmartHomeNG.
-  
+
 ## Requirements
-  
+
 ### Python libraries  
 * requests - [install instructions](http://docs.python-requests.org/en/latest/user/install/#install "http://docs.python-requests.org/en/latest/user/install/#install")
-  
+
 ### Other  
 * Pushover API-KEY - get it from [__here__](https://pushover.net/apps/ "https://pushover.net/apps/") for free, after registration.
-  
+
 ---
 ## Changelog
 
 __2017-08-13__:
 
 * Initial version
-  
+
 ---
 ## Configuration  
-  
-### plugin.conf (deprecated) / plugin.yaml
-  
-```
-[po]
-    class_name = Pushover
-    class_path = plugins.pushover
-    apiKey = <your-api-key>
-    userKey = <your-user-key>
-#   device = <your-device-string(optional)>
-```
+
+### plugin.yaml
 
 ```yaml
 po:
@@ -41,17 +32,17 @@ po:
 ```
 
 Description of the attributes:
-  
+
 * __apiKey__: set api-key globally of the sending application
 * __userKey__: set user-key globally so it will be used as defaul receiving user - you can override this on each call
 * __device__: set receiving device globally to filter the receive device - you can override this on each call - you can define multiple devices seperated by comma - this is optional - without all devices will receive messages
-  
+
 ---    
 ## Usage:
-  
+
 ### sh.po(title, message [, priority] [, retry] [, expire] [, sound] [, url] [, url_title] [, device] [, userKey] [, apiKey])
 Send a message to your device.  
-  
+
 #### Parameters  
 * __title__: The title of the message
 * __message__:  The message - some html code possible, read https://pushover.net/api#html
@@ -66,7 +57,7 @@ Send a message to your device.
 * __apiKey__: defines and/or override the globally defined api-key of the sending application
 
 All params can set to None (only message not), so they will not be set or in case of device, userKey and apiKey the global vars will be used.
-  
+
 #### Example
 ```python
 

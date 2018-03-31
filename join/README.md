@@ -9,21 +9,15 @@ Support is provided trough the support thread within the smarthomeNG forum:
 [https://knx-user-forum.de/forum/supportforen/smarthome-py/1113523-neues-plugin-join-tts-sms-phonecall-notification-uvm](https://knx-user-forum.de/forum/supportforen/smarthome-py/1113523-neues-plugin-join-tts-sms-phonecall-notification-uvm)
 
 ## Requirements
-This plugin requires lib requests. You can install this lib with: 
-<pre>
+This plugin requires the library ``requests``. You can install this lib with:
+
+```bash
 sudo pip3 install requests --upgrade
-</pre>
+```
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-```
-[join]
-    class_name = Join
-    class_path = plugins.join
-    device_id = <your deviceid>
-    api_key = <your apikey>
-```
+### plugin.yaml
 
 ```yaml
 join:

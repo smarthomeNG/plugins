@@ -1,7 +1,7 @@
 # KNX
 
 Send and receive messages to and from knx bus via knxd connection.
-By default the plugin connects on 127.0.0.1 port 6720 but it can be changed in plugin.conf.
+By default the plugin connects on 127.0.0.1 port 6720 but it can be changed in plugin.yaml.
 
 ## Requirements
 
@@ -9,9 +9,8 @@ This plugin needs a running eibd or knxd.
 
 ## Configuration
 
-Sample files here are given in ``yaml`` (starting with SHNG 1.3) and ``conf`` (deprecated as of SHNG 1.3) format.
 
-### plugin.yaml / plugin.conf (deprecated)
+### plugin.yaml
 
 ```yaml
 knx:
@@ -26,59 +25,46 @@ knx:
     # readonly: 'False'
 ```
 
-```
-[knx]
-   class_name = KNX
-   class_path = plugins.knx
-#   host = 127.0.0.1
-#   port = 6720
-#   send_time = 600 # update date/time every 600 seconds, default none
-#   time_ga = 1/1/1 # default none
-#   date_ga = 1/1/2 # default none
-#   busmonitor = False
-#   readonly = False
-```
-
 #### Attributes
 
-* `host` : eibd or knxd hostname (default: 127.0.0.1) 
-* `port` : eibd or knxd port (default: 6720) 
+* `host` : eibd or knxd hostname (default: 127.0.0.1)
+* `port` : eibd or knxd port (default: 6720)
 * `send_time` : interval to send time and date to the knx bus
 * `time_ga` : groupadress to send a timestamp to the knx bus
 * `date_ga` : groupadress to send a date to the knx bus
 * `busmonitor` : Values: (True, False, 'logger'). If you set `busmonitor` to True, every KNX packet will be logged to the default plugin logger.                
   Set parameter to `busmonitor = 'logger'` to log all knx messages to a separate logger 'knx_busmonitor'.
   In `logging.yaml` you can configure a formatter, handler and a logger to write all bus messages to a separate file.
-                 <pre>
-                 formatters:
-                     busmonitor:
-                        format: '%(asctime)s;%(message)s'
-                        datefmt: '%Y-%m-%d %H:%M:%S'
-                 handlers:
-                     busmonitor_file:
-                        class: logging.handlers.TimedRotatingFileHandler
-                        formatter: busmonitor
-                        when: midnight
-                        backupCount: 7
-                        filename: ./var/log/knx_busmonitor.log
-                 loggers:
-                     knx_busmonitor:
-                        level: INFO
-                        handlers: [busmonitor_file]
-                </pre>
-                With this configuration all bus monitor messages are writen to `./var/log/knx_busmonitor.log`
-            False disable the logging until you start SmartHomeNG in debug modus.
+  <pre>
+  formatters:
+     busmonitor:
+        format: '%(asctime)s;%(message)s'
+        datefmt: '%Y-%m-%d %H:%M:%S'
+  handlers:
+     busmonitor_file:
+        class: logging.handlers.TimedRotatingFileHandler
+        formatter: busmonitor
+        when: midnight
+        backupCount: 7
+        filename: ./var/log/knx_busmonitor.log
+  loggers:
+     knx_busmonitor:
+        level: INFO
+        handlers: [busmonitor_file]
+  </pre>
+  With this configuration all bus monitor messages are writen to `./var/log/knx_busmonitor.log`
+  False disable the logging until you start SmartHomeNG in debug modus.
 
 * `readonly` :  If you set `readonly` to True, the plugin only read the knx bus and send no group message to the bus.
 * `enable_stats` : if you set this to True then the statistic functions are enabled to collect data (see below)
 
 If you specify a `send_time` intervall and a `time_ga` and/or `date_ga` the plugin sends the time/date every cycle seconds on the bus.
 
-### items.conf
+### items.yaml
 
 #### knx_dpt
 
-This attribute set the datapoint type used for conversion from Bus format to internal SmartHomeNG format. It is mandatory. 
+This attribute set the datapoint type used for conversion from Bus format to internal SmartHomeNG format. It is mandatory.
 If you don't provide one the item will be ignored.
 The DPT has to match the type of the item!
 
@@ -166,32 +152,10 @@ living_room:
         knx_poll: 1/1/9 | 60
 ```
 
-```
-[living_room]
-    [[light]]
-        type = bool
-        knx_dpt = 1
-        knx_send = 1/1/3
-        knx_listen = 1/1/4 | 1/1/5
-        knx_init = 1/1/4
+### logic.yaml
 
-    [[temperature]]
-        type = num
-        knx_dpt = 9
-        knx_send = 1/1/6
-        knx_reply = 1/1/6
-        ow_id = 28.BBBBB20000 # see 1-Wire plugin
-        ow_sensor = temperature # see 1-Wire plugin
-
-    [[window]]
-        type = bool
-        knx_dpt = 1
-        knx_poll = 1/1/9
-```
-
-### logic.conf
-
-You could specify the `knx_listen` and `knx_reply` attribute to every logic in your logic.conf. The argument could be a single group address and dpt or a list of them.
+You could specify the `knx_listen` and `knx_reply` attribute to every logic in your logic.yaml.
+The argument could be a single group address and dpt or a list of them.
 
 ```yaml
 logic1:
@@ -205,22 +169,12 @@ logic2:
       - 1/1/8
 ```
 
-```
-[logic1]
-    knx_dpt = 9
-    knx_listen = 1/1/7
-
-[logic2]
-    knx_dpt = 9
-    knx_reply = 1/1/8 | 1/1/8
-```
-
 If there is a packet directed to the according group address, SmartHomeNG would trigger the logic and will pass the payload (via the trigger object) to the logic.
 
 In the context of the KNX plugin the trigger dictionary consists of the following elements:
 
 * trigger['by']         protocol ('KNX')
-* trigger['source']     PA (physical adress of the KNX packet source) 
+* trigger['source']     PA (physical adress of the KNX packet source)
 * trigger['value']      payload
 
 ## Functions
@@ -256,12 +210,12 @@ Hint: instead of this function you could use the plugin attribute 'send_time' as
 The statistics functions were introduced to watch what is happening on the KNX.
 Mainly it is recorded which physical device sends data by write or response or requests data
 by read operation.
-Whenever such a telegram is received, it is recorded 
+Whenever such a telegram is received, it is recorded
 - which physical device sended the request (originator)
 - which kind of request (read, write, response)
 - target group address affected
 - a counter for the specific kind of request (read, write, response) is increased.
-    
+
 With an additional logic these statistics can be requested from the plugin and examined for
 - unknown group addresses which are not known to either ETS or to SmartHomeNG
 - unknown physical addresses which are new and unexpected
@@ -271,15 +225,9 @@ With an additional logic these statistics can be requested from the plugin and e
 A sample logic that takes an ``esf`` file from ``ETS export as OPC`` to parse the known group addresses is provided as ``Check_KNX.py``
 The result of the logic will be placed in the same directory as the ``esf`` file but with ``.txt`` suffix.
 
-You will need to copy the script into your ``logics`` directory and add these lines to your ``ets/logic.yaml`` or ``etc/logic.conf`` (deprecated as of SmartHomeNG 1.3):
+You will need to copy the script into your ``logics`` directory and add these lines to your ``ets/logic.yaml``:
 
 ```yaml
 Check_KNX:
     filename: Check_KNX.py
 ```
-
-```
-[Check_KNX]
-    filename = Check_KNX.py
-```
-

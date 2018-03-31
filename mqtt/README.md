@@ -28,7 +28,7 @@ Support is provided trough the support thread within the smarthomeNG forum: [Sup
 
 - Login to broker with user/password is supported
 - Log the type and version of the broker
-- configure host by dns-name or ip address 
+- configure host by dns-name or ip address
 - Added functions to allow other plugins to use this plugin for MQTT communication (documented at the end of this document)
 
 
@@ -39,7 +39,7 @@ This plugin needs the following following software to be installed and running:
 - MQTT python module: [paho-mqtt](https://pypi.python.org/pypi/paho-mqtt)
 <pre>In Linux systems can use: pip3 install paho-mqtt </pre>
 
-- A MQTT broker for communication with other MQTT clients. The broker may be running on the hardware SmartHomeNG is running on, or on another hardware that can be reached via TCP/IP. The open souce broker [Mosquitto](https://mosquitto.org) is a good choice. 
+- A MQTT broker for communication with other MQTT clients. The broker may be running on the hardware SmartHomeNG is running on, or on another hardware that can be reached via TCP/IP. The open souce broker [Mosquitto](https://mosquitto.org) is a good choice.
 
 ### Using Mosquitto Broker on Raspberry Pi
 If want to run the broker on a Raspberry Pi you should be aware, that the broker on the raspbian repository is quite old. You should add the mosquitto.org repository as a trusted site to your **`apt-get`** to get a recent version of mosquitto installed.
@@ -92,7 +92,7 @@ All entries that are commented out are optional and don't have to be specified t
 #### port - Port used by broker
 Port 1883 and 8883 are the IANA reserved ports for MQTT.
 
-* 1883: This is the default MQTT port. It is defined at IANA as **MQTT over TCP**. 
+* 1883: This is the default MQTT port. It is defined at IANA as **MQTT over TCP**.
 * 8883: This is the default MQTT port for MQTT over TLS. It’s registered at IANA for **Secure MQTT**.
 
 In a standard setup you should not need to configure this parameter.
@@ -102,15 +102,15 @@ In a standard setup you should not need to configure this parameter.
 
 You don't have to specify a settings for **`qos`**.  The default value used will be QoS 1.
 
-MQTT supports three levels for Quality-Of-Service (0=at most once, 1=at least once, 2=excactly once). QoS 2 has the most overhead and should be used only if needed. 
+MQTT supports three levels for Quality-Of-Service (0=at most once, 1=at least once, 2=excactly once). QoS 2 has the most overhead and should be used only if needed.
 
 A good explanation about Quality-of-Service in MQTT can be found [here](http://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels).
 
 
 #### last_will_topic - MQTT testament message
-if **`last_will_topic`** is not specified, there will be no last-will-message sent. As a standard the last-will message will only be sent if the connection to the broker aborts (is not closed in an orderly manner). 
+if **`last_will_topic`** is not specified, there will be no last-will-message sent. As a standard the last-will message will only be sent if the connection to the broker aborts (is not closed in an orderly manner).
 
-Last-will-messages will be sent with the default QoS. 
+Last-will-messages will be sent with the default QoS.
 
 If you specify a birth-message, the last-will-message will be sent with the retain flag set and the last-will-message will also be sent if the connection is closed orderly (by shutting down SmartHomeNG).
 
@@ -131,7 +131,7 @@ Username to login to the MQTT broker, if the broker is configured for user/passw
 #### password - password to login to broker (optional)
 Password to login to the MQTT broker, if the broker is configured for user/password authentication.
 
->NOTICE: 
+>NOTICE:
 >
 >- Until Implementation of TLS, username and password are transmitted unencrypted.
 >- At this stage of implementation the Password is stored in the plugin.yaml file as clear text.
@@ -158,13 +158,13 @@ root:
             name: Test Item for publishing
             type: num
 ```
-and have set 
+and have set
 
 ```yaml
 mqtt:
     items_topic_prefix: 'item_tree'
 ```
-The item **`testitem`** would be published with the MQTT topic 
+The item **`testitem`** would be published with the MQTT topic
 
 **`item_tree/root/parent/testitem`**
 
@@ -207,7 +207,7 @@ alarm_out:
 
 ```
 
-### Example: items.conf
+### Example: items.yaml
 Example configuration in the old conf-format:
 
 ```
@@ -227,7 +227,7 @@ Example configuration in the old conf-format:
 ```
 
 
-Datatype foo delivers the raw data from the MQTT message to the item (as an array of bytes). 
+Datatype foo delivers the raw data from the MQTT message to the item (as an array of bytes).
 
 **NEW:** You can use any of the other datatypes. If you use any of those datatypes, the data from the mqtt message will be casted to the desired format.
 
@@ -259,7 +259,7 @@ Now you could simply use:
 
 ### logic.yaml
 
-You can specify a MQTT topic to trigger a logic. The logic is triggered every time a message with this topic is received. 
+You can specify a MQTT topic to trigger a logic. The logic is triggered every time a message with this topic is received.
 
 ```yaml
 Alarm:
@@ -270,7 +270,7 @@ Alarm:
 **`mqtt_watch_topic`** specifies the MQTT topic which triggers the logic. A logic that is triggered by the MQTT plugin gets the following information:
 
 * trigger['by']	**`MQTT`** or **`MQTT@<instance>`**
-* trigger['source']	topic of the MQTT message 
+* trigger['source']	topic of the MQTT message
 * trigger['value']	payload of the MQTT message
 
 
@@ -289,10 +289,10 @@ Version 1.3.2 added functions to allow other plugins to use this plugin for MQTT
 #### publish_topic(plug, topic, payload, qos=None, retain=False)
 
         function to publish a topic
-        
+
         this function is to be called from other plugins, which are utilizing
         the mqtt plugin
-        
+
         :param topic:      topic to publish to
         :param payload:    payload to publish
         :param qos:        quality of service (optional) otherwise the default of the mqtt plugin will be used
@@ -302,10 +302,10 @@ Version 1.3.2 added functions to allow other plugins to use this plugin for MQTT
 #### subscription_callback(plug, sub, callback=None)
 
         function set a callback function
-        
+
         this function is to be called from other plugins, which are utilizing
         the mqtt plugin
-        
+
         :param plug:       identifier of plgin/logic using the MQTT plugin
         :param sub:        topic(s) which should call the callback function
                            example: 'device/eno-gw1/#'
@@ -314,9 +314,9 @@ Version 1.3.2 added functions to allow other plugins to use this plugin for MQTT
 #### subscribe_topic(plug, topic, qos=None)
 
         function to subscribe to a topic
-         
+
         this function is to be called from other plugins, which are utilizing
         the mqtt plugin
-         
+
         :param topic:      topic to subscribe to
         :param qos:        quality of service (optional) otherwise the default of the mqtt plugin will be used

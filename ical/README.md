@@ -5,14 +5,17 @@ This plugin has no requirements or dependencies.
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-```
-[ical]
-    class_name = iCal
-    class_path = plugins.ical
-    # calendars = private:http://example.com/private.ics | http://example.com/public.ics | holiday:http://example.com/holidays.ics
-    # cycle = 3600
+```yaml
+ical:
+    class_name: iCal
+    class_path: plugins.ical
+    # calendars:
+    #   - private:http://example.com/private.ics
+    #   - http://example.com/public.ics
+    #   - holiday:http://example.com/holidays.ics
+    # cycle: 3600
 ```
 
 #### Attributes
@@ -21,19 +24,22 @@ The following attributes can be specified:
   * `calendars`: list of calendars to automatically keep up to day and provided via `sh.ical()` function. Configures an alias (optional) and the URI of calendar, which can be a local file or a remote file when starting with `http://`.
   * `cycle`: specifies the interval in seconds to update the calendars. By default it 3600 seconds.
 
-### items.conf
+### items.yaml
 
-```
-[calendar]
-  [[holiday]]
-    type = bool
-    ical_calendar = holiday
-  [[private]]
-    type = bool
-    ical_calendar = private
-  [[public]]
-    type = bool
-    ical_calendar = http://example.com/public.ics
+```yaml
+calendar:
+
+    holiday:
+        type: bool
+        ical_calendar: holiday
+
+    private:
+        type: bool
+        ical_calendar: private
+
+    public:
+        type: bool
+        ical_calendar: http://example.com/public.ics
 ```
 
 #### ical_calendar
@@ -47,7 +53,8 @@ The update interval for the item updates is currently at one minutes. Which mean
 the items will be updated.
 
 ## Functions
-Because there is only one function, you could access it directly by the object. With the above `plugin.conf` it would look like this: `events = sh.ical('http://cal.server/my.ical')`.
+Because there is only one function, you could access it directly by the object.
+With the above `plugin.yaml` it would look like this: `events = sh.ical('http://cal.server/my.ical')`.
 
 This function has one mandatory and two optional arguments. `sh.ical(file, delta=1, offset=0)`
 
@@ -61,11 +68,10 @@ the event end time
 the event's class type (e.g. private calendar entry)
 the event's summary, i.e. content
 
-
 If you want to use a calendar more regularly it could be helpful to configure this calendar in the plugin configuration to make it
 automatically available via an alias and keep them up to date.
 
-```
+```python
 today = sh.now().date()
 
 holidays = sh.ical('http://cal.server/holidays.ical')
@@ -93,19 +99,18 @@ for day in events:
 You can also use the plugin configuration to configure the calendars and using an alias instead. This will ease the access
 to the calendar and you don't need to know the exact calendar URL each time you want to access it.
 
-```
-[ical]
-    class_name = iCal
-    class_path = plugins.ical
-    calendars = holidays:http://cal.server/holidays.ical | events:http://cal.server/events.ical
-    # cycle = 3600
+```yaml
+ical:
+    class_name: iCal
+    class_path: plugins.ical
+    calendars:
+      - holidays:http://cal.server/holidays.ical
+      - events:http://cal.server/events.ical
+    # cycle: 3600
 ```
 
-```
+```python
 holidays = sh.ical('holidays')   # access the holidays.ical
-...
 
 events = sh.ical('events')       # access the events.ical
-...
 ```
-
