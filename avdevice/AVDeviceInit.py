@@ -163,52 +163,75 @@ class Init():
             return reset_onerror
 
         elif vartype == 'responses':
-            ignoreresponse = self._ignoreresponse = re.sub('[ ]', '', value[0]).split(",")
-            errorresponse = re.sub('[ ]', '', value[1]).split(",")
-            force_buffer = re.sub('[ ]', '', value[2]).split(",")
-            ignoredisplay = re.sub('[ ]', '', value[3]).split(",")
+            ignoreresponse = self._ignoreresponse = re.sub(', ', ',', value[0]).split(",")
+            errorresponse = re.sub(', ', ',', value[1]).split(",")
+            force_buffer = re.sub(', ', ',', value[2]).split(",")
+            ignoredisplay = re.sub(', ', ',', value[3]).split(",")
+
+            newignore = []
+            for ignore in ignoredisplay:
+                newignore.append(re.sub('^0', '', ignore))
+            ignoredisplay = newignore
+            self.logger.debug("Initializing {}: Ignore {}".format(self._name, ignoredisplay))
             self.logger.debug("Initializing {}: Special Settings: Ignoring responses {}.".format(self._name, ignoreresponse))
             self.logger.debug("Initializing {}: Special Settings: Error responses {}.".format(self._name, errorresponse))
             self.logger.debug("Initializing {}: Special Settings: Force buffer {}.".format(self._name, force_buffer))
             self.logger.debug("Initializing {}: Special Settings: Ignore Display {}".format(self._name, ignoredisplay))
             return ignoreresponse, errorresponse, force_buffer, ignoredisplay
 
+        elif vartype == 'update_exclude':
+            update_exclude = re.sub(', ', ',', value).split(",")
+            self.logger.debug("Initializing {}: Special Settings: Exclude updates by {}".format(self._name, update_exclude))
+            return update_exclude
+
     def _create_querycommands(self):
         if not self._lock.acquire(timeout=2):
             return
         try:
-            self.logger.debug("Initializing {}: Starting to create query commands. Lock is {}".format(
-                self._name, self._threadlock_standard.locked()))
+            self._query_zonecommands['zone0'].clear()
+            self._query_zonecommands['zone1'].clear()
+            self._query_zonecommands['zone2'].clear()
+            self._query_zonecommands['zone3'].clear()
+            self._query_zonecommands['zone4'].clear()
+            self._query_zonecommands = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
+            self._query_commands.clear()
+            self.logger.debug("Initializing {}: Starting to create query commands. Lock is {}. Query Commands: {}, Query Zone: {}".format(
+                self._name, self._threadlock_standard.locked(), self._query_commands, self._query_zonecommands))
             displaycommand = ''
             length = 0
             for zone in range(0, self._number_of_zones + 1):
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         querycommand = self._functions['zone{}'.format(zone)][command][3]
-                        valuetype = self._functions['zone{}'.format(zone)][command][8]
+                        valuetype = self._functions['zone{}'.format(zone)][command][9]
                         responselist = []
                         splitresponse = self._functions['zone{}'.format(zone)][command][4].split("|")
                         for split in splitresponse:
-                            if split.count('*') > 0 or 'R' in self._functions['zone{}'.format(zone)][command][5]:
-                                responselist.append(split.strip())
-                        responsestring = "|".join(responselist)
-                        responsecommand = re.sub('[*]', '', responsestring)
-                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_zonecommands['zone{}'.format(zone)] \
+                            valuelength = split.count('*')
+                            if valuelength > 0 or 'R' in self._functions['zone{}'.format(zone)][command][5]:
+                                toadd = re.sub('[*]', '', split.strip())
+                                if split.count('?') == 1:
+                                    toadd = re.sub('[?]', '', toadd)
+                                responselist.append(toadd)
+                        responsecommand = "|".join(responselist)
+                        if not '{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype, valuelength) in self._query_zonecommands['zone{}'.format(zone)] \
                             and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' \
                             and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
                             if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_zonecommands['zone{}'.format(zone)].append('{},{},{},{}'.format(
-                                    querycommand, querycommand, responsecommand, valuetype))
+                                self._query_zonecommands['zone{}'.format(zone)].append('{},{},{},{},{}'.format(
+                                    querycommand, querycommand, responsecommand, valuetype, valuelength))
+                                self.logger.log(VERBOSE1, "Initializing {}: Added Query Command for zone {}: {},{},{},{},{}".format(self._name, zone, querycommand, querycommand, responsecommand, valuetype, valuelength))
                             else:
-                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype)
+                                displaycommand = '{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype, valuelength)
                                 self.logger.debug("Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
-                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_commands \
+                        if not '{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype, valuelength) in self._query_commands \
                             and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' \
                             and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
                             if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_commands.append('{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype))
+                                self._query_commands.append('{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype, valuelength))
+                                self.logger.log(VERBOSE1, "Initializing {}: Added general Query Command: {},{},{},{},{}".format(self._name, querycommand, querycommand, responsecommand, valuetype, valuelength))
                             else:
-                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, self._functions['zone{}'.format(zone)][command][8])
+                                displaycommand = '{},{},{},{},{}'.format(querycommand, querycommand, responsecommand, self._functions['zone{}'.format(zone)][command][9], valuelength)
                                 self.logger.log(VERBOSE1, "Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
                     except Exception as err:
                         self.logger.error("Initializing {}: Problems adding query commands for command {}. Error: {}".format(
@@ -229,19 +252,24 @@ class Init():
         if not self._lock.acquire(timeout=2):
             return
         try:
-            self.logger.debug("Initializing {}: Starting to create power commands. Lock is {}".format(
-                self._name, self._threadlock_standard.locked()))
+            self._power_commands.clear()
+            self.logger.debug("Initializing {}: Starting to create power commands. Lock is {}. Powercommands: {}".format(
+                self._name, self._threadlock_standard.locked(), self._power_commands))
             for zone in range(0, self._number_of_zones + 1):
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         if command.startswith('power on'):
-                            if '**' in self._functions['zone{}'.format(zone)][command][4]:
-                                value = re.sub('\*\*', 'ON', self._functions['zone{}'.format(zone)][command][4])
-                            else:
-                                if self._functions['zone{}'.format(zone)][command][6] == 'yes':
-                                    value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
+                            valuelist = []
+                            for response in self._functions['zone{}'.format(zone)][command][4].split("|"):
+                                if '**' in response:
+                                    value = re.sub('\*\*', 'ON', response)
                                 else:
-                                    value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
+                                    if self._functions['zone{}'.format(zone)][command][6] == 'yes':
+                                        value = re.sub('[*]', '0', response)
+                                    else:
+                                        value = re.sub('[*]', '1', response)
+                                valuelist.append(value)
+                            value = "|".join(valuelist)
                             combined = '{},{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2], self._functions['zone{}'.format(zone)][command][3], value, self._functions['zone{}'.format(zone)][command][8])
                             self._power_commands.append(combined)
                     except Exception as err:
@@ -259,16 +287,20 @@ class Init():
         if not self._lock.acquire(timeout=2):
             return
         try:
-            self.logger.debug("Initializing {}: Starting to create response commands. Lock is {}".format(
-                self._name, self._threadlock_standard.locked()))
+            self._response_commands.clear()
+            self._special_commands.clear()
+            self.logger.debug("Initializing {}: Starting to create response commands. Lock is {}. Response Commands: {}".format(
+                self._name, self._threadlock_standard.locked(), self._response_commands))
             for zone in range(0, self._number_of_zones + 1):
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         response_to_split = self._functions['zone{}'.format(zone)][command][4].split("|")
                         for response in response_to_split:
                             valuelength = response.count('*')
-                            if response.count('*') == 1 and self._functions['zone{}'.format(zone)][command][8].startswith('str'):
+                            if (response.count('?') == 1 or response.count('*') == 1) and \
+                                    self._functions['zone{}'.format(zone)][command][9].startswith('str'):
                                 valuelength = 30
+                                response = re.sub('[?]', '*', response)
 
                             if response.find('*') >= 0:
                                 position = response.index('*')
@@ -281,7 +313,7 @@ class Init():
                             except Exception:
                                 inverse = 'no'
                             try:
-                                expectedtype = self._functions['zone{}'.format(zone)][command][8]
+                                expectedtype = self._functions['zone{}'.format(zone)][command][9]
                             except Exception:
                                 expectedtype = ''
                             function = self._functions['zone{}'.format(zone)][command][1].split(" ")[0]
@@ -296,28 +328,31 @@ class Init():
                                 try:
                                     if function == 'display':
                                         if response in self._ignoreresponse and '' not in self._ignoreresponse:
-                                            self._special_commands['Display'] = {'Command': response, 'Ignore': 1}
+                                            self._special_commands['Display'] = {'Command': response, 'Ignore': 1, 'Item': item}
                                         else:
-                                            self._special_commands['Display'] = {'Command': response, 'Ignore': 0}
+                                            self._special_commands['Display'] = {'Command': response, 'Ignore': 0, 'Item': item}
                                         self.logger.log(VERBOSE1, "Initializing {}: Found Display Command and updated it: {}".format(self._name, self._special_commands))
                                     elif function == 'input':
                                         if 'Input' not in self._special_commands:
-                                            self._special_commands['Input'] = {'Command': [response], 'Ignore': [0]}
+                                            self._special_commands['Input'] = {'Command': [response], 'Ignore': [0], 'Item': [item]}
                                         else:
                                             self._special_commands['Input']['Command'].append(response)
+                                            self._special_commands['Input']['Item'].append(item)
                                             self._special_commands['Input']['Ignore'].append(0)
                                         self.logger.log(VERBOSE2, "Initializing {}: Found Input Command and added it to display commands.".format(self._name))
                                     elif (function == 'title' or function == 'station' or function == 'genre'):
                                         if 'Nowplaying' not in self._special_commands:
-                                            self._special_commands['Nowplaying'] = {'Command': [response]}
+                                            self._special_commands['Nowplaying'] = {'Command': [response], 'Item': [item]}
                                         else:
                                             self._special_commands['Nowplaying']['Command'].append(response)
+                                            self._special_commands['Nowplaying']['Item'].append(item)
                                         self.logger.log(VERBOSE1, "Initializing {}: Found Now Playing Command and updated it: {}".format(self._name, self._special_commands))
                                     elif (function == 'speakers'):
                                         if 'Speakers' not in self._special_commands:
-                                            self._special_commands['Speakers'] = {'Command': [response]}
+                                            self._special_commands['Speakers'] = {'Command': [response], 'Item': [item]}
                                         else:
                                             self._special_commands['Speakers']['Command'].append(response)
+                                            self._special_commands['Speakers']['Item'].append(item)
                                         self.logger.log(VERBOSE1, "Initializing {}: Found Speakers Command and updated it: {}".format(self._name, self._special_commands))
                                 except Exception as err:
                                     self.logger.debug("Initializing {}: No Special Commands set. Message: {}".format(self._name, err))
@@ -352,13 +387,13 @@ class Init():
                 "Initializing {}: Problems creating response commands. Error: {}".format(self._name, err))
         finally:
             if 'Display' not in self._special_commands:
-                self._special_commands['Display'] = {'Command': '', 'Ignore': 1}
+                self._special_commands['Display'] = {'Command': '', 'Ignore': 1, 'Item': ''}
             if 'Input' not in self._special_commands:
-                self._special_commands['Input'] = {'Command': '', 'Ignore': 1}
+                self._special_commands['Input'] = {'Command': '', 'Ignore': 1, 'Item': ''}
             if 'Nowplaying' not in self._special_commands:
-                self._special_commands['Nowplaying'] = {'Command': ''}
+                self._special_commands['Nowplaying'] = {'Command': '', 'Item': ''}
             if 'Speakers' not in self._special_commands:
-                self._special_commands['Speakers'] = {'Command': ''}
+                self._special_commands['Speakers'] = {'Command': '', 'Item': ''}
             self.logger.debug("Initializing {}: Special commands for solving Display issues: {}".format(
                 self._name, self._special_commands))
             self.logger.info("Initializing {}: Created response commands, including {} entries.".format(
@@ -371,18 +406,20 @@ class Init():
         if not self._lock.acquire(timeout=2):
             return
         try:
-            self.logger.debug("Initializing {}: Starting to read file {}. Lock is {}".format(
-                self._name, self._model, self._threadlock_standard.locked()))
+            self._functions.clear()
+            self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+            self.logger.debug("Initializing {}: Starting to read file {}. Lock is {}. Functions: {}".format(
+                self._name, self._model, self._threadlock_standard.locked(), self._functions))
             filename = '{}/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
 
             commands = codecs.open(filename, 'r', 'utf-8')
             zones = [0]
             for line in commands:
                 try:
-                    line = re.sub('[!@#$\\n\\r]', '', line)
+                    line = re.sub('[\\n\\r]', '', line)
                     line = re.sub('; ', ';', line)
                     line = re.sub(' ;', ';', line)
-                    if line == '':
+                    if line == '' or line.startswith('#') or line.startswith('ZONE;'):
                         function = ''
                     else:
                         row = line.split(";")
@@ -393,8 +430,8 @@ class Init():
                         else:
                             row[1:3] = [' '.join(row[1:3])]
                         function = row[1]
-                        itemtest = re.sub(' set| on| off| increase| decrease', '', function)
-                        for i in range(0, 9):
+                        itemtest = re.sub(' set| on| off| increase| decrease| open| close', '', function)
+                        for i in range(0, 10):
                             try:
                                 test = row[i]
                             except IndexError:
@@ -402,21 +439,29 @@ class Init():
                                     row.append('RW')
                                 if i == 6:
                                     row.append('no')
-                                if i == 8 and "set" in function:
+                                if i == 9 and "set" in function:
                                     row.append('int,float')
-                                elif i == 8 and ("on" in function or "off" in function):
+                                elif i == 9 and "display" in function:
+                                    row.append('str')
+                                elif i == 9 and "open" in function:
                                     row.append('bool')
-                                elif i == 8 and ("increase" in function or "decrease" in function):
+                                elif i == 9 and "close" in function:
+                                    row.append('bool')
+                                elif i == 9 and ("on" in function or "off" in function):
+                                    row.append('bool')
+                                elif i == 9 and ("increase" in function or "decrease" in function):
                                     row.append('int,float')
                                     row[5] = row[5].replace('*', '')
                                 else:
                                     row.append('')
                         try:
-                            row[8] = row[8].replace('string', 'str')
-                            row[8] = row[8].replace('num', 'int,float')
-                            row[8] = row[8].replace('|', ',')
-                            if row[8] == '':
-                                row[8] = 'bool,int,str'
+                            row[9] = row[9].replace('string', 'str')
+                            row[9] = row[9].replace('num', 'int,float')
+                            row[9] = row[9].replace('|', ',')
+                            if row[4].count('*') == 0 and row[4].count('?') == 0 and row[9] == '':
+                                row[9] = 'empty'
+                            elif row[9] == '':
+                                row[9] = 'bool,int,str'
                         except Exception:
                             pass
                         try:
@@ -426,6 +471,10 @@ class Init():
                     if function == "FUNCTION" or function == '' or function == "FUNCTION FUNCTIONTYPE":
                         pass
                     elif itemtest in itemkeys:
+                        function = function.replace('open', 'on')
+                        function = function.replace('close', 'off')
+                        row[1] = row[1].replace('open', 'on')
+                        row[1] = row[1].replace('close', 'off')
                         if row[0] == '0' or row[0] == '':
                             self._functions['zone0'][function] = row
                         elif row[0] == '1':
@@ -451,7 +500,7 @@ class Init():
         except Exception as err:
             self.logger.error("Initializing {}: Problems loading command file. Error: {}".format(self._name, err))
         finally:
-            self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W', '', '', 'bool']
+            self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W', '', '', '', 'bool']
             self.logger.info("Initializing {}: Created functions list, including entries for {} zones.".format(self._name, self._number_of_zones))
             if self._threadlock_standard.locked():
                 self._lock.release()
