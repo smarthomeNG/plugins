@@ -570,7 +570,7 @@ class AVDevice(SmartPlugin):
 											if not buffer[start:] in bufferlist and not buffer[start:] in line:
 												bufferlist.append(buffer[start:])
 										self.logger.debug("Processing Response {}: Forcebuffer {} FOUND in buffer. Bufferlist: {}. Buffer: {}".format(
-											self._name, buf, bufferlist, buffer))
+											self._name, buf, bufferlist, re.sub('[\r\n]', ' --- ', buffer)))
 								except Exception as err:
 									self.logger.warning("Processing Response {}: Problems while buffering. Error: {}".format(self._name, err))
 							if bufferlist:
@@ -622,15 +622,15 @@ class AVDevice(SmartPlugin):
 							self.logger.log(VERBOSE2, "Processing Response {}: Response {} is ignored because ignore responses is {}. Command list is now: {}. Message: {}".format(self._name, line, self._ignore_response, self._send_commands, err))
 					elif not line.startswith(tuple(self._ignore_response)) and line.startswith(self._special_commands['Display']['Command']) and \
 							self._response_buffer is not False and '' not in self._ignore_response and not self._special_commands['Display']['Command'] == '':
-						self.logger.log(VERBOSE1, "Processing Response {}: Detected Display info {}. buffer: \r\n{}".format(self._name, line, buffer))
+						self.logger.log(VERBOSE1, "Processing Response {}: Detected Display info {}. buffer: {}".format(self._name, line, re.sub('[\r\n]', ' --- ', buffer)))
 						buffering = False
 						buffer += '\r\n{}\r\n'.format(line)
 						buffer = tidy(buffer)
-						self.logger.log(VERBOSE1, "Processing Response {}: Append Display info {} to buffer: \r\n{}".format(self._name, line, buffer))
+						self.logger.log(VERBOSE1, "Processing Response {}: Append Display info {} to buffer: {}".format(self._name, line, re.sub('[\r\n]', ' --- ', buffer)))
 					else:
 						if self._response_buffer is False and not buffer.startswith(tuple(self._force_buffer)) and '' not in self._force_buffer:
 							buffering = False
-							self.logger.log(VERBOSE1, "Processing Response {}: Clearing buffer: {}".format(self._name, buffer))
+							self.logger.log(VERBOSE1, "Processing Response {}: Clearing buffer: {}".format(self._name, re.sub('[\r\n]', ' --- ', buffer)))
 							buffer = '\r\n'
 						self.logger.log(VERBOSE1, "Processing Response {}: Sending back line: {}. Display Command: {}".format(
 							self._name, line, self._special_commands['Display']['Command']))
@@ -687,7 +687,7 @@ class AVDevice(SmartPlugin):
 				buffering = False
 				for buf in bufferlist:
 					if not re.sub('[ ]', '', buf) == '' and not buf.startswith(tuple(self._ignore_response)) and '' not in self._ignore_response:
-						self.logger.debug("Processing Response {}: Sending back {} from filtered buffer: {}.".format(self._name, buf, buffer))
+						self.logger.debug("Processing Response {}: Sending back {} from filtered buffer: {}.".format(self._name, buf, re.sub('[\r\n]', ' --- ', buffer)))
 						self._wait(0.2)
 						yield buf
 		except Exception as err:
@@ -843,7 +843,7 @@ class AVDevice(SmartPlugin):
 					ser.write(bytes('{}\r'.format(command), 'utf-8'))
 					buffer = bytes()
 					buffer = ser.read().decode('utf-8')
-					self.logger.log(VERBOSE1, "Connecting Serial {}:  Buffer: {}. Reconnecting Retry: {}.".format(self._name, buffer, i))
+					self.logger.log(VERBOSE1, "Connecting Serial {}:  Buffer: {}. Reconnecting Retry: {}.".format(self._name, re.sub('[\r\n]', ' --- ', buffer), i))
 					if i >= 4:
 						ser.close()
 						self.logger.log(VERBOSE1, "Connecting Serial {}:  Ran through several retries.".format(self._name))
