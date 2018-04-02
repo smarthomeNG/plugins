@@ -1871,11 +1871,15 @@ class AVDevice(SmartPlugin):
 	def _displayignore(self, response, receivedvalue, caller):
 		if not caller == 'parsing_final':
 			self.logger.log(VERBOSE1, "Display Ignore {}: Function called by: {}. Response: {}. Received Value: {}".format(self._name, caller, response, receivedvalue))
-		displaycommand = self._special_commands['Display']['Command']
-		displayignore = self._special_commands['Display']['Ignore']
-		inputignore = self._special_commands['Input']['Ignore']
-		inputcommands = self._special_commands['Input']['Command']
-		responseignore = self._ignore_response
+		try:
+			displaycommand = self._special_commands['Display']['Command']
+			displayignore = self._special_commands['Display']['Ignore']
+			inputignore = self._special_commands['Input']['Ignore']
+			inputcommands = self._special_commands['Input']['Command']
+			responseignore = self._ignore_response
+		except:
+			displaycommand = inputcommands = responseignore = ''
+			displayignore = inputignore = 1
 		try:
 			sending = self._send_commands[0]
 		except Exception:
