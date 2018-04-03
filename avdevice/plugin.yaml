@@ -11,7 +11,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc
 
-    version: 1.3.2                 # Plugin version
+    version: 1.3.3                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
@@ -173,6 +173,13 @@ parameters:
         description:
             de: "Automatischer Versuch, sich mit dem Gerät zu verbinden, wenn keine Rückmeldung kommt oder die Verbindung verloren wurde. Dies sollte nicht notwendig sein, da das Plugin ohnehin bei jedem neuen Senden eines Befehls einen Verbindungsaufbauversuch startet."
             en: "Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command."
+
+    update_exclude:
+        type: str
+        default: ''
+        description:
+            de: "Caller, bei denen kein Itemupdate vollzogen werden soll. Dies ist hilfreich, um beispielsweise mittels on_change Items abhängig von einem anderen Item zu aktualisieren, ohne dass die Updatefunktion des Plugins getriggert wird (z.B. für play/stop/pause). Es können mehrere durch Komma getrennte Einträge definiert werden."
+            en: "Define calles that shouldn't trigger an item update. This is helpful if you want to change values of items based on other items by using on_change or on_update functions. In that case the plugin wouldn't update the dependent item additionally (e.g. play/pause/stop). You can define a list of callers delimited by ,"
 
 item_attributes:
     avdevice_zone[0-4]:
