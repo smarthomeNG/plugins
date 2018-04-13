@@ -1,25 +1,28 @@
-# Metadata for the Smart-Plugin
 plugin:
-    # Global plugin attributes
-    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    type: interface
     description:
-        de: 'Helios EC x00 Pro / Vallox SE KWL Plugin (Modellserien bis 2014)'
-        en: ''
-    maintainer: mtiews, Tom-Bom-badil
-#    tester:                        # Who tests this plugin?
-#    keywords: iot xyz
-    documentation: https://github.com/Tom-Bom-badil/helios/wiki        # url of documentation (wiki) page
+        de: 'Plugin zur Helios EC x00 Pro / Vallox xx SE Ansteuerung'
+        en: 'Plugin for Helios EC x00 Pro / Vallox xx SE control'
+    maintainer: 'Tom Bombadil'
+    tester: '-'
+    keywords: 'helios vallox ventilation'
+    documentation: https://github.com/Tom-Bom-badil/helios/wiki
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/40092-erweiterung-helios-vallox-plugin
-
-    version: 1.1.1                 # Plugin version
+    version: 1.4.2                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
-    classname: HeliosBase          # class containing the plugin
-
-parameters:
-    # Definition of parameters to be configured in etc/plugin.yaml
-    
-item_attributes:
-    # Definition of item attributes defined by this plugin
-    
+    multi_instance:  False         # plugin supports multi instance
+    classname: 'Helios'            # class containing the plugin
+# parameters:                        # Definition of parameters to be configured in etc/plugin.yaml
+#    tty:
+#        type: str
+#        default: '/dev/ttyUSB0'
+#        description:
+#            de: 'Port für die Kommunikation'
+#            en: 'Port for communication'
+#    cycle: 'Polling interval in seconds'
+#        type: num
+#        default: 300
+#        description:
+#            de: 'Abfrage-Intervall'
+#            en: 'Polling interval'
+# item_attributes:
