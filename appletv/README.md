@@ -262,10 +262,6 @@ If your plugin support item triggers as well, please describe the attributes lik
 
 ## Methods
 
-### play_url(url) <--- Currently not working on ATV4
-Sends a play command to the device with an url as argument.  
-Example: `sh.appletv.play('http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_60fps_normal.mp4')`.
-
 ### is_playing()
 Return `true` or `false` indicating if the Apple TV is currently playing media.  
 Example: `sh.appletv.play()`
