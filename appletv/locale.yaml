@@ -1,0 +1,12 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Finden':               {'de': '=', 'en': 'Discover', 'fr': 'Découvrir'}
+    'Geräte':               {'de': '=', 'en': 'Devices', 'fr': 'Appareils'}
+    'Aktuelles Gerät':      {'de': '=', 'en': 'Actual device', 'fr': 'Appareil actuellement utilisé'}
+    'Gerät nutzbar':        {'de': '=', 'en': 'Device usable', 'fr': 'Appareil utilisable'}
+    'Gerät nicht nutzbar':  {'de': '=', 'en': 'Device not usable', 'fr': 'Appareil non utilisable'}
+    
+    'Wenn ein Gerät nicht nutzbar ist bitte überprüfen op Homesharing eingeschaltet ist.':
+        de: '='
+        en: 'If a device appears unusable, please check if homesharing has been enabled.'
+        fr: 'Si un appareil apparait non utilisable veuillez vérifier que le "Homesharing" est activé.'

@@ -1,0 +1,39 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: "Steuerung eines Apple TV's"
+        en: 'Controls an Apple TV'
+        fr: 'Contrôle un Apple TV'
+    maintainer: Foxi352
+#    tester:                        # Who tests this plugin?
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.5.1                  # Plugin version
+    sh_minversion: 1.4              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True            # plugin supports multi instance
+    classname: AppleTV              # class containing the plugin
+
+parameters:
+    ip:
+        type: ip
+        default: 0.0.0.0
+        description:
+            de: 'IP Adresse des Gerätes.'
+            en: 'Device IP address.'
+            fr: "Adresse IP de l'appareil"
+    login_id:
+        type: str
+        default: ''
+        description:
+            de: 'Login ID des Gerätes, kann im Webinterface gefunden werden.'
+            en: 'Login ID of the device. Can be found in the web interface.'
+            fr: "ID de connexion de l'appareil. Peut être trouvé sur l'interface web"
+   
+#item_attributes:
+    # Definition of item attributes defined by this plugin
+    

@@ -1,0 +1,88 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+{% block headtable %}	
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Name') }}</strong></td>
+			<td class="py-1">{{ p._name }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('IP') }}</strong></td>
+			<td class="py-1">{{ p._ip }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Login ID') }}</strong></td>
+			<td class="py-1">{{ p._login_id }}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+	<form action="discover" method="post">
+	<button id="btn1" class="btn btn-shng btn-sm" type="submit"><i class="fas fa-search"></i>&nbsp;&nbsp;&nbsp;{{ _('Finden') }}&nbsp;</button>
+	</form>
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 1 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+
+{ % set tab1title = "<strong>" ~ {{ _('Geräte') }} ~ "</strong> (" ~ item_count ~ ")" % }
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr>
+				    <th>&nbsp;</th>
+					<th>{{ _('Name') }}</th>
+					<th>{{ _('IP') }}</th>
+					<th>{{ _('Login ID') }}</th>
+					<th>{{ _('DMAP Port') }}</th>
+					<th>{{ _('Airplay Port') }}</th>
+    			</tr>
+			</thead>
+			<tbody>
+			{% for atv in p._atvs %}
+				<tr>  
+				    <td class="py-1" style="color: {% if atv.login_id %}green{% else %}red{% endif %}">
+				        {% if atv.address|string() == p._ip|string() %}
+				            <i class="fas fa-play-circle" title="{{ _('Aktuelles Gerät') }}"></i>
+				        {% elif atv.login_id %}
+                            <i class="fas fa-check-circle" title="{{ _('Gerät nutzbar') }}"></i>
+                        {% else %}
+                            <i class="fas fa-exclamation-circle" title="{{ _('Gerät nicht nutzbar') }}"></i>
+                        {% endif %}
+				    </td>
+					<td class="py-1">{{ atv.name }}</td>
+					<td class="py-1">{{ atv.address }}</td>
+					<td class="py-1">{{ atv.login_id }}</td>
+					<td class="py-1">{{ atv.port }}</td>
+					<td class="py-1">{{ atv.airplay_port }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+<div>
+    * {{ _('Wenn ein Gerät nicht nutzbar ist bitte überprüfen op Homesharing eingeschaltet ist.') }} 
+</div>
+{% endblock bodytab1 %}
+
