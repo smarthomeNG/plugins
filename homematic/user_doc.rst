@@ -58,15 +58,25 @@ ein entsprechender Fehler angezeigt:
 
 .. image:: assets/webif1.jpg
 
+
+|
+|
+
 Im zweiten Tab werden Devices angezeigt, die an der HomeMatic CCU2 angelernt sind:
 
 .. image:: assets/webif2.jpg
+
+|
+|
 
 Durch anklicken der Zeilen mit den Devices, die an der HomeMatic CCU2 angelernt sind, können
 weitere Details zu den Devices angezeigt werden
 
 .. image:: assets/webif2_1.jpg
 
+
+|
+|
 
 Auf dem dritten Reiter werden Informationen zu HomeMatic IP Geräten angezeigt, die an der CCU2
 angelernt sind.
@@ -78,18 +88,22 @@ angelernt sind.
 
 .. image:: assets/webif3.jpg
 
+|
+|
 
 Unterstützte HomeMatic und HomeMatic IP Geräte
 ----------------------------------------------
 
 In der Version 0.1.41 von **pyhomematic** werden die folgenden Geräte unterstützt und sollten
-mit dem Plugin laufen. (Getestet sind sie natürlich nicht alle):
+mit dem Plugin laufen. (Getestet sind sie in Ermangelung der Geräte natürlich nicht alle):
 
 
-Actors
-~~~~~~
+Aktoren
+~~~~~~~
 
-DEVICETYPES = {
+.. code-block:: javascript
+
+  DEVICETYPES = {
     "HM-LC-Bl1-SM": Blind,
     "HM-LC-Bl1-SM-2": Blind,
     "HM-LC-Bl1-FM": Blind,
@@ -216,13 +230,15 @@ DEVICETYPES = {
     "HM-Sen-RD-O": Rain,
     "ST6-SH": EcoLogic,
     "HM-Sec-Sir-WM": RFSiren,
-}
+  }
 
 
-Sensors
-~~~~~~~
+Sensoren
+~~~~~~~~
 
-DEVICETYPES = {
+.. code-block:: javascript
+
+  DEVICETYPES = {
     "HM-Sec-SC": ShutterContact,
     "HM-Sec-SC-2": ShutterContact,
     "HM-Sec-SCo": ShutterContact,
@@ -301,13 +317,15 @@ DEVICETYPES = {
     "HmIP-SAM": TiltIP,
     "HmIP-STHO": IPAreaThermostat,
     "HmIP-STHO-A": IPAreaThermostat,
-}
+  }
 
 
 Thermostate
 ~~~~~~~~~~~
 
-DEVICETYPES = {
+.. code-block:: javascript
+
+  DEVICETYPES = {
     "HM-CC-VG-1": ThermostatGroup,
     "HM-CC-RT-DN": Thermostat,
     "HM-CC-RT-DN-BoM": Thermostat,
@@ -330,13 +348,15 @@ DEVICETYPES = {
     "HMIP-WTH": IPThermostatWall,
     "HmIP-WTH": IPThermostatWall,
     "HmIP-BWTH": IPThermostatWall,
-}
+  }
 
 
 Sonstige
 ~~~~~~~~
 
-DEVICETYPES = {
+.. code-block:: javascript
+
+  DEVICETYPES = {
     "HM-RCV-50": RemoteVirtual,
     "HM-RC-2-PBU-FM": Remote,
     "HM-RC-Dis-H-x-EU": Remote,
@@ -397,5 +417,5 @@ DEVICETYPES = {
     "HM-SwI-X": RemotePress,
     "HMW-RCV-50": RemoteVirtual,
     "HmIP-RC8": Remote,
-}
+  }
 
