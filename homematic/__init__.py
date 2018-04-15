@@ -71,7 +71,10 @@ class Homematic(SmartPlugin):
         self.username = self.get_parameter_value('username')
         self.password = self.get_parameter_value('password')
         self.host = self.get_parameter_value('host')
-        self.port = self.get_parameter_value('port')
+#        self.port = self.get_parameter_value('port')
+#        self.port_hmip = self.get_parameter_value('port_hmip')
+        self.port = 2001
+        self.port_hmip = 2010
 
         # build dict identifier for the homematic ccu of this plugin instance
         self.hm_id = 'rf'
@@ -84,11 +87,28 @@ class Homematic(SmartPlugin):
         try:
              self.hm = HMConnection(interface_id="myserver", autostart=False, 
                                     eventcallback=self.eventcallback, systemcallback=self.systemcallback, 
-                                    remotes={self.hm_id:{"ip": self.host,"port": self.port}})
+                                    remotes={self.hm_id:{"ip": self.host, "port": self.port}})
         except:
             self.logger.error("{}: Unable to create HomeMatic object".format(self.get_fullname()))
             self._init_complete = False
             return
+
+
+        # build dict identifier for the homematicIP ccu of this plugin instance
+        if self.port_hmip != 0:
+            self.hmip_id = 'ip'
+            if self.get_instance_name() != '':
+                self.hmip_id += '_' + self.get_instance_name()
+            # create HomeMaticIP object
+            try:
+                 self.hmip = HMConnection(interface_id="myserver_ip", autostart=False, 
+                                          eventcallback=self.eventcallback, systemcallback=self.systemcallback, 
+                                          remotes={self.hmip_id:{"ip": self.host, "port": self.port_hmip}})
+            except:
+                self.logger.error("{}: Unable to create HomeMaticIP object".format(self.get_fullname()))
+#                self._init_complete = False
+#                return
+
 
         # set the name of the thread that got created by pyhomematic to something meaningfull 
         self.hm._server.name = self.get_fullname()
@@ -104,6 +124,12 @@ class Homematic(SmartPlugin):
             # stop the thread that got created by initializing pyhomematic 
 #            self.hm.stop()
 #            return
+
+        # start communication with HomeMatic ccu
+        try:
+            self.hmip.start()
+        except:
+            self.logger.error("{}: Unable to start HomeMaticIP object".format(self.get_fullname()))
 
         if self.connected:
             # TO DO: sleep besser lösen!
@@ -142,6 +168,7 @@ class Homematic(SmartPlugin):
         self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
         self.alive = False
         self.hm.stop()
+        self.hmip.stop()
 
 
     def parse_item(self, item):
@@ -161,7 +188,18 @@ class Homematic(SmartPlugin):
             init_error = False
 #            self.logger.debug("parse_item{}: {}".format(self.log_instance_str, item))
             dev_id = self.get_iattr_value(item.conf, 'hm_address')
+
+
+            dev_type = self.get_iattr_value(item.conf, 'hm_type')
+
+            dev_type = '?'
             dev = self.hm.devices[self.hm_id].get(dev_id)
+            if dev is None:
+                dev = self.hmip.devices[self.hmip_id].get(dev_id)
+                if dev is not None:
+                    dev_type = 'hmIP'
+            else:
+                dev_type = 'hm'
 
             hm_address = self.get_iattr_value(item.conf, 'hm_address')
             hm_channel = self.get_iattr_value(item.conf, 'hm_channel')
@@ -199,7 +237,7 @@ class Homematic(SmartPlugin):
                 hm_node = None
                 
             # store item and device information for plugin instance
-            self.hm_items.append( [str(item), item, hm_address, hm_channel, hm_function, hm_node] )
+            self.hm_items.append( [str(item), item, hm_address, hm_channel, hm_function, hm_node, dev_type] )
             
             # Initialize item from HomeMatic
             if dev is not None:
@@ -268,8 +306,16 @@ class Homematic(SmartPlugin):
                     hm_channel = myitem[3]
                     hm_function = myitem[4]
                     dev.CHANNELS[int(hm_channel)].setValue(hm_function, item())
-                    self.logger.warning("{}, update_item: Called with value '{}' for item '{}' from caller '{}', source '{}' and dest '{}'".format(self.get_fullname(), item(), item, caller, source, dest))
-                 
+                    self.logger.warning("{}, update_item (hm): Called with value '{}' for item '{}' from caller '{}', source '{}' and dest '{}'".format(self.get_fullname(), item(), item, caller, source, dest))
+                else:
+                    dev = self.hmip.devices[self.hmip_id].get(dev_id)
+                    # Write item value to HomeMaticIP device
+                    if dev is not None:
+                        hm_node = myitem[5]
+                        hm_channel = myitem[3]
+                        hm_function = myitem[4]
+                        dev.CHANNELS[int(hm_channel)].setValue(hm_function, item())
+                        self.logger.warning("{}, update_item (hmIP): Called with value '{}' for item '{}' from caller '{}', source '{}' and dest '{}'".format(self.get_fullname(), item(), item, caller, source, dest))
 
                 # ACTIONNODE: PRESS_LONG (action), PRESS_SHORT (action), [LEVEL (float 0.0-1.0)]
                 # LEVEL (float: 0.0-1.0), STOP (action), INHIBIT (bool), INSTALL_TEST (action), 
@@ -362,6 +408,12 @@ class Homematic(SmartPlugin):
         if dev is not None:
             d_type = str(dev.__class__).replace("<class '"+dev.__module__+'.', '').replace("'>",'')
             return d_type
+
+        dev = self.hmip.devices[self.hmip_id].get(dev_id)
+        if dev is not None:
+            d_type = str(dev.__class__).replace("<class '"+dev.__module__+'.', '').replace("'>",'')
+            return d_type
+
         return ''
 
 
@@ -435,6 +487,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
         
         self.hm_id = self.plugin.hm_id
+        self.hmip_id = self.plugin.hmip_id
 
 
     @cherrypy.expose
@@ -452,6 +505,7 @@ class WebInterface(SmartPluginWebIf):
         username = self.plugin.username
         host = self.plugin.host
         devices = []
+        ipdevices = []
         
         try:
             interface = self.plugin.hm.listBidcosInterfaces(self.hm_id)[0]
@@ -459,6 +513,7 @@ class WebInterface(SmartPluginWebIf):
         except:
             interface = None
         
+        # get HomeMatic devices
         for dev_id in self.plugin.hm.devices[self.hm_id]:
             dev = self.plugin.hm.devices[self.hm_id][dev_id]
 #            d_type = str(dev.__class__).replace("<class '"+dev.__module__+'.', '').replace("'>",'')
@@ -480,12 +535,36 @@ class WebInterface(SmartPluginWebIf):
             d['dev'] = dev
         device_count = len(devices)
         
+        # get HomeMatic devices
+        for dev_id in self.plugin.hmip.devices[self.hmip_id]:
+            dev = self.plugin.hmip.devices[self.hmip_id][dev_id]
+#            d_type = str(dev.__class__).replace("<class '"+dev.__module__+'.', '').replace("'>",'')
+            d_type = self.plugin.get_hmdevicetype(dev_id)
+            d = {}
+            d['name'] = dev._name
+            d['address'] = dev_id
+            d['hmtype'] = dev._TYPE
+            d['type'] = d_type
+            d['firmware'] = dev._FIRMWARE
+            d['version'] = dev._VERSION
+            if d_type in ['Switch','SwitchPowermeter','ShutterContact']:
+                try:
+                    d['value'] = dev.getValue('STATE')
+                except: pass
+
+            ipdevices.append(d)
+            	
+            d['dev'] = dev
+        ipdevice_count = len(ipdevices)
+        self.logger.warning("ipdevice_count = {}, ipdevices = {}".format(ipdevice_count, ipdevices))
+        
         tmpl = self.tplenv.get_template('index.html')
         # The first paramter for the render method has to be specified. the base template 
         # for the web interface relys on the instance of the plugin to be passed as p
         return tmpl.render(p=self.plugin, 
                            interface=interface,
                            devices=devices, device_count=device_count, 
+                           ipdevices=ipdevices, ipdevice_count=ipdevice_count, 
                            items=sorted(self.plugin.hm_items), item_count=len(self.plugin.hm_items),
                            hm=self.plugin.hm, hm_id=self.plugin.hm_id )
 

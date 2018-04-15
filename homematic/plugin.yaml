@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: gateway                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Ansteuerung von HomeMatic Komponenten über eine HomeMatic CCU2 Zentrale'
-        en: 'Control HomeMatic devices through a HomeMatic CCU2 (used as gateway)'
+        de: 'Ansteuerung von HomeMatic Komponenten über eine HomeMatic CCU2 Zentrale. Es werden HomeMatic und HomeMaticIP Geräte unterstützt.'
+        en: 'Control HomeMatic devices through a HomeMatic CCU2 (used as gateway). HomeMatic and HomeMaticIP devices are supported.'
     maintainer: msinn             # Who maintains this plugin?
 #    tester: efgh                   # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
@@ -27,13 +27,21 @@ parameters:
             de: 'IP Adresse bzw. Hostname der HomeMatic CCU2 Zentrale'
             en: 'ip address or hostname of the HomeMatic CCU2 gateway'
         
-    port:
-        type: int
-        default: 2001
-        valid_min: 0
-        description:
-            de: 'Port Nummer der HomeMatic CCU2 Zentrale'
-            en: 'port number of the HomeMatic CCU2 gateway'
+#    port:
+#        type: int
+#        default: 2001
+#        valid_min: 0
+#        description:
+#            de: 'Port Nummer der HomeMatic CCU2 Zentrale'
+#            en: 'port number of the HomeMatic CCU2 gateway'
+#        
+#    port_hmip:
+#        type: int
+#        default: 2010
+#        valid_min: 0
+#        description:
+#            de: 'Port Nummer der HomeMatic CCU2 Zentrale für HomeMaticIP Geräte'
+#            en: 'port number of the HomeMatic CCU2 gateway for HomeMaticIP Devices'
         
     username:
         type: str
