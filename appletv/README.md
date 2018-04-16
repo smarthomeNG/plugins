@@ -154,23 +154,18 @@ atv:
             atv@wohnzimmer: artwork_url
         play_state:
             type: num
-            visu_acl: rw
             atv@wohnzimmer: play_state
         play_state_string:
             type: str
-            visu_acl: rw
             atv@wohnzimmer: play_state_string
         playing:
             type: bool
-            visu_acl: rw
             atv@wohnzimmer: playing
         media_type:
             type: num
-            visu_acl: rw
             atv@wohnzimmer: media_type
         media_type_string:
             type: str
-            visu_acl: rw
             atv@wohnzimmer: media_type_string
         album:
             type: str
@@ -190,11 +185,9 @@ atv:
             atv@wohnzimmer: position
         total_time:
             type: num
-            visu_acl: rw
             atv@wohnzimmer: total_time
         position_percent:
             type: num
-            visu_acl: rw
             atv@wohnzimmer: position_percent
         repeat:
             type: num
@@ -202,7 +195,6 @@ atv:
             atv@wohnzimmer: repeat
         repeat_string:
             type: str
-            visu_acl: rw
             atv@wohnzimmer: repeat_string
         shuffle:
             type: bool
