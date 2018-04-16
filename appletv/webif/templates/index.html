@@ -24,27 +24,62 @@
 </table>
 {% endblock headtable %}
 
-
 <!--
 	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
 -->
 {% block buttons %}
-	<form action="discover" method="post">
-	<button id="btn1" class="btn btn-shng btn-sm" type="submit"><i class="fas fa-search"></i>&nbsp;&nbsp;&nbsp;{{ _('Finden') }}&nbsp;</button>
+	<form id="button_pressed" action="button_pressed" method="post">
+	    <input type="hidden" id="button" name="button" value="">
+	    <input type="hidden" id="pin" name="pin" value="">
+        <button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('discover');$('#button_pressed').submit();">
+        <i class="fas fa-search"></i>&nbsp;&nbsp;&nbsp;{{ _('Finden') }}&nbsp;</button>
+        <button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('start_authorization');$('#button_pressed').submit();" {% if p._credentials_verified %}disabled="true"{% endif %}>
+        <i class="fas fa-key"></i>&nbsp;&nbsp;&nbsp;{{ _('Autorisieren') }}&nbsp;</button>
 	</form>
 {% endblock %}
 
-<!--
-	Define the number of tabs for the body of the web interface (1 - 3)
--->
 {% set tabcount = 1 %}
+{% block bodytab1 %}
 
 <!--
-	Content block for the first tab of the Webinterface
+	PIN entry modal dialog
 -->
+<script src="static/js/bootstrap-pincode-input.js"></script>
+<link rel="stylesheet" type="text/css" href="static/css/bootstrap-pincode-input.css">
+<script>
+   $(document).ready(function() {
+        $('#pincode-input').pincodeInput({hidedigits:false,inputs:4});
+        {% if pinentry %}
+            $('#pinEntry').modal();
+        {% endif %}
+        $('#pinEntry').on('hidden.bs.modal', function (e) {
+            $('#button').val('finish_authorization');
+            $('#pin').val($('#pincode-input').val());
+            $('#button_pressed').submit();
+        })
+    });
+</script>
 
-{ % set tab1title = "<strong>" ~ {{ _('Geräte') }} ~ "</strong> (" ~ item_count ~ ")" % }
-{% block bodytab1 %}
+<div class="modal fade" id="pinEntry" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">{{ _('PIN eingeben') }}</h4>
+            </div>
+            <div class="modal-body">
+                <p>{{ _('PIN eingeben') }}: <input type="text" id="pincode-input"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Validieren') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--
+	Discovered devices table
+-->
 <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
 	<div class="col-sm-12">
 		<table class="table table-striped table-hover pluginList">
@@ -52,7 +87,7 @@
 				<tr>
 				    <th>&nbsp;</th>
 					<th>{{ _('Name') }}</th>
-					<th>{{ _('IP') }}</th>
+					<th>{{ _('IP Adresse') }}</th>
 					<th>{{ _('Login ID') }}</th>
 					<th>{{ _('DMAP Port') }}</th>
 					<th>{{ _('Airplay Port') }}</th>
@@ -84,5 +119,6 @@
 <div>
     * {{ _('Wenn ein Gerät nicht nutzbar ist bitte überprüfen op Homesharing eingeschaltet ist.') }} 
 </div>
+
 {% endblock bodytab1 %}
 

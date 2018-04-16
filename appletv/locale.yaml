@@ -1,12 +1,20 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
     'Finden':               {'de': '=', 'en': 'Discover', 'fr': 'Découvrir'}
+    'Autorisieren':         {'de': '=', 'en': 'Authorize', 'fr': 'Autoriser'}
     'Geräte':               {'de': '=', 'en': 'Devices', 'fr': 'Appareils'}
     'Aktuelles Gerät':      {'de': '=', 'en': 'Actual device', 'fr': 'Appareil actuellement utilisé'}
     'Gerät nutzbar':        {'de': '=', 'en': 'Device usable', 'fr': 'Appareil utilisable'}
     'Gerät nicht nutzbar':  {'de': '=', 'en': 'Device not usable', 'fr': 'Appareil non utilisable'}
+    'IP Adresse':           {'de': '=', 'en': 'IP address', 'fr': 'Adresse IP'}
     'Login ID':             {'de': '=', 'en': 'Login ID', 'fr': 'ID de connexion'}
+    'Validieren':           {'de': '=', 'en': 'Validate', 'fr': 'Valider'}
     
+    'PIN eingeben':
+        de: 'Auf dem Fernseher angezeigte PIN eingeben'
+        en: 'Input PIN as seen on TV'
+        fr: 'Entrer le code PIN affiché sur votre TV'
+
     'Wenn ein Gerät nicht nutzbar ist bitte überprüfen op Homesharing eingeschaltet ist.':
         de: '='
         en: 'If a device appears unusable, please check if homesharing has been enabled.'

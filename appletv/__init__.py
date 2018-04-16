@@ -28,6 +28,7 @@ from lib.model.smartplugin import *
 
 import asyncio
 import datetime
+import os
 import pyatv
 import threading
 from random import randint
@@ -59,6 +60,7 @@ class AppleTV(SmartPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self._name = 'Unknown'
+        self._device_id = None
         self._ip = self.get_parameter_value('ip')
         self._login_id = self.get_parameter_value('login_id')
 
@@ -72,11 +74,13 @@ class AppleTV(SmartPlugin):
         self._push_listener_loop = None
         self._cycle = 5
         self._scheduler_running = False
-        
         self._playstatus = None
         self._is_playing = False
         self._position = 0
         self._position_timestamp = None 
+        self._credentials = None
+        self._credentialsfile = None
+        self._credentials_verified = False
         self.__push_listener_thread = None
 
         self.init_webinterface()
@@ -198,6 +202,27 @@ class AppleTV(SmartPlugin):
         else:
             self._atv = pyatv.connect_to_apple_tv(self._atv_device, self._loop)
             self._atv_rc = self._atv.remote_control
+            self._device_id = self._atv.metadata.device_id
+            self._credentialsfile = os.path.join(os.path.dirname(__file__), '{}.credentials'.format(self._device_id))
+            try:
+                _credentials = open(self._credentialsfile, 'r')
+                self._credentials = _credentials.read()
+                await self._atv.airplay.load_credentials(self._credentials)
+                self.logger.debug("Credentials read: {}".format(self._credentials))
+            except:
+                _credentials = open(self._credentialsfile, 'w')
+                self._credentials = await self._atv.airplay.generate_credentials()
+                await self._atv.airplay.load_credentials(self._credentials)
+                _credentials.write(self._credentials)
+                self.logger.debug("Credentials written: {}".format(self._credentials))
+            finally:
+                try:
+                    await self._atv.airplay.verify_authenticated()
+                    self._credentials_verified = True
+                except:
+                    self._credentials_verified = False
+                    self.logger.info("Credentials for {} are not yet verified, airplay not possible".format(self._name))
+                _credentials.close()
             self._push_listener_thread = threading.Thread(target=self._push_listener_thread_worker, name='ATV listener')
             self._push_listener_thread.start()
         return True
@@ -385,6 +410,7 @@ class WebInterface(SmartPluginWebIf):
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.tplenv = self.init_template_environment()
+        self.pinentry = False
 
 
     @cherrypy.expose
@@ -398,9 +424,18 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin)
+        return tmpl.render(p=self.plugin, pinentry=self.pinentry)
 
     @cherrypy.expose
-    def discover(self):
-        self.plugin._loop.create_task(self.plugin.discover())
+    def button_pressed(self, button = None, pin = None):
+        if button == "discover":
+            self.plugin._loop.create_task(self.plugin.discover())
+        elif button == "start_authorization":
+            self.pinentry = True
+            self.plugin._loop.create_task(self.plugin._atv.airplay.start_authentication())
+        elif button == "finish_authorization":
+            self.pinentry = False
+            self.plugin._loop.create_task(self.plugin._atv.airplay.finish_authentication(pin))
+        else:
+            self.logger.warning("Unknown button pressed in webif: {}".format(button))
         raise cherrypy.HTTPRedirect('index')

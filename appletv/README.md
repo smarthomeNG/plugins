@@ -264,6 +264,10 @@ Example: `sh.appletv.play()`
 Sends a pause command to the device.  
 Example: `sh.appletv.pause()`
 
+### play_url(url)
+Plays a media using the given URL. Thed media must of course be compatible with the Apple TV device. For this to work SHNG must be authenticated with the device first. This is done by using the "Authenticate" button in the web interface. A PIN code displayed on the TV screen must then be entered in the web interface. This should only be needed once and be valid forever.  
+Example: `sh.appletv.play_url('http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_1080p_60fps_normal.mp4')`
+
 ## Visualisation with SmartVISU
 If you use SmartVISU as your visualisation you can use the following html code inside one of your pages to get you started:
 
