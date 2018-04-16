@@ -5,6 +5,7 @@ plugin_translations:
     'Aktuelles Gerät':      {'de': '=', 'en': 'Actual device', 'fr': 'Appareil actuellement utilisé'}
     'Gerät nutzbar':        {'de': '=', 'en': 'Device usable', 'fr': 'Appareil utilisable'}
     'Gerät nicht nutzbar':  {'de': '=', 'en': 'Device not usable', 'fr': 'Appareil non utilisable'}
+    'Login ID':             {'de': '=', 'en': 'Login ID', 'fr': 'ID de connexion'}
     
     'Wenn ein Gerät nicht nutzbar ist bitte überprüfen op Homesharing eingeschaltet ist.':
         de: '='

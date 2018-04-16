@@ -37,6 +37,8 @@ The parameters `ip` and `login_id` are needed if you have more than one Apple TV
 ### items.yaml
 
 Here comes a list of all possible items.
+#### name (string)
+Contains the name of the device, will be filled by autodetection on plugin startup
 
 #### artwork_url (string)
 Contains a URL to the artwork of the currently played media file (if available). 
@@ -256,15 +258,11 @@ atv:
             atv@wohnzimmer: rc_next
 ```
 
-### logic.yaml
-If your plugin support item triggers as well, please describe the attributes like the item attributes.
-
-
 ## Methods
 
 ### is_playing()
-Return `true` or `false` indicating if the Apple TV is currently playing media.  
-Example: `sh.appletv.play()`
+Returns `true` or `false` indicating if the Apple TV is currently playing media.  
+Example: `playing = sh.appletv.is_playing()`
 
 ### play()
 Sends a pause command to the device.  
