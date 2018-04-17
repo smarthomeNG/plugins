@@ -99,8 +99,11 @@ class AppleTV(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
-        self._loop.call_soon_threadsafe(self._loop.stop())
+        self._loop.stop()
+        while self._loop.is_running():
+            pass
         self._loop.run_until_complete(self.disconnect())
+        self._loop.close()
         self.alive = False
 
     def parse_item(self, item):
@@ -278,6 +281,7 @@ class AppleTV(SmartPlugin):
                         self.update_position(self._playstatus.position + time_passed, False)
                     _cycle = 0
         except:
+            return
             self.logger.debug('*** Error in loop.run_forever()')
             raise
 
@@ -412,7 +416,19 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
         self.pinentry = False
 
-
+    def auth_callback(self, future):
+        try:
+            accepted = future.result()
+            if accepted:
+                self.plugin._credentials_verified = True
+                self.plugin.logger.info("Authentication done")
+        except  pyatv.exceptions.DeviceAuthenticationError as e:
+            self.plugin._credentials_verified = False
+            self.plugin.logger.error("Authentication error, wrong PIN ?")
+        except Exception as e:
+            self.plugin._credentials_verified = False
+            self.plugin.logger.error("Authentication error: {}".format(str(e)))
+ 
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -435,7 +451,8 @@ class WebInterface(SmartPluginWebIf):
             self.plugin._loop.create_task(self.plugin._atv.airplay.start_authentication())
         elif button == "finish_authorization":
             self.pinentry = False
-            self.plugin._loop.create_task(self.plugin._atv.airplay.finish_authentication(pin))
+            task = self.plugin._loop.create_task(self.plugin._atv.airplay.finish_authentication(pin))
+            task.add_done_callback(self.auth_callback)
         else:
             self.logger.warning("Unknown button pressed in webif: {}".format(button))
         raise cherrypy.HTTPRedirect('index')

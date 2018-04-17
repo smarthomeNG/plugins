@@ -33,7 +33,7 @@
 	    <input type="hidden" id="pin" name="pin" value="">
         <button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('discover');$('#button_pressed').submit();">
         <i class="fas fa-search"></i>&nbsp;&nbsp;&nbsp;{{ _('Finden') }}&nbsp;</button>
-        <button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('start_authorization');$('#button_pressed').submit();" {% if p._credentials_verified %}disabled="true"{% endif %}>
+        <button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('start_authorization');$('#button_pressed').submit();" {% if p._credentials_verified %}disabled="True"{% endif %}>
         <i class="fas fa-key"></i>&nbsp;&nbsp;&nbsp;{{ _('Autorisieren') }}&nbsp;</button>
 	</form>
 {% endblock %}
