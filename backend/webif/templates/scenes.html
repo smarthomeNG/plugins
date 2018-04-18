@@ -55,9 +55,9 @@
 								<td class="p-1"></td>
 							{% endif %}
 							{% if action[2] %}
-								<td class="p-1">ja</td>
+								<td class="p-1">{{ _('ja') }}</td>
 							{% else %}
-								<td class="p-1">nein</td>
+								<td class="p-1">{{ _('nein') }}</td>
 							{% endif %}
 							<td class="p-1">{{ action[0] }}</td>
 							{% if (action[3] == None) or (action[3] == action[1]) %}
