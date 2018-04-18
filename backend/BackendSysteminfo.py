@@ -175,7 +175,8 @@ class BackendSysteminfo:
                 import socket
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(self.pypi_timeout)
-                sock.connect(('pypi.python.org', 443))
+#                sock.connect(('pypi.python.org', 443))
+                sock.connect(('pypi.org', 443))
                 sock.close()
             except:
                 pypi_available = False
@@ -184,7 +185,8 @@ class BackendSysteminfo:
         import pip
         import xmlrpc
         installed_packages = pip.get_installed_distributions()
-        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+#        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+        pypi = xmlrpc.client.ServerProxy('https://pypi.org/pypi')
 
         req_dict = self.get_requirements_info('base')
         req_test_dict = self.get_requirements_info('test')
@@ -226,7 +228,8 @@ class BackendSysteminfo:
                     package['pypi_version_not_available_msg'] = [translate('Keine Antwort von PyPI')]
             else:
                 package['pypi_version_not_available_msg'] = pypi_unavailable_message
-            package['pypi_doc_url'] = 'https://pypi.python.org/pypi/' + dist.project_name
+#            package['pypi_doc_url'] = 'https://pypi.python.org/pypi/' + dist.project_name
+            package['pypi_doc_url'] = 'https://pypi.org/pypi/' + dist.project_name
 
             if package['name'].startswith('url'):
                 self.logger.info("pypi_json: urllib: package['name'] = >{}<, req_dict.get(package['name'] = >{}<".format(package['name'], req_dict.get(package['name'])))
@@ -625,7 +628,8 @@ class BackendSysteminfo:
                 import socket
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(self.pypi_timeout)
-                sock.connect(('pypi.python.org', 443))
+#                sock.connect(('pypi.python.org', 443))
+                sock.connect(('pypi.org', 443))
                 sock.close()
             except:
                 pypi_available = False
@@ -634,7 +638,8 @@ class BackendSysteminfo:
         import pip
         import xmlrpc
         installed_packages = pip.get_installed_distributions()
-        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+#        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+        pypi = xmlrpc.client.ServerProxy('https://pypi.org/pypi')
         packages = []
         for dist in installed_packages:
             package = {}
