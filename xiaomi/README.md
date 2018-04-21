@@ -1,6 +1,6 @@
 # Xiaomi
 
-Version 0.2
+Version 0.3
 
 ## Requirements
 This plugin requires lib miflora in version 0.4 or above. You can install this lib with:
