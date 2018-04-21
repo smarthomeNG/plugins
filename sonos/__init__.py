@@ -156,28 +156,40 @@ class SimpleHttpServer:
 
 
 class SubscriptionHandler(object):
-    def __init__(self, endpoint, service):
+    def __init__(self, endpoint, service, logger):
         self._lock = threading.Lock()
         self._thread = None
         self._service = service
         self._endpoint = endpoint
         self._event = None
         self._signal = None
+        self._logger = logger
 
     def subscribe(self):
         with self._lock:
             self._signal = threading.Event()
-            self._event = self._service.subscribe(auto_renew=True)
+            try:
+                self._event = self._service.subscribe(auto_renew=True)
+            except Exception as err:
+                self._logger.warning("Sonos: {err}".format(err=err))
             if self._event:
                 self._thread = threading.Thread(target=self._endpoint, args=(self,))
+                self._thread.setDaemon(True)
                 self._thread.start()
 
     def unsubscribe(self):
         with self._lock:
             if self._event:
                 # try to unsubscribe first
-                self._event.unsubscribe()
+                try:
+                    self._event.unsubscribe()
+                except Exception as err:
+                    self._logger.warning("Sonos: {err}".format(err=err))
                 self._signal.set()
+                if self._thread:
+                    self._thread.join()
+                self._logger.debug("Sonos: event {event} unsubscribed and thread terminated".format(
+                    event=self._endpoint))
 
     @property
     def signal(self):
@@ -190,10 +202,6 @@ class SubscriptionHandler(object):
     @property
     def event(self):
         return self._event
-
-    @property
-    def service(self):
-        return self._service
 
     @property
     def is_subscribed(self):
@@ -308,17 +316,23 @@ class Speaker(object):
             self._logger.debug("Sonos: {uid}: soco set to {value}".format(uid=self.uid, value=value))
             if self._soco:
                 self.render_subscription = \
-                    SubscriptionHandler(endpoint=self._rendering_control_event, service=self._soco.renderingControl)
+                    SubscriptionHandler(endpoint=self._rendering_control_event, service=self._soco.renderingControl,
+                                        logger=self._logger)
                 self.av_subscription = \
-                    SubscriptionHandler(endpoint=self._av_transport_event, service=self._soco.avTransport)
+                    SubscriptionHandler(endpoint=self._av_transport_event, service=self._soco.avTransport,
+                                        logger=self._logger)
                 self.system_subscription = \
-                    SubscriptionHandler(endpoint=self._system_properties_event, service=self._soco.systemProperties)
+                    SubscriptionHandler(endpoint=self._system_properties_event, service=self._soco.systemProperties,
+                                        logger=self._logger)
                 self.zone_subscription = \
-                    SubscriptionHandler(endpoint=self._zone_topology_event, service=self._soco.zoneGroupTopology)
+                    SubscriptionHandler(endpoint=self._zone_topology_event, service=self._soco.zoneGroupTopology,
+                                        logger=self._logger)
                 self.alarm_subscription = \
-                    SubscriptionHandler(endpoint=self._alarm_event, service=self._soco.alarmClock)
+                    SubscriptionHandler(endpoint=self._alarm_event, service=self._soco.alarmClock,
+                                        logger=self._logger)
                 self.device_subscription = \
-                    SubscriptionHandler(endpoint=self._device_properties_event, service=self._soco.deviceProperties)
+                    SubscriptionHandler(endpoint=self._device_properties_event, service=self._soco.deviceProperties,
+                                        logger=self._logger)
 
                 # just to have a list for disposing all events
                 self._events = [
@@ -385,46 +399,27 @@ class Speaker(object):
         self.sonos_playlists()
 
     def check_subscriptions(self) -> None:
-        """
-        Do some subscription checks. If a subscription ist not active, we're trying to re-subscribe.
-        """
-        subs_ok = True
-        zone_subscribed = False
 
-        # check topology, system, alarm event for all speaker:
-        if not self.zone_subscription.is_subscribed:
-            subs_ok = False
-            self.zone_subscription.unsubscribe()
-            self.zone_subscription.subscribe()
-            zone_subscribed = True
-        if not self.system_subscription.is_subscribed:
-            subs_ok = False
-            self.system_subscription.unsubscribe()
-            self.system_subscription.subscribe()
-        if not self.alarm_subscription.is_subscribed:
-            subs_ok = False
-            self.alarm_subscription.unsubscribe()
-            self.alarm_subscription.subscribe()
-        if not self.render_subscription.is_subscribed:
-            subs_ok = False
-            self.render_subscription.unsubscribe()
-            self.render_subscription.subscribe()
+        self.zone_subscription.unsubscribe()
+        self.zone_subscription.subscribe()
 
-        if self.is_coordinator:
-            if not self.av_subscription.is_subscribed:
-                subs_ok = False
-                self.av_subscription.unsubscribe()
-                self.av_subscription.subscribe()
+        self.system_subscription.unsubscribe()
+        self.system_subscription.subscribe()
+
+        self.alarm_subscription.unsubscribe()
+        self.alarm_subscription.subscribe()
+
+        self.render_subscription.unsubscribe()
+        self.render_subscription.subscribe()
+
+        self.av_subscription.unsubscribe()
+        self.av_subscription.subscribe()
 
         # sometimes a discover fails --> coordinator is empty --> resubscribe zone topology event
-        if not zone_subscribed:
-            if not self.coordinator:
-                subs_ok = False
-                self.zone_subscription.unsubscribe()
-                self.zone_subscription.subscribe()
+        self.zone_subscription.unsubscribe()
+        self.zone_subscription.subscribe()
 
-        if subs_ok:
-            self._logger.debug("Sonos: {uid}: Event subscriptions ok".format(uid=self.uid))
+        self._logger.debug("Sonos: {uid}: Event subscriptions done".format(uid=self.uid))
 
     # Event Handler routines ###########################################################################################
 
@@ -626,7 +621,7 @@ class Speaker(object):
                             else:
                                 self.track_artist = ''
                             if 'title' in metadata:
-                                # ignore x-sonos-api-stream: radio played, title seeoms wrong
+                                # ignore x-sonos-api-stream: radio played, title seems wrong
                                 if re.match(r"^x-sonosapi-stream:", metadata['title']) is None:
                                     self.track_title = metadata['title']
                             else:
@@ -2038,10 +2033,8 @@ class Speaker(object):
 
             response = requests.post("http://legato.radiotime.com/Radio.asmx", data=data.encode("utf-8"),
                                      headers=headers)
-            test = XML.fromstring(response.content)
-            body = test.find("{http://schemas.xmlsoap.org/soap/envelope/}Body")[0]
-
-            t = XML.tostring(body)
+            schema = XML.fromstring(response.content)
+            body = schema.find("{http://schemas.xmlsoap.org/soap/envelope/}Body")[0]
 
             response = list(xmltodict.parse(XML.tostring(body), process_namespaces=True,
                                             namespaces={'http://www.sonos.com/Services/1.1': None}).values())[0]
@@ -2082,7 +2075,7 @@ class Speaker(object):
             sn = 0
             meta = to_didl_string(items[0])
 
-            uri = "x-sonosapi-stream:{0}?sid={1}&sn={2}".format(item_id, sid, sn)
+            uri = "x-sonosapi-stream:{0}?sid={1}&flags=8224&sn={2}".format(item_id, sid, sn)
 
             self.soco.avTransport.SetAVTransportURI([('InstanceID', 0),
                                                      ('CurrentURI', uri), ('CurrentURIMetaData', meta)])
@@ -2254,7 +2247,7 @@ class Speaker(object):
         :param track: The index of the track to start play from. First item in the queue is 0.
         :param name: playlist name
         :param start: Should the speaker start playing after loading the playlist?
-        :param clear_queue: 'True' to clearthe queue before loading the new playlist, 'False' otherwise.
+        :param clear_queue: 'True' to clear the queue before loading the new playlist, 'False' otherwise.
         :rtype: None
         :return: None
         """
@@ -2291,7 +2284,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.5"
+    PLUGIN_VERSION = "1.4.6"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
                  discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
