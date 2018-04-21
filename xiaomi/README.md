@@ -3,7 +3,7 @@
 Version 0.2
 
 ## Requirements
-This plugin requires lib miflora in version 0.2 or above. You can install this lib with:
+This plugin requires lib miflora in version 0.4 or above. You can install this lib with:
 
 ```
 sudo pip3 install miflora --upgrade

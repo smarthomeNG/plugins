@@ -23,12 +23,12 @@
 import logging
 from miflora.miflora_poller import MiFloraPoller, \
     MI_CONDUCTIVITY, MI_MOISTURE, MI_LIGHT, MI_TEMPERATURE, MI_BATTERY
-from miflora.backends.gatttool import GatttoolBackend
+from btlewrap import available_backends, BluepyBackend, GatttoolBackend, PygattBackend
 from lib.model.smartplugin import SmartPlugin
 
 class Xiaomi(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.0.2"
+    PLUGIN_VERSION = "1.3.0.3"
 
     def __init__(self, smarthome, bt_addr, cycle=300):
         """
