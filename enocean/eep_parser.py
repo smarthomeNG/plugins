@@ -235,6 +235,29 @@ class EEP_Parser():
             self.logger.debug('enocean: D2 Switch on')
         return results
 
+    def _parse_eep_D2_01_12(self, payload, status):
+        # self.logger.debug("enocean: processing D2_01_12: VLD Switch")
+        results = {}
+        # self.logger.info('enocean: D2 Switch Feedback  0:{} 1:{} 2:{}').format(payload[0],payload[1],payload[2])
+        if ( payload[1] == 0x60)  and (payload[2] == 0x80):
+            # Switch is off
+            results['STAT_A'] = 0
+            self.logger.debug('enocean: D2 Switch Channel A: off')
+        elif (payload[1] == 0x60) and (payload[2] == 0xe4):
+            # Switch is on
+            results['STAT_A'] = 1
+            self.logger.debug('enocean: D2 Channel A: Switch on')
+        elif (payload[1] == 0x61) and (payload[2] == 0x80):
+            # Switch is off
+            results['STAT_B'] = 0
+            self.logger.debug('enocean: D2 SwitchChannel A:  off')
+        elif (payload[1] == 0x61) and (payload[2] == 0xe4):
+            # Switch is on
+            results['STAT_B'] = 1
+            self.logger.debug('enocean: D2 Switch Channel B: on')
+        return results
+
+
 
 ####################################################
 ### --- Definitions for RORG = D5 / ORG = 06 --- ###

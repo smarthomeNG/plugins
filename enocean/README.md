@@ -144,9 +144,21 @@ An Enocean item must specify at minimum an ``enocean_rx_id`` (Enocean Identifica
             type=bool
             enocean_rx_key = STAT
             enocean_tx_eep = D2_01_07
-            enocean_pulsewidth = 0.1  // optional; turn off after 0.1 sed
+            enocean_pulsewidth = 0.1  // optional; turn off after 0.1 sec
             enocean_tx_id_offset = 1  
-    
+
+
+    [[actorD2_01_12]]
+        enocean_rx_id= 050A2FF4
+        enocean_rx_eep= D2_01_12
+        [[[switch]]]
+            cache= 'on'
+            type= bool
+            enocean_rx_key= STAT_A
+            enocean_channel= A
+            enocean_tx_eep= D2_01_12
+            enocean_tx_id_offset= 2
+
     [[awning]]
         enocean_rx_id = 0500E508
         enocean_rx_eep = F6_02_03
@@ -310,7 +322,18 @@ Enocean_Item:
             enocean_tx_eep: D2_01_07
             enocean_pulsewidth: 0.1  // optional; turn off after 0.1 sed
             enocean_tx_id_offset: 1  
-    
+
+    actorD2_01_12:
+        enocean_rx_id: 050A2FF4
+        enocean_rx_eep: D2_01_12
+        switch:
+            cache: 'on'
+            type: bool
+            enocean_rx_key: STAT_A
+            enocean_channel: A
+            enocean_tx_eep: D2_01_12
+            enocean_tx_id_offset: 2
+
     awning:
         enocean_rx_id: 0500E508
         enocean_rx_eep: F6_02_03
@@ -413,6 +436,7 @@ The following status EEPs are supported:
 * A5_11_04		Dimmer status feedback
 * A5_12_01		Power Measurement
 * D2_01_07		Simple electronic switch
+* D2_01_12		Simple electronic switch with 2 channels, like NodOn In-Wall module
 * D5_00_01		Door/Window Contact, e.g. Eltako FTK, FTKB
 * F6_02_01		2-Button-Rocker
 * F6_02_02		2-Button-Rocker
@@ -430,6 +454,7 @@ A complete list of available EEPs is documented at [EnOcean Alliance](http://www
 * A5_38_08_03		Dimmer command with specified dim level (0-100)
 * A5_3F_7F		Universal actuator command, e.g. blind control
 * D2_01_07		Simple electronic switch
+* D2_01_12		Simple electronic switch with 2 channels
 ```
 
 The optional ref_level parameter defines default dim value when dimmer is switched on via on command.
@@ -482,4 +507,4 @@ When activated on Enocean device the device will send a ``D4`` teach in request.
 To do so enable the UTE learnmode prior to the activation on the device: Start smarthome with the interactive console - see above. ``sh.enocean.start_UTE_learnmode(ID_Offset)``
 The device will be teached in and the learn mode will be ended automatically
 
-Docu v 1.5
+Docu v 1.6

@@ -538,7 +538,30 @@ class EnOcean(SmartPlugin):
                             pulsew=0
                             self.logger.debug('enocean:  NO pulsewidth found')
                         self.logger.debug('enocean: item is D2_01_07_01 type')
-                        self.send_switch_D2(id_offset, rx_id, pulsew, item())
+                        self.send_switch_D2(id_offset, rx_id, "ALL", pulsew, item())
+                    elif(tx_eep == 'D2_01_12'):
+                        if 'enocean_rx_id' in item.conf:
+                            rx_id = int(item.conf['enocean_rx_id'],16)
+                            self.logger.debug('enocean:  enocean_rx_id found')
+                        else:
+                            rx_id=0
+                            self.logger.debug('enocean:  NO enocean_rx_id found')
+
+                        if 'enocean_channel' in item.conf:
+                            schannel = (item.conf['enocean_channel'])
+                            self.logger.debug('enocean:  channel found')
+                        else:
+                            schannel="ALL"
+                            self.logger.debug('enocean:  NO channel found')
+
+                        if 'enocean_pulsewidth' in item.conf:
+                            pulsew = float(item.conf['enocean_pulsewidth'])
+                            self.logger.debug('enocean:  pulsewidth found')
+                        else:
+                            pulsew=0
+                            self.logger.debug('enocean:  NO pulsewidth found')
+                        self.logger.debug('enocean: item is D2_01_12 type')
+                        self.send_switch_D2(id_offset, rx_id, schannel, pulsew, item())
                         self.logger.debug('enocean: sent switch command for D2 VLD')
                     elif(tx_eep == 'A5_38_08_01'):
                         self.logger.debug('enocean: item is A5_38_08_01 type')
@@ -738,27 +761,34 @@ class EnOcean(SmartPlugin):
             self.logger.error("enocean: sending command A5_38_08: error")
 
 
-    def send_switch_D2(self, id_offset=0, rx_id=0, pulsew=0, on=0):
+    def send_switch_D2(self, id_offset=0, rx_id=0, schannel=0, pulsew=0, on=0):
         if (id_offset < 0) or (id_offset > 127):
             self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
             return
         if (rx_id < 0) or (rx_id > 0xFFFFFFFF):
             self.logger.error("enocean: ID offset out of range (0-127). Aborting.")
             return
+        if ( schannel == "A"): 
+            channel = 0x00
+        elif ( schannel == "B"):
+            channel = 0x01
+        else:
+            channel= 0x1E
+
         SubTel = 0x03
         db = 0xFF
         Secu = 0x0
         #self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x01],[0x03, 0xFF, 0xBA, 0xD0, 0x00, 0xFF, 0x0])
-        self.logger.info("enocean: sending switch command D2_01_07")
+        self.logger.info("enocean: sending switch command D2_01_...")
         if (on == 0):
-            self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x00],[0x03, rx_id, 0xFF, 0x0])
+            self._send_radio_packet(id_offset, 0xD2, [0x01, channel, 0x00],[0x03, rx_id, 0xFF, 0x0])
         elif (on == 1):
-            self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x01],[0x03, rx_id, 0xFF, 0x0])
+            self._send_radio_packet(id_offset, 0xD2, [0x01, channel, 0x01],[0x03, rx_id, 0xFF, 0x0])
             if (pulsew  > 0):
                 time.sleep(pulsew)
-                self._send_radio_packet(id_offset, 0xD2, [0x01, 0x1E, 0x00],[0x03, rx_id, 0xFF, 0x0])
+                self._send_radio_packet(id_offset, 0xD2, [0x01, channel, 0x00],[0x03, rx_id, 0xFF, 0x0])
         else:
-            self.logger.error("enocean: sending command D2_01_07: error")
+            self.logger.error("enocean: sending command D2_01: error")
         
 
 ####################################################
