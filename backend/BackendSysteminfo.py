@@ -184,8 +184,10 @@ class BackendSysteminfo:
 
         import pip
         import xmlrpc
-        installed_packages = pip.get_installed_distributions()
-#        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+        import pkg_resources
+        installed_packages = pkg_resources.working_set
+        #installed_packages = pip.get_installed_distributions()
+        #pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
         pypi = xmlrpc.client.ServerProxy('https://pypi.org/pypi')
 
         req_dict = self.get_requirements_info('base')
