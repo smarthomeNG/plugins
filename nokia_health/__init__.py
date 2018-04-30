@@ -24,6 +24,8 @@
 
 import requests
 from lib.model.smartplugin import *
+from nokia import NokiaAuth, NokiaApi, NokiaCredentials
+
 
 class NokiaHealth(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
@@ -33,14 +35,19 @@ class NokiaHealth(SmartPlugin):
 
     # see https://developer.health.nokia.com/api/doc
 
-    def __init__(self, smarthome, oauth_consumer_key, oauth_nonce, oauth_signature, oauth_token, userid, cycle=300):
+    def __init__(self, smarthome, consumer_key, consumer_secret, access_token, access_token_secret, user_id, cycle=300):
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
-        self._oauth_consumer_key = oauth_consumer_key
-        self._oauth_nonce = oauth_nonce
-        self._oauth_signature = oauth_signature
-        self._oauth_token = oauth_token
-        self._userid = userid
+        self._consumer_key = consumer_key
+        self._consumer_secret = consumer_secret
+        self._access_token = access_token
+        self._access_token_secret = access_token_secret
+        self._auth = NokiaAuth(self._consumer_key, self._consumer_secret)
+        self._user_id = user_id
+        self._creds = NokiaCredentials(self._access_token, self._access_token_secret, self._consumer_key,
+                                       self._consumer_secret, self._user_id)
+        self._client = NokiaApi(self._creds)
+
         self._cycle = cycle
         self._items = {}
 
@@ -67,66 +74,128 @@ class NokiaHealth(SmartPlugin):
     def _update(self):
         """
         Updates information on diverse items
+        Mappings:
+        ('weight', 1),
+        ('height', 4),
+        ('fat_free_mass', 5),
+        ('fat_ratio', 6),
+        ('fat_mass_weight', 8),
+        ('diastolic_blood_pressure', 9),
+        ('systolic_blood_pressure', 10),
+        ('heart_pulse', 11),
+        ('temperature', 12),
+        ('spo2', 54),
+        ('body_temperature', 71),
+        ('skin_temperature', 72),
+        ('muscle_mass', 76),
+        ('hydration', 77),
+        ('bone_mass', 88),
+        ('pulse_wave_velocity', 91)
         """
-        if 'last_update' not in self._items:
-            self.logger.error("Cannot update measure values, last_update item is missing!")
-            return
+        measures = self._client.get_measures()
+        last_measure = measures[0]
 
-        if 'weight' not in self._items:
-            self.logger.error("Cannot update measure values, weight item is missing!")
-            return
+        if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
+            self._items['heart_pulse'](last_measure.get_measure(11))
+            self.logger.debug(last_measure.get_measure(11))
 
-        last_measure = self.get_last_measure()
+        # Bugfix for strange behavior of returning heart_pulse as seperate dataset..
+        if last_measure.get_measure(1) is None:
+            last_measure = measures[1]
 
-        if 'weight' in last_measure and self._items['last_update']() < last_measure['date']:
-            self.logger.debug(last_measure)
-            self._items['weight'](last_measure['weight'])
-            self._items['last_update'](last_measure['date'])
-            if 'height' in last_measure and 'height' in self._items:
-                self._items['height'](last_measure['height'])
+        if last_measure.get_measure(1) is not None and 'weight' in self._items:
+            self._items['weight'](last_measure.get_measure(1))
+            self.logger.debug(last_measure.get_measure(1))
 
-            if 'height' in self._items and ('bmi' in self._items or 'bmi_text' in self._items):
-                if self._items['height']() > 0:
-                    bmi = round(
-                        last_measure['weight'] / ((self._items['height']()) * (self._items['height']())), 2)
-                    if 'bmi' in self._items:
-                        self._items['bmi'](bmi)
-                    if 'bmi_text' in self._items:
-                        if bmi < 16:
-                            self._items['bmi_text']('starkes Untergewicht')
-                        elif 16 <= bmi < 17:
-                            self._items['bmi_text']('mäßiges Untergewicht ')
-                        elif 17 <= bmi < 18.5:
-                            self._items['bmi_text']('leichtes Untergewicht ')
-                        elif 18.5 <= bmi < 25:
-                            self._items['bmi_text']('Normalgewicht')
-                        elif 25 <= bmi < 30:
-                            self._items['bmi_text']('Präadipositas (Übergewicht)')
-                        elif 30 <= bmi < 35:
-                            self._items['bmi_text']('Adipositas Grad I')
-                        elif 35 <= bmi < 40:
-                            self._items['bmi_text']('Adipositas Grad II')
-                        elif 40 <= bmi:
-                            self._items['bmi_text']('Adipositas Grad III')
-                else:
-                    self.logger.error(
-                        "Cannot calculate BMI: height is 0, please set height (in m) for height item manually.")
+        if last_measure.get_measure(4) is not None and 'height' in self._items:
+            self._items['height'](last_measure.get_measure(4))
+            self.logger.debug(last_measure.get_measure(4))
+
+        if last_measure.get_measure(5) is not None and 'fat_free_mass' in self._items:
+            self._items['fat_free_mass'](last_measure.get_measure(5))
+            self.logger.debug(last_measure.get_measure(5))
+
+        if last_measure.get_measure(6) is not None and 'fat_ratio' in self._items:
+            self._items['fat_ratio'](last_measure.get_measure(6))
+            self.logger.debug(last_measure.get_measure(6))
+
+        if last_measure.get_measure(8) is not None and 'fat_mass_weight' in self._items:
+            self._items['fat_mass_weight'](last_measure.get_measure(8))
+            self.logger.debug(last_measure.get_measure(8))
+
+        if last_measure.get_measure(9) is not None and 'diastolic_blood_pressure' in self._items:
+            self._items['diastolic_blood_pressure'](last_measure.get_measure(9))
+            self.logger.debug(last_measure.get_measure(9))
+
+        if last_measure.get_measure(10) is not None and 'systolic_blood_pressure' in self._items:
+            self._items['systolic_blood_pressure'](last_measure.get_measure(10))
+            self.logger.debug(last_measure.get_measure(10))
+
+        if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
+            self._items['heart_pulse'](last_measure.get_measure(11))
+            self.logger.debug(last_measure.get_measure(11))
+
+        if last_measure.get_measure(12) is not None and 'temperature' in self._items:
+            self._items['temperature'](last_measure.get_measure(12))
+            self.logger.debug(last_measure.get_measure(12))
+
+        if last_measure.get_measure(54) is not None and 'spo2' in self._items:
+            self._items['spo2'](last_measure.get_measure(54))
+            self.logger.debug(last_measure.get_measure(54))
+
+        if last_measure.get_measure(71) is not None and 'body_temperature' in self._items:
+            self._items['body_temperature'](last_measure.get_measure(71))
+            self.logger.debug(last_measure.get_measure(71))
+
+        if last_measure.get_measure(72) is not None and 'skin_temperature' in self._items:
+            self._items['skin_temperature'](last_measure.get_measure(72))
+            self.logger.debug(last_measure.get_measure(72))
+
+        if last_measure.get_measure(76) is not None and 'muscle_mass' in self._items:
+            self._items['muscle_mass'](last_measure.get_measure(76))
+            self.logger.debug(last_measure.get_measure(76))
+
+        if last_measure.get_measure(77) is not None and 'hydration' in self._items:
+            self._items['hydration'](last_measure.get_measure(77))
+            self.logger.debug(last_measure.get_measure(77))
+
+        if last_measure.get_measure(88) is not None and 'bone_mass' in self._items:
+            self._items['bone_mass'](last_measure.get_measure(88))
+            self.logger.debug(last_measure.get_measure(88))
+
+        if last_measure.get_measure(91) is not None and 'pulse_wave_velocity' in self._items:
+            self._items['pulse_wave_velocity'](last_measure.get_measure(91))
+            self.logger.debug(last_measure.get_measure(91))
+
+        if 'height' in self._items and ('bmi' in self._items or 'bmi_text' in self._items) and last_measure.get_measure(
+                1) is not None:
+            if self._items['height']() > 0:
+                bmi = round(
+                    last_measure.get_measure(1) / ((self._items['height']()) * (self._items['height']())), 2)
+                if 'bmi' in self._items:
+                    self._items['bmi'](bmi)
+                if 'bmi_text' in self._items:
+                    if bmi < 16:
+                        self._items['bmi_text']('starkes Untergewicht')
+                    elif 16 <= bmi < 17:
+                        self._items['bmi_text']('mäßiges Untergewicht ')
+                    elif 17 <= bmi < 18.5:
+                        self._items['bmi_text']('leichtes Untergewicht ')
+                    elif 18.5 <= bmi < 25:
+                        self._items['bmi_text']('Normalgewicht')
+                    elif 25 <= bmi < 30:
+                        self._items['bmi_text']('Präadipositas (Übergewicht)')
+                    elif 30 <= bmi < 35:
+                        self._items['bmi_text']('Adipositas Grad I')
+                    elif 35 <= bmi < 40:
+                        self._items['bmi_text']('Adipositas Grad II')
+                    elif 40 <= bmi:
+                        self._items['bmi_text']('Adipositas Grad III')
             else:
-                self.logger.error("Cannot calculate BMI: height and / or bmi item missing.")
-
-            if 'fat_ratio' in last_measure and 'fat_ratio' in self._items:
-                self._items['fat_ratio'](last_measure['fat_ratio'])
-
-            if 'fat_free_mass' in last_measure and 'fat_free_mass' in self._items:
-                self._items['fat_free_mass'](last_measure['fat_free_mass'])
-
-            if 'fat_mass_weight' in last_measure and 'fat_mass_weight' in self._items:
-                self._items['fat_mass_weight'](last_measure['fat_mass_weight'])
-
-            if 'heart_pulse' in last_measure and 'heart_pulse' in self._items:
-                self._items['heart_pulse'](last_measure['heart_pulse'])
+                self.logger.error(
+                    "Cannot calculate BMI: height is 0, please set height (in m) for height item manually.")
         else:
-            self.logger.debug("No update - no weight data or no new values since last update!")
+            self.logger.error("Cannot calculate BMI: height and / or bmi item missing.")
 
     def parse_item(self, item):
         """
@@ -136,64 +205,13 @@ class NokiaHealth(SmartPlugin):
         :param item: The item to process.
         """
         # items specific to call monitor
-        if self.get_iattr_value(item.conf, 'nh_type') in ['weight', 'height', 'bmi', 'bmi_text', 'fat_ratio', 'fat_free_mass',
-                                                          'fat_mass_weight', 'heart_pulse', 'last_update']:
+        if self.get_iattr_value(item.conf, 'nh_type') in ['weight', 'height', 'fat_free_mass', 'fat_mass_weight',
+                                                          'fat_ratio', 'fat_mass_weight', 'diastolic_blood_pressure',
+                                                          'systolic_blood_pressure', 'heart_pulse', 'temperature',
+                                                          'spo2', 'body_temperature', 'skin_temperature', 'muscle_mass',
+                                                          'hydration', 'bone_mass', 'pulse_wave_velocity', 'bmi',
+                                                          'bmi_text']:
             self._items[self.get_iattr_value(item.conf, 'nh_type')] = item
-
-    def get_last_measure(self):
-        measure_url = self.BASE_URL + "measure?action=getmeas&oauth_consumer_key=%s&oauth_nonce=%s&oauth_signature=%s&oauth_signature_method=HMAC-SHA1&oauth_token=%s&oauth_version=1.0&userid=%s&limit=10" % (
-            self._oauth_consumer_key, self._oauth_nonce, self._oauth_signature, self._oauth_token, self._userid)
-        response = requests.get(measure_url)
-        json = response.json()
-
-        result = {}
-        if json['status'] == 0:
-            body = json['body']
-            measuregrps = body['measuregrps']
-            date = measuregrps[0]['date']
-            result['date'] = date
-
-            for mgrp in measuregrps:
-                if date != mgrp['date']:
-                    break
-
-                for m in mgrp['measures']:
-                    if m['type'] in self.ALLOWED_MEASURE_TYPES:
-                        if m['type'] == 1:
-                            result['weight'] = m['value'] * pow(10, m['unit'])
-                        elif m['type'] == 4:
-                            result['height'] = m['value'] * pow(10, m['unit'])
-                        elif m['type'] == 5:
-                            result['fat_free_mass'] = m['value'] * pow(10, m['unit'])
-                        elif m['type'] == 6:
-                            result['fat_ratio'] = m['value'] * pow(10, m['unit'])
-                        elif m['type'] == 8:
-                            result['fat_mass_weight'] = m['value'] * pow(10, m['unit'])
-                        elif m['type'] == 11:
-                            result['heart_pulse'] = m['value'] * pow(10, m['unit'])
-                    else:
-                        self.logger.error('Measure Type %s currently not supported' % m['type'])
-        else:
-            self.logger.debug('Status: %s' % json['status'])
-
-        return result
-        # Status Codes:
-        #  0 : Operation was successful
-        # 247 : The userid provided is absent, or incorrect
-        # 250 : The provided userid and/or Oauth credentials do not match
-        # 283 : Token is invalid or doesn't exist
-        # 286 : No such subscription was found
-        # 293 : The callback URL is either absent or incorrect
-        # 294 : No such subscription could be deleted
-        # 304 : The comment is either absent or incorrect
-        # 305 : Too many notifications are already set
-        # 328: The user is deactivated
-        # 342 : The signature (using Oauth) is invalid
-        # 343 : Wrong Notification Callback Url don't exist
-        # 601 : Too Many Request
-        # 2554 : Wrong action or wrong webservice
-        # 2555 : An unknown error occurred
-        # 2556 : Service is not defined
 
     def get_items(self):
         return self._items

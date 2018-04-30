@@ -20,45 +20,42 @@ plugin:
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
 
-    oauth_consumer_key:
+    consumer_key:
         type: str
         default: 300
         mandatory: True
         description:
-            de: 'Oauth Consumer Key'
-            en: 'oauth consumer key'
+            de: 'Nokia Health API Key'
+            en: 'Nokia Health API Key'
 
-    oauth_nonce:
+    consumer_secret:
         type: str
         default: 300
         mandatory: True
         description:
-            de: 'Oauth Nonce'
-            en: 'oauth nonce'
+            de: 'Nokia Health API Secret'
+            en: 'Nokia Health API Secret'
 
-    oauth_signature:
+    access_token:
         type: str
-        default: 300
-        mandatory: True
+        mandatory: False
         description:
-            de: 'Oauth Signature'
-            en: 'oauth signature'
+            de: 'Access Token (über https://developer.health.nokia.com/api bestimmt)'
+            en: 'access token (can be found via https://developer.health.nokia.com/api)'
 
-    oauth_token:
+    access_token_secret:
         type: str
-        default: 300
-        mandatory: True
+        mandatory: False
         description:
-            de: 'Oauth Token'
-            en: 'oauth token'
+            de: 'Access Token Secret (über https://developer.health.nokia.com/api bestimmt)'
+            en: 'access token secret (can be found via https://developer.health.nokia.com/api)'
 
-    userid:
+    user_id:
         type: str
-        default: 300
-        mandatory: True
+        mandatory: False
         description:
-            de: 'Nokia Health User Id'
-            en: 'Nokia Health user id'
+            de: 'User ID'
+            en: 'user id'
 
     cycle:
         type: int
@@ -70,8 +67,8 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
 
-    nokia_health:
+    nh_type:
         type: str
         description:
-            de: 'nokia_health kann folgende Werte annehmen: weight, height (wird von Nokia Health nur beim allerersten Messwert geliefert), bmi, bmi_text, fat_ratio, fat_free_mass, fat_mass_weight, heart_pulse, last_update.'
-            en: 'nokia_health can be out of the following values: weight, height (wird von Nokia Health nur beim allerersten Messwert geliefert), bmi, bmi_text, fat_ratio, fat_free_mass, fat_mass_weight, heart_pulse, last_update.'
+            de: 'nh_type kann folgende Werte annehmen: weight, height (wird von Nokia Health nur beim allerersten Messwert geliefert), bmi, bmi_text, fat_ratio, fat_free_mass, fat_mass_weight, heart_pulse, last_update.'
+            en: 'nh_type can be out of the following values: weight, height (wird von Nokia Health nur beim allerersten Messwert geliefert), bmi, bmi_text, fat_ratio, fat_free_mass, fat_mass_weight, heart_pulse, last_update.'

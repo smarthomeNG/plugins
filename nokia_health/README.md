@@ -18,8 +18,7 @@ sudo pip3 install requests --upgrade
 ```
 
 You have to go through the registration and oauth process on https://developer.health.nokia.com/api.
-You will need a temporary callback url!.
-In the end after step 4, you see the 4 variables needed for the plugin to work in the URL the page is forwarding you to.
+In the end after step 4, you see the access token and the access token secret in the input fields and the user id in the data right to it.
 
 ## Configuration
 
@@ -28,10 +27,10 @@ In the end after step 4, you see the 4 variables needed for the plugin to work i
 nokia_health:
     class_name: NokiaHealth
     class_path: plugins.nokia_health
-    oauth_consumer_key: <your_oauth_consumer_key>
-    oauth_nonce: <your_oauth_nonce>
-    oauth_signature: <your_oauth_signature>
-    oauth_token: <your_oath_token>
+    consumer_key: <your_consumer_key>
+    consumer_secret: <your_consumer_secret>
+    access_token: <your_access_token>
+    access_token_secret: <your_access_token_secret>
     userid: <your_userid>
     instance: nokia_health
 ```
@@ -84,11 +83,6 @@ body:
         type: num
         visu_acl: ro
         nh_type@nokia_health: heart_pulse
-
-    last_update:
-        type: num
-        visu_acl: ro
-        nh_type@nokia_health: last_update
 ```
 
 ## Functions
