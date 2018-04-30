@@ -279,7 +279,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
-    def index(self):
+    def index(self, reload=None):
         """
         Build index.html for cherrypy
 
