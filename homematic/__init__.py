@@ -88,6 +88,7 @@ class Homematic(SmartPlugin):
              self.hm = HMConnection(interface_id="myserver", autostart=False, 
                                     eventcallback=self.eventcallback, systemcallback=self.systemcallback, 
                                     remotes={self.hm_id:{"ip": self.host, "port": self.port}})
+#                                    remotes={self.hm_id:{"ip": self.host, "port": self.port}, self.hmip_id:{"ip": self.host, "port": self.port_hmip}})
         except:
             self.logger.error("{}: Unable to create HomeMatic object".format(self.get_fullname()))
             self._init_complete = False
@@ -512,6 +513,12 @@ class WebInterface(SmartPluginWebIf):
             # [{'DEFAULT': True, 'DESCRIPTION': '', 'ADDRESS': 'OEQ1658621', 'TYPE': 'CCU2', 'DUTY_CYCLE': 1, 'CONNECTED': True, 'FIRMWARE_VERSION': '2.8.5'}]
         except:
             interface = None
+
+        try:
+            interfaceip = self.plugin.hm.listBidcosInterfaces(self.hmip_id)[0]
+            # [{'DEFAULT': True, 'DESCRIPTION': '', 'ADDRESS': 'OEQ1658621', 'TYPE': 'CCU2', 'DUTY_CYCLE': 1, 'CONNECTED': True, 'FIRMWARE_VERSION': '2.8.5'}]
+        except:
+            interfaceip = None
         
         # get HomeMatic devices
         for dev_id in self.plugin.hm.devices[self.hm_id]:
@@ -535,7 +542,7 @@ class WebInterface(SmartPluginWebIf):
             d['dev'] = dev
         device_count = len(devices)
         
-        # get HomeMatic devices
+        # get HomeMaticIP devices
         for dev_id in self.plugin.hmip.devices[self.hmip_id]:
             dev = self.plugin.hmip.devices[self.hmip_id][dev_id]
 #            d_type = str(dev.__class__).replace("<class '"+dev.__module__+'.', '').replace("'>",'')
@@ -562,7 +569,7 @@ class WebInterface(SmartPluginWebIf):
         # The first paramter for the render method has to be specified. the base template 
         # for the web interface relys on the instance of the plugin to be passed as p
         return tmpl.render(p=self.plugin, 
-                           interface=interface,
+                           interface=interface, interfaceip=interfaceip,
                            devices=devices, device_count=device_count, 
                            ipdevices=ipdevices, ipdevice_count=ipdevice_count, 
                            items=sorted(self.plugin.hm_items), item_count=len(self.plugin.hm_items),

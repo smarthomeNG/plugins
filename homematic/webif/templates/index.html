@@ -11,7 +11,7 @@
 	<tbody>
 		<tr>
 			<td class="py-1" width="200"><strong>Interface {{ _('Typ') }}</strong></td>
-			<td class="py-1"><a class="text-shng" href="http://{{ p.host }}" target="_blank">{{ interface.TYPE }}</a></td>
+			<td class="py-1"><a class="text-shng" href="http://{{ p.host }}" target="_blank">{{ interface.TYPE }}</a> {{ interfaceip.TYPE }}</td>
 			<td class="py-1" width="200"><strong>{{ _('Verbunden') }}</strong></td>
 			<td class="py-1">{% if interface.CONNECTED %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td width="100"></td>
@@ -89,8 +89,8 @@
 						<td class="py-1">{{ i[2] }}</td>
 						{% if not i[4] %}
 								<td colspan="3" class="py-1" style="color: red; font-weight: bold;">{{ _('Kein Device mit der Adresse gefunden') }}</td>
-						{% elif not i[3] %}
-								<td colspan="3" class="py-1" style="color: red; font-weight: bold;">{{ _('Funktion') }} {{ i[4] }} {{ _('nicht gefunden') }}</td>
+						{% elif not i[3] and 1 == 2 %}
+								<td colspan="3" class="py-1" style="color: red; font-weight: bold;">{{ _('Funktion') }} {{ i[4] }} {{ _('nicht gefunden') }} ({{ i[3] }})</td>
 						{% elif not i[5] %}
 								<td colspan="3" class="py-1" style="color: red; font-weight: bold;">{{ _('Funktion') }} {{ i[4] }} {{ _('existiert nicht für Kanal') }} {{ i[3] }}</td>
 						{% else %}
@@ -138,7 +138,11 @@
 						<td class="py-1">{{ d.type }}</td>
 						<td class="py-1">{{ d.firmware }}</td>
 						<td class="py-1">{{ d.version }}</td>
-						<td class="py-1">{{ d.dev.getAttributeData('RSSI_DEVICE') }}</td>
+						{% if d.address == 'BidCoS-RF' %}
+							<td></td>
+						{% else %}
+							<td class="py-1">{{ d.dev.getAttributeData('RSSI_DEVICE') }}</td>
+						{% endif %}
 						<td class="py-1"></td>
 					</tr>
 					<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
@@ -235,7 +239,7 @@
 			</thead>
 			<tbody>
 				{% for d in ipdevices|sort(attribute='name') %}
-					<tr id="{{ loop.index }}_click" style="cursor: pointer;">
+					<tr id="{{ loop.index }}_clickip" style="cursor: pointer;">
 						<td class="py-1">{{ d.name }}</td>
 						<td class="py-1">{{ d.address }}</td>
 						<td class="py-1">{{ d.hmtype }}</td>
@@ -245,7 +249,7 @@
 						<td class="py-1">{{ d.dev.getAttributeData('RSSI_DEVICE') }}</td>
 						<td class="py-1"></td>
 					</tr>
-					<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
+					<tr id="{{ loop.index }}_additionalip" style="display: none; cursor: pointer;">
 						<td class="py-1" colspan="10">
 							<div class="card">
 
@@ -301,11 +305,11 @@
 					</tr>
 					<script>
 						/* If foldable content: add onclick for table row, stop unfolding when clicking pypi link inside. */
-						$('#{{ loop.index }}_click').click(function(){
-							$('#{{ loop.index }}_additional').toggle();
+						$('#{{ loop.index }}_clickip').click(function(){
+							$('#{{ loop.index }}_additionalip').toggle();
 						});
-						$('#{{ loop.index }}_additional').click(function(){
-							$('#{{ loop.index }}_additional').toggle();
+						$('#{{ loop.index }}_additionalip').click(function(){
+							$('#{{ loop.index }}_additionalip').toggle();
 						});
 					</script>
 				{% endfor %}
