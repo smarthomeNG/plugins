@@ -16,7 +16,7 @@ sudo pip3 install nokia --upgrade
 ```
 
 You have to go through the registration and oauth process on https://developer.health.nokia.com/api.
-In the end after step 4, you see the access token and the access token secret in the input fields and the user id in the data right to it.
+In the end, after step 4, you see the access token and the access token secret in the input fields and the user id in the data right to it.
 
 ## Configuration
 
@@ -29,7 +29,7 @@ nokia_health:
     consumer_secret: <your_consumer_secret>
     access_token: <your_access_token>
     access_token_secret: <your_access_token_secret>
-    userid: <your_userid>
+    user_id: <your_userid>
     instance: nokia_health
 ```
 
@@ -83,7 +83,3 @@ body:
         nh_type@nokia_health: heart_pulse
 ```
 
-## Functions
-
-### get_last_measure():
-Gets the last measurement values.

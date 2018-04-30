@@ -14,6 +14,16 @@
 			<td class="py-1">Consumer Secret</td>
 			<td class="py-1">{{ p._consumer_secret }}</td>
 		</tr>
+		{% if not p._access_token and not p._access_token_secret %}
+		<tr>
+			<td class="py-1">
+				OAuth API
+			</td>
+			<td class="py-1">
+				<a href="https://developer.health.nokia.com/api" target="_blank">https://developer.health.nokia.com/api</a>
+			</td>
+		</tr>
+		{% else %}
 		<tr>
 			<td class="py-1">Access Token</td>
 			<td class="py-1">{{ p._access_token }}</td>
@@ -22,6 +32,7 @@
 			<td class="py-1">Access Token Secret</td>
 			<td class="py-1">{{ p._access_token_secret }}</td>
 		</tr>
+		{% endif %}
 		<tr>
 			<td class="py-1">User ID</td>
 			<td class="py-1">{{ p._user_id}}</td>
@@ -33,10 +44,7 @@
 {% block bodytab1 %}
 
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
-	<div class="col-sm-12">
-		<strong>Authorize URL:</strong>
-		<a href="{{ p._auth.get_authorize_url() }}" target="_blank">{{ p._auth.get_authorize_url() }}</a>
-	</div>
+
 	<div class="col-sm-12 mt-3">
 		<h5>Nokia Health Items ({{ p.get_items()|length }})</h5>
 
