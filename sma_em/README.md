@@ -1,7 +1,5 @@
 # SMA-EM Plugin
 
-Version 1.3.0.1
-
 This plugin retrieves the data sent by the SMA Energy Meter.
 In agreement with the author Florian Wenger, this plugin uses code published in
 https://github.com/datenschuft/SMA-EM/ - especially the readem method.

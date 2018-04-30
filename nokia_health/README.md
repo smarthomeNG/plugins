@@ -1,7 +1,5 @@
 # Nokia Health
 
-Version 0.1
-
 ## Description
 
 This plugin allows to retrieve data from the Nokia Health API (https://developer.health.nokia.com/api). Currently it 
