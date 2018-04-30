@@ -22,9 +22,8 @@
 #
 #########################################################################
 
-import logging
 import requests
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 
 class NokiaHealth(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
@@ -44,6 +43,9 @@ class NokiaHealth(SmartPlugin):
         self._userid = userid
         self._cycle = cycle
         self._items = {}
+
+        if not self.init_webinterface():
+            self._init_complete = False
 
     def run(self):
         self.alive = True
@@ -172,7 +174,7 @@ class NokiaHealth(SmartPlugin):
                     else:
                         self.logger.error('Measure Type %s currently not supported' % m['type'])
         else:
-            self.logger.error('Status: %s' % json['status'])
+            self.logger.debug('Status: %s' % json['status'])
 
         return result
         # Status Codes:
@@ -192,3 +194,84 @@ class NokiaHealth(SmartPlugin):
         # 2554 : Wrong action or wrong webservice
         # 2555 : An unknown error occurred
         # 2556 : Service is not defined
+
+    def get_items(self):
+        return self._items
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
+                           interface=None, item_count=len(self.plugin.get_items()),
+                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           tab1title="Nokia Health Items (%s)" % len(self.plugin.get_items()),
+                           p=self.plugin)

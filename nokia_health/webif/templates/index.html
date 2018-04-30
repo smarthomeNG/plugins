@@ -1,0 +1,60 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock %}
+
+{% block bodytab1 %}
+
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<h5>Nokia Health Items ({{ p.get_items()|length }})</h5>
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>Pfad</th>
+					<th>Typ</th>
+					<th>Nokia Health Data Type</th>
+					<th>Wert</th>
+					<th>Letztes Update</th>
+					<th>Letzter Change</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key, item in p.get_items().items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ key }}</td>
+						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+{% endblock %}
