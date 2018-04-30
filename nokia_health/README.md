@@ -9,10 +9,10 @@ Support Thread: https://knx-user-forum.de/forum/supportforen/smarthome-py/114117
 
 ## Requirements
 
-This plugin requires lib requests. You can install this lib with: 
+This plugin requires lib nokia. You can install this lib with: 
 
 ```bash
-sudo pip3 install requests --upgrade
+sudo pip3 install nokia --upgrade
 ```
 
 You have to go through the registration and oauth process on https://developer.health.nokia.com/api.
