@@ -73,11 +73,14 @@ class TankerKoenig(SmartPlugin):
         self.logger.debug(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
         json_obj = response.json()
         keys = ['place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode']
-        for i in json_obj['stations']:
-            result_station = {}
-            for key in keys:
-                result_station[key] = i[key]
-            result_stations.append(result_station)
+        if json_obj.get('stations', None) is None:
+            self.logger.warning("Tankerkönig didn't return any station")
+        else:
+            for i in json_obj['stations']:
+                result_station = {}
+                for key in keys:
+                    result_station[key] = i[key]
+                result_stations.append(result_station)
         return result_stations
 
     def get_petrol_station_detail(self, id):
