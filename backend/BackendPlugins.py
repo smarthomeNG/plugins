@@ -98,7 +98,7 @@ class BackendPlugins:
                 plugin['attributes'] = {}
                 plugin['smartplugin'] = False
                 plugin['instance'] = x
-                plugin['shortname'] = x._configname
+                plugin['configname'] = ''
                 plugin['shortname'] = x._shortname
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
