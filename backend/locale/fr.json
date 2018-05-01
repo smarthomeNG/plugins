@@ -114,11 +114,13 @@
 
 	"Nr.": "N°",
 	"Type": "Type",
+	"Configname": "",
 	"Plugin": "Extension",
 	"Classname": "Nom de la classe",
 	"Instanz": "Instance",
 	"Version": "Version",
 	"Mehrere Instanzen möglich": "Supporte plusieurs instances",
+	"Web Interface": "",
 	"ja": "oui",
 	"Ja": "Oui",
 	"nein": "non",
@@ -201,6 +203,10 @@
 	"Version nicht zulässig!": "Version non autorisée",
 	"Schlüsselwörter": "Mots-clés",
 
+	"Entwicklungs-Daten": "",
+	"Plugin spezifische Parameter": "",
+	"Plugin spezifische Item Attribute": "",
+
 	"_items": {
 		"path": "Chemin",
 		"name": "Nom",
@@ -269,6 +275,8 @@
 		"Neue Python Logik": "Nouvelle logique 'Python'",
 		"Erstellen": "Créer",
 		"Entladen": "Décharger",
+		"Starten": "",
+		"Stoppen": "",
 		"Nach unten scrollen": "Défiler vers le bas"
 	},
 

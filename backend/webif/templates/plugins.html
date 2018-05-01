@@ -18,9 +18,9 @@
 			<tr class="shng_heading">
 				<th style="width: 30px;"></th>
 				<th style="width: 30px;"></th>
-				<th style="width: 30px;">{{ _('Type') }}</th>
+				<th style="width: 150px;">{{ _('Type') }}</th>
+				<th style="width: 200px;">{{ _('Configname') }}</th>
 				<th style="width: 200px;">{{ _('Plugin') }}</th>
-				<th style="width: 160x;">{{ _('Classname') }}</th>
 				<th style="width: 200px;">{{ _('Instanz') }}</th>
 				<th style="width: 150px;">{{ _('Version') }}</th>
 				<th style="width: 150px;">{{ _('Mehrere Instanzen möglich') }}</th>
@@ -31,8 +31,9 @@
 		<tbody>
 			{% for p in plugins	 %}
 			{% set outer_loop = loop %}
-			<tr id="{{ loop.index }}_click" style="cursor: pointer;">
+			<tr>
 				<td class="py-1"><span style="color: {% if p.stopped %}red{% else %}green{% endif %};" class="fas {% if p.stopped %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span></td>
+				<form name="input" action="plugins.html" method="POST" enctype="multipart/form-data">
 				<td class="py-1">
 					{% if p.metadata.get_string('type') in ['web', 'protocol', 'interface', 'gateway', 'system'] %}
 					<img src="/gstatic/img/plugin_{{ p.metadata.get_string('type') }}.svg" style="width: 25px;"/>
@@ -40,33 +41,42 @@
 					-
 					{% endif %}
 				</td>
-				<td class="py-1" width="30px">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}
-				<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.shortname }}</td>
-				<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.classname }}</td>
+				<td class="py-1" id="{{ loop.index }}_click1" style="cursor: pointer;" width="30px">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}</td>
+				<td class="p-1" id="{{ loop.index }}_click2">
+					<input style="cursor: pointer; {% if p.stopped %} color:#bbb;{% endif %} border:none; background-color:transparent; width:100%" name="configname" readonly="true" value="{{ p.configname }}" type="text">
+				</td>
+				<td class="p-1" id="{{ loop.index }}_click3">
+					<input style="cursor: pointer; {% if p.stopped %} color:#bbb;{% endif %} border:none; background-color:transparent; width:100%" name="shortname" readonly="true" value="{{ p.shortname }}" type="text">
+				</td>
 				{% if p.smartplugin %}
 					{% set webifs = mod_http.get_webifs_for_plugin(p.shortname) %}
-					<td class="py-1">
-					{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.instancename %}{{ p.instancename }}{%else%}default{%endif%}
+					<td class="p-1" id="{{ loop.index }}_click4">
+						<input style="cursor: pointer; {% if p.stopped %} color:#bbb;{% endif %} border:none; background-color:transparent; width:100%" name="instancename" readonly="true" value="{{ p.instancename }}" type="text">
 					</td>
 <!--
 					<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.metadata.get_string('version') }}</td>
 -->
-					<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.version }}</td>
-					<td class="py-1">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
+					<td class="py-1" class="py-1" id="{{ loop.index }}_click5" style="cursor: pointer;">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.version }}</td>
+					<td class="py-1" class="py-1" id="{{ loop.index }}_click6" style="cursor: pointer;">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
 
 					{% if updates or 1==1 %}
 						<td class="py-1">
 							{% if 1==2 %}
 								<button {% if p.stopped %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-hand-pointer"></i></button>
+								<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-sync"></i></button>
 							{% endif %}
-							<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-sync"></i></button>
+
 						{% if not p.stopped %}
-							<button name="disable" title="{{ _('Deaktivieren','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-pause"></i></button>
+							<button name="disable" title="{{ _('Stoppen','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-pause"></i></button>
 						{% else %}
-							<button name="enable" title="{{ _('Aktivieren','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-play"></i></button>
+							<button name="enable" title="{{ _('Starten','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-play"></i></button>
 						{% endif %}
+						
+						{% if develop %}
+							<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-eject" style="color: #c40808;"></i></button>
+						{% endif %}
+
 						{% if 1 == 2 %}
-							<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-eject"></i></button>
 							&nbsp; &nbsp; &nbsp;
 							<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-outline-dark btn-sm" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ p.shortname }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true" style="color: #c40808;"></i></button>
 						{% endif %}
@@ -96,6 +106,7 @@
 					<td class="py-1"></td>
 					<td class="py-1"></td>
 				{%endif%}
+				</form>
 			</tr>
 			<tr id="{{ loop.index }}_additional" style="display: none; cursor: pointer;">
 				<td class="py-1" colspan="10">
@@ -153,50 +164,78 @@
 							</table>
 						</div>
 						{% endif %}
-
+						
+						{% if develop %}
 						<div class="card-header p-1"><strong>{{ _('Plugin Metadaten') }}:</strong></div>
 						<div class="card-body p-1">
 							{% if p.metadata.get_mlstring('description') %}
-							{{ _('Beschreibung') }}: {{ p.metadata.get_mlstring('description') }}<br/>
+							<strong>{{ _('Beschreibung') }}</strong>: {{ p.metadata.get_mlstring('description') }}<br/>
 							{% endif %}
 
 							{% if p.metadata.get_string('documentation') %}
-							{{ _('Documentation') }}:
+							<strong>{{ _('Documentation') }}</strong>:
 							<a class="text-shng" target="_blank" href="{{ p.metadata.get_string('documentation') }}">{{ p.metadata.get_string('documentation') }}</a><br/>
 							{% endif %}
 
 							{% if p.metadata.get_string('support') %}
-							{{ _('Support') }}:
+							<strong>{{ _('Support') }}</strong>:
 							<a class="text-shng" target="_blank" href="{{ p.metadata.get_string('support') }}">{{ p.metadata.get_string('support') }}</a><br/>
 							{% endif %}
 
-							{{ _('Schlüsselwörter') }}:
+							<strong>{{ _('Schlüsselwörter') }}</strong>:
 							{% if p.metadata.get_string('keywords') %}
 								{{ p.metadata.get_string('keywords') }}
 							{% else %}
 							-
 							{% endif %}
 							<br/>
-							{{ _('Wartung') }}:
+							<strong>{{ _('Wartung') }}</strong>:
 							{% if p.metadata.get_string('maintainer') %}
 								{{ p.metadata.get_string('maintainer') }}
 							{% else %}
 							-
 							{% endif %}
 							<br/>
-							{{ _('Tester') }}:
+							<strong>{{ _('Tester') }}</strong>:
 							{% if p.metadata.get_string('tester') %}
 								{{ p.metadata.get_string('tester') }}
 							{% else %}
 							-
 							{% endif %}
+							<br/>
+							<br/>
+							<strong>Python Class</strong>: {{ p.classname }}
 						</div>
+						
+						<div class="card-header p-1"><strong>{{ _('Entwicklungs-Daten') }}:</strong></div>
+						<div class="card-body p-1">
+							<strong>__dir__()</strong>:<br/>
+							{{ p.instance.__dir__() }}<br/
+							><br/>
+						</div>
+						{% endif %}
+
 					</div>
 				</td>
 			</tr>
 			<script>
 				/* If foldable content: add onclick for table row, stop unfolding when clicking pypi link inside. */
-				$('#{{ loop.index }}_click').click(function(){
+				$('#{{ loop.index }}_click1').click(function(){
+					$('#{{ loop.index }}_additional').toggle();
+				});
+				$('#{{ loop.index }}_click2').click(function(){
+					$('#{{ loop.index }}_additional').toggle();
+				});
+				$('#{{ loop.index }}_click3').click(function(){
+					$('#{{ loop.index }}_additional').toggle();
+				});
+				$('#{{ loop.index }}_click4').click(function(){
+					$('#{{ loop.index }}_additional').toggle();
+				});
+				$('#{{ loop.index }}_click5').click(function(){
+					$('#{{ loop.index }}_additional').toggle();
+				});
+				$('#{{ loop.index }}_click6').click(function(){
 					$('#{{ loop.index }}_additional').toggle();
 				});
 				$('#{{ loop.index }}_additional').click(function(){

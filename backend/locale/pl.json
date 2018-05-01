@@ -111,11 +111,13 @@
 
 	"Nr.": "Nr",
 	"Type": "Typ",
+	"Configname": "",
 	"Plugin": "Plugin",
 	"Classname": "Nazwa klasy",
 	"Instanz": "Instancja",
 	"Version": "Wersja",
 	"Mehrere Instanzen möglich": "Możliwe wiele instancji",
+	"Web Interface": "",
 	"ja": "Tak",
 	"Ja": "Tak",
 	"nein": "Nie",
@@ -198,6 +200,10 @@
 	"Version nicht zulässig!": "",
 	"Schlüsselwörter": "",
 
+	"Entwicklungs-Daten": "",
+	"Plugin spezifische Parameter": "",
+	"Plugin spezifische Item Attribute": "",
+
 	"_items": {
 		"path": "ścieżka",
 		"name": "nazwa",
@@ -266,6 +272,8 @@
 		"Neue Python Logik": "",
 		"Erstellen": "",
 		"Entladen": "",
+		"Starten": "",
+		"Stoppen": "",
 		"Nach unten scrollen": ""
 	},
 	

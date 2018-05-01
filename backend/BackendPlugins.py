@@ -48,12 +48,26 @@ class BackendPlugins:
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def plugins_html(self):
+    def plugins_html(self, configname=None, shortname=None, instancename=None, enable=None, disable=None, unload=None):
         """
         display a list of all known plugins
         """
+        # process actions triggerd by buttons on the web page
+        if enable is not None:
+            myplg = self.plugins.return_plugin(configname)
+            myplg2 = self.plugins.get_pluginthread(configname)
+            myplg.run()
+            self.logger.warning("disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg, myplg.alive, myplg2))
+        elif disable is not None:
+            myplg = self.plugins.return_plugin(configname)
+            myplg2 = self.plugins.get_pluginthread(configname)
+            myplg.stop()
+            self.logger.warning("disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg, myplg.alive, myplg2))
+        elif unload is not None:
+            result = self.plugins.unload_plugin(configname)
+
+        # get data for display of page
         conf_plugins = {}
-#        _conf = lib.config.parse(self._sh._plugin_conf)
         _conf = lib.config.parse(self.plugins._get_plugin_conf_filename())
 
         for plugin in _conf:
@@ -67,7 +81,7 @@ class BackendPlugins:
             if bool(x._parameters):
                 plugin['attributes'] = x._parameters
             else:
-                plugin['attributes'] = conf_plugins.get(x._config_section, {})
+                plugin['attributes'] = conf_plugins.get(x.get_configname(), {})
             plugin['metadata'] = x._metadata
             if isinstance(x, SmartPlugin):
                 plugin['smartplugin'] = True
@@ -75,17 +89,19 @@ class BackendPlugins:
                 plugin['instance'] = x
                 plugin['multiinstance'] = x.is_multi_instance_capable()
                 plugin['version'] = x.get_version()
+                plugin['configname'] = x.get_configname()
                 plugin['shortname'] = x.get_shortname()
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x.get_classname()
+                plugin['stopped'] = not x.alive
             else:
                 plugin['smartplugin'] = False
+                plugin['instance'] = x
+                plugin['shortname'] = x._configname
                 plugin['shortname'] = x._shortname
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
-            
-#            if  plugin['shortname'] in ['cli','blockly']:
-#                plugin['stopped'] = True
+                plugin['stopped'] = not x.alive
             plugin_list.append(plugin)
         plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])
 

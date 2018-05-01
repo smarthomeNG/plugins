@@ -113,11 +113,13 @@
 
 	"Nr.": "No.",
 	"Type": "Type",
+	"Configname": "Configname",
 	"Plugin": "Plugin",
 	"Classname": "Classname",
 	"Instanz": "Instance",
 	"Version": "Version",
 	"Mehrere Instanzen möglich": "Multi-Instance",
+	"Web Interface": "Web Interface",
 	"ja": "yes",
 	"Ja": "Yes",
 	"nein": "no",
@@ -200,6 +202,10 @@
 	"Version nicht zulässig!": "Version not usable!",
 	"Schlüsselwörter": "Keywords",
 
+	"Entwicklungs-Daten": "Development Data",
+	"Plugin spezifische Parameter": "Plugin specific parameters",
+	"Plugin spezifische Item Attribute": "Plugin specific item attributes",
+
 	"_items": {
 		"path": "Pfad",
 		"name": "name",
@@ -268,6 +274,8 @@
 		"Neue Python Logik": "New Python logic",
 		"Erstellen": "Create",
 		"Entladen": "Unload",
+		"Starten": "Start",
+		"Stoppen": "Stop",
 		"Nach unten scrollen": "Scroll down"
 	},
 	
