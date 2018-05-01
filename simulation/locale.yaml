@@ -1,0 +1,17 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'sim Attribut':        {'de': '"sim" Attribut', 'en': '"sim" Attribute'}
+    'Simulation Plugin Items':
+        de: 'Items des Simulation Plugins'
+        en: 'Simulation Plugin Items'
+    'startrecord Scheduler': {'de': 'startrecord Scheduler', 'en': 'startrecord Scheduler'}
+    'simulate Scheduler': {'de': 'simulate Scheduler', 'en': 'simulate Scheduler'}
+    'Last Day':
+        de: 'Letzter Tag'
+        en: 'Last Day'
+    'Data File':
+        de: 'Datendatei'
+        en: 'Data File'
+    'Clear Data File':
+        de: 'Datendatei leeren'
+        en: 'Clear Data File'

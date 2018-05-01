@@ -452,12 +452,19 @@ class WebInterface(SmartPluginWebIf):
         if cmd == 'delete_data_file':
             if len(self.plugin._datafile) > 0:
                 self.plugin._clear_file()
-        startRecord = self.plugin.scheduler_get('startrecord')['next']
-        simuluate = self.plugin.scheduler_get('startrecord')['next']
+        start_record = self.plugin.scheduler_get('startrecord')
+        simulate = self.plugin.scheduler_get('simulate')
+        start_record_entry = None
+        simulate_entry = None
+        if start_record is not None:
+            start_record_entry = start_record['next']
+        if simulate is not None:
+            simulate_entry = simulate['next']
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1, startRecord=startRecord, simulate=simuluate,
+                           plugin_info=self.plugin.get_info(), tabcount=1, startRecord=start_record_entry,
+                           simulate=simulate_entry,
                            tab1title="Simulation Items (%s)" % len(self.plugin.get_items()),
                            p=self.plugin)
