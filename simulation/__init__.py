@@ -374,6 +374,7 @@ class Simulation(SmartPlugin):
         self.file = open(self._datafile, 'w')
         self.file.write('')
         self.file.close()
+        self.tank(0)
 
     def init_webinterface(self):
         """"
