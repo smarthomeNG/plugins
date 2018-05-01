@@ -33,7 +33,7 @@ from lib.utils import Utils
 class CLIHandler(lib.connection.Stream):
     terminator = '\n'.encode()
 
-    def __init__(self, smarthome, sock, source, updates, hashed_password, commands):
+    def __init__(self, smarthome, sock, source, updates, hashed_password, commands, plugin):
         """
         Constructor
         :param smarthome: SmartHomeNG instance
@@ -58,6 +58,7 @@ class CLIHandler(lib.connection.Stream):
             self.__push_command_prompt()
         else:
             self.__push_password_prompt()
+        self.plugin = plugin
 
     def push(self, data):
         """
@@ -71,6 +72,8 @@ class CLIHandler(lib.connection.Stream):
         Received data and found terminator (newline) in data
         :param data: Received data up to terminator
         """
+        if not self.plugin.alive:
+            self.close()
         # Call process methods based on prompt type
         cmd = data.decode().strip()
         if self.__prompt_type == 'password':
@@ -178,7 +181,7 @@ class CLIHandler(lib.connection.Stream):
 
 class CLI(lib.connection.Server, SmartPlugin):
 
-    PLUGIN_VERSION = '1.4.0'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.4.1'     # is checked against version in plugin.yaml
 
     def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323, hashed_password=''):
         """
@@ -211,11 +214,14 @@ class CLI(lib.connection.Server, SmartPlugin):
         """
         Handle incoming connection
         """
-        sock, address = self.accept()
-        if sock is None:
-            return
-        self.logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
-        CLIHandler(self.sh, sock, address, self.updates_allowed, self.hashed_password, self.commands)
+        if self.alive:
+            sock, address = self.accept()
+            if sock is None:
+                return
+            self.logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
+            CLIHandler(self.sh, sock, address, self.updates_allowed, self.hashed_password, self.commands, self)
+        else:
+            self.close()
 
     def run(self):
         """
