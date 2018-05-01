@@ -7,11 +7,11 @@ plugin:
         en: 'Controlling AV devices via TCP/IP and RS232'
     maintainer: onkelandy
     tester: Foxi352                     # Who tests this plugin?
-    keywords: av denon pioneer epson amp receiver projector rs232 telnet tcpip
+    keywords: av denon pioneer epson oppo player amp receiver projector rs232 telnet tcpip
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc
 
-    version: 1.3.3                 # Plugin version
+    version: 1.3.4                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
@@ -26,6 +26,13 @@ parameters:
         description:
             de: 'Name des Geräts. Muss mit dem Namen der Textdatei unter plugins/avdevice korrelieren, die sämtliche Befehle beinhaltet.'
             en: 'Name of AV device. Has to correspond to a text file with the same name in the folder plugins/avdevice including all commands.'
+
+    update_exclude:
+        type: str
+        default: ''
+        description:
+            de: "Caller, bei denen kein Itemupdate vollzogen werden soll. Dies ist hilfreich, um beispielsweise mittels on_change Items abhängig von einem anderen Item zu aktualisieren, ohne dass die Updatefunktion des Plugins getriggert wird (z.B. für play/stop/pause). Es können mehrere durch Komma getrennte Einträge definiert werden."
+            en: "Define calles that shouldn't trigger an item update. This is helpful if you want to change values of items based on other items by using on_change or on_update functions. In that case the plugin wouldn't update the dependent item additionally (e.g. play/pause/stop). You can define a list of callers delimited by ,"
 
     tcp_ip:
         type: ip
@@ -174,16 +181,147 @@ parameters:
             de: "Automatischer Versuch, sich mit dem Gerät zu verbinden, wenn keine Rückmeldung kommt oder die Verbindung verloren wurde. Dies sollte nicht notwendig sein, da das Plugin ohnehin bei jedem neuen Senden eines Befehls einen Verbindungsaufbauversuch startet."
             en: "Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command."
 
-    update_exclude:
-        type: str
-        default: ''
-        description:
-            de: "Caller, bei denen kein Itemupdate vollzogen werden soll. Dies ist hilfreich, um beispielsweise mittels on_change Items abhängig von einem anderen Item zu aktualisieren, ohne dass die Updatefunktion des Plugins getriggert wird (z.B. für play/stop/pause). Es können mehrere durch Komma getrennte Einträge definiert werden."
-            en: "Define calles that shouldn't trigger an item update. This is helpful if you want to change values of items based on other items by using on_change or on_update functions. In that case the plugin wouldn't update the dependent item additionally (e.g. play/pause/stop). You can define a list of callers delimited by ,"
-
 item_attributes:
-    avdevice_zone[0-4]:
+    avdevice_zone0_depend:
+        type: list(str)
+        description:
+            de: 'bla'
+            en: 'bla'
+
+    avdevice_zone1_depend:
+        type: list(str)
+        description:
+            de: 'bla'
+            en: 'bla'
+
+    avdevice_zone2_depend:
+        type: list(str)
+        description:
+            de: 'bla'
+            en: 'bla'
+
+    avdevice_zone3_depend:
+        type: list(str)
+        description:
+            de: 'bla'
+            en: 'bla'
+
+    avdevice_zone4_depend:
+        type: list(str)
+        description:
+            de: 'bla'
+            en: 'bla'
+
+    avdevice_depend:
+        type: list(str)
+        description:
+            de: 'bla'
+            en: 'bla'
+
+    avdevice_zone0:
         type: str
         description:
             de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
             en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+
+    avdevice_zone1:
+        type: str
+        description:
+            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+
+    avdevice_zone2:
+        type: str
+        description:
+            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+
+    avdevice_zone3:
+        type: str
+        description:
+            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+
+    avdevice_zone4:
+        type: str
+        description:
+            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+
+    avdevice:
+        type: str
+        description:
+            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+
+    avdevice_zone0_speakers:
+        type: str
+        description:
+            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+
+    avdevice_zone1_speakers:
+        type: str
+        description:
+            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+
+    avdevice_zone2_speakers:
+        type: str
+        description:
+            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+
+    avdevice_zone3_speakers:
+        type: str
+        description:
+            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+
+    avdevice_zone4_speakers:
+        type: str
+        description:
+            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+
+    avdevice_speakers:
+        type: str
+        description:
+            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+
+    avdevice_zone0_init:
+        type: str
+        description:
+            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+
+    avdevice_zone1_init:
+        type: str
+        description:
+            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+
+    avdevice_zone2_init:
+        type: str
+        description:
+            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+
+    avdevice_zone3_init:
+        type: str
+        description:
+            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+
+    avdevice_zone4_init:
+        type: str
+        description:
+            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+
+    avdevice_init:
+        type: str
+        description:
+            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
