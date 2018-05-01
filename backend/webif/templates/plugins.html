@@ -66,14 +66,16 @@
 								<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-sync"></i></button>
 							{% endif %}
 
-						{% if not p.stopped %}
-							<button name="disable" title="{{ _('Stoppen','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-pause"></i></button>
-						{% else %}
-							<button name="enable" title="{{ _('Starten','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-play"></i></button>
-						{% endif %}
+						{% if p.stoppable %}
+							{% if not p.stopped %}
+								<button name="disable" title="{{ _('Stoppen','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-pause"></i></button>
+							{% else %}
+								<button name="enable" title="{{ _('Starten','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-play"></i></button>
+							{% endif %}
 						
-						{% if develop %}
-							<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-eject" style="color: #c40808;"></i></button>
+							{% if develop %}
+								<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-eject" style="color: #c40808;"></i></button>
+							{% endif %}
 						{% endif %}
 
 						{% if 1 == 2 %}

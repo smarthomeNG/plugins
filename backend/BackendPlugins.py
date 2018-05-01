@@ -104,6 +104,14 @@ class BackendPlugins:
                 plugin['classname'] = x._classname
 #                plugin['stopped'] = not x.alive
                 plugin['stopped'] = False
+                
+            try:
+                plugin['stopped'] = not x.alive
+                plugin['stoppable'] = True
+            except:
+                plugin['stopped'] = False
+                plugin['stoppable'] = True
+            
             plugin_list.append(plugin)
         plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])
 
