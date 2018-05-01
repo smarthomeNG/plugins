@@ -41,10 +41,10 @@ class Join(SmartPlugin):
         self._sh = smarthome
 
     def run(self):
-        pass
+        self.alive = True
 
     def stop(self):
-        pass
+        self.alive = False
 
     def send(self, title=None, text=None, icon=None, find=None, smallicon=None, device_id=None, device_ids=None,
              device_names=None, url=None, image=None, sound=None, group=None, clipboard=None, file=None,
