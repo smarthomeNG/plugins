@@ -109,7 +109,7 @@ class BackendPlugins:
                 plugin['stoppable'] = True
             except:
                 plugin['stopped'] = False
-                plugin['stoppable'] = True
+                plugin['stoppable'] = False
             
             plugin_list.append(plugin)
         plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])
