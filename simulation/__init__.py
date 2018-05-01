@@ -467,5 +467,6 @@ class WebInterface(SmartPluginWebIf):
                            interface=None, item_count=len(self.plugin.get_items()),
                            plugin_info=self.plugin.get_info(), tabcount=1, startRecord=start_record_entry,
                            simulate=simulate_entry,
+                           cmd=cmd,
                            tab1title="Simulation Items (%s)" % len(self.plugin.get_items()),
                            p=self.plugin)

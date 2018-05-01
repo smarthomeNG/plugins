@@ -15,3 +15,6 @@ plugin_translations:
     'Clear Data File':
         de: 'Datendatei leeren'
         en: 'Clear Data File'
+    'Datendatei erfolgreich geleert!':
+        de: 'Datendatei erfolgreich geleert!'
+        en: 'Data File Cleared Successfully!'
