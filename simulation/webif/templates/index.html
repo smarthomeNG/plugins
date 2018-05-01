@@ -14,15 +14,15 @@
 			<td class="py-1"><strong>Last Day</strong></td>
 			<td class="py-1">{% if p.lastday == '' %}-{% else %}{{ p.lastday }}{% endif %}</td>
 		</tr>
-		{% if p.scheduler_get('startrecord') %}
+		{% if startRecord %}
 		<tr>
 			<td class="py-1"><strong>startrecord Scheduler</strong></td>
-			<td class="py-1">{{ p.scheduler_get('startrecord')['next'].strftime('%d.%m.%Y %H:%M:%S') }}</td>
+			<td class="py-1">{{ startRecord.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 		</tr>
-		{% elif p.scheduler_get('simulate') %}
+		{% elif simulate %}
 		<tr>
 			<td class="py-1"><strong>simulate Scheduler</strong></td>
-			<td class="py-1">{{ p.scheduler_get('simulate')['next'].strftime('%d.%m.%Y %H:%M:%S') }}</td>
+			<td class="py-1">{{ simulate.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 		</tr>
 		{% endif %}
 	</tbody>

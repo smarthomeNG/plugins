@@ -414,12 +414,14 @@ class Simulation(SmartPlugin):
     def get_items(self):
         return self._items
 
+
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
 
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
+
 
 class WebInterface(SmartPluginWebIf):
 
@@ -450,10 +452,12 @@ class WebInterface(SmartPluginWebIf):
         if cmd == 'delete_data_file':
             if len(self.plugin._datafile) > 0:
                 self.plugin._clear_file()
+        startRecord = self.plugin.scheduler_get('startrecord')['next']
+        simuluate = self.plugin.scheduler_get('startrecord')['next']
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           plugin_info=self.plugin.get_info(), tabcount=1, startRecord=startRecord, simulate=simuluate,
                            tab1title="Simulation Items (%s)" % len(self.plugin.get_items()),
                            p=self.plugin)
