@@ -93,7 +93,6 @@ class BackendPlugins:
                 plugin['shortname'] = x.get_shortname()
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x.get_classname()
-                plugin['stopped'] = not x.alive
             else:
                 plugin['attributes'] = {}
                 plugin['smartplugin'] = False
