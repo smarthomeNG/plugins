@@ -78,12 +78,12 @@ class BackendPlugins:
         for x in self.plugins.return_plugins():
             plugin = dict()
             plugin['stopped'] = False
-            if bool(x._parameters):
-                plugin['attributes'] = x._parameters
-            else:
-                plugin['attributes'] = conf_plugins.get(x.get_configname(), {})
             plugin['metadata'] = x._metadata
             if isinstance(x, SmartPlugin):
+                if bool(x._parameters):
+                    plugin['attributes'] = x._parameters
+                else:
+                    plugin['attributes'] = conf_plugins.get(x.get_configname(), {})
                 plugin['smartplugin'] = True
                 plugin['instancename'] = x.get_instance_name()
                 plugin['instance'] = x
@@ -95,6 +95,7 @@ class BackendPlugins:
                 plugin['classname'] = x.get_classname()
                 plugin['stopped'] = not x.alive
             else:
+                plugin['attributes'] = {}
                 plugin['smartplugin'] = False
                 plugin['instance'] = x
                 plugin['shortname'] = x._configname
