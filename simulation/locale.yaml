@@ -24,3 +24,6 @@ plugin_translations:
     'Zurück':
         de: 'Zurück'
         en: 'Back'
+    'Keine Daten verfügbar':
+        de: 'Keine Daten verfügbar'
+        en: 'no data available'

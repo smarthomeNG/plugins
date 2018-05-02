@@ -81,7 +81,7 @@
 	{% else %}<br style="clear:both;"/>
 	<div class="container-fluid">
 		<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-	{% if data_file_content %}<textarea autocomplete="off" id="data_file_content" name="data_file_content">{% for line in data_file_content %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
+			{% if data_file_content %}<textarea autocomplete="off" id="data_file_content" name="data_file_content">{% for line in data_file_content %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}<div class="m-2">{{ _('Keine Daten verfügbar') }}</div>{% endif %}
 		</div>
 	</div>
 	<script type="text/javascript" language="javascript">
