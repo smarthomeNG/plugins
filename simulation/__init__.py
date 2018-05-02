@@ -84,13 +84,13 @@ class Simulation(SmartPlugin):
     # --------------------------------- parse_item ----------------------------------
     def parse_item(self, item):
         if 'sim' in item.conf:
-            if (item.conf['sim'] == 'message'):
+            if item.conf['sim'] == 'message':
                 self._message_item = item
-            if (item.conf['sim'] == 'state'):
+            if item.conf['sim'] == 'state':
                 self.state = item
-            if (item.conf['sim'] == 'control'):
+            if item.conf['sim'] == 'control':
                 self.control = item
-            if (item.conf['sim'] == 'tank'):
+            if item.conf['sim'] == 'tank':
                 self.tank = item
             self._items.append(item)
             return self.update_item
@@ -450,9 +450,20 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        data_file_content = []
         if cmd == 'delete_data_file':
             if len(self.plugin._datafile) > 0:
                 self.plugin._clear_file()
+        elif cmd == 'show_data_file':
+            try:
+                file = open(self.plugin._datafile, 'r')
+
+                for line in file:
+                    data_file_content.append(line)
+                file.close()
+            except IOError as error:
+                self.logger.error('NoFile {}'.format(error))
+
         start_record = self.plugin.scheduler_get('startrecord')
         simulate = self.plugin.scheduler_get('simulate')
         start_record_entry = None
@@ -467,6 +478,6 @@ class WebInterface(SmartPluginWebIf):
                            interface=None, item_count=len(self.plugin.get_items()),
                            plugin_info=self.plugin.get_info(), tabcount=1, startRecord=start_record_entry,
                            simulate=simulate_entry,
-                           cmd=cmd,
+                           cmd=cmd, data_file_content=data_file_content,
                            tab1title="Simulation Items (%s)" % len(self.plugin.get_items()),
                            p=self.plugin)

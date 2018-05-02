@@ -7,8 +7,8 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1"><strong>{{ _('Data File') }}:</strong></td>
-			<td class="py-1">{{p._datafile}}</td>
+			<td class="py-1"><strong>{{ _('Datendatei') }}:</strong></td>
+			<td class="py-1"><a href="?cmd=show_data_file">{{p._datafile}}</a></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>{{ _('Last Day') }}</strong></td>
@@ -30,7 +30,12 @@
 {% endblock headtable %}
 
 {% block buttons %}
-<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?cmd=delete_data_file'">{{ _('Clear Data File') }}</button>
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?cmd=delete_data_file'">{{ _('Datendatei leeren') }}</button>
+{% if cmd == 'show_data_file' %}
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?'">{{ _('Zurück') }}</button>
+{% else %}
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?cmd=show_data_file'">{{ _('Datendatei anzeigen') }}</button>
+{% endif %}
 {% endblock buttons %}
 
 
@@ -44,6 +49,7 @@
 			</button>
 		</div>
 	{% endif %}
+	{% if cmd != 'show_data_file' %}
 	<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 		<h5>{{ _('Simulation Plugin Items') }} ({{ p.get_items()|length }})</h5>
 
@@ -72,5 +78,27 @@
 			</tbody>
 		</table>
 	</div>
+	{% else %}<br style="clear:both;"/>
+	<div class="container-fluid">
+		<div style="border: 1px solid #ddd; margin-bottom: 10px;">
+	{% if data_file_content %}<textarea autocomplete="off" id="data_file_content" name="data_file_content">{% for line in data_file_content %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
+		</div>
+	</div>
+	<script type="text/javascript" language="javascript">
+		var dataFileCodeMirror = CodeMirror.fromTextArea(document.getElementById("data_file_content"), {
+			lineNumbers: true,
+			readOnly: true,
+			indentUnit: 4,
+			lineSeparator: '\n',
+			mode: 'ttcn',
+			lineWrapping: false,
+			firstLineNumber: 1,
+			indentWithTabs: false
+		});
+
+		window.addEventListener("resize", function(){resizeCodeMirror(dataFileCodeMirror, 75)}, false);
+		resizeCodeMirror(dataFileCodeMirror, 75);
+	</script>
+	{% endif %}
 </div>
 {% endblock bodytab1 %}

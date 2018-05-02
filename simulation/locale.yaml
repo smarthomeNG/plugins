@@ -9,12 +9,18 @@ plugin_translations:
     'Last Day':
         de: 'Letzter Tag'
         en: 'Last Day'
-    'Data File':
+    'Datendatei':
         de: 'Datendatei'
         en: 'Data File'
-    'Clear Data File':
+    'Datendatei leeren':
         de: 'Datendatei leeren'
         en: 'Clear Data File'
     'Datendatei erfolgreich geleert!':
         de: 'Datendatei erfolgreich geleert!'
         en: 'Data File Cleared Successfully!'
+    'Datendatei anzeigen':
+        de: 'Datendatei anzeigen'
+        en: 'Show Data File'
+    'Zurück':
+        de: 'Zurück'
+        en: 'Back'
