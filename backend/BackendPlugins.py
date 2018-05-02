@@ -97,11 +97,10 @@ class BackendPlugins:
                 plugin['attributes'] = {}
                 plugin['smartplugin'] = False
                 plugin['instance'] = x
-                plugin['configname'] = ''
+                plugin['configname'] = x._configname
                 plugin['shortname'] = x._shortname
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
-#                plugin['stopped'] = not x.alive
                 plugin['stopped'] = False
                 
             try:
@@ -110,6 +109,9 @@ class BackendPlugins:
             except:
                 plugin['stopped'] = False
                 plugin['stoppable'] = False
+            if plugin['shortname'] == 'backend':
+                plugin['stoppable'] = False
+            
             
             plugin_list.append(plugin)
         plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])

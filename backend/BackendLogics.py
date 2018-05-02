@@ -324,8 +324,19 @@ class BackendLogics:
         else:
             file_lines = self.unloaded_logic_load_code(file_path)
 
+        # create a list of dicts, where each dict contains the information for one logic
+        logics_list = []
+        import time
+        for ln in self.logics.return_loaded_logics():
+            logic = self.fill_logicdict(ln)
+            if logic['logictype'] == 'Blockly':
+                logic['pathname'] = os.path.splitext(logic['pathname'])[0] + '.blockly'
+            logics_list.append(logic)
+            self.logger.debug("Backend: logics_html: - logic = {}, enabled = {}, , logictype = {}, filename = {}, userlogic = {}, watch_item = {}".format(str(logic['name']), str(logic['enabled']), str(logic['logictype']), str(logic['filename']), str(logic['userlogic']), str(logic['watch_item'])) )
+
+        newlogics = sorted(self.logic_findnew(logics_list), key=lambda k: k['name'])
         return self.render_template('logics_view.html', logicname=logicname, thislogic=mylogic, logic_lines=file_lines, file_path=file_path,
-                                    updates=updates, yaml_updates=self.yaml_updates, mode=mode)
+                                    updates=updates, yaml_updates=self.yaml_updates, mode=mode, logic_loaded=(mylogic in newlogics))
 
 
     # -----------------------------------------------------------------------------------
