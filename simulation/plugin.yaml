@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: system                  # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Aufnahme und Abspielen von Aktionsreihenfolgen'
-        en: ''
+        de: 'Aufnahme und Abspielen von Aktionsreihenfolgen.'
+        en: 'Recording And Replay of Actions on Items.'
     maintainer: ggf. cmalo (?)
     tester: psilo909, Sandman60, cmalo
 #    keywords: iot xyz
@@ -18,7 +18,31 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    data_file:
+        type: str
+        mandatory: True
+        description:
+            de: 'Voller Pfad zum Datenfile (Textdatei).'
+            en: 'Full path to data file (text file).'
+    callers:
+        type: str
+        mandatory: False
+        description:
+            de: '(optional) Liste von Event-Sourcen, um Events aufzuzeichnen. Wenn ein Item geändert wird, werden nur
+            Events von Callern aus der Liste mit dem Plugin aufgezeichnet.'
+            en: '(optional) List of event sources for recording of events. Only item changed with a caller in the list
+            are recorded to the simulation file.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    sim:
+        type: str
+        mandatory: True
+        description:
+            de: 'Entweder der Wert "track", "state", "control", "message" oder "tank". Außer "track" dürfen die Werte
+            nur exakt einem Item zugeordnet werden. Sie dienen der internen Datenhaltung des Plugins. "track"
+            dient dazu, den Wert eines Items mit dem Plugin aufzuzeichnen. Es darf daher auch in mehreren Items gesetzt
+            werden.'
+            en: 'May be either the value "track", "state", "control", "message" or "tank". Besides "track" the values
+            may only be assigned one time over all items. They are used for plugin internal information storage.
+            "track" may be assigned to multiple items and is used to record the value changes of that item.'
