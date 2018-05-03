@@ -185,38 +185,38 @@ item_attributes:
     avdevice_zone0_depend:
         type: list(str)
         description:
-            de: 'bla'
-            en: 'bla'
+            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
+            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
 
     avdevice_zone1_depend:
         type: list(str)
         description:
-            de: 'bla'
-            en: 'bla'
+            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
+            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
 
     avdevice_zone2_depend:
         type: list(str)
         description:
-            de: 'bla'
-            en: 'bla'
+            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
+            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
 
     avdevice_zone3_depend:
         type: list(str)
         description:
-            de: 'bla'
-            en: 'bla'
+            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
+            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
 
     avdevice_zone4_depend:
         type: list(str)
         description:
-            de: 'bla'
-            en: 'bla'
+            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
+            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
 
     avdevice_depend:
         type: list(str)
         description:
-            de: 'bla'
-            en: 'bla'
+            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
+            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
 
     avdevice_zone0:
         type: str

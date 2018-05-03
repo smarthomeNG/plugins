@@ -96,9 +96,9 @@ class AVDevice(SmartPlugin):
 		self._is_connected = []
 		self._parsinginput = []
 		self._dependencies = {'Slave_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
-					   		'Slave_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
-					   		'Master_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
-					   		'Master_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}}
+							'Slave_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
+							'Master_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
+							'Master_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}}
 
 		try:
 			self._model = self.get_parameter_value('model')
@@ -1292,9 +1292,10 @@ class AVDevice(SmartPlugin):
 						expectedresponse = []
 						try:
 							for resp in self._send_commands:
-								splitresponse=resp.split('|')
-								if isinstance(splitresponse, list) and len(splitresponse) > 1:
-									splitresponse[0:len(splitresponse)-1] = ['|'.join(splitresponse[0:len(splitresponse)-1])]
+								if resp.split(',', 2)[2].find('|') >= 0:
+									splitresponse=resp.split('|')
+								else:
+									splitresponse = [resp]
 								splitresponse[0] = splitresponse[0].split(',')[2]
 								for i in range(0, len(splitresponse)):
 									splitresponse[i] = splitresponse[i].split(',')[0]
@@ -1362,7 +1363,10 @@ class AVDevice(SmartPlugin):
 											expectedindices = _duplicateindex(expectedresponse, expected)
 											for expectedindex in expectedindices:
 												if self._send_commands[expectedindex] not in deletecommands:
-													expectedtype = self._send_commands[expectedindex].split(';')[0].split('|')[0].split(',')
+													if self._send_commands[expectedindex].split(',', 2)[2].find('|') >= 0:
+														expectedtype = self._send_commands[expectedindex].split(';')[0].split('|')[0].split(',')
+													else:
+														expectedtype = self._send_commands[expectedindex].split(';')[0].split(',')
 													try:
 														int(expectedtype[-1])
 														length = len(expectedtype)-1
@@ -1564,12 +1568,14 @@ class AVDevice(SmartPlugin):
 											testcommand = data.split('?')[0]
 											commandstarts = []
 											for entry in self._response_commands:
-												commandstarts.append(entry.split('?')[0])
+												if entry.split('?')[0] in testcommand:
+													commandstarts.append(entry.split('?')[0])
+
 											self.logger.log(VERBOSE1, "Parsing Input {}: Commandstarts {}. testcommand {}".format(self._name, commandstarts, testcommand))
-											if commandstarts.count(testcommand) > 1:
-												updated = 0
-											else:
+											if len(commandstarts) >= 1:
 												updated = 1
+											else:
+												updated = 0
 										except Exception as err:
 											self.logger.error("Parsing Input {}: Problem with new tests {}".format(self._name, err))
 										self._wait(0.15)
@@ -2218,7 +2224,12 @@ class AVDevice(SmartPlugin):
 									for sendcommand in self._send_commands:
 										self.logger.log(VERBOSE1, "Updating Item {}: Testing send command: {}".format(self._name, sendcommand))
 										if commandinfo[3] in sendcommand:
-											valuetype = sendcommand.split(';')[0].split('|').split(',')
+											splitfind = sendcommand.split(',', 2)[2]
+											before = sendcommand.split(',', 2)[0:2]
+											if splitfind.find('|') >= 0:
+												after = [splitfind.split('|')[1]]
+												sendcommand = ','.join(before+after)
+											valuetype = sendcommand.split(';')[0].split(',')
 											if valuetype[len(valuetype)-1].isdigit():
 												valuetype.pop(len(valuetype)-1)
 											try:
