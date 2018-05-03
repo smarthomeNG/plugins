@@ -96,9 +96,9 @@ class AVDevice(SmartPlugin):
 		self._is_connected = []
 		self._parsinginput = []
 		self._dependencies = {'Slave_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
-					   		'Slave_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
-					   		'Master_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
-					   		'Master_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}}
+							'Slave_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
+							'Master_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}, \
+							'Master_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}}
 
 		try:
 			self._model = self.get_parameter_value('model')
@@ -2224,7 +2224,12 @@ class AVDevice(SmartPlugin):
 									for sendcommand in self._send_commands:
 										self.logger.log(VERBOSE1, "Updating Item {}: Testing send command: {}".format(self._name, sendcommand))
 										if commandinfo[3] in sendcommand:
-											valuetype = sendcommand.split(';')[0].split('|').split(',')
+											splitfind = sendcommand.split(',', 2)[2]
+											before = sendcommand.split(',', 2)[0:2]
+											if splitfind.find('|') >= 0:
+												after = [splitfind.split('|')[1]]
+												sendcommand = ','.join(before+after)
+											valuetype = sendcommand.split(';')[0].split(',')
 											if valuetype[len(valuetype)-1].isdigit():
 												valuetype.pop(len(valuetype)-1)
 											try:
