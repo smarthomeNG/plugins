@@ -692,7 +692,7 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def index(self, reload=None, action=None, item_id=None, item_path=None):
+    def index(self, reload=None, action=None, item_id=None, item_path=None, day=None, month=None, year=None):
         """
         Build index.html for cherrypy
 
@@ -704,8 +704,23 @@ class WebInterface(SmartPluginWebIf):
             if action == "delete_log" and item_id is not None:
                 self.plugin.deleteLog(item_id)
             if action == "item_details" and item_id is not None:
+                selected_date = None
+                if day is not None and month is not None and year is not None:
+                    if self.plugin._sh.get_defaultlanguage() is not 'en':
+                        selected_date = "%s.%s.%s" % (day, month, year)
+                    else:
+                        selected_date = "%s/%s/%s" % (month, day, year)
+                    time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (month, day, year),
+                                                                        "%m/%d/%Y").timetuple())*1000
+                else:
+                    now = self.plugin.shtime.now()
+                    time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (now.month, now.day, now.year),
+                                                                        "%m/%d/%Y").timetuple())*1000
+                time_end = time_start + 24 * 60 * 60 * 1000
                 tmpl = self.tplenv.get_template('item_details.html')
-                rows = self.plugin.readLogs(item_id)
+                self.logger.error(time_start)
+                self.logger.error(time_end)
+                rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
                 log_array = []
                 for row in rows:
                     value_dict = {}
@@ -722,7 +737,8 @@ class WebInterface(SmartPluginWebIf):
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
                                                 reverse=False),
                                    tabcount=1, action=action, item_id=item_id, item_path=item_path,
-                                   language = self.plugin._sh.get_defaultlanguage(), log_array=reversed_arr)
+                                   language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now(),
+                                   log_array=reversed_arr, selected_date=selected_date)
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
