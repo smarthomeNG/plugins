@@ -721,7 +721,8 @@ class WebInterface(SmartPluginWebIf):
                 return tmpl.render(p=self.plugin,
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
                                                 reverse=False),
-                                   tabcount=1, action=action, item_id=item_id, item_path=item_path, log_array=reversed_arr)
+                                   tabcount=1, action=action, item_id=item_id, item_path=item_path,
+                                   language = self.plugin._sh.get_defaultlanguage(), log_array=reversed_arr)
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
