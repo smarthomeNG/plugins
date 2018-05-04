@@ -43,3 +43,6 @@ plugin_translations:
     'Wertehistorie löschen':
         de: 'Wertehistorie löschen'
         en: 'Delete Historical Data'
+    'Zeige Einträge vom':
+        de: 'Zeige Einträge vom'
+        en: 'Show entries from'
