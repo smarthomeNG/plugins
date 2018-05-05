@@ -24,5 +24,8 @@ nosetests.xml
 ehthumbs.db
 Thumbs.db
 
+# don't upload private plugins
+/priv_*
+
 # Pycharm settings
 /.idea
