@@ -25,7 +25,7 @@ function confirmDelete(url, text) {
 	</div>
 {% endif %}
 <div class="mb-2">
-	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }} <strong>{{ item_path }}</strong> {{_('(Datenbank-ID') }}: {{ item_id }}):
+	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }} <strong>{{ item_path }}</strong> {{ _('am') }} <strong>{% if selected_date %}{{ selected_date }}{% else %}{% if language == 'en' %}{{ now.strftime('%-m/%-d/%Y') }}{% else %}{{ now.strftime('%-d.%-m.%Y') }}{% endif %}{% endif %}</strong> {{_('(Datenbank-ID') }}: {{ item_id }}):
 	<br/>
 </div>
 <div style="float:right; width:220px;" id="datepicker">
