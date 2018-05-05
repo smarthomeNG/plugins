@@ -24,8 +24,8 @@
 				<th style="width: 200px;">{{ _('Instanz') }}</th>
 				<th style="width: 150px;">{{ _('Version') }}</th>
 				<th style="width: 150px;">{{ _('Mehrere Instanzen möglich') }}</th>
-				<th style="width: 150px;">{{ _('Aktionen') }}</th>
-				<th>{{ _('Web Interface') }}</th>
+				<th style="width: 120px;">{{ _('Aktionen') }}</th>
+				<th style="width: 140px;">{{ _('Web Interface') }}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -42,15 +42,15 @@
 					{% endif %}
 				</td>
 				<td class="py-1" id="{{ loop.index }}_click1" style="cursor: pointer;" width="30px">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}</td>
-				<td class="p-1" id="{{ loop.index }}_click2">
+				<td class="py-1" id="{{ loop.index }}_click2">
 					<input style="cursor: pointer; {% if p.stopped %} color:#bbb;{% endif %} border:none; background-color:transparent; width:100%" name="configname" readonly="true" value="{{ p.configname }}" type="text">
 				</td>
-				<td class="p-1" id="{{ loop.index }}_click3">
+				<td class="py-1" id="{{ loop.index }}_click3">
 					<input style="cursor: pointer; {% if p.stopped %} color:#bbb;{% endif %} border:none; background-color:transparent; width:100%" name="shortname" readonly="true" value="{{ p.shortname }}" type="text">
 				</td>
 				{% if p.smartplugin %}
 					{% set webifs = mod_http.get_webifs_for_plugin(p.shortname) %}
-					<td class="p-1" id="{{ loop.index }}_click4">
+					<td class="py-1" id="{{ loop.index }}_click4">
 						<input style="cursor: pointer; {% if p.stopped %} color:#bbb;{% endif %} border:none; background-color:transparent; width:100%" name="instancename" readonly="true" value="{{ p.instancename }}" type="text">
 					</td>
 <!--
