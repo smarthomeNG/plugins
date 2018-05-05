@@ -31,6 +31,7 @@ import ast
 import lib.config
 from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
+from lib.module import Modules
 from lib.logic import Logics          # für update der /etc/logic.yaml
 from lib.logic import Logic           # für reload (bytecode)
 #import lib.logic as logics
@@ -147,15 +148,16 @@ class Blockly(SmartPlugin):
 
         This method is only needed if the plugin is implementing a web interface
         """
-        self.mod_http = self.get_module('http')
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
         if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return
-        self.logger.info("Using http-module for web interface")
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
         
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        self.logger.info("webif_dir = '{}'".format(webif_dir))
         config = {
             '/': {
                 'tools.staticdir.root': webif_dir,

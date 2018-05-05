@@ -19,7 +19,7 @@
 				<th style="width: 30px;"></th>
 				<th style="width: 30px;"></th>
 				<th style="width: 150px;">{{ _('Type') }}</th>
-				<th style="width: 240px;">{{ _('Configname') }}</th>
+				<th style="width: 200px;">{{ _('Configname') }}</th>
 				<th style="width: 200px;">{{ _('Plugin') }}</th>
 				<th style="width: 200px;">{{ _('Instanz') }}</th>
 				<th style="width: 150px;">{{ _('Version') }}</th>
@@ -42,15 +42,15 @@
 					{% endif %}
 				</td>
 				<td class="py-1" id="{{ loop.index }}_click1" style="cursor: pointer;" width="30px">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.smartplugin %}SmartPlugin{%else%}Classic{%endif%}</td>
-				<td class="py-1" id="{{ loop.index }}_click2">
+				<td class="p-1" id="{{ loop.index }}_click2">
 					<input style="cursor: pointer; {% if p.stopped %} color:#bbb;{% endif %} border:none; background-color:transparent; width:100%" name="configname" readonly="true" value="{{ p.configname }}" type="text">
 				</td>
-				<td class="py-1" id="{{ loop.index }}_click3">
+				<td class="p-1" id="{{ loop.index }}_click3">
 					<input style="cursor: pointer; {% if p.stopped %} color:#bbb;{% endif %} border:none; background-color:transparent; width:100%" name="shortname" readonly="true" value="{{ p.shortname }}" type="text">
 				</td>
 				{% if p.smartplugin %}
 					{% set webifs = mod_http.get_webifs_for_plugin(p.shortname) %}
-					<td class="py-1" id="{{ loop.index }}_click4">
+					<td class="p-1" id="{{ loop.index }}_click4">
 						<input style="cursor: pointer; {% if p.stopped %} color:#bbb;{% endif %} border:none; background-color:transparent; width:100%" name="instancename" readonly="true" value="{{ p.instancename }}" type="text">
 					</td>
 <!--
@@ -90,7 +90,7 @@
 					<td class="py-1">{% if not p.stopped and p.shortname != 'backend' %}
 							{% for webif in webifs %}
 								{% if webif['Instance'] == p.instancename %}
-									<img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="cursor: pointer; width: 25px;"/>
+									<img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="width: 25px;"/>
 									<script>
 										$('#webif_link_{{outer_loop.index}}_{{loop.index}}').click(function(e){
 											window.open('/{{ webif['Webifname'] }}')
@@ -207,6 +207,8 @@
 							<br/>
 							<br/>
 							<strong>Python Class</strong>: {{ p.classname }}
+							<br/>
+							Update(s) triggered by <strong>{{ p.instance._itemlist|length }}</strong> items
 						</div>
 						
 						<div class="card-header p-1"><strong>{{ _('Entwicklungs-Daten') }}:</strong></div>

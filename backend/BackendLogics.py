@@ -335,8 +335,10 @@ class BackendLogics:
             self.logger.debug("Backend: logics_html: - logic = {}, enabled = {}, , logictype = {}, filename = {}, userlogic = {}, watch_item = {}".format(str(logic['name']), str(logic['enabled']), str(logic['logictype']), str(logic['filename']), str(logic['userlogic']), str(logic['watch_item'])) )
 
         newlogics = sorted(self.logic_findnew(logics_list), key=lambda k: k['name'])
+        logic_loadable=(mylogic in newlogics)
+        logic_loadable=True
         return self.render_template('logics_view.html', logicname=logicname, thislogic=mylogic, logic_lines=file_lines, file_path=file_path,
-                                    updates=updates, yaml_updates=self.yaml_updates, mode=mode, logic_loaded=(mylogic in newlogics))
+                                    updates=updates, yaml_updates=self.yaml_updates, mode=mode, logic_loadable=logic_loadable)
 
 
     # -----------------------------------------------------------------------------------
