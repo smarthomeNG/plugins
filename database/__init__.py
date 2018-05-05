@@ -706,7 +706,7 @@ class WebInterface(SmartPluginWebIf):
             if action == "item_details" and item_id is not None:
                 selected_date = None
                 if day is not None and month is not None and year is not None:
-                    if self.plugin._sh.get_defaultlanguage() is not 'en':
+                    if self.plugin._sh.get_defaultlanguage() not in 'en':
                         selected_date = "%s.%s.%s" % (day, month, year)
                     else:
                         selected_date = "%s/%s/%s" % (month, day, year)
