@@ -52,7 +52,8 @@ Blockly.Python['sh_item_obj'] = function(block) {
   var iPath = block.getFieldValue('P');
   
   // TODO: Assemble Python into code variable.
-  var code = 'sh.return_item("' + iPath + '")';
+//  var code = 'sh.return_item("' + iPath + '")';
+  var code = 'sh.items.return_item("' + iPath + '")';
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_ATOMIC];
   //return code;

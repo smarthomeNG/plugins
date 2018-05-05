@@ -25,7 +25,7 @@
 		{% if thislogic.enabled %}
 			<button name="disable" class="btn btn-shng btn-sm"><i class="fas fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
 		{% else %}
-			<button {% if not logic_loaded %}disabled="true"{% endif %} name="enable" class="btn btn-shng btn-xs"><i class="fas fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
+			<button {% if not logic_loadable %}disabled="true"{% endif %} name="enable" class="btn btn-shng btn-sm"><i class="fas fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
 		{% endif %}
 		&nbsp;|&nbsp;|&nbsp;
 			<button id="save" name="save" class="btn btn-shng-success btn-sm"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern','button') }}</button>&nbsp;

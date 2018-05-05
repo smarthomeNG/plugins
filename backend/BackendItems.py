@@ -60,7 +60,7 @@ class BackendItems:
         """
         display a list of items
         """
-        return self.render_template('items.html', item_count=self._sh.item_count, item_path=item_path,
+        return self.render_template('items.html', item_count=self.items.item_count(), item_path=item_path,
                                     items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
                                                  reverse=False))
 
