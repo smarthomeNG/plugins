@@ -718,8 +718,6 @@ class WebInterface(SmartPluginWebIf):
                                                                         "%m/%d/%Y").timetuple())*1000
                 time_end = time_start + 24 * 60 * 60 * 1000
                 tmpl = self.tplenv.get_template('item_details.html')
-                self.logger.error(time_start)
-                self.logger.error(time_end)
                 rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
                 log_array = []
                 for row in rows:
