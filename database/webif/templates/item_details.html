@@ -38,9 +38,9 @@ function confirmDelete(url, text) {
 		<th style="width: 180px;">{{ _('Zeit') }}</th>
 		<th style="width: 120px;">{{ _('Dauer') }}</th>
 		<th style="width: 180px;">{{ _('Geändert') }}</th>
+		<th style="width: 120px;">VAL_NUM</th>
+		<th style="width: 120px;">VAL_BOOL</th>
 		<th>VAL_STR</th>
-		<th>VAL_NUM</th>
-		<th>VAL_BOOL</th>
 	</tr>
 	</thead>
 	{% for dataset in log_array %}
@@ -49,9 +49,9 @@ function confirmDelete(url, text) {
 			<td class="py-1">{{ dataset[0].strftime('%d.%m.%Y %H:%M:%S') }}</td>
 			<td class="py-1">{{ dataset[2] }}</td>
 			<td class="py-1">{{ dataset[6].strftime('%d.%m.%Y %H:%M:%S') }} </td>
-			<td class="py-1">{{ dataset[3] }}</td>
 			<td class="py-1">{{ dataset[4] }}</td>
 			<td class="py-1">{{ dataset[5] }}</td>
+			<td class="py-1">{{ dataset[3] }}</td>
 		</tr>
 	{% endfor %}
 </table>
