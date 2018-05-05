@@ -90,7 +90,7 @@
 					<td class="py-1">{% if not p.stopped and p.shortname != 'backend' %}
 							{% for webif in webifs %}
 								{% if webif['Instance'] == p.instancename %}
-									<img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="width: 25px;"/>
+									<img id="webif_link_{{outer_loop.index}}_{{loop.index}}" src="static/img/html.svg" style="width: 25px; cursor: pointer;"/>
 									<script>
 										$('#webif_link_{{outer_loop.index}}_{{loop.index}}').click(function(e){
 											window.open('/{{ webif['Webifname'] }}')
