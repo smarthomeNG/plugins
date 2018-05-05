@@ -61,6 +61,7 @@ function confirmDelete(url, text) {
 		language: "{{ language }}",
 		autoclose: true,
 		todayHighlight: true,
+		todayBtn: "linked",
 		endDate: "{% if language == 'en' %}{{ now.strftime('%m/%d/%Y') }}{% else %}{{ now.strftime('%d.%m.%Y') }}{% endif %}"
 	});
 	$('#datepicker').datepicker().on('changeDate', function(e) {
