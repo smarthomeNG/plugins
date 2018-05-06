@@ -28,7 +28,7 @@ from lib.logic import Logics
 from lib.model.smartplugin import *
 
 
-class Develop(SmartPlugin):
+class Logconf(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
