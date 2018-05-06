@@ -674,15 +674,18 @@ class CLICommands:
         :param parameter: Parameters used to call the command
         :param source: Source
         """
-#        handler.push("Items:\n======\n")
-        wrk = "Items ({}):".format(self.plugin.items.item_count())
-        wrk += '\n'+'='*len(wrk)+'\n'
-        handler.push(wrk)
+        handler.push("Items:\n======\n")
+#        wrk = "Items ({}):".format(self.plugin.items.item_count())
+#        wrk += '\n'+'='*len(wrk)+'\n'
+#        handler.push(wrk)
         for item in self.sh.return_items():
             if item.type():
                 handler.push("{0} = {1}\n".format(item.id(), item()))
             else:
                 handler.push("{0}\n".format(item.id()))
+        wrk = "{} Items".format(self.plugin.items.item_count())
+        wrk = '-'*len(wrk)+'\n'+wrk+'\n'
+        handler.push(wrk)
 
     def _cli_iupdate(self, handler, parameter, source):
         """
