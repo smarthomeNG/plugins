@@ -88,7 +88,7 @@ TestNum:
     cache: True
     telegram_message: TestNum: [VALUE]
     telegram_value_match_regex: [0-1][0-9]    # nur Nachrichten senden wenn Zahlen von 0 - 19
-:TestBool
+TestBool:
     type: bool
     cache: True
     telegram_message: TestBool: [VALUE]
