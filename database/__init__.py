@@ -104,7 +104,7 @@ class Database(SmartPlugin):
             item.db = functools.partial(self._single, item=item.id())
             item.dbplugin = self
 
-            if self.get_iattr_value(item.conf, 'database') == 'init':
+            if self._initialized and self.get_iattr_value(item.conf, 'database') == 'init':
                 if not self._db.lock(5):
                     self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
                     return
