@@ -104,7 +104,7 @@ All attribute parameters (commands) are listed with the /info-command in a keybo
 
 Simple Example
 
-```
+```yaml
 Aussentemperatur:
     name: Aussentemperatur in °C
     type: num
@@ -144,7 +144,7 @@ write message-text into the SH-item whit this attribut
 
 Simple Example
 
-```
+```yaml
 telegram_message:
     name: Textnachricht von Telegram
     type: str
