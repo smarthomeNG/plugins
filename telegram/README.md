@@ -13,16 +13,7 @@ install telepot library (see requirements.txt)
 * BotFather will send you a token (=shard secred) you will need for plugin registration
 * configure some bot details starting by sending "/mybots" to BotFather
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[telegram]
-    name = My Home
-    class_name = Telegram
-    class_path = plugins.telegram
-    token = 123456789:BBCCfd78dsf98sd9ds-_HJKShh4z5z4zh22
-    trusted_chat_ids = 123456789,9876543210
-```
+### plugin.yaml
 
 ```
 telegram:
@@ -45,7 +36,7 @@ shared secret key to authenticate to telegram network
 
 Telegram communication is handled over chat(-channels) with unique ids. So a communication is bound to a chat id (=connected user) which can be adressed with broadcast messages. To get your current chat id, send a /subscribe command to the bot, which will replay with your chatid.  
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 #### telegram_message 
 
@@ -63,15 +54,7 @@ Available tags:
 
 Simple Example
 
-```
-[doorbell
-    name = Türklingel (entprellt)
-    type = bool
-    knx_dpt = 1
-    telegram_message = "Es klingelt an der Tür"
-```
-
-```
+```yaml
 doorbell:
     name: Türklingel (entprellt)
     type: bool
@@ -84,16 +67,7 @@ Example with tags
 The following example shows an integration in AutoBlind.
 If the state changes, a message with the current state name is broadcasted 
 
-```
-[state_name]
-    name = Name des aktuellen Zustands
-    type = str
-    visu_acl = r
-    cache = on
-    telegram_message = "New AutoBlind state: [VALUE]"
-```
-
-```
+```yaml
 state_name:
     name: Name des aktuellen Zustands
     type: str
@@ -107,7 +81,8 @@ state_name:
 In some cases it is usefull to check a value against a condition before sending the message. Messages are used to monitor defined value groups. Therefore messaging is limited with this attribute to matching regular expressions only.
 
 Simple Example
-```
+
+```yaml
 TestNum:
     type: num
     cache: True
@@ -128,25 +103,6 @@ e.g. /wetter
 All attribute parameters (commands) are listed with the /info-command in a keyboard menu
 
 Simple Example
-
-```
-[Aussentemperatur]
-    name = Aussentemperatur in °C
-    type = num
-    knx_dpt = 9
-    telegram_info = "wetter"
-[Wind_kmh]
-    name = Wingeschwindigkeit in kmh
-    type = num
-    knx_dpt = 9
-    telegram_info = "wetter"
-[Raumtemperatur]
-    name = Raumtemperatur Wohnzimmer in °C
-    type = num
-    knx_dpt = 9
-    telegram_info = "rtr_ist"
-
-```
 
 ```
 Aussentemperatur:
@@ -187,13 +143,6 @@ Raumtemperatur
 write message-text into the SH-item whit this attribut
 
 Simple Example
-
-```
-[telegram_message]
-    name = Textnachricht von Telegram
-    type = str
-    telegram_text = "true"
-```
 
 ```
 telegram_message:
