@@ -62,7 +62,7 @@ doorbell:
     telegram_message: Es klingelt an der Tür
 ```
 	
-Example with tags
+#### Example with tags
 
 The following example shows an integration in AutoBlind.
 If the state changes, a message with the current state name is broadcasted 
@@ -80,7 +80,7 @@ state_name:
 
 In some cases it is usefull to check a value against a condition before sending the message. Messages are used to monitor defined value groups. Therefore messaging is limited with this attribute to matching regular expressions only.
 
-Simple Example
+#### Simple Example
 
 ```yaml
 TestNum:
@@ -114,14 +114,14 @@ Wind_kmh:
     name: Wingeschwindigkeit in kmh
     type: num
     knx_dpt: 9
-    telegram_info: "wetter"
-Raumtemperatur
+    telegram_info: wetter
+Raumtemperatur:
     name: Raumtemperatur Wohnzimmer in °C
     type: num
     knx_dpt: 9
     telegram_info: rtr_ist
-
 ```
+
 /info broadcast all info-commands in a bot-keyboard-menu e.g.
     
     [ /wetter] [/rtr_ist]
