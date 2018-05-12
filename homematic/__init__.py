@@ -47,7 +47,7 @@ class Homematic(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+        Initalizes the plugin. The parameters descriptions for this method are pulled from the entry in plugin.yaml.
 
         :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**! 
         :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
@@ -57,7 +57,7 @@ class Homematic(SmartPlugin):
         a reference to the sh object any more.
         
         The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
-        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
+        to support older plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
         use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
