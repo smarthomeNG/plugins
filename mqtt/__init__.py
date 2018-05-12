@@ -11,7 +11,6 @@
 #  protocol. It was designed as an extremely lightweight publish/subscribe 
 #  messaging transport.
 #  
-#  For detail read http://mqtt.org
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -47,6 +46,9 @@ from lib.model.smartplugin import *
 from lib.utils import Utils
 from lib.item import Items
 
+import threading
+connect_lock = threading.Lock()
+
 
 class Mqtt(SmartPlugin):
     """
@@ -56,7 +58,7 @@ class Mqtt(SmartPlugin):
     
     ALLOW_MULTIINSTANCE = True
     
-    PLUGIN_VERSION = "1.4.4"
+    PLUGIN_VERSION = "1.4.6"
 
     __plugif_CallbackTopics = {}         # for plugin interface
     __plugif_Sub = None
@@ -65,17 +67,20 @@ class Mqtt(SmartPlugin):
     _broker = {}
     
     
-    def __init__(self, sh, 
-            host='127.0.0.1', port='1883', qos='1',
-            last_will_topic='', last_will_payload='',
-            birth_topic='', birth_payload='',
-            publish_items='False', items_topic_prefix='devices/shng',
-            user='', password='',
-            broker_monitoring=False,
-            tls=None, ca_certs='/etc/', acl='none'
-        ):
+    def __init__(self, sh, *args, **kwargs):
+
         """
         Initalizes the plugin. The parameters described for this method are pulled from the entry in plugin.yaml.
+
+        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
+        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
+        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
+
+        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
+        to support older plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
+        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
+        returns the value in the datatype that is defined in the metadata.
 
         :param sh:                 The instance of the smarthome object, save it for later references
         :param host:               ip address or hostname of the MQTT broker
@@ -94,16 +99,54 @@ class Mqtt(SmartPlugin):
         :param ca_certs:           .
         :param acl:                Default Access-Control, can be overwritten in item definition
         """
-#        self.logger = SmartPluginLogger(__name__, self)
-#        self.logger = SmartPluginLogger("mqtt", self)
+
         self.logger = logging.getLogger(__name__)
-#        self.logger = logging.getLogger().getChild("child-mqtt")
-        
-        # attention:
-        # if your plugin runs standalone, sh will likely be None so do not rely on it later or check it within your code
-        
-        self._sh = sh
-        
+
+        # get the parameters for the plugin (as defined in metadata plugin.yaml):
+        #   self.param1 = self.get_parameter_value('param1')
+
+        # Initialization code goes here
+        self.broker_hostname = self.get_parameter_value('host')
+        self.broker_port = self.get_parameter_value('port')
+        try:
+            self.broker_ip = socket.gethostbyname( self.broker_hostname )
+        except Exception as e:
+            self.logger.error(self.get_loginstance()+"Error resolving '%s': %s" % (self.broker_hostname, e))
+        if self.broker_ip == self.broker_hostname:
+            self.broker_hostname = ''
+
+        self.broker_monitoring = self.get_parameter_value('broker_monitoring')
+        self.qos = self.get_parameter_value('qos')
+        self.acl = self.get_parameter_value('acl').lower()
+
+        self.last_will_topic = self.get_parameter_value('last_will_topic')
+        self.last_will_payload = self.get_parameter_value('last_will_payload')
+        self.birth_topic = self.get_parameter_value('birth_topic')
+        self.birth_payload = self.get_parameter_value('birth_payload')
+        if (self.last_will_topic != '') and (self.last_will_topic [-1] == '/'):
+            self.last_will_topic = self.last_will_topic[:-1]
+        if self.birth_topic == '':
+            self.birth_topic = self.last_will_topic
+        else:
+            if self.birth_topic [-1] == '/':
+                self.birth_topic = self.birth_topic[:-1]
+
+        self.publish_items = self.get_parameter_value('publish_items')
+        self.items_topic_prefix = self.get_parameter_value('items_topic_prefix')
+        if self.items_topic_prefix [-1] != '/':
+            self.items_topic_prefix = self.items_topic_prefix + '/'
+
+        self.username = self.get_parameter_value('user')
+        self.password = self.get_parameter_value('password')
+        if self.password == '':
+            self.password = None
+
+        # tls ...
+        # ca_certs ...
+
+
+
+
         self.topics = {}                # subscribed topics
         self.logictopics = {}           # subscribed topics for triggering logics
         self.logicpayloadtypes = {}     # payload types for subscribed topics for triggering logics
@@ -115,69 +158,8 @@ class Mqtt(SmartPlugin):
             self.at_instance_name = '@'+self.at_instance_name
 
         self._connected = False
+        self._connect_result = ''
         
-        # check parameters specified in plugin.yaml
-        # get ip address for hostname
-        self.broker_hostname = host
-        try:
-            host = socket.gethostbyname( host )
-        except Exception as e:
-            self.logger.error(self.get_loginstance()+"Error resolving '%s': %s" % (host, e))
-            return
-
-        if Utils.is_ip(host):
-            self.broker_ip = host
-        else:
-            self.broker_ip = ''
-            self.logger.error(self.get_loginstance()+'Invalid ip address for broker specified, plugin not starting')
-            return
-        if self.broker_ip == self.broker_hostname:
-            self.broker_hostname = ''
-
-        if Utils.is_int(port):
-            self.broker_port = int(port)
-        else:
-            self.broker_port = 1883
-            self.logger.error(self.get_loginstance()+"Invalid port number for broker specified, plugin trying standard port '{}'".format(str(self.broker_port)))
-            
-        self.qos = -1
-        if Utils.is_int(qos):
-            self.qos = int(qos)
-        if not (self.qos in [0, 1, 2]):
-            self.qos = 1
-            self.logger.error(self.get_loginstance()+"Invalid value specified for default quality-of-service, using standard '{}'".format(str(self.qos)))
-
-        self.acl = acl.lower()
-        if not (self.acl in ['none','pub','sub','pubsub']):
-            self.acl ='none'
-            self.logger.error(self.get_loginstance()+"Invalid value specified for default acess-control, using standard '{}'".format(self.acl))
-
-        if (last_will_topic != '') and (last_will_topic [-1] == '/'):
-            last_will_topic = last_will_topic[:-1]
-        self.last_will_topic = last_will_topic
-        self.last_will_payload = last_will_payload
-        
-        if birth_topic == '':
-            self.birth_topic = self.last_will_topic
-        else:
-            if birth_topic [-1] == '/':
-                birth_topic = birth_topic[:-1]
-            self.birth_topic = birth_topic
-        self.birth_payload = birth_payload
-        
-        self.publish_items = Utils.to_bool(publish_items, default=False)
-        if items_topic_prefix [-1] == '/':
-            items_topic_prefix = items_topic_prefix[:-1]
-        self.items_topic_prefix = items_topic_prefix + '/'
-        
-        self.username = user
-        if password == '':
-           self.password = None
-        else:
-            self.password = password
-        
-        self.broker_monitoring = Utils.to_bool(broker_monitoring, default=False)
-
         # tls ...
         # ca_certs ...
 
@@ -198,9 +180,6 @@ class Mqtt(SmartPlugin):
             self._client._thread.name = "paho_" + self.get_fullname()
         except:
             self.logger.warning(self.get_loginstance()+"Unable to set name for paho thread")
-        for topic in self.inittopics:
-            item = self.inittopics[topic]
-            self.update_item(item)
 
 
     def stop(self):
@@ -263,17 +242,16 @@ class Mqtt(SmartPlugin):
             if self._connected or True:
                 topic = self.get_iattr_value(item.conf, 'mqtt_topic_in')
                 self.topics[topic] = item
-                self._client.subscribe(topic, qos=self.get_qos_forTopic(item) )
-                self.logger.info(self.get_loginstance()+"Listening on topic '{}' for item '{}'".format( topic, item.id() ))
-        
+                # the real subscription is made by the callback function self.on_connect()
+
         if self.has_iattr(item.conf, 'mqtt_topic_out'):
             # initialize topics if configured
             topic = self.get_iattr_value(item.conf, 'mqtt_topic_out')
             if self.has_iattr(item.conf, 'mqtt_topic_init'):
                 self.inittopics[self.get_iattr_value(item.conf, 'mqtt_topic_init')] = item
-                self.logger.info(self.get_loginstance()+"Publishing and initialising topic '{}' for item '{}'".format( topic, item.id() ))
+#                self.logger.info(self.get_loginstance()+"Publishing and initialising topic '{}' for item '{}'".format( topic, item.id() ))
             else:
-                self.logger.info(self.get_loginstance()+"Publishing topic '{}' for item '{}'".format( topic, item.id() ))
+                self.logger.info(self.get_loginstance()+"Publishing topic '{}' (when needed) for item '{}'".format( topic, item.id() ))
 
             return self.update_item
 
@@ -292,9 +270,8 @@ class Mqtt(SmartPlugin):
                     if (logic.conf['mqtt_payload_type'+self.at_instance_name]).lower() in ['str', 'num', 'bool', 'list', 'dict', 'scene']:
                         self.logicpayloadtypes[topic] = (logic.conf['mqtt_payload_type'+self.at_instance_name]).lower()
                     else:
-                        self.logger.warning(self.get_loginstance()+"Invalid payload-datatype specified for logic '{}', ignored".format( str(logic) ))       
-                self._client.subscribe(topic, qos=self.qos)
-                self.logger.info(self.get_loginstance()+"Listening on topic '{}' for logic '{}'".format( topic, str(logic) ))
+                        self.logger.warning(self.get_loginstance()+"Invalid payload-datatype specified for logic '{}', ignored".format( str(logic) ))
+                    # the real subscription is made by the callback function self.on_connect()
 
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -406,7 +383,12 @@ class Mqtt(SmartPlugin):
         if qos == None:
             qos = self.qos
         return int(qos)
-        
+
+
+    def on_mqtt_log(self, client, userdata, level, buf):
+        # self.logger.info("on_log: {}".format(buf))
+        return
+
 
     def ConnectToBroker(self):
         """
@@ -416,7 +398,8 @@ class Mqtt(SmartPlugin):
         if self.get_instance_name() != '':
             clientname = clientname + '.' + self.get_instance_name()
         self.logger.info(self.get_loginstance()+"Connecting to broker. Starting mqtt client '{0}'".format(clientname))
-        self._client = mqtt.Client(clientname)
+        self._client = mqtt.Client(client_id=clientname)
+
 
         # set testament, if configured
         if (self.last_will_topic != '') and (self.last_will_payload != ''):
@@ -428,39 +411,74 @@ class Mqtt(SmartPlugin):
         if self.username != '':
             self._client.username_pw_set(self.username, self.password)
         self._client.on_connect = self.on_connect
+        self._client.on_log = self.on_mqtt_log
+        self._client.on_message = self.on_mqtt_message
         try:
             self._client.connect(self.broker_ip, self.broker_port, 60)
         except Exception as e:
             self.logger.error(self.get_loginstance()+'Connection error:', e)
 
-        self._client.on_message = self.on_mqtt_message
-        self._client.subscribe('$SYS/broker/version', qos=0 )
-        self._client.subscribe('$SYS/broker/clients/active', qos=0 )
-        self._client.subscribe('$SYS/broker/subscriptions/count', qos=0 )
-        self._client.subscribe('$SYS/broker/messages/stored', qos=0 )
-
-        if self.broker_monitoring:
-            self._client.subscribe('$SYS/broker/uptime', qos=0 )
-            self._client.subscribe('$SYS/broker/retained messages/count', qos=0 )
-            self._client.subscribe('$SYS/broker/load/messages/received/1min', qos=0 )
-            self._client.subscribe('$SYS/broker/load/messages/received/5min', qos=0 )
-            self._client.subscribe('$SYS/broker/load/messages/received/15min', qos=0 )
-            self._client.subscribe('$SYS/broker/load/messages/sent/1min', qos=0 )
-            self._client.subscribe('$SYS/broker/load/messages/sent/5min', qos=0 )
-            self._client.subscribe('$SYS/broker/load/messages/sent/15min', qos=0 )
 
 
-    def on_connect(self, mqttc, obj, flags, rc):
+
+    def on_connect(self, client, userdata, flags, rc):
         """
-        Connecting callback function
+        Callback function called on connect
         """
+
+        self._connect_result = mqtt.connack_string(rc)
+
         if rc == 0:
-            self.logger.info(self.get_loginstance()+"Connection returned result '{}' ".format( mqtt.connack_string(rc) ))
+            self.logger.info(self.get_loginstance()+"Connection returned result '{}' (userdata={}) ".format( mqtt.connack_string(rc), userdata ))
             self._connected = True
+
+            self._client.subscribe('$SYS/broker/version', qos=0)
+            self._client.subscribe('$SYS/broker/clients/active', qos=0)
+            self._client.subscribe('$SYS/broker/subscriptions/count', qos=0)
+            self._client.subscribe('$SYS/broker/messages/stored', qos=0)
+
+            if self.broker_monitoring:
+                self._client.subscribe('$SYS/broker/uptime', qos=0)
+                self._client.subscribe('$SYS/broker/retained messages/count', qos=0)
+                self._client.subscribe('$SYS/broker/load/messages/received/1min', qos=0)
+                self._client.subscribe('$SYS/broker/load/messages/received/5min', qos=0)
+                self._client.subscribe('$SYS/broker/load/messages/received/15min', qos=0)
+                self._client.subscribe('$SYS/broker/load/messages/sent/1min', qos=0)
+                self._client.subscribe('$SYS/broker/load/messages/sent/5min', qos=0)
+                self._client.subscribe('$SYS/broker/load/messages/sent/15min', qos=0)
+
+            # subscribe to topics to listen for items
+            for topic in self.topics:
+                item = self.topics[topic]
+                self._client.subscribe(topic, qos=self.get_qos_forTopic(item) )
+                self.logger.info(self.get_loginstance()+"Listening on topic '{}' for item '{}'".format( topic, item.id() ))
+
+            # subscribe to topics to listen for triggering logics
+            for topic in self.logictopics:
+                logic = self.logictopics[topic]
+                self._client.subscribe(topic, qos=self.qos)
+                self.logger.info(self.get_loginstance()+"Listening on topic '{}' for logic '{}'".format( topic, str(logic) ))
+
+            for topic in self.inittopics:
+                item = self.inittopics[topic]
+                self.logger.info(self.get_loginstance()+"Publishing and initialising topic '{}' for item '{}'".format( topic, item.id() ))
+                self.update_item(item)
+            self.logger.info("self.topics = {}".format(self.topics))
+
             return
-            
-        self.logger.warning(self.get_loginstance()+"Connection returned result '{}': {}".format( str(rc), mqtt.connack_string(rc) ))
-        
+
+        self.logger.warning(self.get_loginstance()+"Connection returned result '{}': {} (client={}, userdata={}, self._client={})".format( str(rc), mqtt.connack_string(rc), client, userdata, self._client ))
+        if rc == 5:
+            self.DisconnectFromBroker()
+
+
+    def on_disconnect(client, userdata, rc):
+        """
+        Callback function called on disconnect
+        """
+        self.logger.info(self.get_loginstance() + "Disconnection returned result '{}' ".format(rc))
+        return
+
 
     def DisconnectFromBroker(self):
         """
@@ -495,7 +513,7 @@ class Mqtt(SmartPlugin):
             if (self.birth_topic != '') and (self.birth_payload != ''):
                 self._client.publish(self.last_will_topic, self.last_will_payload+' (shutdown)', self.qos, retain=True)
                 
-        self.logger.info(self.get_loginstance()+"Stopping mqtt client '{}'. Disconnecting from broker.".format(self._client._client_id))
+        self.logger.info(self.get_loginstance()+"Stopping mqtt client '{}'. Disconnecting from broker.".format(self._client._client_id.decode('utf-8')))
         self._client.loop_stop()
         self._connected = False
         self._client.disconnect()
@@ -536,9 +554,12 @@ class Mqtt(SmartPlugin):
         """
         Return formatted uptime of broker
         """
-        return self.seconds_to_displaysting(int(self._broker['uptime'])) 
-    
-    
+        try:
+            return self.seconds_to_displaysting(int(self._broker['uptime']))
+        except:
+            return '-'
+
+
     def on_mqtt_message(self, client, userdata, message):
         """
         Callback function to handle received messages for items and logics
@@ -559,7 +580,7 @@ class Mqtt(SmartPlugin):
             payload = self.cast_mqtt(datatype, message.payload)
             self.logger.info(self.get_loginstance()+"Received topic '{}', payload '{} (type {})', QoS '{}', retain '{}' for logic '{}'".format( message.topic, str(payload), datatype, str(message.qos), str(message.retain), str(logic) ))
             logic.trigger('MQTT'+self.at_instance_name, message.topic, payload )
-            
+
         if (item == None) and (logic == None):
             if message.topic == '$SYS/broker/clients/active':
                 self._broker['active_clients'] = message.payload.decode('utf-8')
@@ -570,8 +591,6 @@ class Mqtt(SmartPlugin):
             elif message.topic == '$SYS/broker/retained messages/count':
                 self._broker['retained_messages'] = message.payload.decode('utf-8')
             elif message.topic == '$SYS/broker/uptime':
-#                sec = int(message.payload.decode('utf-8').split(' ')[0])
-#                self._broker['uptime'] = self.seconds_to_displaysting(sec) 
                 self._broker['uptime'] = message.payload.decode('utf-8').split(' ')[0]
             elif message.topic == '$SYS/broker/load/messages/received/1min':
                 self._broker['msg_rcv_1min'] = message.payload.decode('utf-8')
@@ -718,7 +737,7 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, 
+        return tmpl.render(p=self.plugin, connection_result=self.plugin._connect_result,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']))
                           )
 
