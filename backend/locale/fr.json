@@ -270,7 +270,7 @@
 		"Speichern_und_Neu_Laden" : "Sauvegarder et recharger",
 		"Speichern_Neu_Laden_und_Triggern": "Sauvegarder, recharger et déclencher",
 		"Löschen" : "Supprimer",
-		"Alle löschen" : "",
+		"Alle ausgewählten löschen" : "",
 		"Konvertieren": "Convertir",
         "Neue Blockly Logik": "Nouvelle logique 'Blockly'",
 		"Neue Python Logik": "Nouvelle logique 'Python'",

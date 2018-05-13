@@ -193,7 +193,7 @@ function checkCache() {
 			temp = temp + '<td><input style="min-width: 110px;" name="delete" value="{{ _('Löschen','button') }}" type="submit" class="btn btn-shng btn-sm" onClick="deleteFromCache(\''+element.filename+'\');">';
 		});
 		temp = temp + '</tbody></table>';
-		temp = temp + '<input style="min-width: 110px;" name="delete" value="{{ _('Alle löschen','button') }}" type="submit" class="btn btn-shng btn-sm" onClick="deleteAllCheckedFromCache()"></div>';
+		temp = temp + '<input style="min-width: 110px;" name="delete" value="{{ _('Alle ausgewählten löschen','button') }}" type="submit" class="btn btn-shng btn-sm" onClick="deleteAllCheckedFromCache()"></div>';
 		$('#cache_check').html(temp);
 	});
 }
