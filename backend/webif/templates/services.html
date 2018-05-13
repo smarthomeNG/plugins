@@ -187,14 +187,22 @@ function checkCache() {
 	$.getJSON("cache_check_json.html", function(result) {
 		var temp = '<div class="table-responsive">{{ _('Dateien ohne zugehöriges Item im /var/cache Verzeichnis') }}: '+result.length;
 		temp = temp + '<table class="table table-striped" style="border: 1px solid #ccc;">';
-		temp = temp + '<thead><tr><th style="width: 550px;">{{ _('Dateiname') }}</th><th style="min-width:200px;">{{ _('Letzte Modifikation') }}</th><th style="min-width:200px;">{{ _('Erstellungsdatum') }}</th><th>{{ _('Aktionen') }}</th></td></thead><tbody>';
+		temp = temp + '<thead><tr><th><input id="selectAllCacheOrphans" onClick="checkAll()" type="checkbox"/></th><th style="width: 550px;">{{ _('Dateiname') }}</th><th style="min-width:200px;">{{ _('Letzte Modifikation') }}</th><th style="min-width:200px;">{{ _('Erstellungsdatum') }}</th><th>{{ _('Aktionen') }}</th></td></thead><tbody>';
 		$.each(result, function(index, element) {
-			temp = temp + '<tr><td>'+element.filename+'</td><td>'+element.last_modified+'</td><td>'+element.created+'</td>';
+			temp = temp + '<tr><td><input type="checkbox" value="'+element.filename+'" class="check"/></td><td>'+element.filename+'</td><td>'+element.last_modified+'</td><td>'+element.created+'</td>';
 			temp = temp + '<td><input style="min-width: 110px;" name="delete" value="{{ _('Löschen','button') }}" type="submit" class="btn btn-shng btn-sm" onClick="deleteFromCache(\''+element.filename+'\');">';
 		});
-		temp = temp + '</tbody></table></div>';
+		temp = temp + '</tbody></table>';
+		temp = temp + '<input style="min-width: 110px;" name="delete" value="{{ _('Alle löschen','button') }}" type="submit" class="btn btn-shng btn-sm" onClick="deleteAllCheckedFromCache()"></div>';
 		$('#cache_check').html(temp);
 	});
+}
+function checkAll() {
+    if ($('#selectAllCacheOrphans').is(":checked")) {
+		$('.check').prop('checked', true);
+	} else {
+        $('.check').prop('checked', false);
+    }
 }
 
 function convertYaml() {
@@ -207,6 +215,18 @@ function checkYaml() {
 
 function checkEval() {
 	window.location = "eval_syntax_checker.html";
+}
+
+function deleteAllCheckedFromCache() {
+    var requests = [];
+    $(".check").each(function(index) {
+    	if ($( this ).is(':checked')) {
+    	    $.ajax({
+				async: false,
+				url: "cache_file_delete.html?filename="+$( this ).val()});
+		}
+		checkCache();
+    });
 }
 
 function deleteFromCache(filename) {
