@@ -181,6 +181,7 @@
 	"Systemeigenschaften": "System Properties",
 	"Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!": "If you don't save, you will loose your last changes!",
 	"Wollen Sie die Logik" : "Do you really want to delete the logic",
+	"Wollen Sie die selektierten Dateien wirklich löschen?" : "Do you really want to delete the selected files?",
 	"wirklich löschen?" : "?",
     "Neue Logik erstellen": "Create new logic",
     "Angaben für die Erzeugung einer neuen Python Logik": "Data for creation of a new Python logic",

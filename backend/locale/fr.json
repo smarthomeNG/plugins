@@ -182,6 +182,7 @@
 	"Systemeigenschaften": "Propriétés du système",
 	"Sie verlieren ggf. Ihre letzten, nicht gespeicherten Eingaben!": "Si vous ne sauvegardez pas vous perdez toutes modifications!",
     "Wollen Sie die Logik" : "Voulez-vous vraiment supprimer cette logique",
+	"Wollen Sie die selektierten Dateien wirklich löschen?" : "",
     "wirklich löschen?" : "?",
     "Neue Logik erstellen": "Créer nouvelle logique",
     "Angaben für die Erzeugung einer neuen Python Logik": "Donées de la nouvelle logique",
