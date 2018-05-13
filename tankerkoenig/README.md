@@ -118,5 +118,5 @@ sh.petrol_station.DemoBavariaPetrol.diesel(detail['diesel'])
 
 ### Get prices of two petrol stations
 ```python
-prices = sh.tankerkoenig.get_petrol_station_prices(['6437ff91-823c-40c6-b556-42553056f7cd','56e30926-02dd-41aa-9e05-1120cbafe34f'])
+prices = sh.tankerkoenig.get_petrol_station_prices([sh.petrol_station.DemoBavariaPetrol.conf['tankerkoenig_id']])
 ```
