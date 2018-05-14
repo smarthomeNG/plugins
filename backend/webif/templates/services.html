@@ -22,24 +22,41 @@
 			</tr>
 		</thead>
 		<tbody>
-				<tr>
-					<td><img src="static/img/languages.svg" alt="Icon languages" width="48" height="48"></td>
-					<td style="padding-top:23px;">
-						<div style="float:left; margin-right:15px;">{{ _('Sprache des Backends') }}:</div>
-						<select class="custom-select" id="language" onChange="location.href='reload_translation.html?lang='+$('#language').val()" style="float:left; width: 250px; margin-top:-7px;">
-							<option {% if lang=='de' %}selected{% endif %} value="de">{% if lang!='de' %}{{ _('Auf Deutsch wechseln') }}{% else %}{{ _('Deutsch','button') }}{% endif %}</option>
-							<option {% if lang=='en' %}selected{% endif %} value="en">{% if lang!='en' %}{{ _('Auf Englisch wechseln') }}{% else %}{{ _('Englisch','button') }}{% endif %}</option>
-							<option {% if lang=='fr' %}selected{% endif %} value="fr">{% if lang!='fr' %}{{ _('Auf Französisch wechseln') }}{% else %}{{ _('Französisch','button') }}{% endif %}</option>
-							<option {% if lang=='pl' %}selected{% endif %} value="pl">{% if lang!='pl' %}{{ _('Auf Polnisch wechseln') }}{% else %}{{ _('Polnisch','button') }}{% endif %}</option>
-						</select>
-					<td style="padding-top:15px;">
-					{% if develop %}
-						<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" onclick="location.href='reload_translation.html'">{{ _('Übersetzung neu laden') }}</button>
-					{% endif %}
-					</td>
-				</tr>
 			<tr>
-		<!--    <td><img src="static/img/knxd_service.png" alt="Icon knxd service" width="48" height="48"></td> -->
+				<td><img src="static/img/languages.svg" alt="Icon languages" width="48" height="48"></td>
+				<td style="padding-top:23px;">
+					<div style="float:left; margin-right:15px;">{{ _('Sprache des Backends') }}:</div>
+					<select class="custom-select" id="language" onChange="location.href='reload_translation.html?lang='+$('#language').val()" style="float:left; width: 250px; margin-top:-7px;">
+						<option {% if lang=='de' %}selected{% endif %} value="de">{% if lang!='de' %}{{ _('Auf Deutsch wechseln') }}{% else %}{{ _('Deutsch','button') }}{% endif %}</option>
+						<option {% if lang=='en' %}selected{% endif %} value="en">{% if lang!='en' %}{{ _('Auf Englisch wechseln') }}{% else %}{{ _('Englisch','button') }}{% endif %}</option>
+						<option {% if lang=='fr' %}selected{% endif %} value="fr">{% if lang!='fr' %}{{ _('Auf Französisch wechseln') }}{% else %}{{ _('Französisch','button') }}{% endif %}</option>
+						<option {% if lang=='pl' %}selected{% endif %} value="pl">{% if lang!='pl' %}{{ _('Auf Polnisch wechseln') }}{% else %}{{ _('Polnisch','button') }}{% endif %}</option>
+					</select>
+				<td style="padding-top:15px;">
+				{% if develop %}
+					<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" onclick="location.href='reload_translation.html'">{{ _('Übersetzung neu laden') }}</button>
+				{% endif %}
+				</td>
+			</tr>
+
+    		{% if service_ctrl %}
+            <tr>
+				<td><img src="gstatic/img/logo_small_76x76.png" alt="SmartHomeNG logo small" width="48" height="48"></td>
+                <td style="padding-top:23px;"><div style="float:left; margin-right:15px;">Dienst für SmartHomeNG: <strong>smarthome.service</strong></div></td>
+                {%  if shng_service %}
+                    <td style="padding-top:15px;">
+	    				<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" name="restart" onclick="location.href='services_shng_restart.html'">{{ _('Neu Starten','button') }}</button>
+                    </td>
+                {%  else %}
+                    <td style="padding-top:23px;">
+						<strong>{{ 'SmartHomeNG läuft nicht als Dienst' }}</strong>
+						<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" name="restart" onclick="location.href='services_shng_restart.html'">{{ _('Neu Starten','button') }}</button>
+    				</td>
+                {% endif %}
+            </tr>
+	    	{% endif %}
+
+			<tr>
 				<td><img src="/gstatic/img/plugin_gateway.svg" alt="Icon knxd service" width="48" height="48"></td>
 				<td style="padding-top:23px;">{{ _('Dienst für die KNX Unterstützung') }}:&nbsp;<strong>
 				{% if knxdeamon %}

@@ -203,3 +203,35 @@ def parse_requirements(file_path):
     fobj.close()
     return req_dict
 
+
+def get_process_info(command, wait=True):
+    """
+    returns output from executing a given command via the shell.
+    """
+    ## get subprocess module
+    import subprocess
+
+    ## call date command ##
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
+    # Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
+    # Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.
+    # Wait for process to terminate. The optional input argument should be a string to be sent to the child process, or None, if no data should be sent to the child.
+    (result, err) = p.communicate()
+    logger = logging.getLogger(__name__)
+    logger.warning("Backend: get_process_info command='{}', result='{}', err='{}'".format(command, result, err))
+
+    if wait:
+        ## Wait for date to terminate. Get return returncode ##
+        p_status = p.wait()
+    return str(result, encoding='utf-8', errors='strict')
+
+
+def os_with_systemd():
+    """
+    Returns True, if running systemd on the computer
+
+    :return:
+    """
+    result = get_process_info("systemctl --version")
+    return (result != '')

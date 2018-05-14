@@ -33,6 +33,7 @@ import socket
 import sys
 import threading
 import os
+
 import lib.config
 from lib.logic import Logics
 import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
@@ -58,14 +59,14 @@ class BackendServices:
         """
         shows a page with info about some services needed by smarthome
         """
-        knxd_service = self.get_process_info("systemctl status knxd.service")
-        smarthome_service = self.get_process_info("systemctl status smarthome.service")
-        knxd_socket = self.get_process_info("systemctl status knxd.socket")
+        knxd_service = get_process_info("systemctl status knxd.service")
+        smarthome_service = get_process_info("systemctl status smarthome.service")
+        knxd_socket = get_process_info("systemctl status knxd.socket")
 
         knxdeamon = ''
-        if self.get_process_info("ps cax|grep eibd") != '':
+        if get_process_info("ps cax|grep eibd") != '':
             knxdeamon = 'eibd'
-        if self.get_process_info("ps cax|grep knxd") != '':
+        if get_process_info("ps cax|grep knxd") != '':
             if knxdeamon != '':
                 knxdeamon += ' and '
             knxdeamon += 'knxd'
@@ -73,17 +74,47 @@ class BackendServices:
         sql_plugin = False
         database_plugin = []
 
-        for x in self._sh.plugins:
-            if x.__class__.__name__ == "SQL":
-                sql_plugin = True
-                break
-            elif x.__class__.__name__ == "Database":
-                database_plugin.append(x.get_instance_name())
+        if self._sh.plugins is not None:
+            # Only, if plugins are in initialized
+            for x in self._sh.plugins:  # TO DO: umstellen auf plugin api
+                if x.__class__.__name__ == "SQL":
+                    sql_plugin = True
+                    break
+                elif x.__class__.__name__ == "Database":
+                    database_plugin.append(x.get_instance_name())
 
-        return self.render_template('services.html', 
+        service_ctrl = os_with_systemd()
+        shng_service = False
+        if service_ctrl:
+            result = get_process_info("systemctl status smarthome")
+#            self.logger.warning("services: result = '{}'".format(result))
+            if result.find('Active: inactive') != -1:
+                shng_service = False
+            elif result.find('Active: active') != -1:
+                shng_service = True
+            else:
+                self.logger.warning("services: Cannot determine SmartHomeNG service state")
+
+        return self.render_template('services.html',
+                                    service_ctrl=service_ctrl, shng_service=shng_service,
                                     knxd_service=knxd_service, knxd_socket=knxd_socket, knxdeamon=knxdeamon,
                                     smarthome_service=smarthome_service, lang=get_translation_lang(), 
                                     sql_plugin=sql_plugin, database_plugin=database_plugin)
+
+
+    @cherrypy.expose
+    def services_shng_restart_html(self):
+        """
+        Restart shNG service and reshow services page
+        """
+        result = get_process_info("sudo systemctl restart smarthome.service", wait=False)
+        if result == '':
+            result = "<strong>"+translate('Restart fehlgeschlagen - Bitte /etc/sudoer richtig konfigurieren')+"</strong>"
+
+        result = result.replace('\n', '<br>')
+        return self.render_template('services_shng_restart.html',
+                                    msg=result)
+        # return '<meta http-equiv="Refresh" content="0; url=./services.html/" />'
 
 
     @cherrypy.expose

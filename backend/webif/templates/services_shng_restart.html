@@ -1,0 +1,28 @@
+ <!DOCTYPE html>
+{% extends "base.html" %}
+{% block navbar %}
+	{% with active_page="services" %}
+	{% include "navbar.html" %}
+	{% endwith %}
+{% endblock navbar %}
+
+{% block title %}
+{{ _('Dienste', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
+{% block content %}
+<div style="margin-left: 50px; margin-top: 80px; margin-right: 10px;">
+
+    {{ msg }}
+
+</div>
+
+<script type="text/javascript">
+	$.get(".services.html").done(function () {
+		alert("success");
+	}).fail(function () {
+		alert("failed.");
+	});
+</script>
+{% endblock content %}
+
