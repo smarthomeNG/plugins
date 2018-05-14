@@ -109,7 +109,7 @@ class BackendServices:
         """
         result = get_process_info("sudo systemctl restart smarthome.service", wait=False)
         if result == '':
-            result = "<strong>"+translate('Restart fehlgeschlagen - Bitte /etc/sudoer richtig konfigurieren')+"</strong>"
+            result = "<strong>"+translate('Restart sollte erfolgen - Bitte warten')+"</strong>"
 
         result = result.replace('\n', '<br>')
         return self.render_template('services_shng_restart.html',
