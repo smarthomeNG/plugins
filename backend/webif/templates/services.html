@@ -236,7 +236,7 @@ function checkEval() {
 
 function deleteAllCheckedFromCache() {
     var requests = [];
-    $(".check").each(function(index) {
+    $(".check").each(function() {
     	if ($( this ).is(':checked')) {
     	    $.ajax({
 				async: false,
