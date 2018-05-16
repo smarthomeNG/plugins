@@ -50,7 +50,7 @@
                 {%  else %}
                     <td style="padding-top:23px;">
 						<strong>{{ 'SmartHomeNG läuft nicht als Dienst' }}</strong>
-						<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" name="restart" onclick="location.href='services_shng_restart.html'">{{ _('Neu Starten','button') }}</button>
+						<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" name="restart" onclick="location.href='services_shng_restart.html'">{{ _('Zum Service machen','button') }}</button>
     				</td>
                 {% endif %}
             </tr>
@@ -236,7 +236,7 @@ function checkEval() {
 
 function deleteAllCheckedFromCache() {
     var requests = [];
-    $(".check").each(function(index) {
+    $(".check").each(function() {
     	if ($( this ).is(':checked')) {
     	    $.ajax({
 				async: false,

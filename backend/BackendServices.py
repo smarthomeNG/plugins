@@ -10,6 +10,7 @@
 #
 #  This plugin is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
+#  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
@@ -83,17 +84,10 @@ class BackendServices:
                 elif x.__class__.__name__ == "Database":
                     database_plugin.append(x.get_instance_name())
 
-        service_ctrl = os_with_systemd()
+        service_ctrl = os_service_controllable()
         shng_service = False
         if service_ctrl:
-            result = get_process_info("systemctl status smarthome")
-#            self.logger.warning("services: result = '{}'".format(result))
-            if result.find('Active: inactive') != -1:
-                shng_service = False
-            elif result.find('Active: active') != -1:
-                shng_service = True
-            else:
-                self.logger.warning("services: Cannot determine SmartHomeNG service state")
+            shng_service = os_service_status('smarthome')
 
         return self.render_template('services.html',
                                     service_ctrl=service_ctrl, shng_service=shng_service,
@@ -107,9 +101,8 @@ class BackendServices:
         """
         Restart shNG service and reshow services page
         """
-        result = get_process_info("sudo systemctl restart smarthome.service", wait=False)
-        if result == '':
-            result = "<strong>"+translate('Restart sollte erfolgen - Bitte warten')+"</strong>"
+        os_service_restart('smarthome')
+        result = "<strong>"+translate('Restart sollte erfolgen - Bitte warten')+"</strong>"
 
         result = result.replace('\n', '<br>')
         return self.render_template('services_shng_restart.html',
