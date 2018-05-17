@@ -280,7 +280,7 @@ def os_service_status(servicename):
         elif result.find(' ok ') != -1:
             result_b = True
         else:
-            self.logger.warning("os_service_status (SysVInit): Cannot determine status of service (result='{}')".format(result))
+            logger.warning("os_service_status (SysVInit): Cannot determine status of service (result='{}')".format(result))
     else:
         result = "os_service_status: Cannot determine status of service"
         result_b = False
