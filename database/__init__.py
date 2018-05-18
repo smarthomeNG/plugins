@@ -692,7 +692,8 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def index(self, reload=None, action=None, item_id=None, item_path=None, day=None, month=None, year=None):
+    def index(self, reload=None, action=None, item_id=None, item_path=None, day=None, month=None, year=None,
+              time_orig=None, changed_orig=None):
         """
         Build index.html for cherrypy
 
@@ -700,16 +701,17 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        delete_triggered = False
         if action is not None:
             if action == "delete_log" and item_id is not None:
-                self.plugin.deleteLog(item_id)
+                if time_orig is not None and changed_orig is not None:
+                    self.plugin.deleteLog(item_id, time=time_orig, changed=changed_orig)
+                    action = "item_details"
+                else:
+                    self.plugin.deleteLog(item_id)
+                delete_triggered = True
             if action == "item_details" and item_id is not None:
-                selected_date = None
                 if day is not None and month is not None and year is not None:
-                    if self.plugin._sh.get_defaultlanguage() not in 'en':
-                        selected_date = "%s.%s.%s" % (day, month, year)
-                    else:
-                        selected_date = "%s/%s/%s" % (month, day, year)
                     time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (month, day, year),
                                                                         "%m/%d/%Y").timetuple())*1000
                 else:
@@ -728,6 +730,7 @@ class WebInterface(SmartPluginWebIf):
                             value_dict[key] = row[key]
                         else:
                             value_dict[key] = datetime.datetime.fromtimestamp(row[key]/1000, tz=self.plugin.shtime.tzinfo())
+                            value_dict["%s_orig" % key] = row[key]
 
                     log_array.append(value_dict)
                 reversed_arr = log_array[::-1]
@@ -736,12 +739,13 @@ class WebInterface(SmartPluginWebIf):
                                                 reverse=False),
                                    tabcount=1, action=action, item_id=item_id, item_path=item_path,
                                    language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now(),
-                                   log_array=reversed_arr, selected_date=selected_date)
+                                   log_array=reversed_arr, day=day, month=month, year=year,
+                                   delete_triggered=delete_triggered)
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
-                           tabcount=1, action=action, item_id=item_id)
+                           tabcount=1, action=action, item_id=item_id, delete_triggered=delete_triggered)
 
 
     @cherrypy.expose

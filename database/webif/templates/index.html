@@ -10,10 +10,10 @@
 	}
 </script>
 
-{% if action == 'delete_log' %}
+{% if delete_triggered %}
 	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
 		<strong>{{ _('Löschauftrag für die Einträge von Item ID') }} {{ item_id }} {{ _('in der Tabelle "log" wurde erfolgreich initiiert!') }}</strong><br/>
-		{{ _('Das Löschen kann noch kurze Zeit dauern, da die DELETE Anfrage erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
+		{{ _('Das Löschen kann noch kurze Zeit dauern, da die Ausführung des Delete Queries erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
