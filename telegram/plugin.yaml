@@ -23,7 +23,7 @@ parameters:
         type: str
         type: str
         description:
-            de: 'geteilter geheimer Schlüssel zur Authentifizierung bei Telegram'
+            de: 'geteilter geheimer SchlÃ¼ssel zur Authentifizierung bei Telegram'
             en: 'shared secret key to authenticate to telegram network'
 
     trusted_chat_ids:
@@ -37,7 +37,7 @@ item_attributes:
     telegram_message:
         type: str
         description:
-            de: 'Mitteilung senden wenn sich der Itemwert ändert'
+            de: 'Mitteilung senden wenn sich der Itemwert Ã¤ndert'
             en: 'Send message on item change'
 
     telegram_info:
@@ -55,5 +55,5 @@ item_attributes:
     telegram_value_match_regex:
         type: str
         description:
-            de: 'Itemwert gegen einen regulären Ausdruck prüfen vor versenden einer Mitteilung'
+            de: 'Itemwert gegen einen regulÃ¤n Ausdruck prÃ¼fen vor versenden einer Mitteilung'
             en: 'check a value against a condition before sending a message'

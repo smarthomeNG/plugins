@@ -1,10 +1,10 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'choose':                   {'de': 'Ausw‰hlen', 'en': '=', 'fr': 'Choisissez parmi'}
+    'choose':                   {'de': 'Ausw√§hlen', 'en': '=', 'fr': 'Choisissez parmi'}
     'I'll hide the keyboard':   {'de': 'Ich blende die Bedientasten aus', 'en': '=', 'fr': 'Je cache le clavier'}
     'Infos from the items:':    {'de': 'Infos von den Items:', 'en': '=', 'fr': 'Info sur les Items:'}
     'unknown command %s':       {'de': 'Unbekanntes Kommando %s:', 'en': '=', 'fr': 'commande inconnue %s:'}
-    'no items found with the attribute %s':       {'de': 'Keine Items mit Attribut %s gefunden', 'en': '=', 'fr': 'Ne pas trouvÈe une Item avec %s'}
+    'no items found with the attribute %s':       {'de': 'Keine Items mit Attribut %s gefunden', 'en': '=', 'fr': 'Ne pas trouv√©e une Item avec %s'}
     
 
     # Alternative format for translations of longer texts:
