@@ -20,12 +20,16 @@
 				<th style="width: 30px;"></th>
 				<th style="width: 150px;">{{ _('Type') }}</th>
 				<th style="width: 200px;">{{ _('Configname') }}</th>
-				<th style="width: 200px;">{{ _('Plugin') }}</th>
-				<th style="width: 200px;">{{ _('Instanz') }}</th>
+				<th style="width: 260px;">{{ _('Plugin') }}</th>
+				<th style="width: 170px;">{{ _('Instanz') }}</th>
 				<th style="width: 150px;">{{ _('Version') }}</th>
-				<th style="width: 150px;">{{ _('Mehrere Instanzen möglich') }}</th>
-				<th style="width: 120px;">{{ _('Aktionen') }}</th>
-				<th style="width: 140px;">{{ _('Web Interface') }}</th>
+				<th style="width: 130px;">{{ _('Mehrere Instanzen möglich') }}</th>
+				{% if develop %}
+					<th style="width: 120px;">{{ _('Aktionen') }}</th>
+				{%  else %} %}
+					<th></th>
+				{%  endif %}
+				<th style="width: 130px;">{{ _('Web Interface') }}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -59,13 +63,8 @@
 					<td class="py-1" class="py-1" id="{{ loop.index }}_click5" style="cursor: pointer;">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{{ p.version }}</td>
 					<td class="py-1" class="py-1" id="{{ loop.index }}_click6" style="cursor: pointer;">{% if p.stopped %}<span style="color:#bbb;">{% endif %}{% if p.multiinstance %}{{ _('Ja') }}{%else%}{{ _('Nein') }}{%endif%}</td>
 
-					{% if updates or 1==1 %}
+					{% if develop %}
 						<td class="py-1">
-							{% if 1==2 %}
-								<button {% if p.stopped %}disabled="true"{% endif %} name="trigger" title="{{ _('Auslösen','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-hand-pointer"></i></button>
-								<button name="reload" title="{{ _('Neu Laden','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-sync"></i></button>
-							{% endif %}
-
 						{% if p.stoppable %}
 							{% if not p.stopped %}
 								<button name="disable" title="{{ _('Stoppen','button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-pause"></i></button>
@@ -76,11 +75,6 @@
 							{% if develop %}
 								<button name="unload" title="{{ _('Entladen', 'button') }}" class="btn btn-outline-dark btn-sm"><i class="fas fa-eject" style="color: #c40808;"></i></button>
 							{% endif %}
-						{% endif %}
-
-						{% if 1 == 2 %}
-							&nbsp; &nbsp; &nbsp;
-							<button name="delete" title="{{ _('Löschen', 'button') }}" class="btn btn-outline-dark btn-sm" onClick="return confirm('{{_('Wollen Sie die Logik') }} \'{{ p.shortname }}\' {{ _('wirklich löschen?')}}');"><i class="far fa-trash-alt" aria-hidden="true" style="color: #c40808;"></i></button>
 						{% endif %}
 						</td>
 					{% else %}
