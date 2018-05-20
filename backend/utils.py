@@ -302,3 +302,33 @@ def os_service_restart(servicename):
         result = get_process_info("sudo service {} restart".format(servicename), wait=False)
     else:
         logger.warning("os_service_restart: Cannot restart service")
+
+
+def os_restart_shng(pid):
+    """
+    Restart a service
+
+    :param pid:
+    """
+    result = get_process_info("ps -f -p {}".format(pid))
+    cmdpos = result.find('CMD')
+    result = result[result.find('\n')+1:]
+    cmd = result[cmdpos:]
+    cmd = cmd[:cmd.find('.py')+3]
+    logger.warning("os_service_shng: ps -f -p {} -> '{}'".format(pid, cmd))
+
+    logger.warning("os_service_shng: 1. Restart -> '{} -r'".format(cmd))
+    result = get_process_info("{} -r".format(cmd), wait=False)
+    logger.warning("os_service_shng: 2. Restart -> '{} -r'".format(cmd))
+
+
+# PIDFILE in smarthome.py als global definiert
+# self.get_sh()._pidfile
+# lib.daemon.read_pidfile(PIDFILE)
+#
+# lib.daemon.read_pidfile(self.get_sh()._pidfile)
+#
+# > ps -f -p 14266
+# UID        PID  PPID  C STIME TTY          TIME CMD
+# smartho+ 14266     1  3 Mai17 ?        00:50:30 python bin/smarthome.py -r
+#

@@ -42,16 +42,18 @@
     		{% if service_ctrl %}
             <tr>
 				<td><img src="gstatic/img/logo_small_76x76.png" alt="SmartHomeNG logo small" width="48" height="48"></td>
-                <td style="padding-top:23px;"><div style="float:left; margin-right:15px;">Dienst für SmartHomeNG: <strong>smarthome.service</strong></div></td>
                 {%  if shng_service %}
+	                <td style="padding-top:23px;"><div style="float:left; margin-right:15px;">Dienst für SmartHomeNG: <strong>smarthome.service</strong></div></td>
                     <td style="padding-top:15px;">
-	    				<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" name="restart" onclick="location.href='services_shng_restart.html'">{{ _('Neu Starten','button') }}</button>
+	    				<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" name="restart" onclick="location.href='services_shng_restart.html'">{{ _('Service neu starten','button') }}</button>
                     </td>
                 {%  else %}
-                    <td style="padding-top:23px;">
-						<strong>{{ 'SmartHomeNG läuft nicht als Dienst' }}</strong>
-						<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" name="restart" onclick="location.href='services_shng_restart.html'">{{ _('Zum Service machen','button') }}</button>
+                    <td style="padding-top:23px;"><strong>SmartHomeNG</strong> {{ '(läuft nicht als Dienst)' }}</td>
+<!--
+                    <td style="padding-top:15px;">
+						<button style="min-width:190px;" type="button" class="btn btn-shng btn-sm" name="restart" onclick="location.href='services_shng_restart.html'">{{ _('Prozess neu starten','button') }}</button>
     				</td>
+-->
                 {% endif %}
             </tr>
 	    	{% endif %}

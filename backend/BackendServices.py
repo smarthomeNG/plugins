@@ -36,6 +36,7 @@ import threading
 import os
 
 import lib.config
+import lib.daemon
 from lib.logic import Logics
 import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.model.smartplugin import SmartPlugin
@@ -101,8 +102,13 @@ class BackendServices:
         """
         Restart shNG service and reshow services page
         """
-        os_service_restart('smarthome')
-        result = "<strong>"+translate('Restart sollte erfolgen - Bitte warten')+"</strong>"
+        if os_service_status('smarthome'):
+            os_service_restart('smarthome')
+            result = "<strong>" + translate('Restart des Service sollte erfolgen - Bitte warten') + "</strong>"
+        else:
+            pid = lib.daemon.read_pidfile(self.plugin.get_sh()._pidfile)
+            os_restart_shng(pid)
+            result = "<strong>" + translate('Restart des Prozesses sollte erfolgen - Bitte warten') + "</strong>"
 
         result = result.replace('\n', '<br>')
         return self.render_template('services_shng_restart.html',
