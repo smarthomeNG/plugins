@@ -3,7 +3,7 @@ plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Anbindung des Telegram Service'
+        de: 'Anbindung des Telegram Service (verwendet telepot package)'
         en: ''
     maintainer: gamade
 #    tester:                        # Who tests this plugin?
