@@ -9,7 +9,7 @@ install telepot library (see requirements.txt)
 ## Configuration
 
 * Send command "/newbot" to "BotFather" in order to create your new bot
-* you will asked for a bot name and unique username 
+* you will asked for a bot name and unique username
 * BotFather will send you a token (=shard secred) you will need for plugin registration
 * configure some bot details starting by sending "/mybots" to BotFather
 
@@ -38,9 +38,9 @@ Telegram communication is handled over chat(-channels) with unique ids. So a com
 
 ### items.yaml
 
-#### telegram_message 
+#### telegram_message
 
-Send (broadcast) message on item change to registered chats. 
+Send (broadcast) message on item change to registered chats.
 It is possible to use placeholder tags in the message string, to use a template based communication.
 
 Available tags:
@@ -52,7 +52,11 @@ Available tags:
 [SOURCE]
 [DEST]
 
-Simple Example
+#### telegram_value_match_regex
+
+In some cases it is usefull to check a value against a condition before sending the message. Messages are used to monitor defined value groups. Therefore messaging is limited with this attribute to matching regular expressions only.
+
+#### Simple Example
 
 ```yaml
 doorbell:
@@ -61,11 +65,11 @@ doorbell:
     knx_dpt: 1
     telegram_message: Es klingelt an der Tür
 ```
-	
+
 #### Example with tags
 
 The following example shows an integration in AutoBlind.
-If the state changes, a message with the current state name is broadcasted 
+If the state changes, a message with the current state name is broadcasted
 
 ```yaml
 state_name:
@@ -76,33 +80,14 @@ state_name:
     telegram_message: 'New AutoBlind state: [VALUE]'
 ```
 
-#### telegram_value_match_regex
-
-In some cases it is usefull to check a value against a condition before sending the message. Messages are used to monitor defined value groups. Therefore messaging is limited with this attribute to matching regular expressions only.
-
-#### Simple Example
-
-```yaml
-TestNum:
-    type: num
-    cache: True
-    telegram_message: TestNum: [VALUE]
-    telegram_value_match_regex: [0-1][0-9]    # nur Nachrichten senden wenn Zahlen von 0 - 19
-TestBool:
-    type: bool
-    cache: True
-    telegram_message: TestBool: [VALUE]
-    telegram_value_match_regex: 1              # nur Nachricht senden wenn 1 (True)
-```
-
 #### telegram_info
 
 read (broadcast) a list with specific item-values provided with the attribute.
-The attribute parameter is also the command. 
+The attribute parameter is also the command.
 e.g. /wetter
 All attribute parameters (commands) are listed with the /info-command in a keyboard menu
 
-Simple Example
+#### Simple Example
 
 ```yaml
 Aussentemperatur:
@@ -110,11 +95,13 @@ Aussentemperatur:
     type: num
     knx_dpt: 9
     telegram_info: wetter
+
 Wind_kmh:
     name: Wingeschwindigkeit in kmh
     type: num
     knx_dpt: 9
     telegram_info: wetter
+
 Raumtemperatur:
     name: Raumtemperatur Wohnzimmer in °C
     type: num
@@ -123,7 +110,7 @@ Raumtemperatur:
 ```
 
 /info broadcast all info-commands in a bot-keyboard-menu e.g.
-    
+
     [ /wetter] [/rtr_ist]
 
 /wetter broadcast all items and values provided with the attribute 'telegram_info = "wetter"'
@@ -138,24 +125,12 @@ Raumtemperatur:
     Dg.Bad.Raumtemperatur = 23.5
     Dg.Schlafzimmer.Raumtemperatur = 20.1
 
-#### telegram_text
-
-write message-text into the SH-item whit this attribut
-
-Simple Example
-
-```yaml
-telegram_message:
-    name: Textnachricht von Telegram
-    type: str
-    telegram_text: true
-```
 
 ## Todo and feature requests
 
 * The connection is resetted by the server time by time. Improve internal error handling, because the reset is not really an "error"
 * Implement full /subscribe meachanism to join broadcast messages
+* Implement codition based messaging. Messages are only sent, if a condition is fulfilled, e.g. a bool value is true.
 * Implement interface to operationlog plugin for message broadcast
 * Implement fast and menu based (read-only) navigation through item-tree
 * Implement r/w access to items
-
