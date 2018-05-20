@@ -9,8 +9,6 @@ Library ``python-telegram-bot`` and ``urllib3`` need to be installed prior to us
 Install it manually with either ``sudo pip install -r requirements.txt``    or    
 by using ``pip install -r requirements.txt``
 
-install telepot library (see requirements.txt)
-
 ## Configuration
 
 * Send command "/newbot" to "BotFather" in order to create your new bot
