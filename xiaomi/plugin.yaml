@@ -39,6 +39,7 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     xiaomi_data_type:
         type: str
+        mandatory: True
         description:
             de: 'Auszulesender Wert. Mögliche Werte: temperature, light, moisture, conductivity, name, firmware, firmware'
             en: 'Value to read. Possible: values temperature, light, moisture, conductivity, name, firmware, firmware.'
