@@ -49,7 +49,7 @@ parameters:
         default: 300
         description:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
-            en: '(optional) Timeperiod between two update cycles. Default is 300 seconds.'
+            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
     ssl:
         type: bool
         default: True
