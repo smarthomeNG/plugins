@@ -47,7 +47,7 @@ class Wunderground(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION='1.4.7'
+    PLUGIN_VERSION='1.4.8'
 
 
     def __init__(self, sh, apikey='', language='de', location='', cycle='600', item_subtree=''):
@@ -287,17 +287,20 @@ class Wunderground(SmartPlugin):
             self.logger.warning('_update_items: Could not read data from Wunderground' )   
         else:
             self.wugdata = json.loads( wugjson.decode('utf-8') )
-            self.logger.info('_update_items: json heruntergeladen {}'.format( str(self.wugdata) ))
 
-            if weatheritems == None:
-                # search complete item-tree
-#                self.itemlist = self.__sh.find_items('wug_matchstring')
-                self.itemlist = self.items.find_items('wug_matchstring')
+            teststr = str(self.wugdata)
+            if teststr.find("'title': ''") == -1 and teststr.find("'date': ''") == -1:
+                self.logger.info('_update_items: Downloaded json {}'.format(str(self.wugdata)))
+                # update items with weather information )only if no invalid forecast data is sent
+                if weatheritems == None:
+                    # search complete item-tree
+                    self.itemlist = self.items.find_items('wug_matchstring')
+                else:
+                    # search subtree
+                    self.itemlist = self.items.find_children(weatheritems, 'wug_matchstring')
             else:
-                # search subtree
-#                self.itemlist = self.__sh.find_children(weatheritems, 'wug_matchstring')
-                self.itemlist = self.items.find_children(weatheritems, 'wug_matchstring')
-                
+                self.logger.warning('_update_items: Downloaded invalid json {}'.format(str(self.wugdata)))
+
             for item in self.itemlist:
                 # check every item
                 self._get_item_fromwugdata(item)

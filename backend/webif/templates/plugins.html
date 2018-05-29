@@ -26,7 +26,7 @@
 				<th style="width: 130px;">{{ _('Mehrere Instanzen möglich') }}</th>
 				{% if develop %}
 					<th style="width: 120px;">{{ _('Aktionen') }}</th>
-				{%  else %} %}
+				{%  else %}
 					<th></th>
 				{%  endif %}
 				<th style="width: 130px;">{{ _('Web Interface') }}</th>
@@ -99,8 +99,12 @@
 					<td class="py-1">-</td>
 					<td class="py-1">-</td>
 					<td class="py-1">-</td>
-					<td class="py-1">-</td>
-					<td class="py-1">-</td>
+					{% if develop %}
+						<td class="py-1">-</td>
+					{% else %}
+						<td class="py-1"></td>
+					{%endif%}
+					<td class="py-1"></td>
 				{%endif%}
 				</form>
 			</tr>
@@ -161,7 +165,6 @@
 						</div>
 						{% endif %}
 						
-						{% if develop %}
 						<div class="card-header p-1"><strong>{{ _('Plugin Metadaten') }}:</strong></div>
 						<div class="card-body p-1">
 							{% if p.metadata.get_mlstring('description') %}
@@ -205,6 +208,7 @@
 							Update(s) triggered by <strong>{{ p.instance._itemlist|length }}</strong> items
 						</div>
 						
+						{% if develop %}
 						<div class="card-header p-1"><strong>{{ _('Entwicklungs-Daten') }}:</strong></div>
 						<div class="card-body p-1">
 							<strong>__dir__()</strong>:<br/>

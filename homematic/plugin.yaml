@@ -13,7 +13,7 @@ plugin:
 
 # Following entries are for Smart-Plugins:
     version: 1.5.0                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    sh_minversion: 1.4d            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
     classname: Homematic            # class containing the plugin
