@@ -298,12 +298,13 @@ class Wunderground(SmartPlugin):
                 else:
                     # search subtree
                     self.itemlist = self.items.find_children(weatheritems, 'wug_matchstring')
-            else:
-                self.logger.warning('_update_items: Downloaded invalid json {}'.format(str(self.wugdata)))
 
-            for item in self.itemlist:
-                # check every item
-                self._get_item_fromwugdata(item)
+                for item in self.itemlist:
+                    # check every item
+                    self._get_item_fromwugdata(item)
+            else:
+                self.logger.info('_update_items: Ignoring INVALID json {}'.format(str(self.wugdata)))
+
 
 
     def init_webinterface(self):
