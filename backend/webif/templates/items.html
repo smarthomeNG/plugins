@@ -27,14 +27,14 @@
             </div>
         </div>
         <div class="row">
-            <div class="col">
+            <div class="col" style="max-width: 50%;">
                 <div class="card">
                     <div class="card-body p-1">
                         <div id="tree" style="overflow-y: scroll;"></div>
                     </div>
                 </div>
             </div>
-            <div class="col">
+            <div class="col" style="max-width: 50%;">
                 <div class="card" >
                     <div class="card-header p-1 shng_heading">
                         <a class="float-sm-right" href="#" onclick="reload(selectedNode.text);" title="{{ _('Neu Laden', 'button') }}"><span id="refresh-element" class="fas fa-sync"></span></a>
@@ -47,7 +47,7 @@
                                     <span id="reload-element" class="fas fa-sync fa-4x"/>
                                 </div>
                             </div>
-                            <div id="tree_detail" class="data-container refresh-data pre-scrollable">
+                            <div id="tree_detail" class="data-container refresh-data pre-scrollable" style="overflow-x: auto;">
                             {{ _('Item im Baum auswählen um Details einzusehen!') }}
                             </div>
                         </div>
@@ -91,7 +91,7 @@ function getDetailInfo(result) {
                 input = element.value;
         }
 
-        temp = '<div class="table-responsive"><table class="table table-striped table-hover">';
+        temp = '<div class="table-responsive" style="min-width: 500px;"><table class="table table-striped table-hover">';
         temp = temp + '<thead><tr class="shng_heading"><th class="py-1">{{ _('Attribut') }}</th><th class="py-1">{{ _('Wert') }}</th></tr></thead><tbody>';
         temp = temp + '<tr><td class="py-1">{{ _('path', 'items') }}</td><td class="py-1">'+element.path+'</td></tr>';
         temp = temp + '<tr><td class="py-1">{{ _('name', 'items') }}</td><td class="py-1">'+element.name+'</td></tr>';
