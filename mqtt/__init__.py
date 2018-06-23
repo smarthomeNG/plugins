@@ -112,6 +112,8 @@ class Mqtt(SmartPlugin):
             self.broker_ip = socket.gethostbyname( self.broker_hostname )
         except Exception as e:
             self.logger.error(self.get_loginstance()+"Error resolving '%s': %s" % (self.broker_hostname, e))
+            self._init_complete = False
+            return
         if self.broker_ip == self.broker_hostname:
             self.broker_hostname = ''
 
@@ -397,7 +399,7 @@ class Mqtt(SmartPlugin):
         clientname = os.uname()[1]
         if self.get_instance_name() != '':
             clientname = clientname + '.' + self.get_instance_name()
-        self.logger.info(self.get_loginstance()+"Connecting to broker. Starting mqtt client '{0}'".format(clientname))
+        self.logger.info(self.get_loginstance()+"Connecting to broker '{}:{}'. Starting mqtt client '{}'".format(self.broker_ip, self.broker_port, clientname))
         self._client = mqtt.Client(client_id=clientname)
 
 
