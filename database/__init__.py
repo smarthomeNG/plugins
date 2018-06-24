@@ -89,8 +89,8 @@ class Database(SmartPlugin):
         self._dump_lock = threading.Lock()
 
         self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver, connect)
-        self._db.connect()
-        self._db.setup({i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
+        self._initialized = False
+        self._initialize()
 
         smarthome.scheduler.add('Database dump ' + self._name + ("" if prefix == "" else " [" + prefix + "]"), self._dump, cycle=self._dump_cycle, prio=5)
 
@@ -104,7 +104,7 @@ class Database(SmartPlugin):
             item.db = functools.partial(self._single, item=item.id())
             item.dbplugin = self
 
-            if self.get_iattr_value(item.conf, 'database') == 'init':
+            if self._initialized and self.get_iattr_value(item.conf, 'database') == 'init':
                 if not self._db.lock(5):
                     self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
                     return
@@ -306,6 +306,10 @@ class Database(SmartPlugin):
             return
 
         self.logger.debug('Starting dump')
+
+        if not self._initialize():
+            self._dump_lock.release()
+            return
 
         if items == None:
             self._buffer_lock.acquire()
@@ -577,6 +581,8 @@ class Database(SmartPlugin):
         self._query(self._db.execute, query, params, cur)
 
     def _query(self, func, query, params, cur=None):
+        if not self._initialize():
+            return None
         if cur is None:
             if self._db.verify(5) == 0:
                 self.logger.error("Database: Connection not recovered")
@@ -595,6 +601,18 @@ class Database(SmartPlugin):
             self._db.release()
         self.logger.debug("Fetch {}: {}".format(query_readable, tuples))
         return tuples
+
+    def _initialize(self):
+        try:
+            if not self._db.connected():
+                self._db.connect()
+            if not self._initialized:
+                self._db.setup({i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
+                self._initialized = True
+        except Exception as e:
+           self.logger.error("Database: initialization failed: {}".format(e))
+           return False
+        return True
 
     def _parse_ts(self, frame):
         minute = 60 * 1000
