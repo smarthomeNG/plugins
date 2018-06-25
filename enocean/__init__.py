@@ -640,7 +640,7 @@ class EnOcean(SmartPlugin):
             return None
         # device range 10 - 19 --> Learn protocol for switch actuators
         elif (device == 10):
-            # Prepare Data for Eltako switch FSR61
+            # Prepare Data for Eltako switch FSR61, Eltako FSVA-230V
             payload = [0xE0, 0x40, 0x0D, 0x80]
             self.logger.info('enocean: sending learn telegram for switch command with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
         # device range 20 - 29 --> Learn protocol for dim actuators

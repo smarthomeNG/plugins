@@ -338,7 +338,7 @@ The following status EEPs are supported:
 * A5_04_02		Energy (optional), humidity and temperature sensor
 * A5_08_01		Brightness and movement sensor
 * A5_11_04		Dimmer status feedback
-* A5_12_01		Power Measurement
+* A5_12_01		Power Measurement, e.g. Eltako FSVA-230V
 * D2_01_07		Simple electronic switch
 * D5_00_01		Door/Window Contact, e.g. Eltako FTK, FTKB
 * F6_02_01		2-Button-Rocker
@@ -389,7 +389,7 @@ sh.enocean.send_learn_protocol(id_offset, device)
 ```
 With device are different actuators defined:
 
-- 10: Eltako Switch FSR61
+- 10: Eltako Switch FSR61, Eltako FSVA-230V
 - 20: Eltako FSUD-230V
 - 21: Eltako FHK61SSR dim device (EEP A5-38-08)
 - 22: Eltako FRGBW71L RGB dim devices (EEP 07-3F-7F)
