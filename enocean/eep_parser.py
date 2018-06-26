@@ -164,7 +164,7 @@ class EEP_Parser():
         return results
 
     def _parse_eep_A5_12_01(self, payload, status):
-        # Status command from switche actor with powermeter, for example eltako FSVA-230
+        # Status command from switch actor with powermeter, for example Eltako FSVA-230
         results = {}
         status = payload[3]
         is_data = (status & 0x08) == 0x08
@@ -173,18 +173,18 @@ class EEP_Parser():
             return results
         is_power = (status & 0x04) == 0x04
         div_enum = (status & 0x03)
-        divisor = 1
+        divisor = 1.0
         if(div_enum == 0):
-            divisor = 1
+            divisor = 1.0
             self.logger.debug("enocean: processing A5_12_01: divisor is {0}".format(divisor))
         elif(div_enum == 1):
-            divisor = 10
+            divisor = 10.0
             self.logger.debug("enocean: processing A5_12_01: divisor is {0}".format(divisor))
         elif(div_enum == 2):
-            divisor = 100
+            divisor = 100.0
             self.logger.debug("enocean: processing A5_12_01: divisor is {0}".format(divisor))
         elif(div_enum == 3):
-            divisor = 1000
+            divisor = 1000.0
             self.logger.debug("enocean: processing A5_12_01: divisor is {0}".format(divisor))
         else: 
             self.logger.warning("enocean: processing A5_12_01: Unknown enum ({0}) for divisor".format(div_enum))
@@ -194,8 +194,9 @@ class EEP_Parser():
         else:
             self.logger.debug("enocean: processing A5_12_01: powermeter: Unit is kWh")
         value = (payload[0] << 16) + (payload[1] << 8) + payload[2]
-        self.logger.debug("enocean: processing A5_12_01: powermeter: {0}W".format(value))
-        results['VALUE'] = value/devisor
+        value = value / divisor
+        self.logger.debug("enocean: processing A5_12_01: powermeter: {0} W".format(value))
+        results['VALUE'] = value
         return results
 
     def _parse_eep_A5_20_04(self, payload, status):
