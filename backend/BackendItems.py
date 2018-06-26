@@ -322,14 +322,9 @@ class BackendItems:
             on_update_list = self.build_on_list(item._on_update_dest_var, item._on_update)
             on_change_list = self.build_on_list(item._on_change_dest_var, item._on_change)
 
-            try:
-                self._trigger = item_conf_sorted['trigger']
-            except:
-                self._trigger = ''
-            try:
-                self._trigger_condition = item_conf_sorted['trigger_condition']
-            except:
-                self._trigger_condition = ''
+            self._trigger_condition_raw = item._trigger_condition_raw
+            if self._trigger_condition_raw == []:
+                self._trigger_condition_raw = ''
 
             data_dict = {'path': item._path,
                          'name': item._name,
@@ -349,9 +344,9 @@ class BackendItems:
                          'enforce_updates': enforce_updates,
                          'cache': cache,
                          'eval': html.escape(self.disp_str(item._eval)),
-                         'eval_trigger': self.disp_str(item._eval_trigger),
-                         'trigger': self.disp_str(self._trigger),
-                         'trigger_condition': self.disp_str(self._trigger_condition),
+                         'trigger': self.disp_str(item._trigger),
+                         'trigger_condition': self.disp_str(item._trigger_condition),
+                         'trigger_condition_raw': self.disp_str(self._trigger_condition_raw),
                          'on_update': html.escape(self.list_to_displaystring(on_update_list)),
                          'on_change': html.escape(self.list_to_displaystring(on_change_list)),
                          'log_change': self.disp_str(item._log_change),

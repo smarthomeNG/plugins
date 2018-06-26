@@ -116,14 +116,14 @@ function getDetailInfo(result) {
 	    temp = temp + '<tr class="shng_heading"><th class="py-1" colspan="2">{{ _('Evaluation und Trigger') }}:</th></tr>';
         temp = temp + '<tr><td class="py-1">{{ _('cache', 'items') }}</td><td class="py-1">'+element.cache+'</td></tr>';
         temp = temp + '<tr><td class="py-1">{{ _('enforce_updates', 'items') }}</td><td class="py-1">'+element.enforce_updates+'</td></tr>';
-        temp = temp + '<tr><td class="py-1">{{ _('eval', 'items') }}</td><td class="py-1">'+element.eval+'</td></tr>';
-        temp = temp + '<tr><td class="py-1">{{ _('eval_trigger', 'items') }}</td><td class="py-1">'+element.eval_trigger+'</td></tr>';
-		if (element.trigger != '') {
-	        temp = temp + '<tr><td class="py-1">{{ _('trigger', 'items') }}</td><td class="py-1">'+element.trigger+'</td></tr>';
-		};
-		if (element.trigger_condition != '') {
+        temp = temp + '<tr><td class="py-1">{{ _('eval_trigger', 'items') }}</td><td class="py-1">'+element.trigger+'</td></tr>';
+		if (element.trigger_condition != '-') {
 			temp = temp + '<tr><td class="py-1">{{ _('trigger_condition', 'items') }}</td><td class="py-1">' + element.trigger_condition + '</td></tr>';
 		};
+		if (element.trigger_condition_raw != '') {
+			temp = temp + '<tr><td class="py-1">{{ _('trigger_condition raw', 'items') }}</td><td class="py-1">' + element.trigger_condition_raw + '</td></tr>';
+		};
+        temp = temp + '<tr><td class="py-1">{{ _('eval', 'items') }}</td><td class="py-1">'+element.eval+'</td></tr>';
         temp = temp + '<tr><td class="py-1">{{ _('on_update', 'items') }}</td><td class="py-1">'+element.on_update+'</td></tr>';
         temp = temp + '<tr><td class="py-1">{{ _('on_change', 'items') }}</td><td class="py-1">'+element.on_change+'</td></tr>';
         temp = temp + '<tr><td class="py-1">{{ _('log_change', 'items') }}</td><td class="py-1">'+element.log_change+'</td></tr>';

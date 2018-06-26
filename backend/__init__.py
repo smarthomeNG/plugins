@@ -49,7 +49,7 @@ class BackendServer(SmartPlugin):
     the update functions for the items
     """
     
-    PLUGIN_VERSION='1.4.11'
+    PLUGIN_VERSION='1.4.12'
 
 
     def __init__(self, sh, updates_allowed='True', developer_mode="no", pypi_timeout=5):
