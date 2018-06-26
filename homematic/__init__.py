@@ -532,6 +532,11 @@ class WebInterface(SmartPluginWebIf):
             d['type'] = d_type
             d['firmware'] = dev._FIRMWARE
             d['version'] = dev._VERSION
+            d['assigned'] = False
+            for i in self.plugin.hm_items:
+                if i[2] == dev_id:
+                    d['assigned'] = True
+                    break
             if d_type in ['Switch','SwitchPowermeter','ShutterContact']:
                 try:
                     d['value'] = dev.getValue('STATE')
@@ -554,6 +559,11 @@ class WebInterface(SmartPluginWebIf):
             d['type'] = d_type
             d['firmware'] = dev._FIRMWARE
             d['version'] = dev._VERSION
+            d['assigned'] = False
+            for i in self.plugin.hm_items:
+                if i[2] == dev_id:
+                    d['assigned'] = True
+                    break
             if d_type in ['Switch','SwitchPowermeter','ShutterContact']:
                 try:
                     d['value'] = dev.getValue('STATE')

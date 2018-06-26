@@ -132,16 +132,16 @@
 			<tbody>
 				{% for d in devices|sort(attribute='name') %}
 					<tr id="{{ loop.index }}_click" style="cursor: pointer;">
-						<td class="py-1">{{ d.name }}</td>
-						<td class="py-1">{{ d.address }}</td>
-						<td class="py-1">{{ d.hmtype }}</td>
-						<td class="py-1">{{ d.type }}</td>
-						<td class="py-1">{{ d.firmware }}</td>
-						<td class="py-1">{{ d.version }}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.name }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.address }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.hmtype }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.type }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.firmware }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.version }}{% if not d.assigned %}</span>{% endif %}</td>
 						{% if d.address == 'BidCoS-RF' %}
 							<td></td>
 						{% else %}
-							<td class="py-1">{{ d.dev.getAttributeData('RSSI_DEVICE') }}</td>
+							<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.dev.getAttributeData('RSSI_DEVICE') }}{% if not d.assigned %}</span>{% endif %}</td>
 						{% endif %}
 						<td class="py-1"></td>
 					</tr>
@@ -240,13 +240,13 @@
 			<tbody>
 				{% for d in ipdevices|sort(attribute='name') %}
 					<tr id="{{ loop.index }}_clickip" style="cursor: pointer;">
-						<td class="py-1">{{ d.name }}</td>
-						<td class="py-1">{{ d.address }}</td>
-						<td class="py-1">{{ d.hmtype }}</td>
-						<td class="py-1">{{ d.type }}</td>
-						<td class="py-1">{{ d.firmware }}</td>
-						<td class="py-1">{{ d.version }}</td>
-						<td class="py-1">{{ d.dev.getAttributeData('RSSI_DEVICE') }}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.name }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.address }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.hmtype }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.type }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.firmware }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.version }}{% if not d.assigned %}</span>{% endif %}</td>
+						<td class="py-1">{% if not d.assigned %}<span style="color:#bbb;">{% endif %}{{ d.dev.getAttributeData('RSSI_DEVICE') }}{% if not d.assigned %}</span>{% endif %}</td>
 						<td class="py-1"></td>
 					</tr>
 					<tr id="{{ loop.index }}_additionalip" style="display: none; cursor: pointer;">
