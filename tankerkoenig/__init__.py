@@ -98,10 +98,13 @@ class TankerKoenig(SmartPlugin):
             return
         json_obj = response.json()
         keys = ['e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen']
-        i = json_obj['station']
         result_station = {}
-        for key in keys:
-            result_station[key] = i[key]
+        try:
+            i = json_obj['station']
+            for key in keys:
+                result_station[key] = i[key]
+        except:
+            pass
 
         return result_station
 
