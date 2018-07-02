@@ -7,7 +7,7 @@
 			<td class="py-1"><strong>{{ _('Verbunden') }}</strong></td>
 			<td class="py-1">{% if p._fritz_device.is_ssl() %}SSL{% else %}{{ _('Ja') }}{% endif %}</td>
 			<td class="py-1"><strong>{{ _('Benutzer') }}</strong></td>
-			<td class="py-1">{{ p.get_parameter_value_for_display('user') }}</td>
+			<td class="py-1">{{ p.get_parameter_value_for_display('username') }}</td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>{{ _('Call Monitor') }}</strong></td>
