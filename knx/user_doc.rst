@@ -44,12 +44,15 @@ Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 Im ersten Tab werden die Items angezeigt, die das knx Plugin nutzen:
 
 .. image:: assets/webif1.jpg
+   :class: screenshot
 
 Im zweiten Tab werden Statistiken zu den KNX Gruppenadessen angezeigt:
 
 .. image:: assets/webif2.jpg
+   :class: screenshot
 
 Im dritten Tab werden Statistiken zu den physischen KNX Adressen angezeigt.
 
 .. image:: assets/webif3.jpg
+   :class: screenshot
 

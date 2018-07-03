@@ -57,6 +57,7 @@ definiert sind, dass sie nicht zu den in der HomeMatic CCU2 angelernten Devices 
 ein entsprechender Fehler angezeigt:
 
 .. image:: assets/webif1.jpg
+   :class: screenshot
 
 
 |
@@ -65,6 +66,7 @@ ein entsprechender Fehler angezeigt:
 Im zweiten Tab werden Devices angezeigt, die an der HomeMatic CCU2 angelernt sind:
 
 .. image:: assets/webif2.jpg
+   :class: screenshot
 
 |
 |
@@ -73,6 +75,7 @@ Durch anklicken der Zeilen mit den Devices, die an der HomeMatic CCU2 angelernt 
 weitere Details zu den Devices angezeigt werden
 
 .. image:: assets/webif2_1.jpg
+   :class: screenshot
 
 
 |
@@ -87,6 +90,7 @@ angelernt sind.
    des SmartHomeNG Plugins ist **nicht** möglich.
 
 .. image:: assets/webif3.jpg
+   :class: screenshot
 
 |
 |

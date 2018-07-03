@@ -43,9 +43,11 @@ Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 Im ersten Tab werden die Items angezeigt, die das mqtt Plugin nutzen.
 
 .. image:: assets/webif1.jpg
+   :class: screenshot
 
 Im zweiten Tab werden Informationen zum Broker angezeigt. Laufzeit und Durchsatz werden nur angezeigt,
 wenn der Parameter **broker_monitoring** in etc/plugin.yaml auf **True** gesetzt ist.
 
 .. image:: assets/webif2.jpg
+   :class: screenshot
 

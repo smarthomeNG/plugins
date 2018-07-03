@@ -43,8 +43,10 @@ Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 Im ersten Tab werden die Items angezeigt, die das avm Plugin nutzen:
 
 .. image:: assets/webif1.jpg
+   :class: screenshot
 
 Im zweiten Tab werden Call Monitor Items zum avm Plugin angezeigt:
 
 .. image:: assets/webif2.jpg
+   :class: screenshot
 

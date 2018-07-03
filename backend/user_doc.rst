@@ -34,6 +34,7 @@ Das Backend Plugin liefert zahlreiche Infroamtionen, die zum Beispiel bei der Fe
 hilfreich sind. Inzwischen kann man damit auch eine Reihe von Administrationsaufgaben erledigen.
 
 .. image:: assets/backend_systeminfo.jpg
+   :class: screenshot
 
 Genauer ist das unter :doc:`/backend/backend` beschrieben.
 

@@ -43,5 +43,6 @@ Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 Im unteren Teil Tab werden Informationen zu den Clients angezeigt, die das Plugin nutzen.
 
 .. image:: assets/webif1.jpg
+   :class: screenshot
 
 

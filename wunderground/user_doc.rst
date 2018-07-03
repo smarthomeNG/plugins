@@ -44,9 +44,11 @@ Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 Im ersten Tab werden die Items angezeigt, die das wunderground Plugin nutzen:
 
 .. image:: assets/webif1.jpg
+   :class: screenshot
 
 Im zweiten Tab werden die wunderground ROhdaten angezeigt:
 
 .. image:: assets/webif2.jpg
+   :class: screenshot
 
 

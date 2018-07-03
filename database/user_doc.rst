@@ -43,9 +43,11 @@ Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 Im ersten Tab werden die Items angezeigt, die das database Plugin nutzen:
 
 .. image:: assets/webif1.jpg
+   :class: screenshot
 
 Auf der Detailseite zu den Item Einträgen werden die geloggten Werte angezeigt:
 
 .. image:: assets/webif1_1.jpg
+   :class: screenshot
 
 

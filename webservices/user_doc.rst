@@ -44,4 +44,5 @@ Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 Im unteren Teil werden die Items angezeigt, die per REST Interface abgefragt werden können:
 
 .. image:: assets/webif1.jpg
+   :class: screenshot
 
