@@ -124,10 +124,7 @@ class DarkSky(SmartPlugin):
 
     def get_forecast(self):
         """
-        Returns detail information for a petrol station id
-        Should not be used extensively, due to performance issues on tankerkoenig side.
-        https://creativecommons.tankerkoenig.de/#techInfo
-        @param id: Internal ID of petrol station to retrieve information for
+        Requests the forecast information at darksky.net
         """
         try:
             response = self._session.get(self._build_url())
@@ -141,11 +138,10 @@ class DarkSky(SmartPlugin):
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to
-        the Nokia Health identifier and adds it to an internal array
+        the ds_matchstring and adds it to an internal array
 
         :param item: The item to process.
         """
-        # items specific to call monitor
         if self.get_iattr_value(item.conf, 'ds_matchstring'):
             self._items[self.get_iattr_value(item.conf, 'ds_matchstring')] = item
 
