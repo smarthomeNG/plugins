@@ -32,7 +32,7 @@ class DarkSky(SmartPlugin):
     PLUGIN_VERSION = "1.5.0.1"
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
-    def __init__(self, smarthome, key, latitude = None, longitude = None, lang='de', units='auto', cycle=300):
+    def __init__(self, smarthome, key, latitude=None, longitude=None, lang='de', units='auto', cycle=300):
         """
         Initializes the plugin
         @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
@@ -45,6 +45,7 @@ class DarkSky(SmartPlugin):
             self._lat = latitude
             self._lon = longitude
         else:
+            self.logger.debug("__init__: latitude and longitude not provided, using shng system values instead.")
             self._lat = self._sh._lat
             self._lon = self._sh._lon
         self._lang = lang
@@ -96,12 +97,12 @@ class DarkSky(SmartPlugin):
                                 wrk = wrk[int(sp[0])]
                             else:
                                 self.logger.error(
-                                    "_get_item_fromwugdata: invalid ds_matchstring '{}'; integer too large in matchstring".format(
+                                    "_update: invalid ds_matchstring '{}'; integer too large in matchstring".format(
                                         s))
                                 break
                         else:
                             self.logger.error(
-                                "_get_item_fromwugdata: invalid ds_matchstring '{}'; integer expected in matchstring".format(
+                                "_update: invalid ds_matchstring '{}'; integer expected in matchstring".format(
                                     s))
                             break
                     else:
@@ -109,7 +110,7 @@ class DarkSky(SmartPlugin):
                     if len(sp) == 1:
                         spl = s.split('/')
                         self.logger.debug(
-                            "_get_item_fromwugdata: ds_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
+                            "_update: ds_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
                                                                                                              str(spl),
                                                                                                              str(wrk)))
                     sp.pop(0)
