@@ -82,7 +82,7 @@ class DarkSky(SmartPlugin):
             if s == "flags/sources":
                 wrk = ', '.join(wrk['flags']['sources'])
             elif s == "alerts":
-                if 'alerts' in work:
+                if 'alerts' in wrk:
                     wrk = wrk['alerts']
                 else:
                     wrk = []
