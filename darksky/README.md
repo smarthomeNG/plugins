@@ -1,4 +1,4 @@
-# Wunderground
+# darksky.net / forecast.io
 
 #### Version 1.2.5
 
