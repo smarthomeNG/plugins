@@ -56,8 +56,8 @@ class DarkSky(SmartPlugin):
         self._cycle = cycle
 
     def run(self):
+        self.scheduler_add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
-        self._sh.scheduler.add(__name__, self._update_loop, cycle=self._cycle)
 
     def stop(self):
         self.alive = False

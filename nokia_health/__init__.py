@@ -56,7 +56,7 @@ class NokiaHealth(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add(__name__, self._update_loop, cycle=self._cycle)
+        self.scheduler_add(__name__, self._update_loop, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
