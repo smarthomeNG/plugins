@@ -28,32 +28,32 @@ import datetime
 import json
 from lib.model.smartplugin import SmartPlugin
 
+
 class DarkSky(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.5.0.1"
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
-    def __init__(self, smarthome, key, latitude=None, longitude=None, lang='de', units='auto', cycle=300):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
         @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
         api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
         self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
-        self._key = key
-        if latitude is not None and longitude is not None:
-            self._lat = latitude
-            self._lon = longitude
+        self._key = self.get_parameter_value('key')
+        if self.get_parameter_value('latitude') != '' and self.get_parameter_value('longitude') != '':
+            self._lat = self.get_parameter_value('latitude')
+            self._lon = self.get_parameter_value('longitude')
         else:
             self.logger.debug("__init__: latitude and longitude not provided, using shng system values instead.")
-            self._lat = self._sh._lat
-            self._lon = self._sh._lon
-        self._lang = lang
-        self._units = units
+            self._lat = self.get_sh()._lat
+            self._lon = self.get_sh()._lon
+        self._lang = self.get_parameter_value('lang')
+        self._units = self.get_parameter_value('units')
         self._session = requests.Session()
+        self._cycle = int(self.get_parameter_value('cycle'))
         self._items = {}
-        self._cycle = cycle
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)

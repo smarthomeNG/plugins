@@ -28,12 +28,14 @@ parameters:
     latitude:
         type: str
         mandatory: False
+        default: ''
         description:
             de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings'
             en: 'Latitude for the location, of which weather data is requested. Default: SmartHomeNG Settings'
     longitude:
         type: str
         mandatory: False
+        default: ''
         description:
             de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings.'
             en: 'Longitude for the location, of which weather data is requested. Default: SmartHomeNG Settings.'
@@ -51,6 +53,13 @@ parameters:
         description:
             de: 'Einheit der zurückgelieferten Daten. Mögliche Werte siehe https://darksky.net/dev/docs.'
             en: 'Unit of the returned data. Possible values see https://darksky.net/dev/docs.'
+    cycle:
+        type: int
+        mandatory: False
+        default: 300
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
     
 item_attributes:
     # Definition of item attributes defined by this plugin
