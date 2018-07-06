@@ -151,7 +151,7 @@ class DarkSky(SmartPlugin):
     def _build_url(self, url_type='forecast'):
         """
         Builds a request url
-        @param suffix: url suffix
+        @param url_type: url type (currently on 'forecast', as historic data are not supported.
         @return: string of the url
         """
         url = ''
