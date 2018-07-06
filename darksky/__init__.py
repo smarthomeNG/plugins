@@ -32,7 +32,7 @@ class DarkSky(SmartPlugin):
     PLUGIN_VERSION = "1.5.0.1"
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
-    def __init__(self, smarthome, key, latitude, longitude, lang='de', units='auto', cycle=300):
+    def __init__(self, smarthome, key, latitude = None, longitude = None, lang='de', units='auto', cycle=300):
         """
         Initializes the plugin
         @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
@@ -41,8 +41,12 @@ class DarkSky(SmartPlugin):
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
         self._key = key
-        self._lat = latitude
-        self._lon = longitude
+        if latitude is not None and longitude is not None:
+            self._lat = latitude
+            self._lon = longitude
+        else:
+            self._lat = self._sh._lat
+            self._lon = self._sh._lon
         self._lang = lang
         self._units = units
         self._session = requests.Session()
@@ -77,6 +81,8 @@ class DarkSky(SmartPlugin):
             wrk = forecast
             if s == "flags/sources":
                 wrk = ', '.join(wrk['flags']['sources'])
+            elif s == "alerts":
+                wrk = wrk['alerts']
             else:
                 while True:
                     if (len(sp) == 0) or (wrk is None):

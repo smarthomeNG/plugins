@@ -25,18 +25,18 @@ parameters:
         description:
             de: 'Persönlicher API Key für darksky.net. Registrierung unter https://darksky.net/dev.'
             en: 'Your own personal API key for darksky.net. For your own key register to https://darksky.net/dev.'
-    latitude:
+   latitude:
         type: str
-        mandatory: True
+        mandatory: False
         description:
-            de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen.'
-            en: 'Latitude for the location, of which weather data is requested.'
+            de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings'
+            en: 'Latitude for the location, of which weather data is requested. Default: SmartHomeNG Settings'
     longitude:
         type: str
-        mandatory: True
+        mandatory: False
         description:
-            de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen.'
-            en: 'Longitude for the location, of which weather data is requested.'
+            de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings.'
+            en: 'Longitude for the location, of which weather data is requested. Default: SmartHomeNG Settings.'
     lang:
         type: str
         mandatory: False

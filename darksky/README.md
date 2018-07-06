@@ -167,8 +167,14 @@ darksky:
 
         icon:
             type: str
-            ds_matchstring: daily/icon            
-    
+            ds_matchstring: daily/icon        
+                
+    alerts:
+
+        list:
+            type: list
+            ds_matchstring: alerts 
+               
     flags:
 
         sources:
