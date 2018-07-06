@@ -167,7 +167,21 @@ darksky:
 
         icon:
             type: str
-            ds_matchstring: daily/icon
+            ds_matchstring: daily/icon            
+    
+    flags:
+
+        sources:
+            type: str
+            ds_matchstring: flags/sources
+
+        units:
+            type: str
+            ds_matchstring: flags/units
+
+        nearest_station:
+            type: num
+            ds_matchstring: flags/nearest-station
 ```
 
 ### logic.yaml

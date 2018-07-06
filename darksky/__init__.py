@@ -75,33 +75,35 @@ class DarkSky(SmartPlugin):
         for s, item in self._items.items():
             sp = s.split('/')
             wrk = forecast
-
-            while True:
-                if (len(sp) == 0) or (wrk is None):
-                    break
-                if type(wrk) is list:
-                    if self.is_int(sp[0]):
-                        if int(sp[0]) < len(wrk):
-                            wrk = wrk[int(sp[0])]
+            if s == "flags/sources":
+                wrk = ', '.join(wrk['flags']['sources'])
+            else:
+                while True:
+                    if (len(sp) == 0) or (wrk is None):
+                        break
+                    if type(wrk) is list:
+                        if self.is_int(sp[0]):
+                            if int(sp[0]) < len(wrk):
+                                wrk = wrk[int(sp[0])]
+                            else:
+                                self.logger.error(
+                                    "_get_item_fromwugdata: invalid ds_matchstring '{}'; integer too large in matchstring".format(
+                                        s))
+                                break
                         else:
                             self.logger.error(
-                                "_get_item_fromwugdata: invalid ds_matchstring '{}'; integer too large in matchstring".format(
+                                "_get_item_fromwugdata: invalid ds_matchstring '{}'; integer expected in matchstring".format(
                                     s))
                             break
                     else:
-                        self.logger.error(
-                            "_get_item_fromwugdata: invalid ds_matchstring '{}'; integer expected in matchstring".format(
-                                s))
-                        break
-                else:
-                    wrk = wrk.get(sp[0])
-                if len(sp) == 1:
-                    spl = s.split('/')
-                    self.logger.debug(
-                        "_get_item_fromwugdata: ds_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
-                                                                                                         str(spl),
-                                                                                                         str(wrk)))
-                sp.pop(0)
+                        wrk = wrk.get(sp[0])
+                    if len(sp) == 1:
+                        spl = s.split('/')
+                        self.logger.debug(
+                            "_get_item_fromwugdata: ds_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
+                                                                                                             str(spl),
+                                                                                                             str(wrk)))
+                    sp.pop(0)
 
             # if a value was found, store it to item
             if wrk is not None:
@@ -121,20 +123,10 @@ class DarkSky(SmartPlugin):
             response = self._session.get(self._build_url())
         except Exception as e:
             self.logger.error(
-                "Exception when sending GET request for get_forecast: %s" % str(e))
+                "get_forecast: Exception when sending GET request for get_forecast: %s" % str(e))
             return
         json_obj = response.json()
         return json_obj
-
-        #result_station = {}
-        #try:
-        #    i = json_obj['station']
-        #    for key in keys:
-        #        result_station[key] = i[key]
-        #except:
-        #    pass
-
-        #return result_station
 
     def parse_item(self, item):
         """
@@ -150,19 +142,19 @@ class DarkSky(SmartPlugin):
     def get_items(self):
         return self._items
 
-    def _build_url(self, type='forecast'):
+    def _build_url(self, url_type='forecast'):
         """
         Builds a request url
         @param suffix: url suffix
         @return: string of the url
         """
         url = ''
-        if type == 'forecast':
+        if url_type == 'forecast':
             url = self._base_forecast_url % (self._key, self._lat, self._lon)
             parameters = "?lang=%s" % self._lang
             if self._units is not None:
                 parameters = "%s&units=%s" % (parameters, self._units)
             url = '%s%s' % (url, parameters)
         else:
-            self.logger.error('Wrong url type specified: %s' %type)
+            self.logger.error('_build_url: Wrong url type specified: %s' %url_type)
         return url
