@@ -510,20 +510,9 @@ class AVM(SmartPlugin):
                      ('WANDSLInterfaceConfig', 'urn:dslforum-org:service:WANDSLInterfaceConfig:1'),
                      ('MyFritz', 'urn:dslforum-org:service:X_AVM-DE_MyFritz:1')])
 
-    def __init__(self, smarthome, username='', password='', host='fritz.box', port='49443', ssl='True', verify='False',
-                 cycle=300, call_monitor='False', call_monitor_incoming_filter=''):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param username:           Login name of user, cptional for devices which only support passwords
-        :param password:           Password for the FritzDevice
-        :param host:               IP or host name of FritzDevice
-        :param port:               Port of the FritzDevice (https: 49443, http: 49000)
-        :param ssl:                True or False => https or http in URLs
-        :param verify:             True or False => verification of SSL certificate
-        :param cycle:              Update cycle in seconds
-        :param call_monitor:       bool: Shall the MonitoringService for the CallMonitor be started?
-        :param call_monitor_incoming_filter:    Filter only specific numbers to be watched by call monitor
         """
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init AVM Plugin')
@@ -531,25 +520,26 @@ class AVM(SmartPlugin):
         self._session = requests.Session()
         self._timeout = 10
 
-        self._verify = self.to_bool(verify)
-        ssl = self.to_bool(ssl)
+        self._verify = self.get_parameter_value('verify')
+        ssl = self.get_parameter_value('ssl')
 
         if ssl and not self._verify:
             urllib3.disable_warnings()
 
-        self._fritz_device = FritzDevice(host, port, ssl, username, password, self.get_instance_name())
+        self._fritz_device = FritzDevice(self.get_parameter_value('host'), self.get_parameter_value('port'), ssl,
+                                         self.get_parameter_value('username'), self.get_parameter_value('password'),
+                                         self.get_instance_name())
 
-        self._call_monitor = self.to_bool(call_monitor)
+        self._call_monitor = self.to_bool(self.get_parameter_value('call_monitor'))
         if self._call_monitor:
             self._monitoring_service = MonitoringService(self._fritz_device.get_host(), 1012,
                                                          self.get_contact_name_by_phone_number,
-                                                         call_monitor_incoming_filter, self)
+                                                         self.get_parameter_value('call_monitor_incoming_filter'), self)
             self._monitoring_service.connect()
 
-        self._call_monitor_incoming_filter = call_monitor_incoming_filter
+        self._call_monitor_incoming_filter = self.get_parameter_value('call_monitor_incoming_filter')
 
-        self._cycle = int(cycle)
-        self._sh = smarthome
+        self._cycle = int(self.get_parameter_value('cycle'))
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
         self._calllist_cache = []
@@ -561,7 +551,6 @@ class AVM(SmartPlugin):
         """
         Run method for the plugin
         """
-        #        self._sh.scheduler.add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.scheduler_add('update', self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
@@ -2074,7 +2063,6 @@ class WebInterface(SmartPluginWebIf):
         self.plugin = plugin
 
         self.tplenv = self.init_template_environment()
-
 
     @cherrypy.expose
     def index(self, reload=None):

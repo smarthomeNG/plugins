@@ -68,6 +68,12 @@ parameters:
         description:
             de: '(optional) Aktiviert oder deaktiviert den MonitoringService, welcher auf den Call Monitor des FritzDevice verbindet. Der Call Monitor muss über ein verbundenes Telefon via #96*5* aktiviert sein.'
             en: '(optional) Activates or deactivates the MonitoringService, which connects to the FritzDevice`s call monitor. The call monitor has to be activated before by a connected telephone via calling #96*5*'
+    call_monitor_incoming_filter:
+        type: str
+        default: ''
+        description:
+            de: '(optional) Spezielle Rufnummern ausfiltern, die vom Callmonitor ignoriert werden sollen.'
+            en: '(optional) Filter only specific numbers to be watched by call monitor'
     instance:
         type: str
         default: ''
