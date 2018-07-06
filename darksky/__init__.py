@@ -24,6 +24,7 @@
 
 import logging
 import requests
+import datetime
 import json
 from lib.model.smartplugin import SmartPlugin
 
@@ -82,9 +83,23 @@ class DarkSky(SmartPlugin):
             wrk = forecast
             if s == "flags/sources":
                 wrk = ', '.join(wrk['flags']['sources'])
-            elif s == "alerts":
+            elif s == "alerts" or s == "alerts_string":
                 if 'alerts' in wrk:
-                    wrk = wrk['alerts']
+                    if s == "alerts":
+                        wrk = wrk['alerts']
+                    else:
+                        alerts_string = ''
+                        for alert in wrk['alerts']:
+                            start_time = datetime.datetime.fromtimestamp(
+                                int(alert['time'])
+                            ).strftime('%d.%m.%Y %H:%M')
+                            expire_time = datetime.datetime.fromtimestamp(
+                                int(alert['expires'])
+                            ).strftime('%d.%m.%Y %H:%M')
+                            alerts_string_wrk = "<h1>"+alert['title']+" ("+start_time+" - "+expire_time+")</h1>"
+                            alerts_string_wrk = alerts_string_wrk + "<span>"+alert['description']+"</span>"
+                            alerts_string = alerts_string + alerts_string_wrk
+                        wrk = alerts_string
                 else:
                     wrk = []
             else:

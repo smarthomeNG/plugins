@@ -25,7 +25,7 @@ parameters:
         description:
             de: 'Persönlicher API Key für darksky.net. Registrierung unter https://darksky.net/dev.'
             en: 'Your own personal API key for darksky.net. For your own key register to https://darksky.net/dev.'
-   latitude:
+    latitude:
         type: str
         mandatory: False
         description:
