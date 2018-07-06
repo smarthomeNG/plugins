@@ -174,6 +174,10 @@ darksky:
         list:
             type: list
             ds_matchstring: alerts 
+            
+        string_detail:
+            type: str
+            ds_matchstring@home: alerts_string
                
     flags:
 
