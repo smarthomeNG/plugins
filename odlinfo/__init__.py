@@ -40,7 +40,7 @@ from requests.auth import HTTPBasicAuth
 
 class ODLInfo(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.4.1"
     _base_url = 'https://odlinfo.bfs.de/daten/json/stamm.json'
 
     def __init__(self, sh, *args, **kwargs):
