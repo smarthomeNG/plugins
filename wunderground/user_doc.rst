@@ -5,6 +5,11 @@
 wunderground
 ############
 
+.. important::
+   wunderground.com gibt keine kostenfreien API-Keys mehr heraus. Dieses Plugin ist daher nur für User nutzbar,
+   die bereits einen entsprechenden API-Key besitzen (z.B. für die Wetterdaten Anzeige in smartVISU).
+
+
 Konfiguration
 =============
 
