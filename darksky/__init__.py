@@ -246,7 +246,7 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def index(self):
+    def index(self, reload=None):
         """
         Build index.html for cherrypy
 
