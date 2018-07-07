@@ -26,7 +26,8 @@ import logging
 import requests
 import datetime
 import json
-from lib.model.smartplugin import SmartPlugin
+from lib.module import Modules
+from lib.model.smartplugin import *
 
 
 class DarkSky(SmartPlugin):
@@ -52,9 +53,13 @@ class DarkSky(SmartPlugin):
             self._lon = self.get_sh()._lon
         self._lang = self.get_parameter_value('lang')
         self._units = self.get_parameter_value('units')
+        self._jsonData = {}
         self._session = requests.Session()
         self._cycle = int(self.get_parameter_value('cycle'))
         self._items = {}
+
+        if not self.init_webinterface():
+            self._init_complete = False
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
@@ -78,7 +83,7 @@ class DarkSky(SmartPlugin):
         Updates information on diverse items
         """
         forecast = self.get_forecast()
-
+        self._jsonData = forecast
         for s, item in self._items.items():
             sp = s.split('/')
             wrk = forecast
@@ -164,6 +169,9 @@ class DarkSky(SmartPlugin):
     def get_items(self):
         return self._items
 
+    def get_json_data(self):
+        return self._jsonData
+
     def _build_url(self, url_type='forecast'):
         """
         Builds a request url
@@ -180,3 +188,75 @@ class DarkSky(SmartPlugin):
         else:
             self.logger.error('_build_url: Wrong url type specified: %s' %url_type)
         return url
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+
+    @cherrypy.expose
+    def index(self):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        from pprint import pformat
+
+        tmpl = self.tplenv.get_template('index.html')
+        pf = pformat(self.plugin.get_json_data())
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
+                           plugin_info=self.plugin.get_info(), p=self.plugin, json_data=pf.replace('\n','<br>').replace(' ','&nbsp;'),)
