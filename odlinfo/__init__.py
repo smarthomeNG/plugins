@@ -39,6 +39,7 @@ from lib.model.smartplugin import SmartPlugin
 from requests.auth import HTTPBasicAuth
 
 class ODLInfo(SmartPlugin):
+    PLUGIN_VERSION = "1.4.1"
     _base_url = 'https://odlinfo.bfs.de/daten/json/stamm.json'
 
     def __init__(self, sh, *args, **kwargs):

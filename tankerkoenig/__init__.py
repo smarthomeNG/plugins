@@ -29,6 +29,7 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class TankerKoenig(SmartPlugin):
+    PLUGIN_VERSION = "1.4.1"
     _base_url = 'https://creativecommons.tankerkoenig.de/json/'
     _detail_url_suffix = 'detail.php'
     _prices_url_suffix = 'prices.php'
