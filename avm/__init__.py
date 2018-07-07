@@ -476,9 +476,6 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.4"
-
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
         <?xml version="1.0" encoding="utf-8"?>
