@@ -167,7 +167,7 @@ function getDetailInfo(result) {
 
         $('#tree_detail').html(temp);
 
-        $("#item_value" ).change(function() {
+        $("#item_value" ).on('blur change', function() {
             if (element.type == 'num') {
                 if (isNaN($("#item_value" ).val())) {
                     alert("{{ _('Die eingegebenen Daten sind kein numerischer Wert') }} !");
