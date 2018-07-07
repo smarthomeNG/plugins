@@ -27,6 +27,7 @@ import requests
 import json
 from lib.model.smartplugin import SmartPlugin
 
+
 class TankerKoenig(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.1.1"
@@ -35,15 +36,14 @@ class TankerKoenig(SmartPlugin):
     _prices_url_suffix = 'prices.php'
     _list_url_suffix = 'list.php'
 
-    def __init__(self, smarthome, apikey):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
         @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
         api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
         self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
-        self._apikey = apikey
+        self._apikey = self.get_parameter_value('apikey')
         self._session = requests.Session()
 
     def run(self):
@@ -65,14 +65,17 @@ class TankerKoenig(SmartPlugin):
         """
         result_stations = []
         try:
-            response = self._session.get(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
+            response = self._session.get(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (
+            self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
         except Exception as e:
             self.logger.error(
                 "Exception when sending GET request for get_petrol_stations: %s" % str(e))
             return
-        self.logger.debug(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
+        self.logger.debug(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (
+        self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
         json_obj = response.json()
-        keys = ['place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode']
+        keys = ['place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen',
+                'postCode']
         if json_obj.get('stations', None) is None:
             self.logger.warning("Tankerkönig didn't return any station")
         else:
@@ -91,13 +94,15 @@ class TankerKoenig(SmartPlugin):
         @param id: Internal ID of petrol station to retrieve information for
         """
         try:
-            response = self._session.get(self._build_url("%s?id=%s&apikey=%s" % (self._detail_url_suffix, id, self._apikey)))
+            response = self._session.get(
+                self._build_url("%s?id=%s&apikey=%s" % (self._detail_url_suffix, id, self._apikey)))
         except Exception as e:
             self.logger.error(
                 "Exception when sending GET request for get_petrol_station_detail: %s" % str(e))
             return
         json_obj = response.json()
-        keys = ['e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen']
+        keys = ['e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name',
+                'lat', 'isOpen']
         result_station = {}
         try:
             i = json_obj['station']
