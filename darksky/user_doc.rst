@@ -1,9 +1,9 @@
 .. index:: Plugins; DarkSky (darksky.net / forecast.io Wetterdaten)
 .. index:: DarkSky
-.. index:: Wetter
+.. index:: Wetter; darksky
 
-Darksky
-############
+darksky
+#######
 
 Konfiguration
 =============
