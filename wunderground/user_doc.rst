@@ -1,6 +1,6 @@
 .. index:: Plugins; Wunderground (Wunderground Wetterdaten)
 .. index:: Wunderground
-.. index:: Wetter, wunderground
+.. index:: Wetter; wunderground
 
 wunderground
 ############
