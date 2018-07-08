@@ -4,14 +4,14 @@ Providing a room temperature regulator
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
 ```
-[rtr]
-    class_name = RTR
-    class_path = plugins.rtr
-#    default_Kp = # Proportional gain
-#    default_Ki = # Integral gain
+rtr:
+    class_name: RTR
+    class_path: plugins.rtr
+    # default_Kp: 5 # Proportional gain
+    # default_Ki: 240 # Integral gain
 ```
 
 Description of the attributes:
@@ -19,7 +19,7 @@ Description of the attributes:
 * __default_Kp__: change default value for Kp (optional, default: 5)
 * __default_Ki__: change default value for Ki (optional, default: 240)
 
-### items.conf
+### items.yaml
 
 Three items need to be assigned ``rtr_current``, ``rtr_setpoint`` and ``rtr_actuator``. The attributes each are assigned an integer index.
 The same index shows that the items belong to the same rtr.
@@ -41,39 +41,7 @@ This attribute marks the item as a receiving one for the value to be sent to the
 
 #### Example
 
-The following shows an example for a working 
-
-```
-# items/gf.conf
-[gf]
-    [[floor]]
-        [[[temp]]]
-            name = Temp
-            type = num
-            knx_dpt = 9
-            knx_send = 4/2/120
-            knx_reply = 4/2/120
-            ow_addr = 28.52734A030000
-            ow_sensor = T
-            rtr_current = 1
-
-            [[[[set]]]]
-                type = num
-                visu = yes
-                cache = On
-                knx_dpt = 9
-                knx_send = 4/3/120
-                knx_listen = 4/3/120
-                rtr_setpoint = 1
-
-            [[[[state]]]]
-                type = num
-                visu = yes
-                knx_dpt = 9
-                knx_send = 4/1/120
-                knx_listen = 4/1/120
-                rtr_actuator = 1
-```
+The following shows an example for a working
 
 ```yaml
 gf:

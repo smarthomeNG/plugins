@@ -47,13 +47,20 @@ from .utils import *
 
 class BackendSysteminfo:
 
+
+    def __init__(self):
+
+        self.logger.info("BackendSysteminfo __init__ {}".format(''))        
+
+
     # -----------------------------------------------------------------------------------
     #    SYSTEMINFO
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
     def system_html(self):
-        now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
+#        now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
+        now = self.plugin.shtime.now().strftime('%d.%m.%Y %H:%M')
         system = platform.system()
         vers = platform.version()
         # node = platform.node()
@@ -102,25 +109,24 @@ class BackendSysteminfo:
                                     ip=ip, ipv6=ipv6)
 
 
-    def get_process_info(self, command):
-        """
-        returns output from executing a given command via the shell.
-        """
-        self.find_visu_plugin()
-        ## get subprocess module
-        import subprocess
-
-        ## call date command ##
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-
-        # Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
-        # Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.
-        # Wait for process to terminate. The optional input argument should be a string to be sent to the child process, or None, if no data should be sent to the child.
-        (result, err) = p.communicate()
-
-        ## Wait for date to terminate. Get return returncode ##
-        p_status = p.wait()
-        return str(result, encoding='utf-8', errors='strict')
+#    def get_process_info(self, command):
+#        """
+#        returns output from executing a given command via the shell.
+#        """
+#        ## get subprocess module
+#        import subprocess
+#
+#        ## call date command ##
+#        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+#
+#        # Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
+#        # Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.
+#        # Wait for process to terminate. The optional input argument should be a string to be sent to the child process, or None, if no data should be sent to the child.
+#        (result, err) = p.communicate()
+#
+#        ## Wait for date to terminate. Get return returncode ##
+#        p_status = p.wait()
+#        return str(result, encoding='utf-8', errors='strict')
 
 
     # -----------------------------------------------------------------------------------
@@ -169,7 +175,8 @@ class BackendSysteminfo:
                 import socket
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(self.pypi_timeout)
-                sock.connect(('pypi.python.org', 443))
+#                sock.connect(('pypi.python.org', 443))
+                sock.connect(('pypi.org', 443))
                 sock.close()
             except:
                 pypi_available = False
@@ -177,8 +184,11 @@ class BackendSysteminfo:
 
         import pip
         import xmlrpc
-        installed_packages = pip.get_installed_distributions()
-        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+        import pkg_resources
+        installed_packages = pkg_resources.working_set
+        #installed_packages = pip.get_installed_distributions()
+        #pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+        pypi = xmlrpc.client.ServerProxy('https://pypi.org/pypi')
 
         req_dict = self.get_requirements_info('base')
         req_test_dict = self.get_requirements_info('test')
@@ -210,7 +220,7 @@ class BackendSysteminfo:
             if pypi_available:
                 try:
                     available = pypi.package_releases(dist.project_name)
-                    self.logger.info("pypi_json: pypi package: project_name {}, availabe = {}".format(dist.project_name, available))
+                    self.logger.debug("pypi_json: pypi package: project_name {}, availabe = {}".format(dist.project_name, available))
                     try:
                         package['pypi_version'] = available[0]
                     except:
@@ -220,7 +230,8 @@ class BackendSysteminfo:
                     package['pypi_version_not_available_msg'] = [translate('Keine Antwort von PyPI')]
             else:
                 package['pypi_version_not_available_msg'] = pypi_unavailable_message
-            package['pypi_doc_url'] = 'https://pypi.python.org/pypi/' + dist.project_name
+#            package['pypi_doc_url'] = 'https://pypi.python.org/pypi/' + dist.project_name
+            package['pypi_doc_url'] = 'https://pypi.org/pypi/' + dist.project_name
 
             if package['name'].startswith('url'):
                 self.logger.info("pypi_json: urllib: package['name'] = >{}<, req_dict.get(package['name'] = >{}<".format(package['name'], req_dict.get(package['name'])))
@@ -278,7 +289,6 @@ class BackendSysteminfo:
             
             # check if installed verison is ok
             if package['is_required'] or package['is_required_for_testsuite'] or package['is_required_for_docbuild']:
-                self.logger.info("required package {}:".format(package['name']))
                 package['vers_ok'] = True
                 if self.compare_versions(package['vers_req_min'], package['vers_installed'], '>'):
                     package['vers_ok'] = False
@@ -561,7 +571,7 @@ class BackendSysteminfo:
         req_result = []
         for req in req_templist:
             req_result.append( self.req_split_source(req, package) )
-        self.logger.info("check_requirement: package {}, len(req_result)={}, req_result = '{}'".format(package, len(req_result), req_result))
+        self.logger.debug("check_requirement: package {}, len(req_result)={}, req_result = '{}'".format(package, len(req_result), req_result))
 
         # Check if requirements from all sources are the same
         if len(req_result) > 1:
@@ -598,7 +608,7 @@ class BackendSysteminfo:
 #                req_max = ?
         
         
-        self.logger.info("check_requirement: package {} ({}), req_result = '{}'".format(package, len(req_result), req_result))
+        self.logger.debug("check_requirement: package {} ({}), req_result = '{}'".format(package, len(req_result), req_result))
         if req_min != '' or req_max != '':
             req_txt = ''
 
@@ -609,7 +619,6 @@ class BackendSysteminfo:
         """
         returns a list with the installed python packages and its versions
         """
-        self.find_visu_plugin()
 
         # check if pypi service is reachable
         if self.pypi_timeout <= 0:
@@ -621,7 +630,8 @@ class BackendSysteminfo:
                 import socket
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(self.pypi_timeout)
-                sock.connect(('pypi.python.org', 443))
+#                sock.connect(('pypi.python.org', 443))
+                sock.connect(('pypi.org', 443))
                 sock.close()
             except:
                 pypi_available = False
@@ -630,7 +640,8 @@ class BackendSysteminfo:
         import pip
         import xmlrpc
         installed_packages = pip.get_installed_distributions()
-        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+#        pypi = xmlrpc.client.ServerProxy('https://pypi.python.org/pypi')
+        pypi = xmlrpc.client.ServerProxy('https://pypi.org/pypi')
         packages = []
         for dist in installed_packages:
             package = {}

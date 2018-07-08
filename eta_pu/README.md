@@ -7,17 +7,8 @@
 * ETA Pellet Unit PU (http://www.eta.at) with remote access enabled (there are 3 modes available: none, readonly, read/write)
 
 ## Configuration
-### plugin.conf (deprecated) / plugin.yaml
 
-```
-[eta_pu]
-    class_name = ETA_PU
-    class_path = plugins.eta_pu
-    address = 192.168.179.15
-    port = 8080
-    setpath = '/user/vars'
-    setname = 'smarthome'
-```
+### plugin.yaml
 
 ```yaml
 eta_pu:
@@ -36,7 +27,7 @@ Description of the attributes:
 * __setpath__: path to the presaved sets of CAN-bus-uri
 * __setname__: the name of the set, used by this plugin
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 The ETA pellet unit organises the data with so calles "uri" (unified ressource identifier). Every uri is readable, some are also writable.
 Every uri represents a CAN-bus-id of all internal parts of the pellet unit.
@@ -69,39 +60,8 @@ There is a second item type available for reading error messages from the pellet
 
 The __visu__ elements are optional.
 
-```
-# items/eta_pu.conf (deprecated)
-[eta_unit]
-    [[boiler]]
-        [[[emission_temperature]]]
-            eta_pu_uri = 112/10021/0/0/12162
-            type = str
-            [[[[Value]]]]
-                eta_pu_type = calc
-                type = num
-            [[[[unit]]]]
-                eta_pu_type = unit
-                type = str
-    [[warmwater]]
-        [[[state]]]
-        eta_pu_uri = 112/10111/0/0/12129
-            [[[[text]]]]
-                visu_acl = ro
-                type = str
-                eta_pu_type = strValue
-        [[[extra_loading_button]]]
-        eta_pu_uri = 112/10111/0/0/12134
-            [[[[number]]]]
-                visu_acl = rw
-                type = num
-                eta_pu_type = calc
-    [[error]]
-        eta_pu_error = yes
-        type = str
-```
 
 ```yaml
-# items/eta_pu.yaml
 eta_unit:
 
     boiler:
@@ -141,8 +101,6 @@ eta_unit:
         type: str
 ```
 
-### logic.conf
+### logic.yaml
 
 No special logic functions available in the moment
-
-

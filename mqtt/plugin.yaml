@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: protocol                 # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Implementierung eines MQTT Clients. Umfassendere Implementierung des MQTT Protokolls'
-        en: 'Implementation of a MQTT client. Feature enriched implementation of the MQTT protocol'
+        de: 'Implementierung eines MQTT Clients. Umfassendere Implementierung des MQTT Protokolls v3.1.1'
+        en: 'Implementation of a MQTT client. Feature enriched implementation of the MQTT protocol v3.1.1'
     description_long:                  # Alternative: description in multiple languages
         de: 'Dieses Plugin implementiert die Funktionalität, damit SmartHomeNG als ein MQTT 
              Client agieren kann.\n
@@ -53,8 +53,8 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin
 
-    version: 1.4.4                # Plugin version
-    sh_minversion: 1.3c            # minimum shNG version to use this plugin
+    version: 1.4.6                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     classname: Mqtt                # class containing the plugin
@@ -238,6 +238,7 @@ parameters:
     password:
         type: str
         default: ''
+        hide: True
         description:
             de: 'Passwort für das Broker Login'
             en: 'Password for login to the broker'
@@ -261,6 +262,14 @@ parameters:
                  \n
                 '        
         
+    broker_monitoring:
+        type: bool
+        default: False
+        description:
+            de: 'Ermöglicht das Monitoring einiger Broker Werte durch das Web Interfase.'
+            en: 'Enables monitoring some broker data through the web interface.'
+
+
 #    tls:    # Not yet implemented
 #        type: bool
 #        default: False
@@ -410,4 +419,3 @@ item_attributes:
                 '        
             en: 'When set to True, the MQTT message is sent with the retain flag set.\n
                 '        
-        

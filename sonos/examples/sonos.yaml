@@ -279,10 +279,12 @@ MySonos:
 
       tts_language:
         type: str
+        value: de
         sonos_attrib: tts_language
 
       tts_volume:
         type: num
+        value: -1
         sonos_attrib: tts_volume
 
       tts_fade_in:

@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=not-context-manager
+
+# NOTE: The pylint not-content-manager warning is disabled pending the fix of
+# a bug in pylint: https://github.com/PyCQA/pylint/issues/782
 
 """Classes to handle Sonos UPnP Events and Subscriptions."""
 
@@ -18,13 +22,14 @@ from .compat import (
     Queue, BaseHTTPRequestHandler, URLError, socketserver, urlopen
 )
 from .data_structures_entry import from_didl_string
-from .exceptions import SoCoException
+from .exceptions import SoCoException, SoCoFault, EventParseException
 from .utils import camel_to_underscore
 from .xml import XML
 
 log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 
+# pylint: disable=too-many-branches
 def parse_event_xml(xml_event):
     """Parse the body of a UPnP event.
 
@@ -42,6 +47,7 @@ def parse_event_xml(xml_event):
               :code:`{'Volume': {'LF': '100', 'RF': '100', 'Master': '36'}}`)
             * an instance of a `DidlObject` subclass (eg if it represents
               track metadata).
+            * a `SoCoFault` (if a variable contains illegal metadata)
 
     Example:
 
@@ -87,7 +93,7 @@ def parse_event_xml(xml_event):
     # uses this namespace
     properties = tree.findall(
         '{urn:schemas-upnp-org:event-1-0}property')
-    for prop in properties:
+    for prop in properties:  # pylint: disable=too-many-nested-blocks
         for variable in prop:
             # Special handling for a LastChange event specially. For details on
             # LastChange events, see
@@ -99,13 +105,17 @@ def parse_event_xml(xml_event):
                 # We assume there is only one InstanceID tag. This is true for
                 # Sonos, as far as we know.
                 # InstanceID can be in one of two namespaces, depending on
-                # whether we are looking at an avTransport event or a
-                # renderingControl event, so we need to look for both
+                # whether we are looking at an avTransport event, a
+                # renderingControl event, or a Queue event
+                # (there, it is named QueueID)
                 instance = last_change_tree.find(
                     "{urn:schemas-upnp-org:metadata-1-0/AVT/}InstanceID")
                 if instance is None:
                     instance = last_change_tree.find(
                         "{urn:schemas-upnp-org:metadata-1-0/RCS/}InstanceID")
+                if instance is None:
+                    instance = last_change_tree.find(
+                        "{urn:schemas-sonos-com:metadata-1-0/Queue/}QueueID")
                 # Look at each variable within the LastChange event
                 for last_change_var in instance:
                     tag = last_change_var.tag
@@ -127,7 +137,20 @@ def parse_event_xml(xml_event):
                     # If DIDL metadata is returned, convert it to a music
                     # library data structure
                     if value.startswith('<DIDL-Lite'):
-                        value = from_didl_string(value)[0]
+                        # Wrap any parsing exception in a SoCoFault, so the
+                        # user can handle it
+                        try:
+                            value = from_didl_string(value)[0]
+                        except SoCoException as original_exception:
+                            log.warning("Event contains illegal metadata"
+                                        "for '%s'.\n"
+                                        "Error message: '%s'\n"
+                                        "The result will be a SoCoFault.",
+                                        tag, str(original_exception))
+                            event_parse_exception = EventParseException(
+                                tag, value, original_exception
+                            )
+                            value = SoCoFault(event_parse_exception)
                     channel = last_change_var.get('channel')
                     if channel is not None:
                         if result.get(tag) is None:
@@ -154,7 +177,8 @@ class Event(object):
             `time.time` function).
         service (str): the service which is subscribed to the event.
         variables (dict, optional): contains the ``{names: values}`` of the
-            evented variables. Defaults to `None`.
+            evented variables. Defaults to `None`. The values may be
+            `SoCoFault` objects if the metadata could not be parsed.
 
     Raises:
         AttributeError:  Not all attributes are returned with each event. An
@@ -217,11 +241,12 @@ class EventNotifyHandler(BaseHTTPRequestHandler):
         sid = headers['sid']  # Event Subscription Identifier
         content_length = int(headers['content-length'])
         content = self.rfile.read(content_length)
-        # find the relevant service from the sid
-        with _sid_to_service_lock:
-            service = _sid_to_service.get(sid)
+        # Find the relevant service and queue from the sid
+        with _subscriptions_lock:
+            subscription = _subscriptions.get(sid)
         # It might have been removed by another thread
-        if service:
+        if subscription:
+            service = subscription.service
             log.info(
                 "Event %s received for %s service on thread %s at %s", seq,
                 service.service_id, threading.current_thread(), timestamp)
@@ -233,18 +258,14 @@ class EventNotifyHandler(BaseHTTPRequestHandler):
             # cache.
             # pylint: disable=protected-access
             service._update_cache_on_event(event)
-            # Find the right queue, and put the event on it
-            with _sid_to_event_queue_lock:
-                try:
-                    _sid_to_event_queue[sid].put(event)
-                except KeyError:  # The key have been deleted in another thread
-                    pass
+            # Put the event on the queue
+            subscription.events.put(event)
         else:
             log.info("No service registered for %s", sid)
         self.send_response(200)
         self.end_headers()
 
-    def log_message(self, fmt, *args):
+    def log_message(self, fmt, *args):  # pylint: disable=arguments-differ
         # Divert standard webserver logging to the debug log
         log.debug(fmt, *args)
 
@@ -452,36 +473,36 @@ class Subscription(object):
         # pylint: disable=unbalanced-tuple-unpacking
         ip_address, port = event_listener.address
         headers = {
-            'Callback': '<http://{0}:{1}>'.format(ip_address, port),
+            'Callback': '<http://{}:{}>'.format(ip_address, port),
             'NT': 'upnp:event'
         }
         if requested_timeout is not None:
-            headers["TIMEOUT"] = "Second-{0}".format(requested_timeout)
-        response = requests.request(
-            'SUBSCRIBE', service.base_url + service.event_subscription_url,
-            headers=headers)
-        response.raise_for_status()
-        self.sid = response.headers['sid']
-        timeout = response.headers['timeout']
-        # According to the spec, timeout can be "infinite" or "second-123"
-        # where 123 is a number of seconds.  Sonos uses "Second-123" (with a
-        # capital letter)
-        if timeout.lower() == 'infinite':
-            self.timeout = None
-        else:
-            self.timeout = int(timeout.lstrip('Second-'))
-        self._timestamp = time.time()
-        self.is_subscribed = True
-        log.info(
-            "Subscribed to %s, sid: %s",
-            service.base_url + service.event_subscription_url, self.sid)
-        # Add the queue to the master dict of queues so it can be looked up
-        # by sid
-        with _sid_to_event_queue_lock:
-            _sid_to_event_queue[self.sid] = self.events
-        # And do the same for the sid to service mapping
-        with _sid_to_service_lock:
-            _sid_to_service[self.sid] = self.service
+            headers["TIMEOUT"] = "Second-{}".format(requested_timeout)
+
+        # Lock out EventNotifyHandler during registration
+        with _subscriptions_lock:
+            response = requests.request(
+                'SUBSCRIBE', service.base_url + service.event_subscription_url,
+                headers=headers)
+            response.raise_for_status()
+            self.sid = response.headers['sid']
+            timeout = response.headers['timeout']
+            # According to the spec, timeout can be "infinite" or "second-123"
+            # where 123 is a number of seconds.  Sonos uses "Second-123" (with
+            # a capital letter)
+            if timeout.lower() == 'infinite':
+                self.timeout = None
+            else:
+                self.timeout = int(timeout.lstrip('Second-'))
+            self._timestamp = time.time()
+            self.is_subscribed = True
+            log.info(
+                "Subscribed to %s, sid: %s",
+                service.base_url + service.event_subscription_url, self.sid)
+            # Add the subscription to the master dict so it can be looked up
+            # by sid
+            _subscriptions[self.sid] = self
+
         # Register this subscription to be unsubscribed at exit if still alive
         # This will not happen if exit is abnormal (eg in response to a
         # signal or fatal interpreter error - see the docs for `atexit`).
@@ -530,17 +551,12 @@ class Subscription(object):
         if requested_timeout is None:
             requested_timeout = self.requested_timeout
         if requested_timeout is not None:
-            headers["TIMEOUT"] = "Second-{0}".format(requested_timeout)
-
-        try:
-            response = requests.request(
-                'SUBSCRIBE',
-                self.service.base_url + self.service.event_subscription_url,
-                headers=headers, timeout=1)
-        except:
-            log.warning("Could not subscribe event: {sid}".format(sid=self.sid))
-            return
-
+            headers["TIMEOUT"] = "Second-{}".format(requested_timeout)
+        response = requests.request(
+            'SUBSCRIBE',
+            self.service.base_url + self.service.event_subscription_url,
+            headers=headers)
+        response.raise_for_status()
         timeout = response.headers['timeout']
         # According to the spec, timeout can be "infinite" or "second-123"
         # where 123 is a number of seconds.  Sonos uses "Second-123" (with a
@@ -575,15 +591,11 @@ class Subscription(object):
         headers = {
             'SID': self.sid
         }
-        try:
-            response = requests.request(
-                'UNSUBSCRIBE',
-                self.service.base_url + self.service.event_subscription_url,
-                headers=headers, timeout=1)
-            response.raise_for_status()
-        except Exception:
-            log.debug("Could not unsubscribe. Speaker seems to be offline.")
-
+        response = requests.request(
+            'UNSUBSCRIBE',
+            self.service.base_url + self.service.event_subscription_url,
+            headers=headers)
+        response.raise_for_status()
         self.is_subscribed = False
         self._timestamp = None
         log.info(
@@ -591,14 +603,10 @@ class Subscription(object):
             self.service.base_url + self.service.event_subscription_url,
             self.sid)
         # remove queue from event queues and sid to service mappings
-        with _sid_to_event_queue_lock:
+
+        with _subscriptions_lock:
             try:
-                del _sid_to_event_queue[self.sid]
-            except KeyError:
-                pass
-        with _sid_to_service_lock:
-            try:
-                del _sid_to_service[self.sid]
+                del _subscriptions[self.sid]
             except KeyError:
                 pass
         self._has_been_unsubscribed = True
@@ -617,19 +625,24 @@ class Subscription(object):
             time_left = self.timeout - (time.time() - self._timestamp)
             return time_left if time_left > 0 else 0
 
+    def __enter__(self):
+        if not self.is_subscribed:
+            self.subscribe()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.unsubscribe()
+
 
 # pylint: disable=C0103
 event_listener = EventListener()
 
-# Thread safe mappings.
-# Used to store a mapping of sids to event queues
-_sid_to_event_queue = weakref.WeakValueDictionary()
-# Used to store a mapping of sids to service instances
-_sid_to_service = weakref.WeakValueDictionary()
+# Thread safe mapping.
+# Used to store a mapping of sid to subscription.
+_subscriptions = weakref.WeakValueDictionary()
 
-# The locks to go with them
+# The lock to go with it
 # You must only ever access the mapping in the context of this lock, eg:
-#   with _sid_to_event_queue_lock:
-#       queue = _sid_to_event_queue[sid]
-_sid_to_event_queue_lock = threading.Lock()
-_sid_to_service_lock = threading.Lock()
+#   with _subscriptions_lock:
+#       queue = _subscriptions[sid].events
+_subscriptions_lock = threading.Lock()

@@ -4,22 +4,111 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Ansteuerung von AVM FRITZ!Boxen, WLAN-Repeatern, DECT Steckdosen, etc.'
-        en: ''
+        en: 'Get and send data from/to AVM devices such as the FRITZ!Box, Wifi Repeaters or DECT sockets.'
     maintainer: psilo909
     tester: Sandman60, cmalo
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins_doc/config/avm.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 1.4.3                 # Plugin version
-    sh_minversion: 1.3c             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.5.4                 # Plugin version
+    sh_minversion: 1.4c            # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     classname: AVM                 # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+    username:
+        type: str
+        default: ''
+        description:
+            de: '(optional) Nutzername für den Login. Kann für manche Features benötigt werden!'
+            en: '(optional) Login information (user). Can be needed to use some features of the AVM device.'
+    password:
+        type: str
+        default: ''
+        hide: True
+        description:
+            de: '(optional) Passwort für den Login. Wird in der Regel immer benötigt und aus Sicherheitsgründen empfohlen.'
+            en: '(optional) Password for login. Is normally always needed and recommended due to security reasons'
+    host:
+        type: str
+        default: 'fritz.box'
+        description:
+            de: '(optional) Hostname oder IP-Adresse des FritzDevice.'
+            en: '(optional) Hostname or ip address of the FritzDevice.'
+    port:
+        type: int
+        default: 49433
+        description:
+            de: '(optional) Port des FritzDevice, normalerweise 49433 für https oder 49000 für http'
+            en: '(optional) Port of the FritzDevice, typically 49433 for https or 49000 for http'
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
+    ssl:
+        type: bool
+        default: True
+        description:
+            de: '(optional) Mit True wird das FritzDevice via https, mit False via http angesprochen.'
+            en: '(optional) True will add "https", False "http" to the URLs in the plugin.'
+    verify:
+        type: bool
+        default: False
+        description:
+            de: '(optional) Schaltet die Zertifikate-Prüfung an oder aus. Normalerweise False.'
+            en: '(optional) Turns certificate verification on or off. Typically False'
+    call_monitor:
+        type: bool
+        default: False
+        description:
+            de: '(optional) Aktiviert oder deaktiviert den MonitoringService, welcher auf den Call Monitor des FritzDevice verbindet. Der Call Monitor muss über ein verbundenes Telefon via #96*5* aktiviert sein.'
+            en: '(optional) Activates or deactivates the MonitoringService, which connects to the FritzDevice`s call monitor. The call monitor has to be activated before by a connected telephone via calling #96*5*'
+    call_monitor_incoming_filter:
+        type: str
+        default: ''
+        description:
+            de: '(optional) Spezielle Rufnummern ausfiltern, die vom Callmonitor ignoriert werden sollen.'
+            en: '(optional) Filter only specific numbers to be watched by call monitor'
+    instance:
+        type: str
+        default: ''
+        description:
+            de: '(optional) Eindeutiger Identifier für die Instanz des Plugins, also für jedes FritzDevice. Kann bei nur einem Gerät / Single Instance Betrieb des Plugins entfallen.'
+            en: '(optional) Unique identifier for each FritzDevice / each instance of the plugin. Can be skipped if only one device is used / the plugin is operated single instance.'
     
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    avm_data_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'AVM Datentyp des jeweiligen Items.'
+            en: 'AVM Data Type of the respective item.'
+    avm_incoming_allowed:
+        type: str
+        description:
+            de: '(optional) Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.'
+            en: '(optional) Definition of the allowed incoming number. Only in items of avm_data_type `monitor_trigger`.'
+    avm_target_number:
+        type: str
+        description:
+            de: '(optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
+            en: '(optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.'
+    mac:
+        type: str
+        mandatory: True
+        description:
+            de: 'Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
+            en: 'Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!'
+    ain:
+        type: str
+        mandatory: True
+        description:
+            de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
+            en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
+

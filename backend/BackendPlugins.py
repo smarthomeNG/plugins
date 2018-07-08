@@ -25,6 +25,7 @@
 import cherrypy
 
 import lib.config
+from lib.plugin import Plugins
 from lib.model.smartplugin import SmartPlugin
 
 from .utils import *
@@ -33,45 +34,87 @@ from .utils import *
 
 class BackendPlugins:
 
+    plugins = None
+
+    def __init__(self):
+
+        self.plugins = Plugins.get_instance()
+        self.logger.info("BackendPlugins __init__ self.plugins = {}".format(str(self.plugins)))
+        
+        
 
     # -----------------------------------------------------------------------------------
     #    PLUGINS
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def plugins_html(self):
+    def plugins_html(self, configname=None, shortname=None, instancename=None, enable=None, disable=None, unload=None):
         """
         display a list of all known plugins
         """
+        # process actions triggerd by buttons on the web page
+        if enable is not None:
+            myplg = self.plugins.return_plugin(configname)
+            myplg2 = self.plugins.get_pluginthread(configname)
+            myplg.run()
+            self.logger.warning("disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg, myplg.alive, myplg2))
+        elif disable is not None:
+            myplg = self.plugins.return_plugin(configname)
+            myplg2 = self.plugins.get_pluginthread(configname)
+            myplg.stop()
+            self.logger.warning("disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg, myplg.alive, myplg2))
+        elif unload is not None:
+            result = self.plugins.unload_plugin(configname)
+
+        # get data for display of page
         conf_plugins = {}
-        _conf = lib.config.parse(self._sh._plugin_conf)
+        _conf = lib.config.parse(self.plugins._get_plugin_conf_filename())
+
         for plugin in _conf:
             conf_plugins[plugin] = {}
             conf_plugins[plugin] = _conf[plugin]
 
-        plugins = []
-        for x in self._sh._plugins:
+        plugin_list = []
+        for x in self.plugins.return_plugins():
             plugin = dict()
-            if bool(x._parameters):
-                plugin['attributes'] = x._parameters
-            else:
-                plugin['attributes'] = conf_plugins[x._config_section]
+            plugin['stopped'] = False
             plugin['metadata'] = x._metadata
             if isinstance(x, SmartPlugin):
+                if bool(x._parameters):
+                    plugin['attributes'] = x._parameters
+                else:
+                    plugin['attributes'] = conf_plugins.get(x.get_configname(), {})
                 plugin['smartplugin'] = True
                 plugin['instancename'] = x.get_instance_name()
+                plugin['instance'] = x
                 plugin['multiinstance'] = x.is_multi_instance_capable()
                 plugin['version'] = x.get_version()
+                plugin['configname'] = x.get_configname()
                 plugin['shortname'] = x.get_shortname()
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x.get_classname()
             else:
+                plugin['attributes'] = {}
                 plugin['smartplugin'] = False
+                plugin['instance'] = x
+                plugin['configname'] = x._configname
                 plugin['shortname'] = x._shortname
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
-            plugins.append(plugin)
-        plugins_sorted = sorted(plugins, key=lambda k: k['classpath'])
+                plugin['stopped'] = False
+                
+            try:
+                plugin['stopped'] = not x.alive
+                plugin['stoppable'] = True
+            except:
+                plugin['stopped'] = False
+                plugin['stoppable'] = False
+            if plugin['shortname'] == 'backend':
+                plugin['stoppable'] = False
+            
+            
+            plugin_list.append(plugin)
+        plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])
 
         return self.render_template('plugins.html', plugins=plugins_sorted, lang=get_translation_lang(), mod_http=self._bs.mod_http)
 

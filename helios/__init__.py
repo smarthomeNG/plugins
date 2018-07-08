@@ -96,7 +96,7 @@ class HeliosException(Exception):
 
 class HeliosBase(SmartPlugin):
 
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.4.2"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, tty='/dev/ttyUSB0'):

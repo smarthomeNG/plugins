@@ -156,18 +156,18 @@ apt-get install ssh
 ```
 
 ## Configuration
-### plugin.conf
-Adding following lines to plugin.conf in smarthomeNG will enable the rcswitch plugin:
+### plugin.yaml
+Adding following lines to plugin.yaml in smarthomeNG will enable the rcswitch plugin:
 
-```
-[rc]
-    class_name = RCswitch
-    class_path = plugins.rcswitch
-    rcswitch_dir = {path of rc switch} # optional parameter. Default: /usr/local/bin/rcswitch-pi
-    rcswitch_sendDuration = {minimum time in s between sending commands} # optional parameter. Default: 0.5
-    rcswitch_host = {ip}# optional parameter. Default: empty
-    rcswitch_user = {user at remote host}#  optional parameter. Default: empty
-    rcswitch_password = {password for user at remote host}# optional parameter. Default: empty
+```yaml
+rc:
+    class_name: RCswitch
+    class_path: plugins.rcswitch
+    rcswitch_dir: {path of rc switch} # optional parameter. Default: /usr/local/bin/rcswitch-pi
+    rcswitch_sendDuration: {minimum time in s between sending commands} # optional parameter. Default: 0.5
+    rcswitch_host: {ip}# optional parameter. Default: empty
+    rcswitch_user: {user at remote host}#  optional parameter. Default: empty
+    rcswitch_password: {password for user at remote host}# optional parameter. Default: empty
 ```
 
 #### Attributes
@@ -178,23 +178,24 @@ Adding following lines to plugin.conf in smarthomeNG will enable the rcswitch pl
 * `rcswitch_password`: password for the user on the remote machine
 
 #### Example
-```
-[rc]
-    class_name = RCswitch
-    class_path = plugins.rcswitch
-    rcswitch_dir = /usr/local/bin/rcswitch-pi # optional
-    rcswitch_sendDuration = 0.5 # optional
-    rcswitch_host = 192.168.0.4 # optional
-    rcswitch_user = pi # optional
-    rcswitch_password = raspberry # optional
+
+```yaml
+rc:
+    class_name: RCswitch
+    class_path: plugins.rcswitch
+    rcswitch_dir: /usr/local/bin/rcswitch-pi    # optional
+    rcswitch_sendDuration: 0.5    # optional
+    rcswitch_host: 192.168.0.4    # optional
+    rcswitch_user: pi    # optional
+    rcswitch_password: raspberry    # optional
 ```
 
-### items.conf
+### items.yaml
 Just add following attributes to the items which shall be connected with rcswitch:
 
 ```
-rc_device = number of device [1-5]
-rc_code = code of device [00000 - 11111]
+rc_device: <number of device [1-5]>
+rc_code: <code of device [00000 - 11111]>
 ```
 
 #### Attributes
@@ -204,18 +205,22 @@ rc_code = code of device [00000 - 11111]
 
 #### Example:
 
-```
-[Basement]
-	[[LivingRoom]]
-		[[[RCpowerPlug]]]
-			[[[[TV]]]]
-				[[[[[switch]]]]]
-					type = bool
-					knx_dpt = 1
-					knx_listen = 14/0/10
-					knx_send = 14/0/13
-					rc_code = 11111
-					rc_device = 2
+```yaml
+Basement:
+
+    LivingRoom:
+
+        RCpowerPlug:
+
+            TV:
+
+                switch:
+                    type: bool
+                    knx_dpt: 1
+                    knx_listen: 14/0/10
+                    knx_send: 14/0/13
+                    rc_code: 11111
+                    rc_device: 2
 ```
 
 ----------------------------
@@ -225,7 +230,7 @@ If the switch does not work, but you are sure that the installation was done pro
 
 If not, it is easy to do this.
 
-```
+```bash
 sudo usermod -aG gpio smarthome
 sudo reboot
 ```
@@ -245,4 +250,4 @@ sudo reboot
 * add import os at the init
 ----------------------------
 ## Further information
-For discussion see https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen 
+For discussion see https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen

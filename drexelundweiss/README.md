@@ -36,36 +36,24 @@ The plugin detects the connected device type automatically:
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
+### plugin.yaml
 
-```
-[DuW]
-   class_name = DuW
-   class_path = plugins.drexelundweiss
-   tty = /dev/ttyUSB0
-#   Busmonitor = 1
-#   LU_ID = 130
-#   WP_ID = 140
-#   device = 14 # x2 plus as standard device
-#   retrylimit = 100 # number of retries to get answer right
-```
-
-```
+```yaml
 DuW:
     class_name: DuW
     class_path: plugins.drexelundweiss
     tty: /dev/ttyUSB0
-    # Busmonitor = 1
-    # LU_ID = 130
-    # WP_ID = 140
-    # device = 14 # x2 plus as standard device
-    # retrylimit = 100 # number of retries to get answer right
+    # Busmonitor: 1
+    # LU_ID: 130
+    # WP_ID: 140
+    # device: 14 # x2 plus as standard device
+    # retrylimit: 100 # number of retries to get answer right
 ```
 
 You have to adapt the tty to your local environment and change LU_ID and WP_ID if not D&W default is used.
 Busmonitor mode will output all activity on Service Interface to smarthome.py log if started in debug mode, default is Busmonitor off.
 
-### items.conf
+### items.yaml
 
 #### DuW_LU_register / DuW_WP_register
 
@@ -76,19 +64,7 @@ Values are calculated automatically regarding the register depending divisor and
 
 #### Example
 
-```
-#.conf
-[KWL]
-    [[MODE]]
-        name = Betriebsart
-        visu_acl = rw
-        type = num
-        DuW_LU_register = 5002
-        sv_widget = {{ basic.slider('item', 'item', 0, 5, 1) }}
-```
-
-```
-# .yaml
+```yaml
 KWL:
 
     MODE:
@@ -99,8 +75,8 @@ KWL:
         sv_widget: "{{ basic.slider('item', 'item', 0, 5, 1) }}"
 ```
 
-Find a full conf file example in plugin folder
+A full .yaml file example can be found in plugin folder.
 
 ## Functions
 
-......
+None so far

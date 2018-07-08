@@ -44,10 +44,10 @@ class Pushbullet(SmartPlugin):
         self.logger = logging.getLogger(__name__)
 
     def run(self):
-        pass
+        self.alive = True
 
     def stop(self):
-        pass
+        self.alive = False
 
     def delete(self, pushid, apikey=None):
         if apikey is None:

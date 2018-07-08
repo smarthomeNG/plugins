@@ -3,24 +3,14 @@ $('#help').click(function(e) {
   resizeCodeMirror()
 });
 $('#linewrapping').click(function(e) {
-    switchLineWrapping()
+    switchLineWrapping(logicsCodeMirror)
 });
 $('#rulers').click(function(e) {
     switchRulers();
 });
 
-window.addEventListener("resize", resizeCodeMirror, false);
-
-function resizeCodeMirror() {
-    if (!logicsCodeMirror.getOption("fullScreen")) {
-        var browserHeight = $( window ).height();
-        offsetTop = $('.CodeMirror').offset().top;
-        logicsCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) - 15 + browserHeight)+ 'px';
-        logicsCodeMirror.refresh();
-    }
-}
-
-resizeCodeMirror();
+window.addEventListener("resize", function(){resizeCodeMirror(logicsCodeMirror, 15)}, false);
+resizeCodeMirror(logicsCodeMirror, 15);
 
 var dict = [];
 function getItemDictionary() {
@@ -61,15 +51,6 @@ CodeMirror.commands.autocomplete_item = function(cm) {
     CodeMirror.showHint(cm, CodeMirror.hint.itemsHint);
 };
 
-function switchLineWrapping() {
-	logicsCodeMirror.setOption('lineWrapping', !logicsCodeMirror.getOption('lineWrapping'));
-	if (logicsCodeMirror.getOption('lineWrapping')) {
-		$('#linewrapping').addClass('active');
-	} else {
-		$('#linewrapping').removeClass('active');
-	}
-};
-
 function switchRulers() {
 
 	if (logicsCodeMirror.getOption('rulers').length == 0) {
@@ -90,19 +71,19 @@ function checkChangedContent() {
 };
 
 function markChangedContent() {
-    $('#savereloadtrigger').removeClass('btn-success');
-    $('#savereload').removeClass('btn-success');
-    $('#save').removeClass('btn-success');
-    $('#savereloadtrigger').addClass('btn-danger');
-    $('#savereload').addClass('btn-danger');
-    $('#save').addClass('btn-danger');
+    $('#savereloadtrigger').removeClass('btn-shng-success');
+    $('#savereload').removeClass('btn-shng-success');
+    $('#save').removeClass('btn-shng-success');
+    $('#savereloadtrigger').addClass('btn-shng-danger');
+    $('#savereload').addClass('btn-shng-danger');
+    $('#save').addClass('btn-shng-danger');
 }
 
 function markIdenticalContent() {
-    $('#savereloadtrigger').removeClass('btn-danger');
-    $('#savereload').removeClass('btn-danger');
-    $('#save').removeClass('btn-danger');
-    $('#savereloadtrigger').addClass('btn-success');
-    $('#savereload').addClass('btn-success');
-    $('#save').addClass('btn-success');
+    $('#savereloadtrigger').removeClass('btn-shng-danger');
+    $('#savereload').removeClass('btn-shng-danger');
+    $('#save').removeClass('btn-shng-danger');
+    $('#savereloadtrigger').addClass('btn-shng-success');
+    $('#savereload').addClass('btn-shng-success');
+    $('#save').addClass('btn-shng-success');
 }

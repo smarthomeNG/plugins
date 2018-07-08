@@ -39,20 +39,18 @@ from lib.model.smartplugin import SmartPlugin
 from requests.auth import HTTPBasicAuth
 
 class ODLInfo(SmartPlugin):
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.4.1"
     _base_url = 'https://odlinfo.bfs.de/daten/json/stamm.json'
 
-    def __init__(self, smarthome, user, password):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
         @param user: For accessing the ODLINFO API you need a personal username
         @param password: For accessing the ODLINFO API you need a personal password
         """
         self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
-        self._user = user
-        self._password = password
+        self._user = self.get_parameter_value('user')
+        self._password = self.get_parameter_value('password')
         self._keys = ['ort', 'kenn', 'plz', 'status', 'kid', 'hoehe', 'lon', 'lat', 'mw']
         self._session = requests.Session()
 

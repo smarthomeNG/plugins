@@ -30,6 +30,12 @@ import html
 
 class BackendLogging:
 
+
+    def __init__(self):
+
+        self.logger.info("BackendLogging __init__ {}".format(''))        
+
+
     # -----------------------------------------------------------------------------------
     #    LOGGING
     # -----------------------------------------------------------------------------------
@@ -81,7 +87,7 @@ class BackendLogging:
                 l['filenames'].append(fn)
                 
             if l['handlers'] == ['NullHandler']:
-                self.logger.warning("logging_html: Filtered out logger {}: l['handlers'] = {}".format(l['name'], l['handlers']))
+                self.logger.debug("logging_html: Filtered out logger {}: l['handlers'] = {}".format(l['name'], l['handlers']))
             else:
                 loggers.append(l)
 

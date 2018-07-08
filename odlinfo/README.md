@@ -6,7 +6,7 @@ This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in µSv/h from several m
 For more information see https://odlinfo.bfs.de.
 
 ## Requirements
-This plugin requires lib requests. You can install this lib with: 
+This plugin requires lib requests. You can install this lib with:
 
 ```
 sudo pip3 install requests --upgrade
@@ -72,15 +72,7 @@ Dies führt dazu, dass einzelne Zeitreihen abrupt enden.
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[odlinfo]
-    class_name = ODLInfo
-    class_path = plugins.odlinfo
-    user = <your own user>
-    password = <your own password>
-```
+### plugin.yaml
 
 ```yaml
 odlinfo:
@@ -94,15 +86,9 @@ odlinfo:
   * `user`: Your own personal user for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html
   * `password`: Your own personal password for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 #### Example:
-
-```
-[outside]
-    [[radiation]]
-        type = num
-```
 
 ```yaml
 outside:

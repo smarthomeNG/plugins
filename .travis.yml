@@ -1,0 +1,16 @@
+sudo: false
+language: python
+python:
+    - "3.3"
+    - "3.4"
+    - "3.5"
+    - "3.6"
+
+env:
+    - REPOSITORY_ORIGIN=plugins
+
+install:
+    - pip install tox-travis "virtualenv<14.0.0"
+
+script:
+    - sh .travis.sh

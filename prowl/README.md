@@ -6,14 +6,14 @@ This plugin has no requirements or dependencies.
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
 ```
-[notify]
-    class_name = Prowl
-    class_path = plugins.prowl
-    apikey = asdf1234asdf1234 # secret global key for prowl
-    instance = Whatever # Instance name displayed in messages
+notify:
+    class_name: Prowl
+    class_path: plugins.prowl
+    apikey: asdf1234asdf1234 # secret global key for prowl
+    instance: Whatever # Instance name displayed in messages
 ```
 
 #### Attributes
@@ -21,7 +21,6 @@ This plugin has no requirements or dependencies.
    * `instance`: this attribute is optional. If set it will be displayed in prowl messages.
 
 ## Functions
-
 
 Because there is only one function you could access it directly by the object. With the above example it would look like this: ``sh.notify('Intrusion', 'Living room window broken!')``
 This function takes several arguments:

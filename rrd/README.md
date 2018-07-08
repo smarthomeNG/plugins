@@ -25,15 +25,7 @@ SQLite
 + accurate logging of changing times
 + more analysis functionality
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[rrd]
-    class_name = RRD
-    class_path = plugins.rrd
-    # step = 300
-    # rrd_dir = /usr/smarthome/var/rrd/
-```
+### plugin.yaml
 
 ```yaml
 rrd:
@@ -46,7 +38,7 @@ rrd:
 `step` sets the cycle time how often entries will be updated.
 `rrd_dir` specify the rrd storage location.
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 #### rrd
 To active rrd logging (for an item) simply set this attribute to yes.
@@ -62,24 +54,6 @@ Set this item attribute to log the maximum as well. Default is no.
 Set the type of data source. Default ist `gauge`.
   * `gauge` - should be used for things like temperatures.
   * `counter` - should be used for continuous incrementing counters like the Powermeter (kWh), watercounter (m³), pellets (kg).
-
-```
-[outside]
-    name = Outside
-    [[temperature]]
-        name = Temperatur
-        type = num
-        rrd = init
-        rrd_min = yes
-        rrd_max = yes
-
-[office]
-    name = Büro
-    [[temperature]]
-        name = Temperatur
-        type = num
-        rrd = yes
-```
 
 ```yaml
 outside:

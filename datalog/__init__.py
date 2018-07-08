@@ -29,7 +29,7 @@ from lib.model.smartplugin import SmartPlugin
 class DataLog(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.3.0'
+    PLUGIN_VERSION = '1.3.3'
 
     filepatterns = {}
     logpatterns = {}

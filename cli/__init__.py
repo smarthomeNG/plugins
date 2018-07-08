@@ -26,6 +26,7 @@ import threading
 
 import lib.connection
 from lib.logic import Logics
+from lib.item import Items
 from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
 
@@ -33,7 +34,7 @@ from lib.utils import Utils
 class CLIHandler(lib.connection.Stream):
     terminator = '\n'.encode()
 
-    def __init__(self, smarthome, sock, source, updates, hashed_password, commands):
+    def __init__(self, smarthome, sock, source, updates, hashed_password, commands, plugin):
         """
         Constructor
         :param smarthome: SmartHomeNG instance
@@ -58,6 +59,7 @@ class CLIHandler(lib.connection.Stream):
             self.__push_command_prompt()
         else:
             self.__push_password_prompt()
+        self.plugin = plugin
 
     def push(self, data):
         """
@@ -71,6 +73,8 @@ class CLIHandler(lib.connection.Stream):
         Received data and found terminator (newline) in data
         :param data: Received data up to terminator
         """
+        if not self.plugin.alive:
+            self.close()
         # Call process methods based on prompt type
         cmd = data.decode().strip()
         if self.__prompt_type == 'password':
@@ -178,7 +182,7 @@ class CLIHandler(lib.connection.Stream):
 
 class CLI(lib.connection.Server, SmartPlugin):
 
-    PLUGIN_VERSION = '1.4.0'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.4.2'     # is checked against version in plugin.yaml
 
     def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323, hashed_password=''):
         """
@@ -190,6 +194,8 @@ class CLI(lib.connection.Server, SmartPlugin):
         :param hashed_password: Hashed password that is required to logon
         """
         self.logger = logging.getLogger(__name__)
+
+        self.items = Items.get_instance()
 
         if hashed_password is None or hashed_password == '':
             self.logger.warning("CLI: You should set a password for this plugin.")
@@ -203,7 +209,7 @@ class CLI(lib.connection.Server, SmartPlugin):
         self.sh = smarthome
         self.updates_allowed = Utils.to_bool(update)
         self.hashed_password = hashed_password
-        self.commands = CLICommands(self.sh, self.updates_allowed)
+        self.commands = CLICommands(self.sh, self.updates_allowed, self)
         self.alive = False
 
 
@@ -211,11 +217,14 @@ class CLI(lib.connection.Server, SmartPlugin):
         """
         Handle incoming connection
         """
-        sock, address = self.accept()
-        if sock is None:
-            return
-        self.logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
-        CLIHandler(self.sh, sock, address, self.updates_allowed, self.hashed_password, self.commands)
+        if self.alive:
+            sock, address = self.accept()
+            if sock is None:
+                return
+            self.logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
+            CLIHandler(self.sh, sock, address, self.updates_allowed, self.hashed_password, self.commands, self)
+        else:
+            self.close()
 
     def run(self):
         """
@@ -255,13 +264,14 @@ class CLICommands:
 
     logics = None
 
-    def __init__(self, smarthome, updates_allowed=False):
+    def __init__(self, smarthome, updates_allowed=False, plugin=None):
         """
         Constructor
         :param smarthome: sh.py instance
         :param updates_allowed: bool True: basic commands may do updates, False: basic commands may not do updates
         """
         self.sh = smarthome
+        self.plugin = plugin
         self.logger = logging.getLogger(__name__)
         self.updates_allowed = updates_allowed
         self._commands = {}
@@ -534,6 +544,7 @@ class CLICommands:
         :param source: Source
         """
         handler.push("Items:\n======\n")
+#        handler.push("Items ({}):\n==========\n".format(self.plugin.items.item_count()))
         self._cli_ls_int(handler, parameter, '*' in parameter or ':' in parameter)
 
     def _cli_ls_int(self, handler, parameter, match=True):
@@ -664,11 +675,17 @@ class CLICommands:
         :param source: Source
         """
         handler.push("Items:\n======\n")
+#        wrk = "Items ({}):".format(self.plugin.items.item_count())
+#        wrk += '\n'+'='*len(wrk)+'\n'
+#        handler.push(wrk)
         for item in self.sh.return_items():
             if item.type():
                 handler.push("{0} = {1}\n".format(item.id(), item()))
             else:
                 handler.push("{0}\n".format(item.id()))
+        wrk = "{} Items".format(self.plugin.items.item_count())
+        wrk = '-'*len(wrk)+'\n'+wrk+'\n'
+        handler.push(wrk)
 
     def _cli_iupdate(self, handler, parameter, source):
         """

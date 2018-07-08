@@ -35,7 +35,10 @@ import threading
 import os
 
 import lib.config
+from lib.plugin import Plugins
 from lib.logic import Logics
+from lib.scheduler import Scheduler
+
 import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.utils import Utils
 
@@ -52,8 +55,13 @@ class BackendLogics:
 
     def __init__(self):
 
+        # !! Cannot initialze self.logics here, because at startup logics are initialized after plugins !!
         self.logics = Logics.get_instance()
-        self.logger.warning("BackendLogics __init__ self.logics = {}".format(str(self.logics)))
+        self.logger.info("BackendLogics __init__ self.logics = {}".format(self.logics))
+        self.plugins = Plugins.get_instance()
+        self.logger.info("BackendLogics __init__ self.plugins = {}".format(str(self.plugins)))
+        self.scheduler = Scheduler.get_instance()
+        self.logger.info("BackendLogics __init__ self.scheduler = {}".format(self.scheduler))
         
         
     def logics_initialize(self):
@@ -72,7 +80,9 @@ class BackendLogics:
         # find out if blockly plugin is loaded
         if self.blockly_plugin_loaded == None:
             self.blockly_plugin_loaded = False
-            for x in self._sh._plugins:
+#            for x in self._sh._plugins:
+#            for x in self._sh.return_plugins():
+            for x in self.plugins.return_plugins():
                 try:
                     if x.get_shortname() == 'blockly':
                         self.blockly_plugin_loaded = True
@@ -120,8 +130,10 @@ class BackendLogics:
                 mylogic['watch_item_list'] = loaded_logic.watch_item
 
             mylogic['next_exec'] = ''
-            if self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name):
-                mylogic['next_exec'] = self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name).strftime('%Y-%m-%d %H:%M:%S%z')
+#            if self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name):
+#                mylogic['next_exec'] = self._sh.scheduler.return_next(self._logicname_prefix+loaded_logic.name).strftime('%Y-%m-%d %H:%M:%S%z')
+            if self.scheduler.return_next(self._logicname_prefix+loaded_logic.name):
+                mylogic['next_exec'] = self.scheduler.return_next(self._logicname_prefix+loaded_logic.name).strftime('%Y-%m-%d %H:%M:%S%z')
                 
             mylogic['last_run'] = ''
             if loaded_logic.last_run():
@@ -157,7 +169,8 @@ class BackendLogics:
             self.logics.unload_logic(logicname)
 
         elif add is not None:
-            self.logics.load_logic(logicname)
+            if not  self.logics.load_logic(logicname):
+                self.logger.error("Could not load logic '{}', syntax error".format(logicname))
             
         elif delete is not None:
             self.logics.delete_logic(logicname)
@@ -183,7 +196,8 @@ class BackendLogics:
         Find new logics (logics defined in /etc/logic.yaml but not loaded)
         """
         _config = {}
-        _config.update(self._sh._logics._read_logics(self._sh._logic_conf_basename, self._sh._logic_dir))
+#        _config.update(self._sh._logics._read_logics(self._sh._logic_conf_basename, self._sh._logic_dir))
+        _config.update(self.logics._read_logics(self.logics._get_logic_conf_basename(), self.logics.get_logics_dir()))
 
         self.logger.info("logic_findnew: _config = '{}'".format(_config))
         newlogics = []
@@ -219,7 +233,7 @@ class BackendLogics:
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def logics_view_html(self, file_path, logicname, 
+    def logics_view_html(self, logicname, file_path=None,
                                trigger=None, enable=None, disable=None, save=None, savereload=None, savereloadtrigger=None, 
                                logics_code=None, cycle=None, crontab=None, watch=None, visu_acl=None):
         """
@@ -238,20 +252,41 @@ class BackendLogics:
         elif disable is not None:
             self.logics.disable_logic(logicname)
         elif save is not None:
-            self.logic_save_code(logicname, logics_code)
-            self.logic_save_config(logicname, cycle, crontab, watch, visu_acl)
+            if logicname in self.logics.return_loaded_logics():
+                self.logic_save_code(logicname, logics_code)
+            else:
+                filename = os.path.basename(file_path)
+                self.logic_create_codefile(filename, logics_code, overwrite=True)
+            self.logic_save_config(logicname, cycle, crontab, watch, visu_acl, file_path)
         elif savereload is not None:
-            self.logic_save_code(logicname, logics_code)
-            self.logic_save_config(logicname, cycle, crontab, watch, visu_acl)
-            self.logics.load_logic(logicname)
+            if logicname in self.logics.return_loaded_logics():
+                self.logic_save_code(logicname, logics_code)
+            else:
+                filename = os.path.basename(file_path)
+                self.logic_create_codefile(filename, logics_code, overwrite=True)
+            self.logic_save_config(logicname, cycle, crontab, watch, visu_acl, file_path)
+            if not self.logics.load_logic(logicname):
+                self.logger.error("Could not load logic '{}' after saving; syntax error in logic".format(logicname))
         elif savereloadtrigger is not None:
-            self.logic_save_code(logicname, logics_code)
-            self.logic_save_config(logicname, cycle, crontab, watch, visu_acl)
-            self.logics.load_logic(logicname)
-            self.logics.trigger_logic(logicname)
+            if logicname in self.logics.return_loaded_logics():
+                self.logic_save_code(logicname, logics_code)
+            else:
+                filename = os.path.basename(file_path)
+                self.logic_create_codefile(filename, logics_code, overwrite=True)
+            self.logic_save_config(logicname, cycle, crontab, watch, visu_acl, file_path)
+            if not self.logics.load_logic(logicname):
+                self.logger.error("Could not load logic '{}' after saving; syntax error in logic".format(logicname))
+            else:
+                self.logics.trigger_logic(logicname)
 
         # assemble data for displaying/editing of a logic
         mylogic = self.fill_logicdict(logicname)
+
+        if file_path is None:
+            if 'pathname' in mylogic:
+                file_path = mylogic['pathname']
+            else:
+                self.logger.error('No pathname for logic given or pathname cannot be retrieved via logic name!')
 
         config_list = self.logics.read_config_section(logicname)
         for config in config_list:
@@ -259,7 +294,7 @@ class BackendLogics:
                 mylogic['cycle'] = config[1]
             if config[0] == 'crontab':
 #                mylogic['crontab'] = config[1]
-                self.logger.info("logics_view_html: crontab = >{}<".format(config[1]))
+                self.logger.debug("logics_view_html: crontab = >{}<".format(config[1]))
                 edit_string = self.list_to_editstring(config[1])
                 mylogic['crontab'] = Utils.strip_quotes_fromlist(edit_string)
             if config[0] == 'watch_item':
@@ -281,12 +316,29 @@ class BackendLogics:
                 mylogic['userlogic'] = True
             if mylogic['userlogic'] == False:
                 updates = False
-        file_lines = []
-        if mylogic != {}:
-            file_lines = self.logic_load_code(logicname, os.path.splitext(file_path)[1])
 
+        file_lines = []
+#        if mylogic != {}:
+        if mylogic.get('enabled', None) is not None:
+            file_lines = self.logic_load_code(logicname, os.path.splitext(file_path)[1])
+        else:
+            file_lines = self.unloaded_logic_load_code(file_path)
+
+        # create a list of dicts, where each dict contains the information for one logic
+        logics_list = []
+        import time
+        for ln in self.logics.return_loaded_logics():
+            logic = self.fill_logicdict(ln)
+            if logic['logictype'] == 'Blockly':
+                logic['pathname'] = os.path.splitext(logic['pathname'])[0] + '.blockly'
+            logics_list.append(logic)
+            self.logger.debug("Backend: logics_html: - logic = {}, enabled = {}, , logictype = {}, filename = {}, userlogic = {}, watch_item = {}".format(str(logic['name']), str(logic['enabled']), str(logic['logictype']), str(logic['filename']), str(logic['userlogic']), str(logic['watch_item'])) )
+
+        newlogics = sorted(self.logic_findnew(logics_list), key=lambda k: k['name'])
+        logic_loadable=(mylogic in newlogics)
+        logic_loadable=True
         return self.render_template('logics_view.html', logicname=logicname, thislogic=mylogic, logic_lines=file_lines, file_path=file_path,
-                                    updates=updates, yaml_updates=self.yaml_updates, mode=mode)
+                                    updates=updates, yaml_updates=self.yaml_updates, mode=mode, logic_loadable=logic_loadable)
 
 
     # -----------------------------------------------------------------------------------
@@ -316,7 +368,9 @@ class BackendLogics:
                     logics_code = '#!/usr/bin/env python3\n' + '# ' + filename + '\n\n'
                     if self.logic_create_codefile(filename, logics_code):
                         self.logic_create_config(logicname, filename)
-                        self.logics.load_logic(logicname)
+                        if not self.logics.load_logic(logicname):
+                            self.logger.error("Could not load logic '{}', syntax error".format(logicname))
+
 #                        self.logics.disable_logic(logicname)
                         redir = '<meta http-equiv="refresh" content="0; url=logics_view.html?file_path={}&logicname={}" />'.format(self.logics.get_logics_dir()+filename, logicname)
                         return redir
@@ -338,7 +392,7 @@ class BackendLogics:
         """
         """
         if type(l) is str:
-            self.logger.info("list_to_editstring: >{}<  -->  >{}<".format(l, l))
+            self.logger.debug("list_to_editstring: >{}<  -->  >{}<".format(l, l))
             return l
         
         edit_string = ''
@@ -346,7 +400,7 @@ class BackendLogics:
             if edit_string != '':
                 edit_string += ' | '
             edit_string += str(entry)
-        self.logger.info("list_to_editstring: >{}<  -->  >{}<".format(l, edit_string))
+        self.logger.debug("list_to_editstring: >{}<  -->  >{}<".format(l, edit_string))
         return edit_string
         
 
@@ -380,7 +434,7 @@ class BackendLogics:
         return
          
 
-    def logic_save_config(self, logicname, cycle, crontab, watch, visu_acl):
+    def logic_save_config(self, logicname, cycle, crontab, watch, visu_acl, file_path):
         """
         Save configuration data of a logic
         
@@ -388,7 +442,10 @@ class BackendLogics:
         """
         config_list = []
         thislogic = self.logics.return_logic(logicname)
-        config_list.append(['filename', thislogic.filename, ''])
+        if thislogic is None:
+            config_list.append(['filename', os.path.basename(file_path), ''])
+        else:
+            config_list.append(['filename', thislogic.filename, ''])
         if Utils.is_int(cycle):
             cycle = int(cycle)
             if cycle > 0:
@@ -410,21 +467,26 @@ class BackendLogics:
         return
          
 
+    def unloaded_logic_load_code(self, file_path):
+
+        file_lines = []                
+        fobj = open(file_path)
+        for line in fobj:
+            file_lines.append(html.escape(line))
+        fobj.close()
+        return file_lines
+
+
     def logic_load_code(self, logicname, code_type='.python'):
 
         file_lines = []
         if logicname in self.logics.return_loaded_logics():
             mylogic = self.logics.return_logic(logicname)
-
             if code_type == '.blockly':
                 pathname = os.path.splitext(mylogic.pathname)[0] + '.blockly'
             else:
                 pathname = mylogic.pathname
-                
-            fobj = open(pathname)
-            for line in fobj:
-                file_lines.append(html.escape(line))
-            fobj.close()
+            file_lines = self.unloaded_logic_load_code(pathname)
         return file_lines
 
 
@@ -441,11 +503,12 @@ class BackendLogics:
         return
 
 
-    def logic_create_codefile(self, filename, logics_code):
+    def logic_create_codefile(self, filename, logics_code, overwrite=False):
 
         pathname = self.logics.get_logics_dir() + filename
-        if os.path.isfile(pathname):
-            return False
+        if not overwrite:
+            if os.path.isfile(pathname):
+                return False
 
         f = open(pathname, 'w')
         f.write(logics_code)

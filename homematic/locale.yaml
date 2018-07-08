@@ -1,0 +1,11 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Device Anlernen':           {'de': '=', 'en': 'Learn-In Device'}
+    'nicht gefunden':            {'de': '=', 'en': 'not found'}
+    'existiert nicht für Kanal': {'de': '=', 'en': 'does not exist for channel'}
+
+    # Alternative format for translations of longer texts:
+    'Kein Device mit der Adresse gefunden':
+        de: '='
+        en: 'No device found with this address'
+

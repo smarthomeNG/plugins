@@ -1,0 +1,96 @@
+{% extends "base_database.html" %}
+
+{% block buttons %}
+{{ super() }}
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?'">{{ _('Übersicht') }}</button>
+{% endblock buttons %}
+
+{% block bodytab1 %}
+<script type="text/javascript" language="javascript">
+function confirmDelete(url, text) {
+	if (confirm(text)) {
+		window.location.href=url;
+	}
+	return false;
+}
+</script>
+{% if action == 'delete_log' %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Löschauftrag in der Tabelle "log" wurde erfolgreich initiiert!') }}</strong><br/>
+		{{ _('Das Löschen kann noch kurze Zeit dauern, da die DELETE Anfrage erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if delete_triggered %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Löschauftrag in der Tabelle "log" wurde erfolgreich initiiert!') }}</strong><br/>
+		{{ _('Das Löschen kann noch kurze Zeit dauern, da die Ausführung des Delete Queries erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+<div class="mb-2">
+	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }} <strong>{{ item_path }}</strong> {{ _('am') }} <strong>{% if day and month and year %}{% if language == 'en' %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == 'en' %}{{ now.strftime('%-m/%-d/%Y') }}{% else %}{{ now.strftime('%-d.%-m.%Y') }}{% endif %}{% endif %}</strong> {{_('(Datenbank-ID') }}: {{ item_id }}):
+	<br/>
+</div>
+<div style="float:right; width:220px;" id="datepicker">
+</div>
+<div style="margin-right: 220px;">
+<table class="table table-striped table-hover pluginList" style="">
+	<thead>
+	<tr>
+		<th style="width: 90px;">{{ _('Item ID') }}</th>
+		<th style="width: 180px;">{{ _('Zeit') }}</th>
+		<th style="width: 120px;">{{ _('Dauer') }}</th>
+		<th style="width: 180px;">{{ _('Geändert') }}</th>
+		<th style="width: 120px;">VAL_NUM</th>
+		<th style="width: 120px;">VAL_BOOL</th>
+		<th>VAL_STR</th>
+		<th>{{ _('Aktionen') }}</th>
+	</tr>
+	</thead>
+	{% if log_array | length > 0 %}
+		{% for dataset in log_array %}
+			<tr>
+				<td class="py-1">{{ dataset[1] }}</td>
+				<td class="py-1">{{ dataset[0].strftime('%d.%m.%Y %H:%M:%S') }}</td>
+				<td class="py-1">{{ dataset[2] }}</td>
+				<td class="py-1">{{ dataset[6].strftime('%d.%m.%Y %H:%M:%S') }} </td>
+				<td class="py-1">{{ dataset[4] }}</td>
+				<td class="py-1">{{ dataset[5] }}</td>
+				<td class="py-1">{{ dataset[3] }}</td>
+				<td class="py-1"><button type="button" class="btn btn-danger btn-sm" title="{{ _('Wert löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ dataset[1] }}&item_path={{ item_path }}&time_orig={{ dataset['0_orig'] }}&changed_orig={{ dataset['6_orig'] }}{% if day and month and year %}&day={{ day }}&month={{ month }}&year={{ year }}{% endif %}','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-trash-alt"></i></button></td>
+			</tr>
+		{% endfor %}
+	{% else %}
+		<tr>
+			<td class="py-1">-</td>
+			<td class="py-1">-</td>
+			<td class="py-1">-</td>
+			<td class="py-1">-</td>
+			<td class="py-1">-</td>
+			<td class="py-1">-</td>
+			<td class="py-1">-</td>
+			<td class="py-1">-</td>
+		</tr>
+	{% endif %}
+</table>
+</div>
+<script>
+	$('#datepicker').datepicker({
+		language: "{{ language }}",
+		autoclose: true,
+		todayHighlight: true,
+		todayBtn: "linked",
+		endDate: "{% if language == 'en' %}{{ now.strftime('%m/%d/%Y') }}{% else %}{{ now.strftime('%d.%m.%Y') }}{% endif %}"
+	});
+	$('#datepicker').datepicker().on('changeDate', function(e) {
+		date = $('#datepicker').datepicker('getDate');
+		location.href='?action={{ action }}&item_id={{ item_id }}&item_path={{ item_path }}&day='+date.getDate()+'&month='+(date.getMonth()+1)+'&year='+date.getFullYear();
+    });
+    $('#datepicker').datepicker('update', '{% if day and month and year %}{% if language == 'en' %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == 'en' %}{{ now.strftime('%-m/%-d/%Y') }}{% else %}{{ now.strftime('%-d.%-m.%Y') }}{% endif %}{% endif %}');
+</script>
+{% endblock bodytab1 %}

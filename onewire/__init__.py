@@ -36,7 +36,7 @@ class owexpath(Exception):
 
 class OwBase(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.3.1'
+    PLUGIN_VERSION = '1.3.2'
 
     def __init__(self, host='127.0.0.1', port=4304):
         self.logger = logging.getLogger(__name__)

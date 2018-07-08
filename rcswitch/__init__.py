@@ -58,9 +58,9 @@ class RCswitch(SmartPlugin):
 			#check connection to remote host and accept fingerprint
 			try:
 				# following line shall raise an error in case connection is not possible. 
-				user = subprocess.check_output(shlex.split('sshpass -p {} ssh -o StrictHostKeyChecking=no {}@{} grep {} /etc/passwd'.format(rcswitch_password, rcswitch_user, rcswitch_host, rcswitch_user)), stderr=DEVNULL).decode('utf8')[0:len(rcswitch_user)]
+				self.user = subprocess.check_output(shlex.split('sshpass -p {} ssh -o StrictHostKeyChecking=no {}@{} grep {} /etc/passwd'.format(rcswitch_password, rcswitch_user, rcswitch_host, rcswitch_user)), stderr=DEVNULL).decode('utf8')[0:len(rcswitch_user)]
 				# check  if rc switch is installed at the specified path on remote host
-				fileStat = subprocess.check_output(shlex.split('sshpass -p {} ssh {}@{} stat -c %a {}'.format(rcswitch_password, rcswitch_user, rcswitch_host, self.rcswitch_dir)), stderr=DEVNULL).decode('utf8')
+				self.fileStat = subprocess.check_output(shlex.split('sshpass -p {} ssh {}@{} stat -c %a {}'.format(rcswitch_password, rcswitch_user, rcswitch_host, self.rcswitch_dir)), stderr=DEVNULL).decode('utf8')
 				self.rcswitch_dir = ('sshpass -p {} ssh {}@{} {}'.format(rcswitch_password, rcswitch_user, rcswitch_host, self.rcswitch_dir))
 				self.logger.info('RCswitch: Using {} as host.'.format(rcswitch_host))
 			except subprocess.CalledProcessError as e:
@@ -110,8 +110,8 @@ class RCswitch(SmartPlugin):
 		if self.has_iattr(item.conf, 'rc_code') and self.has_iattr(item.conf, 'rc_device') and self.setupOK: #if 'rc_device' in item.conf and 'rc_code' in item.conf and self.setupOK:
 			# prepare parameters
 			value = item()
-			rcCode =self.get_iattr_value(item.conf, 'rc_code') 
-			rcDevice =self.get_iattr_value(item.conf, 'rc_device')
+			rcCode = self.get_iattr_value(item.conf, 'rc_code') 
+			rcDevice = self.get_iattr_value(item.conf, 'rc_device')
 		
 			# avoid parallel access by use of semaphore
 			self.lock.acquire()

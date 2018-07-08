@@ -30,15 +30,15 @@ import re
 import socketserver
 import subprocess
 import threading
+from collections import OrderedDict
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from queue import Empty
 import sys
 from urllib.parse import unquote
-
 import requests
+import xmltodict
 from requests.utils import quote
 from tinytag import TinyTag
-
 from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
 from lib.item import Item
@@ -46,6 +46,7 @@ from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
 from plugins.sonos.soco.data_structures import to_didl_string, DidlItem, DidlMusicTrack
 from plugins.sonos.soco.events import event_listener
+from plugins.sonos.soco.music_services.data_structures import get_class
 from plugins.sonos.soco.snapshot import Snapshot
 from plugins.sonos.soco.xml import XML
 import time
@@ -95,11 +96,14 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             file_name = unquote(self.path)
             # prevent path traversal
             file_name = os.path.normpath('/' + file_name).lstrip('/')
-            file_path = os.path.join(WebserviceHttpHandler.webroot, file_name)
 
+            # search file in snippet and tts folder
+            file_path = os.path.join(WebserviceHttpHandler.snippet_folder, file_name)
             if not os.path.exists(file_path):
-                self.send_error(404, 'File Not Found: %s' % self.path)
-                return
+                file_path = os.path.join(WebserviceHttpHandler.webroot, file_name)
+                if not os.path.exists(file_path):
+                    self.send_error(404, 'File Not Found: %s' % self.path)
+                    return
 
             # get registered mime-type
             mime_type = self._get_mime_type_by_filetype(file_path)
@@ -133,11 +137,12 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
 
 
 class SimpleHttpServer:
-    def __init__(self, ip, port, root_path):
+    def __init__(self, ip, port, tts_folder, snippet_folder):
         self.server = ThreadedHTTPServer((ip, port), WebserviceHttpHandler)
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.daemon = True
-        WebserviceHttpHandler.webroot = root_path
+        WebserviceHttpHandler.webroot = tts_folder
+        WebserviceHttpHandler.snippet_folder = snippet_folder
 
     def start(self):
         self.thread.start()
@@ -151,28 +156,40 @@ class SimpleHttpServer:
 
 
 class SubscriptionHandler(object):
-    def __init__(self, endpoint, service):
+    def __init__(self, endpoint, service, logger):
         self._lock = threading.Lock()
         self._thread = None
         self._service = service
         self._endpoint = endpoint
         self._event = None
         self._signal = None
+        self._logger = logger
 
     def subscribe(self):
         with self._lock:
             self._signal = threading.Event()
-            self._event = self._service.subscribe(auto_renew=True)
+            try:
+                self._event = self._service.subscribe(auto_renew=True)
+            except Exception as err:
+                self._logger.warning("Sonos: {err}".format(err=err))
             if self._event:
                 self._thread = threading.Thread(target=self._endpoint, args=(self,))
+                self._thread.setDaemon(True)
                 self._thread.start()
 
     def unsubscribe(self):
         with self._lock:
             if self._event:
                 # try to unsubscribe first
-                self._event.unsubscribe()
+                try:
+                    self._event.unsubscribe()
+                except Exception as err:
+                    self._logger.warning("Sonos: {err}".format(err=err))
                 self._signal.set()
+                if self._thread:
+                    self._thread.join()
+                self._logger.debug("Sonos: event {event} unsubscribed and thread terminated".format(
+                    event=self._endpoint))
 
     @property
     def signal(self):
@@ -185,10 +202,6 @@ class SubscriptionHandler(object):
     @property
     def event(self):
         return self._event
-
-    @property
-    def service(self):
-        return self._service
 
     @property
     def is_subscribed(self):
@@ -303,17 +316,23 @@ class Speaker(object):
             self._logger.debug("Sonos: {uid}: soco set to {value}".format(uid=self.uid, value=value))
             if self._soco:
                 self.render_subscription = \
-                    SubscriptionHandler(endpoint=self._rendering_control_event, service=self._soco.renderingControl)
+                    SubscriptionHandler(endpoint=self._rendering_control_event, service=self._soco.renderingControl,
+                                        logger=self._logger)
                 self.av_subscription = \
-                    SubscriptionHandler(endpoint=self._av_transport_event, service=self._soco.avTransport)
+                    SubscriptionHandler(endpoint=self._av_transport_event, service=self._soco.avTransport,
+                                        logger=self._logger)
                 self.system_subscription = \
-                    SubscriptionHandler(endpoint=self._system_properties_event, service=self._soco.systemProperties)
+                    SubscriptionHandler(endpoint=self._system_properties_event, service=self._soco.systemProperties,
+                                        logger=self._logger)
                 self.zone_subscription = \
-                    SubscriptionHandler(endpoint=self._zone_topology_event, service=self._soco.zoneGroupTopology)
+                    SubscriptionHandler(endpoint=self._zone_topology_event, service=self._soco.zoneGroupTopology,
+                                        logger=self._logger)
                 self.alarm_subscription = \
-                    SubscriptionHandler(endpoint=self._alarm_event, service=self._soco.alarmClock)
+                    SubscriptionHandler(endpoint=self._alarm_event, service=self._soco.alarmClock,
+                                        logger=self._logger)
                 self.device_subscription = \
-                    SubscriptionHandler(endpoint=self._device_properties_event, service=self._soco.deviceProperties)
+                    SubscriptionHandler(endpoint=self._device_properties_event, service=self._soco.deviceProperties,
+                                        logger=self._logger)
 
                 # just to have a list for disposing all events
                 self._events = [
@@ -338,7 +357,12 @@ class Speaker(object):
             return
 
         for subscription in self._events:
-            subscription.unsubscribe()
+            try:
+                subscription.unsubscribe()
+            except Exception as error:
+                self._logger.warning("Sonos: {error}".format(error=error))
+                continue
+
         self._soco = None
 
     def subscribe_base_events(self):
@@ -375,46 +399,27 @@ class Speaker(object):
         self.sonos_playlists()
 
     def check_subscriptions(self) -> None:
-        """
-        Do some subscription checks. If a subscription ist not active, we're trying to re-subscribe.
-        """
-        subs_ok = True
-        zone_subscribed = False
 
-        # check topology, system, alarm event for all speaker:
-        if not self.zone_subscription.is_subscribed:
-            subs_ok = False
-            self.zone_subscription.unsubscribe()
-            self.zone_subscription.subscribe()
-            zone_subscribed = True
-        if not self.system_subscription.is_subscribed:
-            subs_ok = False
-            self.system_subscription.unsubscribe()
-            self.system_subscription.subscribe()
-        if not self.alarm_subscription.is_subscribed:
-            subs_ok = False
-            self.alarm_subscription.unsubscribe()
-            self.alarm_subscription.subscribe()
-        if not self.render_subscription.is_subscribed:
-            subs_ok = False
-            self.render_subscription.unsubscribe()
-            self.render_subscription.subscribe()
+        self.zone_subscription.unsubscribe()
+        self.zone_subscription.subscribe()
 
-        if self.is_coordinator:
-            if not self.av_subscription.is_subscribed:
-                subs_ok = False
-                self.av_subscription.unsubscribe()
-                self.av_subscription.subscribe()
+        self.system_subscription.unsubscribe()
+        self.system_subscription.subscribe()
+
+        self.alarm_subscription.unsubscribe()
+        self.alarm_subscription.subscribe()
+
+        self.render_subscription.unsubscribe()
+        self.render_subscription.subscribe()
+
+        self.av_subscription.unsubscribe()
+        self.av_subscription.subscribe()
 
         # sometimes a discover fails --> coordinator is empty --> resubscribe zone topology event
-        if not zone_subscribed:
-            if not self.coordinator:
-                subs_ok = False
-                self.zone_subscription.unsubscribe()
-                self.zone_subscription.subscribe()
+        self.zone_subscription.unsubscribe()
+        self.zone_subscription.subscribe()
 
-        if subs_ok:
-            self._logger.debug("Sonos: {uid}: Event subscriptions ok".format(uid=self.uid))
+        self._logger.debug("Sonos: {uid}: Event subscriptions done".format(uid=self.uid))
 
     # Event Handler routines ###########################################################################################
 
@@ -616,7 +621,7 @@ class Speaker(object):
                             else:
                                 self.track_artist = ''
                             if 'title' in metadata:
-                                # ignore x-sonos-api-stream: radio played, title seeoms wrong
+                                # ignore x-sonos-api-stream: radio played, title seems wrong
                                 if re.match(r"^x-sonosapi-stream:", metadata['title']) is None:
                                     self.track_title = metadata['title']
                             else:
@@ -629,6 +634,8 @@ class Speaker(object):
                                 cover_url = metadata['album_art_uri']
                                 if not cover_url.startswith(('http:', 'https:')):
                                     self.track_album_art = 'http://' + self.soco.ip_address + ':1400' + cover_url
+                                else:
+                                    self.track_album_art = cover_url
                             else:
                                 self.track_album_art = ''
 
@@ -1997,21 +2004,79 @@ class Speaker(object):
         :param start: Start playing after setting the radio stream? Default: True
         :return: None
         """
+
+        # ------------------------------------------------------------------------------------------------------------ #
+
+        # This code here is a quick workaround for issue https://github.com/SoCo/SoCo/issues/557 and will be fixed
+        # if a patch is applied.
+
+        # ------------------------------------------------------------------------------------------------------------ #
+
         if not self._check_property():
             return
         if not self.is_coordinator:
             sonos_speaker[self.coordinator].play_tunein(station_name, start)
         else:
-            service = MusicService('TuneIn')
-            result = service.search(category='stations', term=station_name)
-            if not result:
-                self._logger.warning("No radio station found for search string '{term}'.".format(term=station_name))
-                return
-            item = result[0]
-            meta = to_didl_string(item)
-            account = service.account
-            uri = "x-sonosapi-stream:{0}?sid={1}&sn={2}".format(item.metadata['id'], service.service_id,
-                                                                account.serial_number)
+
+            data = '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Header><credentials ' \
+                   'xmlns="http://www.sonos.com/Services/1.1"><deviceId>anon</deviceId>' \
+                   '<deviceProvider>Sonos</deviceProvider></credentials></s:Header><s:Body>' \
+                   '<search xmlns="http://www.sonos.com/Services/1.1"><id>search:station</id><term>{search}</term>' \
+                   '<index>0</index><count>100</count></search></s:Body></s:Envelope>'.format(
+                search=station_name)
+
+            headers = {
+                "SOAPACTION": "http://www.sonos.com/Services/1.1#search",
+                "USER-AGENT": "Linux UPnP/1.0 Sonos/40.5-49250 (WDCR:Microsoft Windows NT 10.0.16299)",
+                "CONTENT-TYPE": 'text/xml; charset="utf-8"'
+            }
+
+            response = requests.post("http://legato.radiotime.com/Radio.asmx", data=data.encode("utf-8"),
+                                     headers=headers)
+            schema = XML.fromstring(response.content)
+            body = schema.find("{http://schemas.xmlsoap.org/soap/envelope/}Body")[0]
+
+            response = list(xmltodict.parse(XML.tostring(body), process_namespaces=True,
+                                            namespaces={'http://www.sonos.com/Services/1.1': None}).values())[0]
+
+            items = []
+            # The result to be parsed is in either searchResult or getMetadataResult
+            if 'searchResult' in response:
+                response = response['searchResult']
+            elif 'getMetadataResult' in response:
+                response = response['getMetadataResult']
+            else:
+                raise ValueError('"response" should contain either the key '
+                                 '"searchResult" or "getMetadataResult"')
+
+            for result_type in ('mediaCollection', 'mediaMetadata'):
+                # Upper case the first letter (used for the class_key)
+                result_type_proper = result_type[0].upper() + result_type[1:]
+                raw_items = response.get(result_type, [])
+                # If there is only 1 result, it is not put in an array
+                if isinstance(raw_items, OrderedDict):
+                    raw_items = [raw_items]
+
+                for raw_item in raw_items:
+                    # Form the class_key, which is a unique string for this type,
+                    # formed by concatenating the result type with the item type. Turns
+                    # into e.g: MediaMetadataTrack
+                    class_key = result_type_proper + raw_item['itemType'].title()
+                    cls = get_class(class_key)
+                    from plugins.sonos.soco.music_services import Account
+                    items.append(
+                        cls.from_music_service(MusicService(service_name='TuneIn', account=Account()), raw_item))
+
+            if not items:
+                exit(0)
+
+            item_id = items[0].metadata['id']
+            sid = 254  # hard-coded TuneIn service id ?
+            sn = 0
+            meta = to_didl_string(items[0])
+
+            uri = "x-sonosapi-stream:{0}?sid={1}&flags=8224&sn={2}".format(item_id, sid, sn)
+
             self.soco.avTransport.SetAVTransportURI([('InstanceID', 0),
                                                      ('CurrentURI', uri), ('CurrentURIMetaData', meta)])
             if start:
@@ -2090,7 +2155,7 @@ class Speaker(object):
                     volumes[member] = sonos_speaker[member].volume
 
                 tag = TinyTag.get(file_path)
-                duration = int(round(tag.duration))
+                duration = int(round(tag.duration)) + 0.4
                 self._logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
                 file_name = quote(os.path.split(file_path)[1])
                 snippet_url = "{url}/{file}".format(url=webservice_url, file=file_name)
@@ -2130,18 +2195,19 @@ class Speaker(object):
                         else:
                             sonos_speaker[member].set_volume(volumes[member], group_command=False)
 
-    def play_snippet(self, audio_file, local_webservice_path: str, webservice_url: str, volume: int = -1, fade_in=False) \
-            -> None:
+    def play_snippet(self, audio_file, local_webservice_path_snippet: str, webservice_url: str, volume: int = -1,
+                     fade_in=False) -> None:
         if not self._check_property():
             return
         if not self.is_coordinator:
-            sonos_speaker[self.coordinator].play_tts(audio_file, local_webservice_path, webservice_url, volume, fade_in)
+            sonos_speaker[self.coordinator].play_snippet(audio_file, local_webservice_path_snippet, webservice_url, volume,
+                                                     fade_in)
         else:
             if "tinytag" not in sys.modules:
                 self._logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
                                    "install tinytag'.")
                 return
-            file_path = os.path.join(local_webservice_path, audio_file)
+            file_path = os.path.join(local_webservice_path_snippet, audio_file)
 
             if not os.path.exists(file_path):
                 self._logger.error("Sonos: Snippet file '{file_path}' does not exists.".format(file_path=file_path))
@@ -2181,7 +2247,7 @@ class Speaker(object):
         :param track: The index of the track to start play from. First item in the queue is 0.
         :param name: playlist name
         :param start: Should the speaker start playing after loading the playlist?
-        :param clear_queue: 'True' to clearthe queue before loading the new playlist, 'False' otherwise.
+        :param clear_queue: 'True' to clear the queue before loading the new playlist, 'False' otherwise.
         :rtype: None
         :return: None
         """
@@ -2218,10 +2284,10 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.2"
+    PLUGIN_VERSION = "1.4.6"
 
-    def __init__(self, sh, tts=False, local_webservice_path=None, discover_cycle="120",
-                 webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
+    def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
+                 discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
         super().__init__(**kwargs)
         self._sh = sh
         self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
@@ -2230,6 +2296,12 @@ class Sonos(SmartPlugin):
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
         self._tts = self.to_bool(tts, default=False)
         self._local_webservice_path = local_webservice_path
+
+        # see documentation: if no exclusive snippet path is set, we use the global one
+        if local_webservice_path_snippet is None:
+            self._local_webservice_path_snippet = self._local_webservice_path
+        else:
+            self._local_webservice_path_snippet = local_webservice_path_snippet
 
         get_param_func = getattr(self, "get_parameter_value", None)
         if callable(get_param_func):
@@ -2241,11 +2313,12 @@ class Sonos(SmartPlugin):
         if speaker_ips:
             self._logger.debug("Sonos: User-defined speaker IPs set. Auto-discover disabled.")
         # check user specified sonos speaker ips
-        for ip in speaker_ips:
-            if self.is_ip(ip):
-                self._speaker_ips.append(ip)
-            else:
-                self._logger.warning("Sonos: Invalid Sonos speaker ip '{ip}'. Ignoring.".format(ip=ip))
+        if speaker_ips:
+            for ip in speaker_ips:
+                if self.is_ip(ip):
+                    self._speaker_ips.append(ip)
+                else:
+                    self._logger.warning("Sonos: Invalid Sonos speaker ip '{ip}'. Ignoring.".format(ip=ip))
 
         # unique items in list
         self._speaker_ips = utils.unique_list(self._speaker_ips)
@@ -2275,6 +2348,16 @@ class Sonos(SmartPlugin):
         discover_cycle_default = 120
 
         if self._tts:
+            if self._local_webservice_path_snippet:
+                # we just need an existing path with read rights, this can be done by the user while shNG is running
+                # just throw some warnings
+                if not os.path.exists(self._local_webservice_path_snippet):
+                    self._logger.warning("Sonos: Local webservice snippet path was set to '{path}' but doesn't "
+                                         "exists".format(path=self._local_webservice_path_snippet))
+                if not os.access(self._local_webservice_path_snippet, os.R_OK):
+                    self._logger.warning("Sonos: Local webservice snippet path '{path}' is not readable.".format(
+                        path=self._local_webservice_path_snippet))
+
             if self._local_webservice_path:
                 # check access rights
                 try:
@@ -2294,8 +2377,10 @@ class Sonos(SmartPlugin):
                                                                                port=self._webservice_port)
                             self._logger.debug("Sonos: Starting webservice for TTS on {url}".format(
                                 url=self._webservice_url))
-                            self.webservice = SimpleHttpServer(self._webservice_ip, self._webservice_port,
-                                                               self._local_webservice_path)
+                            self.webservice = SimpleHttpServer(self._webservice_ip,
+                                                               self._webservice_port,
+                                                               self._local_webservice_path,
+                                                               self._local_webservice_path_snippet)
                             self.webservice.start()
                         else:
                             self._logger.warning(
@@ -2547,7 +2632,7 @@ class Sonos(SmartPlugin):
                         return
                     volume = self._resolve_child_command_int(item, 'snippet_volume', -1)
                     fade_in = self._resolve_child_command_bool(item, 'snippet_fade_in')
-                    sonos_speaker[uid].play_snippet(item(), self._local_webservice_path, self._webservice_url, volume,
+                    sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume,
                                                     fade_in)
 
     def _resolve_child_command_str(self, item: Item, child_command, default_value="") -> str:
@@ -2562,6 +2647,8 @@ class Sonos(SmartPlugin):
         for child in item.return_children():
             if self.has_iattr(child.conf, 'sonos_attrib'):
                 if self.get_iattr_value(child.conf, 'sonos_attrib') == child_command:
+                    if child() == "":
+                        return default_value
                     return child()
         return default_value
 
@@ -2658,8 +2745,8 @@ class Sonos(SmartPlugin):
 
     def _discover(self) -> None:
         """
-        Discover Sonos speaker in the network. If the plugin parameter 'speaker_ips' no discover package is sent over
-        the network.
+        Discover Sonos speaker in the network. If the plugin parameter 'speaker_ips' has IP addresses, no discover
+        package is sent over the network.
         :rtype: None
         """
         handled_speaker = {}

@@ -10,6 +10,7 @@
 #
 #  This plugin is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
+#  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
@@ -33,7 +34,9 @@ import socket
 import sys
 import threading
 import os
+
 import lib.config
+import lib.daemon
 from lib.logic import Logics
 import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.model.smartplugin import SmartPlugin
@@ -42,6 +45,11 @@ from .utils import *
 import lib.item_conversion
 
 class BackendServices:
+
+
+    def __init__(self):
+
+        self.logger.info("BackendServices __init__ {}".format(''))        
 
 
     # -----------------------------------------------------------------------------------
@@ -53,14 +61,14 @@ class BackendServices:
         """
         shows a page with info about some services needed by smarthome
         """
-        knxd_service = self.get_process_info("systemctl status knxd.service")
-        smarthome_service = self.get_process_info("systemctl status smarthome.service")
-        knxd_socket = self.get_process_info("systemctl status knxd.socket")
+        knxd_service = get_process_info("systemctl status knxd.service")
+        smarthome_service = get_process_info("systemctl status smarthome.service")
+        knxd_socket = get_process_info("systemctl status knxd.socket")
 
         knxdeamon = ''
-        if self.get_process_info("ps cax|grep eibd") != '':
+        if get_process_info("ps cax|grep eibd") != '':
             knxdeamon = 'eibd'
-        if self.get_process_info("ps cax|grep knxd") != '':
+        if get_process_info("ps cax|grep knxd") != '':
             if knxdeamon != '':
                 knxdeamon += ' and '
             knxdeamon += 'knxd'
@@ -68,26 +76,54 @@ class BackendServices:
         sql_plugin = False
         database_plugin = []
 
-        for x in self._sh._plugins:
-            if x.__class__.__name__ == "SQL":
-                sql_plugin = True
-                break
-            elif x.__class__.__name__ == "Database":
-                database_plugin.append(x.get_instance_name())
+        if self._sh.plugins is not None:
+            # Only, if plugins are in initialized
+            for x in self._sh.plugins:  # TO DO: umstellen auf plugin api
+                if x.__class__.__name__ == "SQL":
+                    sql_plugin = True
+                    break
+                elif x.__class__.__name__ == "Database":
+                    database_plugin.append(x.get_instance_name())
 
-        return self.render_template('services.html', 
+        service_ctrl = os_service_controllable()
+        shng_service = False
+        if service_ctrl:
+            shng_service = os_service_status('smarthome')
+
+        return self.render_template('services.html',
+                                    service_ctrl=service_ctrl, shng_service=shng_service,
                                     knxd_service=knxd_service, knxd_socket=knxd_socket, knxdeamon=knxdeamon,
                                     smarthome_service=smarthome_service, lang=get_translation_lang(), 
                                     sql_plugin=sql_plugin, database_plugin=database_plugin)
 
 
     @cherrypy.expose
+    def services_shng_restart_html(self):
+        """
+        Restart shNG service and reshow services page
+        """
+        if os_service_status('smarthome'):
+            os_service_restart('smarthome')
+            result = "<strong>" + translate('Restart des Service sollte erfolgen - Bitte warten') + "</strong>"
+        else:
+            pid = lib.daemon.read_pidfile(self.plugin.get_sh()._pidfile)
+            os_restart_shng(pid)
+            result = "<strong>" + translate('Restart des Prozesses sollte erfolgen - Bitte warten') + "</strong>"
+
+        result = result.replace('\n', '<br>')
+        return self.render_template('services_shng_restart.html',
+                                    msg=result)
+        # return '<meta http-equiv="Refresh" content="0; url=./services.html/" />'
+
+
+    @cherrypy.expose
     def reload_translation_html(self, lang=''):
         if lang != '':
             load_translation(lang)
+            self.plugin.get_sh().set_defaultlanguage(lang)
         else:
             load_translation(get_translation_lang())
-        return self.index()
+        return self.main_html()
 
     @cherrypy.expose
     def reboot(self):
@@ -104,26 +140,6 @@ class BackendServices:
             return True
         except ValueError:
             return False
-
-    @cherrypy.expose
-    def db_dump_html(self, plugin):
-        """
-        returns the smarthomeNG sqlite database as download
-        """
-        if (plugin == "sqlite_old"):
-            self._sh.sql.dump('%s/var/db/smarthomedb.dump' % self._sh_dir)
-            mime = 'application/octet-stream'
-            return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb.dump" % self._sh_dir, mime,
-                                                  "%s/var/db/" % self._sh_dir)
-        elif plugin != "":
-            for x in self._sh._plugins:
-                if isinstance(x, SmartPlugin):
-                    if x.get_instance_name() == plugin:
-                        x.dump('%s/var/db/smarthomedb_%s.dump' % (self._sh_dir, plugin))
-                        mime = 'application/octet-stream'
-                        return cherrypy.lib.static.serve_file("%s/var/db/smarthomedb_%s.dump" % (self._sh_dir, plugin),
-                                                              mime, "%s/var/db/" % self._sh_dir)
-        return
 
     # -----------------------------------------------------------------------------------
 

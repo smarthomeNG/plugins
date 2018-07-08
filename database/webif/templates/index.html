@@ -1,0 +1,50 @@
+{% extends "base_database.html" %}
+
+{% block bodytab1 %}
+<script type="text/javascript" language="javascript">
+	function confirmDelete(url, text) {
+		if (confirm(text)) {
+			window.location.href=url;
+		}
+		return false;
+	}
+</script>
+
+{% if delete_triggered %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Löschauftrag für die Einträge von Item ID') }} {{ item_id }} {{ _('in der Tabelle "log" wurde erfolgreich initiiert!') }}</strong><br/>
+		{{ _('Das Löschen kann noch kurze Zeit dauern, da die Ausführung des Delete Queries erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+
+<div class="mb-2">
+	{{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
+</div>
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>{{ _('Item') }}</th>
+		<th>{{ _('Wert') }}</th>
+		<th>{{ _('Item-ID in der Datenbank') }}</th>
+		<th>{{ _('Aktionen') }}</th>
+	</tr>
+	</thead>
+	{% for item in items %}
+		{% if p.has_iattr(item.conf, 'database') %}
+			<tr>
+				<td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ item() }}</td>
+				<td class="py-1">{{ p.id(item, create=False) }}</td>
+				<td class="py-1">
+					<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
+					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item._path }}';"><i class="fas fa-search"></i></button>
+					<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item._path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
+				</td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+</table>
+{% endblock bodytab1 %}

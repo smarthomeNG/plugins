@@ -27,6 +27,11 @@ import cherrypy
 class BackendScenes:
 
 
+    def __init__(self):
+
+        self.logger.info("BackendScenes __init__ {}".format(''))        
+
+
     # -----------------------------------------------------------------------------------
     #    SCENES
     # -----------------------------------------------------------------------------------
@@ -60,7 +65,7 @@ class BackendScenes:
                     for action in action_list:
                         if not isinstance(action[0], str):
                             action[0] = action[0].id()
-                    action_dict['action_list'] = sorted(action_list)
+                    action_dict['action_list'] = action_list
 
                     disp_action_list.append(action_dict)
                 scene_dict['values'] = disp_action_list

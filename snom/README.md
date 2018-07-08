@@ -5,14 +5,15 @@ This plugin has no requirements or dependencies.
 
 ## Configuration
 
-### plugin.conf
-```
-[snom]
-    class_name = Snom
-    class_path = plugins.snom
-    # phonebook = None
-    # username = None
-    # password = None
+### plugin.yaml
+
+```yaml
+snom:
+    class_name: Snom
+    class_path: plugins.snom
+    # phonebook: None
+    # username: None
+    # password: None
 ```
 
 #### Attributes
@@ -21,7 +22,7 @@ This plugin has no requirements or dependencies.
   * `username`/`password`: login information for _all_ snom phones
   * `phonebook`: path to a xml phonebook file e.g. '/var/www/voip/phonebook.xml'
 
-### items.conf
+### items.yaml
 
 #### snom_host
 With 'snom_host' you specify the host name or IP address of a snom phone.
@@ -29,21 +30,24 @@ With 'snom_host' you specify the host name or IP address of a snom phone.
 #### snom_key
 This is the key name of an item in the snom configuration. You have to specify the 'snom_host' in the same or the item above to make the link to the phone.
 
-```
-[phone]
-    snom_host = 10.0.0.4
-    [[display]]
-        type = str
-        snom_key = user_realname1
-    [[mailbox]]
-        type = num
-        ast_box = 33
-    [[hook]]
-        type = bool
-        nw = yes
+```yaml
+phone:
+    snom_host: 10.0.0.4
+
+    display:
+        type: str
+        snom_key: user_realname1
+
+    mailbox:
+        type: num
+        ast_box: 33
+
+    hook:
+        type: bool
+        nw: 'yes'
 ```
 
-### logic.conf
+### logic.yaml
 
 Currently there is no logic configuration for this plugin.
 

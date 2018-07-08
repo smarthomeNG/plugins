@@ -2,39 +2,23 @@
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-```
-[sql]
-    class_name = SQL
-    class_path = plugins.sqlite_visu2_8
-#   path = None
-#   dumpfile = /tmp/smarthomedb.dump
-```
+### plugin.yaml
 
 ```yaml
 sql:
     class_name: SQL
     class_path: plugins.sqlite_visu2_8
-    # path = None
-    # dumpfile = /tmp/smarthomedb.dump
+    # path: None
+    # dumpfile: /tmp/smarthomedb.dump
 ```
 
 The `path` attribute allows you to specify the of the SQLite database.
 
 If you specify a `dumpfile`, SmartHomeNG dumps the database every night into this file.
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 For num and bool items, you could set the attribute: `sqlite`. By this you enable logging of the item values and SmartHomeNG set the item to the last know value at start up (equal cache = yes).
-
-```
-[outside]
-    name = Outside
-    [[temperature]]
-        name = Temperatur
-        type = num
-        sqlite = yes
-```
 
 ```yaml
 outside:
@@ -81,7 +65,7 @@ The time point could be specified with `<number><interval>`, where interval coul
    * `y`: year
 
 e.g.
-```yaml
+```python
 sh.outside.temperature.db('min', '1d')  # returns the minimum temperature within the last day
 sh.outside.temperature.db('avg', '2w', '1w')  # returns the average temperature of the week before last week
 ```

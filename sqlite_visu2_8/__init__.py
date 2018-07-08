@@ -25,6 +25,9 @@ import functools
 import time
 import threading
 import sqlite3
+
+from lib.item import Items
+from lib.shtime import Shtime
 from lib.model.smartplugin import SmartPlugin
 
 class SQL(SmartPlugin):
@@ -55,6 +58,8 @@ class SQL(SmartPlugin):
         self.logger = logging.getLogger(__name__)
 #       sqlite3.register_adapter(datetime.datetime, self._timestamp)
         self._sh = smarthome
+        self.items = Items.get_instance()
+        self.shtime = Shtime.get_instance()
         self.connected = False
         self._buffer = {}
         self._buffer_lock = threading.Lock()
@@ -146,7 +151,8 @@ class SQL(SmartPlugin):
                     prev_change = self._datetime(prev_change[0])
                     item.set(value, 'SQLite', prev_change=prev_change, last_change=last_change)
             else:
-                last_change = self._timestamp(self._sh.now())
+#                last_change = self._timestamp(self._sh.now())
+                last_change = self._timestamp(self.shtime.now())
                 item._sqlite_last = last_change
                 self._execute("INSERT OR IGNORE INTO cache VALUES('{}',{},{})".format(item.id(), last_change, float(item())))
             self._buffer[item] = []
@@ -186,7 +192,8 @@ class SQL(SmartPlugin):
         self._execute("UPDATE OR IGNORE cache SET _start={}, _value={} WHERE _item='{}';".format(_end, float(item()), item.id()))
 
     def _datetime(self, ts):
-        return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
+#        return datetime.datetime.fromtimestamp(ts / 1000, self._sh.tzinfo())
+        return datetime.datetime.fromtimestamp(ts / 1000, self.shtime.tzinfo())
 
     def _execute(self, *query):
         if not self._fdb_lock.acquire(timeout=2):
@@ -234,7 +241,8 @@ class SQL(SmartPlugin):
             return int(frame)
         except:
             pass
-        dt = self._sh.now()
+#        dt = self._sh.now()
+        dt = self.shtime.now()
         ts = int(time.mktime(dt.timetuple()) * 1000 + dt.microsecond / 1000)
         if frame == 'now':
             fac = 0
@@ -300,7 +308,8 @@ class SQL(SmartPlugin):
         try:
             self.logger.debug("SQLite: pack database")
             for entry in self.periods:
-                now = self._timestamp(self._sh.now())
+#                now = self._timestamp(self._sh.now())
+                now = self._timestamp(self.shtime.now())
                 period, granularity = entry
                 period = int(now - period * 24 * 3600 * 1000)
                 granularity = int(granularity * 3600 * 1000)
@@ -333,7 +342,8 @@ class SQL(SmartPlugin):
                 step = iend - istart
         reply = {'cmd': 'series', 'series': None, 'sid': sid}
         reply['params'] = {'update': True, 'item': item, 'func': func, 'start': iend, 'end': end, 'step': step, 'sid': sid}
-        reply['update'] = self._sh.now() + datetime.timedelta(seconds=int(step / 1000))
+#        reply['update'] = self._sh.now() + datetime.timedelta(seconds=int(step / 1000))
+        reply['update'] = self.shtime.now() + datetime.timedelta(seconds=int(step / 1000))
         where = " from num WHERE _item='{0}' AND _start + _dur >= {1} AND _start <= {2} GROUP by CAST((_start / {3}) AS INTEGER)".format(item, istart, iend, step)
         if func == 'avg':
             query = "SELECT MIN(_start), ROUND(SUM(_avg * _dur) / SUM(_dur), 2)" + where + " ORDER BY _start ASC"
@@ -345,7 +355,8 @@ class SQL(SmartPlugin):
             query = "SELECT MIN(_start), ROUND(SUM(_on * _dur) / SUM(_dur), 2)" + where + " ORDER BY _start ASC"
         else:
             raise NotImplementedError
-        _item = self._sh.return_item(item)
+#        _item = self._sh.return_item(item)
+        _item = self.items.return_item(item)
         if self._buffer[_item] != [] and end == 'now':
             self._insert(_item)
         tuples = self._fetchall(query)
@@ -384,7 +395,8 @@ class SQL(SmartPlugin):
         else:
             self.logger.warning("Unknown export function: {0}".format(func))
             return
-        _item = self._sh.return_item(item)
+#        _item = self._sh.return_item(item)
+        _item = self.items.return_item(item)
         if self._buffer[_item] != [] and end == 'now':
             self._insert(_item)
         tuples = self._fetchall(query)

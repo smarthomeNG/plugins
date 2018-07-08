@@ -7,37 +7,42 @@ System-Settings-Service "Allow programs on other systems to control XBMC" enable
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-```
-[xbmc]
-    class_name = XBMC
-    class_path = plugins.xbmc
+```yaml
+xbmc:
+    class_name: XBMC
+    class_path: plugins.xbmc
 ```
 
-### items.conf
+### items.yaml
 
-```
-[living]
-    [[xbmc]]
-        type = str
-        xbmc_host = xbmc.home
+```yaml
+living:
+
+    xbmc:
+        type: str
+        xbmc_host: xbmc.home
         # xbmc_port = 9090
-        xbmc_listen = state
-        [[[title]]]
-            type = str
-            xbmc_listen = title
-        [[[media]]]
-            type = str
-            xbmc_listen = media
-        [[[volume]]]
-            type = num
-            xbmc_listen = volume
-            xbmc_send = volume
-        [[[mute]]]
-            type = bool
-            xbmc_listen = mute
-            xbmc_send = mute
+        xbmc_listen: state
+
+        title:
+            type: str
+            xbmc_listen: title
+
+        media:
+            type: str
+            xbmc_listen: media
+
+        volume:
+            type: num
+            xbmc_listen: volume
+            xbmc_send: volume
+
+        mute:
+            type: bool
+            xbmc_listen: mute
+            xbmc_send: mute
 ```
 
 #### xbmc_host
@@ -62,7 +67,7 @@ The following `xbmc_send` attributes could be defined to send changes to the sys
    * `mute` a bool flag
 
 
-### logic.conf
+### logic.yaml
 
 Nothing so far
 
@@ -73,7 +78,7 @@ This plugin provides the function to send notification messages to xbmc.
 The picture attribute is optional.
 
 ```python
-sh.xbmc.notify_all('Phone', 'Sister in law calling', 'http://smarthome.local/img/phone.png') 
+sh.xbmc.notify_all('Phone', 'Sister in law calling', 'http://smarthome.local/img/phone.png')
 # or for a dedicated xbmc
 sh.living.xbmc.notify('Door', 'Ding Dong')
 ```

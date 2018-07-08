@@ -7,18 +7,36 @@ plugin:
         en: 'Access to data from SMA Energy Meter network multicast'
     maintainer: psilo909
     tester: psilo909
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    keywords: smart meter, power consumption
+    documentation: http://smarthomeng.de/user/plugins_doc/config/sma_em.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1030610-sma_em-plugin
 
-    version: 1.3.0.1               # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.5.0.3               # Plugin version
+    sh_minversion: 1.4c            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: SMA_EM              # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    serial:
+        type: str
+        mandatory: True
+        description:
+            de: 'Seriennummer des SMA Energy Meters.'
+            en: 'Serial of the SMA Energy Meter.'
+    time_sleep:
+        type: int
+        default: 5
+        description:
+            de: 'Zeit in Sekunden, die nach einem empfangenen Multicast (= Datensatz) gewartet werden soll. Default: 5.'
+            en: 'The time in seconds to sleep after a multicast was received. Default: 5.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    sma_em_data_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'Datentyp. Folgende Werte sind möglich: pregard, pregardcounter, psurplus, psurpluscounter, sregard, sregardcounter, ssurplus, ssurpluscounter, qregard, qregardcounter, qsurplus, qsurpluscounter, cosphi, p1regard, p1regardcounter, p1surplus, p1surpluscounter, s1regard, s1regardcounter, s1surplus, s1surpluscounter, q1regard, q1regardcounter, q1surplus, q1surpluscounter, v1, thd1, cosphi1, p2regard, p2regardcounter, p2surplus, p2surpluscounter, s2regard, s2regardcounter, s2surplus, s2surpluscounter, q2regard, q2regardcounter, q2surplus, q2surpluscounter, v2, thd2, cosphi2, p3regard, p3regardcounter, p3surplus, p3surpluscounter, s3regard, s3regardcounter, s3surplus, s3surpluscounter, q3regard, q3regardcounter, q3surplus, q3surpluscounter, v3, thd3, cosphi3.'
+            en: 'Datentyp. The following values are possible: pregard, pregardcounter, psurplus, psurpluscounter, sregard, sregardcounter, ssurplus, ssurpluscounter, qregard, qregardcounter, qsurplus, qsurpluscounter, cosphi, p1regard, p1regardcounter, p1surplus, p1surpluscounter, s1regard, s1regardcounter, s1surplus, s1surpluscounter, q1regard, q1regardcounter, q1surplus, q1surpluscounter, v1, thd1, cosphi1, p2regard, p2regardcounter, p2surplus, p2surpluscounter, s2regard, s2regardcounter, s2surplus, s2surpluscounter, q2regard, q2regardcounter, q2surplus, q2surpluscounter, v2, thd2, cosphi2, p3regard, p3regardcounter, p3surplus, p3surpluscounter, s3regard, s3regardcounter, s3surplus, s3surpluscounter, q3regard, q3regardcounter, q3surplus, q3surpluscounter, v3, thd3, cosphi3.'

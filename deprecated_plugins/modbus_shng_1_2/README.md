@@ -6,19 +6,19 @@ Not specified so far but the ``pymodbus`` module seems to be needed
 
 ## Supported Hardware
 
-Waterkotte Sole-WP with RTU Modbus 
+Waterkotte Sole-WP with RTU Modbus
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-```
-[modbus]
-   class_name = Modbus
-   class_path = plugins.modbus
-   serialport = 
-   # slave_address = 1
-   # update_cycle = 30
+```yaml
+modbus:
+    class_name: Modbus
+    class_path: plugins.modbus
+    serialport: '<yourporthere>'
+    # slave_address = 1
+    # update_cycle = 30
 ```
 
 The ``serialport`` needs to be given for communication with the modbus device.
@@ -26,7 +26,7 @@ The ``serialport`` needs to be given for communication with the modbus device.
 Optional are ``slave_address`` and ``update_cycle`` for the query time in seconds
 
 
-### items.conf
+### items.yaml
 
 There are three attributes:
 
@@ -48,16 +48,15 @@ Mask to isolate date
 
 Please provide an item configuration with every attribute and usefull settings.
 
-```
-# items/my.conf
+```yaml
+someroom:
 
-[someroom]
-    [[mydevice]]
-        type = bool
-        my_attr = setting
+    mydevice:
+        type: bool
+        my_attr: setting
 ```
 
-### logic.conf
+### logic.yaml
 If your plugin support item triggers as well, please describe the attributes like the item attributes.
 
 

@@ -8,26 +8,28 @@ In manager.config its required to enable at least:
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-The plugin needs the username and password of the AMI and a IP and port address if asterisk does not run on localhost. 
+The plugin needs the username and password of the AMI and a IP and port address if asterisk does not run on localhost.
+
+```yaml
+ast:
+    class_name: Asterisk
+    class_path: plugins.asterisk
+    username: admin
+    password: secret
+    host: 127.0.0.1    # default
+    port: 5038    # default
 
 ```
-[ast]
-    class_name = Asterisk
-    class_path = plugins.asterisk
-    username = admin
-    password = secret
-    host = 127.0.0.1 # default
-    port = 5038 # default
-```
 
-### items.conf
+### items.yaml
 
 #### ast_dev
 
-Its possible to specify the ``ast_dev`` attribute to an bool item in items.conf. The argument could be a number or string and corrospond to thhe asterisk device configuration.
-E.g. ``2222`` for the following device in asterisk sip.conf:
+It is possible to specify the ``ast_dev`` attribute to an bool item in items.yaml.
+The argument could be a number or string and correspond to the asterisk device configuration.
+E.g. ``2222`` for the following device in asterisk ``sip.conf``:
 
 ```
 [2222]
@@ -41,32 +43,35 @@ The mailbox number of this phone. It will be set to the number of new messages i
 #### ast_db
 Specify the database entry which will be updated at an item change.
 
-In items.conf:
+In items.yaml:
+
+```yaml
+office:
+
+    fon:
+        type: bool
+        ast_dev: 2222
+        ast_db: active/office
+
+        box:
+            type: num
+            ast_box: 22
+```
+
+Calling the '2222' from sip client or making a call from it, item ``office.fon`` will be set to True.
+After finishing the call, it will be set to False.
+
+
+### logic.yaml
+
+It is possible to specify the `ast_userevent` keyword to every logic in logic.yaml.
 
 ```
-[office]
-    [[fon]]
-        type = bool
-        ast_dev = 2222
-        ast_db = active/office
-        [[[box]]]
-            type = num
-            ast_box = 22
-```
+logic1:
+    ast_userevent: Call
 
-Calling the '2222' from sip client or making a call from it, ``office.fon`` will be set to True. After finishing the call, it will be set to False.
-
-
-### logic.conf
-
-It is possible to specify the `ast_userevent` keyword to every logic in logic.conf.
-
-```
-[logic1]
-    ast_userevent = Call
-
-[logic2]
-    ast_userevent = Action
+logic2:
+    ast_userevent: Action
 ```
 
 In the asterisk extensions.conf ``exten => _X.,n,UserEvent(Call,Source: ${CALLERID(num)},Value: ${CALLERID(name)})`` would trigger 'logic1' every time, this UserEvent is sent.

@@ -13,23 +13,27 @@ git clone https://github.com/rthill/plex.git
 
 ## Configuration
 
-### plugin.conf
-```
-[plex]
-    class_name = Plex
-    class_path = plugins.plex
-    displaytime = 6500 # Default is 6000 (6 sec)
+### plugin.yaml
+
+```yaml
+plex:
+    class_name: Plex
+    class_path: plugins.plex
+    displaytime: 6500 # Default is 6000 (6 sec)
 ```
 
-### items.conf
+### items.yaml
 ```
-[mm]
-    [[gf]]
-        [[[living]]]
-            [[[[plex]]]]
-                type = foo
-                plex_host = rasplex.plugin.lu
-                plex_port = 3005 # Optional: default is 3005
+mm:
+
+    gf:
+
+        living:
+
+            plex:
+                type: foo
+                plex_host: rasplex.plugin.lu
+                plex_port: 3005    # Optional: default is 3005
 ```
 
 ## Usage
@@ -47,4 +51,3 @@ sh.plex.notify('Door', 'Garage door is open for 1 hour', 'warning')
 # Error notification
 sh.plex.notify('Logic XYZ', 'Execution failed ....', 'error')
 ```
-

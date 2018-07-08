@@ -9,19 +9,9 @@ No special requirements.
 
 ## Configuration
 
-### plugin.conf (deprecated) / yaml
+### plugin.yaml
 
 Use the plugin configuration to configure the in-memory logs.
-
-```
-[memlog]
-    class_name = MemLog
-    class_path = plugins.memlog
-    name = alert
-#    mappings = time | thread | level | message
-#    maxlen = 50
-#    items = first.item.now | second.item.thread.info | third.item.level | fourth.item.msg
-```
 
 ```
 memlog:
@@ -41,7 +31,7 @@ memlog:
 #      - fourth.item.msg
 ```
 
-This will register a in-memory log with the name "alert". This can be used to attach 
+This will register a in-memory log with the name "alert". This can be used to attach
 to items.
 
 #### name attribute
@@ -69,7 +59,7 @@ be written using the list of items configured in this attribute as log values.
 When this is not configured, the default mapping values will be used the associated
 item's value will be logged.
 
-### items.conf
+### items.yaml
 
 The following attributes can be used.
 
@@ -82,23 +72,14 @@ the log. Everything is logged with 'INFO' level.
 
 Simple item logging:
 
-```
-# .conf (deprecated)
-[some]
-    [[item]]
-        type = str
-        memlog = alert
-```
-
-```
-# .yaml
+```yaml
 some:
     item:
         type: str
         memlog: alert
 ```
 
-### logic.conf
+### logic.yaml
 
 #### memlog
 
@@ -122,8 +103,8 @@ logic invocation/trigger.
 
 Example:
 
-```
-memlog_message = The logic {logic.name} was triggered!
+```yaml
+memlog_message: The logic {logic.name} was triggered!
 ```
 
 ## Methods
@@ -145,4 +126,3 @@ This log the given message in `msg` parameter with the default log level.
 
 This logs the message in `msg` parameter with the given log level specified in `lvl`
 parameter.
-

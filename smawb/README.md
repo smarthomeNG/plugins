@@ -17,52 +17,52 @@ This PlugIn is based on the ```SunnyWebBox.py``` Python-Script (https://github.c
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
-You have to just simply copy the following into your plugin.conf file. The ip-address/hostname the SMA-Sunny-WebBox(es) has to be setup later in the items.conf!
+You have to just simply copy the following into your plugin.yaml file. The ip-address/hostname the SMA-Sunny-WebBox(es) has to be setup later in the items.yaml!
 
 ```
-[smawb]
-    class_name = SMAWB
-    class_path = plugins.smawb
-#    smawb_polling_cycle = 10
+smawb:
+    class_name: SMAWB
+    class_path: plugins.smawb
+    # smawb_polling_cycle: 10
 ```
 
 Description of the optional attribute:
 
 * __smawb_polling_cycle__: the number of seconds between polling data from all configured SMA-Sunny-WebBoxes (default: 10 sec)
 
-### items.conf
+### items.yaml
 
 The most item-fields of this plugin are mandatory. So you should always use all of the fields showed in the following example.
 
 #### Example
 
-```
-# items/sma_sunny_webboxes.conf
-[SMA_WebBox]
-    type = str
-    smawb_host = 192.168.0.123
-#    smawb_password = ''
-    [[Overview]]
-        type = str
-        smawb_key = OVERVIEW
-        [[[GriPwr]]]
-            type = str
-            smawb_data = GriPwr
-        [[[GriEgyTdy]]]
-            type = num
-            smawb_data = GriEgyTdy
-    [[INV1]]
-        type = str
-        smawb_key = WRTL1ECD:2123456223
-        [[[A_Ms_Watt]]]
-            type = str
-            smawb_data = A.Ms.Watt
-        [[[B_Ms_Watt]]]
-            type = num
-            smawb_data = B.Ms.Watt
-        ...
+```yaml
+SMA_WebBox:
+    type: str
+    smawb_host: 192.168.0.123
+
+    # smawb_password = ''
+    Overview:
+        type: str
+        smawb_key: OVERVIEW
+
+        GriPwr:
+            type: str
+            smawb_data: GriPwr
+
+        GriEgyTdy:
+            type: num
+            smawb_data: GriEgyTdy
+
+    INV1:
+        type: str
+        smawb_key: WRTL1ECD:2123456223
+
+        A_Ms_Watt:
+            type: str
+            smawb_data: A.Ms.Watt
 ```
 
 Description of the attributes:
@@ -77,44 +77,53 @@ Hints:
 
 #### Example for multiple SMA-Sunny-WebBoxes
 
-```
-# items/sma_sunny_webboxes.conf
-[SMA_WebBox_1]
-    type = str
-    smawb_host = 192.168.0.123
-#    smawb_password = ''
-    [[Overview]]
-        type = str
-        smawb_key = OVERVIEW
-        [[[GriPwr]]]
-            type = str
-            smawb_data = GriPwr
-        ...
-    [[INV1]]
-        type = str
-        smawb_key = WRTL1ECD:2123456223
-        [[[A_Ms_Watt]]]
-            type = str
-            smawb_data = A.Ms.Watt
-        ...
-[SMA_WebBox_2]
-    type = str
-    smawb_host = 192.168.0.124
-#    smawb_password = ''
-    [[Overview]]
-        type = str
-        smawb_key = OVERVIEW
-        [[[GriPwr]]]
-            type = str
-            smawb_data = GriPwr
-        ...
-    [[INV1]]
-        type = str
-        smawb_key = WRTL1ECD:2522222222
-        [[[A_Ms_Watt]]]
-            type = str
-            smawb_data = A.Ms.Watt
-        ...
+```yaml
+SMA_WebBox_1:
+    type: str
+    smawb_host: 192.168.0.123
+
+    # smawb_password = ''
+    Overview:
+        type: str
+        smawb_key: OVERVIEW
+
+        GriPwr:
+            type: str
+            smawb_data: GriPwr
+
+        # '...'
+    INV1:
+        type: str
+        smawb_key: WRTL1ECD:2123456223
+
+        A_Ms_Watt:
+            type: str
+            smawb_data: A.Ms.Watt
+
+    # '...'
+
+SMA_WebBox_2:
+    type: str
+    smawb_host: 192.168.0.124
+
+    # smawb_password = ''
+    Overview:
+        type: str
+        smawb_key: OVERVIEW
+
+        GriPwr:
+            type: str
+            smawb_data: GriPwr
+
+        # '...'
+    INV1:
+        type: str
+        smawb_key: WRTL1ECD:2522222222
+
+        A_Ms_Watt:
+            type: str
+            smawb_data: A.Ms.Watt
+            # '...'
 ```
 
 ## SmartVisu

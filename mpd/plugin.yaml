@@ -5,21 +5,40 @@ plugin:
     description:
         de: 'Music Player Deamon (MPD) Unterstützung'
         en: 'Music Player Deamon (MPD) support'
-    maintainer: '? (mknx)'
-#    tester: efgh                   # Who tests this plugin?
-#    keywords: kwd1 kwd2            # keywords, where applicable
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mpd/README.md # url of documentation (wiki) page
+    maintainer: 'E3EAT'
+#    tester:                        # Who tests this plugin?
+    keywords: MPD Music             # keywords, where applicable
+#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mpd/...md # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:
-#    version: 1.3.3                 # Plugin version
-#    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.4.1                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    multi_instance: False
+    multi_instance: True
     classname: MPD                 # class containing the plugin
 
-#parameters:
+parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
-#item_attributes:
-    # Definition of item attributes defined by this plugin
-    
+
+    host:
+        type: str
+        mandatory: True
+        description:
+            de: 'IP oder Hostname des MPD'
+            en: 'IP or hostname of the MPD'
+
+    port:
+        type: int
+        mandatory: False
+        default: 6600
+        description:
+            de: 'Der Port auf dem MPD lauscht.'
+            en: 'The port that is used by MPD.'
+
+    cycle:
+        type: int
+        mandatory: False
+        default: 2
+        description:
+            de: 'Gibt an nach wie vielen Sekunden die Statusitems aktualisiert werden'
+            en: 'The time interval that will be used for update the status items'
