@@ -143,8 +143,8 @@ living_room:
         knx_dpt: 9
         knx_send: 1/1/6
         knx_reply: 1/1/6
-        ow_id: 28.BBBBB20000    # see 1-Wire plugin
-        ow_sensor: temperature    # see 1-Wire plugin
+        ow_addr: 28.BBBBB20000    # see 1-Wire plugin
+        ow_sensor: T              # see 1-Wire plugin
 
     window:
         type: bool
