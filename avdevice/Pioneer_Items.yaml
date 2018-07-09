@@ -26,9 +26,7 @@ Pioneer:
         type: num
         visu_acl: rw
         avdevice_zone1@pioneer: speakers
-        avdevice_zone1_depend@pioneer:
-        - volume > 100,b
-        - power, a
+        avdevice_zone1_depend@pioneer: power
 
     SpeakerA:
         knx_init: 1/4/2
@@ -36,7 +34,8 @@ Pioneer:
         type: bool
         visu_acl: rw
         avdevice_zone1_speakers@pioneer: 1
-        name: Musik Saunaraum
+        avdevice_zone1_depend@pioneer: power
+        name: Musik Bad
         influxdb: 'yes'
         database@nas: 'yes'
 
@@ -46,7 +45,8 @@ Pioneer:
         type: bool
         visu_acl: rw
         avdevice_zone1_speakers@pioneer: 2
-        name: Musik Bad
+        avdevice_zone1_depend@pioneer: power
+        name: Musik Sauna
         influxdb: 'yes'
         database@nas: 'yes'
 
@@ -54,6 +54,7 @@ Pioneer:
         type: bool
         visu_acl: rw
         avdevice_zone1@pioneer: power
+        avdevice_zone1_depend@pioneer: init
         influxdb: 'yes'
         database@nas: 'yes'
 
@@ -61,13 +62,13 @@ Pioneer:
         type: bool
         visu_acl: rw
         avdevice_zone1@pioneer: mute
-        avdevice_zone2_depend@pioneer: volume > 30
-        avdevice_zone1_depend@pioneer: volume > 100
+        avdevice_zone1_depend@pioneer: power
 
     Volume:
         type: num
         visu_acl: rw
         avdevice_zone1@pioneer: volume
+        avdevice_zone1_depend@pioneer: power
         cache: 'True'
 
         Fading:
@@ -80,7 +81,9 @@ Pioneer:
         enforce_updates: 'yes'
         knx_listen: 3/4/8
         knx_dpt: 1
-        avdevice_zone1_depend@pioneer: volume > 0
+        avdevice_zone1_depend@pioneer:
+          - power, a
+          - volume < 160, b
 
     VolumeDown:
         type: bool
@@ -89,7 +92,9 @@ Pioneer:
         enforce_updates: 'yes'
         knx_listen: 3/4/7
         knx_dpt: 1
-        avdevice_zone1_depend@pioneer: volume > 0
+        avdevice_zone1_depend@pioneer:
+          - volume > 10, b
+          - power, a
 
     VolumeLow:
         type: bool
@@ -98,7 +103,7 @@ Pioneer:
         knx_listen: 3/4/9
         knx_dpt: 1
         avdevice_zone1@pioneer: volumelow
-        avdevice_zone1_depend@pioneer: volume > 0
+        avdevice_zone1_depend@pioneer: power
 
     VolumeHigh:
         type: bool
@@ -107,7 +112,7 @@ Pioneer:
         knx_listen: 3/4/10
         knx_dpt: 1
         avdevice_zone1@pioneer: volumehigh
-        avdevice_zone1_depend@pioneer: volume > 0
+        avdevice_zone1_depend@pioneer: power
 
     Source:
         type: foo
@@ -134,9 +139,7 @@ Pioneer:
         type: foo
         visu_acl: ro
         avdevice_zone1@pioneer: playingmode
-        avdevice_zone1_depend@pioneer:
-            - power,a
-            - volume > 100,b
+        avdevice_zone1_depend@pioneer: power
 
     Bass:
         type: num
@@ -194,10 +197,7 @@ Pioneer:
         type: str
         visu_acl: ro
         avdevice_zone0@pioneer: display
-        avdevice_zone1_depend@pioneer:
-            - power
-            - Tone = True
-            - mute = False
+        avdevice_zone1_depend@pioneer: power
         avdevice_zone2_depend@pioneer: power
 
     HDMI:
@@ -211,21 +211,31 @@ Pioneer:
         type: str
         visu_acl: ro
         avdevice_zone0@pioneer: title
+        avdevice_zone1_depend@pioneer:
+          - power, a
+          - input = 26, b
 
     Station:
         type: str
         visu_acl: ro
         avdevice_zone0@pioneer: station
+        avdevice_zone1_depend@pioneer:
+          - power, a
+          - input = 26, b
 
     Genre:
         type: str
         visu_acl: ro
         avdevice_zone0@pioneer: genre
+        avdevice_zone1_depend@pioneer:
+          - power, a
+          - input = 26, b
 
     Power2:
         type: bool
         visu_acl: rw
         avdevice_zone2@pioneer: power
+        avdevice_zone2_depend@pioneer: init
 
     Source2:
         type: foo

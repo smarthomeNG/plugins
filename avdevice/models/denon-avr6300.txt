@@ -10,8 +10,8 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 0; right; ; MNCRT; ; ; W
 0; enter; ; MNENT; ; ; W
 0; info; ; MNINF; ; ; W
-0; menu; on; MNMEN ON; MNMEN?; MNMEN ON; RW
-0; menu; off; MNMEN OFF; MNMEN?; MNMEN OFF; RW
+0; menu; on; MNMEN ON; MNMEN?; MNMEN **; RW
+0; menu; off; MNMEN OFF; MNMEN?; MNMEN ***; RW
 # Firmware response often hast problems. Not recommended to implement this command.
 #0; firmware; ; ; UGIDN; UGIDN ************|UGIDN **; R
 # The display command is only working with receivers without HEOS
