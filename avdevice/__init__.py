@@ -1129,13 +1129,14 @@ class AVDevice(SmartPlugin):
                                 expectedvalue = eval(expectedvalue.lstrip('0'))
                             except Exception:
                                 pass
-                            groupcount[group] += 1 if (dependvalue == expectedvalue and compare == '==') or \
-                                                      (dependvalue >= expectedvalue and compare == '>=') or \
-                                                      (dependvalue <= expectedvalue and compare == '<=') or \
-                                                      (dependvalue < expectedvalue and compare == '<') or \
-                                                      (dependvalue > expectedvalue and compare == '>') or \
-                                                      (not dependvalue == expectedvalue and compare == '!=') \
-                                else 0
+                            if type(dependvalue) == type(expectedvalue):
+                                groupcount[group] += 1 if (dependvalue == expectedvalue and compare == '==') or \
+                                                          (dependvalue >= expectedvalue and compare == '>=') or \
+                                                          (dependvalue <= expectedvalue and compare == '<=') or \
+                                                          (dependvalue < expectedvalue and compare == '<') or \
+                                                          (dependvalue > expectedvalue and compare == '>') or \
+                                                          (not dependvalue == expectedvalue and compare == '!=') \
+                                    else 0
                             if not dep_type == 'checkquery':
                                 try:
                                     dependitems[group][dependitem].append([dependvalue, compare, expectedvalue])
@@ -1144,8 +1145,8 @@ class AVDevice(SmartPlugin):
                         except Exception as err:
                             depending = False
                             self.logger.warning(
-                                "Checking Dependency {}: Adding function {} caused problem: {}.".format(
-                                    self._name, dep_function, err))
+                                    "Checking Dependency {}: Adding primary {} (depending on {}) in {} caused problem: {}.".format(
+                                        self._name, entry['Function'], dep_function, zone, err))
 
                         if dep_type == 'checkquery' and dependitem not in donedependitems:
                             primarycount = sum(groupcount.values())
@@ -1168,13 +1169,28 @@ class AVDevice(SmartPlugin):
                                         expectedvalue = eval(expectedvalue.lstrip('0'))
                                     except Exception:
                                         pass
-                                    groupcount[group] += 1 if (dependvalue == expectedvalue and compare == '==') or \
-                                                              (dependvalue >= expectedvalue and compare == '>=') or \
-                                                              (dependvalue <= expectedvalue and compare == '<=') or \
-                                                              (dependvalue < expectedvalue and compare == '<') or \
-                                                              (dependvalue > expectedvalue and compare == '>') or \
-                                                              (not dependvalue == expectedvalue and compare == '!=') \
-                                        else 0
+                                    for x in self._functions[zone]:
+                                        if self._functions[zone][x][1] == additional['Function']:
+                                            try:
+                                                dict_entry = self._functions[zone][x][10]
+                                                break
+                                            except Exception:
+                                                dict_entry = None
+                                        else:
+                                            dict_entry = None
+                                    expectedvalue = Translate(expectedvalue, dict_entry, self._name, 'parse',
+                                                          self._specialparse).translate() or expectedvalue
+                                    self.logger.log(VERBOSE2,
+                                                    "Checking Dependency {}: Expectedvalue after Translation {}. Dependitem: {}, expected {}".format(
+                                                        self._name, expectedvalue, dependitem, expectedvalue))
+                                    if type(dependvalue) == type(expectedvalue):
+                                        groupcount[group] += 1 if (dependvalue == expectedvalue and compare == '==') or \
+                                                                  (dependvalue >= expectedvalue and compare == '>=') or \
+                                                                  (dependvalue <= expectedvalue and compare == '<=') or \
+                                                                  (dependvalue < expectedvalue and compare == '<') or \
+                                                                  (dependvalue > expectedvalue and compare == '>') or \
+                                                                  (not dependvalue == expectedvalue and compare == '!=') \
+                                            else 0
                                     try:
                                         dependitems[group][dependitem].append([dependvalue, compare, expectedvalue])
                                     except Exception:
@@ -1182,8 +1198,8 @@ class AVDevice(SmartPlugin):
                             except Exception as err:
                                 depending = False
                                 self.logger.warning(
-                                    "Checking Dependency {}: Adding function {} in zone {} caused problem: {}.".format(
-                                        self._name, dep_function, zone, err))
+                                    "Checking Dependency {}: Adding {} (depending on {}) in {} caused problem: {}.".format(
+                                        self._name, entry['Function'], dep_function, zone, err))
                             self.logger.log(VERBOSE2,
                                             "Checking Dependency {}: Zone: {}, Groupcount: {}, Grouptotal: {}. Primarycount: {}".format(
                                                 self._name, additional_zone, groupcount, grouptotal, primarycount))
@@ -1197,8 +1213,9 @@ class AVDevice(SmartPlugin):
                                 queryentry = entry['Query']
                             except Exception as err:
                                 self.logger.log(VERBOSE2,
-                                                "Checking Dependency {}: Dependent functions found for {}. But no Query command. Message: {}".format(
-                                                    self._name, dep_function, err))
+                                                "Checking Dependency {}: Dependent functions found for {}. "
+                                                "But no Query command for {}. Message: {}".format(
+                                                    self._name, dep_function, entry['Function'], err))
                                 queryentry = None
                             if dependtotal == comparetotal:
                                 if primarycount > 0 and queryentry is not None:
