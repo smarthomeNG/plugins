@@ -39,7 +39,6 @@ class WebServices(SmartPlugin):
     def __init__(self, smarthome, mode="all"):
         self.logger = logging.getLogger(__name__)
         self.logger.debug('Backend.__init__')
-        self._sh = smarthome
         self._mode = mode
 
         if not self.init_webinterfaces():
@@ -282,7 +281,8 @@ class SimpleWebServiceInterface(WebServiceInterface):
                         if self.check_set(set_id, self.plugin.get_iattr_value(item.conf, 'webservices_set')):
                             if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
                                 item_data = self.assemble_item_data(item, 'val')
-                                items[item_data['path']] = item_data['value']
+                                if item_data is not None:
+                                    items[item_data['path']] = item_data['value']
                             else:
                                 item_data = self.assemble_item_data(item, 'full')
                                 if item_data is not None:
@@ -306,7 +306,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
@@ -323,7 +323,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                             items[item_data['path']] = item_data
                 return items
         else:
-            item = self.plugin._sh.return_item(item_path)
+            item = self.plugin.get_sh().return_item(item_path)
             if item is None:
                 return {"Error": "No item with item path %s found." % item_path}
 
@@ -361,7 +361,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
@@ -369,7 +369,8 @@ class RESTWebServicesInterface(WebServiceInterface):
                         if self.check_set(set_id, self.plugin.get_iattr_value(item.conf, 'webservices_set')):
                             if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
                                 item_data = self.assemble_item_data(item, 'val')
-                                items[item_data['path']] = item_data['value']
+                                if item_data is not None:
+                                    items[item_data['path']] = item_data['value']
                             else:
                                 item_data = self.assemble_item_data(item, 'full')
                                 if item_data is not None:
@@ -394,7 +395,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
@@ -411,7 +412,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                             items[item_data['path']] = item_data
                 return items
         else:
-            item = self.plugin._sh.return_item(item_path)
+            item = self.plugin.get_sh().return_item(item_path)
 
             if item is None:
                 return {"Error": "No item with item path %s found." % item_path}
