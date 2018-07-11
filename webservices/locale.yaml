@@ -6,7 +6,7 @@ plugin_translations:
     'Alle zugreifbaren Items':         {'de': '=', 'en': 'All Accessible Items'}
 
     # Alternative format for translations of longer texts:
-    'Die folgenden Items und Sets können über die REST und die Simple WebService API gelesen und (bei Items) verändert werden':
+    'Die folgenden Items und Sets können über die REST und die Simple WebService API gelesen und (bei str, num und bool Items) verändert werden':
         de: '='
-        en: 'The following items and sets can be read through the REST and the Simple WebService API. Items can be changed as well'
+        en: 'The following items and sets can be read through the REST and the Simple WebService API. Values of str, num, and bool items can also be changed.'
 
