@@ -14,13 +14,6 @@ Tested with Pioneer (< 2016 models) and Denon AV receivers, Epson projector Oppo
 
 ## Changelog
 
-### v1.3.6
-Major code re-write using multiple modules and classes, minimizing complexity
-Extended "translate" functionality with wildcards
-Implemented optional waiting time between multiple commands
-Improved Keep Command handling
-Several bug fixes and tests
-
 ### v1.3.5
 Implemented possibility to "translate" values
 Improved Wildcard handling
@@ -46,7 +39,6 @@ Bug fixes
 
 ### v1.3.2
 Added and tested full Denon support
-
 
 ## Configuration
 
@@ -111,7 +103,6 @@ avdevice:
 * `responsebuffer`: integer or boolean. Set this to a number to collect quickly received responses in a buffer and evaluate them collectively. The standard value should be fine and prevent responses getting lost. Some receivers might first respond to a command with an update of the display and then with the actual value. The buffer ensures the correct evaluation of the response.
 * `autoreconnect`: boolean. Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command.
 * `update_exclude`: string. Define smarthomeNG callers that should be ignored if they change an item. An example would be on_update or on_change. If you use i.e. on_update on an item using avdevice you might get stuck in an endless loop. Use this attribute to avoid this.
-* `statusquery`: bool. If set to true (default) value will get queried after connection or manual statusupdate. If set to false only those items with depend=init will get updated.
 
 ### items.yaml
 
@@ -373,7 +364,7 @@ Each line holds one specific command that should be sent to the device. You also
 
 * `functiontype`: for boolean functions use "on" or "off". For commands setting a specific value like source, input mode, volume, etc. use "set". To increase or decrease a value use the corresponding "increase" or "decrease". For everything else leave empty!
 
-* `send`: the command to be sent, e.g. power off is "PF" for Pioneer receivers. You can use a pipe "|" if more than one command should be sent. Add an integer or float to specify a pause in seconds between the commands, like "PO|2|PO". That might be necessary for power on commands via RS232, e.g. for Pioneer receivers to power on "PO|PO" forces the plugin to send the "PO" command twice. Use stars "\*" to specify the format of the value to be sent. Let's say your device expects the value for volume as 3 digits, a "\*\*\*VL" ensures that even setting the volume to "5" sends the command as "005VL"
+* `send`: the command to be sent, e.g. power off is "PF" for Pioneer receivers. You can use a pipe "|" if more than one command should be sent. That might be necessary for power on commands via RS232, e.g. for Pioneer receivers to power on "PO|PO" forces the plugin to send the "PO" command twice. Use stars "\*" to specify the format of the value to be sent. Let's say your device expects the value for volume as 3 digits, a "\*\*\*VL" ensures that even setting the volume to "5" sends the command as "005VL"
 
 * `query`: Query command. This is usually useful after setting up the connection or turning on the power. This command gets also used if the plugin doesn't receive the correct answer after sending a command. It is recommended to leave this value empty for all functions except on, off and set.
 
@@ -388,8 +379,6 @@ Each line holds one specific command that should be sent to the device. You also
 * `maxvalue`: You can define the maximum value for setting a specific function. This might be most relevant for setting the volume. If you configure this with "100" and set the volume to "240" (via Visu or CLI) the value will get clamped by the plugin and set to "100".
 
 * `responsetype`: Defines the type of the response value and can be set to "bool", "num" or "str" or a mixture of them (separated by a pipe "|" or comma ","). Most response types are set automatically on startup but you can force a specific type using this value. It is recommended to use the values suggested in the txt files that come with the plugin.
-
-* `translationfile`: If you want to translate a specific value/code to something else, define a txt file here that holds the information on how to translate which value
 
 #### Example
 
@@ -418,29 +407,6 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; playingmode; ; ?L; ?L; LM****; R; ; ; ; str,int; pioneer_LM
 #0; test; ; ; ; noidea; R (commented out)
 ```
-
-### Translation
-
-Define a filename that contains translations in your main model.txt as seen above.
-You could create a file called denon_volume.txt and link it in your model.txt file to convert 3 digit volume to a float. Denon receivers handle e.g. 50.5 as 505. If you want to use value limits or visualize the volume correctly in your VISU you should use the following translation file:
-
-```
-# plugins/avdevice/denon_volume.txt
-CODE; TRANSLATION
-***; **.*
-```
-
-Pioneer receivers use numbers to define input source or listening mode what is very cryptic and not very user friendly. Therefore you should use the relevant files in the plugins folder like pioneer_input. That file looks something like this:
-
-```
-# plugins/avdevice/pioneer_input.txt
-CODE; TRANSLATION
-00; PHONO
-01; CD
-02; TUNER
-```
-
-Now, when the plugin receives FN01 as a response, the response gets converted to "CD". Vice versa you can even update your item to "CD" and the plugin will send "01FN" as a command. It is advised to define the according item as type=foo so you can either use a number or string, just the way you like.
 
 ### Wildcards
 

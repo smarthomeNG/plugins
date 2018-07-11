@@ -1,0 +1,68 @@
+ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; MAXVALUE; RESPONSETYPE
+0; power; on; #PON; #QPW; @PON OK **|@UPW *|OK **; RW
+0; power; off; #POFF; #QPW; @POF OK ***|@UPW *|OK ***; RW
+0; eject; open; #EJT; ; @EJT OK ****|@OK ****|@UPL ****; RW
+0; eject; close; #EJT; ; @EJT OK *****|@OK *****|@UPL ****; RW
+0; track; set; #SRH T*; #QTK; @UTC ??? ***; RW
+0; chapter; set; #SRH C*; #QCH; @UTC ***; RW
+0; hdr; set; #SHR *; #QHR; @OK *; RW; ; ; str
+0; subtitleshift; set; #SSH *; #QSH; @OK *; W; ; ; num
+0; timedisplay; set; #STC; ; @OK *; RW; ; ; str
+0; trackelapsed; query; #QTE; #QTE; @OK ********|@UTC ??? ??? T ********; RW
+0; trackremain; query; #QTR; #QTR; @OK ********|@UTC ??? ??? X ********; RW
+0; chapterelapsed; query; #QCE; #QCE; @OK ********|@UTC ??? ??? C ********; RW
+0; chapterremain; query; #QCR; #QCR; @OK ********|@UTC ??? ??? K ********; RW
+0; totalelapsed; query; #QEL; #QEL; @OK ********|@UTC ??? ??? E ********; RW
+0; totalremain; query; #QRE; #QRE; @OK ********|@UTC ??? ??? R ********; RW
+0; disctype; ; #QDT; #QDT; OK BD-MV|OK DVD-VIDEO|OK DVD-AUDIO|OK SACD|OK CDDA|OK DATA-DISC|UDT BD-MV|UDT DVD-VIDEO|UDT DVD-AUDIO|UDT SACD|UDT CDDA|UDT DATA-DISC; R
+0; status; ; #QPL; #QPL; @OK NO DISC|@OK LOADING|@OK OPEN|@OK CLOSE|@UPL DISC|@UPL LOAD|@UPL OPEN|@UPL CLOS|@OK SCREEN SAVER|@QPL OK NO DISC|@QPL OK LOADING|@QPL OK OPEN|@QPL OK CLOSE|@QPL UPL DISC|@QPL UPL LOAD|@QPL UPL OPEN|@QPL UPL CLOS|@QPL OK SCREEN SAVER; RW
+0; dimmer; ; #DIM; ; @OK ON|@OK DIM|@OK OFF; W
+0; pure; set; #PUR; ; @PUR OK **|@PUR OK ***; W; ; ; bool
+0; num0; ; #NU1; ; @OK|@NU1 OK; W
+0; num2; ; #NU2; ; @OK|@NU2 OK; W
+0; num3; ; #NU3; ; @OK|@NU3 OK; W
+0; num4; ; #NU4; ; @OK|@NU4 OK; W
+0; num5; ; #NU5; ; @OK|@NU5 OK; W
+0; num6; ; #NU6; ; @OK|@NU6 OK; W
+0; num7; ; #NU7; ; @OK|@NU7 OK; W
+0; num8; ; #NU8; ; @OK|@NU8 OK; W
+0; num9; ; #NU9; ; @OK|@NU9 OK; W
+0; num0; ; #NU0; ; @OK|@NU0 OK; W
+0; clear; ; #CLR; ; @OK; W
+0; goto; ; #GOT; ; @OK; W
+0; home; ; #HOM; #QPL; @OK HOME MENU|@UPL HOME; RW
+0; pageup; ; #PUD; ; @OK; W
+0; pagedown; ; #PDN; ; @OK; W
+0; osd; ; #OSD; ; @OK; W
+0; topmenu; ; #TTL; ; @OK; W
+0; popupmenu; ; #MNU; ; @OK; W
+0; up; ; #NUP; ; @OK; W
+0; left; ; #NLT; ; @OK; W
+0; right; ; #NRT; ; @OK; W
+0; down; ; #NDN; ; @OK; W
+0; enter; ; #SEL; ; @OK; W
+0; setup; ; #SET; #QPL; @OK SETUP; W
+0; return; ; #RET; ; @OK; W
+0; red; ; #RED; ; @OK; W
+0; green; ; #GRN; ; @OK; W
+0; blue; ; #BLU; ; @OK; W
+0; yellow; ; #YLW; ; @OK; W
+0; stop; ; #STP; #QPL; @OK STOP|@UPL STOP; RW
+0; play; ; #PLA; #QPL; @OK PLAY|@UPL PLAY; RW
+0; pause; ; #PAU; #QPL; @OK PAUSE|@UPL PAUSE; RW
+0; previous; ; #PRE; ; @OK; W
+0; next; ; #NXT; ; @OK; W
+0; rewind; ; #REV; #QPL; @OK FREV|@UPL FRV?; RW
+0; fastforward; ; #FWD; #QPL; @OK FFWD|@UPL FFW?; RW
+0; audiotrack; ; #AUD; #QAT; @UAT ?? **/??; RW
+0; audiotype; ; ; ; @UAT ** ??/?? ??? ***; R
+0; audiolanguage; ; #AUD; #QAT; @UAT ?? ??/?? ***; RW
+0; subtitletrack; ; #SUB; #QST; @UST **/??; RW
+0; subtitlelanguage; ; #SUB; #QST; @UST ??/?? ***; RW
+0; option; ; #OPT; ; @OK; W
+0; m3d; ; #M3D; ; @OK; W
+0; pictureadjustment; ; #SEH; ; @OK; W
+0; info; ; #INH; ; @OK; W
+0; avsync; ; #AVS; ; @OK; W
+0; gapless; ; #GPA; ; @OK; W
+0; verbose; set; #SVM *; #QVM; @OK *|@SVM OK *|@QVM OK *; RW
