@@ -110,7 +110,9 @@ class WebServices(SmartPlugin):
 # ------------------------------------------
 
 import cherrypy
-#from jinja2 import Environment, FileSystemLoader
+
+
+# from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
@@ -129,7 +131,6 @@ class WebInterface(SmartPluginWebIf):
         self.plugin = plugin
 
         self.tplenv = self.init_template_environment()
-
 
     @cherrypy.expose
     def index(self, reload=None):
@@ -191,10 +192,16 @@ class WebServiceInterface:
 
     def assemble_item_data(self, item, webservices_data='full'):
         if item is not None:
-            if item.type() in ['str', 'bool', 'num']:
+            if item.type() in ['str', 'bool', 'num'] or (
+                    item.type() in ['foo'] and item._path in ['env.location.moonrise', 'env.location.moonset',
+                                                                'env.location.sunrise', 'env.location.sunset']):
+                value = item._value
+                if item.type() in ['foo'] and item._path in ['env.location.moonrise', 'env.location.moonset',
+                                                                'env.location.sunrise', 'env.location.sunset']:
+                    if isinstance(value, datetime.datetime):
+                        value = str(value)
                 if webservices_data == 'full':
                     prev_value = item.prev_value()
-                    value = item._value
 
                     if isinstance(prev_value, datetime.datetime):
                         prev_value = str(prev_value)
@@ -254,7 +261,7 @@ class WebServiceInterface:
                                  }
                     return data_dict
                 elif webservices_data == 'val':
-                    return {'path': item._path, 'value': item._value}
+                    return {'path': item._path, 'value': value}
             else:
                 return None
 
