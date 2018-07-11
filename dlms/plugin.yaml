@@ -1,19 +1,19 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    type: gateway                  # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Unterstützung für Smartmeter, die DLMS (Device Language Message Specification, IEC 62056-21) nutzen und OBIS codes liefern'
         en: 'Support for smartmeter using DLMS (Device Language Message Specification, IEC 62056-21) and delivering OBIS codes'
     maintainer: bmxp (JuMi2006)
-#    tester:                        # Who tests this plugin?
+#    tester:                       # Who tests this plugin?
     keywords: dlms obis smartmeter
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/DLMS-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.2.5                 # Plugin version
-    sh_minversion: 1.2             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.5.0                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: DLMS                # class containing the plugin
 
@@ -23,8 +23,8 @@ parameters:
         type: foo
         default: 0
         description:
-            de: 'Serieller Port an dem der Smartmeter angeschlossen ist'
-            en: 'serial port at which the smartmeter is attached'
+            de: 'Instanz des Plugin'
+            en: 'Instance of Plugin'
     serialport:
         type: str
         description:
@@ -32,16 +32,16 @@ parameters:
             en: 'serial port at which the smartmeter is attached'
     baudrate:
         type: int
-        default: 0
+        default: 300
         description:
             de: 'Baudrate bei der die Kommunikation erfolgen soll'
             en: 'Baudrate at which the communikation should take place'
     update_cycle:
         type: int
+        default: 60
         description:
             de: 'Zeitlicher Abstand zwischen zwei Abfragen des Smartmeters'
             en: 'Time between two queries of smartmeter'
-        default: 60
     device_address:
         type: str
         default: ''
@@ -52,14 +52,14 @@ parameters:
         type: int
         default: 2
         description:
-            de: 'Timeout nach dem der Lesevorgang automatisch beendet wird'
-            en: 'timeout for automatic abortion of readout'
+            de: 'Timeout in Sekunden nach dem der Lesevorgang automatisch beendet wird'
+            en: 'timeout in seconds for automatic abortion of readout'
     use_checksum: 
         type: bool
         default: True
         description:
-            de: 'Wenn gesetzt und Wahr, wird eine Prüfsumme über die ausgelesenen Daten gebildet'
-            en: 'if true the a checksum will be calculated of the readout result'
+            de: 'Wenn wahr, wird eine Prüfsumme über die ausgelesenen Daten gebildet'
+            en: 'if true then a checksum will be calculated of the readout result'
     reset_baudrate: 
         type: bool
         default: True

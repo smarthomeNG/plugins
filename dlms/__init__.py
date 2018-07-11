@@ -34,50 +34,27 @@ __docformat__ = 'reStructuredText'
 import logging
 import datetime
 
-if __name__ == '__main__':
-    # just needed for standalone mode
-    class SmartPlugin():
-        pass
-    import os
-    import sys
-    BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
-    sys.path.insert(0, BASE)    
-    from lib.utils import Utils
-else:
-    # just needed for plugin mode
-    from lib.model.smartplugin import SmartPlugin
-    from lib.utils import Utils
+from lib.module import Modules
+from lib.model.smartplugin import *
+from lib.utils import Utils
 
 import time
 import serial
 import re
 from threading import Semaphore
 
-"""
-This module implements the query of a smartmeter using the DLMS protocol.
+from . import dlms
+from . import conversion
 
-
-The Character Format for protocol mode A - D is defined as 1 start bit, 7 data bits, 1 parity bit, 1 stop bit and even parity 
-In protocol mode E it is defined as 1 start bit, 8 data bits, 1 stop bit is allowed, see Annex E of IEC62056-21
-For this plugin the protocol mode E is neither implemented nor supported.
-
-Abbreviations
--------------
-COSEM
-   COmpanion Specification for Energy Metering
-
-OBIS
-   OBject Identification System (see iec62056-61{ed1.0}en_obis_protocol.pdf)
-"""
 
 class DLMS(SmartPlugin):
-    PLUGIN_VERSION = "1.2.6"
-    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.5.0"
+    ALLOW_MULTIINSTANCE = True
     """
-    This class provides a Plugin for SmarthomeNG.py which reads out a smartmeter.
+    This class provides a Plugin for SmarthomeNG which reads out a smartmeter.
     The smartmeter needs to have an infrared interface and an IR-Adapter is needed for USB
-    It is possible to use the Plugin as a standalone program to check out the communication 
-    prior to use it in SmarthomeNG.py
+    It is possible to use dlms.py standalone to test the results 
+    prior to use it in SmarthomeNG
     
     The tag 'dlms_obis_code' identifies the items which are to be updated from the plugin
     """
@@ -87,22 +64,26 @@ class DLMS(SmartPlugin):
         'dlms_obis_code',           # a single code in form of '1-1:1.8.1'
         'dlms_obis_readout']        # complete readout from smartmeter, if you want to examine codes yourself in a logic
 
-    def __init__(self, smarthome, serialport, baudrate="auto", update_cycle="60", instance = 0, device_address = b'', timeout = 2, use_checksum = True, reset_baudrate = True, no_waiting = False ):
+    def __init__(self, sh, *args, **kwargs ):
         """
         Initializes the DLMS plugin
-        :param serialport: 
+        The params may be obtained through get_parameter_value(parameter_name)
+
+        serialport
+        baudrate="auto"
+        update_cycle="60"
+        device_address = b''
+        timeout = 2
+        use_checksum = True
+        reset_baudrate = True
+        no_waiting = False
         """
         self.logger = logging.getLogger(__name__)
-        self.logger.debug("init dlms")
+        self.logger.debug("init {}".format(__name__))
 
-        self._sh = smarthome                                    # save a reference to the smarthome object
-        self._serialport = serialport
-        self._update_cycle = int(update_cycle)                  # the frequency in seconds how often the device should be accessed
-        self._instance = instance                               # the instance of the plugin for questioning multiple smartmeter
-        self._device_address = device_address                   # there is a possibility of using a named device.
-                                                                # normally this will be empty since only one meter will be attached
-                                                                # to one serial interface but the standard allows for it and we honor that.
-        self.timeout = timeout
+        self._instance = self.get_parameter_value('instance')    # the instance of the plugin for questioning multiple smartmeter
+        self._update_cycle  = self.get_parameter_value('update_cycle')       # the frequency in seconds how often the device should be accessed
+        
         self._sema = Semaphore()                                # implement a semaphore to avoid multiple calls of the query function
         self._min_cycle_time = 0                                # we measure the time for the value query and add some security value of 10 seconds
 
@@ -111,26 +92,32 @@ class DLMS(SmartPlugin):
 
         self.dlms_obis_readout_items = []                       # this is a list of items that receive the full readout
 
- 		# obsolete parameters, kept for compatability with previous versions
-        self._use_checksum = Utils.to_bool(use_checksum)
-        self._reset_baudrate = Utils.to_bool(reset_baudrate)
-        self._no_waiting = Utils.to_bool(no_waiting)
+        # dict especially for the interface
+        self._config = {}
+        self._config['serialport'] = self.get_parameter_value('serialport')
 
+        # there is a possibility of using a named device
+        # normally this will be empty since only one meter will be attached
+        # to one serial interface but the standard allows for it and we honor that.
+        self._config['device'] = self.get_parameter_value('device_address')   
+        self._config['timeout'] = self.get_parameter_value('timeout')
 
-        self.logger.debug("Instance {} of DLMS configured to use serialport '{}' with update cycle {} seconds".format( self._instance if self._instance else 0,self._serialport, self._update_cycle))
-        if __name__ == '__main__':
-            self.alive = True
-        else:
-            self.logger.debug("init done")
+        self._config['use_checksum'] = self.get_parameter_value('use_checksum')
+        self._config['reset_baudrate'] = self.get_parameter_value('reset_baudrate')
+        self._config['no_waiting'] = self.get_parameter_value('no_waiting')
+
+        self.logger.debug("Instance {} of DLMS configured to use serialport '{}' with update cycle of {} seconds".format( self._instance if self._instance else 0,self._config.get('serialport'), self._update_cycle))
+        self.init_webinterface()
+
+        self.logger.debug("init done")
 
     def run(self):
         """
         This is called when the plugins thread is about to run
         """
+       	self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
-        if __name__ != '__main__':
-            # if we are not running in console mode, we add a scheduler to let it call the _update_values_callback function
-            self._sh.scheduler.add('DLMS', self._update_values_callback, prio=5, cycle=self._update_cycle)
+        self.scheduler_add('DLMS', self._update_values_callback, prio=5, cycle=self._update_cycle)
         self.logger.debug("run dlms")
 
     def stop(self):
@@ -138,16 +125,15 @@ class DLMS(SmartPlugin):
         This is called when the plugins thread is about to stop
         """
         self.alive = False
-        if __name__ != '__main__':
-            # clean up means to remove the scheduler for the update function
-            self._sh.scheduler.remove('DLMS')
-        self.logger.debug("stop dlms")
+        self.scheduler_remove('DLMS')
+        self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
 
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
         :param item: The item to process.
         """
+
         if self.has_iattr(item.conf, self.ITEM_TAG[0]):
             self.dlms_obis_code_items.append(item)
             self.logger.debug("Item '{}' has Attribute '{}' so it is added to the list of items "
@@ -162,47 +148,45 @@ class DLMS(SmartPlugin):
             self.logger.debug("Item '{}' has Attribute '{}' so it is added to the list of items "
                               "to receive full OBIS Code readout".format(item, self.ITEM_TAG[1]))
 
-    def format_time(self, timedelta ):
+    def init_webinterface(self):
         """
-        function returns a pretty formatted string according to the size of the timedelta
-        :param timediff: time delta given in seconds
-        :return: returns a string
-        """
-        if timedelta > 1000.0:
-            return "{:.2f} s".format(timedelta)
-        elif timedelta > 1.0:
-            return "{:.2f} s".format(timedelta)
-        elif timedelta > 0.001:
-            return "{:.2f} ms".format(timedelta*1000.0)
-        elif timedelta > 0.000001:
-            return "{:.2f} µs".format(timedelta*1000000.0)
-        elif timedelta > 0.000000001:
-            return "{:.2f} ns".format(timedelta * 1000000000.0)
+        Initialize the web interface for this plugin
 
-    def _read_data_block_from_serial(self, the_serial, end_byte=0x0a):
+        This method is only needed if the plugin is implementing a web interface
         """
-        This function reads some bytes from serial interface
-        it returns an array of bytes if a timeout occurs or a given end byte is encountered
-        and otherwise None if an error occurred
-        :param the_serial: interface to read from
-        :param end_byte: the indicator for end of data by source endpoint
-        :returns the read data or None
-        """
-        response = bytes()
         try:
-            while self.alive:
-                ch = the_serial.read()
-                if len(ch) == 0:
-                    break
-                response += ch
-                if ch == end_byte:
-                    break
-                if (response[-1] == end_byte):
-                    break
-        except Exception as e:
-            self.logger.debug("Warning {0}".format(e))
-            return None
-        return response
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+        
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+        
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self), 
+                                     self.get_shortname(), 
+                                     config, 
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+                                   
+        return True
 
     def _update_values_callback(self):
         """
@@ -212,262 +196,26 @@ class DLMS(SmartPlugin):
         """
         if self._sema.acquire(blocking=False):
             try:
-                result = self._query_smartmeter()
-                if len(result) > 5:
-                    self._update_values( result )
-                else:
+                result = dlms.query(self._config)
+                if result is None:
                     self.logger.error( "no results from smartmeter query received" )
+                elif len(result) <= 5:
+                    self.logger.error( "results from smartmeter query received but is smaller than 5 characters" )
+                else:
+                    self._update_values( result )
             except Exception as e:
-                    self.logger.debug("Uncaught Exception {0} occurred, please inform plugin author!".format(e))
+                    self.logger.debug("Exception '{0}' occurred, please inform plugin author!".format(e))
             finally:
                     self._sema.release()
         else:
             self.logger.warning("update is alrady running, maybe it really takes very long or you should use longer "
                                 "query interval time")
 
-    def _query_smartmeter(self):
-        """
-        This function will
-        1. open a serial communication line to the smartmeter
-        2. sends a request for info
-        3. parses the devices first (and maybe second) answer for capabilities of the device
-        4. adjusts the speed of the communication accordingly
-        5. reads out the block of OBIS information
-        6. closes the serial communication
-        return: a textblock with the data response from smartmeter
-        """
-        # for the performance of the serial read we need to save the actual time
-        starttime = time.time()
-        runtime = starttime
-        result = None
 
-        StartChar = b'/'[0]
-        InitialBaudrate = 300
-        Request_Message = b"/?"+self._device_address+b"!\r\n"
+# ------------------------------------------
+#    Utility functions
+# ------------------------------------------
 
-        # open the serial communication
-        # about timeout: time tr between sending a request and an answer needs to be
-        # 200ms < tr < 1500ms for protocol mode A or B
-        # inter character time must be smaller than 1500 ms
-        # The time between the reception of a message and the transmission of an answer is:
-        # (20 ms) 200 ms = tr = 1 500 ms (see item 12) of 6.3.14).
-        # If a response has not been received, the waiting time of the transmitting equipment after
-        # transmission of the identification message, before it continues with the transmission, is:
-        # 1 500 ms < tt = 2 200 ms
-        # The time between two characters in a character sequence is:
-        # ta < 1 500 ms
-        wait_before_acknowledge = 0.4   # wait for 400 ms before sending the request to change baudrate
-        wait_after_acknowledge = 0.4    # wait for 400 ms after sending acknowledge
-        dlms_serial = None
-
-        try:
-            dlms_serial = serial.Serial(self._serialport,
-                                        InitialBaudrate,
-                                        bytesize=serial.SEVENBITS,
-                                        parity=serial.PARITY_EVEN,
-                                        timeout=self.timeout)
-            if not self._serialport == dlms_serial.name:
-                self.logger.debug("Asked for {} as serial port, but really using now {}".format(
-                    self._serialport, dlms_serial.name))
-        except FileNotFoundError as e:
-            self.logger.error("Serial port '{0}' does not exist, please check your port".format( self._serialport))
-            return
-        except OSError as e:
-            self.logger.error("Serial port '{0}' does not exist, please check the spelling".format(self._serialport))
-            return
-        except serial.SerialException as e:
-            if dlms_serial is None:
-                self.logger.error("Serial port '{0}' could not be opened".format(self._serialport))
-            else:
-                self.logger.error("Serial port '{0}' could be opened but somehow not accessed".format(self._serialport))
-        except Exception as e:
-            self.logger.error("Another unknown error occurred: '{0}'".format(e))
-            return
-
-        if not dlms_serial.isOpen():
-            self.logger.error("Serial port '{0}' could not be opened with given parameters, maybe wrong baudrate?".format(self._serialport))
-            return
-
-        self.logger.debug("Time to open serial port {}: {}".format(self._serialport,self.format_time(time.time()- runtime)))
-        runtime = time.time()
-
-        try:
-            self.logger.debug("Reset input buffer from serial port '{}'".format(self._serialport))
-            dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
-            self.logger.debug("Writing request message {} to serial port '{}'".format(Request_Message, self._serialport))
-            dlms_serial.write(Request_Message)
-            self.logger.debug("Flushing buffer from serial port '{}'".format(self._serialport))
-            dlms_serial.flush()                 # replaced dlms_serial.drainOutput()
-            self.logger.debug("Reset input buffer from serial port '{}'".format(self._serialport))
-            dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
-        except Exception as e:
-            self.logger.warning("Error {}".format(e))
-            return
-
-        self.logger.debug("Time to send first request to smartmeter: {}".format(self.format_time(time.time()- runtime)))
-
-        # now get first response
-        response = self._read_data_block_from_serial(dlms_serial)
-        if response is None:
-            return
-
-        self.logger.debug("Time to receive an answer: {}".format(self.format_time(time.time()- runtime)))
-        runtime = time.time()
-
-        # We need to examine the read response here for an echo of the _Request_Message
-        # some meters answer if appropriate meter is available for answering with an echo of the request Message
-        if response == Request_Message:
-            self.logger.debug("Request Message was echoed, need to read the identification message".format(response))
-            # read Identification message if Request was echoed
-            # now read the capabilities and type/brand line from Smartmeter
-            # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
-            response = self._read_data_block_from_serial(dlms_serial)
-        else:
-            self.logger.debug("Request Message was echoed, need to read the identification message".format(response))
-
-        self.logger.debug("Time to get first identification message from smartmeter: "
-                          "{}".format(self.format_time(time.time() - runtime)))
-        runtime = time.time()
-
-        Identification_Message = response
-        self.logger.debug("Identification Message is {}".format(Identification_Message))
-
-        if (len(Identification_Message) < 5):
-            self.logger.warning("malformed identification message {}".format(Identification_Message))
-            return
-
-        if (Identification_Message[0] != StartChar):
-            self.logger.warning("identification message {} does not start with '/',"
-                                "aborting".format(Identification_Message[0]))
-            return
-
-        """
-        Different smartmeters allow for different protocol modes. 
-        The protocol mode decides whether the communication is fixed to a certain baudrate or might be speed up.
-        Some meters do initiate a protocol by themselves with a fixed speed of 2400 baud e.g. Mode D
-        """
-        Protocol_Mode = 'A'
-
-        """
-        The communication of the plugin always stays at the same speed, 
-		Protocol indicator can be anything except for A-I, 0-9, /, ?
-        """
-        Baudrates_Protocol_Mode_A = 300
-        Baudrates_Protocol_Mode_B = { 'A': 600, 'B': 1200, 'C': 2400, 'D': 4800, 'E': 9600, 'F': 19200,
-                                      'G': "reserved", 'H': "reserved", 'I': "reserved" }
-        Baudrates_Protocol_Mode_C = { '0': 300, '1': 600, '2': 1200, '3': 2400, '4': 4800, '5': 9600, '6': 19200,
-                                      '7': "reserved", '8': "reserved", '9': "reserved"}
-
-        # always '3' but it is always initiated by the metering device so it can't be encountered here
-        Baudrates_Protocol_Mode_D = { '3' : 2400}
-        #Baudrates_Protocol_Mode_E is the same as Mode_C
-
-        Baudrate_identification = chr(Identification_Message[4])
-        if Baudrate_identification in Baudrates_Protocol_Mode_B:
-            NewBaudrate = Baudrates_Protocol_Mode_B[Baudrate_identification]
-            Protocol_Mode = 'B'
-        elif Baudrate_identification in Baudrates_Protocol_Mode_C:
-            NewBaudrate = Baudrates_Protocol_Mode_C[Baudrate_identification]
-            Protocol_Mode = 'C' # could also be 'E' but it doesn't make any difference here
-        else:
-            NewBaudrate = Baudrates_Protocol_Mode_A
-            Protocol_Mode = 'A'
-
-        self.logger.debug("Baudrate id is '{}' thus Protocol Mode is {} and "
-                          "max Baudrate available is {} Bd".format(Baudrate_identification, Protocol_Mode, NewBaudrate))
-
-        # for protocol C or E we now send an acknowledge and include the new baudrate parameter
-        # maybe todo
-        # we could implement here a baudrate that is fixed to somewhat lower speed if we need to
-        # read out a smartmeter with broken communication
-        Acknowledge = b'\x060' + Baudrate_identification.encode() + b'0\r\n'
-
-        if Protocol_Mode == 'C':
-            # the speed change in communication is initiated from the reading device
-            time.sleep(wait_before_acknowledge)
-            self.logger.debug("Using protocol mode C, send acknowledge {} "
-                              "and tell smartmeter to switch to {} Baud".format(Acknowledge, NewBaudrate))
-            try:
-                dlms_serial.write( Acknowledge )
-            except Exception as e:
-                self.logger.warning("Warning {0}".format(e))
-                return
-            time.sleep(wait_after_acknowledge)
-            dlms_serial.flush()                 # replaced dlms_serial.drainOutput()
-            dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
-            if (NewBaudrate != InitialBaudrate):
-                # change request to set higher baudrate
-                dlms_serial.baudrate = NewBaudrate
-
-        elif Protocol_Mode == 'B':
-            # the speed change in communication is initiated from the smartmeter device
-            time.sleep(wait_before_acknowledge)
-            self.logger.debug("Using protocol mode C, smartmeter and reader will switch to {} Baud".format(NewBaudrate))
-            time.sleep(wait_after_acknowledge)
-            dlms_serial.flush()                 # replaced dlms_serial.drainOutput()
-            dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
-            if (NewBaudrate != InitialBaudrate):
-                # change request to set higher baudrate
-                dlms_serial.baudrate = NewBaudrate
-        else:
-            self.logger.debug("No change of readout baudrate, "
-                              "smartmeter and reader will stay at {} Baud".format(NewBaudrate))
-
-        # now read the huge data block with all the OBIS codes
-        self.logger.debug("Reading OBIS data from smartmeter")
-        response = self._read_data_block_from_serial( dlms_serial, None)
-
-        dlms_serial.close()
-        self.logger.debug("Time for reading OBIS data: {}".format(self.format_time(time.time()- runtime)))
-        runtime = time.time()
-
-        # Display performance of the serial communication
-        self.logger.debug("Whole communication with "
-                          "smartmeter took {}".format(self.format_time(time.time() - starttime)))
-
-        if self._use_checksum:
-            # data block in repsonse may be capsuled within STX and ETX to provide error checking
-            # thus the response will contain a sequence of
-            # STX Datablock ! CR LF ETX BCC
-            # which means we need at least 6 characters in response where Datablock is empty
-
-            STX = 0x02
-            ETX = 0x03
-            BCC = 0x00  # Block check Character
-
-            if (len(response) > 5) and (response[0] == STX) or (response[-2] == ETX):
-                # perform checks (start with STX, end with ETX, checksum match)
-                self.logger.debug("calculating checksum over data response")
-                checksum = 0
-                for i in response[1:]:
-                    checksum ^= i
-                if checksum != BCC:
-                    self.logger.warning("checksum/protocol error: response={} "
-                                        "checksum={}".format(' '.join(hex(i) for i in response), checksum))
-                    return
-                else:
-                    self.logger.debug("checksum over data response was ok")
-            else:
-                self.logger.warning("STX - ETX not found")
-
-        if len(response) > 5:
-            result = str(response[1:-4], 'ascii')
-            self.logger.debug("parsing OBIS codes took {}".format(self.format_time(time.time()- runtime)))
-            self.logger.debug("the whole query took {}".format(self.format_time(time.time()- starttime)))
-        else:
-            self.logger.debug("Sorry response did not caontain enough data for OBIS decode")
-
-        suggested_cycle = (time.time() - starttime) + 10.0
-
-        if (time.time() - runtime) > self._update_cycle and self._min_cycle_time < self._update_cycle:
-            # if query takes longer than the given update_cycle then make a suggestion for an adjustment
-            self.logger.warning("the update cycle should be "
-                                "increased to at least {}".format(self.format_time(suggested_cycle)))
-
-        if suggested_cycle > self._min_cycle_time:
-            self._min_cycle_time = suggested_cycle
-
-        return result
 
     def _to_datetime_ZST10(self, text):
         """
@@ -646,9 +394,8 @@ class DLMS(SmartPlugin):
         Sets all items with attribute to the full readout text given in textblock
         :param textblock: the result of the latest query
         """
-        if __name__ != '__main__':
-            for item in self.dlms_obis_readout_items:
-                item(textblock, 'DLMS')
+        for item in self.dlms_obis_readout_items:
+            item(textblock, 'DLMS')
 
 
     def _is_obis_code_wanted( self, code):
@@ -657,9 +404,7 @@ class DLMS(SmartPlugin):
         :param code:
         :return: returns true if code is in user defined OBIS codes to scan for
         """
-        if __name__ == '__main__':
-            return True
-        elif code in self.dlms_obis_codes:
+        if code in self.dlms_obis_codes:
             #self.logger.debug("Wanted OBIS Code found: '{}'".format(code))
             return True
         #self.logger.debug("OBIS Code '{}' is not interesting...".format(code))
@@ -672,31 +417,30 @@ class DLMS(SmartPlugin):
         :param Code: OBIS Code
         :param Values: list of dictionaries with Value / Unit entries
         """
-        if __name__ != '__main__':
-            for item in self.dlms_obis_code_items:
-                if self.has_iattr(item.conf, self.ITEM_TAG[0]):
-                    attribute = self.get_iattr_value(item.conf, self.ITEM_TAG[0])
-                    if not isinstance(attribute, list):
-                        self.logger.warning("Attribute '{}' is a single argument, not a list".format(attribute))
-                        attribute = [attribute]
-                    obis_code = attribute[0]
-                    if obis_code == Code:
-                        #todo: error handling for key errors
-                        Index = int(attribute[1]) if len(attribute)>1 else 0
-                        Key = attribute[2] if len(attribute)>2 else 'Value'
-                        if not Key in ['Value', 'Unit']: Key = 'Value'
-                        Converter = attribute[3] if len(attribute)>3 else ''
-                        try:
-                            itemValue = Values[Index][Key]
-                            itemValue = self._convert_value(itemValue, Converter )
-                            item(itemValue, 'DLMS')
-                            self.logger.debug("Set item {} for Obis Code {} to Value {}".format(item, Code, itemValue))
-                        except IndexError as e:
-                            self.logger.warning("Index Error '{}' while setting item {} for Obis Code {} to Value "
-                                                "with Index '{}' in '{}'".format(str(e), item, Code, Index, Values))
-                        except KeyError as e:
-                            self.logger.warning("Key error '{}' while setting item {} for Obis Code {} to "
-                                                "Key '{}' in '{}'".format(str(e), item, Code, Key, Values[Index]))
+        for item in self.dlms_obis_code_items:
+            if self.has_iattr(item.conf, self.ITEM_TAG[0]):
+                attribute = self.get_iattr_value(item.conf, self.ITEM_TAG[0])
+                if not isinstance(attribute, list):
+                    self.logger.warning("Attribute '{}' is a single argument, not a list".format(attribute))
+                    attribute = [attribute]
+                obis_code = attribute[0]
+                if obis_code == Code:
+                    #todo: error handling for key errors
+                    Index = int(attribute[1]) if len(attribute)>1 else 0
+                    Key = attribute[2] if len(attribute)>2 else 'Value'
+                    if not Key in ['Value', 'Unit']: Key = 'Value'
+                    Converter = attribute[3] if len(attribute)>3 else ''
+                    try:
+                        itemValue = Values[Index][Key]
+                        itemValue = self._convert_value(itemValue, Converter )
+                        item(itemValue, 'DLMS')
+                        self.logger.debug("Set item {} for Obis Code {} to Value {}".format(item, Code, itemValue))
+                    except IndexError as e:
+                        self.logger.warning("Index Error '{}' while setting item {} for Obis Code {} to Value "
+                                            "with Index '{}' in '{}'".format(str(e), item, Code, Index, Values))
+                    except KeyError as e:
+                        self.logger.warning("Key error '{}' while setting item {} for Obis Code {} to "
+                                            "Key '{}' in '{}'".format(str(e), item, Code, Key, Values[Index]))
 
     def _update_values(self, readout):
         """
@@ -762,57 +506,40 @@ class DLMS(SmartPlugin):
                     # self.logger.debug("{:40} ---> {}".format(line, Values))
                     self._update_items(obis_code, values)
 
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
 
-if __name__ == '__main__':
-    import sys
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
 
-    usage = """
-    Usage:
-    ----------------------------------------------------------------------------------------------------
+class WebInterface(SmartPluginWebIf):
 
-    There are two ways to use this module:
-    1. You can use it as a plugin for SmartHomeNG
-    2. You can use it standalone from the command line.
-       This way you can test your serial link to the smartmeter and
-       sniff the output for which values you want to have in your item structure lately
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
 
-       You need to give the interface to query as first parameter, e.g. /dev/dlms0
-       If you like to receive verbose information just append '-v' to the latter as well.
 
-    """
-    logging.getLogger().setLevel( logging.DEBUG )
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s  @ %(lineno)d')
-    #formatter = logging.Formatter('%(message)s')
-    ch.setFormatter(formatter)
-    # add the handlers to the logger
-    logging.getLogger().addHandler(ch)
-    serial_to_use = ""
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+        
+        Render the template and return the html file to be delivered to the browser
+            
+        :return: contents of the template after beeing rendered 
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin, c=self.plugin._config)
 
-    if len(sys.argv) > 1:
-        serial_to_use = sys.argv[1]
-    else:
-        print(usage)
-        exit()
-
-    print("This is DLMS Plugin running in standalone mode")
-    print("==============================================")
-
-    dlms_plugin = DLMS(None, serial_to_use )
-    result = dlms_plugin._query_smartmeter()
-    if result is None:
-        print()
-        print("No results from query, maybe a problem with the serial port '{}' given ".format(serial_to_use))
-        print("==============================================")
-    elif len(result) > 0:
-        print()
-        print("These are the results of the query")
-        print("==============================================")
-        print(result)
-        print("==============================================")
-    else:
-        print()
-        print("The query did not get any results!")
-        print("Maybe the serial was occupied or there was an error")
