@@ -33,8 +33,8 @@ from lib.module import Modules
 
 
 class WebServices(SmartPlugin):
-    ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = '1.5.0.2'
+    ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
     def __init__(self, smarthome, mode="all"):
         self.logger = logging.getLogger(__name__)
@@ -146,7 +146,8 @@ class WebInterface(SmartPluginWebIf):
         items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         for item in items_sorted:
             if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
-                if item.type() in ['str', 'bool', 'num']:
+                if item.type() in ['str', 'bool', 'num'] or (
+                        item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS):
                     items_filtered.append(item)
                     if self.plugin.has_iattr(item.conf, 'webservices_set'):
                         if isinstance(self.plugin.get_iattr_value(item.conf, 'webservices_set'), list):
@@ -193,11 +194,9 @@ class WebServiceInterface:
     def assemble_item_data(self, item, webservices_data='full'):
         if item is not None:
             if item.type() in ['str', 'bool', 'num'] or (
-                    item.type() in ['foo'] and item._path in ['env.location.moonrise', 'env.location.moonset',
-                                                                'env.location.sunrise', 'env.location.sunset']):
+                    item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS):
                 value = item._value
-                if item.type() in ['foo'] and item._path in ['env.location.moonrise', 'env.location.moonset',
-                                                                'env.location.sunrise', 'env.location.sunset']:
+                if item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS:
                     if isinstance(value, datetime.datetime):
                         value = str(value)
                 if webservices_data == 'full':
@@ -335,8 +334,9 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 return {"Error": "No item with item path %s found." % item_path}
 
             if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
-                if item.type() in ['str', 'bool', 'num']:
-                    if value is not None:
+                if item.type() in ['str', 'bool', 'num'] or (
+                        item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS):
+                    if value is not None and item.type() in ['str', 'bool', 'num']:
                         item(value)
                         return {"Success": "Item with item path %s set to %s." % (item_path, value)}
                     else:
@@ -347,7 +347,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                         if item_data is not None:
                             return item_data
                 else:
-                    return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
+                    return {"Error": "Item with path %s is type %s, only str, num, bool and foo item types (of special system items) are supported." %
                                      (item_path, item.type())}
             else:
                 return {"Error": "Item with path %s not allowed for access via Webservice plugin." %
@@ -476,7 +476,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                                 item._path)
                         return item_data
                     else:
-                        return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
+                        return {"Error": "Item with path %s is type %s, only str, num, bool and foo item types (of special system items) are supported." %
                                          (item_path, item.type())}
             else:
                 return {"Error": "Item with path %s not allowed for access via Webservice plugin." %
