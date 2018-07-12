@@ -32,6 +32,7 @@ import lib.db
 
 from lib.shtime import Shtime
 from lib.item import Items
+from lib.utils import Utils
 
 from lib.model.smartplugin import *
 from lib.module import Modules
@@ -88,7 +89,7 @@ class Database(SmartPlugin):
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver, connect)
+        self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver, Utils.string_to_list(connect))
         self._initialized = False
         self._initialize()
 
