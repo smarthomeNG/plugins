@@ -1,0 +1,346 @@
+%YAML 1.1
+---
+Denon:
+    type: foo
+
+    Powerall:
+        type: bool
+        visu_acl: rw
+        avdevice_zone0: power
+
+    Update:
+        type: bool
+        visu_acl: rw
+        avdevice_zone0: statusupdate
+        enforce_updates: 'yes'
+
+    Power:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: power
+
+    Mute:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: mute
+
+    VolumeFL:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: volumefl
+        cache: 'True'
+
+    VolumeFLUp:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: volumefl+
+        enforce_updates: 'yes'
+
+    VolumeFLDown:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: volumefl-
+        enforce_updates: 'yes'
+
+    VolumeFR:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: volumefr
+        cache: 'True'
+
+    VolumeFRUp:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: volumefr+
+        enforce_updates: 'yes'
+
+    VolumeFRDown:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: volumefr-
+        enforce_updates: 'yes'
+
+    Volume:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: volume
+        cache: 'True'
+
+    VolumeMax:
+        type: num
+        visu_acl: ro
+        avdevice_zone1: volumemax
+
+    VolumeUp:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: volume+
+        enforce_updates: 'yes'
+
+    VolumeDown:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: volume-
+        enforce_updates: 'yes'
+
+    VolumeLow:
+        type: bool
+        enforce_updates: 'yes'
+        visu_acl: rw
+        avdevice_zone1: volumelow
+
+    VolumeHigh:
+        type: bool
+        enforce_updates: 'yes'
+        visu_acl: rw
+        avdevice_zone1: volumehigh
+
+    Eco:
+        type: str
+        visu_acl: rw
+        avdevice_zone0: eco
+
+    Source:
+        type: str
+        visu_acl: rw
+        avdevice_zone1: input
+
+        Music:
+            type: bool
+            visu_acl: ro
+            eval: 1 if ((sh.Denon.Source() == 'DVD' or sh.Denon.Source() == 'CD' or sh.Denon.Source() == 'NET') and sh.Denon.Power()) else 0
+            eval_trigger:
+              - Denon.Source
+              - Denon.Power
+            enforce_updates: 'yes'
+
+    Mode:
+        type: str
+        visu_acl: rw
+        avdevice_zone1: mode
+
+    Dialog:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: dialog
+        enforce_updates: 'no'
+
+    Dialogtoggle:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: dialogtoggle
+
+    Subwoofer:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: subwoofer
+        enforce_updates: 'no'
+
+    Subwoofertoggle:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: subwoofertoggle
+
+    CinemaEQ:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: cinemaeq
+
+    Mainspeakers:
+        type: str
+        visu_acl: rw
+        avdevice_zone1: mainspeakers
+
+    Sleep:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: sleep
+
+    Standby:
+        type: foo
+        visu_acl: rw
+        avdevice_zone1: standby
+
+    Bass:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: bass
+
+    BassUp:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: bass+
+        enforce_updates: 'yes'
+
+    BassDown:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: bass-
+        enforce_updates: 'yes'
+
+    Tone:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1: tone
+
+    Trebble:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: trebble
+
+    TrebbleUp:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: trebble+
+        enforce_updates: 'yes'
+
+    TrebbleDown:
+        type: num
+        visu_acl: rw
+        avdevice_zone1: trebble-
+        enforce_updates: 'yes'
+
+    Videoinput:
+        type: str
+        visu_acl: rw
+        avdevice_zone1: videoinput
+
+    Audioinput:
+        type: str
+        visu_acl: rw
+        avdevice_zone1: audioinput
+
+    Videoparams:
+        type: str
+        visu_acl: rw
+        avdevice_zone1: videoparams
+
+    Power2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2: power
+
+    Source2:
+        type: str
+        visu_acl: rw
+        avdevice_zone2: input
+
+        Music:
+            type: bool
+            visu_acl: ro
+            eval: 1 if ((sh.Denon.Source2() == 'DVD' or sh.Denon.Source2() == 'CD' or sh.Denon.Source2() == 'NET') and sh.Denon.Power2()) else 0
+            eval_trigger:
+              - Denon.Source2
+              - Denon.Power2
+
+    Mute2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2: mute
+
+    Volume2:
+        type: num
+        visu_acl: rw
+        avdevice_zone2: volume
+
+        Fading:
+            type: num
+
+    VolumeUp2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2: volume+
+        enforce_updates: 'yes'
+
+    VolumeDown2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2: volume-
+        enforce_updates: 'yes'
+
+    VolumeHigh2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2: volumehigh
+        enforce_updates: 'yes'
+
+    VolumeLow2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2: volumelow
+        enforce_updates: 'yes'
+
+    Sleep2:
+        type: num
+        visu_acl: rw
+        avdevice_zone2: sleep
+
+    Standby2:
+        type: foo
+        visu_acl: rw
+        avdevice_zone2: standby
+
+    Power3:
+        type: bool
+        visu_acl: rw
+        avdevice_zone3: power
+
+    Source3:
+        type: str
+        visu_acl: rw
+        avdevice_zone3: input
+
+        Musik:
+            type: bool
+            visu_acl: ro
+            eval: 1 if ((sh.Denon.Source3() == 'DVD' or sh.Denon.Source3() == 'CD' or sh.Denon.Source3() == 'NET') and sh.Denon.Power3()) else 0
+            eval_trigger:
+              - Denon.Source3
+              - Denon.Power3
+
+    Mute3:
+        type: bool
+        visu_acl: rw
+        avdevice_zone3: mute
+
+    Volume3:
+        type: num
+        visu_acl: rw
+        avdevice_zone3: volume
+
+        Fading:
+            type: num
+
+    VolumeUp3:
+        type: bool
+        visu_acl: rw
+        avdevice_zone3: volume+
+        enforce_updates: 'yes'
+
+    VolumeDown3:
+        type: bool
+        visu_acl: rw
+        avdevice_zone3: volume-
+        enforce_updates: 'yes'
+
+    VolumeHigh3:
+        type: bool
+        visu_acl: rw
+        avdevice_zone3: volumehigh
+        enforce_updates: 'yes'
+
+    VolumeLow3:
+        type: bool
+        visu_acl: rw
+        avdevice_zone3: volumelow
+        enforce_updates: 'yes'
+
+    Sleep3:
+        type: num
+        visu_acl: rw
+        avdevice_zone3: sleep
+
+    Standby3:
+        type: foo
+        visu_acl: rw
+        avdevice_zone3: standby

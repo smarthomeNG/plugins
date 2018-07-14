@@ -19,7 +19,7 @@ esf = 'Smarthome.esf'
 esf = os.path.join( sh.base_dir, 'var', esf)
 
 if os.path.isfile(esf):
-    # pyhon works with utf8 internally so we need to convert it, then chop the columns
+    # python works with utf8 internally so we need to convert it, then chop the columns
     f = open(esf, 'r', encoding="iso-8859-15")
     projectname = f.readline()
     logger.debug("Start parsing Project '{0}' from file {1}".format(projectname, esf))

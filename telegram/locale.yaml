@@ -1,8 +1,8 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
     'choose':                   {'de': 'Auswählen', 'en': '=', 'fr': 'Choisissez parmi'}
-    'I'll hide the keyboard':   {'de': 'Ich blende die Bedientasten aus', 'en': '=', 'fr': 'Je cache le clavier'}
-    'Infos from the items:':    {'de': 'Infos von den Items:', 'en': '=', 'fr': 'Info sur les Items:'}
+    'I will hide the keyboard': {'de': 'Ich blende die Bedientasten aus', 'en': '=', 'fr': 'Je cache le clavier'}
+    'Info from the items:':    {'de': 'Infos von den Items:', 'en': '=', 'fr': 'Info sur les Items:'}
     'unknown command %s':       {'de': 'Unbekanntes Kommando %s:', 'en': '=', 'fr': 'commande inconnue %s:'}
     'no items found with the attribute %s':       {'de': 'Keine Items mit Attribut %s gefunden', 'en': '=', 'fr': 'Ne pas trouvée une Item avec %s'}
     

@@ -33,13 +33,12 @@ from lib.module import Modules
 
 
 class WebServices(SmartPlugin):
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.5.0.2'
+    PLUGIN_VERSION = '1.5.0.3'
+    ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
     def __init__(self, smarthome, mode="all"):
         self.logger = logging.getLogger(__name__)
         self.logger.debug('Backend.__init__')
-        self._sh = smarthome
         self._mode = mode
 
         if not self.init_webinterfaces():
@@ -111,7 +110,9 @@ class WebServices(SmartPlugin):
 # ------------------------------------------
 
 import cherrypy
-#from jinja2 import Environment, FileSystemLoader
+
+
+# from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
@@ -131,7 +132,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -146,7 +146,8 @@ class WebInterface(SmartPluginWebIf):
         items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         for item in items_sorted:
             if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
-                if item.type() in ['str', 'bool', 'num']:
+                if item.type() in ['str', 'bool', 'num'] or (
+                        item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS):
                     items_filtered.append(item)
                     if self.plugin.has_iattr(item.conf, 'webservices_set'):
                         if isinstance(self.plugin.get_iattr_value(item.conf, 'webservices_set'), list):
@@ -192,10 +193,14 @@ class WebServiceInterface:
 
     def assemble_item_data(self, item, webservices_data='full'):
         if item is not None:
-            if item.type() in ['str', 'bool', 'num']:
+            if item.type() in ['str', 'bool', 'num'] or (
+                    item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS):
+                value = item._value
+                if item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS:
+                    if isinstance(value, datetime.datetime):
+                        value = str(value)
                 if webservices_data == 'full':
                     prev_value = item.prev_value()
-                    value = item._value
 
                     if isinstance(prev_value, datetime.datetime):
                         prev_value = str(prev_value)
@@ -255,7 +260,7 @@ class WebServiceInterface:
                                  }
                     return data_dict
                 elif webservices_data == 'val':
-                    return {'path': item._path, 'value': item._value}
+                    return {'path': item._path, 'value': value}
             else:
                 return None
 
@@ -282,7 +287,8 @@ class SimpleWebServiceInterface(WebServiceInterface):
                         if self.check_set(set_id, self.plugin.get_iattr_value(item.conf, 'webservices_set')):
                             if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
                                 item_data = self.assemble_item_data(item, 'val')
-                                items[item_data['path']] = item_data['value']
+                                if item_data is not None:
+                                    items[item_data['path']] = item_data['value']
                             else:
                                 item_data = self.assemble_item_data(item, 'full')
                                 if item_data is not None:
@@ -306,7 +312,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
@@ -323,13 +329,14 @@ class SimpleWebServiceInterface(WebServiceInterface):
                             items[item_data['path']] = item_data
                 return items
         else:
-            item = self.plugin._sh.return_item(item_path)
+            item = self.plugin.get_sh().return_item(item_path)
             if item is None:
                 return {"Error": "No item with item path %s found." % item_path}
 
             if self.plugin._mode == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
-                if item.type() in ['str', 'bool', 'num']:
-                    if value is not None:
+                if item.type() in ['str', 'bool', 'num'] or (
+                        item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS):
+                    if value is not None and item.type() in ['str', 'bool', 'num']:
                         item(value)
                         return {"Success": "Item with item path %s set to %s." % (item_path, value)}
                     else:
@@ -340,7 +347,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                         if item_data is not None:
                             return item_data
                 else:
-                    return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
+                    return {"Error": "Item with path %s is type %s, only str, num, bool and foo item types (of special system items) are supported." %
                                      (item_path, item.type())}
             else:
                 return {"Error": "Item with path %s not allowed for access via Webservice plugin." %
@@ -361,7 +368,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
@@ -369,7 +376,8 @@ class RESTWebServicesInterface(WebServiceInterface):
                         if self.check_set(set_id, self.plugin.get_iattr_value(item.conf, 'webservices_set')):
                             if self.plugin.get_iattr_value(item.conf, 'webservices_data') == 'val':
                                 item_data = self.assemble_item_data(item, 'val')
-                                items[item_data['path']] = item_data['value']
+                                if item_data is not None:
+                                    items[item_data['path']] = item_data['value']
                             else:
                                 item_data = self.assemble_item_data(item, 'full')
                                 if item_data is not None:
@@ -394,7 +402,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
@@ -411,7 +419,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                             items[item_data['path']] = item_data
                 return items
         else:
-            item = self.plugin._sh.return_item(item_path)
+            item = self.plugin.get_sh().return_item(item_path)
 
             if item is None:
                 return {"Error": "No item with item path %s found." % item_path}
@@ -468,7 +476,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                                 item._path)
                         return item_data
                     else:
-                        return {"Error": "Item with path %s is type %s, only str, num and bool types are supported." %
+                        return {"Error": "Item with path %s is type %s, only str, num, bool and foo item types (of special system items) are supported." %
                                          (item_path, item.type())}
             else:
                 return {"Error": "Item with path %s not allowed for access via Webservice plugin." %

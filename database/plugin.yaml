@@ -18,7 +18,29 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    driver:
+        type: str
+        default: 'sqlite3'
+        description:
+            de: 'Spezifiziert das DB-API2 Treiber Modul'
+            en: 'specifies the DB-API2 driver module (e.g. Python includes the SQLite driver by importing the module sqlite3, to use it here just set the driver parameter to the module name sqlite3)'
+    connect:
+        type: list(str)
+        description:
+            de: 'Spezifiziert die Verbindungsparameter, welche genutzt werden, um die connect() Funktion des DB API 2 aufzurufen.'
+            en: 'specifies the connection parameters which is directly used to invoke the connect() function of the DB API 2 implementation (for SQLite lookup here, other databases depends on implementation). An example connect string for pymysql could be connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome'
+    prefix:
+        type: str
+        description:
+            de: ''
+            en: "if you want to log into an existing database with other tables you can specify a prefix for the plugins' tables"
+    cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Dump Cycle bestimmt wie oft die Daten auf Platte geschrieben werden (in Sekunden).'
+            en: 'Dump cycle defined how often the database is dumped to disc (in seconds).'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     
