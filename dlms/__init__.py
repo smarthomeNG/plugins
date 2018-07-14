@@ -82,6 +82,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         """
         self.logger = logging.getLogger(__name__)
         self.logger.debug("init {}".format(__name__))
+        self._init_complete = False
 
         self._instance = self.get_parameter_value('instance')    # the instance of the plugin for questioning multiple smartmeter
         self._update_cycle  = self.get_parameter_value('update_cycle')       # the frequency in seconds how often the device should be accessed
@@ -98,6 +99,8 @@ class DLMS(SmartPlugin, conversion.Conversion):
         # dict especially for the interface
         self._config = {}
         self._config['serialport'] = self.get_parameter_value('serialport')
+        if not self._config['serialport']:
+            return
 
         # there is a possibility of using a named device
         # normally this will be empty since only one meter will be attached
@@ -114,6 +117,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self.init_webinterface()
 
         self.logger.debug("init done")
+        self._init_complete = True
 
     def run(self):
         """
