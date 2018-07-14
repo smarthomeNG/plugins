@@ -1,5 +1,7 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
+    'Letzte Auslesung':     {'de': '=', 'en': 'Last Readout', 'fr': '='}
+    'OBIS Items':           {'de': '=', 'en': 'OBIS Items', 'fr': '='}
     'Schnittstelle':        {'de': '=', 'en': 'Interface', 'fr': 'Interface'}
     'Gerätesubadresse':     {'de': '=', 'en': 'Device address', 'fr': 'Adresse du device'}
     'Timeout':              {'de': '=', 'en': 'Timeout', 'fr': 'Timeout '}

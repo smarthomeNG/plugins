@@ -23,8 +23,8 @@ parameters:
         type: foo
         default: 0
         description:
-            de: 'Instanz des Plugin'
-            en: 'Instance of Plugin'
+            de: 'Instanz des Plugins'
+            en: 'Plugin instance'
     serialport:
         type: str
         description:
@@ -42,12 +42,18 @@ parameters:
         description:
             de: 'Zeitlicher Abstand zwischen zwei Abfragen des Smartmeters'
             en: 'Time between two queries of smartmeter'
+    update_cycle_start_offset:
+        type: int
+        default: 0
+        description:
+            de: 'Zeit die beim Start des Plugins zusätzlich gewartet wird, damit sich verschiedene Instanzen die gleiche Schnittstellen abfragen nicht in die Quere kommen'
+            en: 'Time which gets added to the start of first query. This prevents interference between two instances using the same interface'
     device_address:
         type: str
         default: ''
         description:
-            de: 'interne Unteradresse des Smartmeters'
-            en: 'internal subadress of smartmeter'
+            de: 'Interne Unteradresse des Smartmeters'
+            en: 'Internal subadress of smartmeter'
     querycode:
         type: str
         default: '?'
