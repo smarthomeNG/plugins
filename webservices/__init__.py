@@ -33,7 +33,7 @@ from lib.module import Modules
 
 
 class WebServices(SmartPlugin):
-    PLUGIN_VERSION = '1.5.0.2'
+    PLUGIN_VERSION = '1.5.0.3'
     ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
     def __init__(self, smarthome, mode="all"):
