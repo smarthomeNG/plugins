@@ -1,10 +1,40 @@
 #!/usr/bin/env python3
-# This Python file is able to visit
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+#########################################################################
+#  Copyright 2016 - 2017 Bernd Meiners              Bernd.Meiners@mail.de
+#########################################################################
+#
+#  DLMS plugin for SmartHomeNG.py.
+#
+#  This file is part of SmartHomeNG.py.
+#  Visit:  https://github.com/smarthomeNG/
+#          https://knx-user-forum.de/forum/supportforen/smarthome-py
+#          https://smarthomeng.de
+#
+#  SmartHomeNG.py is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  SmartHomeNG.py is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with SmartHomeNG.py. If not, see <http://www.gnu.org/licenses/>.
+#########################################################################
+
+
+# This Python will visit
 # http://dlms.com/organization/flagmanufacturesids/index.html
-# download the list of manufacturer ids for smartmeter as html
-# and parse out the ids together with the manufacturer
+# to download the list of manufacturer ids for smartmeter as html
+# and parse out the ids together with the manufacturer.
+#
 # The result will be stored locally as a manufacturer.yaml
 # to serve as information database for the identification of smartmeters
+# 
+# BeautifulSoup is needed to perform the task.
 
 import logging
 import requests

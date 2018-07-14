@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2013 - 2015 KNX-User-Forum e.V.    http://knx-user-forum.de/
-#  Copyright 2016 - 2017 Bernd Meiners              Bernd.Meiners@mail.de
+#  Copyright 2016 - 2018 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #
 #  DLMS plugin for SmartHomeNG.py.
@@ -47,16 +47,17 @@ from . import dlms
 from . import conversion
 
 
-class DLMS(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0"
-    ALLOW_MULTIINSTANCE = True
+class DLMS(SmartPlugin, conversion.Conversion):
+    PLUGIN_VERSION = "1.5.1"
+
     """
     This class provides a Plugin for SmarthomeNG which reads out a smartmeter.
     The smartmeter needs to have an infrared interface and an IR-Adapter is needed for USB
     It is possible to use dlms.py standalone to test the results 
     prior to use it in SmarthomeNG
     
-    The tag 'dlms_obis_code' identifies the items which are to be updated from the plugin
+    The tag 'dlms_obis_code' identifies the items which are to be updated from the plugin,
+    the tag ``dlms_obis_readout`` will receive the last readout from smartmeter
     """
 
     # tags this plugin handles
@@ -73,6 +74,7 @@ class DLMS(SmartPlugin):
         baudrate="auto"
         update_cycle="60"
         device_address = b''
+        querycode = '?'
         timeout = 2
         use_checksum = True
         reset_baudrate = True
@@ -91,7 +93,8 @@ class DLMS(SmartPlugin):
         self.dlms_obis_codes = []                               # this is a list of codes that are to be parsed
 
         self.dlms_obis_readout_items = []                       # this is a list of items that receive the full readout
-
+        self._last_readout = ""
+        
         # dict especially for the interface
         self._config = {}
         self._config['serialport'] = self.get_parameter_value('serialport')
@@ -99,7 +102,8 @@ class DLMS(SmartPlugin):
         # there is a possibility of using a named device
         # normally this will be empty since only one meter will be attached
         # to one serial interface but the standard allows for it and we honor that.
-        self._config['device'] = self.get_parameter_value('device_address')   
+        self._config['device'] = self.get_parameter_value('device_address')
+        self._config['querycode'] = self.get_parameter_value('querycode')
         self._config['timeout'] = self.get_parameter_value('timeout')
 
         self._config['use_checksum'] = self.get_parameter_value('use_checksum')
@@ -211,189 +215,12 @@ class DLMS(SmartPlugin):
             self.logger.warning("update is alrady running, maybe it really takes very long or you should use longer "
                                 "query interval time")
 
-
-# ------------------------------------------
-#    Utility functions
-# ------------------------------------------
-
-
-    def _to_datetime_ZST10(self, text):
-        """
-        this function converts a string of form "YYMMDDhhmm" into a datetime object
-        :param text: string to convert
-        :return: a datetime object upon success or None if error found by malformed string
-        """
-        if len(text) != 10:
-            self.logger.error("too few characters for date/time code from OBIS")
-            return None
-        if not text.isdigit():
-            self.logger.error("only digits allowed for date/time code from OBIS")
-            return None
-        else:
-            year = int(text[0:2])+2000
-            month = int(text[2:4])
-            day = int(text[4:6])
-            hour = int(text[6:8])
-            minute = int(text[8:10])
-            return datetime.datetime(year,month,day,hour,minute,0)
-
-    def _to_datetime_ZST12(self, text):
-        """
-        this function converts a string of form "YYMMDDhhmmss" into a datetime object
-        :param text: string to convert
-        :return: a datetime object upon success or None if error found by malformed string
-        """
-        if len(text) != 12:
-            self.logger.error("too few characters for date/time code from OBIS")
-            return None
-        if not text.isdigit():
-            self.logger.error("only digits allowed for date/time code from OBIS")
-            return None
-        else:
-            year = int(text[0:2])+2000
-            month = int(text[2:4])
-            day = int(text[4:6])
-            hour = int(text[6:8])
-            minute = int(text[8:10])
-            second = int(text[10:12])
-            return datetime.datetime(year,month,day,hour,minute,second)
-
-    def _to_date_D6(self, text):
-        """
-        this function converts a string of form "YYMMDD" into a datetime.date object
-        :param text: string to convert
-        :return: a datetime.date object upon success or None if error found by malformed string
-        """
-        if len(text) != 6:
-            self.logger.error("too few characters for date code from OBIS")
-            return None
-        if not text.isdigit():
-            self.logger.error("only digits allowed for date code from OBIS")
-            return None
-        else:
-            year = int(text[0:2])+2000
-            month = int(text[2:4])
-            day = int(text[4:6])
-            return datetime.date(year,month,day)
-
-    def _to_time_Z4(self, text):
-        """
-        this function converts a string of form "hhmm" into a datetime.time object
-        :param text: string to convert
-        :return: a datetime.time object upon success or None if error found by malformed string
-        """
-        if len(text) != 4:
-            self.logger.error("too few characters for time code from OBIS")
-            return None
-        if not text.isdigit():
-            self.logger.error("only digits allowed for time code from OBIS")
-            return None
-        else:
-            hour = int(text[0:2])
-            minute = int(text[2:4])
-            return datetime.time(hour,minute)
-
-    def _to_time_Z6(self, text):
-        """
-        this function converts a string of form "hhmmss" into a datetime.time object
-        :param text: string to convert
-        :return: a datetime.time object upon success or None if error found by malformed string
-        """
-        if len(text) != 6:
-            self.logger.error("too few characters for time code from OBIS")
-            return None
-        if not text.isdigit():
-            self.logger.error("only digits allowed for time code from OBIS")
-            return None
-        else:
-            hour = int(text[0:2])
-            minute = int(text[2:4])
-            second = int(text[4:6])
-            return datetime.time(hour,minute,second)
-
-    def _convert_value( self, v, converter = 'str'):
-        """
-        This function converts the OBIS value to a user chosen value
-        :param v: the value to convert from given as string
-        :param converter: should contain one of ['str','float', 'int','ZST10', 'ZST12', 'D6', 'Z6', 'Z4', 'num']
-        :return: after successful conversion the value in converted form
-        """
-
-        if converter == 'str' or len(converter) == 0:
-            return v
-
-        if converter == 'float':
-            try:
-                return float(v)
-            except ValueError:
-                self.logger.error("Could not convert from '{}' to a float".format(v))
-                return None
-
-        if converter == 'int':
-            try:
-                return int(v)
-            except ValueError:
-                self.logger.error("Could not convert from '{}' to an integer".format(v))
-                return None
-
-        if converter == 'ZST10':
-            if len(v) == 10 and v.isdigit():
-                # this is a date!
-                v = self._to_datetime_ZST10(v)
-                return v
-            else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
-
-        if converter == 'ZST12':
-            if len(v) == 12 and v.isdigit():
-                # this is a date!
-                v = self._to_datetime_ZST12(v)
-                return v
-            else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
-
-        if converter == 'D6':
-            if len(v) == 6 and v.isdigit():
-                # this is a date!
-                v = self._to_date_D6(v)
-                return v
-            else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
-
-        if converter == 'Z6':
-            if len(v) == 6 and v.isdigit():
-                # this is a date!
-                v = self._to_time_Z6(v)
-                return v
-            else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
-
-        if converter == 'Z4':
-            if len(v) == 4 and v.isdigit():
-                # this is a date!
-                v = self._to_time_Z4(v)
-                return v
-            else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
-
-        if converter == 'num':
-            try:
-                return int(v)
-            except ValueError:
-                pass
-
-            try:
-                return float(v)
-            except ValueError:
-                pass
-
-        return v
-
     def _update_dlms_obis_readout_items(self, textblock):
         """
         Sets all items with attribute to the full readout text given in textblock
         :param textblock: the result of the latest query
         """
+        self._last_readout = textblock
         for item in self.dlms_obis_readout_items:
             item(textblock, 'DLMS')
 
@@ -541,5 +368,5 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, c=self.plugin._config)
+        return tmpl.render(p=self.plugin, i=self.plugin._instance, c=self.plugin._config, r=self.plugin._last_readout, cycle=self._update_cycle)
 

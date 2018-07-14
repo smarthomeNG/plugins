@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2013 - 2015 KNX-User-Forum e.V.    http://knx-user-forum.de/
-#  Copyright 2016 - 2017 Bernd Meiners              Bernd.Meiners@mail.de
+#  Copyright 2016 - 2018 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #
 #  DLMS plugin for SmartHomeNG.py.
@@ -10,6 +10,7 @@
 #  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
 #          https://knx-user-forum.de/forum/supportforen/smarthome-py
+#          https://smarthomeng.de
 #
 #  SmartHomeNG.py is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
