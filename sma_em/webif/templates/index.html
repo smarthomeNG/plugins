@@ -46,7 +46,7 @@
 			<tbody>
 				{% for key, item in p.get_items().items() %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item.id() }}</td>
 						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ key }}</td>
 						<td class="py-1">{{ item() }}</td>

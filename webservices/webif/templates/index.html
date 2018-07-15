@@ -44,10 +44,10 @@
             {% for item in value %}
                 <tr>
                     <td class="p-1">
-                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item._path}}/">{{item._path}}</a>
+                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item.id()}}/">{{item.id()}}</a>
                     </td>
                     <td class="p-1">
-                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item._path}}/">{{item._path}}</a>
+                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item.id()}}/">{{item.id()}}</a>
                     </td>
                     <td>
                          {{item.type()}}
@@ -63,10 +63,10 @@
         {% for item in item_data %}
         <tr>
             <td class="p-1">
-                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item._path}}/">{{item._path}}</a>
+                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item.id()}}/">{{item.id()}}</a>
             </td>
             <td class="p-1">
-                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item._path}}/">{{item._path}}</a>
+                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item.id()}}/">{{item.id()}}</a>
             </td>
             <td>
                  {{item.type()}}

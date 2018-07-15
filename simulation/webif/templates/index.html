@@ -67,7 +67,7 @@
 			<tbody>
 				{% for item in p.get_items() %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item._path }}</td>
+						<td class="py-1">{{ item.id() }}</td>
 						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ item() }}</td>
 						<td class="py-1">{{ item.conf['sim'] }}</td>
