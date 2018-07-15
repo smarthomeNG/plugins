@@ -11,10 +11,10 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/DLMS-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.5.0                 # Plugin version
+    version: 1.5.1                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
+    multi_instance: True          # plugin supports multi instance
     classname: DLMS                # class containing the plugin
 
 parameters:
@@ -23,8 +23,8 @@ parameters:
         type: foo
         default: 0
         description:
-            de: 'Instanz des Plugin'
-            en: 'Instance of Plugin'
+            de: 'Instanz des Plugins'
+            en: 'Plugin instance'
     serialport:
         type: str
         description:
@@ -42,12 +42,24 @@ parameters:
         description:
             de: 'Zeitlicher Abstand zwischen zwei Abfragen des Smartmeters'
             en: 'Time between two queries of smartmeter'
+    update_cycle_start_offset:
+        type: int
+        default: 0
+        description:
+            de: 'Zeit die beim Start des Plugins zusätzlich gewartet wird, damit sich verschiedene Instanzen die gleiche Schnittstellen abfragen nicht in die Quere kommen'
+            en: 'Time which gets added to the start of first query. This prevents interference between two instances using the same interface'
     device_address:
         type: str
         default: ''
         description:
-            de: 'interne Unteradresse des Smartmeters'
-            en: 'internal subadress of smartmeter'
+            de: 'Interne Unteradresse des Smartmeters'
+            en: 'Internal subadress of smartmeter'
+    querycode:
+        type: str
+        default: '?'
+        description:
+            de: 'Abfragecode für den Smartmeter, default ist `?`, einige Smartmeter akzeptieren z.B. `2`'
+            en: 'querycode of smartmeter, defaults to `?`, some smartmeter accept e.g. `2`'
     timeout:
         type: int
         default: 2
@@ -78,8 +90,8 @@ item_attributes:
     dlms_obis_code: 
         type: str
         description:
-            de: 'muß noch beschrieben werden'
-            en: 'needs some description'
+            de: 'Anweisung welcher Teil einer OBIS Zeile geparst und dem Item zugewiesen werden soll `1-1:1.6.2*01|Index|Value/Unit|Value Type`'
+            en: 'instruction which part of obis line should be parsed and assigned to an item `1-1:1.6.2*01|Index|Value/Unit|Value Type`'
     dlms_obis_readout: 
         type: str
         description:
