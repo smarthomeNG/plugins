@@ -28,7 +28,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class Miflora(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.0.3"
+    PLUGIN_VERSION = "1.3.0.4"
 
     def __init__(self, smarthome, bt_addr, cycle=300):
         """
