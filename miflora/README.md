@@ -1,6 +1,6 @@
-# Xiaomi
+# Miflora
 
-Version 0.3
+Version 0.4
 
 ## Requirements
 This plugin requires lib miflora in version 0.4 or above. You can install this lib with:
@@ -15,32 +15,32 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 
 ## Supported Hardware
 
-* Xiaomi Mi Plant Flowers Tester Light Monitor
+* Xiaomi MiFlora Plant Flowers Tester Light Monitor
 
 ## Configuration
 
 ### plugin.yaml
 
 ```yaml
-xiaomi:
-    class_name: Xiaomi
-    class_path: plugins.xiaomi
+miflora:
+    class_name: Miflora
+    class_path: miflora
     bt_addr: C4:7C:7E:21:F3:2B
     cycle: 300
-    instance: xiaomi
+    instance: miflora
 ```
 
 #### Attributes
-  * `bt_addr`: The Bluetooth address of your xiaomi plant sensor. Find e.g. with hcitool lescan
+  * `bt_addr`: The Bluetooth address of your xiaomi miflora plant sensor. Find e.g. with hcitool lescan
   * `cycle`: Cycle interval for data retrieval
   * `instance`: Instance name in case multi-instance use is needed (one instance can handle one sensor)
 
 ### items.yaml
 
-#### xiaomi_data_type
+#### miflora_data_type
 
-The xiaomi_data_type is needed to provide information to the plugin, which values shall be stored in the item.
-Possible xiaomi_data_type's are temperature, light, moisture, conductivity, name, firmware and battery.
+The miflora_data_type is needed to provide information to the plugin, which values shall be stored in the item.
+Possible miflora_data_type's are temperature, light, moisture, conductivity, name, firmware and battery.
 
 #### Example
 
@@ -51,29 +51,29 @@ plants:
 
         temperature:
             type: num
-            xiaomi_data_type@xiaomi: temperature
+            miflora_data_type@miflora: temperature
 
         light:
             type: num
-            xiaomi_data_type@xiaomi: light
+            miflora_data_type@miflora: light
 
         moisture:
             type: num
-            xiaomi_data_type@xiaomi: moisture
+            miflora_data_type@miflora: moisture
 
         conductivity:
             type: num
-            xiaomi_data_type@xiaomi: conductivity
+            miflora_data_type@miflora: conductivity
 
         name:
             type: str
-            xiaomi_data_type@xiaomi: name
+            miflora_data_type@miflora: name
 
         firmware:
             type: str
-            xiaomi_data_type@xiaomi: firmware
+            miflora_data_type@miflora: firmware
 
         battery:
             type: num
-            xiaomi_data_type@xiaomi: battery
+            miflora_data_type@miflora: battery
 ```

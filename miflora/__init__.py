@@ -26,7 +26,7 @@ from miflora.miflora_poller import MiFloraPoller, \
 from btlewrap import available_backends, BluepyBackend, GatttoolBackend, PygattBackend
 from lib.model.smartplugin import SmartPlugin
 
-class Xiaomi(SmartPlugin):
+class Miflora(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.3.0.3"
 
