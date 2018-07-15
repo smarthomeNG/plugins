@@ -1097,6 +1097,11 @@ class AVDevice(SmartPlugin):
                                                 "Checking Dependency {}: Adding query because it's init dependency is set to true.".format(
                                                     self._name))
                                 return False
+                            elif func.lower() == 'init' and dep_type == 'statusupdate' and len(totest[zone][dep_function]) == 1:
+                                self.logger.log(VERBOSE2,
+                                                "Checking Dependency {}: Adding query because updating status and no other dependencies set.".format(
+                                                    self._name))
+                                return False
                             elif dep_type == 'initupdate' and self._statusquery is False:
                                 self.logger.log(VERBOSE2,
                                                 "Checking Dependency {}: Not adding query because no init dependency defined.".format(
