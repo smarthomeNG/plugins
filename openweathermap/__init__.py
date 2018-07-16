@@ -34,6 +34,7 @@ class OpenWeatherMap(SmartPlugin):
     PLUGIN_VERSION = "1.5.0.1"
 
     _base_url = 'https://api.openweathermap.org/%s'
+    _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -88,15 +89,17 @@ class OpenWeatherMap(SmartPlugin):
         self._jsonData['uvi'] = uv
         for s, item in self._items.items():
 
-            if 'uvi' not in s:
-                wrk = weather
+            if s in ['clouds_new', 'precipitation_new', 'pressure_new', 'wind_new', 'temp_new']:
+                wrk = self.get_owm_layer(item)
+                self.logger.error(wrk)
             else:
-                wrk = uv
-                s = s.replace("uvi_", "")
-            sp = s.split('/')
-            if s == "flags/sources":
-                wrk = ', '.join(wrk['flags']['sources'])
-            else:
+                if 'uvi' not in s:
+                    wrk = weather
+                else:
+                    wrk = uv
+                    s = s.replace("uvi_", "")
+                sp = s.split('/')
+
                 while True:
                     if (len(sp) == 0) or (wrk is None):
                         break
@@ -131,6 +134,12 @@ class OpenWeatherMap(SmartPlugin):
 
         return
 
+    def get_owm_layer(self, item):
+        """
+        Requests the layer information (image links) at openweathermap.com
+        """
+        return self._build_url('owm_layer', item)
+
     def get_weather(self):
         """
         Requests the weather information at openweathermap.com
@@ -146,7 +155,7 @@ class OpenWeatherMap(SmartPlugin):
 
     def get_uv(self):
         """
-        Requests the weather information at openweathermap.com
+        Requests the uv index information at openweathermap.com
         """
         try:
             response = self._session.get(self._build_url('uv'))
@@ -176,7 +185,7 @@ class OpenWeatherMap(SmartPlugin):
     def get_json_data_uvi(self):
         return self._jsonData['uvi']
 
-    def _build_url(self, url_type='weather'):
+    def _build_url(self, url_type='weather', item=None):
         """
         Builds a request url
         @param url_type: url type (currently on 'forecast', as historic data are not supported.
@@ -193,6 +202,37 @@ class OpenWeatherMap(SmartPlugin):
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
+        elif url_type == 'owm_layer':
+            if self.has_iattr(item.conf, 'owm_matchstring'):
+                layer = self.get_iattr_value(item.conf, 'owm_matchstring')
+            elif 'owm_matchstring' in item.conf:
+                layer = item.conf['owm_matchstring']
+
+            if self.has_iattr(item.conf, 'x'):
+                x = self.get_iattr_value(item.conf, 'x')
+            elif 'x' in item.conf:
+                x = item.conf['x']
+            else:
+                self.logger.warning("_build_url: x attribute not set for item, setting default 1")
+                x = 1
+
+            if self.has_iattr(item.conf, 'y'):
+                y = self.get_iattr_value(item.conf, 'y')
+            elif 'y' in item.conf:
+                y = item.conf['y']
+            else:
+                self.logger.warning("_build_url: y attribute not set for item, setting default 1")
+                y = 1
+
+            if self.has_iattr(item.conf, 'z'):
+                z = self.get_iattr_value(item.conf, 'z')
+            elif 'z' in item.conf:
+                z = item.conf['z']
+            else:
+                self.logger.warning("_build_url: z attribute not set for item, setting default 1")
+                z = 1
+
+            url = self._base_img_url % (layer, z, x, y, self._key)
         else:
             self.logger.error('_build_url: Wrong url type specified: %s' % url_type)
         return url

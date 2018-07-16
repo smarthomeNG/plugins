@@ -32,7 +32,7 @@
 						<td class="py-1">{{ item.id() }}</td>
 						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{% if key in ['precipitation_new', 'clouds_new', 'pressure_new', 'wind_new', 'temp_new'] %}<a class="text-shng" target="_blank" href="{{ item() }}">{{ item() }}</a>{% else %} {{ item() }} {% endif %}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
