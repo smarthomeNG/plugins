@@ -211,7 +211,7 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         self.logger.info("{}: Running from '{}'".format(self.__class__.__name__, self.webif_dir))
         backendtemplates = self.plugin.path_join(self.webif_dir, 'templates')
         globaltemplates = self.plugin.mod_http.gtemplates_dir
-        self.tplenv = Environment(loader=FileSystemLoader([backendtemplates, globaltemplates]))
+        self.tplenv = Environment(loader=FileSystemLoader([globaltemplates, backendtemplates]))
 
         from os.path import basename as get_basename
         self.tplenv.globals['get_basename'] = get_basename
