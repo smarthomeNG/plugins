@@ -49,7 +49,7 @@ class BackendServer(SmartPlugin):
     the update functions for the items
     """
     
-    PLUGIN_VERSION='1.4.12'
+    PLUGIN_VERSION = '1.4.13'
 
 
     def __init__(self, sh, updates_allowed='True', developer_mode="no", pypi_timeout=5):
@@ -209,8 +209,10 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.logger.info("{}: Running from '{}'".format(self.__class__.__name__, self.webif_dir))
-        
-        self.tplenv = Environment(loader=FileSystemLoader(self.plugin.path_join( self.webif_dir, 'templates' ) ))   
+        backendtemplates = self.plugin.path_join(self.webif_dir, 'templates')
+        globaltemplates = self.plugin.mod_http.gtemplates_dir
+        self.tplenv = Environment(loader=FileSystemLoader([backendtemplates, globaltemplates]))
+
         from os.path import basename as get_basename
         self.tplenv.globals['get_basename'] = get_basename
         self.tplenv.globals['is_userlogic'] = Logics.is_userlogic
