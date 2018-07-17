@@ -249,6 +249,21 @@ EnOcean_Item:
         movement:
             type: bool
             enocean_rx_key: MOV
+			
+	occupancy_sensor:
+        enocean_rx_id: 01234567
+        enocean_rx_eep: A5_07_03
+        lux:
+            type: num
+            enocean_rx_key: ILL
+
+		movement:
+            type: bool
+            enocean_rx_key: PIR
+
+        voltage:
+            type: bool
+            enocean_rx_key: SVC
 
     temperature_sensor:
         enocean_rx_id: 01234567
@@ -336,6 +351,7 @@ The following status EEPs are supported:
 * A5_02_20		High Precision Temperature Sensor (ranges -10*C to +41.2°C, 1/20°C resolution)
 * A5_02_30		High Precision Temperature Sensor (ranges -40*C to +62.3°C, 1/10°C resolution)
 * A5_04_02		Energy (optional), humidity and temperature sensor
+* A5_07_03		Occupancy sensor, e.g. NodOn PIR-2-1-0x
 * A5_08_01		Brightness and movement sensor
 * A5_11_04		Dimmer status feedback
 * A5_12_01		Power Measurement, e.g. Eltako FSVA-230V
