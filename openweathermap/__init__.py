@@ -91,7 +91,6 @@ class OpenWeatherMap(SmartPlugin):
 
             if s in ['clouds_new', 'precipitation_new', 'pressure_new', 'wind_new', 'temp_new']:
                 wrk = self.get_owm_layer(item)
-                self.logger.error(wrk)
             else:
                 if 'uvi' not in s:
                     wrk = weather
