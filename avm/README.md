@@ -417,19 +417,19 @@ avm:
                 cache: 'yes'
                 visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 ip:
                     type: str
                     avm_data_type@fritzbox_7490: device_ip
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 connection_type:
                     type: str
                     avm_data_type@fritzbox_7490: device_connection_type
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 hostname:
                     type: str
                     avm_data_type@fritzbox_7490: device_hostname
@@ -442,19 +442,19 @@ avm:
                 cache: 'yes'
                 visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 ip:
                     type: str
                     avm_data_type: device_ip
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 connection_type:
                     type: str
                     avm_data_type: device_connection_type
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 hostname:
                     type: str
                     avm_data_type: device_hostname
@@ -468,19 +468,19 @@ avm:
                 type: bool
                 visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 ip:
                     type: str
                     avm_data_type: device_ip
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 connection_type:
                     type: str
                     avm_data_type: device_connection_type
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 hostname:
                     type: str
                     avm_data_type: device_hostname
@@ -492,19 +492,19 @@ avm:
                 type: bool
                 visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 ip:
                     type: str
                     avm_data_type: device_ip
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 connection_type:
                     type: str
                     avm_data_type: device_connection_type
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 hostname:
                     type: str
                     avm_data_type: device_hostname
@@ -517,19 +517,19 @@ avm:
                 cache: 'yes'
                 visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 ip:
                     type: str
                     avm_data_type: device_ip
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 connection_type:
                     type: str
                     avm_data_type: device_connection_type
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 hostname:
                     type: str
                     avm_data_type: device_hostname
@@ -541,19 +541,19 @@ avm:
                 type: bool
                 visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 ip:
                     type: str
                     avm_data_type: device_ip
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 connection_type:
                     type: str
                     avm_data_type: device_connection_type
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 hostname:
                     type: str
                     avm_data_type: device_hostname
@@ -566,19 +566,19 @@ avm:
                 cache: 'yes'
                 visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 ip:
                     type: str
                     avm_data_type: device_ip
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 connection_type:
                     type: str
                     avm_data_type: device_connection_type
                     visu_acl: ro
 
-                # these items need to be child items from network_device, an @... must not be set
+                # these items need to be child items from network_device
                 hostname:
                     type: str
                     avm_data_type: device_hostname
@@ -592,13 +592,13 @@ avm:
             ain: 14324 0432601    # has to be identical to id in fritzbox (also with spaces!)
             visu_acl: rw
 
-            # these items need to be child items from aha_device, an @... must not be set
+            # these items need to be child items from aha_device
             energy:
                 avm_data_type: energy
                 type: num
                 visu_acl: ro
 
-            # these items need to be child items from aha_device, an @... must not be set
+            # these items need to be child items from aha_device
             power:
                 avm_data_type: power
                 type: num
@@ -607,7 +607,7 @@ avm:
                 visu_acl: ro
                 eval: value / 100
 
-            # these items need to be child items from aha_device, an @... must not be set
+            # these items need to be child items from aha_device
             temperature:
                 avm_data_type: temperature
                 type: num
@@ -619,13 +619,13 @@ avm:
             ain: 03456 0221393    # has to be identical to id in fritzbox (also with spaces!)
             visu_acl: rw
 
-            # these items need to be child items from aha_device, an @... must not be set
+            # these items need to be child items from aha_device
             energy:
                 avm_data_type: energy
                 type: num
                 visu_acl: ro
 
-            # these items need to be child items from aha_device, an @... must not be set
+            # these items need to be child items from aha_device
             power:
                 avm_data_type: power
                 type: num
@@ -634,7 +634,7 @@ avm:
                 visu_acl: ro
                 eval: value / 100
 
-            # these items need to be child items from aha_device, an @... must not be set
+            # these items need to be child items from aha_device
             temperature:
                 avm_data_type: temperature
                 type: num
