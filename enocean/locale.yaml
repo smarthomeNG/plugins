@@ -1,0 +1,26 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Aktionen':        {'de': 'Aktionen', 'en': 'Actions'}
+    'Blockiert':       {'de': 'Blockiert', 'en': 'Blocked'}
+    'Ja':              {'de': 'Ja', 'en': 'Yes'}
+    'Nein':            {'de': 'Nein', 'en': 'No'}
+    'Ein':             {'de': 'Ein', en: 'On'}
+    'Zeit':            {'de': 'Zeit', en: 'Time'}
+    'Item ID':         {'de': 'Item ID', en: 'Item ID'}
+    'Dauer':           {'de': 'Dauer', en: 'Duration'}
+    'Übersicht':       {'de': 'Übersicht', en: 'Overview'}
+    'Senden':
+        de: 'Senden'
+        en: 'Sending'
+    'Die folgenden Items sind dieser Instanz des Enocean Plugins zugewiesen':
+        de: 'Die folgenden Items sind dieser Instanz des Enocean Plugins zugewiesen'
+        en: 'The following items are assigned to this instance of the enocean plugin'
+    'UTE Listen':
+        de: 'UTE Listen'
+        en: 'UTE Listen'
+    'Senden An/Aus':
+        de: 'Senden An/Aus'
+        en: 'Tx On/Off'
+    'Wollen Sie das Senden wirklich umschalten?':
+        de: 'Wollen Sie das Senden wirklich umschalten?'
+        en: 'Do you really want to change the sending state?' 

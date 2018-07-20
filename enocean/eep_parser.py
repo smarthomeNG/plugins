@@ -131,7 +131,7 @@ class EEP_Parser():
         if (result['BRI'] > 0):
             self.logger.info('enocean: brightness: {0}'.format(result['BRI']))
         return result
-		
+
     def _parse_eep_A5_07_03(self, payload, status):
         # Occupancy sensor with supply voltage monitor, NodOne
         self.logger.debug("enocean: parsing A5_07_03: Occupancy sensor")

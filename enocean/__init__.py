@@ -27,9 +27,10 @@ import logging
 import struct
 import time
 import threading
+from lib.item import Items         #what for?
 from . import eep_parser
 from . import prepare_packet_data
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 
 FCSTAB = [
     0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
@@ -164,7 +165,7 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.3"
+    PLUGIN_VERSION = "1.3.4"
 
     
     def __init__(self, smarthome, serialport, tx_id=''):
@@ -181,11 +182,15 @@ class EnOcean(SmartPlugin):
         self._cmd_lock = threading.Lock()
         self._response_lock = threading.Condition()
         self._rx_items = {}
+        self.UTE_listen = False
         self._block_ext_out_msg = False
         # call init of eep_parser
         self.eep_parser = eep_parser.EEP_Parser()
         # call init of prepare_packet_data
         self.prepare_packet_data = prepare_packet_data.Prepare_Packet_Data(self)
+
+        if not self.init_webinterface():
+            self._init_complete = False
 
     def eval_telegram(self, sender_id, data, opt):
         self.logger.debug("enocean: call function << eval_telegram >>")
@@ -556,6 +561,15 @@ class EnOcean(SmartPlugin):
         else:
             self.logger.info("enocean: invalid argument. Must be True/False")
 
+    def toggle_block_external_out_messages(self):
+        self.logger.debug("enocean: call function << toggle block_external_out_messages >>")
+        if self._block_ext_out_msg == False:
+            self.logger.info("enocean: Blocking of external out messages activated")
+            self._block_ext_out_msg = True
+        else:
+            self.logger.info("enocean: Blocking of external out messages deactivated")
+            self._block_ext_out_msg = False
+      
     def send_bit(self):
         self.logger.debug("enocean: call function << send_bit >>")
         self.logger.info("enocean: trigger Built-In Self Test telegram")
@@ -722,3 +736,88 @@ class EnOcean(SmartPlugin):
 ###############################
 ### --- END - Calc CRC8 --- ###
 ###############################
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+import csv
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.items = Items.get_instance()
+
+        self.tplenv = self.init_template_environment()
+
+
+    @cherrypy.expose
+    def index(self, reload=None, action=None, item_id=None, item_path=None, day=None, month=None, year=None,
+              time_orig=None, changed_orig=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        if action is not None:
+            if action == "toggle_tx_blocking":
+                self.plugin.toggle_block_external_out_messages()
+            
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(p=self.plugin,
+                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
+                           tabcount=1, action=action, item_id=item_id)
+
+

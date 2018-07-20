@@ -1,0 +1,32 @@
+{% extends "base_enocean.html" %}
+
+{% block bodytab1 %}
+<script type="text/javascript" language="javascript">
+	function confirmDelete(url, text) {
+		if (confirm(text)) {
+			window.location.href=url;
+		}
+		return false;
+	}
+</script>
+
+<div class="mb-2">
+	{{ _('Die folgenden Items sind dieser Instanz des Enocean Plugins zugewiesen') }}:
+</div>
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>{{ _('Item') }}</th>
+		<th>{{ _('RxEEP') }}</th>
+	</tr>
+	</thead>
+	{% for item in items %}
+		{% if p.has_iattr(item.conf, 'enocean_rx_id') %}
+			<tr>
+				<td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ item.conf['enocean_rx_eep']}}</td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+</table>
+{% endblock bodytab1 %}

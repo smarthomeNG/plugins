@@ -9,7 +9,7 @@ This plugin is still under development.
 If you have special hardware not supported yet please feel free to improve and contribute!
 
 ## Version / Change History
-Version: 1.6
+Version: 1.3.4
 
 Change History: currently not maintained.
 
@@ -249,15 +249,15 @@ EnOcean_Item:
         movement:
             type: bool
             enocean_rx_key: MOV
-			
-	occupancy_sensor:
+
+    occupancy_sensor:
         enocean_rx_id: 01234567
         enocean_rx_eep: A5_07_03
         lux:
             type: num
             enocean_rx_key: ILL
 
-		movement:
+        movement:
             type: bool
             enocean_rx_key: PIR
 
