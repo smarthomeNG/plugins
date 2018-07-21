@@ -1,12 +1,38 @@
 {% extends "base_enocean.html" %}
 
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+
+{% set start_tab = 2 %}
+
+{% set tab1title = "<strong> " ~ _('Übersicht') ~ "</strong> " %}
 {% block bodytab1 %}
+
 <script type="text/javascript" language="javascript">
 	function confirmDelete(url, text) {
 		if (confirm(text)) {
 			window.location.href=url;
 		}
 		return false;
+	}
+
+	function prepareCommand() {
+		if (confirm('{{ _('Wollen Sie ein Lerntelegramm schicken?') }}')) {
+			offsetvalue = $('#input-offset');
+			device_id_type = $('#enocean_device');
+
+			window.location.href='?action=send_learn&device_offset=' + offsetvalue .val() + '&device_id=' + device_id_type.val();
+		}
+		return false;
+
+
 	}
 </script>
 
@@ -30,3 +56,25 @@
 	{% endfor %}
 </table>
 {% endblock bodytab1 %}
+
+{% set tab2title = "<strong> " ~ _('Neu hinzufügen') ~ "</strong> " %}
+
+{% block bodytab2 %}
+
+<div class="mb-2">
+	{{ _('Enocean Geräte anlernen') }}:
+</div>
+<div style="float:left; margin-right:15px;">{{ _('Gerätetyp') }}:</div>
+		<select class="custom-select" id="enocean_device" style="float:left; width: 250px; margin-top:-7px;">
+			<option value="10">{{ _('Eltako FSVA-230V') }}</option>
+			<option value="20">{{ _('Eltako FSUD-230V') }}</option>
+			<option value="21">{{ _('Eltako FHK61SSR') }}</option>
+			<option value="30">{{ _('Radiator Valve') }}</option>
+			<option value="40">{{ _('Shutter Actor') }}</option>
+		</select>
+
+	{{ _('Offset') }}<input type="input" class="form-control mb-1" id="input-offset" placeholder="{{ _('Offset') }}" value="1" maxlength="3" style="width: 50px;">
+	<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anlernen') }}" onclick="prepareCommand();">{{ _('Anlernen') }}</button>
+
+{% endblock bodytab2 %}
+

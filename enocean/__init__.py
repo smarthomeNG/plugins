@@ -802,7 +802,7 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def index(self, reload=None, action=None, item_id=None, item_path=None, day=None, month=None, year=None,
+    def index(self, reload=None, action=None, item_id=None, item_path=None, device_id=None, device_offset=None,
               time_orig=None, changed_orig=None):
         """
         Build index.html for cherrypy
@@ -814,10 +814,15 @@ class WebInterface(SmartPluginWebIf):
         if action is not None:
             if action == "toggle_tx_blocking":
                 self.plugin.toggle_block_external_out_messages()
-            
+            elif action == "send_learn" and device_id is not None and device_offset is not None:
+                self.logger.warning("Learn telegram triggered via webinterface (ID:{0} Offset:{1})".format(device_id,device_offset))
+                self.plugin.send_learn_protocol(int(device_offset), int(device_id))
+            else:
+                self.logger.error("Unknown comman received via webinterface")
+
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
-                           tabcount=1, action=action, item_id=item_id)
+                           tabcount=1, item_id=item_id)
 
 
