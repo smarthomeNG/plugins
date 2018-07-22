@@ -16,7 +16,7 @@ var dict = [];
 function getItemDictionary() {
     $.getJSON('items.json?mode=list', function(result) {
         for (i = 0; i < result.length; i++) {
-            dict.push("sh."+result[i]);
+            dict.push("sh."+result[i]+"()");
         }
     });
 }
