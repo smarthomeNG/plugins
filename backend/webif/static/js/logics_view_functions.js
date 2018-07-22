@@ -20,7 +20,15 @@ function getItemDictionary() {
         }
     });
 }
+function getPluginDictionary() {
+    $.getJSON('plugins.json', function(result) {
+        for (i = 0; i < result.length; i++) {
+            dict.push("sh."+result[i]);
+        }
+    });
+}
 getItemDictionary();
+getPluginDictionary();
 
 CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
     var cur = editor.getCursor(),
