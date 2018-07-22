@@ -1,13 +1,13 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
     'Aktionen':        {'de': 'Aktionen', 'en': 'Actions'}
-    'Blockiert':       {'de': 'Blockiert', 'en': 'Blocked'}
+    'Blockiert':       {'de': 'Blockiert', 'en': 'Blocked', 'fr': 'Blocke'}
     'Ja':              {'de': 'Ja', 'en': 'Yes'}
     'Nein':            {'de': 'Nein', 'en': 'No'}
     'Ein':             {'de': 'Ein', en: 'On'}
     'Zeit':            {'de': 'Zeit', en: 'Time'}
     'Item ID':         {'de': 'Item ID', en: 'Item ID'}
-    'Dauer':           {'de': 'Dauer', en: 'Duration'}
+    'Gerätetyp':       {'de': 'Gerätetyp', en: 'Device Type'}
     'Übersicht':       {'de': 'Übersicht', en: 'Overview'}
     'Senden':
         de: 'Senden'
@@ -23,4 +23,14 @@ plugin_translations:
         en: 'Tx On/Off'
     'Wollen Sie das Senden wirklich umschalten?':
         de: 'Wollen Sie das Senden wirklich umschalten?'
-        en: 'Do you really want to change the sending state?' 
+        en: 'Do you really want to change the sending state?'
+        fr: 'Changer le stade de l'emitteur?'
+
+    'Neu hinzufügen':
+        de: 'Neu hinzufügen' 
+        en: 'Add devie'
+        fr: 'Ajouter'
+    'Enocean Geräte anlernen':
+        de: 'Enocean Geräte anlernen'
+        en: 'Teach-in new Enocean devices
+        fr: 'Ajouter nouveux acteur'
