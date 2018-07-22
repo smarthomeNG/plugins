@@ -118,4 +118,16 @@ class BackendPlugins:
 
         return self.render_template('plugins.html', plugins=plugins_sorted, lang=get_translation_lang(), mod_http=self._bs.mod_http)
 
+    @cherrypy.expose
+    def plugins_json(self):
+        """
+        returns a list of plugin names (from config) as json structure
+        """
+        plugin_list = []
+        for x in self.plugins.return_plugins():
+            if isinstance(x, SmartPlugin):
+                plugin_list.append(x.get_configname())
+            else:
+                plugin_list.append(x._configname)
 
+        return json.dumps(plugin_list)
