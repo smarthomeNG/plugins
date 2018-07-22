@@ -30,7 +30,7 @@ function getPluginDictionary() {
 getItemDictionary();
 getPluginDictionary();
 
-CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
+CodeMirror.registerHelper('hint', 'autocompleteHint', function(editor) {
     var cur = editor.getCursor(),
         curLine = editor.getLine(cur.line);
     var start = cur.ch,
@@ -56,7 +56,7 @@ CodeMirror.registerHelper('hint', 'itemsHint', function(editor) {
 });
 
 CodeMirror.commands.autocomplete_item = function(cm) {
-    CodeMirror.showHint(cm, CodeMirror.hint.itemsHint);
+    CodeMirror.showHint(cm, CodeMirror.hint.autocompleteHint);
 };
 
 function switchRulers() {
