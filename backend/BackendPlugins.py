@@ -27,21 +27,20 @@ import cherrypy
 import lib.config
 from lib.plugin import Plugins
 from lib.model.smartplugin import SmartPlugin
+import inspect
 
 from .utils import *
 
-#import lib.item_conversion
+
+# import lib.item_conversion
 
 class BackendPlugins:
-
     plugins = None
 
     def __init__(self):
 
         self.plugins = Plugins.get_instance()
         self.logger.info("BackendPlugins __init__ self.plugins = {}".format(str(self.plugins)))
-        
-        
 
     # -----------------------------------------------------------------------------------
     #    PLUGINS
@@ -57,12 +56,16 @@ class BackendPlugins:
             myplg = self.plugins.return_plugin(configname)
             myplg2 = self.plugins.get_pluginthread(configname)
             myplg.run()
-            self.logger.warning("disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg, myplg.alive, myplg2))
+            self.logger.warning(
+                "disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg,
+                                                                                             myplg.alive, myplg2))
         elif disable is not None:
             myplg = self.plugins.return_plugin(configname)
             myplg2 = self.plugins.get_pluginthread(configname)
             myplg.stop()
-            self.logger.warning("disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg, myplg.alive, myplg2))
+            self.logger.warning(
+                "disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg,
+                                                                                             myplg.alive, myplg2))
         elif unload is not None:
             result = self.plugins.unload_plugin(configname)
 
@@ -102,7 +105,7 @@ class BackendPlugins:
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
                 plugin['stopped'] = False
-                
+
             try:
                 plugin['stopped'] = not x.alive
                 plugin['stoppable'] = True
@@ -111,23 +114,52 @@ class BackendPlugins:
                 plugin['stoppable'] = False
             if plugin['shortname'] == 'backend':
                 plugin['stoppable'] = False
-            
-            
+
             plugin_list.append(plugin)
         plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])
 
-        return self.render_template('plugins.html', plugins=plugins_sorted, lang=get_translation_lang(), mod_http=self._bs.mod_http)
+        return self.render_template('plugins.html', plugins=plugins_sorted, lang=get_translation_lang(),
+                                    mod_http=self._bs.mod_http)
 
     @cherrypy.expose
     def plugins_json(self):
         """
         returns a list of plugin names (from config) as json structure
         """
+        not_allowed_functions = ['__init__', 'parse_item', 'parse_logic', 'update_item', 'init_webinterface',
+                                 'init_webinterfaces']
         plugin_list = []
         for x in self.plugins.return_plugins():
             if isinstance(x, SmartPlugin):
-                plugin_list.append(x.get_configname())
+                plugin_config_name = x.get_configname()
             else:
-                plugin_list.append(x._configname)
+                plugin_config_name = x._configname
+
+            plugin_list.append(plugin_config_name)
+
+            for func_name in inspect.getmembers(x, predicate=inspect.ismethod):
+                if self.get_class_that_defined_method(func_name[1]) is not None:
+                    class_name = self.get_class_that_defined_method(func_name[1]).__name__
+                    if 'SmartPlugin' not in class_name and func_name[0] not in not_allowed_functions and not func_name[
+                        0].startswith('_'):
+                        plugin_list.append(plugin_config_name + "." + func_name[0])
 
         return json.dumps(plugin_list)
+
+    def get_class_that_defined_method(self, meth):
+        if inspect.ismethod(meth):
+            for cls in inspect.getmro(meth.__self__.__class__):
+                if cls.__dict__.get(meth.__name__) is meth:
+                    return cls
+            meth = meth.__func__  # fallback to __qualname__ parsing
+        if inspect.isfunction(meth):
+
+            # Check to make sure the method has a "qualname"
+            if not getattr(meth, '__qualname__', None):
+                return None
+
+            cls = getattr(inspect.getmodule(meth),
+                          meth.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
+            if isinstance(cls, type):
+                return cls
+        return None  # not required since None would have been implicitly returned anyway
