@@ -135,7 +135,7 @@ class BackendPlugins:
             else:
                 plugin_config_name = x._configname
 
-            plugin_list.append(plugin_config_name)
+            #plugin_list.append(plugin_config_name)
 
             for func_name in inspect.getmembers(x, predicate=inspect.ismethod):
                 if self.get_class_that_defined_method(func_name[1]) is not None:
