@@ -16,14 +16,14 @@ var dict = [];
 function getItemDictionary() {
     $.getJSON('items.json?mode=list', function(result) {
         for (i = 0; i < result.length; i++) {
-            dict.push("sh."+result[i]+"()");
+            dict.push({ text: "sh."+result[i]+"()", displayText: "sh."+result[i]+"() | Item" });
         }
     });
 }
 function getPluginDictionary() {
     $.getJSON('plugins.json', function(result) {
         for (i = 0; i < result.length; i++) {
-            dict.push("sh."+result[i]);
+            dict.push({ text: "sh."+result[i], displayText: "sh."+result[i]+" | Plugin"});
         }
     });
 }
@@ -45,17 +45,26 @@ CodeMirror.registerHelper('hint', 'autocompleteHint', function(editor) {
     }
     var regex = new RegExp('^' + curWord, 'i');
     if (curWord.length >= 3) {
-        return {
-            list: (!curWord ? [] : dict.filter(function(item) {
-                return item.match(regex);
-            })).sort(),
+        var oCompletions = {
+            list: (!curWord ? [] : dict.filter(function (item) {
+                return item['text'].match(regex);
+            })).sort(function(a, b){
+                var nameA=a.text.toLowerCase(), nameB=b.text.toLowerCase()
+                if (nameA < nameB) //sort string ascending
+                    return -1
+                if (nameA > nameB)
+                    return 1
+                return 0 //default return value (no sorting)
+            }),
             from: CodeMirror.Pos(cur.line, start),
             to: CodeMirror.Pos(cur.line, end)
-        }
+        };
+
+        return oCompletions;
     }
 });
 
-CodeMirror.commands.autocomplete_item = function(cm) {
+CodeMirror.commands.autocomplete_shng = function(cm) {
     CodeMirror.showHint(cm, CodeMirror.hint.autocompleteHint);
 };
 
