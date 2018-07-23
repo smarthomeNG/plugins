@@ -129,6 +129,25 @@ var watchitemsCodeMirror = CodeMirror.fromTextArea($("#watch")[0], {
     {% if not yaml_updates or not updates %}readOnly: true,{% endif %}
 });
 
+watchitemsCodeMirror.on("beforeChange", function(cm, changeObj) {
+    var typedNewLine = changeObj.origin == '+input' && typeof changeObj.text == "object" && changeObj.text.join("") == "";
+    if (typedNewLine) {
+        return changeObj.cancel();
+    }
+
+    var pastedNewLine = changeObj.origin == 'paste' && typeof changeObj.text == "object" && changeObj.text.length > 1;
+    if (pastedNewLine) {
+        var newText = changeObj.text.join(" ");
+
+        // trim
+        //newText = $.trim(newText);
+
+        return changeObj.update(null, null, [newText]);
+    }
+
+    return null;
+});
+
 var logicsCodeMirror = CodeMirror.fromTextArea($("#logics_code")[0], {
     lineNumbers: true,
 
