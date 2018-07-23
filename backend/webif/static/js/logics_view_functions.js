@@ -19,6 +19,7 @@ function getItemDictionary() {
         for (i = 0; i < result.length; i++) {
             dict.push({ text: "sh."+result[i]+"()", displayText: "sh."+result[i]+"() | Item" });
             watch_items_dict.push({ text: result[i], displayText: result[i] });
+            watch_items_dict.push({ text: result[i], displayText: "sh."+result[i] });
         }
     });
 }
@@ -51,7 +52,7 @@ function registerAutocompleteHelper(name, curDict) {
         if (curWord.length >= 3) {
             var oCompletions = {
                 list: (!curWord ? [] : curDict.filter(function (item) {
-                    return item['text'].match(regex);
+                    return item['displayText'].match(regex);
                 })).sort(function(a, b){
                     var nameA=a.text.toLowerCase(), nameB=b.text.toLowerCase()
                     if (nameA < nameB) //sort string ascending
