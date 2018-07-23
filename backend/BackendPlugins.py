@@ -142,7 +142,7 @@ class BackendPlugins:
                     class_name = self.get_class_that_defined_method(func_name[1]).__name__
                     if 'SmartPlugin' not in class_name and func_name[0] not in not_allowed_functions and not func_name[
                         0].startswith('_'):
-                        plugin_list.append(plugin_config_name + "." + func_name[0])
+                        plugin_list.append(plugin_config_name + "." + func_name[0]+str(inspect.signature(func_name[1])))
 
         return json.dumps(plugin_list)
 

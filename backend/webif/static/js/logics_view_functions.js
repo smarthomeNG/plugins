@@ -26,7 +26,7 @@ function getItemDictionary() {
 function getPluginDictionary() {
     $.getJSON('plugins.json', function(result) {
         for (i = 0; i < result.length; i++) {
-            dict.push({ text: "sh."+result[i]+"()", displayText: "sh."+result[i]+"() | Plugin"});
+            dict.push({ text: "sh."+result[i], displayText: "sh."+result[i]+" | Plugin"});
         }
     });
 }
