@@ -13,10 +13,12 @@ window.addEventListener("resize", function(){resizeCodeMirror(logicsCodeMirror, 
 resizeCodeMirror(logicsCodeMirror, 15);
 
 var dict = [];
+var watch_items_dict = [];
 function getItemDictionary() {
     $.getJSON('items.json?mode=list', function(result) {
         for (i = 0; i < result.length; i++) {
             dict.push({ text: "sh."+result[i]+"()", displayText: "sh."+result[i]+"() | Item" });
+            watch_items_dict.push({ text: result[i], displayText: result[i] });
         }
     });
 }
@@ -29,6 +31,7 @@ function getPluginDictionary() {
 }
 getItemDictionary();
 getPluginDictionary();
+console.log(watch_items_dict);
 
 CodeMirror.registerHelper('hint', 'autocompleteHint', function(editor) {
     var cur = editor.getCursor(),
@@ -44,9 +47,44 @@ CodeMirror.registerHelper('hint', 'autocompleteHint', function(editor) {
         curWord = curWord.trim();
     }
     var regex = new RegExp('^' + curWord, 'i');
+
     if (curWord.length >= 3) {
         var oCompletions = {
-            list: (!curWord ? [] : dict.filter(function (item) {
+            list: (!curWord ? [] : watch_items_dict.filter(function (item) {
+                return item['text'].match(regex);
+            })).sort(function(a, b){
+                var nameA=a.text.toLowerCase(), nameB=b.text.toLowerCase()
+                if (nameA < nameB) //sort string ascending
+                    return -1
+                if (nameA > nameB)
+                    return 1
+                return 0 //default return value (no sorting)
+            }),
+            from: CodeMirror.Pos(cur.line, start),
+            to: CodeMirror.Pos(cur.line, end)
+        };
+
+        return oCompletions;
+    }
+});
+
+CodeMirror.registerHelper('hint', 'autocompleteWatchItemsHint', function(editor) {
+    var cur = editor.getCursor(),
+        curLine = editor.getLine(cur.line);
+    var start = cur.ch,
+        end = start;
+
+    var charexp =  /[\w\.$]+/;
+    while (end < curLine.length && charexp.test(curLine.charAt(end))) ++end;
+    while (start && charexp.test(curLine.charAt(start - 1))) --start;
+    var curWord = start != end && curLine.slice(start, end);
+    if (curWord.length > 1) {
+        curWord = curWord.trim();
+    }
+    var regex = new RegExp('^' + curWord, 'i');
+    if (curWord.length >= 3) {
+        var oCompletions = {
+            list: (!curWord ? [] : watch_items_dict.filter(function (item) {
                 return item['text'].match(regex);
             })).sort(function(a, b){
                 var nameA=a.text.toLowerCase(), nameB=b.text.toLowerCase()
@@ -66,6 +104,10 @@ CodeMirror.registerHelper('hint', 'autocompleteHint', function(editor) {
 
 CodeMirror.commands.autocomplete_shng = function(cm) {
     CodeMirror.showHint(cm, CodeMirror.hint.autocompleteHint);
+};
+
+CodeMirror.commands.autocomplete_shng_watch_items = function(cm) {
+    CodeMirror.showHint(cm, CodeMirror.hint.autocompleteWatchItemsHint);
 };
 
 function switchRulers() {
