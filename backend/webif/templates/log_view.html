@@ -35,7 +35,7 @@
 </div>
 <br style="clear:both;"/>
 <div class="container-fluid" style="overflow: none;">
-    <div style="border: 1px solid #ddd; margin-bottom: 10px;">
+    <div style="margin-bottom: 10px;">
 {% if log_lines %}<textarea autocomplete="off" id="log_file" name="log_file">{% for line in log_lines %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
     </div>
 </div>
