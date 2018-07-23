@@ -138,10 +138,6 @@ watchitemsCodeMirror.on("beforeChange", function(cm, changeObj) {
     var pastedNewLine = changeObj.origin == 'paste' && typeof changeObj.text == "object" && changeObj.text.length > 1;
     if (pastedNewLine) {
         var newText = changeObj.text.join(" ");
-
-        // trim
-        //newText = $.trim(newText);
-
         return changeObj.update(null, null, [newText]);
     }
 
