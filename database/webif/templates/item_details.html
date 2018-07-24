@@ -33,7 +33,7 @@ function confirmDelete(url, text) {
 	</div>
 {% endif %}
 <div class="mb-2">
-	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }} <strong>{{ item_path }}</strong> {{ _('am') }} <strong>{% if day and month and year %}{% if language == 'en' %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == 'en' %}{{ now.strftime('%-m/%-d/%Y') }}{% else %}{{ now.strftime('%-d.%-m.%Y') }}{% endif %}{% endif %}</strong> {{_('(Datenbank-ID') }}: {{ item_id }}, {{ log_array | length }} {{_('Datensätze')}}):
+	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }} <strong>{{ item_path }}</strong> {{ _('am') }} <strong>{% if day and month and year %}{% if language == 'en' %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == 'en' %}{{ now.strftime('%-m/%-d/%Y') }}{% else %}{{ now.strftime('%-d.%-m.%Y') }}{% endif %}{% endif %}</strong> ({{_('Datenbank-ID') }}: {{ item_id }}, {{ log_array | length }} {{_('Datensätze')}}):
 	<br/>
 </div>
 <div style="float:right; width:220px;" id="datepicker">
