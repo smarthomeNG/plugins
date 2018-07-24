@@ -62,6 +62,11 @@
 {% block bodytab2 %}
 
 <div class="mb-2">
+	{{ _('Unbekannte Sensor ID') }}:
+	<td class="py-1">{{ p.unknown_sender_id }}</td>
+</div>
+
+<div class="mb-2">
 	{{ _('Enocean Geräte anlernen') }}:
 </div>
 <div style="float:left; margin-right:15px;">{{ _('Gerätetyp') }}:</div>
@@ -75,6 +80,5 @@
 
 	{{ _('Offset') }}<input type="input" class="form-control mb-1" id="input-offset" placeholder="{{ _('Offset') }}" value="1" maxlength="3" style="width: 50px;">
 	<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anlernen') }}" onclick="prepareCommand();">{{ _('Anlernen') }}</button>
-
 {% endblock bodytab2 %}
 

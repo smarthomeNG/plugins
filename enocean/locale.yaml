@@ -24,7 +24,7 @@ plugin_translations:
     'Wollen Sie das Senden wirklich umschalten?':
         de: 'Wollen Sie das Senden wirklich umschalten?'
         en: 'Do you really want to change the sending state?'
-        fr: 'Changer le stade de l'emitteur?'
+        fr: 'Changer le stade de lemitteur?'
 
     'Neu hinzufügen':
         de: 'Neu hinzufügen' 
@@ -32,5 +32,5 @@ plugin_translations:
         fr: 'Ajouter'
     'Enocean Geräte anlernen':
         de: 'Enocean Geräte anlernen'
-        en: 'Teach-in new Enocean devices
+        en: 'Teach-in new Enocean devices'
         fr: 'Ajouter nouveux acteur'

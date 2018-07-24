@@ -183,6 +183,7 @@ class EnOcean(SmartPlugin):
         self._response_lock = threading.Condition()
         self._rx_items = {}
         self.UTE_listen = False
+        self.unknown_sender_id = 'None'
         self._block_ext_out_msg = False
         # call init of eep_parser
         self.eep_parser = eep_parser.EEP_Parser()
@@ -309,6 +310,7 @@ class EnOcean(SmartPlugin):
         elif (sender_id <= self.tx_id + 127) and (sender_id >= self.tx_id):
             self.logger.debug("enocean: Received repeated enocean stick message")
         else:
+            self.unknown_sender_id = "{:08X}".format(sender_id)
             self.logger.info("unknown ID = {:08X}".format(sender_id))
 
 
@@ -453,7 +455,11 @@ class EnOcean(SmartPlugin):
         self.alive = False
         self.logger.info("enocean: Thread stopped")
 
-        
+    def get_tx_id_as_hex(self):
+        hexstring = "{:08X}".format(self.tx_id)
+        return hexstring
+
+    
     def _send_UTE_response(self, data, optional):
         self.logger.debug("enocean: call function << _send_UTE_response >>")
         choice = data[0]
