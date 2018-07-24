@@ -11,6 +11,7 @@ plugin_translations:
     'Geändert':        {'de': 'Geändert', en: 'Changed'}
     'Übersicht':       {'de': 'Übersicht', en: 'Overview'}
     'am':              {'de': 'am', en: 'on the'}
+    'Datensätze':      {'de': 'Datensätze', 'en': 'Data Sets']
     'Item-ID in der Datenbank':
         de: 'Item-ID in der Datenbank'
         en: 'Item ID within the database'
