@@ -11,8 +11,8 @@ plugin:
     documentation: https://www.smarthomeng.de/?category_name=plugins&s=webservices
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1163886-support-thread-f%C3%BCr-das-webservices-plugin
 
-    version: 1.5.0.3               # Plugin version
-    sh_minversion: 1.4c            # minimum shNG version to use this plugin
+    version: 1.5.0.5               # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: WebServices         # class containing the plugin
