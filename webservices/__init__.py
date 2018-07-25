@@ -145,7 +145,7 @@ class WebInterface(SmartPluginWebIf):
         for item in items_sorted:
             if self.plugin.get_mode() == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
                 if item.type() in ['str', 'bool', 'num'] or (
-                        item.type() in ['foo'] and item.path() in self.plugin.ALLOWED_FOO_PATHS):
+                        item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS):
                     items_filtered.append(item)
                     if self.plugin.has_iattr(item.conf, 'webservices_set'):
                         if isinstance(self.plugin.get_iattr_value(item.conf, 'webservices_set'), list):
@@ -192,9 +192,9 @@ class WebServiceInterface:
     def assemble_item_data(self, item, webservices_data='full'):
         if item is not None:
             if item.type() in ['str', 'bool', 'num'] or (
-                    item.type() in ['foo'] and item.path() in self.plugin.ALLOWED_FOO_PATHS):
+                    item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS):
                 value = item._value
-                if item.type() in ['foo'] and item.path() in self.plugin.ALLOWED_FOO_PATHS:
+                if item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS:
                     if isinstance(value, datetime.datetime):
                         value = str(value)
                 if webservices_data == 'full':
@@ -206,7 +206,7 @@ class WebServiceInterface:
                     cycle = ''
                     crontab = ''
                     for entry in self.plugin.get_sh().scheduler._scheduler:
-                        if entry == item.path():
+                        if entry == item._path:
                             if self.plugin.get_sh().scheduler._scheduler[entry]['cycle']:
                                 cycle = self.plugin.get_sh().scheduler._scheduler[entry]['cycle']
                             if self.plugin.get_sh().scheduler._scheduler[entry]['cron']:
@@ -233,7 +233,7 @@ class WebServiceInterface:
                         trig = trig[1:len(trig) - 27]
                         triggers.append(format(trig.replace("<", "")))
 
-                    data_dict = {'path': item.path(),
+                    data_dict = {'path': item._path,
                                  'name': item._name,
                                  'type': item.type(),
                                  'value': value,
@@ -258,7 +258,7 @@ class WebServiceInterface:
                                  }
                     return data_dict
                 elif webservices_data == 'val':
-                    return {'path': item.path(), 'value': value}
+                    return {'path': item._path, 'value': value}
             else:
                 return None
 
@@ -293,8 +293,8 @@ class SimpleWebServiceInterface(WebServiceInterface):
                                 if item_data is not None:
                                     item_data['url'] = "http://%s:%s/ws/items/%s" % (
                                         self.plugin.mod_http.get_local_ip_address(),
-                                        self.plugin.mod_http.get_local_port(), item.path())
-                                    items[item.path()] = item_data
+                                        self.plugin.mod_http.get_local_port(), item._path)
+                                    items[item._path] = item_data
                 return items
         else:
             return {"Error": "No set-ID for item set is given."}
@@ -325,7 +325,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                             if final_mode != "val":
                                 item_data['url'] = "http://%s:%s/ws/items/%s" % (
                                     self.plugin.mod_http.get_local_ip_address(),
-                                    self.plugin.mod_http.get_local_servicesport(), item.path())
+                                    self.plugin.mod_http.get_local_servicesport(), item._path)
                             items[item_data['path']] = item_data
                 return items
         else:
@@ -335,7 +335,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
 
             if self.plugin.get_mode() == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
                 if item.type() in ['str', 'bool', 'num'] or (
-                        item.type() in ['foo'] and item.path() in self.plugin.ALLOWED_FOO_PATHS):
+                        item.type() in ['foo'] and item._path in self.plugin.ALLOWED_FOO_PATHS):
                     if value is not None and item.type() in ['str', 'bool', 'num']:
                         item(value)
                         return {"Success": "Item with item path %s set to %s." % (item_path, value)}
@@ -386,7 +386,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                                 if item_data is not None:
                                     item_data['url'] = "http://%s:%s/rest/items/%s" % (
                                         self.plugin.mod_http.get_local_ip_address(),
-                                        self.plugin.mod_http.get_local_port(), item.path())
+                                        self.plugin.mod_http.get_local_port(), item._path)
                                     items[item_data['path']] = item_data
                 return items
         else:
@@ -419,7 +419,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                             if final_mode != 'val':
                                 item_data['url'] = "http://%s:%s/rest/items/%s" % (
                                     self.plugin.mod_http.get_local_ip_address(),
-                                    self.plugin.mod_http.get_local_port(), item.path())
+                                    self.plugin.mod_http.get_local_port(), item._path)
                             items[item_data['path']] = item_data
                 return items
         else:
@@ -478,7 +478,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                             item_data['url'] = "http://%s:%s/rest/items/%s" % (
                                 self.plugin.mod_http.get_local_ip_address(),
                                 self.plugin.mod_http.get_local_servicesport(),
-                                item.path())
+                                item._path)
                         return item_data
                     else:
                         return {
