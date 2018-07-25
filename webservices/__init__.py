@@ -141,7 +141,7 @@ class WebInterface(SmartPluginWebIf):
         """
         items_filtered = []
         item_sets = {}
-        items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+        items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         for item in items_sorted:
             if self.plugin.get_mode() == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
                 if item.type() in ['str', 'bool', 'num'] or (
@@ -205,12 +205,12 @@ class WebServiceInterface:
 
                     cycle = ''
                     crontab = ''
-                    for entry in self.plugin._sh.scheduler._scheduler:
+                    for entry in self.plugin.get_sh().scheduler._scheduler:
                         if entry == item.path():
-                            if self.plugin._sh.scheduler._scheduler[entry]['cycle']:
-                                cycle = self.plugin._sh.scheduler._scheduler[entry]['cycle']
-                            if self.plugin._sh.scheduler._scheduler[entry]['cron']:
-                                crontab = str(self.plugin._sh.scheduler._scheduler[entry]['cron'])
+                            if self.plugin.get_sh().scheduler._scheduler[entry]['cycle']:
+                                cycle = self.plugin.get_sh().scheduler._scheduler[entry]['cycle']
+                            if self.plugin.get_sh().scheduler._scheduler[entry]['cron']:
+                                crontab = str(self.plugin.get_sh().scheduler._scheduler[entry]['cron'])
                             break
 
                     changed_by = item.changed_by()
@@ -277,7 +277,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin._sh.return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
