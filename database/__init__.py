@@ -196,7 +196,7 @@ class Database(SmartPlugin):
     def id(self, item, create=True, cur=None):
         id = self.readItem(str(item.id()), cur=cur)
 
-        if id == None and create == True:
+        if id is None and create == True:
             id = [self.insertItem(item.id(), cur)]
 
         return None if id == None else int(id[COL_ITEM_ID])
@@ -582,6 +582,7 @@ class Database(SmartPlugin):
         self._query(self._db.execute, query, params, cur)
 
     def _query(self, func, query, params, cur=None):
+        self.logger.debug(query)
         if not self._initialize():
             return None
         if cur is None:
@@ -720,6 +721,7 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        item = self.plugin.get_sh().return_item(item_path)
         delete_triggered = False
         if action is not None:
             if action == "delete_log" and item_id is not None:
@@ -739,6 +741,7 @@ class WebInterface(SmartPluginWebIf):
                                                                         "%m/%d/%Y").timetuple())*1000
                 time_end = time_start + 24 * 60 * 60 * 1000
                 tmpl = self.tplenv.get_template('item_details.html')
+
                 rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
                 log_array = []
                 for row in rows:
@@ -755,7 +758,7 @@ class WebInterface(SmartPluginWebIf):
                 reversed_arr = log_array[::-1]
                 return tmpl.render(p=self.plugin,
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
-                                                reverse=False),
+                                                reverse=False), item = item,
                                    tabcount=1, action=action, item_id=item_id, item_path=item_path,
                                    language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now(),
                                    log_array=reversed_arr, day=day, month=month, year=year,

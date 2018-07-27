@@ -12,6 +12,9 @@ plugin_translations:
     'Übersicht':       {'de': 'Übersicht', 'en': 'Overview'}
     'am':              {'de': 'am', 'en': 'on the'}
     'Datensätze':      {'de': 'Datensätze', 'en': 'Data Sets'}
+    'Aktueller Wert':  {'de': '=', 'en': 'Recent Value'}
+    'Typ':             {'de': '=', 'en': 'Type'}
+    'Tabelle':         {'de': '=', 'en': 'Table'}
     'Item-ID in der Datenbank':
         'de': 'Item-ID in der Datenbank'
         'en': 'Item ID within the database'

@@ -108,6 +108,8 @@
 	"Ergebnis: Aufbereitetes .YAML Format": "",
 	"Ergebnis: Aufbereitet als Python Source Code": "",
 	"Python Code Ausgabe": "",
+	"Pakete für den Bau der Dokumentation": "Packages for Building the Documentation",
+	"Pakete für die Testsuite": "Packages for the Test Suite",
 
 	"Nr.": "Nr",
 	"Type": "Typ",
