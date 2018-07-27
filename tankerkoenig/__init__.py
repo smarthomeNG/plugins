@@ -130,18 +130,22 @@ class TankerKoenig(SmartPlugin):
             return
         json_obj = response.json()
         keys = ['e5', 'e10', 'diesel', 'status']
+
         for id in ids:
-            if id in json_obj['prices']:
-                result_station = dict()
-                result_station['id'] = id
-                for key in keys:
-                    if key in json_obj['prices'][id]:
-                        result_station[key] = json_obj['prices'][id][key]
-                    else:
-                        result_station[key] = ""
-                result_station_prices.append(result_station)
+            if 'prices' in json_obj:
+                if id in json_obj['prices']:
+                    result_station = dict()
+                    result_station['id'] = id
+                    for key in keys:
+                        if key in json_obj['prices'][id]:
+                            result_station[key] = json_obj['prices'][id][key]
+                        else:
+                            result_station[key] = ""
+                    result_station_prices.append(result_station)
+                else:
+                    self.logger.error("No result for station with id %s. Check manually!" % id)
             else:
-                self.logger.error("No result for station with id %s. Check manually!" % id)
+                self.logger.error("'prices' key missing in json response! Check manually!" % id)
         return result_station_prices
 
     def _build_url(self, suffix):
