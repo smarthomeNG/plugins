@@ -109,6 +109,79 @@ class BackendSysteminfo:
                                     ip=ip, ipv6=ipv6)
 
 
+    @cherrypy.expose
+    def system_json(self):
+        """
+        Return System inforation as json (
+        for Angular tests only)
+
+        :return:
+        """
+#        now = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
+        now = self.plugin.shtime.now().strftime('%d.%m.%Y %H:%M')
+        system = platform.system()
+        vers = platform.version()
+        # node = platform.node()
+        node = socket.getfqdn()
+        arch = platform.machine()
+        user = pwd.getpwuid(os.geteuid()).pw_name  # os.getlogin()
+
+        ip = Utils.get_local_ipv4_address()
+        ipv6 = Utils.get_local_ipv6_address()
+
+        space = os.statvfs(self._sh_dir)
+        freespace = space.f_frsize * space.f_bavail / 1024 / 1024
+
+        # return host uptime
+        uptime = time.mktime(datetime.datetime.now().timetuple()) - psutil.boot_time()
+        days = uptime // (24 * 3600)
+        uptime = uptime % (24 * 3600)
+        hours = uptime // 3600
+        uptime %= 3600
+        minutes = uptime // 60
+        uptime %= 60
+        seconds = uptime
+        uptime = self.age_to_string(days, hours, minutes, seconds)
+
+        # return SmarthomeNG runtime
+        rt = str(self._sh.runtime())
+        daytest = rt.split(' ')
+        if len(daytest) == 3:
+            days = int(daytest[0])
+            hours, minutes, seconds = [float(val) for val in str(daytest[2]).split(':')]
+        else:
+            days = 0
+            hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
+        sh_uptime = self.age_to_string(days, hours, minutes, seconds)
+
+        pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
+                                             sys.version_info[3])
+
+        #python_packages = self.getpackages()
+        #req_dict = self.get_requirements_info()
+
+        response = {}
+        response['now'] = now
+        response['system'] = system
+        response['sh_vers'] = shngversion.get_shng_version()
+        response['sh_desc'] = shngversion.get_shng_description()
+        response['plg_vers'] = shngversion.get_plugins_version()
+        response['plg_desc'] = shngversion.get_plugins_description()
+        response['sh_dir'] = self._sh_dir
+        response['vers'] = vers
+        response['node'] = node
+        response['arch'] = arch
+        response['user'] = user
+        response['freespace'] = freespace
+        response['uptime'] = uptime
+        response['sh_uptime'] = sh_uptime
+        response['pyversion'] = pyversion
+        response['ip'] = ip
+        response['ipv6'] = ipv6
+
+        return json.dumps(response)
+
+
 #    def get_process_info(self, command):
 #        """
 #        returns output from executing a given command via the shell.
