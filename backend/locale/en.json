@@ -206,6 +206,8 @@
 	"Entwicklungs-Daten": "Development Data",
 	"Plugin spezifische Parameter": "Plugin specific parameters",
 	"Plugin spezifische Item Attribute": "Plugin specific item attributes",
+	"Pakete für den Bau der Dokumentation": "Packages for Building the Documentation",
+	"Pakete für die Testsuite": "Packages for the Test Suite",
 
 	"_items": {
 		"path": "Pfad",
