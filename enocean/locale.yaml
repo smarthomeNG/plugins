@@ -8,6 +8,14 @@ plugin_translations:
         de: 'Senden'
         en: 'Sending'
         fr: 'Emettre'
+    'Lerntelegramm erfolgreich gesendet.':
+        de: 'Lerntelegramm erfolgreich gesendet.'
+        en: 'Teach-in telegram sent successfully.'
+        fr: 'Message envoyé avec succes.'
+    'Lerntelegramm':
+        de: 'Lerntelegramm'
+        en: 'Teach-in telegram'
+        fr: 'Message Ã programmer'
     'UTE Listen':
         de: 'UTE Listen'
         en: 'UTE Listen'

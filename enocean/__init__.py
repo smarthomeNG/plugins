@@ -520,7 +520,7 @@ class EnOcean(SmartPlugin):
         if caller != 'EnOcean':
             self.logger.debug('enocean: item << {} >> updated externally.'.format(item))
             if self._block_ext_out_msg:
-                self.logger.debug('enocean: sending manually blocked by user. Aborting')
+                self.logger.warning('enocean: sending manually blocked by user. Aborting')
                 return None
             if 'enocean_tx_eep' in item.conf:
                 if isinstance(item.conf['enocean_tx_eep'], str):
@@ -575,7 +575,16 @@ class EnOcean(SmartPlugin):
         else:
             self.logger.info("enocean: Blocking of external out messages deactivated")
             self._block_ext_out_msg = False
-      
+
+    def toggle_UTE_mode(self,id_offset=0):
+        self.logger.debug("enocean: toggle UTE mode")
+        if self.UTE_listen == True:
+            self.logger.info("enocean: UTE mode deactivated")
+            self.UTE_listen = False
+        elif (id_offset is not None) and not (id_offset == 0):
+            self.start_UTE_learnmode(id_offset)
+            self.logger.info("enocean: UTE mode activated for ID offset")
+
     def send_bit(self):
         self.logger.debug("enocean: call function << send_bit >>")
         self.logger.info("enocean: trigger Built-In Self Test telegram")
@@ -657,7 +666,7 @@ class EnOcean(SmartPlugin):
         # check offset range between 0 and 127
         if (id_offset < 0) or (id_offset > 127):
             self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
-            return None
+            return False
         # device range 10 - 19 --> Learn protocol for switch actuators
         elif (device == 10):
             # Prepare Data for Eltako switch FSR61, Eltako FSVA-230V
@@ -688,17 +697,17 @@ class EnOcean(SmartPlugin):
             self.logger.info('enocean: sending learn telegram for actuator with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
         else:
             self.logger.error('enocean: sending learn telegram with invalid device! Device {} actually not defined!'.format(device))
-            return None
+            return False
         # Send radio package
         self._send_radio_packet(id_offset, rorg, payload)
-        return None
+        return True
 
 
     def start_UTE_learnmode(self, id_offset=0):
         self.logger.debug("enocean: call function << start_UTE_learnmode >>")
         self.UTE_listen = True
         self.learn_id = id_offset
-        self.logger.info("enocean: Listeining for UTE package ('D4')")
+        self.logger.info("enocean: Listening for UTE package ('D4')")
         
         
     def enter_learn_mode(self, onoff=1):
@@ -817,18 +826,25 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        learn_triggered = False
+
         if action is not None:
             if action == "toggle_tx_blocking":
                 self.plugin.toggle_block_external_out_messages()
-            elif action == "send_learn" and device_id is not None and device_offset is not None:
+            elif action == "toggle_UTE":
+                self.plugin.toggle_UTE_mode(device_offset)
+                self.logger.warning("UTE mode triggered via webinterface (Offset:{0})".format(device_offset))
+            elif action == "send_learn" and (device_id is not None) and not (device_id=="") and (device_offset is not None) and not(device_offset==""):
                 self.logger.warning("Learn telegram triggered via webinterface (ID:{0} Offset:{1})".format(device_id,device_offset))
-                self.plugin.send_learn_protocol(int(device_offset), int(device_id))
+                ret = self.plugin.send_learn_protocol(int(device_offset), int(device_id))
+                if ret == True:
+                    learn_triggered = True
             else:
                 self.logger.error("Unknown comman received via webinterface")
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
-                           tabcount=1, item_id=item_id)
+                           tabcount=1, item_id=item_id, learn_triggered=learn_triggered, action='')
 
 

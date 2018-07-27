@@ -66,39 +66,69 @@
 {% endblock bodytab1 %}
 
 {% set tab2title = "<strong> " ~ _('Neu hinzufügen') ~ "</strong> " %}
-
 {% block bodytab2 %}
+
+{% if learn_triggered %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Lerntelegramm') }}</strong><br/>
+		{{ _('Lerntelegramm erfolgreich gesendet.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+
+
 <div class="row">
-	<div class="col-md-6 mb-3">
+	<div class="col-md-3 mb-3">
 		{{ _('Unbekannte Sensor ID') }}:
 		<td class="py-1">{{ p.unknown_sender_id }}</td>
 	</div>
-	<br>	
+
 	<div class="col-md-6 mb-3">
-		<div class="shng_heading">
-		{{ _('Enocean Geräte anlernen') }}:
+		<div class="row">
+			<div class="shng_heading">
+				{{ _('Enocean Geräte anlernen') }}:	
+			</div>
 		</div>
-		{{ _('Gerätetyp') }}:
-		<br>
-		<br>		
-		<select class="custom-select" id="enocean_device" style="float:left; width: 250px; margin-top:-7px;">
-				<option value="10">{{ _('Eltako FSVA-230V') }}</option>
-				<option value="10">{{ _('Eltako FSR61') }}</option>
-				<option value="20">{{ _('Eltako FSUD-230V') }}</option>
-				<option value="21">{{ _('Eltako FHK61SSR') }}</option>
-				<option value="22">{{ _('Eltako FRGBW71L') }}</option>
-				<option value="30">{{ _('Radiator Valve') }}</option>
-				<option value="40">{{ _('Eltako FSB61NP-230V') }}</option>
-				<option value="40">{{ _('Eltako FSB14') }}</option>
-				<option value="40">{{ _('Eltako FSB61') }}</option>
-				<option value="40">{{ _('Eltako FSB71') }}</option>
-		</select>
+		<div class="row">
+			<div class="col-md-6 mb-3">
+				{{ _('Gerätetyp') }}:
+			</div>
+		
+			<div class="col-md-6 mb-3">
+				<select class="custom-select" id="enocean_device" style="float:left; width: 250px; margin-top:-7px;">
+					<option value="">{{ _('Choose sensor...') }}</option>
+					<option value="10">{{ _('Eltako FSVA-230V') }}</option>
+					<option value="10">{{ _('Eltako FSR61') }}</option>
+					<option value="20">{{ _('Eltako FSUD-230V') }}</option>
+					<option value="21">{{ _('Eltako FHK61SSR') }}</option>
+					<option value="22">{{ _('Eltako FRGBW71L') }}</option>
+					<option value="30">{{ _('Radiator Valve') }}</option>
+					<option value="40">{{ _('Eltako FSB61NP-230V') }}</option>
+					<option value="40">{{ _('Eltako FSB14') }}</option>
+					<option value="40">{{ _('Eltako FSB61') }}</option>
+					<option value="40">{{ _('Eltako FSB71') }}</option>
+				</select>
+			</div>
+		</div>
+		<div class="row">
 		<td style="min-width:190px;" style="padding-top:15px;">
-		<br>
-		<br>
-		{{ _('ID Offset') }}:<input type="input" class="form-control mb-1" id="input-offset" placeholder="{{ _('ID Offset') }}" value="1" maxlength="3" style="width: 50px;">
-		<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anlernen') }}" onclick="prepareLearnCommand();">{{ _('Anlernen') }}</button>
-		<button type="button" class="btn btn-shng btn-sm" title="{{ _('UTE An/Aus') }}" onclick="prepareUTECommand();">{{ _('UTE An/Aus') }}</button>
+			<div class="col-md-6 mb-3">
+				{{ _('ID Offset') }}:
+			</div>
+			<div class="col-md-6 mb-3">
+				<input type="input" class="form-control mb-1" id="input-offset" placeholder="{{ _('ID Offset') }}" value="1" maxlength="3" style="width: 50px;">
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anlernen') }}" onclick="prepareLearnCommand();">{{ _('Anlernen') }}</button>
+			</div>
+			<div class="col-md-2 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('UTE An/Aus') }}" onclick="prepareUTECommand();">{{ _('UTE An/Aus') }}</button>
+			</div>
+		</div>
 	</div>
 </div>
 {% endblock bodytab2 %}
