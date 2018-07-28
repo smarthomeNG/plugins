@@ -1555,8 +1555,8 @@ class AVDevice(SmartPlugin):
                     try:
                         if _del_data.startswith(tuple(found)):
                             self.logger.log(VERBOSE1,
-                                            "Parsing Input {}: Expected response edited {}. Data {} starts with one of the entries."
-                                            " Resetting resend counter".format(self._name, found, _del_data))
+                                            "Parsing Input {}: Expected response edited {}. Data starts with one of the entries."
+                                            " Resetting resend counter".format(self._name, found))
                             _entry, _value, _del_valuetype = self._write_itemsdict(_del_data, found)
                             self._sendingcommand = 'done'
                             self._resend_counter = 0
@@ -1566,48 +1566,44 @@ class AVDevice(SmartPlugin):
                             self.logger.log(VERBOSE1,
                                             "Parsing Input {}: No response expected. Resend Counter reset.".format(
                                                 self._name))
-                        if _del_data.startswith(tuple(found)):
-                            # only add send command to list again if response doesn't fit to corresponding command
-                            expectedindices = _duplicateindex(_del_expectedresponse, expected)
-                            self.logger.log(VERBOSE2, "Parsing Input {}: expectedindices {}.".format(
-                                self._name, expectedindices))
-                            for expectedindex in expectedindices:
-                                self.logger.log(VERBOSE2,
-                                                "Parsing Input {}: expected {}, deletecommands {}.".format(
-                                                    self._name, self._send_commands[expectedindex],
-                                                    del_commands))
-                                if self._send_commands[expectedindex] not in del_commands:
-                                    parse_expectedtype = \
-                                        self._send_commands[expectedindex].split(';')[0].split('|')[0].split(',') \
-                                        if self._send_commands[expectedindex].split(',', 2)[2].find('|') >= 0 \
-                                        else self._send_commands[expectedindex].split(';')[0].split(',')
-                                    try:
-                                        int(parse_expectedtype[-1])
-                                        length = len(parse_expectedtype) - 1
-                                    except Exception:
-                                        length = len(parse_expectedtype)
-                                    try:
-                                        parse_expectedtype[3:length] = [','.join(parse_expectedtype[3:length])]
-                                        testvalue = parse_expectedtype[3]
-                                    except Exception:
-                                        testvalue = ''
-                                    if not _del_valuetype == testvalue or not found or _del_data == 'ERROR':
-                                        self.logger.log(VERBOSE2,
-                                                        "Parsing Input {}: Test Value {} of {} is not same as Valuetype:"
-                                                        "{} or nothing found {}. Keeping in Sendcommands.".format(
-                                                            self._name, testvalue, self._send_commands[expectedindex],
-                                                            _del_valuetype, found))
-                                    elif not _del_data == 'ERROR':
-                                        del_commands.append(self._send_commands[expectedindex])
-                                        self.logger.log(VERBOSE1,
-                                                        "Parsing Input {}: Test Value {} of {} is same as Valuetype: {}. Removing from Sendcommands.".format(
-                                                            self._name, testvalue,
-                                                            self._send_commands[expectedindex],
-                                                            _del_valuetype))
-                        else:
-                            self.logger.log(VERBOSE1,
-                                            "Parsing Input {}: Expected response edited {}. Data {} is different, not deleting"
-                                            " the command from sendcommands.".format(self._name, found, _del_data))
+
+                        # only add send command to list again if response doesn't fit to corresponding command
+                        expectedindices = _duplicateindex(_del_expectedresponse, expected)
+                        self.logger.log(VERBOSE2, "Parsing Input {}: expectedindices {}.".format(
+                            self._name, expectedindices))
+                        for expectedindex in expectedindices:
+                            self.logger.log(VERBOSE2,
+                                            "Parsing Input {}: expected {}, deletecommands {}.".format(
+                                                self._name, self._send_commands[expectedindex],
+                                                del_commands))
+                            if self._send_commands[expectedindex] not in del_commands:
+                                parse_expectedtype = \
+                                    self._send_commands[expectedindex].split(';')[0].split('|')[0].split(',') \
+                                    if self._send_commands[expectedindex].split(',', 2)[2].find('|') >= 0 \
+                                    else self._send_commands[expectedindex].split(';')[0].split(',')
+                                try:
+                                    int(parse_expectedtype[-1])
+                                    length = len(parse_expectedtype) - 1
+                                except Exception:
+                                    length = len(parse_expectedtype)
+                                try:
+                                    parse_expectedtype[3:length] = [','.join(parse_expectedtype[3:length])]
+                                    testvalue = parse_expectedtype[3]
+                                except Exception:
+                                    testvalue = ''
+                                if not _del_valuetype == testvalue or not found or _del_data == 'ERROR':
+                                    self.logger.log(VERBOSE2,
+                                                    "Parsing Input {}: Test Value {} of {} is not same as Valuetype:"
+                                                    "{} or nothing found {}. Keeping in Sendcommands.".format(
+                                                        self._name, testvalue, self._send_commands[expectedindex],
+                                                        _del_valuetype, found))
+                                elif not _del_data == 'ERROR':
+                                    del_commands.append(self._send_commands[expectedindex])
+                                    self.logger.log(VERBOSE1,
+                                                    "Parsing Input {}: Test Value {} of {} is same as Valuetype: {}. Removing from Sendcommands.".format(
+                                                        self._name, testvalue,
+                                                        self._send_commands[expectedindex],
+                                                        _del_valuetype))
                     except Exception as _err:
                         self.logger.log(VERBOSE1,
                                         "Parsing Input {}: Deleting commands problem: {}".format(self._name, _err))
