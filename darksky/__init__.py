@@ -95,16 +95,17 @@ class DarkSky(SmartPlugin):
                         wrk = wrk['alerts']
                     else:
                         alerts_string = ''
-                        for alert in wrk['alerts']:
-                            start_time = datetime.datetime.fromtimestamp(
-                                int(alert['time'])
-                            ).strftime('%d.%m.%Y %H:%M')
-                            expire_time = datetime.datetime.fromtimestamp(
-                                int(alert['expires'])
-                            ).strftime('%d.%m.%Y %H:%M')
-                            alerts_string_wrk = "<p><h1>"+alert['title']+" ("+start_time+" - "+expire_time+")</h1>"
-                            alerts_string_wrk = alerts_string_wrk + "<span>"+alert['description']+"</span></p>"
-                            alerts_string = alerts_string + alerts_string_wrk
+                        if 'alerts' in wrk:
+                            for alert in wrk['alerts']:
+                                start_time = datetime.datetime.fromtimestamp(
+                                    int(alert['time'])
+                                ).strftime('%d.%m.%Y %H:%M')
+                                expire_time = datetime.datetime.fromtimestamp(
+                                    int(alert['expires'])
+                                ).strftime('%d.%m.%Y %H:%M')
+                                alerts_string_wrk = "<p><h1>"+alert['title']+" ("+start_time+" - "+expire_time+")</h1>"
+                                alerts_string_wrk = alerts_string_wrk + "<span>"+alert['description']+"</span></p>"
+                                alerts_string = alerts_string + alerts_string_wrk
                         wrk = alerts_string
                 else:
                     wrk = []
