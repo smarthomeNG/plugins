@@ -118,7 +118,7 @@ class Init(object):
                                                                 self.logger.log(VERBOSE2, "Updating Dependencies {}: Skipping {}.".format(
                                                                     self._name, commandlist))
                                         except Exception as err:
-                                            self.logger.error(err)
+                                            pass
                                         if commandlist in alreadydone:
                                             self.logger.log(VERBOSE2, "Updating Dependencies {}: Commandlist {} is alreadydone: {}, skipping.".format(
                                                 self._name, commandlist, alreadydone))
