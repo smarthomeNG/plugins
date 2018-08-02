@@ -93,10 +93,15 @@ class Init(object):
                                                         for resp in responselist:
                                                             resp_split = re.sub('[*]', '', resp.split(',')[0])
                                                             cond1 = resp_split in responses
+                                                            cond2_1 = set(resp.split(',')[1:-1])
+                                                            cond2_2 = set(already.split('|')[0].split(',')[3:-1])
+                                                            cond2 = cond2_1 == cond2_2
                                                             self.logger.log(VERBOSE2, "Updating Dependencies {}: Querycommand {} for zone {}"
-                                                                            " already in list. Testing -{}- against the responses {}.".format(
-                                                                                self._name, querycommand, zone, resp_split, responses))
-                                                            if resp not in alreadylist and cond1:
+                                                                            " already in list. Testing -{}- against the responses {}."
+                                                                            " Testing type {} against {}".format(
+                                                                                self._name, querycommand, zone, resp_split,
+                                                                                responses, cond2_1, cond2_2))
+                                                            if resp not in alreadylist and cond1 and cond2:
                                                                 newquery = already + '|' + resp
                                                                 dependencies['Slave_query'][dependzone][newquery] = \
                                                                     dependencies['Slave_query'][dependzone].get(already)
@@ -107,7 +112,7 @@ class Init(object):
                                                                                     self._name, resp, alreadylist))
                                                                 if commandlist not in alreadydone:
                                                                     alreadydone.append(commandlist)
-                                                            elif cond1:
+                                                            elif cond1 and cond2:
                                                                 if commandlist not in alreadydone:
                                                                     alreadydone.append(commandlist)
                                                                 self.logger.log(VERBOSE2, "Updating Dependencies {}: Skipping {}.".format(
@@ -369,15 +374,18 @@ class Init(object):
                                     if already.split(',')[0] == querycommand:
                                         alreadylist = ','.join(already.split(',')[2:]).split('|')
                                         responses = [re.sub('[*]', '', x.split(',')[0]) for x in alreadylist]
-
-
                                         for resp in responselist:
                                             resp_split = re.sub('[*]', '', resp.split(',')[0])
                                             cond1 = resp_split in responses
-                                            self.logger.log(VERBOSE2, "Initializing {}: Querycommand {} for zone {} already in list. "
-                                                            "Testing -{}- against the responses {}.".format(
-                                                                self._name, querycommand, zone, resp_split, responses))
-                                            if resp not in alreadylist and cond1:
+                                            cond2_1 = set(resp.split(',')[1:-1])
+                                            cond2_2 = set(already.split('|')[0].split(',')[3:-1])
+                                            cond2 = cond2_1 == cond2_2
+                                            self.logger.log(VERBOSE2, "Updating Dependencies {}: Querycommand {} for zone {}"
+                                                            " already in list. Testing -{}- against the responses {}."
+                                                            " Testing type {} against {}".format(
+                                                                self._name, querycommand, zone, resp_split,
+                                                                responses, cond2_1, cond2_2))
+                                            if resp not in alreadylist and cond1 and cond2:
                                                 self.logger.log(VERBOSE2, "Initializing {}: Adding {} to {}.".format(
                                                     self._name, resp, alreadylist))
                                                 self._query_commands[x] = already + '|' + resp
@@ -385,7 +393,7 @@ class Init(object):
                                                 self._query_zonecommands['zone{}'.format(zone)][idx] = already + '|' + resp
                                                 if commandlist not in alreadydone:
                                                     alreadydone.append(commandlist)
-                                            elif cond1:
+                                            elif cond1 and cond2:
                                                 if commandlist not in alreadydone:
                                                     alreadydone.append(commandlist)
                                                 self.logger.log(VERBOSE2, "Initializing {}: Skipping {}.".format(
