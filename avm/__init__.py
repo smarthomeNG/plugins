@@ -1513,6 +1513,8 @@ class AVM(SmartPlugin):
         Updates FritzDevice specific information
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/deviceinfoSCPD.pdf
+        CURL for testing:
+        curl  --anyauth -u user:'password' 'https://192.168.178.1:49443/upnp/control/deviceinfo' -H 'Content-Type: text/xml; charset="utf-8"' -H 'SoapAction: urn:dslforum-org:service:DeviceInfo:1#GetInfo' -d '<?xml version="1.0" encoding="utf-8"?> <s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"> <s:Body> <u:GetInfo xmlns:u="urn:dslforum-org:service:DeviceInfo:1"> </u:GetInfo> </s:Body> </s:Envelope>' -s -k
 
         :param item: Item to be updated (Supported item avm_data_types: uptime, software_version, hardware_version,serial_number, description)
         """
