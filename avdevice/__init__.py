@@ -1930,19 +1930,20 @@ class AVDevice(SmartPlugin):
                             commanditem = command.split(';')[1]
                         except Exception:
                             commanditem = None
+                        if commanditem:
+                                command = '{};{}'.format(command_split, commanditem)
+                        self.logger.log(VERBOSE1,
+                                            "Parsing Input {}: Adding command commandsplit {}, commanditem {}. Command: {}".format(
+                                                self._name, command_split, commanditem, command))
                         if command_split in self._query_commands:
                             reorderlist.append(command)
                         elif command_split in self._power_commands:
-                            if commanditem:
-                                command = '{};{}'.format(command_split, item)
                             self.logger.log(VERBOSE1,
-                                            "Parsing Input {}: Ordering power command {} to first position.".format(
+                                            "Parsing Input {}: Adding command and ordering power command {} to first position.".format(
                                                 self._name, command))
                             reorderlist.insert(0, command)
                             index += 1
                         else:
-                            if commanditem:
-                                command = '{};{}'.format(command, item)
                             reorderlist.insert(index, command)
                             self.logger.log(VERBOSE1,
                                             "Parsing Input {}: Adding command {} to position {}.".format(
