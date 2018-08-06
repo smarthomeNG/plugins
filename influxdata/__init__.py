@@ -21,6 +21,7 @@
 
 import logging
 import socket
+import re
 from lib.model.smartplugin import SmartPlugin
 
 
@@ -36,6 +37,11 @@ class InfluxData(SmartPlugin):
         self.influx_port = influx_port
         self.influx_keyword = influx_keyword
         self._items = []
+
+    def cleanstring(self, s):
+        s = re.sub(r"[^\w\s]", '', s)
+        s = re.sub(r"\s+", '-', s)
+        return s
 
     def run(self):
         self.alive = True
@@ -66,7 +72,7 @@ class InfluxData(SmartPlugin):
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        message = "{},caller={},source={},dest={} value={}".format(item.id(), caller, source, dest, float(item()))
+        message = "{},caller={},source={},dest={} value={}".format(item.id(), self.cleanstring(caller), source, dest, float(item()))
         self.udp(message)
         return None
 
