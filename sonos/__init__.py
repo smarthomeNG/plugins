@@ -2155,7 +2155,7 @@ class Speaker(object):
                     volumes[member] = sonos_speaker[member].volume
 
                 tag = TinyTag.get(file_path)
-                duration = int(round(tag.duration)) + 0.4
+                duration = int(round(tag.duration)) + self.__snippet_duration_offset
                 self._logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
                 file_name = quote(os.path.split(file_path)[1])
                 snippet_url = "{url}/{file}".format(url=webservice_url, file=file_name)
@@ -2284,10 +2284,10 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.6"
+    PLUGIN_VERSION = "1.4.7"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
-                 discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
+                 discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, snippet_duration_offset=0.0, **kwargs):
         super().__init__(**kwargs)
         self._sh = sh
         self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
@@ -2296,6 +2296,7 @@ class Sonos(SmartPlugin):
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
         self._tts = self.to_bool(tts, default=False)
         self._local_webservice_path = local_webservice_path
+        self._snippet_duration_offset = float(snippet_duration_offset)
 
         # see documentation: if no exclusive snippet path is set, we use the global one
         if local_webservice_path_snippet is None:
