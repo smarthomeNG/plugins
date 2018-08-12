@@ -29,7 +29,6 @@ import logging
 try:
     from pyhomematic import HMConnection
     REQUIRED_PACKAGE_IMPORTED = True
-
 except:
     REQUIRED_PACKAGE_IMPORTED = False
 
