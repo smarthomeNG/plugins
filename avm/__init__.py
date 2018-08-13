@@ -27,9 +27,14 @@ import socket
 import time
 import threading
 from xml.dom import minidom
-import requests
-from requests.packages import urllib3
-from requests.auth import HTTPDigestAuth
+try:
+    import requests
+    from requests.packages import urllib3
+    from requests.auth import HTTPDigestAuth
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
+
 from lib.model.smartplugin import *
 from lib.module import Modules
 
@@ -515,6 +520,12 @@ class AVM(SmartPlugin):
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
         self.logger = logging.getLogger(__name__)
+
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'requests'".format(self.get_fullname()))
+            self._init_complete = False
+            return
+
         self.logger.info('Init AVM Plugin')
 
         self._session = requests.Session()
