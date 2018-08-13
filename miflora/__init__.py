@@ -21,14 +21,19 @@
 #########################################################################
 
 import logging
-from miflora.miflora_poller import MiFloraPoller, \
-    MI_CONDUCTIVITY, MI_MOISTURE, MI_LIGHT, MI_TEMPERATURE, MI_BATTERY
+try:
+    from miflora.miflora_poller import MiFloraPoller, \
+        MI_CONDUCTIVITY, MI_MOISTURE, MI_LIGHT, MI_TEMPERATURE, MI_BATTERY
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
+
 from btlewrap import available_backends, BluepyBackend, GatttoolBackend, PygattBackend
 from lib.model.smartplugin import SmartPlugin
 
 class Miflora(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.0.4"
+    PLUGIN_VERSION = "1.3.0.5"
 
     def __init__(self, smarthome, bt_addr, cycle=300):
         """
@@ -39,7 +44,11 @@ class Miflora(SmartPlugin):
         :param cycle: Cycle interval in seconds
         """         
         self._sh = smarthome
-        self.logger = logging.getLogger(__name__) 	# get a unique logger for the plugin and provide it internally
+        self.logger = logging.getLogger(__name__)
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'pyhomematic'".format(self.get_fullname()))
+            self._init_complete = False
+            return
         self._bt_addr = bt_addr
         self._cycle = int(cycle)
         self._items = []
