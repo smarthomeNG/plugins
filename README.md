@@ -1,6 +1,6 @@
 # OpenWeatherMap
 
-#### Version 1.5.0.2
+#### Version 1.5.0.1
 
 This plugins can be used retrieve weather information from OpenWeatherMap (https://openweathermap.org/).
 
