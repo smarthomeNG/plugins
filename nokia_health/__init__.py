@@ -22,9 +22,12 @@
 #
 #########################################################################
 
-import requests
 from lib.model.smartplugin import *
-from nokia import NokiaAuth, NokiaApi, NokiaCredentials
+try:
+    from nokia import NokiaAuth, NokiaApi, NokiaCredentials
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
 
 
 class NokiaHealth(SmartPlugin):
@@ -37,6 +40,11 @@ class NokiaHealth(SmartPlugin):
 
     def __init__(self, smarthome, consumer_key, consumer_secret, access_token, access_token_secret, user_id, cycle=300):
         self.logger = logging.getLogger(__name__)
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'nokia'".format(self.get_fullname()))
+            self._init_complete = False
+            return
+
         self._sh = smarthome
         self._consumer_key = consumer_key
         self._consumer_secret = consumer_secret
