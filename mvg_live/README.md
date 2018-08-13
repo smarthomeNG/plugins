@@ -1,8 +1,6 @@
 # MVG Live
 
-## Description
-
-Retrieval of departure times of stations within the Münchner Verkehrsbetriebe (MVG)
+Version 0.1
 
 ## Requirements
 This plugin requires lib PyMVGLive. You can install this lib with:

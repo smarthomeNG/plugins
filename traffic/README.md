@@ -1,6 +1,6 @@
 # Traffic
 
-## Description
+Version 0.1
 
 This plugin provides functionality to query the Google Directions API for traffic / direction info.
 All mappings to items need to be done via your own logic.

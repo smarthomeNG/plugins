@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2018 René Frieß                      rene.friess(a)gmail.com
-#  Version 1.5.0.2
+#  Version 1.5.0.1
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -23,11 +23,7 @@
 #########################################################################
 
 import logging
-try:
-    import requests
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
+import requests
 import datetime
 import json
 from lib.module import Modules
@@ -35,7 +31,9 @@ from lib.model.smartplugin import *
 
 
 class DarkSky(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.2"
+
+    PLUGIN_VERSION = "1.5.0.1"
+
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
     def __init__(self, sh, *args, **kwargs):
@@ -45,10 +43,6 @@ class DarkSky(SmartPlugin):
         api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
         self.logger = logging.getLogger(__name__)
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'requests'".format(self.get_fullname()))
-            self._init_complete = False
-            return
         self._key = self.get_parameter_value('key')
         if self.get_parameter_value('latitude') != '' and self.get_parameter_value('longitude') != '':
             self._lat = self.get_parameter_value('latitude')

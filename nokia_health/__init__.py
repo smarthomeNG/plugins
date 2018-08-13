@@ -22,17 +22,14 @@
 #
 #########################################################################
 
+import requests
 from lib.model.smartplugin import *
-try:
-    from nokia import NokiaAuth, NokiaApi, NokiaCredentials
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
+from nokia import NokiaAuth, NokiaApi, NokiaCredentials
 
 
 class NokiaHealth(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.3"
+    PLUGIN_VERSION = "1.5.2"
     BASE_URL = "https://api.health.nokia.com/"
     ALLOWED_MEASURE_TYPES = [1, 4, 5, 6, 8, 11]
 
@@ -40,11 +37,6 @@ class NokiaHealth(SmartPlugin):
 
     def __init__(self, smarthome, consumer_key, consumer_secret, access_token, access_token_secret, user_id, cycle=300):
         self.logger = logging.getLogger(__name__)
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'nokia'".format(self.get_fullname()))
-            self._init_complete = False
-            return
-
         self._sh = smarthome
         self._consumer_key = consumer_key
         self._consumer_secret = consumer_secret

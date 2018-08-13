@@ -1,6 +1,6 @@
 # Join
 
-Version 1.4.1.1
+Version 1.0
 
 This plugin allows to send command to your mobile phone via the Join API: https://joaoapps.com/join/api/
 

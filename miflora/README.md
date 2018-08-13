@@ -1,7 +1,6 @@
 # Miflora
 
-## Description
-Read data from Xiaomi MiFlora plant sensors via Bluetooth LE.
+Version 0.4
 
 ## Requirements
 This plugin requires lib miflora in version 0.4 or above. You can install this lib with:

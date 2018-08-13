@@ -1,8 +1,6 @@
 # TankerKoenig
 
-## Description
-
-This plugin provides petrol station prices by the API of TankerKönig. Take care not to request the interface too often or for too many petrol stations. Please follow instructions given on https://creativecommons.tankerkoenig.de/#techInfo.
+Version 0.1
 
 ## Requirements
 

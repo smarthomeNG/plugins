@@ -22,11 +22,7 @@
 #########################################################################
 
 import logging
-try:
-    import requests
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
+import requests
 from lib.model.smartplugin import SmartPlugin
 
 
@@ -34,16 +30,12 @@ class Join(SmartPlugin):
     URL_PREFIX = 'https://joinjoaomgcd.appspot.com/_ah/api/'
     SEND_URL = URL_PREFIX+'messaging/v1/sendPush?apikey='
     LIST_URL = URL_PREFIX+'registration/v1/listDevices?apikey='
-    PLUGIN_VERSION = "1.4.1.1"
+    PLUGIN_VERSION = "1.4.1.0"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome, api_key=None, device_id=None):
         logging.getLogger("requests").setLevel(logging.WARNING)
         self.logger = logging.getLogger(__name__)
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'requests'".format(self.get_fullname()))
-            self._init_complete = False
-            return
         self._api_key = api_key
         self._device_id = device_id
         self._sh = smarthome

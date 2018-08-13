@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2017 René Frieß                      rene.friess(a)gmail.com
-#  Version 1.3.0.2
+#  Version 1.3.0.1
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -23,28 +23,19 @@
 #########################################################################
 
 import logging
-try:
-    import MVGLive
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
-from lib.model.smartplugin import SmartPlugin
+import MVGLive
 
+from lib.model.smartplugin import SmartPlugin
 
 class MVG_Live(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0.2"
+    PLUGIN_VERSION = "1.3.0.1"
 
     def __init__(self, smarthome):
         """
         Initializes the plugin
         """
         self.logger = logging.getLogger(__name__)
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'MVGLive'".format(self.get_fullname()))
-            self._init_complete = False
-            return
-
         self._sh = smarthome
         self._mvg_live = MVGLive.MVGLive()
 

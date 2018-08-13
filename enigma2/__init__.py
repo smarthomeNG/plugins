@@ -25,14 +25,9 @@
 import logging
 import time
 from xml.dom import minidom
-try:
-    import requests
-    from requests.packages import urllib3
-    from requests.auth import HTTPBasicAuth
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
-
+import requests
+from requests.packages import urllib3
+from requests.auth import HTTPBasicAuth
 from lib.model.smartplugin import SmartPlugin
 
 
@@ -129,7 +124,7 @@ class Enigma2(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the Enigma2Device
     """
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.12"
+    PLUGIN_VERSION = "1.4.11"
 
     _url_suffix_map = dict([('about', '/web/about'),
                             ('deviceinfo', '/web/deviceinfo'),
@@ -165,11 +160,6 @@ class Enigma2(SmartPlugin):
         """
         self.logger = logging.getLogger(__name__)
         # self.logger.info('Init Enigma2 Plugin with device_id %s' % )
-
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'requests'".format(self.get_fullname()))
-            self._init_complete = False
-            return
 
         self._session = requests.Session()
         self._timeout = 10

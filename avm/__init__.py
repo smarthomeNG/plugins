@@ -27,14 +27,9 @@ import socket
 import time
 import threading
 from xml.dom import minidom
-try:
-    import requests
-    from requests.packages import urllib3
-    from requests.auth import HTTPDigestAuth
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
-
+import requests
+from requests.packages import urllib3
+from requests.auth import HTTPDigestAuth
 from lib.model.smartplugin import *
 from lib.module import Modules
 
@@ -482,7 +477,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.5.5"
+    PLUGIN_VERSION = "1.5.4"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -520,12 +515,6 @@ class AVM(SmartPlugin):
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
         self.logger = logging.getLogger(__name__)
-
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'requests'".format(self.get_fullname()))
-            self._init_complete = False
-            return
-
         self.logger.info('Init AVM Plugin')
 
         self._session = requests.Session()

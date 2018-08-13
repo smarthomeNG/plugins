@@ -23,18 +23,13 @@
 #########################################################################
 
 import logging
-try:
-    import requests
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
-
+import requests
 import json
 from lib.model.smartplugin import SmartPlugin
 
 
 class TankerKoenig(SmartPlugin):
-    PLUGIN_VERSION = "1.4.2"
+    PLUGIN_VERSION = "1.4.1"
     _base_url = 'https://creativecommons.tankerkoenig.de/json/'
     _detail_url_suffix = 'detail.php'
     _prices_url_suffix = 'prices.php'
@@ -47,12 +42,6 @@ class TankerKoenig(SmartPlugin):
         api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
         self.logger = logging.getLogger(__name__)
-
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'requests'".format(self.get_fullname()))
-            self._init_complete = False
-            return
-
         self._apikey = self.get_parameter_value('apikey')
         self._session = requests.Session()
 

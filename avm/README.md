@@ -14,8 +14,9 @@ It is completely based on the TR-064 interface from AVM (http://avm.de/service/s
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-Version 1.5.5 tested with a FRITZ!Box 7590 (FRITZ!OS 7), FRITZ!Box 7490 (FRITZ!OS 06.93), and a FRITZ! WLAN Repeater 
-1750E (FRITZ!OS 06.93). Lower firmwares and other models may work as well!
+Version 1.1.2 tested with a FRITZ!Box 7490 (FRITZ!OS 06.51), a FRITZ! WLAN Repeater 1750E (FRITZ!OS 06.32) and a
+WLAN Repeater 300E (FRITZ!OS 06.30). It was also tested with a FRITZ!Box 7390 with FW 84.06.36 and a Fritz!Box 7390
+with v6.30 und v6.51.
 
 The avm_data_types listed in the example items under "devices" only work correctly with firmware <= v6.30, if the
 FRITZ!Box does not handle more than 16 devices in parallel (under "Heimnetz/Netzwerk"). Otherwise some of the devices
