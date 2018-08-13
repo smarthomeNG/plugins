@@ -46,7 +46,7 @@ class Miflora(SmartPlugin):
         self._sh = smarthome
         self.logger = logging.getLogger(__name__)
         if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'pyhomematic'".format(self.get_fullname()))
+            self.logger.error("{}: Unable to import Python package 'miflora'".format(self.get_fullname()))
             self._init_complete = False
             return
         self._bt_addr = bt_addr
