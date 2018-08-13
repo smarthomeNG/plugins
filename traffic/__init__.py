@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #
 #########################################################################
-#  Copyright 2017 René Frieß                      rene.friess(a)gmail.com
-#  Version 1.3.0.1
+#  Copyright 2017-2018 René Frieß                 rene.friess(a)gmail.com
+#  Version 1.3.0.2
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -23,12 +23,17 @@
 #########################################################################
 
 import logging
-import requests
+try:
+    import requests
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
+
 from lib.model.smartplugin import SmartPlugin
 
 class Traffic(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0.1"
+    PLUGIN_VERSION = "1.3.0.2"
     _base_url = 'https://maps.googleapis.com/maps/api/directions/json'
 
     def __init__(self, smarthome, apikey, language='de'):
@@ -39,6 +44,10 @@ class Traffic(SmartPlugin):
         @param language: two char language code. default: de
         """
         self.logger = logging.getLogger(__name__)
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'requests'".format(self.get_fullname()))
+            self._init_complete = False
+            return
         self._sh = smarthome
         self._apikey = apikey
         self._language = language
