@@ -4,7 +4,7 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Unterstützung für ein Nuki Smart-Lock'
-        en: ''
+        en: 'Support for smart locks by Nuki'
     maintainer: fuppy, pfischi
 #    tester:                        # Who tests this plugin?
 #    keywords: iot xyz
