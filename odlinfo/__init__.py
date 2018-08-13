@@ -34,9 +34,14 @@
 #########################################################################
 
 import logging
-import requests
 from lib.model.smartplugin import SmartPlugin
-from requests.auth import HTTPBasicAuth
+try:
+    import requests
+    from requests.auth import HTTPBasicAuth
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
+
 
 class ODLInfo(SmartPlugin):
     PLUGIN_VERSION = "1.4.1"
@@ -49,6 +54,10 @@ class ODLInfo(SmartPlugin):
         @param password: For accessing the ODLINFO API you need a personal password
         """
         self.logger = logging.getLogger(__name__)
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'requests'".format(self.get_fullname()))
+            self._init_complete = False
+            return
         self._user = self.get_parameter_value('user')
         self._password = self.get_parameter_value('password')
         self._keys = ['ort', 'kenn', 'plz', 'status', 'kid', 'hoehe', 'lon', 'lat', 'mw']
