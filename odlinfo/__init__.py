@@ -44,7 +44,7 @@ except:
 
 
 class ODLInfo(SmartPlugin):
-    PLUGIN_VERSION = "1.4.1"
+    PLUGIN_VERSION = "1.4.2"
     _base_url = 'https://odlinfo.bfs.de/daten/json/stamm.json'
 
     def __init__(self, sh, *args, **kwargs):

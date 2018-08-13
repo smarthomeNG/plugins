@@ -11,7 +11,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins_doc/config/enigma2.html        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
-    version: 1.4.11                # Plugin version
+    version: 1.4.12                # Plugin version
     sh_minversion: 1.3c            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
