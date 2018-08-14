@@ -2141,11 +2141,11 @@ class Speaker(object):
         for item in self.sonos_playlists_items:
             item(p_l, 'Sonos')
 
-    def _play_snippet(self, file_path: str, webservice_url: str, volume: int = -1, fade_in=False) -> None:
+    def _play_snippet(self, file_path: str, webservice_url: str, volume: int = -1, duration_offset: float = 0, fade_in=False) -> None:
         if not self._check_property():
             return
         if not self.is_coordinator:
-            sonos_speaker[self.coordinator]._play_snippet(file_path, webservice_url, volume, fade_in)
+            sonos_speaker[self.coordinator]._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
         else:
             with self._snippet_queue_lock:
                 snap = None
@@ -2155,7 +2155,8 @@ class Speaker(object):
                     volumes[member] = sonos_speaker[member].volume
 
                 tag = TinyTag.get(file_path)
-                duration = int(round(tag.duration)) + self.__snippet_duration_offset
+                duration = round(tag.duration) + duration_offset
+                self._logger.debug("Sonos: TTS track duration offset is: {offset}s".format(offset=duration_offset))
                 self._logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
                 file_name = quote(os.path.split(file_path)[1])
                 snippet_url = "{url}/{file}".format(url=webservice_url, file=file_name)
@@ -2195,12 +2196,12 @@ class Speaker(object):
                         else:
                             sonos_speaker[member].set_volume(volumes[member], group_command=False)
 
-    def play_snippet(self, audio_file, local_webservice_path_snippet: str, webservice_url: str, volume: int = -1,
+    def play_snippet(self, audio_file, local_webservice_path_snippet: str, webservice_url: str, volume: int = -1, duration_offset: float = 0,
                      fade_in=False) -> None:
         if not self._check_property():
             return
         if not self.is_coordinator:
-            sonos_speaker[self.coordinator].play_snippet(audio_file, local_webservice_path_snippet, webservice_url, volume,
+            sonos_speaker[self.coordinator].play_snippet(audio_file, local_webservice_path_snippet, webservice_url, volume, duration_offset,
                                                      fade_in)
         else:
             if "tinytag" not in sys.modules:
@@ -2212,15 +2213,15 @@ class Speaker(object):
             if not os.path.exists(file_path):
                 self._logger.error("Sonos: Snippet file '{file_path}' does not exists.".format(file_path=file_path))
                 return
-            self._play_snippet(file_path, webservice_url, volume, fade_in)
+            self._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
 
-    def play_tts(self, tts: str, tts_language: str, local_webservice_path: str, webservice_url: str, volume: int = -1,
+    def play_tts(self, tts: str, tts_language: str, local_webservice_path: str, webservice_url: str, volume: int = -1, duration_offset: float = 0,
                  fade_in=False) -> None:
         if not self._check_property():
             return
         if not self.is_coordinator:
             sonos_speaker[self.coordinator].play_tts(tts, tts_language, local_webservice_path, webservice_url,
-                                                     volume, fade_in)
+                                                     volume, duration_offset, fade_in)
         else:
             if "tinytag" not in sys.modules:
                 self._logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
@@ -2239,7 +2240,7 @@ class Speaker(object):
             else:
                 self._logger.debug("Sonos: File {file} already exists. No TTS request necessary.".format(
                     file=file_path))
-            self._play_snippet(file_path, webservice_url, volume, fade_in)
+            self._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
 
     def load_sonos_playlist(self, name: str, start: bool = False, clear_queue: bool = False, track: int = 0) -> None:
         """
@@ -2627,13 +2628,13 @@ class Sonos(SmartPlugin):
                     volume = self._resolve_child_command_int(item, 'tts_volume', -1)
                     fade_in = self._resolve_child_command_bool(item, 'tts_fade_in')
                     sonos_speaker[uid].play_tts(item(), language, self._local_webservice_path, self._webservice_url,
-                                                volume, fade_in)
+                                                volume, self._snippet_duration_offset, fade_in)
                 if command == 'play_snippet':
                     if item() == "":
                         return
                     volume = self._resolve_child_command_int(item, 'snippet_volume', -1)
                     fade_in = self._resolve_child_command_bool(item, 'snippet_fade_in')
-                    sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume,
+                    sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume, self._snippet_duration_offset,
                                                     fade_in)
 
     def _resolve_child_command_str(self, item: Item, child_command, default_value="") -> str:
