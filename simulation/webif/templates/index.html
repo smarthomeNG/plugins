@@ -9,23 +9,6 @@
 		<tr>
 			<td class="py-1"><strong>{{ _('Datendatei') }}:</strong></td>
 			<td class="py-1"><a class="text-shng" href="?cmd=show_data_file">{{p._datafile}}</a></td>
-		</tr>
-		<tr>
-			<td class="py-1"><strong>{{ _('Last Day') }}</strong></td>
-			<td class="py-1">{% if p.lastday == '' %}-{% else %}{{ p.lastday }}{% endif %}</td>
-		</tr>
-		{% if startRecord %}
-		<tr>
-			<td class="py-1"><strong>{{ _('startrecord Scheduler') }}</strong></td>
-			<td class="py-1">{{ startRecord.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-		</tr>
-		{% elif simulate %}
-		<tr>
-			<td class="py-1"><strong>{{ _('simulate Scheduler') }}</strong></td>
-			<td class="py-1">{{ simulate.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-		</tr>
-		{% endif %}
-		<tr>
 			<td><strong>{{ _('State') }}</strong></td>
 			<td>{% for item in p.get_items() %}
 			{% if item.conf['sim'] == 'state' %}
@@ -35,6 +18,24 @@
 			{% if item() == 4 %}{{ _('Play') }}{% endif %}
 			{% endif %}
 				{% endfor %}</td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Last Day') }}</strong></td>
+			<td class="py-1" colspan="3">{% if p.lastday == '' %}-{% else %}{{ p.lastday }}{% endif %}</td>
+		</tr>
+		{% if startRecord %}
+		<tr>
+			<td class="py-1"><strong>{{ _('startrecord Scheduler') }}</strong></td>
+			<td class="py-1" colspan="3">{{ startRecord.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+		</tr>
+		{% elif simulate %}
+		<tr>
+			<td class="py-1"><strong>{{ _('simulate Scheduler') }}</strong></td>
+			<td class="py-1" colspan="3">{{ simulate.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+		</tr>
+		{% endif %}
+		<tr>
+
 		</tr>
 	</tbody>
 </table>
