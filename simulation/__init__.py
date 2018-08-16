@@ -33,6 +33,7 @@
 #       corrected serious bug in compare entry with NextDay
 #  0.5  Added feature to select which caller is written to the simulation file
 #  0.6  Added WebGUI and Clear Data File function
+#  0.7  Implemented new way of parameter handling (taken from plugin.yaml). Fixed IF statement for empty caller list
 #
 ##########################################################################
 
