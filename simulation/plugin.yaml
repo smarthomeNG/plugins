@@ -10,7 +10,7 @@ plugin:
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/developer/plugins/simulation/README.html        # url of documentation (wiki) page
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/841097-anwesenheitssimulation-0-1'
-    version: 1.5.0.6               # Plugin version
+    version: 1.5.0.7               # Plugin version
     sh_minversion: 1.4c             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -25,7 +25,7 @@ parameters:
             de: 'Voller Pfad zum Datenfile (Textdatei).'
             en: 'Full path to data file (text file).'
     callers:
-        type: str
+        type: list(str)
         mandatory: False
         description:
             de: '(optional) Liste von Event-Sourcen, um Events aufzuzeichnen. Wenn ein Item geändert wird, werden nur
