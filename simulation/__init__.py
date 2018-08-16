@@ -33,6 +33,7 @@
 #       corrected serious bug in compare entry with NextDay
 #  0.5  Added feature to select which caller is written to the simulation file
 #  0.6  Added WebGUI and Clear Data File function
+#  0.7  Implemented new way of parameter handling (taken from plugin.yaml). Fixed IF statement for empty caller list
 #
 ##########################################################################
 
@@ -47,18 +48,20 @@ from lib.scheduler import Scheduler
 
 class Simulation(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.0.6"
+    PLUGIN_VERSION = "1.5.0.7"
 
-    def __init__(self, smarthome, data_file, callers=None):
+    def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Simulation release 1.5.0.6')
-        self._sh = smarthome
         self.shtime = Shtime.get_instance()
-        self._datafile = data_file
+        self._datafile = self.get_parameter_value('data_file')
         self.lastday = ''
         self.items = Items.get_instance()
         self.scheduler = Scheduler.get_instance()
-        self._callers = callers
+        if  len(self.get_parameter_value('callers')) == 0:
+            self._callers = None
+        else:
+            self._callers = self.get_parameter_value('callers')
         self._items = []
         self.scheduler_add('midnight', self._midnight, cron='0 0 * *', prio=3)
 
@@ -107,7 +110,7 @@ class Simulation(SmartPlugin):
     # Callback. Writes the event to the file
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if (item.conf['sim'] == 'track') and (self.state() == 2) and (self._callers and caller in self._callers):
+        if (item.conf['sim'] == 'track') and (self.state() == 2) and (self._callers is None or caller in self._callers):
             now = self.shtime.now()
             day = now.day
             self.file.write(now.strftime('%a;%H:%M:%S'))
