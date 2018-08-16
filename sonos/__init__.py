@@ -35,10 +35,16 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from queue import Empty
 import sys
 from urllib.parse import unquote
-import requests
-import xmltodict
-from requests.utils import quote
-from tinytag import TinyTag
+
+try:
+    import requests
+    import xmltodict
+    from requests.utils import quote
+    from tinytag import TinyTag
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
+
 from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
 from lib.item import Item
@@ -2298,6 +2304,11 @@ class Sonos(SmartPlugin):
         self._tts = self.to_bool(tts, default=False)
         self._local_webservice_path = local_webservice_path
         self._snippet_duration_offset = float(snippet_duration_offset)
+
+        # Exit if the required package(s) could not be imported
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self._logger.error("{}: Unable to import required external python packages. Please install.".format(self.get_fullname()))
+            return
 
         # see documentation: if no exclusive snippet path is set, we use the global one
         if local_webservice_path_snippet is None:
