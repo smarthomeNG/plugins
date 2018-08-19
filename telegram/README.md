@@ -92,7 +92,7 @@ TestBool:
     type: bool
     cache: True
     telegram_message: TestBool: [VALUE]
-    telegram_value_match_regex: 1              # nur Nachricht senden wenn 1 (True)
+    telegram_value_match_regex: (true|True|1)  # nur Nachricht senden wenn 1 (True)
 ```
 
 #### telegram_info
