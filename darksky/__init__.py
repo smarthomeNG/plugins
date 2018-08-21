@@ -108,7 +108,10 @@ class DarkSky(SmartPlugin):
                                 alerts_string = alerts_string + alerts_string_wrk
                         wrk = alerts_string
                 else:
-                    wrk = []
+                    if s == "alerts_string":
+                        wrk = ''
+                    else:
+                        wrk = []
             else:
                 while True:
                     if (len(sp) == 0) or (wrk is None):
