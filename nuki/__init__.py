@@ -32,6 +32,7 @@ nuki_event_items = {}
 nuki_battery_items = {}
 paired_nukis = []
 
+
 class NukiTCPDispatcher(lib.connection.Server):
     def __init__(self, ip, port):
         self._logger = logging.getLogger(__name__)
@@ -66,27 +67,25 @@ class NukiTCPDispatcher(lib.connection.Server):
 
 
 class Nuki(SmartPlugin):
-
-    PLUGIN_VERSION = "1.4.0.2"
+    PLUGIN_VERSION = "1.5.0.3"
     ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, sh, bridge_ip, bridge_port, bridge_api_token, bridge_callback_ip=None,
-                 bridge_callback_port=8090, protocol='http'):
+    def __init__(self, sh, *args, **kwargs):
 
         global paired_nukis
         global nuki_event_items
         global nuki_action_items
         global nuki_battery_items
         self._logger = logging.getLogger(__name__)
-        self._sh = sh
-        self._base_url = protocol + '://' + bridge_ip + ":" + bridge_port + '/'
-        self._token = bridge_api_token
-        self._callback_ip = bridge_callback_ip
-        self._callback_port = bridge_callback_port
+        self._base_url = self.get_parameter_value('protocol') + '://' + self.get_parameter_value(
+            'bridge_ip') + ":" + self.get_parameter_value('bridge_port') + '/'
+        self._token = self.get_parameter_value('bridge_api_token')
+        self._callback_ip = self.get_parameter_value('bridge_callback_ip')
+        self._callback_port = self.get_parameter_value('bridge_callback_port')
         self._action = ''
         self._noWait = ''
 
-        if self._callback_ip is None:
+        if self._callback_ip is None or self._callback_ip in ['0.0.0.0', '']:
             self._callback_ip = get_lan_ip()
 
             if not self._callback_ip:
@@ -101,17 +100,17 @@ class Nuki(SmartPlugin):
 
         NukiTCPDispatcher(self._callback_ip, self._callback_port)
 
-        self._lockActions = [1,     # unlock
-                             2,     # lock
-                             3,     # unlatch
-                             4,     # lockAndGo
-                             5,     # lockAndGoWithUnlatch
+        self._lockActions = [1,  # unlock
+                             2,  # lock
+                             3,  # unlatch
+                             4,  # lockAndGo
+                             5,  # lockAndGoWithUnlatch
                              ]
 
     def run(self):
         self._clear_callbacks()
         self.scheduler_add(__name__, self._scheduler_job, prio=3, cron=None, cycle=300, value=None,
-                               offset=None, next=None)
+                           offset=None, next=None)
 
         self.alive = True
 
@@ -190,7 +189,8 @@ class Nuki(SmartPlugin):
             return
         for nuki in response:
             paired_nukis.append(nuki['nukiId'])
-            self._logger.info('Nuki: Paired Nuki Lock found: {name} - {id}'.format(name=nuki['name'], id=nuki['nukiId']))
+            self._logger.info(
+                'Nuki: Paired Nuki Lock found: {name} - {id}'.format(name=nuki['name'], id=nuki['nukiId']))
             self._logger.debug(paired_nukis)
 
     def _clear_callbacks(self):
@@ -254,6 +254,7 @@ class Nuki(SmartPlugin):
             return json.loads(response.text)
         except Exception as ex:
             self._logger.error(ex)
+
 
 #######################################################################
 # UTIL FUNCTION
