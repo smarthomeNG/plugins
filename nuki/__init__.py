@@ -110,8 +110,9 @@ class Nuki(SmartPlugin):
 
     def run(self):
         self._clear_callbacks()
-        self._sh.scheduler.add("nuki_scheduler", self._scheduler_job, prio=3, cron=None, cycle=300, value=None,
+        self.scheduler_add(__name__, self._scheduler_job, prio=3, cron=None, cycle=300, value=None,
                                offset=None, next=None)
+
         self.alive = True
 
     def _scheduler_job(self):
