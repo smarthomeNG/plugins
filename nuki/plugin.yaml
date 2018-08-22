@@ -27,7 +27,7 @@ parameters:
             en: 'IP address of the NUKI Bridge.'
 
     bridge_port:
-        type: str
+        type: int
         mandatory: True
         description:
             de: 'Portnummer der NUKI Bridge.'
