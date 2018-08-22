@@ -38,6 +38,7 @@ import psutil
 
 import bin.shngversion as shngversion
 import lib.config
+from lib.shtime import Shtime
 #from lib.logic import Logics
 #from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
@@ -86,7 +87,7 @@ class BackendSysteminfo:
         uptime = self.age_to_string(days, hours, minutes, seconds)
 
         # return SmarthomeNG runtime
-        rt = str(self._sh.runtime())
+        rt = str(Shtime.get_instance().runtime())
         daytest = rt.split(' ')
         if len(daytest) == 3:
             days = int(daytest[0])
@@ -144,7 +145,7 @@ class BackendSysteminfo:
         uptime = self.age_to_string(days, hours, minutes, seconds)
 
         # return SmarthomeNG runtime
-        rt = str(self._sh.runtime())
+        rt = str(Shtime.get_instance().runtime())
         daytest = rt.split(' ')
         if len(daytest) == 3:
             days = int(daytest[0])
