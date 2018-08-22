@@ -78,7 +78,7 @@ class Nuki(SmartPlugin):
         global nuki_battery_items
         self._logger = logging.getLogger(__name__)
         self._base_url = self.get_parameter_value('protocol') + '://' + self.get_parameter_value(
-            'bridge_ip') + ":" + self.get_parameter_value('bridge_port') + '/'
+            'bridge_ip') + ":" + str(self.get_parameter_value('bridge_port')) + '/'
         self._token = self.get_parameter_value('bridge_api_token')
         self._callback_ip = self.get_parameter_value('bridge_callback_ip')
         self._callback_port = self.get_parameter_value('bridge_callback_port')
