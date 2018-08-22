@@ -7,7 +7,7 @@ plugin:
         en: 'Support for the NUKI Smart Lock'
     maintainer: fuppy, pfischi
     tester: psilo909
-    keywords: 'Smart Lock', 'NUKI'
+    keywords: Smart Lock, Nuki
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1052437-nuki-smartlock-plugin-support-thread
 
