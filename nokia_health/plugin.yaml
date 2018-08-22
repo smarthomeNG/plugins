@@ -3,15 +3,15 @@ plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Anbindung der Nokia Health API'
-        en: ''
+        de: 'Anbindung der Nokia Health API mit Oauth2'
+        en: 'Usage of the nokia health api with oauth2'
     maintainer: 'psilo909'
     tester: 'psilo909'
     keywords: health
     documentation: 'http://smarthomeng.de/user/plugins_doc/config/nokia_health.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1141179-nokia-health-plugin'
 
-    version: 1.5.2                 # Plugin version
+    version: 1.5.3                 # Plugin version
     sh_minversion: 1.4c            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -20,42 +20,55 @@ plugin:
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
 
-    consumer_key:
+    access_token:
         type: str
-        default: 300
         mandatory: True
         description:
-            de: 'Nokia Health API Key'
-            en: 'Nokia Health API Key'
+            de: 'Access-Token, via nokia Script von https://github.com/orcasgit/python-nokia'
+            en: 'Access token, retrieved via script from https://github.com/orcasgit/python-nokia'
+
+    token_expiry:
+        type: str
+        mandatory: True
+        description:
+            de: 'Token expiry, via nokia Script von https://github.com/orcasgit/python-nokia'
+            en: 'Token expiry, retrieved via script from https://github.com/orcasgit/python-nokia'
+
+    token_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'Token-Type, via nokia Script von https://github.com/orcasgit/python-nokia'
+            en: 'Token type, retrieved via script from https://github.com/orcasgit/python-nokia'
+
+    refresh_token:
+        type: str
+        mandatory: True
+        description:
+            de: 'Refresh-Token, via nokia Script von https://github.com/orcasgit/python-nokia'
+            en: 'Refresh token, retrieved via script from https://github.com/orcasgit/python-nokia'
+
+    user_id:
+        type: str
+        mandatory: True
+        description:
+            de: 'Nokia Health User ID (steht in der URL, wenn man als nomraler User einloggt)'
+            en: 'Nokia Health User ID (can be found in the URL when you log in)'
+
+    client_id:
+        type: str
+        mandatory: True
+        description:
+            de: 'Client ID von https://account.health.nokia.com/partner/dashboard_oauth2'
+            en: 'Client ID from https://account.health.nokia.com/partner/dashboard_oauth2'
 
     consumer_secret:
         type: str
         default: 300
         mandatory: True
         description:
-            de: 'Nokia Health API Secret'
-            en: 'Nokia Health API Secret'
-
-    access_token:
-        type: str
-        mandatory: False
-        description:
-            de: 'Access Token (über https://developer.health.nokia.com/api bestimmt)'
-            en: 'access token (can be found via https://developer.health.nokia.com/api)'
-
-    access_token_secret:
-        type: str
-        mandatory: False
-        description:
-            de: 'Access Token Secret (über https://developer.health.nokia.com/api bestimmt)'
-            en: 'access token secret (can be found via https://developer.health.nokia.com/api)'
-
-    user_id:
-        type: str
-        mandatory: False
-        description:
-            de: 'User ID'
-            en: 'user id'
+            de: 'Consumer-Geheimnis von https://account.health.nokia.com/partner/dashboard_oauth2'
+            en: 'Consumer secret from https://account.health.nokia.com/partner/dashboard_oauth2'
 
     cycle:
         type: int
@@ -63,6 +76,7 @@ parameters:
         description:
             de: 'Dieser Parameter muss normalerweise nicht angegeben werden. Er erlaubt es die Update-Frquenz anzupassen (Standard: alle 600 Sekunden). Mit dem Standardwert werden die Daten von Nokia Health alle 5 Minuten aktualisiert.'
             en: "This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 300 seconds). As a standard, the plugin updates the Nokia Health data every 5 minutes."
+
 
 item_attributes:
     # Definition of item attributes defined by this plugin

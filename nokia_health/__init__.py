@@ -29,26 +29,23 @@ from nokia import NokiaAuth, NokiaApi, NokiaCredentials
 
 class NokiaHealth(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.2"
-    BASE_URL = "https://api.health.nokia.com/"
+    PLUGIN_VERSION = "1.5.3"
     ALLOWED_MEASURE_TYPES = [1, 4, 5, 6, 8, 11]
 
-    # see https://developer.health.nokia.com/api/doc
-
-    def __init__(self, smarthome, consumer_key, consumer_secret, access_token, access_token_secret, user_id, cycle=300):
+    def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
-        self._consumer_key = consumer_key
-        self._consumer_secret = consumer_secret
-        self._access_token = access_token
-        self._access_token_secret = access_token_secret
-        self._auth = NokiaAuth(self._consumer_key, self._consumer_secret)
-        self._user_id = user_id
-        self._creds = NokiaCredentials(self._access_token, self._access_token_secret, self._consumer_key,
-                                       self._consumer_secret, self._user_id)
-        self._client = NokiaApi(self._creds)
+        self._access_token = self.get_parameter_value('access_token')
+        self._token_expiry = self.get_parameter_value('token_expiry')
+        self._token_type = self.get_parameter_value('token_type')
+        self._refresh_token = self.get_parameter_value('refresh_token')
+        self._user_id = self.get_parameter_value('user_id')
+        self._client_id = self.get_parameter_value('client_id')
+        self._consumer_secret = self.get_parameter_value('consumer_secret')
+        self._cycle = self.get_parameter_value('cycle')
 
-        self._cycle = cycle
+        self._creds = NokiaCredentials(self._access_token, self._token_expiry, self._token_type, self._refresh_token, self._user_id, self._client_id,
+                                 self._consumer_secret)
+        self._client = NokiaApi(self._creds)
         self._items = {}
 
         if not self.init_webinterface():

@@ -15,21 +15,30 @@ This plugin requires lib nokia. You can install this lib with:
 sudo pip3 install nokia --upgrade
 ```
 
-You have to go through the registration and oauth process on https://developer.health.nokia.com/api.
-In the end, after step 4, you see the access token and the access token secret in the input fields and the user id in the data right to it.
+You have to register at https://account.health.nokia.com/partner/dashboard_oauth2.
+The callback URL does not need to be reachable from the internet. You will have to start a small webserver for the oauth2
+process.  The script can be found at https://github.com/orcasgit/python-nokia and is installed with the pypi package. 
+```
+nokia saveconfig --consumer-key [consumerkey] --consumer-secret [consumersecret] --callback-url [callbackurl] --config nokia.cfg
+```
+The script for me only worked, when running it on the machine where i used the browser for accessing the callback url.
+Once the script finishs, the required data for the plugin will be written to the config file and can be used for the plugin.
+
+In future i will provide the oauth2 process in the web interface of the plugin!
 
 ## Configuration
 
 ### plugin.yaml
 ```yaml
 nokia_health:
-    class_name: NokiaHealth
-    class_path: plugins.nokia_health
-    consumer_key: <your_consumer_key>
-    consumer_secret: <your_consumer_secret>
-    access_token: <your_access_token>
-    access_token_secret: <your_access_token_secret>
-    user_id: <your_userid>
+    access_token: <your access token>
+    token_expiry: <your token expiry>
+    token_type: <token type>
+    refresh_token: <your refresh token>
+    user_id: <your user id>
+    client_id: <your client id>
+    consumer_secret: <your consumer secret>
+    cycle: 300
     instance: nokia_health
 ```
 
