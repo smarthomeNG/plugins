@@ -25,6 +25,7 @@
 
 import logging
 from lib.model.smartplugin import SmartPlugin
+from lib.item import Items
 import io
 import time
 import re
@@ -73,6 +74,7 @@ class AVDevice(SmartPlugin):
                  autoreconnect=False,
                  update_exclude='',
                  statusquery=True):
+        self.itemsApi = Items.get_instance()
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
         self.alive = False
@@ -191,7 +193,7 @@ class AVDevice(SmartPlugin):
                                         "Resetting {}: Resetting nothing because command is query command only.".format(self._name))
                         return None
             try:
-                founditem = self._sh.return_item(founditem)
+                founditem = self.itemsApi.return_item(founditem)
             except Exception as err:
                 self.logger.debug("Resetting {}: {} is no valid item. Message: {}.".format(self._name, founditem, err))
                 return None
@@ -876,7 +878,7 @@ class AVDevice(SmartPlugin):
             self.logger.log(VERBOSE1, "Initializing {}: Speaker Items: {}".format(self._name, self._items_speakers))
             try:
                 try:
-                    self._dependson = self._sh.return_item(self._dependson)
+                    self._dependson = self.itemsApi.return_item(self._dependson)
                     self.logger.debug("Initializing {}: Dependson Item: {}.".format(self._name, self._dependson))
                 except Exception:
                     self._dependson = None
@@ -1300,7 +1302,7 @@ class AVDevice(SmartPlugin):
                 else:
                     depending = True
                     try:
-                        item = self._sh.return_item(dep_function).id()
+                        item = self.itemsApi.return_item(dep_function).id()
                     except Exception:
                         item = dep_function.id()
                     if not item == self._dependson.id():
