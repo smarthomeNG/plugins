@@ -3,11 +3,11 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Unterstützung für ein Nuki Smart-Lock'
-        en: ''
+        de: 'Unterstützung für ein NUKI Smart-Lock'
+        en: 'Support for the NUKI Smart Lock'
     maintainer: fuppy, pfischi
     tester: psilo909
-#    keywords: iot xyz
+    keywords: 'Smart Lock', 'NUKI'
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1052437-nuki-smartlock-plugin-support-thread
 
