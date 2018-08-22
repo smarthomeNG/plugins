@@ -52,8 +52,8 @@ parameters:
         mandatory: False
         default: 8090
         description:
-            de: 'Port, über den die Callbacks der NUKI Bridge verarbeitet werden sollen. Default: 8090.'
-            en: 'Port for the callbacks from NUK Bridge. Default: 8090.'
+            de: '(optional) Port, über den die Callbacks der NUKI Bridge verarbeitet werden sollen. Default: 8090.'
+            en: '(optional) Port for the callbacks from NUK Bridge. Default: 8090.'
 
     protocol:
         type: str
