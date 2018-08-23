@@ -86,7 +86,7 @@ class Nuki(SmartPlugin):
         self._noWait = ''
 
         if self._callback_ip is None or self._callback_ip in ['0.0.0.0', '']:
-            self._callback_ip = get_lan_ip()
+            self._callback_ip = self.get_local_ipv4_address()
 
             if not self._callback_ip:
                 self._logger.critical("Nuki: Could not fetch internal ip address. Set it manually!")
@@ -254,20 +254,3 @@ class Nuki(SmartPlugin):
             return json.loads(response.text)
         except Exception as ex:
             self._logger.error(ex)
-
-
-#######################################################################
-# UTIL FUNCTION
-#######################################################################
-
-def get_lan_ip():
-    try:
-        import socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(5)
-        s.connect(("google.com", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except:
-        return None
