@@ -24,7 +24,9 @@
 
 import requests
 import ruamel.yaml
+import datetime
 from lib.model.smartplugin import *
+from lib.shtime import Shtime
 from nokia import NokiaAuth, NokiaApi, NokiaCredentials
 
 
@@ -35,6 +37,7 @@ class NokiaHealth(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
+        self.shtime = Shtime.get_instance()
         self._user_id = self.get_parameter_value('user_id')
         self._client_id = self.get_parameter_value('client_id')
         self._consumer_secret = self.get_parameter_value('consumer_secret')
@@ -99,22 +102,34 @@ class NokiaHealth(SmartPlugin):
             if self.get_item('access_token')() and self.get_item(
                     'token_expiry')() > 0 and self.get_item(
                 'token_type')() and self.get_item('refresh_token')():
-                self.logger.debug(
-                    "Plugin '{}': Initializing NokiaCredentials: access_token - {} token_expiry - {} token_type - {} refresh_token - {} user_id - {} client_id - {} consumer_secret - {}".
-                    format(self.get_fullname(), self.get_item('access_token')(),
-                           self.get_item('token_expiry')(),
-                           self.get_item('token_type')(),
-                           self.get_item('refresh_token')(),
-                           self._user_id,
-                           self._client_id,
-                           self._consumer_secret))
-                self._creds = NokiaCredentials(self.get_item('access_token')(),
-                                               self.get_item('token_expiry')(),
-                                               self.get_item('token_type')(),
-                                               self.get_item('refresh_token')(),
-                                               self._user_id, self._client_id,
-                                               self._consumer_secret)
-                self._client = NokiaApi(self._creds, refresh_cb=self._store_tokens)
+
+                if (self.shtime.now() < datetime.datetime.fromtimestamp(self.get_item(
+                    'token_expiry')(), tz=self.shtime.tzinfo())):
+                    self.logger.error(
+                        "Plugin '{}': Token is valid, will expire on {}.".format(
+                            self.get_fullname(), datetime.datetime.fromtimestamp(self.get_item(
+                                'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
+                    self.logger.debug(
+                        "Plugin '{}': Initializing NokiaCredentials: access_token - {} token_expiry - {} token_type - {} refresh_token - {} user_id - {} client_id - {} consumer_secret - {}".
+                        format(self.get_fullname(), self.get_item('access_token')(),
+                               self.get_item('token_expiry')(),
+                               self.get_item('token_type')(),
+                               self.get_item('refresh_token')(),
+                               self._user_id,
+                               self._client_id,
+                               self._consumer_secret))
+                    self._creds = NokiaCredentials(self.get_item('access_token')(),
+                                                   self.get_item('token_expiry')(),
+                                                   self.get_item('token_type')(),
+                                                   self.get_item('refresh_token')(),
+                                                   self._user_id, self._client_id,
+                                                   self._consumer_secret)
+                    self._client = NokiaApi(self._creds, refresh_cb=self._store_tokens)
+                else:
+                    self.logger.error(
+                        "Plugin '{}': Token is expired, run OAuth2 again from Web Interface (Expiry Date: {}).".format(
+                            self.get_fullname(), datetime.datetime.fromtimestamp(self.get_item(
+                            'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
             else:
                 self.logger.error(
                     "Plugin '{}': Items for OAuth2 Data not set. Please run process via WebGUI of the plugin.".format(self.get_fullname()))
@@ -377,4 +392,5 @@ class WebInterface(SmartPluginWebIf):
                            plugin_info=self.plugin.get_info(), tabcount=2, callback_url=self._get_callback_url(),
                            tab1title="Nokia Health Items (%s)" % len(self.plugin.get_items()),
                            tab2title="OAuth2 Data", authorize_url=self._auth.get_authorize_url(),
-                           p=self.plugin)
+                           p=self.plugin, token_expiry=datetime.datetime.fromtimestamp(self.plugin.get_item(
+                    'token_expiry')(), tz=self.plugin.shtime.tzinfo()))

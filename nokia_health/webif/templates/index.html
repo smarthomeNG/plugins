@@ -46,7 +46,7 @@
 						<td class="py-1">{{ item._path }}</td>
 						<td class="py-1">{{ item._type }}</td>
 						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item() }} {% if key == 'token_expiry' %}({{ token_expiry.strftime('%d.%m.%Y %H:%M:%S') }}){% endif %}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
@@ -79,7 +79,7 @@
 		<td class="py-1">Access Token</td>
 		<td class="py-1">{{ p.get_item('access_token')() }}</td>
 		<td class="py-1">Token Expiry</td>
-		<td class="py-1">{{ p.get_item('token_expiry')() }}</td>
+		<td class="py-1">{{ p.get_item('token_expiry')() }} ({{ token_expiry.strftime('%d.%m.%Y %H:%M:%S') }})</td>
 	</tr>
 	<tr>
 		<td class="py-1">Token Type</td>
