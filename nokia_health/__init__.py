@@ -23,6 +23,7 @@
 #########################################################################
 
 import requests
+import ruamel.yaml
 from lib.model.smartplugin import *
 from nokia import NokiaAuth, NokiaApi, NokiaCredentials
 
@@ -34,18 +35,12 @@ class NokiaHealth(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
-        self._access_token = self.get_parameter_value('access_token')
-        self._token_expiry = self.get_parameter_value('token_expiry')
-        self._token_type = self.get_parameter_value('token_type')
-        self._refresh_token = self.get_parameter_value('refresh_token')
         self._user_id = self.get_parameter_value('user_id')
         self._client_id = self.get_parameter_value('client_id')
         self._consumer_secret = self.get_parameter_value('consumer_secret')
         self._cycle = self.get_parameter_value('cycle')
-
-        self._creds = NokiaCredentials(self._access_token, self._token_expiry, self._token_type, self._refresh_token, self._user_id, self._client_id,
-                                 self._consumer_secret)
-        self._client = NokiaApi(self._creds)
+        self._creds = None
+        self._client = None
         self._items = {}
 
         if not self.init_webinterface():
@@ -53,16 +48,27 @@ class NokiaHealth(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self.scheduler_add(__name__, self._update_loop, cycle=self._cycle)
+        self.scheduler_add('poll_data', self._update_loop, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
+
+    def _store_tokens(self, token):
+        self.logger.debug(
+            "Plugin '{}': Updating tokens to items: access_token - {} token_expiry - {} token_type - {} refresh_token - {}".
+                format(self.get_fullname(), token['access_token'], token['expires_in'], token['token_type'],
+                       token['refresh_token']))
+        self.plugin.get_item('access_token')(token['access_token'])
+        self.plugin.get_item('token_expiry')(token['expires_in'])
+        self.plugin.get_item('token_type')(token['token_type'])
+        self.plugin.get_item('refresh_token')(token['refresh_token'])
 
     def _update_loop(self):
         """
         Starts the update loop for all known items.
         """
-        self.logger.debug('Starting update loop for instance %s' % self.get_instance_name())
+        self.logger.debug(
+            "Plugin '{}': Starting update loop".format(self.get_fullname()))
         if not self.alive:
             return
 
@@ -89,12 +95,36 @@ class NokiaHealth(SmartPlugin):
         ('bone_mass', 88),
         ('pulse_wave_velocity', 91)
         """
+        if self._client is None:
+            if self.get_item('access_token')() and self.get_item(
+                    'token_expiry')() > 0 and self.get_item(
+                'token_type')() and self.get_item('refresh_token')():
+                self.logger.debug(
+                    "Plugin '{}': Initializing NokiaCredentials: access_token - {} token_expiry - {} token_type - {} refresh_token - {} user_id - {} client_id - {} consumer_secret - {}".
+                    format(self.get_fullname(), self.get_item('access_token')(),
+                           self.get_item('token_expiry')(),
+                           self.get_item('token_type')(),
+                           self.get_item('refresh_token')(),
+                           self._user_id,
+                           self._client_id,
+                           self._consumer_secret))
+                self._creds = NokiaCredentials(self.get_item('access_token')(),
+                                               self.get_item('token_expiry')(),
+                                               self.get_item('token_type')(),
+                                               self.get_item('refresh_token')(),
+                                               self._user_id, self._client_id,
+                                               self._consumer_secret)
+                self._client = NokiaApi(self._creds, refresh_cb=self._store_tokens)
+            else:
+                self.logger.error(
+                    "Plugin '{}': Items for OAuth2 Data not set. Please run process via WebGUI of the plugin.".format(self.get_fullname()))
+                return
         measures = self._client.get_measures()
         last_measure = measures[0]
 
         if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
             self._items['heart_pulse'](last_measure.get_measure(11))
-            self.logger.debug(last_measure.get_measure(11))
+            self.logger.debug("Plugin '{}': heart_pulse - {}".format(self.get_fullname(), last_measure.get_measure(11)))
 
         # Bugfix for strange behavior of returning heart_pulse as seperate dataset..
         if last_measure.get_measure(1) is None:
@@ -102,67 +132,74 @@ class NokiaHealth(SmartPlugin):
 
         if last_measure.get_measure(1) is not None and 'weight' in self._items:
             self._items['weight'](last_measure.get_measure(1))
-            self.logger.debug(last_measure.get_measure(1))
+            self.logger.debug("Plugin '{}': weight - {}".format(self.get_fullname(), last_measure.get_measure(1)))
 
         if last_measure.get_measure(4) is not None and 'height' in self._items:
             self._items['height'](last_measure.get_measure(4))
-            self.logger.debug(last_measure.get_measure(4))
+            self.logger.debug("Plugin '{}': height - {}".format(self.get_fullname(), last_measure.get_measure(4)))
 
         if last_measure.get_measure(5) is not None and 'fat_free_mass' in self._items:
             self._items['fat_free_mass'](last_measure.get_measure(5))
-            self.logger.debug(last_measure.get_measure(5))
+            self.logger.debug(
+                "Plugin '{}': fat_free_mass - {}".format(self.get_fullname(), last_measure.get_measure(5)))
 
         if last_measure.get_measure(6) is not None and 'fat_ratio' in self._items:
             self._items['fat_ratio'](last_measure.get_measure(6))
-            self.logger.debug(last_measure.get_measure(6))
+            self.logger.debug("Plugin '{}': fat_ratio - {}".format(self.get_fullname(), last_measure.get_measure(6)))
 
         if last_measure.get_measure(8) is not None and 'fat_mass_weight' in self._items:
             self._items['fat_mass_weight'](last_measure.get_measure(8))
-            self.logger.debug(last_measure.get_measure(8))
+            self.logger.debug(
+                "Plugin '{}': fat_mass_weight - {}".format(self.get_fullname(), last_measure.get_measure(8)))
 
         if last_measure.get_measure(9) is not None and 'diastolic_blood_pressure' in self._items:
             self._items['diastolic_blood_pressure'](last_measure.get_measure(9))
-            self.logger.debug(last_measure.get_measure(9))
+            self.logger.debug(
+                "Plugin '{}': diastolic_blood_pressure - {}".format(self.get_fullname(), last_measure.get_measure(9)))
 
         if last_measure.get_measure(10) is not None and 'systolic_blood_pressure' in self._items:
             self._items['systolic_blood_pressure'](last_measure.get_measure(10))
-            self.logger.debug(last_measure.get_measure(10))
+            self.logger.debug(
+                "Plugin '{}': systolic_blood_pressure - {}".format(self.get_fullname(), last_measure.get_measure(10)))
 
         if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
             self._items['heart_pulse'](last_measure.get_measure(11))
-            self.logger.debug(last_measure.get_measure(11))
+            self.logger.debug("Plugin '{}': heart_pulse - {}".format(self.get_fullname(), last_measure.get_measure(11)))
 
         if last_measure.get_measure(12) is not None and 'temperature' in self._items:
             self._items['temperature'](last_measure.get_measure(12))
-            self.logger.debug(last_measure.get_measure(12))
+            self.logger.debug("Plugin '{}': temperature - {}".format(self.get_fullname(), last_measure.get_measure(12)))
 
         if last_measure.get_measure(54) is not None and 'spo2' in self._items:
             self._items['spo2'](last_measure.get_measure(54))
-            self.logger.debug(last_measure.get_measure(54))
+            self.logger.debug("Plugin '{}': spo2 - {}".format(self.get_fullname(), last_measure.get_measure(54)))
 
         if last_measure.get_measure(71) is not None and 'body_temperature' in self._items:
             self._items['body_temperature'](last_measure.get_measure(71))
-            self.logger.debug(last_measure.get_measure(71))
+            self.logger.debug(
+                "Plugin '{}': body_temperature - {}".format(self.get_fullname(), last_measure.get_measure(71)))
 
         if last_measure.get_measure(72) is not None and 'skin_temperature' in self._items:
             self._items['skin_temperature'](last_measure.get_measure(72))
-            self.logger.debug(last_measure.get_measure(72))
+            self.logger.debug(
+                "Plugin '{}': skin_temperature - {}".format(self.get_fullname(), last_measure.get_measure(72)))
 
         if last_measure.get_measure(76) is not None and 'muscle_mass' in self._items:
             self._items['muscle_mass'](last_measure.get_measure(76))
-            self.logger.debug(last_measure.get_measure(76))
+            self.logger.debug("Plugin '{}': muscle_mass - {}".format(self.get_fullname(), last_measure.get_measure(76)))
 
         if last_measure.get_measure(77) is not None and 'hydration' in self._items:
             self._items['hydration'](last_measure.get_measure(77))
-            self.logger.debug(last_measure.get_measure(77))
+            self.logger.debug("Plugin '{}': hydration - {}".format(self.get_fullname(), last_measure.get_measure(77)))
 
         if last_measure.get_measure(88) is not None and 'bone_mass' in self._items:
             self._items['bone_mass'](last_measure.get_measure(88))
-            self.logger.debug(last_measure.get_measure(88))
+            self.logger.debug("Plugin '{}': bone_mass - {}".format(self.get_fullname(), last_measure.get_measure(88)))
 
         if last_measure.get_measure(91) is not None and 'pulse_wave_velocity' in self._items:
             self._items['pulse_wave_velocity'](last_measure.get_measure(91))
-            self.logger.debug(last_measure.get_measure(91))
+            self.logger.debug(
+                "Plugin '{}': pulse_wave_velocity - {}".format(self.get_fullname(), last_measure.get_measure(91)))
 
         if 'height' in self._items and ('bmi' in self._items or 'bmi_text' in self._items) and last_measure.get_measure(
                 1) is not None:
@@ -190,9 +227,11 @@ class NokiaHealth(SmartPlugin):
                         self._items['bmi_text']('Adipositas Grad III')
             else:
                 self.logger.error(
-                    "Cannot calculate BMI: height is 0, please set height (in m) for height item manually.")
+                    "Plugin '{}': Cannot calculate BMI: height is 0, please set height (in m) for height item manually.".format(
+                        self.get_fullname()))
         else:
-            self.logger.error("Cannot calculate BMI: height and / or bmi item missing.")
+            self.logger.error(
+                "Plugin '{}': Cannot calculate BMI: height and / or bmi item missing.".format(self.get_fullname()))
 
     def parse_item(self, item):
         """
@@ -207,11 +246,15 @@ class NokiaHealth(SmartPlugin):
                                                           'systolic_blood_pressure', 'heart_pulse', 'temperature',
                                                           'spo2', 'body_temperature', 'skin_temperature', 'muscle_mass',
                                                           'hydration', 'bone_mass', 'pulse_wave_velocity', 'bmi',
-                                                          'bmi_text']:
+                                                          'bmi_text', 'access_token', 'token_expiry', 'token_type',
+                                                          'refresh_token']:
             self._items[self.get_iattr_value(item.conf, 'nh_type')] = item
 
     def get_items(self):
         return self._items
+
+    def get_item(self, key):
+        return self._items[key]
 
     def init_webinterface(self):
         """"
@@ -225,7 +268,7 @@ class NokiaHealth(SmartPlugin):
         except:
             self.mod_http = None
         if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_fullname()))
             return False
 
         # set application configuration for cherrypy
@@ -272,11 +315,25 @@ class WebInterface(SmartPluginWebIf):
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self._creds = None
+        self._auth = None
 
         self.tplenv = self.init_template_environment()
 
+    def _get_callback_url(self):
+        ip = self.plugin.mod_http.get_local_ip_address()
+        port = self.plugin.mod_http.get_local_port()
+        web_ifs = self.plugin.mod_http.get_webifs_for_plugin(self.plugin.get_shortname())
+        for web_if in web_ifs:
+            if web_if['Instance'] == self.plugin.get_instance_name():
+                callback_url = "http://{}:{}{}".format(ip, port, web_if['Mount'])
+                self.logger.debug("Plugin '{}': WebIf found, callback is {}".format(self.plugin.get_fullname(),
+                                                                                    callback_url))
+            return callback_url
+        self.logger.error("Plugin '{}': Callback URL cannot be established.".format(self.plugin.get_fullname()))
+
     @cherrypy.expose
-    def index(self, reload=None):
+    def index(self, reload=None, state=None, code=None, error=None):
         """
         Build index.html for cherrypy
 
@@ -284,9 +341,40 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        if self._auth is None:
+            self._auth = NokiaAuth(
+                self.plugin._client_id,
+                self.plugin._consumer_secret,
+                callback_uri=self._get_callback_url(),
+                scope='user.info,user.metrics,user.activity'
+            )
+
+        if code:
+            self.logger.debug("Plugin '{}': Got code as callback: {}".format(self.plugin.get_fullname(), code))
+            credentials = None
+            try:
+                credentials = self._auth.get_credentials(code)
+            except:
+                self.logger.error(
+                    "Plugin '{}': An error occurred, perhaps code parameter is invalid or too old?".format(
+                        self.plugin.get_fullname()))
+            if credentials is not None:
+                self._creds = credentials
+                self.logger.debug(
+                    "Plugin '{}': New credentials are: access_token {}, token_expiry {}, token_type {}, refresh_token {}".
+                        format(self.plugin.get_fullname(), self._creds.access_token, self._creds.token_expiry,
+                               self._creds.token_type, self._creds.refresh_token))
+                self.plugin.get_item('access_token')(self._creds.access_token)
+                self.plugin.get_item('token_expiry')(self._creds.token_expiry)
+                self.plugin.get_item('token_type')(self._creds.token_type)
+                self.plugin.get_item('refresh_token')(self._creds.refresh_token)
+
+                self.plugin._client = None
+
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           plugin_info=self.plugin.get_info(), tabcount=2, callback_url=self._get_callback_url(),
                            tab1title="Nokia Health Items (%s)" % len(self.plugin.get_items()),
+                           tab2title="OAuth2 Data", authorize_url=self._auth.get_authorize_url(),
                            p=self.plugin)
