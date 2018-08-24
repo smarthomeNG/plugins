@@ -63,7 +63,7 @@ class NokiaHealth(SmartPlugin):
                        token['refresh_token']))
         self.get_item('access_token')(token['access_token'])
         self.get_item('token_expiry')(
-            int((self.shtime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()) + int(token['expires_in']))
+            int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()) + int(token['expires_in']))
         self.get_item('token_type')(token['token_type'])
         self.get_item('refresh_token')(token['refresh_token'])
 
@@ -111,7 +111,7 @@ class NokiaHealth(SmartPlugin):
                     'token_expiry')() > 0 and self.get_item(
                 'token_type')() and self.get_item('refresh_token')():
 
-                if (datetime.datetime.utcnow()  < datetime.datetime.fromtimestamp(self.get_item(
+                if (self.shtime.now() < datetime.datetime.fromtimestamp(self.get_item(
                         'token_expiry')(), tz=self.shtime.tzinfo())):
                     self.logger.debug(
                         "Plugin '{}': Token is valid, will expire on {}.".format(
