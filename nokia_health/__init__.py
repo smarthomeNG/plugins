@@ -104,20 +104,20 @@ class NokiaHealth(SmartPlugin):
                 'token_type')() and self.get_item('refresh_token')():
 
                 if (self.shtime.now() < datetime.datetime.fromtimestamp(self.get_item(
-                    'token_expiry')(), tz=self.shtime.tzinfo())):
+                        'token_expiry')(), tz=self.shtime.tzinfo())):
                     self.logger.error(
                         "Plugin '{}': Token is valid, will expire on {}.".format(
                             self.get_fullname(), datetime.datetime.fromtimestamp(self.get_item(
                                 'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
                     self.logger.debug(
                         "Plugin '{}': Initializing NokiaCredentials: access_token - {} token_expiry - {} token_type - {} refresh_token - {} user_id - {} client_id - {} consumer_secret - {}".
-                        format(self.get_fullname(), self.get_item('access_token')(),
-                               self.get_item('token_expiry')(),
-                               self.get_item('token_type')(),
-                               self.get_item('refresh_token')(),
-                               self._user_id,
-                               self._client_id,
-                               self._consumer_secret))
+                            format(self.get_fullname(), self.get_item('access_token')(),
+                                   self.get_item('token_expiry')(),
+                                   self.get_item('token_type')(),
+                                   self.get_item('refresh_token')(),
+                                   self._user_id,
+                                   self._client_id,
+                                   self._consumer_secret))
                     self._creds = NokiaCredentials(self.get_item('access_token')(),
                                                    self.get_item('token_expiry')(),
                                                    self.get_item('token_type')(),
@@ -129,10 +129,11 @@ class NokiaHealth(SmartPlugin):
                     self.logger.error(
                         "Plugin '{}': Token is expired, run OAuth2 again from Web Interface (Expiry Date: {}).".format(
                             self.get_fullname(), datetime.datetime.fromtimestamp(self.get_item(
-                            'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
+                                'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
             else:
                 self.logger.error(
-                    "Plugin '{}': Items for OAuth2 Data not set. Please run process via WebGUI of the plugin.".format(self.get_fullname()))
+                    "Plugin '{}': Items for OAuth2 Data not set. Please run process via WebGUI of the plugin.".format(
+                        self.get_fullname()))
                 return
         measures = self._client.get_measures()
         last_measure = measures[0]
@@ -364,13 +365,13 @@ class WebInterface(SmartPluginWebIf):
                 scope='user.info,user.metrics,user.activity'
             )
 
-        if code:
+        if not reload and code:
             self.logger.debug("Plugin '{}': Got code as callback: {}".format(self.plugin.get_fullname(), code))
             credentials = None
             try:
                 credentials = self._auth.get_credentials(code)
             except:
-                self.logger.warning(
+                self.logger.error(
                     "Plugin '{}': An error occurred, perhaps code parameter is invalid or too old?".format(
                         self.plugin.get_fullname()))
             if credentials is not None:
@@ -386,7 +387,6 @@ class WebInterface(SmartPluginWebIf):
 
                 self.plugin._client = None
 
-
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
@@ -394,4 +394,5 @@ class WebInterface(SmartPluginWebIf):
                            tab1title="Nokia Health Items (%s)" % len(self.plugin.get_items()),
                            tab2title="OAuth2 Data", authorize_url=self._auth.get_authorize_url(),
                            p=self.plugin, token_expiry=datetime.datetime.fromtimestamp(self.plugin.get_item(
-                    'token_expiry')(), tz=self.plugin.shtime.tzinfo()), now = self.plugin.shtime.now(), code=code)
+                'token_expiry')(), tz=self.plugin.shtime.tzinfo()), now=self.plugin.shtime.now(), code=code,
+                           state=state, reload=reload)

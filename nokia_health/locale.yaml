@@ -15,3 +15,9 @@ plugin_translations:
     'Callback URL':
         'de': 'Callback URL'
         'en': 'Callback URL'
+    'Code Parameter für OAuth2 an Callback gesendet. Bitte Prüfen, ob die Werte, insbesondere Token Expiry aktualisiert wurden. Der Code ist nur einmal gültig, daher ist bspw. beim Reload der Seite mit gestztem "code" Parameter keine Änderung an Token Expiry mehr zu sehen!':
+        'de': 'Code Parameter für OAuth2 an Callback Funktion gesendet. Bitte Prüfen, ob die Werte, insbesondere Token Expiry aktualisiert wurden. Der Code ist nur einmal gültig, daher ist bspw. beim Reload der Seite mit gestztem "code" Parameter keine Änderung an Token Expiry mehr zu sehen!'
+        'en': 'Code parameter sent to callback function for OAuth2. Please verify, if the values, especially Token Expiry have updated. The code is valid only for one time. So when e.g. reloading the page with set "code" parameter, no change will happend anymore.'
+    'Code':
+        'de': 'Code'
+        'en': 'Code'
