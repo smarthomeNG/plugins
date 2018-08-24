@@ -811,8 +811,8 @@ class WebInterface(SmartPluginWebIf):
         returns the smarthomeNG sqlite database as download
         """
 
-        self.plugin.dump('%s/var/db/smarthomedb_%s.dump' % (self.plugin._sh.base_dir, self.plugin.get_instance_name()))
+        self.plugin.dump('%s/var/db/smarthomedb_%s.dump' % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()))
         mime = 'application/octet-stream'
         return cherrypy.lib.static.serve_file(
-            "%s/var/db/smarthomedb_%s.dump" % (self.plugin._sh.base_dir, self.plugin.get_instance_name()),
-            mime, "%s/var/db/" % self.plugin._sh.base_dir)
+            "%s/var/db/smarthomedb_%s.dump" % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()),
+            mime, "%s/var/db/" % self.plugin.get_sh().base_dir)
