@@ -21,3 +21,6 @@ plugin_translations:
     'Code':
         'de': 'Code'
         'en': 'Code'
+    'State':
+        'de': 'State'
+        'en': 'State'

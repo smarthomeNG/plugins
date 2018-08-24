@@ -35,8 +35,9 @@
 {% if code and not reload %}
 <div class="mb-2 alert alert-info alert-dismissible fade show" role="alert">
 	<strong>{{ _('Info') }}</strong><br/>
-	{{ _('Code Parameter für OAuth2 an Callback gesendet. Bitte Prüfen, ob die Werte, insbesondere Token Expiry aktualisiert wurden. Der Code ist nur einmal gültig, daher ist bspw. beim Reload der Seite mit gestztem "code" Parameter keine Änderung an Token Expiry mehr zu sehen!') }}<br/>
+	{{ _('Code Parameter für OAuth2 an Callback gesendet. Bitte Prüfen, ob die Werte, insbesondere Token Expiry aktualisiert wurden. Der Code ist nur einmal gültig, daher ist bspw. beim Reload der Seite mit gestztem "code" Parameter keine Änderung an Token Expiry mehr zu sehen!') }}<hr/>
 	{{ _('Code') }}: {{ code }}
+	{% if state %}<br/>{{ _('State') }}: {{ state }}{% endif %}
 	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 		<span aria-hidden="true">&times;</span>
 	</button>
