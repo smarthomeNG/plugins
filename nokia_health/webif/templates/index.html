@@ -32,6 +32,15 @@
 	</button>
 </div>
 {% endif %}
+{% if p.get_item('token_expiry')() == 0 %}
+<div class="mb-2 alert alert-danger alert-dismissible fade show" role="alert">
+	<strong>{{ _('Warnung') }}</strong><br/>
+	{{ _('OAuth2 noch nicht durchlaufen. Bitte unter dem Tab "OAuth2 Data" via Link starten. Erst danach funktioniert das Plugin.') }}
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+		<span aria-hidden="true">&times;</span>
+	</button>
+</div>
+{% endif %}
 {% if code and not reload %}
 <div class="mb-2 alert alert-info alert-dismissible fade show" role="alert">
 	<strong>{{ _('Info') }}</strong><br/>
@@ -84,7 +93,8 @@
 			{{ _('OAuth2 Authorization URL') }}
 		</td>
 		<td class="py-1" colspan="3">
-			<a href="{{ authorize_url }}" target="_blank">{{ _('Hier klicken, um OAuth2 Prozess zu starten!') }}</a>
+			{{ _('Hier zuerst registrieren:') }} <a class="text-shng" href="https://account.health.nokia.com/partner/add_oauth2" target="_blank">https://account.health.nokia.com/partner/add_oauth2</a><br/>
+			<a class="text-shng" href="{{ authorize_url }}" target="_blank">{{ _('Hier klicken, um OAuth2 Prozess zu starten!') }}</a>
 		</td>
 	</tr>
 	<tr>

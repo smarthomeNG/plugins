@@ -24,3 +24,9 @@ plugin_translations:
     'State':
         'de': 'State'
         'en': 'State'
+    'OAuth2 noch nicht durchlaufen. Bitte unter dem Tab "OAuth2 Data" via Link starten. Erst danach funktioniert das Plugin.':
+        'de': 'OAuth2 noch nicht durchlaufen. Bitte unter dem Tab "OAuth2 Data" via Link starten. Erst danach funktioniert das Plugin.'
+        'en': 'OAuth2 was not run. Please start under the tab "OAuth2 Data" by clicking the link. Otherwise the plugin won`t work properly'
+    'Hier zuerst registrieren:':
+        'de': 'Hier zuerst registrieren:'
+        'en': 'Register here first:'
