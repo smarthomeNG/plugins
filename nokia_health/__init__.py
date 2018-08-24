@@ -395,4 +395,4 @@ class WebInterface(SmartPluginWebIf):
                            tab2title="OAuth2 Data", authorize_url=self._auth.get_authorize_url(),
                            p=self.plugin, token_expiry=datetime.datetime.fromtimestamp(self.plugin.get_item(
                 'token_expiry')(), tz=self.plugin.shtime.tzinfo()), now=self.plugin.shtime.now(), code=code,
-                           state=state, reload=reload)
+                           state=state, reload=reload, language=self.plugin.get_sh().get_defaultlanguage())
