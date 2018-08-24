@@ -112,7 +112,7 @@ class NokiaHealth(SmartPlugin):
 
                 if (self.shtime.now() < datetime.datetime.fromtimestamp(self.get_item(
                         'token_expiry')(), tz=self.shtime.tzinfo())):
-                    self.logger.error(
+                    self.logger.debug(
                         "Plugin '{}': Token is valid, will expire on {}.".format(
                             self.get_fullname(), datetime.datetime.fromtimestamp(self.get_item(
                                 'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
