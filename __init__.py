@@ -39,8 +39,6 @@ class OpenWeatherMap(SmartPlugin):
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
-        @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
-        api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
         self.logger = logging.getLogger(__name__)
         self._key = self.get_parameter_value('key')
