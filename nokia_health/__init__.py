@@ -61,10 +61,10 @@ class NokiaHealth(SmartPlugin):
             "Plugin '{}': Updating tokens to items: access_token - {} token_expiry - {} token_type - {} refresh_token - {}".
                 format(self.get_fullname(), token['access_token'], token['expires_in'], token['token_type'],
                        token['refresh_token']))
-        self.plugin.get_item('access_token')(token['access_token'])
-        self.plugin.get_item('token_expiry')(token['expires_in'])
-        self.plugin.get_item('token_type')(token['token_type'])
-        self.plugin.get_item('refresh_token')(token['refresh_token'])
+        self.get_item('access_token')(token['access_token'])
+        self.get_item('token_expiry')(token['expires_in'])
+        self.get_item('token_type')(token['token_type'])
+        self.get_item('refresh_token')(token['refresh_token'])
 
     def _update_loop(self):
         """
