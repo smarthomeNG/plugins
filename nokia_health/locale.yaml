@@ -1,0 +1,17 @@
+plugin_translations:
+    'Warnung':  {'de': 'Warnung', 'en': 'Warning'}
+    'Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.':
+        'de': 'Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.'
+        'en': 'The token has expired and was not renewed. Please start OAuth2 process again.'
+    'Nokia Health Items':
+        'de': 'Nokia Health Items'
+        'en': 'Nokia Health Items'
+    'Hier klicken, um OAuth2 Prozess zu starten!':
+        'de': 'Hier klicken, um OAuth2 Prozess zu starten!'
+        'en': 'Click here, to start OAuth2 process!'
+    'OAuth2 Authorization URL':
+        'de': 'OAuth2 Authorization URL'
+        'en': 'OAuth2 Authorization URL'
+    'Callback URL':
+        'de': 'Callback URL'
+        'en': 'Callback URL'

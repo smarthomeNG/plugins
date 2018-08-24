@@ -370,7 +370,7 @@ class WebInterface(SmartPluginWebIf):
             try:
                 credentials = self._auth.get_credentials(code)
             except:
-                self.logger.error(
+                self.logger.warning(
                     "Plugin '{}': An error occurred, perhaps code parameter is invalid or too old?".format(
                         self.plugin.get_fullname()))
             if credentials is not None:
@@ -386,6 +386,7 @@ class WebInterface(SmartPluginWebIf):
 
                 self.plugin._client = None
 
+
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
@@ -393,4 +394,4 @@ class WebInterface(SmartPluginWebIf):
                            tab1title="Nokia Health Items (%s)" % len(self.plugin.get_items()),
                            tab2title="OAuth2 Data", authorize_url=self._auth.get_authorize_url(),
                            p=self.plugin, token_expiry=datetime.datetime.fromtimestamp(self.plugin.get_item(
-                    'token_expiry')(), tz=self.plugin.shtime.tzinfo()))
+                    'token_expiry')(), tz=self.plugin.shtime.tzinfo()), now = self.plugin.shtime.now(), code=code)

@@ -23,21 +23,30 @@
 {% endblock %}
 
 {% block bodytab1 %}
+{% if p.get_item('token_expiry')() > 0 and token_expiry < now %}
+<div class="mb-2 alert alert-danger alert-dismissible fade show" role="alert">
+	<strong>{{ _('Warnung') }}</strong><br/>
+	{{ _('Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.') }}
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+		<span aria-hidden="true">&times;</span>
+	</button>
+</div>
+{% endif %}
 
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 
 	<div class="col-sm-12 mt-3">
-		<h5>Nokia Health Items ({{ p.get_items()|length }})</h5>
+		<h5>{{ _('Nokia Health Items') }} ({{ p.get_items()|length }})</h5>
 
 		<table class="table table-striped table-hover pluginList">
 			<thead>
 				<tr class="shng_heading">
-					<th>Pfad</th>
-					<th>Typ</th>
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
 					<th>Nokia Health Data Type</th>
-					<th>Wert</th>
-					<th>Letztes Update</th>
-					<th>Letzter Change</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -46,7 +55,7 @@
 						<td class="py-1">{{ item._path }}</td>
 						<td class="py-1">{{ item._type }}</td>
 						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ item() }} {% if key == 'token_expiry' %}({{ token_expiry.strftime('%d.%m.%Y %H:%M:%S') }}){% endif %}</td>
+						<td class="py-1" {% if key == 'token_expiry' and p.get_item('token_expiry')() > 0 and token_expiry < now %}style="color: red; font-weight: bold;"{% endif %}>{{ item() }} {% if key == 'token_expiry' %}({{ token_expiry.strftime('%d.%m.%Y %H:%M:%S') }}){% endif %}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
@@ -61,15 +70,15 @@
 <table class="table table-striped table-hover">
 	<tr>
 		<td class="py-1">
-			OAuth2 Authorization URL
+			{{ _('OAuth2 Authorization URL') }}
 		</td>
 		<td class="py-1" colspan="3">
-			<a href="{{ authorize_url }}" target="_blank">Click Here!</a>
+			<a href="{{ authorize_url }}" target="_blank">{{ _('Hier klicken, um OAuth2 Prozess zu starten!') }}</a>
 		</td>
 	</tr>
 	<tr>
 		<td class="py-1">
-			Callback URL
+			{{ _('Callback URL') }}
 		</td>
 		<td class="py-1">
 			{{ callback_url }}
@@ -79,7 +88,7 @@
 		<td class="py-1">Access Token</td>
 		<td class="py-1">{{ p.get_item('access_token')() }}</td>
 		<td class="py-1">Token Expiry</td>
-		<td class="py-1">{{ p.get_item('token_expiry')() }} ({{ token_expiry.strftime('%d.%m.%Y %H:%M:%S') }})</td>
+		<td class="py-1" {% if p.get_item('token_expiry')() > 0 and token_expiry < now %}style="color: red; font-weight: bold;"{% endif %}>{{ p.get_item('token_expiry')() }} ({{ token_expiry.strftime('%d.%m.%Y %H:%M:%S') }})</td>
 	</tr>
 	<tr>
 		<td class="py-1">Token Type</td>
