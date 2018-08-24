@@ -49,7 +49,7 @@ class Miflora(SmartPlugin):
         """
         Run method for the plugin
         """        
-        self.logger.debug("run method called")
+        self.logger.debug("Plugin '{}': 'run' method called.".format(self.get_fullname()))
         self._sh.scheduler.add(__name__, self._update_loop, prio=7, cycle=self._cycle)
         self.alive = True
 
@@ -57,11 +57,11 @@ class Miflora(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("stop method called")
+        self.logger.debug("Plugin '{}': 'stop' method called.".format(self.get_fullname()))
         try:
             self._sh.scheduler.remove(__name__)
         except:
-            self.logger.error("removing of scheduler failed: {}".format(sys.exc_info()))
+            self.logger.error("Plugin '{}': Removing of scheduler failed: {}.".format(self.get_fullname(), sys.exc_info()))
 
         self.alive = False
 
@@ -73,7 +73,7 @@ class Miflora(SmartPlugin):
         :param item: The item to process.
         """
         if self.has_iattr(item.conf, 'xiaomi_data_type'):
-            self.logger.debug("parse item: {0}".format(item))
+            self.logger.debug("Plugin '{}': Parse item: {}.".format(self.get_fullname(), item))
             self._items.append(item)
 
     def _update_loop(self):
