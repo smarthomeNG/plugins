@@ -39,7 +39,7 @@ class WebServices(SmartPlugin):
 
     def __init__(self, smarthome, mode="all"):
         self.logger = logging.getLogger(__name__)
-        self.logger.debug('Backend.__init__')
+        self.logger.debug("Plugin '{}': '__init__'".format(self.get_fullname()))
         self._mode = mode
         self.items = Items.get_instance()
 
@@ -56,7 +56,7 @@ class WebServices(SmartPlugin):
         except:
             self.mod_http = None
         if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_fullname()))
             return False
 
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
@@ -99,14 +99,14 @@ class WebServices(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Plugin '{}': run method called".format(self.get_shortname()))
+        self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
 
     def stop(self):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Plugin '{}': stop method called".format(self.get_shortname()))
+        self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
         self.alive = False
 
 
