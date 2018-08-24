@@ -159,9 +159,12 @@ class Nuki(SmartPlugin):
 
                 response = self._api_call(self._base_url, nuki_id=nuki_action_items[item], endpoint='lockAction',
                                           action=action, token=self._token, no_wait=self._noWait)
-                if response['success']:
-                    # self._get_nuki_status()
-                    self._logger.info("Nuki: update item: {0}".format(item.id()))
+                if response is not None:
+                    if response['success']:
+                        # self._get_nuki_status()
+                        self._logger.info("Nuki: update item: {0}".format(item.id()))
+                else:
+                    self._logger.error("Nuki: no response.")
 
     @staticmethod
     def update_lock_state(nuki_id, lock_state):
