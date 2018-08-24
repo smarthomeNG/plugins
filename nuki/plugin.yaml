@@ -63,6 +63,13 @@ parameters:
             de: '(optional) Zu verwendendes Protokoll für die Kommunikaton mit der NUKI Bridge. Default: http.'
             en: '(optional) Protocol for communication with NUKE bridge. Default http.'
 
+    no_wait:
+        type: bool
+        mandatory: False
+        default: True
+        description:
+            de: '(optional) Flag, ob gewartet werden soll, bis die Aktion des Schlosses beendet ist. False kann zu Fehler bei Requests an die NUKI Bridge führen. Default: True'
+            en: '(optional) Flag indicating whether or not to wait for the lock action to complete and return its result. 0 may lead to errors in requests to NUKI Bridge. Default: True'
 
 item_attributes:
     # Definition of item attributes defined by this plugin

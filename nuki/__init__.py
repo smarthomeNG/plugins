@@ -83,7 +83,7 @@ class Nuki(SmartPlugin):
         self._callback_ip = self.get_parameter_value('bridge_callback_ip')
         self._callback_port = self.get_parameter_value('bridge_callback_port')
         self._action = ''
-        self._noWait = ''
+        self._noWait = self.get_parameter_value('no_wait')
 
         if self._callback_ip is None or self._callback_ip in ['0.0.0.0', '']:
             self._callback_ip = self.get_local_ipv4_address()
@@ -243,7 +243,8 @@ class Nuki(SmartPlugin):
             if action is not None:
                 payload['action'] = action
             if no_wait is not None:
-                payload['noWait'] = no_wait
+                payload['noWait'] = int(no_wait)
+                self._logger.debug("Nuki: noWait is {}".format(int(no_wait)))
             if callback_url is not None:
                 payload['url'] = callback_url
             if id is not None:
