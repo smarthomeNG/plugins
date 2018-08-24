@@ -62,7 +62,8 @@ class NokiaHealth(SmartPlugin):
                 format(self.get_fullname(), token['access_token'], token['expires_in'], token['token_type'],
                        token['refresh_token']))
         self.get_item('access_token')(token['access_token'])
-        self.get_item('token_expiry')(int((self.shtime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())+int(token['expires_in']))
+        self.get_item('token_expiry')(
+            int((self.shtime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()) + int(token['expires_in']))
         self.get_item('token_type')(token['token_type'])
         self.get_item('refresh_token')(token['refresh_token'])
 
@@ -101,8 +102,8 @@ class NokiaHealth(SmartPlugin):
 
         if 'access_token' not in self.get_items() or 'token_expiry' not in self.get_items() or 'token_type' not in self.get_items() or 'refresh_token' not in self.get_items():
             self.logger.error(
-            "Plugin '{}': Mandatory Items for OAuth2 Data do not exist. Verify that you have items with nh_type: token_expiry, token_type, refresh_token and access_token in your item tree.".format(
-                self.get_fullname()))
+                "Plugin '{}': Mandatory Items for OAuth2 Data do not exist. Verify that you have items with nh_type: token_expiry, token_type, refresh_token and access_token in your item tree.".format(
+                    self.get_fullname()))
             return
 
         if self._client is None:
@@ -110,7 +111,7 @@ class NokiaHealth(SmartPlugin):
                     'token_expiry')() > 0 and self.get_item(
                 'token_type')() and self.get_item('refresh_token')():
 
-                if (self.shtime.now() < datetime.datetime.fromtimestamp(self.get_item(
+                if (datetime.datetime.utcnow()  < datetime.datetime.fromtimestamp(self.get_item(
                         'token_expiry')(), tz=self.shtime.tzinfo())):
                     self.logger.debug(
                         "Plugin '{}': Token is valid, will expire on {}.".format(
