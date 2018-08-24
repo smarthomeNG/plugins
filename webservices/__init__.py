@@ -29,7 +29,7 @@ import os
 import cherrypy
 
 from lib.model.smartplugin import *
-
+from lib.item import Items
 from lib.module import Modules
 
 
@@ -41,6 +41,7 @@ class WebServices(SmartPlugin):
         self.logger = logging.getLogger(__name__)
         self.logger.debug('Backend.__init__')
         self._mode = mode
+        self.items = Items.get_instance()
 
         if not self.init_webinterfaces():
             self._init_complete = False
@@ -141,7 +142,7 @@ class WebInterface(SmartPluginWebIf):
         """
         items_filtered = []
         item_sets = {}
-        items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+        items_sorted = sorted(self.plugin.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         for item in items_sorted:
             if self.plugin.get_mode() == 'all' or self.plugin.has_iattr(item.conf, 'webservices_set'):
                 if item.type() in ['str', 'bool', 'num'] or (
@@ -277,7 +278,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.items.return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
@@ -311,7 +312,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin.return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.items.return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
@@ -370,7 +371,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.items.return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
@@ -405,7 +406,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                 return {"Error": "%s requests not allowed for this URL" % cherrypy.request.method}
 
             elif cherrypy.request.method == 'GET':
-                items_sorted = sorted(self.plugin.get_sh().return_items(), key=lambda k: str.lower(k['_path']),
+                items_sorted = sorted(self.plugin.items.return_items(), key=lambda k: str.lower(k['_path']),
                                       reverse=False)
                 items = {}
                 for item in items_sorted:
