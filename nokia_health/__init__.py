@@ -62,7 +62,7 @@ class NokiaHealth(SmartPlugin):
                 format(self.get_fullname(), token['access_token'], token['expires_in'], token['token_type'],
                        token['refresh_token']))
         self.get_item('access_token')(token['access_token'])
-        self.get_item('token_expiry')(token['expires_in'])
+        self.get_item('token_expiry')(int((self.shtime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())+int(token['expires_in']))
         self.get_item('token_type')(token['token_type'])
         self.get_item('refresh_token')(token['refresh_token'])
 
@@ -98,6 +98,13 @@ class NokiaHealth(SmartPlugin):
         ('bone_mass', 88),
         ('pulse_wave_velocity', 91)
         """
+
+        if 'access_token' not in self.get_items() or 'token_expiry' not in self.get_items() or 'token_type' not in self.get_items() or 'refresh_token' not in self.get_items():
+            self.logger.error(
+            "Plugin '{}': Mandatory Items for OAuth2 Data do not exist. Verify that you have items with nh_type: token_expiry, token_type, refresh_token and access_token in your item tree.".format(
+                self.get_fullname()))
+            return
+
         if self._client is None:
             if self.get_item('access_token')() and self.get_item(
                     'token_expiry')() > 0 and self.get_item(
@@ -132,7 +139,7 @@ class NokiaHealth(SmartPlugin):
                                 'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
             else:
                 self.logger.error(
-                    "Plugin '{}': Items for OAuth2 Data not set. Please run process via WebGUI of the plugin.".format(
+                    "Plugin '{}': Items for OAuth2 Data are not set with required values. Please run process via WebGUI of the plugin.".format(
                         self.get_fullname()))
                 return
         measures = self._client.get_measures()
