@@ -1,5 +1,6 @@
 plugin_translations:
     'Warnung':  {'de': 'Warnung', 'en': 'Warning'}
+    'Info':     {'de': 'Info', 'en': 'Info'}
     'Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.':
         'de': 'Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.'
         'en': 'The token has expired and was not renewed. Please start OAuth2 process again.'
