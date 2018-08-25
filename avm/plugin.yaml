@@ -147,23 +147,25 @@ item_attributes:
 
     avm_incoming_allowed:
         type: str
+        mandatory: False
         description:
             de: '(optional) Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed incoming number. Only in items of avm_data_type `monitor_trigger`.'
     avm_target_number:
         type: str
+        mandatory: False
         description:
             de: '(optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.'
     mac:
         type: str
-        mandatory: True
+        mandatory: False
         description:
             de: 'Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
             en: 'Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!'
     ain:
         type: str
-        mandatory: True
+        mandatory: False
         description:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
