@@ -43,3 +43,11 @@ item_attributes:
         description:
             de: 'Auszulesender Wert. Mögliche Werte: temperature, light, moisture, conductivity, name, firmware, firmware'
             en: 'Value to read. Possible: values temperature, light, moisture, conductivity, name, firmware, firmware.'
+        valid_list:
+        - 'temperature'
+        - 'light'
+        - 'moisture'
+        - 'conductivity'
+        - 'name'
+        - 'firmware'
+        - 'battery'
