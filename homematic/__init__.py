@@ -68,7 +68,7 @@ class Homematic(SmartPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-        self.logger = logging.getLogger(__name__)
+#        self.logger = logging.getLogger(__name__)
 
         # Exit if the required package(s) could not be imported
         if not REQUIRED_PACKAGE_IMPORTED:

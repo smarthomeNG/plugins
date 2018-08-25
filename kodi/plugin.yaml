@@ -7,6 +7,7 @@ plugin:
         en: ''
     maintainer: ggf. cmalo (mknx)
     tester: onkelandy
+    state: develop
     keywords: mediacenter
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py

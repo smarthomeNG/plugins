@@ -7,6 +7,7 @@ plugin:
         en: 'Support for smartVISU: Automatic generation of pages; widget handling'
     maintainer: msinn
     tester: psilo909
+    state: qa-passed
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/Visu_Unterstuetzung        # url of documentation (wiki) page
 
