@@ -6,7 +6,8 @@ plugin:
         de: 'Plugin zur Einbindung von Enigma2 kompatiblen Sat-Receivern mit openwebif'
         en: 'Plugin to include Enigma2 sat receivers compatible to openwebif'
     maintainer: psilo909
-    tester: Sandman60, cmalo
+    tester: Sandman60, msinn
+    state: 'qa-passed'
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins_doc/config/enigma2.html        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
@@ -94,3 +95,66 @@ item_attributes:
         description:
             de: 'Referenz auf Services (bspw. Sender), siehe README.'
             en: 'Service reference, see README.'
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    get_audio_tracks:
+        type: list
+        description:
+            de: "Diese Funktion liefert eine Liste von dicts mit den folgenden Keys: 'e2audiotrackdescription' (str), 'e2audiotrackid' (int), 'e2audiotrackpid' (int), 'e2audiotrackactive' (bool) - Beispiel: sh.vusolo2.get_audio_tracks()"
+            en: "This function returns a list of dicts with the following keys: 'e2audiotrackdescription' (str), 'e2audiotrackid' (int), 'e2audiotrackpid' (int), 'e2audiotrackactive' (bool) - Example: sh.vusolo2.get_audio_tracks()"
+
+        parameters:
+            # This function has no parameters
+
+    send_message:
+        type: foo
+        description:
+            de: "Sendet eine Message an das Enigma2 Device - Beispiel: sh.vusolo2.send_message('Testnachricht', 1, 10)"
+            en: "Sends a message to the device - Example: sh.vusolo2.send_message('Testmessage', 1, 10)"
+
+        parameters:
+            messagetext:
+                type: str
+                description:
+                    de: "Anzuzeignder Text"
+                    en: "Text to be displayed"
+            messagetype:
+                type: int
+                default: 1
+                valid_min: 0
+                valid_max: 3
+                description:
+                    de: "0=Ja/Nein, 1=Info, 2=Mitteilung, 3=Achtung"
+                    en: "0=Yes/No, 1=Info, 2=Message, 3=Attention"
+            timeout:
+                type: int
+                default: 10
+                description:
+                    de: "Anzeigedauer der Message in Sekunden"
+                    en: "Number of seconds the message should stay on the device"
+
+    set_power_state:
+        type: foo
+        description:
+            de: "Setzt den Power-Status auf einen bestimmten Wert - Beispiel (toggle standby): sh.vusolo2.set_power_state(0)"
+            en: "Sets the power state to a specific value - Example (toggle standby): sh.vusolo2.set_power_state(0)"
+
+        parameters:
+            value:
+                type: int
+                valid_min: 0
+                valid_max: 5
+                description:
+                    de: "0 = Toggle Standby 1 = Deepstandby 2 = Reboot 3 = Restart Enigma2 4 = Wakeup from Standby 5 = Standby"
+                    en: "0 = Toggle Standby 1 = Deepstandby 2 = Reboot 3 = Restart Enigma2 4 = Wakeup from Standby 5 = Standby"
+
+    get_answer:
+        type: foo
+        description:
+            de: "Diese Funktion prüft, ob eine Antwort zu einer gesendeten Message eingegangen ist. Dabei ist ddas timeout zu beachten, bis eine Message beantwortet wird. - Beispiel: sh.vusolo2.get_answer()"
+            en: "This function checks for an answer to a sent message. If you call this method, take into account the timeout until the message can be answered and e.g. set a 'while (count < 0)' - Example: sh.vusolo2.get_answer()"
+
+        parameters:
+            # This function has no parameters

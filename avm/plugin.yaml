@@ -8,6 +8,7 @@ plugin:
     maintainer: psilo909
     tester: Sandman60, cmalo
 #    keywords: iot xyz
+    state: 'qa-passed'
     documentation: http://smarthomeng.de/user/plugins_doc/config/avm.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 

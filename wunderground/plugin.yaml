@@ -7,6 +7,7 @@ plugin:
         en: 'Get weather data from wunderground.com'
     maintainer: msinn
 #    tester:                        # Who tests this plugin?
+    state: 'qa-passed'
     keywords: weather
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
@@ -156,4 +157,7 @@ structs:
             wug_matchstring: current_observation/relative_humidity
             wug_datatype: percent
             log_change: q21-items
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
 

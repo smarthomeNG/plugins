@@ -7,6 +7,7 @@ plugin:
         en: 'Weather data via darksky.net.'
     maintainer: psilo909
     tester:
+    state: 'qa-passed'
 #    keywords: iot xyz
     documentation: 'https://www.smarthomeng.de/user/plugins/darksky/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1244744-neues-plugin-wetterdaten-via-darksky-net-forecast-io'
@@ -69,3 +70,7 @@ item_attributes:
         description:
             de: 'Matchstring basierend auf der Response des "Forecast Request" aus https://darksky.net/dev/docs (Example Request), bspw. "currently/temperature". Ausnahmen: Im Fall von "alerts" wird ein Item vom Typ "list" benötigt, der Wert "alerts_string" schreibt die Alerts-Liste in einen HTML String. Das Array in "flags/sources" wird in ein "str" Item gemerged.'
             en: 'Matchstring according to the response of the "forecast request" described in https://darksky.net/dev/docs (Example Request), e.g. "currently/temperature". Exceptions: In case of "alerts" an item of type "list" will be filled with raw data, the value "alerts_string" creates a html string with alerts data. The array "flags/sources" will be merged to a string.'
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+
