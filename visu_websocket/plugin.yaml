@@ -51,6 +51,9 @@ parameters:
           - true
           - yes
           - no
+        valid_list_description:
+            de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff', 'Lesen/Schreiben', 'Lesen/Schreiben', 'Kein Zugriff']
+            en: ['Read/Write', 'Read Only', 'Deny access', 'Read/Write', 'Read/Write', 'Deny access']
         description:
             de: 'Erlaube den Zugriff über Websocket Protokoll (rw=Lesen/Schreiben, ro=Nur Lesen, deny=Kein Zugriff) - Voreinstellung für alle Items'
             en: 'Allow access through wbsocket protocol (rw=Read/Write, ro=Read Only, deny=Deny access) - Default for all items'
