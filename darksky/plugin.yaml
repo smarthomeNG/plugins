@@ -6,7 +6,7 @@ plugin:
         de: 'Wetterdaten über darksky.net.'
         en: 'Weather data via darksky.net.'
     maintainer: psilo909
-    tester:
+    tester: psilo909
     state: 'qa-passed'
 #    keywords: iot xyz
     documentation: 'https://www.smarthomeng.de/user/plugins/darksky/user_doc.html'
@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.4c           # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
+    restartable: unknown
     classname: DarkSky            # class containing the plugin
 
 parameters:

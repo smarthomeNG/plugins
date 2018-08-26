@@ -6,6 +6,7 @@ plugin:
         de: 'Wake on LAN'
         en: 'Wake on LAN'
     maintainer: cmalo
+    tester: ohinckel
     state: qa-passed
 #    tester:                        # Who tests this plugin?
 #    keywords: iot xyz
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: WakeOnLan           # class containing the plugin
 
 parameters: NONE
@@ -24,7 +26,7 @@ parameters: NONE
 item_attributes:
     # Definition of item attributes defined by this plugin
     wol_mac:
-        type: str
+        type: mac
         mandatory: True
         description:
             de: 'MAC Adresse des per WOL aufzuweckenden Geräts.'

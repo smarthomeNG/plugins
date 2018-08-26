@@ -7,6 +7,7 @@ plugin:
         en: ''
     maintainer: '? (2ndsky)'
     tester: psilo909
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: SmartTV             # class containing the plugin
 
 parameters:
@@ -62,3 +64,7 @@ item_attributes:
             en: 'There are two possibilities to use this attribute.
   * Define it on a string item and set it to `true`: With this configuration, every string you set to this item will be send to the SmartTV device.
   * Define it on a boolean item and set it to a key value: With this configuration, the specified key value is sent whenever you set the item to `true` (if the item is only for sending a specific command to the tv then you should consider using the `enforce_updates` attribute, too). It is even possible to define several keys separeted with a comma.'
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

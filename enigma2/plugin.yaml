@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.3c            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Enigma2             # class containing the plugin
 
 parameters:
@@ -109,7 +110,7 @@ plugin_functions:
             # This function has no parameters
 
     send_message:
-        type: foo
+        type: void
         description:
             de: "Sendet eine Message an das Enigma2 Device - Beispiel: sh.vusolo2.send_message('Testnachricht', 1, 10)"
             en: "Sends a message to the device - Example: sh.vusolo2.send_message('Testmessage', 1, 10)"
@@ -123,8 +124,7 @@ plugin_functions:
             messagetype:
                 type: int
                 default: 1
-                valid_min: 0
-                valid_max: 3
+                valid_list: [0, 1, 2, 3]
                 description:
                     de: "0=Ja/Nein, 1=Info, 2=Mitteilung, 3=Achtung"
                     en: "0=Yes/No, 1=Info, 2=Message, 3=Attention"
@@ -136,7 +136,7 @@ plugin_functions:
                     en: "Number of seconds the message should stay on the device"
 
     set_power_state:
-        type: foo
+        type: void
         description:
             de: "Setzt den Power-Status auf einen bestimmten Wert - Beispiel (toggle standby): sh.vusolo2.set_power_state(0)"
             en: "Sets the power state to a specific value - Example (toggle standby): sh.vusolo2.set_power_state(0)"

@@ -8,6 +8,7 @@ plugin:
         en: 'Commandline interface for SmartHomeNG - Works with SmartHomeNG v1.4 and up'
     maintainer: msinn
     tester: onkelandy, Sandman60, ohinckel
+    state: qa-passed
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: CLI                 # class containing the plugin
 
 parameters:
@@ -38,6 +40,7 @@ parameters:
         default: 2323
         description:
             de: 'Netzwerk Port der für die Verbindung genutzt wird'
+
             en: 'used network port'
             
     hashed_password:
@@ -47,6 +50,48 @@ parameters:
             en: "password that needs to be entered on login. SHA-512 hashed. Hashes can be created via the backend plugin. If you don't use a password, a warning will be logged. If you don't want that log entry, this parameter must be set to 'none'."
             
     
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
-    
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    add_command:
+        type: void
+        description:
+            de: "sh.cli.commands.add_command(command, function, group, usage)"
+            en: "sh.cli.commands.add_command(command, function, group, usage)"
+        parameters:
+            command:
+                type: str
+                description:
+                    de: "Name des Kommandos"
+                    en: "Name of the command"
+            function:
+                type: function
+                description:
+                    de: "Funktion die aufgerufen werden soll, wenn das Kommando eingegeben wird"
+                    en: "function to be called when the command is entered"
+            group:
+                type: str
+                valid_list: ['item', 'log', 'logic', 'scheduler']
+                description:
+                    de: "Kommando Gruppe (item, log, logic, scheduler)"
+                    en: "Command group (item, log, logic, scheduler)"
+            usage:
+                type: str
+                description:
+                    de: "Beschreibung der Kommando-Nutzung"
+                    en: "description how to use that command"
+
+    remove_command:
+        type: bool
+        description:
+            de: "sh.cli.commands.remove_command(command)"
+            en: "sh.cli.commands.remove_command(command)"
+        parameters:
+            command:
+                type: str
+                description:
+                    de: "Name des Kommandos"
+                    en: "Name of the command"

@@ -6,7 +6,8 @@ plugin:
         de: 'Wetterdaten über darksky.net.'
         en: 'Weather data via darksky.net.'
     maintainer: psilo909
-    tester:
+    tester: psilo909
+    state: qa-passed
 #    keywords: iot xyz
     documentation: ''
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.4c           # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
+    restartable: unknown
     classname: OpenWeatherMap     # class containing the plugin
 
 parameters:
@@ -69,3 +71,7 @@ item_attributes:
         description:
             de: 'Matchstring für die OpenWeatherMap Daten, siehe Beispiele in der README.'
             en: 'Matchstring for the OpenWeatherMap data, see examples in README.'
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

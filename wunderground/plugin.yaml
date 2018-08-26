@@ -6,7 +6,7 @@ plugin:
         de: 'Abfrage der Daten des Wetterdienstes Wunderground.com'
         en: 'Get weather data from wunderground.com'
     maintainer: msinn
-#    tester:                        # Who tests this plugin?
+    tester: msinn                       # Who tests this plugin?
     state: 'qa-passed'
     keywords: weather
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.4c             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Wunderground        # class containing the plugin
 
 
