@@ -55,15 +55,16 @@ parameters:
             de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff', 'Lesen/Schreiben', 'Lesen/Schreiben', 'Kein Zugriff']
             en: ['Read/Write', 'Read Only', 'Deny access', 'Read/Write', 'Read/Write', 'Deny access']
         description:
-            de: 'Erlaube den Zugriff über Websocket Protokoll (rw=Lesen/Schreiben, ro=Nur Lesen, deny=Kein Zugriff) - Voreinstellung für alle Items'
-            en: 'Allow access through wbsocket protocol (rw=Read/Write, ro=Read Only, deny=Deny access) - Default for all items'
+            de: 'Steuert den Zugriff über Websocket Protokoll - Voreinstellung für alle Items'
+            en: 'Control access through wbsocket protocol - Default for all items'
     
     wsproto:
         type: int
         default: 4
-        valid_list:
-          - 3
-          - 4
+        valid_list: [3, 4]
+        valid_list_description:
+            de: ['Version 3', 'Version 4']
+            en: ['version 3', 'version 4']
         description:
             de: 'Verwendete Version des Websocket Protokolls'
             en: 'Used version of the websocket protocol'
@@ -87,7 +88,11 @@ item_attributes:
           - true
           - yes
           - no
+        valid_list_description:
+            de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff', 'Lesen/Schreiben', 'Lesen/Schreiben', 'Kein Zugriff']
+            en: ['Read/Write', 'Read Only', 'Deny access', 'Read/Write', 'Read/Write', 'Deny access']
         description:
-            de: 'Erlaube den Zugriff auf das Item über Websocket Protokoll (rw=Lesen/Schreiben, ro=Nur Lesen, deny=Kein Zugriff)'
-            en: 'Allow access to the item through websocket protocol (rw=Read/Write, ro=Read Only, deny=Deny access)'
+            de: 'Steuert den Zugriff auf das Item über Websocket Protokoll'
+            en: 'Control access to this item through wbsocket protocol'
+
 
