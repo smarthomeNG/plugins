@@ -410,10 +410,6 @@ class Database(SmartPlugin):
         if func is 'count' or func.startswith('count'):
             parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
             func = 'count'
-            self.logger.debug(parts)
-            self.logger.debug(parts.groups())
-            self.logger.debug(parts.group(3))
-            self.logger.debug(parts.group(4))
             if parts and parts.group(3) is not None:
                 expression['params']['op'] = parts.group(3)
             if parts and parts.group(4) is not None:
