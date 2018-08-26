@@ -95,4 +95,39 @@ item_attributes:
             de: 'Steuert den Zugriff auf das Item über Websocket Protokoll'
             en: 'Control access to this item through wbsocket protocol'
 
+logic_parameter:
+    # Definition of item attributes defined by this plugin
+    visu_acl:
+        type: bool
+        default: False
+        valid_list:
+          - True
+          - False
+        valid_list_description:
+            de: ['Logik kann durch smartVISU getriggert werden', 'Logik kann durch smartVISU getriggert werden']
+            en: ['Logic can be triggered by smartVISU', 'Logic cannot be triggered by smartVISU']
+        description:
+            de: 'Dieses Attribut kann für jede Logik in ../etc/logic.yaml angegeben werden.'
+            en: 'This attribute can be added to every logic in ../etc/logic.yaml.'
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    url:
+        type: void
+        description:
+            de: "Diese Funktion weist smartVISU Clients an, auf die angegebene Url (Visu Seite) zu wechseln. Die Funktion funktioniert mit smartVISU v2.9 und später. Für smartVISU v2.8 muss ein modifiziertes Treiber io_smarthome.js verwendet werden - Beispiel: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+            en: "This function instructs the smartVISU clients to change to the specified url (visu page). This function works with smartVISU v2.9 and up, for smartVISU v2.8 a modified driver io_smarthome.js is needed - Example: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+        parameters:
+            url:
+                type: str
+                description:
+                    de: "Die URL zu der smartVISU wechseln soll"
+                    en: "url to which smartVISU should change"
+            clientip:
+                type: str
+                default: ''
+                description:
+                    de: "Falls angegeben, werden nur Clients (Browser) die auf dem Host mit der angegebenen IP Adresse laufen angewiesen die Seite zu wechseln. "
+                    en: "If specified, only clients (browsers) running on the host with the specified ip address are instructed to change the page."
 

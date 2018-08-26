@@ -129,8 +129,8 @@ plugin_functions:
                     de: ['Ja/Nein', 'Info', 'Mitteilung', 'Achtung']
                     en: ['Yes/No', 'Info', 'Message', 'Attention']
                 description:
-                    de: "0=Ja/Nein, 1=Info, 2=Mitteilung, 3=Achtung"
-                    en: "0=Yes/No, 1=Info, 2=Message, 3=Attention"
+                    de: "messagetype bestimmt die Art wie die Mitteilung angezeigt werden soll"
+                    en: "messagetype determines the way the message shall be shown"
             timeout:
                 type: int
                 default: 10
@@ -152,8 +152,8 @@ plugin_functions:
                     de: ['Toggle Standby', 'Deepstandby', 'Reboot', 'Restart Enigma2', 'Wakeup from Standby', 'Standby']
                     en: ['Toggle Standby', 'Deepstandby', 'Reboot', 'Restart Enigma2', 'Wakeup from Standby', 'Standby']
                 description:
-                    de: "0 = Toggle Standby 1 = Deepstandby 2 = Reboot 3 = Restart Enigma2 4 = Wakeup from Standby 5 = Standby"
-                    en: "0 = Toggle Standby 1 = Deepstandby 2 = Reboot 3 = Restart Enigma2 4 = Wakeup from Standby 5 = Standby"
+                    de: "Status in den die Enigma2 Box versetzt werden soll"
+                    en: "State into which the Enigma2 box should be changed"
 
     get_answer:
         type: foo
