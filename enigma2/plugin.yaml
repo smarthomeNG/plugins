@@ -125,6 +125,9 @@ plugin_functions:
                 type: int
                 default: 1
                 valid_list: [0, 1, 2, 3]
+                valid_list_description:
+                    de: ['Ja/Nein', 'Info', 'Mitteilung', 'Achtung']
+                    en: ['Yes/No', 'Info', 'Message', 'Attention']
                 description:
                     de: "0=Ja/Nein, 1=Info, 2=Mitteilung, 3=Achtung"
                     en: "0=Yes/No, 1=Info, 2=Message, 3=Attention"
@@ -144,8 +147,10 @@ plugin_functions:
         parameters:
             value:
                 type: int
-                valid_min: 0
-                valid_max: 5
+                valid_list: [0, 1, 2, 3, 4, 5]
+                valid_list_description:
+                    de: ['Toggle Standby', 'Deepstandby', 'Reboot', 'Restart Enigma2', 'Wakeup from Standby', 'Standby']
+                    en: ['Toggle Standby', 'Deepstandby', 'Reboot', 'Restart Enigma2', 'Wakeup from Standby', 'Standby']
                 description:
                     de: "0 = Toggle Standby 1 = Deepstandby 2 = Reboot 3 = Restart Enigma2 4 = Wakeup from Standby 5 = Standby"
                     en: "0 = Toggle Standby 1 = Deepstandby 2 = Reboot 3 = Restart Enigma2 4 = Wakeup from Standby 5 = Standby"
