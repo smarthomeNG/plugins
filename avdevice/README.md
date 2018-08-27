@@ -14,6 +14,12 @@ Tested with Pioneer (< 2016 models) and Denon AV receivers, Epson projector Oppo
 
 ## Changelog
 
+### v1.5.0
+Minor code re-write using smartplugin methods and logging
+added config file for Denon AVR1100
+fixed Denon example
+added Web Interface
+
 ### v1.3.6
 Major code re-write using multiple modules and classes, minimizing complexity
 Extended "translate" functionality with wildcards
