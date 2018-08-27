@@ -40,6 +40,12 @@ parameters:
         description:
             de: 'Dump Cycle bestimmt wie oft die Daten auf Platte geschrieben werden (in Sekunden).'
             en: 'Dump cycle defined how often the database is dumped to disc (in seconds).'
+    precision:
+        type: int
+        default: 2
+        description:
+            de: 'Genauigkeit der aus der Datenbank ausgelesenen Werte (Nachkommastellen).'
+            en: 'Precision of values read from database (digits after comma).'
 
 item_attributes:
     # Definition of item attributes defined by this plugin

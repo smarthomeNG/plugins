@@ -74,13 +74,14 @@ class Database(SmartPlugin):
       '6' : ["CREATE INDEX {item}_name ON {item} (name);", "DROP INDEX {item}_name;"]
     }
 
-    def __init__(self, smarthome, driver, connect, prefix="", cycle=60):
+    def __init__(self, smarthome, driver, connect, prefix="", cycle=60, precision=2):
         self._sh = smarthome
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
         
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
+        self._precision = int(precision)
         self._name = self.get_instance_name()
         self._replace = {table: table if prefix == "" else prefix + "_" + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
@@ -99,6 +100,7 @@ class Database(SmartPlugin):
             self._init_complete = False
 
     def parse_item(self, item):
+        self.logger.debug(item.conf)
         if self.has_iattr(item.conf, 'database'):
             self._buffer_insert(item, [])
             item.series = functools.partial(self._series, item=item.id())
@@ -431,12 +433,12 @@ class Database(SmartPlugin):
             sid = item + '|' + func + '|' + str(start) + '|' + str(end)  + '|' + str(count)
         func, expression = self._expression(func)
         queries = {
-            'avg' : 'MIN(time), ROUND(AVG(val_num * duration) / AVG(duration), 2)',
+            'avg' : 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'avg.order' : 'ORDER BY time ASC',
             'count' : 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'min' : 'MIN(time), MIN(val_num)',
             'max' : 'MIN(time), MAX(val_num)',
-            'on'  : 'MIN(time), ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
+            'on'  : 'MIN(time), ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
             'on.order' : 'ORDER BY time ASC',
             'sum' : 'MIN(time), SUM(val_num)',
             'raw' : 'time, val_num',
@@ -479,11 +481,11 @@ class Database(SmartPlugin):
     def _single(self, func, start, end='now', item=None):
         func, expression = self._expression(func)
         queries = {
-            'avg' : 'ROUND(AVG(val_num * duration) / AVG(duration), 2)',
+            'avg' : self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'count' : 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'min' : 'MIN(val_num)',
             'max' : 'MAX(val_num)',
-            'on'  : 'ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
+            'on'  : self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
             'sum' : 'SUM(val_num)',
             'raw' : 'val_num',
             'raw.order' : 'ORDER BY time DESC',
@@ -497,6 +499,11 @@ class Database(SmartPlugin):
         if logs['tuples'] is None:
             return
         return logs['tuples'][0][0]
+
+    def _precision_query(self, query):
+        if self._precision >= 0:
+            return 'ROUND({}, {})'.format(query, self._precision)
+        return query
 
     def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
         _item = self.items.return_item(item)
