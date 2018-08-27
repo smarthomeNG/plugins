@@ -32,7 +32,7 @@ parameters:
     prefix:
         type: str
         description:
-            de: ''
+            de: 'Enthält ein Prefix welches vor die Datenbanktabellen des Plugins geschrieben wird'
             en: "if you want to log into an existing database with other tables you can specify a prefix for the plugins' tables"
     cycle:
         type: int
