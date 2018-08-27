@@ -15,6 +15,7 @@ plugin:
     sh_minversion: 1.4c            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: WebSocket           # class containing the plugin
 
 parameters:

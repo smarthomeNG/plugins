@@ -7,6 +7,7 @@ plugin:
         en: 'Bang & Olufsen Masterlink Gateway'
     maintainer: msinn
 #    tester:                        # Who tests this plugin?
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
@@ -14,6 +15,7 @@ plugin:
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: False
     classname: Mlgw                # class containing the plugin
 
 parameters:
@@ -106,4 +108,8 @@ item_attributes:
         description:
             de: 'Befehl auf den reagiert werden soll'
             en: 'Command to listen for'
+
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
 

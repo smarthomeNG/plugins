@@ -7,6 +7,7 @@ plugin:
         en: 'Database plugin, **since SmartHomeNG v1.3**'
     maintainer: ohinckel
     tester: psilo909, onkelandy, brandst
+    state: ready
     keywords: database
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
@@ -50,3 +51,7 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
     
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
