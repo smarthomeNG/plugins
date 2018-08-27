@@ -24,27 +24,20 @@
 #########################################################################
 
 import logging
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
-
 import io
 import time
-import datetime
 import re
 import errno
+import sys
 import itertools
-
 from .AVDeviceInit import Init
 from .AVDeviceInit import ProcessVariables
 from .AVDeviceFunctions import CreateResponse
 from .AVDeviceFunctions import Translate
 from .AVDeviceFunctions import ConvertValue
 from .AVDeviceFunctions import CreateExpectedResponse
-
-# Used to get errorline, for debugging only
-# sys.exc_info()[-1].tb_lineno
-#try:
-#    import sys
 
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
@@ -54,46 +47,70 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.3.6"
 
-    def __init__(self, smarthome):
+    def __init__(self, smarthome,
+                 model='',
+                 ignoreresponse='RGB,RGC,RGD,GBH,GHH,VTA,AUA,AUB',
+                 errorresponse='E02,E04,E06',
+                 forcebuffer='GEH01020, GEH04022, GEH05024',
+                 inputignoredisplay='',
+                 dependson_item='',
+                 dependson_value=True,
+                 rs232_port='',
+                 rs232_baudrate=9600,
+                 rs232_timeout=0.1,
+                 tcp_ip='',
+                 tcp_port=23,
+                 tcp_timeout=1,
+                 resetonerror=False,
+                 depend0_power0=False,
+                 depend0_volume0=False,
+                 sendretries=10,
+                 resendwait=1.0,
+                 reconnectretries=13,
+                 secondstokeep=50,
+                 responsebuffer='5',
+                 autoreconnect=False,
+                 update_exclude='',
+                 statusquery=True):
         self.itemsApi = Items.get_instance()
         self.logger = logging.getLogger(__name__)
-        self.init_webinterface()
+        self._sh = smarthome
+        self.alive = False
+        self._name = self.get_instance_name()
+        self._serialwrapper = None
+        self._serial = None
+        self._tcpsocket = None
+        self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+        self._items = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+        self._query_zonecommands = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
+        self._items_speakers = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+        self._send_commands = []
+        self._init_commands = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+        self._keep_commands = {}
+        self._specialparse = {}
+        self._query_commands = []
+        self._power_commands = []
+        self._expected_response = []
+        self._response_commands = {}
+        self._response_wildcards = {'wildcard': {}, 'original': {}}
+        self._number_of_zones = 0
+        self._trigger_reconnect = True
+        self._reconnect_counter = 0
+        self._resend_counter = 0
+        self._resend_on_empty_counter = 0
+        self._clearbuffer = False
+        self._sendingcommand = 'done'
+        self._special_commands = {}
+        self._is_connected = []
+        self._parsinginput = []
+        self._dependencies = {'Slave_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                              'Slave_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                              'Master_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                              'Master_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}}
+
         try:
-            self.alive = False
-            self._name = self.get_fullname()
-            self._serialwrapper = None
-            self._serial = None
-            self._tcpsocket = None
-            self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
-            self._items = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
-            self._query_zonecommands = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
-            self._items_speakers = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
-            self._send_commands = []
-            self._init_commands = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
-            self._keep_commands = {}
-            self._specialparse = {}
-            self._query_commands = []
-            self._power_commands = []
-            self._expected_response = []
-            self._response_commands = {}
-            self._response_wildcards = {'wildcard': {}, 'original': {}}
-            self._number_of_zones = 0
-            self._trigger_reconnect = True
-            self._reconnect_counter = 0
-            self._resend_counter = 0
-            self._resend_on_empty_counter = 0
-            self._clearbuffer = False
-            self._sendingcommand = 'done'
-            self._special_commands = {}
-            self._is_connected = []
-            self._parsinginput = []
-            self._send_history = {'query': {}, 'command': {}}
-            self._dependencies = {'Slave_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
-                                  'Slave_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
-                                  'Master_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
-                                  'Master_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}}
             self._model = self.get_parameter_value('model')
             self._resend_wait = float(self.get_parameter_value('resendwait'))
             self._secondstokeep = int(self.get_parameter_value('secondstokeep'))
@@ -118,37 +135,39 @@ class AVDevice(SmartPlugin):
             rs232_timeout = self.get_parameter_value('rs232_timeout')
             update_exclude = self.get_parameter_value('update_exclude')
             statusquery = self.get_parameter_value('statusquery')
-
-            # Initializing all variables
-            self.logger.debug("Initializing {}: Resendwait: {}. Seconds to keep: {}.".format(self._name, self._resend_wait,
-                                                                                             self._secondstokeep))
-            self.init = Init(self._name, self._model, self._items)
-            self._rs232, self._baud, self._timeout = ProcessVariables([rs232_port, rs232_baudrate, rs232_timeout],
-                                                                      self._name).process_rs232()
-            self._tcp, self._port, self._tcp_timeout = ProcessVariables([tcp_ip, tcp_port, tcp_timeout],
-                                                                        self._name).process_tcp()
-            self._dependson, self._dependson_value, self._depend0_power0, self._depend0_volume0 = ProcessVariables(
-                [dependson_item, dependson_value, depend0_power0, depend0_volume0], self._name).process_dependson()
-
-            self._response_buffer = ProcessVariables(responsebuffer, self._name).process_responsebuffer()
-            self._reset_onerror = ProcessVariables(resetonerror, self._name).process_resetonerror()
-            self._statusquery = ProcessVariables(statusquery, self._name).process_statusquery()
-            self._ignore_response, self._error_response, self._force_buffer, self._ignoredisplay = ProcessVariables(
-                [ignoreresponse, errorresponse, forcebuffer, inputignoredisplay], self._name).process_responses()
-            self.logger.debug(
-                "Initializing {}: Special Settings: Ignoring responses {}.".format(self._name, self._ignore_response))
-            self.logger.debug(
-                "Initializing {}: Special Settings: Error responses {}.".format(self._name, self._error_response))
-            self.logger.debug("Initializing {}: Special Settings: Force buffer {}.".format(self._name, self._force_buffer))
-            self.logger.debug(
-                "Initializing {}: Special Settings: Ignore Display {}".format(self._name, self._ignoredisplay))
-            self.logger.debug(
-                "Initializing {}: Querying at plugin init is set to {}".format(self._name, self._statusquery))
-            self._update_exclude = ProcessVariables(update_exclude, self._name).process_update_exclude()
-
         except Exception:
-            self._init_complete = False
-            return
+            self._model = model
+            self._resend_wait = float(resendwait)
+            self._secondstokeep = int(secondstokeep)
+            self._auto_reconnect = autoreconnect
+            self._resend_retries = int(sendretries)
+            self._reconnect_retries = int(reconnectretries)
+        # Initializing all variables
+        self.logger.debug("Initializing {}: Resendwait: {}. Seconds to keep: {}.".format(self._name, self._resend_wait,
+                                                                                         self._secondstokeep))
+        self.init = Init(self._sh, self._name, self._model, self._items)
+        self._rs232, self._baud, self._timeout = ProcessVariables([rs232_port, rs232_baudrate, rs232_timeout],
+                                                                  self._name).process_rs232()
+        self._tcp, self._port, self._tcp_timeout = ProcessVariables([tcp_ip, tcp_port, tcp_timeout],
+                                                                    self._name).process_tcp()
+        self._dependson, self._dependson_value, self._depend0_power0, self._depend0_volume0 = ProcessVariables(
+            [dependson_item, dependson_value, depend0_power0, depend0_volume0], self._name).process_dependson()
+
+        self._response_buffer = ProcessVariables(responsebuffer, self._name).process_responsebuffer()
+        self._reset_onerror = ProcessVariables(resetonerror, self._name).process_resetonerror()
+        self._statusquery = ProcessVariables(statusquery, self._name).process_statusquery()
+        self._ignore_response, self._error_response, self._force_buffer, self._ignoredisplay = ProcessVariables(
+            [ignoreresponse, errorresponse, forcebuffer, inputignoredisplay], self._name).process_responses()
+        self.logger.debug(
+            "Initializing {}: Special Settings: Ignoring responses {}.".format(self._name, self._ignore_response))
+        self.logger.debug(
+            "Initializing {}: Special Settings: Error responses {}.".format(self._name, self._error_response))
+        self.logger.debug("Initializing {}: Special Settings: Force buffer {}.".format(self._name, self._force_buffer))
+        self.logger.debug(
+            "Initializing {}: Special Settings: Ignore Display {}".format(self._name, self._ignoredisplay))
+        self.logger.debug(
+            "Initializing {}: Querying at plugin init is set to {}".format(self._name, self._statusquery))
+        self._update_exclude = ProcessVariables(update_exclude, self._name).process_update_exclude()
 
     # Non-blocking wait function
     @staticmethod
@@ -805,12 +824,6 @@ class AVDevice(SmartPlugin):
             self.logger.error("Processing Response {}: Problems: {} in line {}.".format(
                 self._name, err, sys.exc_info()[-1].tb_lineno))
 
-    def _clear_history(self, part):
-        if part == 'keep':
-            self._keep_commands.clear()
-        else:
-            self._send_history[part].clear()
-
     # init function
     def _initialize(self):
         self._send_commands[:] = []
@@ -851,7 +864,6 @@ class AVDevice(SmartPlugin):
 
     # Run function
     def run(self):
-        self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         if self._tcp is None and self._rs232 is None:
             self.logger.error(
                 "Initializing {}: Neither IP address nor RS232 port given. Not running.".format(self._name))
@@ -893,18 +905,15 @@ class AVDevice(SmartPlugin):
         if depending is False:
             if self._tcp is not None and 'TCP' not in self._is_connected:
                 self.logger.log(VERBOSE1, "Connecting {}: Starting TCP scheduler".format(self._name))
-                try:
-                    self.scheduler_add('avdevice-tcp-reconnect', self.connect_tcp, cycle=7)
-                except Exception as err:
-                    self.logger.error(err)
-                self.scheduler_change('avdevice-tcp-reconnect', active=True)
-                self.scheduler_trigger('avdevice-tcp-reconnect')
+                self._sh.scheduler.add('avdevice-tcp-reconnect', self.connect_tcp, cycle=7)
+                self._sh.scheduler.change('avdevice-tcp-reconnect', active=True)
+                self._sh.scheduler.trigger('avdevice-tcp-reconnect')
                 self._trigger_reconnect = False
             if self._rs232 is not None and 'Serial' not in self._is_connected:
                 self.logger.log(VERBOSE1, "Connecting {}: Starting RS232 scheduler".format(self._name))
-                self.scheduler_add('avdevice-serial-reconnect', self.connect_serial, cycle=7)
-                self.scheduler_change('avdevice-serial-reconnect', active=True)
-                self.scheduler_trigger('avdevice-serial-reconnect')
+                self._sh.scheduler.add('avdevice-serial-reconnect', self.connect_serial, cycle=7)
+                self._sh.scheduler.change('avdevice-serial-reconnect', active=True)
+                self._sh.scheduler.trigger('avdevice-serial-reconnect')
                 self._trigger_reconnect = False
         elif depending is True and trigger == 'parse_dataerror':
             self._resetondisconnect('connect')
@@ -913,15 +922,7 @@ class AVDevice(SmartPlugin):
     def connect_tcp(self):
         try:
             if self._tcp is not None and 'TCP' not in self._is_connected:
-                try:
-                    socket = __import__('socket')
-                    REQUIRED_PACKAGE_IMPORTED = True
-                except:
-                    REQUIRED_PACKAGE_IMPORTED = False
-                if not REQUIRED_PACKAGE_IMPORTED:
-                    self.logger.error("{}: Unable to import Python package 'socket'".format(self.get_fullname()))
-                    self._init_complete = False
-                    return
+                socket = __import__('socket')
                 self.logger.log(VERBOSE1, "Connecting TCP {}: Starting to connect to {}.".format(self._name, self._tcp))
                 self._tcpsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self._tcpsocket.setblocking(0)
@@ -952,7 +953,7 @@ class AVDevice(SmartPlugin):
                 self.logger.warning("Connecting TCP {}: Reconnecting. Command list while connecting: {}.".format(
                     self._name, self._send_commands))
             elif cond3 or cond4:
-                self.scheduler_change('avdevice-tcp-reconnect', active=False)
+                self._sh.scheduler.change('avdevice-tcp-reconnect', active=False)
                 self._reconnect_counter = 0
                 if cond4:
                     self._addorremove_keepcommands('disconnect', 'all')
@@ -960,7 +961,7 @@ class AVDevice(SmartPlugin):
                     self._addorremove_keepcommands('connected', 'all')
                 self._trigger_reconnect = True
                 self.logger.debug(
-                    "Connecting TCP {}: Deactivating reconnect schedulerApi. Command list while connecting: {}. "
+                    "Connecting TCP {}: Deactivating reconnect scheduler. Command list while connecting: {}. "
                     "Keep Commands: {}. Reconnecttrigger: {}".format(
                         self._name, self._send_commands, self._keep_commands, self._trigger_reconnect))
             self._reconnect_counter += 1
@@ -974,15 +975,7 @@ class AVDevice(SmartPlugin):
     def connect_serial(self):
         try:
             if self._rs232 is not None and 'Serial' not in self._is_connected:
-                try:
-                    serial = __import__('serial')
-                    REQUIRED_PACKAGE_IMPORTED = True
-                except:
-                    REQUIRED_PACKAGE_IMPORTED = False
-                if not REQUIRED_PACKAGE_IMPORTED:
-                    self.logger.error("{}: Unable to import Python package 'serial'".format(self.get_fullname()))
-                    self._init_complete = False
-                    return
+                serial = __import__('serial')
                 ser = serial.serial_for_url('{}'.format(self._rs232), baudrate=int(self._baud),
                                             timeout=float(self._timeout), write_timeout=float(self._timeout))
                 i = 0
@@ -1042,10 +1035,10 @@ class AVDevice(SmartPlugin):
             if cond1 and cond2:
                 self._trigger_reconnect = False
                 self.logger.log(VERBOSE1,
-                                "Connecting Serial {}: Activating reconnect schedulerApi. Command list while connecting: {}.".format(
+                                "Connecting Serial {}: Activating reconnect scheduler. Command list while connecting: {}.".format(
                                     self._name, self._send_commands))
             elif cond3 or cond4:
-                self.scheduler_change('avdevice-serial-reconnect', active=False)
+                self._sh.scheduler.change('avdevice-serial-reconnect', active=False)
                 self._reconnect_counter = 0
                 if cond4:
                     self._addorremove_keepcommands('disconnect', 'all')
@@ -1053,7 +1046,7 @@ class AVDevice(SmartPlugin):
                     self._addorremove_keepcommands('connected', 'all')
                 self._trigger_reconnect = True
                 self.logger.debug(
-                    "Connecting Serial {}: Deactivating reconnect schedulerApi. Command list while connecting: {}. "
+                    "Connecting Serial {}: Deactivating reconnect scheduler. Command list while connecting: {}. "
                     "Keep commands: {}. Reconnecttrigger: {}".format(
                         self._name, self._send_commands, self._keep_commands, self._trigger_reconnect))
             self._reconnect_counter += 1
@@ -1230,7 +1223,6 @@ class AVDevice(SmartPlugin):
                                 if primarycount > 0 and queryentry is not None:
                                     if queryentry not in self._send_commands:
                                         self._send_commands.append(queryentry)
-                                        self._send_history['query'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = queryentry
                                         self.logger.debug(
                                             "Checking Dependency {}: Dependent Query command {} added to Send Commands. Dependencies: {}".format(
                                                 self._name, queryentry, dependitems))
@@ -2159,7 +2151,6 @@ class AVDevice(SmartPlugin):
                                                     depending = self._checkdependency(query, 'statusupdate')
                                                 if query not in self._send_commands and depending is False:
                                                     self._send_commands.append(query)
-                                                    self._send_history['query'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = query
                                             self._reconnect_counter = 0
                                             self._trigger_reconnect = True
 
@@ -2206,7 +2197,6 @@ class AVDevice(SmartPlugin):
                                                 "Updating Item {}: Readonly. Updating Zone {} Commands {} for {}".format(
                                                     self._name, zone, self._send_commands, item))
                                             self._send_commands.append(appendcommand)
-                                            self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
 
                             except Exception as err:
                                 self.logger.log(VERBOSE2,
@@ -2240,7 +2230,6 @@ class AVDevice(SmartPlugin):
                                             "Updating Item {}: Updating Zone {} Commands {} for {}".format(
                                                 self._name, zone, self._send_commands, item))
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                         checkquery = True
                                 elif command_increase in self._functions['zone{}'.format(zone)]:
                                     commandinfo = self._functions['zone{}'.format(zone)][command_increase]
@@ -2294,7 +2283,6 @@ class AVDevice(SmartPlugin):
                                             "Updating Item {}: Updating Zone {} Command Increase {} for {}".format(
                                                 self._name, zone, self._send_commands, item))
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                 elif command_decrease in self._functions['zone{}'.format(zone)]:
                                     commandinfo = self._functions['zone{}'.format(zone)][command_decrease]
                                     try:
@@ -2347,7 +2335,6 @@ class AVDevice(SmartPlugin):
                                             "Updating Item {}: Updating Zone {} Command Decrease {} for {}".format(
                                                 self._name, zone, self._send_commands, item))
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
 
                                 elif command_on in self._functions['zone{}'.format(zone)] and \
                                         isinstance(value, bool) and value == 1:
@@ -2398,7 +2385,6 @@ class AVDevice(SmartPlugin):
                                                 self._name, appendcommand, self._keep_commands))
                                     else:
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                         self._sendingcommand = appendcommand
                                         checkquery = True
                                         self.logger.log(VERBOSE1,
@@ -2414,7 +2400,6 @@ class AVDevice(SmartPlugin):
                                             depending = self._checkdependency(query, 'statusupdate')
                                             if query not in self._send_commands and depending is False:
                                                 self._send_commands.append(query)
-                                                self._send_history['query'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = query
 
                                 elif command_off in self._functions['zone{}'.format(zone)] and \
                                         isinstance(value, bool) and value == 0:
@@ -2465,7 +2450,6 @@ class AVDevice(SmartPlugin):
                                                 self._name, appendcommand, self._keep_commands))
                                     else:
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                         self._sendingcommand = appendcommand
                                         checkquery = True
                                         self.logger.log(VERBOSE1,
@@ -2602,7 +2586,6 @@ class AVDevice(SmartPlugin):
                                                     self._name, appendcommand, self._keep_commands))
                                         else:
                                             self._send_commands.append(appendcommand)
-                                            self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                             self._sendingcommand = appendcommand
                                             self._resend_counter = 0
                                             checkquery = True
@@ -2630,7 +2613,6 @@ class AVDevice(SmartPlugin):
                                                 self._name, appendcommand, self._keep_commands))
                                     else:
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                         self._resend_counter = 0
                                         checkquery = True
                                         self.logger.log(VERBOSE1,
@@ -2958,13 +2940,13 @@ class AVDevice(SmartPlugin):
     def stop(self):
         self.alive = False
         try:
-            self.scheduler_change('avdevice-tcp-reconnect', active=False)
-            self.scheduler_remove('avdevice-tcp-reconnect')
+            self._sh.scheduler.change('avdevice-tcp-reconnect', active=False)
+            self._sh.scheduler.remove('avdevice-tcp-reconnect')
         except Exception:
             pass
         try:
-            self.scheduler_change('avdevice-serial-reconnect', active=False)
-            self.scheduler_remove('avdevice-serial-reconnect')
+            self._sh.scheduler.change('avdevice-serial-reconnect', active=False)
+            self._sh.scheduler.remove('avdevice-serial-reconnect')
         except Exception:
             pass
         try:
@@ -2978,105 +2960,9 @@ class AVDevice(SmartPlugin):
         except Exception:
             self.logger.log(VERBOSE1, "Stopping {}: No Serial socket to close.".format(self._name))
 
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
 
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-             self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-class WebInterface(SmartPluginWebIf):
-
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-
-    @cherrypy.expose
-    def index(self, action=None, item_id=None, item_path=None, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        item = self.plugin.get_sh().return_item(item_path)
-        config_reloaded = False
-        keep_cleared = False
-        command_cleared = False
-        query_cleared = False
-        if action is not None:
-            if action == "reload":
-                self.plugin._initialize()
-                config_reloaded = True
-            if action == "connect":
-                self.plugin.connect('webif')
-            if action == "clear_query_history":
-                self.plugin._clear_history('query')
-                query_cleared = True
-            if action == "clear_command_history":
-                self.plugin._clear_history('command')
-                command_cleared = True
-            if action == "clear_keep_commands":
-                self.plugin._clear_history('keep')
-                keep_cleared = True
-
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           config_reloaded=config_reloaded, query_cleared=query_cleared,
-                           command_cleared=command_cleared, keep_cleared=keep_cleared,
-                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
+if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+    # noinspection PyUnresolvedReferences
+    PluginClassName(AVDevice).run()
