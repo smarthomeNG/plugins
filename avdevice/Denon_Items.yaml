@@ -231,10 +231,10 @@ Denon:
         Musik:
             type: bool
             visu_acl: ro
-            eval: 1 if ((sh.Musik.OG.Denon.Source() == 'DVD' or sh.Musik.OG.Denon.Source() == 'CD' or sh.Musik.OG.Denon.Source() == 'NET') and sh.Musik.OG.Denon.Power()) else 0
+            eval: 1 if ((sh.Denon.Source() == 'DVD' or sh.Denon.Source() == 'CD' or sh.Denon.Source() == 'NET') and sh.Denon.Power()) else 0
             eval_trigger:
-              - Musik.OG.Denon.Source
-              - Musik.OG.Denon.Power
+              - Denon.Source
+              - Denon.Power
             enforce_updates: 'yes'
 
     Mode:
@@ -437,10 +437,10 @@ Denon:
         Musik:
             type: bool
             visu_acl: ro
-            eval: 1 if ((sh.Musik.OG.Denon.Source2() == 'DVD' or sh.Musik.OG.Denon.Source2() == 'CD' or sh.Musik.OG.Denon.Source2() == 'NET') and sh.Musik.OG.Denon.Power2()) else 0
+            eval: 1 if ((sh.Denon.Source2() == 'DVD' or sh.Denon.Source2() == 'CD' or sh.Denon.Source2() == 'NET') and sh.Denon.Power2()) else 0
             eval_trigger:
-              - Musik.OG.Denon.Source2
-              - Musik.OG.Denon.Power2
+              - Denon.Source2
+              - Denon.Power2
 
     Mute2:
         type: bool
@@ -522,10 +522,10 @@ Denon:
         Musik:
             type: bool
             visu_acl: ro
-            eval: 1 if ((sh.Musik.OG.Denon.Source3() == 'DVD' or sh.Musik.OG.Denon.Source3() == 'CD' or sh.Musik.OG.Denon.Source3() == 'NET') and sh.Musik.OG.Denon.Power3()) else 0
+            eval: 1 if ((sh.Denon.Source3() == 'DVD' or sh.Denon.Source3() == 'CD' or sh.Denon.Source3() == 'NET') and sh.Denon.Power3()) else 0
             eval_trigger:
-              - Musik.OG.Denon.Source3
-              - Musik.OG.Denon.Power3
+              - Denon.Source3
+              - Denon.Power3
 
     Mute3:
         type: bool
