@@ -62,6 +62,7 @@ database:
       - database:/path/to/log.db
       - check_same_thread:0
     # prefix: log
+    # precision: 2
 ```
 
 The following attributes can be used in the plugin configuration:
@@ -76,6 +77,10 @@ The following attributes can be used in the plugin configuration:
      `connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome`
    * `prefix` - if you want to log into an existing database with other tables
      you can specify a prefix for the plugins' tables
+   * `precision` - specifies the amount of digits after comma for values
+     queried from the database (defaults to 2, other values are -1 to return
+     raw float values, 0 to return integer numbers, >0 for the given amount
+     of digits after comma)
 
 ### items.yaml
 
