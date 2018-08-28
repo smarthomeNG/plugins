@@ -96,7 +96,7 @@ item_attributes:
             de: 'Steuert den Zugriff auf das Item über Websocket Protokoll'
             en: 'Control access to this item through wbsocket protocol'
 
-logic_parameter:
+logic_parameters:
     # Definition of item attributes defined by this plugin
     visu_acl:
         type: bool

@@ -217,22 +217,7 @@ item_attributes:
             en: 'Specify a group address to poll and the time interval in seconds for an automated query of KNX in form of a list. First entry is the group address, second entry is the poll interval in seconds. This may be used for actors or sensors that do no support a regular sending of values themselves.'
 
 
-logic_trigger_attributes:
-    # Definition of logic trigger attributes defined by this plugin
-    knx_listen:
-        type: list(knx_ga)
-        description:
-            de: 'Gruppenadresse (oder Liste von Gruppenadressen), auf die gehört werden soll. KNX-Nachrichten an diese Gruppenadresse(n) ändern den Wert des Items'
-            en: "Group address (or list of goup addresses) to listen for. KNX messages to this group address will change the item's value"
-
-    knx_reply:
-        type: list(knx_ga)
-        description:
-            de: 'Eine oder mehrere Gruppenadressen angeben, um den Objektwert vom KNX-Bus aus lesen zu können.'
-            en: 'Specify one or more group addresses to allow reading the item value from the KNX bus.'
-
-
-logic_parameter:
+logic_parameters:
     # Definition of logic parameters defined by this plugin
     knx_listen:
         type: list(knx_ga)
