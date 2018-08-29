@@ -50,7 +50,7 @@ def from_didl_string(string):
             except KeyError:
                 raise DIDLMetadataError("Unknown UPnP class: %s" % item_class)
             item = cls.from_element(elt)
-            #item = attempt_datastructure_upgrade(item)
+            item = attempt_datastructure_upgrade(item)
             items.append(item)
         else:
             # <desc> elements are allowed as an immediate child of <DIDL-Lite>
