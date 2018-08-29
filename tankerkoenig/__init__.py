@@ -51,7 +51,7 @@ class TankerKoenig(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    def get_petrol_stations(self, lat, lon, type='diesel', sort='price', rad='4'):
+    def get_petrol_stations(self, lat, lon, type='diesel', sort='price', rad=4):
         """
         Returns a list of information for petrol stations around a specific location and radius
         Should not be used extensively, due to performance issues on tankerkoenig side.
