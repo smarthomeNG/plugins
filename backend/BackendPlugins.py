@@ -132,34 +132,10 @@ class BackendPlugins:
         for x in self.plugins.return_plugins():
             if isinstance(x, SmartPlugin):
                 plugin_config_name = x.get_configname()
-            else:
-                plugin_config_name = x._configname
-
-            #plugin_list.append(plugin_config_name)
-
-            for func_name in inspect.getmembers(x, predicate=inspect.ismethod):
-                if self.get_class_that_defined_method(func_name[1]) is not None:
-                    class_name = self.get_class_that_defined_method(func_name[1]).__name__
-                    if 'SmartPlugin' not in class_name and func_name[0] not in not_allowed_functions and not func_name[
-                        0].startswith('_'):
-                        plugin_list.append(plugin_config_name + "." + func_name[0]+str(inspect.signature(func_name[1])))
+                if x.metadata is not None:
+                    api = x.metadata.get_plugin_function_defstrings(with_type=True, with_default=True)
+                    if api is not None:
+                        for function in api:
+                            plugin_list.append(plugin_config_name + "." +function)
 
         return json.dumps(plugin_list)
-
-    def get_class_that_defined_method(self, meth):
-        if inspect.ismethod(meth):
-            for cls in inspect.getmro(meth.__self__.__class__):
-                if cls.__dict__.get(meth.__name__) is meth:
-                    return cls
-            meth = meth.__func__  # fallback to __qualname__ parsing
-        if inspect.isfunction(meth):
-
-            # Check to make sure the method has a "qualname"
-            if not getattr(meth, '__qualname__', None):
-                return None
-
-            cls = getattr(inspect.getmodule(meth),
-                          meth.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
-            if isinstance(cls, type):
-                return cls
-        return None  # not required since None would have been implicitly returned anyway
