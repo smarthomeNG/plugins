@@ -22,4 +22,54 @@ parameters:
     
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
+plugin_functions:
+
+    get_station_departures:
+        type: list(dict)
+        description:
+            de: "Gibt ein Array von DICTs mit Infos Verkehrverbindungen der Münchner Verkehrsbetriebe (MVG) zurück. Keys: 'productsymbol', 'product', 'linesymbol', 'time', 'direction', 'linename', 'productsymbolurl', 'linesymbolurl', 'destination'."
+            en: "Returns an Array of DICTs with information on lines of the Münchner Verkehrsbetriebe (MVG). Keys: 'productsymbol', 'product', 'linesymbol', 'time', 'direction', 'linename', 'productsymbolurl', 'linesymbolurl', 'destination'."
+
+        parameters:
+            station:
+                type: str
+                description:
+                    de: "Name der Haltestelle. Schauen Sie auf der MVG live Webseite nach gültigen Namen."
+                    en: "Name of the stop or station. Visit the MVG live web site to find valid names."
+
+            timeoffset:
+                type: int
+                description:
+                    de: "Keine Verbindungen in weniger als dieser Zeitdauer anzeigen. Sinnvoll, wenn man einige Minuten von der Haltstelle entfernt ist. Default: 0"
+                    en: "Do not display connections departing sooner than this number of minutes. Useful if you are a couple of minutes away from the stop. Default: 0"
+
+            entries:
+                type: int
+                description:
+                    de: "Anzahl der Einträge, die geholt werden sollen. Default: 10"
+                    en: "Number of entries to retrieve. Default: 10."
+
+            ubahn:
+                type: bool
+                description:
+                    de: "Falls 'False', keine U-Bahn Abfahrtzeiten anzeigen. Default: True."
+                    en: "If 'False', do not display U-Bahn (subway) departures. Default: True."
+
+            tram:
+                type: bool
+                description:
+                    de: "Falls 'False', keine Tram Abfahrtzeiten anzeigen. Default: True."
+                    en: "If 'False', do not display tram departures. Default: True."
+
+            bus:
+                type: bool
+                description:
+                    de: "Falls 'False', keine Bus Abfahrtzeiten anzeigen. Default: True."
+                    en: "If 'False', do not display bus departures. Default: True."
+
+            sbahn:
+                type: bool
+                description:
+                    de: "Falls 'False', keine S-Bahn Abfahrtzeiten anzeigen. Default: True."
+                    en: "If 'False', do not display S-Bahn (suburban train) departures. Default: True."
