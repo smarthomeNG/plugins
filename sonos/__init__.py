@@ -562,6 +562,16 @@ class Speaker(object):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
 
+                    # set streaming type
+                    if self.soco.is_playing_line_in:
+                        self.streamtype = "line_in"
+                    elif self.soco.is_playing_tv:
+                        self.streamtype = "tv"
+                    elif self.soco.is_playing_radio:
+                        self.streamtype = "radio"
+                    else:
+                        self.streamtype = "music"
+
                     if 'transport_state' in event.variables:
                         transport_state = event.variables['transport_state']
                         if transport_state:
@@ -1221,8 +1231,10 @@ class Speaker(object):
             return
         self._streamtype = streamtype
 
-        for item in self.streamtype_items:
-            item(streamtype, 'Sonos')
+        if self.is_coordinator:
+            for member in self.zone_group_members:
+                for item in sonos_speaker[member].streamtype_items:
+                    item(self.streamtype, 'Sonos')
 
     @property
     def track_uri(self) -> str:
@@ -1250,27 +1262,13 @@ class Speaker(object):
             return
         self._track_uri = track_uri
 
-        if re.match(r"^x-sonos-htastream:", self.track_uri) is not None:
-            streamtype = 'tv'
-        elif re.match(r"^x-rincon-stream:", self.track_uri) is not None:
-            streamtype = 'line-in'
-        elif re.match(r"^x-rincon-mp3radio:", self.track_uri) is not None:
-            streamtype = 'radio'
-        else:
-            # aac, wma etc possible for audio; everything except x- should be radio
-            if re.match(r'^x-', self.track_uri) is not None:
-                streamtype = 'music'
-            else:
-                streamtype = 'radio'
         # coordinator call / update all items
         if self.is_coordinator:
             for member in self.zone_group_members:
-                sonos_speaker[member].streamtype = streamtype
                 for item in sonos_speaker[member].track_uri_items:
                     item(self.track_uri, 'Sonos')
         # slave call, update just the slave
         else:
-            self.streamtype = streamtype
             for item in self.track_uri_items:
                 item(self.track_uri, 'Sonos')
 
@@ -2291,7 +2289,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.7"
+    PLUGIN_VERSION = "1.4.8"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
                  discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, snippet_duration_offset=0.0, **kwargs):
@@ -2811,6 +2809,7 @@ class Sonos(SmartPlugin):
 
                 else:
                     _initialize_speaker(uid, self._logger)
+                    sonos_speaker[uid].soco = zone
 
                 sonos_speaker[uid].is_initialized = True
                 sonos_speaker[uid].refresh_static_properties()
