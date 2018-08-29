@@ -35,4 +35,43 @@ parameters:
     
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
+plugin_functions:
+
+    get_route_info:
+        type: dict
+        description:
+            de: 'Ermittelt Infos zu einer Fahrtroute via Google Directions.'
+            en: 'Returns information on a route via Google Directions.'
+
+        parameters:
+
+            origin:
+                type: str
+                description:
+                    de: "Startpunkt der Route, kann eine Adresse, Geokoordinaten, etc. sein."
+                    en: "Origin of your route, can be an address, geocoordinates, etc."
+
+            destination:
+                type: str
+                description:
+                    de: "Ziel der Route, kann eine Adresse, Geokoordinaten, etc. sein."
+                    en: "Destination of your route, can be an address, geocoordinates, etc."
+
+            alternatives:
+                type: bool
+                description:
+                    de: "Rückgabe alternativer Routen. Default: False"
+                    en: "Return alternative routes. Default: False."
+
+            departure_time:
+                type: str
+                description:
+                    de: "Spezifiziert die gewünschte Abfahrtszeit als Timestamp (Sekunden seit 1.1.1970 UTC). Alternativ kann 'now' für den aktuellen Zeitpunkt gesetzt werden. Default: 'now'."
+                    en: "Specifies the desired time of departure. You can specify the time as an integer in seconds since midnight, January 1, 1970 UTC. Alternatively, you can specify a value of now, which sets the departure time to the current time (correct to the nearest second). Default: 'now'."
+
+            mode:
+                type: str
+                description:
+                    de: "Travel Mode, mögliche Werte 'driving', 'walking', 'bicycling', 'transit'. Default: 'driving'."
+                    en: "Travel Mode, possible values 'driving', 'walking', 'bicycling', 'transit'. Default: 'driving'."
