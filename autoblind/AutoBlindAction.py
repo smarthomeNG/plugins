@@ -284,7 +284,8 @@ class AbActionTrigger(AbActionBase):
         # Trigger logic
         self._log_info("{0}: Triggering logic '{1}' using value '{2}'.{3}", actionname, self.__logic, self.__value, repeat_text)
         by = AutoBlindDefaults.plugin_identification
-        self._sh.trigger(self.__logic, by=by, source=self._name, value=self.__value)
+        add_logics = 'logics.{}'.format(self.__logic) if not self.__logic.startswith('logics.') else self.__logic
+        self._sh.trigger(add_logics, by=by, source=self._name, value=self.__value)
 
 
 # Class representing a single "as_run" action

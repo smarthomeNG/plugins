@@ -20,7 +20,7 @@
 #########################################################################
 from . import AutoBlindConditionSet
 from . import AutoBlindTools
-
+from collections import OrderedDict
 
 # Class representing a list of condition sets
 class AbConditionSets(AutoBlindTools.AbItemChild):
@@ -28,7 +28,7 @@ class AbConditionSets(AutoBlindTools.AbItemChild):
     # abitem: parent AbItem instance
     def __init__(self, abitem):
         super().__init__(abitem)
-        self.__condition_sets = {}
+        self.__condition_sets = OrderedDict()
 
     # Return number of condition sets in list
     def count(self):

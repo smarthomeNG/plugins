@@ -8,7 +8,7 @@ plugin:
     mainainer: i-am-offline
     documentation: https://github.com/i-am-offline/smarthome.plugin.autoblind/wiki
 
-    version: 1.4.0
+    version: 1.4.1
     sh_minversion: 1.4.0
     multi_instance: False
     classname: AutoBlind

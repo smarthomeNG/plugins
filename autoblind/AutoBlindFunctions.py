@@ -87,6 +87,27 @@ class AbFunctions:
             original_caller, original_source = self.get_original_caller(elog, caller, source)
             elog.debug("original trigger by caller '{0}' source '{1}'", original_caller, original_source)
 
+            if "as_manual_on" in item.conf:
+                # get list of include entries
+                include = item.conf["as_manual_on"]
+                if isinstance(include, str):
+                    include = [include, ]
+                elif not isinstance(include, list):
+                    elog.error("Item '{0}', Attribute 'as_manual_on': Value must be a string or a list!", item_id)
+                    return retval_no_trigger
+                elog.debug("checking include values: {0}", include)
+                elog.increase_indent()
+
+                # If current value is in list -> Return "Trigger"
+                for entry in include:
+                    entry_caller, __, entry_source = entry.partition(":")
+                    if (entry_caller == original_caller or entry_caller == "*") and (
+                            entry_source == original_source or entry_source == "*"):
+                        elog.debug("{0}: matching. Writing value {1}", entry, retval_no_trigger)
+                        return retval_no_trigger
+                    elog.debug("{0}: not matching", entry)
+                elog.decrease_indent()
+
             if "as_manual_exclude" in item.conf:
                 # get list of exclude entries
                 exclude = item.conf["as_manual_exclude"]
@@ -128,6 +149,7 @@ class AbFunctions:
                         elog.debug("{0}: matching. Writing value {1}", entry, retval_trigger)
                         return retval_trigger
                     elog.debug("{0}: not matching", entry)
+                elog.decrease_indent()
 
                 # Current value not in list -> Return "No Trigger
                 elog.debug("No include values matching. Writing value {0}", retval_no_trigger)

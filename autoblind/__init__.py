@@ -31,7 +31,7 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class AutoBlind(SmartPlugin):
-    PLUGIN_VERSION = '1.4.0'
+    PLUGIN_VERSION = '1.4.1'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
