@@ -1,0 +1,62 @@
+# Metadata for the AutoBlind plugin
+plugin:
+    # Global plugin attributes
+    type: system                # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Zustandsautomat für SmarthomeNG'
+        en: 'Finite state machine for SmarthomeNG'
+    mainainer: i-am-offline
+    documentation: https://github.com/i-am-offline/smarthome.plugin.autoblind/wiki
+
+    version: 1.4.0
+    sh_minversion: 1.4.0
+    multi_instance: False
+    classname: AutoBlind
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    startup_delay_default:
+        type: int
+        default: 10
+        description:
+            de: 'Vorgabe für Verzögerung der ersten Zustandsermittlung beim Start'
+            en: 'Default delay for first state determination at startup'
+        valid_min: -1
+        valid_max: 600
+
+    suspend_time_default:
+        type: int
+        default: 3600
+        description:
+            de: 'Vorgabezeit zur Unterbrechung der automatischen Steuerung nach manuellen Aktionen'
+            en: 'Default suspend duration after manual actions'
+        valid_min: 1
+        valid_max: 86400
+
+    log_level:
+        type: int
+        default: 0
+        description:
+            de: 'Erweiterte Protokollierung: Loglevel (0: aus, 1: Info, 2: Debug)'
+            en: 'Extended Logging: Loglevel (0: off, 1: Info, 2: Debug)'
+        valid_list:
+          - 0
+          - 1
+          - 2
+
+    log_directory:
+        type: str
+        default: 'var/log/AutoBlind/'
+        description:
+            de: 'Erweiterte Protokollierung: Verzeichnis für die Protokolldateien'
+            en: 'Extended Logging: Directory for log files'
+
+    log_maxage:
+        type: int
+        default: 0
+        description:
+            de: 'Erweiterte Protokollierung: Anzahl der Tage, nach der die Dateien im Verzeichnis für die Protokolldateien wieder gelöscht werden sollen'
+            en: 'Extended Logging: Number of days after which the files in the directory for log files should be deleted'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
