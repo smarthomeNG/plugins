@@ -208,7 +208,7 @@ class Sml(SmartPlugin):
         # Details see http://wiki.volkszaehler.org/software/sml
         values = {}
         packetsize = 7
-        self.logger.debug('Data:{}'.format(''.join(' {:02x}'.format(x) for x in data)))
+        self.logger.debug('Data ({} bytes):{}'.format(len(data), ''.join(' {:02x}'.format(x) for x in data)))
         self._dataoffset = 0
         while self._dataoffset < len(data)-packetsize:
 
