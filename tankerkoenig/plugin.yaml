@@ -7,6 +7,7 @@ plugin:
         en: 'Petrol station prices by the API of TankerKönig. Take care not to request the interface too often or for too many petrol stations. Please follow instructions given on https://creativecommons.tankerkoenig.de/#techInfo.'
     maintainer: psilo909
     tester: Sandman60
+    state: ready
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins_doc/config/tankerkoenig.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/938924-benzinpreis-plugin
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: TankerKoenig        # class containing the plugin
 
 parameters:
@@ -26,7 +28,7 @@ parameters:
             de: 'Persönlicher API Key für TankerKoenig. Registrierung unter https://creativecommons.tankerkoenig.de.'
             en: 'Your own personal API key for TankerKoenig. For your own key register to https://creativecommons.tankerkoenig.de.'
     
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
 
 plugin_functions:
