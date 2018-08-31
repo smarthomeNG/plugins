@@ -6,6 +6,12 @@ Provides universal time switches for items (German: *U*niverselle *Z*eit*s*chalt
 
 Calculating of sunset/sunrise in triggers, requires installation of ephem (which should already be part of core)
 
+Calculating interpolation requires installation of scipy. Install with:
+pip3 install scipy
+
+On Raspberry debian stretch you also have to run:
+apt-get install libatlas-base-dev
+
 ## Configuration
 
 ### plugin.yaml
@@ -19,7 +25,10 @@ uzsu:
 ### items.yaml
 
 #### uzsu
-You have to specify a item with `type = dict` and with the `uzsu_item` attribute set to the path of the item which will be set by this item. The dict has to have two keys. `active` which says if the whole list of entries should be active or not and `list` which contains a list of all entries (see the Item Data Format section for more details).
+You have to specify an item with `type = dict` and with the `uzsu_item` attribute set to the path of the item which will be set by this item. The dict has to have two keys. `active` which says if the whole list of entries should be active or not and `list` which contains a list of all entries (see the Item Data Format section for more details).
+
+From version 1.4.1 on you can also specify an `interpolation` dictionary.
+
 
 ```yaml
 # items/my.yaml
@@ -50,6 +59,17 @@ Each UZSU item is of type list. Each list entry has to be a dict with specific k
 
 * __rrule__: You can use the recurrence rules documented in the [iCalendar RFC](http://www.ietf.org/rfc/rfc2445.txt) for recurrence use of a switching entry.
 
+## Interpolation
+* __type__: string, sets the mathematical function to interpolate between values. Can be cubic, linear or none. If set to cubic or linear the value calculated for the current time will be set on startup and change.
+
+* __interval__: integer, sets the time span in seconds between the automatic triggers based on the interpolation calculation
+
+* __initage__: integer, sets the amount of seconds the plugin should go back in time at startup to find the last UZSU item and triggers that right on startup of the plugin. This is useless if interpolation is active as the interpolated time will get set an init anyhow.
+
+* __itemtype__: the type of the item that should be changed by the UZSU. This is set automatically on init and should not be touched.
+
+* __initizialized__: bool, gets set automatically at startup as soon as a valid UZSU entry was found in the specified initage and the item was indeed initialized with that value.
+
 ## Example
 
 Activates the light every other day at 16:30 and deactivates it at 17:30 for five times:
@@ -57,10 +77,11 @@ Activates the light every other day at 16:30 and deactivates it at 17:30 for fiv
 ```python
 sh.eg.wohnen.kugellampe.uzsu({'active':True, 'list':[
 {'value':1, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '16:30'},
-{'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '17:30'}
-]})
+{'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '17:30'}],
+{'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0}
+})
 ```
 
 ## SmartVISU
 
-There is a widget available which gives an interface to the UZSU. The structure has changed from SmartVISU 2.8 to 2.9 slightly, please consult the corresponding forum.
+There is a widget available which gives an interface to the UZSU. The structure has changed from SmartVISU 2.8 to 2.9 slightly. Interpolation feature is supported in 2.9 only. Please consult the corresponding forum.
