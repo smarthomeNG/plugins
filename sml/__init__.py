@@ -189,7 +189,7 @@ class Sml(SmartPlugin):
                                 self.logger.debug('Found chunk at {} - {} ({} bytes):{}'.format(start_pos, end_pos, end_pos-start_pos, ''.join(' {:02x}'.format(x) for x in chunk)))
                                 chunk_crc_str = '{:02X}{:02X}'.format(chunk[-2], chunk[-1])
                                 chunk_crc_calc = self._crc16(chunk[:-2])
-                                chunk_crc_calc_str = '{:02X}{:02X}'.format((chunk_crc >> 8) & 0xff, chunk_crc & 0xff)
+                                chunk_crc_calc_str = '{:02X}{:02X}'.format((chunk_crc_calc >> 8) & 0xff, chunk_crc_calc & 0xff)
                                 if chunk_crc_str != chunk_crc_calc_str:
                                     self.logger.warn('CRC checksum mismatch: Expected {}, but was {}'.format(chunk_crc_str, chunk_crc_calc_str))
                                     data = data[:start_pos]
