@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2016 <Onkel Andy>                    <onkelandy@hotmail.com>
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,62 +20,84 @@
 #########################################################################
 
 import logging
-from lib.model.smartplugin import SmartPlugin
-import RPi.GPIO as GPIO
+from lib.model.smartplugin import *
 import threading
+import datetime
+
+try:
+    import RPi.GPIO as GPIO
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
 
 class Raspi_GPIO(SmartPlugin):
-    PLUGIN_VERSION = "1.0.1"
+    PLUGIN_VERSION = "1.4.1"
     ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, sh, mode="board"):
+    def __init__(self, sh):
         self.logger = logging.getLogger(__name__)
-        self._sh = sh
-        self._items = []
-        self._itemsdict = {}
-        self._mode = mode.upper()
-        GPIO.setwarnings(False)
-        if self._mode == "BCM":
-            GPIO.setmode(GPIO.BCM)
-        else:
-            GPIO.setmode(GPIO.BOARD)    
-        self.logger.debug("GPIO: Mode set to {0}".format(self._mode))
-        self.alive = False
-        self._lock = threading.Lock() 
-        
+        self.init_webinterface()
+        self._name = self.get_fullname()
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'GPIO'".format(self._name))
+            self._init_complete = False
+            return
+        try:
+            self._items = []
+            self._itemsdict = {}
+            self._initdict = {}
+            self._mode = self.get_parameter_value('mode').upper()
+            GPIO.setwarnings(False)
+            if self._mode == "BCM":
+                GPIO.setmode(GPIO.BCM)
+            else:
+                GPIO.setmode(GPIO.BOARD)
+            self.logger.debug("{}: Mode set to {}".format(self._name, self._mode))
+            self.alive = False
+            self._lock = threading.Lock()
+        except Exception:
+            self._init_complete = False
+            return
+
+
     def get_sensors(self, sensor):
         try:
             value = GPIO.input(sensor)
             self._itemsdict[sensor](value, 'GPIO', 'get_sensors')
-            self.logger.info("GPIO: SENSOR READ: {0}  VALUE: {1}".format(sensor,value))
+            self.logger.info("{}: SENSOR READ: {}  VALUE: {}".format(self._name, sensor, value))
         except Exception as e:
-            self.logger.warning("GPIO: Problem reading sensor: {0}".format(e))
+            self.logger.warning("{}: Problem reading sensor: {}".format(self._name, e))
 
     def run(self):
-        self.logger.debug("GPIO: run method called")
-        self.alive = True   
+        self.logger.debug("{}: run method called")
+        self.alive = True
         for item in self._items:
             if self.has_iattr(item.conf, 'gpio_in'):
-                sensor = int(self.get_iattr_value(item.conf, 'gpio_in')) 
-                value = GPIO.input(sensor)
+                sensor = int(self.get_iattr_value(item.conf, 'gpio_in'))
+                try:
+                    value = GPIO.input(sensor)
+                    self._initdict[sensor] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                except Exception:
+                    self._initdict[sensor] = False
                 item(value, 'GPIO', 'gpio_init')
                 GPIO.add_event_detect(sensor, GPIO.BOTH, callback=self.get_sensors)
-                self.logger.info("GPIO: Adding Event Detection for Pin {}. Initial value is {}".format(sensor, value))           
+                self.logger.info("{}: Adding Event Detection for Pin {}. Initial value is {}".format(
+                    self._name, sensor, value))
 
     def stop(self):
         self.alive = False
         GPIO.cleanup()
-        self.logger.debug("GPIO: cleaned up")
-        
+        self.logger.debug("{}: cleaned up".format(self._name))
+
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'gpio_in'):
             in_pin = int(item.conf['gpio_in'])
             GPIO.setup(in_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            self.logger.debug("GPIO: INPUT {0} assigned to pin \'{1}\'".format(item, in_pin))
+            self.logger.debug("{}: INPUT {} assigned to pin \'{}\'".format(self._name, item, in_pin))
             self._items.append(item)
             self._itemsdict[in_pin] = item
-            return self.update_item      
+            return self.update_item
         if self.has_iattr(item.conf, 'gpio_out'):
             out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
             GPIO.setup(out_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -83,12 +105,13 @@ class Raspi_GPIO(SmartPlugin):
             value = GPIO.input(out_pin)
             item(value, 'GPIO', 'gpio_init')
             GPIO.add_event_detect(out_pin, GPIO.BOTH, callback=self.get_sensors)
-            self.logger.info("GPIO: Adding Event Detection for Output Pin {}. Initial value is {}".format(out_pin, value))
+            self.logger.info("{}: Adding Event Detection for Output Pin {}. Initial value is {}".format(
+                self._name, out_pin, value))
             GPIO.setup(out_pin, GPIO.OUT)
-            self.logger.debug("GPIO: OUTPUT {0} assigned to \'{1}\'".format(item, out_pin))
+            self.logger.debug("{}: OUTPUT {} assigned to \'{}\'".format(self._name, item, out_pin))
             if (out_pin is None):
                 return None
-                self.logger.debug("GPIO: No out_pin set for item {}".format(item))
+                self.logger.debug("{}: No out_pin set for item {}".format(self._name, item))
             else:
                 self._items.append(item)
             return self.update_item
@@ -97,25 +120,103 @@ class Raspi_GPIO(SmartPlugin):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        self.logger.debug("GPIO: Trying to update {}.".format(item))
+        self.logger.debug("{}: Trying to update {}.".format(self._name, item))
         if self.has_iattr(item.conf, 'gpio_out'):
             out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
-            value = item()                   
-            self.logger.debug("GPIO: OUTPUT Setting pin {0} ({2}) to {1}.".format(out_pin, value, item.id()))
+            value = item()
+            self.logger.debug("{}: OUTPUT Setting pin {} ({}) to {}.".format(self._name, out_pin, value, item.id()))
             self.send(out_pin, value)
         else:
-            self.logger.debug("GPIO: No gpio_out")
+            self.logger.debug("{}: No gpio_out".format(self._name))
 
     def send(self, pin, value):
         self._lock.acquire()
         try:
             GPIO.output(pin, value)
-            self.logger.info("GPIO: Pin {0} successfully set to {1}".format(pin, value))
+            self.logger.info("{}: Pin {} successfully set to {}".format(self._name, pin, value))
         except:
-            self.logger.error("GPIO: Send {0} failed for {1}!".format(value, pin))
+            self.logger.error("{}: Send {} failed for {}!".format(self._name, value, pin))
         finally:
-            self._lock.release()                
+            self._lock.release()
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    FooClass(None).run()
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+
+    @cherrypy.expose
+    def index(self, action=None, item_id=None, item_path=None, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        item = self.plugin.get_sh().return_item(item_path)
+
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin,
+                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())

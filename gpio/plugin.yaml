@@ -11,15 +11,21 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.0.1                 # Plugin version
-    sh_minversion: 1.1             # minimum shNG version to use this plugin
+    version: 1.4.1                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: Raspi_GPIO          # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    mode:
+        type: str
+        default: 'BOARD'
+        mandatory: True
+        description:
+            de: 'BOARD oder BCM, abhängig davon, nach welcher Methode die Pins zugewiesen werden sollen.'
+            en: 'BOARD or BCM, depending on how to assign the pins.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
