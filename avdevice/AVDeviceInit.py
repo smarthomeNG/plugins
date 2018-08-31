@@ -64,7 +64,11 @@ class Init(object):
         for item in self._items[zone]:
             _result = self._items[zone][item].get('Item')
             itemlist.append(_result)
-            sortedlist.append(_result.id())
+            if not item == 'dependson':
+                try:
+                    sortedlist.append(_result.id())
+                except Exception:
+                    sortedlist.append(_result)
         sortedlist.sort()
         for i in sortedlist:
             finallist.append(self.itemsApi.return_item(i))
