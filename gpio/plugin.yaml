@@ -23,6 +23,11 @@ parameters:
         type: str
         default: 'BOARD'
         mandatory: True
+        valid_list:
+          - 'board'
+          - 'bcm'
+          - 'BOARD'
+          - 'BCM'
         description:
             de: 'BOARD oder BCM, abhängig davon, nach welcher Methode die Pins zugewiesen werden sollen.'
             en: 'BOARD or BCM, depending on how to assign the pins.'
