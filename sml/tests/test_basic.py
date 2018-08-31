@@ -31,7 +31,7 @@ class TestSmlBasic(TestSmlBase):
             'ff 01 01 01 01 83 02<00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 '
             '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 '
             '00 00 00 00>01 01 63 4e ab 00 76 09 00 00 00 00 0f 40 0f ab 62 01 62 00 72 63 '
-            '02 01 71 01 63 4e 4c 00 1b 1b 1b 1b 1a 00 18 6e',
+            '02 01 71 01 63 4e 4c 00 1b 1b 1b 1b 1a 00 33 f7',
             'hex'
         )
     DEFAULT_PACKET2 = SmlPacket(
@@ -59,15 +59,15 @@ class TestSmlBasic(TestSmlBase):
             'hex'
         )
     DEFAULT_PACKET_MISSING_END = SmlPacket(
-            # Entity {'scaler': -4, 'unitName': 'Wh', 'objName': b'\x01\x00\x02\x08\x00\xff', 'status': None, 'obis': '1-0:2.8.0*255', 'value': 29803232821505, 'valTime': None, 'unit': 30, 'signature': None, 'valueReal': 2980323282.1505003}
-            # Entity {'scaler': -4, 'unitName': 'Wh', 'objName': b'\x01\x00\x01\x08\x00\xff', 'status': None, 'obis': '1-0:1.8.0*255', 'value': 64963419, 'valTime': None, 'unit': 30, 'signature': None, 'valueReal': 6496.3419}
             # Entity {'scaler': None, 'unitName': None, 'objName': b'\x81\x81\xc7\x82\x03\xff', 'status': None, 'obis': '129-129:199.130.3*255', 'value': b'ESY', 'valTime': None, 'unit': None, 'signature': None, 'valueReal': b'ESY'}}
+            # Entity {'scaler': -4, 'unitName': 'Wh', 'objName': b'\x01\x00\x01\x08\x00\xff', 'status': None, 'obis': '1-0:1.8.0*255', 'value': 64963419, 'valTime': None, 'unit': 30, 'signature': None, 'valueReal': 6496.3419}
+            # Entity {'scaler': -4, 'unitName': 'Wh', 'objName': b'\x01\x00\x02\x08\x00\xff', 'status': None, 'obis': '1-0:2.8.0*255', 'value': 29803232821505, 'valTime': None, 'unit': 30, 'signature': None, 'valueReal': 2980323282.1505003}
             '1b 1b 1b 1b 01 01 01 01 76 05 08 ca 78 f7 62 00 62 00 72 65 00 00 01 01 76 01 '
             '01 07 45 53 59 51 33 42 0b 06 45 53 59 01 04 c6 a1 f6 db 01 01 63 bf 6e 00 76 '
             '05 08 ca 78 f8 62 00 62 00 72 65 00 00 07 01 77 01 0b 06 45 53 59 01 04 c6 a1 '
-            'f6 db 01 72 62 01 65 06 5a fc 21 79 77 07 81 81 c7 82 03 ff 01 01 01 01 04 45 '
-            '53 59 01 77 07 01 00 01 08 00 ff 01 01 62 1e 52 fc 69 00 00 00 00 03 df 43 5b '
-            '01 77 07 01 00 02 08 00 ff 01 01 62 1e 52 fc 69 00 00',
+            'f6 db 01 72 62 01 65 06 5a fc 21 79 77 07[81 81:c7 82 03*ff]01 01 01 01 04 45 '
+            '53 59 01 77 07[01 00:01 08 00*ff]01 01 62 1e 52 fc 69 00 00 00 00 03 df 43 5b '
+            '01 77 07[01 00:02 08 00*ff]01 01 62 1e 52 fc 69 00 00',
             'hex'
         )
 
@@ -107,8 +107,7 @@ class TestSmlBasic(TestSmlBase):
         plugin = self.plugin()
         plugin.data.add(TestSmlBasic.DEFAULT_PACKET_MISSING_END)
         values = plugin._refresh()
-        self.assertEqual(3, len(values))
-        self.assertEntry(values, '1-0:2.8.0*255', unit=30, unitname='Wh', value=29803232821505, scaler=-4)
+        self.assertEqual(2, len(values))
         self.assertEntry(values, '1-0:1.8.0*255', unit=30, unitname='Wh', value=64963419, scaler=-4)
         self.assertEntry(values, '129-129:199.130.3*255', value=b'ESY')
 
