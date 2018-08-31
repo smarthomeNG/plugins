@@ -1,4 +1,3 @@
-import common
 import unittest
 
 from plugins.sml import Sml
