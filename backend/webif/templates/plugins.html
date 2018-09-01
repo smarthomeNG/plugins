@@ -139,6 +139,7 @@
 							{% endfor %}
 							</table>
 						</div>
+
 						{% if p.metadata.get_itemdefinitionlist()|length > 0 %}
 						<div class="card-header p-1"><strong>{{ _('Plugin spezifische Item Attribute') }}:</strong></div>
 						<div class="card-body p-1">
@@ -165,6 +166,21 @@
 						</div>
 						{% endif %}
 						
+						{% if p.metadata.get_plugin_function_defstrings()|length > 0 %}
+						<div class="card-header p-1"><strong>{{ _('vom Plugin definierte Methoden') }}:</strong></div>
+						<div class="card-body p-1">
+							<table class="table mb-0">
+							{% set first = True %}
+							{% for func in p.metadata.get_plugin_function_defstrings() %}
+								<tr>
+									<td class="p-0" style="width: 50%;">{{ func }}
+									</td>
+								</tr>
+							{% endfor %}
+							</table>
+						</div>
+						{% endif %}
+
 						<div class="card-header p-1"><strong>{{ _('Plugin Metadaten') }}:</strong></div>
 						<div class="card-body p-1">
 							{% if p.metadata.get_mlstring('description') %}
