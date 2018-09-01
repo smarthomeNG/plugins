@@ -10,7 +10,6 @@ env:
 
 install:
     - pip install tox-travis "virtualenv<14.0.0"
-    - pip install --upgrade setuptools
 
 script:
     - sh .travis.sh
