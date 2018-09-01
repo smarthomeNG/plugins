@@ -81,7 +81,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.4.1"
 
     _items = {}         # item buffer for all uzsu enabled items
 
@@ -240,6 +240,7 @@ class UZSU(SmartPlugin):
             cond3 = _initialized is False
             cond4 = _initage > 0
             cond5 = isinstance(_value, float)
+            self._itpl = OrderedDict(itpl_list)
             if not cond2 and cond3 and cond4:
                 self.logger.info("{}: Looking if there was a value set after {} for item {}".format(
                     self._name, _timediff, item))
@@ -249,7 +250,6 @@ class UZSU(SmartPlugin):
                 self._set(item=item, value=_initvalue, caller='scheduler')
                 self.logger.info("{}: Updated item {} on startup with value {} from time {}".format(
                     self._name, item, _initvalue, datetime.fromtimestamp(_inittime/1000.0)))
-            self._itpl = OrderedDict(itpl_list)
             _itemtype = self._items[item]['interpolation'].get('itemtype')
             if cond2 and not REQUIRED_PACKAGE_IMPORTED:
                 self.logger.warning("{}: Interpolation is set to {} but scipy not installed. Ignoring interpolation".format(
@@ -333,13 +333,13 @@ class UZSU(SmartPlugin):
             active = entry['active']
             today = datetime.today()
             yesterday = today - timedelta(days=1)
-            weekbefore = today - timedelta(days=6)
+            weekbefore = today - timedelta(days=7)
             time = entry['time']
             if not active:
                 return None, None
             if 'date' in entry:
                 date = entry['date']
-            if 'rrule' in entry:
+            if 'rrule' in entry and entry['rrule']:
                 if 'dtstart' in entry:
                     rrule = rrulestr(entry['rrule'], dtstart=entry['dtstart'])
                 else:
@@ -381,14 +381,25 @@ class UZSU(SmartPlugin):
                 self.logger.debug("{}: Result parsing time (sun) {}: {}".format(self._name, time, next))
             else:
                 next = datetime.combine(today, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
-            if next and next.date() == today and cond_next:
+
+            cond1 = next.date() == today.date()
+            cond2 = next.date() - timedelta(days=1) == yesterday.date()
+            cond_next = next > datetime.now(self._timezone) and timescan == 'next'
+            cond_previous_today = next < datetime.now(self._timezone) and timescan == 'previous'
+            cond_previous_yesterday = next - timedelta(days=1) < datetime.now(self._timezone) and timescan == 'previous'
+            self.logger.error('next: {}, today: {}, yesterday: {}.'.format(next, today, yesterday))
+            if next and cond1 and cond_next:
                 self._itpl[next.timestamp() * 1000.0] = value
                 self.logger.debug("{}: Return next: {}, value {}".format(self._name, next, value))
                 return next, value
-            if next and next.date() == today and cond_previous:
+            if next and cond1 and cond_previous_today:
                 self._itpl[next.timestamp() * 1000.0] = value
                 self.logger.debug("{}: Return previous: {}, value {}".format(self._name, next, value))
                 return next, value
+            if next and cond2 and cond_previous_yesterday:
+                self._itpl[(next - timedelta(days=1)).timestamp() * 1000.0] = value
+                self.logger.debug("{}: Return previous: {}, value {}".format(self._name, next - timedelta(days=1), value))
+                return next - timedelta(days=1), value
         except Exception as e:
             self.logger.error("{}: Error '{}' parsing time: {}".format(self._name, time, e))
         return None, None
