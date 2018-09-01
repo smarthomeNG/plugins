@@ -81,7 +81,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.4.1"
+    PLUGIN_VERSION = "1.5.1"
 
     _items = {}         # item buffer for all uzsu enabled items
 
