@@ -387,7 +387,6 @@ class UZSU(SmartPlugin):
             cond_next = next > datetime.now(self._timezone) and timescan == 'next'
             cond_previous_today = next < datetime.now(self._timezone) and timescan == 'previous'
             cond_previous_yesterday = next - timedelta(days=1) < datetime.now(self._timezone) and timescan == 'previous'
-            self.logger.error('next: {}, today: {}, yesterday: {}.'.format(next, today, yesterday))
             if next and cond1 and cond_next:
                 self._itpl[next.timestamp() * 1000.0] = value
                 self.logger.debug("{}: Return next: {}, value {}".format(self._name, next, value))
