@@ -36,6 +36,9 @@ plugin_translations:
     'Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item {{ item_path }} (Datenbank-ID: {{ item_id }})':
         'de': 'Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item'
         'en': 'The following entries are derived from the log table with historical data for item )'
+    'Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item':
+        'de': 'Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item'
+        'en': 'The following entries are derived from the log table with historical data for item )'
     'Datenbank-ID':
         'de': 'Datenbank-ID'
         'en': 'Database ID'
