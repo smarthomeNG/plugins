@@ -143,9 +143,6 @@ class BackendItems:
                     value = float(value)
                 else:
                     value = int(value)
-            if 'dict' in item.type():
-                if type(value) is str:
-                    self.logger.warning('Item type is dict, value type is str')
             item(value, caller='Backend', source='item_change_value_html()')
 
         return
