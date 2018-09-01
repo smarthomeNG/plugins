@@ -4,7 +4,7 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Unterstützung für smartUPS Geräte der Firma APC'
-        en: ''
+        en: 'Support for smartUPS devices sold by APC'
     maintainer: cmalo
     tester: Sandman60
     state: ready
@@ -50,6 +50,9 @@ item_attributes:
         description:
             de: 'Für eine Liste gültiger Werte, "apcaccess" auf der Kommandozeile aufrufen. Dieser Befehl gibt einen Textblock zurück, der eine Liste von ``statusname : value`` Einträgen enthält'
             en: 'For a list of values for this attribute call "apcaccess" on the command line. This command will give back a text block containing a list of ``statusname : value`` entries'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions: NONE
     # Definition of function interface of the plugin
