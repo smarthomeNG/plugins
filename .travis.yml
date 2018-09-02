@@ -8,6 +8,8 @@ python:
 env:
     - REPOSITORY_ORIGIN=plugins
 
+before_install:
+    - sudo apt-get install libudev-dev
 install:
     - pip install tox-travis "virtualenv<14.0.0"
 
