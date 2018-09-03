@@ -156,12 +156,15 @@ class UZSU(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, ITEM_TAG[0]):
+            item.expand_relativepathes(ITEM_TAG[0], '', '')
             self._items[item] = item()
             try:
                 self._items[item]['interpolation']['initialized'] = False
+                item(self._items[item])
             except Exception:
                 self._items[item]['interpolation'] = {}
                 self._items[item]['interpolation']['initialized'] = False
+                item(self._items[item])
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
