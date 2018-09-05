@@ -117,11 +117,10 @@ class Database(SmartPlugin):
                     if cache is not None:
                         value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL+1])
                         last_change = self._datetime(cache[COL_ITEM_TIME])
-                        last_change_ts = self._timestamp(last_change)
                         prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id', {'id':cache[COL_ITEM_ID]}, cur=cur)
                         if value is not None and prev_change is not None:
                             item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
-                        self._buffer_insert(item, [(last_change_ts, None, value)])
+                        self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                 except Exception as e:
                     self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 cur.close()
