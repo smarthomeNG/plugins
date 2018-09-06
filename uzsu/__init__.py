@@ -96,6 +96,7 @@ class UZSU(SmartPlugin):
         self._name = self.get_fullname()
         self._timezone = Shtime.get_instance().tzinfo()
         self._sh = smarthome
+        self._uzsu_sun = None
         self.logger.info('{}: Init with timezone {}'.format(self._name, self._timezone))
         if not REQUIRED_PACKAGE_IMPORTED:
             self.logger.error("{}: Unable to import Python package 'scipy'"
@@ -109,6 +110,9 @@ class UZSU(SmartPlugin):
         """
         self.logger.debug('{}: run method called'.format(self._name))
         self.alive = True
+        self.scheduler_add('uzsu_sunupdate', self._update_all_suns, value={'caller': 'scheduler'}, cron='0 0 * *')
+        self.scheduler_trigger('uzsu_sunupdate')
+        self.logger.info('{}: Triggering sun update and scheduling for midnight'.format(self._name))
 
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
@@ -126,6 +130,24 @@ class UZSU(SmartPlugin):
         """
         self.logger.debug('{}: stop method called'.format(self._name))
         self.alive = False
+
+    def _update_all_suns(self, caller=None):
+        for item in self._items:
+            self._update_sun(item)
+
+    def _update_sun(self, item, caller=None):
+        self._uzsu_sun = self._create_sun()
+        self._items[item] = item()
+        _sunrise = self._uzsu_sun.rise()
+        _sunset = self._uzsu_sun.set()
+        if _sunrise.tzinfo == tzutc():
+            _sunrise = _sunrise.astimezone(self._timezone)
+        if _sunset.tzinfo == tzutc():
+            _sunset = _sunset.astimezone(self._timezone)
+        self._items[item]['sunrise'] = '{:02}:{:02}'.format(_sunrise.hour, _sunrise.minute)
+        self._items[item]['sunset'] = '{:02}:{:02}'.format(_sunset.hour, _sunset.minute)
+        self.logger.debug('{}: Updating sun entries for item {}, called by {}. sunrise: {}, sunset: {}'.format(
+            self._name, item, caller, self._items[item]['sunrise'], self._items[item]['sunset']))
 
     def _add_type(self, item):
         try:
@@ -165,6 +187,7 @@ class UZSU(SmartPlugin):
                 self._items[item]['interpolation'] = {}
                 self._items[item]['interpolation']['initialized'] = False
                 item(self._items[item])
+            self.logger.debug('{}: Dict for item {} is: {}'.format(self._name, item, self._items[item]))
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -188,11 +211,15 @@ class UZSU(SmartPlugin):
         self.logger.debug('{}: called by {}, changed by: {}'.format(self._name, caller, item.changed_by()))
         _next = None
         _value = None
+        self._update_sun(item, caller='schedule')
+
+        item(self._items[item])
         if not self._items[item]['interpolation'].get('itemtype'):
             self.logger.error("{}: item '{}' to be set by uzsu does not exist.".format(
                 self._name, self.get_iattr_value(item.conf, ITEM_TAG[0])))
         elif 'active' in self._items[item]:
             if self._items[item]['active']:
+
                 self._itpl.clear()
                 for entry in self._items[item]['list']:
                     next, value = self._get_time(entry, 'next')
@@ -406,6 +433,29 @@ class UZSU(SmartPlugin):
             self.logger.error("{}: Error '{}' parsing time: {}".format(self._name, time, e))
         return None, None
 
+    def _create_sun(self):
+        # checking preconditions from configuration:
+        uzsu_sun = None
+        if not self._sh.sun:  # no sun object created
+            self.logger.error("{}: No latitude/longitude specified. "
+                              "Not possible to create sun object.".format(self._name))
+
+        # create an own sun object:
+        if not self._uzsu_sun:
+            try:
+                longitude = self._sh.sun._obs.long
+                latitude = self._sh.sun._obs.lat
+                elevation = self._sh.sun._obs.elev
+                uzsu_sun = lib.orb.Orb('sun', longitude, latitude, elevation)
+                self.logger.debug("{}: Created a new sun object with latitude={}, longitude={}, elevation={}".format(
+                    self._name, latitude, longitude, elevation))
+            except Exception as e:
+                self.logger.error("{}: Error '{}' creating a new sun object. You could not "
+                                  "use sunrise/sunset as UZSU entry.".format(self._name, e))
+        else:
+            uzsu_sun = self._uzsu_sun
+        return uzsu_sun
+
     def _sun(self, dt, tstr):
         """
         parses a given string with a time range to determine it's timely boundaries and
@@ -415,23 +465,8 @@ class UZSU(SmartPlugin):
         :param: tstr contains a string with '[H:M<](sunrise|sunset)[+|-][offset][<H:M]' like e.g. '6:00<sunrise<8:00'
         :return: the calculated date and time in timezone aware format
         """
-        # checking preconditions from configuration:
-        if not self._sh.sun:  # no sun object created
-            self.logger.error("{}: No latitude/longitude specified. "
-                              "You could not use sunrise/sunset as UZSU entry.".format(self._name))
-            return
-
-        # create an own sun object:
-        try:
-            longitude = self._sh.sun._obs.long
-            latitude = self._sh.sun._obs.lat
-            elevation = self._sh.sun._obs.elev
-            uzsu_sun = lib.orb.Orb('sun', longitude, latitude, elevation)
-            self.logger.debug("{}: Created a new sun object with latitude={}, longitude={}, elevation={}".format(
-                self._name, latitude, longitude, elevation))
-        except Exception as e:
-            self.logger.error("{}: Error '{}' creating a new sun object. You could not "
-                              "use sunrise/sunset as UZSU entry.".format(self._name, e))
+        uzsu_sun = self._create_sun()
+        if not uzsu_sun:
             return
 
         self.logger.debug("{}: Given param dt={}, tz={}".format(self._name, dt, dt.tzinfo))
