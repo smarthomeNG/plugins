@@ -47,12 +47,13 @@ class Raspi_GPIO(SmartPlugin):
             self._itemsdict = {}
             self._initdict = {}
             self._mode = self.get_parameter_value('mode').upper()
+            self._bouncetime = self.get_parameter_value('bouncetime')
             GPIO.setwarnings(False)
             if self._mode == "BCM":
                 GPIO.setmode(GPIO.BCM)
             else:
                 GPIO.setmode(GPIO.BOARD)
-            self.logger.debug("{}: Mode set to {}".format(self._name, self._mode))
+            self.logger.debug("{}: Mode set to {}. Bouncetime: {}".format(self._name, self._mode, self._bouncetime))
             self.alive = False
             self._lock = threading.Lock()
         except Exception:
@@ -80,7 +81,7 @@ class Raspi_GPIO(SmartPlugin):
                 except Exception:
                     self._initdict[sensor] = False
                 item(value)
-                GPIO.add_event_detect(sensor, GPIO.BOTH, callback=self.get_sensors)
+                GPIO.add_event_detect(sensor, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
                 self.logger.info("{}: Adding Event Detection for Pin {}. Initial value is {}".format(
                     self._name, sensor, value))
 
@@ -104,7 +105,7 @@ class Raspi_GPIO(SmartPlugin):
             self._itemsdict[out_pin] = item
             value = GPIO.input(out_pin)
             item(value)
-            GPIO.add_event_detect(out_pin, GPIO.BOTH, callback=self.get_sensors)
+            GPIO.add_event_detect(out_pin, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
             self.logger.info("{}: Adding Event Detection for Output Pin {}. Initial value is {}".format(
                 self._name, out_pin, value))
             GPIO.setup(out_pin, GPIO.OUT)

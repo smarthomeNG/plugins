@@ -32,5 +32,22 @@ parameters:
             de: 'BOARD oder BCM, abhängig davon, nach welcher Methode die Pins zugewiesen werden sollen.'
             en: 'BOARD or BCM, depending on how to assign the pins.'
 
+    bouncetime:
+        type: int
+        default: 300
+        mandatory: False
+        description:
+            de: 'Prellzeit in ms, um Änderungen innerhalb kurzer Zeit zu verhindern.'
+            en: 'bouncetime in ms to avoid multiple events in a short time period.'
 item_attributes:
     # Definition of item attributes defined by this plugin
+    gpio_in:
+        type: int
+        description:
+            de: 'Pin Nummer für den GPIO Eingang. Die Nummer hängt vom Modus in den Plugin-Paramtern ab!'
+            en: 'Pin number of the GPIO input. Depends on the mode you have set in the plugin parameters!'
+    gpio_out:
+        type: int
+        description:
+            de: 'Pin Nummer für den GPIO Ausgang. Die Nummer hängt vom Modus in den Plugin-Paramtern ab! Der Ausgang wird zum Pluginstart automatisch aktualisiert, sollte also nicht im Item als gpio_in und gpio_out definiert werden.'
+            en: 'Pin number of the GPIO output. Depends on the mode you have set in the plugin parameters! Do not set gpio_in and gpio_out for the same item as the output item will get initialized at plugin start automatically.'            
