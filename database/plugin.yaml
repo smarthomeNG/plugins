@@ -153,6 +153,7 @@ plugin_functions:
                 type: int
                 description:
                     de: "Zeitstempel der Änderung"
+                    en: "Time of change"
             cur:
                 type: foo
                 description:
@@ -193,12 +194,12 @@ plugin_functions:
                 type: int
                 description:
                     de: "Zeitstempel der Änderung"
+                    en: "Time of change"
             cur:
                 type: foo
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
-                    en: "Timestamp of change"    deleteLog:
     readLog:
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID auslesen'
@@ -354,6 +355,7 @@ plugin_functions:
                 type: int
                 description:
                     de: "Zeitstempel der Änderung"
+                    en: "Time of change"
             cur:
                 type: foo
                 description:
