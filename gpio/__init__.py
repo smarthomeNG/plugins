@@ -69,7 +69,7 @@ class Raspi_GPIO(SmartPlugin):
             self.logger.warning("{}: Problem reading sensor: {}".format(self._name, e))
 
     def run(self):
-        self.logger.debug("{}: run method called")
+        self.logger.debug("{}: run method called".format(self._name))
         self.alive = True
         for item in self._items:
             if self.has_iattr(item.conf, 'gpio_in'):
@@ -79,7 +79,7 @@ class Raspi_GPIO(SmartPlugin):
                     self._initdict[sensor] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                 except Exception:
                     self._initdict[sensor] = False
-                item(value, 'GPIO', 'gpio_init')
+                item(value)
                 GPIO.add_event_detect(sensor, GPIO.BOTH, callback=self.get_sensors)
                 self.logger.info("{}: Adding Event Detection for Pin {}. Initial value is {}".format(
                     self._name, sensor, value))
@@ -103,7 +103,7 @@ class Raspi_GPIO(SmartPlugin):
             GPIO.setup(out_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             self._itemsdict[out_pin] = item
             value = GPIO.input(out_pin)
-            item(value, 'GPIO', 'gpio_init')
+            item(value)
             GPIO.add_event_detect(out_pin, GPIO.BOTH, callback=self.get_sensors)
             self.logger.info("{}: Adding Event Detection for Output Pin {}. Initial value is {}".format(
                 self._name, out_pin, value))
