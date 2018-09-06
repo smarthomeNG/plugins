@@ -7,14 +7,16 @@ plugin:
         en: 'Controlling AV devices via TCP/IP and RS232'
     maintainer: onkelandy
     tester: Foxi352                     # Who tests this plugin?
+    state: ready
     keywords: av denon pioneer epson oppo player amp receiver projector rs232 telnet tcpip
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc
 
-    version: 1.3.4                 # Plugin version
+    version: 1.3.6                # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
+    restartable: unknown
     classname: AVDevice            # class containing the plugin
 
 parameters:
@@ -85,7 +87,7 @@ parameters:
 
     forcebuffer:
         type: str
-        default: 'GEH01020,GEH04022,GEH05024'
+        default: 'GEH01020,GEH04022,GEH05024,R'
         description:
             de: "Wenn aus irgendeinem Grund die Antworten nicht gepuffert werden sollen, können hier dennoch Antworten definiert werden, die sehr wohl gepuffert werden. Dies ist besonders wichtig bei Informationen, die schnell hintereinander gesendet werden bzw. wechseln wie Künstler, Musiktitel, Radiostation, etc. Der Defaultwert ist für Pioneer Receiver empfohlen."
             en: "If for whatever reason you don't want to buffer the response from your device you can still define specific responses that should get buffered. This is important for responses that change or get sent very quickly. Artist, title, radio station, etc. are examples that should be put here. The default value is recommended for Pioneer receivers."
@@ -180,6 +182,13 @@ parameters:
         description:
             de: "Automatischer Versuch, sich mit dem Gerät zu verbinden, wenn keine Rückmeldung kommt oder die Verbindung verloren wurde. Dies sollte nicht notwendig sein, da das Plugin ohnehin bei jedem neuen Senden eines Befehls einen Verbindungsaufbauversuch startet."
             en: "Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command."
+
+    statusquery:
+        type: bool
+        default: True
+        description:
+            de: "Verbindet sich das Plugin, werden die Werte automatisch abgefragt, auch wenn kein Depend=Init im Item angegeben ist. Sollen nur Items abgefragt werden, bei denen das depend-Attribut auf init gesetzt ist, sollte dieser Wert auf False gestellt werden."
+            en: "As soon as the plugin connects to the device the values get queried automatically even if the Depend=Init is not set in the items. If you want to query only those items that are set explicitly change this value to False."
 
 item_attributes:
     avdevice_zone0_depend:
@@ -325,3 +334,10 @@ item_attributes:
         description:
             de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
             en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

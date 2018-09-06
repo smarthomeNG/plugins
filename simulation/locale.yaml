@@ -6,6 +6,12 @@ plugin_translations:
         en: 'Simulation Plugin Items'
     'startrecord Scheduler': {'de': 'startrecord Scheduler', 'en': 'startrecord Scheduler'}
     'simulate Scheduler': {'de': 'simulate Scheduler', 'en': 'simulate Scheduler'}
+    'State': {'de': 'Status', 'en': 'Stop'}
+    'Stop': {'de': 'Stop', 'en': 'Stop'}
+    'Standby': {'de': 'Standby', 'en': 'Standby'}
+    'Record': {'de': 'Record', 'en': 'Record'}
+    'Play': {'de': 'Play', 'en': 'Play'}
+    'Days': {'de': 'Tage', 'en': 'Days'}
     'Last Day':
         de: 'Letzter Tag'
         en: 'Last Day'

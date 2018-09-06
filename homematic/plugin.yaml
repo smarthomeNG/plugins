@@ -6,6 +6,8 @@ plugin:
         de: 'Ansteuerung von HomeMatic Komponenten über eine HomeMatic CCU2 Zentrale. Es werden HomeMatic und HomeMaticIP Geräte unterstützt.'
         en: 'Control HomeMatic devices through a HomeMatic CCU2 (used as gateway). HomeMatic and HomeMaticIP devices are supported.'
     maintainer: msinn             # Who maintains this plugin?
+    tester: msinn
+    state: qa-passed
 #    tester: efgh                   # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
@@ -16,6 +18,7 @@ plugin:
     sh_minversion: 1.4d            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
+    restartable: unknown
     classname: Homematic            # class containing the plugin
 
 parameters:
@@ -88,3 +91,6 @@ item_attributes:
             en: 'Optional: Channel of the devicemon which the function shall be used.
                  Has only to be specified, if the requested function is implemented more than once on the device.'
         
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

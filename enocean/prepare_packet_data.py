@@ -62,7 +62,7 @@ class Prepare_Packet_Data():
             id_offset = 0
         # start prepare data           
         rorg, payload, optional = getattr(self, '_prepare_data_for_tx_eep_' + tx_eep)(item, tx_eep)
-        self.logger.info('enocean-PrepareData: {} returns [{:#04x}], [{}], [{}]'.format(tx_eep, rorg, ', '.join('{:#04x}'.format(x) for x in payload), ', '.join('{:#04x}'.format(x) for x in optional)))
+        #self.logger.info('enocean-PrepareData: {} returns [{:#04x}], [{}], [{}]'.format(tx_eep, rorg, ', '.join('{:#04x}'.format(x) for x in payload), ', '.join('{:#04x}'.format(x) for x in optional)))
         return id_offset, rorg, payload, optional
 
 

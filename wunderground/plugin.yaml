@@ -6,7 +6,8 @@ plugin:
         de: 'Abfrage der Daten des Wetterdienstes Wunderground.com'
         en: 'Get weather data from wunderground.com'
     maintainer: msinn
-#    tester:                        # Who tests this plugin?
+    tester: msinn                       # Who tests this plugin?
+    state: 'qa-passed'
     keywords: weather
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.4c             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Wunderground        # class containing the plugin
 
 
@@ -99,3 +101,64 @@ item_attributes:
         description:
             de: 'Veraltet. Bitte stattdessen wug_matchstring verwenden.'
             en: 'Deprecated. Use wug_matchstring instead.'
+
+structs:
+    wug_wetter:
+        ort:
+            type: str
+            wug_matchstring: current_observation/display_location/city
+            log_change: q21-items
+
+        ort_wetterstation:
+            type: str
+            wug_matchstring: current_observation/observation_location/city
+            log_change: q21-items
+            value: unbekannt
+
+        lokale_zeit:
+            type: str
+            wug_matchstring: current_observation/local_time_rfc822
+            log_change: q21-items
+
+        beobachtungszeitpunkt:
+            type: str
+            wug_matchstring: current_observation/observation_time_rfc822
+            log_change: q21-items
+
+        beobachtungszeitpunkt_datetime:
+            type: num
+            wug_matchstring: current_observation/observation_epoch
+            log_change: q21-items
+
+        wetter:
+            type: str
+            wug_matchstring: current_observation/weather
+            log_change: q21-items
+
+            icon:
+                type: str
+                wug_matchstring: current_observation/icon
+                log_change: q21-items
+
+        temperatur:
+            type: num
+            value: -9999
+            wug_matchstring: current_observation/temp_c
+            log_change: q21-items
+
+        temperatur_gefuehlt:
+            type: num
+            value: -9999
+            wug_matchstring: current_observation/feelslike_c
+            log_change: q21-items
+
+        rel_luftfeuchtigkeit:
+            type: num
+            value: -9999
+            wug_matchstring: current_observation/relative_humidity
+            wug_datatype: percent
+            log_change: q21-items
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

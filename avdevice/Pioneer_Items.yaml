@@ -1,218 +1,305 @@
 %YAML 1.1
 ---
-  Pioneer:
-      type: foo
+Pioneer:
+    type: foo
 
-      Update:
-          type: bool
-          visu_acl: rw
-          avdevice_zone0: statusupdate
-          enforce_updates: 'yes'
+    Reload:
+        visu_acl: rw
+        type: bool
+        cache: 'false'
+        enforce_updates: 'yes'
+        avdevice@pioneer: reload
 
-      Speakers:
-          type: num
-          visu_acl: rw
-          avdevice_zone1: speakers
+    Update:
+        type: bool
+        visu_acl: rw
+        avdevice_zone0@pioneer: statusupdate
+        enforce_updates: 'yes'
 
-      SpeakerA:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1_speakers: 1
+        Running:
+            type: bool
+            visu_acl: ro
+            enforce_updates: 'yes'
+            value: 0
 
-      SpeakerB:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1_speakers: 2
+    Speakers:
+        type: num
+        visu_acl: rw
+        avdevice_zone1@pioneer: speakers
+        avdevice_zone1_depend@pioneer: power
 
-      Power:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1: power
+    SpeakerA:
+        knx_init: 1/4/2
+        knx_dpt: 1
+        type: bool
+        visu_acl: rw
+        avdevice_zone1_speakers@pioneer: 1
+        avdevice_zone1_depend@pioneer: power
+        name: Musik Bad
+        influxdb: 'yes'
+        database@nas: 'yes'
 
-      Mute:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1: mute
+    SpeakerB:
+        knx_init: 1/4/1
+        knx_dpt: 1
+        type: bool
+        visu_acl: rw
+        avdevice_zone1_speakers@pioneer: 2
+        avdevice_zone1_depend@pioneer: power
+        name: Musik Sauna
+        influxdb: 'yes'
+        database@nas: 'yes'
 
-      Volume:
-          type: num
-          visu_acl: rw
-          avdevice_zone1: volume
-          cache: 'True'
+    Power:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1@pioneer: power
+        avdevice_zone1_depend@pioneer: init
+        influxdb: 'yes'
+        database@nas: 'yes'
 
-          Fading:
-              type: num
+    Mute:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1@pioneer: mute
+        avdevice_zone1_depend@pioneer: power
 
-      VolumeUp:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1: volume+
-          enforce_updates: 'yes'
+    Volume:
+        type: num
+        visu_acl: rw
+        avdevice_zone1@pioneer: volume
+        avdevice_zone1_depend@pioneer: power
+        cache: 'True'
 
-      VolumeDown:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1: volume-
-          enforce_updates: 'yes'
+        Fading:
+            type: num
 
-      VolumeLow:
-          type: bool
-          enforce_updates: 'yes'
-          visu: rw
-          avdevice_zone1: volumelow
+    VolumeUp:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1@pioneer: volume+
+        enforce_updates: 'yes'
+        knx_listen: 3/4/8
+        knx_dpt: 1
+        avdevice_zone1_depend@pioneer:
+          - power, a
+          - volume < 160, b
 
-      VolumeHigh:
-          type: bool
-          enforce_updates: 'yes'
-          visu: rw
-          avdevice_zone1: volumehigh
+    VolumeDown:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1@pioneer: volume-
+        enforce_updates: 'yes'
+        knx_listen: 3/4/7
+        knx_dpt: 1
+        avdevice_zone1_depend@pioneer:
+          - volume > 10, b
+          - power, a
 
-      Source:
-          type: num
-          visu_acl: rw
-          avdevice_zone1: input
+    VolumeLow:
+        type: bool
+        enforce_updates: 'yes'
+        visu: rw
+        knx_listen: 3/4/9
+        knx_dpt: 1
+        avdevice_zone1@pioneer: volumelow
+        avdevice_zone1_depend@pioneer: power
 
-          Music:
-              type: bool
-              visu_acl: ro
-              eval: 1 if (sh.Pioneer.Source() == 13 and sh.Pioneer.Power()) else 0
-              eval_trigger:
-                - Pioneer.Source
-                - Pioneer.Power
-              enforce_updates: 'yes'
+    VolumeHigh:
+        type: bool
+        enforce_updates: 'yes'
+        visu: rw
+        knx_listen: 3/4/10
+        knx_dpt: 1
+        avdevice_zone1@pioneer: volumehigh
+        avdevice_zone1_depend@pioneer: power
 
-      Mode:
-          type: num
-          visu_acl: rw
-          avdevice_zone1: mode
+    Source:
+        type: foo
+        visu_acl: rw
+        avdevice_zone1@pioneer: input
+        avdevice_zone1_depend@pioneer: power
 
-      Playingmode:
-          type: foo
-          visu_acl: ro
-          avdevice_zone1: playingmode
+        Musik:
+            type: bool
+            visu_acl: ro
+            eval: 1 if (sh.Musik.KG.Pioneer.Source() == 13 and sh.Musik.KG.Pioneer.Power()) else 0
+            eval_trigger:
+              - Musik.KG.Pioneer.Source
+              - Musik.KG.Pioneer.Power
+            enforce_updates: 'yes'
 
-      Bass:
-          type: num
-          visu_acl: rw
-          avdevice_zone1: bass
+    Mode:
+        type: foo
+        visu_acl: rw
+        avdevice_zone1@pioneer: mode
+        avdevice_zone1_depend@pioneer: power = True
 
-      BassUp:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1: bass+
-          enforce_updates: 'yes'
+    Playingmode:
+        type: foo
+        visu_acl: ro
+        avdevice_zone1@pioneer: playingmode
+        avdevice_zone1_depend@pioneer: power
 
-      BassDown:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1: bass-
-          enforce_updates: 'yes'
+    Bass:
+        type: num
+        visu_acl: rw
+        avdevice_zone1@pioneer: bass
+        avdevice_zone1_depend@pioneer: tone
 
-      Dialog:
-          type: num
-          visu_acl: rw
-          avdevice_zone1: dialog
+    BassUp:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1@pioneer: bass+
+        enforce_updates: 'yes'
+        avdevice_zone1_depend@pioneer: tone
 
-      Trebble:
-          type: num
-          visu_acl: rw
-          avdevice_zone1: trebble
+    BassDown:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1@pioneer: bass-
+        enforce_updates: 'yes'
+        avdevice_zone1_depend@pioneer: tone
 
-      TrebbleUp:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1: trebble+
-          enforce_updates: 'yes'
+    Dialog:
+        type: num
+        visu_acl: rw
+        avdevice_zone1@pioneer: dialog
+        avdevice_zone1_depend@pioneer: power
 
-      TrebbleDown:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1: trebble-
-          enforce_updates: 'yes'
+    Trebble:
+        type: num
+        visu_acl: rw
+        avdevice_zone1@pioneer: trebble
+        avdevice_zone1_depend@pioneer: tone
 
-      Tone:
-          type: bool
-          visu_acl: rw
-          avdevice_zone1: tone
+    TrebbleUp:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1@pioneer: trebble+
+        enforce_updates: 'yes'
+        avdevice_zone1_depend@pioneer: tone
 
-      Display:
-          type: str
-          visu_acl: ro
-          avdevice_zone0: display
+    TrebbleDown:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1@pioneer: trebble-
+        enforce_updates: 'yes'
+        avdevice_zone1_depend@pioneer: tone
 
-      HDMI:
-          type: num
-          visu_acl: ro
-          avdevice_zone1: HDMI
+    Tone:
+        type: bool
+        visu_acl: rw
+        avdevice_zone1@pioneer: tone
+        avdevice_zone1_depend@pioneer: power
 
-      Title:
-          type: str
-          visu_acl: ro
-          avdevice_zone0: title
+    Display:
+        type: str
+        visu_acl: ro
+        avdevice_zone0@pioneer: display
+        avdevice_zone1_depend@pioneer: power
+        avdevice_zone2_depend@pioneer: power
 
-      Station:
-          type: str
-          visu_acl: ro
-          avdevice_zone0: station
+    HDMI:
+        type: num
+        visu_acl: ro
+        avdevice_zone1@pioneer: HDMI
+        avdevice_zone1_depend@pioneer: power
+        avdevice_zone1_depend@pioneer: power
 
-      Genre:
-          type: str
-          visu_acl: ro
-          avdevice_zone0: genre
+    Title:
+        type: str
+        visu_acl: ro
+        avdevice_zone0@pioneer: title
+        avdevice_zone1_depend@pioneer:
+          - power, a
+          - input = 26, b
 
-      Power2:
-          type: bool
-          visu_acl: rw
-          avdevice_zone2: power
+    Station:
+        type: str
+        visu_acl: ro
+        avdevice_zone0@pioneer: station
+        avdevice_zone1_depend@pioneer:
+          - power, a
+          - input = 26, b
 
-      Source2:
-          type: num
-          visu_acl: rw
-          avdevice_zone2: input
+    Genre:
+        type: str
+        visu_acl: ro
+        avdevice_zone0@pioneer: genre
+        avdevice_zone1_depend@pioneer:
+          - power, a
+          - input = 26, b
 
-          Musik:
-              type: bool
-              visu_acl: ro
-              eval: 1 if (sh.Pioneer.Source2() == 13 and sh.Pioneer.Power2()) else 0
-              eval_trigger:
-                - Musik.Source2
-                - Musik.Power2
-              enforce_updates: 'no'
+    Power2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2@pioneer: power
+        avdevice_zone2_depend@pioneer: init
 
-      Mute2:
-          type: bool
-          visu_acl: rw
-          avdevice_zone2: mute
+    Source2:
+        type: foo
+        visu_acl: rw
+        avdevice_zone2@pioneer: input
+        avdevice_zone2_depend@pioneer: power
 
-      Volume2:
-          type: num
-          visu_acl: rw
-          avdevice_zone2: volume
-          cache: 'True'
+        Musik:
+            type: bool
+            visu_acl: ro
+            eval: 1 if (sh.Musik.KG.Pioneer.Source2() == 13 and sh.Musik.KG.Pioneer.Power2()) else 0
+            eval_trigger:
+              - Musik.KG.Pioneer.Source2
+              - Musik.KG.Pioneer.Power2
+            enforce_updates: 'no'
 
-          Fading:
-              type: num
+    Mute2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2@pioneer: mute
+        avdevice_zone2_depend@pioneer: power
 
-      VolumeUp2:
-          type: bool
-          visu_acl: rw
-          avdevice_zone2: volume+
-          enforce_updates: 'yes'
+    Volume2:
+        type: num
+        visu_acl: rw
+        avdevice_zone2@pioneer: volume
+        cache: 'True'
+        avdevice_zone2_depend@pioneer: power
 
-      VolumeDown2:
-          type: bool
-          visu_acl: rw
-          avdevice_zone2: volume-
-          enforce_updates: 'yes'
+        Fading:
+            type: num
 
-      VolumeHigh2:
-          type: num
-          visu_acl: rw
-          avdevice_zone2: volumehigh
-          enforce_updates: 'yes'
+    VolumeUp2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2@pioneer: volume+
+        enforce_updates: 'yes'
+        knx_listen: 3/4/15
+        knx_dpt: 1
+        avdevice_zone2_depend@pioneer: power
 
-      VolumeLow2:
-          type: num
-          visu_acl: rw
-          avdevice_zone2: volumelow
-          enforce_updates: 'yes'
+    VolumeDown2:
+        type: bool
+        visu_acl: rw
+        avdevice_zone2@pioneer: volume-
+        enforce_updates: 'yes'
+        knx_listen: 3/4/14
+        knx_dpt: 1
+        avdevice_zone2_depend@pioneer: power
+
+    VolumeHigh2:
+        type: num
+        visu_acl: rw
+        avdevice_zone2@pioneer: volumehigh
+        enforce_updates: 'yes'
+        knx_listen: 3/4/17
+        knx_dpt: 1
+        avdevice_zone2_depend@pioneer: power
+
+    VolumeLow2:
+        type: num
+        visu_acl: rw
+        avdevice_zone2@pioneer: volumelow
+        enforce_updates: 'yes'
+        knx_listen: 3/4/16
+        knx_dpt: 1
+        avdevice_zone2_depend@pioneer: power

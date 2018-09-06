@@ -1,7 +1,5 @@
 # MVG Live
 
-Version 0.1
-
 ## Requirements
 This plugin requires lib PyMVGLive. You can install this lib with:
 

@@ -7,6 +7,7 @@ plugin:
         en: 'Support for a websocket protocol (for smartVISU, etc.)'
     maintainer: msinn
     tester: psilo909
+    state: qa-passed
 #    keywords: iot xyz
     documentation: https://github.com/smarthomeNG/smarthome/wiki/Visu_Unterstuetzung        # url of documentation (wiki) page
 
@@ -14,6 +15,7 @@ plugin:
     sh_minversion: 1.4c            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: WebSocket           # class containing the plugin
 
 parameters:
@@ -50,16 +52,20 @@ parameters:
           - true
           - yes
           - no
+        valid_list_description:
+            de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff', 'Lesen/Schreiben', 'Lesen/Schreiben', 'Kein Zugriff']
+            en: ['Read/Write', 'Read Only', 'Deny access', 'Read/Write', 'Read/Write', 'Deny access']
         description:
-            de: 'Erlaube den Zugriff über Websocket Protokoll (rw=Lesen/Schreiben, ro=Nur Lesen, deny=Kein Zugriff) - Voreinstellung für alle Items'
-            en: 'Allow access through wbsocket protocol (rw=Read/Write, ro=Read Only, deny=Deny access) - Default for all items'
+            de: 'Steuert den Zugriff über Websocket Protokoll - Voreinstellung für alle Items'
+            en: 'Control access through wbsocket protocol - Default for all items'
     
     wsproto:
         type: int
         default: 4
-        valid_list:
-          - 3
-          - 4
+        valid_list: [3, 4]
+        valid_list_description:
+            de: ['Version 3', 'Version 4']
+            en: ['version 3', 'version 4']
         description:
             de: 'Verwendete Version des Websocket Protokolls'
             en: 'Used version of the websocket protocol'
@@ -83,7 +89,46 @@ item_attributes:
           - true
           - yes
           - no
+        valid_list_description:
+            de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff', 'Lesen/Schreiben', 'Lesen/Schreiben', 'Kein Zugriff']
+            en: ['Read/Write', 'Read Only', 'Deny access', 'Read/Write', 'Read/Write', 'Deny access']
         description:
-            de: 'Erlaube den Zugriff auf das Item über Websocket Protokoll (rw=Lesen/Schreiben, ro=Nur Lesen, deny=Kein Zugriff)'
-            en: 'Allow access to the item through websocket protocol (rw=Read/Write, ro=Read Only, deny=Deny access)'
+            de: 'Steuert den Zugriff auf das Item über Websocket Protokoll'
+            en: 'Control access to this item through wbsocket protocol'
+
+logic_parameters:
+    # Definition of item attributes defined by this plugin
+    visu_acl:
+        type: bool
+        default: False
+        valid_list:
+          - True
+          - False
+        valid_list_description:
+            de: ['Logik kann durch smartVISU getriggert werden', 'Logik kann durch smartVISU getriggert werden']
+            en: ['Logic can be triggered by smartVISU', 'Logic cannot be triggered by smartVISU']
+        description:
+            de: 'Dieses Attribut kann für jede Logik in ../etc/logic.yaml angegeben werden.'
+            en: 'This attribute can be added to every logic in ../etc/logic.yaml.'
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    url:
+        type: void
+        description:
+            de: "Diese Funktion weist smartVISU Clients an, auf die angegebene Url (Visu Seite) zu wechseln. Die Funktion funktioniert mit smartVISU v2.9 und später. Für smartVISU v2.8 muss ein modifiziertes Treiber io_smarthome.js verwendet werden - Beispiel: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+            en: "This function instructs the smartVISU clients to change to the specified url (visu page). This function works with smartVISU v2.9 and up, for smartVISU v2.8 a modified driver io_smarthome.js is needed - Example: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+        parameters:
+            url:
+                type: str
+                description:
+                    de: "Die URL zu der smartVISU wechseln soll"
+                    en: "url to which smartVISU should change"
+            clientip:
+                type: str
+                default: ''
+                description:
+                    de: "Falls angegeben, werden nur Clients (Browser) die auf dem Host mit der angegebenen IP Adresse laufen angewiesen die Seite zu wechseln. "
+                    en: "If specified, only clients (browsers) running on the host with the specified ip address are instructed to change the page."
 

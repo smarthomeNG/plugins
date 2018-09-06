@@ -24,16 +24,17 @@
 #########################################################################
 
 import logging
-
-logger = logging.getLogger()
-
 import sleekxmpp
 
-logging.basicConfig(level=logging.DEBUG)
+from lib.model.smartplugin import *
 
+class XMPP(SmartPlugin):
 
-class XMPP:
+    PLUGIN_VERSION = "1.4.0"
+    ALLOW_MULTIINSTANCE = False
+
     def __init__(self, smarthome, jid, password, logic='XMPP'):
+        self.logger = logging.getLogger(__name__)
         self.xmpp = sleekxmpp.ClientXMPP(jid, password)
         self.xmpp.add_event_handler("session_start", self.handleXMPPConnected)
         self.xmpp.add_event_handler("message", self.handleIncomingMessage)
@@ -48,7 +49,7 @@ class XMPP:
     def stop(self):
         self._run = False
         self.alive = False
-        logger.info("Shutting Down XMPP Client")
+        self.logger.info("Shutting Down XMPP Client")
         self.xmpp.disconnect(wait=False)
 
     def parse_item(self, item):
@@ -61,7 +62,7 @@ class XMPP:
         try:
             self.send(to, msgsend, mt='chat')
         except Exception as e:
-            logger.error("XMPP: Could not send message {} to {}: {}".format(msgsend, to, e))
+            self.logger.error("XMPP: Could not send message {} to {}: {}".format(msgsend, to, e))
         finally:
             try:
                 pass
@@ -99,7 +100,7 @@ class XMPP:
                  msgsend->mbody = body of the message eg 'Hello world'
                  mt->mtype = message type, could be 'chat' or 'groupchat'
         """
-        logger.info("Sending message via XMPP. To: {0}\t Message: {1}".format(to, msgsend))
+        self.logger.info("Sending message via XMPP. To: {0}\t Message: {1}".format(to, msgsend))
         self.xmpp.send_message(mto=to, mbody=str(msgsend), mtype=mt)
 
 

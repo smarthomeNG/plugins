@@ -4,22 +4,65 @@ plugin:
     type: protocol                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Unterstützung des Extensible Messaging and Presence Protocol (XMPP). Unterstützt z.Zt. nur das Senden von Nachrichten'
-        en: ''
+        en: 'Support for the Extensible Messaging and Presence Protocol (XMPP). Currently only message sending supported'
     maintainer: '? (Skender Haxhimolla)'
-#    tester: efgh                   # Who tests this plugin?
+    tester: ohinckel                   # Who tests this plugin?
+    state: ready
 #    keywords: kwd1 kwd2            # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:
-#    version: 1.3.3                 # Plugin version
-#    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.3.3                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    multi_instance: False
+    multi_instance: False
+    restartable: unknown
     classname: XMPP                # class containing the plugin
 
-#parameters:
+parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+    jid:
+        type: str
+        mandatory: True
+        description:
+            de: 'Gibt den Benutzernamen / JID des zu nutzenden Accounts an'
+            en: 'Specifies the username / JID of the account to use'
+    password:
+        type: str
+        mandatory: True
+        hide: True
+        description:
+            de: 'Gibt das Passwort für den zu nutzenden Account an'
+            en: 'Specifies the password of the account to use'
     
-#item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
     
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+    send:
+        description:
+            de: 'Eine Messgae via xmpp senden'
+            en: 'Send a message via xmpp'
+        parameter:
+            to:
+                type: str
+                description:
+                    de: "An wen, z.B. 'skender@haxhimolla.im'"
+                    en: "To whom e.g. 'skender@haxhimolla.im'"
+            msgsend:
+                type: str
+                description:
+                    de: "Text der Message, z.B. 'Hello world'"
+                    en: "body of the message e.g. 'Hello world'"
+            mt:
+                type: str
+                default: 'chat'
+                valid_list: ['chat', 'groupchat']
+                description:
+                    de: "Message Typ, kann 'chat' oder 'groupchat' sein"
+                    en: "message type, could be 'chat' or 'groupchat'"
+

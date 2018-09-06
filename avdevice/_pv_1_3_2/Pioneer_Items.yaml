@@ -1,0 +1,218 @@
+%YAML 1.1
+---
+  Pioneer:
+      type: foo
+
+      Update:
+          type: bool
+          visu_acl: rw
+          avdevice_zone0: statusupdate
+          enforce_updates: 'yes'
+
+      Speakers:
+          type: num
+          visu_acl: rw
+          avdevice_zone1: speakers
+
+      SpeakerA:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1_speakers: 1
+
+      SpeakerB:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1_speakers: 2
+
+      Power:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: power
+
+      Mute:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: mute
+
+      Volume:
+          type: num
+          visu_acl: rw
+          avdevice_zone1: volume
+          cache: 'True'
+
+          Fading:
+              type: num
+
+      VolumeUp:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: volume+
+          enforce_updates: 'yes'
+
+      VolumeDown:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: volume-
+          enforce_updates: 'yes'
+
+      VolumeLow:
+          type: bool
+          enforce_updates: 'yes'
+          visu: rw
+          avdevice_zone1: volumelow
+
+      VolumeHigh:
+          type: bool
+          enforce_updates: 'yes'
+          visu: rw
+          avdevice_zone1: volumehigh
+
+      Source:
+          type: num
+          visu_acl: rw
+          avdevice_zone1: input
+
+          Music:
+              type: bool
+              visu_acl: ro
+              eval: 1 if (sh.Pioneer.Source() == 13 and sh.Pioneer.Power()) else 0
+              eval_trigger:
+                - Pioneer.Source
+                - Pioneer.Power
+              enforce_updates: 'yes'
+
+      Mode:
+          type: num
+          visu_acl: rw
+          avdevice_zone1: mode
+
+      Playingmode:
+          type: foo
+          visu_acl: ro
+          avdevice_zone1: playingmode
+
+      Bass:
+          type: num
+          visu_acl: rw
+          avdevice_zone1: bass
+
+      BassUp:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: bass+
+          enforce_updates: 'yes'
+
+      BassDown:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: bass-
+          enforce_updates: 'yes'
+
+      Dialog:
+          type: num
+          visu_acl: rw
+          avdevice_zone1: dialog
+
+      Trebble:
+          type: num
+          visu_acl: rw
+          avdevice_zone1: trebble
+
+      TrebbleUp:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: trebble+
+          enforce_updates: 'yes'
+
+      TrebbleDown:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: trebble-
+          enforce_updates: 'yes'
+
+      Tone:
+          type: bool
+          visu_acl: rw
+          avdevice_zone1: tone
+
+      Display:
+          type: str
+          visu_acl: ro
+          avdevice_zone0: display
+
+      HDMI:
+          type: num
+          visu_acl: ro
+          avdevice_zone1: HDMI
+
+      Title:
+          type: str
+          visu_acl: ro
+          avdevice_zone0: title
+
+      Station:
+          type: str
+          visu_acl: ro
+          avdevice_zone0: station
+
+      Genre:
+          type: str
+          visu_acl: ro
+          avdevice_zone0: genre
+
+      Power2:
+          type: bool
+          visu_acl: rw
+          avdevice_zone2: power
+
+      Source2:
+          type: num
+          visu_acl: rw
+          avdevice_zone2: input
+
+          Musik:
+              type: bool
+              visu_acl: ro
+              eval: 1 if (sh.Pioneer.Source2() == 13 and sh.Pioneer.Power2()) else 0
+              eval_trigger:
+                - Musik.Source2
+                - Musik.Power2
+              enforce_updates: 'no'
+
+      Mute2:
+          type: bool
+          visu_acl: rw
+          avdevice_zone2: mute
+
+      Volume2:
+          type: num
+          visu_acl: rw
+          avdevice_zone2: volume
+          cache: 'True'
+
+          Fading:
+              type: num
+
+      VolumeUp2:
+          type: bool
+          visu_acl: rw
+          avdevice_zone2: volume+
+          enforce_updates: 'yes'
+
+      VolumeDown2:
+          type: bool
+          visu_acl: rw
+          avdevice_zone2: volume-
+          enforce_updates: 'yes'
+
+      VolumeHigh2:
+          type: num
+          visu_acl: rw
+          avdevice_zone2: volumehigh
+          enforce_updates: 'yes'
+
+      VolumeLow2:
+          type: num
+          visu_acl: rw
+          avdevice_zone2: volumelow
+          enforce_updates: 'yes'

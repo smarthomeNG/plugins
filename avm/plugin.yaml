@@ -8,6 +8,7 @@ plugin:
     maintainer: psilo909
     tester: Sandman60, cmalo
 #    keywords: iot xyz
+    state: 'qa-passed'
     documentation: http://smarthomeng.de/user/plugins_doc/config/avm.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
@@ -89,25 +90,83 @@ item_attributes:
         description:
             de: 'AVM Datentyp des jeweiligen Items.'
             en: 'AVM Data Type of the respective item.'
+        valid_list:
+        - 'uptime'
+        - 'serial_number'
+        - 'software_version'
+        - 'hardware_version'
+        - 'myfritz_status'
+        - 'monitor_trigger'
+        - 'is_call_incoming'
+        - 'call_duration_incoming'
+        - 'last_caller_incoming'
+        - 'last_number_incoming'
+        - 'last_called_number_incoming'
+        - 'last_call_date_incoming'
+        - 'call_event_incoming'
+        - 'is_call_outgoing'
+        - 'call_duration_outgoing'
+        - 'last_caller_outgoing'
+        - 'last_number_outgoing'
+        - 'last_called_number_outgoing'
+        - 'last_call_date_outgoing'
+        - 'call_event_outgoing'
+        - 'call_direction'
+        - 'call_event'
+        - 'tam'
+        - 'tam_name'
+        - 'tam_old_message_number'
+        - 'tam_new_message_number'
+        - 'tam_total_message_number'
+        - 'wan_connection_status'
+        - 'wan_connection_error'
+        - 'wan_is_connected'
+        - 'wan_uptime'
+        - 'wan_ip'
+        - 'wan_upstream'
+        - 'wan_downstream'
+        - 'wan_total_packets_sent'
+        - 'wan_total_packets_received'
+        - 'wan_current_packets_sent'
+        - 'wan_current_packets_received'
+        - 'wan_total_bytes_sent'
+        - 'wan_total_bytes_received'
+        - 'wan_current_bytes_sent'
+        - 'wan_current_bytes_received'
+        - 'wan_link'
+        - 'wlanconfig'
+        - 'wlanconfig_ssid'
+        - 'wlan_guest_time_remaining'
+        - 'network_device'
+        - 'device_ip'
+        - 'device_connection_type'
+        - 'device_hostname'
+        - 'aha_device'
+        - 'energy'
+        - 'power'
+        - 'temperature'
+
     avm_incoming_allowed:
         type: str
+        mandatory: False
         description:
             de: '(optional) Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed incoming number. Only in items of avm_data_type `monitor_trigger`.'
     avm_target_number:
         type: str
+        mandatory: False
         description:
             de: '(optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.'
     mac:
         type: str
-        mandatory: True
+        mandatory: False
         description:
             de: 'Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
             en: 'Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!'
     ain:
         type: str
-        mandatory: True
+        mandatory: False
         description:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'

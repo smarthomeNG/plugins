@@ -7,14 +7,16 @@ plugin:
         en: 'Get travel times and directions via the (free) Google Directions API. For your own key see <a href="https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model" target="_blank">https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model</a>'
     maintainer: psilo909
 #    tester:                        # Who tests this plugin?
+    state: ready
     keywords: google directions, travel times, routing information
     documentation: http://smarthomeng.de/user/plugins_doc/config/traffic.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1048446-traffic-plugin-support-thread
 
-    version: 1.3.0.1               # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.5.0.2               # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Traffic             # class containing the plugin
 
 parameters:
@@ -32,7 +34,48 @@ parameters:
         description:
             de: '(optional) Sprache, in der bspw. Routinganweisungen bezogen werden sollen. Default: deutsch.'
             en: '(optional) Language to retrieve routing information. Default: German (de)'
-    
-item_attributes:
+
+
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
-    
+
+
+plugin_functions:
+
+    get_route_info:
+        type: dict
+        description:
+            de: 'Ermittelt Infos zu einer Fahrtroute via Google Directions.'
+            en: 'Returns information on a route via Google Directions.'
+
+        parameters:
+
+            origin:
+                type: str
+                description:
+                    de: "Startpunkt der Route, kann eine Adresse, Geokoordinaten, etc. sein."
+                    en: "Origin of your route, can be an address, geocoordinates, etc."
+
+            destination:
+                type: str
+                description:
+                    de: "Ziel der Route, kann eine Adresse, Geokoordinaten, etc. sein."
+                    en: "Destination of your route, can be an address, geocoordinates, etc."
+
+            alternatives:
+                type: bool
+                description:
+                    de: "Rückgabe alternativer Routen. Default: False"
+                    en: "Return alternative routes. Default: False."
+
+            departure_time:
+                type: str
+                description:
+                    de: "Spezifiziert die gewünschte Abfahrtszeit als Timestamp (Sekunden seit 1.1.1970 UTC). Alternativ kann 'now' für den aktuellen Zeitpunkt gesetzt werden. Default: 'now'."
+                    en: "Specifies the desired time of departure. You can specify the time as an integer in seconds since midnight, January 1, 1970 UTC. Alternatively, you can specify a value of now, which sets the departure time to the current time (correct to the nearest second). Default: 'now'."
+
+            mode:
+                type: str
+                description:
+                    de: "Travel Mode, mögliche Werte 'driving', 'walking', 'bicycling', 'transit'. Default: 'driving'."
+                    en: "Travel Mode, possible values 'driving', 'walking', 'bicycling', 'transit'. Default: 'driving'."
