@@ -159,7 +159,6 @@ plugin_functions:
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
-                    en: "Timestamp of change"
     updateLog:
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
@@ -260,7 +259,6 @@ plugin_functions:
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
-                    en: "Timestamp of change"    deleteLog:
     readLogs:
         description:
             de: 'Log-Datenbankeinträge für angegebene Datenbank-ID auslesen'
