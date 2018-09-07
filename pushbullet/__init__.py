@@ -33,7 +33,7 @@ class Pushbullet(SmartPlugin):
     _apiurl = "https://api.pushbullet.com/v2/pushes"
     _upload_apiurl = "https://api.pushbullet.com/v2/upload-request"
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.5.2"
 
     def __init__(self, sh, *args, **kwargs):
         logging.getLogger("requests").setLevel(logging.WARNING)
