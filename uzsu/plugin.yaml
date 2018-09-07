@@ -10,7 +10,7 @@ plugin:
 #    keywords: iot xyz
     documentation: https://github.com/smarthomeNG/smarthome/wiki/UZSU-%28Universelle-Zeitschaltuhr%29        # url of documentation (wiki) page
 
-    version: 1.5.1                 # Plugin version
+    version: 1.5.2                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
