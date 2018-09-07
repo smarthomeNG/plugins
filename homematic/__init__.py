@@ -197,7 +197,6 @@ class Homematic(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-        item.expand_relativepathes('test_attr', "", "")
         if self.has_iattr(item.conf, 'hm_address'):
             init_error = False
 #            self.logger.debug("parse_item{}: {}".format(self.log_instance_str, item))

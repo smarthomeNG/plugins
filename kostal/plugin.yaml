@@ -23,3 +23,9 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
     
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

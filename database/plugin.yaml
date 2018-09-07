@@ -69,7 +69,7 @@ plugin_functions:
         description:
             de: 'Liefert für das angegebene Item die Datenbank-ID zurück'
             en: 'Return the database ID for the given item'
-        parameter:
+        parameters:
             item:
                 type: foo
                 description:
@@ -84,7 +84,7 @@ plugin_functions:
         description:
             de: 'Erzeugt einen Datenbank-Dump für angegebene Kriterien'
             en: 'Creates a database dump for given criterias'
-        parameter:
+        parameters:
             dumpfile:
                 type: str
                 description:
@@ -134,7 +134,7 @@ plugin_functions:
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID anlegen'
             en: 'Create database log record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -174,7 +174,7 @@ plugin_functions:
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
             en: 'Update database log record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -214,7 +214,7 @@ plugin_functions:
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID auslesen'
             en: 'Read database log record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -229,7 +229,7 @@ plugin_functions:
         description:
             de: 'Log-Datenbankeinträge für angegebene Datenbank-ID löschen'
             en: 'Delete database log records for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -274,7 +274,7 @@ plugin_functions:
         description:
             de: 'Log-Datenbankeinträge für angegebene Datenbank-ID auslesen'
             en: 'Read database log records for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -319,7 +319,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeintrag für angegebene Datenbank-ID anlegen'
             en: 'Create database item record for given database ID'
-        parameter:
+        parameters:
             name:
                 type: str
                 description:
@@ -334,7 +334,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
             en: 'Update database item record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -375,7 +375,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeintrag für angegebene Datenbank-ID auslesen'
             en: 'Read database item record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -390,7 +390,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeinträge auslesen'
             en: 'Read database item records'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -405,7 +405,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeintrag für angegebene Datenbank-ID löschen'
             en: 'Delete database item record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
