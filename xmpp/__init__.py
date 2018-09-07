@@ -35,14 +35,22 @@ class XMPP(SmartPlugin):
 
     def __init__(self, smarthome, jid, password, logic='XMPP'):
         self.logger = logging.getLogger(__name__)
+        plugins = self.get_parameter_value('plugins')
+        joins = self.get_parameter_value('join')
+
+        # Enable MUC in case account should join channels
+        if len(joins) and 'xep_0045' not in plugins:
+            plugins.append('xep_0045')
+
         self.xmpp = sleekxmpp.ClientXMPP(jid, password)
-        for plugin in self.get_parameter_value('plugins'):
+        for plugin in plugins:
             self.xmpp.register_plugin(plugin)
         self.xmpp.use_ipv6 = self.get_parameter_value('use_ipv6')
         self.xmpp.add_event_handler("session_start", self.handleXMPPConnected)
         self.xmpp.add_event_handler("message", self.handleIncomingMessage)
         self._logic = logic
         self._sh = smarthome
+        self._join = joins
 
     def run(self):
         self.alive = True
@@ -52,6 +60,8 @@ class XMPP(SmartPlugin):
     def stop(self):
         self._run = False
         self.alive = False
+        for chat in self._join:
+            self.xmpp.plugin['xep_0045'].leaveMUC(chat, self.xmpp.jid)
         self.logger.info("Shutting Down XMPP Client")
         self.xmpp.disconnect(wait=False)
 
@@ -75,6 +85,8 @@ class XMPP(SmartPlugin):
     def handleXMPPConnected(self, event):
         self.xmpp.sendPresence(pstatus="Send me a message")
         self.xmpp.get_roster()
+        for chat in self._join:
+            self.xmpp.plugin['xep_0045'].joinMUC(chat, self.xmpp.jid, wait=True)
 
     def handleIncomingMessage(self, msg):
         """
