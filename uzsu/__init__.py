@@ -65,9 +65,9 @@ import lib.orb
 from collections import OrderedDict
 
 try:
-    from scipy import interpolate, optimize
+    from scipy import interpolate
     REQUIRED_PACKAGE_IMPORTED = True
-except:
+except Exception:
     REQUIRED_PACKAGE_IMPORTED = False
 
 ITEM_TAG = ['uzsu_item']
