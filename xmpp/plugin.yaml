@@ -34,6 +34,11 @@ parameters:
         description:
             de: 'Gibt das Passwort für den zu nutzenden Account an'
             en: 'Specifies the password of the account to use'
+    plugins:
+        type: list(str)
+        description:
+            de: 'Aktiviert weitere Plugins (XEP)'
+            en: 'Activates additional plugins (XEP)'
     use_ipv6:
         type: bool
         default: True

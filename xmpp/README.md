@@ -18,6 +18,9 @@ xmpp:
     jid: 'user account eg skender@somexmppserver.com'
     password: your xmpp server password
     #use_ipv6: 1
+    #plugins:
+    #  - xep_0199  # MUC
+    #  - xep_0045  # PING
 ```
 
 Description of the attributes:
@@ -25,6 +28,7 @@ Description of the attributes:
 * jid: jabber/xmpp user account
 * password: jabber/xmpp user password
 * use_ipv6: enable IPv6 support, which is the default
+* plugins: list of plugins (XEP to support)
 
 ### logic.yaml
 At this stage there are no specific logic files. But in order to use this module you can create a logic file for another attribute and execute
