@@ -96,8 +96,9 @@ class Database(SmartPlugin):
 
         smarthome.scheduler.add('Database dump ' + self._name + ("" if prefix == "" else " [" + prefix + "]"), self._dump, cycle=self._dump_cycle, prio=5)
 
-        if not self.init_webinterface():
-            self._init_complete = False
+        self.init_webinterface()
+        return
+
 
     def parse_item(self, item):
         self.logger.debug(item.conf)
