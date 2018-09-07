@@ -34,6 +34,12 @@ parameters:
         description:
             de: 'Gibt das Passwort für den zu nutzenden Account an'
             en: 'Specifies the password of the account to use'
+    use_ipv6:
+        type: bool
+        default: True
+        description:
+            de: 'Aktiviert die Nutzung von IPv6 zusätzlich zu IPv4 (optional)'
+            en: 'Activates IPv6 support beside of IPv4 (optional)'
     
 item_attributes: NONE
     # Definition of item attributes defined by this plugin

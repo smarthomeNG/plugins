@@ -36,6 +36,7 @@ class XMPP(SmartPlugin):
     def __init__(self, smarthome, jid, password, logic='XMPP'):
         self.logger = logging.getLogger(__name__)
         self.xmpp = sleekxmpp.ClientXMPP(jid, password)
+        self.xmpp.use_ipv6 = self.get_parameter_value('use_ipv6')
         self.xmpp.add_event_handler("session_start", self.handleXMPPConnected)
         self.xmpp.add_event_handler("message", self.handleIncomingMessage)
         self._logic = logic
