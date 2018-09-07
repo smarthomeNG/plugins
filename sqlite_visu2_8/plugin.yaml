@@ -49,11 +49,67 @@ item_attributes:
         description:
             de: "Falls auf 'yes' gesetzt, wird der Wert des Items in die sqlite Datenbank geschrieben."
             en: "If set to 'yes', the value of the item will be written to the sqlite database"
-        valid_list: ['', 'yes', 'True', 'no', 'False']
+        valid_list: ['', 'yes', 'init', 'True', 'no', 'False']
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
 plugin_functions:
     # Definition of function interface of the plugin
+    db:
+        type: num
+        description:
+            de: "Diese Methode liefert einen Wert, für die gewählte Zeitspanne. Die Funktion legt fest, wie der Wert berechnet wird."
+            en: "This method returns an value for the specified function and timeframe."
+        parameters:
+            function:
+                type: str
+                valid_list: ['avg', 'max', 'min', 'avg', 'sum']
+                description:
+                    de: "Funktion die genutzt wird um den Rückgabewert zu berechnen"
+                    en: "function used to calculate the return value"
+            start:
+                type: str
+                description:
+                    de: "Beginn der Zeitspanne"
+                    en: "start of timeframe"
+            end:
+                type: str
+                default: now
+                description:
+                    de: "Ende der Zeitspanne"
+                    en: "end of timeframe"
+
+    cleanup:
+        description:
+            de: "Diese Funktion entfernt verwaiste Items, welche nicht mehr in der Item Konfiguration referenziert werden."
+            en: "This function removes orphaned item entries which are no longer referenced in the item configuration."
+
+    dump:
+        description:
+            de: "Erzeugt einen Dump der Datenbank in die angegebene Datei"
+            en: "Dumps the database into the specified file. 'sh.sql.dump('/tmp/smarthomedb.dump')' writes the database content into /tmp/smarthomedb.dump"
+        parameters:
+            filename:
+                type: str
+                description:
+                    de: "Dateiname für den Datenbank Dump"
+                    en: "filename for the datbase dump"
+
+    move:
+        description:
+            de: "Diese Funktion benennt Item Einträge um. sh.sql.move('my.old.item', 'my.new.item')"
+            en: "This function renames item entries. sh.sql.move('my.old.item', 'my.new.item')"
+        parameters:
+            old:
+                type: str
+                description:
+                    de: "Alter Item Name"
+                    en: "old item name"
+            new:
+                type: str
+                description:
+                    de: "Neuer Item Name"
+                    en: "new item name"
+
 

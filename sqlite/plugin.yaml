@@ -42,11 +42,33 @@ item_attributes:
         description:
             de: "Falls auf 'yes' gesetzt, wird der Wert des Items in die sqlite Datenbank geschrieben."
             en: "If set to 'yes', the value of the item will be written to the sqlite database"
-        valid_list: ['', 'yes', 'True', 'no', 'False']
+        valid_list: ['', 'yes', 'init', 'True', 'no', 'False']
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
 plugin_functions:
     # Definition of function interface of the plugin
-
+    db:
+        type: num
+        description:
+            de: "Diese Methode liefert einen Wert, für die gewählte Zeitspanne. Die Funktion legt fest, wie der Wert berechnet wird."
+            en: "This method returns an value for the specified function and timeframe."
+        parameters:
+            function:
+                type: str
+                valid_list: ['avg', 'max', 'min', 'avg', 'sum']
+                description:
+                    de: "Funktion die genutzt wird um den Rückgabewert zu berechnen"
+                    en: "function used to calculate the return value"
+            start:
+                type: str
+                description:
+                    de: "Beginn der Zeitspanne"
+                    en: "start of timeframe"
+            end:
+                type: str
+                default: now
+                description:
+                    de: "Ende der Zeitspanne"
+                    en: "end of timeframe"

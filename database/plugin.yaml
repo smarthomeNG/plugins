@@ -15,6 +15,7 @@ plugin:
     sh_minversion: 1.4c            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Database            # class containing the plugin
 
 parameters:
@@ -48,9 +49,19 @@ parameters:
             de: 'Genauigkeit der aus der Datenbank ausgelesenen Werte (Nachkommastellen).'
             en: 'Precision of values read from database (digits after comma).'
 
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    database:
+        type: str
+        valid_list: ['', 'yes', 'init']
+        description:
+            de: "Wenn auf 'yes' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert in die Datenbank geschrieben."
+            en: "This attribute enables the database logging when set (just use value 'yes'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
+
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions:
     # Definition of function interface of the plugin
