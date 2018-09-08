@@ -1,0 +1,88 @@
+{% extends "base_plugin.html" %}
+{% block scripts %}
+{{ super() }}
+<script>
+function mainpage() {
+  var url = window.location.href;
+  var page = url.substring(url.lastIndexOf('/') + 1);
+  var final = url.replace(page, '');
+  if ( url.includes("?action=") ) {
+    window.location.href = final;
+  };
+}
+</script>
+{% endblock scripts %}
+{% set logo_frame = false %}
+
+
+{% set item_count = p._items|length %}
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% set tabcount = 1 %}
+
+{% block headtable %}
+  {% set sun = {'sunrise': '-', 'sunset': '-'} %}
+  {% for item in p._items %}
+    {% if p._items[item]['sunrise'] and sun.sunrise == '-' %}
+      {% if sun.update({'sunrise': p._items[item]['sunrise']|string}) %} {% endif %}
+      {% if sun.update({'sunset': p._items[item]['sunset']|string}) %} {% endif %}
+    {% endif %}
+  {% endfor %}
+
+<table class="table table-striped table-hover">
+  <tbody>
+    <tr>
+      <td class="py-1"><strong>{{ _('Sonnenaufgang') }}</strong></td>
+      <td class="py-1">{{ sun.sunrise }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"><strong>{{ _('Sonnenuntergang') }}</strong></td>
+      <td class="py-1">{{ sun.sunset }}</td>
+      <td class="py-1" width="50px"></td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>Items</strong></td>
+      <td class="py-1" colspan=5>{{ item_count }}</td>
+    </tr>
+
+  </tbody>
+</table>
+{% endblock headtable %}
+
+
+{% block bodytab1 %}
+
+<div class="container-fluid m-2">
+  <div class="mb-2">
+    {{ _('Die folgenden Items sind dem UZSU Plugin zugewiesen') }}:
+  </div>
+  <table class="table table-striped table-hover pluginList">
+    <thead>
+    <tr>
+      <th>{{ _('UZSU Item') }}</th>
+      <th>{{ _('Abhängige Items (mit Typ)') }}</th>
+      <th>{{ _('Wert des abhängigen Items') }}</th>
+      <th>{{ _('Interpolation') }}</th>
+      <th>{{ _('Back in Time') }}</th>
+    </tr>
+    </thead>
+    {% for item in p._items %}
+      {% if p.has_iattr(item.conf, 'uzsu_item') %}
+        {% if p._items[item]['active'] == True %}
+          {% set color = 'green' %}
+        {% else %}
+          {% set color = 'gray' %}
+        {% endif %}
+          <tr style="color:{{ color }};">
+            <td class="py-1">{{ item._path }}</td>
+            <td class="py-1">{{ p.get_iattr_value(item.conf, 'uzsu_item') }}
+              ({{ p._items[item]['interpolation']['itemtype'] }})</td>
+              <td class="py-1">{{ p._get_dependant(item) }}</td>
+              <td class="py-1">{% if p._items[item]['interpolation']['type'] %}
+                {{ p._items[item]['interpolation']['type'] }}{% else %}-{% endif %}</td>
+              <td class="py-1">{% if p._items[item]['interpolation']['initage'] %}
+                {{ p._items[item]['interpolation']['initage'] }}{% else %}-{% endif %}</td>
+          </tr>
+        {% endif %}
+    {% endfor %}
+  </table>
+</div>
+{% endblock bodytab1 %}

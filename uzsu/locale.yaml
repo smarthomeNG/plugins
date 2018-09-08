@@ -1,0 +1,11 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Die folgenden Items sind dem UZSU Plugin zugewiesen':         {'de': '=', 'en': 'The following items are assigned to the UZSU plugin'}
+    'UZSU Item':                  {'de': '=', 'en': '='}
+    'Abhängige Items (mit Typ)':  {'de': '=', 'en': 'Dependant Item (with type)'}
+    'Wert des abhängigen Items':  {'de': '=', 'en': 'Value of dependant Item'}
+    'Interpolation':              {'de': '=', 'en': '='}
+    'Back in Time':               {'de': '=', 'en': '='}
+    'Sonnenaufgang':              {'de': '=', 'en': 'sun rise'}
+    'Sonnenuntergang':            {'de': '=', 'en': 'sun set'}
+    'Uhr':                        {'de': '=', 'en': "o'clock"}

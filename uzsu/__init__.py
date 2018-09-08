@@ -53,7 +53,7 @@
 # ]})
 
 import logging
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 from lib.item import Items
 from lib.shtime import Shtime
 
@@ -97,11 +97,14 @@ class UZSU(SmartPlugin):
         self._timezone = Shtime.get_instance().tzinfo()
         self._sh = smarthome
         self._uzsu_sun = None
+        self._items = {}
+        self._itpl = OrderedDict()
+        self.init_webinterface()
         self.logger.info('{}: Init with timezone {}'.format(self._name, self._timezone))
         if not REQUIRED_PACKAGE_IMPORTED:
             self.logger.error("{}: Unable to import Python package 'scipy'"
                               " which is necessary for interpolation.".format(self._name))
-        self._itpl = OrderedDict()
+            self._init_complete = False
 
     def run(self):
         """
@@ -120,9 +123,8 @@ class UZSU(SmartPlugin):
         for item in self._items:
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
             item(self._items[item])
-            if 'active' in self._items[item]:
-                if self._items[item]['active']:
-                    self._schedule(item, caller='run')
+            if 'active' in self._items[item] and self._items[item]['active']:
+                self._schedule(item, caller='run')
 
     def stop(self):
         """
@@ -132,10 +134,24 @@ class UZSU(SmartPlugin):
         self.alive = False
 
     def _update_all_suns(self, caller=None):
+        """
+        Update sun information for all uzsu items
+
+        :param caller:  if given it represents the callers name
+        :type caller:   str
+        """
         for item in self._items:
             self._update_sun(item)
 
     def _update_sun(self, item, caller=None):
+        """
+        Update general sunrise and sunset information for visu
+
+        :param caller:  if given it represents the callers name
+        :param item:    uzsu item
+        :type caller:   str
+        :type item:     item
+        """
         self._uzsu_sun = self._create_sun()
         self._items[item] = item()
         _sunrise = self._uzsu_sun.rise()
@@ -150,6 +166,13 @@ class UZSU(SmartPlugin):
             self._name, item, caller, self._items[item]['sunrise'], self._items[item]['sunset']))
 
     def _add_type(self, item):
+        """
+        Adding the type of the item that is changed by the uzsu to the item dict
+
+        :param item:    uzsu item
+        :type item:     item
+        :return:        The item type of the item that is changed
+        """
         try:
             _uzsuitem = self.itemsApi.return_item(self.get_iattr_value(item.conf, ITEM_TAG[0]))
         except Exception as err:
@@ -170,6 +193,7 @@ class UZSU(SmartPlugin):
         the item in future, like adding it to an internal array for future reference
 
         :param item:    The item to process.
+        :type item:     item
         :return:        If the plugin needs to be informed of an items change you should return a call back function
                         like the function update_item down below. An example when this is needed is the knx plugin
                         where parse_item returns the update_item function when the attribute knx_send is found.
@@ -194,10 +218,11 @@ class UZSU(SmartPlugin):
         """
         This is called by smarthome engine when the item changes, e.g. by Visu or by the command line interface
         The relevant item is put into the internal item list and registered to the scheduler
-        :param item: item to be updated towards the plugin
-        :param caller: if given it represents the callers name
-        :param source: if given it represents the source
-        :param dest: if given it represents the dest
+
+        :param item:    item to be updated towards the plugin
+        :param caller:  if given it represents the callers name
+        :param source:  if given it represents the source
+        :param dest:    if given it represents the dest
         """
         self._items[item] = item()
         self._schedule(item, caller='update')
@@ -205,7 +230,11 @@ class UZSU(SmartPlugin):
     def _schedule(self, item, caller=None):
         """
         This function schedules an item: First the item is removed from the scheduler.
-        If the item is active then the list is searched for the nearest next execution time
+        If the item is active then the list is searched for the nearest next execution time.
+        No matter it active or not the calculation for the execution time is triggered.
+
+        :param item:    item to be updated towards the plugin
+        :param caller:  if given it represents the callers name
         """
         self.scheduler_remove('uzsu_{}'.format(item))
         self.logger.debug('{}: called by {}, changed by: {}'.format(self._name, caller, item.changed_by()))
@@ -314,7 +343,7 @@ class UZSU(SmartPlugin):
             if cond5 and _value < 0:
                 self.logger.warning("{}: value {} for item {} is negative. This might be due"
                                     " to not enough values set in the UZSU.".format(self._name, _value, item))
-            if _reset_interpolation == True:
+            if _reset_interpolation is True:
                 self._items[item]['interpolation']['type'] = 'none'
                 item(self._items[item])
             else:
@@ -323,6 +352,13 @@ class UZSU(SmartPlugin):
                 self.scheduler_add('uzsu_{}'.format(item), self._set, value={'item': item, 'value': _value}, next=_next)
 
     def _set(self, **kwargs):
+        """
+        This function sets the specific item
+
+        :param item:    item to be updated towards the plugin
+        :param value:   value the item should be set to
+        :param caller:  if given it represents the callers name
+        """
         item = kwargs['item']
         value = kwargs['value']
         try:
@@ -336,13 +372,15 @@ class UZSU(SmartPlugin):
 
     def _get_time(self, entry, timescan, item=None):
         """
-        Returns the next execution time and value
-        :param entry:   a dictionary that may contain the following keys:
-                        value
-                        active
-                        date
-                        rrule
-                        dtstart
+        Returns the next and previous execution time and value
+        :param entry:       a dictionary that may contain the following keys:
+                            value
+                            active
+                            date
+                            rrule
+                            dtstart
+        :param item:        item to be updated towards the plugin
+        :param timescan:    defines whether to find values in the future or past
         """
         try:
             if not isinstance(entry, dict):
@@ -362,8 +400,6 @@ class UZSU(SmartPlugin):
             time = entry['time']
             if not active:
                 return None, None
-            if 'date' in entry:
-                date = entry['date']
             if 'rrule' in entry and entry['rrule']:
                 if 'dtstart' in entry:
                     rrule = rrulestr(entry['rrule'], dtstart=entry['dtstart'])
@@ -438,6 +474,9 @@ class UZSU(SmartPlugin):
         return None, None
 
     def _create_sun(self):
+        """
+        Creates a sun object for sun calculations
+        """
         # checking preconditions from configuration:
         uzsu_sun = None
         if not self._sh.sun:  # no sun object created
@@ -465,9 +504,10 @@ class UZSU(SmartPlugin):
         parses a given string with a time range to determine it's timely boundaries and
         returns a time
 
-        :param: dt contains a datetime object,
-        :param: tstr contains a string with '[H:M<](sunrise|sunset)[+|-][offset][<H:M]' like e.g. '6:00<sunrise<8:00'
-        :return: the calculated date and time in timezone aware format
+        :param dt:          contains a datetime object,
+        :param tstr:        contains a string with '[H:M<](sunrise|sunset)[+|-][offset][<H:M]' like e.g. '6:00<sunrise<8:00'
+        :param timescan:    defines whether to find values in the future or past, for logging purposes
+        :return:            the calculated date and time in timezone aware format
         """
         uzsu_sun = self._create_sun()
         if not uzsu_sun:
@@ -565,10 +605,110 @@ class UZSU(SmartPlugin):
             if dmax < next_time:
                 next_time = dmax
 
-        if dmin is not None and dmax is not None:
-            if dmin > dmax:
-                self.logger.error("{}: Wrong times: the earliest time should be smaller than the "
-                                  "latest time in {}".format(self._name, tstr))
-                return
+        if dmin is not None and dmax is not None and dmin > dmax:
+            self.logger.error("{}: Wrong times: the earliest time should be smaller than the "
+                              "latest time in {}".format(self._name, tstr))
+            return
 
         return next_time
+
+    def _get_dependant(self, item):
+        """
+        Getting the value of the dependent item for the webif
+
+        :param item:    uzsu item
+        :type item:     item
+        :return:        The item value of the item that is changed
+        """
+        try:
+            _uzsuitem = self.itemsApi.return_item(self.get_iattr_value(item.conf, ITEM_TAG[0]))
+        except Exception as err:
+            _uzsuitem = None
+            self.logger.warning("{}: Item to be queried does not exist. Error: {}".format(self._name, err))
+        try:
+            _itemvalue = _uzsuitem()
+        except Exception as err:
+            _itemvalue = None
+            self.logger.warning("{}: Item to be queried does not have a type attribute. Error: {}".format(
+                self._name, err))
+        return _itemvalue
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')
+        except Exception:
+            self.mod_http = None
+        if self.mod_http is None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        import sys
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, action=None, item_id=None, item_path=None, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        #item = self.plugin.get_sh().return_item(item_path)
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin,
+                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
