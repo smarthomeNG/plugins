@@ -18,6 +18,12 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+    remove_duplicates:
+        type: bool
+        default: False
+        description:
+            de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu geätigten Eintrag ersetzt'
+            en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
 
 item_attributes:
     # Definition of item attributes defined by this plugin

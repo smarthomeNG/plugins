@@ -62,6 +62,7 @@ from dateutil.rrule import rrulestr
 from dateutil import parser
 from dateutil.tz import tzutc
 import lib.orb
+from unittest import mock
 from collections import OrderedDict
 
 try:
@@ -95,6 +96,7 @@ class UZSU(SmartPlugin):
         self.itemsApi = Items.get_instance()
         self._name = self.get_fullname()
         self._timezone = Shtime.get_instance().tzinfo()
+        self._remove_duplicates = self.get_parameter_value('remove_duplicates')
         self._sh = smarthome
         self._uzsu_sun = None
         self._items = {}
@@ -225,6 +227,27 @@ class UZSU(SmartPlugin):
         :param dest:    if given it represents the dest
         """
         self._items[item] = item()
+        if self._remove_duplicates is True:
+            compare_entries = item.prev_value()
+            newentries = []
+            [newentries.append(i) for i in self._items[item]['list'] if i not in compare_entries['list']]
+            self.logger.debug('{}: Got update for item {}: {}'.format(self._name, item, newentries))
+            todel = []
+            for entry in self._items[item]['list']:
+                for new in newentries:
+                    found = False
+                    if not entry.get('value') == new.get('value'):
+                        with mock.patch.dict(entry, value=new.get('value')):
+                            found = True if entry == new else False
+                        if found is True:
+                            todel.append(entry)
+            finallist = [n for n in self._items[item]['list'] if n not in todel]
+            self._items[item]['list'] = finallist
+            item(self._items[item])
+            if todel:
+                self.logger.warning('Deleted the following entries from the actual dict'
+                                    ' because the entry got updated: {}'.format(todel))
+
         self._schedule(item, caller='update')
 
     def _schedule(self, item, caller=None):
