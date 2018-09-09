@@ -47,6 +47,12 @@ parameters:
         description:
             de: 'Definiert das Namensformat für die Logdateien'
             en: 'Defines the name patter for the log files'
+    logger:
+        type: str
+        default: ''
+        description:
+            de: 'Logt zusätzlich in den angegebenen Logger (z.B. "plugins.operationlog.logger")'
+            en: 'Additionally log to the given logger (e.g. "plugins.operationlog.logger")'
     
 item_attributes:
     # Definition of item attributes defined by this plugin
