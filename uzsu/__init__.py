@@ -124,7 +124,7 @@ class UZSU(SmartPlugin):
 
         for item in self._items:
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
-            item(self._items[item])
+            item(self._items[item], 'USZU Plugin', 'itemtype')
             if 'active' in self._items[item] and self._items[item]['active']:
                 self._schedule(item, caller='run')
 
@@ -133,6 +133,12 @@ class UZSU(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug('{}: stop method called'.format(self._name))
+        for item in self._items:
+            try:
+                self.scheduler_remove('uzsu_{}'.format(item))
+                self.logger.debug('{}: Removing scheduler for item {}'.format(self._name, item))
+            except Exception as err:
+                self.logger.debug('{}: Scheduler for item {} not removed. Problem: {}'.format(self._name, item, err))
         self.alive = False
 
     def _update_all_suns(self, caller=None):
@@ -164,8 +170,25 @@ class UZSU(SmartPlugin):
             _sunset = _sunset.astimezone(self._timezone)
         self._items[item]['sunrise'] = '{:02}:{:02}'.format(_sunrise.hour, _sunrise.minute)
         self._items[item]['sunset'] = '{:02}:{:02}'.format(_sunset.hour, _sunset.minute)
-        self.logger.debug('{}: Updating sun entries for item {}, called by {}. sunrise: {}, sunset: {}'.format(
+        self.logger.debug('{}: Updating sun entries for item {}, triggered by {}. sunrise: {}, sunset: {}'.format(
             self._name, item, caller, self._items[item]['sunrise'], self._items[item]['sunset']))
+
+    def _update_suncalc(self, item, entry, entryindex, entryvalue):
+        update = False
+        if entry.get('calculated'):
+            update = True if entry == self._items[item]['list'][entryindex] else update
+            with mock.patch.dict(entry, calculated=entryvalue):
+                update = True if entry == self._items[item]['list'][entryindex] else update
+        else:
+            update = True
+        if update is True and not entry.get('calculated') == entryvalue:
+            self.logger.debug("{}: Updated calculated time for item {} entry {} with {}.".format(
+                self._name, item, self._items[item]['list'][entryindex], entryvalue))
+            self._items[item]['list'][entryindex]['calculated'] = entryvalue
+            item(self._items[item], 'USZU Plugin', 'update_sun')
+        else:
+            self.logger.debug("{}: Sun calculation {} entry not updated for item {} with value {}".format(
+                self._name, entryvalue, item, entry.get('calculated')))
 
     def _add_type(self, item):
         """
@@ -208,13 +231,41 @@ class UZSU(SmartPlugin):
             self._items[item] = item()
             try:
                 self._items[item]['interpolation']['initialized'] = False
-                item(self._items[item])
+                item(self._items[item], 'USZU Plugin', 'init')
             except Exception:
                 self._items[item]['interpolation'] = {}
                 self._items[item]['interpolation']['initialized'] = False
-                item(self._items[item])
+                item(self._items[item], 'USZU Plugin', 'init')
             self.logger.debug('{}: Dict for item {} is: {}'.format(self._name, item, self._items[item]))
             return self.update_item
+
+    def _remove_dupes(self, item):
+        self._items[item]['list'] = [i for n, i in enumerate(self._items[item]['list'])
+                                     if i not in self._items[item]['list'][:n]]
+        self.logger.debug('{}: Removed duplicate entries for item {}.'.format(self._name, item))
+        compare_entries = item.prev_value()
+        if compare_entries.get('list'):
+            newentries = []
+            [newentries.append(i) for i in self._items[item]['list'] if i not in compare_entries['list']]
+            self.logger.debug('{}: Got update for item {}: {}'.format(self._name, item, newentries))
+            for entry in self._items[item]['list']:
+                for new in newentries:
+                    found = False
+                    if not entry.get('value') == new.get('value') and new.get('active') is True:
+                        try:
+                            with mock.patch.dict(entry, value=new.get('value'), calculated=new['calculated']):
+                                found = True if entry == new else found
+                        except Exception:
+                            with mock.patch.dict(entry, value=new.get('value')):
+                                found = True if entry == new else found
+                        if found is True:
+                            self._items[item]['list'][self._items[item]['list'].index(entry)].update({'active': False})
+                            time = entry['time']
+                            oldvalue, newvalue = entry['value'], new['value']
+                            self.logger.warning('{}: Set old entry for item {} at {} with value {} to inactive'
+                                                ' because newer active entry with value {} found.'.format(
+                                                    self._name, item, time, oldvalue, newvalue))
+        item(self._items[item], 'USZU Plugin', 'update')
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -227,28 +278,13 @@ class UZSU(SmartPlugin):
         :param dest:    if given it represents the dest
         """
         self._items[item] = item()
-        if self._remove_duplicates is True:
-            compare_entries = item.prev_value()
-            newentries = []
-            [newentries.append(i) for i in self._items[item]['list'] if i not in compare_entries['list']]
-            self.logger.debug('{}: Got update for item {}: {}'.format(self._name, item, newentries))
-            todel = []
-            for entry in self._items[item]['list']:
-                for new in newentries:
-                    found = False
-                    if not entry.get('value') == new.get('value'):
-                        with mock.patch.dict(entry, value=new.get('value')):
-                            found = True if entry == new else False
-                        if found is True:
-                            todel.append(entry)
-            finallist = [n for n in self._items[item]['list'] if n not in todel]
-            self._items[item]['list'] = finallist
-            item(self._items[item])
-            if todel:
-                self.logger.warning('Deleted the following entries from the actual dict'
-                                    ' because the entry got updated: {}'.format(todel))
-
-        self._schedule(item, caller='update')
+        self.logger.debug('{}: Update Item {}, Caller {}, Source {}, Dest {}.'.format(
+            self._name, item, caller, source, dest))
+        # Removing Duplicates
+        if self._remove_duplicates is True and self._items[item].get('list') and not caller == 'USZU Plugin':
+            self._remove_dupes(item)
+        if not caller == 'USZU Plugin':
+            self._schedule(item, caller='update')
 
     def _schedule(self, item, caller=None):
         """
@@ -260,7 +296,8 @@ class UZSU(SmartPlugin):
         :param caller:  if given it represents the callers name
         """
         self.scheduler_remove('uzsu_{}'.format(item))
-        self.logger.debug('{}: called by {}, changed by: {}'.format(self._name, caller, item.changed_by()))
+        self.logger.debug('{}: Schedule Item {}, Trigger: {}, Changed by: {}'.format(
+            self._name, item, caller, item.changed_by()))
         _next = None
         _value = None
         self._update_sun(item, caller='schedule')
@@ -270,10 +307,10 @@ class UZSU(SmartPlugin):
                 self._name, self.get_iattr_value(item.conf, ITEM_TAG[0])))
         else:
             self._itpl.clear()
-            for entry in self._items[item]['list']:
-                next, value = self._get_time(entry, 'next', item)
+            for i, entry in enumerate(self._items[item]['list']):
+                next, value = self._get_time(entry, 'next', item, i)
                 self._get_time(entry, 'previous', item)
-                item(self._items[item])
+                item(self._items[item], 'USZU Plugin', 'schedule')
                 if next is not None:
                     self.logger.debug("{}: uzsu active entry for item {} with datetime {}, value {}"
                                       " and tzinfo {}".format(self._name, item, next, value, next.tzinfo))
@@ -288,8 +325,7 @@ class UZSU(SmartPlugin):
                 else:
                     self.logger.debug("{}: uzsu active entry for item {} keep {}, value {} and tzinfo {}".format(
                         self._name, item, _next, _value, _next.tzinfo))
-
-        if _next and _value is not None and 'active' in self._items[item] and self._items[item]['active']:
+        if _next and _value is not None and 'active' in self._items[item] and self._items[item]['active'] is True:
             _reset_interpolation = False
             _interval = self._items[item]['interpolation'].get('interval')
             _interval = 5 if not _interval else int(_interval)
@@ -322,7 +358,7 @@ class UZSU(SmartPlugin):
                 self.logger.info("{}: Looking if there was a value set after {} for item {}".format(
                     self._name, _timediff, item))
                 self._items[item]['interpolation']['initialized'] = True
-                item(self._items[item])
+                item(self._items[item], 'USZU Plugin', 'init')
             if cond1 and not cond2 and cond3:
                 self._set(item=item, value=_initvalue, caller='scheduler')
                 self.logger.info("{}: Updated item {} on startup with value {} from time {}".format(
@@ -368,7 +404,7 @@ class UZSU(SmartPlugin):
                                     " to not enough values set in the UZSU.".format(self._name, _value, item))
             if _reset_interpolation is True:
                 self._items[item]['interpolation']['type'] = 'none'
-                item(self._items[item])
+                item(self._items[item], 'USZU Plugin', 'reset_interpolation')
             else:
                 self.logger.debug("{}: will add scheduler named uzsu_{} with datetime {} and tzinfo {}"
                                   " and value {}".format(self._name, item, _next, _next.tzinfo, _value))
@@ -393,7 +429,7 @@ class UZSU(SmartPlugin):
         if not caller:
             self._schedule(item, caller='set')
 
-    def _get_time(self, entry, timescan, item=None):
+    def _get_time(self, entry, timescan, item=None, entryindex=None):
         """
         Returns the next and previous execution time and value
         :param entry:       a dictionary that may contain the following keys:
@@ -418,6 +454,7 @@ class UZSU(SmartPlugin):
             value = entry['value']
             active = entry['active']
             today = datetime.today()
+            tomorrow = today + timedelta(days=1)
             yesterday = today - timedelta(days=1)
             weekbefore = today - timedelta(days=7)
             time = entry['time']
@@ -430,10 +467,10 @@ class UZSU(SmartPlugin):
                     try:
                         rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(
                             weekbefore, parser.parse(time.strip()).time()))
-                        self.logger.debug("{}: Created rrule:'{}' for time:'{}'".format(
+                        self.logger.debug("{}: Created rrule: '{}' for time:'{}'".format(
                             self._name, str(rrule).replace('\n', ';'), time))
                     except ValueError:
-                        self.logger.debug("{}: Could not create a rrule from rrule:'{}' and time:'{}'".format(
+                        self.logger.debug("{}: Could not create a rrule from rrule: '{}' and time:'{}'".format(
                             self._name, entry['rrule'], time))
                         if 'sun' in time:
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(
@@ -452,7 +489,9 @@ class UZSU(SmartPlugin):
                         return None, None
                     if 'sun' in time:
                         next = self._sun(datetime.combine(dt.date(), datetime.min.time()).replace(tzinfo=self._timezone), time, timescan)
-                        self.logger.debug("{}: Result parsing time (rrule){}: {}".format(self._name, time, next))
+                        self.logger.debug("{}: Result parsing time (rrule) {}: {}".format(self._name, time, next))
+                        if entryindex:
+                            self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                     else:
                         next = datetime.combine(dt.date(), parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
                     cond_next = next > datetime.now(self._timezone) and timescan == 'next'
@@ -466,31 +505,49 @@ class UZSU(SmartPlugin):
                         self.logger.debug("{}: Return from rrule previous: {}, value {}.".format(self._name, next, value))
                         return next, value
             if 'sun' in time:
-                next = self._sun(datetime.combine(today, datetime.min.time()).replace(tzinfo=self._timezone), time, timescan)
-                self.logger.debug("{}: Result parsing time (sun) {}: {}".format(self._name, time, next))
-                entry_calculated = self._items[item].get('list').index(entry)
-                self._items[item].get('list')[entry_calculated]['calculated'] = next.strftime("%H:%M")
-                self.logger.debug("{}: Updated calculated time for item {}.".format(
-                    self._name, item))
+                next = self._sun(datetime.combine(today, datetime.min.time()).replace(
+                    tzinfo=self._timezone), time, timescan)
+                cond_today = next > datetime.now(self._timezone) and timescan == 'next'
+                if cond_today:
+                    self.logger.debug("{}: Result parsing time today (sun) {}: {}".format(self._name, time, next))
+                    if entryindex:
+                        self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
+                else:
+                    self._itpl[next.timestamp() * 1000.0] = value
+                    self.logger.debug("{}: Include previous today: {}, value {} for interpolation.".format(self._name, next, value))
+                    if entryindex:
+                        self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
+                    next = self._sun(datetime.combine(tomorrow, datetime.min.time()).replace(
+                        tzinfo=self._timezone), time, timescan)
+                    self.logger.debug("{}: Result parsing time tomorrow (sun) {}: {}".format(self._name, time, next))
             else:
                 next = datetime.combine(today, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
-
+                cond_today = next > datetime.now(self._timezone) and timescan == 'next'
+                if not cond_today:
+                    self._itpl[next.timestamp() * 1000.0] = value
+                    self.logger.debug("{}: Include next today: {}, value {} for interpolation.".format(self._name, next, value))
+                    next = datetime.combine(tomorrow, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
             cond1 = next.date() == today.date()
             cond2 = next.date() - timedelta(days=1) == yesterday.date()
+            cond3 = next.date() == tomorrow.date()
             cond_next = next > datetime.now(self._timezone) and timescan == 'next'
             cond_previous_today = next < datetime.now(self._timezone) and timescan == 'previous'
             cond_previous_yesterday = next - timedelta(days=1) < datetime.now(self._timezone) and timescan == 'previous'
             if next and cond1 and cond_next:
                 self._itpl[next.timestamp() * 1000.0] = value
-                self.logger.debug("{}: Return next: {}, value {}".format(self._name, next, value))
+                self.logger.debug("{}: Return next today: {}, value {}".format(self._name, next, value))
+                return next, value
+            if next and cond3 and cond_next:
+                self._itpl[next.timestamp() * 1000.0] = value
+                self.logger.debug("{}: Return next tomorrow: {}, value {}".format(self._name, next, value))
                 return next, value
             if next and cond1 and cond_previous_today:
                 self._itpl[next.timestamp() * 1000.0] = value
-                self.logger.debug("{}: Return previous: {}, value {}".format(self._name, next, value))
+                self.logger.debug("{}: Return previous today: {}, value {}".format(self._name, next, value))
                 return next, value
             if next and cond2 and cond_previous_yesterday:
                 self._itpl[(next - timedelta(days=1)).timestamp() * 1000.0] = value
-                self.logger.debug("{}: Return previous: {}, value {}".format(self._name, next - timedelta(days=1), value))
+                self.logger.debug("{}: Return previous yesterday: {}, value {}".format(self._name, next - timedelta(days=1), value))
                 return next - timedelta(days=1), value
         except Exception as e:
             self.logger.error("{}: Error '{}' parsing time: {}".format(self._name, time, e))
@@ -730,7 +787,7 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        #item = self.plugin.get_sh().return_item(item_path)
+        # item = self.plugin.get_sh().return_item(item_path)
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
