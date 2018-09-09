@@ -4,7 +4,7 @@ plugin:
     type: system                  # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
         de: 'Implementierung seperater Logs'
-        en: ''
+        en: 'Implementation for additional logs'
     maintainer: '? (JanT112)'
     tester: Sandman60, onkelandy
 #    keywords: iot xyz
@@ -50,4 +50,55 @@ parameters:
     
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    olog:
+        type: str
+        description:
+            de: 'Wenn gesetzt, werden Item-Änderungen in das angegebene Log geloggt'
+            en: 'When set, item changes will be logged to the given log'
+    olog_txt:
+        type: str
+        description:
+            de: 'Gibt den Text an, der bei Änderungen geloggt werden soll'
+            en: 'Specifies the text to log on changes'
+    olog_level:
+        type: str
+        valid_list:
+          - DEBUG
+          - INFO
+          - WARNING
+          - ERROR
+        description:
+            de: 'Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR)'
+            en: 'Specifies the log level (DEBUG, INFO, WARNING, ERROR)'
+    olog_rules:
+        type: str
+        description:
+            de: 'Definiert bestimmte Regel/Mappings für das Logging'
+            en: 'Declares specific rules/mappings for the logging'
+
+logic_parameters:
+    # Definition of logic parameters defined by this plugin
+    olog:
+        type: str
+        description:
+            de: 'Wenn gesetzt, werden Item-Änderungen in das angegebene Log geloggt'
+            en: 'When set, item changes will be logged to the given log'
+    olog_txt:
+        type: str
+        description:
+            de: 'Gibt den Text an, der bei Änderungen geloggt werden soll'
+            en: 'Specifies the text to log on changes'
+    olog_level:
+        type: str
+        valid_list:
+          - DEBUG
+          - INFO
+          - WARNING
+          - ERROR
+        description:
+            de: 'Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR)'
+            en: 'Specifies the log level (DEBUG, INFO, WARNING, ERROR)'
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+
