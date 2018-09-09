@@ -80,7 +80,7 @@ class Raspi_GPIO(SmartPlugin):
                     self._initdict[sensor] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                 except Exception:
                     self._initdict[sensor] = False
-                item(value)
+                item(value, 'GPIO Plugin', 'run')
                 GPIO.add_event_detect(sensor, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
                 self.logger.info("{}: Adding Event Detection for Pin {}. Initial value is {}".format(
                     self._name, sensor, value))
@@ -104,7 +104,7 @@ class Raspi_GPIO(SmartPlugin):
             GPIO.setup(out_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             self._itemsdict[out_pin] = item
             value = GPIO.input(out_pin)
-            item(value)
+            item(value, 'GPIO Plugin', 'parse')
             GPIO.add_event_detect(out_pin, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
             self.logger.info("{}: Adding Event Detection for Output Pin {}. Initial value is {}".format(
                 self._name, out_pin, value))
