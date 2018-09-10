@@ -10,6 +10,14 @@ function mainpage() {
     window.location.href = final;
   };
 }
+  function togglevis(id) {
+    var div = document.getElementById(id);
+    div.style.display = div.style.display == "none" ? "block" : "none";
+  }
+  function hide(id) {
+    document.getElementById(id).style.display = "none";
+  }
+
 </script>
 {% endblock scripts %}
 {% set logo_frame = false %}
@@ -52,7 +60,8 @@ function mainpage() {
 
 <div class="container-fluid m-2">
   <div class="mb-2">
-    {{ _('Die folgenden Items sind dem UZSU Plugin zugewiesen') }}:
+    {{ _('Die folgenden Items sind dem UZSU Plugin zugewiesen') }}.
+    <strong>{{ _('Klick auf ein Item um dessen Konfiguration anzuzeigen') }}</strong>
   </div>
   <table class="table table-striped table-hover pluginList">
     <thead>
@@ -66,16 +75,26 @@ function mainpage() {
     </thead>
     {% for item in p.get_items() %}
       {% if p.has_iattr(item.conf, 'uzsu_item') %}
-        {% if p._items[item]['active'] == True %}
-          {% set color = 'green' %}
+
+        {% if p._logics_planned(item) == none and p._items[item]['active'] == True %}
+          {% set color = 'red' %}
+        {% elif p._items[item]['active'] == True %}
+            {% set color = 'green' %}
         {% else %}
           {% set color = 'gray' %}
         {% endif %}
-          <tr style="color:{{ color }};">
+        <div id="detail_{{item._path}}" style="position:fixed;bottom:10px;right: 5%;max-width:50%;display:none" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">{{ p._items[item] }}</div>
+          <tr style="color:{{ color }};" onClick="togglevis('detail_{{item._path}}')" onMouseOut="hide('detail_{{item._path}}')">
             <td class="py-1">{{ item._path }}</td>
             <td class="py-1">{{ p.get_iattr_value(item.conf, 'uzsu_item') }}
-              ({{ p._items[item]['interpolation']['itemtype'] }})</td>
-              <td class="py-1">{{ p._get_dependant(item) }}</td>
+              ({{ p._items[item]['interpolation']['itemtype'] }})
+
+            </td>
+              <td class="py-1" >{{ p._get_dependant(item) }}<br>
+                {% if p._logics_planned(item) != none %}{{ p._logics_planned(item) }}{% endif %}
+                {% if p._logics_planned(item) == none and p._items[item]['active'] == True %}
+                ACTIVE, BUT NO ENTRIES!{% endif %}
+              </td>
               <td class="py-1">{% if p._items[item]['interpolation']['type'] %}
                 {{ p._items[item]['interpolation']['type'] }} ({% if p._items[item]['interpolation']['interval'] %}{{ p._items[item]['interpolation']['interval'] }}{% else %}<span style="color: gray;">5</span>{% endif %})
                 {% else %}-{% endif %}</td>

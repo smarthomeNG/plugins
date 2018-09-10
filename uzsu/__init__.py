@@ -53,6 +53,7 @@
 # ]})
 
 import logging
+import functools
 from lib.model.smartplugin import *
 from lib.item import Items
 from lib.shtime import Shtime
@@ -100,6 +101,8 @@ class UZSU(SmartPlugin):
         self._sh = smarthome
         self._uzsu_sun = None
         self._items = {}
+        self._planned = {}
+        self._update_count = {'todo': 0, 'done': 0}
         self._itpl = OrderedDict()
         self.init_webinterface()
         self.logger.info('{}: Init with timezone {}'.format(self._name, self._timezone))
@@ -116,16 +119,20 @@ class UZSU(SmartPlugin):
         self.logger.debug('{}: run method called'.format(self._name))
         self.alive = True
         self.scheduler_add('uzsu_sunupdate', self._update_all_suns, value={'caller': 'scheduler'}, cron='0 0 * *')
-        self.scheduler_trigger('uzsu_sunupdate')
-        self.logger.info('{}: Triggering sun update and scheduling for midnight'.format(self._name))
-
-        # if you want to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
+        self.logger.info('{}: Adding sun update schedule for midnight'.format(self._name))
 
         for item in self._items:
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
             item(self._items[item], 'USZU Plugin', 'itemtype')
-            if 'active' in self._items[item] and self._items[item]['active']:
+            cond1 = self._items[item].get('active') and self._items[item]['active'] is True
+            cond2 = self._items[item].get('list')
+            if cond1 and cond2:
+                self._update_count['todo'] = self._update_count.get('todo') + 1
+
+        for item in self._items:
+            cond1 = self._items[item].get('active') and self._items[item]['active'] is True
+            cond2 = self._items[item].get('list')
+            if cond1 and cond2:
                 self._schedule(item, caller='run')
 
     def stop(self):
@@ -149,7 +156,10 @@ class UZSU(SmartPlugin):
         :type caller:   str
         """
         for item in self._items:
-            self._update_sun(item)
+            success = self._update_sun(item)
+            if success:
+                self.logger.debug('{}: Updating item {}'.format(self._name, item))
+                item(self._items[item])
 
     def _update_sun(self, item, caller=None):
         """
@@ -160,18 +170,23 @@ class UZSU(SmartPlugin):
         :type caller:   str
         :type item:     item
         """
-        self._uzsu_sun = self._create_sun()
-        self._items[item] = item()
-        _sunrise = self._uzsu_sun.rise()
-        _sunset = self._uzsu_sun.set()
-        if _sunrise.tzinfo == tzutc():
-            _sunrise = _sunrise.astimezone(self._timezone)
-        if _sunset.tzinfo == tzutc():
-            _sunset = _sunset.astimezone(self._timezone)
-        self._items[item]['sunrise'] = '{:02}:{:02}'.format(_sunrise.hour, _sunrise.minute)
-        self._items[item]['sunset'] = '{:02}:{:02}'.format(_sunset.hour, _sunset.minute)
-        self.logger.debug('{}: Updating sun entries for item {}, triggered by {}. sunrise: {}, sunset: {}'.format(
-            self._name, item, caller, self._items[item]['sunrise'], self._items[item]['sunset']))
+        try:
+            self._uzsu_sun = self._create_sun()
+            self._items[item] = item()
+            _sunrise = self._uzsu_sun.rise()
+            _sunset = self._uzsu_sun.set()
+            if _sunrise.tzinfo == tzutc():
+                _sunrise = _sunrise.astimezone(self._timezone)
+            if _sunset.tzinfo == tzutc():
+                _sunset = _sunset.astimezone(self._timezone)
+            self._items[item]['sunrise'] = '{:02}:{:02}'.format(_sunrise.hour, _sunrise.minute)
+            self._items[item]['sunset'] = '{:02}:{:02}'.format(_sunset.hour, _sunset.minute)
+            self.logger.debug('{}: Updated sun entries for item {}, triggered by {}. sunrise: {}, sunset: {}'.format(
+                self._name, item, caller, self._items[item]['sunrise'], self._items[item]['sunset']))
+            success = True
+        except Exception:
+            success = False
+        return success
 
     def _update_suncalc(self, item, entry, entryindex, entryvalue):
         update = False
@@ -211,6 +226,55 @@ class UZSU(SmartPlugin):
                 self._name, err))
         return _itemtype
 
+    def _logics_activate(self, activevalue=None, item=None):
+        if isinstance(activevalue, str):
+            if activevalue.lower() in ['1', 'yes', 'true', 'on']:
+                activevalue = True
+            elif activevalue.lower() in ['0', 'no', 'false', 'off']:
+                activevalue = False
+            else:
+                self.logger.warning("{}: Value to activate item {} has to be True or False".format(self._name, item))
+        if isinstance(activevalue, bool):
+            self._items[item] = item()
+            self._items[item]['active'] = activevalue
+            self.logger.info("{}: Item {} is set via logic to: {}".format(self._name, item, activevalue))
+            item(self._items[item], 'UZSU Plugin', 'logic')
+        if activevalue is None:
+            return self._items[item].get('active')
+
+    def _logics_interpolation(self, type=None, interval=5, backintime=0, item=None):
+        if type is None:
+            return self._items[item].get('interpolation')
+        else:
+            self._items[item] = item()
+            self._items[item]['interpolation']['type'] = str(type).lower()
+            self._items[item]['interpolation']['interval'] = int(interval)
+            self._items[item]['interpolation']['initage'] = int(backintime)
+            self.logger.info("{}: Item {} interpolation is set via logic to: type={}, interval={}, backintime={}".format(
+                self._name, item, type, interval, backintime))
+            item(self._items[item], 'UZSU Plugin', 'logic')
+
+    def _logics_clear(self, clear=False, item=None):
+        if isinstance(clear, str):
+            if clear.lower() in ['1', 'yes', 'true', 'on']:
+                clear = True
+            else:
+                self.logger.warning("{}: Value to clear uzsu item {} has to be True".format(self._name, item))
+        if isinstance(clear, bool) and clear is True:
+            self._items[item].clear()
+            self._items[item] = {'interpolation': {}, 'active': False}
+            self.logger.info("{}: UZSU settings for item {} are cleared".format(self._name, item))
+            item(self._items[item], 'UZSU Plugin', 'clear')
+
+    def _logics_planned(self, item=None):
+        try:
+            self.logger.info("{}: Item {} is going to be set to {} at {}".format(
+                self._name, item, self._planned[item]['value'], self._planned[item]['next']))
+            return self._planned[item]
+        except Exception:
+            self.logger.info("{}: Nothing planned for item {}. {}".format(self._name, item, self._planned))
+            return None
+
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
@@ -228,6 +292,13 @@ class UZSU(SmartPlugin):
         """
         if self.has_iattr(item.conf, ITEM_TAG[0]):
             item.expand_relativepathes(ITEM_TAG[0], '', '')
+
+            # add functions for use in logics and webif
+            item.activate = functools.partial(self._logics_activate, item=item)
+            item.interpolation = functools.partial(self._logics_interpolation, item=item)
+            item.clear = functools.partial(self._logics_clear, item=item)
+            item.planned = functools.partial(self._logics_planned, item=item)
+
             self._items[item] = item()
             try:
                 self._items[item]['interpolation']['initialized'] = False
@@ -305,6 +376,9 @@ class UZSU(SmartPlugin):
         if not self._items[item]['interpolation'].get('itemtype'):
             self.logger.error("{}: item '{}' to be set by uzsu does not exist.".format(
                 self._name, self.get_iattr_value(item.conf, ITEM_TAG[0])))
+        elif not self._items[item].get('list'):
+            self.logger.warning("{}: uzsu item '{}' is active but has no entries.".format(
+                self._name, item))
         else:
             self._itpl.clear()
             for i, entry in enumerate(self._items[item]['list']):
@@ -408,7 +482,12 @@ class UZSU(SmartPlugin):
             else:
                 self.logger.debug("{}: will add scheduler named uzsu_{} with datetime {} and tzinfo {}"
                                   " and value {}".format(self._name, item, _next, _next.tzinfo, _value))
+                self._planned[item] = {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M')}
+                self._update_count['done'] = self._update_count.get('done') + 1
                 self.scheduler_add('uzsu_{}'.format(item), self._set, value={'item': item, 'value': _value}, next=_next)
+            if self._update_count.get('done')  == self._update_count.get('todo'):
+                self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
+                self._update_count = {'done': 0, 'todo': 0}
 
     def _set(self, **kwargs):
         """

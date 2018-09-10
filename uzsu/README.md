@@ -39,11 +39,11 @@ someroom:
 
         anotheritem:
             type: dict
-            uzsu_item: someroom.someitem
+            uzsu_item: someroom.someitem #using smarthomeNG 1.5.1 develop you can use '..' to define a relative item
             cache: 'True'
 ```
 
-If you specify the ``cache: True`` as well, then you're switching entries will be there even if you restart smarthome.py.
+If you specify the ``cache: True`` as well, then your switching entries will be there even if you restart smarthome.py.
 
 ## Item Data Format
 
@@ -69,6 +69,33 @@ Each UZSU item is of type list. Each list entry has to be a dict with specific k
 * __itemtype__: the type of the item that should be changed by the UZSU. This is set automatically on init and should not be touched.
 
 * __initizialized__: bool, gets set automatically at startup as soon as a valid UZSU entry was found in the specified initage and the item was indeed initialized with that value.
+
+## Additional item functions
+
+You can use these function in logics to query or set yout uzsu item:
+
+```
+# query the next scheduled value and time
+sh.eg.wohnen.kugellampe.uzsu.planned()
+
+# query the interpolation settings
+sh.eg.wohnen.kugellampe.uzsu.interpolation()
+
+# query whether the uzsu is set active or not
+sh.eg.wohnen.kugellampe.uzsu.activate()
+
+# set the uzsu active or inactive
+sh.eg.wohnen.kugellampe.uzsu.activate(True/False)
+
+# set interpolation options
+sh.eg.wohnen.kugellampe.uzsu.activate(type='linear/none/cubic', interval=5, backintime=0)
+
+# clear your settings of the uzsu item. BE CAREFUL!
+sh.eg.wohnen.kugellampe.uzsu.clear(True)
+
+
+```
+
 
 ## Example
 

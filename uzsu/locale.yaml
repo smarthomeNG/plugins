@@ -1,6 +1,7 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
     'Die folgenden Items sind dem UZSU Plugin zugewiesen':         {'de': '=', 'en': 'The following items are assigned to the UZSU plugin'}
+    'Klick auf ein Item um dessen Konfiguration anzuzeigen':         {'de': '=', 'en': 'Click on an item to show its configuration'}
     'UZSU Item':                  {'de': '=', 'en': '='}
     'Abhängige Items (mit Typ)':  {'de': '=', 'en': 'Dependant Item (with type)'}
     'Wert des abhängigen Items':  {'de': '=', 'en': 'Value of dependant Item'}
