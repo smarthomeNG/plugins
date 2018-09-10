@@ -60,11 +60,11 @@ function mainpage() {
       <th>{{ _('UZSU Item') }}</th>
       <th>{{ _('Abhängige Items (mit Typ)') }}</th>
       <th>{{ _('Wert des abhängigen Items') }}</th>
-      <th>{{ _('Interpolation') }}</th>
+      <th>{{ _('Interpolation (Intervall)') }}</th>
       <th>{{ _('Back in Time') }}</th>
     </tr>
     </thead>
-    {% for item in p._items %}
+    {% for item in p.get_items() %}
       {% if p.has_iattr(item.conf, 'uzsu_item') %}
         {% if p._items[item]['active'] == True %}
           {% set color = 'green' %}
@@ -77,7 +77,8 @@ function mainpage() {
               ({{ p._items[item]['interpolation']['itemtype'] }})</td>
               <td class="py-1">{{ p._get_dependant(item) }}</td>
               <td class="py-1">{% if p._items[item]['interpolation']['type'] %}
-                {{ p._items[item]['interpolation']['type'] }}{% else %}-{% endif %}</td>
+                {{ p._items[item]['interpolation']['type'] }} ({% if p._items[item]['interpolation']['interval'] %}{{ p._items[item]['interpolation']['interval'] }}{% else %}<span style="color: gray;">5</span>{% endif %})
+                {% else %}-{% endif %}</td>
               <td class="py-1">{% if p._items[item]['interpolation']['initage'] %}
                 {{ p._items[item]['interpolation']['initage'] }}{% else %}-{% endif %}</td>
           </tr>

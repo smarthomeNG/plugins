@@ -460,7 +460,9 @@ class UZSU(SmartPlugin):
             time = entry['time']
             if not active:
                 return None, None
-            if 'rrule' in entry and entry['rrule']:
+            if 'rrule' in entry:
+                if entry['rrule'] == '':
+                    entry['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
                 if 'dtstart' in entry:
                     rrule = rrulestr(entry['rrule'], dtstart=entry['dtstart'])
                 else:
@@ -507,8 +509,8 @@ class UZSU(SmartPlugin):
             if 'sun' in time:
                 next = self._sun(datetime.combine(today, datetime.min.time()).replace(
                     tzinfo=self._timezone), time, timescan)
-                cond_today = next > datetime.now(self._timezone) and timescan == 'next'
-                if cond_today:
+                cond_future = next > datetime.now(self._timezone) and timescan == 'next'
+                if cond_future:
                     self.logger.debug("{}: Result parsing time today (sun) {}: {}".format(self._name, time, next))
                     if entryindex:
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
@@ -522,8 +524,8 @@ class UZSU(SmartPlugin):
                     self.logger.debug("{}: Result parsing time tomorrow (sun) {}: {}".format(self._name, time, next))
             else:
                 next = datetime.combine(today, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
-                cond_today = next > datetime.now(self._timezone) and timescan == 'next'
-                if not cond_today:
+                cond_future = next > datetime.now(self._timezone) and timescan == 'next'
+                if not cond_future:
                     self._itpl[next.timestamp() * 1000.0] = value
                     self.logger.debug("{}: Include next today: {}, value {} for interpolation.".format(self._name, next, value))
                     next = datetime.combine(tomorrow, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
@@ -593,7 +595,7 @@ class UZSU(SmartPlugin):
         if not uzsu_sun:
             return
 
-        self.logger.debug("{}: Given param dt={}, tz={}".format(self._name, dt, dt.tzinfo))
+        self.logger.debug("{}: Given param dt={}, tz={} for {}".format(self._name, dt, dt.tzinfo, timescan))
 
         # now start into parsing details
         self.logger.debug('{}: Examine param time string: {}'.format(self._name, tstr))
@@ -713,6 +715,18 @@ class UZSU(SmartPlugin):
                 self._name, err))
         return _itemvalue
 
+    def get_items(self):
+        """
+        Getting a sorted item list with uzsu config
+
+        :return:        sorted itemlist
+        """
+        sortedlist = sorted([k.id() for k in self._items.keys()])
+        finallist = []
+        for i in sortedlist:
+            finallist.append(self.itemsApi.return_item(i))
+        return finallist
+
     def init_webinterface(self):
         """"
         Initialize the web interface for this plugin
@@ -787,7 +801,7 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        # item = self.plugin.get_sh().return_item(item_path)
+        item = self.plugin.get_sh().return_item(item_path)
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,

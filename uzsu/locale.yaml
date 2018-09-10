@@ -4,7 +4,7 @@ plugin_translations:
     'UZSU Item':                  {'de': '=', 'en': '='}
     'Abhängige Items (mit Typ)':  {'de': '=', 'en': 'Dependant Item (with type)'}
     'Wert des abhängigen Items':  {'de': '=', 'en': 'Value of dependant Item'}
-    'Interpolation':              {'de': '=', 'en': '='}
+    'Interpolation (Intervall)':              {'de': '=', 'en': 'Interpolation (interval)'}
     'Back in Time':               {'de': '=', 'en': '='}
     'Sonnenaufgang':              {'de': '=', 'en': 'sun rise'}
     'Sonnenuntergang':            {'de': '=', 'en': 'sun set'}
