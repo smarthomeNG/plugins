@@ -76,7 +76,7 @@ function mainpage() {
     {% for item in p.get_items() %}
       {% if p.has_iattr(item.conf, 'uzsu_item') %}
 
-        {% if p._logics_planned(item) == none and p._items[item]['active'] == True %}
+        {% if (p._logics_planned(item) == none and p._items[item]['active'] == True) or p._items[item]['interpolation']['itemtype'] == none %}
           {% set color = 'red' %}
         {% elif p._items[item]['active'] == True %}
             {% set color = 'green' %}
@@ -87,13 +87,16 @@ function mainpage() {
           <tr style="color:{{ color }};" onClick="togglevis('detail_{{item._path}}')" onMouseOut="hide('detail_{{item._path}}')">
             <td class="py-1">{{ item._path }}</td>
             <td class="py-1">{{ p.get_iattr_value(item.conf, 'uzsu_item') }}
+              {% if p._items[item]['interpolation']['itemtype'] == none %} -
+              {{ _('Item existiert nicht!') }}{% else %}
               ({{ p._items[item]['interpolation']['itemtype'] }})
-
+              {% endif %}
             </td>
               <td class="py-1" >{{ p._get_dependant(item) }}<br>
                 {% if p._logics_planned(item) != none %}{{ p._logics_planned(item) }}{% endif %}
                 {% if p._logics_planned(item) == none and p._items[item]['active'] == True %}
-                ACTIVE, BUT NO ENTRIES!{% endif %}
+                {{ _('Aktives Item, keine (aktiven) Einträge!') }}
+                {% endif %}
               </td>
               <td class="py-1">{% if p._items[item]['interpolation']['type'] %}
                 {{ p._items[item]['interpolation']['type'] }} ({% if p._items[item]['interpolation']['interval'] %}{{ p._items[item]['interpolation']['interval'] }}{% else %}<span style="color: gray;">5</span>{% endif %})
