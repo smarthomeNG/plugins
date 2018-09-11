@@ -7,6 +7,30 @@ This Plugin uses sleekxmpp as basis to connect to XMPP etc services: https://pyp
 At this stage the XMPP plugin module only supports in sending messages. Recevied messages are ignored. OTR not supported
 as the sleekxmpp libraries do not support this as yet.
 
+This Plugin can also be used to setup a standard logger category which
+can be used to log messages using XMPP to some chat or groupchat contact.
+The logging configuration looks like this:
+
+```yaml
+handlers:
+    xmpp:
+        class: plugins.xmpp.XMPPLogHandler
+        formatter: shng_simple
+        xmpp_plugin: xmpp
+        xmpp_receiver: room@conference.example.com
+        xmpp_receiver_type: groupchat
+loggers:
+    xmpp:
+        handlers: [xmpp]
+        level: WARN
+```
+
+This requires a XMPP plugin configured in a section named `xmpp`
+which is used in the `xmpp_plugin` setting. The receiver and type needs
+to be specified to configure the target receiving the log
+messages.
+
+
 ## Configuration
 
 ### plugin.yaml

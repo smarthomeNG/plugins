@@ -26,6 +26,7 @@
 import logging
 import sleekxmpp
 
+from lib.plugin import Plugins
 from lib.model.smartplugin import *
 
 class XMPP(SmartPlugin):
@@ -117,6 +118,28 @@ class XMPP(SmartPlugin):
         """
         self.logger.info("Sending message via XMPP. To: {0}\t Message: {1}".format(to, msgsend))
         self.xmpp.send_message(mto=to, mbody=str(msgsend), mtype=mt)
+
+
+class XMPPLogHandler(logging.Handler):
+
+    def __init__(self, xmpp_plugin, xmpp_receiver, xmpp_receiver_type='chat'):
+        logging.Handler.__init__(self)
+        self._plugin = None
+        self._xmpp_plugin = xmpp_plugin
+        self._xmpp_receiver = xmpp_receiver
+        self._xmpp_receiver_type = xmpp_receiver_type
+
+    def emit(self, record):
+        if self._plugin is None:
+            self._plugin = Plugins.get_instance().return_plugin(self._xmpp_plugin)
+            if self._plugin is None:
+                logging.getLogger(__name__).error('Can not get XMPP plugin for {} - disabling XMPP logging!'.format(self._xmpp_plugin))
+                self._plugin = False
+            else:
+                logging.getLogger(__name__).info('Configured XMPP logging using pluing {}'.format(self._xmpp_plugin))
+
+        if self._plugin is not False:
+            self._plugin.send(self._xmpp_receiver, self.format(record), self._xmpp_receiver_type)
 
 
 def main():
