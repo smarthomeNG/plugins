@@ -12,6 +12,12 @@ function mainpage() {
 }
 </script>
 {% endblock scripts %}
+
+{%- block styles %}
+{{ super() }}
+<link rel="stylesheet" href="static/avdevice.css" type="text/css"/>
+{%- endblock styles %}
+
 {% set logo_frame = false %}
 
 
@@ -50,9 +56,8 @@ function mainpage() {
 <table class="table table-striped table-hover">
   <tbody>
     <tr>
-      <td class="py-1"><strong>{{ _('Modell') }}</strong></td>
+      <td class="py-1 left-head"><strong>{{ _('Modell') }}</strong></td>
       <td class="py-1">{{ p.get_parameter_value_for_display('model').replace('models/', '').upper() }}</td>
-      <td class="py-1" width="50px"></td>
       <td class="py-1"><strong style="color:{{ conn_color }};">{{ _('Verbindung') }}</strong></td>
       <td class="py-1" style="color:{{ conn_color }};">{% if p._rs232 %}{{ p._rs232 }}:{{ p._baud }}, {{ p._timeout }}
         {% else %}{{ p._tcp }}:{{ p._port }}, {{ p._tcp_timeout }}{% endif %}
@@ -63,29 +68,26 @@ function mainpage() {
         <button type="button" class="btn btn-shng btn-sm reload" title="{{ _('Try to connect RS232') }}" onclick="location.href='?action=connect';">C</button>
         {% endif %}
       </td>
-      <td class="py-1" width="50px"></td>
     </tr>
     <tr>
-      <td class="py-1"><strong>{{ _('Abhängig von') }}</strong></td>
-      <td class="py-1">{{ p._dependson|default('nichts') }}
-        {% if p._dependson_value %} = {{ p._dependson_value }}{% endif %}</td>
-      <td></td>
-      <td class="py-1"><strong>{{ _('0 wenn') }}</strong></td>
-      <td class="py-1">
+      <td class="py-1 header"><div class="oneliner"><strong>{{ _('Abhängig von') }}</strong></div></td>
+      <td class="py-1 content"><div>{{ p._dependson|default('nichts') }}
+        {% if p._dependson_value %} = {{ p._dependson_value }}{% endif %}</div></td>
+      <td class="py-1 header"><div class="oneliner"><strong>{{ _('0 wenn') }}</strong></div></td>
+      <td class="py-1 content"><div>
         {% if p._depend0_power0 %}Power{% endif %}{% if p._depend0_power0 and p._depend0_volume0%}, {% endif %}
         {% if p._depend0_volume0 %}Volume{% endif %}
-        {% if not p._depend0_volume0 and not p._depend0_power0 %}None{% endif %}</td>
-      <td></td>
+        {% if not p._depend0_volume0 and not p._depend0_power0 %}None{% endif %}</div></td>
     </tr>
     <tr>
-      <td class="py-1"><strong>{{ _('Ignorieren') }}</strong></td>
-      <td class="py-1" colspan=5>{% if p._ignore_response %}{{ p._ignore_response }}
-        {% else %}None{% endif %}</td>
+      <td class="py-1 header"><div class="oneliner"><strong>{{ _('Ignorieren') }}</strong></div></td>
+      <td class="py-1 content" colspan=3><div class="oneliner">{% if p._ignore_response %}{{ p._ignore_response }}
+        {% else %}None{% endif %}</div></td>
     </tr>
     <tr>
-      <td class="py-1"><strong>{{ _('Fehlermeldung') }}</strong></td>
-      <td class="py-1" colspan=5>{% if p._error_response %}{{ p._error_response }}
-        {% else %}None{% endif %}</td>
+      <td class="py-1 header"><div class="oneliner"><strong>{{ _('Fehlermeldung') }}</strong></div></td>
+      <td class="py-1 content" colspan=3><div class="oneliner">{% if p._error_response %}{{ p._error_response }}
+        {% else %}None{% endif %}</div></td>
     </tr>
   </tbody>
 </table>
@@ -112,7 +114,7 @@ function mainpage() {
 {% endblock %}
 
 {% block bodytab1 %}
-<div class="container-fluid m-2">
+<div class="container-fluid m-2" style="margin-top:250px;">
 {% if item_count_zone0>0 %}
   <div class="mb-2">
     {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
