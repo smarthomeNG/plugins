@@ -61,7 +61,7 @@ class OperationLog(AbLogger, SmartPlugin):
         AbLogger.__init__(self, name)
         self._filepattern = filepattern
         self._log = lib.log.Log(smarthome, name, mapping, int(maxlen))
-        self._logger = None if logger else logging.getLogger(logger)
+        self._logger = None if not logger else logging.getLogger(logger)
         self._path = name
         self._cachefile = None
         self._cache = True
