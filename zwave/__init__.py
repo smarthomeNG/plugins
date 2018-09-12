@@ -83,6 +83,7 @@ class ZWave(SmartPlugin):
         self.logger.debug('zwave: logath={0}', self._logfile)
         self._loglevel = loglevel
         self._sec_strategy = sec_strategy
+        self._ready = False
 
     def run(self):
         """
@@ -92,7 +93,7 @@ class ZWave(SmartPlugin):
         self.alive = True
 
         try:
-            options = ZWaveOption(self._device, config_path=self._config_path, user_path='.', cmd_line='')
+            options = ZWaveOption(self._device, config_path=self._config_path, user_path='./var/ozw', cmd_line='')
         except Exception as e:
             self.logger.error('zwave: error on create ZWaveOption - {}'.format(e))
             self.alive = False
@@ -125,24 +126,40 @@ class ZWave(SmartPlugin):
         try:
             self._network.start()
         except Exception as e:
+            self.alive = False
             self.logger.error('zwave: error on start network - {}'.format(e))
 
         self.logger.info('zwave: use openzwave library: {}'.format(self._network.controller.ozw_library_version))
         self.logger.info('zwave: use python library: {}'.format(self._network.controller.python_library_version))
         self.logger.info('zwave: use ZWave library: {}'.format(self._network.controller.library_description))
-        while 1:
-            if self.alive and self._network.state < self._network.STATE_READY:
+
+        while self.alive:
+
+            if self._network.state != self._network.STATE_READY:
+
                 self.logger.debug('zwave: wait until network is ready... current state is: {}'.format(self._network.state_str))
-                time.sleep(3.0)
                 if self._network.state == self._network.STATE_FAILED:
-                    self.alive = false
+                    self.alive = False
                     return
 
-        self.logger.info('zwave: controller ready : {} nodes were found.'.format(self._network.nodes_count))
-        self.logger.info('zwave: controller node id : {}'.format(self._network.controller.node.node_id))
-        self.logger.info('zwave: controller node version : {}'.format(self._network.controller.node.version))
-        self.logger.info('zwave: Network home id : {}'.format(self._network.home_id_str))
-        self.logger.info('zwave: Nodes in network : {}'.format(self._network.nodes_count))
+            # Dump network information on STATE_READY
+            if self._network.state == self._network.STATE_READY and self._ready == False:
+                self.logger.info('zwave: controller ready : {} nodes were found.'.format(self._network.nodes_count))
+                self.logger.info('zwave: controller node id : {}'.format(self._network.controller.node.node_id))
+                self.logger.info('zwave: controller node version : {}'.format(self._network.controller.node.version))
+                self.logger.info('zwave: Network home id : {}'.format(self._network.home_id_str))
+                self.logger.info('zwave: Nodes in network : {}'.format(self._network.nodes_count))
+
+                self.logger.info("zwave: Start refresh values")
+                for __id in self.listenOn:
+                    __val = self._network.get_value(__id)
+                    self.logger.info("zwave: id : '{}', val: '{}'".format(__id,__val))
+                    for __item in self.listenOn[__id][ITEMS]:
+                        __item(__val.data, 'ZWave')
+
+                self._ready = True
+
+            time.sleep(3.0)
 
     def stop(self):
         """
