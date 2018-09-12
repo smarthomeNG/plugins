@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2017 Thomas Creutz                    <thomas.creutz@gmx.de>
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
 #  upwards.
@@ -50,14 +50,14 @@ class ZWave(SmartPlugin):
     def __init__(self, sh, device='/dev/ttyUSB0', sec_strategy='SUPPORTED', config_path='/etc/openzwave/', zlogging='false', logfile='OZW.log', loglevel='Info'):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-        
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**! 
+
+        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
         :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
         :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
-        
+
         If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
         a reference to the sh object any more.
-        
+
         The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are implemented
         to support older plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
         use the SmartPlugin method `get_parameter_value(parameter_name)` instead. Anywhere within the Plugin you can get
