@@ -571,7 +571,7 @@ class UZSU(SmartPlugin):
                     if 'sun' in time:
                         next = self._sun(datetime.combine(dt.date(), datetime.min.time()).replace(tzinfo=self._timezone), time, timescan)
                         self.logger.debug("{}: Result parsing time (rrule) {}: {}".format(self._name, time, next))
-                        if entryindex:
+                        if entryindex is not None:
                             self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                     else:
                         next = datetime.combine(dt.date(), parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
@@ -591,7 +591,7 @@ class UZSU(SmartPlugin):
                 cond_future = next > datetime.now(self._timezone) and timescan == 'next'
                 if cond_future:
                     self.logger.debug("{}: Result parsing time today (sun) {}: {}".format(self._name, time, next))
-                    if entryindex:
+                    if entryindex is not None:
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                 else:
                     self._itpl[next.timestamp() * 1000.0] = value
