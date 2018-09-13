@@ -4,7 +4,7 @@ plugin:
     type: system                  # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
         de: 'Implementierung seperater Logs'
-        en: ''
+        en: 'Implementation of seperate logs'
     maintainer: '? (JanT112)'
     tester: Sandman60, onkelandy
 #    keywords: iot xyz
