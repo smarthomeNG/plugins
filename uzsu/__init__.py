@@ -59,12 +59,14 @@ from lib.item import Items
 from lib.shtime import Shtime
 
 from datetime import datetime, timedelta
+from time import sleep
 from dateutil.rrule import rrulestr
 from dateutil import parser
 from dateutil.tz import tzutc
 import lib.orb
 from unittest import mock
 from collections import OrderedDict
+from bin.smarthome import VERSION
 
 try:
     from scipy import interpolate
@@ -93,7 +95,9 @@ class UZSU(SmartPlugin):
 
         :param sh:  The instance of the smarthome object, save it for later references
         """
-        self.logger = logging.getLogger(__name__)
+
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
         self.itemsApi = Items.get_instance()
         self._name = self.get_fullname()
         self._timezone = Shtime.get_instance().tzinfo()
@@ -569,6 +573,7 @@ class UZSU(SmartPlugin):
                     if dt is None:
                         return None, None
                     if 'sun' in time:
+                        sleep(0.01)
                         next = self._sun(datetime.combine(dt.date(), datetime.min.time()).replace(tzinfo=self._timezone), time, timescan)
                         self.logger.debug("{}: Result parsing time (rrule) {}: {}".format(self._name, time, next))
                         if entryindex is not None:
