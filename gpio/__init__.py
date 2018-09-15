@@ -23,6 +23,7 @@ import logging
 from lib.model.smartplugin import *
 import threading
 import datetime
+from bin.smarthome import VERSION
 
 try:
     import RPi.GPIO as GPIO
@@ -35,7 +36,8 @@ class Raspi_GPIO(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh):
-        self.logger = logging.getLogger(__name__)
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
         self.init_webinterface()
         self._name = self.get_fullname()
         if not REQUIRED_PACKAGE_IMPORTED:
