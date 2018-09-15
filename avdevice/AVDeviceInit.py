@@ -29,6 +29,7 @@ import re
 import os
 
 from lib.item import Items
+from bin.smarthome import VERSION
 
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
@@ -45,7 +46,8 @@ class Init(object):
         self._ignoreresponse = []
         self.itemsApi = Items.get_instance()
 
-        self.logger = logging.getLogger(__name__)
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
         self.logger.log(VERBOSE1, "Initializing {}: Started".format(self._name))
 
         self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}

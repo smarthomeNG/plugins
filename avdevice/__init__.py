@@ -33,6 +33,7 @@ import datetime
 import re
 import errno
 import itertools
+from bin.smarthome import VERSION
 
 from .AVDeviceInit import Init
 from .AVDeviceInit import ProcessVariables
@@ -40,11 +41,6 @@ from .AVDeviceFunctions import CreateResponse
 from .AVDeviceFunctions import Translate
 from .AVDeviceFunctions import ConvertValue
 from .AVDeviceFunctions import CreateExpectedResponse
-
-# Used to get errorline, for debugging only
-# sys.exc_info()[-1].tb_lineno
-#try:
-#    import sys
 
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
@@ -58,7 +54,8 @@ class AVDevice(SmartPlugin):
 
     def __init__(self, smarthome):
         self.itemsApi = Items.get_instance()
-        self.logger = logging.getLogger(__name__)
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
         self.init_webinterface()
         try:
             self.alive = False
@@ -457,6 +454,50 @@ class AVDevice(SmartPlugin):
 
     # Processing the response from the AV device, dealing with buffers, etc.
     def _processing_response(self, socket):
+
+        def _sortbuffer(buffer, bufferlist):
+            expectedsplit = []
+            self._expected_response = CreateExpectedResponse(buffer, self._name,
+                                                             self._send_commands).create_expected()
+            expectedsplit = list(itertools.chain(*[x.split('|') for x in self._expected_response]))
+            sortedbuffer = []
+            for e in expectedsplit:
+                for entry in bufferlist:
+                    if entry == e and entry not in self._ignore_response:
+                        sortedbuffer.append(entry)
+                        self.logger.log(VERBOSE2,
+                                        "Processing Response {}: Response is same as expected. adding: {}.".format(
+                                            self._name, entry))
+                        break
+                    elif entry.startswith(e):
+                        try:
+                            realresponse = self._response_wildcards['original'][e]
+                        except Exception:
+                            realresponse = e
+                        try:
+                            for resp in self._response_commands[realresponse]:
+                                self.logger.log(VERBOSE2,
+                                                "Processing Response {}: realresponse: {}. Length: {}, expected length: {}.".format(
+                                                    self._name, realresponse, len(entry), resp[1]))
+                                cond1 = len(entry) == resp[1] or resp[1] == 100 or resp[0] == 100
+                                cond2 = entry not in sortedbuffer and entry not in self._ignore_response
+                                if cond1 and cond2:
+                                    self.logger.log(VERBOSE2,
+                                                    "Processing Response {}: length is same. adding: {}.".format(
+                                                        self._name, entry))
+                                    sortedbuffer.append(entry)
+                                    break
+                        except Exception:
+                            pass
+
+            self.logger.log(VERBOSE2,
+                            "Processing Response {}: expected response: {}, bufferlist {}. Sortedbuffer: {}".format(
+                                self._name, expectedsplit, bufferlist, sortedbuffer))
+            bufferlist = [x for x in bufferlist if x not in sortedbuffer]
+            buffer = "\r\n".join(sortedbuffer + bufferlist)
+            buffer = "{}\r\n".format(buffer)
+            return buffer, expectedsplit
+
         try:
             buffer = ''
             tidy = lambda c: re.sub(
@@ -565,48 +606,10 @@ class AVDevice(SmartPlugin):
                             buffer_cleaned.append(buff)
                     bufferlist = buffer_cleaned
                     buffer = "\r\n".join(bufferlist) + "\r\n"
-                    expectedsplit = []
 
                     if self._send_commands:
-                        self._expected_response = CreateExpectedResponse(buffer, self._name,
-                                                                         self._send_commands).create_expected()
-                        expectedsplit = list(itertools.chain(*[x.split('|') for x in self._expected_response]))
-                        sortedbuffer = []
-                        for e in expectedsplit:
-                            for entry in bufferlist:
-                                if entry == e and entry not in self._ignore_response:
-                                    sortedbuffer.append(entry)
-                                    self.logger.log(VERBOSE2,
-                                                    "Processing Response {}: Response is same as expected. adding: {}.".format(
-                                                        self._name, entry))
-                                    break
-                                elif entry.startswith(e):
-                                    try:
-                                        realresponse = self._response_wildcards['original'][e]
-                                    except Exception:
-                                        realresponse = e
-                                    try:
-                                        for resp in self._response_commands[realresponse]:
-                                            self.logger.log(VERBOSE2,
-                                                            "Processing Response {}: realresponse: {}. Length: {}, expected length: {}.".format(
-                                                                self._name, realresponse, len(entry), resp[1]))
-                                            cond1 = len(entry) == resp[1] or resp[1] == 100 or resp[0] == 100
-                                            cond2 = entry not in sortedbuffer and entry not in self._ignore_response
-                                            if cond1 and cond2:
-                                                self.logger.log(VERBOSE2,
-                                                                "Processing Response {}: length is same. adding: {}.".format(
-                                                                    self._name, entry))
-                                                sortedbuffer.append(entry)
-                                                break
-                                    except Exception:
-                                        pass
-
-                        self.logger.log(VERBOSE2,
-                                        "Processing Response {}: expected response: {}, bufferlist {}. Sortedbuffer: {}".format(
-                                            self._name, expectedsplit, bufferlist, sortedbuffer))
-                        bufferlist = [x for x in bufferlist if x not in sortedbuffer]
-                        buffer = "\r\n".join(sortedbuffer + bufferlist)
-                        buffer = "{}\r\n".format(buffer)
+                        _, expectedsplit = _sortbuffer(buffer, bufferlist)
+                        # first entry should be buffer as soon as resorting works perfectly smooth. Problem now: On very short interval settings the sorting results in wrong reponses.
                         self.logger.log(VERBOSE2, "Processing Response {}: Buffer after sorting: {}.".format(
                             self._name, re.sub('[\r\n]', ' --- ', buffer)))
 
@@ -802,8 +805,7 @@ class AVDevice(SmartPlugin):
                         self._wait(0.2)
                         yield buf
         except Exception as err:
-            self.logger.error("Processing Response {}: Problems: {} in line {}.".format(
-                self._name, err, sys.exc_info()[-1].tb_lineno))
+            self.logger.error("Processing Response {}: Problems: {}".format(self._name, err))
 
     def _clear_history(self, part):
         if part == 'keep':
@@ -1188,7 +1190,7 @@ class AVDevice(SmartPlugin):
                                         else:
                                             dict_entry = None
                                     expectedvalue = Translate(expectedvalue, dict_entry, self._name, 'parse',
-                                                          self._specialparse).translate() or expectedvalue
+                                                              self._specialparse).translate() or expectedvalue
                                     self.logger.log(VERBOSE2,
                                                     "Checking Dependency {}: Expectedvalue after Translation {}. Dependitem: {}, expected {}".format(
                                                         self._name, expectedvalue, dependitem, expectedvalue))
@@ -1943,7 +1945,7 @@ class AVDevice(SmartPlugin):
                         if commanditem:
                                 command = '{};{}'.format(command_split, commanditem)
                         self.logger.log(VERBOSE1,
-                                            "Parsing Input {}: Adding command commandsplit {}, commanditem {}. Command: {}".format(
+                                        "Parsing Input {}: Adding command commandsplit {}, commanditem {}. Command: {}".format(
                                                 self._name, command_split, commanditem, command))
                         if command_split in self._query_commands:
                             reorderlist.append(command)
@@ -2789,7 +2791,7 @@ class AVDevice(SmartPlugin):
                             self._special_commands['Input']['Ignore']))
             except Exception as err:
                 self.logger.debug(
-                    "Display Ignore {}: Problems: {} in line {}.".format(self._name, err, sys.exc_info()[-1].tb_lineno))
+                    "Display Ignore {}: Problems: {}".format(self._name, err))
         else:
             try:
                 cond1 = response.startswith(tuple(inputcommands))
@@ -2985,15 +2987,15 @@ class AVDevice(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+            self.mod_http = Modules.get_instance().get_module('http')
         except:
-             self.mod_http = None
-        if self.mod_http == None:
+            self.mod_http = None
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
             return False
 
@@ -3026,8 +3028,8 @@ class AVDevice(SmartPlugin):
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
-class WebInterface(SmartPluginWebIf):
 
+class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
         """
@@ -3043,7 +3045,6 @@ class WebInterface(SmartPluginWebIf):
         self.plugin = plugin
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, action=None, item_id=None, item_path=None, reload=None):
         """
@@ -3053,7 +3054,6 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        item = self.plugin.get_sh().return_item(item_path)
         config_reloaded = False
         keep_cleared = False
         command_cleared = False

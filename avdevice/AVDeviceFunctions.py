@@ -25,6 +25,7 @@
 
 import logging
 import re
+from bin.smarthome import VERSION
 
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
@@ -38,7 +39,8 @@ class CreateExpectedResponse(object):
         self._name = name
         self._send_commands = sendcommands
 
-        self.logger = logging.getLogger(__name__)
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
         self.logger.debug(
             "Processing Response {}: Creating expected response. Buffer: {}. Name: {}. Sendcommands: {}".format(
                 self._name, re.sub('[\r\n]', ' --- ', self._buffer), self._name, self._send_commands))
