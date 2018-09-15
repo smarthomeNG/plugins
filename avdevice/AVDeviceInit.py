@@ -39,15 +39,13 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 class Init(object):
 
-    def __init__(self, name, model, items):
+    def __init__(self, name, model, items, logger):
         self._items = items
         self._name = name
         self._model = model
         self._ignoreresponse = []
         self.itemsApi = Items.get_instance()
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        self.logger = logger
         self.logger.log(VERBOSE1, "Initializing {}: Started".format(self._name))
 
         self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
@@ -779,10 +777,10 @@ class Init(object):
 
 
 class ProcessVariables(Init):
-    def __init__(self, value, name):
+    def __init__(self, value, name, logger):
         self._value = value
         self._name = name
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
 
     def process_rs232(self):
         baud = serial_timeout = None

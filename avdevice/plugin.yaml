@@ -7,6 +7,7 @@ plugin:
         en: 'Controlling AV devices via TCP/IP and RS232'
     maintainer: onkelandy
     tester: Foxi352                     # Who tests this plugin?
+    state: develop
     keywords: av denon pioneer epson oppo player amp receiver projector rs232 telnet tcpip
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.5            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
+    restartable: unknown
     classname: AVDevice            # class containing the plugin
 
 parameters:

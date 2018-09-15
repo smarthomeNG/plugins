@@ -56,6 +56,7 @@ class AVDevice(SmartPlugin):
         self.itemsApi = Items.get_instance()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
+        self.logger.error(self.logger)
         self.init_webinterface()
         try:
             self.alive = False
@@ -119,19 +120,21 @@ class AVDevice(SmartPlugin):
             # Initializing all variables
             self.logger.debug("Initializing {}: Resendwait: {}. Seconds to keep: {}.".format(self._name, self._resend_wait,
                                                                                              self._secondstokeep))
-            self.init = Init(self._name, self._model, self._items)
+            self.init = Init(self._name, self._model, self._items, self.logger)
             self._rs232, self._baud, self._timeout = ProcessVariables([rs232_port, rs232_baudrate, rs232_timeout],
-                                                                      self._name).process_rs232()
+                                                                      self._name, self.logger).process_rs232()
             self._tcp, self._port, self._tcp_timeout = ProcessVariables([tcp_ip, tcp_port, tcp_timeout],
-                                                                        self._name).process_tcp()
+                                                                        self._name, self.logger).process_tcp()
             self._dependson, self._dependson_value, self._depend0_power0, self._depend0_volume0 = ProcessVariables(
-                [dependson_item, dependson_value, depend0_power0, depend0_volume0], self._name).process_dependson()
+                [dependson_item, dependson_value, depend0_power0, depend0_volume0],
+                self._name, self.logger).process_dependson()
 
-            self._response_buffer = ProcessVariables(responsebuffer, self._name).process_responsebuffer()
-            self._reset_onerror = ProcessVariables(resetonerror, self._name).process_resetonerror()
-            self._statusquery = ProcessVariables(statusquery, self._name).process_statusquery()
+            self._response_buffer = ProcessVariables(responsebuffer, self._name, self.logger).process_responsebuffer()
+            self._reset_onerror = ProcessVariables(resetonerror, self._name, self.logger).process_resetonerror()
+            self._statusquery = ProcessVariables(statusquery, self._name, self.logger).process_statusquery()
             self._ignore_response, self._error_response, self._force_buffer, self._ignoredisplay = ProcessVariables(
-                [ignoreresponse, errorresponse, forcebuffer, inputignoredisplay], self._name).process_responses()
+                [ignoreresponse, errorresponse, forcebuffer, inputignoredisplay],
+                self._name, self.logger).process_responses()
             self.logger.debug(
                 "Initializing {}: Special Settings: Ignoring responses {}.".format(self._name, self._ignore_response))
             self.logger.debug(
@@ -141,9 +144,10 @@ class AVDevice(SmartPlugin):
                 "Initializing {}: Special Settings: Ignore Display {}".format(self._name, self._ignoredisplay))
             self.logger.debug(
                 "Initializing {}: Querying at plugin init is set to {}".format(self._name, self._statusquery))
-            self._update_exclude = ProcessVariables(update_exclude, self._name).process_update_exclude()
+            self._update_exclude = ProcessVariables(update_exclude, self._name, self.logger).process_update_exclude()
 
-        except Exception:
+        except Exception as err:
+            self.logger.error(err)
             self._init_complete = False
             return
 
@@ -305,7 +309,7 @@ class AVDevice(SmartPlugin):
                         value = data[valuestart:valueend]
                         invert = True if entry[6].lower() in ['1', 'true', 'yes', 'on'] else False
                         received = ConvertValue(value, expectedtype, invert, entry[0], command,
-                                                self._name, self._special_commands).convert_value() \
+                                                self._name, self._special_commands, self.logger).convert_value() \
                             if not value == '' else data[valuestart:valueend]
                         receivedvalue = received[1] if isinstance(received, list) else received
                         try:
@@ -317,7 +321,7 @@ class AVDevice(SmartPlugin):
                             sametype = True if receivedvalue == '' and expectedtype == 'empty' else False
                         if sametype is True:
                             self._items[zone][av_function]['Value'] = Translate(
-                                value, entry[9], self._name, 'writedict', self._specialparse).translate()
+                                value, entry[9], self._name, 'writedict', self._specialparse, self.logger).translate()
                             self.logger.debug(
                                 "Storing Values {}: Found writeable dict key: {}. Zone: {}. "
                                 "Value {} with type {}. Function: {}.".format(
@@ -458,7 +462,7 @@ class AVDevice(SmartPlugin):
         def _sortbuffer(buffer, bufferlist):
             expectedsplit = []
             self._expected_response = CreateExpectedResponse(buffer, self._name,
-                                                             self._send_commands).create_expected()
+                                                             self._send_commands, self.logger).create_expected()
             expectedsplit = list(itertools.chain(*[x.split('|') for x in self._expected_response]))
             sortedbuffer = []
             for e in expectedsplit:
@@ -541,7 +545,7 @@ class AVDevice(SmartPlugin):
                     if cond1 and not cond2:
                         buffering = True
                         self._expected_response = CreateExpectedResponse(buffer, self._name,
-                                                                         self._send_commands).create_expected()
+                                                                         self._send_commands, self.logger).create_expected()
                         self.logger.log(VERBOSE1,
                                         "Processing Response {}: Error reading.. Error: {}. Sending Command: {}.".format(
                                             self._name, err, self._sendingcommand))
@@ -658,7 +662,7 @@ class AVDevice(SmartPlugin):
                     line = re.sub('[\\n\\r]', '', line).strip()
                     responseforsending = False
                     for entry in self._response_commands:
-                        newentry = Translate(line, entry, self._name, '', '').wildcard()
+                        newentry = Translate(line, entry, self._name, '', '', self.logger).wildcard()
                         self._response_wildcards['wildcard'].update({newentry: entry})
                         self._response_wildcards['original'].update({entry: newentry})
                     responsecommands = list(self._response_wildcards['wildcard'].keys())
@@ -669,7 +673,7 @@ class AVDevice(SmartPlugin):
                     try:
                         for resp in ','.join(self._sendingcommand.split(';')[0].split(',')[2:]).split('|'):
                             resp = resp.split(',')[0]
-                            resp = Translate(line, resp, self._name, '', '').wildcard() if len(line) == len(
+                            resp = Translate(line, resp, self._name, '', '', self.logger).wildcard() if len(line) == len(
                                 resp) else resp
                             self.logger.log(VERBOSE2,
                                             "Processing Response {}: Testing sendingcommand {}. Line: {}, expected response: {}".format(
@@ -706,7 +710,7 @@ class AVDevice(SmartPlugin):
                             keyfound = False
                             compare = ','.join(self._send_commands[0].split(';')[0].split(',')[2:]).split('|')
                             for comp in compare:
-                                comp = Translate(line, comp.split(',')[0], self._name, '', '').wildcard()
+                                comp = Translate(line, comp.split(',')[0], self._name, '', '', self.logger).wildcard()
                                 keyfound = True if line.startswith(comp) else False
                             if keyfound is True:
                                 self.logger.log(VERBOSE1,
@@ -775,7 +779,7 @@ class AVDevice(SmartPlugin):
                 buffering = False
                 if bufferlist:
                     self._expected_response = CreateExpectedResponse('\r\n'.join(bufferlist), self._name,
-                                                                     self._send_commands).create_expected()
+                                                                     self._send_commands, self.logger).create_expected()
                 for buf in bufferlist:
                     cond1 = not re.sub('[ ]', '', buf) == ''
                     cond2 = not buf.startswith(tuple(self._ignore_response))
@@ -1190,7 +1194,7 @@ class AVDevice(SmartPlugin):
                                         else:
                                             dict_entry = None
                                     expectedvalue = Translate(expectedvalue, dict_entry, self._name, 'parse',
-                                                              self._specialparse).translate() or expectedvalue
+                                                              self._specialparse, self.logger).translate() or expectedvalue
                                     self.logger.log(VERBOSE2,
                                                     "Checking Dependency {}: Expectedvalue after Translation {}. Dependitem: {}, expected {}".format(
                                                         self._name, expectedvalue, dependitem, expectedvalue))
@@ -1775,7 +1779,7 @@ class AVDevice(SmartPlugin):
                                         received = ConvertValue(
                                             data[responseposition:responseposition + valuelength], expectedtype, False,
                                             valuelength, self._special_commands['Display']['Command'],
-                                            self._name, self._special_commands).convert_value()
+                                            self._name, self._special_commands, self.logger).convert_value()
                                         self.logger.debug(
                                             "Parsing Input {}: Displaycommand found in response {}. Converted to {}.".format(
                                                 self._name, data, receivedvalue))
@@ -1819,7 +1823,7 @@ class AVDevice(SmartPlugin):
                                         receivedvalue = ConvertValue(
                                             data[responseposition:responseposition + valuelength], expectedtype, False,
                                             valuelength, self._special_commands['Speakers']['Command'], self._name,
-                                            self._special_commands).convert_value()
+                                            self._special_commands, self.logger).convert_value()
                                         try:
                                             for _ in self._special_commands['Speakers']['Command']:
                                                 for zone in self._items_speakers:
@@ -1854,7 +1858,7 @@ class AVDevice(SmartPlugin):
                                         if not receivedvalue == '':
                                             receivedvalue = ConvertValue(value, expectedtype, invert, valuelength,
                                                                          data, self._name,
-                                                                         self._special_commands).convert_value()
+                                                                         self._special_commands, self.logger).convert_value()
                                     try:
                                         sametype = True if isinstance(receivedvalue, eval(expectedtype)) else False
                                     except Exception:
@@ -1875,7 +1879,7 @@ class AVDevice(SmartPlugin):
                                                 self._name, dictkey, responseposition, value))
                                         self._addorremove_keepcommands('removefromkeep', data)
                                         value = Translate(origvalue, entry[9], self._name, 'parse',
-                                                          self._specialparse).translate() or value
+                                                          self._specialparse, self.logger).translate() or value
                                         if av_function in self._items[zone].keys():
                                             self._items[zone][av_function]['Value'] = value
                                             self.logger.log(VERBOSE1,
@@ -2189,7 +2193,7 @@ class AVDevice(SmartPlugin):
                                                 self._name, command))
 
                                         responsecommand, _ = CreateResponse(commandinfo, '', '', self._name,
-                                                                            self._specialparse).response_standard()
+                                                                            self._specialparse, self.logger).response_standard()
                                         appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3],
                                                                              responsecommand, item.id())
                                         cond1 = appendcommand not in self._query_commands
@@ -2224,7 +2228,7 @@ class AVDevice(SmartPlugin):
                                 if command in self._functions['zone{}'.format(zone)]:
                                     commandinfo = self._functions['zone{}'.format(zone)][command]
                                     replacedresponse, _ = CreateResponse(commandinfo, '', '', self._name,
-                                                                         self._specialparse).response_standard()
+                                                                         self._specialparse, self.logger).response_standard()
                                     appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
                                     cond1 = appendcommand not in self._query_commands
                                     cond2 = appendcommand not in self._special_commands['Display']['Command']
@@ -2256,7 +2260,7 @@ class AVDevice(SmartPlugin):
                                             reverseinfo = ''
                                     replacedresponse, replacedreverse = CreateResponse(
                                         commandinfo, reverseinfo, '', self._name,
-                                        self._specialparse).response_in_decrease()
+                                        self._specialparse, self.logger).response_in_decrease()
                                     try:
                                         reverseitem = self._items['zone{}'.format(zone)][command.replace('+', '-', 1)].get('Item')
                                     except Exception:
@@ -2309,7 +2313,7 @@ class AVDevice(SmartPlugin):
                                             reverseinfo = ''
                                     replacedresponse, replacedreverse = CreateResponse(
                                         commandinfo, reverseinfo, '', self._name,
-                                        self._specialparse).response_in_decrease()
+                                        self._specialparse, self.logger).response_in_decrease()
                                     try:
                                         reverseitem = self._items['zone{}'.format(zone)][command.replace('-', '+', 1)].get('Item')
                                     except Exception:
@@ -2356,7 +2360,7 @@ class AVDevice(SmartPlugin):
                                     commandinfo = self._functions['zone{}'.format(zone)][command_on]
                                     reverseinfo = self._functions['zone{}'.format(zone)][command_off]
                                     replacedresponse, replacedreverse = CreateResponse(
-                                        commandinfo, reverseinfo, '', self._name, self._specialparse).response_on()
+                                        commandinfo, reverseinfo, '', self._name, self._specialparse, self.logger).response_on()
 
                                     appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
                                     reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.id())
@@ -2423,7 +2427,7 @@ class AVDevice(SmartPlugin):
                                     commandinfo = self._functions['zone{}'.format(zone)][command_off]
                                     reverseinfo = self._functions['zone{}'.format(zone)][command_on]
                                     replacedresponse, replacedreverse = CreateResponse(
-                                        commandinfo, reverseinfo, '', self._name, self._specialparse).response_off()
+                                        commandinfo, reverseinfo, '', self._name, self._specialparse, self.logger).response_off()
 
                                     appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
                                     reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.id())
@@ -2479,11 +2483,11 @@ class AVDevice(SmartPlugin):
                                     newvalue = None
                                     if not command.lower().startswith('speakers'):
                                         response, _ = CreateResponse(commandinfo, '', value, self._name,
-                                                                     self._specialparse).response_set()
+                                                                     self._specialparse, self.logger).response_set()
                                     try:
                                         newvalue = value.lower() if isinstance(value, str) else value
                                         newvalue = Translate(newvalue, commandinfo[10], self._name, 'update',
-                                                             self._specialparse).translate()
+                                                             self._specialparse, self.logger).translate()
                                         self.logger.log(VERBOSE2,
                                                         "Updating Item {}: Translated value: {}".format(self._name,
                                                                                                         newvalue))
@@ -2540,16 +2544,16 @@ class AVDevice(SmartPlugin):
                                                                 self._name, self._items['zone{}'.format(zone)]['speakers']['Item'],
                                                                 currentvalue, item, item(), multiply, value))
                                             response, _ = CreateResponse(commandinfo, '', value, self._name,
-                                                                         self._specialparse).response_set()
+                                                                         self._specialparse, self.logger).response_set()
                                             command_re = CreateResponse(commandinfo, '', value, self._name,
-                                                                        self._specialparse).replace_number(
+                                                                        self._specialparse, self.logger).replace_number(
                                                                             commandinfo[2], value, translatecode)
                                             self.logger.log(VERBOSE2,
                                                             "Updating Item {}: Speakers commandinfo 2: {}, value: {}. command_re: {}".format(
                                                                 self._name, commandinfo[2], value, command_re))
                                             if value > 0:
                                                 replacedresponse, _ = CreateResponse(powerinfo, '', True, self._name,
-                                                                                     self._specialparse).response_power()
+                                                                                     self._specialparse, self.logger).response_power()
                                                 try:
                                                     poweritem = self._items['zone{}'.format(zone)][powerinfo[1]].get('Item')
                                                 except Exception:
@@ -2564,7 +2568,7 @@ class AVDevice(SmartPlugin):
                                                         self._name, powerinfo))
                                         else:
                                             command_re = CreateResponse(commandinfo, '', value, self._name,
-                                                                        self._specialparse).replace_number(
+                                                                        self._specialparse, self.logger).replace_number(
                                                                             commandinfo[2], value, translatecode)
                                             self.logger.log(VERBOSE2,
                                                             "Updating Item {}: commandinfo 2: {}, value: {}. command_re: {}".format(
@@ -2573,7 +2577,7 @@ class AVDevice(SmartPlugin):
                                     elif isinstance(value, str) and 'str' in commandinfo[9]:
                                         setting = True
                                         command_re = CreateResponse(commandinfo, '', value, self._name,
-                                                                    self._specialparse).replace_string(
+                                                                    self._specialparse, self.logger).replace_string(
                                                                         commandinfo[2], value, translatecode)
 
                                     else:
