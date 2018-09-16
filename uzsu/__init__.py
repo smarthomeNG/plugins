@@ -749,33 +749,35 @@ class UZSU(SmartPlugin):
             self.logger.error('{}: Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
                 self._name, tstr))
             return
-
         if smin is not None:
             h, sep, m = smin.partition(':')
             try:
-                dmin = next_time.replace(hour=int(h), minute=int(m), second=0, tzinfo=self._timezone)
+                dmin = next_time.replace(day=dt.day, hour=int(h), minute=int(m), second=0, tzinfo=self._timezone)
             except Exception:
                 self.logger.error('{}: Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
                     self._name, tstr))
                 return
-            if dmin > next_time:
-                next_time = dmin
+        else:
+            dmin = next_time
         if smax is not None:
             h, sep, m = smax.partition(':')
             try:
-                dmax = next_time.replace(hour=int(h), minute=int(m), second=0, tzinfo=self._timezone)
+                dmax = next_time.replace(day=dt.day, hour=int(h), minute=int(m), second=0, tzinfo=self._timezone)
             except Exception:
                 self.logger.error('{}: Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
                     self._name, tstr))
                 return
-            if dmax < next_time:
-                next_time = dmax
-
+        else:
+            dmax = next_time
+        min = max = 0
         if dmin is not None and dmax is not None and dmin > dmax:
             self.logger.error("{}: Wrong times: the earliest time should be smaller than the "
                               "latest time in {}".format(self._name, tstr))
             return
-
+        if dmin > next_time:
+            next_time = dmin
+        if dmax < next_time:
+            next_time = dmax
         return next_time
 
     def _get_dependant(self, item):
