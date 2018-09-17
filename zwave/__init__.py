@@ -76,7 +76,7 @@ class ZWave(SmartPlugin):
         self.listenOn = {}
         self._device = device
         self._config_path = config_path
-        self._logging = logging
+        self._logging = zlogging
         self._logfile = os.path.join(sh._base_dir, 'var')
         self._logfile = os.path.join(self._logfile, 'log')
         self._logfile = os.path.join(self._logfile, logfile)
