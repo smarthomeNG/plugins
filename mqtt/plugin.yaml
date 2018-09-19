@@ -83,6 +83,7 @@ parameters:
         type: int
         default: 1883
         valid_min: 0
+        valid_max: 65535
         description:
             de: 'Vom Broker benutzter Port'
             en: 'Port used by broker'

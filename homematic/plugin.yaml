@@ -64,6 +64,8 @@ parameters:
     learnmode_length:
         type: int
         default: 60
+        valid_min: 0
+        valid_max: 300
         description:
             de: 'Dauer des Anlernmodus der HomeMatic CCU2 Zentrale nach Aktivierung durch das Web Interface'
             en: 'Duration of learnmode of the HomeMatic CCU2 gateway after activation through the web interface'
