@@ -387,7 +387,15 @@ class UZSU(SmartPlugin):
             self._itpl.clear()
             for i, entry in enumerate(self._items[item]['list']):
                 next, value = self._get_time(entry, 'next', item, i)
-                self._get_time(entry, 'previous', item)
+                prev, prev_value = self._get_time(entry, 'previous', item)
+                try:
+                    cond1 = prev > datetime.now(self._timezone)
+                    cond2 = prev < next
+                except Exception as err:
+                    cond1 = cond2 = False
+                if cond1 and cond2:
+                    next = prev
+                    value = prev_value
                 item(self._items[item], 'USZU Plugin', 'schedule')
                 if next is not None:
                     self.logger.debug("{}: uzsu active entry for item {} with datetime {}, value {}"
@@ -533,7 +541,6 @@ class UZSU(SmartPlugin):
                 return None, None
             if 'time' not in entry:
                 return None, None
-            now = datetime.now()
             value = entry['value']
             active = entry['active']
             today = datetime.today()
@@ -567,7 +574,7 @@ class UZSU(SmartPlugin):
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(weekbefore, datetime.min.time()))
                             self.logger.debug("{}: Looking for {} time. Found rrule: {}".format(
                                 self._name, timescan, str(rrule).replace('\n', ';')))
-                dt = now
+                dt = datetime.now()
                 while self.alive:
                     dt = rrule.before(dt) if timescan == 'previous' else rrule.after(dt)
                     if dt is None:
@@ -580,15 +587,9 @@ class UZSU(SmartPlugin):
                             self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                     else:
                         next = datetime.combine(dt.date(), parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
-                    cond_next = next > datetime.now(self._timezone) and timescan == 'next'
-                    cond_previous = next < datetime.now(self._timezone) and timescan == 'previous'
-                    if next and next.date() == dt.date() and cond_next:
+                    if next and next.date() == dt.date():
                         self._itpl[next.timestamp() * 1000.0] = value
-                        self.logger.debug("{}: Return from rrule next: {}, value {}.".format(self._name, next, value))
-                        return next, value
-                    if next and next.date() == dt.date() and cond_previous:
-                        self._itpl[next.timestamp() * 1000.0] = value
-                        self.logger.debug("{}: Return from rrule previous: {}, value {}.".format(self._name, next, value))
+                        self.logger.debug("{}: Return from rrule {}: {}, value {}.".format(self._name, timescan, next, value))
                         return next, value
             if 'sun' in time:
                 next = self._sun(datetime.combine(today, datetime.min.time()).replace(
@@ -617,7 +618,7 @@ class UZSU(SmartPlugin):
             cond2 = next.date() - timedelta(days=1) == yesterday.date()
             cond3 = next.date() == tomorrow.date()
             cond_next = next > datetime.now(self._timezone) and timescan == 'next'
-            cond_previous_today = next < datetime.now(self._timezone) and timescan == 'previous'
+            cond_previous_today = next - timedelta(seconds=1) < datetime.now(self._timezone) and timescan == 'previous'
             cond_previous_yesterday = next - timedelta(days=1) < datetime.now(self._timezone) and timescan == 'previous'
             if next and cond1 and cond_next:
                 self._itpl[next.timestamp() * 1000.0] = value
@@ -628,7 +629,7 @@ class UZSU(SmartPlugin):
                 self.logger.debug("{}: Return next tomorrow: {}, value {}".format(self._name, next, value))
                 return next, value
             if next and cond1 and cond_previous_today:
-                self._itpl[next.timestamp() * 1000.0] = value
+                self._itpl[(next - timedelta(seconds=1)).timestamp() * 1000.0] = value
                 self.logger.debug("{}: Return previous today: {}, value {}".format(self._name, next, value))
                 return next, value
             if next and cond2 and cond_previous_yesterday:
