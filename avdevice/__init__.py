@@ -56,7 +56,6 @@ class AVDevice(SmartPlugin):
         self.itemsApi = Items.get_instance()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
-        self.logger.error(self.logger)
         self.init_webinterface()
         try:
             self.alive = False
