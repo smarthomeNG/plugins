@@ -23,28 +23,36 @@ import datetime
 import threading
 import xml.etree.cElementTree
 from lib.model.smartplugin import SmartPlugin
+from bin.smarthome import VERSION
+from lib.tools import Tools
 
 
 class wettercom(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.4.0"
     _server = 'api.wetter.com'
 
-    """get city code
-
-    returns one or more city code(s) for use in forecast function
-
-    """
+    def __init__(self, smarthome):
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+        self._project = self.get_parameter_value('project')
+        self._apikey = self.get_parameter_value('apikey')
+        self._tools = Tools()
+        self.lock = threading.Lock()
 
     def search(self, location):
-
+        """
+        get city code
+        returns one or more city code(s) for use in forecast function
+        """
         retval = {}
+        searchURL = 'http://{}/location/index/search/{}/project/{}/cs/{}'.format(
+            self._server, location, self._project, hashlib.md5(('{}{}{}'.format(
+                self._project, self._apikey, location)).encode('UTF-8')).hexdigest())
+        self.logger.debug('Search URL: {}'.format(searchURL))
 
-        searchURL = 'http://' + self._server + '/location/index/search/' \
-            + location + '/project/' + self._project + '/cs/' \
-            + hashlib.md5((self._project + self._apikey + location).encode('UTF-8')).hexdigest()
+        content = self._tools.fetch_url(searchURL)
 
-        content = self._sh.tools.fetch_url(searchURL)
         if content:
             searchXML = xml.etree.cElementTree.fromstring(content)
 
@@ -53,30 +61,28 @@ class wettercom(SmartPlugin):
                 break
 
             if numhits > 0:
-                retval = [
-                    ccodes.text for ccodes in searchXML.iter('city_code')]
+                retval = [ccodes.text for ccodes in searchXML.iter('city_code')]
 
         return retval
 
-    """get forecast data
-
-    returns forecast data for the location city_code (use search to get it)
-
-    forecast data is returned as dictionary for each date/time values are
-
-    max. temperature, weather condition text, wind speed,
-    condensation probability, min. temperatur, wind direction in degree,
-    wind direction text, weather condition code
-
-    """
-
     def forecast(self, city_code):
-        retval = {}
-        forecastURL = 'http://' + self._server + '/forecast/weather/city/' \
-            + city_code + '/project/' + self._project + '/cs/' \
-            + hashlib.md5((self._project + self._apikey + city_code).encode('UTF-8')).hexdigest()
+        """
+        get forecast data
+        returns forecast data for the location city_code (use search to get it)
+        forecast data is returned as dictionary for each date/time values are
 
-        content = self._sh.tools.fetch_url(forecastURL)
+        max. temperature, weather condition text, wind speed,
+        condensation probability, min. temperatur, wind direction in degree,
+        wind direction text, weather condition code
+        """
+        retval = {}
+        forecastURL = 'http://{}/forecast/weather/city/{}/project/{}/cs/{}'.format(
+            self._server, city_code, self._project, hashlib.md5(('{}{}{}'.format(
+                self._project, self._apikey, city_code)).encode('UTF-8')).hexdigest())
+        self.logger.debug('Forecast URL: {}'.format(forecastURL))
+
+        content = self._tools.fetch_url(forecastURL)
+
         if content:
             forecastXML = xml.etree.cElementTree.fromstring(content)
 
@@ -101,18 +107,13 @@ class wettercom(SmartPlugin):
 
             return retval
 
-    def __init__(self, smarthome, project, apikey):
-        self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
-        self._project = project
-        self._apikey = apikey
-        self.lock = threading.Lock()
-
     def run(self):
         self.alive = True
+        self.logger.debug('run method called')
 
     def stop(self):
         self.alive = False
+        self.logger.debug('stop method called')
 
     def parse_item(self, item):
         return None
