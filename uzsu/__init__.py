@@ -756,7 +756,7 @@ class UZSU(SmartPlugin):
                 self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
                     tstr))
                 return
-        else:
+        elif smax is None:
             dmin = next_time
         if smax is not None:
             h, sep, m = smax.partition(':')
@@ -766,17 +766,21 @@ class UZSU(SmartPlugin):
                 self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
                     tstr))
                 return
-        else:
+        elif smin is None:
             dmax = next_time
         min = max = 0
         if dmin is not None and dmax is not None and dmin > dmax:
             self.logger.error("Wrong times: the earliest time should be smaller than the "
                               "latest time in {}".format(tstr))
             return
-        if dmin > next_time:
-            next_time = dmin
-        if dmax < next_time:
-            next_time = dmax
+        try:
+            next_time = dmin if dmin > next_time else next_time
+        except Exception:
+            pass
+        try:
+            next_time = dmax if dmax < next_time else next_time
+        except Exception:
+            pass
         return next_time
 
     def _get_dependant(self, item):
