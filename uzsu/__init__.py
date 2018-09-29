@@ -352,6 +352,16 @@ class UZSU(SmartPlugin):
         :param dest:    if given it represents the dest
         """
         self._items[item] = item()
+        for entry in self._items[item]['list']:
+            if entry['rrule'] == '':
+                try:
+                    _index = self._items[item]['list'].index(entry)
+                    self._items[item]['list'][_index]['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
+                    self.logger.debug("Updated rrule for item: {}".format(item))
+                    item(self._items[item], 'USZU Plugin', 'create_rrule')
+                except Exception as err:
+                    self.logger.warning("Error creating rrule: {}".format(err))
+
         self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}.'.format(
             item, caller, source, dest))
         # Removing Duplicates
