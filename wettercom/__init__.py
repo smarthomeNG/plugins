@@ -51,7 +51,10 @@ class wettercom(SmartPlugin):
                 self._project, self._apikey, location)).encode('UTF-8')).hexdigest())
         self.logger.debug('Search URL: {}'.format(searchURL))
 
-        content = self._tools.fetch_url(searchURL)
+        try:
+            content = self._tools.fetch_url(searchURL)
+        except Exception:
+            content = None
 
         if content:
             searchXML = xml.etree.cElementTree.fromstring(content)
@@ -81,7 +84,10 @@ class wettercom(SmartPlugin):
                 self._project, self._apikey, city_code)).encode('UTF-8')).hexdigest())
         self.logger.debug('Forecast URL: {}'.format(forecastURL))
 
-        content = self._tools.fetch_url(forecastURL)
+        try:
+            content = self._tools.fetch_url(forecastURL)
+        except Exception:
+            content = None
 
         if content:
             forecastXML = xml.etree.cElementTree.fromstring(content)
