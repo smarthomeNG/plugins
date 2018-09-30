@@ -130,12 +130,15 @@ class UZSU(SmartPlugin):
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
                 self._update_count['todo'] = self._update_count.get('todo') + 1
+        self.logger.debug("Going to update {} items".format(self._update_count['todo']))
 
         for item in self._items:
             cond1 = self._items[item].get('active') and self._items[item]['active'] is True
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
                 self._schedule(item, caller='run')
+            else:
+                self.logger.debug("Not scheduling item {}, cond1 {}, cond2 {}".format(item, cond1, cond2))
 
     def stop(self):
         """
@@ -160,7 +163,7 @@ class UZSU(SmartPlugin):
         for item in self._items:
             success = self._update_sun(item)
             if success:
-                self.logger.debug('Updating item {}'.format(item))
+                self.logger.debug('Updating sun info for item {}'.format(item))
                 item(self._items[item])
 
     def _update_sun(self, item, caller=None):
@@ -275,7 +278,7 @@ class UZSU(SmartPlugin):
                 item, self._planned[item]['value'], self._planned[item]['next']))
             return self._planned[item]
         except Exception:
-            self.logger.info("Nothing planned for item {}. {}".format(item, self._planned))
+            self.logger.info("Nothing planned for item {}.".format(item))
             return None
 
     def parse_item(self, item):
@@ -511,7 +514,7 @@ class UZSU(SmartPlugin):
                 self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                 self._update_count = {'done': 0, 'todo': 0}
 
-    def _set(self, **kwargs):
+    def _set(self, item=None, value=None, caller=None):
         """
         This function sets the specific item
 
@@ -519,14 +522,8 @@ class UZSU(SmartPlugin):
         :param value:   value the item should be set to
         :param caller:  if given it represents the callers name
         """
-        item = kwargs['item']
-        value = kwargs['value']
-        try:
-            caller = kwargs['caller']
-        except Exception:
-            caller = None
         _uzsuitem = self.itemsApi.return_item(self.get_iattr_value(item.conf, ITEM_TAG[0]))
-        _uzsuitem(value, caller='UZSU')
+        _uzsuitem(value, caller='UZSU Plugin')
         if not caller:
             self._schedule(item, caller='set')
 

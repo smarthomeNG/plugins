@@ -75,8 +75,8 @@ function mainpage() {
     </thead>
     {% for item in p.get_items() %}
       {% if p.has_iattr(item.conf, 'uzsu_item') %}
-
-        {% if (p._logics_planned(item) == none and p._items[item]['active'] == True) or p._items[item]['interpolation']['itemtype'] == none %}
+        {% set planned = p._logics_planned(item) %}
+        {% if (p._items[item]['active'] == True and planned == none) or p._items[item]['interpolation']['itemtype'] == none %}
           {% set color = 'red' %}
         {% elif p._items[item]['active'] == True %}
             {% set color = 'green' %}
@@ -93,8 +93,8 @@ function mainpage() {
               {% endif %}
             </td>
               <td class="py-1" >{{ p._get_dependant(item) }}<br>
-                {% if p._logics_planned(item) != none %}{{ p._logics_planned(item) }}{% endif %}
-                {% if p._logics_planned(item) == none and p._items[item]['active'] == True %}
+                {% if planned != none %}{{ planned }}{% endif %}
+                {% if planned == none and p._items[item]['active'] == True %}
                 {{ _('Aktives Item, keine (aktiven) Einträge!') }}
                 {% endif %}
               </td>
