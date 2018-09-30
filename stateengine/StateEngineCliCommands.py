@@ -22,12 +22,15 @@ import logging
 # noinspection PyUnresolvedReferences
 from lib.model.smartplugin import SmartPlugin
 from lib.plugin import Plugins
+from bin.smarthome import VERSION
+
 
 class SeCliCommands:
-    def __init__(self, smarthome, items):
+    def __init__(self, smarthome, items, logger):
         self.__items = items
         self._sh = smarthome
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
+
 
         # Add additional cli commands if cli is active (and functionality to add own cli commands is available)
         try:
@@ -35,10 +38,10 @@ class SeCliCommands:
             if cli is None:
                 self.logger.info("StateEngine: Additional CLI commands not registered because CLI plugin is not active")
             elif not isinstance(cli, SmartPlugin):
-                self.logger.info("StateEngine: Additional CLI commands not registered because CLI plugin is to old")
+                self.logger.info("StateEngine: Additional CLI commands not registered because CLI plugin is too old")
             else:
-                cli.commands.add_command("se_list", self.cli_list, "StateEngine", "se_list: list AutoState items")
-                cli.commands.add_command("se_detail", self.cli_detail, "StateEngine", "se_detail [asItem]: show details on AutoState item [asItem]")
+                cli.commands.add_command("se_list", self.cli_list, "StateEngine", "se_list: list StateEngine items")
+                cli.commands.add_command("se_detail", self.cli_detail, "StateEngine", "se_detail [seItem]: show details on StateEngine item [seItem]")
                 self.logger.info("StateEngine: Two additional CLI commands registered")
         except AttributeError as err:
             self.logger.error("StateEngine: Additional CLI commands not registered because error occured.")
@@ -47,7 +50,7 @@ class SeCliCommands:
     # CLI command se_list
     # noinspection PyUnusedLocal
     def cli_list(self, handler, parameter, source):
-        handler.push("Items for AutoState Plugin\n")
+        handler.push("Items for StateEngine Plugin\n")
         handler.push("==========================\n")
         for name in sorted(self.__items):
             self.__items[name].cli_list(handler)
@@ -62,7 +65,7 @@ class SeCliCommands:
     # get item from parameter
     def __cli_getitem(self, handler, parameter):
         if parameter not in self.__items:
-            handler.push("no AutoState item \"{0}\" found.\n".format(parameter))
+            handler.push("no StateEngine item \"{0}\" found.\n".format(parameter))
             return None
         return self.__items[parameter]
 

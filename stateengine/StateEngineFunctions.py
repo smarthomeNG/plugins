@@ -33,8 +33,8 @@ class SeFunctions:
     def ab_alive(self, value):
         self.__ab_alive = value
 
-    def __init__(self, smarthome):
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, smarthome, logger):
+        self.logger = logger
         self.__sh = smarthome
         self.__locks = {}
         self.__ab_alive = False

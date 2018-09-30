@@ -28,6 +28,7 @@ from . import StateEngineFunctions
 import logging
 import os
 from lib.model.smartplugin import SmartPlugin
+from bin.smarthome import VERSION
 
 
 class StateEngine(SmartPlugin):
@@ -35,9 +36,10 @@ class StateEngine(SmartPlugin):
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
 
-        self.logger = logging.getLogger(__name__)
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
         self.__items = {}
         self.alive = False
         self.__cli = None
@@ -48,7 +50,7 @@ class StateEngine(SmartPlugin):
 
         StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
         StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
-        StateEngineDefaults.write_to_log()
+        StateEngineDefaults.write_to_log(self.logger)
 
         StateEngineCurrent.init(self.get_sh())
 
@@ -71,7 +73,7 @@ class StateEngine(SmartPlugin):
             cron = ['init', '30 0 * *']
             self.scheduler_add('StateEngine: Remove old logfiles', SeLogger.remove_old_logfiles, cron=cron, offset=0)
 
-        self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh())
+        self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
 
     # Parse an item
     # noinspection PyMethodMayBeStatic
@@ -100,7 +102,7 @@ class StateEngine(SmartPlugin):
         else:
             self.logger.info("StateEngine deactivated because no items have been found.")
 
-        self.__cli = StateEngineCliCommands.SeCliCommands(self.get_sh(), self.__items)
+        self.__cli = StateEngineCliCommands.SeCliCommands(self.get_sh(), self.__items, self.logger)
 
         self.alive = True
         self.get_sh().stateengine_plugin_functions.ab_alive = True

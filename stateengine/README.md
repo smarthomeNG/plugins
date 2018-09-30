@@ -12,8 +12,6 @@ The manual can be found in the Wiki at GitHub: <https://github.com/i-am-offline/
 
 ## Configuration
 
-To update from autoblind to stateengine use the script "autoblind_update.sh" in the plugin folder!
-
 ### plugin.yaml
 See the [manual at GitHub](https://github.com/i-am-offline/smarthome.plugin.autoblind/wiki)
 
@@ -22,12 +20,11 @@ See the [manual at GitHub](https://github.com/i-am-offline/smarthome.plugin.auto
 
 ##Changelog
 ### v1.4.1
-Added to official develop repository
-Renamed to StateEngine
-Added script to change autoblind entries to stateengine entries in items, logics and cache
-Fix compatibility of logic trigger for SmarthomeNG 1.4+
-Changed state condition evaluation to OrderedDict to keep original order
-Added additional option for manual item called "manual_on" to figure out if item WAS trigger by specific KNX GA
+Added to official develop repository (onkelandy)
+Renamed to StateEngine (onkelandy)
+Fix compatibility of logic trigger for SmarthomeNG 1.4+ (onkelandy)
+Changed state condition evaluation to OrderedDict to keep original order (onkelandy)
+Added additional option for manual item called "manual_on" to figure out if item WAS trigger by specific KNX GA (onkelandy)
 
 ### v1.4.0
 Make compatible with SmarthomeNG 1.4+ (i-am-offline)

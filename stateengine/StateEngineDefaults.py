@@ -28,7 +28,6 @@ suspend_time = 3600
 plugin_identification = "StateEngine Plugin"
 
 
-def write_to_log():
-    logger = logging.getLogger(__name__)
+def write_to_log(logger):
     logger.info("StateEngine default startup delay = {0}".format(startup_delay))
     logger.info("StateEngine default suspension time = {0}".format(suspend_time))
