@@ -596,8 +596,12 @@ class UZSU(SmartPlugin):
                         next = datetime.combine(dt.date(), parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
                     if next and next.date() == dt.date():
                         self._itpl[next.timestamp() * 1000.0] = value
-                        self.logger.debug("Return from rrule {}: {}, value {}.".format(timescan, next, value))
-                        return next, value
+                        if next - timedelta(seconds=1) > datetime.now().replace(tzinfo=self._timezone):
+                            self.logger.debug("Return from rrule {}: {}, value {}.".format(timescan, next, value))
+                            return next, value
+                        else:
+                            self.logger.debug("Not returning {} rrule {} because it's in the past.".format(timescan, next))
+                            return None, None
             if 'sun' in time:
                 next = self._sun(datetime.combine(today, datetime.min.time()).replace(
                     tzinfo=self._timezone), time, timescan)
