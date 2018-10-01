@@ -9,18 +9,18 @@ git clone https://github.com/rthill/slack.git
 </pre>
 
 ## Configuration
-### plugin.conf
+### etc/plugin.yaml
 <pre>
-[slack]
-    class_name = Slack
-    class_path = plugins.slack
-    token = abc/def/ghi
+SlackForChannelGeneral:
+    class_name: Slack
+    class_path: plugins.slack
+    token: abc/def/ghi # Token for posting to channel '#general'
 </pre>
 
 ## Usage
-Generate a token using https://<your_team>.slack.com/apps/new/A0F7XDUAZ-incoming-webhooks
+Generate a token using https://<your_team>.slack.com/apps/new/A0F7XDUAZ-incoming-webhooks for every channel you want to post to.
 
-To send notifications use the following syntax in your logics:
+To send a notification to channel '#general' use the following syntax in your logics:
 
 <pre>
 # Default informational notification

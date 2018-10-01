@@ -27,7 +27,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class Slack(SmartPlugin):
     PLUGIN_VERSION = "1.0.0"
-    ALLOW_MULTIINSTANCE = False
+    ALLOW_MULTIINSTANCE = True
     SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
     html_escape_table = {
         '&': "&amp;",
