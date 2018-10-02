@@ -67,6 +67,7 @@ import lib.orb
 from unittest import mock
 from collections import OrderedDict
 from bin.smarthome import VERSION
+import copy
 
 try:
     from scipy import interpolate
@@ -177,7 +178,10 @@ class UZSU(SmartPlugin):
         """
         try:
             self._uzsu_sun = self._create_sun()
-            self._items[item] = item()
+            if VERSION > '1.5.1':
+                self._items[item] = item()
+            else:
+                self._items[item] = copy.deepcopy(item())
             _sunrise = self._uzsu_sun.rise()
             _sunset = self._uzsu_sun.set()
             if _sunrise.tzinfo == tzutc():
@@ -241,7 +245,10 @@ class UZSU(SmartPlugin):
             else:
                 self.logger.warning("Value to activate item '{}' has to be True or False".format(item))
         if isinstance(activevalue, bool):
-            self._items[item] = item()
+            if VERSION > '1.5.1':
+                self._items[item] = item()
+            else:
+                self._items[item] = copy.deepcopy(item())
             self._items[item]['active'] = activevalue
             self.logger.info("Item {} is set via logic to: {}".format(item, activevalue))
             item(self._items[item], 'UZSU Plugin', 'logic')
@@ -252,7 +259,10 @@ class UZSU(SmartPlugin):
         if type is None:
             return self._items[item].get('interpolation')
         else:
-            self._items[item] = item()
+            if VERSION > '1.5.1':
+                self._items[item] = item()
+            else:
+                self._items[item] = copy.deepcopy(item())
             self._items[item]['interpolation']['type'] = str(type).lower()
             self._items[item]['interpolation']['interval'] = int(interval)
             self._items[item]['interpolation']['initage'] = int(backintime)
@@ -305,7 +315,10 @@ class UZSU(SmartPlugin):
             item.clear = functools.partial(self._logics_clear, item=item)
             item.planned = functools.partial(self._logics_planned, item=item)
 
-            self._items[item] = item()
+            if VERSION > '1.5.1':
+                self._items[item] = item()
+            else:
+                self._items[item] = copy.deepcopy(item())
             try:
                 self._items[item]['interpolation']['initialized'] = False
                 item(self._items[item], 'USZU Plugin', 'init')
@@ -354,7 +367,10 @@ class UZSU(SmartPlugin):
         :param source:  if given it represents the source
         :param dest:    if given it represents the dest
         """
-        self._items[item] = item()
+        if VERSION > '1.5.1':
+            self._items[item] = item()
+        else:
+            self._items[item] = copy.deepcopy(item())
         if self._items[item].get('list'):
             for entry in self._items[item]['list']:
                 if entry['rrule'] == '':
