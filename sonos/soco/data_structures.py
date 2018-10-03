@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=star-args, too-many-arguments, fixme
 
+# Disable while we have Python 2.x compatability
+# pylint: disable=useless-object-inheritance,bad-mcs-classmethod-argument
+
 """
 This module contains classes for handling DIDL-Lite metadata.
 
@@ -160,7 +163,7 @@ class DidlResource(object):
                 try:
                     return int(result)
                 except ValueError:
-                    raise ValueError(
+                    raise DIDLMetadataError(
                         'Could not convert {0} to an integer'.format(name))
             else:
                 return None
@@ -169,8 +172,8 @@ class DidlResource(object):
         # required
         content['protocol_info'] = element.get('protocolInfo')
         if content['protocol_info'] is None:
-            raise Exception('Could not create Resource from Element: '
-                            'protocolInfo not found (required).')
+            raise DIDLMetadataError('Could not create Resource from Element: '
+                                    'protocolInfo not found (required).')
         # Optional
         content['import_uri'] = element.get('importUri')
         content['size'] = _int_helper('size')
@@ -200,8 +203,9 @@ class DidlResource(object):
             ~xml.etree.ElementTree.Element: an Element.
         """
         if not self.protocol_info:
-            raise Exception('Could not create Element for this resource: '
-                            'protocolInfo not set (required).')
+            raise DIDLMetadataError('Could not create Element for this'
+                                    'resource:'
+                                    'protocolInfo not set (required).')
         root = XML.Element('res')
 
         # Required
@@ -300,7 +304,7 @@ class DidlMetaClass(type):
 
     """Meta class for all Didl objects."""
 
-    def __new__(mcs, name, bases, attrs):
+    def __new__(cls, name, bases, attrs):
         """Create a new instance.
 
         Args:
@@ -308,7 +312,7 @@ class DidlMetaClass(type):
             bases (tuple): Base classes.
             attrs (dict): attributes defined for the class.
         """
-        new_cls = super(DidlMetaClass, mcs).__new__(mcs, name, bases, attrs)
+        new_cls = super(DidlMetaClass, cls).__new__(cls, name, bases, attrs)
         # Register all subclasses with the global _DIDL_CLASS_TO_CLASS mapping
         item_class = attrs.get('item_class', None)
         if item_class is not None:
@@ -764,6 +768,24 @@ class DidlMusicTrack(DidlAudioItem):
     )
 
 
+class DidlAudioBook(DidlAudioItem):
+
+    """Class that represents an audio book."""
+
+    # the DIDL Lite class for this object.
+    item_class = 'object.item.audioItem.audioBook'
+    # name: (ns, tag)
+    _translation = DidlAudioItem._translation.copy()
+    _translation.update(
+        {
+            'storageMedium': ('upnp', 'storageMedium'),
+            'producer': ('upnp', 'producer'),
+            'contributor': ('dc', 'contributor'),
+            'date': ('dc', 'date'),
+        }
+    )
+
+
 class DidlAudioBroadcast(DidlAudioItem):
 
     """Class that represents an audio broadcast."""
@@ -889,7 +911,7 @@ class DidlMusicAlbum(DidlAlbum):
     # name: (ns, tag)
     # pylint: disable=protected-access
     #:
-    _translation = DidlAudioItem._translation.copy()
+    _translation = DidlAlbum._translation.copy()
     _translation.update(
         {
             'artist': ('upnp', 'artist'),
