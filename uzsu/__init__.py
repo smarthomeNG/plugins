@@ -126,12 +126,12 @@ class UZSU(SmartPlugin):
 
         for item in self._items:
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
-            item(self._items[item], 'USZU Plugin', 'itemtype')
+            item(self._items[item], 'UZSU Plugin', 'itemtype')
             cond1 = self._items[item].get('active') and self._items[item]['active'] is True
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
                 self._update_count['todo'] = self._update_count.get('todo') + 1
-        self.logger.debug("Going to update {} items".format(self._update_count['todo']))
+        self.logger.debug("Going to update {} items: {}".format(self._update_count['todo'], list(self._items.keys())))
 
         for item in self._items:
             cond1 = self._items[item].get('active') and self._items[item]['active'] is True
@@ -209,7 +209,7 @@ class UZSU(SmartPlugin):
             self.logger.debug("Updated calculated time for item {} entry {} with value {}.".format(
                 item, self._items[item]['list'][entryindex], entryvalue))
             self._items[item]['list'][entryindex]['calculated'] = entryvalue
-            item(self._items[item], 'USZU Plugin', 'update_sun')
+            item(self._items[item], 'UZSU Plugin', 'update_sun')
         else:
             self.logger.debug("Sun calculation {} entry not updated for item {} with value {}".format(
                 entryvalue, item, entry.get('calculated')))
@@ -321,11 +321,11 @@ class UZSU(SmartPlugin):
                 self._items[item] = copy.deepcopy(item())
             try:
                 self._items[item]['interpolation']['initialized'] = False
-                item(self._items[item], 'USZU Plugin', 'init')
+                item(self._items[item], 'UZSU Plugin', 'init')
             except Exception:
                 self._items[item]['interpolation'] = {}
                 self._items[item]['interpolation']['initialized'] = False
-                item(self._items[item], 'USZU Plugin', 'init')
+                item(self._items[item], 'UZSU Plugin', 'init')
             self.logger.debug('Dict for item {} is: {}'.format(item, self._items[item]))
             return self.update_item
 
@@ -355,7 +355,7 @@ class UZSU(SmartPlugin):
                             self.logger.warning("Set old entry for item '{}' at {} with value {} to inactive"
                                                 " because newer active entry with value {} found.".format(
                                                     item, time, oldvalue, newvalue))
-        item(self._items[item], 'USZU Plugin', 'update')
+        item(self._items[item], 'UZSU Plugin', 'update')
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -371,6 +371,8 @@ class UZSU(SmartPlugin):
             self._items[item] = item()
         else:
             self._items[item] = copy.deepcopy(item())
+        self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}.'.format(
+            item, caller, source, dest))
         if self._items[item].get('list'):
             for entry in self._items[item]['list']:
                 if entry['rrule'] == '':
@@ -378,16 +380,13 @@ class UZSU(SmartPlugin):
                         _index = self._items[item]['list'].index(entry)
                         self._items[item]['list'][_index]['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
                         self.logger.debug("Updated rrule for item: {}".format(item))
-                        item(self._items[item], 'USZU Plugin', 'create_rrule')
+                        item(self._items[item], 'UZSU Plugin', 'create_rrule')
                     except Exception as err:
                         self.logger.warning("Error creating rrule: {}".format(err))
-
-        self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}.'.format(
-            item, caller, source, dest))
         # Removing Duplicates
-        if self._remove_duplicates is True and self._items[item].get('list') and not caller == 'USZU Plugin':
+        if self._remove_duplicates is True and self._items[item].get('list') and not caller == 'UZSU Plugin':
             self._remove_dupes(item)
-        if not caller == 'USZU Plugin':
+        if not caller == 'UZSU Plugin':
             self._schedule(item, caller='update')
 
     def _schedule(self, item, caller=None):
@@ -425,7 +424,7 @@ class UZSU(SmartPlugin):
                 if cond1 and cond2:
                     next = prev
                     value = prev_value
-                item(self._items[item], 'USZU Plugin', 'schedule')
+                item(self._items[item], 'UZSU Plugin', 'schedule')
                 if next is not None:
                     self.logger.debug("uzsu active entry for item {} with datetime {}, value {}"
                                       " and tzinfo {}".format(item, next, value, next.tzinfo))
@@ -473,7 +472,7 @@ class UZSU(SmartPlugin):
                 self.logger.info("Looking if there was a value set after {} for item {}".format(
                     _timediff, item))
                 self._items[item]['interpolation']['initialized'] = True
-                item(self._items[item], 'USZU Plugin', 'init')
+                item(self._items[item], 'UZSU Plugin', 'init')
             if cond1 and not cond2 and cond3:
                 self._set(item=item, value=_initvalue, caller='scheduler')
                 self.logger.info("Updated item {} on startup with value {} from time {}".format(
@@ -487,7 +486,7 @@ class UZSU(SmartPlugin):
                     _interpolation, _interval))
             elif cond2 and _itemtype not in ['num']:
                 self.logger.warning("Interpolation is set to {} but type of item is {}."
-                                    " Ignoring interpolation and setting USZU interpolation to none.".format(
+                                    " Ignoring interpolation and setting UZSU interpolation to none.".format(
                                         _interpolation, _itemtype))
                 _reset_interpolation = True
             elif _interpolation.lower() == 'cubic' and _interval > 0:
@@ -519,7 +518,7 @@ class UZSU(SmartPlugin):
                                     " to not enough values set in the UZSU.".format(_value, item))
             if _reset_interpolation is True:
                 self._items[item]['interpolation']['type'] = 'none'
-                item(self._items[item], 'USZU Plugin', 'reset_interpolation')
+                item(self._items[item], 'UZSU Plugin', 'reset_interpolation')
             else:
                 self.logger.debug("will add scheduler named uzsu_{} with datetime {} and tzinfo {}"
                                   " and value {}".format(item, _next, _next.tzinfo, _value))
