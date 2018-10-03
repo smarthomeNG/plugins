@@ -11,22 +11,24 @@ git clone https://github.com/rthill/slack.git
 ## Configuration
 ### etc/plugin.yaml
 <pre>
-SlackForChannelGeneral:
+SlackInstance:
     class_name: Slack
     class_path: plugins.slack
-    token: abc/def/ghi # Token for posting to channel '#general'
+    token: abc/def/ghi # Token for posting to workspace '<your_team>'
 </pre>
 
 ## Usage
-Generate a token using https://<your_team>.slack.com/apps/new/A0F7XDUAZ-incoming-webhooks for every channel you want to post to.
+Generate a "incoming webhook" with a token using https://<your_team>.slack.com/apps/new/A0F7XDUAZ-incoming-webhooks. You need to select a single channel when generating the token, but the token can be used for posting to multiple channels in the same workspace.
 
-To send a notification to channel '#general' use the following syntax in your logics:
+If you want to send notifications to different workspaces you need to generate a token for each workspace and you need to configure a SlackInstance section for every workspace/token.
+
+To send a notification use the following syntax in your logics with the first parameter being the desired channel:
 
 <pre>
-# Default informational notification
-sh.slack.notify('#general', 'Ding Dong: Front door')
+# Default informational notification to channel #general
+sh.SlackInstance.notify('#general', 'Ding Dong: Front door')
 # Or use the following to set the default notification type to normal
-sh.slack.notify('#general', 'Ding Dong: Front door', 'normal')
+sh.SlackInstance.notify('#otherChannel', 'Ding Dong: Front door', 'normal')
 # Other notification types use warning, danger or good.
-sh.slack.notify('#general', 'Alarm: Garage door open', 'danger')
+sh.SlackInstance.notify('#differentChannel', 'Alarm: Garage door open', 'danger')
 </pre>
