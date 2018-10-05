@@ -93,7 +93,7 @@ function mainpage() {
               {% endif %}
             </td>
               <td class="py-1" >{{ p._get_dependant(item) }}<br>
-                {% if planned != none and planned != 'deactivated' %}{{ planned }}{% endif %}
+                {% if planned != none %}{{ planned }}{% endif %}
                 {% if planned == none and p._items[item]['active'] == True %}
                 {{ _('Aktives Item, keine (aktiven) Einträge!') }}
                 {% endif %}

@@ -283,13 +283,10 @@ class UZSU(SmartPlugin):
             item(self._items[item], 'UZSU Plugin', 'clear')
 
     def _logics_planned(self, item=None):
-        if self._planned.get(item) not in [None, {}, 'deactivated']:
+        if self._planned.get(item) not in [None, {}] and self._items[item].get('active') is True:
             self.logger.info("Item {} is going to be set to {} at {}".format(
                 item, self._planned[item]['value'], self._planned[item]['next']))
             return self._planned[item]
-        elif self._planned.get(item) == 'deactivated':
-            self.logger.info("Nothing planned for item {} because UZSU is not active.".format(item))
-            return 'deactivated'
         else:
             self.logger.info("Nothing planned for item {}.".format(item))
             return None
@@ -378,8 +375,11 @@ class UZSU(SmartPlugin):
         self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}. Will update: {}'.format(
             item, caller, source, dest, cond))
         if self._items[item].get('list'):
+            _inactive = 0
             for entry in self._items[item]['list']:
-                if entry['rrule'] == '':
+                if entry.get('active') == False:
+                    _inactive += 1
+                if entry.get('rrule') == '':
                     try:
                         _index = self._items[item]['list'].index(entry)
                         self._items[item]['list'][_index]['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
@@ -387,6 +387,9 @@ class UZSU(SmartPlugin):
                         item(self._items[item], 'UZSU Plugin', 'create_rrule')
                     except Exception as err:
                         self.logger.warning("Error creating rrule: {}".format(err))
+        self.logger.error("inactive: {}, length: {}".format(_inactive, len(self._items[item]['list'])))
+        if _inactive >= len(self._items[item]['list']):
+            self._planned.update({item: None})
         # Removing Duplicates
         if self._remove_duplicates is True and self._items[item].get('list') and cond:
             self._remove_dupes(item)
@@ -415,8 +418,6 @@ class UZSU(SmartPlugin):
         elif self._items[item].get('list') is None:
             self.logger.warning("uzsu item '{}' is active but has no entries.".format(item))
             self._planned.update({item: None})
-        elif self._items[item].get('active') is False:
-            self._planned.update({item: 'deactivated'})
         elif self._items[item].get('active') is True:
             self._itpl.clear()
             for i, entry in enumerate(self._items[item]['list']):
