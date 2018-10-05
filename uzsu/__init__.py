@@ -254,6 +254,8 @@ class UZSU(SmartPlugin):
             item(self._items[item], 'UZSU Plugin', 'logic')
         if activevalue is None:
             return self._items[item].get('active')
+        elif activevalue is True:
+            self.scheduler_remove('uzsu_{}'.format(item))
 
     def _logics_interpolation(self, type=None, interval=5, backintime=0, item=None):
         if type is None:
