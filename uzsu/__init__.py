@@ -178,7 +178,7 @@ class UZSU(SmartPlugin):
         """
         try:
             self._uzsu_sun = self._create_sun()
-            if VERSION > '1.5.1':
+            if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
                 self._items[item] = item()
             else:
                 self._items[item] = copy.deepcopy(item())
@@ -245,7 +245,7 @@ class UZSU(SmartPlugin):
             else:
                 self.logger.warning("Value to activate item '{}' has to be True or False".format(item))
         if isinstance(activevalue, bool):
-            if VERSION > '1.5.1':
+            if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
                 self._items[item] = item()
             else:
                 self._items[item] = copy.deepcopy(item())
@@ -259,7 +259,7 @@ class UZSU(SmartPlugin):
         if type is None:
             return self._items[item].get('interpolation')
         else:
-            if VERSION > '1.5.1':
+            if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
                 self._items[item] = item()
             else:
                 self._items[item] = copy.deepcopy(item())
@@ -318,7 +318,7 @@ class UZSU(SmartPlugin):
             item.clear = functools.partial(self._logics_clear, item=item)
             item.planned = functools.partial(self._logics_planned, item=item)
 
-            if VERSION > '1.5.1':
+            if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
                 self._items[item] = item()
             else:
                 self._items[item] = copy.deepcopy(item())
@@ -370,7 +370,7 @@ class UZSU(SmartPlugin):
         :param source:  if given it represents the source
         :param dest:    if given it represents the dest
         """
-        if VERSION > '1.5.1':
+        if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
             self._items[item] = item()
         else:
             self._items[item] = copy.deepcopy(item())

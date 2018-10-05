@@ -5,8 +5,8 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Universelle Zeitschaltuhr'
         en: 'Universal time switch'
-    maintainer: cmalo (Niko Will)
-    tester: Sandman60, cmalo, onkelandy
+    maintainer: onkelandy
+    tester: Sandman60, cmalo, schuma
 #    keywords: iot xyz
     documentation: https://github.com/smarthomeNG/smarthome/wiki/UZSU-%28Universelle-Zeitschaltuhr%29        # url of documentation (wiki) page
 
