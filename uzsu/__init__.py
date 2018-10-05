@@ -421,15 +421,7 @@ class UZSU(SmartPlugin):
             self._itpl.clear()
             for i, entry in enumerate(self._items[item]['list']):
                 next, value = self._get_time(entry, 'next', item, i)
-                prev, prev_value = self._get_time(entry, 'previous', item)
-                try:
-                    cond1 = prev > datetime.now(self._timezone)
-                    cond2 = prev < next
-                except Exception as err:
-                    cond1 = cond2 = False
-                if cond1 and cond2:
-                    next = prev
-                    value = prev_value
+                self._get_time(entry, 'previous', item)
                 item(self._items[item], 'UZSU Plugin', 'schedule')
                 if next is not None:
                     self.logger.debug("uzsu active entry for item {} with datetime {}, value {}"
@@ -531,7 +523,7 @@ class UZSU(SmartPlugin):
             self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M')}})
             self._update_count['done'] = self._update_count.get('done') + 1
             self.scheduler_add('uzsu_{}'.format(item), self._set, value={'item': item, 'value': _value}, next=_next)
-            if self._update_count.get('done')  == self._update_count.get('todo'):
+            if self._update_count.get('done') == self._update_count.get('todo'):
                 self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                 self._update_count = {'done': 0, 'todo': 0}
 
@@ -622,7 +614,6 @@ class UZSU(SmartPlugin):
                             return next, value
                         else:
                             self.logger.debug("Not returning {} rrule {} because it's in the past.".format(timescan, next))
-                            return None, None
             if 'sun' in time:
                 next = self._sun(datetime.combine(today, datetime.min.time()).replace(
                     tzinfo=self._timezone), time, timescan)
