@@ -254,8 +254,6 @@ class UZSU(SmartPlugin):
             item(self._items[item], 'UZSU Plugin', 'logic')
         if activevalue is None:
             return self._items[item].get('active')
-        elif activevalue is True:
-            self.scheduler_remove('uzsu_{}'.format(item))
 
     def _logics_interpolation(self, type=None, interval=5, backintime=0, item=None):
         if type is None:
@@ -285,11 +283,14 @@ class UZSU(SmartPlugin):
             item(self._items[item], 'UZSU Plugin', 'clear')
 
     def _logics_planned(self, item=None):
-        try:
+        if self._planned.get(item) not in [None, {}, 'deactivated']:
             self.logger.info("Item {} is going to be set to {} at {}".format(
                 item, self._planned[item]['value'], self._planned[item]['next']))
             return self._planned[item]
-        except Exception:
+        elif self._planned.get(item) == 'deactivated':
+            self.logger.info("Nothing planned for item {} because UZSU is not active.".format(item))
+            return 'deactivated'
+        else:
             self.logger.info("Nothing planned for item {}.".format(item))
             return None
 
@@ -373,8 +374,9 @@ class UZSU(SmartPlugin):
             self._items[item] = item()
         else:
             self._items[item] = copy.deepcopy(item())
-        self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}.'.format(
-            item, caller, source, dest))
+        cond = (not caller == 'UZSU Plugin') or source == 'logic'
+        self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}. Will update: {}'.format(
+            item, caller, source, dest, cond))
         if self._items[item].get('list'):
             for entry in self._items[item]['list']:
                 if entry['rrule'] == '':
@@ -386,9 +388,9 @@ class UZSU(SmartPlugin):
                     except Exception as err:
                         self.logger.warning("Error creating rrule: {}".format(err))
         # Removing Duplicates
-        if self._remove_duplicates is True and self._items[item].get('list') and not caller == 'UZSU Plugin':
+        if self._remove_duplicates is True and self._items[item].get('list') and cond:
             self._remove_dupes(item)
-        if not caller == 'UZSU Plugin':
+        if cond:
             self._schedule(item, caller='update')
 
     def _schedule(self, item, caller=None):
@@ -410,10 +412,12 @@ class UZSU(SmartPlugin):
         if not self._items[item]['interpolation'].get('itemtype'):
             self.logger.error("item '{}' to be set by uzsu does not exist.".format(
                 self.get_iattr_value(item.conf, ITEM_TAG[0])))
-        elif not self._items[item].get('list'):
-            self.logger.warning("uzsu item '{}' is active but has no entries.".format(
-                item))
-        else:
+        elif self._items[item].get('list') is None:
+            self.logger.warning("uzsu item '{}' is active but has no entries.".format(item))
+            self._planned.update({item: None})
+        elif self._items[item].get('active') is False:
+            self._planned.update({item: 'deactivated'})
+        elif self._items[item].get('active') is True:
             self._itpl.clear()
             for i, entry in enumerate(self._items[item]['list']):
                 next, value = self._get_time(entry, 'next', item, i)
@@ -441,7 +445,7 @@ class UZSU(SmartPlugin):
                 else:
                     self.logger.debug("uzsu active entry for item {} keep {}, value {} and tzinfo {}".format(
                         item, _next, _value, _next.tzinfo))
-        if _next and _value is not None and 'active' in self._items[item] and self._items[item]['active'] is True:
+        if _next and _value is not None and self._items[item].get('active') is True:
             _reset_interpolation = False
             _interval = self._items[item]['interpolation'].get('interval')
             _interval = 5 if not _interval else int(_interval)
@@ -521,12 +525,12 @@ class UZSU(SmartPlugin):
             if _reset_interpolation is True:
                 self._items[item]['interpolation']['type'] = 'none'
                 item(self._items[item], 'UZSU Plugin', 'reset_interpolation')
-            else:
-                self.logger.debug("will add scheduler named uzsu_{} with datetime {} and tzinfo {}"
-                                  " and value {}".format(item, _next, _next.tzinfo, _value))
-                self._planned[item] = {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M')}
-                self._update_count['done'] = self._update_count.get('done') + 1
-                self.scheduler_add('uzsu_{}'.format(item), self._set, value={'item': item, 'value': _value}, next=_next)
+
+            self.logger.debug("will add scheduler named uzsu_{} with datetime {} and tzinfo {}"
+                              " and value {}".format(item, _next, _next.tzinfo, _value))
+            self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M')}})
+            self._update_count['done'] = self._update_count.get('done') + 1
+            self.scheduler_add('uzsu_{}'.format(item), self._set, value={'item': item, 'value': _value}, next=_next)
             if self._update_count.get('done')  == self._update_count.get('todo'):
                 self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                 self._update_count = {'done': 0, 'todo': 0}
