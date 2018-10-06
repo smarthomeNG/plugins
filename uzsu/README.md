@@ -12,7 +12,7 @@ pip3 install scipy
 On Raspberry debian stretch you also have to run:
 apt-get install libatlas-base-dev
 
-##Changelog
+## Changelog
 
 ### v1.5.2
 Make the plugin compatible with the master 1.5.1 version
