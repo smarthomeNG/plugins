@@ -377,7 +377,7 @@ class UZSU(SmartPlugin):
         if self._items[item].get('list'):
             _inactive = 0
             for entry in self._items[item]['list']:
-                if entry.get('active') == False:
+                if entry.get('active') is False:
                     _inactive += 1
                 if entry.get('rrule') == '':
                     try:
@@ -792,7 +792,6 @@ class UZSU(SmartPlugin):
                 return
         elif smin is None:
             dmax = next_time
-        min = max = 0
         if dmin is not None and dmax is not None and dmin > dmax:
             self.logger.error("Wrong times: the earliest time should be smaller than the "
                               "latest time in {}".format(tstr))

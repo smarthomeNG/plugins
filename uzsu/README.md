@@ -27,6 +27,7 @@ apt-get install libatlas-base-dev
 * Added interpolation feature: the UZSU can now be used for smooth transitions of values (e.g. for light dimming, etc.)
 * Added item functions to (de)activate, change interpolation and query some settings from the uzsu item via logic
 * Fixed uzsu evaluation for entries without an rrule setting (day of week)
+* Automatic deactivating older entries when new entry for exactly the same time (and day) is created (only works with specific VISU widgets)
 * Improved error handling (detecting wrong items to be set by UZSU, empty entries, etc.)
 
 ## Configuration
