@@ -1,0 +1,260 @@
+{% extends "base_plugin.html" %}
+{% block scripts %}
+{{ super() }}
+<script>
+function mainpage() {
+  var url = window.location.href;
+  var page = url.substring(url.lastIndexOf('/') + 1);
+  var final = url.replace(page, '');
+  if ( url.includes("?action=") ) {
+    window.location.href = final;
+  };
+}
+</script>
+{% endblock scripts %}
+{% set logo_frame = false %}
+
+
+{% set item_count = p.__items|length %}
+{% set tab1title = "<strong>StateEngine</strong>" %}
+{% set tabcount = 1 %}
+
+{% block headtable %}
+
+<table class="table table-striped table-hover">
+  <tbody>
+    <tr>
+      <td class="py-1"><strong>Log Level</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('log_level') }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"><strong>Log Folder</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('log_directory') }}</td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>Startup Delay</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('startup_delay_default') }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"><strong>Suspend Time</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('suspend_time_default') }}</td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>Items</strong></td>
+      <td class="py-1">{{ item_count }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"></td>
+      <td class="py-1"></td>
+    </tr>
+  </tbody>
+</table>
+{% endblock headtable %}
+
+
+{% block bodytab1 %}
+
+<div class="container-fluid m-2" style="position: relative;">
+  <div style="float: left; border:1px solid black; width:200px; position: sticky; position: -webkit-sticky; top:220px; left:0;">
+    <a href="https://www.smarthomeng.de/starting-with-state-machine-automation-stateengine-plugin" target="link">Einführung</a><br>
+    <a href="?page=doku1">Grundsätzliches</a><br>
+    <a href="?page=doku2">Plugin-Konfiguration</a><br>
+    <a href="?page=doku3">Das Objekt-Item</a><br>
+    <a href="?page=doku4">Das Zustands-Item</a><br>
+    <a href="?page=doku5">Bedingungen</a><br>
+    <a href="?page=doku6">Aktionen: Ausführung</a><br>
+    <a href="?page=doku7">Aktionen: Einzelangabe</a><br>
+    <a href="?page=doku8">Aktionen: Combo-Angabe</a><br>
+    <a href="?page=doku9">Zustand-Templates</a><br>
+    <a href="?page=doku10">Vordefinierte Funktionen</a><br>
+    <a href="?page=doku11">Variablen</a><br>
+    <a href="?page=doku12">Sperr-Zustand</a><br>
+    <a href="?page=doku13">Pausiert-Zustand</a><br>
+    <a href="?page=doku14">CLI Kommandos</a><br>
+    <a href="?page=doku15">Vollständiges Beispiel</a><br>
+  </div>
+  <div style="margin-left:230px; max-width: 800px;">
+    <h1 id="aktioneneinzelvariante">Aktionen - Einzelvariante</h1>
+
+    <p>Bei der Einzelvariante zur Definition von Aktionen werden alle Parameter einer Aktion in separaten Attributen definiert. Über den gemeinsamen Aktionsnamen gehören die Attribute einer Aktion zusammen.</p>
+
+    <p>Ähnlich wie Bedingungen benötigen auch Aktionen einen Namen. Der Name ist auch hier beliebig und wird lediglich in der Benennung der Attribute verwendet. Die Namen aller Attribute, die zu einer Bedingung gehören, folgen dem Muster "<code>se_&lt;Funktion&gt;_&lt;Aktionsname&gt;</code>".</p>
+
+    <h2 id="aktionitemaufeinenwertsetzen">Aktion: Item auf einen Wert setzen</h2>
+
+    <pre><code>    se_set_&lt;Aktionsname&gt;
+    </code></pre>
+
+    <p>Das Item, dass verändert werden soll, muss auf Ebene des Objekt-Items über das Attribut "<code>se_item_&lt;Aktionsname&gt;</code>" angegeben werden. </p>
+
+    <p>Das Attribut "<code>se_set_&lt;Aktionsname&gt;</code>" nutzt den [[Datentyp AbValue|Doku-De-Grundsaetzliches-AbValue]]. Der Wert, auf den das Item gesezt wird kann dadurch als statischer Wert, als Wert eines Items oder als Ergebnis der Ausführung einer Funktion festgelegt werden.</p>
+
+    <p><strong>Minimumabweichung:</strong>
+    Es ist möglich eine Minimumabweichung für Änderungen zu definieren. Wenn die Differenz zwischen dem aktuellen Wert des Items und dem ermittelten neuen Wert kleiner ist als die festgelegte Minimumabweichung wird keine Änderung vorgenommen. Die Minimumabweichung wird über das Attribut "<code>se_mindelta_&lt;Aktionsname&gt;</code>" auf der Ebene des Objekt-Items festgelegt. Auch hier wird der [[Datentyp AbValue|Doku-De-Grundsaetzliches-AbValue]] verwendet.</p>
+
+    <h2 id="aktionitemzwangsweiseaufeinenwertsetzen">Aktion: Item zwangsweise auf einen Wert setzen</h2>
+
+    <pre><code>    se_force_&lt;Aktionsname&gt;
+    </code></pre>
+
+    <p>Diese Aktion funktioniert analog zu <code>se_set_&lt;Aktionsname&gt;</code>. Einziger Unterschied ist, dass die Wertänderung erzwungen wird: Wenn das Item bereits den zu setzenden Wert hat, dann ändert smarthomeNG das Item nicht. Selbst wenn beim Item das Attribut <code>enforce_updates = yes</code> gesetzt ist, wird zwar der Wert neu gesetzt, der von smarthomeNG Änderungszeit nicht neu gesetzt. Mit dem Attribut <code>se_force_&lt;Aktionsname&gt;</code> wird das Plugin den Wert des Items bei Bedarf zuerst auf einen anderen Wert ändern und dann auf dem Zielwert setzen. Damit erfolgt auf jeden Fall eine Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang stehenden Änderungen (eval's, Aktualisierung der Änderungszeiten, etc).</p>
+
+    <h2 id="aktionausfhreneinerfunktion">Aktion: Ausführen einer Funktion</h2>
+
+    <pre><code>    se_run_&lt;Aktionsname&gt;: eval:(Funktion)
+    </code></pre>
+
+    <p>Die Angabe ist vergleichbar mit dem Ausführen einer Funktion zur Ermittlung des Werts für ein Item, hier wird jedoch kein Item benötigt. Außerdem wird der Rückgabewert der Funktion ignoriert.</p>
+
+    <h2 id="aktionauslseneinerlogikausfhrung">Aktion: Auslösen einer Logikausführung</h2>
+
+    <pre><code>    se_trigger_&lt;Aktionsname&gt;
+    </code></pre>
+
+    <p>Um beim Auslösen einen Wert an die Logik zu übergeben, kann dieser Wert im Attribut über die Angabe von <code>:&lt;Wert&gt;</code> hinter dem Logiknamen angegeben werden.</p>
+
+    <p><strong>Beispiel:</strong></p>
+
+    <pre><code>    se_trigger_&lt;Aktionsname&gt;: meineLogik:Zu übergebender Wert
+    </code></pre>
+
+    <h2 id="aktionalleitemsdieeinbestimmtesattributhabenaufdenwertdiesesattributssetzen">Aktion: Alle Items, die ein bestimmtes Attribut haben, auf den Wert dieses Attributs setzen</h2>
+
+    <pre><code>    se_byattr_&lt;Aktionsname&gt;
+    </code></pre>
+
+    <p>Mit diesem Attribut wird der Name eines anderen (beliebigen) Attributs angegeben. Beim Ausführen werden alle Items herausgesucht, die das angegebene Attribut enthalten. Diese Items werden auf den Wert gesetzt, der dem genannten Attribut in den Items jeweils zugewiesen ist.</p>
+
+    <p><strong>Beispiel:</strong></p>
+
+    <pre><code>    se_byattr_&lt;Aktionsname&gt;: mein_eigenes_Attribut
+    </code></pre>
+
+    <p>sucht alle Items heraus, bei denen das Attribut "<code>mein_eigenes_Attribut</code>" angegeben ist.
+    Ein Item</p>
+
+    <pre><code>    dummy:
+            type: num
+            mein_eigenes_Attribut: 42
+    </code></pre>
+
+    <p>wird dann auf "<code>42</code>" gesetzt. <br />
+    Ein anderes Item</p>
+
+    <pre><code>    dummy2:
+            type: str
+            mein_eigenes_Attribut: Rums
+    </code></pre>
+
+    <p>wird gleichzeitig auf "<code>Rums</code>" gesetzt.</p>
+
+    <h2 id="aktionsondervorgnge">Aktion: Sondervorgänge</h2>
+
+    <pre><code>    se_special_&lt;Aktionsname&gt;: (Sondervorgang)
+    </code></pre>
+
+    <p>Für bestimmte Sondervorgänge sind besondere Aktionen im Plugin definiert (z. B. für das Suspend). Diese werden jedoch nicht hier erläutert, sondern an den Stellen, andenen Sie verwendet werden.</p>
+
+    <h2 id="verzgertesausfhreneineraktion">Verzögertes Ausführen einer Aktion</h2>
+
+    <pre><code>    se_delay_&lt;Aktionsname&gt;
+    </code></pre>
+
+    <p>Über das Attribut wird die Verzögerung angegeben, nach der die Aktion ausgeführt werden soll. Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten.</p>
+
+    <pre><code>    se_delay_&lt;Aktionsname&gt;: 30         --&gt; 30 Sekunden
+        se_delay_&lt;Aktionsname&gt;: 30m        --&gt; 30 Minuten
+    </code></pre>
+
+    <p>Der Timer zur Ausführung der Aktion nach der angegebenen Verzögerung wird entfernt, wenn eine gleichartike Aktion ausgeführt werden soll (egal ob verzögert oder nicht). Wenn also die Verzögerung größer als der "<code>cycle</code>" ist, wird die Aktion nie durchgeführt werden, es sei denn die Aktion soll nur einmalig ausgeführt werden. <br />
+    Das Attribut "<code>se_delay_&lt;Aktionsname&gt;</code>" verwendet den [[Datentyp AbValue|Doku-De-Grundsaetzliches-AbValue]]</p>
+
+    <h2 id="wiederholeneineraktion">Wiederholen einer Aktion</h2>
+
+    <pre><code>    se_repeat_&lt;Aktionsname&gt;
+    </code></pre>
+
+    <p>Über das Attribut wird unabhängig vom globalen Setting für das stateengine Item festgelegt, ob eine Aktion auch beim erneuten Eintritt in den Status ausgeführt wird oder nicht.</p>
+
+    <pre><code>    se_delay_&lt;Aktionsname&gt;: True    # Aktion wird bei jedem Mal aufs neue ausgeführt
+        se_delay_&lt;Aktionsname&gt;: False   # Aktion wird nur beim ersten Eintritt in den Status ausgeführt
+    </code></pre>
+
+    <h2 id="festlegenderausfhrungsreihenfolgevonaktionen">Festlegen der Ausführungsreihenfolge von Aktionen</h2>
+
+    <pre><code>    se_order_&lt;Aktionsname&gt;
+    </code></pre>
+
+    <p>Die Reihenfolge, in der die Aktionen ausgeführt werden, ist nicht zwingend die Reihenfolge in der die Attribute definiert sind. In den meisten Fällen ist dies kein Problem da die Aktionen voneinander unabhängig sind und daher in beliebiger Reihenfolge ausgeführt werden können. In Einzelfällen kann es jedoch erforderlich sein, mehrere Aktionen in einer bestimmten Reihenfolge auszuführen. Dies kann über das Attribut <code>se_order_&lt;Aktionsname&gt;</code> erfolgen. Mit diesem Attribut wird der Aktion eine Zahl zugewiesen. Aktionen werden in aufsteigender Reihenfolge der zugewiesenen Zahlen ausgeführt.</p>
+
+    <p>Es ist möglich zwei Aktionen die gleiche Zahl zuzuweisen, die Reihenfolge der beiden Aktionen untereinander ist dann wieder undefiniert. Innerhalb der gesamten Aktionen werden die beiden Aktionen jedoch an der angegebenen Position ausgeführt.</p>
+
+    <p>Wird für eine Aktion kein Reihenfolgenwert angegeben, wird implizit der Wert 1 verwendet.</p>
+
+    <p>Das Attribut "<code>se_order_&lt;Aktionsname&gt;</code>" verwendet den [[Datentyp AbValue|Doku-De-Grundsaetzliches-AbValue]]</p>
+
+    <p><strong>Beispiel zur Ausführungsreihenfolge:</strong></p>
+
+    <pre><code>beispiel:
+        automatik:
+            rules:
+                &lt;...&gt;
+                Zustand1:
+                    se_order_aktion1: 3
+                    se_order_aktion2: 2
+                    se_order_aktion3: 1
+                    se_order_aktion4: 2
+    </code></pre>
+
+    <p>Die Reihenfolge der Aktionen hier wird wie folgt sein:</p>
+
+    <ol>
+    <li>aktion3</li>
+
+    <li>aktion2, aktion4 ODER aktion4, aktion2</li>
+
+    <li>aktion 1</li>
+    </ol>
+
+    <p>Ist zusätzlich eine aktion5 definiert, die keine Reihenfolge festgelegt hat, wird die Reihenfolge der Aktionen wie folgt sein:</p>
+
+    <ol>
+    <li>aktion3, aktion5 ODER aktion5, aktion3</li>
+
+    <li>aktion2, aktion4 ODER aktion4, aktion2</li>
+
+    <li>aktion 1</li>
+    </ol>
+
+    <h2 id="beispielzuaktionen">Beispiel zu Aktionen</h2>
+
+    <pre><code>beispiel:
+        raffstore:
+            automatik:
+                rules:
+                    &lt;...&gt;
+                    se_item_height: beispiel.raffstore1.hoehe
+                    se_mindelta_height: 10
+                    se_item_lamella: beispiel.raffstore1.lamelle
+                    se_mindelta_lamella: 5
+                    Daemmerung:
+                        &lt;...&gt;
+                        se_set_height: value:100
+                        se_set_lamella: value:25
+                        &lt;...&gt;
+                    Nacht:
+                        &lt;...&gt;
+                        se_set_height: value:100
+                        se_set_lamella: value:0
+                        &lt;...&gt;
+                    Nachfuehren:
+                        &lt;...&gt;
+                        se_set_height: value:100
+                        se_set_lamella: eval:stateengine_eval.sun_tracking()
+                        &lt;...&gt;
+                    Sonder:
+                        &lt;...&gt;
+                        se_trigger_logic1: myLogic:42
+                        se_delay_logic1: 10
+                        &lt;...&gt;
+    </code></pre>
+  </div>
+</div>
+{% endblock bodytab1 %}
