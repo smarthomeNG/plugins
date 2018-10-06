@@ -15,16 +15,19 @@ apt-get install libatlas-base-dev
 ## Changelog
 
 ### v1.5.2
-Make the plugin compatible with the master 1.5.1 version
-Correctly write cache file when changing the uzsu item
-Automatically activate all days of the week if no day is set via Visu
-Variety of bug fixes and optimizations
+* Make the plugin compatible with the master 1.5.1 version
+* Correctly write cache file when changing the uzsu item
+* Automatically activate all days of the week if no day is set via Visu
+* Variety of bug fixes and optimizations
+* Corrected information on web interface concerning (in)active entries
 
 ### v1.4.1 - 1.5.1
-Added "back in time" feature to re-trigger missed uzsu evaluations on smarthomeng startup
-Added interpolation feature: the UZSU can now be used for smooth transitions of values (e.g. for light dimming, etc.)
-Added item functions to (de)activate, change interpolation and query some settings from the uzsu item via logic
-Fixed uzsu evaluation for entries without an rrule setting (day of week)
+* Added a web interface for easier debugging
+* Added "back in time" feature to re-trigger missed uzsu evaluations on smarthomeng startup
+* Added interpolation feature: the UZSU can now be used for smooth transitions of values (e.g. for light dimming, etc.)
+* Added item functions to (de)activate, change interpolation and query some settings from the uzsu item via logic
+* Fixed uzsu evaluation for entries without an rrule setting (day of week)
+* Improved error handling (detecting wrong items to be set by UZSU, empty entries, etc.)
 
 ## Configuration
 
@@ -106,10 +109,17 @@ sh.eg.wohnen.kugellampe.uzsu.activate(type='linear/none/cubic', interval=5, back
 
 # clear your settings of the uzsu item. BE CAREFUL!
 sh.eg.wohnen.kugellampe.uzsu.clear(True)
-
-
 ```
 
+## Web Interface
+The web interface gives you the following information:
+* list of all UZSU items
+* items to be set as well as their item type (bool, string, num, etc.)
+* current value of the item to be set as well as the planned next value + timestamp of that scheduling
+* interpolation type and interval
+* back in time value
+* show the complete dictionary entry of an UZSU entry as a popup by clicking on it
+* color coded info: gray = inacitve, green = active, red = problem
 
 ## Example
 
