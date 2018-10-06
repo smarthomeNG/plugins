@@ -387,9 +387,8 @@ class UZSU(SmartPlugin):
                         item(self._items[item], 'UZSU Plugin', 'create_rrule')
                     except Exception as err:
                         self.logger.warning("Error creating rrule: {}".format(err))
-        self.logger.error("inactive: {}, length: {}".format(_inactive, len(self._items[item]['list'])))
-        if _inactive >= len(self._items[item]['list']):
-            self._planned.update({item: None})
+            if _inactive >= len(self._items[item]['list']):
+                self._planned.update({item: None})
         # Removing Duplicates
         if self._remove_duplicates is True and self._items[item].get('list') and cond:
             self._remove_dupes(item)

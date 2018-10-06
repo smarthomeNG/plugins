@@ -12,6 +12,19 @@ pip3 install scipy
 On Raspberry debian stretch you also have to run:
 apt-get install libatlas-base-dev
 
+##Changelog
+### v1.5.2
+Make the plugin compatible with the master 1.5.1 version
+Correctly write cache file when changing the uzsu item
+Automatically activate all days of the week if no day is set via Visu
+Variety of bug fixes and optimizations
+
+### v1.4.1 - 1.5.1
+Added "back in time" feature to re-trigger missed uzsu evaluations on smarthomeng startup
+Added interpolation feature: the UZSU can now be used for smooth transitions of values (e.g. for light dimming, etc.)
+Added item functions to (de)activate, change interpolation and query some settings from the uzsu item via logic
+Fixed uzsu evaluation for entries without an rrule setting (day of week)
+
 ## Configuration
 
 ### plugin.yaml
@@ -43,7 +56,7 @@ someroom:
             cache: 'True'
 ```
 
-If you specify the ``cache: True`` as well, then your switching entries will be there even if you restart smarthome.py.
+If you specify the ``cache: True`` as well, then your switching entries will be there even if you restart smarthome.py (sometimes didn't work correctly with plugin version < 1.5.2).
 
 ## Item Data Format
 
@@ -72,7 +85,7 @@ Each UZSU item is of type list. Each list entry has to be a dict with specific k
 
 ## Additional item functions
 
-You can use these function in logics to query or set yout uzsu item:
+You can use these function in logics to query or set your uzsu item:
 
 ```
 # query the next scheduled value and time
@@ -99,7 +112,7 @@ sh.eg.wohnen.kugellampe.uzsu.clear(True)
 
 ## Example
 
-Activates the light every other day at 16:30 and deactivates it at 17:30 for five times:
+Activates the light every other day at 16:30 and deactivates it at 17:30 for five times. Between the UZSU entries the values are interpolated every 5 minutes.
 
 ```python
 sh.eg.wohnen.kugellampe.uzsu({'active':True, 'list':[
@@ -111,4 +124,4 @@ sh.eg.wohnen.kugellampe.uzsu({'active':True, 'list':[
 
 ## SmartVISU
 
-There is a widget available which gives an interface to the UZSU. The structure has changed from SmartVISU 2.8 to 2.9 slightly. Interpolation feature is supported in 2.9 only. Please consult the corresponding forum.
+There is a widget available which gives an interface to the UZSU. The structure has changed from SmartVISU 2.8 to 2.9 slightly. Interpolation feature is supported in 2.9 only as a popup and graph. Please consult the corresponding forum.
