@@ -15,12 +15,24 @@ SlackInstance:
     class_name: Slack
     class_path: plugins.slack
     token: abc/def/ghi # Token for posting to workspace '<your_team>'
+
+# the following is only neccessary if you want to post to different Slack workspaces
+SlackInstanceForSecondWorkspace:
+    class_name: Slack
+    class_path: plugins.slack
+    token: jkl/mno/pqr # Token for posting to another workspace '<another_team>'
 </pre>
 
 ## Usage
-Generate a "incoming webhook" with a token using https://<your_team>.slack.com/apps/new/A0F7XDUAZ-incoming-webhooks. You need to select a single channel when generating the token, but the token can be used for posting to multiple channels in the same workspace.
+To enable posting to Slack you need to create an "incoming webhook" there, which gives you an authorization token.
+Open the following URL for your team workspace and create a wehhook. Please select one channel of your workspace.
+https://<your_team>.slack.com/apps/new/A0F7XDUAZ-incoming-webhooks.
+Afterwards you need to setup your etc/plugin.yaml as described above and insert the webhook token.
+The created API token authorizes posting to every channel in this workspace.
 
-If you want to send notifications to different workspaces you need to generate a token for each workspace and you need to configure a SlackInstance section for every workspace/token.
+For most users a single instance would be sufficient.
+If you want to send notifications to more than one Slack workspace, you need to generate a webhook / token in every Slack workspace.
+For each of them you'll need to configure a section in plugin.yaml with different instance names.
 
 To send a notification use the following syntax in your logics with the first parameter being the desired channel:
 
@@ -31,4 +43,7 @@ sh.SlackInstance.notify('#general', 'Ding Dong: Front door')
 sh.SlackInstance.notify('#otherChannel', 'Ding Dong: Front door', 'normal')
 # Other notification types use warning, danger or good.
 sh.SlackInstance.notify('#differentChannel', 'Alarm: Garage door open', 'danger')
+
+# Sending a notification to the second workspace
+sh.SlackInstanceForSecondWorkspace.notify('#general', 'Hello second workspace!')
 </pre>

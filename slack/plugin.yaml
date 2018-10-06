@@ -24,8 +24,8 @@ parameters:
     token:
         type: str
         description:
-            de: 'Slack-Token für den API-Zugriff auf einen Messaging-Kanal'
-            en: 'Slack token for API access to a single messaging channel'
+            de: 'Slack-Token für den API-Zugriff auf einen oder mehrere Kanäle in einem Slack-Workspace'
+            en: 'Slack token for API access to one or more channels in a single Slack workspace'
         mandatory: True
 
 item_attributes: NONE
@@ -36,8 +36,8 @@ plugin_functions:
         notify:
             type: foo
             description:
-                de: 'Absetzen einer Messaging-Nachricht an slack'
-                en: 'send a messaging text to Slack'
+                de: 'Absetzen einer Messaging-Nachricht an den Slack Workspace'
+                en: 'send a messaging text to Slack workspace'
             parameters:
                 channel:
                     type: str
