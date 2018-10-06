@@ -13,6 +13,7 @@ On Raspberry debian stretch you also have to run:
 apt-get install libatlas-base-dev
 
 ##Changelog
+
 ### v1.5.2
 Make the plugin compatible with the master 1.5.1 version
 Correctly write cache file when changing the uzsu item
