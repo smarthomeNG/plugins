@@ -9,33 +9,36 @@ git clone https://github.com/rthill/slack.git
 </pre>
 
 ## Configuration
-### etc/plugin.yaml
+### etc/plugin.yaml single instance example
 <pre>
 SlackInstance:
-    class_name: Slack
-    class_path: plugins.slack
+    plugin_name: slack
     token: abc/def/ghi # Token for posting to workspace '<your_team>'
+</pre>
 
-# the following is only neccessary if you want to post to different Slack workspaces
-SlackInstanceForSecondWorkspace:
-    class_name: Slack
-    class_path: plugins.slack
+### etc/plugin.yaml multi instance example
+If you want to post to more than one Slack workspaces or if you want to use more than one incoming webhook / authentication token, configure this plugin with multiple instances.
+<pre>
+SlackInstance_1:
+    plugin_name: slack
+    instance: WorkspaceYourTeam
+    token: abc/def/ghi # Token for posting to workspace '<your_team>'
+	
+SlackInstance_2:
+    plugin_name: slack
+    instance: WorkspaceAnotherTeam
     token: jkl/mno/pqr # Token for posting to another workspace '<another_team>'
 </pre>
 
 ## Usage
 To enable posting to Slack you need to create an "incoming webhook" there, which gives you an authorization token.
-Open the following URL for your team workspace and create a wehhook. Please select one channel of your workspace.
-https://<your_team>.slack.com/apps/new/A0F7XDUAZ-incoming-webhooks.
+Open the following URL for your team workspace.
+https://<your_team>.slack.com/apps/new/A0F7XDUAZ-incoming-webhooks
+Create a new webhook at which you need to select one channel of your workspace.
+The created URL contains an API token which authorizes posting to every channel in this workspace.
 Afterwards you need to setup your etc/plugin.yaml as described above and insert the webhook token.
-The created API token authorizes posting to every channel in this workspace.
-
-For most users a single instance would be sufficient.
-If you want to send notifications to more than one Slack workspace, you need to generate a webhook / token in every Slack workspace.
-For each of them you'll need to configure a section in plugin.yaml with different instance names.
 
 To send a notification use the following syntax in your logics with the first parameter being the desired channel:
-
 <pre>
 # Default informational notification to channel #general
 sh.SlackInstance.notify('#general', 'Ding Dong: Front door')
@@ -43,7 +46,18 @@ sh.SlackInstance.notify('#general', 'Ding Dong: Front door')
 sh.SlackInstance.notify('#otherChannel', 'Ding Dong: Front door', 'normal')
 # Other notification types use warning, danger or good.
 sh.SlackInstance.notify('#differentChannel', 'Alarm: Garage door open', 'danger')
+</pre>
 
-# Sending a notification to the second workspace
-sh.SlackInstanceForSecondWorkspace.notify('#general', 'Hello second workspace!')
+To learn more on message formatting (e.g. bold, underline, URLs, Emojis, multiline) visit the following link:
+https://api.slack.com/docs/message-formatting
+
+
+For most users a single instance would be sufficient.
+If you want to send notifications to more than one Slack workspace or if you want to use more than one incoming webhook / authentication token, you need to generate a webhook / token in every Slack workspace.
+For each of them you'll need to configure a instace of this plugn in etc/plugin.yaml with different instance names as shown in multi instance example configuration above.
+Sending notifications in multi instance example:
+<pre>
+# Sending a notification to two workspaces
+sh.SlackInstance_1.notify('#general', 'Hello first workspace!')
+sh.SlackInstance_2.notify('#general', 'Hello second workspace!')
 </pre>
