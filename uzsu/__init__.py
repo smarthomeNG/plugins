@@ -414,7 +414,7 @@ class UZSU(SmartPlugin):
         if not self._items[item]['interpolation'].get('itemtype'):
             self.logger.error("item '{}' to be set by uzsu does not exist.".format(
                 self.get_iattr_value(item.conf, ITEM_TAG[0])))
-        elif self._items[item].get('list') is None:
+        elif not self._items[item].get('list'):
             self.logger.warning("uzsu item '{}' is active but has no entries.".format(item))
             self._planned.update({item: None})
         elif self._items[item].get('active') is True:

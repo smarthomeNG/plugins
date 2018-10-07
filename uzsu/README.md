@@ -23,7 +23,7 @@ apt-get install libatlas-base-dev
 
 ### v1.4.1 - 1.5.1
 * Added a web interface for easier debugging
-* Added "back in time" feature to re-trigger missed uzsu evaluations on smarthomeng startup
+* Added "back in time"/initage feature to re-trigger missed uzsu evaluations on smarthomeng startup
 * Added interpolation feature: the UZSU can now be used for smooth transitions of values (e.g. for light dimming, etc.)
 * Added item functions to (de)activate, change interpolation and query some settings from the uzsu item via logic
 * Fixed uzsu evaluation for entries without an rrule setting (day of week)
@@ -82,7 +82,7 @@ Each UZSU item is of type list. Each list entry has to be a dict with specific k
 
 * __interval__: integer, sets the time span in seconds between the automatic triggers based on the interpolation calculation
 
-* __initage__: integer, sets the amount of seconds the plugin should go back in time at startup to find the last UZSU item and triggers that right on startup of the plugin. This is useless if interpolation is active as the interpolated time will get set an init anyhow.
+* __initage__: integer, sets the amount of seconds the plugin should go back in time at startup to find the last UZSU item and triggers that right on startup of the plugin. This is useless if interpolation is active as the interpolated time will get set on init anyhow.
 
 * __itemtype__: the type of the item that should be changed by the UZSU. This is set automatically on init and should not be touched.
 
