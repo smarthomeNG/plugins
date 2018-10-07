@@ -46,7 +46,7 @@ Blockly.Blocks['shtools_dewpoint'] = {
     this.appendDummyInput()
         .appendField("Taupunkt bei")
     this.appendValueInput("TEMP")
-        .appendField("ï¿½C Temeratur und ")
+        .appendField("°C Temeratur und ")
     this.appendValueInput("HUM")
         .appendField("% rel.Feuchtigkeit");
     this.setInputsInline(true);
