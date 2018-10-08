@@ -25,10 +25,22 @@ loggers:
         level: WARN
 ```
 
-This requires a XMPP plugin configured in a section named `xmpp`
-which is used in the `xmpp_plugin` setting. The receiver and type needs
-to be specified to configure the target receiving the log
-messages.
+This requires a XMPP plugin configured in a section named `xmpp` (e.g.
+see below for example) which is referenced in the `xmpp_plugin` setting.
+The receiver and chat type needs to be specified to configure the target
+contact receiving the messages.
+
+It is also possible to log all messages to a given operation log instance
+via XMPP. E.g. when having multiple operation logs configured, one for events
+one for alarms, the alarms operation log can be send via XMPP when it
+receives log messages:
+
+```yaml
+loggers:
+    plugins.operationlog.alarms:
+        handlers: [xmpp]
+        level: INFO
+```
 
 
 ## Configuration
