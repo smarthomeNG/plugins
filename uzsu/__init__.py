@@ -134,10 +134,14 @@ class UZSU(SmartPlugin):
         self.logger.debug("Going to update {} items: {}".format(self._update_count['todo'], list(self._items.keys())))
 
         for item in self._items:
-            cond1 = self._items[item].get('active') and self._items[item]['active'] is True
+            cond1 = self._items[item].get('active') is True
             cond2 = self._items[item].get('list')
+            self._check_rruleandplanned(item)
             if cond1 and cond2:
                 self._schedule(item, caller='run')
+            elif cond1 and not cond2:
+                self.logger.warning("Item '{}' is active but has no entries.".format(item))
+                self._planned.update({item: None})
             else:
                 self.logger.debug("Not scheduling item {}, cond1 {}, cond2 {}".format(item, cond1, cond2))
 
@@ -284,11 +288,14 @@ class UZSU(SmartPlugin):
 
     def _logics_planned(self, item=None):
         if self._planned.get(item) not in [None, {}] and self._items[item].get('active') is True:
-            self.logger.info("Item {} is going to be set to {} at {}".format(
+            self.logger.info("Item '{}' is going to be set to {} at {}".format(
                 item, self._planned[item]['value'], self._planned[item]['next']))
             return self._planned[item]
+        elif not self._planned.get(item) and self._items[item].get('active') is True:
+            self.logger.warning("Item '{}' is active but has no (active) entries.".format(item))
+            self._planned.update({item: None})
         else:
-            self.logger.info("Nothing planned for item {}.".format(item))
+            self.logger.info("Nothing planned for item '{}'.".format(item))
             return None
 
     def parse_item(self, item):
@@ -357,6 +364,23 @@ class UZSU(SmartPlugin):
                                                     item, time, oldvalue, newvalue))
         item(self._items[item], 'UZSU Plugin', 'update')
 
+    def _check_rruleandplanned(self, item):
+        if self._items[item].get('list'):
+            _inactive = 0
+            for entry in self._items[item]['list']:
+                if entry.get('active') is False:
+                    _inactive += 1
+                if entry.get('rrule') == '':
+                    try:
+                        _index = self._items[item]['list'].index(entry)
+                        self._items[item]['list'][_index]['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
+                        self.logger.debug("Updated rrule for item: {}".format(item))
+                        item(self._items[item], 'UZSU Plugin', 'create_rrule')
+                    except Exception as err:
+                        self.logger.warning("Error creating rrule: {}".format(err))
+            if _inactive >= len(self._items[item]['list']):
+                self._planned.update({item: None})
+
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         This is called by smarthome engine when the item changes, e.g. by Visu or by the command line interface
@@ -374,21 +398,7 @@ class UZSU(SmartPlugin):
         cond = (not caller == 'UZSU Plugin') or source == 'logic'
         self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}. Will update: {}'.format(
             item, caller, source, dest, cond))
-        if self._items[item].get('list'):
-            _inactive = 0
-            for entry in self._items[item]['list']:
-                if entry.get('active') is False:
-                    _inactive += 1
-                if entry.get('rrule') == '':
-                    try:
-                        _index = self._items[item]['list'].index(entry)
-                        self._items[item]['list'][_index]['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
-                        self.logger.debug("Updated rrule for item: {}".format(item))
-                        item(self._items[item], 'UZSU Plugin', 'create_rrule')
-                    except Exception as err:
-                        self.logger.warning("Error creating rrule: {}".format(err))
-            if _inactive >= len(self._items[item]['list']):
-                self._planned.update({item: None})
+        self._check_rruleandplanned(item)
         # Removing Duplicates
         if self._remove_duplicates is True and self._items[item].get('list') and cond:
             self._remove_dupes(item)
@@ -415,7 +425,7 @@ class UZSU(SmartPlugin):
             self.logger.error("item '{}' to be set by uzsu does not exist.".format(
                 self.get_iattr_value(item.conf, ITEM_TAG[0])))
         elif not self._items[item].get('list') and self._items[item].get('active') is True:
-            self.logger.warning("uzsu item '{}' is active but has no entries.".format(item))
+            self.logger.warning("item '{}' is active but has no entries.".format(item))
             self._planned.update({item: None})
         elif self._items[item].get('active') is True:
             self._itpl.clear()
@@ -526,6 +536,9 @@ class UZSU(SmartPlugin):
             if self._update_count.get('done') == self._update_count.get('todo'):
                 self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                 self._update_count = {'done': 0, 'todo': 0}
+        elif self._items[item].get('active') is True:
+            self.logger.warning("item '{}' is active but has no active entries.".format(item))
+            self._planned.update({item: None})
 
     def _set(self, item=None, value=None, caller=None):
         """
