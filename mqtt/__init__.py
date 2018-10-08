@@ -58,7 +58,7 @@ class Mqtt(SmartPlugin):
     
     ALLOW_MULTIINSTANCE = True
     
-    PLUGIN_VERSION = "1.4.6"
+    PLUGIN_VERSION = "1.4.7"
 
     __plugif_CallbackTopics = {}         # for plugin interface
     __plugif_Sub = None
@@ -165,7 +165,10 @@ class Mqtt(SmartPlugin):
         # tls ...
         # ca_certs ...
 
-        self.ConnectToBroker()
+        if not self.ConnectToBroker():
+            self._init_complete = False
+            return
+
         self.init_webinterface()
         
 
@@ -417,8 +420,10 @@ class Mqtt(SmartPlugin):
         self._client.on_message = self.on_mqtt_message
         try:
             self._client.connect(self.broker_ip, self.broker_port, 60)
-        except Exception as e:
+        except ERROR as e:
             self.logger.error(self.get_loginstance()+'Connection error:', e)
+            return False
+        return True
 
 
 
