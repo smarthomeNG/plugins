@@ -78,6 +78,8 @@ Each UZSU item is of type list. Each list entry has to be a dict with specific k
 * __rrule__: You can use the recurrence rules documented in the [iCalendar RFC](http://www.ietf.org/rfc/rfc2445.txt) for recurrence use of a switching entry.
 
 ## Interpolation
+Note: If Interpolation is activated the value will always be set in the given interval even if the next event is not on the same day.
+
 * __type__: string, sets the mathematical function to interpolate between values. Can be cubic, linear or none. If set to cubic or linear the value calculated for the current time will be set on startup and change.
 
 * __interval__: integer, sets the time span in seconds between the automatic triggers based on the interpolation calculation

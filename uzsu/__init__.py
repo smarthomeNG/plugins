@@ -268,10 +268,10 @@ class UZSU(SmartPlugin):
             else:
                 self._items[item] = copy.deepcopy(item())
             self._items[item]['interpolation']['type'] = str(type).lower()
-            self._items[item]['interpolation']['interval'] = abs(int(interval))
+            self._items[item]['interpolation']['interval'] = int(interval)
             self._items[item]['interpolation']['initage'] = int(backintime)
             self.logger.info("Item {} interpolation is set via logic to: type={}, interval={}, backintime={}".format(
-                item, type, abs(interval), backintime))
+                item, type, interval, backintime))
             item(self._items[item], 'UZSU Plugin', 'logic')
 
     def _logics_clear(self, clear=False, item=None):
@@ -331,6 +331,7 @@ class UZSU(SmartPlugin):
                 item(self._items[item], 'UZSU Plugin', 'init')
             except Exception:
                 self._items[item]['interpolation'] = {}
+                self._items[item]['interpolation']['type'] = 'none'
                 self._items[item]['interpolation']['initialized'] = False
                 item(self._items[item], 'UZSU Plugin', 'init')
             self.logger.debug('Dict for item {} is: {}'.format(item, self._items[item]))
@@ -450,7 +451,7 @@ class UZSU(SmartPlugin):
         if _next and _value is not None and self._items[item].get('active') is True:
             _reset_interpolation = False
             _interval = self._items[item]['interpolation'].get('interval')
-            _interval = 5 if not _interval else abs(int(_interval))
+            _interval = 5 if not _interval else int(_interval)
             _interpolation = self._items[item]['interpolation'].get('type')
             _interpolation = 'none' if not _interpolation else _interpolation
             _initage = self._items[item]['interpolation'].get('initage')
