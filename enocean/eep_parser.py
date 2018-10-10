@@ -132,6 +132,24 @@ class EEP_Parser():
             self.logger.info('enocean: brightness: {0}'.format(result['BRI']))
         return result
 
+    def _parse_eep_A5_07_03(self, payload, status):
+        # Occupancy sensor with supply voltage monitor, NodOne
+        self.logger.debug("enocean: parsing A5_07_03: Occupancy sensor")
+        result = {}
+        is_data = ((payload[3] & 0x08) == 0x08)                           # learn or data telegeram: 1:data, 0:learn
+        if not is_data:
+            self.logger.info("enocean: occupancy sensor: Received learn telegram.")
+            return result
+
+        if payload[0] > 250:
+            self.logger.error("enocean: occupancy sensor issued error code: {0}".format(payload[0]))
+        else:
+            result['SVC'] = (payload[0] / 255.0 * 5.0)                  # supply voltage in volts
+        result['ILL'] = (payload[1] << 2) + ((payload[2] & 0xC0) >> 6)  # 10 bit illumination in lux
+        result['PIR'] = ((payload[3] & 0x80) == 0x80)                   # Movement flag, 1:motion detected
+        self.logger.debug("occupancy: PIR:{0} illumination: {1}lx, voltage: {2}V".format(result['PIR'],result['ILL'],result['SVC']))
+        return result
+
     def _parse_eep_A5_08_01(self, payload, status):
         # Brightness and movement sensor, for example eltako FBH65TFB
         self.logger.debug("enocean: parsing A5_08_01: Movement sensor")
@@ -139,7 +157,6 @@ class EEP_Parser():
         result['BRI'] = (payload[1] / 255.0 * 2048)          # brightness in lux
         result['MOV'] = not ((payload[3] & 0x02) == 0x02)    # movement
         #self.logger.debug("enocean: movement: {0}, brightness: {1}".format(result['MOV'],result['BRI']))
-        #self.logger.debug("enocean: movement data byte0: {0}".format(payload[3]))
         return result
 
     def _parse_eep_A5_11_04(self, payload, status):
@@ -164,11 +181,38 @@ class EEP_Parser():
         return results
 
     def _parse_eep_A5_12_01(self, payload, status):
-        # Status command from switche actor with powermeter, for example eltako FSVA-230
-        self.logger.debug("enocean: processing A5_12_01")
+        # Status command from switch actor with powermeter, for example Eltako FSVA-230
         results = {}
         status = payload[3]
+        is_data = (status & 0x08) == 0x08
+        if(is_data == False):
+            self.logger.debug("enocean: processing A5_12_01: powermeter: is learn telegram. Aborting.")
+            return results
+        is_power = (status & 0x04) == 0x04
+        div_enum = (status & 0x03)
+        divisor = 1.0
+        if(div_enum == 0):
+            divisor = 1.0
+            self.logger.debug("enocean: processing A5_12_01: divisor is {0}".format(divisor))
+        elif(div_enum == 1):
+            divisor = 10.0
+            self.logger.debug("enocean: processing A5_12_01: divisor is {0}".format(divisor))
+        elif(div_enum == 2):
+            divisor = 100.0
+            self.logger.debug("enocean: processing A5_12_01: divisor is {0}".format(divisor))
+        elif(div_enum == 3):
+            divisor = 1000.0
+            self.logger.debug("enocean: processing A5_12_01: divisor is {0}".format(divisor))
+        else: 
+            self.logger.warning("enocean: processing A5_12_01: Unknown enum ({0}) for divisor".format(div_enum))
+
+        if(is_power):
+            self.logger.debug("enocean: processing A5_12_01: powermeter: Unit is Watts")
+        else:
+            self.logger.debug("enocean: processing A5_12_01: powermeter: Unit is kWh")
         value = (payload[0] << 16) + (payload[1] << 8) + payload[2]
+        value = value / divisor
+        self.logger.debug("enocean: processing A5_12_01: powermeter: {0} W".format(value))
         results['VALUE'] = value
         return results
 
@@ -274,9 +318,11 @@ class EEP_Parser():
         return self._parse_eep_F6_02_01(payload, status)
 
     def _parse_eep_F6_02_03(self, payload, status):
-        # Repeated switch communication(RPS) Telegramm
-        # Status command from bidirectional actors, for example eltako FSUD-230, FSVA-230V or switches (for example Gira)
-        #self.logger.debug("enocean: processing F6_02_03: Rocker Switch, 2 Rocker")
+        '''
+        Repeated switch communication(RPS) Telegramm
+        Status command from bidirectional actors, for example eltako FSUD-230, FSVA-230V or switches (for example Gira)
+        '''
+        self.logger.debug("enocean: processing F6_02_03: Rocker Switch, 2 Rocker")
         results = {}
         # Button A1: Dimm light down
         results['AI'] = (payload[0]) == 0x10
@@ -294,9 +340,31 @@ class EEP_Parser():
             results['A'] = True
         elif (payload[0] == 0x10):
             results['A'] = False
-        # special extension for ELTAKO FSB61NP-230V status message compatibility:
-        elif (payload[0] == 0x02): 
-            results['B'] = False
+        return results
+    
+    def _parse_eep_F6_02_03_01(self, payload, status):
+        '''
+        Repeated switch communication(RPS) Telegramm
+        Status command from bidirectional shutter actors
+        Repeated switch Command for Eltako FSB61NP-230V, FSB71
+        Key Description:
+        STATUS: status what the shutter does
+        B: status of the shutter actor (command) 
+        '''
+        self.logger.debug("enocean: processing F6_02_03_01: shutter actor")
+        results = {}
+        if (payload[0] == 0x70):
+            results['STATUS'] = 'upper end position'
+            results['B'] = 0
+        elif (payload[0] == 0x50):
+            results['STATUS'] = 'lower end position'
+            results['B'] = 0
+        elif (payload[0] == 0x01):
+            results['STATUS'] = 'Start movin up'
+            results['B'] = 1
+        elif (payload[0] == 0x02):
+            results['STATUS'] = 'Start movin down'
+            results['B'] = 2
         return results
 
     def _parse_eep_F6_10_00(self, payload, status):

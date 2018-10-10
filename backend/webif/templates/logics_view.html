@@ -5,63 +5,38 @@
 	{{ nav }}
 {% endblock navbar %}
 
-{% block content %}
-<link rel="stylesheet" href="static/codemirror/lib/codemirror.css">
-<link rel="stylesheet" href="static/codemirror/addon/display/fullscreen.css">
-<link rel="stylesheet" href="static/codemirror/addon/hint/show-hint.css">
-<link rel="stylesheet" href="static/css/codemirror_custom.css">
-<link rel="stylesheet" href="static/codemirror/addon/dialog/dialog.css">
-<link rel="stylesheet" href="static/codemirror/addon/search/matchesonscrollbar.css">
-<link rel="stylesheet" href="static/codemirror/addon/fold/foldgutter.css" />
-<script src="static/codemirror/lib/codemirror.js"></script>
-<script src="static/codemirror/mode/python/python.js"></script>
-<script src="static/codemirror/mode/xml/xml.js"></script>
-<script src="static/codemirror/addon/fold/foldcode.js"></script>
-<script src="static/codemirror/addon/fold/foldgutter.js"></script>
-<script src="static/codemirror/addon/fold/comment-fold.js"></script>
-<script src="static/codemirror/addon/fold/brace-fold.js"></script>
-<script src="static/codemirror/addon/fold/xml-fold.js"></script>
-<script src="static/codemirror/addon/fold/indent-fold.js"></script>
-<script src="static/codemirror/addon/display/fullscreen.js"></script>
-<script src="static/codemirror/addon/display/rulers.js"></script>
-<script src="static/codemirror/addon/hint/show-hint.js"></script>
-<script src="static/codemirror/addon/hint/anyword-hint.js"></script>
-<script src="static/codemirror/addon/dialog/dialog.js"></script>
-<script src="static/codemirror/addon/search/searchcursor.js"></script>
-<script src="static/codemirror/addon/search/search.js"></script>
-<script src="static/codemirror/addon/scroll/annotatescrollbar.js"></script>
-<script src="static/codemirror/addon/search/matchesonscrollbar.js"></script>
-<script src="static/codemirror/addon/search/jump-to-line.js"></script>
+{% block title %}
+{{ _('Logiken', 'menu') }} - SmartHomeNG
+{% endblock title %}
 
-<div class="container" style="width: 90%;">
-	<h3>SmartHomeNG {{ _('Logik') }}: {{ logicname }}</h3>
+{% block content %}
+<div class="container-fluid navBorder mb-2">
+	<div  class="shng_headline">SmartHomeNG {{ _('Logik') }}: {{ logicname }}</div>
 	<strong>{{ _('Dateiname') }}:</strong> {{ file_path }}
-	<br/><br/>
 </div>
 
-<div class="container" style="width: 90%;">
+<div class="container-fluid">
 	<div style="margin-bottom: 5px;">
 	{% if updates %}
 		<form name="input" action="logics_view.html" method="POST" enctype="multipart/form-data">
 		<input type="hidden" name="logicname" readonly="true" value="{{ logicname }}" type="text"/>
 		<input type="hidden" name="file_path" readonly="true" value="{{ file_path }}" type="text"/>
-			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-default btn-xs"><i class="fas fa-hand-pointer"></i> {{ _('Auslösen','button') }}</button>
-
+			<button {% if not thislogic.enabled %}disabled="true"{% endif %} name="trigger" type="submit" class="btn btn-shng btn-sm"><i class="fas fa-hand-pointer"></i> {{ _('Auslösen','button') }}</button>&nbsp;
 		{% if thislogic.enabled %}
-			<button name="disable" class="btn btn-default btn-xs"><i class="fas fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
+			<button name="disable" class="btn btn-shng btn-sm"><i class="fas fa-pause"></i>&nbsp;&nbsp;{{ _('Deaktivieren','button') }}</button>
 		{% else %}
-			<button name="enable" class="btn btn-default btn-xs"><i class="fas fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
+			<button {% if not logic_loadable %}disabled="true"{% endif %} name="enable" class="btn btn-shng btn-sm"><i class="fas fa-play"></i>&nbsp;&nbsp;{{ _('Aktivieren','button') }}</button>
 		{% endif %}
 		&nbsp;|&nbsp;|&nbsp;
-			<button id="save" name="save" class="btn btn-default btn-xs btn-success"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern','button') }}</button>
-			<button id="savereload" name="savereload" class="btn btn-default btn-xs btn-success"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern_und_Neu_Laden','button') }}</button>
+			<button id="save" name="save" class="btn btn-shng-success btn-sm"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern','button') }}</button>&nbsp;
+			<button id="savereload" name="savereload" class="btn btn-shng-success btn-sm"><i class="fas fa-save"></i>&nbsp;&nbsp;{{ _('Speichern_und_Neu_Laden','button') }}</button>
 <!--
-		<input id="savereloadtrigger" name="savereloadtrigger" value="{{ _('Speichern_Neu_Laden_und_Triggern','button') }}" type="submit" class="btn btn-default btn-xs btn-success"/>
+		<input id="savereloadtrigger" name="savereloadtrigger" value="{{ _('Speichern_Neu_Laden_und_Triggern','button') }}" type="submit" class="btn btn-default btn-xs btn-shng-success"/>
 -->
 		 |&nbsp;|&nbsp;
-			<button id="linewrapping" type="button" class="btn btn-default btn-xs active">{{ _('Zeilenumbruch') }}</button>
-			<button id="rulers" type="button" class="btn btn-default btn-xs active">{{ _('Hilfslinien') }}</button>
-			<button id="help" type="button" class="btn btn-default btn-xs"><i class="fas fa-info"></i>&nbsp;&nbsp;{{ _('Hilfe') }}</button>
+			<button id="linewrapping" type="button" class="btn btn-shng-outline-secondary btn-sm active">{{ _('Zeilenumbruch') }}</button>&nbsp;
+			<button id="rulers" type="button" class="btn btn-shng-outline-secondary btn-sm active">{{ _('Hilfslinien') }}</button>&nbsp;
+			<button id="help" type="button" class="btn btn-shng-outline-secondary btn-sm"><i class="fas fa-info"></i>&nbsp;&nbsp;{{ _('Hilfe') }}</button>
 	{% endif %}
     </div>
 	<div id="help_text" style="display:none;">
@@ -90,67 +65,122 @@
 		</p>
 	</div>
 
-	<table class="table table-bordered table-hover table-striped">
+	<table class="table table-bordered table-hover table-striped mb-1">
 		<tr>
-			<td style="min-width:200px;"><strong>{{ _('Status') }}:</strong></td>
-			<td colspan="3"><span style="color: {% if not thislogic.enabled %}red{% else %}green{% endif %};" class="fa {% if not thislogic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span>
+			<td class="py-1 shng_heading" style="min-width:200px;">{{ _('Status') }}:</td>
+			<td class="py-1" colspan="3"><span style="color: {% if not thislogic.enabled %}red{% else %}green{% endif %};" class="fa {% if not thislogic.enabled %}fa-pause-circle{% else %}fa-play-circle{% endif %}"></span>
 			{% if not thislogic.enabled %}{{ _('Nicht aktiv') }}{% else %}{{ _('Aktiv') }}{% endif %}
 			</td>
 		</tr>
 		<tr>
-			<td style="width:200px;"><strong>{{ _('letzte Ausführung') }}</strong></td>
-			<td style="min-width:200px;">{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
+			<td class="py-1 shng_heading" style="width:200px;">{{ _('letzte Ausführung') }}</td>
+			<td class="py-1" style="min-width:200px;">{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
 				{{ thislogic.last_run }}
 				{% if not thislogic.enabled %}</span>{% endif %}
 			</td>
-			<td style="width:200px;"><strong>{{ _('nächste Ausführung') }}</strong></td>
-			<td style="min-width:200px;">{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
+			<td class="py-1 shng_heading" style="width:200px;">{{ _('nächste Ausführung') }}</td>
+			<td class="py-1" style="min-width:200px;">{% if not thislogic.enabled %}<span style="color:#bbb;">{% endif %}
 				{{ thislogic.next_exec }}
 				{% if not thislogic.enabled %}</span>{% endif %}
 			</td>
 		</tr>
 		<tr>
-			<td><strong>{{ _('Cycle') }}</strong></td>
-			<td colspan="3">
+			<td class="py-1 shng_heading">{{ _('Cycle') }}</td>
+			<td class="py-1" colspan="3">
 				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="cycle" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.cycle }}"/>
 				<input type="hidden" id="original_cycle" value="{{ thislogic.cycle }}"/>
 			</td>
 		</tr>
 		<tr>
-			<td><strong>{{ _('Crontab(s)') }}</strong></td>
-			<td colspan="3">
+			<td class="py-1 shng_heading">{{ _('Crontab(s)') }}</td>
+			<td class="py-1" colspan="3">
 				<input type="text" autocomplete="off" id="crontab" style="width: 450px; border: 1px solid #ddd;" name="crontab" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.crontab }}"/>
 				<input type="hidden" id="original_crontab" value="{{ thislogic.crontab }}"/>
 			</td>
 		</tr>
 		<tr>
-			<td><strong>{{ _('Watch_Item(s)') }}</strong></td>
-			<td colspan="3">
-				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.watch_item }}"/>
+			<td class="py-1 shng_heading">{{ _('Watch_Item(s)') }}</td>
+			<td class="py-1" colspan="3">
+				{% if yaml_updates and updates %}
+				<textarea autocomplete="off" id="watch" style="width: 900px;" name="watch" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %}>{{ thislogic.watch_item }}</textarea>
+				{% else %}
+				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" readonly="true" disabled value="{{ thislogic.watch_item }}"/>
+				{% endif %}
 				<input type="hidden" id="original_watch" value="{{ thislogic.watch_item }}"/>
 			</td>
 		</tr>
 		<tr>
-			<td><strong>{{ 'visu_acl' }}</strong></td>
-			<td colspan="3">
+			<td class="py-1 shng_heading">{{ 'visu_acl' }}</td>
+			<td class="py-1" colspan="3">
 				<input type="text" autocomplete="off" id="cycle" style="width: 200px; border: 1px solid #ddd;" name="visu_acl" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.visu_acl }}"/>
 				<input type="hidden" id="original_visu_acl" value="{{ thislogic.visu_acl }}"/>
 			</td>
 		</tr>
 	</table>
 	<input type="hidden" id="original_content" value="{% for line in logic_lines %}{{ line }}{% endfor %}"/>
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
+	<div style="margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
 		{% if logic_lines %}
 			<textarea autocomplete="off" id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}{% endfor %}</textarea>
 			{% if updates %}</form>{% endif %}
 		{% else %}{{ _('no data available') }}{% endif %}
+	{% if not yaml_updates or not updates %}
+	<style>
+	.CodeMirror {
+		background-color: #f2f2f2;
+	}
+	.CodeMirror-gutters	{
+		background-color: #f2f2f2;
+	}
+	</style>
+	{% endif %}
 	<script>
 var rulers = [];
 for (var i = 1; i <= 100; i++) {
 	rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
 }
+{% if yaml_updates and updates %}
+var watchitemsCodeMirror = CodeMirror.fromTextArea($("#watch")[0], {
+    {% if not yaml_updates or not updates %}readOnly: true,{% endif %}
+});
 
-var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
+watchitemsCodeMirror.on("beforeChange", function(cm, changeObj) {
+    var typedNewLine = changeObj.origin == '+input' && typeof changeObj.text == "object" && changeObj.text.join("") == "";
+    if (typedNewLine) {
+        return changeObj.cancel();
+    }
+
+    var pastedNewLine = changeObj.origin == 'paste' && typeof changeObj.text == "object" && changeObj.text.length > 1;
+    if (pastedNewLine) {
+        var newText = changeObj.text.join(" ");
+        return changeObj.update(null, null, [newText]);
+    }
+
+    return null;
+});
+
+watchitemsCodeMirror.on("keyup", function (cm, event) {
+    if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+
+	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
+		(event.keyCode != 8 &&
+		event.keyCode != 9 &&
+		event.keyCode != 13 &&
+		event.keyCode != 27 &&
+		event.keyCode != 37 &&
+		event.keyCode != 38 &&
+		event.keyCode != 39 &&
+		event.keyCode != 40 &&
+		event.keyCode != 46)) {
+		CodeMirror.commands.autocomplete_shng_watch_items(cm, null, {completeSingle: false});
+	};
+});
+{% endif %}
+
+var logicsCodeMirror = CodeMirror.fromTextArea($("#logics_code")[0], {
     lineNumbers: true,
 
     extraKeys: {
@@ -184,7 +214,7 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
     {% endif %}
     lineSeparator: '\n',
     indentUnit: 4,
-    {% if mode == 'python' %}rulers: rulers,{% endif %}
+    {% if mode == 'python' and updates %}rulers: rulers,{% endif %}
     lineWrapping: true,
     indentWithTabs: false,
     foldGutter: true,
@@ -192,6 +222,27 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
 });
 
 {% if updates %}
+logicsCodeMirror.on("keyup", function (cm, event) {
+    if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+
+	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
+		(event.keyCode != 8 &&
+		event.keyCode != 9 &&
+		event.keyCode != 13 &&
+		event.keyCode != 27 &&
+		event.keyCode != 37 &&
+		event.keyCode != 38 &&
+		event.keyCode != 39 &&
+		event.keyCode != 40 &&
+		event.keyCode != 46)) {
+		CodeMirror.commands.autocomplete_shng(cm, null, {completeSingle: false});
+	};
+});
+
 $('#crontab').keyup( function() {
 	if (checkChangedContent()) {
         markChangedContent();
@@ -213,26 +264,7 @@ $('#cycle').keyup( function() {
 		markIdenticalContent();
     }
 });
-logicsCodeMirror.on("keyup", function (cm, event) {
-    if (checkChangedContent()) {
-        markChangedContent();
-    } else {
-		markIdenticalContent();
-    }
 
-	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
-		(event.keyCode != 8 &&
-		event.keyCode != 9 &&
-		event.keyCode != 13 &&
-		event.keyCode != 27 &&
-		event.keyCode != 37 &&
-		event.keyCode != 38 &&
-		event.keyCode != 39 &&
-		event.keyCode != 40 &&
-		event.keyCode != 46)) {
-		CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
-	};
-});
 var answer = false;
 var unloadCheck = true;
 $('a').click(function(e) {

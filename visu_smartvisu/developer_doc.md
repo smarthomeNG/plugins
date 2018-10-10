@@ -7,7 +7,7 @@ Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
 
 This plugin is part of SmartHomeNG.
-  
+
 Visit:  https://github.com/smarthomeNG/
         https://knx-user-forum.de/forum/supportforen/smarthome-py
 ```
@@ -31,7 +31,7 @@ This directory stores general-use widgets, which are not specific to a plugin. T
 This directory stores template files, that are used while auto-generating pages for smartVISU. The files in this directory are copied to the pages/base/tplNG directory, which is created.
 
 ## Handling of smartVISU widgets
-The visu plugin handles widgets, which a plugin developer delivers with the plugin he has written. For this to work, the attribute **`smartvisu_dir`** in the visu section of **`plugin.conf`** must be set to the base directory of smartVISU. 
+The visu plugin handles widgets, which a plugin developer delivers with the plugin he has written. For this to work, the attribute **`smartvisu_dir`** in the visu section of **`plugin.yaml`** must be set to the base directory of smartVISU. 
 
 It handles widgets that define their own Javascript or css. The Javascript and css files must follow the same naming convention as the html file.
 
@@ -42,12 +42,12 @@ All files in the **sv_widgets** directory are copied to the smartVISU installati
 
 A widget html-file may contain multiple widgets.
 
-For further automatic integration the widget must follow a name convention. It must be named **`widget_<class>.html`**. Where **`<class>`** is the class name for the import statement in smartVISU. If this convention is followed, a statement in the form of 
+For further automatic integration the widget must follow a name convention. It must be named **`widget_<class>.html`**. Where **`<class>`** is the class name for the import statement in smartVISU. If this convention is followed, a statement in the form of
 
 ```
 	{% import "widget_<class>.html" as <class> %}
 ```
-is generated. 
+is generated.
 
 **Example**:
 >For a file **`widget_hue.html`** the statement
@@ -82,4 +82,3 @@ The visu plugin creates a directory named **_sh_widgets** in the **widgets** dir
 On the first run the visu plugin creates a copy of the file **root.html** in the **pages/base** directory of smartVISU. The copied file is called **root_master.html**.
 
 On each start of smarthome.py the visu plugin creates a new version of **root.html**. The new version is made of the contents of **root_master.html** and the necessary statements are inserted.
-

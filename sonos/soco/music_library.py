@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# Disable while we have Python 2.x compatability
+# pylint: disable=useless-object-inheritance
+
 """Access to the Music Library.
 
 The Music Library is the collection of music stored on your local network.
@@ -37,7 +40,10 @@ class MusicLibrary(object):
                           'playlists': 'A:PLAYLISTS',
                           'share': 'S:',
                           'sonos_playlists': 'SQ:',
-                          'categories': 'A:'}
+                          'categories': 'A:',
+                          'sonos_favorites': 'FV:2',
+                          'radio_stations': 'R:0/0',
+                          'radio_shows': 'R:0/1'}
 
     # pylint: disable=invalid-name, protected-access
     def __init__(self, soco=None):
@@ -50,7 +56,7 @@ class MusicLibrary(object):
         self.soco = soco if soco is not None else discovery.any_soco()
         self.contentDirectory = self.soco.contentDirectory
 
-    def _build_album_art_full_uri(self, url):
+    def build_album_art_full_uri(self, url):
         """Ensure an Album Art URI is an absolute URI.
 
         Args:
@@ -64,6 +70,16 @@ class MusicLibrary(object):
         if not url.startswith(('http:', 'https:')):
             url = 'http://' + self.soco.ip_address + ':1400' + url
         return url
+
+    def _update_album_art_to_full_uri(self, item):
+        """Update an item's Album Art URI to be an absolute URI.
+
+        Args:
+            item: The item to update the URI for
+        """
+        if getattr(item, 'album_art_uri', False):
+            item.album_art_uri = self.build_album_art_full_uri(
+                item.album_art_uri)
 
     def get_artists(self, *args, **kwargs):
         """Convenience method for `get_music_library_information`
@@ -137,6 +153,33 @@ class MusicLibrary(object):
 
         """
         args = tuple(['playlists'] + list(args))
+        return self.get_music_library_information(*args, **kwargs)
+
+    def get_sonos_favorites(self, *args, **kwargs):
+        """Convenience method for `get_music_library_information`
+        with ``search_type='sonos_favorites'``. For details of other arguments,
+        see `that method
+        <#soco.music_library.MusicLibrary.get_music_library_information>`_.
+        """
+        args = tuple(['sonos_favorites'] + list(args))
+        return self.get_music_library_information(*args, **kwargs)
+
+    def get_favorite_radio_stations(self, *args, **kwargs):
+        """Convenience method for `get_music_library_information`
+        with ``search_type='radio_stations'``. For details of other arguments,
+        see `that method
+        <#soco.music_library.MusicLibrary.get_music_library_information>`_.
+        """
+        args = tuple(['radio_stations'] + list(args))
+        return self.get_music_library_information(*args, **kwargs)
+
+    def get_favorite_radio_shows(self, *args, **kwargs):
+        """Convenience method for `get_music_library_information`
+        with ``search_type='radio_stations'``. For details of other arguments,
+        see `that method
+        <#soco.music_library.MusicLibrary.get_music_library_information>`_.
+        """
+        args = tuple(['radio_shows'] + list(args))
         return self.get_music_library_information(*args, **kwargs)
 
         # pylint: disable=too-many-locals, too-many-arguments,
@@ -274,7 +317,7 @@ class MusicLibrary(object):
             for item in items:
                 # Check if the album art URI should be fully qualified
                 if full_album_art_uri:
-                    self.soco._update_album_art_to_full_uri(item)
+                    self._update_album_art_to_full_uri(item)
                 # Append the item to the list
                 item_list.append(item)
 
@@ -348,7 +391,7 @@ class MusicLibrary(object):
         for container in containers:
             # Check if the album art URI should be fully qualified
             if full_album_art_uri:
-                self.soco._update_album_art_to_full_uri(container)
+                self._update_album_art_to_full_uri(container)
             item_list.append(container)
 
         # pylint: disable=star-args

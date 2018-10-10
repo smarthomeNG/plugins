@@ -1,7 +1,5 @@
 # Traffic
 
-Version 0.1
-
 This plugin provides functionality to query the Google Directions API for traffic / direction info.
 All mappings to items need to be done via your own logic.
 
@@ -21,14 +19,7 @@ sudo pip3 install requests --upgrade
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-```
-[traffic]
-    class_name = Traffic
-    class_path = plugins.traffic
-    apikey = your own api key
-    language = de (optional)
-```
+### plugin.yaml
 
 ```yaml
 traffic:
@@ -42,55 +33,9 @@ traffic:
   * `apikey`: Your own personal API key for Google Directions. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
   * `language`: Any 2 char language code that is supported by Google Directions API, default is "de"
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 Currently, no pre defined items exist, the example below needs these items:
-```
-[travel_info]
-
-     [[travel_time]]
-        type = num
-
-        [[[in_traffic]]]
-            type = num
-
-    [[travel_distance]]
-        type = num
-
-    [[travel_summary]]
-        type = str
-
-    [[html_instructions]]
-        type = str
-
-    [[html_warnings]]
-        type = str
-
-    [[copyrights]]
-        type = str
-
-    [[start_address]]
-        type = str
-
-    [[start_location]]
-
-        [[[lat]]]
-            type = num
-
-        [[[lon]]]
-            type = num
-
-    [[end_address]]
-        type = str
-
-    [[end_location]]
-
-        [[[lat]]]
-            type = num
-
-        [[[lon]]]
-            type = num
-```
 
 ```yaml
 travel_info:

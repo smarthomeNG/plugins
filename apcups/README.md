@@ -19,7 +19,7 @@ Should work on all APC UPS devices. Tested only on a "smartUPS".
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
 Add the following lines to activate the plugin:
 
@@ -31,24 +31,13 @@ ApcUps:
     port: 3551
 ```
 
-or the same for deprecated *.conf file format:
-
-```ini
-[apcups]
-    class_name = APCUPS
-    class_path = plugins.apcups
-#    host = localhost
-#    port = 3551
-#    cycle = 300
-```
-
 Description of the attributes:
 
 * __host__: ip address of the NIS (optional, default: localhost)
 * __port__: port of the NIS (optional, default: 3551)
 * __cycle__: time to update the items with values from apcaccess
 
-### items.conf
+### items.yaml
 
 There is only one attribute: **apcups**
 
@@ -138,28 +127,6 @@ serverroom:
             apcups: timeleft
 ```
 
-or in (deprecated) *.conf format:
-
-```ini
-# items/apcups.conf
-[serverroom]
-    [[apcups]]
-        [[[linev]]]
-            visu_acl = ro
-            type = num 
-            apcups = linev
-
-        [[[status]]]
-            # will be 'ONLINE', 'ONBATT', or in case of a problem simply empty
-            visu_acl = ro
-            type = str
-            apcups = status
-
-        [[[timeleft]]]
-            visu_acl = ro
-            type = num       
-            apcups = timeleft
-```
 **type** depends on the values.
 
 ### Status Report Fields

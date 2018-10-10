@@ -38,6 +38,9 @@ translation_dict_de = {}
 translation_lang = ''
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_translation_lang():
     global translation_lang
     return translation_lang
@@ -55,8 +58,8 @@ def load_translation_backuplanguages():
         translation_dict_en = json.load(f)
     except Exception as e:
         translation_dict_en = {}
-        logger.error("Backend: load_translation language='{0}' failed: Error '{1}'".format('en', e))
-    logger.debug("Backend: translation_dict_en='{0}'".format(translation_dict_en))
+        logger.error("load_translation language='{0}' failed: Error '{1}'".format('en', e))
+    logger.debug("translation_dict_en='{0}'".format(translation_dict_en))
 
     lang_filename = os.path.dirname(os.path.abspath(__file__)) + '/locale/' + 'de' + '.json'
     try:
@@ -64,8 +67,8 @@ def load_translation_backuplanguages():
         translation_dict_de = json.load(f)
     except Exception as e:
         translation_dict_de = {}
-        logger.error("Backend: load_translation language='{0}' failed: Error '{1}'".format('de', e))
-    logger.debug("Backend: translation_dict_de='{0}'".format(translation_dict_de))
+        logger.error("load_translation language='{0}' failed: Error '{1}'".format('de', e))
+    logger.debug("translation_dict_de='{0}'".format(translation_dict_de))
 
     return
 
@@ -88,14 +91,14 @@ def load_translation(language):
             f = open(lang_filename, 'r')
         except Exception as e:
             translation_lang = ''
-            logger.error("Backend: load_translation language='{0}' failed: Error '{1}'".format(translation_lang, e))
+            logger.error("load_translation language='{0}' failed: Error '{1}'".format(translation_lang, e))
             return False
         try:
             translation_dict = json.load(f)
         except Exception as e:
-            logger.error("Backend: load_translation language='{0}': Error '{1}'".format(translation_lang, e))
+            logger.error("load_translation language='{0}': Error '{1}'".format(translation_lang, e))
             return False
-    logger.debug("Backend: translation_dict='{0}'".format(translation_dict))
+    logger.debug("translation_dict='{0}'".format(translation_dict))
     return True
 
 
@@ -121,17 +124,17 @@ def _get_translation(txt, block):
     if block != '':
         tr = _get_translation_for_block('', txt, block)
         if tr == '':
-            logger.info("Backend: Language '{0}': Translation for '{1}' is missing!".format(translation_lang, txt))
+            logger.info("Language '{0}': Translation for '{1}' is missing!".format(translation_lang, txt))
             tr = _get_translation_for_block('en', txt, block)
             if tr == '':
                 tr = _get_translation_for_block('de', txt, block)
     else:
         tr = translation_dict.get(txt, '')
         if tr == '':
-            logger.info("Backend: Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
+            logger.info("Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
             tr = translation_dict_en.get(txt, '')
             if tr == '':
-                logger.info("Backend: Language '{0}': Translation for '{1}' is missing".format('en', txt))
+                logger.info("Language '{0}': Translation for '{1}' is missing".format('en', txt))
                 tr = translation_dict_de.get(txt, '')
     return tr
     
@@ -151,7 +154,7 @@ def translate(txt, block=''):
         tr = _get_translation(txt, block)
 
         if tr == '':
-            logger.info("Backend: -> Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
+            logger.info("translate: -> Language '{0}': Translation for '{1}' is missing".format(translation_lang, txt))
             tr = txt
     return html.escape(tr)
 
@@ -203,3 +206,129 @@ def parse_requirements(file_path):
     fobj.close()
     return req_dict
 
+
+def get_process_info(command, wait=True):
+    """
+    returns output from executing a given command via the shell.
+    """
+    ## get subprocess module
+    import subprocess
+
+    ## call date command ##
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+
+    # Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
+    # Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.
+    # Wait for process to terminate. The optional input argument should be a string to be sent to the child process, or None, if no data should be sent to the child.
+    (result, err) = p.communicate()
+#    logger.warning("get_process_info: command='{}', result='{}', err='{}'".format(command, result, err))
+
+    if wait:
+        ## Wait for date to terminate. Get return returncode ##
+        p_status = p.wait()
+    return str(result, encoding='utf-8', errors='strict')
+
+
+def os_with_systemd():
+    """
+    Returns True, if running systemd on the computer
+
+    :return:
+    """
+    result = get_process_info("systemctl --version")
+    return (result != '')
+
+
+def os_with_sysvinit():
+    """
+    Returns True, if running SysVinit on the computer
+
+    :return:
+    """
+    return os.path.isfile('/usr/sbin/service')
+
+
+def os_service_controllable():
+    """
+    Test if services are contollable by backend
+
+    :return: True, if service is controllable
+    """
+    return (os_with_systemd() or os_with_sysvinit())
+
+
+def os_service_status(servicename):
+    """
+    Returns if the specified service is active (running)
+
+    :param servicename: str
+    :return: bool
+    """
+    result_b = False
+    if os_with_systemd():
+        result = get_process_info("systemctl status {}".format(servicename))
+        if result.find('Active: inactive') != -1:
+            result_b = False
+        elif result.find('Active: active') != -1:
+            result_b = True
+        else:
+            logger.warning("os_service_status (systemd): Cannot determine status of service (result='{}')".format(result))
+    elif os_with_sysvinit():
+        result = get_process_info("/usr/sbin/service {} status".format(servicename))
+        if result.find('FAIL') != -1:
+            result_b = False
+        elif result.find(' ok ') != -1:
+            result_b = True
+        else:
+            logger.warning("os_service_status (SysVInit): Cannot determine status of service (result='{}')".format(result))
+    else:
+        result = "os_service_status: Cannot determine status of service"
+        result_b = False
+        logger.warning("os_service_status: Cannot determine status of service")
+#    logger.warning("os_service_status: result = '{}' -> {}".format(result, result_b))
+    return result_b
+
+def os_service_restart(servicename):
+    """
+    Restart a service
+
+    :param servicename:
+    :return:
+    """
+    logger.warning("os_service_restart: Restarting SmartHomeNG")
+    if os_with_systemd():
+            result = get_process_info("sudo systemctl restart {}.service".format(servicename), wait=False)
+    elif os_with_sysvinit():
+        result = get_process_info("sudo service {} restart".format(servicename), wait=False)
+    else:
+        logger.warning("os_service_restart: Cannot restart service")
+
+
+def os_restart_shng(pid):
+    """
+    Restart a service
+
+    :param pid:
+    """
+    result = get_process_info("ps -f -p {}".format(pid))
+    cmdpos = result.find('CMD')
+    result = result[result.find('\n')+1:]
+    cmd = result[cmdpos:]
+    cmd = cmd[:cmd.find('.py')+3]
+    logger.warning("os_service_shng: ps -f -p {} -> '{}'".format(pid, cmd))
+
+    logger.warning("os_service_shng: 1. Restart -> '{} -r'".format(cmd))
+    result = get_process_info("{} -r".format(cmd), wait=False)
+    logger.warning("os_service_shng: 2. Restart -> '{} -r'".format(cmd))
+
+
+# PIDFILE in smarthome.py als global definiert
+# self.get_sh()._pidfile
+# lib.daemon.read_pidfile(PIDFILE)
+#
+# lib.daemon.read_pidfile(self.get_sh()._pidfile)
+#
+# > ps -f -p 14266
+# UID        PID  PPID  C STIME TTY          TIME CMD
+# smartho+ 14266     1  3 Mai17 ?        00:50:30 python bin/smarthome.py -r
+#

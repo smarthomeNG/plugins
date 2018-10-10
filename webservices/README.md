@@ -11,7 +11,7 @@ Support-Thread für das Plugin: https://knx-user-forum.de/forum/supportforen/sma
 ## Requirements
 
 This plugin requires CherryPy to be installed via pip.
-It requires SmartHomeNG 1.4 or higher!
+It requires SmartHomeNG 1.5 or higher!
 
 ## Configuration
 
@@ -28,14 +28,7 @@ The webservice plugin is one functionality that builds upon the service layer co
     service_hashed_password: 'xxx'
 ```
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[WebServices]
-   class_name = WebServices
-   class_path = plugins.webservices
-   mode = all
-```
+### plugin.yaml
 
 ```yaml
 WebServices:
@@ -46,7 +39,7 @@ WebServices:
 #### Attributes
   * `mode`: Optional mode for the plugin - "all" (default) means you can access all your items via the API. "set" means only defined item sets are accessible.
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 Currently access to all items is provided via the REST api in case the plugin is set via mode attribute to "all". In case that is not wanted, the attribute "webservices_set" can be used to group selected items to be accessible.
 
@@ -64,7 +57,7 @@ MyItem2:
     webservices_data: 'full'
 ```
 
-There are two item-attributes in items.yaml/items.conf that are specific to the webservices plugin. These parameters beginn with **`webservices_`**.
+There are two item-attributes in items.yaml/items.yaml that are specific to the webservices plugin. These parameters beginn with **`webservices_`**.
 
 #### webservices_set
 
@@ -106,7 +99,7 @@ returns:
 
 Sets a value of an item.
 
-http://<your_server_ip>:<your_services_port>/items/<item_path>/<value>
+http://<your_server_ip>:<your_services_port>/ws/items/<item_path>/\<value\>
 
 E.g. http://192.168.178.100:1234/ws/items/office.light/0 or http://192.168.178.100:1234/ws/items/office.light/False turns off the light.
 
@@ -117,6 +110,8 @@ Gets the data of an item set, enriched by meta data (if webservices_data is not 
 http://<your_server_ip>:<your_services_port>/ws/itemset/<set_name>
 
 ### REST Compliant Interface
+
+The POST and PUT Requests can be easily tested with Chrome Plugin "Postman".
 
 #### HTTP GET (e.g. normal access to the URL)
 
@@ -153,6 +148,20 @@ A HTTP PUT request to the URL sets a value of an item. Only num, bool and str it
 For bool items you can use int values 0 and 1, but also "yes", "no", "y", "n", "true", "false", "t", "f", "on", "off".
 In case you send a string (or a string bool representation), take care it is provided in "...".
 
+Ensure in the HTTP HEADER of the Request Content-Type: application/json is set!
+
 http://<your_server_ip>:<your_services_port>/rest/items/<item_path>
 
 E.g. a PUT request with 0 as payload to http://192.168.178.100:1234/rest/items/office.light turns off the light.
+
+#### HTTP POST
+
+A HTTP POST request to the URL sets a value of an item. Only num, bool and str item types are supported.
+For bool items you can use int values 0 and 1, but also "yes", "no", "y", "n", "true", "false", "t", "f", "on", "off".
+In case you send a string (or a string bool representation), take care it is provided in "...".
+
+Ensure in the HTTP HEADER of the Request Content-Type: application/json is set!
+
+http://<your_server_ip>:<your_services_port>/rest/items/<item_path>
+
+E.g. a POST request with 0 as payload to http://192.168.178.100:1234/rest/items/office.light turns off the light.

@@ -1,3 +1,13 @@
+window.addEventListener("resize", resizeItemTree, false);
+
+function resizeItemTree() {
+    var browserHeight = $( window ).height();
+    offsetTop = $('#tree').offset().top;
+    offsetTopDetail = $('#tree_detail').offset().top;
+    $('#tree').css("maxHeight", ((-1)*(offsetTop) - 35 + browserHeight)+ 'px');
+    $('#tree_detail').css("maxHeight", ((-1)*(offsetTopDetail) - 35 + browserHeight)+ 'px');
+}
+resizeItemTree();
 
 function build_item_subtree_recursive(data) {
     var result = [];
@@ -17,28 +27,24 @@ function build_item_subtree_recursive(data) {
     return tree_element;
 }
 
-function reload(data) {
-    panel = $(".panel").reload({
-        autoReload: false,
-        time: 3000,
-        refreshContainer: '.refresh-container',
-        dataContainer: '#tree_detail',
-        beforeReload: function() {},
-        afterReload: function() {},
-        parseData: getDetailInfo,
-        parameterString: data.text
-    });
-}
+function reload(item_path) {
+    if (item_path) {
+        $('#refresh-element').addClass('fa-spin');
+        $('#reload-element').addClass('fa-spin');
+        $('#cardOverlay').show();
+        $.getJSON('item_detail_json.html?item_path='+item_path, function(result) {
+            getDetailInfo(result);
+            window.setTimeout(function(){
+                $('#refresh-element').removeClass('fa-spin');
+                $('#reload-element').removeClass('fa-spin');
+                $('#cardOverlay').hide();
+            }, 300);
 
-function changeSearchButtonColor(active) {
-    if (active) {
-        $('#btn-search').removeClass("btn-default");
-        $('#btn-search').addClass("btn-primary");
-    } else {
-        $('#btn-search').removeClass("btn-primary");
-        $('#btn-search').addClass("btn-default");
+        });
     }
 }
+
+var selectedNode;
 
 function getTree() {
     var item_tree = [];
@@ -47,59 +53,78 @@ function getTree() {
         $.each(result, function(index, element) {
             item_tree.push(build_item_subtree_recursive(element));
         });
+
         $('#tree').treeview({
             data: item_tree,
 			levels: 1,
+			expandIcon: 'plusIcon',
+		    collapseIcon: 'minusIcon',
+			selectedBackColor: '#709cc2',
             showTags: true,
-            onNodeSelected: function(event, data) {
-                reload(data)
+            onNodeSelected: function(event, node) {
+                selectedNode = node;
+                reload(node.text);
             }
         });
-    });
-    var search = function(e) {
-          results = [];
-          var pattern = $('#input-search').val();
-          var options = {
-            ignoreCase: true,
-            exactMatch: false,
-            revealResults: true
-          };
-          var results = $('#tree').treeview('search', [ pattern, options ]);
-          $('#search-results').html(' - Treffer: '+results.length);
 
+        function clearSearch() {
+            $('#btn-clear-search').on('click', function (e) {
+                $('#tree').treeview('clearSearch');
+                $('#tree').treeview('collapseAll', { silent: false });
+                $('#input-search').val('');
+                $('#search-output').html('');
+                results = [];
+                $('#search-results').html('');
+            });
+        };
 
-          $('#btn-clear-search').on('click', function (e) {
-            $('#tree').treeview('clearSearch');
-            $('#tree').treeview('collapseAll', { silent: false });
-            $('#btn-search').removeClass("btn-primary");
-            $('#btn-search').addClass("btn-default");
-            $('#input-search').val('');
-            $('#search-output').html('');
+        var search = function(e) {
             results = [];
-            $('#search-results').html('');
-          });
-    }
-    if ($('#input-search').val() != '') {
-        changeSearchButtonColor(true);
-    }
-    $('#btn-search').on('click', search);
-    $("#input-search").keypress(function(event){
-        if(event.keyCode == 13){
-            $("#btn-search").click();
+            var pattern = $('#input-search').val();
+            var options = {
+                ignoreCase: true,
+                exactMatch: false,
+                revealResults: true
+            };
+            var results = $('#tree').treeview('search', [ pattern, options ]);
+            if ($('#input-search').val() != "") {
+                $('#search-results').html(' - Treffer: '+results.length);
+            }
+            clearSearch();
         }
-        if ($('#input-search').val() == '') {
-            changeSearchButtonColor(false);
-        } else {
-            changeSearchButtonColor(true);
-        }
-    });
 
-    // Expand/collapse all
-    $('#btn-expand-all').on('click', function (e) {
-      var levels = $('#select-expand-all-levels').val();
-      $('#tree').treeview('expandAll', { levels: levels, silent: false });
-    });
-    $('#btn-collapse-all').on('click', function (e) {
-      $('#tree').treeview('collapseAll', { silent: false });
+        var searchExact = function(e) {
+            results = [];
+            var pattern = $('#input-search').val();
+            var options = {
+                ignoreCase: true,
+                exactMatch: true,
+                revealResults: true
+            };
+            var results = $('#tree').treeview('search', [ pattern, options ]);
+            if ($('#input-search').val() != "") {
+                $('#search-results').html(' - Treffer: '+results.length);
+            }
+            clearSearch();
+        }
+
+        $('#btn-search').on('click', search);
+        $("#input-search").keypress(function(event){
+            if(event.keyCode == 13){
+                $("#btn-search").click();
+            }
+        });
+
+        // Expand/collapse all
+        $('#btn-expand-all').on('click', function (e) {
+          $('#tree').treeview('expandAll', { silent: false });
+        });
+        $('#btn-collapse-all').on('click', function (e) {
+          $('#tree').treeview('collapseAll', { silent: false });
+        });
+
+        if ($("#input-search").val() != "") {
+            searchExact();
+        }
     });
 }

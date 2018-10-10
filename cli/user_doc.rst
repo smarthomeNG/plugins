@@ -4,6 +4,15 @@
 cli
 ###
 
+Konfiguration
+=============
+
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/cli` beschrieben.
+
+
+Weiterführende Informationen
+============================
+
 Das CLI Plugin bietet einen Zugriff über Telnet auf SmartHomeNG.
 
 Über das Plugin können diverse Befehle an SmartHomeNG zur Auflistung, Debugging und Manipulation 

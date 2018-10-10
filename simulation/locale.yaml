@@ -1,0 +1,35 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'sim Attribut':        {'de': '"sim" Attribut', 'en': '"sim" Attribute'}
+    'Simulation Plugin Items':
+        de: 'Items des Simulation Plugins'
+        en: 'Simulation Plugin Items'
+    'startrecord Scheduler': {'de': 'startrecord Scheduler', 'en': 'startrecord Scheduler'}
+    'simulate Scheduler': {'de': 'simulate Scheduler', 'en': 'simulate Scheduler'}
+    'State': {'de': 'Status', 'en': 'Stop'}
+    'Stop': {'de': 'Stop', 'en': 'Stop'}
+    'Standby': {'de': 'Standby', 'en': 'Standby'}
+    'Record': {'de': 'Record', 'en': 'Record'}
+    'Play': {'de': 'Play', 'en': 'Play'}
+    'Days': {'de': 'Tage', 'en': 'Days'}
+    'Last Day':
+        de: 'Letzter Tag'
+        en: 'Last Day'
+    'Datendatei':
+        de: 'Datendatei'
+        en: 'Data File'
+    'Datendatei leeren':
+        de: 'Datendatei leeren'
+        en: 'Clear Data File'
+    'Datendatei erfolgreich geleert!':
+        de: 'Datendatei erfolgreich geleert!'
+        en: 'Data File Cleared Successfully!'
+    'Datendatei anzeigen':
+        de: 'Datendatei anzeigen'
+        en: 'Show Data File'
+    'Zurück':
+        de: 'Zurück'
+        en: 'Back'
+    'Keine Daten verfügbar':
+        de: 'Keine Daten verfügbar'
+        en: 'no data available'

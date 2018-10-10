@@ -1,0 +1,58 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+{% set tabcount = 3 %}
+{% set tab1title = 'Items' %}
+{% set tab2title = 'JSON Data (Weather)' %}
+{% set tab3title = 'JSON Data (UV Index)' %}
+
+{% block headtable %}
+{% endblock %}
+
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<h5>OpenWeatherMap Plugin Items ({{ p.get_items()|length }})</h5>
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>Pfad</th>
+					<th>Typ</th>
+					<th>owm_matchstring</th>
+					<th>Wert</th>
+					<th>Letztes Update</th>
+					<th>Letzter Change</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key, item in p.get_items().items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item.id() }}</td>
+						<td class="py-1">{{ item.type() }}</td>
+						<td class="py-1">{{ key }}</td>
+						<td class="py-1">{% if key in ['precipitation_new', 'clouds_new', 'pressure_new', 'wind_new', 'temp_new'] %}<a class="text-shng" target="_blank" href="{{ item() }}">{{ item() }}</a>{% else %} {{ item() }} {% endif %}</td>
+						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}
+{% block bodytab2 %}
+
+<div class="container-fluid m-2">
+	({{ json_data_weather }})
+</div>
+
+{% endblock %}
+{% block bodytab3 %}
+
+<div class="container-fluid m-2">
+	({{ json_data_uvi }})
+</div>
+
+{% endblock %}

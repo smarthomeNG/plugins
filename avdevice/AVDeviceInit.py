@@ -25,17 +25,16 @@
 
 import logging
 
-import codecs
 import re
 import os
-import threading
+
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
 logging.addLevelName(logging.DEBUG - 1, 'VERBOSE1')
 logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 
-class Init():
+class Init(object):
 
     def __init__(self, smarthome, name, model, items):
         self._items = items
@@ -46,415 +45,824 @@ class Init():
 
         self.logger = logging.getLogger(__name__)
         self.logger.log(VERBOSE1, "Initializing {}: Started".format(self._name))
-        self._threadlock_standard = threading.Lock()
-        self._lock = threading.Condition(self._threadlock_standard)
 
         self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
         self._query_zonecommands = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
         self._query_commands = []
         self._power_commands = []
         self._response_commands = {}
+        self._specialparse = {}
         self._number_of_zones = 0
         self._special_commands = {}
 
-    def _addstatusupdate(self):
+    def update_dependencies(self, dependencies):
+        done = False
+        for zone in dependencies['Master_function']:
+            self.logger.log(VERBOSE2, "Updating Dependencies {}: Starting for {}. ".format(self._name, zone))
+            for entry in dependencies['Master_function'][zone]:
+                for device_function in self._functions[zone]:
+                    alreadydone = []
+                    if self._functions[zone][device_function][1] == entry:
+                        for instance in dependencies['Master_function'][zone][entry]:
+                            dependingfunction = instance.get('Function')
+                            dependzone = instance.get('Zone')
+                            # self.logger.log(VERBOSE2, "Updating Dependencies {}: Testing depending {}.".format(self._name, dependzone))
+                            for command in self._functions[dependzone]:
+                                # self.logger.log(VERBOSE2, "Updating Dependencies {}: Command {}.".format(self._name, command))
+                                if self._functions[dependzone][command][1] == dependingfunction:
+                                    for entrylist in self._items[dependzone][dependingfunction]['Master']:
+                                        querycommand = self._functions[dependzone][command][3]
+                                        valuetype = self._functions[dependzone][command][9]
+                                        splitresponse = self._functions[dependzone][command][4].split('|')
+                                        responselist = []
+                                        for splitted in splitresponse:
+                                            valuelength = splitted.count('*')
+                                            if valuelength > 0 or 'R' in self._functions[dependzone][command][5]:
+                                                response_toadd = splitted.strip()
+                                                cond1 = splitted.count('?') == 1 and splitted.count('*') == 0
+                                                response_toadd = re.sub('[?]', '*', response_toadd) if cond1 else response_toadd
+                                                responselist.append('{},{},{}'.format(response_toadd, valuetype, valuelength))
+                                        responsecommand = "|".join(responselist)
+                                        commandlist = '{},{},{}'.format(querycommand, querycommand, responsecommand)
+                                        try:
+                                            if command.split(' ')[1] in ['on', 'off', 'increase', 'decrease']:
+                                                for already in dependencies['Slave_query'][dependzone]:
+                                                    if already.split(',')[0] == querycommand:
+                                                        alreadylist = ','.join(already.split(',')[2:]).split('|')
+                                                        responses = [re.sub('[*]', '', x.split(',')[0]) for x in alreadylist]
+                                                        for resp in responselist:
+                                                            resp_split = re.sub('[*]', '', resp.split(',')[0])
+                                                            cond1 = resp_split in responses
+                                                            cond2_1 = set(resp.split(',')[1:-1])
+                                                            cond2_2 = set(already.split('|')[0].split(',')[3:-1])
+                                                            cond2 = cond2_1 == cond2_2
+                                                            self.logger.log(VERBOSE2, "Updating Dependencies {}: Querycommand {} for zone {}"
+                                                                            " already in list. Testing -{}- against the responses {}."
+                                                                            " Testing type {} against {}".format(
+                                                                                self._name, querycommand, zone, resp_split,
+                                                                                responses, cond2_1, cond2_2))
+                                                            if resp not in alreadylist and cond1 and cond2:
+                                                                newquery = already + '|' + resp
+                                                                dependencies['Slave_query'][dependzone][newquery] = \
+                                                                    dependencies['Slave_query'][dependzone].get(already)
+                                                                dependencies['Slave_query'][dependzone].pop(already)
+                                                                instance['Query'] = newquery
+                                                                self.logger.log(VERBOSE2,
+                                                                                "Updating Dependencies {}: Adding {} to {}.".format(
+                                                                                    self._name, resp, alreadylist))
+                                                                if commandlist not in alreadydone:
+                                                                    alreadydone.append(commandlist)
+                                                            elif cond1 and cond2:
+                                                                if commandlist not in alreadydone:
+                                                                    alreadydone.append(commandlist)
+                                                                self.logger.log(VERBOSE2, "Updating Dependencies {}: Skipping {}.".format(
+                                                                    self._name, commandlist))
+                                        except Exception as err:
+                                            pass
+                                        if commandlist in alreadydone:
+                                            self.logger.log(VERBOSE2, "Updating Dependencies {}: Commandlist {} is alreadydone: {}, skipping.".format(
+                                                self._name, commandlist, alreadydone))
+                                        else:
+                                            toadd = {'Item': entrylist['Item'], 'Dependvalue': entrylist['Dependvalue'],
+                                                     'Compare': entrylist['Compare'], 'Zone': entrylist['Zone'],
+                                                     'Function': entrylist['Function'], 'Group': entrylist['Group']}
+                                            if not querycommand == '' and self._functions[dependzone][command][4].find('*') >= 0:
+                                                instance['Query'] = commandlist
+                                                try:
+                                                    if toadd not in dependencies['Slave_query'][dependzone][commandlist]:
+                                                        dependencies['Slave_query'][dependzone][commandlist].append(toadd)
+                                                        self.logger.log(VERBOSE2,
+                                                                        "Updating Dependencies {}: Adding {} to {} in {}".format(
+                                                                            self._name, commandlist, dependingfunction,
+                                                                            dependzone))
+                                                except Exception:
+                                                    dependencies['Slave_query'][dependzone].update({commandlist: [toadd]})
+                                                    self.logger.log(VERBOSE2,
+                                                                        "Updating Dependencies {}: Creating {} for {} in {}".format(
+                                                                            self._name, commandlist, dependingfunction,
+                                                                            dependzone))
+                                    done = True
+                                    # break
+                        if done is True:
+                            break
+                            pass
+        return dependencies
+
+    def _dependstage1(self, dependson_list, problems):
+        for zone in self._items.keys():
+            for entry in self._items[zone]:
+                try:
+                    depend = self._items[zone][entry]['Master']
+                    if depend is not None:
+                        dependson_list[zone].update({entry: depend})
+                except Exception:
+                    pass
+        for zone in dependson_list:
+            for entry in dependson_list[zone]:
+                for count, entrylist in enumerate(dependson_list[zone][entry]):
+                    sub = dependson_list[zone][entry][count].get('Item')
+                    # self.logger.log(VERBOSE2, "Initializing {}: List {}, Entry {}, {}.".format(self._name, entrylist, entry, sub))
+                    try:
+                        itemzone = dependson_list[zone][entry][count].get('Zone')
+                        dependson_list[zone][entry][count].update({'Item': self._items[itemzone][sub].get('Item')})
+                        dependson_list[zone][entry][count].update({'Function': sub})
+                        self.logger.log(VERBOSE2,
+                                        "Initializing {}: Updated Dependon entry for {} with entry {}.".format(
+                                            self._name, sub, entrylist))
+                    except Exception as err:
+                        if sub == 'init':
+                            problems[zone].append("{}=init".format(entry))
+                            dependson_list[zone][entry][count].update({'Item': None})
+                            dependson_list[zone][entry][count].update({'Function': sub})
+                            self.logger.log(VERBOSE2,
+                                            "Initializing {}: Item with function {} is set to init. Problems: {}".format(
+                                                self._name, sub, problems))
+                        else:
+                            problems[zone].append(sub)
+                            self.logger.error(
+                                "Initializing {}: Item with function {} for dependency does not exist. Entry: {}, Error: {}".format(
+                                    self._name, sub, entry, err))
+                self._items[zone][entry]['Master'] = dependson_list[zone][entry]
+        return dependson_list, problems
+
+    def _dependstage2(self, dependson_list, problems):
+        for zone in dependson_list:
+            for entry in dependson_list[zone]:
+                for count, _ in enumerate(dependson_list[zone][entry]):
+                    if entry not in problems[zone] and '{}=init'.format(entry) not in problems[zone]:
+                        item = self._items[zone][entry]['Item']
+                        try:
+                            self._items[dependson_list[zone][entry][count]['Zone']][
+                                dependson_list[zone][entry][count]['Function']]['Slave'].append(
+                                {'Function': entry, 'Item': item,
+                                 'Compare': dependson_list[zone][entry][count]['Compare'],
+                                 'Zone': zone,
+                                 'Group': dependson_list[zone][entry][count]['Group'],
+                                 'Dependvalue': dependson_list[zone][entry][count]['Dependvalue']})
+                        except Exception:
+                            self._items[dependson_list[zone][entry][count]['Zone']][
+                                dependson_list[zone][entry][count]['Function']].update(
+                                {'Slave':
+                                 [{'Function': entry,
+                                   'Item': item,
+                                   'Compare': dependson_list[zone][entry][count]['Compare'],
+                                   'Zone': zone,
+                                   'Dependvalue': dependson_list[zone][entry][count]['Dependvalue'],
+                                   'Group': dependson_list[zone][entry][count]['Group']}]})
+
+    def _dependstage3(self, dependson_list, problems, finaldepend):
+        for zone in dependson_list:
+            for entry in dependson_list[zone]:
+                for count, _ in enumerate(dependson_list[zone][entry]):
+                    if entry not in problems[zone] and '{}=init'.format(entry) not in problems[zone]:
+                        dependzone = dependson_list[zone][entry][count].get('Zone')
+                        item = dependson_list[zone][entry][count].get('Item')
+                        try:
+                            finaldepend['Slave_function'][zone][entry].append(
+                                {'Item': item,
+                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue'),
+                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                 'Zone': dependson_list[zone][entry][count].get('Zone'),
+                                 'Group': dependson_list[zone][entry][count].get('Group'),
+                                 'Function': dependson_list[zone][entry][count].get('Function')})
+                        except Exception:
+                            finaldepend['Slave_function'][zone].update(
+                                {entry:
+                                 [{'Item': item,
+                                   'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue'),
+                                   'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                   'Zone': dependson_list[zone][entry][count].get('Zone'),
+                                   'Group': dependson_list[zone][entry][count].get('Group'),
+                                   'Function': dependson_list[zone][entry][count].get('Function')}]})
+
+                        try:
+                            finaldepend['Slave_item'][zone][self._items[zone][entry].get('Item').id()].append(
+                                {'Item': item,
+                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue'),
+                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                 'Zone': dependson_list[zone][entry][count].get('Zone'),
+                                 'Group': dependson_list[zone][entry][count].get('Group'),
+                                 'Function': dependson_list[zone][entry][count].get('Function')})
+                        except Exception:
+                            finaldepend['Slave_item'][zone].update(
+                                {self._items[zone][entry].get('Item').id():
+                                 [{'Item': item,
+                                   'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue'),
+                                   'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                   'Zone': dependson_list[zone][entry][count].get('Zone'),
+                                   'Group': dependson_list[zone][entry][count].get('Group'),
+                                   'Function': dependson_list[zone][entry][count].get('Function')}]})
+
+                        try:
+                            finaldepend['Master_item'][dependzone][
+                                self._items[dependzone][dependson_list[zone][entry][count]['Function']].get(
+                                    'Item').id()].append(
+                                {'Item': self._items[zone][entry].get('Item'),
+                                 'Function': entry,
+                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                 'Zone': zone,
+                                 'Group': dependson_list[zone][entry][count].get('Group'),
+                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')})
+                        except Exception:
+                            finaldepend['Master_item'][dependzone].update(
+                                {self._items[dependzone][dependson_list[zone][entry][count]['Function']].get(
+                                    'Item').id():
+                                    [{'Item': self._items[zone][entry].get('Item'),
+                                      'Function': entry,
+                                      'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                      'Zone': zone,
+                                      'Group': dependson_list[zone][entry][count].get('Group'),
+                                      'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')}]})
+                        try:
+                            finaldepend['Master_function'][dependzone][
+                                dependson_list[zone][entry][count]['Function']].append(
+                                {'Item': self._items[zone][entry].get('Item'),
+                                 'Function': entry,
+                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                 'Zone': zone,
+                                 'Group': dependson_list[zone][entry][count].get('Group'),
+                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')})
+                        except Exception:
+                            finaldepend['Master_function'][dependzone].update(
+                                {dependson_list[zone][entry][count]['Function']:
+                                 [{'Item': self._items[zone][entry].get('Item'),
+                                   'Function': entry,
+                                   'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                   'Zone': zone,
+                                   'Group': dependson_list[zone][entry][count].get('Group'),
+                                   'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')}]})
+        return finaldepend
+
+    def _dependstage4(self, dependson_list, problems, finaldepend):
+        for zone in dependson_list:
+            for entry in dependson_list[zone]:
+                for count, _ in enumerate(dependson_list[zone][entry]):
+                    if '{}=init'.format(entry) in problems[zone]:
+                        dependzone = dependson_list[zone][entry][count].get('Zone')
+                        try:
+                            finaldepend['Master_function'][dependzone][
+                                dependson_list[zone][entry][count]['Function']].append(
+                                {'Item': self._items[zone][entry].get('Item'),
+                                 'Function': entry,
+                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                 'Zone': zone,
+                                 'Group': dependson_list[zone][entry][count].get('Group'),
+                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')})
+                        except Exception:
+                            finaldepend['Master_function'][dependzone].update(
+                                {dependson_list[zone][entry][count]['Function']:
+                                 [{'Item': self._items[zone][entry].get('Item'),
+                                   'Function': entry,
+                                   'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                   'Zone': zone,
+                                   'Group': dependson_list[zone][entry][count].get('Group'),
+                                   'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')}]})
+        return finaldepend
+
+    def process_items(self):
         if 'statusupdate' not in self._items['zone0'].keys():
             self._items['zone0']['statusupdate'] = {'Item': ['self._statusupdate'], 'Value': False}
             self.logger.debug("Initializing {}: No statusupdate Item set, creating dummy item.".format(self._name))
-        return self._items
+        dependson_list = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+        finaldepend = {'Slave_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                       'Slave_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                       'Slave_query': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                       'Master_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                       'Master_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}}
+        problems = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
 
-    def _process_variables(self, value, vartype):
-        self.logger.debug("Initializing Serial {}: Converting {} as type {}.".format(self._name, value, vartype))
-        if vartype == 'rs232':
-            try:
-                rs232 = re.sub('[ ]', '', value[0])
-                if rs232 == 'None' or rs232 == '':
-                    rs232 = baud = serial_timeout = None
-                self.logger.debug("Initializing Serial {}: Serialport is {}.".format(self._name, rs232))
-            except Exception as err:
-                rs232 = baud = serial_timeout = None
-                self.logger.warning("Initializing Serial {}: Serial Port is {}. Error: {}.".format(self._name, baud, err))
-            if rs232 is not None:
-                try:
-                    baud = int(value[1])
-                    self.logger.debug("Initializing Serial {}: Baudrate is {}.".format(self._name, baud))
-                except Exception as err:
-                    baud = 9600
-                    self.logger.debug("Initializing Serial {}: Using standard baudrate {} because: {}.".format(self._name, baud, err))
-                try:
-                    serial_timeout = float(value[2])
-                    self.logger.debug("Initializing Serial {}: Timeout is {}.".format(self._name, serial_timeout))
-                except Exception as err:
-                    serial_timeout = 0.1
-                    self.logger.debug("Initializing Serial {}: Using standard timeout {}. Because: {}.".format(self._name, serial_timeout, err))
-            return rs232, baud, serial_timeout
-        elif vartype == 'tcp':
-            try:
-                tcp = re.sub('[ ]', '', value[0])
-                if tcp == 'None' or tcp == '' or tcp == '0.0.0.0':
-                    tcp = port = tcp_timeout = None
-                self.logger.debug("Initializing TCP {}: IP is {}.".format(self._name, tcp))
-            except Exception as err:
-                tcp = port = tcp_timeout = None
-                self.logger.warning("Initializing TCP {}: Problem setting IP: {}.".format(self._name, err))
-            if tcp is not None:
-                try:
-                    port = int(value[1])
-                    self.logger.debug("Initializing TCP {}: Port is {}.".format(self._name, port))
-                except Exception as err:
-                    port = None
-                    self.logger.warning("Initializing TCP {}: Port is {} because: {}.".format(self._name, port, err))
-                try:
-                    tcp_timeout = int(value[2])
-                    self.logger.debug("Initializing TCP {}: Timeoout is {}.".format(self._name, tcp_timeout))
-                except Exception as err:
-                    tcp_timeout = 1
-                    self.logger.warning("Initializing TCP {}: Timeout is set to standard (1) because: {}.".format(self._name, err))
-            return tcp, port, tcp_timeout
+        dependson_list, problems = self._dependstage1(dependson_list, problems)
+        self._dependstage2(dependson_list, problems)
+        finaldepend = self._dependstage3(dependson_list, problems, finaldepend)
+        finaldepend = self._dependstage4(dependson_list, problems, finaldepend)
 
-        elif vartype == 'dependson':
-            try:
-                dependson = re.sub('[ ]', '', value[0])
-                if dependson == 'None' or dependson == '':
-                    dependson = None
-                if dependson is None:
-                    dependson_value = None
-                else:
-                    if re.sub('[ ]', '', str(value[1])).lower() in ['1', 'yes', 'true', 'on']:
-                        dependson_value = True
-                    elif re.sub('[ ]', '', str(value[1])).lower() in ['0', 'no', 'false', 'off']:
-                        dependson_value = False
-                self.logger.debug("Initializing {}: Dependson Item: {}. Value: {}".format(self._name, dependson, dependson_value))
-            except Exception:
-                if dependson is not None:
-                    dependson_value = True
-                    self.logger.debug("Initializing {}: Dependson Item: {}. No value for item given, assuming True.".format(self._name, dependson))
-                else:
-                    dependson_value = None
-                    self.logger.debug("Initializing {}: No Dependson Item.".format(self._name))
-            if dependson is not None:
-                if re.sub('[ ]', '', str(value[2])).lower() in ['1', 'yes', 'true', 'on'] and dependson:
-                    depend0_power0 = True
-                elif re.sub('[ ]', '', str(value[2])).lower() in ['0', 'no', 'false', 'off'] or not dependson:
-                    depend0_power0 = False
-                if re.sub('[ ]', '', str(value[3])).lower() in ['1', 'yes', 'true', 'on'] and dependson:
-                    depend0_volume0 = True
-                elif re.sub('[ ]', '', str(value[3])).lower() in ['0', 'no', 'false', 'off'] or not dependson:
-                    depend0_volume0 = False
-                self.logger.debug("Initializing {}: Resetting volume after dependson is off: {}. Resetting power: {}.".format(self._name, depend0_volume0, depend0_power0))
-            else:
-                depend0_power0 = depend0_volume0 = None
-            return dependson, dependson_value, depend0_power0, depend0_volume0
+        return self._items, finaldepend
 
-        elif vartype == 'responsebuffer':
-            if str(value).lower() in ['1', 'yes', 'true', 'on']:
-                response_buffer = True
-            elif str(value).lower() in ['0', 'no', 'false', 'off']:
-                response_buffer = False
-            else:
-                response_buffer = abs(int(value)) * -1
-            return response_buffer
-
-        elif vartype == 'resetonerror':
-            if str(value).lower() in ['1', 'yes', 'true', 'on']:
-                reset_onerror = True
-            elif str(value).lower() in ['0', 'no', 'false', 'off']:
-                reset_onerror = False
-            return reset_onerror
-
-        elif vartype == 'responses':
-            ignoreresponse = self._ignoreresponse = re.sub('[ ]', '', value[0]).split(",")
-            errorresponse = re.sub('[ ]', '', value[1]).split(",")
-            force_buffer = re.sub('[ ]', '', value[2]).split(",")
-            ignoredisplay = re.sub('[ ]', '', value[3]).split(",")
-            self.logger.debug("Initializing {}: Special Settings: Ignoring responses {}.".format(self._name, ignoreresponse))
-            self.logger.debug("Initializing {}: Special Settings: Error responses {}.".format(self._name, errorresponse))
-            self.logger.debug("Initializing {}: Special Settings: Force buffer {}.".format(self._name, force_buffer))
-            self.logger.debug("Initializing {}: Special Settings: Ignore Display {}".format(self._name, ignoredisplay))
-            return ignoreresponse, errorresponse, force_buffer, ignoredisplay
-
-    def _create_querycommands(self):
-        if not self._lock.acquire(timeout=2):
-            return
+    def create_querycommands(self):
+        length = 0
         try:
-            self.logger.debug("Initializing {}: Starting to create query commands. Lock is {}".format(
-                self._name, self._threadlock_standard.locked()))
+            self._query_zonecommands['zone0'].clear()
+            self._query_zonecommands['zone1'].clear()
+            self._query_zonecommands['zone2'].clear()
+            self._query_zonecommands['zone3'].clear()
+            self._query_zonecommands['zone4'].clear()
+            self._query_zonecommands = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
+            self._query_commands.clear()
+            self.logger.debug(
+                "Initializing {}: Starting to create query commands. Query Commands: {}, Query Zone: {}".format(
+                    self._name, self._query_commands, self._query_zonecommands))
             displaycommand = ''
-            length = 0
             for zone in range(0, self._number_of_zones + 1):
+                alreadydone = []
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         querycommand = self._functions['zone{}'.format(zone)][command][3]
-                        valuetype = self._functions['zone{}'.format(zone)][command][8]
+                        valuetype = self._functions['zone{}'.format(zone)][command][9]
                         responselist = []
                         splitresponse = self._functions['zone{}'.format(zone)][command][4].split("|")
-                        for split in splitresponse:
-                            if split.count('*') > 0 or 'R' in self._functions['zone{}'.format(zone)][command][5]:
-                                responselist.append(split.strip())
-                        responsestring = "|".join(responselist)
-                        responsecommand = re.sub('[*]', '', responsestring)
-                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_zonecommands['zone{}'.format(zone)] \
-                            and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' and not querycommand == '' \
-                            and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
-                            if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_zonecommands['zone{}'.format(zone)].append('{},{},{},{}'.format(
-                                    querycommand, querycommand, responsecommand, valuetype))
-                            else:
-                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype)
-                                self.logger.debug("Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
-                        if not '{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype) in self._query_commands \
-                            and not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none' \
-                            and not querycommand == '' and not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse:
-                            if not re.sub('[*]', '', self._functions['zone{}'.format(zone)][command][4]) in self._special_commands['Display']['Command']:
-                                self._query_commands.append('{},{},{},{}'.format(querycommand, querycommand, responsecommand, valuetype))
-                            else:
-                                displaycommand = '{},{},{},{}'.format(querycommand, querycommand, responsecommand, self._functions['zone{}'.format(zone)][command][8])
-                                self.logger.log(VERBOSE1, "Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
+                        for splitted in splitresponse:
+                            valuelength = splitted.count('*')
+                            if valuelength > 0 or 'R' in self._functions['zone{}'.format(zone)][command][5]:
+                                toadd = splitted.strip()
+                                toadd = re.sub('[?]', '*', toadd) if splitted.count('?') == 1 and splitted.count('*') == 0 else toadd
+                                responselist.append('{},{},{}'.format(toadd, valuetype, valuelength))
+                        responsecommand = "|".join(responselist)
+                        commandlist = '{},{},{}'.format(querycommand, querycommand, responsecommand)
+                        try:
+                            if command.split(' ')[1] in ['on', 'off', 'increase', 'decrease']:
+                                for x, already in enumerate(self._query_commands):
+                                    if already.split(',')[0] == querycommand:
+                                        alreadylist = ','.join(already.split(',')[2:]).split('|')
+                                        responses = [re.sub('[*]', '', x.split(',')[0]) for x in alreadylist]
+                                        for resp in responselist:
+                                            resp_split = re.sub('[*]', '', resp.split(',')[0])
+                                            cond1 = resp_split in responses
+                                            cond2_1 = set(resp.split(',')[1:-1])
+                                            cond2_2 = set(already.split('|')[0].split(',')[3:-1])
+                                            cond2 = cond2_1 == cond2_2
+                                            self.logger.log(VERBOSE2, "Updating Dependencies {}: Querycommand {} for zone {}"
+                                                            " already in list. Testing -{}- against the responses {}."
+                                                            " Testing type {} against {}".format(
+                                                                self._name, querycommand, zone, resp_split,
+                                                                responses, cond2_1, cond2_2))
+                                            if resp not in alreadylist and cond1 and cond2:
+                                                self.logger.log(VERBOSE2, "Initializing {}: Adding {} to {}.".format(
+                                                    self._name, resp, alreadylist))
+                                                self._query_commands[x] = already + '|' + resp
+                                                idx = self._query_zonecommands['zone{}'.format(zone)].index(already)
+                                                self._query_zonecommands['zone{}'.format(zone)][idx] = already + '|' + resp
+                                                if commandlist not in alreadydone:
+                                                    alreadydone.append(commandlist)
+                                            elif cond1 and cond2:
+                                                if commandlist not in alreadydone:
+                                                    alreadydone.append(commandlist)
+                                                self.logger.log(VERBOSE2, "Initializing {}: Skipping {}.".format(
+                                                    self._name, commandlist))
+                        except Exception:
+                            pass
+                        if commandlist in alreadydone:
+                            self.logger.log(VERBOSE2, "Initializing {}: Commandlist {} is alreadydone: {}, skipping.".format(
+                                    self._name, commandlist, alreadydone))
+                        else:
+                            cond1 = commandlist not in self._query_zonecommands['zone{}'.format(zone)]
+                            cond2 = not responsecommand == '' and not responsecommand == ' ' and not responsecommand == 'none'
+                            cond3 = not querycommand == ''
+                            cond4 = not self._functions['zone{}'.format(zone)][command][4] in self._ignoreresponse
+                            cond5 = not self._functions['zone{}'.format(zone)][command][4] in self._special_commands['Display']['Command']
+                            if cond1 and cond2 and cond3 and cond4:
+                                if cond5:
+                                    self._query_zonecommands['zone{}'.format(zone)].append(commandlist)
+                                    self.logger.log(VERBOSE1, "Initializing {}: Added Query Command for zone {}: {}".format(
+                                        self._name, zone, commandlist))
+                                else:
+                                    displaycommand = commandlist
+                                    self.logger.debug(
+                                        "Initializing {}: Displaycommand: {}".format(self._name, displaycommand))
+                            cond1 = commandlist not in self._query_commands
+                            if cond1 and cond2 and cond3 and cond4:
+                                if cond5:
+                                    self._query_commands.append(commandlist)
+                                    self.logger.log(VERBOSE1,
+                                                    "Initializing {}: Added general Query Command: {}.".format(self._name,
+                                                                                                               commandlist))
+                                else:
+                                    displaycommand = '{},{},{}'.format(querycommand, querycommand, responsecommand)
+                                    self.logger.log(VERBOSE1, "Initializing {}: Displaycommand: {}".format(self._name,
+                                                                                                           displaycommand))
                     except Exception as err:
-                        self.logger.error("Initializing {}: Problems adding query commands for command {}. Error: {}".format(
-                            self._name, command, err))
+                        self.logger.error(
+                            "Initializing {}: Problems adding query commands for command {}. Error: {}".format(
+                                self._name, command, err))
                 length += len(self._query_zonecommands['zone{}'.format(zone)])
             if not displaycommand == '':
                 self._query_commands.append(displaycommand)
                 length += 1
         except Exception as err:
-            self.logger.error("Initializing {}: Problems searching for query commands. Error: {}".format(self._name, err))
+            self.logger.error(
+                "Initializing {}: Problems searching for query commands. Error: {}".format(self._name, err))
         finally:
-            if self._threadlock_standard.locked():
-                self._lock.release()
-            self.logger.info("Initializing {}: Created query commands, including {} entries.".format(self._name, length))
+            self.logger.info(
+                "Initializing {}: Created query commands, including {} entries.".format(self._name, length))
             return self._query_commands, self._query_zonecommands
 
-    def _create_powercommands(self):
-        if not self._lock.acquire(timeout=2):
-            return
+    def create_powercommands(self):
         try:
-            self.logger.debug("Initializing {}: Starting to create power commands. Lock is {}".format(
-                self._name, self._threadlock_standard.locked()))
+            self._power_commands.clear()
+            self.logger.debug(
+                "Initializing {}: Starting to create Powercommands: {}".format(
+                    self._name, self._power_commands))
             for zone in range(0, self._number_of_zones + 1):
                 for command in self._functions['zone{}'.format(zone)]:
                     try:
                         if command.startswith('power on'):
-                            if '**' in self._functions['zone{}'.format(zone)][command][4]:
-                                value = re.sub('\*\*', 'ON', self._functions['zone{}'.format(zone)][command][4])
-                            else:
-                                if self._functions['zone{}'.format(zone)][command][6] == 'yes':
-                                    value = re.sub('[*]', '0', self._functions['zone{}'.format(zone)][command][4])
-                                else:
-                                    value = re.sub('[*]', '1', self._functions['zone{}'.format(zone)][command][4])
-                            combined = '{},{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2], self._functions['zone{}'.format(zone)][command][3], value, self._functions['zone{}'.format(zone)][command][8])
+                            valuetype = self._functions['zone{}'.format(zone)][command][9]
+                            responselist = []
+                            splitresponse = self._functions['zone{}'.format(zone)][command][4].split("|")
+                            for response in splitresponse:
+                                valuelength = response.count('*')
+                                if valuelength > 0 or 'R' in self._functions['zone{}'.format(zone)][command][5]:
+                                    value = response.strip()
+                                    value = re.sub('[?]', '*', value) if response.count('?') == 1 and response.count('*') == 0 else value
+                                    if '**' in response:
+                                        value = re.sub('\*\*', 'ON', response)
+                                    else:
+                                        if self._functions['zone{}'.format(zone)][command][6] == 'yes':
+                                            value = re.sub('[*]', '0', response)
+                                        else:
+                                            value = re.sub('[*]', '1', response)
+                                    responselist.append('{},{},{}'.format(value, valuetype, valuelength))
+                            responsecommand = "|".join(responselist)
+                            combined = '{},{},{}'.format(self._functions['zone{}'.format(zone)][command][2],
+                                                         self._functions['zone{}'.format(zone)][command][3], responsecommand)
                             self._power_commands.append(combined)
                     except Exception as err:
-                        self.logger.warning("Initializing {}: Problems searching power commands for {} in zone {}. Error: {}".format(self._name, command, zone, err))
+                        self.logger.warning(
+                            "Initializing {}: Problems searching Powercommands for {} in zone {}. Error: {}".format(
+                                self._name, command, zone, err))
         except Exception as err:
-            self.logger.warning("Initializing {}: Problems creating power commands. Error: {}".format(self._name, err))
+            self.logger.warning("Initializing {}: Problems creating Powercommands. Error: {}".format(self._name, err))
         finally:
-            if self._threadlock_standard.locked():
-                self._lock.release()
-            self.logger.info("Initializing {}: Created power commands, including {} entries.".format(self._name, len(self._power_commands)))
+            self.logger.info("Initializing {}: Created Powercommands, including {} entries.".format(self._name, len(
+                self._power_commands)))
 
             return self._power_commands
 
-    def _create_responsecommands(self):
-        if not self._lock.acquire(timeout=2):
-            return
+    def create_responsecommands(self):
         try:
-            self.logger.debug("Initializing {}: Starting to create response commands. Lock is {}".format(
-                self._name, self._threadlock_standard.locked()))
+            self._response_commands.clear()
+            self._special_commands.clear()
+            self.logger.debug(
+                "Initializing {}: Starting to create response commands. Response Commands: {}".format(
+                    self._name, self._response_commands))
             for zone in range(0, self._number_of_zones + 1):
                 for command in self._functions['zone{}'.format(zone)]:
-                    try:
-                        response_to_split = self._functions['zone{}'.format(zone)][command][4].split("|")
-                        for response in response_to_split:
-                            valuelength = response.count('*')
-                            if response.count('*') == 1 and self._functions['zone{}'.format(zone)][command][8].startswith('str'):
-                                valuelength = 30
-
-                            if response.find('*') >= 0:
-                                position = response.index('*')
-                            else:
-                                position = 0
-                            response = re.sub('[*]', '', response)
-                            commandlength = len(response)
-                            try:
-                                inverse = self._functions['zone{}'.format(zone)][command][6]
-                            except Exception:
-                                inverse = 'no'
-                            try:
-                                expectedtype = self._functions['zone{}'.format(zone)][command][8]
-                            except Exception:
-                                expectedtype = ''
-                            function = self._functions['zone{}'.format(zone)][command][1].split(" ")[0]
-                            try:
-                                functiontype = self._functions['zone{}'.format(zone)][command][1].split(" ")[1]
-                            except Exception:
-                                functiontype = ''
-                            item = self._items['zone{}'.format(zone)][function]['Item']
-                            self.logger.log(VERBOSE2, "Initializing {}: Response: {}, Function: {}, Item: {}, Type: {}".format(
-                                self._name, response, function, item, expectedtype))
-                            if self._functions['zone{}'.format(zone)][command][5].lower() in ['r', 'rw']:
+                    if not command == 'init' and not command == 'statusupdate':
+                        try:
+                            response_to_split = self._functions['zone{}'.format(zone)][command][4].split("|")
+                            for response in response_to_split:
+                                if not response:
+                                    self.logger.log(VERBOSE2, "Initializing {}: No response set for {}".format(
+                                        self._name, command))
+                                    break
+                                origresponse = response
                                 try:
-                                    if function == 'display':
-                                        if response in self._ignoreresponse and '' not in self._ignoreresponse:
-                                            self._special_commands['Display'] = {'Command': response, 'Ignore': 1}
-                                        else:
-                                            self._special_commands['Display'] = {'Command': response, 'Ignore': 0}
-                                        self.logger.log(VERBOSE1, "Initializing {}: Found Display Command and updated it: {}".format(self._name, self._special_commands))
-                                    elif function == 'input':
+                                    specialparse = self._functions['zone{}'.format(zone)][command][10]
+                                except Exception:
+                                    specialparse = ''
+                                valuelength = response.count('*')
+                                commandlength = 100 if response.find('?{str}') >= 0 else len(response)
+                                response = re.sub('\?\{str\}', '?', response) if response.find('?{str}') >= 0 else response
+                                cond1 = response.count('?') == 1 and response.count('*') == 0
+                                cond2 = response.count('*') == 1
+                                cond3 = 'str' in self._functions['zone{}'.format(zone)][command][9].split(',')
+                                if (cond1 or cond2) and cond3:
+                                    valuelength = 100
+                                    response = re.sub('\*\{str\}', '*', response)
+                                    cond1 = response.count('?') == 1 and response.count('*') == 0
+                                    response = re.sub('[?]', '*', response) if cond1 else response
+                                position = response.index('*') if response.find('*') >= 0 else 0
+                                response = re.sub('[*]', '', response.split('*')[0])
+                                inverse = self._functions['zone{}'.format(zone)][command][6]
+                                expectedtype = self._functions['zone{}'.format(zone)][command][9]
+                                device_function = command.split(" ")[0]
+                                try:
+                                    functiontype = command.split(" ")[1]
+                                except Exception:
+                                    functiontype = ''
+                                item = self._items['zone{}'.format(zone)][device_function]['Item']
+                                self.logger.log(VERBOSE2,
+                                                "Initializing {}: Response: {}, Original {}; Function: {}, Item: {},"
+                                                " Type: {}, Valuelength: {}, Commandlength: {}".format(
+                                                    self._name, response, origresponse, device_function, item,
+                                                    expectedtype, valuelength, commandlength))
+                                if self._functions['zone{}'.format(zone)][command][5].lower() in ['r', 'rw']:
+                                    if device_function == 'display':
+                                        self._special_commands['Display'] = {'Command': response, 'Ignore': 1, 'Item': item} \
+                                            if response in self._ignoreresponse and '' not in self._ignoreresponse \
+                                            else {'Command': response, 'Ignore': 0, 'Item': item}
+                                    elif device_function == 'input':
                                         if 'Input' not in self._special_commands:
-                                            self._special_commands['Input'] = {'Command': [response], 'Ignore': [0]}
+                                            self._special_commands['Input'] = {'Command': [response], 'Ignore': [0],
+                                                                               'Item': [item]}
                                         else:
                                             self._special_commands['Input']['Command'].append(response)
+                                            self._special_commands['Input']['Item'].append(item)
                                             self._special_commands['Input']['Ignore'].append(0)
-                                        self.logger.log(VERBOSE2, "Initializing {}: Found Input Command and added it to display commands.".format(self._name))
-                                    elif (function == 'title' or function == 'station' or function == 'genre'):
+                                        self.logger.log(VERBOSE2, "Initializing {}: Found Input Command and added it"
+                                                        " to display commands.".format(self._name))
+                                    elif device_function == 'title' or device_function == 'station' or device_function == 'genre':
                                         if 'Nowplaying' not in self._special_commands:
-                                            self._special_commands['Nowplaying'] = {'Command': [response]}
+                                            self._special_commands['Nowplaying'] = {'Command': [response], 'Item': item}
                                         else:
                                             self._special_commands['Nowplaying']['Command'].append(response)
-                                        self.logger.log(VERBOSE1, "Initializing {}: Found Now Playing Command and updated it: {}".format(self._name, self._special_commands))
-                                    elif (function == 'speakers'):
+                                    elif device_function == 'speakers':
                                         if 'Speakers' not in self._special_commands:
-                                            self._special_commands['Speakers'] = {'Command': [response]}
+                                            self._special_commands['Speakers'] = {'Command': [response], 'Item': item}
                                         else:
                                             self._special_commands['Speakers']['Command'].append(response)
-                                        self.logger.log(VERBOSE1, "Initializing {}: Found Speakers Command and updated it: {}".format(self._name, self._special_commands))
-                                except Exception as err:
-                                    self.logger.debug("Initializing {}: No Special Commands set. Message: {}".format(self._name, err))
 
-                                try:
-                                    toadd = len(self._response_commands[response])
-                                    for entry in self._response_commands[response]:
-                                        if (item not in entry and expectedtype in entry and valuelength == entry[0]) and function == entry[4]:
-                                            entry[3].append(item[0])
-                                            self.logger.log(VERBOSE1, "Initializing {}: Appending Item to response {} for function {} with response {}.".format(
-                                                self._name, response, function, entry))
-                                        elif expectedtype not in entry or not valuelength == entry[0] or not function == entry[4]:
-                                            toadd -= 1
-                                        else:
-                                            pass
-                                            self.logger.log(VERBOSE1, "Initializing {}: Ignoring response {} for function {} because it is already in list.".format(
-                                                self._name, response, function, entry))
-                                    if toadd < len(self._response_commands[response]):
-                                        self._response_commands[response].append([
-                                            valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype, functiontype])
-                                        self.logger.log(VERBOSE1, "Initializing {}: Adding additional list to function {} for response {} with value {}.".format(
-                                            self._name, function, response, self._response_commands[response]))
-                                except Exception as err:
-                                    self.logger.log(VERBOSE2, "Initializing {}: Creating response command for: {}. Message: {}".format(self._name, response, err))
-                                    self._response_commands[response] = [[
-                                        valuelength, commandlength, position, item, function, 'zone{}'.format(zone), inverse, expectedtype, functiontype]]
-                                self._response_commands[response] = sorted(self._response_commands[response], key=lambda x: x[0], reverse=True)
-                    except Exception as err:
-                        self.logger.warning("Initializing {}: Problems searching functions for {} in zone {}. Either it is not in the textfile or wrong instance name defined. Error: {}".format(self._name, command, zone, err))
+                                    try:
+                                        toadd = len(self._response_commands[response])
+                                        for entry in self._response_commands[response]:
+                                            cond1 = item not in entry and expectedtype in entry
+                                            cond2 = valuelength == entry[0] and device_function == entry[4]
+                                            cond3 = expectedtype not in entry
+                                            cond4 = not valuelength == entry[0]
+                                            cond5 = not device_function == entry[4]
+                                            if cond1 and cond2:
+                                                self.logger.log(VERBOSE1, "Initializing {}: Appending Item to response"
+                                                                " {} for function {} with response {}.".format(
+                                                                    self._name, response, device_function, entry))
+                                                entry[3] = [entry[3]]
+                                                entry[3].append(item[0])
+                                            elif cond3 or cond4 or cond5:
+                                                toadd -= 1
+                                            else:
+                                                self.logger.log(VERBOSE1, "Initializing {}: Ignoring response {} for function {}"
+                                                                " because it is already in list.".format(
+                                                                    self._name, response, device_function, entry))
+                                        if toadd < len(self._response_commands[response]):
+                                            self.logger.log(VERBOSE1, "Initializing {}: Adding additional list to function {}"
+                                                            " for response {} with value {}.".format(
+                                                                self._name, device_function, response, self._response_commands[response]))
+                                            self._response_commands[response].append([
+                                                valuelength, commandlength, position, item, device_function,
+                                                'zone{}'.format(zone), inverse, expectedtype, functiontype,
+                                                specialparse])
+
+                                    except Exception as err:
+                                        self.logger.log(VERBOSE2,
+                                                        "Initializing {}: Creating response command for: {}. Message: {}".format(
+                                                            self._name, response, err))
+                                        self._response_commands[response] = [[
+                                            valuelength, commandlength, position, item, device_function,
+                                            'zone{}'.format(zone),
+                                            inverse, expectedtype, functiontype, specialparse]]
+                                    self._response_commands[response] = sorted(self._response_commands[response],
+                                                                               key=lambda x: x[0], reverse=True)
+                        except Exception as err:
+                            self.logger.warning(
+                                "Initializing {}: Problems searching functions for {} in zone {}. Either it is not in"
+                                " the textfile or wrong instance name defined. Error: {}".format(
+                                    self._name, command, zone, err))
         except Exception as err:
-            self.logger.error(
-                "Initializing {}: Problems creating response commands. Error: {}".format(self._name, err))
+            self.logger.error("Initializing {}: Problems creating response commands. Error: {}".format(self._name, err))
         finally:
-            if 'Display' not in self._special_commands:
-                self._special_commands['Display'] = {'Command': '', 'Ignore': 1}
-            if 'Input' not in self._special_commands:
-                self._special_commands['Input'] = {'Command': '', 'Ignore': 1}
-            if 'Nowplaying' not in self._special_commands:
-                self._special_commands['Nowplaying'] = {'Command': ''}
-            if 'Speakers' not in self._special_commands:
-                self._special_commands['Speakers'] = {'Command': ''}
+            self._special_commands['Display'] = {'Command': '', 'Ignore': 1, 'Item': ''} \
+                if 'Display' not in self._special_commands else self._special_commands['Display']
+            self._special_commands['Input'] = {'Command': '', 'Ignore': [1], 'Item': ''} \
+                if 'Input' not in self._special_commands else self._special_commands['Input']
+            self._special_commands['Nowplaying'] = {'Command': '', 'Item': ''} \
+                if 'Nowplaying' not in self._special_commands else self._special_commands['Nowplaying']
+            self._special_commands['Speakers'] = {'Command': '', 'Item': ''} \
+                if 'Speakers' not in self._special_commands else self._special_commands['Speakers']
             self.logger.debug("Initializing {}: Special commands for solving Display issues: {}".format(
                 self._name, self._special_commands))
             self.logger.info("Initializing {}: Created response commands, including {} entries.".format(
                 self._name, len(self._response_commands)))
-            if self._threadlock_standard.locked():
-                self._lock.release()
             return self._response_commands, self._special_commands
 
-    def _read_commandfile(self):
-        if not self._lock.acquire(timeout=2):
-            return
+    def _read_parsefile(self, device_function):
+        resulting = {'update': {}, 'parse': {}}
         try:
-            self.logger.debug("Initializing {}: Starting to read file {}. Lock is {}".format(
-                self._name, self._model, self._threadlock_standard.locked()))
-            filename = '{}/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
-
-            commands = codecs.open(filename, 'r', 'utf-8')
-            zones = [0]
-            for line in commands:
-                try:
-                    line = re.sub('[!@#$\\n\\r]', '', line)
+            self.logger.debug(
+                "Initializing {}: Starting to read translation file {}. ".format(self._name, device_function))
+            filename = '{}/translations/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), device_function)
+            with open(filename, encoding='utf-8') as parsing:
+                comment = 0
+                for line in parsing:
+                    line = re.sub('[\\n\\r]', '', line)
                     line = re.sub('; ', ';', line)
                     line = re.sub(' ;', ';', line)
-                    if line == '':
-                        function = ''
-                    else:
-                        row = line.split(";")
-                        if row[0] == '':
-                            row[0] = '0'
-                        if row[2] == '':
-                            row[1:3] = [''.join(row[1:3])]
-                        else:
-                            row[1:3] = [' '.join(row[1:3])]
-                        function = row[1]
-                        itemtest = re.sub(' set| on| off| increase| decrease', '', function)
-                        for i in range(0, 9):
-                            try:
-                                test = row[i]
-                            except IndexError:
-                                if i == 5:
-                                    row.append('RW')
-                                if i == 6:
-                                    row.append('no')
-                                if i == 8 and "set" in function:
-                                    row.append('int,float')
-                                elif i == 8 and ("on" in function or "off" in function):
-                                    row.append('bool')
-                                elif i == 8 and ("increase" in function or "decrease" in function):
-                                    row.append('int,float')
-                                    row[5] = row[5].replace('*', '')
-                                else:
-                                    row.append('')
+                    cond1 = line == "'''" and comment == 0
+                    cond2 = line == "'''" and comment == 1
+                    cond3 = (line == "'''" or line == '' or line.startswith('#') or line.startswith('CODE;'))
+                    comment += 1 if cond1 else -1 if cond2 else 0
+                    code = ''
+                    if comment == 0 and not cond1 and not cond2 and not cond3:
+                        code = line.split(";")[0]
+                    if not code == '':
+                        translation = line.split(";")[1]
                         try:
-                            row[8] = row[8].replace('string', 'str')
-                            row[8] = row[8].replace('num', 'int,float')
-                            row[8] = row[8].replace('|', ',')
-                            if row[8] == '':
-                                row[8] = 'bool,int,str'
+                            code = code.lower()
                         except Exception:
                             pass
+                        try:
+                            origtranslation = translation
+                            translation = translation.lower()
+                        except Exception:
+                            origtranslation = translation
+                        resulting['update'].update({translation: code})
+                        resulting['parse'].update({code: origtranslation})
+        except Exception as err:
+            self.logger.error("Initializing {}: Problems reading Special Parse file: {}".format(self._name, err))
+        finally:
+            return resulting
+
+    def read_commandfile(self):
+        try:
+            self._functions.clear()
+            self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+            self._specialparse.clear()
+            self._specialparse = {}
+            self.logger.debug("Initializing {}: Starting to read file {}. Functions: {}".format(
+                self._name, self._model, self._functions))
+            filename = '{}/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
+
+            with open(filename, encoding='utf-8') as commands:
+                zones = [0]
+                comment = 0
+                for line in commands:
+                    line = re.sub('[\\n\\r]', '', line)
+                    line = re.sub('; ', ';', line)
+                    line = re.sub(' ;', ';', line)
+                    cond1 = line == "'''" and comment == 0
+                    cond2 = line == "'''" and comment == 1
+                    cond3 = (line == "'''" or line == '' or line.startswith('#') or line.startswith('ZONE;'))
+                    comment += 1 if cond1 else -1 if cond2 else 0
+                    device_function = ''
+                    itemkeys = []
+                    itemtest = ''
+                    row = [None, None]
+                    origfunction = None
+                    if comment == 0 and not cond3:
+                        row = line.split(";")
+                        row[0] = '0' if row[0] == '' else row[0]
+                        origfunction = row[1]
+                        row[1:3] = [''.join(row[1:3])] if row[2] == '' else [' '.join(row[1:3])]
+                        device_function = row[1]
+                        itemtest = re.sub(' set| on| off| increase| decrease| open| close| query', '', device_function)
+                        for i in range(0, 10):
+                            try:
+                                row[i]
+                            except IndexError:
+                                cond1 = (i == 9 and ("set" in device_function or
+                                                     "increase" in device_function or
+                                                     "decrease" in device_function))
+                                cond2 = (i == 9 and ("open" in device_function or
+                                                     "close" in device_function or
+                                                     "on" in device_function or
+                                                     "off" in device_function))
+                                row.append('RW' if i == 5
+                                           else 'no' if i == 6
+                                           else 'int,float' if cond1
+                                           else 'str' if (i == 9 and "display" in device_function)
+                                           else 'bool' if cond2
+                                           else '')
+                                cond1 = ("increase" in device_function or "decrease" in device_function)
+                                if i == 9 and cond1:
+                                    row[5] = row[5].replace('*', '')
+                        row[9] = row[9].replace('string', 'str')
+                        row[9] = row[9].replace('num', 'int,float')
+                        row[9] = row[9].replace('|', ',')
+                        row[9] = 'empty' if (row[4].count('*') == 0 and row[4].count('?') == 0 and row[9] == '') \
+                            else 'bool,int,str' if row[9] == '' else row[9]
+                        row[2] = row[3] if not row[2] else row[2]
                         try:
                             itemkeys = self._items['zone{}'.format(row[0])].keys()
                         except Exception:
                             itemkeys = []
-                    if function == "FUNCTION" or function == '' or function == "FUNCTION FUNCTIONTYPE":
+                    if device_function == "FUNCTION" or device_function == '' or device_function == "FUNCTION FUNCTIONTYPE":
                         pass
                     elif itemtest in itemkeys:
-                        if row[0] == '0' or row[0] == '':
-                            self._functions['zone0'][function] = row
-                        elif row[0] == '1':
-                            self._functions['zone1'][function] = row
-                        elif row[0] == '2':
-                            self._functions['zone2'][function] = row
-                        elif row[0] == '3':
-                            self._functions['zone3'][function] = row
-                        elif row[0] == '4':
-                            self._functions['zone4'][function] = row
-                        else:
-                            self.logger.error("Initializing {}: Error in Commandfile on line: {}".format(self._name, line))
-                        if not int(row[0]) in zones:
-                            zones.append(int(row[0]))
+                        device_function = device_function.replace('open', 'on')
+                        device_function = device_function.replace('close', 'off')
+                        row[1] = origfunction
+                        rowzone = '0' if row[0] == '' else row[0]
+                        self._functions['zone{}'.format(rowzone)][device_function] = row
+                        zones.append(int(row[0]) if not int(row[0]) in zones else 0)
+                        try:
+                            self._specialparse[row[10]] = self._read_parsefile(row[10])
+                        except Exception:
+                            pass
                     else:
-                        self.logger.warning("Initializing {}: Function {} for zone {} not used by any item. Re-visit items and config file!".format(
-                            self._name, function, row[0]))
-                except Exception as err:
-                    self.logger.error("Initializing {}: Problems parsing command file. Error: {}".format(self._name, err))
+                        self.logger.warning(
+                            "Initializing {}: Function {} for zone {} not used by any item. Re-visit items and config file!".format(
+                                self._name, device_function, row[0]))
             self._number_of_zones = max(zones)
             self.logger.debug("Initializing {}: Number of zones: {}".format(self._name, self._number_of_zones))
-            commands.close()
         except Exception as err:
             self.logger.error("Initializing {}: Problems loading command file. Error: {}".format(self._name, err))
         finally:
-            self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W', '', '', 'bool']
-            self.logger.info("Initializing {}: Created functions list, including entries for {} zones.".format(self._name, self._number_of_zones))
-            if self._threadlock_standard.locked():
-                self._lock.release()
-            self.logger.log(VERBOSE1, "Initializing {}: Finishing reading file. Lock is released. Lock is now {}".format(
-                self._name, self._threadlock_standard.locked()))
-            return self._functions, self._number_of_zones
+            self._functions['zone0']['statusupdate'] = ['0', 'statusupdate', '', '', '', 'W', '', '', '', 'bool']
+            self._functions['zone0']['init'] = ['0', 'init', '', '', '', 'W', '', '', '', 'bool']
+            self._functions['zone1']['init'] = ['0', 'init', '', '', '', 'W', '', '', '', 'bool']
+            self._functions['zone2']['init'] = ['0', 'init', '', '', '', 'W', '', '', '', 'bool']
+            self._functions['zone3']['init'] = ['0', 'init', '', '', '', 'W', '', '', '', 'bool']
+            self._functions['zone4']['init'] = ['0', 'init', '', '', '', 'W', '', '', '', 'bool']
+            self.logger.info(
+                "Initializing {}: Created functions list, including entries for {} zones.".format(self._name,
+                                                                                                  self._number_of_zones))
+            self.logger.log(VERBOSE1, "Initializing {}: Finishing reading file. ".format(self._name))
+            return self._functions, self._number_of_zones, self._specialparse
+
+
+class ProcessVariables(Init):
+    def __init__(self, value, name):
+        self._value = value
+        self._name = name
+        self.logger = logging.getLogger(__name__)
+
+    def process_rs232(self):
+        baud = serial_timeout = None
+        try:
+            rs232 = re.sub('[ ]', '', self._value[0])
+            rs232 = None if rs232 == 'None' or rs232 == '' else rs232
+            self.logger.debug("Initializing Serial {}: Serial port is {}.".format(self._name, rs232))
+        except Exception as err:
+            rs232 = None
+            self.logger.warning(
+                "Initializing Serial {}: Serial Port is {}. Error: {}.".format(self._name, baud, err))
+        if rs232 is not None:
+            try:
+                baud = int(self._value[1])
+                self.logger.debug("Initializing Serial {}: Baud rate is {}.".format(self._name, baud))
+            except Exception as err:
+                baud = 9600
+                self.logger.debug(
+                    "Initializing Serial {}: Using standard baud rate {} because: {}.".format(self._name, baud, err))
+            try:
+                serial_timeout = float(self._value[2])
+                self.logger.debug("Initializing Serial {}: Timeout is {}.".format(self._name, serial_timeout))
+            except Exception as err:
+                serial_timeout = 0.1
+                self.logger.debug(
+                    "Initializing Serial {}: Using standard timeout {}. Because: {}.".format(self._name,
+                                                                                             serial_timeout, err))
+        return rs232, baud, serial_timeout
+
+    def process_tcp(self):
+        port = tcp_timeout = None
+        try:
+            tcp = re.sub('[ ]', '', self._value[0])
+            tcp = None if tcp == 'None' or tcp == '' or tcp == '0.0.0.0' else tcp
+            self.logger.debug("Initializing TCP {}: IP is {}.".format(self._name, tcp))
+        except Exception as err:
+            tcp = None
+            self.logger.warning("Initializing TCP {}: Problem setting IP: {}.".format(self._name, err))
+        if tcp is not None:
+            try:
+                port = int(self._value[1])
+                self.logger.debug("Initializing TCP {}: Port is {}.".format(self._name, port))
+            except Exception as err:
+                port = None
+                self.logger.warning("Initializing TCP {}: Port is {} because: {}.".format(self._name, port, err))
+            try:
+                tcp_timeout = int(self._value[2])
+                self.logger.debug("Initializing TCP {}: Timeoout is {}.".format(self._name, tcp_timeout))
+            except Exception as err:
+                tcp_timeout = 1
+                self.logger.warning(
+                    "Initializing TCP {}: Timeout is set to standard (1) because: {}.".format(self._name, err))
+        return tcp, port, tcp_timeout
+
+    def process_dependson(self):
+        depend = None
+        try:
+            depend = re.sub('[ ]', '', self._value[0])
+            depend = None if depend == 'None' or depend == '' else depend
+            dependson_value = True if re.sub('[ ]', '', str(self._value[1])).lower() in ['1', 'yes', 'true', 'on'] \
+                else False if re.sub('[ ]', '', str(self._value[1])).lower() in ['0', 'no', 'false', 'off'] \
+                else None
+            self.logger.debug(
+                "Initializing {}: Dependson Item: {}. Value: {}".format(self._name, depend, dependson_value))
+        except Exception:
+            dependson_value = True if depend is not None else None
+        depend0_power0 = True if re.sub('[ ]', '', str(self._value[2])).lower() in ['1', 'yes', 'true', 'on'] and depend else False
+        depend0_volume0 = True if re.sub('[ ]', '', str(self._value[3])).lower() in ['1', 'yes', 'true', 'on'] and depend else False
+        self.logger.debug(
+            "Initializing {}: Resetting volume after dependson is off: {}. Resetting power: {}.".format(
+                self._name, depend0_volume0, depend0_power0))
+        return depend, dependson_value, depend0_power0, depend0_volume0
+
+    def process_responsebuffer(self):
+        buffer = True if str(self._value).lower() in ['1', 'yes', 'true', 'on'] \
+            else False if str(self._value).lower() in ['0', 'no', 'false', 'off'] \
+            else abs(int(self._value)) * -1
+        return buffer
+
+    def process_resetonerror(self):
+        reset = True if str(self._value).lower() in ['1', 'yes', 'true', 'on'] else False
+        return reset
+
+    def process_statusquery(self):
+        statusquery = True if str(self._value).lower() in ['1', 'yes', 'true', 'on'] else False
+        return statusquery
+
+    def process_responses(self):
+        ignoreresponse = self._ignoreresponse = re.sub(', ', ',', self._value[0]).split(",")
+        errorresponse = re.sub(', ', ',', self._value[1]).split(",")
+        force_buffer = re.sub(', ', ',', self._value[2]).split(",")
+        ignoredisplay = re.sub(', ', ',', self._value[3]).split(",")
+        newignore = []
+        for ignore in ignoredisplay:
+            newignore.append(re.sub('^0', '', ignore))
+        ignoredisplay = newignore
+        self.logger.debug("Initializing {}: Ignore Display: {}".format(self._name, ignoredisplay))
+        return ignoreresponse, errorresponse, force_buffer, ignoredisplay
+
+    def process_update_exclude(self):
+        exclude = re.sub(', ', ',', self._value).split(",")
+        self.logger.debug(
+            "Initializing {}: Special Settings: Exclude updates by {}".format(self._name, exclude))
+        return exclude

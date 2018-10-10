@@ -1,7 +1,5 @@
 # MVG Live
 
-Version 0.1
-
 ## Requirements
 This plugin requires lib PyMVGLive. You can install this lib with:
 
@@ -17,13 +15,7 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[mvg_live]
-    class_name = MVG_Live
-    class_path = plugins.mvg_live
-```
+### plugin.yaml
 
 ```yaml
 mvg_live:
@@ -31,31 +23,9 @@ mvg_live:
     class_path: plugins.mvg_live
 ```
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 Currently, no pre defined items exist, the example below needs these items:
-
-```
-[travel_info]
-
-     [[mvg_station]]
-        type = num
-
-        [[[search]]]
-            type = str
-            cache = yes
-            visu_acl: rw
-
-            [[[[result]]]]
-                type = str
-                cache = yes
-                visu_acl: rw
-
-            [[[[refresh]]]]
-                type = bool
-                visu_acl = rw
-                enforce_updates = true
-```
 
 ```yaml
 travel_info:
@@ -85,12 +55,7 @@ Returns information about the departures in a specific station. See www.mvg-live
 
 ## Logics
 
-### logics.conf / yaml
-```
-[MVGWatch]
-    filename = mvg.py
-    watch_items = travel_info.mvg_station.search
-```
+### logics.yaml
 
 ```yaml
 MVGWatch:

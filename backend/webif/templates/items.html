@@ -2,35 +2,61 @@
 {% extends "base.html" %}
 {% import "navbar.html" as nav with context %}
 {% block navbar %}
-    {{ nav }}
+	{% with active_page="items" %}
+	{% include "navbar.html" %}
+	{% endwith %}
 {% endblock navbar %}
+
+{% block title %}
+{{ _('Items', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
 {% block content %}
-
- <div class="container">
-      <strong>{{ _('Items') }} ({{ _('gesamt') }}: {{ item_count }})</strong><span id="search-results"></span><br/><br/>
-      <div class="form-group">
-          <input type="input" class="form-control" id="input-search" placeholder="{{ _('Itempfad suchen...') }}" value=""><br/>
-          <button type="button" class="btn btn-default" id="btn-search"><i class="fas fa-search"></i>&nbsp;{{ _('Suchen') }}</button>
-          <button type="button" class="btn btn-default" id="btn-clear-search"><i class="fas fa-circle-notch"></i>&nbsp;{{ _('Suche zurücksetzen') }}</button>
-          <button type="button" class="btn btn-default" id="btn-expand-all"><i class="fas fa-folder-open"></i>&nbsp;{{ _('Alle aufklappen') }}</button>
-          <button type="button" class="btn btn-default" id="btn-collapse-all"><i class="fas fa-folder"></i>&nbsp;{{ _('Alle zuklappen') }}</button>
-      </div>
-
-      <div class="pre-scrollable" id="tree" style="float:left; border: 1px solid #ccc; height:650px; max-height:650px; width:600px;"></div>
-      <div class=container" style="float:left; margin-left: 5px;">
-        <!--refresh widget-->
-        <div class="panel panel-default" data-url="item_detail_json.html?item_path=" data-item="child1">
-          <div class="panel-heading"><a class="pull-right" href="#"><span id="refresh-element" class="fas fa-sync"></span></a> {{ _('Item-Informationen') }}</div>
-          <div class="panel-body panel-refresh">
-            <div class="refresh-container" style="padding-top: 220px;"><i class="refresh-spinner fa fa-spinner fa-spin fa-5x"></i></div>
-            <div id="tree_detail" class="data-container refresh-data pre-scrollable" style="height:575px; max-height:575px; width:500px;">
-                {{ _('Item im Baum auswählen um Details einzusehen!') }}
+<div class="container-fluid navBorder" style="overflow: hidden;">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <div class="shng_headline">{{ _('Items') }} ({{ _('gesamt') }}: {{ item_count }})</><span id="search-results"></div>
+                <div class="form-group mb-2">
+                    <input type="input" class="form-control mb-1" id="input-search" placeholder="{{ _('Itempfad suchen...') }}" value="{% if item_path is not none %}{{ item_path }}{% endif %}">
+                    <button type="button" class="btn btn-shng btn-sm" id="btn-search"><i class="fas fa-search"></i>&nbsp;{{ _('Suchen') }}</button>
+                    <button type="button" class="btn btn-shng btn-sm" id="btn-clear-search"><i class="fas fa-circle-notch"></i>&nbsp;{{ _('Suche zurücksetzen') }}</button>
+                    <button type="button" class="btn btn-shng btn-sm" id="btn-expand-all"><i class="fas fa-folder-open"></i>&nbsp;{{ _('Alle aufklappen') }}</button>
+                    <button type="button" class="btn btn-shng btn-sm" id="btn-collapse-all"><i class="fas fa-folder"></i>&nbsp;{{ _('Alle zuklappen') }}</button>
+                </div>
             </div>
-          </div>
         </div>
-    <!--refresh widget-->
-     </div>
- </div>
+        <div class="row">
+            <div class="col" style="max-width: 50%;">
+                <div class="card">
+                    <div class="card-body p-1">
+                        <div id="tree" style="overflow-y: scroll;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col" style="max-width: 50%;">
+                <div class="card" >
+                    <div class="card-header p-1 shng_heading">
+                        <a class="float-sm-right" href="#" onclick="reload(selectedNode.text);" title="{{ _('Neu Laden', 'button') }}"><span id="refresh-element" class="fas fa-sync"></span></a>
+                        <strong>{{ _('Item-Informationen') }}</strong>
+                    </div>
+                    <div class="card-body p-1" style="position: relative;">
+                        <div class="card-text" style="">
+                            <div id="cardOverlay" class="cardOverlay">
+                                <div style="position: relative; top: 45%; left:45%;">
+                                    <span id="reload-element" class="fas fa-sync fa-4x"/>
+                                </div>
+                            </div>
+                            <div id="tree_detail" class="data-container refresh-data pre-scrollable" style="overflow-x: auto;">
+                            {{ _('Item im Baum auswählen um Details einzusehen!') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="static/js/item_tree_functions.js"></script>
 <script type="text/javascript" language="javascript">
@@ -65,76 +91,83 @@ function getDetailInfo(result) {
                 input = element.value;
         }
 
-        temp = '<div class="table-responsive"><table class="table table-striped table-hover">';
-        temp = temp + '<thead><tr><th>{{ _('Attribut') }}</th><th>{{ _('Wert') }}</th></tr></thead><tbody>';
-        temp = temp + '<tr><th>{{ _('path', 'items') }}</th><td>'+element.path+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('name', 'items') }}</th><td>'+element.name+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('type', 'items') }}</th><td>'+element.type+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('value', 'items') }}</th><td>'+input+'</td></tr>';
+        temp = '<div class="table-responsive" style="min-width: 500px;"><table class="table table-striped table-hover">';
+        temp = temp + '<thead><tr class="shng_heading"><th class="py-1" style="min-width: 190px;">{{ _('Attribut') }}</th><th class="py-1">{{ _('Wert') }}</th></tr></thead><tbody>';
+        temp = temp + '<tr><td class="py-1">{{ _('path', 'items') }}</td><td class="py-1">'+element.path+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('name', 'items') }}</td><td class="py-1">'+element.name+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('type', 'items') }}</td><td class="py-1">'+element.type+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('value', 'items') }}</td><td class="py-1">'+input+'</td></tr>';
 
-        temp = temp + '<tr><th></th><td></td></tr>';
-	    temp = temp + '<tr><th colspan="2">{{ _('Änderungsinformationen') }}:</th></tr>';
-        temp = temp + '<tr><th>{{ _('Letztes Update') }}</th><td>'+element.last_update+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Letzte Änderung') }}</th><td>'+element.last_change+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('update_age') }}</th><td>'+element.update_age+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('age') }}</th><td>'+element.age+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Update durch') }}</th><td>'+element.updated_by+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('Geändert durch') }}</th><td>'+element.changed_by+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('vorheriger Wert') }}</th><td>'+element.previous_value+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('previous update') }}</th><td>'+element.previous_update+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('previous change') }}</th><td>'+element.previous_change+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('previous update age') }}</th><td>'+element.previous_update_age+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('previous age') }}</th><td>'+element.previous_age+'</td></tr>';
+        temp = temp + '<tr><td class="py-1"></td><td class="py-1"></td></tr>';
+	    temp = temp + '<tr class="shng_heading"><th class="py-1" colspan="2">{{ _('Änderungsinformationen') }}:</th></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('Letztes Update') }}</td><td class="py-1">'+element.last_update+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('Letzte Änderung') }}</td><td class="py-1">'+element.last_change+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('update_age') }}</td><td class="py-1">'+element.update_age+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('age') }}</td><td class="py-1">'+element.age+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('Update durch') }}</td><td class="py-1">'+element.updated_by+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('Geändert durch') }}</td><td class="py-1">'+element.changed_by+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('vorheriger Wert') }}</td><td class="py-1">'+element.previous_value+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('previous update') }}</td><td class="py-1">'+element.previous_update+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('previous change') }}</td><td class="py-1">'+element.previous_change+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('previous update age') }}</td><td class="py-1">'+element.previous_update_age+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('previous age') }}</td><td class="py-1">'+element.previous_age+'</td></tr>';
 
-        temp = temp + '<tr><th></th><td></td></tr>';
-	    temp = temp + '<tr><th colspan="2">{{ _('Evaluation und Trigger') }}:</th></tr>';
-        temp = temp + '<tr><th>{{ _('cache', 'items') }}</th><td>'+element.cache+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('enforce_updates', 'items') }}</th><td>'+element.enforce_updates+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('eval', 'items') }}</th><td>'+element.eval+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('eval_trigger', 'items') }}</th><td>'+element.eval_trigger+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('on_update', 'items') }}</th><td>'+element.on_update+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('on_change', 'items') }}</th><td>'+element.on_change+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('cycle', 'items') }}</th><td>'+element.cycle+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('crontab', 'items') }}</th><td>'+element.crontab+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('autotimer', 'items') }}</th><td>'+element.autotimer+'</td></tr>';
-        temp = temp + '<tr><th>{{ _('threshold', 'items') }}</th><td>'+element.threshold+'</td></tr>';
+        temp = temp + '<tr><td class="py-1"></td><td class="py-1"></td></tr>';
+	    temp = temp + '<tr class="shng_heading"><th class="py-1" colspan="2">{{ _('Evaluation und Trigger') }}:</th></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('cache', 'items') }}</td><td class="py-1">'+element.cache+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('enforce_updates', 'items') }}</td><td class="py-1">'+element.enforce_updates+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('eval_trigger', 'items') }}</td><td class="py-1">'+element.trigger+'</td></tr>';
+		if (element.trigger_condition != '-') {
+			temp = temp + '<tr><td class="py-1">{{ _('trigger_condition', 'items') }}</td><td class="py-1">' + element.trigger_condition + '</td></tr>';
+		};
+		if (element.trigger_condition_raw != '') {
+			temp = temp + '<tr><td class="py-1">{{ _('trigger_condition raw', 'items') }}</td><td class="py-1">' + element.trigger_condition_raw + '</td></tr>';
+		};
+        temp = temp + '<tr><td class="py-1">{{ _('eval', 'items') }}</td><td class="py-1">'+element.eval+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('on_update', 'items') }}</td><td class="py-1">'+element.on_update+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('on_change', 'items') }}</td><td class="py-1">'+element.on_change+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('log_change', 'items') }}</td><td class="py-1">'+element.log_change+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('cycle', 'items') }}</td><td class="py-1">'+element.cycle+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('crontab', 'items') }}</td><td class="py-1">'+element.crontab+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('autotimer', 'items') }}</td><td class="py-1">'+element.autotimer+'</td></tr>';
+        temp = temp + '<tr><td class="py-1">{{ _('threshold', 'items') }}</td><td class="py-1">'+element.threshold+'</td></tr>';
 
         config = JSON.parse(element.config);
 		if (Object.keys(config).length > 0) {
-    	    temp = temp + '<tr><th></th><td></td></tr>';
-	        temp = temp + '<tr><th colspan="2">{{ _('Plugin spezifische Attribute') }}:</th></tr>';
+    	    temp = temp + '<tr><td class="py-1"></td><td class="py-1"></td></tr>';
+	        temp = temp + '<tr class="shng_heading"><th class="py-1" colspan="2">{{ _('Plugin spezifische Attribute') }}:</th></tr>';
 	        for(key in config){
-    	        temp = temp + '<tr><th>' + key + '</th><td>' + config[key] + '</td></tr>';
+    	        temp = temp + '<tr><td class="py-1">' + key + '</td><td class="py-1">' + config[key] + '</td></tr>';
 			};
         };
 
         logics = JSON.parse(element.logics);
 		if (logics.length > 0) {
-	        temp = temp + '<tr><th></th><td></td></tr>';
-    	    temp = temp + '<tr><th colspan="2">{{ _('Verbundene Logiken') }}:</th></tr>';
+	        temp = temp + '<tr><td class="py-1"></td><td class="py-1"></td></tr>';
+    	    temp = temp + '<tr class="shng_heading"><th class="py-1" colspan="2">{{ _('Verbundene Logiken') }}:</th></tr>';
         	for(i in logics){
-	        	temp = temp + '<tr><td colspan="2">'+logics[i]+'</td></tr>';
+	        	temp = temp + '<tr><td class="py-1" colspan="2"><a class="text-shng" href="logics_view.html?logicname='+logics[i]+'">'+logics[i]+'</a></td></tr>';
 			};
 		};
 
         triggers = JSON.parse(element.triggers);
 		if (triggers.length > 0) {
-	        temp = temp + '<tr><th></th><td></td></tr>';
-    	    temp = temp + '<tr><th colspan="2">{{ _('Verbundene Trigger') }}:</th></tr>';
+	        temp = temp + '<tr><td class="py-1"></td><td class="py-1"></td></tr>';
+    	    temp = temp + '<tr class="shng_heading"><th class="py-1" colspan="2">{{ _('Verbundene Trigger') }}:</th></tr>';
         	for(i in triggers){
-	        	temp = temp + '<tr><td colspan="2">'+triggers[i]+'</td></tr>';
+	        	temp = temp + '<tr><td class="py-1" colspan="2">'+triggers[i]+'</td></tr>';
 			};
 		};
 		if (element.filename != 'None') {
-			temp = temp + '<tr><th></th><td></td></tr>';
-			temp = temp + '<tr><th>{{ _('filename', 'items') }}</th><td>'+element.filename+'</td></tr>';
+			temp = temp + '<tr><td class="py-1"></td><td class="py-1"></td></tr>';
+			temp = temp + '<tr><td class="py-1">{{ _('filename', 'items') }}</td><td class="py-1">'+element.filename+'</td></tr>';
 		}
 
         temp = temp + '</tbody></table></div>';
 
         $('#tree_detail').html(temp);
 
-        $("#item_value" ).change(function() {
+        $("#item_value" ).on('blur change', function() {
             if (element.type == 'num') {
                 if (isNaN($("#item_value" ).val())) {
                     alert("{{ _('Die eingegebenen Daten sind kein numerischer Wert') }} !");
@@ -159,5 +192,9 @@ function getDetailInfo(result) {
     });
 }
 getTree();
+
+{% if item_path %}
+    reload("{{ item_path }}");
+{% endif %}
 </script>
 {% endblock %}

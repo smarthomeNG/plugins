@@ -31,17 +31,7 @@ Should work with other SMA inverters as well - please let me know!
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[sma]
-    class_name = SMA
-    class_path = plugins.sma
-    bt_addr = 00:80:25:21:7F:58
-#    password = 0000
-#    update_cycle = 60
-#    allowed_timedelta = 10
-```
+### plugin.yaml
 
 ```yaml
 sma:
@@ -60,70 +50,9 @@ Description of the attributes:
 * __update_cycle__: interval in seconds how often the data is read from the inverter (default 60)
 * __allowed_timedelta__: allowed difference of inverter to system time - if above, inverter is set to system time - set to -1 to disable (default 60)
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
-The item having ``sma = PLUGIN_ACTIVE`` can be set to True/False in order to connect/disconnect to the inverter during night. 
-
-```
-[Inverter]
-  [[Plugin_active]]
-    type = bool
-    sma = PLUGIN_ACTIVE
-  [[Feeding_Power_in_W]]
-    type = num
-    sma = AC_P_TOTAL
-  [[Daily_Yield_in_Wh]]
-    type = num
-    sma = E_DAY
-  [[Total_Yield_in_Wh]]
-    type = num
-    sma = E_TOTAL
-  [[Serial_Number]]
-    type = num
-    sma = INV_SERIAL
-  [[MAC_Address]]
-    type = str
-    sma = INV_ADDRESS
-  [[Last_Update_Of_Data]]
-    type = str
-    sma = LAST_UPDATE
-  [[DC_Power_String1_in_W]]
-    type = num
-    sma = DC_STRING1_P
-  [[DC_Power_String2_in_W]]
-    type = num
-    sma = DC_STRING2_P
-  [[DC_Voltage_String1_in_V]]
-    type = num
-    sma = DC_STRING1_U
-  [[DC_Voltage_String2_in_V]]
-    type = num
-    sma = DC_STRING2_U
-  [[DC_Current_String1_in_A]]
-    type = num
-    sma = DC_STRING1_I
-  [[DC_Current_String2_in_A]]
-    type = num
-    sma = DC_STRING2_I
-  [[Operating_Time_in_s]]
-    type = num
-    sma = OPERATING_TIME
-  [[Feeding_Time_in_s]]
-    type = num
-    sma = FEEDING_TIME
-  [[Grid_Frequency_in_Hz]]
-    type = num
-    sma = GRID_FREQUENCY
-  [[Inverter_Status]]
-    type = str
-    sma = STATUS
-  [[Relais_Status]]
-    type = str
-    sma = GRID_RELAY
-  [[Software_Version]]
-    type = str
-    sma = SW_VERSION
-```
+The item having ``sma = PLUGIN_ACTIVE`` can be set to True/False in order to connect/disconnect to the inverter during night.
 
 ```yaml
 Inverter:

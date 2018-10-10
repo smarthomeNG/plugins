@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=star-args, too-many-arguments, fixme
 
+# Disable while we have Python 2.x compatability
+# pylint: disable=useless-object-inheritance,bad-mcs-classmethod-argument
+
 """
 This module contains classes for handling DIDL-Lite metadata.
 
@@ -39,6 +42,10 @@ from .xml import (
     XML, ns_tag
 )
 
+# Due to cyclic import problems, we only import from_didl_string at runtime.
+# from data_structures_entry import from_didl_string
+_FROM_DIDL_STRING_FUNCTION = None
+
 
 ###############################################################################
 # MISC HELPER FUNCTIONS                                                       #
@@ -61,6 +68,7 @@ def to_didl_string(*args):
             'xmlns': "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/",
             'xmlns:dc': "http://purl.org/dc/elements/1.1/",
             'xmlns:upnp': "urn:schemas-upnp-org:metadata-1-0/upnp/",
+            'xmlns:r': "urn:schemas-rinconnetworks-com:metadata-1-0/"
         })
     for arg in args:
         didl.append(arg.to_element())
@@ -155,7 +163,7 @@ class DidlResource(object):
                 try:
                     return int(result)
                 except ValueError:
-                    raise ValueError(
+                    raise DIDLMetadataError(
                         'Could not convert {0} to an integer'.format(name))
             else:
                 return None
@@ -164,8 +172,8 @@ class DidlResource(object):
         # required
         content['protocol_info'] = element.get('protocolInfo')
         if content['protocol_info'] is None:
-            raise Exception('Could not create Resource from Element: '
-                            'protocolInfo not found (required).')
+            raise DIDLMetadataError('Could not create Resource from Element: '
+                                    'protocolInfo not found (required).')
         # Optional
         content['import_uri'] = element.get('importUri')
         content['size'] = _int_helper('size')
@@ -195,8 +203,9 @@ class DidlResource(object):
             ~xml.etree.ElementTree.Element: an Element.
         """
         if not self.protocol_info:
-            raise Exception('Could not create Element for this resource: '
-                            'protocolInfo not set (required).')
+            raise DIDLMetadataError('Could not create Element for this'
+                                    'resource:'
+                                    'protocolInfo not set (required).')
         root = XML.Element('res')
 
         # Required
@@ -295,7 +304,7 @@ class DidlMetaClass(type):
 
     """Meta class for all Didl objects."""
 
-    def __new__(mcs, name, bases, attrs):
+    def __new__(cls, name, bases, attrs):
         """Create a new instance.
 
         Args:
@@ -303,7 +312,7 @@ class DidlMetaClass(type):
             bases (tuple): Base classes.
             attrs (dict): attributes defined for the class.
         """
-        new_cls = super(DidlMetaClass, mcs).__new__(mcs, name, bases, attrs)
+        new_cls = super(DidlMetaClass, cls).__new__(cls, name, bases, attrs)
         # Register all subclasses with the global _DIDL_CLASS_TO_CLASS mapping
         item_class = attrs.get('item_class', None)
         if item_class is not None:
@@ -419,7 +428,7 @@ class DidlObject(with_metaclass(DidlMetaClass, object)):
             # way.
             setattr(self, key, value)
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-branches
     @classmethod
     def from_element(cls, element):     # pylint: disable=R0914
         """Create an instance of this class from an ElementTree xml Element.
@@ -454,26 +463,31 @@ class DidlObject(with_metaclass(DidlMetaClass, object)):
                 "UPnP class is incorrect. Expected '{0}',"
                 " got '{1}'".format(cls.item_class, item_class))
 
-        # parent_id, item_id  and restricted are stored as attibutes on the
+        # parent_id, item_id  and restricted are stored as attributes on the
         # element
-        item_id = really_unicode(element.get('id', None))
+        item_id = element.get('id', None)
         if item_id is None:
             raise DIDLMetadataError("Missing id attribute")
-        parent_id = really_unicode(element.get('parentID', None))
+        item_id = really_unicode(item_id)
+        parent_id = element.get('parentID', None)
         if parent_id is None:
             raise DIDLMetadataError("Missing parentID attribute")
-        restricted = element.get('restricted', None)
-        if restricted is None:
-            raise DIDLMetadataError("Missing restricted attribute")
-        restricted = True if restricted in [1, 'true', 'True'] else False
+        parent_id = really_unicode(parent_id)
 
-        # There must be a title. According to spec, it should be the first
-        # child, but Sonos does not abide by this
+        # CAUTION: This implementation deviates from the spec.
+        # Elements are normally required to have a `restricted` tag, but
+        # Spotify Direct violates this. To make it work, a missing restricted
+        # tag is interpreted as `restricted = True`.
+        restricted = element.get('restricted', None)
+        restricted = False if restricted in [0, 'false', 'False'] else True
+
+        # Similarily, all elements should have a title tag, but Spotify Direct
+        # does not comply
         title_elt = element.find(ns_tag('dc', 'title'))
-        if title_elt is None:
-            raise DIDLMetadataError(
-                "Missing title element")
-        title = really_unicode(title_elt.text)
+        if title_elt is None or not title_elt.text:
+            title = ''
+        else:
+            title = really_unicode(title_elt.text)
 
         # Deal with any resource elements
         resources = []
@@ -653,6 +667,42 @@ class DidlObject(with_metaclass(DidlMetaClass, object)):
 
         return elt
 
+    def get_uri(self, resource_nr=0):
+        """Return the uri to use for playing this item.
+
+        Args:
+            resource_nr (int): The index of the resource. Note that there is no
+                known object with more than one resource, so you can probably
+                keep the default value (0).
+        Returns:
+            str: The uri.
+        """
+        return self.resources[resource_nr].uri
+
+    def set_uri(self, uri, resource_nr=0, protocol_info=None):
+        """Set a resource uri for this instance. If no resource exists, create
+        a new one with the given protocol info.
+
+        Args:
+            uri (str): The resource uri.
+            resource_nr (int): The index of the resource on which to set the
+                uri. If it does not exist, a new resource is added to the list.
+                Note that by default, only the uri of the first resource is
+                used for playing the item.
+            protocol_info (str): Protocol info for the resource. If none is
+                given and the resource does not exist yet, a default protocol
+                info is constructed as '[uri prefix]:*:*:*'.
+        """
+        try:
+            self.resources[resource_nr].uri = uri
+            if protocol_info is not None:
+                self.resources[resource_nr].protocol_info = protocol_info
+        except IndexError:
+            if protocol_info is None:
+                # create default protcol info
+                protocol_info = uri[:uri.index(':')] + ':*:*:*'
+            self.resources.append(DidlResource(uri, protocol_info))
+
 
 ###############################################################################
 # OBJECT.ITEM HIERARCHY                                                       #
@@ -697,47 +747,6 @@ class DidlAudioItem(DidlItem):
         }
     )
 
-# Browsing Sonos Favorites produces some odd looking DIDL-Lite. The object
-# class is 'object.itemobject.item.sonos-favorite', which is probably a typo
-# in Sonos' code somewhere.
-
-# Here is an example:
-# <?xml version="1.0" ?>
-# <DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"
-#     xmlns:dc="http://purl.org/dc/elements/1.1/"
-#     xmlns:r="urn:schemas-rinconnetworks-com:metadata-1-0/"
-#     xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/">
-#   <item id="FV:2/13" parentID="FV:2" restricted="false">
-#     <dc:title>Shake It Off</dc:title>
-#     <upnp:class>object.itemobject.item.sonos-favorite</upnp:class>
-#     <r:ordinal>4</r:ordinal>
-#     <res protocolInfo="sonos.com-spotify:*:audio/x-spotify:*">
-#         x-sonos-spotify:spotify%3atrack%3a7n.......?sid=9&amp;flags=32</res>
-#     <upnp:albumArtURI>http://o.scd.....</upnp:albumArtURI>
-#     <r:type>instantPlay</r:type>
-#     <r:description>By Taylor Swift</r:description>
-#     <r:resMD>&lt;DIDL-Lite xmlns:dc=&quot;
-#       http://purl.org/dc/elements/1.1/&quot;
-#       xmlns:upnp=&quot;urn:schemas-upnp-org:metadata-1-0/upnp/&quot;
-#       xmlns:r=&quot;urn:schemas-rinconnetworks-com:metadata-1-0/&quot;
-#       xmlns=&quot;urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/&quot;&gt;
-#       &lt;item id=&quot;00030020spotify%3atrack%3a7n9Q6b...74uCtajkddPt&quot;
-#       parentID=&quot;0006006ctoplist%2ftracks%2fregion%2fGB&quot;
-#       restricted=&quot;true&quot;&gt;&lt;dc:title&gt;Shake It Off
-#       &lt;/dc:title&gt;&lt;upnp:class&gt;object.item.audioItem.musicTrack
-#       &lt;/upnp:class&gt;&lt;desc id=&quot;cdudn&quot;
-#       nameSpace=&quot;urn:schemas-rinconnetworks-com:metadata-1-0/&quot;&gt;
-#       SA_RINCON2311_XXXXX&lt;/desc&gt;
-#       &lt;/item&gt;
-#       &lt;/DIDL-Lite&gt;
-#     </r:resMD>
-#   </item>
-# </DIDL-Lite>
-
-# Note the r:ordinal, r:type; r:description, r:resMD elements which are not
-# seen (?) anywhere else
-# We're ignoring this for the moment!
-
 
 class DidlMusicTrack(DidlAudioItem):
 
@@ -759,6 +768,24 @@ class DidlMusicTrack(DidlAudioItem):
     )
 
 
+class DidlAudioBook(DidlAudioItem):
+
+    """Class that represents an audio book."""
+
+    # the DIDL Lite class for this object.
+    item_class = 'object.item.audioItem.audioBook'
+    # name: (ns, tag)
+    _translation = DidlAudioItem._translation.copy()
+    _translation.update(
+        {
+            'storageMedium': ('upnp', 'storageMedium'),
+            'producer': ('upnp', 'producer'),
+            'contributor': ('dc', 'contributor'),
+            'date': ('dc', 'date'),
+        }
+    )
+
+
 class DidlAudioBroadcast(DidlAudioItem):
 
     """Class that represents an audio broadcast."""
@@ -772,7 +799,6 @@ class DidlAudioBroadcast(DidlAudioItem):
             'radio_call_sign': ('upnp', 'radioCallSign'),
             'radio_station_id': ('upnp', 'radioStationID'),
             'channel_nr': ('upnp', 'channelNr'),
-
         }
     )
 
@@ -787,6 +813,53 @@ class DidlAudioBroadcastFavorite(DidlAudioBroadcast):
 
     # the DIDL Lite class for this object.
     item_class = 'object.item.audioItem.audioBroadcast.sonos-favorite'
+
+
+class DidlFavorite(DidlItem):
+
+    """Class that represents a Sonos favorite.
+
+    Note that the favorite itself isn't playable in all cases, please use the
+    object returned by `favorite.reference` instead."""
+
+    # the DIDL Lite class for this object.
+    item_class = 'object.itemobject.item.sonos-favorite'
+    _translation = DidlItem._translation.copy()
+    _translation.update(
+        {
+            'type': ('r', 'type'),
+            'description': ('r', 'description'),
+            'favorite_nr': ('r', 'ordinal'),
+            'resource_meta_data': ('r', 'resMD')
+        }
+    )
+
+    # The resMD tag contains the metadata of the Didl object referenced by this
+    # favorite. For user convenience, we will parse this metadata and make the
+    # object available via the 'reference' property.
+    @property
+    def reference(self):
+        """The Didl object this favorite refers to."""
+
+        # Import from_didl_string if it isn't present already. The import
+        # happens here because it would cause cyclic import errors if the
+        # import happened at load time.
+        global _FROM_DIDL_STRING_FUNCTION  # pylint: disable=global-statement
+        if not _FROM_DIDL_STRING_FUNCTION:
+            from . import data_structures_entry
+            _FROM_DIDL_STRING_FUNCTION = data_structures_entry.from_didl_string
+
+        ref = _FROM_DIDL_STRING_FUNCTION(
+            getattr(self, 'resource_meta_data'))[0]
+        # The resMD metadata lacks a <res> tag, so we use the resources from
+        # the favorite to make 'reference' playable.
+        ref.resources = self.resources
+        return ref
+
+    @reference.setter
+    def reference(self, value):
+        setattr(self, 'resource_meta_data', to_didl_string(value))
+        self.resources = value.resources
 
 
 ###############################################################################
@@ -838,7 +911,7 @@ class DidlMusicAlbum(DidlAlbum):
     # name: (ns, tag)
     # pylint: disable=protected-access
     #:
-    _translation = DidlAudioItem._translation.copy()
+    _translation = DidlAlbum._translation.copy()
     _translation.update(
         {
             'artist': ('upnp', 'artist'),
@@ -1006,13 +1079,33 @@ class DidlMusicGenre(DidlGenre):
     tag = 'item'
 
 
+class DidlRadioShow(DidlContainer):
+    """Class that represents a radio show."""
+
+    # the DIDL Lite class for this object.
+    item_class = 'object.container.radioShow'
+    # A radio show doesn't seem to have any special attributes
+
+
 ###############################################################################
 # SPECIAL LISTS                                                               #
 ###############################################################################
 
 class ListOfMusicInfoItems(list):
 
-    """Abstract container class for a list of music information items."""
+    """Abstract container class for a list of music information items.
+
+    Instances of this class are returned from queries into the music library
+    or to music services. The attributes :attr:`~total_matches` and
+    :attr:`~number_returned` are used to ascertain whether paging is required
+    in order to retrive all elements of the query. :attr:`~total_matches` is
+    the total number of results to the query and :attr:`~number_returned` is
+    the number of results actually returned. If the two differ, paging is
+    required. Paging is typically performed with the ``start`` and
+    ``max_items`` arguments to the query method. See e.g. the
+    :meth:`~soco.music_library.MusicLibrary.get_music_library_information`
+    method for details.
+    """
 
     def __init__(self, items, number_returned, total_matches, update_id):
         super(ListOfMusicInfoItems, self).__init__(items)
@@ -1097,11 +1190,6 @@ class SearchResult(ListOfMusicInfoItems):
 class Queue(ListOfMusicInfoItems):
 
     """Container class that represents a queue."""
-
-    def __init__(self, items, number_returned, total_matches, update_id):
-        super(Queue, self).__init__(
-            items, number_returned, total_matches, update_id
-        )
 
     def __repr__(self):
         return '{0}(items={1})'.format(

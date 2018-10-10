@@ -30,10 +30,11 @@ from xml.dom import minidom
 import requests
 from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
+from lib.module import Modules
 
 
-class MonitoringService():
+class MonitoringService:
     """
     Class which connects to the FritzBox service of the Callmonitor: http://www.wehavemorefun.de/fritzbox/Callmonitor
 
@@ -70,10 +71,9 @@ class MonitoringService():
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.conn.connect((self._host, self._port))
-#            self._listen_thread = threading.Thread(target=self._listen,
-#                                                   name="MonitoringService_%s" % self._plugin_instance.get_instance_name()).start()
             self._listen_thread = threading.Thread(target=self._listen,
-                                                   name="MonitoringService_{}".format(self._plugin_instance.get_fullname())).start()
+                                                   name="MonitoringService_{}".format(
+                                                       self._plugin_instance.get_fullname())).start()
         except Exception as e:
             self.conn = None
             self.logger.error("MonitoringService: Cannot connect to " + self._host + " on port: " + str(
@@ -125,6 +125,26 @@ class MonitoringService():
         else:
             self._items.append(item)
 
+    def get_items(self):
+        return self._items
+
+    def get_trigger_items(self):
+        return self._trigger_items
+
+    def get_items_incoming(self):
+        return self._items_incoming
+
+    def get_items_outgoing(self):
+        return self._items_outgoing
+
+    def get_item_count_total(self):
+        """
+        Returns number of added items (all items of MonitoringService service
+
+        :return: number of items hold by the MonitoringService
+        """
+        return len(self._items) + len(self._trigger_items) + len(self._items_incoming) + len(self._items_outgoing)
+
     def set_duration_item(self, item):
         """
         Sets specific items which count the duration of an incoming or outgoing call
@@ -138,26 +158,30 @@ class MonitoringService():
         self._listen_active = True
         buffer = ""
         data = True
-        while self._listen_active == True:
+        while self._listen_active:
             data = self.conn.recv(recv_buffer)
+            if data == "":
+                self.logger.error("CallMonitor connection not open anymore.")
+            else:
+                self.logger.debug("Data Received from CallMonitor: %s" % data.decode("utf-8"))
             buffer += data.decode("utf-8")
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
                 self._parse_line(line)
 
-            time.sleep(1)
+            # time.sleep(1)
         return
 
     def _start_counter(self, timestamp, direction):
         if direction == 'incoming':
             self._call_connect_timestamp = time.mktime(
-                datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
+                datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_incoming = threading.Thread(target=self._count_duration_incoming,
                                                                       name="MonitoringService_Duration_Incoming_%s" % self._plugin_instance.get_instance_name()).start()
             self.logger.debug('Counter incoming - STARTED')
         elif direction == 'outgoing':
             self._call_connect_timestamp = time.mktime(
-                datetime.datetime.strptime((timestamp), "%d.%m.%y %H:%M:%S").timetuple())
+                datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_outgoing = threading.Thread(target=self._count_duration_outgoing,
                                                                       name="MonitoringService_Duration_Outgoing_%s" % self._plugin_instance.get_instance_name()).start()
             self.logger.debug('Counter outgoing - STARTED')
@@ -178,7 +202,7 @@ class MonitoringService():
 
     def _count_duration_incoming(self):
         self._call_active['incoming'] = True
-        while (self._call_active['incoming']):
+        while self._call_active['incoming']:
             if not self._duration_item['call_duration_incoming'] is None:
                 duration = time.time() - self._call_connect_timestamp
                 self._duration_item['call_duration_incoming'](int(duration))
@@ -186,7 +210,7 @@ class MonitoringService():
 
     def _count_duration_outgoing(self):
         self._call_active['outgoing'] = True
-        while (self._call_active['outgoing']):
+        while self._call_active['outgoing']:
             if not self._duration_item['call_duration_outgoing'] is None:
                 duration = time.time() - self._call_connect_timestamp
                 self._duration_item['call_duration_outgoing'](int(duration))
@@ -207,24 +231,25 @@ class MonitoringService():
         self.logger.debug(line)
         line = line.split(";")
 
-        if (line[1] == "RING"):
+        if line[1] == "RING":
             call_from = line[3]
             call_to = line[4]
             self._trigger(call_from, call_to, line[0], line[2], line[1], '')
-        elif (line[1] == "CALL"):
+        elif line[1] == "CALL":
             call_from = line[4]
             call_to = line[5]
             self._trigger(call_from, call_to, line[0], line[2], line[1], line[3])
-        elif (line[1] == "CONNECT"):
+        elif line[1] == "CONNECT":
             self._trigger('', '', line[0], line[2], line[1], line[3])
-        elif (line[1] == "DISCONNECT"):
+        elif line[1] == "DISCONNECT":
             self._trigger('', '', '', line[2], line[1], '')
 
     def _trigger(self, call_from, call_to, time, callid, event, branch):
         """
         Triggers the event: sets item values and looks up numbers in the phone book.
         """
-
+        self.logger.debug(
+            "Event: %s, Call From: %s, Call To: %s, Time: %s, CallID: %s" % (event, call_from, call_to, time, callid))
         # in each case set current call event and direction
         for item in self._items:
             if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event':
@@ -241,7 +266,9 @@ class MonitoringService():
             for trigger_item in self._trigger_items:
                 if self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') == 'monitor_trigger':
                     trigger_item(0)
-                    # self.logger.debug(self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +trigger_item.conf['avm_incoming_allowed']+" "+trigger_item.conf['avm_target_number'])
+                    self.logger.debug(self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +
+                                      trigger_item.conf['avm_incoming_allowed'] + " " + trigger_item.conf[
+                                          'avm_target_number'])
                     if 'avm_incoming_allowed' not in trigger_item.conf or 'avm_target_number' not in trigger_item.conf:
                         self.logger.error(
                             "both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes in a trigger item.")
@@ -259,7 +286,8 @@ class MonitoringService():
                 # process items specific to incoming calls
                 for item in self._items_incoming:  # update items for incoming calls
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_incoming']:
-                        item(1)
+                        self.logger.debug("Setting is_call_incoming: %s" % True)
+                        item(True)
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_caller_incoming']:
                         if call_from != '' and call_from is not None:
                             name = self._callback(call_from)
@@ -271,13 +299,17 @@ class MonitoringService():
                             item("Unbekannt")
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in [
                         'last_call_date_incoming']:
+                        self.logger.debug("Setting last_call_date_incoming: %s" % time)
                         item(time)
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
+                        self.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_number_incoming']:
+                        self.logger.debug("Setting last_number_incoming: %s" % call_from)
                         item(call_from)
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in [
                         'last_called_number_incoming']:
+                        self.logger.debug("Setting last_called_number_incoming: %s" % call_to)
                         item(call_to)
 
         # call is outgoing
@@ -291,7 +323,7 @@ class MonitoringService():
             # process items specific to outgoing calls
             for item in self._items_outgoing:
                 if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_outgoing']:
-                    item(1)
+                    item(True)
                 elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_caller_outgoing']:
                     name = self._callback(call_to)
                     if name != '' and not name is None:
@@ -313,7 +345,7 @@ class MonitoringService():
             # handle OUTGOING calls
             if callid == self._call_outgoing_cid:
                 if not self._duration_item[
-                    'call_duration_outgoing'] is None:  # start counter thread only if duration item set and call is outgoing
+                           'call_duration_outgoing'] is None:  # start counter thread only if duration item set and call is outgoing
                     self._stop_counter('outgoing')  # stop potential running counter for parallel (older) outgoing call
                     self._start_counter(time, 'outgoing')
                 for item in self._items_outgoing:
@@ -323,11 +355,13 @@ class MonitoringService():
             # handle INCOMING calls
             elif callid == self._call_incoming_cid:
                 if not self._duration_item[
-                    'call_duration_incoming'] is None:  # start counter thread only if duration item set and call is incoming
+                           'call_duration_incoming'] is None:  # start counter thread only if duration item set and call is incoming
                     self._stop_counter('incoming')  # stop potential running counter for parallel (older) incoming call
+                    self.logger.debug("Starting Counter for Call Time")
                     self._start_counter(time, 'incoming')
                 for item in self._items_incoming:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
+                        self.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
 
         # connection ended
@@ -338,7 +372,7 @@ class MonitoringService():
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_outgoing':
                         item(event.lower())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_outgoing':
-                        item(0)
+                        item(False)
                 if not self._duration_item['call_duration_outgoing'] is None:  # stop counter threads
                     self._stop_counter('outgoing')
                 self._call_outgoing_cid = None
@@ -347,15 +381,18 @@ class MonitoringService():
             elif callid == self._call_incoming_cid:
                 for item in self._items_incoming:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_incoming':
+                        self.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_incoming':
-                        item(0)
+                        self.logger.debug("Setting is_call_incoming: %s" % False)
+                        item(False)
                 if not self._duration_item['call_duration_incoming'] is None:  # stop counter threads
+                    self.logger.debug("Stopping Counter for Call Time")
                     self._stop_counter('incoming')
                 self._call_incoming_cid = None
 
 
-class FritzDevice():
+class FritzDevice:
     """
     This class encapsulates information related to a specific FritzDevice, such has host, port, ssl, username, password, or related items
     """
@@ -439,8 +476,8 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.3"
+
+    PLUGIN_VERSION = "1.5.4"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -473,20 +510,9 @@ class AVM(SmartPlugin):
                      ('WANDSLInterfaceConfig', 'urn:dslforum-org:service:WANDSLInterfaceConfig:1'),
                      ('MyFritz', 'urn:dslforum-org:service:X_AVM-DE_MyFritz:1')])
 
-    def __init__(self, smarthome, username='', password='', host='fritz.box', port='49443', ssl='True', verify='False',
-                 cycle=300, call_monitor='False', call_monitor_incoming_filter=''):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param username:           Login name of user, cptional for devices which only support passwords
-        :param password:           Password for the FritzDevice
-        :param host:               IP or host name of FritzDevice
-        :param port:               Port of the FritzDevice (https: 49443, http: 49000)
-        :param ssl:                True or False => https or http in URLs
-        :param verify:             True or False => verification of SSL certificate
-        :param cycle:              Update cycle in seconds
-        :param call_monitor:       bool: Shall the MonitoringService for the CallMonitor be started?
-        :param call_monitor_incoming_filter:    Filter only specific numbers to be watched by call monitor
         """
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init AVM Plugin')
@@ -494,34 +520,37 @@ class AVM(SmartPlugin):
         self._session = requests.Session()
         self._timeout = 10
 
-        self._verify = self.to_bool(verify)
-        ssl = self.to_bool(ssl)
+        self._verify = self.get_parameter_value('verify')
+        ssl = self.get_parameter_value('ssl')
 
         if ssl and not self._verify:
             urllib3.disable_warnings()
 
-        self._fritz_device = FritzDevice(host, port, ssl, username, password, self.get_instance_name())
+        self._fritz_device = FritzDevice(self.get_parameter_value('host'), self.get_parameter_value('port'), ssl,
+                                         self.get_parameter_value('username'), self.get_parameter_value('password'),
+                                         self.get_instance_name())
 
-        self._call_monitor = self.to_bool(call_monitor)
+        self._call_monitor = self.to_bool(self.get_parameter_value('call_monitor'))
         if self._call_monitor:
             self._monitoring_service = MonitoringService(self._fritz_device.get_host(), 1012,
                                                          self.get_contact_name_by_phone_number,
-                                                         call_monitor_incoming_filter, self)
+                                                         self.get_parameter_value('call_monitor_incoming_filter'), self)
             self._monitoring_service.connect()
 
-        self._call_monitor_incoming_filter = call_monitor_incoming_filter
+        self._call_monitor_incoming_filter = self.get_parameter_value('call_monitor_incoming_filter')
 
-        self._cycle = int(cycle)
-        self._sh = smarthome
+        self._cycle = int(self.get_parameter_value('cycle'))
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
         self._calllist_cache = []
+
+        if not self.init_webinterface():
+            self._init_complete = False
 
     def run(self):
         """
         Run method for the plugin
         """
-#        self._sh.scheduler.add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.scheduler_add('update', self._update_loop, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
@@ -547,7 +576,7 @@ class AVM(SmartPlugin):
             arguments = [
                 self._argument % {'name': name, 'value': value}
                 for name, value in argument.items()
-                ]
+            ]
             argument_string = argument_string.join(arguments)
         body = self._body.strip() % {'action': action, 'service': service, 'arguments': argument_string}
         soap_data = self._envelope.strip() % body
@@ -615,7 +644,7 @@ class AVM(SmartPlugin):
         :return: Array of calllist entries
         """
         # request and cache calllist
-        if (self._calllist_cache is None):
+        if self._calllist_cache is None:
             self._calllist_cache = self.get_calllist(self._call_monitor_incoming_filter)
         elif len(self._calllist_cache) == 0:
             self._calllist_cache = self.get_calllist(self._call_monitor_incoming_filter)
@@ -745,7 +774,7 @@ class AVM(SmartPlugin):
                             break
             if not self._monitoring_service is None:
                 self._monitoring_service.set_duration_item(item)
-        else:
+        elif self.has_iattr(item.conf, 'avm_data_type'):
             # normal items
             self._fritz_device._items.append(item)
         if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device']:
@@ -978,7 +1007,7 @@ class AVM(SmartPlugin):
 
             calllist_entries = calllist_xml.getElementsByTagName('Call')
             result_entries = []
-            if (len(calllist_entries) > 0):
+            if len(calllist_entries) > 0:
                 for calllist_entry in calllist_entries:
                     result_entry = {}
 
@@ -1417,6 +1446,8 @@ class AVM(SmartPlugin):
         Updates AVM home automation device related information
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_homeauto.pdf
+        CURL for testing which data is coming back:
+        curl --anyauth -u user:'password' "https://192.168.178.1:49443/upnp/control/x_homeauto" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:X_AVM-DE_Homeauto:1#GetSpecificDeviceInfos" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:GetSpecificDeviceInfos xmlns:u='urn:dslforum-org:service:X_AVM-DE_Homeauto:1'><s:NewAIN>xxxxx xxxxxxx</s:NewAIN></u:GetSpecificDeviceInfos></s:Body></s:Envelope>" -s -k
 
         :param item: item to be updated (Supported item avm_data_types: aha_device)
         """
@@ -1438,6 +1469,7 @@ class AVM(SmartPlugin):
                                           auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                               self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
+
         except Exception as e:
             self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
             return
@@ -1447,8 +1479,8 @@ class AVM(SmartPlugin):
             if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data)
                 for child in item.return_children():
-                    if 'avm_data_type' in child.conf:
-                        if child.conf['avm_data_type'] == 'temperature':
+                    if self.has_iattr(child.conf, 'avm_data_type'):
+                        if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
                             temp = xml.getElementsByTagName('NewTemperatureCelsius')
                             if len(temp) > 0:
                                 child(int(temp[0].firstChild.data))
@@ -1456,7 +1488,7 @@ class AVM(SmartPlugin):
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
                                                                                                            'avm_data_type'))
-                        elif child.conf['avm_data_type'] == 'power':
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'power':
                             power = xml.getElementsByTagName('NewMultimeterPower')
                             if len(power) > 0:
                                 child(int(power[0].firstChild.data))
@@ -1464,7 +1496,7 @@ class AVM(SmartPlugin):
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
                                                                                                            'avm_data_type'))
-                        elif child.conf['avm_data_type'] == 'energy':
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'energy':
                             energy = xml.getElementsByTagName('NewMultimeterEnergy')
                             if len(energy) > 0:
                                 child(int(energy[0].firstChild.data))
@@ -1481,6 +1513,8 @@ class AVM(SmartPlugin):
         Updates FritzDevice specific information
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/deviceinfoSCPD.pdf
+        CURL for testing:
+        curl  --anyauth -u user:'password' 'https://192.168.178.1:49443/upnp/control/deviceinfo' -H 'Content-Type: text/xml; charset="utf-8"' -H 'SoapAction: urn:dslforum-org:service:DeviceInfo:1#GetInfo' -d '<?xml version="1.0" encoding="utf-8"?> <s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"> <s:Body> <u:GetInfo xmlns:u="urn:dslforum-org:service:DeviceInfo:1"> </u:GetInfo> </s:Body> </s:Envelope>' -s -k
 
         :param item: Item to be updated (Supported item avm_data_types: uptime, software_version, hardware_version,serial_number, description)
         """
@@ -1972,3 +2006,86 @@ class AVM(SmartPlugin):
             if not xml[0].firstChild is None:
                 data = xml[0].firstChild.data
         return data
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tabcount = 1
+        tab2title = ""
+        if self.plugin._call_monitor:
+            tab2title = "Call Monitor Items (%s)" % self.plugin._monitoring_service.get_item_count_total()
+            tabcount = 2
+
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
+                           plugin_info=self.plugin.get_info(), tabcount=tabcount,
+                           tab1title="AVM Items (%s)" % self.plugin._fritz_device.get_item_count(),
+                           tab2title=tab2title,
+                           p=self.plugin)

@@ -5,17 +5,9 @@ This plugin has no requirements or dependencies.
 
 ## Configuration
 
-### plugin.conf (deprecated) / .yaml
+### plugin.yaml
 
-```
-[luxtronic2]
-    class_name = Luxtronic2
-    class_path = plugins.luxtronic2
-    host = 192.168.0.123
-    # port = 8888
-```
-
-```
+```yaml
 luxtronic2:
     class_name: Luxtronic2
     class_path: plugins.luxtronic2
@@ -27,9 +19,9 @@ luxtronic2:
   * `host`: specifies the hostname of your heating server.
   * `port`: if you want to use a nonstandard port.
 
-### items.conf
+### items.yaml
 
-Each heating controlled with a Luxtronic 2.0 controller has different things which can controlled or different information which can be received. 
+Each heating controlled with a Luxtronic 2.0 controller has different things which can controlled or different information which can be received.
 The reason for that is that every heating system can have special modules installed or mounted to the system itself.
 To have the most generic way to read state informations or change values this plugin is based on the index values of the ouput from your heating.
 There are three main sections:
@@ -37,7 +29,7 @@ There are three main sections:
   * 'attribute': I'm not sure what they are for. In the Java Applet on the webserver of the heating itself it is used as visibility and it seems that these are only boolean flags, maybe to control which parameter is realy needed.
   * 'calculated': returns calculated information. For example the current state or the time the heating was running until now.
 
-For all of the following items.conf attributes you have to define the right index for the output from your heating.
+For all of the following items.yaml attributes you have to define the right index for the output from your heating.
 
 #### lux2
 Special post processed values from the calculated section for the most important information (read-only).
@@ -55,22 +47,7 @@ Defines a mapping to a attribute (read-only). All attribute values are bytes (nu
 #### lux2_c
 Defines a mapping to a calculated value (read-only). All calculated values are integer (numbers).
 
-```
-#.conf (deprecated)
-[heating]
-    [[temp_outside]]
-        type = num
-        lux2 = 10
-    [[state_numeric]]
-        type = num
-        lux2_c = 119
-    [[state]]
-        type = str
-        lux2 = 119
-```
-
-```
-#.yaml
+```yaml
 heating:
     temp_outside:
         type: num
@@ -83,12 +60,10 @@ heating:
         lux2: 119
 ```
 
-### logic.conf
+### logic.yaml
 
 Currently there is no logic configuration for this plugin.
 
 ## Functions
 
 Currently there are no functions offered from this plugin.
-
-

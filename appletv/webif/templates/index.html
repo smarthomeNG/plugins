@@ -1,0 +1,124 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+{% block headtable %}	
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Name') }}</strong></td>
+			<td class="py-1">{{ p._name }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('IP') }}</strong></td>
+			<td class="py-1">{{ p._ip }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Login ID') }}</strong></td>
+			<td class="py-1">{{ p._login_id }}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+	<form id="button_pressed" action="button_pressed" method="post">
+	    <input type="hidden" id="button" name="button" value="">
+	    <input type="hidden" id="pin" name="pin" value="">
+        <button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('discover');$('#button_pressed').submit();">
+        <i class="fas fa-search"></i>&nbsp;&nbsp;&nbsp;{{ _('Finden') }}&nbsp;</button>
+        <button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('start_authorization');$('#button_pressed').submit();" {% if p._credentials_verified %}disabled="True"{% endif %}>
+        <i class="fas fa-key"></i>&nbsp;&nbsp;&nbsp;{{ _('Autorisieren') }}&nbsp;</button>
+	</form>
+{% endblock %}
+
+{% set tabcount = 1 %}
+{% block bodytab1 %}
+
+<!--
+	PIN entry modal dialog
+-->
+<script src="static/js/bootstrap-pincode-input.js"></script>
+<link rel="stylesheet" type="text/css" href="static/css/bootstrap-pincode-input.css">
+<script>
+   $(document).ready(function() {
+        $('#pincode-input').pincodeInput({hidedigits:false,inputs:4});
+        {% if pinentry %}
+            $('#pinEntry').modal();
+        {% endif %}
+        $('#pinEntry').on('hidden.bs.modal', function (e) {
+            $('#button').val('finish_authorization');
+            $('#pin').val($('#pincode-input').val());
+            $('#button_pressed').submit();
+        })
+    });
+</script>
+
+<div class="modal fade" id="pinEntry" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">{{ _('PIN eingeben') }}</h4>
+            </div>
+            <div class="modal-body">
+                <p>{{ _('PIN eingeben') }}: <input type="text" id="pincode-input"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Validieren') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--
+	Discovered devices table
+-->
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr>
+				    <th>&nbsp;</th>
+					<th>{{ _('Name') }}</th>
+					<th>{{ _('IP Adresse') }}</th>
+					<th>{{ _('Login ID') }}</th>
+					<th>{{ _('DMAP Port') }}</th>
+					<th>{{ _('Airplay Port') }}</th>
+    			</tr>
+			</thead>
+			<tbody>
+			{% for atv in p._atvs %}
+				<tr>  
+				    <td class="py-1" style="color: {% if atv.login_id %}green{% else %}red{% endif %}">
+				        {% if atv.address|string() == p._ip|string() %}
+				            <i class="fas fa-play-circle" title="{{ _('Aktuelles Gerät') }}"></i>
+				        {% elif atv.login_id %}
+                            <i class="fas fa-check-circle" title="{{ _('Gerät nutzbar') }}"></i>
+                        {% else %}
+                            <i class="fas fa-exclamation-circle" title="{{ _('Gerät nicht nutzbar') }}"></i>
+                        {% endif %}
+				    </td>
+					<td class="py-1">{{ atv.name }}</td>
+					<td class="py-1">{{ atv.address }}</td>
+					<td class="py-1">{{ atv.login_id }}</td>
+					<td class="py-1">{{ atv.port }}</td>
+					<td class="py-1">{{ atv.airplay_port }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+<div>
+    * {{ _('Wenn ein Gerät nicht nutzbar ist bitte überprüfen op Homesharing eingeschaltet ist.') }} 
+</div>
+
+{% endblock bodytab1 %}
+

@@ -26,7 +26,8 @@ Blockly.Blocks['shtime_now'] = {
   }
 };
 Blockly.Python['shtime_now'] = function(block) {
-  var code = 'sh.now()';
+//  var code = 'sh.now()';
+  var code = 'sh.shtime.now()';
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.Python.ORDER_NONE];
 };

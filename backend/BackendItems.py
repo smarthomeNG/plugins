@@ -34,15 +34,21 @@ import sys
 import threading
 import os
 import lib.config
+from lib.item import Items
 from lib.logic import Logics
-import lib.logic   # zum Test (für generate bytecode -> durch neues API ersetzen)
+import lib.logic  # zum Test (für generate bytecode -> durch neues API ersetzen)
 from lib.model.smartplugin import SmartPlugin
 from .utils import *
 
 import lib.item_conversion
 
+
 class BackendItems:
 
+    def __init__(self):
+
+        self.items = Items.get_instance()
+        self.logger.info("BackendItems __init__ {}".format(self.items))
 
     def __init__(self):
 
@@ -54,13 +60,13 @@ class BackendItems:
     # -----------------------------------------------------------------------------------
 
     @cherrypy.expose
-    def items_html(self):
+    def items_html(self, item_path=None):
         """
         display a list of items
         """
-        return self.render_template('items.html', item_count=self._sh.item_count, 
-                                    items=sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False) )
-
+        return self.render_template('items.html', item_count=self.items.item_count(), item_path=item_path,
+                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
+                                                 reverse=False))
 
     @cherrypy.expose
     def items_json(self, mode="tree"):
@@ -69,7 +75,7 @@ class BackendItems:
 
         :param mode:             tree (default) or list structure
         """
-        items_sorted = sorted(self._sh.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+        items_sorted = sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
 
         if mode == 'tree':
             parent_items_sorted = []
@@ -85,7 +91,6 @@ class BackendItems:
                 item_list.append(item._path)
             return json.dumps(item_list)
 
-
     @cherrypy.expose
     def cache_check_json_html(self):
         """
@@ -98,7 +103,7 @@ class BackendItems:
         unused_cache_files = []
         for file in onlyfiles:
             if not file.find(".") == 0:  # filter .gitignore etc.
-                item = self._sh.return_item(file)
+                item = self.items.return_item(file)
                 no_cache_file = False;
                 if item is None:
                     no_cache_file = True
@@ -136,14 +141,14 @@ class BackendItems:
         Is called by items.html when an item value has been changed
         """
         item_data = []
-        item = self._sh.return_item(item_path)
+        item = self.items.return_item(item_path)
         if self.updates_allowed:
             if 'num' in item.type():
                 if "." in value or "," in value:
                     value = float(value)
                 else:
                     value = int(value)
-            item(value, caller='Backend')
+            item(value, caller='Backend', source='item_change_value_html()')
 
         return
 
@@ -201,13 +206,12 @@ class BackendItems:
                     hours = hours - 24 * days
         return self.age_to_string(days, hours, minutes, seconds)
 
-
     def list_to_displaystring(self, l):
         """
         """
         if type(l) is str:
             return l
-        
+
         edit_string = ''
         for entry in l:
             if edit_string != '':
@@ -215,9 +219,8 @@ class BackendItems:
             edit_string += str(entry)
         if edit_string == '':
             edit_string = '-'
-#        self.logger.info("list_to_displaystring: >{}<  -->  >{}<".format(l, edit_string))
+        #        self.logger.info("list_to_displaystring: >{}<  -->  >{}<".format(l, edit_string))
         return edit_string
-
 
     def build_on_list(self, on_dest_list, on_eval_list):
         """
@@ -228,16 +231,15 @@ class BackendItems:
             if isinstance(on_dest_list, list):
                 for on_dest, on_eval in zip(on_dest_list, on_eval_list):
                     if on_dest != '':
-                        on_list.append( on_dest + ' = ' + on_eval )
+                        on_list.append(on_dest + ' = ' + on_eval)
                     else:
-                        on_list.append( on_eval )
+                        on_list.append(on_eval)
             else:
                 if on_dest_list != '':
-                    on_list.append( on_dest_list + ' = ' + on_eval_list )
+                    on_list.append(on_dest_list + ' = ' + on_eval_list)
                 else:
-                    on_list.append( on_eval_list )
+                    on_list.append(on_eval_list)
         return on_list
-
 
     @cherrypy.expose
     def item_detail_json_html(self, item_path):
@@ -245,7 +247,7 @@ class BackendItems:
         returns a list of items as json structure
         """
         item_data = []
-        item = self._sh.return_item(item_path)
+        item = self.items.return_item(item_path)
         if item is not None:
             if item.type() is None or item.type() is '':
                 prev_value = ''
@@ -264,7 +266,7 @@ class BackendItems:
             cycle = ''
             crontab = ''
             for entry in self._sh.scheduler._scheduler:
-                if entry == item._path:
+                if entry == "items." + item._path:
                     if self._sh.scheduler._scheduler[entry]['cycle']:
                         cycle = self._sh.scheduler._scheduler[entry]['cycle']
                     if self._sh.scheduler._scheduler[entry]['cron']:
@@ -319,11 +321,15 @@ class BackendItems:
             except:
                 # if used lib.items doesn't support update_age() function
                 upd_age = item.age()
-            
+
             # build on_update and on_change data
             on_update_list = self.build_on_list(item._on_update_dest_var, item._on_update)
             on_change_list = self.build_on_list(item._on_change_dest_var, item._on_change)
-            
+
+            self._trigger_condition_raw = item._trigger_condition_raw
+            if self._trigger_condition_raw == []:
+                self._trigger_condition_raw = ''
+
             data_dict = {'path': item._path,
                          'name': item._name,
                          'type': item.type(),
@@ -342,9 +348,12 @@ class BackendItems:
                          'enforce_updates': enforce_updates,
                          'cache': cache,
                          'eval': html.escape(self.disp_str(item._eval)),
-                         'eval_trigger': self.disp_str(item._eval_trigger),
+                         'trigger': self.disp_str(item._trigger),
+                         'trigger_condition': self.disp_str(item._trigger_condition),
+                         'trigger_condition_raw': self.disp_str(self._trigger_condition_raw),
                          'on_update': html.escape(self.list_to_displaystring(on_update_list)),
                          'on_change': html.escape(self.list_to_displaystring(on_change_list)),
+                         'log_change': self.disp_str(item._log_change),
                          'cycle': str(cycle),
                          'crontab': str(crontab),
                          'autotimer': self.disp_str(item._autotimer),
@@ -376,4 +385,3 @@ class BackendItems:
             item_data.append({'path': item._path, 'name': item._name, 'tags': tags, 'nodes': nodes})
 
         return item_data
-

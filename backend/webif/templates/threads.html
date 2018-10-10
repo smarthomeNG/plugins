@@ -1,30 +1,38 @@
  <!DOCTYPE html>
 {% extends "base.html" %}
-{% import "navbar.html" as nav with context %}
 {% block navbar %}
-    {{ nav }}
+	{% with active_page="threads" %}
+	{% include "navbar.html" %}
+	{% endwith %}
 {% endblock navbar %}
 
+{% block title %}
+{{ _('Threads', 'menu') }} - SmartHomeNG
+{% endblock title %}
+
 {% block content %}
-<div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>{{ _('Thread') }} ({{ _('gesamt') }}: {{ threads_count }})</th>
-                    <th>{{ _('Thread-Id') }}</th>
-                    <th>{{ _('Aktiv') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for t in threads  %}
-                <tr>
-                    <td>{{ t.name }}</td>
-                    <td>{{ t.id }}</td>
-                    <td>{{ _(t.alive, 'threads') }}</td>
-                    <td width="200px"></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div style="margin-left: 10px; margin-right: 10px;">
+	<div class="table-responsive">
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Thread') }} ({{ _('gesamt') }}: {{ threads_count }})</th>
+					<th>{{ _('Thread-Id') }}</th>
+					<th>{{ _('Aktiv') }}</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for t in threads	 %}
+				<tr>
+					<td class="py-1">{{ t.name }}</td>
+					<td class="py-1">{{ t.id }}</td>
+					<td class="py-1">{{ _(t.alive, 'threads') }}</td>
+					<td class="py-1" width="200px"></td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
 {% endblock %}

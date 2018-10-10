@@ -26,8 +26,10 @@ import lib.log
 import os
 import pickle
 
-from .AutoBlindLoggerOLog import AbLogger
+from lib.shtime import Shtime
 from lib.model.smartplugin import SmartPlugin
+
+from .AutoBlindLoggerOLog import AbLogger
 
 
 
@@ -38,9 +40,10 @@ class OperationLog(AbLogger, SmartPlugin):
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome, name, cache=True, logtofile=True, filepattern="{year:04}-{month:02}-{day:02}-{name}.log",
-                 mapping=['time', 'thread', 'level', 'message'], items=[], maxlen=50):
+                 mapping=['time', 'thread', 'level', 'message'], items=[], maxlen=50, logger=None):
         log_directory = "var/log/operationlog/"
         self._sh = smarthome
+        self.shtime = Shtime.get_instance()
         self.name = name
         self.logger = logging.getLogger(__name__)
         if log_directory[0] != "/":
@@ -58,6 +61,7 @@ class OperationLog(AbLogger, SmartPlugin):
         AbLogger.__init__(self, name)
         self._filepattern = filepattern
         self._log = lib.log.Log(smarthome, name, mapping, int(maxlen))
+        self._logger = None if not logger else logging.getLogger(logger)
         self._path = name
         self._cachefile = None
         self._cache = True
@@ -73,12 +77,15 @@ class OperationLog(AbLogger, SmartPlugin):
         if isinstance(cache, str) and cache in ['False', 'false', 'No', 'no']:
             self._cache = False
             info_txt_cache = ""
+        info_logger_log = ", logging to {}".format(logger)
+        if not logger:
+            info_logger_log = ""
         self._logtofile = True
         info_txt_log = "OperationLog {}: logging to file {}{}, keeping {} entries in memory".format(self.name, self.log_directory,
                                                                                                     self._filepattern, int(self._maxlen))
         if isinstance(logtofile, str) and logtofile in ['False', 'false', 'No', 'no']:
             self._logtofile = False
-        self.logger.info(info_txt_log + info_txt_cache)
+        self.logger.info(info_txt_log + info_txt_cache + info_logger_log)
 
         #############################################################
         # Cache
@@ -86,13 +93,13 @@ class OperationLog(AbLogger, SmartPlugin):
         if self._cache is True:
             self._cachefile = self._sh._cache_dir + self._path
             try:
-                self.__last_change, self._logcache = _cache_read(self._cachefile, self._sh._tzinfo)
+                self.__last_change, self._logcache = _cache_read(self._cachefile, self.shtime.tzinfo())
                 self.load(self._logcache)
                 self.logger.debug("OperationLog {}: read cache: {}".format(self.name, self._logcache))
             except Exception:
                 try:
                     _cache_write(self.logger, self._cachefile, self._log.export(int(self._maxlen)))
-                    _cache_read(self._cachefile, self._sh._tzinfo)
+                    _cache_read(self._cachefile, self.shtime.tzinfo())
                     self.logger.info("OperationLog {}: generated cache file".format(self.name))
                 except Exception as e:
                     self.logger.warning("OperationLog {}: problem reading cache: {}".format(self._path, e))
@@ -100,7 +107,7 @@ class OperationLog(AbLogger, SmartPlugin):
     def update_logfilename(self):
         if self.__date == datetime.datetime.today() and self.__fname is not None:
             return
-        now = self._sh.now()
+        now = self.shtime.now()
         self.__fname = self._filepattern.format(**{'name': self.name, 'year': now.year, 'month': now.month, 'day': now.day})
         self.__myLogger.update_logfile(self.__fname)
 
@@ -294,7 +301,7 @@ class OperationLog(AbLogger, SmartPlugin):
             log = []
             for name in self._log.mapping:
                 if name == 'time':
-                    log.append(self._sh.now())
+                    log.append(self.shtime.now())
                 elif name == 'thread':
                     log.append(threading.current_thread().name)
                 elif name == 'level':
@@ -312,6 +319,9 @@ class OperationLog(AbLogger, SmartPlugin):
                     _cache_write(self.logger, self._cachefile, self._log.export(int(self._maxlen)))
                 except Exception as e:
                     self.logger.warning("OperationLog {}: could not update cache {}".format(self._path, e))
+
+            if self._logger:
+                self._logger.log(logging.getLevelName(level), ' '.join(map(str, logvalues)))
 
 
 #####################################################################

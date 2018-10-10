@@ -7,7 +7,7 @@ Logging items to the time-series database [InfluxDB](https://www.influxdata.com/
 This started as a fork of the plugin `influxdata` with the following enhancements:
 - proper naming
 - specify a name for the measurement instead of falling back to the item's ID
-- specify additional tags or fields globally (plugin.conf) and/or on per-item basis
+- specify additional tags or fields globally (plugin.yaml) and/or on per-item basis
 
 The special smarthomeNG attributes `caller`, `source` and `dest` are always logged as tags.
 
@@ -35,23 +35,11 @@ You have to explicitly enable the UDP endpoint in influxdb. The UDP endpoint can
   # retention-policy = ""
 ```
 
-### plugin.conf (deprecated) / plugin.yaml
+### plugin.yaml
 
 you can setup global tags and fields (JSON encoded)
 
-```
-[influxdb]
-    class_name = InfluxDB
-    class_path = plugins.influxdb
-#   host = localhost
-#   port = 8089
-#   keyword = influxdb
-#   value_field = value
-    tags = {"key": "value", "foo": "bar"}
-    fields = {"key": "value", "foo": "bar"}
-```
-
-```
+```yaml
 influxdb:
     class_name: InfluxDB
     class_path: plugins.influxdb
@@ -63,47 +51,30 @@ influxdb:
     fields: '{"key": "value", "foo": "bar"}'
 ```
 
-### items.conf (deprecated) / items.yaml
-logging into a measurement named `root.some_item`, default tags and tags/fields as specified in plugin.conf
+### items.yaml
 
-```
-[root]
-  [[some_item]]
-    influxdb = true
-```
+logging into a measurement named `root.some_item`, default tags and tags/fields as specified in plugin.yaml
 
-```
+```yaml
 root:
 
     some_item:
         influxdb: 'true'
 ```
 
-if `keyword` in plugin.conf is set to `sqlite` this can also be used as a drop-in replacement for sqlite.
+if `keyword` in plugin.yaml is set to `sqlite` this can also be used as a drop-in replacement for sqlite.
 
-```
-[root]
-  [[some_item]]
-    sqlite = true
-```
-
-```
+```yaml
 root:
 
     some_item:
         sqlite: 'true'
 ```
 
-*recommended*: logging into the measurement `temp` with an additional tag `room` and default tags (including `item: root.dining_temp`) and tags/fields as specified in plugin.conf
+*recommended*: logging into the measurement `temp` with an additional tag `room`
+and default tags (including `item: root.dining_temp`) and tags/fields as specified in plugin.yaml
 
-```
-[root]
-  [[dining_temp]]
-    influxdb_name = temp
-    influxdb_tags = {"room": "dining"}
-```
-
-```
+```yaml
 root:
 
     dining_temp:

@@ -1,0 +1,128 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Datendatei') }}:</strong></td>
+			<td class="py-1"><a class="text-shng" href="?cmd=show_data_file">{{p._datafile}}</a></td>
+			<td><strong>{{ _('State') }}</strong></td>
+			<td>{% for item in p.get_items() %}
+			{% if item.conf['sim'] == 'state' %}
+			{% if item() == 0 %}{{ _('Stop') }}{% endif %}
+			{% if item() == 1 %}{{ _('Standby') }}{% endif %}
+			{% if item() == 2 %}{{ _('Record') }}{% endif %}
+			{% if item() == 4 %}{{ _('Play') }}{% endif %}
+			{% endif %}
+				{% endfor %}</td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Last Day') }}</strong></td>
+			<td class="py-1" colspan="3">{% if p.lastday == '' %}-{% else %}{{ p.lastday }}{% endif %}</td>
+		</tr>
+		{% if startRecord %}
+		<tr>
+			<td class="py-1"><strong>{{ _('startrecord Scheduler') }}</strong></td>
+			<td class="py-1" colspan="3">{{ startRecord.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+		</tr>
+		{% elif simulate %}
+		<tr>
+			<td class="py-1"><strong>{{ _('simulate Scheduler') }}</strong></td>
+			<td class="py-1" colspan="3">{{ simulate.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+		</tr>
+		{% endif %}
+		<tr>
+
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+{% block buttons %}
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?cmd=delete_data_file'">{{ _('Datendatei leeren') }}</button>
+{% if cmd == 'show_data_file' %}
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?'">{{ _('Zurück') }}</button>
+{% else %}
+<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?cmd=show_data_file'">{{ _('Datendatei anzeigen') }}</button>
+{% endif %}
+{% endblock buttons %}
+
+
+{% block bodytab1 %}
+<div class="col-sm-12">
+	{% if cmd == 'delete_data_file' %}
+		<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+			<strong>{{ _('Datendatei erfolgreich geleert!') }}</strong>
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+	{% endif %}
+	{% if cmd != 'show_data_file' %}
+	<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+		<h5>{{ _('Simulation Plugin Items') }} ({{ p.get_items()|length }})</h5>
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Item') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('sim Attribut') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in p.get_items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">
+							{% if item.conf['sim'] in ['state','tank','message','control'] %}<strong>{% endif %}
+							{{ item.id() }}
+							{% if item.conf['sim'] in ['state','tank','message','control'] %}</strong>{% endif %}
+						</td>
+						<td class="py-1">{{ item.type() }}</td>
+						<td class="py-1">{{ item() }} <i>
+							{% if item.conf['sim'] == 'state' %}
+							{% if item() == 0 %}({{ _('Stop') }}){% endif %}
+							{% if item() == 1 %}({{ _('Standby') }}){% endif %}
+							{% if item() == 2 %}({{ _('Record') }}){% endif %}
+							{% if item() == 4 %}({{ _('Play') }}){% endif %}
+							{% elif item.conf['sim'] == 'tank' %}
+							({{ _('Days') }})
+							{% endif %}</i></td>
+						<td class="py-1">{{ item.conf['sim'] }}</td>
+						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	{% else %}<br style="clear:both;"/>
+	<div class="container-fluid">
+		<div style="border: 1px solid #ddd; margin-bottom: 10px;">
+			{% if data_file_content %}<textarea autocomplete="off" id="data_file_content" name="data_file_content">{% for line in data_file_content %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}<div class="m-2">{{ _('Keine Daten verfügbar') }}</div>{% endif %}
+		</div>
+	</div>
+	<script type="text/javascript" language="javascript">
+		var dataFileCodeMirror = CodeMirror.fromTextArea(document.getElementById("data_file_content"), {
+			lineNumbers: true,
+			readOnly: true,
+			indentUnit: 4,
+			lineSeparator: '\n',
+			mode: 'ttcn',
+			lineWrapping: false,
+			firstLineNumber: 1,
+			indentWithTabs: false
+		});
+
+		window.addEventListener("resize", function(){resizeCodeMirror(dataFileCodeMirror, 75)}, false);
+		resizeCodeMirror(dataFileCodeMirror, 75);
+	</script>
+	{% endif %}
+</div>
+{% endblock bodytab1 %}

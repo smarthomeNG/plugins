@@ -1,0 +1,14 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Modus':                           {'de': '=', 'en': 'Mode'}
+    'Alle Items':                      {'de': '=', 'en': 'All items'}
+    'Nur in Sets definierte Items':    {'de': '=', 'en': 'Only items defined in sets'}
+    'Alle zugreifbaren Items':         {'de': '=', 'en': 'All Accessible Items'}
+
+    # Alternative format for translations of longer texts:
+    'Die folgenden Items und Sets können über die REST und die Simple WebService API gelesen und (bei str, num und bool Items) verändert werden':
+        'de': '='
+        'en': 'The following items and sets can be read through the REST and the Simple WebService API. Values of str, num, and bool items can also be changed.'
+    'Tipp: Durch Anhängen des Parameters "?mode=val|full" kann erzwungen werden, dass das Item / Itemset mit vollen oder einfachen Daten zurückgeliefert wird. Ansonsten greift die Konfiguration im Item via webservices_data.':
+        'de': '='
+        'en': 'Hint: By adding the parameter "?mode=val|full" to the URL, it can be enforced that the Item / Itemset is returned with full / simple data. Otherwise the configuration within the item (webservices_data) applies.'

@@ -2,9 +2,11 @@
 # https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/smart-home-skill-api-reference
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
 import ssl
 import json
 import uuid
+
 
 class AlexaService(object):
     def __init__(self, logger, version, devices, actions, host, port, auth=None, https_certfile=None, https_keyfile=None):
@@ -23,13 +25,18 @@ class AlexaService(object):
             # TODO: client-certificates can be handled here as well: https://docs.python.org/2/library/ssl.html
             self.server.socket = ssl.wrap_socket(self.server.socket, server_side=True, certfile=https_certfile, keyfile=https_keyfile)
 
+        self._server_thread = threading.Thread(target=self.server.serve_forever)
+        self._server_thread.daemon = True
+
     def start(self):
         self.logger.info("Alexa: service starting")
-        self.server.serve_forever()
+        self._server_thread.start()
 
     def stop(self):
         self.logger.info("Alexa: service stopping")
         self.server.shutdown()
+        self.server.server_close()
+
 
 class AlexaRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, logger, version, devices, actions, *args):

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=fixme
 
+# Disable while we have Python 2.x compatability
+# pylint: disable=useless-object-inheritance
+
 """Sonos Music Services interface.
 
 This module provides the MusicService class and related functionality.
@@ -606,7 +609,7 @@ class MusicService(object):
         item_id = quote_url(item_id.encode('utf-8'))
         # Add the account info to the end as query params
         account = self.account
-        result = "soco://{0}?sid={1}&sn={2}".format(
+        result = "soco://{}?sid={}&sn={}".format(
             item_id, self.service_id,
             account.serial_number
         )
@@ -619,7 +622,7 @@ class MusicService(object):
         The Sonos descriptor is used as the content of the <desc> tag in
         DIDL metadata, to indicate the relevant music service id and username.
         """
-        desc = "SA_RINCON{0}_{1}".format(
+        desc = "SA_RINCON{}_{}".format(
             self.account.service_type, self.account.username
         )
         return desc
@@ -850,7 +853,7 @@ def desc_from_uri(uri):
         account_serial_number = query_string['sn'][0]
         try:
             account = Account.get_accounts()[account_serial_number]
-            desc = "SA_RINCON{0}_{1}".format(
+            desc = "SA_RINCON{}_{}".format(
                 account.service_type, account.username)
             return desc
         except KeyError:
@@ -863,11 +866,11 @@ def desc_from_uri(uri):
             if service_id == service["ServiceID"]:
                 service_type = service["ServiceType"]
                 account = Account.get_accounts_for_service(service_type)
-                if len(account) == 0:
+                if not account:
                     break
                 # Use the first account we find
                 account = account[0]
-                desc = "SA_RINCON{0}_{1}".format(
+                desc = "SA_RINCON{}_{}".format(
                     account.service_type, account.username)
                 return desc
     # Nothing found. Default to the standard desc value. Is this the right

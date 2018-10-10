@@ -17,9 +17,15 @@ plugin:
     multi_instance: False          # plugin supports multi instance
     classname: Dashbutton          # class containing the plugin
 
-parameters:
+parameters: NONE
     # Definition of parameters to be configured in etc/plugin.yaml
     
 item_attributes:
     # Definition of item attributes defined by this plugin
     
+logic_parameters:
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+

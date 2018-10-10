@@ -1,8 +1,8 @@
 # NUT - Network UPS Tools plugin
 
-This plugin is connecting to NUT daemon and can be used to read ups variables. 
+This plugin is connecting to NUT daemon and can be used to read ups variables.
 
-The primary goal of the Network UPS Tools (NUT) project is to provide support for Power Devices, 
+The primary goal of the Network UPS Tools (NUT) project is to provide support for Power Devices,
 such as Uninterruptible Power Supplies, Power Distribution Units, Automatic Transfer Switch, Power Supply Units and Solar Controllers.
 
 The plugin can be used standalone to list available variables using command `upsc your_ups_name`.
@@ -16,7 +16,7 @@ Configured & running upsd - NUT daemon
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
 ```yaml
 nut:
@@ -29,7 +29,7 @@ nut:
     timeout: telnet read timeout, optional, default 5
 ```
 
-## items.conf
+## items.yaml
 
 ```yaml
 ups_item:
@@ -49,15 +49,15 @@ ups:
         nut_var: ups.status
         online:
             type: bool
-            eval_trigger: ups.status 
+            eval_trigger: ups.status
             eval: 1 if 'OL' in sh.ups.status() else 0
         on_battery:
             type: bool
-            eval_trigger: ups.status 
+            eval_trigger: ups.status
             eval: 1 if 'OB' in sh.ups.status() else 0
         low_battery:
             type: bool
-            eval_trigger: ups.status 
+            eval_trigger: ups.status
             eval: 1 if 'LB' in sh.ups.status() else 0
     battery:
         percent:

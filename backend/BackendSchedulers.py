@@ -23,9 +23,19 @@
 #########################################################################
 
 import cherrypy
+import html
+#
+from lib.scheduler import Scheduler
+
 
 class BackendSchedulers:
 
+
+    def __init__(self):
+
+        self.scheduler = Scheduler.get_instance()
+        self.logger.info("BackendSchedulers __init__ self.scheduler = {}".format(self.scheduler))
+        
 
     # -----------------------------------------------------------------------------------
     #    SCHEDULERS
@@ -38,21 +48,23 @@ class BackendSchedulers:
         """
         
         schedule_list = []
-        for entry in self._sh.scheduler._scheduler:
+#        for entry in self._sh.scheduler._scheduler:
+        for entry in self.scheduler._scheduler:
             schedule = dict()
-            s = self._sh.scheduler._scheduler[entry]
+#            s = self._sh.scheduler._scheduler[entry]
+            s = self.scheduler._scheduler[entry]
             if s['next'] != None and s['cycle'] != '' and s['cron'] != '':
                 schedule['fullname'] = entry
                 schedule['name'] = entry
                 schedule['group'] = ''
                 schedule['next'] = s['next'].strftime('%Y-%m-%d %H:%M:%S%z')
                 schedule['cycle'] = s['cycle']
-                schedule['cron'] = s['cron']
+                schedule['cron'] = html.escape(str(s['cron']))
                 
                 if schedule['cycle'] == None:
-                    schedule['cycle'] = ''
+                    schedule['cycle'] = '-'
                 if schedule['cron'] == None:
-                    schedule['cron'] = ''
+                    schedule['cron'] = '-'
                 
                 nl = entry.split('.')
                 if nl[0].lower() in ['items','logics','plugins']:

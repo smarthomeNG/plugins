@@ -3,23 +3,63 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Unterstützung für SMA Inverter SunnyBoy 5000TL-21, Sunny Tripower 8000TL-10, Sunny Tripower 12000TL-10'
-        en: ''
+        de: 'Unterstützung für SMA Wechselrichter SunnyBoy 5000TL-21, Sunny Tripower 8000TL-10, Sunny Tripower 12000TL-10'
+        en: 'Support for the SMA Inverter SunnyBoy 5000TL-21, Sunny Tripower 8000TL-10, Sunny Tripower 12000TL-10'
     maintainer: '? (Robert Budde)'
     tester: psilo909
+    state: ready
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    documentation: https://smarthomeng.de/user/plugins_doc/config/sma.html        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/27997-beitrag-plugin-zum-lesen-von-sma-wechselrichtern-sunnyboy-5000tl-21-getestet
 
     version: 1.3.1                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: SMA                 # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    bt_addr:
+        type: str
+        mandatory: True
+        description:
+            de: 'Bluetooth-Adresse des SMA Wechselrichters (mit "hcitool scan" herauszufinden).'
+            en: 'Bluetooth address of SMA inverter (find out with "hcitool scan").'
+
+    cycle:
+        type: int
+        default: 60
+        mandatory: False
+        description:
+            de: '(optional) Dieser Parameter muss normalerweise nicht angegeben werden. Er erlaubt es die Update-Frquenz anzupassen (Standard: alle 60 Sekunden).'
+            en: "(optional) This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 60 seconds)."
+
+    password:
+        type: str
+        mandatory: False
+        description:
+            de: '(optional) Passwort des Wechselrichters im User-Mode. Default: 0000.'
+            en: '(optional) Password of the inverter in user mode. Default: 0000.'
+
+    allowed_timedelta:
+        type: int
+        default: 10
+        mandatory: False
+        description:
+            de: '(optional) Erlaubter Zeitunterschied zwischen Systemzeit und Zeit des Wechselrichters. Falls der Inverter auf Systemzeit steht, kann die Prüfung mit -1 deaktiviert werden. Default: 10.'
+            en: '(optional) Allowed difference of inverter to system time - if above, inverter is set to system time - set to -1 to disable. Default: 10.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    sma:
+        type: str
+        mandatory: True
+        description:
+            de: 'Auszulesender Wert, möglich sind: PLUGIN_ACTIVE, AC_P_TOTAL, E_DAY, E_TOTAL, INV_SERIAL, INV_ADDRESS, LAST_UPDATE, DC_STRING1_P, DC_STRING2_P, DC_STRING1_U, DC_STRING2_U, DC_STRING1_I, DC_STRING2_I, OPERATING_TIME, FEEDING_TIME, GRID_FREQUENCY, STATUS, GRID_RELAY, SW_VERSION.'
+            en: 'Value to read. Possible: PLUGIN_ACTIVE, AC_P_TOTAL, E_DAY, E_TOTAL, INV_SERIAL, INV_ADDRESS, LAST_UPDATE, DC_STRING1_P, DC_STRING2_P, DC_STRING1_U, DC_STRING2_U, DC_STRING1_I, DC_STRING2_I, OPERATING_TIME, FEEDING_TIME, GRID_FREQUENCY, STATUS, GRID_RELAY, SW_VERSION.'
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

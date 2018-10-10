@@ -27,6 +27,7 @@
 
 import logging
 
+from lib.module import Modules
 from lib.model.smartplugin import SmartPlugin
 
 from .utils import *
@@ -40,8 +41,6 @@ from .BackendPlugins import BackendPlugins
 from .BackendScenes import BackendScenes
 from .BackendThreads import BackendThreads
 from .BackendLogging import BackendLogging
-from .BackendVisu import BackendVisu
-
 
 
 class BackendServer(SmartPlugin):
@@ -50,7 +49,7 @@ class BackendServer(SmartPlugin):
     the update functions for the items
     """
     
-    PLUGIN_VERSION='1.4.9'
+    PLUGIN_VERSION = '1.4.13'
 
 
     def __init__(self, sh, updates_allowed='True', developer_mode="no", pypi_timeout=5):
@@ -146,7 +145,8 @@ class BackendServer(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = self.get_module('http')   # try/except to handle running in a core version that does not support modules
+#            self.mod_http = self.get_module('http')   # try/except to handle running in a core version that does not support modules
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
         except:
              self.mod_http = None
 
@@ -191,7 +191,7 @@ import lib.item_conversion
 
 class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogics, 
                    BackendSchedulers, BackendPlugins, BackendScenes, BackendThreads, 
-                   BackendLogging, BackendVisu):
+                   BackendLogging):
 
     blockly_plugin_loaded = None    # None = load state is unknown
 
@@ -209,8 +209,10 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.logger.info("{}: Running from '{}'".format(self.__class__.__name__, self.webif_dir))
-        
-        self.tplenv = Environment(loader=FileSystemLoader(self.plugin.path_join( self.webif_dir, 'templates' ) ))   
+        backendtemplates = self.plugin.path_join(self.webif_dir, 'templates')
+        globaltemplates = self.plugin.mod_http.gtemplates_dir
+        self.tplenv = Environment(loader=FileSystemLoader([globaltemplates, backendtemplates]))
+
         from os.path import basename as get_basename
         self.tplenv.globals['get_basename'] = get_basename
         self.tplenv.globals['is_userlogic'] = Logics.is_userlogic
@@ -227,38 +229,23 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         self.pypi_timeout = plugin.pypi_timeout
 
         self._sh_dir = self._sh.base_dir
-        self.visu_plugin = None
-        self.visu_plugin_version = '1.0.0'
         
+        BackendSysteminfo.__init__(self)
+        BackendServices.__init__(self)
+        BackendItems.__init__(self)
+        BackendLogics.__init__(self)
+        BackendSchedulers.__init__(self)
+        BackendPlugins.__init__(self)
+        BackendScenes.__init__(self)
+        BackendThreads.__init__(self)
+        BackendLogging.__init__(self)
+
 
     def html_escape(self, str):
         """
         escape characters in html
         """
         return html_escape(str)
-
-
-    def find_visu_plugin(self):
-        """
-        look for the configured instance of the visu protocol plugin.
-        """
-        if self.visu_plugin is not None:
-            return
-
-        for p in self._sh._plugins:
-            if p.__class__.__name__ == "WebSocket":
-                self.visu_plugin = p
-        if self.visu_plugin is not None:
-            try:
-                self.visu_plugin_version = self.visu_plugin.get_version()
-            except:
-                self.visu_plugin_version = '1.0.0'
-            self.visu_plugin_build = self.visu_plugin_version[4:]
-            if self.visu_plugin_build < '2':
-                self.visu_plugin = None
-                self.logger.warning(
-                    "Visu protocol plugin v{} is too old to support backend, please update".format(
-                        self.visu_plugin_version))
 
 
     def render_template(self, tmpl_name, **kwargs):
@@ -272,11 +259,9 @@ class WebInterface(BackendSysteminfo, BackendServices, BackendItems, BackendLogi
         :return: contents of the template after beeing rendered 
 
         """
-        self.find_visu_plugin()
         tmpl = self.tplenv.get_template(tmpl_name)
         return tmpl.render(develop=self.developer_mode,
                            smarthome=self._sh, 
-                           visu_plugin=(self.visu_plugin is not None), 
                            yaml_converter=lib.item_conversion.is_ruamelyaml_installed(),
                            **kwargs)
 

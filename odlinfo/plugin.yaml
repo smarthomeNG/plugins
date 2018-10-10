@@ -3,23 +3,65 @@ plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Anbindung der Datenschnittstelle des Bundesamts für Strahlenschutz, **seit SmartHomeNG v1.3**'
-        en: ''
+        de: 'Dieses Plugin liefert die Gamme-Ortsdosisleistung (ODL) in µSv/h  von mehreren Stationen in Deutschland (zur Verfügung gestellt durch das Bundesamt für Strahlenschutz). Mehr Informationen unter httsp://odlinfo.bfs.de.'
+        en: 'This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in from several measuring stations (by "Bundesamt für Strahlenschutz") in Germany. For more information see https://odlinfo.bfs.de.'
     maintainer: psilo909
     tester: Sandman60
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    state: ready
+    keywords: radioactivity
+    documentation: http://smarthomeng.de/user/plugins_doc/config/odlinfo.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/986480-odlinfo-plugin-für-strahlungsdaten
 
-    version: 1.1.1                 # Plugin version
-    sh_minversion: 1.1             # minimum shNG version to use this plugin
+    version: 1.4.1                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: ODLInfo             # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
-item_attributes:
+    user:
+        type: str
+        mandatory: True
+        description:
+            de: 'Persönlicher User für odlinfo.bfs.de. Anleitung unter https://odlinfo.bfs.de/DE/service/datenschnittstelle.html.'
+            en: 'Your own personal user for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html.'
+
+    password:
+        type: str
+        mandatory: True
+        description:
+            de: 'Persönliches Passwort für odlinfo.bfs.de. Anleitung unter https://odlinfo.bfs.de/DE/service/datenschnittstelle.html.'
+            en: 'Your own personal password for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html.'
+
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
     
+plugin_functions:
+
+    get_radiation_data_for_id:
+        type: dict
+        description:
+            de: "Gibt ein DICT mit Infos zur einer Messstation zurück. Keys: 'plz', 'kid', 'lon', 'lat', 'ort', 'hoehe', 'mw', 'status'."
+            en: "Returns a DICT with Infos of a measuring station. Keys: 'plz', 'kid', 'lon', 'lat', 'ort', 'hoehe', 'mw', 'status'."
+
+        parameters:
+            odlinfo_id:
+                type: str
+                description:
+                    de: "ID der Messstation. Siehe https://odlinfo.bfs.de."
+                    en: "ID of measuring station. See https://odlinfo.bfs.de."
+
+    get_radiation_data_for_ids:
+        type: list(dict)
+        description:
+            de: "Gibt ein Array von DICTs mit Infos zu Messstationen zurück. Keys: 'plz', 'kid', 'lon', 'lat', 'ort', 'hoehe', 'mw', 'status'."
+            en: "Returns an array of DICTs with Infos of measuring stations. Keys: 'plz', 'kid', 'lon', 'lat', 'ort', 'hoehe', 'mw', 'status'."
+
+        parameters:
+            odlinfo_ids:
+                type: list(str)
+                description:
+                    de: "Array der IDs der Messstationen. Siehe https://odlinfo.bfs.de."
+                    en: "Array of IDs of measuring stations. See https://odlinfo.bfs.de."

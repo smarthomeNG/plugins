@@ -1,0 +1,121 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1">Client ID</td>
+			<td class="py-1">{{ p._client_id }}</td>
+		</tr>
+		<tr>
+			<td class="py-1">Consumer Secret</td>
+			<td class="py-1" colspan="3">{{ p._consumer_secret }}</td>
+		</tr>
+		<tr>
+			<td class="py-1">User ID</td>
+			<td class="py-1">{{ p._user_id}}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock %}
+
+{% block bodytab1 %}
+{% if p.get_item('token_expiry')() > 0 and token_expiry < now %}
+<div class="mb-2 alert alert-danger alert-dismissible fade show" role="alert">
+	<strong>{{ _('Warnung') }}</strong><br/>
+	{{ _('Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.') }}
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+		<span aria-hidden="true">&times;</span>
+	</button>
+</div>
+{% endif %}
+{% if p.get_item('token_expiry')() == 0 %}
+<div class="mb-2 alert alert-danger alert-dismissible fade show" role="alert">
+	<strong>{{ _('Warnung') }}</strong><br/>
+	{{ _('OAuth2 noch nicht durchlaufen. Bitte unter dem Tab "OAuth2 Data" via Link starten. Erst danach funktioniert das Plugin.') }}
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+		<span aria-hidden="true">&times;</span>
+	</button>
+</div>
+{% endif %}
+{% if code and not reload %}
+<div class="mb-2 alert alert-info alert-dismissible fade show" role="alert">
+	<strong>{{ _('Info') }}</strong><br/>
+	{{ _('Code Parameter für OAuth2 an Callback gesendet. Bitte Prüfen, ob die Werte, insbesondere Token Expiry aktualisiert wurden. Der Code ist nur einmal gültig, daher ist bspw. beim Reload der Seite mit gestztem "code" Parameter keine Änderung an Token Expiry mehr zu sehen!') }}<hr/>
+	{{ _('Code') }}: {{ code }}
+	{% if state %}<br/>{{ _('State') }}: {{ state }}{% endif %}
+	<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+		<span aria-hidden="true">&times;</span>
+	</button>
+</div>
+{% endif %}
+
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+
+	<div class="col-sm-12 mt-3">
+		<h5>{{ _('Nokia Health Items') }} ({{ p.get_items()|length }})</h5>
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>Nokia Health Data Type</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key, item in p.get_items().items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1" {% if key in ['token_expiry', 'token_type', 'refresh_token', 'access_token'] %}style="font-weight:bold;"{% endif %}>{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ key }}</td>
+						<td class="py-1" {% if key == 'token_expiry' and p.get_item('token_expiry')() > 0 and token_expiry < now %}color: red; font-weight: bold;"{% endif %}>{{ item() }} {% if key == 'token_expiry' %}{% if p.get_item('token_expiry')() > 0 %}({% if language == 'en' %}{{ token_expiry.strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ token_expiry.strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}){% endif %}{% endif %}</td>
+						<td class="py-1">{% if language == 'en' %}{{ item.last_update().strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+						<td class="py-1">{% if language == 'en' %}{{ item.last_change().strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}
+
+{% block bodytab2 %}
+<table class="table table-striped table-hover">
+	<tr>
+		<td class="py-1">
+			{{ _('OAuth2 Authorization URL') }}
+		</td>
+		<td class="py-1" colspan="3">
+			{{ _('Hier zuerst registrieren:') }} <a class="text-shng" href="https://account.health.nokia.com/partner/add_oauth2" target="_blank">https://account.health.nokia.com/partner/add_oauth2</a><br/>
+			<a class="text-shng" href="{{ authorize_url }}" target="_blank">{{ _('Hier klicken, um OAuth2 Prozess zu starten!') }}</a>
+		</td>
+	</tr>
+	<tr>
+		<td class="py-1">
+			{{ _('Callback URL') }}
+		</td>
+		<td class="py-1">
+			{{ callback_url }}
+		</td>
+	</tr>
+	<tr>
+		<td class="py-1">Access Token</td>
+		<td class="py-1">{{ p.get_item('access_token')() }}</td>
+		<td class="py-1">Token Expiry</td>
+		<td class="py-1" {% if p.get_item('token_expiry')() > 0 and token_expiry < now %}style="color: red; font-weight: bold;"{% endif %}>{{ p.get_item('token_expiry')() }} {% if p.get_item('token_expiry')() > 0 %}({% if language == 'en'%}{{ token_expiry.strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ token_expiry.strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}){% endif %}</td>
+	</tr>
+	<tr>
+		<td class="py-1">Token Type</td>
+		<td class="py-1">{{ p.get_item('token_type')() }}</td>
+		<td class="py-1">Refresh Token</td>
+		<td class="py-1">{{ p.get_item('refresh_token')() }}</td>
+	</tr>
+</table>
+{% endblock %}

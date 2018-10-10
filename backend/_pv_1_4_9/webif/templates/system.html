@@ -1,0 +1,284 @@
+ <!DOCTYPE html>
+{% extends "base.html" %}
+{% import "navbar.html" as nav with context %}
+{% block navbar %}
+    {{ nav }}
+{% endblock navbar %}
+
+{% block content %}
+ <ul id="system_tabs" class="nav nav-tabs">
+  <li class="active"><a data-toggle="tab" href="#systemproperties">{{ _('Systemeigenschaften') }}</a></li>
+  <li id="tab_pypi" class="disabled">
+      <a href="#pypi">
+          {{ _('PyPI Check') }}
+          <i id="spinner" class="fas fa-circle-notch fa-spin fa-fw"></i>
+  </a></li>
+ </ul>
+<div class="tab-content">
+    <div id="systemproperties" class="tab-pane fade in active">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 100px;"></th>
+                    <th style="width: 250px;">{{ _('Eigenschaft') }}</th>
+                    <th>{{ _('Status') }}</th>
+                </tr>
+            </thead>
+        <tbody>
+            <tr>
+                <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('SmartHomeNG Version') }}:</td>
+                <td style="vertical-align: middle;">{{ sh_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}&nbsp;&nbsp;-&nbsp;&nbsp; {{ sh_desc }} &nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Benutzer') }}:&nbsp;{{ user }}</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/logo_small_76x76.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('SmartHomeNG Plugins Version') }}:</td>
+                <td style="vertical-align: middle;">{{ plg_vers }}&nbsp;{{ _('in') }}&nbsp;{{ sh_dir }}/plugins
+                    {% if plg_desc != '' %}
+						&nbsp;&nbsp;-&nbsp;&nbsp; {{ plg_desc }}
+					{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><img src="static/img/terminal-server.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">Host:</td>
+                <td style="vertical-align: middle;">{{ node }}&nbsp;&nbsp;-&nbsp;&nbsp;IPv4: {{ ip }}<!--&nbsp;&nbsp;-&nbsp;&nbsp;IPv6: {{ ipv6 }}--></td>
+            </tr>
+            <tr>
+                <td><img src="static/img/tux_hdd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Betriebssystem') }}:</td>
+                <td style="vertical-align: middle;">{{ system }} {{ vers }}&nbsp;&nbsp;-&nbsp;&nbsp;{{ _('Architektur') }}:&nbsp;{{ arch }}</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/python.png" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Python Version') }}:</td>
+                <td style="vertical-align: middle;">{{ pyversion }}</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/hd.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Freier Speicher') }}:</td>
+                <td style="vertical-align: middle;">{{ (freespace)|round|int }} MByte</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/clock.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Datum') }} / {{ _('Zeit') }}:</td>
+                <td style="vertical-align: middle;">{{ now }}</td>
+            </tr>
+            <tr>
+                <td><img src="static/img/preferences.svg" style="width: 36px; height: 36px; margin-left: 40px;"></td>
+                <td style="vertical-align: middle;">{{ _('Betriebszeit') }}:</td>
+                <td style="vertical-align: middle;">Host:&nbsp;{{ uptime }}&nbsp;&nbsp;-&nbsp;&nbsp;SmartHomeNG:&nbsp;{{ sh_uptime }}</td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
+    </div>
+    <div id="pypi" class="tab-pane fade">
+    <div class="table-responsive" >
+        <table id="package_check" class="table table-hover">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Python Package</th>
+                    <th style="width: 25%;">{{ _('installierte Version') }}</th>
+                    <th style="width: 25%;">{{ _('Anforderungen') }}</th>
+                    <th style="width: 25%;">{{ _('Neuste Version') }} (PyPI)</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    </div>
+</div>
+ <script>
+$(".disabled").click(function (e) {
+        e.preventDefault();
+        return false;
+});
+
+function activateTab(selector) {
+    $(selector).on('click.twbstab',function() { $(this).tab('show'); })
+        .closest('.disabled').removeClass('disabled');
+}
+
+
+$.getJSON('pypi.json', function(result) {
+    $.each(result, function(index, element) {
+        if (index == 0) {
+            oldSort = element['sort'].substr(0,1);
+            newSort = element['sort'].substr(0,1);
+        } else {
+            oldSort = newSort;
+            newSort = newSort = element['sort'].substr(0,1);
+        }
+        if (oldSort != newSort) {
+            if (element['is_required_for_testsuite']) {
+	            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für die Testsuite') }}</td></tr>");
+			} else if (element['is_required_for_docbuild']) {
+	            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete für den Bau der Dokumentation') }}</td></tr>");
+            } else {
+	            $('#package_check').find("tbody").append("<tr><td style=\"font-weight:bold; background:#eee;\" colspan=\"5\">{{ _('Pakete ohne Requirements') }}</td></tr>");
+			}
+        }
+
+
+        fontWeight = '';
+        if (element['is_required']) {
+            fontWeight = "font-weight: bold;";
+        }
+
+        var fontColorPyPi = "black";
+        var fontColorInstalled = "";
+        var versionInstalledIcon = "";
+        var versionInstalledText = "{{ _('Version nicht zulässig!') }}";
+
+        /* color codes and icons */
+		if (element['is_required'] || element['is_required_for_docbuild'] || element['is_required_for_testsuite'] ) {
+	        if (element['vers_ok']) {
+                versionInstalledIcon = "fa-check-square";
+                versionInstalledText = "{{ _('Version unterstützt!') }}";
+	            if (element['vers_recent']) {
+	    	        fontColorInstalled = "green";
+	    	        if (element['pypi_version_ok']) {
+	                    fontColorPyPi = "black";
+	                } else {
+	                    fontColorPyPi = "red";
+	                }
+	            } else {
+	    	        fontColorInstalled = "black";
+					fontColorPyPi = "green";
+	    	    }
+        	} else {
+            	fontColorInstalled = "red";
+	   	        if (!element['pypi_version_ok']) {
+                    fontColorPyPi = "red";
+                }
+            	var versionInstalledIcon = "fa-times-circle";
+	        }
+		} else {
+		    fontColorPyPi = "black";
+            if (element['vers_recent']) {
+    	        fontColorInstalled = "green";
+    	    } else {
+			    fontColorInstalled = "black";
+			}
+		}
+
+		/* Build String for requirements column */
+        var reqString = '';
+        var reqTextString = '';
+        /* MIN and MAX filled, MIN != MAX */
+        if (element['is_required'] || element['is_required_for_docbuild'] || element['is_required_for_testsuite'] ) {
+            if (element['vers_req_min'] != '' && element['vers_req_max'] != '' && (element['vers_req_min'] != element['vers_req_max'])) {
+                reqString += element['vers_req_min']+" <= <i class=\"far "+versionInstalledIcon+"\" title=\"{{ _('installierte Version') }}\"></i>"
+                if (reqString == "") {
+                    reqString += "<i class=\"far "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\" style=\"color: "+fontColorInstalled+"\"></i>";
+                }
+                reqString += " <= "+element['vers_req_max'];
+            }
+            /* ELSE: MIN and MAX filled, MIN == MAX */
+            else if (element['vers_req_min'] != '' && element['vers_req_max'] != '' && (element['vers_req_min'] == element['vers_req_max'])) {
+                reqString += "<i class=\"far "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> == "+element['vers_req_min'];
+            }
+            /* ELSE: MIN or MAX filled */
+            else {
+                if (element['vers_req_min'] != '') {
+                    reqString += "<i class=\"far "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> "+" >= "+element['vers_req_min'];
+                } else if (element['vers_req_max'] != '') {
+                    reqString += "<i class=\"far "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> "+"<= "+element['vers_req_max'];
+                }
+            }
+            /* Element required due to Doku, Testsuite or SmartHomeNG in general, but no MIN and MAX version -> all versions valid */
+            if (reqString == '') {
+                reqString = "<i class=\"far "+versionInstalledIcon+"\" title=\""+versionInstalledText+"\"></i> == *";
+            }
+            if (element['vers_req_source'] != '') {
+                reqTextString = element['vers_req_source'];
+            } else {
+                reqTextString = "";
+            }
+        }
+        /* Element not required, requirements unclear, set "-" */
+        else {
+            reqString = "-"
+        }
+
+        /* If there is detailed content, set folding layout */
+        var foldingElement = '';
+        var foldingStyle = '';
+        if (reqTextString != '') {
+            foldingStyle = "cursor: pointer;";
+        }
+
+        /* Link package PyPi URL */
+        var packageName = element['name'];
+        if (element['pypi_doc_url'] != '') {
+            packageName = "<a target=\"_blank\" class=\"pypi_link\" href=\""+element['pypi_doc_url']+"\">"+packageName+"</a>";
+        }
+
+        /* Build row for normal content */
+        var table_row = '';
+        table_row =  "<tr style=\""+foldingStyle+"\" id=\""+index+"_unfold"+"\">"+
+            "<td style=\""+fontWeight+"\">"+packageName+"</td>"+
+            "<td style=\"color: "+fontColorInstalled+"\">"+element['vers_installed']+"</td>"+
+            "<td>"+reqString+"</td>"+
+            "<td style=\"color: "+fontColorPyPi+"\">"+element['pypi_version'];
+
+        /* Checks for icon next to PyPi Version */
+		if (element['vers_recent'] != true && element['pypi_version_ok']) {
+	        if ((element['pypi_version'] != '') && (element['pypi_version'] != element['vers_installed'])) {
+	            /* Element not required? Don't set that the PyPi version is supported */
+	            if (!element['is_required'] && !element['is_required_for_docbuild'] && !element['is_required_for_testsuite'] ) {
+	                table_row += "&nbsp;<i class=\"fas fa-info-circle\" title=\"{{ _('Neuste Version!') }}\"></i>";
+	            } else {
+	                table_row += "&nbsp;<i class=\"fas fa-check-circle\" title=\"{{ _('Version unterstützt!') }}\"></i>";
+        	    }
+        	}
+        } else if (element['pypi_version'] != '-' && !element['pypi_version_ok']) {
+            table_row += "&nbsp;<i class=\"fas fa-exclamation-circle\" title=\"{{ _('Version nicht zulässig!') }}\"></i>";
+        }
+
+        /* Close table row */
+        table_row += "</td></tr>"
+
+        /* Build row for foldable content */
+        var table_row_requirements_detail = '';
+        if (reqTextString != '') {
+            table_row_requirements_detail =
+                "<tr id=\""+index+"_requirements_detail\" "+
+                "style=\"display: none; "+foldingStyle+"\">";
+            table_row_requirements_detail +=
+                "<td colspan=\"4\">";
+            table_row_requirements_detail +=
+                "<div class=\"panel panel-default\" style=\"margin-bottom: 5px;\">"+
+                "<div class=\"panel-heading\">{{ _('Anforderungen') }} (requirements.txt)</div>"+
+                "<div class=\"panel-body\">"+reqTextString+"</div></div>";
+            table_row_requirements_detail +=
+                "</td></tr>";
+        }
+
+        /* Append assembled content */
+        $('#package_check').find("tbody").append(table_row + table_row_requirements_detail);
+
+        /* If foldable content: add onclick for table row, stop unfolding when clicking pypi link inside. */
+        if (reqTextString != '') {
+            $('#'+index+'_unfold').click(function(){
+                $('#'+index+'_requirements_detail').toggle();
+            });
+            $('#'+index+'_requirements_detail').click(function(){
+                $('#'+index+'_requirements_detail').toggle();
+            });
+            $('#'+index+'_unfold .pypi_link').click(function(e){
+                e.stopPropagation();
+            });
+        }
+    });
+
+    /* Hide spinner, activate tab, show DIV with content */
+    $('#spinner').hide();
+    $('#tab_pypi').removeClass("disabled");
+    activateTab('#system_tabs a[href="#pypi"]');
+});
+</script>
+{% endblock %}

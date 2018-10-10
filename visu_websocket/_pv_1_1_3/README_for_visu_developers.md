@@ -1,18 +1,18 @@
 # Visualisation plugin (Websocket Protocol) - for developers
 
 ```
- 
+
 Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
 Copyright 2016- Martin Sinn                      m.sinn@gmx.de
 
 This plugin is part of SmartHomeNG.
-  
+
 Visit:  https://github.com/smarthomeNG/
         https://knx-user-forum.de/forum/supportforen/smarthome-py
 
 ```
 
-This file gives **smarthome.py** developers of visualization software additional information about the visu_websocket plugin. 
+This file gives **smarthome.py** developers of visualization software additional information about the visu_websocket plugin.
 The following sections describe the implemented websocket protocol, that can be used my a visu to interface with smarthomeNG.
 
 For information about the configuration of the plugin refer to **README.md**.
@@ -21,7 +21,7 @@ For information about the configuration of the plugin refer to **README.md**.
 
 ## WebSocket Interface
 
-The visa plugin implements a WebSocket server. This section describes the implemented protocol. The messages of the protocol consist of data in json format. Following are the request commands which the visu plugin handles. 
+The visa plugin implements a WebSocket server. This section describes the implemented protocol. The messages of the protocol consist of data in json format. Following are the request commands which the visu plugin handles.
 
 
 ### item
@@ -61,17 +61,17 @@ The plugin answers with a list of of pairs. Each pair consists of an item name a
 ```
 	{
 	 'items': [
-	 	['wohnung.hauswirtschaft.deckenlicht', False], 
-	 	['wohnung.hauswirtschaft.waschmaschine', True], 
-	 	['wohnung.hauswirtschaft.waschmaschine.status', 1], 
-	 	['wohnung.hauswirtschaft.waschmaschine.ma', 37], 
-	 	['wohnung.hauswirtschaft.trockner', True], 
-	 	['wohnung.hauswirtschaft.trockner.status', 1], 
-	 	['wohnung.hauswirtschaft.trockner.ma', 0], 
-	 ], 
+	 	['wohnung.hauswirtschaft.deckenlicht', False],
+	 	['wohnung.hauswirtschaft.waschmaschine', True],
+	 	['wohnung.hauswirtschaft.waschmaschine.status', 1],
+	 	['wohnung.hauswirtschaft.waschmaschine.ma', 37],
+	 	['wohnung.hauswirtschaft.trockner', True],
+	 	['wohnung.hauswirtschaft.trockner.status', 1],
+	 	['wohnung.hauswirtschaft.trockner.ma', 0],
+	 ],
 	 'cmd': 'item'
 	}
-	 	
+
 ```
 
 
@@ -81,7 +81,7 @@ Additionally, the plugin initiates an update routine, which sends updates for it
 	{
 	 'items': [
 			['wohnung.hauswirtschaft.waschmaschine.ma', 36]
-	 ], 
+	 ],
 	 'cmd': 'item'
 	}
 ```
@@ -102,7 +102,7 @@ The plugin answers with:
 
 
 ### logic
-With the **`logic`** command a client requests a logic to be triggered. **`name`** is the name of the logic, as defined in **`etc/logic.conf`**. Furthermore, in **`etc/logic.conf`** the attribute **`visu_acl`** for that logic has to be set to **True**.
+With the **`logic`** command a client requests a logic to be triggered. **`name`** is the name of the logic, as defined in **`etc/logic.yaml`**. Furthermore, in **`etc/logic.yaml`** the attribute **`visu_acl`** for that logic has to be set to **True**.
 
 ```
 	{"cmd":"logic",  "name":"az_licht",  "val":0}
@@ -120,7 +120,7 @@ The plugin does not send an answer to the **`logic`** command.
 
 
 ### series
-With the **`series`** command a client requests a series of values for an item. The values which are requested are stored in a database using the sqlite plugin. The **`series`** command only returns data for items which are configured to store data via the **sqlite** plugin. 
+With the **`series`** command a client requests a series of values for an item. The values which are requested are stored in a database using the sqlite plugin. The **`series`** command only returns data for items which are configured to store data via the **sqlite** plugin.
 
 The series command is for instance used by SmartVISU to get data for the plot widget. The following example requests a series of the average values of the last 48 hours:
 
@@ -141,33 +141,33 @@ If the **`end`** attribute is ommitted, **"end":"now"** is assumed by the plugin
 If the **`count`** attribute is ommitted, **"count":100** is assumed by the plugin.
 
 The answer to the request above could look like this:
- 
+
 ```
 
 	{
 	 'series': [
-	 	(1460636598495, 1831.97), 
-	 	(1460637648422, 1458.14), 
-	 	(1460639298307, 757.22), 
-	 	(1460641098243, 577.38), 
+	 	(1460636598495, 1831.97),
+	 	(1460637648422, 1458.14),
+	 	(1460639298307, 757.22),
+	 	(1460641098243, 577.38),
 	 	... (102 values in total)
-	 	(1460802051217, 740.61), 
-	 	(1460803884973, 637.61), 
-	 	(1460805521319, 744.41), 
-	 	(1460807229532, 718.03), 
-	 	(1460808823757, 681.25), 
+	 	(1460802051217, 740.61),
+	 	(1460803884973, 637.61),
+	 	(1460805521319, 744.41),
+	 	(1460807229532, 718.03),
+	 	(1460808823757, 681.25),
 	 	(1460809294663, 681.25)
-	 ], 
-	 'cmd': 'series', 
+	 ],
+	 'cmd': 'series',
 	 'params': {
-	 	'end': 'now', 
-	 	'start': 1460809294663, 
-	 	'update': True, 
-	 	'item': 'wohnung.verteilung.zaehler.wirkleistung', 
-	 	'step': 1728000.01, 
-	 	'func': 'avg', 
+	 	'end': 'now',
+	 	'start': 1460809294663,
+	 	'update': True,
+	 	'item': 'wohnung.verteilung.zaehler.wirkleistung',
+	 	'step': 1728000.01,
+	 	'func': 'avg',
 	 	'sid': 'wohnung.verteilung.zaehler.wirkleistung|avg|48h|now'
-	 }, 
+	 },
 	 'update': "2016-04-16T21:14:50.20.8227+02:00",
 	 'sid': 'wohnung.verteilung.zaehler.wirkleistung|avg|48h|now'
 	}
@@ -183,10 +183,10 @@ Additionally, the plugin initiates an update routine, which sends updates for se
 ```
 	{
 	 'series': [
-	 	(1460810141323, 711.25), 
+	 	(1460810141323, 711.25),
 	 	(1460811024119, 711.25)
-	 ], 
-	 'cmd': 'series', 
+	 ],
+	 'cmd': 'series',
 	 'sid': 'wohnung.verteilung.zaehler.wirkleistung|avg|48h|now'
 	}
 ```
@@ -231,8 +231,8 @@ The plugin answers with the protocol version it supports. Additionally it sends 
 
 ```
 	{
-	 "cmd": "proto", 
-	 "ver": 4, 
+	 "cmd": "proto",
+	 "ver": 4,
 	 "time":"2016-04-14T21:23:20.248227+02:00"
 	}
 ```
@@ -248,9 +248,9 @@ The following example shows, what a smartVISU v2.7 running in a Safari Browser w
 ```
 	{
 	 'cmd': 'identity',
-	 'sw': 'smartVISU', 
-	 'ver': 'v2.7', 
-	 'browser': 'Safari', 
+	 'sw': 'smartVISU',
+	 'ver': 'v2.7',
+	 'browser': 'Safari',
 	 'bver': '9'
 	}
 ```
@@ -270,4 +270,3 @@ The following command instructs smartVISU to change to the main page:
 ```
 
 The smartVISU client does not send an answer to the **`url`** command.
-

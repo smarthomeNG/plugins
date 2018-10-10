@@ -1,0 +1,47 @@
+ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; MINVALUE; MAXVALUE; RESPONSETYPE
+0; power; on; #PON; #QPW; @PON OK **|@QPW OK **|@UPW *; RW
+0; power; off; #POF; #QPW; @POF OK ***|@QPW OK ***|@UPW *; RW
+0; verbose; set; #SVM *; #QVM; @SVM OK *|@QVM OK *; RW
+0; eject; open; #EJT; ; @EJT OK ****|@UPL ****; RW
+0; eject; close; #EJT; ; @EJT OK *****|@UPL ****; RW
+0; status; ; #QPL; #QPL; @UPL *{str}|@QPL OK *{str}|@QPL ER *{str}; R; ; ; ; str
+0; pure; on; #PUR; ; @PUR OK **; RW; ; ; ; bool
+0; pure; off; #PUR; ; @PUR OK ***; RW; ; ; ; bool
+'''
+0; num1; ; #NU1; ; @OK|@NU1 OK; W
+0; num2; ; #NU2; ; @OK|@NU2 OK; W
+0; num3; ; #NU3; ; @OK|@NU3 OK; W
+0; num4; ; #NU4; ; @OK|@NU4 OK; W
+0; num5; ; #NU5; ; @OK|@NU5 OK; W
+0; num6; ; #NU6; ; @OK|@NU6 OK; W
+0; num7; ; #NU7; ; @OK|@NU7 OK; W
+0; num8; ; #NU8; ; @OK|@NU8 OK; W
+0; num9; ; #NU9; ; @OK|@NU9 OK; W
+0; num0; ; #NU0; ; @OK|@NU0 OK; W
+'''
+0; stop; ; #STP; ; @OK STOP|@STP OK STOP|@STP OK FULL STOP; RW
+0; play; ; #PLA; ; @OK PLAY|@PLA OK PLAY; RW
+0; pause; ; #PAU; ; @OK PAUSE|@PAU OK PAUSE; RW
+0; disctype; ; #QDT; #QDT; @UDT *|@QDT OK *; R; ; ; ; str
+'''
+0; track; set; #SRH T*; #QTK; @QTK OK **/??|@UTC ??? ***; RW
+0; chapter; set; #SRH C*; #QCH; @QCH OK **|UTC ***; RW
+0; hdr; set; #SHR *; #QHR; @QHR OK *; RW; ; ; ; str
+0; subtitleshift; set; #SSH *; #QSH; @QSH OK *; W; ; ; ; num
+0; timedisplay; set; #STC; ; @STC OK *; RW; ; ; ; str
+0; trackelapsed; ; #QTE; #QTE; @QTE OK ********|@UTC ??? ??? T ********; R; ; ; ; str
+0; trackremain; ; #QTR; #QTR; @QTR OK ********|@UTC ??? ??? X ********; R; ; ; ; str
+0; chapterelapsed; ; #QCE; #QCE; @QCE OK ********|@UTC ??? ??? C ********; R; ; ; ; str
+0; chapterremain; ; #QCR; #QCR; @QCR OK ********|@UTC ??? ??? K ********; R; ; ; ; str
+0; totalelapsed; ; #QEL; #QEL; @QEL OK ********|@UTC ??? ??? E ********; R; ; ; ; str
+0; totalremain; ; #QRE; #QRE; @QRE OK ********|@UTC ??? ??? R ********; R; ; ; ; str
+'''
+0; trackname; ; ; #QTN; @QTN OK *|@QTN ER INVALID; R; ; ; ; str
+0; albumname; ; ; #QTA; @QTA OK *|@QTA ER INVALID; R; ; ; ; str
+0; artistname; ; ; #QTP; @QTP OK *|@QTP ER INVALID; R; ; ; ; str
+0; audiotrack; ; #AUD; #QTK; @QTK OK **/??|@UAT ?{str} **/?? ??? ???|@QTK OK */?|@UAT ?{str} */? ??? ???; RW; ; ; ; num
+0; audiotype; ; ; #QAT; @UAT *{str} ??/?? ??? ???|@QAT OK *{str} ?/? ?{str}; R; ; ; ; str
+#0; audiochannels; ; ; ; @UAT ?? ??/?? ??? ***; R; ; ; ; str
+0; audiolanguage; ; #AUD; ; @QAT OK ?{str} ?/? *{str}|@QAT OK ?{str} ??/?? *{str}|@UAT ?{str} ??/?? *** ???; RW; ; ; ; str
+#0; subtitletrack; ; #SUB; #QST; @QST OK  **|@UST **; RW
+#0; subtitlelanguage; ; #SUB; #QST; @QST OK ??/?? ***|@UST ??/?? ***; RW

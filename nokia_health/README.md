@@ -1,7 +1,5 @@
 # Nokia Health
 
-Version 0.1
-
 ## Description
 
 This plugin allows to retrieve data from the Nokia Health API (https://developer.health.nokia.com/api). Currently it 
@@ -11,28 +9,28 @@ Support Thread: https://knx-user-forum.de/forum/supportforen/smarthome-py/114117
 
 ## Requirements
 
-This plugin requires lib requests. You can install this lib with: 
+This plugin requires lib nokia. You can install this lib with: 
 
 ```bash
-sudo pip3 install requests --upgrade
+sudo pip3 install nokia --upgrade
 ```
 
-You have to go through the registration and oauth process on https://developer.health.nokia.com/api.
-You will need a temporary callback url!.
-In the end after step 4, you see the 4 variables needed for the plugin to work in the URL the page is forwarding you to.
+You have to register at https://account.health.nokia.com/partner/add_oauth2.
+The callback URL to enter when registering is shown via the plugin's web interface and can be added as soon as client_id and consumer_secret have been set in etc/plugin.yaml
+
+The OAuth2 process can then be triggered via the Web Interface of the plugin. Therefore at least the first four items of the example below need to exist (access_token, token_expiry, token_type, refresh_token).
+
+In case your SmartHomeNG instance is offline for too long, the tokens expire. You then have to start the OAuth2 process via the Web Interface again. Errors will be logged in this case!
 
 ## Configuration
 
 ### plugin.yaml
 ```yaml
-nokia_health:
-    class_name: NokiaHealth
-    class_path: plugins.nokia_health
-    oauth_consumer_key: <your_oauth_consumer_key>
-    oauth_nonce: <your_oauth_nonce>
-    oauth_signature: <your_oauth_signature>
-    oauth_token: <your_oath_token>
-    userid: <your_userid>
+nokia_health: 
+    user_id: <your user id>
+    client_id: <your client id>
+    consumer_secret: <your consumer secret>
+    cycle: 300
     instance: nokia_health
 ```
 
@@ -42,23 +40,54 @@ Please be aware that there are dependencies for the values. E.g. the body measur
 height exists. From what i saw so far is, that the height is transmitted only one time, the first time the scale 
 communicates with the Nokia servers. In case you miss it, set the item value manually!
 
+The first four items are mandatory, as they are needed for OAuth2 data!
+
 ```yaml
 body:
+
+    access_token:
+        type: str
+        visu_acl: ro
+        cache: yes
+        nh_type@nokia_health: access_token
+
+    token_expiry:
+        type: num
+        visu_acl: ro
+        cache: yes
+        nh_type@nokia_health: token_expiry
+
+    token_type:
+        type: str
+        visu_acl: ro
+        cache: yes
+        nh_type@nokia_health: token_type
+
+    refresh_token:
+        type: str
+        visu_acl: ro
+        cache: yes
+        nh_type@nokia_health: refresh_token
 
     weight:
         type: num
         visu_acl: ro
         nh_type@nokia_health: weight
- 
+
     height:
         type: num
         visu_acl: ro
         nh_type@nokia_health: height
-  
+
     bmi:
         type: num
         visu_acl: ro
         nh_type@nokia_health: bmi
+
+    bmi_text:
+        type: str
+        visu_acl: ro
+        nh_type@nokia_health: bmi_text
 
     fat_ratio:
         type: num
@@ -79,14 +108,5 @@ body:
         type: num
         visu_acl: ro
         nh_type@nokia_health: heart_pulse
-
-    last_update:
-        type: num
-        visu_acl: ro
-        nh_type@nokia_health: last_update
 ```
 
-## Functions
-
-### get_last_measure():
-Gets the last measurement values.

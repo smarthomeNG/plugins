@@ -3,10 +3,11 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Anbindung der REST-Schnittstelle von ETA Heizungen'
-        en: ''
+        de: 'Anbindung der REST-Schnittstelle von ETA Heizungen (http://www.eta.co.at)'
+        en: 'ETA Pellet Unit PU (http://www.eta.co.at) with remote access enabled (there are 3 modes available: none, readonly, read/write)'
     maintainer: '? (Brootux)'
     tester: 'psilo909, ?'
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
@@ -15,11 +16,64 @@ plugin:
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknkown
     classname: ETA_PU              # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    address:
+        type: ip
+        mandatory: True
+        description:
+            de: 'IP Adresse der ETA Pellet Einheit'
+            en: 'ip address of the ETA pellet unit'
+
+    port:
+        type: int
+        valid_min: 0
+        default: 8080
+        description:
+            de: 'Port der ETA Webservers'
+            en: 'port of the ETA webserver'
+
+    setpath:
+        type: str
+        description:
+            de: 'Pfad zu den vorab gesicherten Sets von CAN-Bus-uri'
+            en: 'path to the presaved sets of CAN-bus-uri'
+
+    setname:
+        type: str
+        description:
+            de: 'Name des Sets, welches durch dieses Plugin genutzt wird'
+            en: 'the name of the set, used by this plugin'
+
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    eta_pu_uri:
+        type: str
+        description:
+            de: "Enthält die CAN-Bus-Id. Die Pellet Einheit zeigt alle Ids mit Beschreibung unter der Url http://<ip>/user/menu"
+            en: "Contains the CAN-bus-id. The pellet unit shows all ids with description by requesting http://<ip>/user/menu"
+
+    eta_pu_type:
+        type: str
+        description:
+            de: ""
+            en: "Represents the field of the data line. Must be one of: strValue, unit, decPlaces, scaleFactor, advTextOffset or calc"
+
+    eta_pu_error:
+        type: str
+        valid_list: ['', 'yes', 'no']
+        description:
+            de: "Wenn auf 'yes' gesetzt, werden Fehlermeldung der ETA Pellet Einheit in dieses Item eingelesen."
+            en: "The error message from the ETA pellet unit will be read."
+
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

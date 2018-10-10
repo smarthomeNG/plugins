@@ -1,0 +1,65 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Aktionen':        {'de': 'Aktionen', 'en': 'Actions'}
+    'Verbunden':       {'de': 'Verbunden', 'en': 'Connected'}
+    'Ja':              {'de': 'Ja', 'en': 'Yes'}
+    'Nein':            {'de': 'Nein', 'en': 'No'}
+    'Datenbank-Dump':  {'de': 'Datenbank-Dump', 'en': 'Database Dump'}
+    'Zeit':            {'de': 'Zeit', 'en': 'Time'}
+    'Item ID':         {'de': 'Item ID', 'en': 'Item ID'}
+    'Dauer':           {'de': 'Dauer', 'en': 'Duration'}
+    'Geändert':        {'de': 'Geändert', 'en': 'Changed'}
+    'Übersicht':       {'de': 'Übersicht', 'en': 'Overview'}
+    'am':              {'de': 'am', 'en': 'on the'}
+    'Datensätze':      {'de': 'Datensätze', 'en': 'Data Sets'}
+    'Aktueller Wert':  {'de': '=', 'en': 'Recent Value'}
+    'Typ':             {'de': '=', 'en': 'Type'}
+    'Tabelle':         {'de': '=', 'en': 'Table'}
+    'Item-ID in der Datenbank':
+        'de': 'Item-ID in der Datenbank'
+        'en': 'Item ID within the database'
+    'Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen':
+        'de': 'Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen'
+        'en': 'The following items are assigned to this instance of the database plugin'
+    'Löschauftrag für die Einträge von Item ID':
+        'de': 'Löschauftrag für die Einträge von Item ID'
+        'en': 'Deletion of data for the entries of item ID'
+    'in der Tabelle "log" wurde erfolgreich initiiert!':
+        'de': 'in der Tabelle "log" wurde erfolgreich initiiert!'
+        'en': 'in table "log" successfully initiated.'
+    'Löschauftrag in der Tabelle "log" wurde erfolgreich initiiert!':
+        'de': 'Löschauftrag in der Tabelle "log" wurde erfolgreich initiiert!'
+        'en': 'Deletion of data set successfully initiated!'
+    'Das Löschen kann noch kurze Zeit dauern, da die Ausführung des Delete Queries erst nach Abschluß der bestehenden Transaktionen erfolgen kann.':
+        'de': 'Das Löschen kann noch kurze Zeit dauern, da die Ausführung des Delete Queries erst nach Abschluß der bestehenden Transaktionen erfolgen kann.'
+        'en': 'The deletion could take a short time, as the DELETE query will be processed after the end of already existing database transactions.'
+    'Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item {{ item_path }} (Datenbank-ID: {{ item_id }})':
+        'de': 'Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item'
+        'en': 'The following entries are derived from the log table with historical data for item )'
+    'Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item':
+        'de': 'Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item'
+        'en': 'The following entries are derived from the log table with historical data for item )'
+    'Datenbank-ID':
+        'de': 'Datenbank-ID'
+        'en': 'Database ID'
+    'Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?':
+        'de': 'Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?'
+        'en': 'Do you really want to delete the historical data (table log) of this item?'
+    'Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?':
+        'de': 'Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?'
+        'en': 'Do you really want to delete the historic dataset (table log) of this item?'
+    'CSV Export der Werte':
+        'de': 'CSV Export der Werte'
+        'en': 'CSV Export of Values'
+    'Historische Daten':
+        'de': 'Historische Daten'
+        'en': 'Historical Data'
+    'Wertehistorie löschen':
+        'de': 'Wertehistorie löschen'
+        'en': 'Delete Historical Data'
+    'Wert löschen':
+        'de': 'Wert löschen'
+        'en': 'Delete Value'
+    'Zeige Einträge vom':
+        'de': 'Zeige Einträge vom'
+        'en': 'Show entries from'

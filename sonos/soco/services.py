@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=fixme, invalid-name
 
+# Disable while we have Python 2.x compatability
+# pylint: disable=useless-object-inheritance
+
 """Classes representing Sonos UPnP services.
 
 >>> import soco
@@ -45,7 +48,7 @@ from .exceptions import (
     SoCoUPnPException, UnknownSoCoException
 )
 from .utils import prettify
-from .xml import XML, illegal_xml_re, PARSEERROR
+from .xml import XML, illegal_xml_re
 
 # UNICODE NOTE
 # UPnP requires all XML to be transmitted/received with utf-8 encoding. All
@@ -63,10 +66,33 @@ log = logging.getLogger(__name__)  # pylint: disable=C0103
 # logging.basicConfig()
 # log.setLevel(logging.INFO)
 
-#: A UPnP Action and its arguments.
-Action = namedtuple('Action', 'name, in_args, out_args')
-#: A UPnP Argument and its type.
-Argument = namedtuple('Argument', 'name, vartype')
+
+class Action(namedtuple('ActionBase', 'name, in_args, out_args')):
+    """A UPnP Action and its arguments."""
+    def __str__(self):
+        args = ', '.join(str(arg) for arg in self.in_args)
+        returns = ', '.join(str(arg) for arg in self.out_args)
+        return '{0}({1}) -> {{{2}}}'.format(self.name, args, returns)
+
+
+class Argument(namedtuple('ArgumentBase', 'name, vartype')):
+    """A UPnP Argument and its type."""
+    def __str__(self):
+        argument = self.name
+        if self.vartype.default:
+            argument = "{0}={1}".format(self.name, self.vartype.default)
+        return '{0}: {1}'.format(argument, str(self.vartype))
+
+
+class Vartype(namedtuple('VartypeBase', 'datatype, default, list, range')):
+    """An argument type with default value and range."""
+    def __str__(self):
+        if self.list:
+            return '[{0}]'.format(', '.join(self.list))
+        if self.range:
+            return '[{0}..{1}]'.format(self.range[0], self.range[1])
+        return self.datatype
+
 
 # A shared cache for ZoneGroupState. Each zone has the same info, so when a
 # SoCo instance is asked for group info, we can cache it and return it when
@@ -119,17 +145,22 @@ class Service(object):
         self.version = 1
         self.service_id = self.service_type
         #: str: The base URL for sending UPnP Actions.
-        self.base_url = 'http://{0}:1400'.format(self.soco.ip_address)
+        self.base_url = 'http://{}:1400'.format(self.soco.ip_address)
         #: str: The UPnP Control URL.
-        self.control_url = '/{0}/Control'.format(self.service_type)
+        self.control_url = '/{}/Control'.format(self.service_type)
         #: str: The service control protocol description URL.
-        self.scpd_url = '/xml/{0}{1}.xml'.format(
+        self.scpd_url = '/xml/{}{}.xml'.format(
             self.service_type, self.version)
         #: str: The service eventing subscription URL.
-        self.event_subscription_url = '/{0}/Event'.format(self.service_type)
+        self.event_subscription_url = '/{}/Event'.format(self.service_type)
         #: A cache for storing the result of network calls. By default, this is
         #: a `TimedCache` with a default timeout=0.
         self.cache = Cache(default_timeout=0)
+
+        # Caching variables for actions and event_vars, will be filled when
+        # they are requested for the first time
+        self._actions = None
+        self._event_vars = None
 
         # From table 3.3 in
         # http://upnp.org/specs/arch/UPnP-arch-DeviceArchitecture-v1.1.pdf
@@ -161,6 +192,7 @@ class Service(object):
             611: 'Invalid Control URL',
             612: 'No Such Session',
         }
+        self.DEFAULT_ARGS = {}
 
     def __getattr__(self, action):
         """Called when a method on the instance cannot be found.
@@ -238,7 +270,7 @@ class Service(object):
             xml_response (str):  SOAP/xml response text (unicode,
                 not utf-8).
         Returns:
-             dict: a dict of ``{argument_name, value)}`` items.
+             dict: a dict of ``{argument_name: value}`` items.
         """
 
         # A UPnP SOAP response (including headers) looks like this:
@@ -268,13 +300,9 @@ class Service(object):
         xml_response = xml_response.encode('utf-8')
         try:
             tree = XML.fromstring(xml_response)
-        except PARSEERROR:
+        except XML.ParseError:
             # Try to filter illegal xml chars (as unicode), in case that is
             # the reason for the parse error
-            # NOTE: The PARSERROR used here is a Python 2.6 compat trick in
-            # our xml module. If we ever drop support for Python 2.6 it should
-            # be replaced with a simple XML.ParseError and the hack in .xml
-            # removed
             filtered = illegal_xml_re.sub('', xml_response.decode('utf-8'))\
                                      .encode('utf-8')
             tree = XML.fromstring(filtered)
@@ -286,6 +314,61 @@ class Service(object):
         action_response = tree.find(
             "{http://schemas.xmlsoap.org/soap/envelope/}Body")[0]
         return dict((i.tag, i.text or "") for i in action_response)
+
+    def compose_args(self, action_name, in_argdict):
+        """Compose the argument list from an argument dictionary, with
+        respect for default values.
+
+        Args:
+            action_name (str): The name of the action to be performed.
+            in_argdict (dict): Arguments as a dict, eg
+                ``{'InstanceID': 0, 'Speed': 1}. The values
+                can be a string or something with a string representation.
+
+        Returns:
+            list: a list of ``(name, value)`` tuples.
+
+        Raises:
+            `AttributeError`: If this service does not support the action.
+            `ValueError`: If the argument lists do not match the action
+                signature.
+        """
+
+        for action in self.actions:
+            if action.name == action_name:
+                # The found 'action' will be visible from outside the loop
+                break
+        else:
+            raise AttributeError('Unknown Action: {0}'.format(action_name))
+
+        # Check for given argument names which do not occur in the expected
+        # argument list
+        # pylint: disable=undefined-loop-variable
+        unexpected = set(in_argdict) - \
+            set(argument.name for argument in action.in_args)
+        if unexpected:
+            raise ValueError(
+                "Unexpected argument '{0}'. Method signature: {1}"
+                .format(next(iter(unexpected)), str(action))
+            )
+
+        # List the (name, value) tuples for each argument in the argument list
+        composed = []
+        for argument in action.in_args:
+            name = argument.name
+            if name in in_argdict:
+                composed.append((name, in_argdict[name]))
+                continue
+            if name in self.DEFAULT_ARGS:
+                composed.append((name, self.DEFAULT_ARGS[name]))
+                continue
+            if argument.vartype.default is not None:
+                composed.append((name, argument.vartype.default))
+            raise ValueError(
+                "Missing argument '{0}'. Method signature: {1}"
+                .format(argument.name, str(action))
+            )
+        return composed
 
     def build_command(self, action, args=None):
         """Build a SOAP request.
@@ -340,14 +423,15 @@ class Service(object):
         # is set over the network
         return (headers, body)
 
-    def send_command(self, action, args=None, cache=None, cache_timeout=None):
+    def send_command(self, action, args=None, cache=None, cache_timeout=None,
+                     **kwargs):
         """Send a command to a Sonos device.
 
         Args:
             action (str): the name of an action (a string as specified in the
                 service description XML file) to be sent.
             args (list, optional): Relevant arguments as a list of (name,
-                value) tuples.
+                value) tuples, as an alternative to ``kwargs``.
             cache (Cache): A cache is operated so that the result will be
                 stored for up to ``cache_timeout`` seconds, and a subsequent
                 call with the same arguments within that period will be
@@ -360,16 +444,22 @@ class Service(object):
                 the cache identified by the service's `cache` attribute will
                 be used, but a different cache object may be specified in
                 the `cache` parameter.
+            kwargs: Relevant arguments for the command.
 
         Returns:
-             dict: a dict of ``{argument_name, value)}`` items.
+             dict: a dict of ``{argument_name, value}`` items.
 
         Raises:
+            `AttributeError`: If this service does not support the action.
+            `ValueError`: If the argument lists do not match the action
+                signature.
             `SoCoUPnPException`: if a SOAP error occurs.
             `UnknownSoCoException`: if an unknonwn UPnP error occurs.
-            `requests.exceptions.HTTPError`: if an http error.
+            `requests.exceptions.HTTPError`: if an http error occurs.
 
         """
+        if args is None:
+            args = self.compose_args(action, kwargs)
         if cache is None:
             cache = self.cache
         result = cache.get(action, args)
@@ -413,6 +503,7 @@ class Service(object):
             # Something else has gone wrong. Probably a network error. Let
             # Requests handle it
             response.raise_for_status()
+        return None
 
     def handle_upnp_error(self, xml_error):
         """Disect a UPnP error, and raise an appropriate exception.
@@ -462,7 +553,7 @@ class Service(object):
         if error_code is not None:
             description = self.UPNP_ERRORS.get(int(error_code), '')
             raise SoCoUPnPException(
-                message='UPnP Error {0} received: {1} from {2}'.format(
+                message='UPnP Error {} received: {} from {}'.format(
                     error_code, description, self.soco.ip_address),
                 error_code=error_code,
                 error_description=description,
@@ -521,6 +612,43 @@ class Service(object):
         """
         pass
 
+    @property
+    def actions(self):
+        """The service's actions with their arguments.
+
+        Returns:
+            list(`Action`): A list of Action namedtuples, consisting of
+            action_name (str), in_args (list of Argument namedtuples,
+            consisting of name and argtype), and out_args (ditto).
+
+        The return value looks like this::
+            [
+                Action(
+                    name='GetMute',
+                    in_args=[
+                        Argument(name='InstanceID', ...),
+                        Argument(
+                            name='Channel',
+                            vartype='string',
+                            list=['Master', 'LF', 'RF', 'SpeakerOnly'],
+                            range=None
+                        )
+                    ],
+                    out_args=[
+                        Argument(name='CurrentMute, ...)
+                    ]
+                )
+                Action(...)
+            ]
+
+        Its string representation will look like this::
+            GetMute(InstanceID: ui4, Channel: [Master, LF, RF, SpeakerOnly]) \
+            -> {CurrentMute: boolean}
+        """
+        if self._actions is None:
+            self._actions = list(self.iter_actions())
+        return self._actions
+
     def iter_actions(self):
         """Yield the service's actions with their arguments.
 
@@ -534,15 +662,13 @@ class Service(object):
             Action(
                 name='SetFormat',
                 in_args=[
-                    Argument(name='DesiredTimeFormat', vartype='string'),
-                    Argument(name='DesiredDateFormat', vartype='string')],
+                    Argument(name='DesiredTimeFormat', vartype=<Vartype>),
+                    Argument(name='DesiredDateFormat', vartype=<Vartype>)],
                 out_args=[]
             )
         """
 
         # pylint: disable=too-many-locals
-        # TODO: Provide for Allowed value list, Allowed value range,
-        # default value
         # pylint: disable=invalid-name
         ns = '{urn:schemas-upnp-org:service-1-0}'
         # get the scpd body as bytes, and feed directly to elementtree
@@ -551,34 +677,54 @@ class Service(object):
         tree = XML.fromstring(scpd_body)
         # parse the state variables to get the relevant variable types
         vartypes = {}
-        srvStateTables = tree.findall('{0}serviceStateTable'.format(ns))
+        srvStateTables = tree.findall('{}serviceStateTable'.format(ns))
         for srvStateTable in srvStateTables:
-            statevars = srvStateTable.findall('{0}stateVariable'.format(ns))
+            statevars = srvStateTable.findall('{}stateVariable'.format(ns))
             for state in statevars:
-                name = state.findtext('{0}name'.format(ns))
-                vartypes[name] = state.findtext('{0}dataType'.format(ns))
+                name = state.findtext('{}name'.format(ns))
+                datatype = state.findtext('{}dataType'.format(ns))
+                default = state.findtext('{}defaultValue'.format(ns))
+                value_list_elt = state.find('{}allowedValueList'.format(ns))\
+                    or ()
+                value_list = [item.text for item in value_list_elt] or None
+                value_range_elt = state.find('{}allowedValueRange'.format(ns))\
+                    or ()
+                value_range = [item.text for item in value_range_elt] or None
+                vartypes[name] = Vartype(datatype, default, value_list,
+                                         value_range)
         # find all the actions
-        actionLists = tree.findall('{0}actionList'.format(ns))
+        actionLists = tree.findall('{}actionList'.format(ns))
         for actionList in actionLists:
-            actions = actionList.findall('{0}action'.format(ns))
+            actions = actionList.findall('{}action'.format(ns))
             for i in actions:
-                action_name = i.findtext('{0}name'.format(ns))
-                argLists = i.findall('{0}argumentList'.format(ns))
+                action_name = i.findtext('{}name'.format(ns))
+                argLists = i.findall('{}argumentList'.format(ns))
                 for argList in argLists:
-                    args_iter = argList.findall('{0}argument'.format(ns))
+                    args_iter = argList.findall('{}argument'.format(ns))
                     in_args = []
                     out_args = []
                     for arg in args_iter:
-                        arg_name = arg.findtext('{0}name'.format(ns))
-                        direction = arg.findtext('{0}direction'.format(ns))
+                        arg_name = arg.findtext('{}name'.format(ns))
+                        direction = arg.findtext('{}direction'.format(ns))
                         related_variable = arg.findtext(
-                            '{0}relatedStateVariable'.format(ns))
+                            '{}relatedStateVariable'.format(ns))
                         vartype = vartypes[related_variable]
                         if direction == "in":
                             in_args.append(Argument(arg_name, vartype))
                         else:
                             out_args.append(Argument(arg_name, vartype))
                     yield Action(action_name, in_args, out_args)
+
+    @property
+    def event_vars(self):
+        """The service's eventable variables.
+
+        Returns:
+            list(tuple): A list of (variable name, data type) tuples.
+        """
+        if self._event_vars is None:
+            self._event_vars = list(self.iter_event_vars())
+        return self._event_vars
 
     def iter_event_vars(self):
         """Yield the services eventable variables.
@@ -592,13 +738,13 @@ class Service(object):
         scpd_body = requests.get(self.base_url + self.scpd_url).text
         tree = XML.fromstring(scpd_body.encode('utf-8'))
         # parse the state variables to get the relevant variable types
-        statevars = tree.findall('{0}stateVariable'.format(ns))
+        statevars = tree.findall('{}stateVariable'.format(ns))
         for state in statevars:
             # We are only interested if 'sendEvents' is 'yes', i.e this
             # is an eventable variable
             if state.attrib['sendEvents'] == "yes":
-                name = state.findtext('{0}name'.format(ns))
-                vartype = state.findtext('{0}dataType'.format(ns))
+                name = state.findtext('{}name'.format(ns))
+                vartype = state.findtext('{}dataType'.format(ns))
                 yield (name, vartype)
 
 
@@ -619,17 +765,11 @@ class MusicServices(Service):
     """Sonos music services service, for functions related to 3rd party music
     services."""
 
-    def __init__(self, soco):
-        super(MusicServices, self).__init__(soco)
-
 
 class DeviceProperties(Service):
 
     """Sonos device properties service, for functions relating to zones, LED
     state, stereo pairs etc."""
-
-    def __init__(self, soco):
-        super(DeviceProperties, self).__init__(soco)
 
 
 class SystemProperties(Service):
@@ -637,17 +777,11 @@ class SystemProperties(Service):
     """Sonos system properties service, for functions relating to
     authentication etc."""
 
-    def __init__(self, soco):
-        super(SystemProperties, self).__init__(soco)
-
 
 class ZoneGroupTopology(Service):
 
     """Sonos zone group topology service, for functions relating to network
     topology, diagnostics and updates."""
-
-    def __init__(self, soco):
-        super(ZoneGroupTopology, self).__init__(soco)
 
     def GetZoneGroupState(self, *args, **kwargs):
         """Overrides default handling to use the global shared zone group state
@@ -660,16 +794,10 @@ class GroupManagement(Service):
 
     """Sonos group management service, for services relating to groups."""
 
-    def __init__(self, soco):
-        super(GroupManagement, self).__init__(soco)
-
 
 class QPlay(Service):
 
     """Sonos Tencent QPlay service (a Chinese music service)"""
-
-    def __init__(self, soco):
-        super(QPlay, self).__init__(soco)
 
 
 class ContentDirectory(Service):
@@ -726,6 +854,7 @@ class RenderingControl(Service):
         super(RenderingControl, self).__init__(soco)
         self.control_url = "/MediaRenderer/RenderingControl/Control"
         self.event_subscription_url = "/MediaRenderer/RenderingControl/Event"
+        self.DEFAULT_ARGS.update({'InstanceID': 0})
 
 
 class MR_ConnectionManager(Service):  # pylint: disable=invalid-name
@@ -773,6 +902,7 @@ class AVTransport(Service):
             738: 'Bad Domain Name',
             739: 'Server Error',
         })
+        self.DEFAULT_ARGS.update({'InstanceID': 0})
 
 
 class Queue(Service):
@@ -796,3 +926,4 @@ class GroupRenderingControl(Service):
         self.control_url = "/MediaRenderer/GroupRenderingControl/Control"
         self.event_subscription_url = \
             "/MediaRenderer/GroupRenderingControl/Event"
+        self.DEFAULT_ARGS.update({'InstanceID': 0})

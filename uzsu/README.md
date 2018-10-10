@@ -8,13 +8,7 @@ Calculating of sunset/sunrise in triggers, requires installation of ephem (which
 
 ## Configuration
 
-### plugin.conf (deprecated) / plugin.yaml
-
-```
-[uzsu]
-   class_name = UZSU
-   class_path = plugins.uzsu
-```
+### plugin.yaml
 
 ```yaml
 uzsu:
@@ -22,22 +16,10 @@ uzsu:
     class_path: plugins.uzsu
 ```
 
-### items.conf (deprecated) / items.yaml
+### items.yaml
 
 #### uzsu
 You have to specify a item with `type = dict` and with the `uzsu_item` attribute set to the path of the item which will be set by this item. The dict has to have two keys. `active` which says if the whole list of entries should be active or not and `list` which contains a list of all entries (see the Item Data Format section for more details).
-
-```
-# items/my.conf (deprecated)
-
-[someroom]
-    [[someitem]]
-        type = int
-        [[[anotheritem]]]
-            type = dict
-            uzsu_item = someroom.someitem
-            cache = True
-```
 
 ```yaml
 # items/my.yaml
@@ -52,7 +34,7 @@ someroom:
             cache: 'True'
 ```
 
-If you specify the `cache = True` as well, then you're switching entries will be there even if you restart smarthome.py.
+If you specify the ``cache: True`` as well, then you're switching entries will be there even if you restart smarthome.py.
 
 ## Item Data Format
 

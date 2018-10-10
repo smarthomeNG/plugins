@@ -7,6 +7,7 @@ plugin:
         en: 'Integration of a SQLite database - use this version of the plugin for smartVISU v2.8 and above'
     maintainer: '?'
 #    tester:                        # Who tests this plugin?
+    state: ready
     keywords: database
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
@@ -14,11 +15,101 @@ plugin:
     sh_minversion: 1.3c            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: SQL                 # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+#    cycle:
+#        type: int
+#        valid_min: 0
+#        default: 300
+#        description:
+#            de: 'Zyklus-Zeit in dem die Datanbank Daten auf den Datenträger geschrieben werden'
+#            en: 'cycle time for data beeing written to disc'
+
+    path:
+        type: str
+        description:
+            de: "Pfad zur Datenbank Datei (Pfad ohne Dateiname)"
+            en: "Path to the database file (path without filename)"
+        default: None*
+
+    dumpfile:
+        type: str
+        description:
+            de: "Falls dumpfile angegeben ist, erzeugt SmartHomeNG jede Nacht einen Datenbank Dump in diese Datei. (kompletter Pfad und Dateiname)"
+            en: "If dumpfile is specified, SmartHomeNG dumps the database every night into this file. (Complete path and filename)"
+        default: ''
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    sqlite:
+        type: str
+        description:
+            de: "Falls auf 'yes' gesetzt, wird der Wert des Items in die sqlite Datenbank geschrieben."
+            en: "If set to 'yes', the value of the item will be written to the sqlite database"
+        valid_list: ['', 'yes', 'init', 'True', 'no', 'False']
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+    db:
+        type: num
+        description:
+            de: "Diese Methode liefert einen Wert, für die gewählte Zeitspanne. Die Funktion legt fest, wie der Wert berechnet wird."
+            en: "This method returns an value for the specified function and timeframe."
+        parameters:
+            function:
+                type: str
+                valid_list: ['avg', 'max', 'min', 'avg', 'sum']
+                description:
+                    de: "Funktion die genutzt wird um den Rückgabewert zu berechnen"
+                    en: "function used to calculate the return value"
+            start:
+                type: str
+                description:
+                    de: "Beginn der Zeitspanne"
+                    en: "start of timeframe"
+            end:
+                type: str
+                default: now
+                description:
+                    de: "Ende der Zeitspanne"
+                    en: "end of timeframe"
+
+    cleanup:
+        description:
+            de: "Diese Funktion entfernt verwaiste Items, welche nicht mehr in der Item Konfiguration referenziert werden."
+            en: "This function removes orphaned item entries which are no longer referenced in the item configuration."
+
+    dump:
+        description:
+            de: "Erzeugt einen Dump der Datenbank in die angegebene Datei"
+            en: "Dumps the database into the specified file. 'sh.sql.dump('/tmp/smarthomedb.dump')' writes the database content into /tmp/smarthomedb.dump"
+        parameters:
+            filename:
+                type: str
+                description:
+                    de: "Dateiname für den Datenbank Dump"
+                    en: "filename for the datbase dump"
+
+    move:
+        description:
+            de: "Diese Funktion benennt Item Einträge um. sh.sql.move('my.old.item', 'my.new.item')"
+            en: "This function renames item entries. sh.sql.move('my.old.item', 'my.new.item')"
+        parameters:
+            old:
+                type: str
+                description:
+                    de: "Alter Item Name"
+                    en: "old item name"
+            new:
+                type: str
+                description:
+                    de: "Neuer Item Name"
+                    en: "new item name"
+
+
