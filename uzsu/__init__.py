@@ -107,7 +107,7 @@ class UZSU(SmartPlugin):
         self._items = {}
         self._planned = {}
         self._update_count = {'todo': 0, 'done': 0}
-        self._itpl = OrderedDict()
+        self._itpl = {}
         self.init_webinterface()
         self.logger.info("Init with timezone {}".format(self._timezone))
         if not REQUIRED_PACKAGE_IMPORTED:
@@ -286,6 +286,17 @@ class UZSU(SmartPlugin):
             self.logger.info("UZSU settings for item '{}' are cleared".format(item))
             item(self._items[item], 'UZSU Plugin', 'clear')
 
+    def _logics_itpl(self, clear=False, item=None):
+        if isinstance(clear, str):
+            if clear.lower() in ['1', 'yes', 'true', 'on']:
+                clear = True
+        if isinstance(clear, bool) and clear is True:
+            self._itpl[item].clear()
+            self.logger.info("UZSU interpolation dict for item '{}' is cleared".format(item))
+        else:
+            self.logger.info("UZSU interpolation dict for item '{}' is: {}".format(item, self._itpl[item]))
+            return self._itpl[item]
+
     def _logics_planned(self, item=None):
         if self._planned.get(item) not in [None, {}] and self._items[item].get('active') is True:
             self.logger.info("Item '{}' is going to be set to {} at {}".format(
@@ -321,6 +332,7 @@ class UZSU(SmartPlugin):
             item.interpolation = functools.partial(self._logics_interpolation, item=item)
             item.clear = functools.partial(self._logics_clear, item=item)
             item.planned = functools.partial(self._logics_planned, item=item)
+            item.itpl = functools.partial(self._logics_itpl, item=item)
 
             if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
                 self._items[item] = item()
@@ -429,7 +441,7 @@ class UZSU(SmartPlugin):
             self.logger.warning("item '{}' is active but has no entries.".format(item))
             self._planned.update({item: None})
         elif self._items[item].get('active') is True:
-            self._itpl.clear()
+            self._itpl[item] = OrderedDict()
             for i, entry in enumerate(self._items[item]['list']):
                 next, value = self._get_time(entry, 'next', item, i)
                 self._get_time(entry, 'previous', item)
@@ -463,8 +475,8 @@ class UZSU(SmartPlugin):
             _initialized = self._items[item]['interpolation'].get('initialized')
             _initialized = False if not _initialized else _initialized
             entry_now = datetime.now(self._timezone).timestamp() * 1000.0
-            self._itpl[entry_now] = 'NOW'
-            itpl_list = sorted(list(self._itpl.items()))
+            self._itpl[item][entry_now] = 'NOW'
+            itpl_list = sorted(list(self._itpl[item].items()))
             entry_index = itpl_list.index((entry_now, 'NOW'))
             _inittime = itpl_list[entry_index - min(1, entry_index)][0]
             _initvalue = itpl_list[entry_index - min(1, entry_index)][1]
@@ -480,7 +492,7 @@ class UZSU(SmartPlugin):
             cond3 = _initialized is False
             cond4 = _initage > 0
             cond5 = isinstance(_value, float)
-            self._itpl = OrderedDict(itpl_list)
+            self._itpl[item] = OrderedDict(itpl_list)
             if not cond2 and cond3 and cond4:
                 self.logger.info("Looking if there was a value set after {} for item {}".format(
                     _timediff, item))
@@ -504,26 +516,27 @@ class UZSU(SmartPlugin):
                 _reset_interpolation = True
             elif _interpolation.lower() == 'cubic' and _interval > 0:
                 try:
-                    tck = interpolate.PchipInterpolator(list(self._itpl.keys()), list(self._itpl.values()))
+                    tck = interpolate.PchipInterpolator(list(self._itpl[item].keys()), list(self._itpl[item].values()))
                     _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
                     _next = _nextinterpolation if _next > _nextinterpolation else _next
                     _value = round(float(tck(_next.timestamp() * 1000.0)), 2)
                     _value_now = round(float(tck(entry_now)), 2)
                     self._set(item=item, value=_value_now, caller='scheduler')
                     self.logger.info("Updated: {}, cubic interpolation value: {}, based on dict: {}."
-                                     " Next: {}, value: {}".format(item, _value_now, self._itpl, _next, _value))
+                                     " Next: {}, value: {}".format(item, _value_now, self._itpl[item], _next, _value))
                 except Exception as e:
-                    self.logger.error("Error cubic interpolation: {}".format(e))
+                    self.logger.error("Error cubic interpolation for item {} "
+                                      "with interpolation list {}: {}".format(item, self._itpl[item], e))
             elif _interpolation.lower() == 'linear' and _interval > 0:
                 try:
-                    tck = interpolate.interp1d(list(self._itpl.keys()), list(self._itpl.values()))
+                    tck = interpolate.interp1d(list(self._itpl[item].keys()), list(self._itpl[item].values()))
                     _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
                     _next = _nextinterpolation if _next > _nextinterpolation else _next
                     _value = round(float(tck(_next.timestamp() * 1000.0)), 2)
                     _value_now = round(float(tck(entry_now)), 2)
                     self._set(item=item, value=_value_now, caller='scheduler')
                     self.logger.info("Updated: {}, linear interpolation value: {}, based on dict: {}."
-                                     " Next: {}, value: {}".format(item, _value_now, self._itpl, _next, _value))
+                                     " Next: {}, value: {}".format(item, _value_now, self._itpl[item], _next, _value))
                 except Exception as e:
                     self.logger.error("Error linear interpolation: {}".format(e))
             if cond5 and _value < 0:
@@ -541,7 +554,7 @@ class UZSU(SmartPlugin):
             if self._update_count.get('done') == self._update_count.get('todo'):
                 self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                 self._update_count = {'done': 0, 'todo': 0}
-        elif self._items[item].get('active') is True:
+        elif self._items[item].get('active') is True and self._items[item].get('list'):
             self.logger.warning("item '{}' is active but has no active entries.".format(item))
             self._planned.update({item: None})
 
@@ -626,7 +639,7 @@ class UZSU(SmartPlugin):
                     else:
                         next = datetime.combine(dt.date(), parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
                     if next and next.date() == dt.date():
-                        self._itpl[next.timestamp() * 1000.0] = value
+                        self._itpl[item][next.timestamp() * 1000.0] = value
                         if next - timedelta(seconds=1) > datetime.now().replace(tzinfo=self._timezone):
                             self.logger.debug("Return from rrule {}: {}, value {}.".format(timescan, next, value))
                             return next, value
@@ -641,7 +654,7 @@ class UZSU(SmartPlugin):
                     if entryindex is not None:
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                 else:
-                    self._itpl[next.timestamp() * 1000.0] = value
+                    self._itpl[item][next.timestamp() * 1000.0] = value
                     self.logger.debug("Include previous today: {}, value {} for interpolation.".format(next, value))
                     if entryindex:
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
@@ -652,7 +665,7 @@ class UZSU(SmartPlugin):
                 next = datetime.combine(today, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
                 cond_future = next > datetime.now(self._timezone) and timescan == 'next'
                 if not cond_future:
-                    self._itpl[next.timestamp() * 1000.0] = value
+                    self._itpl[item][next.timestamp() * 1000.0] = value
                     self.logger.debug("Include next today: {}, value {} for interpolation.".format(next, value))
                     next = datetime.combine(tomorrow, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
             cond1 = next.date() == today.date()
@@ -662,19 +675,19 @@ class UZSU(SmartPlugin):
             cond_previous_today = next - timedelta(seconds=1) < datetime.now(self._timezone) and timescan == 'previous'
             cond_previous_yesterday = next - timedelta(days=1) < datetime.now(self._timezone) and timescan == 'previous'
             if next and cond1 and cond_next:
-                self._itpl[next.timestamp() * 1000.0] = value
+                self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug("Return next today: {}, value {}".format(next, value))
                 return next, value
             if next and cond3 and cond_next:
-                self._itpl[next.timestamp() * 1000.0] = value
+                self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug("Return next tomorrow: {}, value {}".format(next, value))
                 return next, value
             if next and cond1 and cond_previous_today:
-                self._itpl[(next - timedelta(seconds=1)).timestamp() * 1000.0] = value
+                self._itpl[item][(next - timedelta(seconds=1)).timestamp() * 1000.0] = value
                 self.logger.debug("Return previous today: {}, value {}".format(next, value))
                 return next, value
             if next and cond2 and cond_previous_yesterday:
-                self._itpl[(next - timedelta(days=1)).timestamp() * 1000.0] = value
+                self._itpl[item][(next - timedelta(days=1)).timestamp() * 1000.0] = value
                 self.logger.debug("Return previous yesterday: {}, value {}".format(next - timedelta(days=1), value))
                 return next - timedelta(days=1), value
         except Exception as e:
