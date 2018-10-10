@@ -326,6 +326,7 @@ class OneWire(OwBase):
                         value = self._flip[self.read('/uncached' + path).decode()]
                 except Exception:
                     self.logger.warning("1-Wire: problem reading {0}".format(addr))
+                    #pydevd.settrace("192.168.177.20")
                     continue
                 item(value, '1-Wire', path)
 
@@ -377,6 +378,7 @@ class OneWire(OwBase):
         start = time.time()
         for addr in self._sensors:
             if not self.alive:
+                self.logger.info("1-Wire: Self not alive".format(addr))
                 break
             for key in self._sensors[addr]:
                 item = self._sensors[addr][key]['item']
@@ -388,23 +390,28 @@ class OneWire(OwBase):
                     value = self.read('/uncached' + path).decode()
                     if key.startswith('T') and value == '85.0000':
                         self.logger.info("1-Wire: problem reading {0}. Wiring problem?".format(addr))
+                        temperror=True
                         continue
+                    else:
+                        temperror=False
                     value = float(value)
                 except Exception as e:
-                    self.logger.warning("1-Wire: problem reading {} {}: {}".format(addr, path, e))
-                    if not self.connected:
-                        return
-                    else:
-                        self.close()
-                        break
-                if key == 'L':  # light lux conversion
-                    if value > 0:
-                        value = round(10 ** ((float(value) / 47) * 1000))
-                    else:
-                        value = 0
-                elif key == 'VOC':
-                    value = value * 310 + 450
-                item(value, '1-Wire', path)
+                    self.logger.warning("1-Wire: problem reading {} {}: {}. Trying to continue with next sensor".format(addr, path, e))
+                    #if not self.connected:
+                    #    return
+                    #else:
+                    #    self.close()
+                    #    break
+                else:  #only if no exception
+                    if key == 'L':  # light lux conversion
+                        if value > 0:
+                            value = round(10 ** ((float(value) / 47) * 1000))
+                        else:
+                            value = 0
+                    elif key == 'VOC':
+                        value = value * 310 + 450
+                    if not temperror: item(value, '1-Wire', path)
+                    
         cycletime = time.time() - start
         self.logger.debug("1-Wire: sensor cycle takes {0} seconds".format(cycletime))
 
