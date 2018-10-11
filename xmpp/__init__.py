@@ -62,7 +62,7 @@ class XMPP(SmartPlugin):
         self._run = False
         self.alive = False
         for chat in self._join:
-            self.xmpp.plugin['xep_0045'].leaveMUC(chat, self.xmpp.jid)
+            self.xmpp.plugin['xep_0045'].leaveMUC(chat, self.xmpp.boundjid.bare)
         self.logger.info("Shutting Down XMPP Client")
         self.xmpp.disconnect(wait=False)
 
@@ -87,7 +87,7 @@ class XMPP(SmartPlugin):
         self.xmpp.sendPresence(pstatus="Send me a message")
         self.xmpp.get_roster()
         for chat in self._join:
-            self.xmpp.plugin['xep_0045'].joinMUC(chat, self.xmpp.jid, wait=True)
+            self.xmpp.plugin['xep_0045'].joinMUC(chat, self.xmpp.boundjid.bare, wait=True)
 
     def handleIncomingMessage(self, msg):
         """
