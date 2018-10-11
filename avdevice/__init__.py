@@ -1252,7 +1252,7 @@ class AVDevice(SmartPlugin):
                             elif primarycount == 0 and queryentry is not None:
                                 try:
                                     self._send_commands.remove(queryentry)
-                                    self._clearbuffer = True
+                                    self._clearbuffer = True if not self._send_commands else False
                                     self.logger.debug(
                                         "Checking Dependency {}: Dependent Query command {} removed from Send Commands. Dependencies: {}".format(
                                             self._name, queryentry, self._send_commands, dependitems))
