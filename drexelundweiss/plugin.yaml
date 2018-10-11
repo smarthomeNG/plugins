@@ -5,27 +5,72 @@ plugin:
     description:
         de: 'Unterstützt Drexel & Weiss USB Devices'
         en: ''
-    maintainer: '?'
+    maintainer: 'onkelandy'
     tester: onkelandy, brandst
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/34582-drexel-weiss-plugin
 
-    version: 1.3.0                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.5.1                 # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: DuW                 # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    tty:
+        type: str
+        default: ''
+        description:
+            de: "Beim Nutzen einer RS232/USB Schnittstelle ist die serielle Schnittstelle anzugeben."
+            en: "If you use a RS232/USB cable to communicate with your device define the serial port."
+
+    LU_ID:
+        type: int
+        default: 130
+        description:
+            de: "ID für Lüftung."
+            en: "ID for ventilation."
+
+    WP_ID:
+        type: int
+        default: 140
+        description:
+            de: "ID für Heizung."
+            en: "ID for heating."
+
+    device:
+        type: int
+        default: 0
+        description:
+            de: "ID des Geräts, falls die Info nicht automatisch ausgelesen werden kann."
+            en: "ID of the device if it is not possible to read it automatically."
+
+    retrylimit:
+        type: int
+        default: 100
+        description:
+            de: "Maximale Versuche, einen Wert einzulesen."
+            en: "Maximum retries to read a value."
+
+    busmonitor:
+        type: bool
+        default: False
+        description:
+            de: "Busmonitor."
+            en: "Busmonitor."
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
-logic_parameters: NONE
-    # Definition of logic parameters defined by this plugin
+    DuW_WP_register:
+        type: int
+        description:
+            de: 'Register für Wärmepumpe entsprechend Textdatei'
+            en: 'Register for heating based on text file'
 
-plugin_functions: NONE
-    # Definition of function interface of the plugin
-
+    DuW_LU_register:
+        type: int
+        description:
+            de: 'Register für Lüftung entsprechend Textdatei'
+            en: 'Register for ventilation based on text file'            
