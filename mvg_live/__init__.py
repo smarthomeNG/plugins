@@ -29,14 +29,13 @@ from lib.model.smartplugin import SmartPlugin
 
 class MVG_Live(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0.1"
+    PLUGIN_VERSION = "1.5.0.2"
 
-    def __init__(self, smarthome):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
         """
         self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
         self._mvg_live = MVGLive.MVGLive()
 
     def run(self):

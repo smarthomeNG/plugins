@@ -80,6 +80,7 @@ Sonos:
                                                     # ip address here.  
     # webservice_port: 23500                        # optional, default:  23500
     # discover_cycle: 120                           # optional, default:  120 (in seconds)
+    # snippet_duration_offset: 0.4                  # optional, default: 0.0 (in seconds)
     # speaker_ips:                                  # optional. You can set static IP addresses for your Sonos speaker. This
     #   - 192.168.1.10                              # will disable auto-discovery. This is useful if you're using a 
     #   - 192.168.1.77                              # containerized environment with restricted network access.
@@ -778,6 +779,7 @@ option for the Sonos plugin in your ```plugin.yaml```. In addition to that, you 
 ```local_webservice_path``` option. If you want to separate your audio snippets from the automatic generated TTS audio
 files, you have to set the ```local_webservice_path_snippet``` option. 
 A very simple Webservice will be started to serve Sonos requests.
+In order to adapt the automatically calculated duration of audio snippets to different hardware, a fixed duration offset (in seconds) can be configured via the snippet_duration_offset option.
 
 ### Configure Speaker IPs manually
 

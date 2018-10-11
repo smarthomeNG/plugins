@@ -7,6 +7,7 @@ plugin:
         en: 'Petrol station prices by the API of TankerKönig. Take care not to request the interface too often or for too many petrol stations. Please follow instructions given on https://creativecommons.tankerkoenig.de/#techInfo.'
     maintainer: psilo909
     tester: Sandman60
+    state: ready
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins_doc/config/tankerkoenig.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/938924-benzinpreis-plugin
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: TankerKoenig        # class containing the plugin
 
 parameters:
@@ -26,6 +28,71 @@ parameters:
             de: 'Persönlicher API Key für TankerKoenig. Registrierung unter https://creativecommons.tankerkoenig.de.'
             en: 'Your own personal API key for TankerKoenig. For your own key register to https://creativecommons.tankerkoenig.de.'
     
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
-    
+
+plugin_functions:
+    # Definition of function interface of the plugin
+    get_petrol_stations:
+        type: dict
+        description:
+            de: "Diese Funktion liefert ein DICT mit den Tankstellen im Umkreis."
+            en: "This function returns a DICT with petrol stations around a coordinate."
+
+        parameters:
+            lat:
+                type: float
+                description:
+                    de: "Breitengrad des Mittelpunkts der Anfrage."
+                    en: "Latitude of center."
+            lon:
+                type: float
+                description:
+                    de: "Längengrad des Mittelpunkts der Anfrage."
+                    en: "Longitude of center."
+
+
+            type:
+                type: str
+                description:
+                    de: "Typ des Benzins: 'e5', 'e10', 'diesel' oder 'all'."
+                    en: "Type of fuel: 'e5', 'e10', 'diesel' or 'all'."
+
+            sort:
+                type: str
+                description:
+                    de: "Sortierreihenfolge der Ergebnisse, 'price' oder 'dist'."
+                    en: "Sort order of results, 'price', or 'dist'."
+
+            rad:
+                type: float
+                description:
+                    de: "Suchradius in km, Max: 25"
+                    en: "Search radius in km, max: 25"
+
+
+    get_petrol_station_detail:
+        type: dict
+        description:
+            de: "Diese Funktion gibt Details über eine Tankstelle als DICT mit folgenden Keys zurück: 'e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen'"
+            en: "This function returns details about a petrol station as DICT with keys: 'e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen'"
+
+        parameters:
+            id:
+                type: str
+                description:
+                    de: "UUID für die anzufragende Tankstelle."
+                    en: "UUID for requested petrol station."
+
+    get_petrol_station_prices:
+        type: dict
+        description:
+            de: "Gibt ein DICT mit Preisen für ein Array an Tankstellen-IDs zurück. Benutzung wird vom Tankerkoenig Team aus Performanzgründen empfeohlen!!!"
+            en: "Returns a list of prices for an array of petrol station ids. Recommended to be used by tankerkoenig team due to performance issues!!!"
+
+        parameters:
+            ids:
+                type: list(str)
+                description:
+                    de: "Array der Tankstellen IDs, für die Preise angefragt werden sollen."
+                    en: "Array of petrol station IDs, for which prices shall be queried."

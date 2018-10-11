@@ -39,8 +39,6 @@ class DarkSky(SmartPlugin):
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
-        @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
-        api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
         self.logger = logging.getLogger(__name__)
         self._key = self.get_parameter_value('key')
@@ -95,19 +93,23 @@ class DarkSky(SmartPlugin):
                         wrk = wrk['alerts']
                     else:
                         alerts_string = ''
-                        for alert in wrk['alerts']:
-                            start_time = datetime.datetime.fromtimestamp(
-                                int(alert['time'])
-                            ).strftime('%d.%m.%Y %H:%M')
-                            expire_time = datetime.datetime.fromtimestamp(
-                                int(alert['expires'])
-                            ).strftime('%d.%m.%Y %H:%M')
-                            alerts_string_wrk = "<p><h1>"+alert['title']+" ("+start_time+" - "+expire_time+")</h1>"
-                            alerts_string_wrk = alerts_string_wrk + "<span>"+alert['description']+"</span></p>"
-                            alerts_string = alerts_string + alerts_string_wrk
+                        if 'alerts' in wrk:
+                            for alert in wrk['alerts']:
+                                start_time = datetime.datetime.fromtimestamp(
+                                    int(alert['time'])
+                                ).strftime('%d.%m.%Y %H:%M')
+                                expire_time = datetime.datetime.fromtimestamp(
+                                    int(alert['expires'])
+                                ).strftime('%d.%m.%Y %H:%M')
+                                alerts_string_wrk = "<p><h1>"+alert['title']+" ("+start_time+" - "+expire_time+")</h1>"
+                                alerts_string_wrk = alerts_string_wrk + "<span>"+alert['description']+"</span></p>"
+                                alerts_string = alerts_string + alerts_string_wrk
                         wrk = alerts_string
                 else:
-                    wrk = []
+                    if s == "alerts_string":
+                        wrk = ''
+                    else:
+                        wrk = []
             else:
                 while True:
                     if (len(sp) == 0) or (wrk is None):

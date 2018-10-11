@@ -3,23 +3,102 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Unterstützung für ein Nuki Smart-Lock'
-        en: ''
+        de: 'Unterstützung für ein NUKI Smart-Lock'
+        en: 'Support for the NUKI Smart Lock'
     maintainer: fuppy, pfischi
-#    tester:                        # Who tests this plugin?
-#    keywords: iot xyz
+    tester: psilo909
+    state: ready
+    keywords: Smart Lock, Nuki
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1052437-nuki-smartlock-plugin-support-thread
 
-    version: 1.3.0.1               # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.5.0.3               # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Nuki                # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    bridge_ip:
+        type: ip
+        mandatory: True
+        description:
+            de: 'IP-Adresse der NUKI Bridge.'
+            en: 'IP address of the NUKI Bridge.'
+
+    bridge_port:
+        type: int
+        mandatory: True
+        description:
+            de: 'Portnummer der NUKI Bridge.'
+            en: 'Port number of the NUKI Bridge.'
+
+    bridge_api_token:
+        type: str
+        mandatory: True
+        description:
+            de: 'Token für die Authentifizierung mit der API der NUKI Bridge.'
+            en: 'Token for authentication with the API of the NUKI Bridge.'
+
+    bridge_callback_ip:
+        type: ip
+        mandatory: False
+        description:
+            de: '(optional) IP Adresse, die die Callbacks der NUKI Bridge verarbeitet. Default: Lokale IP Adresse.'
+            en: '(optional) IP address of the TCP dispatcher which is handling the Bridge callback requests. By default, the local IP address is used.'
+
+    bridge_callback_port:
+        type: int
+        mandatory: False
+        default: 8090
+        description:
+            de: '(optional) Port, über den die Callbacks der NUKI Bridge verarbeitet werden sollen. Default: 8090.'
+            en: '(optional) Port for the callbacks from NUK Bridge. Default: 8090.'
+
+    protocol:
+        type: str
+        mandatory: False
+        default: 'http'
+        description:
+            de: '(optional) Zu verwendendes Protokoll für die Kommunikaton mit der NUKI Bridge. Default: http.'
+            en: '(optional) Protocol for communication with NUKE bridge. Default http.'
+
+    no_wait:
+        type: bool
+        mandatory: False
+        default: True
+        description:
+            de: '(optional) Flag, ob gewartet werden soll, bis die Aktion des Schlosses beendet ist. False kann zu Fehler bei Requests an die NUKI Bridge führen. Default: True'
+            en: '(optional) Flag indicating whether or not to wait for the lock action to complete and return its result. 0 may lead to errors in requests to NUKI Bridge. Default: True'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     
+    nuki_id:
+        type: str
+        mandatory: True
+        description:
+            de: 'Dieses Attribut weist das Item dem jeweiligen NUKI Smart Lock zu. Die `nuki_id` kann entweder über die
+                 REST API der NUKI Bridget (siehe Dokumentation)herausgefunden werden, oder durch Neustart von SmartHomeNG mit
+                 dem konfigurierten NUKI Plugin. Der `name` und die `nuki_id` werden in das jeweilige Logfile geschrieben.'
+            en: 'This attribute connects the related item with the corresponding Nuki Smart Lock.
+                 The `nuki_id` can be figured out via the REST API of the Nuki Bridge (see API documentation) or by just (re)starting
+                 SmarthomeNG with the configured Nuki plugin. The `name` and the `nuki_id` of all paired Nuki Locks will be written to
+                 the log file of SmarthomeNG.'
+
+    nuki_trigger:
+        type: str
+        mandatory: True
+        description:
+            de: 'Es gibt drei Typen von NUKI Triggern, `action`, `state` und `battery`. Ein Item kann nur einen Trigger gleichzeitig haben..'
+            en: 'There are three types of nuki triggers, `action`, `state` and `battery`. An item can only have one trigger
+                 attribute at once.'
+        valid_list:
+            - 'state'
+            - 'battery'
+            - 'action'
+
+plugin_functions: NONE
+    # Definition of item attributes defined by this plugin

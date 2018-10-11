@@ -101,7 +101,11 @@
 		<tr>
 			<td class="py-1 shng_heading">{{ _('Watch_Item(s)') }}</td>
 			<td class="py-1" colspan="3">
-				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %} value="{{ thislogic.watch_item }}"/>
+				{% if yaml_updates and updates %}
+				<textarea autocomplete="off" id="watch" style="width: 900px;" name="watch" {% if not yaml_updates or not updates %}readonly="true" disabled{% endif %}>{{ thislogic.watch_item }}</textarea>
+				{% else %}
+				<input type="text" autocomplete="off" id="watch" style="width: 900px; border: 1px solid #ddd;" name="watch" readonly="true" disabled value="{{ thislogic.watch_item }}"/>
+				{% endif %}
 				<input type="hidden" id="original_watch" value="{{ thislogic.watch_item }}"/>
 			</td>
 		</tr>
@@ -114,18 +118,69 @@
 		</tr>
 	</table>
 	<input type="hidden" id="original_content" value="{% for line in logic_lines %}{{ line }}{% endfor %}"/>
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
+	<div style="margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
 		{% if logic_lines %}
 			<textarea autocomplete="off" id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}{% endfor %}</textarea>
 			{% if updates %}</form>{% endif %}
 		{% else %}{{ _('no data available') }}{% endif %}
+	{% if not yaml_updates or not updates %}
+	<style>
+	.CodeMirror {
+		background-color: #f2f2f2;
+	}
+	.CodeMirror-gutters	{
+		background-color: #f2f2f2;
+	}
+	</style>
+	{% endif %}
 	<script>
 var rulers = [];
 for (var i = 1; i <= 100; i++) {
 	rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
 }
+{% if yaml_updates and updates %}
+var watchitemsCodeMirror = CodeMirror.fromTextArea($("#watch")[0], {
+    {% if not yaml_updates or not updates %}readOnly: true,{% endif %}
+});
 
-var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_code"), {
+watchitemsCodeMirror.on("beforeChange", function(cm, changeObj) {
+    var typedNewLine = changeObj.origin == '+input' && typeof changeObj.text == "object" && changeObj.text.join("") == "";
+    if (typedNewLine) {
+        return changeObj.cancel();
+    }
+
+    var pastedNewLine = changeObj.origin == 'paste' && typeof changeObj.text == "object" && changeObj.text.length > 1;
+    if (pastedNewLine) {
+        var newText = changeObj.text.join(" ");
+        return changeObj.update(null, null, [newText]);
+    }
+
+    return null;
+});
+
+watchitemsCodeMirror.on("keyup", function (cm, event) {
+    if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+
+	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
+		(event.keyCode != 8 &&
+		event.keyCode != 9 &&
+		event.keyCode != 13 &&
+		event.keyCode != 27 &&
+		event.keyCode != 37 &&
+		event.keyCode != 38 &&
+		event.keyCode != 39 &&
+		event.keyCode != 40 &&
+		event.keyCode != 46)) {
+		CodeMirror.commands.autocomplete_shng_watch_items(cm, null, {completeSingle: false});
+	};
+});
+{% endif %}
+
+var logicsCodeMirror = CodeMirror.fromTextArea($("#logics_code")[0], {
     lineNumbers: true,
 
     extraKeys: {
@@ -159,7 +214,7 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
     {% endif %}
     lineSeparator: '\n',
     indentUnit: 4,
-    {% if mode == 'python' %}rulers: rulers,{% endif %}
+    {% if mode == 'python' and updates %}rulers: rulers,{% endif %}
     lineWrapping: true,
     indentWithTabs: false,
     foldGutter: true,
@@ -167,6 +222,27 @@ var logicsCodeMirror = CodeMirror.fromTextArea(document.getElementById("logics_c
 });
 
 {% if updates %}
+logicsCodeMirror.on("keyup", function (cm, event) {
+    if (checkChangedContent()) {
+        markChangedContent();
+    } else {
+		markIdenticalContent();
+    }
+
+	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
+		(event.keyCode != 8 &&
+		event.keyCode != 9 &&
+		event.keyCode != 13 &&
+		event.keyCode != 27 &&
+		event.keyCode != 37 &&
+		event.keyCode != 38 &&
+		event.keyCode != 39 &&
+		event.keyCode != 40 &&
+		event.keyCode != 46)) {
+		CodeMirror.commands.autocomplete_shng(cm, null, {completeSingle: false});
+	};
+});
+
 $('#crontab').keyup( function() {
 	if (checkChangedContent()) {
         markChangedContent();
@@ -188,26 +264,7 @@ $('#cycle').keyup( function() {
 		markIdenticalContent();
     }
 });
-logicsCodeMirror.on("keyup", function (cm, event) {
-    if (checkChangedContent()) {
-        markChangedContent();
-    } else {
-		markIdenticalContent();
-    }
 
-	if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
-		(event.keyCode != 8 &&
-		event.keyCode != 9 &&
-		event.keyCode != 13 &&
-		event.keyCode != 27 &&
-		event.keyCode != 37 &&
-		event.keyCode != 38 &&
-		event.keyCode != 39 &&
-		event.keyCode != 40 &&
-		event.keyCode != 46)) {
-		CodeMirror.commands.autocomplete_item(cm, null, {completeSingle: false});
-	};
-});
 var answer = false;
 var unloadCheck = true;
 $('a').click(function(e) {

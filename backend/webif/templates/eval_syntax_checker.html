@@ -13,14 +13,14 @@
 <div class="container-fluid navBorder"></div>
 <form name="input" action="eval_syntax_checker.html" method="POST" enctype="multipart/form-data">
 	<div class="container-fluid" style="width: 100%;">
-		<div style="width: 100%; float: left; border: 1px solid #ccc; margin-bottom: 10px; margin-right: 5px;">
+		<div style="width: 100%; float: left; margin-bottom: 10px; margin-right: 5px;">
 			<div title="{{ _('Hier den Ausdruck eingeben, der ausgewertet werden soll. Items können mit absolutem Pfad oder relativem Pfad angegeben werden.') }}">
-				<div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ausdruck (Eingabe im Python Eval-Format)') }}</div>
+				<div style="font-weight: bold; padding-left: 5px;">{{ _('Ausdruck (Eingabe im Python Eval-Format)') }}</div>
 				<textarea id="eval_code" name="eval_code">{{ eval_code }}</textarea>
 			</div>
 			<div title="{{ _('Um relative Itempfade aufzulösen, hier das Item eingeben, zu dem die Pfade relativ sind.') }}">
-				<div style="font-weight: bold; padding-left: 5px; border-top: 2px solid #ccc;">{{ _('Relativ zu (Eingabe des Item-Path)') }}</div>
-				<input type="text" style="width: 599px; border: 1px solid #ccc;" name="relative_to" value="{{ relative_to }}"/>
+				<div style="font-weight: bold; padding-left: 5px;">{{ _('Relativ zu (Eingabe des Item-Path)') }}</div>
+				<input type="text" style="width: 599px;" name="relative_to" value="{{ relative_to }}"/>
 			</div>
 
 			<div title="{{ _('Hier wird der Ausdruck angezeigt, nachdem die relativen Itempfade aufgelöst wurden.') }}">

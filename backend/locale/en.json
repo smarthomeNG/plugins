@@ -52,6 +52,7 @@
 	"Plugin Metadaten": "Plugin Metadata",
 	"Verbundene Logiken": "Bound Logics",
 	"Verbundene Trigger": "Bound Triggers",
+	"vom Plugin definierte Methoden": "Methods defined by the plugin",
 	"Willkommen im Backend von": "Welcome to the backend of",
 	"Eigenschaft": "Property",
 	"IP": "IP Address",
@@ -206,6 +207,8 @@
 	"Entwicklungs-Daten": "Development Data",
 	"Plugin spezifische Parameter": "Plugin specific parameters",
 	"Plugin spezifische Item Attribute": "Plugin specific item attributes",
+	"Pakete für den Bau der Dokumentation": "Packages for Building the Documentation",
+	"Pakete für die Testsuite": "Packages for the Test Suite",
 
 	"_items": {
 		"path": "Pfad",
@@ -235,8 +238,8 @@
 		"Lizenz": "License",
 		"Link": "Link",
 		"Name": "Name",
-		"disclosure_title": "Disclosure of Open Source Software Components deployed in SmartHomeNG BackendServer Plugin",
-		"Verwendete Open Source Software Komponenten": "Open Source Software Components used for the Plugin",
+		"disclosure_title": "Disclosure of Open Source Software Components deployed in SmartHomeNG",
+		"Verwendete Open Source Software Komponenten": "Open Source Software Components used",
 		"Icons/Bilder": "Icons/Images",
 		"Alle Icons und Bilder kommen von": "All icons and images are taken from "
 	},

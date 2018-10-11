@@ -1,19 +1,17 @@
 # EnOcean
 
 ## Description
-This plugin allows you to interact with EnOcean devices via SmarthomeNG and SmartVisu.
-
-This plugin is still under development.
+This plugin adds EnOcean support to SmarthomeNG.
 
 ## Support
-If you have special hardware not supported yet please feel free to improve and contribute!
+If you have special hardware not supported yet, please feel free to improve and contribute!
 
 ## Version / Change History
-Version: 1.6
+Version: 1.3.4
 
 Change History: currently not maintained.
 
-## Requirements
+## Hardware Requirements
 For use of this plugin you need an EnOcean radio transceiver module like:
 - Fam4Pi
 - USB 300
@@ -30,26 +28,34 @@ Add the following lines to your `plugin.yaml`:
 
 ##### serialport
 
-You have to specify the `serialport` to your port name of your EnOcean-adpater.
-Creating **udev-rules** for the EnOcean-adapter is recommend, when using different uart devices.
+You have to specify the `serialport` to your port name of your EnOcean adapter.
+UNder Linux, the creation of a specific **udev-rules** for the EnOcean adapter is recommended, when using different Uart devices.
 
 ##### tx_id
-The specification of the EnOcean `tx_id` is optional **but** mandatory for sending control commands from the enocean-adapter to an EnOcean device.
-It is defined as a 8-digit hex value.
+The specification of the EnOcean `tx_id` is optional **but** mandatory for sending control commands from smarthomeNG to EnOcean devices.
+It is defined as a 8-digit hexadecimal value.
 
-When controlling multiple devices, it is recommended to use the EnOcean-adapter's Base-ID (not Unique-ID or Chip-ID) as transmitting ID.
+When controlling multiple devices, it is recommended to use the EnOcean adapter's Base-ID (not Unique-ID or Chip-ID) as transmitting ID.
 For further information regarding the difference between Base-ID and Chip-ID, see
 [Knowledge Base](https://www.enocean.com/en/knowledge-base-doku/enoceansystemspecification%3Aissue%3Awhat_is_a_base_id/)
 
 With the specification of the Base-ID, 128 different transmit ID's are available, ranging between Base-ID and Base-ID + 127.
 
-##### How-To Get the ID of an EnOcean device
+##### How-To Get the Base-ID of the EnOcean adapter
+There are two different ways of reading the EnOcean adapter's Base ID:
+a) Via the Enocean Plugin Webinterface
+b) Via the logfiles created by the Enocean plugin.
 
-1. reboot the pi or restart the smarthome (`sudo reboot` or `sudo systemctl restart smarthome`)
-2. wait some time for comming up of the service
-3. have a look into the log file an look for `enocean: Base ID = 0xYYYYZZZZ`
-4. now you have the right Base-ID and you can place it into the plugin.yaml file.
-5. alternating you will also find the EnOcean-adapter's Unique-ID / Chip-ID in the log-file.
+For a) 
+1. Open the plugin's webinterface under: http://localip:8383/enocean/
+2. Read the ChipBaseID, which is displayed on the upper right side.
+3. Insert the Base-ID in the plugin.yaml file.
+
+For b)
+1. Reboot the pi or restart the SmarthomeNG (`sudo reboot` or `sudo systemctl restart smarthome`)
+2. Wait until all plugins came up
+3. Open the logfile (Enocean or general smarthomeNG logfile) and search for `enocean: Base ID = 0xYYYYZZZZ`
+4. Insert the Base-ID in the plugin.yaml file.
 
 #### Example plugin.yaml
 ```yaml
@@ -63,14 +69,17 @@ enocean:
 ### Items
 
 #### enocean_rx_id, enocean_rx_eep and enocean_tx_id_offset
-An EnOcean item must specify at minimum an `enocean_rx_id` (EnOcean Identification Number (hex code)) and an `enocean_rx_eep` (EnOcean Equipment Profile).
-Send items additionally hold an `enocean_tx_id_offset`.
+An EnOcean item (sensor or actor) must specify at minimum an `enocean_rx_id` (EnOcean Identification Number (hex code)) and an `enocean_rx_eep` (EnOcean Equipment Profile).
+Transmitting items additionally need an `enocean_tx_id_offset`.
+
+#### enocean_rx_eep
+The EEP [EnOcean Equippment Profile] defines the message type that is broadcast by the Enocean device. EEPs are standardized by Enocean. More information can be found under http://www.enocean-alliance.org/eep/
 
 #### enocean_rx_key
-The status of an EnOcean device can be read by using the shortcut names of the Button which should be defined under `enocean_rx_key`.
-Therefore see [EnOcean Equippment Profile](http://www.enocean-alliance.org/eep/)
+Generally, EnOcean devices broadcast more than just one information. These can be linked to different smarthomeNG items via so called shortcut key names (enocean_rx_key). See the list below for different examples of key names.
 
-The following example explaines the button shortcut and its meaning for a rocker/switch with two rocker (EEP-Profile: F6_02_01 or F6_02_02).
+
+The following example outlines the available button shortcuts and their meaning for a rocker/switch with two rocker (EEP-Profile: F6_02_01 or F6_02_02).
 
 ```
 AI = left rocker down
@@ -79,7 +88,7 @@ BI = right rocker down
 B0 = right rocker up
 ```
 
-The following example explaines the button shortcut and its meaning for a rocker/switch with two rocker and 6 available combinations (EEP F6_02_03).
+The following example outlines the button shortcuts and its meaning for a rocker/switch with two rocker and 6 available combinations (EEP F6_02_03).
 
 ```
 AI = left rocker down
@@ -98,7 +107,7 @@ STATUS = handle_status
 ### items.yaml
 
 #### Attributes
-For attributes have a look to the examples.
+For attributes have a look at the examples.
 
 #### Example item.yaml
 ```
@@ -250,6 +259,21 @@ EnOcean_Item:
             type: bool
             enocean_rx_key: MOV
 
+    occupancy_sensor:
+        enocean_rx_id: 01234567
+        enocean_rx_eep: A5_07_03
+        lux:
+            type: num
+            enocean_rx_key: ILL
+
+        movement:
+            type: bool
+            enocean_rx_key: PIR
+
+        voltage:
+            type: bool
+            enocean_rx_key: SVC
+
     temperature_sensor:
         enocean_rx_id: 01234567
         enocean_rx_eep: A5_04_02
@@ -336,6 +360,7 @@ The following status EEPs are supported:
 * A5_02_20		High Precision Temperature Sensor (ranges -10*C to +41.2°C, 1/20°C resolution)
 * A5_02_30		High Precision Temperature Sensor (ranges -40*C to +62.3°C, 1/10°C resolution)
 * A5_04_02		Energy (optional), humidity and temperature sensor
+* A5_07_03		Occupancy sensor, e.g. NodOn PIR-2-1-0x
 * A5_08_01		Brightness and movement sensor
 * A5_11_04		Dimmer status feedback
 * A5_12_01		Power Measurement, e.g. Eltako FSVA-230V
@@ -346,7 +371,7 @@ The following status EEPs are supported:
 * F6_02_03		2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V, FSB61NP-230V or Gira switches.
 * F6_10_00		Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
 ```
-A complete list of available EEPs is documented at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
+A complete list of available EEPs is accessible at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
 
 
 ### Send commands: Tx EEPs
@@ -359,34 +384,30 @@ A complete list of available EEPs is documented at [EnOcean Alliance](http://www
 * D2_01_07		Simple electronic switch
 ```
 
-The optional ref_level parameter defines default dim value when dimmer is switched on via on command.
+The optional ref_level parameter defines default dim value when dimmer is switched on via the regular "on"" command.
 
 ## Functions
 ### Learning Mode
 
-Devices that shall receive commands from the smarthome plugin, i.e. the encoean gateway must be subscribed first.
-Generally follow the teach in procedure as described by enocean:
-1. set the EnOcean device/actor into learn mode
-2. send the learn telegram
-3. exit the learn mode of the actor
+Devices that shall receive commands from the SmarthomeNG plugin must be subscribed (tought-in) first.
+Generally follow the teach-in procedure as described by EnOcean:
+1. Set the EnOcean device/actor into learn mode. See the manual of the respective EnOcean device for detailed information on how to enter learn mode.
+2. While being in learn mode, trigger the learn telegram from SmarthomeNG (via webinterface or via interactive SmarthomeNG console)
+3. Exit the learn mode of the actor
 
-Usually, the EnOcean device, e.g. enocean actor, is set to teach in mode.
-See the manual of the respective device for further information.
-Once being in teach in mode, trigger a learn-in command from smarthomeNG.
-
-In order to send a special learning message, start smarthome with the interactive console:
+The SmarthomeNG interactive console can be reached via:
 
 ```bash
 cd /usr/local/smarthome/bin
 sudo systemctl stop smarthome
 sudo ./smarthome.py -i
 ```
-
-Then use one of the following learn-in commands, depending on your EnOcean device:
-
+The learn message is issued by the following command:
 ```python
 sh.enocean.send_learn_protocol(id_offset, device)
 ```
+Then teach-in commands vary for different EnOcean sensor/actors. The following classes are currently supported:
+
 With device are different actuators defined:
 
 - 10: Eltako Switch FSR61, Eltako FSVA-230V
@@ -406,17 +427,12 @@ Where `id_offset`, range (0-127), specifies the sending ID-offset with respect t
 Later, the ID-offset is specified in the <item.yaml> for every outgoing send command, see the examples above.
 
 Use different ID-offsets for different groups of actors.
-After complete the teach-in procedure, leave the interactive console by `STRG+C` and add the applied id_offset to the respective enocean send item (enocean_tx_id_offset = ID_Offset).
-
+After complete the teach-in procedure, leave the interactive console by `STRG+C` and add the applied id_offset to the respective EnOcean send item (enocean_tx_id_offset = ID_Offset).
 
 ### UTE teach-in
 
-UTE does mean "Universal Uni- and Bidirectional Teach in".
-When activated on EnOcean device the device will send a `D4` teach in request. An automatic answer within 500 ms is expected.
-To do so enable the UTE learnmode prior to the activation on the device: Start smarthome with the interactive console - see above.
-
-`sh.enocean.start_UTE_learnmode(ID_Offset)`
-
-The device will be teached in and the learn mode will be ended automatically
-
-That's it!
+UTE stands for "Universal Uni- and Bidirectional Teach in".
+When being activated on an EnOcean device the device will send a `D4` teach-in request. SmarthomeNG will answer within 500 ms with a telegram to complete the teach-in process.
+To do so enable the UTE learn mode prior to the activation on the device. Again, enabling the UTE mode can be achieved via
+a) The plugin webinterface
+b) SmarthomeNG's interactive console - see above - and the following command `sh.enocean.start_UTE_learnmode(ID_Offset)`

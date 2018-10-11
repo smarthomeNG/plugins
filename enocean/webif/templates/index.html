@@ -1,0 +1,135 @@
+{% extends "base_enocean.html" %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+
+{% set start_tab = 2 %}
+
+{% set tab1title = "<strong> " ~ _('Übersicht') ~ "</strong> " %}
+{% block bodytab1 %}
+
+<script type="text/javascript" language="javascript">
+	function confirmDelete(url, text) {
+		if (confirm(text)) {
+			window.location.href=url;
+		}
+		return false;
+	}
+
+	function prepareLearnCommand() {
+		if (confirm('{{ _('Wollen Sie ein Lerntelegramm schicken?') }}')) {
+			offsetvalue = $('#input-offset');
+			device_id_type = $('#enocean_device');
+
+			window.location.href='?action=send_learn&device_offset=' + offsetvalue .val() + '&device_id=' + device_id_type.val();
+		}
+		return false;
+	}
+
+	function prepareUTECommand() {
+		if (confirm('{{ _('Wollen Sie den UTE Modus umschalten?') }}')) {
+			offsetvalue = $('#input-offset');
+			
+			window.location.href='?action=toggle_UTE&device_offset=' + offsetvalue .val();
+		}
+		return false;
+	}
+
+</script>
+
+<div class="mb-2">
+	{{ _('Die folgenden Items sind dieser Instanz des Enocean Plugins zugewiesen') }}:
+</div>
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>{{ _('Item') }}</th>
+		<th>{{ _('RxEEP') }}</th>
+	</tr>
+	</thead>
+	{% for item in items %}
+		{% if p.has_iattr(item.conf, 'enocean_rx_id') %}
+			<tr>
+				<td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ item.conf['enocean_rx_eep']}}</td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+</table>
+{% endblock bodytab1 %}
+
+{% set tab2title = "<strong> " ~ _('Neu hinzufügen') ~ "</strong> " %}
+{% block bodytab2 %}
+
+{% if learn_triggered %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Lerntelegramm') }}</strong><br/>
+		{{ _('Lerntelegramm erfolgreich gesendet.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+
+
+<div class="row">
+	<div class="col-md-3 mb-3">
+		{{ _('Unbekannte Sensor ID') }}:
+		<td class="py-1">{{ p.unknown_sender_id }}</td>
+	</div>
+
+	<div class="col-md-6 mb-3">
+		<div class="row">
+			<div class="shng_heading">
+				{{ _('Enocean Geräte anlernen') }}:	
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-6 mb-3">
+				{{ _('Gerätetyp') }}:
+			</div>
+		
+			<div class="col-md-6 mb-3">
+				<select class="custom-select" id="enocean_device" style="float:left; width: 250px; margin-top:-7px;">
+					<option value="">{{ _('Choose sensor...') }}</option>
+					<option value="10">{{ _('Eltako FSVA-230V') }}</option>
+					<option value="10">{{ _('Eltako FSR61') }}</option>
+					<option value="20">{{ _('Eltako FSUD-230V') }}</option>
+					<option value="21">{{ _('Eltako FHK61SSR') }}</option>
+					<option value="22">{{ _('Eltako FRGBW71L') }}</option>
+					<option value="30">{{ _('Radiator Valve') }}</option>
+					<option value="40">{{ _('Eltako FSB61NP-230V') }}</option>
+					<option value="40">{{ _('Eltako FSB14') }}</option>
+					<option value="40">{{ _('Eltako FSB61') }}</option>
+					<option value="40">{{ _('Eltako FSB71') }}</option>
+				</select>
+			</div>
+		</div>
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-6 mb-3">
+				{{ _('ID Offset') }}:
+			</div>
+			<div class="col-md-6 mb-3">
+				<input type="input" class="form-control mb-1" id="input-offset" placeholder="{{ _('ID Offset') }}" value="1" maxlength="3" style="width: 50px;">
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-2 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anlernen') }}" onclick="prepareLearnCommand();">{{ _('Anlernen') }}</button>
+			</div>
+			<div class="col-md-2 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('UTE An/Aus') }}" onclick="prepareUTECommand();">{{ _('UTE An/Aus') }}</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock bodytab2 %}
+

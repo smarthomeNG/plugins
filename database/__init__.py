@@ -32,6 +32,7 @@ import lib.db
 
 from lib.shtime import Shtime
 from lib.item import Items
+from lib.utils import Utils
 
 from lib.model.smartplugin import *
 from lib.module import Modules
@@ -73,13 +74,14 @@ class Database(SmartPlugin):
       '6' : ["CREATE INDEX {item}_name ON {item} (name);", "DROP INDEX {item}_name;"]
     }
 
-    def __init__(self, smarthome, driver, connect, prefix="", cycle=60):
+    def __init__(self, smarthome, driver, connect, prefix="", cycle=60, precision=2):
         self._sh = smarthome
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
         
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
+        self._precision = int(precision)
         self._name = self.get_instance_name()
         self._replace = {table: table if prefix == "" else prefix + "_" + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
@@ -88,16 +90,18 @@ class Database(SmartPlugin):
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver, connect)
+        self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver, Utils.string_to_list(connect))
         self._initialized = False
         self._initialize()
 
         smarthome.scheduler.add('Database dump ' + self._name + ("" if prefix == "" else " [" + prefix + "]"), self._dump, cycle=self._dump_cycle, prio=5)
 
-        if not self.init_webinterface():
-            self._init_complete = False
+        self.init_webinterface()
+        return
+
 
     def parse_item(self, item):
+        self.logger.debug(item.conf)
         if self.has_iattr(item.conf, 'database'):
             self._buffer_insert(item, [])
             item.series = functools.partial(self._series, item=item.id())
@@ -114,11 +118,10 @@ class Database(SmartPlugin):
                     if cache is not None:
                         value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL+1])
                         last_change = self._datetime(cache[COL_ITEM_TIME])
-                        last_change_ts = self._timestamp(last_change)
                         prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id', {'id':cache[COL_ITEM_ID]}, cur=cur)
                         if value is not None and prev_change is not None:
                             item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
-                        self._buffer_insert(item, [(last_change_ts, None, value)])
+                        self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                 except Exception as e:
                     self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 cur.close()
@@ -195,7 +198,7 @@ class Database(SmartPlugin):
     def id(self, item, create=True, cur=None):
         id = self.readItem(str(item.id()), cur=cur)
 
-        if id == None and create == True:
+        if id is None and create == True:
             id = [self.insertItem(item.id(), cur)]
 
         return None if id == None else int(id[COL_ITEM_ID])
@@ -409,10 +412,6 @@ class Database(SmartPlugin):
         if func is 'count' or func.startswith('count'):
             parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
             func = 'count'
-            self.logger.debug(parts)
-            self.logger.debug(parts.groups())
-            self.logger.debug(parts.group(3))
-            self.logger.debug(parts.group(4))
             if parts and parts.group(3) is not None:
                 expression['params']['op'] = parts.group(3)
             if parts and parts.group(4) is not None:
@@ -434,12 +433,12 @@ class Database(SmartPlugin):
             sid = item + '|' + func + '|' + str(start) + '|' + str(end)  + '|' + str(count)
         func, expression = self._expression(func)
         queries = {
-            'avg' : 'MIN(time), ROUND(AVG(val_num * duration) / AVG(duration), 2)',
+            'avg' : 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'avg.order' : 'ORDER BY time ASC',
             'count' : 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'min' : 'MIN(time), MIN(val_num)',
             'max' : 'MIN(time), MAX(val_num)',
-            'on'  : 'MIN(time), ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
+            'on'  : 'MIN(time), ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
             'on.order' : 'ORDER BY time ASC',
             'sum' : 'MIN(time), SUM(val_num)',
             'raw' : 'time, val_num',
@@ -482,11 +481,11 @@ class Database(SmartPlugin):
     def _single(self, func, start, end='now', item=None):
         func, expression = self._expression(func)
         queries = {
-            'avg' : 'ROUND(AVG(val_num * duration) / AVG(duration), 2)',
+            'avg' : self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'count' : 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'min' : 'MIN(val_num)',
             'max' : 'MAX(val_num)',
-            'on'  : 'ROUND(SUM(val_bool * duration) / SUM(duration), 2)',
+            'on'  : self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
             'sum' : 'SUM(val_num)',
             'raw' : 'val_num',
             'raw.order' : 'ORDER BY time DESC',
@@ -500,6 +499,11 @@ class Database(SmartPlugin):
         if logs['tuples'] is None:
             return
         return logs['tuples'][0][0]
+
+    def _precision_query(self, query):
+        if self._precision >= 0:
+            return 'ROUND({}, {})'.format(query, self._precision)
+        return query
 
     def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
         _item = self.items.return_item(item)
@@ -581,6 +585,7 @@ class Database(SmartPlugin):
         self._query(self._db.execute, query, params, cur)
 
     def _query(self, func, query, params, cur=None):
+        self.logger.debug(query)
         if not self._initialize():
             return None
         if cur is None:
@@ -719,6 +724,7 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        item = self.plugin.get_sh().return_item(item_path)
         delete_triggered = False
         if action is not None:
             if action == "delete_log" and item_id is not None:
@@ -738,6 +744,7 @@ class WebInterface(SmartPluginWebIf):
                                                                         "%m/%d/%Y").timetuple())*1000
                 time_end = time_start + 24 * 60 * 60 * 1000
                 tmpl = self.tplenv.get_template('item_details.html')
+
                 rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
                 log_array = []
                 for row in rows:
@@ -754,7 +761,7 @@ class WebInterface(SmartPluginWebIf):
                 reversed_arr = log_array[::-1]
                 return tmpl.render(p=self.plugin,
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
-                                                reverse=False),
+                                                reverse=False), item = item,
                                    tabcount=1, action=action, item_id=item_id, item_path=item_path,
                                    language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now(),
                                    log_array=reversed_arr, day=day, month=month, year=year,
@@ -807,8 +814,8 @@ class WebInterface(SmartPluginWebIf):
         returns the smarthomeNG sqlite database as download
         """
 
-        self.plugin.dump('%s/var/db/smarthomedb_%s.dump' % (self.plugin._sh.base_dir, self.plugin.get_instance_name()))
+        self.plugin.dump('%s/var/db/smarthomedb_%s.dump' % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()))
         mime = 'application/octet-stream'
         return cherrypy.lib.static.serve_file(
-            "%s/var/db/smarthomedb_%s.dump" % (self.plugin._sh.base_dir, self.plugin.get_instance_name()),
-            mime, "%s/var/db/" % self.plugin._sh.base_dir)
+            "%s/var/db/smarthomedb_%s.dump" % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()),
+            mime, "%s/var/db/" % self.plugin.get_sh().base_dir)

@@ -33,8 +33,8 @@ function confirmDelete(url, text) {
 	</div>
 {% endif %}
 <div class="mb-2">
-	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }} <strong>{{ item_path }}</strong> {{ _('am') }} <strong>{% if day and month and year %}{% if language == 'en' %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == 'en' %}{{ now.strftime('%-m/%-d/%Y') }}{% else %}{{ now.strftime('%-d.%-m.%Y') }}{% endif %}{% endif %}</strong> {{_('(Datenbank-ID') }}: {{ item_id }}):
-	<br/>
+	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }} <strong>{{ item_path }}</strong> {{ _('am') }} <strong>{% if day and month and year %}{% if language == 'en' %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == 'en' %}{{ now.strftime('%-m/%-d/%Y') }}{% else %}{{ now.strftime('%-d.%-m.%Y') }}{% endif %}{% endif %}</strong>
+	<br/>({{_('Datenbank-ID') }}: {{ item_id }}, {{ _('Typ') }}: {{ item.type() }}, {{ log_array | length }} {{_('Datensätze')}}, {{_('Aktueller Wert')}}: {{ item() }} )
 </div>
 <div style="float:right; width:220px;" id="datepicker">
 </div>
@@ -46,9 +46,9 @@ function confirmDelete(url, text) {
 		<th style="width: 180px;">{{ _('Zeit') }}</th>
 		<th style="width: 120px;">{{ _('Dauer') }}</th>
 		<th style="width: 180px;">{{ _('Geändert') }}</th>
-		<th style="width: 120px;">VAL_NUM</th>
-		<th style="width: 120px;">VAL_BOOL</th>
-		<th>VAL_STR</th>
+		{% if item.type() == 'num' %}<th style="width: 120px;">VAL_NUM</th>{% endif %}
+		{% if item.type() == 'bool' %}<th style="width: 120px;">VAL_BOOL</th>{% endif %}
+		{% if item.type() == 'str' %}<th>VAL_STR</th>{% endif %}
 		<th>{{ _('Aktionen') }}</th>
 	</tr>
 	</thead>
@@ -59,9 +59,9 @@ function confirmDelete(url, text) {
 				<td class="py-1">{{ dataset[0].strftime('%d.%m.%Y %H:%M:%S') }}</td>
 				<td class="py-1">{{ dataset[2] }}</td>
 				<td class="py-1">{{ dataset[6].strftime('%d.%m.%Y %H:%M:%S') }} </td>
-				<td class="py-1">{{ dataset[4] }}</td>
-				<td class="py-1">{{ dataset[5] }}</td>
-				<td class="py-1">{{ dataset[3] }}</td>
+				{% if item.type() == 'num' %}<td class="py-1">{{ dataset[4] }}</td>{% endif %}
+				{% if item.type() == 'bool' %}<td class="py-1">{{ dataset[5] }}</td>{% endif %}
+				{% if item.type() == 'str' %}<td class="py-1">{{ dataset[3] }}</td>{% endif %}
 				<td class="py-1"><button type="button" class="btn btn-danger btn-sm" title="{{ _('Wert löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ dataset[1] }}&item_path={{ item_path }}&time_orig={{ dataset['0_orig'] }}&changed_orig={{ dataset['6_orig'] }}{% if day and month and year %}&day={{ day }}&month={{ month }}&year={{ year }}{% endif %}','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-trash-alt"></i></button></td>
 			</tr>
 		{% endfor %}
@@ -71,9 +71,9 @@ function confirmDelete(url, text) {
 			<td class="py-1">-</td>
 			<td class="py-1">-</td>
 			<td class="py-1">-</td>
-			<td class="py-1">-</td>
-			<td class="py-1">-</td>
-			<td class="py-1">-</td>
+			{{ item.type() == 'num'}}<td class="py-1">-</td>
+			{{ item.type() == 'bool'}}<td class="py-1">-</td>
+			{{ item.type() == 'str'}}<td class="py-1">-</td>
 			<td class="py-1">-</td>
 		</tr>
 	{% endif %}

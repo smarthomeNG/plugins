@@ -46,8 +46,8 @@
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item._path }}</td>
-						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.id() }}</td>
+						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -80,8 +80,8 @@
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item._path }}</td>
-						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.id() }}</td>
+						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -95,8 +95,8 @@
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item._path }}</td>
-						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.id() }}</td>
+						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -110,8 +110,8 @@
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item._path }}</td>
-						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.id() }}</td>
+						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -125,8 +125,8 @@
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item._path }}</td>
-						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ item.id() }}</td>
+						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>

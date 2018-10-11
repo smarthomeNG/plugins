@@ -1,0 +1,123 @@
+{% extends "base_plugin.html" %}
+{% block scripts %}
+{{ super() }}
+<script>
+function mainpage() {
+  var url = window.location.href;
+  var page = url.substring(url.lastIndexOf('/') + 1);
+  var final = url.replace(page, '');
+  if ( url.includes("?action=") ) {
+    window.location.href = final;
+  };
+}
+</script>
+{% endblock scripts %}
+{% set logo_frame = false %}
+
+
+{% set item_count = p.__items|length %}
+{% set tab1title = "<strong>_('Dokumentation')</strong>" %}
+{% set tab2title = "<strong>Items</strong>" %}
+{% set tabcount = 1 %}
+
+{% block headtable %}
+
+<table class="table table-striped table-hover">
+  <tbody>
+    <tr>
+      <td class="py-1"><strong>Log Level</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('log_level') }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"><strong>Log Folder</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('log_directory') }}</td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>Startup Delay</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('startup_delay_default') }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"><strong>Suspend Time</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('suspend_time_default') }}</td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>Items</strong></td>
+      <td class="py-1">{{ item_count }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"></td>
+      <td class="py-1"></td>
+    </tr>
+  </tbody>
+</table>
+{% endblock headtable %}
+
+
+{% block bodytab1 %}
+
+<div class="container-fluid m-2" style="position: relative;">
+  <div style="float: left; border:1px solid black; width:200px; position: sticky; position: -webkit-sticky; top:220px; left:0;">
+    <a href="https://www.smarthomeng.de/starting-with-state-machine-automation-stateengine-plugin" target="link">Einführung</a><br>
+    <a href="?page=doku1">Grundsätzliches</a><br>
+    <a href="?page=doku2">Plugin-Konfiguration</a><br>
+    <a href="?page=doku3">Das Objekt-Item</a><br>
+    <a href="?page=doku4">Das Zustands-Item</a><br>
+    <a href="?page=doku5">Bedingungen</a><br>
+    <a href="?page=doku6">Aktionen: Ausführung</a><br>
+    <a href="?page=doku7">Aktionen: Einzelangabe</a><br>
+    <a href="?page=doku8">Aktionen: Combo-Angabe</a><br>
+    <a href="?page=doku9">Zustand-Templates</a><br>
+    <a href="?page=doku10">Vordefinierte Funktionen</a><br>
+    <a href="?page=doku11">Variablen</a><br>
+    <a href="?page=doku12">Sperr-Zustand</a><br>
+    <a href="?page=doku13">Pausiert-Zustand</a><br>
+    <a href="?page=doku14">CLI Kommandos</a><br>
+    <a href="?page=doku15">Vollständiges Beispiel</a><br>
+  </div>
+  <div style="margin-left:230px; max-width: 800px;">
+  <h1 id="header">stateengine Plugin für smarthomeNG - Deutsche Dokumentation</h1>
+
+  <h2 id="warnung">Warnung</h2>
+
+  <p><strong>Wichtig:</strong>
+  <strong>Es ist nicht empfehlenswert das stateengine Plugin für sicherheitsrelevante Zustände, wie zum Beispiel das Hochfahren von Jalousien bei zu viel Wind, zu verwenden. Sicherheitsrelevante Funktionen müssen so einfach wie möglich aufgebaut sein. Es wird daher dringend dazu geraten, solche Funktionen unabhängig von smarthomeNG und dem stateengine Plugin zu realisieren. Für das Hochfahren von Jalousien bei Windalarm beispielsweise sollte die Sperrfunktionalität verwendet werden, über die alle aktuellen Jalousieaktoren verfügen!</strong></p>
+
+  <h2 id="funktionalitt">Funktionalität</h2>
+
+  <p>Über zusätzliche Items in den items/*.conf-Dateien können Objekte definiert werden, die eine beliebige Anzahl benutzerdefinierter Zustand haben. Jeder Zustand kann Sets von Einstiegs- und Ausstiegsbedingungen haben, sowie diverse Aktionen auslösen, wenn der Zustand aktiv wird. In regelmäßigen Intervallen werden die Zustände für jedes Objekt geprüft.</p>
+
+  <ul>
+  <li>Wenn die Ausstiegsbedingungen des aktuellen Zustands nicht erfüllt sind bleibt das Objekt im aktuellen Zustand.</li>
+
+  <li>Wenn der aktuelle Zustand verlassen werden kann werden alle Zustände in der Reihenfolge, in der sie in der Konfigurationsdatei definiert sind, abgeprüft.</li>
+
+  <li>Der erste Zustand bei dem eine Gruppe Einstiegsbedingungen vollständig erfüllt ist, wird zum aktuellen Zustand. Die Aktionen, die für diesen Zustand definiert sind, werden ausgeführt.</li>
+
+  <li>Wenn kein passender Zustand gefunden wird passiert nichts. Das Objekt verbleibt im vorherigen Zustand.</li>
+  </ul>
+
+  <p>Die folgenden Bedingungen können Teil der Bedingungsgruppen sein:</p>
+
+  <ul>
+  <li>Tageszeit (Minimum, Maximum, Wert)</li>
+
+  <li>Wochentag (Minimum, Maximum, Wert)</li>
+
+  <li>Azimut der Sonne (Minimum, Maximum, Wert)</li>
+
+  <li>Altitude der Sonne (Minimum, Maximum, Wert)</li>
+
+  <li>Alter des aktuellen Zustands (Minimum, Maximum, Wert)</li>
+
+  <li>Zufallszahl (Minimum, Maximum, Wert)</li>
+
+  <li>Vorheriger Zustand (Wert)</li>
+
+  <li>Trigger-Objekt, dass die Zustandsermittlung ausgelöst hat</li>
+  </ul>
+
+  <p>Zusätzlich können beliebige Items als Bedingungen geprüft werden (Minimum, Maximum oder Wert)</p>
+
+  <p>Der ursprüngliche Zweck dieses Plugins war es, Jalousien zu steuern. Mit den steigenden Anforderungen hat es sich jedoch zu einem flexiblen Zustandsautomaten entwickelt, mit dem nahezu alles gesteuert werden kann. Im Prinzip ist es ein <a href="https://de.wikipedia.org/wiki/Endlicher_Automat">endlicher Automat</a>.</p>
+  </div>
+
+
+</div>
+{% endblock bodytab1 %}

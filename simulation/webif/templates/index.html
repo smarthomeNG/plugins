@@ -9,22 +9,34 @@
 		<tr>
 			<td class="py-1"><strong>{{ _('Datendatei') }}:</strong></td>
 			<td class="py-1"><a class="text-shng" href="?cmd=show_data_file">{{p._datafile}}</a></td>
+			<td><strong>{{ _('State') }}</strong></td>
+			<td>{% for item in p.get_items() %}
+			{% if item.conf['sim'] == 'state' %}
+			{% if item() == 0 %}{{ _('Stop') }}{% endif %}
+			{% if item() == 1 %}{{ _('Standby') }}{% endif %}
+			{% if item() == 2 %}{{ _('Record') }}{% endif %}
+			{% if item() == 4 %}{{ _('Play') }}{% endif %}
+			{% endif %}
+				{% endfor %}</td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>{{ _('Last Day') }}</strong></td>
-			<td class="py-1">{% if p.lastday == '' %}-{% else %}{{ p.lastday }}{% endif %}</td>
+			<td class="py-1" colspan="3">{% if p.lastday == '' %}-{% else %}{{ p.lastday }}{% endif %}</td>
 		</tr>
 		{% if startRecord %}
 		<tr>
 			<td class="py-1"><strong>{{ _('startrecord Scheduler') }}</strong></td>
-			<td class="py-1">{{ startRecord.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+			<td class="py-1" colspan="3">{{ startRecord.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 		</tr>
 		{% elif simulate %}
 		<tr>
 			<td class="py-1"><strong>{{ _('simulate Scheduler') }}</strong></td>
-			<td class="py-1">{{ simulate.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+			<td class="py-1" colspan="3">{{ simulate.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 		</tr>
 		{% endif %}
+		<tr>
+
+		</tr>
 	</tbody>
 </table>
 {% endblock headtable %}
@@ -67,9 +79,21 @@
 			<tbody>
 				{% for item in p.get_items() %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item._path }}</td>
-						<td class="py-1">{{ item._type }}</td>
-						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">
+							{% if item.conf['sim'] in ['state','tank','message','control'] %}<strong>{% endif %}
+							{{ item.id() }}
+							{% if item.conf['sim'] in ['state','tank','message','control'] %}</strong>{% endif %}
+						</td>
+						<td class="py-1">{{ item.type() }}</td>
+						<td class="py-1">{{ item() }} <i>
+							{% if item.conf['sim'] == 'state' %}
+							{% if item() == 0 %}({{ _('Stop') }}){% endif %}
+							{% if item() == 1 %}({{ _('Standby') }}){% endif %}
+							{% if item() == 2 %}({{ _('Record') }}){% endif %}
+							{% if item() == 4 %}({{ _('Play') }}){% endif %}
+							{% elif item.conf['sim'] == 'tank' %}
+							({{ _('Days') }})
+							{% endif %}</i></td>
 						<td class="py-1">{{ item.conf['sim'] }}</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>

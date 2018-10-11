@@ -25,7 +25,13 @@
 
 import logging
 
-from pyhomematic import HMConnection
+
+try:
+    from pyhomematic import HMConnection
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
+
 
 from lib.module import Modules
 from lib.model.smartplugin import *
@@ -62,11 +68,17 @@ class Homematic(SmartPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-        self.logger = logging.getLogger(__name__)
+#        self.logger = logging.getLogger(__name__)
+
+        # Exit if the required package(s) could not be imported
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'pyhomematic'".format(self.get_fullname()))
+            self._init_complete = False
+            return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         #   self.param1 = self.get_parameter_value('param1')
-        
+
         # Initialization code goes here
         self.username = self.get_parameter_value('username')
         self.password = self.get_parameter_value('password')

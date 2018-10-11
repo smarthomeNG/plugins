@@ -6,6 +6,7 @@ plugin:
         de: 'Z-Wave Unterstützung'
         en: 'Z-Wave Support'
     maintainer: 'Thomas Creutz'
+    state: develop
 #    tester:                        # Who tests this plugin?
     keywords: z-wave, zwave
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page

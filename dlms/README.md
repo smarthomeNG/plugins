@@ -21,6 +21,15 @@ udevadm trigger
 
 If you like, you can also give the serial port a descriptive name with this.
 
+### Optional:
+
+A script get_manufacturer_ids.py is provided. Upon execution this script loads a list of known manufacturers from 
+http://dlms.com/organization/flagmanufacturesids/index.html
+then parses out the ids and the corresponding manufacturer for convenience and finally write a file ``manufacturer.yaml``
+
+The main module will use the ``manufacturer.yaml`` if it's existing to output more information
+
+
 ### Supported Hardware
 
 * smart meters using using DLMS (Device Language Message Specification) IEC 62056-21
@@ -28,14 +37,15 @@ If you like, you can also give the serial port a descriptive name with this.
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 
 ```
-[dlms]
-    class_name = DLMS
-    class_path = plugins.dlms
-    serialport = /dev/dlms0
-#    update_cycle = 300
+dlms:
+    class_name: DLMS
+    class_path: plugins.dlms
+    serialport: /dev/dlms0
+    update_cycle: 900
+    # SUBSYSTEM==\"tty\", ATTRS{idVendor}==\"10c4\", ATTRS{idProduct}==\"ea60\", ATTRS{serial}==\"0092C9FE\", MODE=\"0666\", GROUP=\"dialout\", SYMLINK+=\"dlms0\"
 ```
 
 Description of the attributes:
@@ -46,18 +56,18 @@ Description of the attributes:
 
 ### Setup procedure:
 
-Start the plugin in standalone mode from the plugins directory e.g. **/usr/local/smarthome/plugins/dlms** with
-**python3 __init__.py _serialport_**
+Start the plugin in **standalone mode** with a shell from the plugins directory e.g. **/usr/local/smarthome/plugins/dlms** with
+**python3 dlms.py _serialport_**
 
 Copy the given obis codes to your item configuration to help generate items as needed
 
-### items.conf
+### items.yaml
 
 You can use all obis codes available by the meter.
 
 Attributes:
 * __dlms_obis_code__: obis code such as 'x.y', 'x.y.z' or 'x.y.z*q' plus a specifier which value to read, the type must match the conversion from OBIS value (str, num, foo)
-* __dlms_obis_readout__: value irrelevant, the item will need to be of ``type = str`` at it receives the full readout of the smartmeter
+* __dlms_obis_readout__: value irrelevant, the item will need to be of ``type: str`` at it receives the full readout of the smartmeter
 
 ## Some background information on OBIS Codes
 
@@ -126,63 +136,63 @@ Comparing the above examples it is obvious that the basically same OBIS Code has
 | 1-1:1.8.0(00051206*kWh) | 1.8.0*00(000783.16)(000783.16) |
 
 To get the value from ``1-1:1.8.0(00051206*kWh)`` into the item we write in the items config file 
-``dlms_obis_code = 1-1:1.8.0|0|Value|num``. This will get the first value in parentheses and cast it into a numeric value.
+``dlms_obis_code: 1-1:1.8.0|0|Value|num``. This will get the first value in parentheses and cast it into a numeric value.
 
 To get the value from ``1.8.0*00(000783.16)(000783.16)`` into the item we write in the items config file 
-``dlms_obis_code = 1.8.0*00|0|Value|num``. This will too get the first value in parentheses and cast it into a numeric value.
+``dlms_obis_code: 1.8.0*00|0|Value|num``. This will too get the first value in parentheses and cast it into a numeric value.
 
-To get the unit from ``1-1:1.8.0(00051206*kWh)`` into another item we write ``dlms_obis_code = 1-1:1.8.0|0|Unit|str`` into the item.conf.
+To get the unit from ``1-1:1.8.0(00051206*kWh)`` into another item we write ``dlms_obis_code: 1-1:1.8.0|0|Unit|str`` into the item.yaml.
 
 
-A sample item.conf for example A might look like following:
+A sample item.yaml for example **A** might look like following:
 
 ```
-[Stromzaehler]
-    [[Auslesung]]
-        type = str
-        dlms_obis_readout = yes
-    [[Seriennummer]]
-        type = str
-        dlms_obis_code = 1-1:0.0.0|0|Value|str
+Stromzaehler:
+    Auslesung:
+        type: str
+        dlms_obis_readout: yes
+    Seriennummer:
+        type: str
+        dlms_obis_code: 1-1:0.0.0|0|Value|str
 
-    [[Ablesung]]
+    Ablesung:
         # Datum und Uhrzeit der letzten Ablesung
-        [[[Uhrzeit]]]
-            type = foo
-            dlms_obis_code = 1-1:0.9.1|0|Value|Z6
-        [[[Datum]]]
-            type = foo
-            dlms_obis_code = 1-1:0.9.2|0|Value|D6
-        [[[Datum_Aktueller_Abrechnungsmonat]]]
-            type = foo
-            dlms_obis_code = 1-1:0.1.3|0|Value|D6
-        [[[Monatszaehler]]]
+        Uhrzeit:
+            type: foo
+            dlms_obis_code: 1-1:0.9.1|0|Value|Z6
+        Datum:
+            type: foo
+            dlms_obis_code: 1-1:0.9.2|0|Value|D6
+        Datum_Aktueller_Abrechnungsmonat:
+            type: foo
+            dlms_obis_code: 1-1:0.1.3|0|Value|D6
+        Monatszaehler:
             # Billing period counter
-            type = num
-            dlms_obis_code = 1-1:0.1.0|0|Value|num
+            type: num
+            dlms_obis_code: 1-1:0.1.0|0|Value|num
             
-    [[Bezug]]
-        [[[Energie]]]
-            type = num
-            sqlite = yes
-            dlms_obis_code = 1-1:1.8.1|0|Value|num
-        [[[Energie_Einheit]]]
-            type = str
-            sqlite = yes
-            dlms_obis_code = 1-1:1.8.1|0|Unit|str
+    Bezug:
+        Energie:
+            type: num
+            sqlite: yes
+            dlms_obis_code: 1-1:1.8.1|0|Value|num
+        Energie_Einheit:
+            type: str
+            sqlite: yes
+            dlms_obis_code: 1-1:1.8.1|0|Unit|str
 
-    [[Lieferung]]
-        [[[Energie]]]
-            type = num
-            sqlite = yes
-            dlms_obis_code = 1-1:2.8.1|0|Value|num
-        [[[Energie_Einheit]]]
-            type = str
-            sqlite = yes
-            dlms_obis_code = 1-1:2.8.1|0|Unit|str
+    Lieferung:
+        Energie:
+            type: num
+            sqlite: yes
+            dlms_obis_code: 1-1:2.8.1|0|Value|num
+        Energie_Einheit:
+            type: str
+            sqlite: yes
+            dlms_obis_code: 1-1:2.8.1|0|Unit|str
 ```
 The basic syntax of the **dlms_obis_code** attributes value is
-``dlms_obis_code = 1-1:1.6.2*01|Index|Value/Unit|Value Type``
+``dlms_obis_code: 1-1:1.6.2*01|Index|Value/Unit|Value Type``
 where
 * __Index__ is the number of the value group you want to read
 * __Value__ or __Unit__  whether you are interested in the value (mostly) or the unit like **kWh**
@@ -198,7 +208,7 @@ where
     * __num__
     
 For any Value Type with time or date the python datetime will be used. 
-That implies that you use ``type = foo`` for the items attribute in the respective item.conf
+That implies that you use ``type: foo`` for the items attribute in the respective item.yaml
  
 | OBIS A | meaning |
 | --- | --- |

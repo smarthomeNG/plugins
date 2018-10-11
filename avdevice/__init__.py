@@ -24,6 +24,7 @@
 #########################################################################
 
 import logging
+
 from lib.model.smartplugin import *
 from lib.item import Items
 
@@ -51,6 +52,7 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.5.0"
+
 
     def __init__(self, smarthome):
         self.itemsApi = Items.get_instance()

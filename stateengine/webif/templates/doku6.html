@@ -1,0 +1,157 @@
+{% extends "base_plugin.html" %}
+{% block scripts %}
+{{ super() }}
+<script>
+function mainpage() {
+  var url = window.location.href;
+  var page = url.substring(url.lastIndexOf('/') + 1);
+  var final = url.replace(page, '');
+  if ( url.includes("?action=") ) {
+    window.location.href = final;
+  };
+}
+</script>
+{% endblock scripts %}
+{% set logo_frame = false %}
+
+
+{% set item_count = p.__items|length %}
+{% set tab1title = "<strong>StateEngine</strong>" %}
+{% set tabcount = 1 %}
+
+{% block headtable %}
+
+<table class="table table-striped table-hover">
+  <tbody>
+    <tr>
+      <td class="py-1"><strong>Log Level</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('log_level') }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"><strong>Log Folder</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('log_directory') }}</td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>Startup Delay</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('startup_delay_default') }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"><strong>Suspend Time</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('suspend_time_default') }}</td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>Items</strong></td>
+      <td class="py-1">{{ item_count }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"></td>
+      <td class="py-1"></td>
+    </tr>
+  </tbody>
+</table>
+{% endblock headtable %}
+
+
+{% block bodytab1 %}
+
+<div class="container-fluid m-2" style="position: relative;">
+  <div style="float: left; border:1px solid black; width:200px; position: sticky; position: -webkit-sticky; top:220px; left:0;">
+    <a href="https://www.smarthomeng.de/starting-with-state-machine-automation-stateengine-plugin" target="link">Einführung</a><br>
+    <a href="?page=doku1">Grundsätzliches</a><br>
+    <a href="?page=doku2">Plugin-Konfiguration</a><br>
+    <a href="?page=doku3">Das Objekt-Item</a><br>
+    <a href="?page=doku4">Das Zustands-Item</a><br>
+    <a href="?page=doku5">Bedingungen</a><br>
+    <a href="?page=doku6">Aktionen: Ausführung</a><br>
+    <a href="?page=doku7">Aktionen: Einzelangabe</a><br>
+    <a href="?page=doku8">Aktionen: Combo-Angabe</a><br>
+    <a href="?page=doku9">Zustand-Templates</a><br>
+    <a href="?page=doku10">Vordefinierte Funktionen</a><br>
+    <a href="?page=doku11">Variablen</a><br>
+    <a href="?page=doku12">Sperr-Zustand</a><br>
+    <a href="?page=doku13">Pausiert-Zustand</a><br>
+    <a href="?page=doku14">CLI Kommandos</a><br>
+    <a href="?page=doku15">Vollständiges Beispiel</a><br>
+  </div>
+  <div style="margin-left:230px; max-width: 800px;">
+    <h1 id="aktionenausfhrungszeitpunkt">Aktionen - Ausführungszeitpunkt</h1>
+
+    <p>Um festzulegen, wann die Aktionen eines Zustands ausgeführt werden, gibt es vier Ereignisse, denen die Aktionen zugeordnet werden können:
+    Für jedes dieser Ereignisse wird ein Item unterhalb des Zustands-Items angelegt, unterhalb dem die jeweiligen Aktionen als Attribute definiert werden.</p>
+
+    <ul>
+    <li><strong>on_enter</strong>: Aktionen, die beim erstmaligen Aktivieren des Zustands ausgeführt werden</li>
+
+    <li><strong>on_stay</strong>: Aktionen, die ausgeführt werden, wenn der Zustand zuvor bereits aktiv war und weiterhin aktiv bleibt.</li>
+
+    <li><strong>on_enter_or_stay</strong>: Aktionen, die ausgeführt werden, wenn der Zustand aktiv ist, unabhängig davon, ob er bereits zuvor aktiv war oder nicht.</li>
+
+    <li><strong>on_leave</strong>: Aktionen, die ausgeführt werden, direkt bevor ein anderer Zustand aktiv wird.</li>
+    </ul>
+
+    <p>Aktionen können auch ohne diese Ereigniss-Items direkt im Zustands-Item definiert werden. Solche Aktionen werden analog zum Ereignis <code>on_enter_or_stay</code> behandelt.</p>
+
+    <p><strong>Beispiel</strong></p>
+
+    <pre><code>test:
+        type: foo
+
+        events:
+            name: stateengine Event Beispiel
+            type: foo
+
+            item:
+                name: Dummy Item
+                type: bool
+                value: False
+
+            rules:
+                type: bool
+                name: Automatik Test Event
+                # Dies ist ein Objekt-Item für das stateengine-Plugin:
+                se_plugin: active
+
+                state1:
+                    type: foo
+                    name: Status 1
+
+                    on_enter:
+                    type: foo
+                    name: Ausführen immer wenn ein Zustand gerade aktiv geworden ist
+                    &lt;... Aktionen ...&gt;
+
+                    on_stay:
+                    type: foo
+                    name: Ausführen immer wenn ein Zustand aktiv geworden ist und bereits vorher aktiv war
+                    &lt;... Aktionen ...&gt;
+
+                    on_enter_or_stay:
+                    type: foo
+                    name: Ausführen immer wenn ein Zustand aktiv ist
+                    &lt;... Aktionen ...&gt;
+
+                    on_leave:
+                    type: foo
+                    name: Ausführen beim Verlassen des Zustands
+                    &lt;... Aktionen ...&gt;
+
+                    enter_1:
+                    type: foo
+                    name: Bedingung 1
+                    &lt;...Einstiegs-Bedingungsset 1...&gt;
+
+                    enter_2:
+                    type: foo
+                    name: Bedingung 2
+                    &lt;...Einstiegs-Bedingungsset 2...&gt;
+
+                state2:
+                    type: foo
+                    name: Status 2
+                    &lt;... Weitere Bedingungssets und Aktionsgruppen ...&gt;
+
+                state3:
+                    type: foo
+                    name: Status 3
+                    &lt;... Weitere Bedingungssets und Aktionsgruppen ...&gt;
+    </code></pre>
+  </div>
+</div>
+{% endblock bodytab1 %}

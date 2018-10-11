@@ -7,6 +7,7 @@ plugin:
         en: 'Support for smartVISU: Automatic generation of pages; widget handling'
     maintainer: msinn
     tester: psilo909
+    state: qa-passed
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/Visu_Unterstuetzung        # url of documentation (wiki) page
 
@@ -14,6 +15,7 @@ plugin:
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: True
     classname: SmartVisu           # class containing the plugin
 
 parameters:
@@ -62,7 +64,7 @@ item_attributes:
 #        type: bool
 #        description:
 #            de: ''
-#            en: ''
+#            en: 'Simply set the visu_acl attribute to something to allow read/write access to the item'
     
     sv_page:
         type: str
@@ -74,66 +76,69 @@ item_attributes:
           - cat_seperator
           - room_lite
         description:
-            de: ''
-            en: ''
+            de: "Setzen Sie 'sv_page' auf einen der angegebenen Werte, um eine Seite für dieses Item zu generieren. Jedes Widget unterhalb dieses Elements wird auf der Seite angezeigt"
+            en: 'Set sv_page to to one of the listed values generate a page for this item. Every widget beneath this item will be included in the page'
     
     sv_overview:
         type: str
         description:
-            de: ''
+            de: "Wenn eine Seite sv_page als 'overview' definiert hat, werden Items eines bestimmten Typs angezeigt. Der Name/Bezeichner des Typs wird definiert, indem 'sv_overview' auf einen eindeutigen Namen gesetzt wird. Damit Elemente auf dieser Seite angezeigt werden, müssen die Items 'sv_item_type' definieren und auf den Wert von 'sv_overview' setzen."
             en: 'If a page has defined sv_page as overview, it shows items of a specific type. The name/identifier of the type is defined by setting sv_overview to an unique name. For items to be displayed on this page, the items have to define sv_item_type and set it to the value of sv_overview.'
     
     sv_item_type:
         type: str
         description:
-            de: ''
+            de: 'sv_item_type erlaubt es, items auf anderen Seiten als der Raum-Seite anzuzeigen'
             en: 'sv_item_type allows items to be displayed on an overview page.'
     
     sv_img:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'Bild, das in der Navigation der smartVISU angezeigt wird'
+            en: 'By setting sv_img you could assign an icon or picture for a page or widget'
     
     sv_widget:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'Definition des Widgets, welches für das Item verwendet wird'
+            en: 'allows the specification of a widget. You could define multiple widgets. The widget(s) is/are shown by being encapsulated in a block of type 2 (Collapsable Block) - Relative item references are supported'
     
     sv_widget2:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'Definition des zweiten Widgets, welches für das Item verwendet wird'
+            en: 'Definition of the secondary widget which is used for the item'
     
     sv_nav_aside:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'Ermöglicht die Angabe eines Widgets, das auf der rechten Seite der Navigationsleiste für einen Raum angezeigt wird. (obere Zeile) - Relative Item-Referenzen werden unterstützt'
+            en: 'allows the specification of a widget, that is being displayed at the right side of the navigation bar for a room. (upper line) - Relative item references are supported'
     
     sv_nav_aside2:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'Ermöglicht die Angabe eines Widgets, das auf der rechten Seite der Navigationsleiste für einen Raum angezeigt wird. (untere Zeile) - Relative Item-Referenzen werden unterstützt.'
+            en: 'allows the specification of a widget, that is being displayed at the right side of the navigation bar for a room. (lower line) - Relative item references are supported.'
     
     sv_heading_left:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget ist nach links ausgerichtet'
+            en: 'allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the left'
     
     sv_heading_center:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget wird zentriert'
+            en: 'allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the center'
     
     sv_heading_right:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget ist nach rechts ausgerichtet'
+            en: 'allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the right'
     
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+
