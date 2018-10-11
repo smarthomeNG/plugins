@@ -85,3 +85,10 @@ item_attributes:
         description:
             de: 'In Items mit diesem Attribut wird der komplette Auslesepuffer abgelegt für eigene Untersuchungen'
             en: 'in items with this attribut the complete readout will be set for examination with own logics'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

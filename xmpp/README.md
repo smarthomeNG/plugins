@@ -7,6 +7,42 @@ This Plugin uses sleekxmpp as basis to connect to XMPP etc services: https://pyp
 At this stage the XMPP plugin module only supports in sending messages. Recevied messages are ignored. OTR not supported
 as the sleekxmpp libraries do not support this as yet.
 
+This Plugin can also be used to setup a standard logger category which
+can be used to log messages using XMPP to some chat or groupchat contact.
+The logging configuration looks like this:
+
+```yaml
+handlers:
+    xmpp:
+        class: plugins.xmpp.XMPPLogHandler
+        formatter: shng_simple
+        xmpp_plugin: xmpp
+        xmpp_receiver: room@conference.example.com
+        xmpp_receiver_type: groupchat
+loggers:
+    xmpp:
+        handlers: [xmpp]
+        level: WARN
+```
+
+This requires a XMPP plugin configured in a section named `xmpp` (e.g.
+see below for example) which is referenced in the `xmpp_plugin` setting.
+The receiver and chat type needs to be specified to configure the target
+contact receiving the messages.
+
+It is also possible to log all messages to a given operation log instance
+via XMPP. E.g. when having multiple operation logs configured, one for events
+one for alarms, the alarms operation log can be send via XMPP when it
+receives log messages:
+
+```yaml
+loggers:
+    plugins.operationlog.alarms:
+        handlers: [xmpp]
+        level: INFO
+```
+
+
 ## Configuration
 
 ### plugin.yaml
@@ -17,12 +53,18 @@ xmpp:
     class_path: plugins.xmpp
     jid: 'user account eg skender@somexmppserver.com'
     password: your xmpp server password
+    #use_ipv6: 1
+    #plugins:
+    #  - xep_0199  # MUC
+    #  - xep_0045  # PING
 ```
 
 Description of the attributes:
 
 * jid: jabber/xmpp user account
 * password: jabber/xmpp user password
+* use_ipv6: enable IPv6 support, which is the default
+* plugins: list of plugins (XEP to support)
 
 ### logic.yaml
 At this stage there are no specific logic files. But in order to use this module you can create a logic file for another attribute and execute

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 #
 #########################################################################
-#  Copyright 2017 Marc René Frieß                 rene.friess(a)gmail.com
-#  Version 1.3.1
+#  Copyright 2017-2018 Marc René Frieß            rene.friess(a)gmail.com
 #########################################################################
 #
 #  This file is part of SmartHomeNG.

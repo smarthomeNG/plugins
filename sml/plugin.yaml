@@ -4,11 +4,11 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Auslesen von Stromzählern via SML-Protokoll'
-        en: ''
+        en: 'Read data from powermeter device using SML protocol'
     maintainer: ohinckel
 #    tester:                        # Who tests this plugin?
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins_doc/config/sml.html
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
     version: 1.0.0                 # Plugin version
@@ -19,7 +19,53 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    serialport:
+        type: str
+        description:
+            de: 'Gibt die serielle Schnittstelle an von der die Daten gelesen werden (z.B. /dev/ttyUSB0)'
+            en: 'Specifies the serial device to read data from (e.g. /dev/ttyUSB0)'
+    host:
+        type: str
+        description:
+            de: '(optional) Alternativ zu "serialport" kann hier ein Netzwerk-Host hinterlegt werden'
+            en: '(optional) Alternatively you can specify a host instead of a serial device'
+    port:
+        type: int
+        description:
+            de: '(optional) Wenn ein "host" angegeben wurde kann hier der Port festgelegt werden'
+            en: '(optional) In case a "host" was specify this can be use to specify the port'
+    device:
+        type: str
+        default: 'raw'
+        valid_list:
+          - raw
+          - hex
+          - smart-meter-gateway-com-1
+        description:
+            de: '(optional) Legt ein Gerät fest von dem die Daten ausgelesen werden'
+            en: '(optional) Specifies a device from which the data is read'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    sml_obis:
+        type: str
+        description:
+            de: 'Gibt den OBIS-Code des Wertes an, das in das Item geschrieben werden soll'
+            en: 'Defines the OBIS code of the value to store in the item'
+    sml_prop:
+        type: str
+        default: valueReal
+        valid_list:
+          - objName
+          - status
+          - valTime
+          - unit
+          - scalar
+          - value
+          - signature
+          - obis
+          - valueReal
+          - unitName
+        description:
+            de: 'Gibt den Eigenschaftstyp an, der in das Item geschrieben werden soll'
+            en: 'Defines the property type to put into the item'

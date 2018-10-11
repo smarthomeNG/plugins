@@ -4,7 +4,7 @@ plugin:
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Anbindung des Telegram Service (verwendet python-telegram-bot Package statt telepot Package)'
-        en: ''
+        en: 'Connects to the telegram service (uses python-telegram-bot package instead of telebot package)'
     maintainer: gamade, ivan73, bmxp
 #    tester:
     state: ready
@@ -60,6 +60,9 @@ item_attributes:
         description:
             de: 'Itemwert gegen einen regulän Ausdruck prüfen vor versenden einer Mitteilung'
             en: 'check a value against a condition before sending a message'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions: NONE
     # Definition of function interface of the plugin

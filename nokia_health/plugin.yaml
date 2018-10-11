@@ -7,6 +7,7 @@ plugin:
         en: 'Usage of the nokia health api with oauth2'
     maintainer: 'psilo909'
     tester: 'psilo909'
+    state: ready
     keywords: health
     documentation: 'http://smarthomeng.de/user/plugins_doc/config/nokia_health.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1141179-nokia-health-plugin'
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.4c            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: NokiaHealth         # class containing the plugin
 
 parameters:
@@ -80,4 +82,10 @@ item_attributes:
         - 'token_expiry'
         - 'token_type'
         - 'refresh_token'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
 

@@ -32,11 +32,13 @@ parameters:
         type: ip
         default: 127.0.0.1
         description:
-            de: 'Legt festm auf welchen Netzwerk Interfaces CLI nach Verbindungen lauscht (127.0.0.1 für localhost, 0.0.0.0 für alle Netzwerk Interfaces)'
+            de: 'Legt fest auf welchen Netzwerk Interfaces CLI nach Verbindungen lauscht (127.0.0.1 für localhost, 0.0.0.0 für alle Netzwerk Interfaces)'
             en: 'used network interface, e.g. 127.0.0.1 (localhost) or listen on all network interfaces: 0.0.0.0'
             
     port:
         type: int
+        valid_min: 0
+        valid_max: 65535
         default: 2323
         description:
             de: 'Netzwerk Port der für die Verbindung genutzt wird'
@@ -52,6 +54,9 @@ parameters:
     
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions:
     # Definition of function interface of the plugin

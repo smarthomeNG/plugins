@@ -37,9 +37,10 @@ parameters:
     send_time:
         type: int
         default: 0
+        valid_min: 0
         description:
-            de: 'Zeitintervall zum Senden von Uhrzeit und Datum an den KNX-Bus'
-            en: 'time interval to send time and date to the knx bus'
+            de: 'Zeitintervall (in Sekunden) zum Senden von Uhrzeit und Datum an den KNX-Bus'
+            en: 'time interval (in seconds) to send time and date to the knx bus'
 
     busmonitor:
         type: str
@@ -66,6 +67,8 @@ parameters:
 
     port:
         type: int
+        valid_min: 0
+        valid_max: 65535
         default: 6720
         description:
             de: 'Port, der bei der Kommunikation mit dem Eibd- oder Knxd-Daemon verwendet wird'

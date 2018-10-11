@@ -92,8 +92,10 @@ class Kodi(SmartPlugin):
         # init logger
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init Kodi Plugin')
-        self.kodi_tcp_connection = Tcp_client(host=self.get_parameter_value('host'),
-                                              port=self.get_parameter_value('port'),
+        self.host = self.get_parameter_value('host')
+        self.port = self.get_parameter_value('port')
+        self.kodi_tcp_connection = Tcp_client(host=self.host,
+                                              port=self.port,
                                               name='KodiTCPConnection',
                                               autoreconnect=False,
                                               connect_retries=5,
@@ -137,7 +139,7 @@ class Kodi(SmartPlugin):
         # check if API is available
         result = self.send_kodi_rpc(method='JSONRPC.Ping')
         if result is None or result['result'] != 'pong':
-            self.logger.error('Kodi JSON-RPC API not available. Did you connect to the TCP port (default: 9090)?')
+            self.logger.error('Kodi JSON-RPC API not available on {}:{}'.format(self.host, self.port))
             self.stop()
         else:
             # API available -> init items

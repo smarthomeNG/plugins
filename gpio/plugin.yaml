@@ -41,6 +41,7 @@ parameters:
             en: 'bouncetime in ms to avoid multiple events in a short time period.'
 item_attributes:
     # Definition of item attributes defined by this plugin
+
     gpio_in:
         type: int
         description:
@@ -51,3 +52,4 @@ item_attributes:
         description:
             de: 'Pin Nummer für den GPIO Ausgang. Die Nummer hängt vom Modus in den Plugin-Paramtern ab! Der Ausgang wird zum Pluginstart automatisch aktualisiert, sollte also nicht im Item als gpio_in und gpio_out definiert werden.'
             en: 'Pin number of the GPIO output. Depends on the mode you have set in the plugin parameters! Do not set gpio_in and gpio_out for the same item as the output item will get initialized at plugin start automatically.'            
+            
