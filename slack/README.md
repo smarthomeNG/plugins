@@ -10,13 +10,13 @@ SlackInstance:
 ```
 
 ### etc/plugin.yaml multi instance example
-If you want to post to more than one Slack workspaces or if you want to use more than one incoming webhook / authentication token, configure this plugin with multiple instances.
+If you want to post to more than one Slack workspace or if you want to use more than one incoming webhook / authentication token, configure this plugin with multiple instances.
 ```yaml
 SlackInstance_1:
     plugin_name: slack
     instance: WorkspaceYourTeam
     token: abc/def/ghi # Token for posting to workspace '<your_team>'
-	
+
 SlackInstance_2:
     plugin_name: slack
     instance: WorkspaceAnotherTeam
@@ -46,7 +46,7 @@ https://api.slack.com/docs/message-formatting
 
 
 For most users a single instance would be sufficient.
-If you want to send notifications to more than one Slack workspace or if you want to use more than one incoming webhook / authentication token, you need to generate a webhook / token in every Slack workspace.
+If you want to go beyond that and want to send notifications to more than one Slack workspace or if you want to use more than one incoming webhook / authentication token, you need to generate a webhook / token in every Slack workspace.
 For each of them you'll need to configure a instace of this plugn in etc/plugin.yaml with different instance names as shown in multi instance example configuration above.
 Sending notifications in multi instance example:
 ```python
