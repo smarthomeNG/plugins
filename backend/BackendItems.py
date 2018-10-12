@@ -50,6 +50,11 @@ class BackendItems:
         self.items = Items.get_instance()
         self.logger.info("BackendItems __init__ {}".format(self.items))
 
+    def __init__(self):
+
+        self.logger.debug("BackendItems __init__ {}".format(''))        
+
+
     # -----------------------------------------------------------------------------------
     #    ITEMS
     # -----------------------------------------------------------------------------------
