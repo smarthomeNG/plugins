@@ -390,18 +390,10 @@ class OneWire(OwBase):
                     value = self.read('/uncached' + path).decode()
                     if key.startswith('T') and value == '85.0000':
                         self.logger.info("1-Wire: problem reading {0}. Wiring problem?".format(addr))
-                        temperror=True
                         continue
-                    else:
-                        temperror=False
                     value = float(value)
                 except Exception as e:
                     self.logger.warning("1-Wire: problem reading {} {}: {}. Trying to continue with next sensor".format(addr, path, e))
-                    #if not self.connected:
-                    #    return
-                    #else:
-                    #    self.close()
-                    #    break
                 else:  #only if no exception
                     if key == 'L':  # light lux conversion
                         if value > 0:
@@ -410,7 +402,7 @@ class OneWire(OwBase):
                             value = 0
                     elif key == 'VOC':
                         value = value * 310 + 450
-                    if not temperror: item(value, '1-Wire', path)
+                    item(value, '1-Wire', path)
                     
         cycletime = time.time() - start
         self.logger.debug("1-Wire: sensor cycle takes {0} seconds".format(cycletime))
