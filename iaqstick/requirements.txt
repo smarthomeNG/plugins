@@ -1,1 +1,1 @@
-pyusb
+pyusb>=1.0.2
