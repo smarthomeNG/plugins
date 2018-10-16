@@ -1954,6 +1954,7 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
             except Exception as e:
                 self.logger.error("Exception when sending POST request: %s" % str(e))
+                return
             self._response_cache["wan_ip_connection_" + action] = response.content
         else:
             self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
