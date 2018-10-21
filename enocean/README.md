@@ -202,6 +202,17 @@ EnOcean_Item:
             enocean_tx_id_offset: 1
             # pulsewith-attribute removed use autotimer functionality instead
             autotimer: 1 = 0  
+            
+    actorD2_01_12:
+        enocean_rx_id: 050A2FF4
+        enocean_rx_eep: D2_01_12
+        switch:
+            cache: 'on'
+            type: bool
+            enocean_rx_key: STAT_A
+            enocean_channel: A
+            enocean_tx_eep: D2_01_12
+            enocean_tx_id_offset: 2
 
     awning:
         remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
@@ -365,6 +376,7 @@ The following status EEPs are supported:
 * A5_11_04		Dimmer status feedback
 * A5_12_01		Power Measurement, e.g. Eltako FSVA-230V
 * D2_01_07		Simple electronic switch
+* D2_01_12		Simple electronic switch with 2 channels, like NodOn In-Wall module
 * D5_00_01		Door/Window Contact, e.g. Eltako FTK, FTKB
 * F6_02_01		2-Button-Rocker
 * F6_02_02		2-Button-Rocker
@@ -382,6 +394,7 @@ A complete list of available EEPs is accessible at [EnOcean Alliance](http://www
 * A5_38_08_03		Dimmer command with specified dim level (0-100)
 * A5_3F_7F		Universal actuator command, e.g. blind control
 * D2_01_07		Simple electronic switch
+* D2_01_12		Simple electronic switch with 2 channels
 ```
 
 The optional ref_level parameter defines default dim value when dimmer is switched on via the regular "on"" command.
