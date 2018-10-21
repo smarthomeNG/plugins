@@ -326,7 +326,6 @@ class OneWire(OwBase):
                         value = self._flip[self.read('/uncached' + path).decode()]
                 except Exception:
                     self.logger.warning("1-Wire: problem reading {0}".format(addr))
-                    #pydevd.settrace("192.168.177.20")
                     continue
                 item(value, '1-Wire', path)
 
@@ -344,6 +343,7 @@ class OneWire(OwBase):
             return
         for bus in self._ibutton_buses:
             if not self.alive:
+                self.logger.info("1-Wire: Self not alive".format(bus))
                 break
             path = '/uncached/' + bus + '/'
             name = self._ibutton_buses[bus]
