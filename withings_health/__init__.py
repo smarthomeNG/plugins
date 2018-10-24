@@ -398,7 +398,7 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
                            plugin_info=self.plugin.get_info(), tabcount=2, callback_url=self._get_callback_url(),
-                           tab1title="Nokia Health Items (%s)" % len(self.plugin.get_items()),
+                           tab1title="Withings Health Items (%s)" % len(self.plugin.get_items()),
                            tab2title="OAuth2 Data", authorize_url=self._auth.get_authorize_url(),
                            p=self.plugin, token_expiry=datetime.datetime.fromtimestamp(self.plugin.get_item(
                 'token_expiry')(), tz=self.plugin.shtime.tzinfo()), now=self.plugin.shtime.now(), code=code,
