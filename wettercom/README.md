@@ -30,413 +30,236 @@ Create a yaml file in the items folder with the following content or copy the fi
 %yaml 1.1
 ---
 wetter:
-    type: foo
-
     vorhersage:
-        type: foo
-
         heute:
-            type: foo
-
             frueh:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
             mittag:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
             spaet:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
             nacht:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
         morgen:
-            type: foo
-
             frueh:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
             mittag:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
             spaet:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
             nacht:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
         uebermorgen:
-            type: foo
-
             frueh:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
             mittag:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
             spaet:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
-
             nacht:
-                type: foo
-
                 temperatur:
-                    type: foo
-
                     max:
                         type: num
-
                     min:
                         type: num
-
                 text:
                     type: str
-
                 code:
                     type: num
-
                 wind:
-                    type: foo
-
                     geschwindigkeit:
                         type: num
-
                     richtung:
                         type: num
-
                         text:
                             type: str
-
                 niederschlag:
                     type: num
 ```
