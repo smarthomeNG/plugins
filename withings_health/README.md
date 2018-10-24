@@ -1,4 +1,4 @@
-# Nokia Health
+# Withings Health
 
 ## Description
 
