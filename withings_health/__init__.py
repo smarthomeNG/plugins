@@ -29,7 +29,7 @@ from lib.shtime import Shtime
 from nokia import NokiaAuth, NokiaApi, NokiaCredentials
 
 
-class NokiaHealth(SmartPlugin):
+class WithingsHealth(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.5.3"
     ALLOWED_MEASURE_TYPES = [1, 4, 5, 6, 8, 11]
@@ -101,7 +101,7 @@ class NokiaHealth(SmartPlugin):
 
         if 'access_token' not in self.get_items() or 'token_expiry' not in self.get_items() or 'token_type' not in self.get_items() or 'refresh_token' not in self.get_items():
             self.logger.error(
-                "Plugin '{}': Mandatory Items for OAuth2 Data do not exist. Verify that you have items with nh_type: token_expiry, token_type, refresh_token and access_token in your item tree.".format(
+                "Plugin '{}': Mandatory Items for OAuth2 Data do not exist. Verify that you have items with withings_type: token_expiry, token_type, refresh_token and access_token in your item tree.".format(
                     self.get_fullname()))
             return
 
@@ -264,14 +264,14 @@ class NokiaHealth(SmartPlugin):
         :param item: The item to process.
         """
         # items specific to call monitor
-        if self.get_iattr_value(item.conf, 'nh_type') in ['weight', 'height', 'fat_free_mass', 'fat_mass_weight',
+        if self.get_iattr_value(item.conf, 'withings_type') in ['weight', 'height', 'fat_free_mass', 'fat_mass_weight',
                                                           'fat_ratio', 'fat_mass_weight', 'diastolic_blood_pressure',
                                                           'systolic_blood_pressure', 'heart_pulse', 'temperature',
                                                           'spo2', 'body_temperature', 'skin_temperature', 'muscle_mass',
                                                           'hydration', 'bone_mass', 'pulse_wave_velocity', 'bmi',
                                                           'bmi_text', 'access_token', 'token_expiry', 'token_type',
                                                           'refresh_token']:
-            self._items[self.get_iattr_value(item.conf, 'nh_type')] = item
+            self._items[self.get_iattr_value(item.conf, 'withings_type')] = item
 
     def get_items(self):
         return self._items

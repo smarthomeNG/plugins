@@ -4,9 +4,12 @@ plugin_translations:
     'Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.':
         'de': 'Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.'
         'en': 'The token has expired and was not renewed. Please start OAuth2 process again.'
-    'Nokia Health Items':
-        'de': 'Nokia Health Items'
-        'en': 'Nokia Health Items'
+    'Withings Health Items':
+        'de': 'Withings Health Items'
+        'en': 'Withings Health Items'
+    'Withings Health Data Type':
+        'de': 'Withings Health Datentyp'
+        'en': 'Withings Health Data Type'
     'Hier klicken, um OAuth2 Prozess zu starten!':
         'de': 'Hier klicken, um OAuth2 Prozess zu starten!'
         'en': 'Click here, to start OAuth2 process!'
