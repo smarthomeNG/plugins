@@ -45,12 +45,12 @@ Password=> ABCD EFGGDBAN <= Yes, all this string.
 Use these credentials in roomba.py
 ```
 
-
+Ganz am ende stehen die IP, blid und das Passwort welches ihr für die plugin.ymal braucht
 
 
 ## Um das Plugin zu aktivieren müsst ihr Folgendes in eure plugin.ymal aufnehmen:
 
-```
+
 roomba_980:
     class_name: ROOMBA_980
     class_path: plugins.roomba_980
@@ -58,11 +58,11 @@ roomba_980:
     blid: '123456789013456'         # die blid des roomba Staubsaugers -> kann mit der getpassword.py ausgelesen werden"
     roombaPassword: 'ABCD EFGGDBAN' # das Passwort des roomba Staubsaugers -> kann mit der getpassword.py ausgelesen werden"
     # cycle: 600                    # Optional, nach wie vielen Sekunden die nächste Statusabfrage durchgeführt wird
-```
+
 
 
 ## Hier meine item.yaml:
-```
+
 roomba:
 
     status_batterie:
@@ -95,4 +95,3 @@ roomba:
         type: bool
         roomba_980: dock
         visu_acl: rw
-```
