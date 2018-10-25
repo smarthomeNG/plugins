@@ -73,12 +73,18 @@ class ROOMBA_980(SmartPlugin):
         if caller != __name__ and self.has_iattr(item.conf, 'roomba_980'):
             if self.get_iattr_value(item.conf, 'roomba_980') == "start":
                if item() == True:
+                   self.myroomba.send_command("start")
+                   item(False, __name__)
                    self.logger.debug('Roomba_980: Start')
             if self.get_iattr_value(item.conf, 'roomba_980') == "stop":
                if item() == True:
+                   self.myroomba.send_command("stop")
+                   item(False, __name__)
                    self.logger.debug('Roomba_980: Stop')
             if self.get_iattr_value(item.conf, 'roomba_980') == "dock":
                if item() == True:
+                   self.myroomba.send_command("dock")
+                   item(False, __name__)
                    self.logger.debug('Roomba_980: Dock')
 
     def get_status(self):
