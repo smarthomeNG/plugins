@@ -22,6 +22,7 @@
 import logging
 from plugins.roomba_980.roomba import Roomba
 from lib.model.smartplugin import SmartPlugin
+from lib.item import Items
 
 class ROOMBA_980(SmartPlugin):
 
@@ -30,6 +31,8 @@ class ROOMBA_980(SmartPlugin):
 
     logger = logging.getLogger(__name__)
 
+    myroomba = None
+
     def __init__(self, sh, adress=None, blid=None, roombaPassword=None, cycle=900):
         self._sh = sh
         self._address = adress
@@ -37,10 +40,11 @@ class ROOMBA_980(SmartPlugin):
         self._roombaPassword = roombaPassword
         self._cycle = cycle
 
-        self.myroomba = None
-
         self._status_batterie = None
         self._status_items = {}
+
+        self.myroomba = Roomba(self._address, self._blid, self._roombaPassword)
+        self.myroomba.connect()
 
     def parse_logic(self, logic):
         pass
@@ -53,11 +57,9 @@ class ROOMBA_980(SmartPlugin):
 
             self._status_items[item_type] = item
 
-            self.logger.debug('Roomba_980: item gefunden {}'.format(item))
+            self.logger.debug('{} item gefunden {}'.format(item_type, item))
 
     def run(self):
-        self.myroomba = Roomba(self._address, self._blid, self._roombaPassword)
-        self.myroomba.connect()
         self.scheduler_add(__name__, self.get_status, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
@@ -71,24 +73,18 @@ class ROOMBA_980(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != __name__ and self.has_iattr(item.conf, 'roomba_980'):
+            self.logger.debug('item_update {} '.format(item))
             if self.get_iattr_value(item.conf, 'roomba_980') == "start":
                if item() == True:
-                   self.myroomba.send_command("start")
-                   item(False, __name__)
-                   self.logger.debug('Roomba_980: Start')
+                   self.send_command("start")
             if self.get_iattr_value(item.conf, 'roomba_980') == "stop":
                if item() == True:
-                   self.myroomba.send_command("stop")
-                   item(False, __name__)
-                   self.logger.debug('Roomba_980: Stop')
+                   self.send_command("stop")
             if self.get_iattr_value(item.conf, 'roomba_980') == "dock":
                if item() == True:
-                   self.myroomba.send_command("dock")
-                   item(False, __name__)
-                   self.logger.debug('Roomba_980: Dock')
+                   self.send_command("dock")
 
     def get_status(self):
-
         status = self.myroomba.master_state
 
         for status_item in self._status_items:
@@ -102,5 +98,10 @@ class ROOMBA_980(SmartPlugin):
              self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['error'],__name__)
 
         self.logger.debug('Roomba_980: Status update')
+
+    def send_command(self, command):
+        if self.myroomba != None:
+             self.myroomba.send_command(command)
+             self.logger.debug('send command: {} to Roomba'.format(command))
 
 

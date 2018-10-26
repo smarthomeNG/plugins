@@ -5,7 +5,7 @@ plugin:
     description:
         de: 'Anbindung von iRobot Roomba Staubsaugern der Serie 900'
         en: ''
-    maintainer: 'Zapfen'
+    maintainer: 'Zapfen83'
     tester: 
     keywords: irobot roomba             # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
@@ -46,7 +46,51 @@ parameters:
     type: num
     default: False
     description:
-      de: "update des items alle x Sekunden"
+      de: "update des items alle x Sekunden, default wert 900"
       en: ""
-#item_attributes:
+
+item_attributes:
     # Definition of item attributes defined by this plugin
+
+  status_batterie:
+    type: num
+    description:
+      de: "Batterie ladewert in Prozent"
+      en: ""
+
+  status_bin_full:
+    type: bool
+    description:
+      de: "Auffangbehälter voll"
+      en: ""
+
+  status_cleanMissionStatus_phase:
+    type: str
+    description:
+      de: "Status was der Roomba gerade macht -> run / charge / ..."
+      en: ""
+
+  status_cleanMissionStatus_error:
+    type: num
+    description:
+      de: "Fehlernummer"
+      en: ""
+
+  start:
+    type: bool
+    description:
+      de: "Startet die Reinigung"
+      en: ""
+
+  stop:
+    type: bool
+    description:
+      de: "Stoppt die Reinigung"
+      en: ""
+
+  dock:
+    type: bool
+    description:
+      de: "Roomba fährt zur Homebase"
+      en: ""
+
