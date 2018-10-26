@@ -72,7 +72,7 @@ item_attributes:
             de: 'Konfiguriert ob der Wert aus dem KWL System initialisiert werden soll.'
             en: 'Configures to initialize the item value with the value from the KWL system.'
     comfoair_trigger:
-        type: list(string)
+        type: list(str)
         description:
             de: 'Konfiguriert Lesekommandos die nach einem Schreibvorgang auf das Item aufgerufen werden.'
             en: 'Configures read commands after an update to the item.'
