@@ -116,6 +116,7 @@ Some first lines of a sample OBIS Code readout for a **Landis & Gyr ZMD 310** Sm
 ```
 
 ### OBIS code example B
+
 Sample OBIS Code readout from a relative simple **Pafal 12EC3g** smartmeter
 ```
 0.0.0(72044837)(72044837)
@@ -128,6 +129,8 @@ C.2.1(000000000000)(                                                )(0000000000
 0.2.2(:::::G11)!(:::::G11)(!)
 ```
 
+### Getting Values from Codelines
+
 Comparing the above examples it is obvious that the basically same OBIS Code has different appearances. 
 
 | Example A | Example B |
@@ -136,64 +139,132 @@ Comparing the above examples it is obvious that the basically same OBIS Code has
 | 1-1:1.8.0(00051206*kWh) | 1.8.0*00(000783.16)(000783.16) |
 
 To get the value from ``1-1:1.8.0(00051206*kWh)`` into the item we write in the items config file 
-``dlms_obis_code: 1-1:1.8.0|0|Value|num``. This will get the first value in parentheses and cast it into a numeric value.
+```
+dlms_obis_code: 
+    - '1-1:1.8.0'
+    - 0
+    - 'Value'
+    - 'num'
+```
+This will get the first value in parentheses and cast it into a numeric value.
 
 To get the value from ``1.8.0*00(000783.16)(000783.16)`` into the item we write in the items config file 
-``dlms_obis_code: 1.8.0*00|0|Value|num``. This will too get the first value in parentheses and cast it into a numeric value.
+```
+dlms_obis_code: 
+    - '1.8.0*00'
+    - 0
+    - 'Value'
+    - 'num'
+```
+This will too get the first value in parentheses and cast it into a numeric value.
 
-To get the unit from ``1-1:1.8.0(00051206*kWh)`` into another item we write ``dlms_obis_code: 1-1:1.8.0|0|Unit|str`` into the item.yaml.
+To get the unit from ``1-1:1.8.0(00051206*kWh)`` into another item we write 
+```yaml
+dlms_obis_code: 
+    - '1-1:1.8.0'
+    - 0
+    - 'Unit'
+    - 'str'
+``` 
+
+into the item.yaml.
 
 
 A sample item.yaml for example **A** might look like following:
 
-```
+```yaml
 Stromzaehler:
     Auslesung:
         type: str
         dlms_obis_readout: yes
     Seriennummer:
         type: str
-        dlms_obis_code: 1-1:0.0.0|0|Value|str
+        dlms_obis_code: 
+            - '1-1:0.0.0
+            - 0
+            - 'Value' 
+            - 'str'
 
     Ablesung:
         # Datum und Uhrzeit der letzten Ablesung
         Uhrzeit:
             type: foo
-            dlms_obis_code: 1-1:0.9.1|0|Value|Z6
+            dlms_obis_code: 
+              - '1-1:0.9.1'
+              - 0
+              - 'Value'
+              - 'Z6'
         Datum:
             type: foo
-            dlms_obis_code: 1-1:0.9.2|0|Value|D6
+            dlms_obis_code: 
+              - '1-1:0.9.2'
+              - 0
+              - 'Value'
+              - 'D6'
         Datum_Aktueller_Abrechnungsmonat:
             type: foo
-            dlms_obis_code: 1-1:0.1.3|0|Value|D6
+            dlms_obis_code: 
+              - '1-1:0.1.3'
+              - 0
+              - 'Value'
+              - 'D6'
         Monatszaehler:
             # Billing period counter
             type: num
-            dlms_obis_code: 1-1:0.1.0|0|Value|num
+            dlms_obis_code: 
+              - '1-1:0.1.0'
+              - 0
+              - 'Value'
+              - 'num'
             
     Bezug:
         Energie:
             type: num
             sqlite: yes
-            dlms_obis_code: 1-1:1.8.1|0|Value|num
+            dlms_obis_code: 
+              - '1-1:1.8.1'
+              - 0
+              - 'Value'
+              - 'num'
+              
         Energie_Einheit:
             type: str
             sqlite: yes
-            dlms_obis_code: 1-1:1.8.1|0|Unit|str
+            dlms_obis_code: 
+              - '1-1:1.8.1'
+              - 0
+              - 'Unit'
+              - 'str'
 
     Lieferung:
         Energie:
             type: num
             sqlite: yes
-            dlms_obis_code: 1-1:2.8.1|0|Value|num
+            dlms_obis_code: 
+              - '1-1:2.8.1'
+              - 0
+              - 'Value'
+              - 'num'
+
         Energie_Einheit:
             type: str
             sqlite: yes
-            dlms_obis_code: 1-1:2.8.1|0|Unit|str
+            dlms_obis_code: 
+              - '1-1:2.8.1'
+              - 0
+              - 'Unit'
+              - 'str'
 ```
 The basic syntax of the **dlms_obis_code** attributes value is
-``dlms_obis_code: 1-1:1.6.2*01|Index|Value/Unit|Value Type``
+```
+dlms_obis_code: 
+    - 1-1:1.6.2*01
+    - Index
+    - 'Value' or 'Unit'
+    - Value Type
+```
 where
+
 * __Index__ is the number of the value group you want to read
 * __Value__ or __Unit__  whether you are interested in the value (mostly) or the unit like **kWh**
 * __Value Type__ can be one of 
@@ -202,12 +273,12 @@ where
     * __D6__ (date coded with YYMMDD),
     * __ZST10__ (date and time coded with YYMMDDhhmm),
     * __ZST12__ (date and time coded with YYMMDDhhmmss), 
-    * __str__,
-    * __float__, 
-    * __int__ or 
-    * __num__
+    * __str__, a string
+    * __float__, a floating point number
+    * __int__ an integer
+    * __num__ a number either float or int
     
-For any Value Type with time or date the python datetime will be used. 
+For any Value Type with ``time`` or ``date`` the python datetime will be used. 
 That implies that you use ``type: foo`` for the items attribute in the respective item.yaml
  
 | OBIS A | meaning |

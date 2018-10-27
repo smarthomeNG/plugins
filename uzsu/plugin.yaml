@@ -5,20 +5,30 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Universelle Zeitschaltuhr'
         en: 'Universal time switch'
-    maintainer: cmalo (Niko Will)
-    tester: Sandman60, cmalo
+    maintainer: cmalo, bmxp, onkelandy
+    tester: Sandman60, cmalo, schuma
 #    keywords: iot xyz
     documentation: https://github.com/smarthomeNG/smarthome/wiki/UZSU-%28Universelle-Zeitschaltuhr%29        # url of documentation (wiki) page
 
-    version: 1.3.0                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.5.2                 # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: UZSU                # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    remove_duplicates:
+        type: bool
+        default: True
+        description:
+            de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu geätigten Eintrag ersetzt'
+            en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    uzsu_item:
+        type: str
+        description:
+            de: 'Das Item, das durch die UZSU geschaltet werden soll'
+            en: 'The item that gets changed by the UZSU'
