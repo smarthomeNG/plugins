@@ -27,9 +27,7 @@ from lib.item import Items
 class ROOMBA_980(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.0.0"
-
-    logger = logging.getLogger(__name__)
+    PLUGIN_VERSION = "1.0.1"
 
     myroomba = None
 
@@ -57,10 +55,10 @@ class ROOMBA_980(SmartPlugin):
 
             self._status_items[item_type] = item
 
-            self.logger.debug('{} item gefunden {}'.format(item_type, item))
+            self.logger.debug('found item {} with function {}'.format(item, item_type))
 
     def run(self):
-        self.scheduler_add(__name__, self.get_status, prio=5, cycle=self._cycle, offset=2)
+        self.scheduler_add('get_status', self.get_status, prio=5, cycle=self._cycle, offset=2)
         self.alive = True
 
     def stop(self):
@@ -72,15 +70,15 @@ class ROOMBA_980(SmartPlugin):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != __name__ and self.has_iattr(item.conf, 'roomba_980'):
+        if caller != __name__:
             self.logger.debug('item_update {} '.format(item))
             if self.get_iattr_value(item.conf, 'roomba_980') == "start":
                if item() == True:
                    self.send_command("start")
-            if self.get_iattr_value(item.conf, 'roomba_980') == "stop":
+            elif self.get_iattr_value(item.conf, 'roomba_980') == "stop":
                if item() == True:
                    self.send_command("stop")
-            if self.get_iattr_value(item.conf, 'roomba_980') == "dock":
+            elif self.get_iattr_value(item.conf, 'roomba_980') == "dock":
                if item() == True:
                    self.send_command("dock")
 
@@ -97,7 +95,7 @@ class ROOMBA_980(SmartPlugin):
           if status_item == "status_cleanMissionStatus_error":
              self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['error'],__name__)
 
-        self.logger.debug('Roomba_980: Status update')
+        self.logger.debug('Status update')
 
     def send_command(self, command):
         if self.myroomba != None:

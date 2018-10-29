@@ -1,15 +1,15 @@
 # roomba_980
 
-Dies ist ein Plugin für das SmarthomeNG Projekt um den iRobot Roomba 980 zu nutzen
+Dies ist ein Plugin für das SmarthomeNG Projekt um den iRobot Roomba 980 zu steuern.
 
-zusätzlich muss das Projekt https://github.com/NickWaterton/Roomba980-Python in das verzeichniss hinterlegt werden
+zusätzlich muss das Projekt https://github.com/NickWaterton/Roomba980-Python in das Plugin Verzeichniss hinterlegt werden
 
 
 ## Wie bekomme ich meine blid und mein Passwort
 
-zu erst müsst ihr das Projekt Roomba980-Python herrunterladen und das roomba Verzeichnis ins rooomba_980 Plugin Verzeichnis kopieren
+zu erst müsst ihr das Projekt Roomba980-Python herrunterladen und das roomba Verzeichnis in das rooomba_980 Plugin Verzeichnis kopieren
 
-in dem Verzeichnis befindet ein getpassword.py, das ihr ausführen müsst, danach bekommt ihr folgende meldung:
+in dem Verzeichnis befindet sich ein getpassword.py, das ihr ausführen müsst, danach bekommt ihr folgende meldung:
 
 ```
 found 1 Roomba(s)
@@ -108,7 +108,7 @@ roomba:
         enforce_updates: 'True'
 
         text:
-            name: robii Text
+            name: roomba Text
             type: str
             enforce_updates: 'True'
             autotimer: 2 = ""
