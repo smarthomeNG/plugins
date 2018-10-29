@@ -12,7 +12,7 @@ plugin:
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
 # Following entries are for Smart-Plugins:
-    version: 1.0.0                 # Plugin version
+    version: 1.0.1                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False
