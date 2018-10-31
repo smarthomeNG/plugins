@@ -172,10 +172,17 @@
 							<table class="table mb-0">
 							{% set first = True %}
 							{% for func in p.metadata.get_plugin_function_defstrings() %}
+								{% if loop.index % 2 > 0 %}
 								<tr>
+								{% endif %}
 									<td class="p-0" style="width: 50%;">{{ func }}
 									</td>
+									{% if loop.index %2 > 0 and loop.last %}
+									<td></td>
+									{% endif %}
+								{% if loop.index % 2 > 0 and not first %}
 								</tr>
+								{% endif %}
 							{% endfor %}
 							</table>
 						</div>
