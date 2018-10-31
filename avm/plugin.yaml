@@ -261,3 +261,15 @@ plugin_functions:
                 description:
                     de: "Anteiliger oder vollständiger Name des Kontakts."
                     en: "Partial or full name of the contact."
+
+    get_calllist:
+        type: list(dict(str))
+        description:
+            de: "Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id','Type','Caller','Called','CalledNumber','Name','Numbertype','Device','Port','Date','Duration' (some optional))."
+            en: "Returns an array of dicts with all calllist entries (attributes 'Id','Type','Caller','Called','CalledNumber','Name','Numbertype','Device','Port','Date','Duration' (some optional))."
+        parameters:
+            filter_incoming:
+                type: str
+                description:
+                    de: "Filter, um nur die Anrufe zu erhalten, die zu einer bestimmten angerufenen Nummer gehören."
+                    en: "Filter to filter calls to a specific destination phone number."
