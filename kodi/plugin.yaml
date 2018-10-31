@@ -29,7 +29,9 @@ parameters:
         type: int
         valid_min: 0
         default: 9090
-    
+        description:
+            en: 'English description'
+
 
 item_attributes:
     # Definition of item attributes defined by this plugin
