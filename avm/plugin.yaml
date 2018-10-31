@@ -171,3 +171,69 @@ item_attributes:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
 
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    reboot:
+        type: void
+        description:
+            de: "Startet das Gerät neu."
+            en: "Reboots the device."
+        parameters:
+        # This function has no parameters
+
+    reconnect:
+        type: void
+        description:
+            de: "Verbindet das Gerät neu mit dem WAN (Wide Area Network)."
+            en: "Reconnects the device to the WAN (Wide Area Network)."
+        parameters:
+        # This function has no parameters
+
+    wol:
+        type: void
+        description:
+            de: "Sendet einen WOL (WakeOnLAN) Befehl an eine MAC Adresse."
+            en: "Sends a WOL (WakeOnLAN) command to a MAC address."
+        parameters:
+            mac_address:
+                type: mac
+                description:
+                    de: "MAC Adresse"
+                    en: "MAC address"
+
+    get_hosts:
+        type: list(dict(str))
+        description:
+            de: "Ermittelt ein Array mit den Namen aller verbundener Hosts."
+            en: "Gets the name of all connected hosts as an array."
+        parameters:
+            only_active:
+                type: bool
+                description:
+                    de: "True, wenn nur aktuell aktive Hosts zurückgegeben werden sollen."
+                    en: "True, if only active hosts shall be returned."
+
+    get_host_details:
+        type: dict(str)
+        description:
+            de: "Ermittelt die Informationen zu einem Host an einem angegebenen Index."
+            en: "Gets the information of a hosts at a specific index."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Index."
+                    en: "Index."
+
+    is_host_active:
+        type: bool
+        description:
+            de: "Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt werden."
+            en: "Checks if a MAC address is active on the FritzDevice, e.g. the status can be used for simple presence detection."
+        parameters:
+            mac_address:
+                type: mac
+                description:
+                    de: "MAC Adresse"
+                    en: "MAC address"

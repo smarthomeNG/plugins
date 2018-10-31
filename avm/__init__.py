@@ -1088,7 +1088,7 @@ class AVM(SmartPlugin):
 
     def get_hosts(self, only_active):
         """
-        Gets the name of all hosts as an array
+        Gets the information (host details) of all hosts as an array of dicts
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
 
@@ -1121,7 +1121,7 @@ class AVM(SmartPlugin):
 
     def get_host_details(self, index):
         """
-        Gets the name of a hosts at a specific index
+        Gets the information of a hosts at a specific index
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
 
