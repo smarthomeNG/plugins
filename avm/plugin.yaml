@@ -251,10 +251,10 @@ plugin_functions:
                     en: "Complete phone number"
 
     get_phone_numbers_by_name:
-        type: str
+        type: dict(dict(str))
         description:
-            de: "Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten."
-            en: "Searches the phonebook for a contact by a given name."
+            de: "Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehörigen Telefonnummern."
+            en: "Searches the phonebook for a contact by a given name and returns the corresponding phone numbers."
         parameters:
             name:
                 type: str
