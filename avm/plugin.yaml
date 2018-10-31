@@ -182,6 +182,58 @@ plugin_functions:
         parameters:
         # This function has no parameters
 
+    cancel_call:
+        type: void
+        description:
+            de: "Beendet einen aktiven Anruf."
+            en: "Cancels an active call."
+        parameters:
+        # This function has no parameters
+
+    start_call:
+        type: void
+        description:
+            de: "Startet einen anruf an eine übergebene Telefonnummer (intern oder extern)."
+            en: "Starts a call for a given phone number (internal or external)."
+        parameters:
+            phone_number:
+                type: str
+                description:
+                    de: "Vollständige Telefonnummer, die angerufen werden soll."
+                    en: "Full phone number to call"
+
+    get_call_origin:
+        type: str
+        description:
+            de: "Gib den Namen des Telefons zurück, das aktuell als 'call origin' gesetzt ist."
+            en: "Gets the phone name, currently set as 'call origin'."
+        parameters:
+        # This function has no parameters
+
+    set_call_origin:
+        type: void
+        description:
+            de: "Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'"
+            en: "Sets the 'call origin', e.g. before running 'start_call'"
+        parameters:
+            phone_name:
+                type: mac
+                description:
+                    de: "Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. Bspw. '**610' für ein internes Gerät."
+                    en: "Full phone identifier, could be e.g. '**610' for an internal device."
+
+    get_phone_name:
+        type: str
+        description:
+            de: "Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden."
+            en: "Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Index"
+                    en: "Index"
+
     reconnect:
         type: void
         description:
@@ -223,8 +275,8 @@ plugin_functions:
             index:
                 type: int
                 description:
-                    de: "Index."
-                    en: "Index."
+                    de: "Index"
+                    en: "Index"
 
     is_host_active:
         type: bool
