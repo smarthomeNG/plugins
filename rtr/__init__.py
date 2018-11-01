@@ -386,7 +386,7 @@ class RTR(SmartPlugin):
         """
         if c in self._controller:
             if self._controller[c]['tempDefault'] > 0:
-                self._sh.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDefault'])
+                self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDefault'])
 
             try:
                 if os.path.isfile(self.path + 'boost_' + c):
@@ -407,7 +407,7 @@ class RTR(SmartPlugin):
         """
         if c in self._controller:
             if self._controller[c]['tempBoost'] > 0:
-                self._sh.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempBoost'])
+                self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempBoost'])
                 shtime = Shtime.get_instance()
                 self._createTrigger('boost_' + c, c, shtime.now() + datetime.timedelta(minutes=5))
         else:
@@ -419,6 +419,6 @@ class RTR(SmartPlugin):
         """
         if c in self._controller:
             if self._controller[c]['tempDrop'] > 0:
-                self._sh.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDrop'])
+                self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDrop'])
         else:
             self.logger.error("drop unknown controller '{}'" . format(self._controller.keys()))
