@@ -1,0 +1,14 @@
+plugin_translations:
+    'Token':  {'de': '=', 'en': '='}
+    'Callback URL (SHNG)':     {'de': '=', 'en': '='}
+    'NoWait':  {'de': '=', 'en': '='}
+    'Base URL (Nuki Bridge)':  {'de': '=', 'en': '='}
+    'Pfad':  {'de': '=', 'en': 'Path'}
+    'Typ':  {'de': '=', 'en': 'Type'}
+    'Nuki ID':  {'de': '=', 'en': '='}
+    'Wert':  {'de': '=', 'en': 'Value'}
+    'Letztes Update':  {'de': '=', 'en': 'Last Update'}
+    'Letzter Change':  {'de': '=', 'en': 'Last Change'}
+    'Nuki Action Items':  {'de': '=', 'en': '='}
+    'Nuki Battery Items':  {'de': '=', 'en': '='}
+    'Nuki Event Items':  {'de': '=', 'en': '='}

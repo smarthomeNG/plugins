@@ -25,7 +25,7 @@ import json
 import requests
 import lib.connection
 import re
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 
 nuki_action_items = {}
 nuki_event_items = {}
@@ -89,12 +89,12 @@ class Nuki(SmartPlugin):
             self._callback_ip = self.get_local_ipv4_address()
 
             if not self._callback_ip:
-                self._logger.critical("Nuki: Could not fetch internal ip address. Set it manually!")
+                self._logger.critical("Plugin '{}': Could not fetch internal ip address. Set it manually!".format(self.get_shortname()))
                 self.alive = False
                 return
-            self._logger.info("Nuki: using local ip address {ip}".format(ip=self._callback_ip))
+            self._logger.info("Plugin '{pluginname}': using local ip address {ip}".format(pluginname=self.get_shortname(), ip=self._callback_ip))
         else:
-            self._logger.info("Nuki: using given ip address {ip}".format(ip=self._callback_ip))
+            self._logger.info("Plugin '{pluginname}': using given ip address {ip}".format(pluginname=self.get_shortname(), ip=self._callback_ip))
 
         self._callback_url = "http://{ip}:{port}/".format(ip=self._callback_ip, port=self._callback_port)
 
@@ -106,6 +106,8 @@ class Nuki(SmartPlugin):
                              4,  # lockAndGo
                              5,  # lockAndGoWithUnlatch
                              ]
+
+        self.init_webinterface()
 
     def run(self):
         self._clear_callbacks()
@@ -125,14 +127,14 @@ class Nuki(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'nuki_id'):
-            self._logger.debug("parse item: {0}".format(item))
+            self._logger.debug("Plugin '{0}': parse item: {1}".format(self.get_shortname(), item))
             nuki_id = self.get_iattr_value(item.conf, 'nuki_id')
 
             if self.has_iattr(item.conf, 'nuki_trigger'):
                 nuki_trigger = self.get_iattr_value(item.conf, "nuki_trigger")
                 if nuki_trigger.lower() not in ['state', 'action', 'battery']:
-                    self._logger.warning("Nuki: Item {item} defines an invalid Nuki trigger {trigger}! "
-                                         "It has to be 'state' or 'action'.".format(item=item, trigger=nuki_trigger))
+                    self._logger.warning("Plugin '{pluginname}': Item {item} defines an invalid Nuki trigger {trigger}! "
+                                         "It has to be 'state' or 'action'.".format(pluginname=self.get_shortname(), item=item, trigger=nuki_trigger))
                     return
                 if nuki_trigger.lower() == 'state':
                     nuki_event_items[item] = int(nuki_id)
@@ -141,8 +143,8 @@ class Nuki(SmartPlugin):
                 else:
                     nuki_battery_items[item] = int(nuki_id)
             else:
-                self._logger.warning("Nuki: Item {item} defines a Nuki ID but no nuki trigger! "
-                                     "This item has no effect.".format(item=item))
+                self._logger.warning("Plugin '{pluginname}': Item {item} defines a Nuki ID but no nuki trigger! "
+                                     "This item has no effect.".format(pluginname=self.get_shortname(), item=item))
                 return
             return self.update_item
 
@@ -154,7 +156,7 @@ class Nuki(SmartPlugin):
             if item in nuki_action_items:
                 action = item()
                 if action not in self._lockActions:
-                    self._logger.warning("Nuki: action {action} not in list of possible actions.".format(action=action))
+                    self._logger.warning("Plugin '{pluginname}': action {action} not in list of possible actions.".format(pluginname=self.get_shortname(), action=action))
                     return
 
                 response = self._api_call(self._base_url, nuki_id=nuki_action_items[item], endpoint='lockAction',
@@ -162,9 +164,9 @@ class Nuki(SmartPlugin):
                 if response is not None:
                     if response['success']:
                         # self._get_nuki_status()
-                        self._logger.info("Nuki: update item: {0}".format(item.id()))
+                        self._logger.info("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.id()))
                 else:
-                    self._logger.error("Nuki: no response.")
+                    self._logger.error("Plugin '{}': no response.".format(self.get_shortname()))
 
     @staticmethod
     def update_lock_state(nuki_id, lock_state):
@@ -193,7 +195,7 @@ class Nuki(SmartPlugin):
         for nuki in response:
             paired_nukis.append(nuki['nukiId'])
             self._logger.info(
-                'Nuki: Paired Nuki Lock found: {name} - {id}'.format(name=nuki['name'], id=nuki['nukiId']))
+                "Plugin '{pluginname}': Paired Nuki Lock found: {name} - {id}".format(pluginname=self.get_shortname(), name=nuki['name'], id=nuki['nukiId']))
             self._logger.debug(paired_nukis)
 
     def _clear_callbacks(self):
@@ -202,10 +204,10 @@ class Nuki(SmartPlugin):
             for c in callbacks['callbacks']:
                 response = self._api_call(self._base_url, endpoint='callback/remove', token=self._token, id=c['id'])
                 if response['success']:
-                    self._logger.debug("Nuki: Callback with id {id} removed.".format(id=c['id']))
+                    self._logger.debug("Plugin '{pluginname}': Callback with id {id} removed.".format(pluginname=self.get_shortname(), id=c['id']))
                     return
-                self._logger.debug("Nuki: Could not remove callback with id {id}: {message}".
-                                   format(id=c['id'], message=c['message']))
+                self._logger.debug("Plugin '{pluginname}': Could not remove callback with id {id}: {message}".
+                                   format(pluginname=self.get_shortname(), id=c['id'], message=c['message']))
 
     def _register_callback(self):
         found = False
@@ -219,17 +221,21 @@ class Nuki(SmartPlugin):
                 response = self._api_call(self._base_url, endpoint='callback/add', token=self._token,
                                           callback_url=self._callback_url)
                 if not response['success']:
-                    self._logger.warning('Nuki: Error establishing the callback url: {message}'.format
-                                         (message=response['message']))
+                    self._logger.warning("Plugin '{pluginname}': Error establishing the callback url: {message}".format
+                                         (pluginname=self.get_shortname(), message=response['message']))
                 else:
-                    self._logger.info('Nuki: Callback URL registered.')
+                    self._logger.info("Plugin '{}': Callback URL registered.".format
+                                         (self.get_shortname()))
             else:
-                self._logger.info('Nuki: Callback URL already registered')
+                self._logger.info("Plugin '{}': Callback URL already registered".format
+                                         (self.get_shortname()))
         else:
-            self._logger.warning('Nuki: No callback ip set. Automatic Nuki lock status updates not available.')
+            self._logger.warning("Plugin '{}': No callback ip set. Automatic Nuki lock status updates not available.".format
+                                         (self.get_shortname()))
 
     def _get_nuki_status(self):
-        self._logger.info("Nuki: Getting Nuki status ...")
+        self._logger.info("Plugin '{}': Getting Nuki status ...".format
+                                         (self.get_shortname()))
         for nuki_id in paired_nukis:
             response = self._api_call(self._base_url, endpoint='lockState', nuki_id=nuki_id, token=self._token,
                                       no_wait=self._noWait)
@@ -247,7 +253,7 @@ class Nuki(SmartPlugin):
                 payload['action'] = action
             if no_wait is not None:
                 payload['noWait'] = int(no_wait)
-                self._logger.debug("Nuki: noWait is {}".format(int(no_wait)))
+                self._logger.debug("Plugin '{}': noWait is {}".format(self.get_shortname(), int(no_wait)))
             if callback_url is not None:
                 payload['url'] = callback_url
             if id is not None:
@@ -258,3 +264,87 @@ class Nuki(SmartPlugin):
             return json.loads(response.text)
         except Exception as ex:
             self._logger.error(ex)
+
+    def get_event_items(self):
+        return nuki_event_items
+
+    def get_battery_items(self):
+        return nuki_battery_items
+
+    def get_action_items(self):
+        return nuki_action_items
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http is None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
+                           interface=None, item_count=len(self.plugin.get_event_items())+len(self.plugin.get_action_items())+len(self.plugin.get_battery_items()),
+                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           p=self.plugin)
