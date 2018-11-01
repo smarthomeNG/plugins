@@ -33,3 +33,5 @@ plugin_translations:
     'Possible Battery Values':  {'de': 'Mögliche Werte für die Batterie', 'en': '='}
     'Batteries are good. No need to replace it.':  {'de': 'Die Batterien sind gut, sie müssen nicht getauscht werden.', 'en': '='}
     'Batteries are low. Please replace as soon as possible!':  {'de': 'Die Batterieladung ist niedrig. Bitte so bald als möglich austauschen!', 'en': '='}
+    'Send': {'de': 'Abschicken', 'en': '='}
+    'none': {'de': 'keine Aktion', 'en': 'no action'}
