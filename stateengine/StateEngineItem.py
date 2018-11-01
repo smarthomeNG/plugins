@@ -254,7 +254,7 @@ class SeItem:
         self.__item._enforce_updates = True
 
         # set "eval" for item if initial
-        if self.__item._eval_trigger and self.__item._eval is None:
+        if self.__item._trigger and self.__item._eval is None:
             self.__item._eval = "1"
 
         # Check scheduler settings and update if requred
@@ -292,14 +292,14 @@ class SeItem:
             self.__sh.scheduler.change(self.id, cycle=new_cycle, cron=new_cron)
 
     # get triggers in readable format
-    def __verbose_eval_triggers(self):
+    def __verbose_triggers(self):
         # noinspection PyProtectedMember
-        if not self.__item._eval_trigger:
+        if not self.__item._trigger:
             return "Inactive"
 
         triggers = ""
         # noinspection PyProtectedMember
-        for trigger in self.__item._eval_trigger:
+        for trigger in self.__item._trigger:
             if triggers != "":
                 triggers += ", "
             triggers += trigger
@@ -335,7 +335,7 @@ class SeItem:
     def __write_to_log(self):
         # get crons and cycles
         crons, cycles = self.__verbose_crons_and_cycles()
-        triggers = self.__verbose_eval_triggers()
+        triggers = self.__verbose_triggers()
 
         # log general config
         self.__logger.header("Configuration of item {0}".format(self.__name))
@@ -364,7 +364,7 @@ class SeItem:
     def cli_detail(self, handler):
         # get data
         crons, cycles = self.__verbose_crons_and_cycles()
-        triggers = self.__verbose_eval_triggers()
+        triggers = self.__verbose_triggers()
         handler.push("AutoState Item {0}:\n".format(self.id))
         handler.push("\tCurrent state: {0}\n".format(self.__laststate_internal_name))
         handler.push(self.__startup_delay.get_text("\t", "\n"))
