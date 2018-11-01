@@ -61,25 +61,26 @@ class RTR(SmartPlugin):
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-        """
 
+        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions 1.4 and up: **Don't use it**!
+        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
+        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
+        """
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
         self.logger.debug("rtr: init method called")
 
+        sh = self.get_sh()
+        self.path = sh.base_dir + '/var/rtr/'
+        self._items = Items.get_instance()
+
         # preset the controller defaults
         self._cycle_time = 1*60
-
         self._defaults['Tlast'] = time.time()
         self._defaults['Kp'] = self.get_parameter_value('default_Kp')
         self._defaults['Ki'] = self.get_parameter_value('default_Ki')
-
-        sh = self.get_sh()
-        self.path = sh.base_dir + '/var/rtr/'
-
-        self._items = Items.get_instance()
 
         return
 
@@ -193,28 +194,51 @@ class RTR(SmartPlugin):
             return
 
         if self.has_iattr(item.conf, 'rtr_stop'):
-            if not item.conf['rtr_stop'].isdigit():
-                self.logger.error("rtr: error in item {0}, rtr_stop need to be the controller number" . format(item.id()))
-                return
-
             # validate this optional Item
-            if item._type is not 'bool':
-                self.logger.error("rtr: error in item {0}, rtr_stop Item need to be bool" . format(item.id()))
+            if item._type != 'bool':
+                logger.error("rtr: error in {0}, rtr_stops Item need to be bool (current {1})" . format(item.id(), item._type))
                 return
 
-            c = 'c' + item.conf['rtr_stop']
+            logger.debug("rtr: parse item {0}, found rtr_stops={1}" . format(item.id(), item.conf['rtr_stops']))
 
-            # init controller with defaults when it not exist
-            if c not in self._controller:
-                self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values" . format(c))
-                self._controller[c] = self._defaults.copy()
+            cList = item.conf['rtr_stops']
+            if isinstance(cList, str):
+                cList = [cList, ]
 
-            # store stopItems into controller
-            if self._controller[c]['stopItems'] is None:
-                self._controller[c]['stopItems'] = []
-            self._controller[c]['stopItems'].append(item)
-            self.logger.info("rtr: add item '{1}' to stopItems for controller '{0}'". format(c, item.id()))
+            for cNum in cList:
+
+                # validate controller number
+                if not cNum.isdigit():
+                    logger.error("rtr: error in {0}, rtr_stops need to be the controller number(s) - skip {1}" . format(item.id(), cNum))
+                    continue
+
+                c = 'c' + cNum
+
+                # init controller with defaults when it not exist
+                if c not in self._controller:
+                    self._controller[c] = self._defaults.copy()
+                    logger.debug("rtr: create controller {0} for {1}" . format(c, item.id()))
+
+                # store stopItems into controller
+                if self._controller[c]['stopItems'] is None:
+                    self._controller[c]['stopItems'] = []
+                self._controller[c]['stopItems'].append(item)
+
+                # listen to item events
+                item.add_method_trigger(self.stop_Controller)
+
+                logger.debug("rtr: parse item {0}, controller {1} stop items: {2} " . format(item.id(), c, self._controller[c]['stopItems']))
+
             return
+
+    def stop_Controller(self, item, caller=None, source=None, dest=None):
+        for c in self._controller.keys():
+            if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
+                for item in self._controller[c]['stopItems']:
+                    if item():
+                       if self._controller[c]['actuatorItem']() > 0:
+                           logger.info("rtr: controller {0} stopped, because of item {1}" . format(c, item.id()))
+                       self._controller[c]['actuatorItem'](0)
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -231,22 +255,12 @@ class RTR(SmartPlugin):
             if 'rtr_setpoint' in item.conf or 'rtr_current' in item.conf:
                 c = 'c' + item.conf['rtr_setpoint']
                 if self._controller[c]['validated']:
-                    if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
-                        for item in self._controller[c]['stopItems']:
-                            if item():
-                                return
-
                     self.pi_controller(c)
 
     def update_items(self):
         """ this is the callback function for the scheduler """
         for c in self._controller.keys():
             if self._controller[c]['validated']:
-                if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
-                    for item in self._controller[c]['stopItems']:
-                        if item():
-                            return
-
                 self.pi_controller(c)
 
     def validate_controller(self, c):
@@ -289,6 +303,15 @@ class RTR(SmartPlugin):
 
         :param c: controller for the calculation
         """
+
+        # check if controller is currently deactivated
+        if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
+            for item in self._controller[c]['stopItems']:
+                if item():
+                   if self._controller[c]['actuatorItem']() > 0:
+                       logger.info("rtr: controller {0} currently deactivated, because of item {1}" . format(c, item.id()))
+                   self._controller[c]['actuatorItem'](0)
+                   return
 
         # calculate scanning time
         Ta = int(time.time()) - self._controller[c]['Tlast']

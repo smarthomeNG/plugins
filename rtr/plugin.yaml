@@ -67,8 +67,8 @@ item_attributes:
         description:
             de: 'Ordnet das Item dem Controller mit gegebener ID als Stellgröße zu'
             en: 'Defines the Item as actuator value for the given controller ID'
-    rtr_stop:
-        type: int
+    rtr_stops:
+        type: list(int)
         description:
-            de: 'Ordnet das Item dem Controller mit gegebener ID als Stop-Objekt zu. Kann nur auf einem Item vom Typ Bool gesetzt werden. Ist der Item Wert True, Pausiert die Regelung.'
-            en: 'Defines the Item as stop item for the given controller ID. Only valid on Item-Type Bool. If Item is True, the controller gets paused'
+            de: 'Ordnet das Item dem einen oder mehreren Controllern per ID als Stop-Objekt zu. Kann nur auf einem Item vom Typ Bool gesetzt werden. Ist der Item Wert True, Pausiert die Regelung.'
+            en: 'Defines the Item as stop item for the given controller IDs. Only valid on Item-Type Bool. If Item is True, the controller gets paused'
