@@ -12,9 +12,20 @@ plugin_translations:
     'Nuki Action Items':  {'de': '=', 'en': '='}
     'Nuki Battery Items':  {'de': '=', 'en': '='}
     'Nuki Event Items':  {'de': '=', 'en': '='}
-    'unlock':  {'de': 'aufgesperrt', 'en': '='}
-    'lock':  {'de': 'abgeschlossen', 'en': '='}
-    'unlatch':  {'de': 'entriegelt', 'en': '='}
+    'Possible Lock Actions':  {'de': 'Mögliche Aktionen des Schlosses', 'en': '='}
+    'unlock':  {'de': 'Aufsperren', 'en': '='}
+    'lock':  {'de': 'Abschließen', 'en': '='}
+    'unlatch':  {'de': 'Entriegeln', 'en': '='}
     'lockAndGo':  {'de': 'Lock And Go', 'en': 'Lock And Go'}
     'lockAndGoWithUnlatch':  {'de': 'Lock And Go mit Entriegeln', 'en': 'Lock And Go with unlatch'}
     'Possible Lock States':  {'de': 'Mögliche Zustände des Schlosses', 'en': '='}
+    'uncalibrated':  {'de': 'unkalibriert', 'en': '='}
+    'locked':  {'de': 'verschlossen', 'en': '='}
+    'unlocking':  {'de': 'aufschließend', 'en': '='}
+    'unlocked':  {'de': 'unverschlossen', 'en': '='}
+    'locking':  {'de': 'schließend', 'en': '='}
+    'unlatched':  {'de': 'aufgeklinkt', 'en': '='}
+    'unlatched (lock and go)':  {'de': 'aufgeklinkt (Lock And Go)', 'en': 'unlatched (Lock And Go)'}
+    'unlatching':  {'de': 'aufklinkend', 'en': '='}
+    'motor blocked':  {'de': 'Motor blockiert', 'en': '='}
+    'undefined':  {'de': 'undefiniert', 'en': '='}

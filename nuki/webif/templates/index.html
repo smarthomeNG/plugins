@@ -50,11 +50,16 @@
 						<td class="py-1">{{ value }}</td>
 						<td class="py-1">
 							{{ item() }}
-							{% if item() == 1 %}({{ _('unlock') }}){% endif %}
-							{% if item() == 2 %}({{ _('lock') }}){% endif %}
-							{% if item() == 3 %}({{ _('unlatch') }}){% endif %}
-							{% if item() == 4 %}({{ _('lockAndGo') }}){% endif %}
-							{% if item() == 5 %}({{ _('lockAndGoWithUnlatch') }}){% endif %}
+							{% if item() == 0 %}({{ _('uncalibrated') }}){% endif %}
+							{% if item() == 1 %}({{ _('locked') }}){% endif %}
+							{% if item() == 2 %}({{ _('unlocking') }}){% endif %}
+							{% if item() == 3 %}({{ _('unlocked') }}){% endif %}
+							{% if item() == 4 %}({{ _('locking') }}){% endif %}
+							{% if item() == 5 %}({{ _('unlatched') }}){% endif %}
+							{% if item() == 6 %}({{ _('unlatched (lock and go)') }}){% endif %}
+							{% if item() == 7 %}({{ _('unlatching') }}){% endif %}
+							{% if item() == 254 %}({{ _('motor blocked') }}){% endif %}
+							{% if item() == 255 %}({{ _('undefined') }}){% endif %}
 						</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -66,11 +71,16 @@
 		  <div class="card-body m-1 p-1">
 			<h5 class="card-title">{{ _('Possible Lock States') }}:</h5>
 			<p class="card-text">
-				1: {{ _('unlock') }}&nbsp;&nbsp;-&nbsp;&nbsp;
-				2: {{ _('lock') }}&nbsp;&nbsp;-&nbsp;&nbsp;
-				3: {{ _('unlatch') }}&nbsp;&nbsp;-&nbsp;&nbsp;
-				4: {{ _('lockAndGo') }}&nbsp;&nbsp;-&nbsp;&nbsp;
-				5: {{ _('lockAndGoWithUnlatch') }}
+				0: {{ _('uncalibrated') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				1: {{ _('locked') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				2: {{ _('unlocking') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				3: {{ _('unlocked') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				4: {{ _('locking') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				5: {{ _('unlatched') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				6: {{ _('unlatched (lock and go)') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				7: {{ _('unlatching') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				254: {{ _('motor blocked') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				255: {{ _('undefined') }}
 			</p>
 		  </div>
 		</div><br/>
@@ -93,13 +103,32 @@
 						<td class="py-1">{{ item.id() }}</td>
 						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ value }}</td>
-						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">
+							{{ item() }}
+							{% if item() == 1 %}({{ _('unlock') }}){% endif %}
+							{% if item() == 2 %}({{ _('lock') }}){% endif %}
+							{% if item() == 3 %}({{ _('unlatch') }}){% endif %}
+							{% if item() == 4 %}({{ _('lockAndGo') }}){% endif %}
+							{% if item() == 5 %}({{ _('lockAndGoWithUnlatch') }}){% endif %}
+						</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
 		</table>
+		<div class="card m-0 p-0" style="width: 100%;">
+		  <div class="card-body m-1 p-1">
+			<h5 class="card-title">{{ _('Possible Lock Actions') }}:</h5>
+			<p class="card-text">
+				1: {{ _('unlock') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				2: {{ _('lock') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				3: {{ _('unlatch') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				4: {{ _('lockAndGo') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				5: {{ _('lockAndGoWithUnlatch') }}
+			</p>
+		  </div>
+		</div><br/>
 		<h5>{{ _('Nuki Battery Items') }} ({{ p.get_battery_items()|length }})</h5>
 
 		<table class="table table-striped table-hover pluginList">
