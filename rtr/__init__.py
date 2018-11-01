@@ -58,11 +58,9 @@ class RTR(SmartPlugin):
                 'tempBoost' : 0,
                 'validated' : False}
 
-    def __init__(self, sh, default_Kp = 10, default_Ki = 15):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param sh:  The instance of the smarthome object, save it for later references
         """
 
         from bin.smarthome import VERSION
@@ -72,14 +70,15 @@ class RTR(SmartPlugin):
         self.logger.debug("rtr: init method called")
 
         # preset the controller defaults
-        self._default_Kp = default_Kp
-        self._default_Ki = default_Ki
+        self._default_Kp = self.get_parameter_value('default_Kp')
+        self._default_Ki = self.get_parameter_value('default_Ki')
         self._cycle_time = 1*60
 
         self._defaults['Tlast'] = time.time()
-        self._defaults['Kp'] = default_Kp
-        self._defaults['Ki'] = default_Ki
+        self._defaults['Kp'] = self.get_parameter_value('default_Kp')
+        self._defaults['Ki'] = self.get_parameter_value('default_Ki')
 
+        sh = self.get_sh()
         self.path = sh.base_dir + '/var/rtr/'
 
         self._items = Items.get_instance()
@@ -93,9 +92,13 @@ class RTR(SmartPlugin):
         self.logger.debug("run method called")
         self.alive = True
         self.scheduler_add('cycle', self.update_items, prio=5, cycle=int(self._cycle_time))
-        # if you want to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
-        self._restoreTrigger()
+
+        try:
+            self._restoreTrigger()
+        except Exception as e:
+            self.logger.error("Error in 'self._restoreTrigger()': {}".format(e))
+
+        return
 
     def stop(self):
         """
@@ -107,7 +110,6 @@ class RTR(SmartPlugin):
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
-
         :param item: The item to process.
         """
         if self.has_iattr(item.conf, 'rtr_current'):
@@ -331,7 +333,9 @@ class RTR(SmartPlugin):
         self._items.return_item(self._controller[c]['actuatorItem'])(y)
 
     def _restoreTrigger(self):
-
+        """
+        scans folder for saved triggers to restore them at startup
+        """
         self.logger.info("check if we need to restore triggers")
 
         if os.path.isdir(self.path):
@@ -360,7 +364,12 @@ class RTR(SmartPlugin):
                 self._createTrigger(filename, c, datetime.datetime.fromtimestamp(ts))
 
     def _createTrigger(self, name, c, timer):
-
+        """
+        this function changes setpoint to defined default temperature
+        :param name: name of the trigger
+        :param c: controller to be used
+        :param timer: datetime value for the trigger
+        """
         self.logger.debug("_createTrigger called for name: '{}', controller: '{}', on '{}'" . format(name, c, timer))
 
         self.scheduler_trigger(name, self.default, by='rtr', value={'c': c}, dt=timer)
@@ -381,7 +390,7 @@ class RTR(SmartPlugin):
 
     def default(self, c):
         """
-        this function changes setpoint to defined default temperature
+        this function changes setpoint of the given controller to defined default temperature
         :param c: controller to be used
         """
         if c in self._controller:
@@ -402,19 +411,20 @@ class RTR(SmartPlugin):
 
     def boost(self, c):
         """
-        this function changes setpoint to defined boost temperature
+        this function changes setpoint of the given controller to defined boost temperature
         :param c: controller to be used
         """
         if c in self._controller:
             if self._controller[c]['tempBoost'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempBoost'])
                 shtime = Shtime.get_instance()
-                self._createTrigger('boost_' + c, c, shtime.now() + datetime.timedelta(minutes=5))
+                self._createTrigger('boost_' + c, c, shtime.now() + datetime.timedelta(minutes=1))
         else:
             self.logger.error("boost unknown controller '{}'" . format(self._controller.keys()))
 
     def drop(self, c):
-        """ this function changes setpoint to defined drop temperature
+        """
+        this function changes setpoint of the given controller to defined drop temperature
         :param c: controller to be used
         """
         if c in self._controller:
