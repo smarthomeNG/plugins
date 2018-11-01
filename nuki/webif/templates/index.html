@@ -48,7 +48,14 @@
 						<td class="py-1">{{ item.id() }}</td>
 						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ value }}</td>
-						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">
+							{{ item() }}
+							{% if item() == 1 %}({{ _('unlock') }}){% endif %}
+							{% if item() == 2 %}({{ _('lock') }}){% endif %}
+							{% if item() == 3 %}({{ _('unlatch') }}){% endif %}
+							{% if item() == 4 %}({{ _('lockAndGo') }}){% endif %}
+							{% if item() == 5 %}({{ _('lockAndGoWithUnlatch') }}){% endif %}
+						</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>

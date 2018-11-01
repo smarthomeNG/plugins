@@ -12,3 +12,8 @@ plugin_translations:
     'Nuki Action Items':  {'de': '=', 'en': '='}
     'Nuki Battery Items':  {'de': '=', 'en': '='}
     'Nuki Event Items':  {'de': '=', 'en': '='}
+    'unlock':  {'de': 'aufgesperrt', 'en': '='}
+    'lock':  {'de': 'abgeschlossen', 'en': '='}
+    'unlatch':  {'de': 'entriegelt', 'en': '='}
+    'lockAndGo':  {'de': 'Lock And Go', 'en': 'Lock And Go'}
+    'lockAndGoWithUnlatch':  {'de': 'Lock And Go mit Entriegeln', 'en': 'Lock And Go with unlatch'}
