@@ -241,21 +241,22 @@ class Nuki(SmartPlugin):
         # Setting up the callback URL
         if self._callback_ip != "":
             callbacks = self._api_call(self._base_url, endpoint='callback/list', token=self._token)
-            for c in callbacks['callbacks']:
-                if c['url'] == self._callback_url:
-                    found = True
-            if not found:
-                response = self._api_call(self._base_url, endpoint='callback/add', token=self._token,
-                                          callback_url=self._callback_url)
-                if not response['success']:
-                    self.logger.warning("Plugin '{pluginname}': Error establishing the callback url: {message}".format
-                                        (pluginname=self.get_shortname(), message=response['message']))
+            if callbacks is not None:
+                for c in callbacks['callbacks']:
+                    if c['url'] == self._callback_url:
+                        found = True
+                if not found:
+                    response = self._api_call(self._base_url, endpoint='callback/add', token=self._token,
+                                              callback_url=self._callback_url)
+                    if not response['success']:
+                        self.logger.warning("Plugin '{pluginname}': Error establishing the callback url: {message}".format
+                                            (pluginname=self.get_shortname(), message=response['message']))
+                    else:
+                        self.logger.info("Plugin '{}': Callback URL registered.".format
+                                         (self.get_shortname()))
                 else:
-                    self.logger.info("Plugin '{}': Callback URL registered.".format
+                    self.logger.info("Plugin '{}': Callback URL already registered".format
                                      (self.get_shortname()))
-            else:
-                self.logger.info("Plugin '{}': Callback URL already registered".format
-                                 (self.get_shortname()))
         else:
             self.logger.warning(
                 "Plugin '{}': No callback ip set. Automatic Nuki lock status updates not available.".format
