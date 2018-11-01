@@ -25,7 +25,10 @@ import json
 import requests
 import lib.connection
 import re
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
 from lib.model.smartplugin import *
+from lib.item import Items
 from bin.smarthome import VERSION
 
 nuki_action_items = {}
@@ -37,9 +40,11 @@ paired_nukis = []
 class NukiTCPDispatcher(lib.connection.Server):
     def __init__(self, plugin):
         self.plugin = plugin
-        lib.connection.Server.__init__(self, self.plugin.get_callback_ip(), self.plugin.get_callback_port(), proto='TCP')
+        lib.connection.Server.__init__(self, self.plugin.get_callback_ip(), self.plugin.get_callback_port(),
+                                       proto='TCP')
         self.dest = 'tcp:' + self.plugin.get_callback_ip() + ':{port}'.format(port=self.plugin.get_callback_port())
-        self.plugin.logger.debug("Plugin '{pluginname}' - NukiTCPDispatcher: starting tcp listener with {url}".format(pluginname=self.plugin.get_shortname(), url=self.dest))
+        self.plugin.logger.debug("Plugin '{pluginname}' - NukiTCPDispatcher: starting tcp listener with {url}".format(
+            pluginname=self.plugin.get_shortname(), url=self.dest))
         self.connect()
 
     def handle_connection(self):
@@ -47,24 +52,29 @@ class NukiTCPDispatcher(lib.connection.Server):
             conn, address = self.socket.accept()
             data = conn.recv(1024)
             address = "{}:{}".format(address[0], address[1])
-            self.plugin.logger.info("Plugin '{}' - NukiTCPDispatcher: {}: incoming connection from {}".format(self.plugin.get_shortname(), 'test', address))
+            self.plugin.logger.info(
+                "Plugin '{}' - NukiTCPDispatcher: {}: incoming connection from {}".format(self.plugin.get_shortname(),
+                                                                                          'test', address))
         except Exception as err:
             self.logger.error("Plugin '{pluginname}':: {}: {}".format(self.plugin.get_shortname(), self._name, err))
             return
 
         try:
             result = re.search('\{.*\}', data.decode('utf-8'))
-            self.plugin.logger.debug("Plugin '{}' - NukiTCPDispatcher: Getting JSON String".format(self.plugin.get_shortname()))
+            self.plugin.logger.debug(
+                "Plugin '{}' - NukiTCPDispatcher: Getting JSON String".format(self.plugin.get_shortname()))
             nuki_bridge_response = json.loads(result.group(0))
             nuki_id = nuki_bridge_response['nukiId']
             state_name = nuki_bridge_response['stateName']
-            self.plugin.logger.debug("Plugin '{pluginname}' - NukiTCPDispatcher: Status Smartlock: ID: {nuki_id} Status: {state_name}".
-                               format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
+            self.plugin.logger.debug(
+                "Plugin '{pluginname}' - NukiTCPDispatcher: Status Smartlock: ID: {nuki_id} Status: {state_name}".
+                format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
             conn.send(b"HTTP/1.1 200 OK\nContent-Type: text/html\n\n")
 
             Nuki.update_lock_state(nuki_id, nuki_bridge_response)
         except Exception as err:
-            self.plugin.logger.error("Plugin '{}' - NukiTCPDispatcher: Error parsing nuki response!\nError: {}".format(self.plugin.get_shortname(), err))
+            self.plugin.logger.error("Plugin '{}' - NukiTCPDispatcher: Error parsing nuki response!\nError: {}".format(
+                self.plugin.get_shortname(), err))
 
 
 class Nuki(SmartPlugin):
@@ -88,17 +98,23 @@ class Nuki(SmartPlugin):
         self._callback_port = self.get_parameter_value('bridge_callback_port')
         self._action = ''
         self._noWait = self.get_parameter_value('no_wait')
+        self.items = Items.get_instance()
 
         if self._callback_ip is None or self._callback_ip in ['0.0.0.0', '']:
             self._callback_ip = self.get_local_ipv4_address()
 
             if not self._callback_ip:
-                self.logger.critical("Plugin '{}': Could not fetch internal ip address. Set it manually!".format(self.get_shortname()))
+                self.logger.critical(
+                    "Plugin '{}': Could not fetch internal ip address. Set it manually!".format(self.get_shortname()))
                 self.alive = False
                 return
-            self.logger.info("Plugin '{pluginname}': using local ip address {ip}".format(pluginname=self.get_shortname(), ip=self._callback_ip))
+            self.logger.info(
+                "Plugin '{pluginname}': using local ip address {ip}".format(pluginname=self.get_shortname(),
+                                                                            ip=self._callback_ip))
         else:
-            self.logger.info("Plugin '{pluginname}': using given ip address {ip}".format(pluginname=self.get_shortname(), ip=self._callback_ip))
+            self.logger.info(
+                "Plugin '{pluginname}': using given ip address {ip}".format(pluginname=self.get_shortname(),
+                                                                            ip=self._callback_ip))
 
         self._callback_url = "http://{ip}:{port}/".format(ip=self._callback_ip, port=self._callback_port)
 
@@ -138,7 +154,8 @@ class Nuki(SmartPlugin):
                 nuki_trigger = self.get_iattr_value(item.conf, "nuki_trigger")
                 if nuki_trigger.lower() not in ['state', 'action', 'battery']:
                     self.logger.warning("Plugin '{pluginname}': Item {item} defines an invalid Nuki trigger {trigger}! "
-                                         "It has to be 'state' or 'action'.".format(pluginname=self.get_shortname(), item=item, trigger=nuki_trigger))
+                                        "It has to be 'state' or 'action'.".format(pluginname=self.get_shortname(),
+                                                                                   item=item, trigger=nuki_trigger))
                     return
                 if nuki_trigger.lower() == 'state':
                     nuki_event_items[item] = int(nuki_id)
@@ -148,7 +165,7 @@ class Nuki(SmartPlugin):
                     nuki_battery_items[item] = int(nuki_id)
             else:
                 self.logger.warning("Plugin '{pluginname}': Item {item} defines a Nuki ID but no nuki trigger! "
-                                     "This item has no effect.".format(pluginname=self.get_shortname(), item=item))
+                                    "This item has no effect.".format(pluginname=self.get_shortname(), item=item))
                 return
             return self.update_item
 
@@ -160,7 +177,9 @@ class Nuki(SmartPlugin):
             if item in nuki_action_items:
                 action = item()
                 if action not in self._lockActions:
-                    self.logger.warning("Plugin '{pluginname}': action {action} not in list of possible actions.".format(pluginname=self.get_shortname(), action=action))
+                    self.logger.warning(
+                        "Plugin '{pluginname}': action {action} not in list of possible actions.".format(
+                            pluginname=self.get_shortname(), action=action))
                     return
 
                 response = self._api_call(self._base_url, nuki_id=nuki_action_items[item], endpoint='lockAction',
@@ -199,7 +218,9 @@ class Nuki(SmartPlugin):
         for nuki in response:
             paired_nukis.append(nuki['nukiId'])
             self.logger.info(
-                "Plugin '{pluginname}': Paired Nuki Lock found: {name} - {id}".format(pluginname=self.get_shortname(), name=nuki['name'], id=nuki['nukiId']))
+                "Plugin '{pluginname}': Paired Nuki Lock found: {name} - {id}".format(pluginname=self.get_shortname(),
+                                                                                      name=nuki['name'],
+                                                                                      id=nuki['nukiId']))
             self.logger.debug(paired_nukis)
 
     def _clear_callbacks(self):
@@ -208,10 +229,12 @@ class Nuki(SmartPlugin):
             for c in callbacks['callbacks']:
                 response = self._api_call(self._base_url, endpoint='callback/remove', token=self._token, id=c['id'])
                 if response['success']:
-                    self.logger.debug("Plugin '{pluginname}': Callback with id {id} removed.".format(pluginname=self.get_shortname(), id=c['id']))
+                    self.logger.debug(
+                        "Plugin '{pluginname}': Callback with id {id} removed.".format(pluginname=self.get_shortname(),
+                                                                                       id=c['id']))
                     return
                 self.logger.debug("Plugin '{pluginname}': Could not remove callback with id {id}: {message}".
-                                   format(pluginname=self.get_shortname(), id=c['id'], message=c['message']))
+                                  format(pluginname=self.get_shortname(), id=c['id'], message=c['message']))
 
     def _register_callback(self):
         found = False
@@ -226,20 +249,21 @@ class Nuki(SmartPlugin):
                                           callback_url=self._callback_url)
                 if not response['success']:
                     self.logger.warning("Plugin '{pluginname}': Error establishing the callback url: {message}".format
-                                         (pluginname=self.get_shortname(), message=response['message']))
+                                        (pluginname=self.get_shortname(), message=response['message']))
                 else:
                     self.logger.info("Plugin '{}': Callback URL registered.".format
-                                         (self.get_shortname()))
+                                     (self.get_shortname()))
             else:
                 self.logger.info("Plugin '{}': Callback URL already registered".format
-                                         (self.get_shortname()))
+                                 (self.get_shortname()))
         else:
-            self.logger.warning("Plugin '{}': No callback ip set. Automatic Nuki lock status updates not available.".format
-                                         (self.get_shortname()))
+            self.logger.warning(
+                "Plugin '{}': No callback ip set. Automatic Nuki lock status updates not available.".format
+                (self.get_shortname()))
 
     def _get_nuki_status(self):
         self.logger.info("Plugin '{}': Getting Nuki status ...".format
-                                         (self.get_shortname()))
+                         (self.get_shortname()))
         for nuki_id in paired_nukis:
             response = self._api_call(self._base_url, endpoint='lockState', nuki_id=nuki_id, token=self._token,
                                       no_wait=self._noWait)
@@ -323,12 +347,10 @@ class Nuki(SmartPlugin):
 
         return True
 
+
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
 
 class WebInterface(SmartPluginWebIf):
 
@@ -358,6 +380,20 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           interface=None, item_count=len(self.plugin.get_event_items())+len(self.plugin.get_action_items())+len(self.plugin.get_battery_items()),
+                           interface=None,
+                           item_count=len(self.plugin.get_event_items()) + len(self.plugin.get_action_items()) + len(
+                               self.plugin.get_battery_items()),
                            plugin_info=self.plugin.get_info(), tabcount=1,
                            p=self.plugin)
+
+    @cherrypy.expose
+    def triggerAction(self, path, value):
+        if path is None:
+            self.plugin.logger.error("Plugin '{}': Path parameter is missing when setting action item value!".format(self.get_shortname()))
+            return
+        if value is None:
+            self.plugin.logger.error("Plugin '{}': Value parameter is missing when setting action item value!".format(self.get_shortname()))
+            return
+        item = self.plugin.items.return_item(path)
+        item(int(value), caller=self.plugin.get_shortname(), source='triggerAction()')
+        return

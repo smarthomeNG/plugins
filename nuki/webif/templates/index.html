@@ -105,13 +105,20 @@
 						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ item._enforce_updates }}</td>
 						<td class="py-1">{{ value }}</td>
-						<td class="py-1">
-							{{ item() }}
-							{% if item() == 1 %}({{ _('unlock') }}){% endif %}
-							{% if item() == 2 %}({{ _('lock') }}){% endif %}
-							{% if item() == 3 %}({{ _('unlatch') }}){% endif %}
-							{% if item() == 4 %}({{ _('lockAndGo') }}){% endif %}
-							{% if item() == 5 %}({{ _('lockAndGoWithUnlatch') }}){% endif %}
+						<td class="py-1" style="width: 300px;">
+								<form onChange="$.get( 'triggerAction?path={{ item.path() }}&value='+$('#nuki_actions_{{ value }}').val(), function( data ) { alert( 'Action triggered.' ); });">
+									<div class="input-group-sm">
+										<input type="hidden" value="{{ value }}" id="nuki_id_{{ value }}" name="nuki_id_{{ value }}"/>
+										<select class="form-control" id="nuki_actions_{{ value }}" name="nuki_actions_{{ value }}">
+											<option value="0" {% if item() == 1 %}selected{% endif %}>0 (-)</option>
+											<option value="1" {% if item() == 1 %}selected{% endif %}>1 ({{ _('unlock') }})</option>
+											<option value="2" {% if item() == 2 %}selected{% endif %}>2 ({{ _('lock') }})</option>
+											<option value="3" {% if item() == 3 %}selected{% endif %}>3 ({{ _('unlatch') }})</option>
+											<option value="4" {% if item() == 4 %}selected{% endif %}>4 ({{ _('lockAndGo') }})</option>
+											<option value="5" {% if item() == 5 %}selected{% endif %}>5 ({{ _('lockAndGoWithUnlatch') }})</option>
+										</select>
+									</div>
+								</form>
 						</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
