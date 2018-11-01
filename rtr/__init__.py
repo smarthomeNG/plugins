@@ -194,12 +194,16 @@ class RTR(SmartPlugin):
             return
 
         if self.has_iattr(item.conf, 'rtr_stop'):
+            self.logger.error("rtr: parse item {0}, found rtr_stop which is not supported anymore - use rtr_stops instead" . format(item.id(), item.conf['rtr_stops']))
+            return
+
+        if self.has_iattr(item.conf, 'rtr_stops'):
             # validate this optional Item
-            if item._type != 'bool':
-                logger.error("rtr: error in {0}, rtr_stops Item need to be bool (current {1})" . format(item.id(), item._type))
+            if item._type is not 'bool':
+                self.logger.error("rtr: error in item {0}, rtr_stops Item need to be bool (current {1})" . format(item.id(), item._type))
                 return
 
-            logger.debug("rtr: parse item {0}, found rtr_stops={1}" . format(item.id(), item.conf['rtr_stops']))
+            self.logger.debug("rtr: parse item {0}, found rtr_stops={1}" . format(item.id(), item.conf['rtr_stops']))
 
             cList = item.conf['rtr_stops']
             if isinstance(cList, str):
@@ -227,7 +231,7 @@ class RTR(SmartPlugin):
                 # listen to item events
                 item.add_method_trigger(self.stop_Controller)
 
-                logger.debug("rtr: parse item {0}, controller {1} stop items: {2} " . format(item.id(), c, self._controller[c]['stopItems']))
+                self.logger.debug("rtr: parse item {0}, controller {1} stop items: {2} " . format(item.id(), c, self._controller[c]['stopItems']))
 
             return
 
