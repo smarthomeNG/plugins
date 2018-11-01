@@ -27,10 +27,11 @@
 # http://de.wikipedia.org/wiki/Regler#PI-Regler
 # http://www.honeywell.de/fp/regler/Reglerparametrierung.pdf
 
-import logging
-from lib.model.smartplugin import SmartPlugin
 import time
 
+from lib.module import Modules
+from lib.item import Items
+from lib.model.smartplugin import *
 
 class RTR(SmartPlugin):
     """
@@ -58,11 +59,12 @@ class RTR(SmartPlugin):
 
         :param sh:  The instance of the smarthome object, save it for later references
         """
-        self._sh = sh
-        # get a unique logger for the plugin and provide it internally
-        self.logger = logging.getLogger(__name__)
 
-        self.logger.debug("init method called")
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        self.logger.debug("rtr: init method called")
 
         # preset the controller defaults
         self._default_Kp = default_Kp
@@ -73,7 +75,9 @@ class RTR(SmartPlugin):
         self._defaults['Kp'] = default_Kp
         self._defaults['Ki'] = default_Ki
 
-        self._sh.scheduler.add('rtr.scheduler', self.update_items, prio=5, cycle=int(self._cycle_time))
+        self._items = Items.get_instance()
+
+        return
 
     def run(self):
         """
@@ -81,6 +85,7 @@ class RTR(SmartPlugin):
         """
         self.logger.debug("run method called")
         self.alive = True
+        self.scheduler_add('cycle', self.update_items, prio=5, cycle=int(self._cycle_time))
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
@@ -271,21 +276,21 @@ class RTR(SmartPlugin):
 
         # calculate scanning time
         Ta = int(time.time()) - self._controller[c]['Tlast']
-        self.logger.debug("rtr: {0} | Ta = Time() - Tlast | {1} = {2} - {3}" . format(c, Ta, (Ta + self._controller[c]['Tlast']), self._controller[c]['Tlast']))
+        self.logger.debug("{0} | Ta = Time() - Tlast | {1} = {2} - {3}" . format(c, Ta, (Ta + self._controller[c]['Tlast']), self._controller[c]['Tlast']))
         self._controller[c]['Tlast'] = int(time.time())
 
         # get current and set point temp
-        w = self._sh.return_item(self._controller[c]['setpointItem'])()
-        x = self._sh.return_item(self._controller[c]['currentItem'])()
+        w = self._items.return_item(self._controller[c]['setpointItem'])()
+        x = self._items.return_item(self._controller[c]['currentItem'])()
 
         # skip execution if x is 0
         if x == 0.00:
-            self.logger.debug("rtr: {0} | skip uninitiated x value (currently zero)" . format(c))
+            self.logger.debug("{0} | skip uninitiated x value (currently zero)" . format(c))
             return
 
         # calculate control error
         e = w - x
-        self.logger.debug("rtr: {0} | e = w - x | {1} = {2} - {3}" . format(c, e, w, x))
+        self.logger.debug("{0} | e = w - x | {1} = {2} - {3}" . format(c, e, w, x))
 
         Kp = 1.0 / self._controller[c]['Kp']
         self._controller[c]['eSum'] = self._controller[c]['eSum'] + e * Ta
@@ -302,7 +307,7 @@ class RTR(SmartPlugin):
                 y = 0
             self._controller[c]['eSum'] = 0
 
-        self.logger.debug("rtr: {0} | eSum = {1}" . format(c, self._controller[c]['eSum']))
-        self.logger.debug("rtr: {0} | y = {1}" . format(c, y))
+        self.logger.debug("{0} | eSum = {1}" . format(c, self._controller[c]['eSum']))
+        self.logger.debug("{0} | y = {1}" . format(c, y))
 
-        self._sh.return_item(self._controller[c]['actuatorItem'])(y)
+        self._items.return_item(self._controller[c]['actuatorItem'])(y)
