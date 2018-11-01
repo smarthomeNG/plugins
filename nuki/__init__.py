@@ -26,6 +26,7 @@ import requests
 import lib.connection
 import re
 from lib.model.smartplugin import *
+from bin.smarthome import VERSION
 
 nuki_action_items = {}
 nuki_event_items = {}
@@ -34,11 +35,11 @@ paired_nukis = []
 
 
 class NukiTCPDispatcher(lib.connection.Server):
-    def __init__(self, ip, port):
-        self._logger = logging.getLogger(__name__)
-        lib.connection.Server.__init__(self, ip, port, proto='TCP')
-        self.dest = 'tcp:' + ip + ':{port}'.format(port=port)
-        self._logger.debug('Nuki: starting tcp listener with {url}'.format(url=self.dest))
+    def __init__(self, plugin):
+        self.plugin = plugin
+        lib.connection.Server.__init__(self, self.plugin.get_callback_ip(), self.plugin.get_callback_port(), proto='TCP')
+        self.dest = 'tcp:' + self.plugin.get_callback_ip() + ':{port}'.format(port=self.plugin.get_callback_port())
+        self.plugin.logger.debug("Plugin '{pluginname}' - NukiTCPDispatcher: starting tcp listener with {url}".format(pluginname=self.plugin.get_shortname(), url=self.dest))
         self.connect()
 
     def handle_connection(self):
@@ -46,24 +47,24 @@ class NukiTCPDispatcher(lib.connection.Server):
             conn, address = self.socket.accept()
             data = conn.recv(1024)
             address = "{}:{}".format(address[0], address[1])
-            self._logger.info("Nuki: {}: incoming connection from {}".format('test', address))
+            self.plugin.logger.info("Plugin '{}' - NukiTCPDispatcher: {}: incoming connection from {}".format(self.plugin.get_shortname(), 'test', address))
         except Exception as err:
-            self._logger.error("Nuki:: {}: {}".format(self._name, err))
+            self.logger.error("Plugin '{pluginname}':: {}: {}".format(self.plugin.get_shortname(), self._name, err))
             return
 
         try:
             result = re.search('\{.*\}', data.decode('utf-8'))
-            self._logger.debug('Nuki: Getting JSON String')
+            self.plugin.logger.debug("Plugin '{}' - NukiTCPDispatcher: Getting JSON String".format(self.plugin.get_shortname()))
             nuki_bridge_response = json.loads(result.group(0))
             nuki_id = nuki_bridge_response['nukiId']
             state_name = nuki_bridge_response['stateName']
-            self._logger.debug("Nuki: Status Smartlock: ID: {nuki_id} Status: {state_name}".
-                               format(nuki_id=nuki_id, state_name=state_name))
+            self.plugin.logger.debug("Plugin '{pluginname}' - NukiTCPDispatcher: Status Smartlock: ID: {nuki_id} Status: {state_name}".
+                               format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
             conn.send(b"HTTP/1.1 200 OK\nContent-Type: text/html\n\n")
 
             Nuki.update_lock_state(nuki_id, nuki_bridge_response)
         except Exception as err:
-            self._logger.error("Nuki: Error parsing nuki response!\nError: {}".format(err))
+            self.plugin.logger.error("Plugin '{}' - NukiTCPDispatcher: Error parsing nuki response!\nError: {}".format(self.plugin.get_shortname(), err))
 
 
 class Nuki(SmartPlugin):
@@ -76,7 +77,10 @@ class Nuki(SmartPlugin):
         global nuki_event_items
         global nuki_action_items
         global nuki_battery_items
-        self._logger = logging.getLogger(__name__)
+
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
         self._base_url = self.get_parameter_value('protocol') + '://' + self.get_parameter_value(
             'bridge_ip') + ":" + str(self.get_parameter_value('bridge_port')) + '/'
         self._token = self.get_parameter_value('bridge_api_token')
@@ -89,16 +93,16 @@ class Nuki(SmartPlugin):
             self._callback_ip = self.get_local_ipv4_address()
 
             if not self._callback_ip:
-                self._logger.critical("Plugin '{}': Could not fetch internal ip address. Set it manually!".format(self.get_shortname()))
+                self.logger.critical("Plugin '{}': Could not fetch internal ip address. Set it manually!".format(self.get_shortname()))
                 self.alive = False
                 return
-            self._logger.info("Plugin '{pluginname}': using local ip address {ip}".format(pluginname=self.get_shortname(), ip=self._callback_ip))
+            self.logger.info("Plugin '{pluginname}': using local ip address {ip}".format(pluginname=self.get_shortname(), ip=self._callback_ip))
         else:
-            self._logger.info("Plugin '{pluginname}': using given ip address {ip}".format(pluginname=self.get_shortname(), ip=self._callback_ip))
+            self.logger.info("Plugin '{pluginname}': using given ip address {ip}".format(pluginname=self.get_shortname(), ip=self._callback_ip))
 
         self._callback_url = "http://{ip}:{port}/".format(ip=self._callback_ip, port=self._callback_port)
 
-        NukiTCPDispatcher(self._callback_ip, self._callback_port)
+        NukiTCPDispatcher(self)
 
         self._lockActions = [1,  # unlock
                              2,  # lock
@@ -127,13 +131,13 @@ class Nuki(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'nuki_id'):
-            self._logger.debug("Plugin '{0}': parse item: {1}".format(self.get_shortname(), item))
+            self.logger.debug("Plugin '{0}': parse item: {1}".format(self.get_shortname(), item))
             nuki_id = self.get_iattr_value(item.conf, 'nuki_id')
 
             if self.has_iattr(item.conf, 'nuki_trigger'):
                 nuki_trigger = self.get_iattr_value(item.conf, "nuki_trigger")
                 if nuki_trigger.lower() not in ['state', 'action', 'battery']:
-                    self._logger.warning("Plugin '{pluginname}': Item {item} defines an invalid Nuki trigger {trigger}! "
+                    self.logger.warning("Plugin '{pluginname}': Item {item} defines an invalid Nuki trigger {trigger}! "
                                          "It has to be 'state' or 'action'.".format(pluginname=self.get_shortname(), item=item, trigger=nuki_trigger))
                     return
                 if nuki_trigger.lower() == 'state':
@@ -143,7 +147,7 @@ class Nuki(SmartPlugin):
                 else:
                     nuki_battery_items[item] = int(nuki_id)
             else:
-                self._logger.warning("Plugin '{pluginname}': Item {item} defines a Nuki ID but no nuki trigger! "
+                self.logger.warning("Plugin '{pluginname}': Item {item} defines a Nuki ID but no nuki trigger! "
                                      "This item has no effect.".format(pluginname=self.get_shortname(), item=item))
                 return
             return self.update_item
@@ -156,7 +160,7 @@ class Nuki(SmartPlugin):
             if item in nuki_action_items:
                 action = item()
                 if action not in self._lockActions:
-                    self._logger.warning("Plugin '{pluginname}': action {action} not in list of possible actions.".format(pluginname=self.get_shortname(), action=action))
+                    self.logger.warning("Plugin '{pluginname}': action {action} not in list of possible actions.".format(pluginname=self.get_shortname(), action=action))
                     return
 
                 response = self._api_call(self._base_url, nuki_id=nuki_action_items[item], endpoint='lockAction',
@@ -164,9 +168,9 @@ class Nuki(SmartPlugin):
                 if response is not None:
                     if response['success']:
                         # self._get_nuki_status()
-                        self._logger.info("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.id()))
+                        self.logger.info("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.id()))
                 else:
-                    self._logger.error("Plugin '{}': no response.".format(self.get_shortname()))
+                    self.logger.error("Plugin '{}': no response.".format(self.get_shortname()))
 
     @staticmethod
     def update_lock_state(nuki_id, lock_state):
@@ -194,9 +198,9 @@ class Nuki(SmartPlugin):
             return
         for nuki in response:
             paired_nukis.append(nuki['nukiId'])
-            self._logger.info(
+            self.logger.info(
                 "Plugin '{pluginname}': Paired Nuki Lock found: {name} - {id}".format(pluginname=self.get_shortname(), name=nuki['name'], id=nuki['nukiId']))
-            self._logger.debug(paired_nukis)
+            self.logger.debug(paired_nukis)
 
     def _clear_callbacks(self):
         callbacks = self._api_call(self._base_url, endpoint='callback/list', token=self._token)
@@ -204,9 +208,9 @@ class Nuki(SmartPlugin):
             for c in callbacks['callbacks']:
                 response = self._api_call(self._base_url, endpoint='callback/remove', token=self._token, id=c['id'])
                 if response['success']:
-                    self._logger.debug("Plugin '{pluginname}': Callback with id {id} removed.".format(pluginname=self.get_shortname(), id=c['id']))
+                    self.logger.debug("Plugin '{pluginname}': Callback with id {id} removed.".format(pluginname=self.get_shortname(), id=c['id']))
                     return
-                self._logger.debug("Plugin '{pluginname}': Could not remove callback with id {id}: {message}".
+                self.logger.debug("Plugin '{pluginname}': Could not remove callback with id {id}: {message}".
                                    format(pluginname=self.get_shortname(), id=c['id'], message=c['message']))
 
     def _register_callback(self):
@@ -221,20 +225,20 @@ class Nuki(SmartPlugin):
                 response = self._api_call(self._base_url, endpoint='callback/add', token=self._token,
                                           callback_url=self._callback_url)
                 if not response['success']:
-                    self._logger.warning("Plugin '{pluginname}': Error establishing the callback url: {message}".format
+                    self.logger.warning("Plugin '{pluginname}': Error establishing the callback url: {message}".format
                                          (pluginname=self.get_shortname(), message=response['message']))
                 else:
-                    self._logger.info("Plugin '{}': Callback URL registered.".format
+                    self.logger.info("Plugin '{}': Callback URL registered.".format
                                          (self.get_shortname()))
             else:
-                self._logger.info("Plugin '{}': Callback URL already registered".format
+                self.logger.info("Plugin '{}': Callback URL already registered".format
                                          (self.get_shortname()))
         else:
-            self._logger.warning("Plugin '{}': No callback ip set. Automatic Nuki lock status updates not available.".format
+            self.logger.warning("Plugin '{}': No callback ip set. Automatic Nuki lock status updates not available.".format
                                          (self.get_shortname()))
 
     def _get_nuki_status(self):
-        self._logger.info("Plugin '{}': Getting Nuki status ...".format
+        self.logger.info("Plugin '{}': Getting Nuki status ...".format
                                          (self.get_shortname()))
         for nuki_id in paired_nukis:
             response = self._api_call(self._base_url, endpoint='lockState', nuki_id=nuki_id, token=self._token,
@@ -253,7 +257,7 @@ class Nuki(SmartPlugin):
                 payload['action'] = action
             if no_wait is not None:
                 payload['noWait'] = int(no_wait)
-                self._logger.debug("Plugin '{}': noWait is {}".format(self.get_shortname(), int(no_wait)))
+                self.logger.debug("Plugin '{}': noWait is {}".format(self.get_shortname(), int(no_wait)))
             if callback_url is not None:
                 payload['url'] = callback_url
             if id is not None:
@@ -263,7 +267,7 @@ class Nuki(SmartPlugin):
             response.raise_for_status()
             return json.loads(response.text)
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
 
     def get_event_items(self):
         return nuki_event_items
@@ -273,6 +277,15 @@ class Nuki(SmartPlugin):
 
     def get_action_items(self):
         return nuki_action_items
+
+    def get_callback_ip(self):
+        return self._callback_ip
+
+    def get_callback_port(self):
+        return self._callback_port
+
+    def get_callback_url(self):
+        return self._callback_url
 
     def init_webinterface(self):
         """"

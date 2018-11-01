@@ -29,3 +29,7 @@ plugin_translations:
     'unlatching':  {'de': 'aufklinkend', 'en': '='}
     'motor blocked':  {'de': 'Motor blockiert', 'en': '='}
     'undefined':  {'de': 'undefiniert', 'en': '='}
+    'Enforce Updates':  {'de': '=', 'en': '='}
+    'Possible Battery Values':  {'de': 'Mögliche Werte für die Batterie', 'en': '='}
+    'Batteries are good. No need to replace it.':  {'de': 'Die Batterien sind gut, sie müssen nicht getauscht werden.', 'en': '='}
+    'Batteries are low. Please replace as soon as possible!':  {'de': 'Die Batterieladung ist niedrig. Bitte so bald als möglich austauschen!', 'en': '='}

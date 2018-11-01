@@ -13,7 +13,7 @@
 			<td class="py-1"><strong>{{ _('Token') }}</strong></td>
 			<td class="py-1">{{ p._token }}</td>
 			<td class="py-1"><strong>{{ _('Callback URL (SHNG)') }}</strong></td>
-			<td class="py-1">{{ p._callback_ip }}:{{ p._callback_port }}</td>
+			<td class="py-1">{{ p.get_callback_url() }}</td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>{{ _('NoWait') }}</strong></td>
@@ -34,7 +34,7 @@
 		<table class="table table-striped table-hover pluginList">
 			<thead>
 				<tr class="shng_heading">
-					<th style="width: 500px;">{{ _('Pfad') }}</th>
+					<th>{{ _('Pfad') }}</th>
 					<th>{{ _('Typ') }}</th>
 					<th>{{ _('Nuki ID') }}</th>
 					<th>{{ _('Wert') }}</th>
@@ -89,8 +89,9 @@
 		<table class="table table-striped table-hover pluginList">
 			<thead>
 				<tr class="shng_heading">
-					<th style="width: 500px;">{{ _('Pfad') }}</th>
+					<th>{{ _('Pfad') }}</th>
 					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Enforce Updates') }}</th>
 					<th>{{ _('Nuki ID') }}</th>
 					<th>{{ _('Wert') }}</th>
 					<th>{{ _('Letztes Update') }}</th>
@@ -102,6 +103,7 @@
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item.id() }}</td>
 						<td class="py-1">{{ item.type() }}</td>
+						<td class="py-1">{{ item._enforce_updates }}</td>
 						<td class="py-1">{{ value }}</td>
 						<td class="py-1">
 							{{ item() }}
@@ -134,7 +136,7 @@
 		<table class="table table-striped table-hover pluginList">
 			<thead>
 				<tr class="shng_heading">
-					<th style="width: 500px;">{{ _('Pfad') }}</th>
+					<th>{{ _('Pfad') }}</th>
 					<th>{{ _('Typ') }}</th>
 					<th>{{ _('Nuki ID') }}</th>
 					<th>{{ _('Wert') }}</th>
@@ -148,13 +150,26 @@
 						<td class="py-1">{{ item.id() }}</td>
 						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ value }}</td>
-						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">
+							{{ item() }}
+							{% if item() == 0 %}({{ _('Batteries are good. No need to replace it.') }}){% endif %}
+							{% if item() == 1 %}({{ _('Batteries are low. Please replace as soon as possible!') }}){% endif %}
+						</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
 		</table>
+		<div class="card m-0 p-0" style="width: 100%;">
+		  <div class="card-body m-1 p-1">
+			<h5 class="card-title">{{ _('Possible Battery Values') }}:</h5>
+			<p class="card-text">
+				0: {{ _('Batteries are good. No need to replace it.') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				1: {{ _('Batteries are low. Please replace as soon as possible!') }}
+			</p>
+		  </div>
+		</div><br/>
 	</div>
 </div>
 
