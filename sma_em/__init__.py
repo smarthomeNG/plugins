@@ -60,8 +60,7 @@ class SMA_EM(SmartPlugin):
         mreq = struct.pack("4sl", socket.inet_aton(self.MCAST_GRP), socket.INADDR_ANY)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
-        if not self.init_webinterface():
-            self._init_complete = False
+        self.init_webinterface()
 
     def get_serial(self):
         return self._serial
