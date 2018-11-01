@@ -70,8 +70,6 @@ class RTR(SmartPlugin):
         self.logger.debug("rtr: init method called")
 
         # preset the controller defaults
-        self._default_Kp = self.get_parameter_value('default_Kp')
-        self._default_Ki = self.get_parameter_value('default_Ki')
         self._cycle_time = 1*60
 
         self._defaults['Tlast'] = time.time()
@@ -128,14 +126,12 @@ class RTR(SmartPlugin):
             self.logger.info("rtr: bound item '{1}' to currentItem for controller '{0}'". format(c, item.id()))
 
             if not self.has_iattr(item.conf, 'rtr_Kp'):
-                self.logger.info("rtr: missing rtr_Kp in item {0}, setting to default: {1}" . format(item.id(), self._default_Kp))
-                self._controller[c]['Kp'] = self._default_Kp
+                self.logger.info("rtr: missing rtr_Kp in item {0}, setting to default: {1}" . format(item.id(), self._controller[c]['Kp']))
             else:
                 self._controller[c]['Kp'] = float(item.conf['rtr_Kp'])
 
             if not self.has_iattr(item.conf, 'rtr_Ki'):
-                self.logger.info("rtr: missing rtr_Ki in item {0}, setting to default: {1}" . format(item.id(), self._default_Ki))
-                self._controller[c]['Ki'] = self._default_Ki
+                self.logger.info("rtr: missing rtr_Ki in item {0}, setting to default: {1}" . format(item.id(), self._controller[c]['Ki']))
             else:
                 self._controller[c]['Ki'] = float(item.conf['rtr_Ki'])
 
