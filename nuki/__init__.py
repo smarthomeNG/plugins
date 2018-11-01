@@ -67,7 +67,7 @@ class NukiTCPDispatcher(lib.connection.Server):
 
 
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.3"
+    PLUGIN_VERSION = "1.5.0.4"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):
