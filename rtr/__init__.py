@@ -28,9 +28,11 @@
 # http://www.honeywell.de/fp/regler/Reglerparametrierung.pdf
 
 import time
+import datetime
 
 from lib.module import Modules
 from lib.item import Items
+from lib.shtime import Shtime
 from lib.model.smartplugin import *
 
 class RTR(SmartPlugin):
@@ -51,6 +53,9 @@ class RTR(SmartPlugin):
                 'Kp' : 0,
                 'Ki' : 0,
                 'Tlast' : 0,
+                'tempDefault' : 0,
+                'tempDrop' : 0,
+                'tempBoost' : 0,
                 'validated' : False}
 
     def __init__(self, sh, default_Kp = 10, default_Ki = 15):
@@ -75,6 +80,8 @@ class RTR(SmartPlugin):
         self._defaults['Kp'] = default_Kp
         self._defaults['Ki'] = default_Ki
 
+        self.path = sh.base_dir + '/var/rtr/'
+
         self._items = Items.get_instance()
 
         return
@@ -88,6 +95,7 @@ class RTR(SmartPlugin):
         self.scheduler_add('cycle', self.update_items, prio=5, cycle=int(self._cycle_time))
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
+        self._restoreTrigger()
 
     def stop(self):
         """
@@ -150,6 +158,15 @@ class RTR(SmartPlugin):
             # store setpointItem into controller
             self._controller[c]['setpointItem'] = item.id()
             self.logger.info("rtr: bound item '{1}' to setpointItem for controller '{0}'". format(c, item.id()))
+
+            if self.has_iattr(item.conf, 'rtr_temp_default'):
+                self._controller[c]['tempDefault'] = int(item.conf['rtr_temp_default'])
+
+            if self.has_iattr(item.conf, 'rtr_temp_drop'):
+                self._controller[c]['tempDrop'] = int(item.conf['rtr_temp_drop'])
+
+            if self.has_iattr(item.conf, 'rtr_temp_boost'):
+                self._controller[c]['tempBoost'] = int(item.conf['rtr_temp_boost'])
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
@@ -235,7 +252,8 @@ class RTR(SmartPlugin):
                 self.pi_controller(c)
 
     def validate_controller(self, c):
-        """ this function checks wether the needed parameters are set for a given controller
+        """
+        this function checks wether the needed parameters are set for a given controller
         :param c: controller to be checked
         """
         if self._controller[c]['setpointItem'] is None:
@@ -311,3 +329,96 @@ class RTR(SmartPlugin):
         self.logger.debug("{0} | y = {1}" . format(c, y))
 
         self._items.return_item(self._controller[c]['actuatorItem'])(y)
+
+    def _restoreTrigger(self):
+
+        self.logger.info("check if we need to restore triggers")
+
+        if os.path.isdir(self.path):
+            for filename in os.listdir(self.path):
+                self.logger.info("need to restore '{}'" . format(filename))
+
+                try:
+                    self.logger.debug("read file {}".format(filename))
+                    f = open(self.path + filename, "r")
+                    ts = f.read()
+                    f.close()
+
+                except OSError as e:
+                    self.logger.error("_restoreTrigger: cannot read '{}', error: {}" . format(self.path + filename, e.args))
+                    continue
+
+                try:
+                    ts = int(ts)
+                    self.logger.debug("file content is {}" . format(ts))
+                except ValueError:
+                    self.logger.error("_restoreTrigger: file content '{}' is no timestamp" . format(ts))
+
+                name, c = filename.split('_')
+                self.logger.debug("controller is {}" . format(c))
+
+                self._createTrigger(filename, c, datetime.datetime.fromtimestamp(ts))
+
+    def _createTrigger(self, name, c, timer):
+
+        self.logger.debug("_createTrigger called for name: '{}', controller: '{}', on '{}'" . format(name, c, timer))
+
+        self.scheduler_trigger(name, self.default, by='rtr', value={'c': c}, dt=timer)
+
+        try:
+            if not os.path.isdir(self.path):
+                os.makedirs(self.path)
+        except OSError as e:
+            self.logger.error("_createTrigger: cannot create '{}', error: {}" . format(self.path, e.args))
+            return
+
+        try:
+            f = open(self.path + name, "w")
+            f.write(timer.strftime("%s"))
+            f.close()
+        except IOError as e:
+            self.logger.error("_createTrigger: I/O error({0}): {1}" . format(e.errno, e.strerror))
+
+    def default(self, c):
+        """
+        this function changes setpoint to defined default temperature
+        :param c: controller to be used
+        """
+        if c in self._controller:
+            if self._controller[c]['tempDefault'] > 0:
+                self._sh.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDefault'])
+
+            try:
+                if os.path.isfile(self.path + 'boost_' + c):
+                    os.remove(self.path + 'boost_' + c)
+            except IOError as e:
+                self.logger.error("default: I/O error({0}): {1}" . format(e.errno, e.strerror))
+
+            if self.scheduler_get('boost_' + c) is not None:
+                self.scheduler_remove('boost_' + c)
+
+        else:
+            self.logger.error("boost unknown controller '{}'" . format(self._controller.keys()))
+
+    def boost(self, c):
+        """
+        this function changes setpoint to defined boost temperature
+        :param c: controller to be used
+        """
+        if c in self._controller:
+            if self._controller[c]['tempBoost'] > 0:
+                self._sh.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempBoost'])
+                shtime = Shtime.get_instance()
+                self._createTrigger('boost_' + c, c, shtime.now() + datetime.timedelta(minutes=5))
+        else:
+            self.logger.error("boost unknown controller '{}'" . format(self._controller.keys()))
+
+    def drop(self, c):
+        """ this function changes setpoint to defined drop temperature
+        :param c: controller to be used
+        """
+        if c in self._controller:
+            if self._controller[c]['tempDrop'] > 0:
+                self._sh.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDrop'])
+        else:
+            self.logger.error("drop unknown controller '{}'" . format(self._controller.keys()))
