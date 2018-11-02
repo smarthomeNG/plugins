@@ -213,7 +213,7 @@ class RTR(SmartPlugin):
 
                 # validate controller number
                 if not cNum.isdigit():
-                    logger.error("rtr: error in {0}, rtr_stops need to be the controller number(s) - skip {1}" . format(item.id(), cNum))
+                    self.logger.error("rtr: error in {0}, rtr_stops need to be the controller number(s) - skip {1}" . format(item.id(), cNum))
                     continue
 
                 c = 'c' + cNum
@@ -221,7 +221,7 @@ class RTR(SmartPlugin):
                 # init controller with defaults when it not exist
                 if c not in self._controller:
                     self._controller[c] = self._defaults.copy()
-                    logger.debug("rtr: create controller {0} for {1}" . format(c, item.id()))
+                    self.logger.debug("rtr: create controller {0} for {1}" . format(c, item.id()))
 
                 # store stopItems into controller
                 if self._controller[c]['stopItems'] is None:
