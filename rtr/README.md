@@ -44,13 +44,13 @@ This attribute marks the item as a receiving one for the value to be sent to the
 
 #### rtr_Kp, rtr_Ki
 
-With those you can define different Kp and/or Ki values to your controller, which override the global default from default_Kp/default_Ki.
+With those you can define different Kp and/or Ki values to your controller, which override the global default from ``default_Kp``/``default_Ki``.
 
 ***The attributes are only valid on the same item, where ``rtr_current`` is defined and belongs to that controller.***
 
 #### rtr_stops
 
-This attribute can be used to define a item as a stop/pause trigger of the given contoller(s). When the value of the Item changes to on/true the controller(s) stops execution and set rtr_actuator to 0, till the value changes back to off/false.
+This attribute can be used to define a item as a stop/pause trigger of the given controller(s). When the value of the Item changes to on/true the controller(s) stops execution and set the item of rtr_actuator to 0, till the value changes back to off/false.
 
 ***The attributes can only be set on a Item of type Bool. You can add muliple Items to one controller and also one Item to multiple controllers***
 
@@ -64,17 +64,17 @@ This is set with ``rtr_temp_default = 21``
 
 Now when we want to ``boost`` the temperature for a special event or what ever you can imagine, you can set the temperature manually to a higher value and hope you dont forget to set it back.
 
-Or u use the boost function of this plugin, to set the temperature to your predefinied value of 23 °C. The Boost function will also handle for you a timer, when the temperature will be set back (lets say in 3 hours) to the predefinied default temperature.
+Or u use the ``boost`` function of this plugin, to set the temperature to your predefinied value of 23 °C. The Boost function will also handle for you a timer, when the temperature will be set back (lets say in 3 hours) to the predefinied default temperature.
 
-For this set ``rtr_temp_boost = 23``. The end time, where the value will be set back to Default is defined in minutes. We can use the global attribute defaultBoostTime or you set a individual time.
+For this set ``rtr_temp_boost = 23``. The end time, where the value will be set back to Default is defined in minutes. We can use the global attribute ``defaultBoostTime`` or you set a individual time with ``rtr_temp_boost_time``.
 
-For those finding this is not flexible enough: The function boost() can also be called with a individual end time. So you can create multiple logics with individual times and bind them to extra items.
+For those finding this is not flexible enough: The function ``boost()`` can also be called with a individual end time. So you can as an example create multiple logics with individual times and bind them to extra items to trigger them.
 
-Now at least we have third temperature mode ``drop``. With it you can build as example a away mode or night reduction where you want want to set temperature to maybe 19 °C.
+Now at least we have the third temperature mode ``drop``. With it you can build as example a away mode or night reduction where you want to set the reduced temperature to maybe 19 °C.
 
 So u set ``rtr_temp_drop = 19`` 
 
-The drop-function has not per default a timer, like the boost function. But you can also pass a datetime value to the drop()-function, to set the time, when the temperature should be set back to default.
+The ``drop()`` function has not per default a timer, like the ``boost()`` function. But you can also pass a datetime value to the drop()-function, to set the time, when the temperature should be set back to default.
 
 The importent thing is, that a created scheduler will survice a restart of smarthome, that the temperature will also be set back to default, when your computer reboots.
 
