@@ -73,7 +73,7 @@ class RTR(SmartPlugin):
         self.logger.debug("rtr: init method called")
 
         sh = self.get_sh()
-        self.path = sh.base_dir + '/var/rtr/'
+        self.path = sh.base_dir + '/var/rtr/timer/'
         self._items = Items.get_instance()
 
         # preset the controller defaults
@@ -81,6 +81,7 @@ class RTR(SmartPlugin):
         self._defaults['Kp'] = self.get_parameter_value('default_Kp')
         self._defaults['Ki'] = self.get_parameter_value('default_Ki')
         self._cycle_time = self.get_parameter_value('cycle_time')
+        self._resetValOnExpiredTimer = self.get_parameter_value('resetValOnExpiredTimer')
 
         return
 
@@ -357,13 +358,17 @@ class RTR(SmartPlugin):
 
     def _restoreTimer(self):
         """
-        scans folder for saved triggers to restore them at startup
+        scans folder for saved timer to restore them at startup
         """
-        self.logger.info("check if we need to restore triggers")
+        self.logger.info("check if we need to restore timer")
 
         if os.path.isdir(self.path):
             for filename in os.listdir(self.path):
                 self.logger.info("need to restore '{}'".format(filename))
+
+                if "boost_c" not in filename:
+                    self.logger.error("file looks invalid! Skip it..")
+                    return
 
                 try:
                     f = open(self.path + filename, "r")
@@ -371,18 +376,24 @@ class RTR(SmartPlugin):
                     f.close()
 
                 except OSError as e:
-                    self.logger.error("_restoreTimer(): cannot read '{}', error: {}".format(self.path + filename, e.args))
+                    self.logger.error("cannot read '{}', error: {}".format(self.path + filename, e.args))
                     continue
 
                 try:
                     ts = int(ts)
                 except ValueError:
-                    self.logger.error("_restoreTimer(): file content '{}' is no timestamp".format(ts))
+                    self.logger.error("file content '{}' is no timestamp".format(ts))
 
                 name, c = filename.split('_')
 
-                # TODO: if trigger ts <= time(), run it and not recreate?!
-                self._createTimer(filename, c, datetime.datetime.fromtimestamp(ts))
+                dt = datetime.datetime.fromtimestamp(ts)
+                shtime = Shtime.get_instance()
+                if dt < shtime.now():
+                    self.logger.info("timer '{}' is already expired - restore = {}".format(filename, self._resetValOnExpiredTimer))
+                    if self._resetValOnExpiredTimer:
+                        self.default(c)
+                else:
+                    self._createTimer(filename, c, dt)
 
     def _createTimer(self, name, c, timer):
         """

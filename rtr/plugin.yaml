@@ -33,6 +33,12 @@ parameters:
             de: "Abständen in Sekunden, in denen die Regelung arbeitet. Dieser Wert sollte nur geändert werden, wenn man weiss was man tut!"
             en: "Cycle timer in secounds. Don't change when you don't know what you do!"
 
+    resetValOnExpiredTimer:
+        type: bool
+        default: true
+        description:
+            de: "Wenn nicht aktiviert, werden beim wiederherstellen von Timern (Restart von SH) die Werte von abgelaufenen Timern nicht zurück gesetzt"
+
 item_attributes:
     rtr_current:
         type: int
