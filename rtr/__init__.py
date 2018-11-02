@@ -194,7 +194,7 @@ class RTR(SmartPlugin):
             return
 
         if self.has_iattr(item.conf, 'rtr_stop'):
-            self.logger.error("rtr: parse item {0}, found rtr_stop which is not supported anymore - use rtr_stops instead" . format(item.id(), item.conf['rtr_stops']))
+            self.logger.error("rtr: parse item {0}, found rtr_stop which is not supported anymore - use rtr_stops instead")
             return
 
         if self.has_iattr(item.conf, 'rtr_stops'):
