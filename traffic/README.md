@@ -95,7 +95,7 @@ route = sh.traffic.get_route_info(sh._lat+','+sh._lon, 'Berlin', False, 'now', '
 if route['summary'] is not '':
     route['summary'] += ": "
 
-summary = route['summary']+"%.1f km in %.0f min" % (round(route['duration_in_traffic']/60,2), round(route['distance']/1000,2))
+summary = route['summary'] + ": %.1f km in %.0f min" % (round(route['distance'] / 1000, 2), round(route['duration_in_traffic'] / 60, 2))
 sh.travel_info.travel_time(route['duration'])
 sh.travel_info.travel_time.in_traffic(route['duration_in_traffic'])
 sh.travel_info.travel_distance(route['distance'])
