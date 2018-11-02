@@ -292,9 +292,9 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
-        self.logger = self.plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self.logger = self.plugin.logger
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
