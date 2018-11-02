@@ -93,9 +93,9 @@ class RTR(SmartPlugin):
         self.scheduler_add('cycle', self.update_items, prio=5, cycle=int(self._cycle_time))
 
         try:
-            self._restoreTrigger()
+            self._restoreTimer()
         except Exception as e:
-            self.logger.error("Error in 'self._restoreTrigger()': {}".format(e))
+            self.logger.error("Error in 'self._restoreTimer()': {}".format(e))
 
         return
 
@@ -113,26 +113,26 @@ class RTR(SmartPlugin):
         """
         if self.has_iattr(item.conf, 'rtr_current'):
             if not item.conf['rtr_current'].isdigit():
-                self.logger.error("rtr: error in item {0}, rtr_current need to be the controller number" . format(item.id()))
+                self.logger.error("rtr: error in item {0}, rtr_current need to be the controller number".format(item.id()))
                 return
             c = 'c' + item.conf['rtr_current']
 
             # init controller with defaults when it not exist
             if c not in self._controller:
-                self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values" . format(c))
+                self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values".format(c))
                 self._controller[c] = self._defaults.copy()
 
             # store currentItem into controller
             self._controller[c]['currentItem'] = item.id()
-            self.logger.info("rtr: bound item '{1}' to currentItem for controller '{0}'". format(c, item.id()))
+            self.logger.info("rtr: bound item '{1}' to currentItem for controller '{0}'".format(c, item.id()))
 
             if not self.has_iattr(item.conf, 'rtr_Kp'):
-                self.logger.info("rtr: missing rtr_Kp in item {0}, setting to default: {1}" . format(item.id(), self._controller[c]['Kp']))
+                self.logger.info("rtr: missing rtr_Kp in item {0}, setting to default: {1}".format(item.id(), self._controller[c]['Kp']))
             else:
                 self._controller[c]['Kp'] = float(item.conf['rtr_Kp'])
 
             if not self.has_iattr(item.conf, 'rtr_Ki'):
-                self.logger.info("rtr: missing rtr_Ki in item {0}, setting to default: {1}" . format(item.id(), self._controller[c]['Ki']))
+                self.logger.info("rtr: missing rtr_Ki in item {0}, setting to default: {1}".format(item.id(), self._controller[c]['Ki']))
             else:
                 self._controller[c]['Ki'] = float(item.conf['rtr_Ki'])
 
@@ -144,19 +144,19 @@ class RTR(SmartPlugin):
 
         if self.has_iattr(item.conf, 'rtr_setpoint'):
             if not item.conf['rtr_setpoint'].isdigit():
-                self.logger.error("rtr: error in item {0}, rtr_setpoint need to be the controller number" . format(item.id()))
+                self.logger.error("rtr: error in item {0}, rtr_setpoint need to be the controller number".format(item.id()))
                 return
 
             c = 'c' + item.conf['rtr_setpoint']
 
             # init controller with defaults when it not exist
             if c not in self._controller:
-                self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values" . format(c))
+                self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values".format(c))
                 self._controller[c] = self._defaults.copy()
 
             # store setpointItem into controller
             self._controller[c]['setpointItem'] = item.id()
-            self.logger.info("rtr: bound item '{1}' to setpointItem for controller '{0}'". format(c, item.id()))
+            self.logger.info("rtr: bound item '{1}' to setpointItem for controller '{0}'".format(c, item.id()))
 
             if self.has_iattr(item.conf, 'rtr_temp_default'):
                 self._controller[c]['tempDefault'] = float(item.conf['rtr_temp_default'])
@@ -174,19 +174,19 @@ class RTR(SmartPlugin):
 
         if self.has_iattr(item.conf, 'rtr_actuator'):
             if not item.conf['rtr_actuator'].isdigit():
-                self.logger.error("rtr: error in item {0}, rtr_actuator need to be the controller number" . format(item.id()))
+                self.logger.error("rtr: error in item {0}, rtr_actuator need to be the controller number".format(item.id()))
                 return
 
             c = 'c' + item.conf['rtr_actuator']
 
             # init controller with defaults when it not exist
             if c not in self._controller:
-                self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values" . format(c))
+                self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values".format(c))
                 self._controller[c] = self._defaults.copy()
 
             # store actuatorItem into controller
             self._controller[c]['actuatorItem'] = item.id()
-            self.logger.info("rtr: bound item '{1}' to actuatorItem for controller '{0}'". format(c, item.id()))
+            self.logger.info("rtr: bound item '{1}' to actuatorItem for controller '{0}'".format(c, item.id()))
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
@@ -200,10 +200,10 @@ class RTR(SmartPlugin):
         if self.has_iattr(item.conf, 'rtr_stops'):
             # validate this optional Item
             if item._type != 'bool':
-                self.logger.error("rtr: error in item {0}, rtr_stops Item need to be bool (current {1})" . format(item.id(), item._type))
+                self.logger.error("rtr: error in item {0}, rtr_stops Item need to be bool (current {1})".format(item.id(), item._type))
                 return
 
-            self.logger.debug("rtr: parse item {0}, found rtr_stops={1}" . format(item.id(), item.conf['rtr_stops']))
+            self.logger.debug("rtr: parse item {0}, found rtr_stops={1}".format(item.id(), item.conf['rtr_stops']))
 
             cList = item.conf['rtr_stops']
             if isinstance(cList, str):
@@ -213,7 +213,7 @@ class RTR(SmartPlugin):
 
                 # validate controller number
                 if not cNum.isdigit():
-                    self.logger.error("rtr: error in {0}, rtr_stops need to be the controller number(s) - skip {1}" . format(item.id(), cNum))
+                    self.logger.error("rtr: error in {0}, rtr_stops need to be the controller number(s) - skip {1}".format(item.id(), cNum))
                     continue
 
                 c = 'c' + cNum
@@ -221,7 +221,7 @@ class RTR(SmartPlugin):
                 # init controller with defaults when it not exist
                 if c not in self._controller:
                     self._controller[c] = self._defaults.copy()
-                    self.logger.debug("rtr: create controller {0} for {1}" . format(c, item.id()))
+                    self.logger.debug("rtr: create controller {0} for {1}".format(c, item.id()))
 
                 # store stopItems into controller
                 if self._controller[c]['stopItems'] is None:
@@ -231,7 +231,7 @@ class RTR(SmartPlugin):
                 # listen to item events
                 item.add_method_trigger(self.stop_Controller)
 
-                self.logger.debug("rtr: parse item {0}, controller {1} stop items: {2} " . format(item.id(), c, self._controller[c]['stopItems']))
+                self.logger.debug("rtr: parse item {0}, controller {1} stop items: {2} ".format(item.id(), c, self._controller[c]['stopItems']))
 
             return
 
@@ -241,7 +241,7 @@ class RTR(SmartPlugin):
                 for item in self._controller[c]['stopItems']:
                     if item():
                        if self._controller[c]['actuatorItem']() > 0:
-                           logger.info("rtr: controller {0} stopped, because of item {1}" . format(c, item.id()))
+                           logger.info("rtr: controller {0} stopped, because of item {1}".format(c, item.id()))
                        self._controller[c]['actuatorItem'](0)
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -254,7 +254,7 @@ class RTR(SmartPlugin):
         :param dest: if given it represents the dest
         """
 
-        self.logger.debug("rtr: update item {}, from caller = {}, with source={} and dest={}" . format(item.id(), caller, source, dest))
+        self.logger.debug("rtr: update item {}, from caller = {}, with source={} and dest={}".format(item.id(), caller, source, dest))
         if item() and caller != 'plugin':
             if 'rtr_setpoint' in item.conf or 'rtr_current' in item.conf:
                 c = 'c' + item.conf['rtr_setpoint']
@@ -281,7 +281,7 @@ class RTR(SmartPlugin):
         if self._controller[c]['actuatorItem'] is None:
             return
 
-        self.logger.info("rtr: all needed params are set, controller {0} validated" . format(c))
+        self.logger.info("rtr: all needed params are set, controller {0} validated".format(c))
         self._controller[c]['validated'] = True
 
     def pi_controller(self, c):
@@ -313,13 +313,13 @@ class RTR(SmartPlugin):
             for item in self._controller[c]['stopItems']:
                 if item():
                    if self._items.return_item(self._controller[c]['actuatorItem'])() > 0:
-                       self.logger.info("rtr: controller {0} currently deactivated, because of item {1}" . format(c, item.id()))
+                       self.logger.info("rtr: controller {0} currently deactivated, because of item {1}".format(c, item.id()))
                    self._items.return_item(self._controller[c]['actuatorItem'])(0)
                    return
 
         # calculate scanning time
         Ta = int(time.time()) - self._controller[c]['Tlast']
-        self.logger.debug("{0} | Ta = Time() - Tlast | {1} = {2} - {3}" . format(c, Ta, (Ta + self._controller[c]['Tlast']), self._controller[c]['Tlast']))
+        self.logger.debug("{0} | Ta = Time() - Tlast | {1} = {2} - {3}".format(c, Ta, (Ta + self._controller[c]['Tlast']), self._controller[c]['Tlast']))
         self._controller[c]['Tlast'] = int(time.time())
 
         # get current and set point temp
@@ -328,12 +328,12 @@ class RTR(SmartPlugin):
 
         # skip execution if x is 0
         if x == 0.00:
-            self.logger.debug("{0} | skip uninitiated x value (currently zero)" . format(c))
+            self.logger.debug("{0} | skip uninitiated x value (currently zero)".format(c))
             return
 
         # calculate control error
         e = w - x
-        self.logger.debug("{0} | e = w - x | {1} = {2} - {3}" . format(c, e, w, x))
+        self.logger.debug("{0} | e = w - x | {1} = {2} - {3}".format(c, e, w, x))
 
         Kp = 1.0 / self._controller[c]['Kp']
         self._controller[c]['eSum'] = self._controller[c]['eSum'] + e * Ta
@@ -350,12 +350,12 @@ class RTR(SmartPlugin):
                 y = 0
             self._controller[c]['eSum'] = 0
 
-        self.logger.debug("{0} | eSum = {1}" . format(c, self._controller[c]['eSum']))
-        self.logger.debug("{0} | y = {1}" . format(c, y))
+        self.logger.debug("{0} | eSum = {1}".format(c, self._controller[c]['eSum']))
+        self.logger.debug("{0} | y = {1}".format(c, y))
 
         self._items.return_item(self._controller[c]['actuatorItem'])(y)
 
-    def _restoreTrigger(self):
+    def _restoreTimer(self):
         """
         scans folder for saved triggers to restore them at startup
         """
@@ -363,56 +363,50 @@ class RTR(SmartPlugin):
 
         if os.path.isdir(self.path):
             for filename in os.listdir(self.path):
-                self.logger.info("need to restore '{}'" . format(filename))
+                self.logger.info("need to restore '{}'".format(filename))
 
                 try:
-                    self.logger.debug("read file {}".format(filename))
                     f = open(self.path + filename, "r")
                     ts = f.read()
                     f.close()
 
                 except OSError as e:
-                    self.logger.error("_restoreTrigger: cannot read '{}', error: {}" . format(self.path + filename, e.args))
+                    self.logger.error("_restoreTimer(): cannot read '{}', error: {}".format(self.path + filename, e.args))
                     continue
 
                 try:
                     ts = int(ts)
-                    self.logger.debug("file content is {}" . format(ts))
                 except ValueError:
-                    self.logger.error("_restoreTrigger: file content '{}' is no timestamp" . format(ts))
+                    self.logger.error("_restoreTimer(): file content '{}' is no timestamp".format(ts))
 
                 name, c = filename.split('_')
-                self.logger.debug("controller is {}" . format(c))
 
                 # TODO: if trigger ts <= time(), run it and not recreate?!
-                self._createTrigger(filename, c, datetime.datetime.fromtimestamp(ts))
+                self._createTimer(filename, c, datetime.datetime.fromtimestamp(ts))
 
-    # TODO: rename Trigger -> Timer?!
-    def _createTrigger(self, name, c, timer):
+    def _createTimer(self, name, c, timer):
         """
         this function changes setpoint to defined default temperature
-        :param name: name of the trigger
+        :param name: name of the timer
         :param c: controller to be used
-        :param timer: datetime value for the trigger
+        :param timer: datetime value for the timer
         """
-        self.logger.debug("_createTrigger called for name: '{}', controller: '{}', on '{}'" . format(name, c, timer))
+        self.logger.debug("_createTimer(): called for name: '{}', controller: '{}', on '{}'".format(name, c, timer))
 
-        #self.scheduler_trigger(name, self.default, by='rtr', value={'c': c}, dt=timer)
-
-        #next = shtime.now() + datetime.timedelta(seconds=time)
         try:
+            # check if this scheduler already exist and delete it before create a new one
             if self.scheduler_get(name) is not None:
                 self.scheduler_remove(name)
-
+            # create scheduler
             self.scheduler_add(name, self.default, value={'c': c}, next=timer)
         except Exception as e:
-            self.logger.error("Error in '_createTrigger()': {}".format(e))
+            self.logger.error("_createTimer(): ': {}".format(e))
 
         try:
             if not os.path.isdir(self.path):
                 os.makedirs(self.path)
         except OSError as e:
-            self.logger.error("_createTrigger: cannot create '{}', error: {}" . format(self.path, e.args))
+            self.logger.error("_createTimer(): cannot create '{}', error: {}".format(self.path, e.args))
             return
 
         try:
@@ -420,13 +414,15 @@ class RTR(SmartPlugin):
             f.write(timer.strftime("%s"))
             f.close()
         except IOError as e:
-            self.logger.error("_createTrigger: I/O error({0}): {1}" . format(e.errno, e.strerror))
+            self.logger.error("_createTimer(): I/O error({}): {}".format(e.errno, e.strerror))
 
     def default(self, c, caller=None, source=None, dest=None):
         """
         this function changes setpoint of the given controller to defined default temperature
         :param c: controller to be used
         """
+        self.logger.debug("default(): called for controller: '{}'".format(c))
+
         if c in self._controller:
             if self._controller[c]['tempDefault'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDefault'])
@@ -435,38 +431,42 @@ class RTR(SmartPlugin):
                 if os.path.isfile(self.path + 'boost_' + c):
                     os.remove(self.path + 'boost_' + c)
             except IOError as e:
-                self.logger.error("default: I/O error({0}): {1}" . format(e.errno, e.strerror))
+                self.logger.error("default(): I/O error({0}): {1}".format(e.errno, e.strerror))
 
             try:
                 if self.scheduler_get('boost_' + c) is not None:
                     self.scheduler_remove('boost_' + c)
             except Exception as e:
-                self.logger.error("Error in '_createTrigger()': {}".format(e))
+                self.logger.error("default(): {}".format(e))
 
         else:
-            self.logger.error("boost unknown controller '{}'" . format(self._controller.keys()))
+            self.logger.error("default(): unknown controller '{}' - we only have '{}'".format(c, self._controller.keys()))
 
     def boost(self, c):
         """
         this function changes setpoint of the given controller to defined boost temperature
         :param c: controller to be used
         """
+        self.logger.debug("boost(): called for controller: '{}'".format(c))
+
         if c in self._controller:
             if self._controller[c]['tempBoost'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempBoost'])
                 shtime = Shtime.get_instance()
-                self._createTrigger('boost_' + c, c, shtime.now() + datetime.timedelta(minutes=1))
+                self._createTimer('boost_' + c, c, shtime.now() + datetime.timedelta(minutes=1))
 
         else:
-            self.logger.error("boost unknown controller '{}'" . format(self._controller.keys()))
+            self.logger.error("boost() unknown controller '{}' - we only have '{}'".format(c, self._controller.keys()))
 
     def drop(self, c):
         """
         this function changes setpoint of the given controller to defined drop temperature
         :param c: controller to be used
         """
+        self.logger.debug("drop(): called for controller: '{}'".format(c))
+
         if c in self._controller:
             if self._controller[c]['tempDrop'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDrop'])
         else:
-            self.logger.error("drop unknown controller '{}'" . format(self._controller.keys()))
+            self.logger.error("drop() unknown controller '{}' - we only have '{}'".format(c, self._controller.keys()))
