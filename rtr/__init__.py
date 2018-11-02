@@ -27,6 +27,7 @@
 # http://de.wikipedia.org/wiki/Regler#PI-Regler
 # http://www.honeywell.de/fp/regler/Reglerparametrierung.pdf
 
+import re
 import time
 import datetime
 
@@ -56,6 +57,7 @@ class RTR(SmartPlugin):
                 'tempDefault' : 0,
                 'tempDrop' : 0,
                 'tempBoost' : 0,
+                'tempBoostTime' : 0,
                 'validated' : False}
 
     def __init__(self, sh, *args, **kwargs):
@@ -80,6 +82,7 @@ class RTR(SmartPlugin):
         self._defaults['Tlast'] = time.time()
         self._defaults['Kp'] = self.get_parameter_value('default_Kp')
         self._defaults['Ki'] = self.get_parameter_value('default_Ki')
+        self._defaults['tempBoostTime'] = self.get_parameter_value('defaultBoostTime')
         self._cycle_time = self.get_parameter_value('cycle_time')
         self._defaultOnExpiredTimer = self.get_parameter_value('defaultOnExpiredTimer')
 
@@ -104,7 +107,7 @@ class RTR(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self.logger.debug("stop method called")
+        self.logger.debug("rtr: stop method called")
         self.alive = False
 
     def parse_item(self, item):
@@ -167,6 +170,9 @@ class RTR(SmartPlugin):
 
             if self.has_iattr(item.conf, 'rtr_temp_boost'):
                 self._controller[c]['tempBoost'] = float(item.conf['rtr_temp_boost'])
+
+            if self.has_iattr(item.conf, 'rtr_temp_boost_time'):
+                self._controller[c]['tempBoostTime'] = int(item.conf['rtr_temp_boost_time'])
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
@@ -366,7 +372,7 @@ class RTR(SmartPlugin):
             for filename in os.listdir(self.path):
                 self.logger.info("need to restore '{}'".format(filename))
 
-                if "boost_c" not in filename:
+                if not re.match(r"boost_c[0-9]+", filename) and not re.match(r"drop_c[0-9]+", filename):
                     self.logger.error("file looks invalid! Skip it..")
                     return
 
@@ -386,8 +392,10 @@ class RTR(SmartPlugin):
 
                 name, c = filename.split('_')
 
-                dt = datetime.datetime.fromtimestamp(ts)
                 shtime = Shtime.get_instance()
+                dt = datetime.datetime.fromtimestamp(ts)
+                dt = dt.replace(tzinfo=shtime.tzinfo())
+
                 if dt < shtime.now():
                     self.logger.info("timer '{}' is already expired - restore default = {}".format(filename, self._defaultOnExpiredTimer))
                     if self._defaultOnExpiredTimer:
@@ -395,21 +403,26 @@ class RTR(SmartPlugin):
                 else:
                     self._createTimer(filename, c, dt)
 
-    def _createTimer(self, name, c, timer):
+    def _createTimer(self, name, c, edt):
         """
-        this function changes setpoint to defined default temperature
+        this function create a scheduler and a recovery text file to restore
+        the scheduler on a restart from smarthome with _restoreTimer()
         :param name: name of the timer
         :param c: controller to be used
-        :param timer: datetime value for the timer
+        :param edt: end datetime value for the timer
         """
-        self.logger.debug("_createTimer(): called for name: '{}', controller: '{}', on '{}'".format(name, c, timer))
+        self.logger.debug("_createTimer(): called for name: '{}', controller: '{}', on '{}'".format(name, c, edt))
+
+        if not isinstance(edt, datetime.datetime):
+            self.logger.error("_createTimer(): edt is no datetime!")
+            return
 
         try:
             # check if this scheduler already exist and delete it before create a new one
             if self.scheduler_get(name) is not None:
                 self.scheduler_remove(name)
             # create scheduler
-            self.scheduler_add(name, self.default, value={'c': c}, next=timer)
+            self.scheduler_add(name, self.default, value={'c': c}, next=edt)
         except Exception as e:
             self.logger.error("_createTimer(): ': {}".format(e))
 
@@ -422,10 +435,30 @@ class RTR(SmartPlugin):
 
         try:
             f = open(self.path + name, "w")
-            f.write(timer.strftime("%s"))
+            f.write(edt.strftime("%s"))
             f.close()
         except IOError as e:
             self.logger.error("_createTimer(): I/O error({}): {}".format(e.errno, e.strerror))
+
+    def _deleteTimer(self, name):
+        """
+        this function delete a scheduler and its recovery text file
+        :param name: name of the timer
+        """
+        self.logger.debug("_deleteTimer(): called for name: '{}'".format(name))
+
+        try:
+            if self.scheduler_get(name) is not None:
+                self.scheduler_remove(name)
+        except Exception as e:
+            self.logger.error("default(): {}".format(e))
+
+        try:
+            if os.path.isfile(self.path + name):
+                os.remove(self.path + name)
+        except IOError as e:
+            self.logger.error("default(): I/O error({0}): {1}".format(e.errno, e.strerror))
+
 
     def default(self, c, caller=None, source=None, dest=None):
         """
@@ -438,46 +471,51 @@ class RTR(SmartPlugin):
             if self._controller[c]['tempDefault'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDefault'])
 
-            try:
-                if os.path.isfile(self.path + 'boost_' + c):
-                    os.remove(self.path + 'boost_' + c)
-            except IOError as e:
-                self.logger.error("default(): I/O error({0}): {1}".format(e.errno, e.strerror))
-
-            try:
-                if self.scheduler_get('boost_' + c) is not None:
-                    self.scheduler_remove('boost_' + c)
-            except Exception as e:
-                self.logger.error("default(): {}".format(e))
+            self._deleteTimer('boost_' + c)
+            self._deleteTimer('drop_' + c)
 
         else:
             self.logger.error("default(): unknown controller '{}' - we only have '{}'".format(c, self._controller.keys()))
 
-    def boost(self, c):
+    def boost(self, c, timer=True, edt=None):
         """
         this function changes setpoint of the given controller to defined boost temperature
         :param c: controller to be used
+        :param timer: if not True, no timer will be created
+        :param edt: end datetime to override the default
         """
         self.logger.debug("boost(): called for controller: '{}'".format(c))
 
         if c in self._controller:
             if self._controller[c]['tempBoost'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempBoost'])
-                shtime = Shtime.get_instance()
-                self._createTimer('boost_' + c, c, shtime.now() + datetime.timedelta(minutes=1))
 
+                if self._controller[c]['tempBoostTime'] == 0 and edt is None:
+                    timer = False
+
+                if timer == True:
+                    if edt is None:
+                        shtime = Shtime.get_instance()
+                        edt = shtime.now() + datetime.timedelta(minutes=self._controller[c]['tempBoostTime'])
+
+                    self._deleteTimer('drop_' + c)
+                    self._createTimer('boost_' + c, c, edt)
         else:
             self.logger.error("boost() unknown controller '{}' - we only have '{}'".format(c, self._controller.keys()))
 
-    def drop(self, c):
+    def drop(self, c, edt=None):
         """
         this function changes setpoint of the given controller to defined drop temperature
         :param c: controller to be used
+        :param edt: end date time, if given a timer with the end date time get created
         """
         self.logger.debug("drop(): called for controller: '{}'".format(c))
 
         if c in self._controller:
             if self._controller[c]['tempDrop'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDrop'])
+                if isinstance(edt, datetime.datetime):
+                    self._deleteTimer('boost_' + c)
+                    self._createTimer('drop_' + c, c, edt)
         else:
             self.logger.error("drop() unknown controller '{}' - we only have '{}'".format(c, self._controller.keys()))

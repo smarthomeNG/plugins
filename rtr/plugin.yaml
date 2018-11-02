@@ -33,55 +33,80 @@ parameters:
             de: "Abständen in Sekunden, in denen die Regelung arbeitet. Dieser Wert sollte nur geändert werden, wenn man weiss was man tut!"
             en: "Cycle timer in secounds. Don't change when you don't know what you do!"
 
+    defaultBoostTime:
+        type: int
+        default: 240
+        description:
+            de: "Legt die Standard Zeit in Minuten fest, nachdem die Boost-Temperatur automatisch zurück auf Standard gesetzt wird"
+            en: "Defines the default time in minutes, when the boost-temperature gets autmatically set back to Default"
+
     defaultOnExpiredTimer:
         type: bool
         default: true
         description:
-            de: "Wenn nicht aktiviert, werden beim wiederherstellen von Timern (Restart von SH) die Werte von abgelaufenen Timern nicht zurück gesetzt"
+            de: "Wenn nicht aktiviert, werden beim wiederherstellen von abgelaufenen Timern die Temperaturen nicht zurück auf Default gesetzt"
+            en: "when not True, a expired timer will not set back to Default-Temperature on a timer restore (when SH will be restarted)"
 
 item_attributes:
     rtr_current:
         type: int
+        mandatory: True
         description:
-            de: 'Ordnet das Item dem Controller mit gegebener ID als Ist-Wert zu'
+            de: 'Ordnet das Item dem Regler/Controller mit gegebener ID als Ist-Wert zu'
             en: 'Defines the Item as current value for the given controller ID'
+
     rtr_Kp:
         type: int
         description:
             de: 'Ordnet dem Item einen vom Standard abweichenden Verstärkungsfaktor zu. Muss auf dem selben Item wie rtr_current gesetzt werden'
             en: 'Defines a different proportional gain for the controller. Only valid in the same Item where rtr_current is defined'
+
     rtr_Ki:
         type: int
         description:
             de: 'Ordnet dem Item einen vom Standard abweichenden Integralfaktor zu. Muss auf dem selben Item wie rtr_current gesetzt werden'
             en: 'Defines a different integral gain for the controller. Only valid in the same Item where rtr_current is defined'
+
     rtr_setpoint:
         type: int
+        mandatory: True
         description:
-            de: 'Ordnet das Item dem Controller mit gegebener ID als Soll-Wert zu'
+            de: 'Ordnet das Item dem Regler/Controller mit gegebener ID als Soll-Wert zu'
             en: 'Defines the Item as setpoint value for the given controller ID'
+
     rtr_temp_default:
         type: float
         description:
-            de: 'Ordnet dem Item eine Standard Temperatur zu, auf die rtr_setpoint zurück gesetzt wird. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
+            de: 'Ordnet dem Regler/Controller eine Standard Temperatur zu, auf die rtr_setpoint zurück gesetzt wird. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
             en: 'Defines a default temperature for rtr_setpoint. Only valid in the same Item where rtr_setpoint is defined'
+
     rtr_temp_drop:
         type: float
         description:
-            de: 'Ordnet dem Item eine Absenk-Temperatur zu, auf die rtr_setpoint beim aufruf der Funktion drop gesetzt wird. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
+            de: 'Ordnet dem Regler/Controller eine Absenk-Temperatur zu, auf die rtr_setpoint beim aufruf der Funktion drop gesetzt wird. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
             en: 'Defines a drop temperature for rtr_setpoint, which is set by calling the drop function. Only valid in the same Item where rtr_setpoint is defined'
+
     rtr_temp_boost:
         type: float
         description:
-            de: 'Ordnet dem Item eine Boost-Temperatur zu, auf die rtr_setpoint beim aufruf der Funktion boost gesetzt wird. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
+            de: 'Ordnet dem Regler eine Boost-Temperatur zu, auf die rtr_setpoint beim aufruf der Funktion boost gesetzt wird. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
             en: 'Defines a boost temperature for rtr_setpoint, which is set by calling the boost function. Only valid in the same Item where rtr_setpoint is defined'
+
+    rtr_temp_boost_time:
+        type: int
+        description:
+            de: "Ordnet dem Regler eine Standard Zeit für den Boost in Minten zu und überschreibt somit den globalen Standard defaultBoostTime. Muss auf dem selben Item wie rtr_setpoint gesetzt werden"
+            en: "Defines a default boost time in minutes for this controller and so overrides the global defaultBoostTime. Only valid in the same Item where rtr_setpoint is defined"
+
     rtr_actuator:
         type: int
+        mandatory: True
         description:
             de: 'Ordnet das Item dem Controller mit gegebener ID als Stellgröße zu'
             en: 'Defines the Item as actuator value for the given controller ID'
+
     rtr_stops:
         type: list(int)
         description:
-            de: 'Ordnet das Item dem einen oder mehreren Controllern per ID als Stop-Objekt zu. Kann nur auf einem Item vom Typ Bool gesetzt werden. Ist der Item Wert True, Pausiert die Regelung.'
+            de: 'Ordnet das Item dem einen oder mehreren Controllern per ID als Stop-Objekt zu. Kann nur auf einem Item vom Typ Bool gesetzt werden. Ist der Item Wert True, Pausiert die Regelung'
             en: 'Defines the Item as stop item for the given controller IDs. Only valid on Item-Type Bool. If Item is True, the controller gets paused'
