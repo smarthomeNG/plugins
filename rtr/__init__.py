@@ -199,7 +199,7 @@ class RTR(SmartPlugin):
 
         if self.has_iattr(item.conf, 'rtr_stops'):
             # validate this optional Item
-            if item._type is not 'bool':
+            if item._type != 'bool':
                 self.logger.error("rtr: error in item {0}, rtr_stops Item need to be bool (current {1})" . format(item.id(), item._type))
                 return
 
