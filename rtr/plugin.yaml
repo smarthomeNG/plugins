@@ -26,6 +26,13 @@ parameters:
             de: 'Standard Integralfaktor für erstellte Items'
             en: 'default integral gain for created items'
 
+    cycle_time:
+        type: int
+        default: 60
+        description:
+            de: "Abständen in Sekunden, in denen die Regelung arbeitet. Dieser Wert sollte nur geändert werden, wenn man weiss was man tut!"
+            en: "Cycle timer in secounds. Don't change when you don't know what you do!"
+
 item_attributes:
     rtr_current:
         type: int

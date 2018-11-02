@@ -77,10 +77,10 @@ class RTR(SmartPlugin):
         self._items = Items.get_instance()
 
         # preset the controller defaults
-        self._cycle_time = 1*60
         self._defaults['Tlast'] = time.time()
         self._defaults['Kp'] = self.get_parameter_value('default_Kp')
         self._defaults['Ki'] = self.get_parameter_value('default_Ki')
+        self._cycle_time = self.get_parameter_value('cycle_time')
 
         return
 
