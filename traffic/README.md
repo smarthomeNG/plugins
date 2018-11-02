@@ -8,6 +8,10 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 Take care not to request the interface too often as there currently is only a limit of 2500 free requests / day.
 More information and API key see: https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model
 
+Blog article to the plugin:
+https://www.smarthomeng.de/das-traffic-plugin-am-beispiel-eines-staualarms
+https://www.smarthomeng.de/geozonen-basierte-services-mit-der-egigeozone-app-und-dem-network-plugin
+https://www.smarthomeng.de/google-maps-widget-fuer-smartvisu-2-9
 
 ## Requirements
 
