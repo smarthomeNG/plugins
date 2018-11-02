@@ -312,9 +312,9 @@ class RTR(SmartPlugin):
         if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
             for item in self._controller[c]['stopItems']:
                 if item():
-                   if self._controller[c]['actuatorItem']() > 0:
-                       logger.info("rtr: controller {0} currently deactivated, because of item {1}" . format(c, item.id()))
-                   self._controller[c]['actuatorItem'](0)
+                   if self._items.return_item(self._controller[c]['actuatorItem'])() > 0:
+                       self.logger.info("rtr: controller {0} currently deactivated, because of item {1}" . format(c, item.id()))
+                   self._items.return_item(self._controller[c]['actuatorItem'])(0)
                    return
 
         # calculate scanning time
@@ -384,8 +384,10 @@ class RTR(SmartPlugin):
                 name, c = filename.split('_')
                 self.logger.debug("controller is {}" . format(c))
 
+                # TODO: if trigger ts <= time(), run it and not recreate?!
                 self._createTrigger(filename, c, datetime.datetime.fromtimestamp(ts))
 
+    # TODO: rename Trigger -> Timer?!
     def _createTrigger(self, name, c, timer):
         """
         this function changes setpoint to defined default temperature
@@ -395,7 +397,16 @@ class RTR(SmartPlugin):
         """
         self.logger.debug("_createTrigger called for name: '{}', controller: '{}', on '{}'" . format(name, c, timer))
 
-        self.scheduler_trigger(name, self.default, by='rtr', value={'c': c}, dt=timer)
+        #self.scheduler_trigger(name, self.default, by='rtr', value={'c': c}, dt=timer)
+
+        #next = shtime.now() + datetime.timedelta(seconds=time)
+        try:
+            if self.scheduler_get(name) is not None:
+                self.scheduler_remove(name)
+
+            self.scheduler_add(name, self.default, value={'c': c}, next=timer)
+        except Exception as e:
+            self.logger.error("Error in '_createTrigger()': {}".format(e))
 
         try:
             if not os.path.isdir(self.path):
@@ -411,7 +422,7 @@ class RTR(SmartPlugin):
         except IOError as e:
             self.logger.error("_createTrigger: I/O error({0}): {1}" . format(e.errno, e.strerror))
 
-    def default(self, c):
+    def default(self, c, caller=None, source=None, dest=None):
         """
         this function changes setpoint of the given controller to defined default temperature
         :param c: controller to be used
@@ -426,8 +437,11 @@ class RTR(SmartPlugin):
             except IOError as e:
                 self.logger.error("default: I/O error({0}): {1}" . format(e.errno, e.strerror))
 
-            if self.scheduler_get('boost_' + c) is not None:
-                self.scheduler_remove('boost_' + c)
+            try:
+                if self.scheduler_get('boost_' + c) is not None:
+                    self.scheduler_remove('boost_' + c)
+            except Exception as e:
+                self.logger.error("Error in '_createTrigger()': {}".format(e))
 
         else:
             self.logger.error("boost unknown controller '{}'" . format(self._controller.keys()))
@@ -442,6 +456,7 @@ class RTR(SmartPlugin):
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempBoost'])
                 shtime = Shtime.get_instance()
                 self._createTrigger('boost_' + c, c, shtime.now() + datetime.timedelta(minutes=1))
+
         else:
             self.logger.error("boost unknown controller '{}'" . format(self._controller.keys()))
 
