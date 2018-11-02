@@ -48,17 +48,17 @@ item_attributes:
             de: 'Ordnet das Item dem Controller mit gegebener ID als Soll-Wert zu'
             en: 'Defines the Item as setpoint value for the given controller ID'
     rtr_temp_default:
-        type: int
+        type: float
         description:
             de: 'Ordnet dem Item eine Standard Temperatur zu, auf die rtr_setpoint zurück gesetzt wird. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
             en: 'Defines a default temperature for rtr_setpoint. Only valid in the same Item where rtr_setpoint is defined'
     rtr_temp_drop:
-        type: int
+        type: float
         description:
             de: 'Ordnet dem Item eine Absenk-Temperatur zu, auf die rtr_setpoint beim aufruf der Funktion drop gesetzt wird. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
             en: 'Defines a drop temperature for rtr_setpoint, which is set by calling the drop function. Only valid in the same Item where rtr_setpoint is defined'
     rtr_temp_boost:
-        type: int
+        type: float
         description:
             de: 'Ordnet dem Item eine Boost-Temperatur zu, auf die rtr_setpoint beim aufruf der Funktion boost gesetzt wird. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
             en: 'Defines a boost temperature for rtr_setpoint, which is set by calling the boost function. Only valid in the same Item where rtr_setpoint is defined'

@@ -159,13 +159,13 @@ class RTR(SmartPlugin):
             self.logger.info("rtr: bound item '{1}' to setpointItem for controller '{0}'". format(c, item.id()))
 
             if self.has_iattr(item.conf, 'rtr_temp_default'):
-                self._controller[c]['tempDefault'] = int(item.conf['rtr_temp_default'])
+                self._controller[c]['tempDefault'] = float(item.conf['rtr_temp_default'])
 
             if self.has_iattr(item.conf, 'rtr_temp_drop'):
-                self._controller[c]['tempDrop'] = int(item.conf['rtr_temp_drop'])
+                self._controller[c]['tempDrop'] = float(item.conf['rtr_temp_drop'])
 
             if self.has_iattr(item.conf, 'rtr_temp_boost'):
-                self._controller[c]['tempBoost'] = int(item.conf['rtr_temp_boost'])
+                self._controller[c]['tempBoost'] = float(item.conf['rtr_temp_boost'])
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
