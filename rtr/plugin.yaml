@@ -33,7 +33,7 @@ parameters:
             de: "Abständen in Sekunden, in denen die Regelung arbeitet. Dieser Wert sollte nur geändert werden, wenn man weiss was man tut!"
             en: "Cycle timer in secounds. Don't change when you don't know what you do!"
 
-    resetValOnExpiredTimer:
+    defaultOnExpiredTimer:
         type: bool
         default: true
         description:

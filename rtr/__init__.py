@@ -81,7 +81,7 @@ class RTR(SmartPlugin):
         self._defaults['Kp'] = self.get_parameter_value('default_Kp')
         self._defaults['Ki'] = self.get_parameter_value('default_Ki')
         self._cycle_time = self.get_parameter_value('cycle_time')
-        self._resetValOnExpiredTimer = self.get_parameter_value('resetValOnExpiredTimer')
+        self._defaultOnExpiredTimer = self.get_parameter_value('defaultOnExpiredTimer')
 
         return
 
@@ -389,8 +389,8 @@ class RTR(SmartPlugin):
                 dt = datetime.datetime.fromtimestamp(ts)
                 shtime = Shtime.get_instance()
                 if dt < shtime.now():
-                    self.logger.info("timer '{}' is already expired - restore = {}".format(filename, self._resetValOnExpiredTimer))
-                    if self._resetValOnExpiredTimer:
+                    self.logger.info("timer '{}' is already expired - restore default = {}".format(filename, self._defaultOnExpiredTimer))
+                    if self._defaultOnExpiredTimer:
                         self.default(c)
                 else:
                     self._createTimer(filename, c, dt)
