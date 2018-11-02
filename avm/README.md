@@ -132,7 +132,7 @@ avm:
 
     monitor:
 
-        trigger:
+        trigger1:
             type: bool
             avm_data_type@fritzbox_7490: monitor_trigger
             avm_incoming_allowed: xxxxxxxx
