@@ -26,6 +26,7 @@ import requests
 import lib.connection
 import re
 import cherrypy
+import time
 from jinja2 import Environment, FileSystemLoader
 from lib.model.smartplugin import *
 from lib.item import Items
@@ -35,6 +36,7 @@ nuki_action_items = {}
 nuki_event_items = {}
 nuki_battery_items = {}
 paired_nukis = []
+lock = False
 
 
 class NukiTCPDispatcher(lib.connection.Server):
@@ -87,6 +89,8 @@ class Nuki(SmartPlugin):
         global nuki_event_items
         global nuki_action_items
         global nuki_battery_items
+        global lock
+        global request_queue
 
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
@@ -272,7 +276,12 @@ class Nuki(SmartPlugin):
 
     def _api_call(self, base_url, endpoint=None, nuki_id=None, token=None, action=None, no_wait=None, callback_url=None,
                   id=None):
+        global lock
+        while lock:
+            time.sleep(0.1)
         try:
+            lock = True
+            self.logger.debug("Plugin '{}': Lock set.".format(self.get_shortname()))
             payload = {}
             if nuki_id is not None:
                 payload['nukiID'] = nuki_id
@@ -287,11 +296,16 @@ class Nuki(SmartPlugin):
                 payload['url'] = callback_url
             if id is not None:
                 payload['id'] = id
-
+            url = urllib.parse.urljoin(base_url, endpoint)
+            self.logger.debug("Plugin '{}': starting API Call to Nuki Bridge at {} with payload {}.".format(self.get_shortname(), url, payload))
             response = requests.get(url=urllib.parse.urljoin(base_url, endpoint), params=payload)
+            self.logger.debug("Plugin '{}': finishing API Call to Nuki Bridge at {}.".format(self.get_shortname(), url))
             response.raise_for_status()
+            lock = False
+            self.logger.debug("Plugin '{}': Lock removed.".format(self.get_shortname()))
             return json.loads(response.text)
         except Exception as ex:
+            lock = False
             self.logger.error(ex)
 
     def get_event_items(self):
