@@ -21,8 +21,7 @@
 #
 #########################################################################
 
-import requests
-import ruamel.yaml
+import cherrypy
 import datetime
 from lib.model.smartplugin import *
 from lib.shtime import Shtime
@@ -62,7 +61,8 @@ class WithingsHealth(SmartPlugin):
                        token['refresh_token']))
         self.get_item('access_token')(token['access_token'])
         self.get_item('token_expiry')(
-            int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()) + int(token['expires_in']))
+            int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()) + int(
+                token['expires_in']))
         self.get_item('token_type')(token['token_type'])
         self.get_item('refresh_token')(token['refresh_token'])
 
@@ -266,12 +266,15 @@ class WithingsHealth(SmartPlugin):
         """
         # items specific to call monitor
         if self.get_iattr_value(item.conf, 'withings_type') in ['weight', 'height', 'fat_free_mass', 'fat_mass_weight',
-                                                          'fat_ratio', 'fat_mass_weight', 'diastolic_blood_pressure',
-                                                          'systolic_blood_pressure', 'heart_pulse', 'temperature',
-                                                          'spo2', 'body_temperature', 'skin_temperature', 'muscle_mass',
-                                                          'hydration', 'bone_mass', 'pulse_wave_velocity', 'bmi',
-                                                          'bmi_text', 'access_token', 'token_expiry', 'token_type',
-                                                          'refresh_token']:
+                                                                'fat_ratio', 'fat_mass_weight',
+                                                                'diastolic_blood_pressure',
+                                                                'systolic_blood_pressure', 'heart_pulse', 'temperature',
+                                                                'spo2', 'body_temperature', 'skin_temperature',
+                                                                'muscle_mass',
+                                                                'hydration', 'bone_mass', 'pulse_wave_velocity', 'bmi',
+                                                                'bmi_text', 'access_token', 'token_expiry',
+                                                                'token_type',
+                                                                'refresh_token']:
             self._items[self.get_iattr_value(item.conf, 'withings_type')] = item
 
     def get_items(self):
@@ -320,10 +323,6 @@ class WithingsHealth(SmartPlugin):
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
 
 class WebInterface(SmartPluginWebIf):
 
