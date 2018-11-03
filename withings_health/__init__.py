@@ -137,6 +137,7 @@ class WithingsHealth(SmartPlugin):
                         "Plugin '{}': Token is expired, run OAuth2 again from Web Interface (Expiry Date: {}).".format(
                             self.get_fullname(), datetime.datetime.fromtimestamp(self.get_item(
                                 'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
+                    return
             else:
                 self.logger.error(
                     "Plugin '{}': Items for OAuth2 Data are not set with required values. Please run process via WebGUI of the plugin.".format(
