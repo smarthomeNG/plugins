@@ -9,7 +9,7 @@ plugin:
     tester: onkelandy, psilo909, Sandman60
     keywords: messaging
     documentation: https://www.smarthomeng.de/developer/plugins/pushbullet/README.html
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/36001-neues-plugin-pushbullet/page8
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/36001-neues-plugin-pushbullet
 
     version: 1.5.2                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
