@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2017 Thomas Creutz                      thomas.creutz@gmx.de
+#  Copyright 2018 Thomas Creutz                      thomas.creutz@gmx.de
 #  Copyright 2016 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG
@@ -465,6 +465,9 @@ class RTR(SmartPlugin):
         this function changes setpoint of the given controller to defined default temperature
         :param c: controller to be used
         """
+        if re.match(r"[0-9]+$", str(c)):
+            c = 'c' + c
+
         self.logger.debug("default(): called for controller: '{}'".format(c))
 
         if c in self._controller:
@@ -484,6 +487,9 @@ class RTR(SmartPlugin):
         :param timer: if not True, no timer will be created
         :param edt: end datetime to override the default
         """
+        if re.match(r"[0-9]+$", str(c)):
+            c = 'c' + c
+
         self.logger.debug("boost(): called for controller: '{}'".format(c))
 
         if c in self._controller:
@@ -509,6 +515,9 @@ class RTR(SmartPlugin):
         :param c: controller to be used
         :param edt: end date time, if given a timer with the end date time get created
         """
+        if re.match(r"[0-9]+$", str(c)):
+            c = 'c' + c
+
         self.logger.debug("drop(): called for controller: '{}'".format(c))
 
         if c in self._controller:
