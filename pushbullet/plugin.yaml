@@ -7,9 +7,9 @@ plugin:
         en: ''
     maintainer: '? (lbernau)'
     tester: onkelandy, psilo909, Sandman60
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    keywords: messaging
+    documentation: https://www.smarthomeng.de/developer/plugins/pushbullet/README.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/36001-neues-plugin-pushbullet/page8
 
     version: 1.5.2                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
