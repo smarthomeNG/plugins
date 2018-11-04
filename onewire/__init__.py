@@ -343,6 +343,7 @@ class OneWire(OwBase):
             return
         for bus in self._ibutton_buses:
             if not self.alive:
+                self.logger.info("1-Wire: Self not alive".format(bus))
                 break
             path = '/uncached/' + bus + '/'
             name = self._ibutton_buses[bus]
@@ -377,6 +378,7 @@ class OneWire(OwBase):
         start = time.time()
         for addr in self._sensors:
             if not self.alive:
+                self.logger.info("1-Wire: Self not alive".format(addr))
                 break
             for key in self._sensors[addr]:
                 item = self._sensors[addr][key]['item']
@@ -391,20 +393,17 @@ class OneWire(OwBase):
                         continue
                     value = float(value)
                 except Exception as e:
-                    self.logger.warning("1-Wire: problem reading {} {}: {}".format(addr, path, e))
-                    if not self.connected:
-                        return
-                    else:
-                        self.close()
-                        break
-                if key == 'L':  # light lux conversion
-                    if value > 0:
-                        value = round(10 ** ((float(value) / 47) * 1000))
-                    else:
-                        value = 0
-                elif key == 'VOC':
-                    value = value * 310 + 450
-                item(value, '1-Wire', path)
+                    self.logger.warning("1-Wire: problem reading {} {}: {}. Trying to continue with next sensor".format(addr, path, e))
+                else:  #only if no exception
+                    if key == 'L':  # light lux conversion
+                        if value > 0:
+                            value = round(10 ** ((float(value) / 47) * 1000))
+                        else:
+                            value = 0
+                    elif key == 'VOC':
+                        value = value * 310 + 450
+                    item(value, '1-Wire', path)
+                    
         cycletime = time.time() - start
         self.logger.debug("1-Wire: sensor cycle takes {0} seconds".format(cycletime))
 
