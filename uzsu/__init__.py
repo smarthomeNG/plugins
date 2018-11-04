@@ -169,7 +169,7 @@ class UZSU(SmartPlugin):
             success = self._update_sun(item)
             if success:
                 self.logger.debug('Updating sun info for item {}'.format(item))
-                item(self._items[item])
+                item(self._items[item], 'UZSU Plugin', 'update_all_suns'))
 
     def _update_sun(self, item, caller=None):
         """
@@ -567,7 +567,7 @@ class UZSU(SmartPlugin):
         :param caller:  if given it represents the callers name
         """
         _uzsuitem = self.itemsApi.return_item(self.get_iattr_value(item.conf, ITEM_TAG[0]))
-        _uzsuitem(value, caller='UZSU Plugin')
+        _uzsuitem(value, 'UZSU Plugin', 'set')
         if not caller:
             self._schedule(item, caller='set')
 
