@@ -4,7 +4,7 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Anbindung von iRobot Roomba Staubsaugern der Serie 900'
-        en: ''
+        en: 'integration of the iRobot Roomba vacuum cleaner series 900'
     maintainer: 'Zapfen83'
     tester: 
     keywords: irobot roomba             # keywords, where applicable

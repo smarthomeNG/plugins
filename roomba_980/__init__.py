@@ -32,7 +32,6 @@ class ROOMBA_980(SmartPlugin):
     myroomba = None
 
     def __init__(self, sh, adress=None, blid=None, roombaPassword=None, cycle=900):
-        self._sh = sh
         self._address = adress
         self._blid = blid
         self._roombaPassword = roombaPassword
@@ -62,7 +61,7 @@ class ROOMBA_980(SmartPlugin):
         self.alive = True
 
     def stop(self):
-        self.scheduler.remove(__name__)
+        self.scheduler.remove('get_status')
         self.myroomba.disconnect()
         self.alive = False
 
@@ -88,11 +87,11 @@ class ROOMBA_980(SmartPlugin):
         for status_item in self._status_items:
           if status_item == "status_batterie":
              self._status_items[status_item](status['state']['reported']['batPct'],__name__)
-          if status_item == "status_bin_full":
+          elif status_item == "status_bin_full":
              self._status_items[status_item](status['state']['reported']['bin']['full'],__name__)
-          if status_item == "status_cleanMissionStatus_phase":
+          elif status_item == "status_cleanMissionStatus_phase":
              self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['phase'],__name__)
-          if status_item == "status_cleanMissionStatus_error":
+          elif status_item == "status_cleanMissionStatus_error":
              self._status_items[status_item](status['state']['reported']['cleanMissionStatus']['error'],__name__)
 
         self.logger.debug('Status update')
