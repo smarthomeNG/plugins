@@ -5,6 +5,7 @@ plugin:
         de: 'Raum Temperatur Regler'
         en: 'Room Temperatur controller'
     maintainer: Thomas Creutz / bmxp
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/31450-rtr-heizungs-plugin
 
     version: 1.2.3                 # Plugin version
     sh_minversion: 1.2             # minimum shNG version to use this plugin
@@ -104,6 +105,9 @@ item_attributes:
         description:
             de: 'Ordnet das Item dem Controller mit gegebener ID als Stellgröße zu'
             en: 'Defines the Item as actuator value for the given controller ID'
+
+    rtr_hvac_mode:
+        type: int
 
     rtr_stops:
         type: list(int)

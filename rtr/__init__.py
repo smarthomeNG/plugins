@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2018 Thomas Creutz                      thomas.creutz@gmx.de
+#  Copyright 2013 Thomas Creutz                      thomas.creutz@gmx.de
 #  Copyright 2016 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG
@@ -45,11 +45,20 @@ class RTR(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.2.3"
 
+    HVACMode_Auto = 0
+    HVACMode_Comfort = 1
+    HVACMode_Standby = 2
+    HVACMode_Economy = 3
+    HVACMode_Bldg_Prot = 4
+
     _controller = {}
     _defaults = {'currentItem' : None,
                 'setpointItem' : None,
                 'actuatorItem' : None,
                 'stopItems' : None,
+                'timerendItem' : None,
+                'HVACModeItem' : None,
+                'HVACMode': 0,
                 'eSum' : 0,
                 'Kp' : 0,
                 'Ki' : 0,
@@ -140,7 +149,6 @@ class RTR(SmartPlugin):
             else:
                 self._controller[c]['Ki'] = float(item.conf['rtr_Ki'])
 
-
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
 
@@ -177,7 +185,7 @@ class RTR(SmartPlugin):
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
 
-            return self.update_item
+            return self.update_setpoint
 
         if self.has_iattr(item.conf, 'rtr_actuator'):
             if not item.conf['rtr_actuator'].isdigit():
@@ -199,6 +207,28 @@ class RTR(SmartPlugin):
                 self.validate_controller(c)
 
             return
+
+        if self.has_iattr(item.conf, 'rtr_timer_end_text'):
+            if not item.conf['rtr_timer_end_text'].isdigit():
+                self.logger.error("rtr: error in item {0}, rtr_timer_end_text need to be the controller number".format(item.id()))
+                return
+
+            c = 'c' + item.conf['rtr_timer_end_text']
+
+            self._controller[c]['timerendItem'] = item.id()
+
+            return
+
+        if self.has_iattr(item.conf, 'rtr_hvac_mode'):
+            if not item.conf['rtr_hvac_mode'].isdigit():
+                self.logger.error("rtr: error in item {0}, rtr_hvac_mode need to be the controller number".format(item.id()))
+                return
+
+            c = 'c' + item.conf['rtr_hvac_mode']
+
+            self._controller[c]['HVACModeItem'] = item.id()
+
+            return self.update_HVACMode
 
         if self.has_iattr(item.conf, 'rtr_stop'):
             self.logger.error("rtr: parse item {0}, found rtr_stop which is not supported anymore - use rtr_stops instead")
@@ -243,6 +273,14 @@ class RTR(SmartPlugin):
             return
 
     def stop_Controller(self, item, caller=None, source=None, dest=None):
+        """
+        this is the callback function for the stopItems
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
         for c in self._controller.keys():
             if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
                 for item in self._controller[c]['stopItems']:
@@ -251,19 +289,48 @@ class RTR(SmartPlugin):
                            logger.info("rtr: controller {0} stopped, because of item {1}".format(c, item.id()))
                        self._controller[c]['actuatorItem'](0)
 
-    def update_item(self, item, caller=None, source=None, dest=None):
+
+    def update_HVACMode(self, item, caller=None, source=None, dest=None):
         """
-        write item's values
+        this is the callback function for the HVACModeItem
 
         :param item: item to be updated towards the plugin
         :param caller: if given it represents the callers name
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
+        if item() and caller != 'plugin':
+            if 'rtr_hvac_mode' in item.conf:
+                c = 'c' + item.conf['rtr_hvac_mode']
+                if self._controller[c]['validated']:
+                    if item() == self.HVACMode_Auto:
+                        self.default(c)
+                    elif item() == self.HVACMode_Comfort:
+                        self.boost(c)
+                    elif item() == self.HVACMode_Standby:
+                        self.default(c)
+                    elif item() == self.HVACMode_Economy:
+                        self.drop(c)
+                    elif item() == self.HVACMode_Bldg_Prot:
+                        self.logger.warning("rtr: HVAC Mode '{}' from Item {} currently not implemented".format(c, item.id()))
+                        self.default(c)
+                    else:
+                        self.logger.error("rtr: HVAC Mode '{}' from Item {} unknown".format(c, item.id()))
+                        self.default(c)
 
+
+    def update_setpoint(self, item, caller=None, source=None, dest=None):
+        """
+        this is the callback function for the setpointItems
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
         self.logger.debug("rtr: update item {}, from caller = {}, with source={} and dest={}".format(item.id(), caller, source, dest))
         if item() and caller != 'plugin':
-            if 'rtr_setpoint' in item.conf or 'rtr_current' in item.conf:
+            if 'rtr_setpoint' in item.conf:
                 c = 'c' + item.conf['rtr_setpoint']
                 if self._controller[c]['validated']:
                     self.pi_controller(c)
@@ -272,6 +339,7 @@ class RTR(SmartPlugin):
         """ this is the callback function for the scheduler """
         for c in self._controller.keys():
             if self._controller[c]['validated']:
+
                 self.pi_controller(c)
 
     def validate_controller(self, c):
@@ -287,6 +355,10 @@ class RTR(SmartPlugin):
 
         if self._controller[c]['actuatorItem'] is None:
             return
+
+        self._controller[c]['HVACMode'] = self.HVACMode_Standby
+        if self._controller[c]['HVACModeItem'] is not None:
+            self._items.return_item(self._controller[c]['HVACModeItem'])(self._controller[c]['HVACMode'])
 
         self.logger.info("rtr: all needed params are set, controller {0} validated".format(c))
         self._controller[c]['validated'] = True
@@ -423,6 +495,10 @@ class RTR(SmartPlugin):
                 self.scheduler_remove(name)
             # create scheduler
             self.scheduler_add(name, self.default, value={'c': c}, next=edt)
+
+            if self._controller[c]['timerendItem'] is not None:
+                self._items.return_item(self._controller[c]['timerendItem'])(edt.strftime("%s"))
+
         except Exception as e:
             self.logger.error("_createTimer(): ': {}".format(e))
 
@@ -474,8 +550,15 @@ class RTR(SmartPlugin):
             if self._controller[c]['tempDefault'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDefault'])
 
+            self._controller[c]['HVACMode'] = self.HVACMode_Standby
+            if self._controller[c]['HVACModeItem'] is not None:
+                self._items.return_item(self._controller[c]['HVACModeItem'])(self._controller[c]['HVACMode'])
+
             self._deleteTimer('boost_' + c)
             self._deleteTimer('drop_' + c)
+
+            if self._controller[c]['timerendItem'] is not None:
+                self._items.return_item(self._controller[c]['timerendItem'])("")
 
         else:
             self.logger.error("default(): unknown controller '{}' - we only have '{}'".format(c, self._controller.keys()))
@@ -495,6 +578,10 @@ class RTR(SmartPlugin):
         if c in self._controller:
             if self._controller[c]['tempBoost'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempBoost'])
+
+                self._controller[c]['HVACMode'] = self.HVACMode_Comfort
+                if self._controller[c]['HVACModeItem'] is not None:
+                    self._items.return_item(self._controller[c]['HVACModeItem'])(self._controller[c]['HVACMode'])
 
                 if self._controller[c]['tempBoostTime'] == 0 and edt is None:
                     timer = False
@@ -523,6 +610,11 @@ class RTR(SmartPlugin):
         if c in self._controller:
             if self._controller[c]['tempDrop'] > 0:
                 self._items.return_item(self._controller[c]['setpointItem'])(self._controller[c]['tempDrop'])
+
+                self._controller[c]['HVACMode'] = self.HVACMode_Economy
+                if self._controller[c]['HVACModeItem'] is not None:
+                    self._items.return_item(self._controller[c]['HVACModeItem'])(self._controller[c]['HVACMode'])
+
                 if isinstance(edt, datetime.datetime):
                     self._deleteTimer('boost_' + c)
                     self._createTimer('drop_' + c, c, edt)
