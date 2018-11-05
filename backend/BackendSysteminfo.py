@@ -89,16 +89,21 @@ class BackendSysteminfo:
         seconds = uptime
         uptime = self.age_to_string(days, hours, minutes, seconds)
 
+        # # return SmarthomeNG runtime
+        # rt = str(Shtime.get_instance().runtime())
+        # daytest = rt.split(' ')
+        # if len(daytest) == 3:
+        #     days = int(daytest[0])
+        #     hours, minutes, seconds = [float(val) for val in str(daytest[2]).split(':')]
+        # else:
+        #     days = 0
+        #     hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
+        # sh_uptime = self.age_to_string(days, hours, minutes, seconds)
+
         # return SmarthomeNG runtime
-        rt = str(Shtime.get_instance().runtime())
-        daytest = rt.split(' ')
-        if len(daytest) == 3:
-            days = int(daytest[0])
-            hours, minutes, seconds = [float(val) for val in str(daytest[2]).split(':')]
-        else:
-            days = 0
-            hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
-        sh_uptime = self.age_to_string(days, hours, minutes, seconds)
+        rt = Shtime.get_instance().runtime_as_dict()
+        sh_uptime = self.age_to_string(rt['days'], rt['hours'], rt['minutes'], rt['seconds'])
+
 
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
                                              sys.version_info[3])
