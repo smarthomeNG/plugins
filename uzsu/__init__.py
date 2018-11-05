@@ -169,7 +169,7 @@ class UZSU(SmartPlugin):
             success = self._update_sun(item)
             if success:
                 self.logger.debug('Updating sun info for item {}'.format(item))
-                item(self._items[item], 'UZSU Plugin', 'update_all_suns'))
+                item(self._items[item], 'UZSU Plugin', 'update_all_suns')
 
     def _update_sun(self, item, caller=None):
         """
