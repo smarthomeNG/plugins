@@ -300,7 +300,7 @@ class RTR(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if item() and caller != 'plugin':
-            if 'rtr_hvac_mode' in item.conf:
+            if self.has_iattr(item.conf, 'rtr_hvac_mode'):
                 c = 'c' + item.conf['rtr_hvac_mode']
                 if self._controller[c]['validated']:
                     if item() == self.HVACMode_Auto:
@@ -330,7 +330,7 @@ class RTR(SmartPlugin):
         """
         self.logger.debug("rtr: update item {}, from caller = {}, with source={} and dest={}".format(item.id(), caller, source, dest))
         if item() and caller != 'plugin':
-            if 'rtr_setpoint' in item.conf:
+            if self.has_iattr(item.conf, 'rtr_setpoint'):
                 c = 'c' + item.conf['rtr_setpoint']
                 if self._controller[c]['validated']:
                     self.pi_controller(c)

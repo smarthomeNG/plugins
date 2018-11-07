@@ -84,6 +84,16 @@ To achieve this, the plugins stores the unix timestamp of the timers end in a fi
 
 For more info about the functions contine reading.
 
+#### rtr_hvac_mode
+
+The ``rtr_hvac_mode`` can be connected to a item, to trigger/read the 3 new modes (default/boost/drop) and get the currently mode set. It implements the KNX DPT 20.102.
+
+Set the item value to
+- 1 to trigger the boost function of the controller
+- 2 to trigger the default function of the controller
+- 3 to trigger the drop function of the controller
+- 4 is currently not implemented and sets the controller back to default
+
 ### Example
 
 The following shows an simple example for a working.
@@ -161,3 +171,104 @@ gf:
                 rtr_stops:
                   - '2'
 ```
+
+## logic
+
+To define items which trigger the default(), boost() or drop() function, you can use the item attribute rtr_hvac_mode or you can start to use a logic and bind the watch item(s) to that logic.
+
+For that I made the following logic, which you can take as an example:
+
+```
+src = trigger['source']
+logger.info("triggerd by {}".format(src))
+src_item = sh.return_item(src)
+
+if src_item is not None and src_item():
+    parent_item = src_item.return_parent()
+    src_item_name = src_item.id().replace("{}.".format(parent_item.id()), "")
+    logger.debug("extracted item name {}".format(src_item_name))
+
+    src_item_parts = src_item_name.split('_')
+    if len(src_item_parts) == 3:
+        m = 0
+        st = src_item_parts[2]
+        if st.find("h") > 0:
+            num = st.replace("h", "")
+            if num.isnumeric():
+                m = int(num) * 60
+        elif st.find("m") > 0:
+            num = st.replace("m", "")
+            if num.isnumeric():
+                m = int(num)
+        else:
+            logger.error("time is invalid for this logic!")
+
+        if m > 0 or src_item_parts[0] == "default":
+
+            items = []
+            if src_item_parts[1] == "all":
+                for item in sh.find_items('rtr_current'):
+                    items.append(item)
+            else:
+                for item in sh.match_items('*.'+src_item_parts[1]+'.*:rtr_current'):
+                    items.append(item)
+
+            edt = sh.now() + datetime.timedelta(minutes=m)
+            if src_item_parts[0] == "default":
+                for item in items:
+                    sh.rtr.default(item.conf["rtr_current"])
+            elif src_item_parts[0] == "boost":
+                for item in items:
+                    sh.rtr.boost(item.conf["rtr_current"], edt)
+            elif src_item_parts[0] == "drop":
+                for item in items:
+                    sh.rtr.drop(item.conf["rtr_current"], edt)
+        else:
+            logger.error("time of 0 is invalid for this logic!")
+    else:
+        logger.error("item name is invalid for this logic!")
+```
+
+Than I created the follow items:
+
+```
+central:
+
+    heater:
+        sv_page: overview
+        sv_img: sani_heating.svg
+        sv_overview: heater
+
+        sv_heading_left: "Boost for <span data-role='controlgroup' data-type='horizontal'>{{ basic.stateswitch('bz1', '.boost_all_3h', '', 1, 'sani_heating_temp', '3h', '', 'icon1') }}{{ basic.stateswitch('bz2', '.boost_all_5h', '', 1, 'sani_heating_temp', '5h', '', 'icon1') }}</span>"
+        sv_heading_center: "{{ basic.stateswitch('nz1', '.default_all_0h', '', 1, 'sani_heating_temp', 'Normal', '', 'icon1') }}"
+        sv_heading_right: "Drop for <span data-role='controlgroup' data-type='horizontal'>{{ basic.stateswitch('dz1', '.drop_all_3h', '', 1, 'sani_heating_temp', '3h', '', 'icon1') }}{{ basic.stateswitch('dz2', '.drop_all_5h', '', 1, 'sani_heating_temp', '5h', '', 'icon1') }}</span>"
+
+        default_all_0h:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'yes'
+
+        boost_all_3h:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'yes'
+
+        boost_all_5h:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'yes'
+
+        drop_all_3h:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'yes'
+
+        drop_all_5h:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'yes'
+```
+
+The logic extract the function name (default/boost/drop), destination items and runtime from the triggering item name.
+Because rtr->default() can't have a datetime set, you must define 0d/0m in the name.
+Everything elso should be self explained and can/should be modified to your needs.
