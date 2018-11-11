@@ -17,6 +17,9 @@ Description of the attributes:
 
 * __default_Kp__: change default value for Kp (optional, default: 10)
 * __default_Ki__: change default value for Ki (optional, default: 15)
+* __cycle_time__: (optional, default: 60)
+* __defaultBoostTime__: (optional, default: 240)
+* __defaultOnExpiredTimer__: (optional, default: True)
 
 ## items.yaml
 
