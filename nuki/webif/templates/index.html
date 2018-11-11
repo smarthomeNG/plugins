@@ -26,7 +26,6 @@
 {% endblock %}
 
 {% block bodytab1 %}
-
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 	<div class="col-sm-12">
 		<h5>{{ _('Nuki Event Items') }} ({{ p.get_event_items()|length }})</h5>
@@ -96,6 +95,7 @@
 					<th>{{ _('Wert') }}</th>
 					<th>{{ _('Letztes Update') }}</th>
 					<th>{{ _('Letzter Change') }}</th>
+					<th></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -105,8 +105,9 @@
 						<td class="py-1">{{ item.type() }}</td>
 						<td class="py-1">{{ item._enforce_updates }}</td>
 						<td class="py-1">{{ value }}</td>
-						<td class="py-1">
+						<td class="py-1" >
 							{{ item() }}
+							{% if item() == 0 %}({{ _('none') }}){% endif %}
 							{% if item() == 1 %}({{ _('unlock') }}){% endif %}
 							{% if item() == 2 %}({{ _('lock') }}){% endif %}
 							{% if item() == 3 %}({{ _('unlatch') }}){% endif %}
@@ -115,6 +116,22 @@
 						</td>
 						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1 pr-5" style="width: 400px;">
+							<form>
+								<div class="input-group-sm input-group">
+									<select class="form-control" id="nuki_actions_{{ value }}" name="nuki_actions_{{ value }}">
+										<option value="1" {% if item() == 1 %}selected{% endif %}>{{ _('unlock') }}</option>
+										<option value="2" {% if item() == 2 %}selected{% endif %}>{{ _('lock') }}</option>
+										<option value="3" {% if item() == 3 %}selected{% endif %}>{{ _('unlatch') }}</option>
+										<option value="4" {% if item() == 4 %}selected{% endif %}>{{ _('lockAndGo') }}</option>
+										<option value="5" {% if item() == 5 %}selected{% endif %}>{{ _('lockAndGoWithUnlatch') }}</option>
+									</select>
+									<div class="input-group-append">
+										<button class="btn btn-outline-secondary" type="button" onClick="$.get( 'triggerAction?path={{ item.path() }}&value='+$('#nuki_actions_{{ value }}').val());">{{ _('Send') }}</button>
+								    </div>
+								</div>
+							</form>
+						</td>
 					</tr>
 				{% endfor %}
 			</tbody>

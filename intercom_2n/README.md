@@ -1,3 +1,4 @@
+
 # 2N-Intercom Plugin
 
 ## Requirements
@@ -257,7 +258,7 @@ Intercom_2n:
                 # – button with a # or key symbol
                 type: str
                 event_data_2n: key
-                enforce_udpates: 'True'
+                enforce_updates: 'True'
 
         KeyReleased:
             # Signals releasing (KeyReleased) of speed dial or numeric keypad buttons.
@@ -271,7 +272,7 @@ Intercom_2n:
                 # – button with a # or key symbol
                 type: str
                 event_data_2n: key
-                enforce_udpates: 'True'
+                enforce_updates: 'True'
 
         CodeEntered:
             # Signals entering of a user code via the numeric keypad. The event is generated in numeric keypad equipped
@@ -282,7 +283,7 @@ Intercom_2n:
                 # User code, 1234, e.g.. The code includes 2 digits at least and 00 cannot be used.
                 type: str
                 event_data_2n: code
-                enforce_udpates: 'True'
+                enforce_updates: 'True'
 
             valid:
                 # Code validity (i.e. if the code is defined as a valid user code or universal switch code in the intercom
@@ -291,7 +292,7 @@ Intercom_2n:
                 # true – valid code
                 type: bool
                 event_data_2n: valid
-                enforce_udpates: 'True'
+                enforce_updates: 'True'
 
         CardEntered:
             # Signals tapping an RFID card on the card reader. The event is generated in RFID card reader equipped devices
