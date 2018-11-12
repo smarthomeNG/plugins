@@ -48,6 +48,10 @@ parameters:
             de: "Wenn nicht aktiviert, werden beim wiederherstellen von abgelaufenen Timern die Temperaturen nicht zurück auf Default gesetzt"
             en: "when not True, a expired timer will not set back to Default-Temperature on a timer restore (when SH will be restarted)"
 
+    defaultValveProtect:
+        type: bool
+        default: true
+
 item_attributes:
     rtr_current:
         type: int
@@ -105,6 +109,9 @@ item_attributes:
         description:
             de: 'Ordnet das Item dem Controller mit gegebener ID als Stellgröße zu'
             en: 'Defines the Item as actuator value for the given controller ID'
+
+    rtr_valve_protect:
+        type: bool
 
     rtr_hvac_mode:
         type: int

@@ -67,6 +67,8 @@ class RTR(SmartPlugin):
                 'tempDrop' : 0,
                 'tempBoost' : 0,
                 'tempBoostTime' : 0,
+                'valveProtect' : False,
+                'valveProtectActive' : False,
                 'validated' : False}
 
     def __init__(self, sh, *args, **kwargs):
@@ -92,6 +94,7 @@ class RTR(SmartPlugin):
         self._defaults['Kp'] = self.get_parameter_value('default_Kp')
         self._defaults['Ki'] = self.get_parameter_value('default_Ki')
         self._defaults['tempBoostTime'] = self.get_parameter_value('defaultBoostTime')
+        self._defaults['valveProtect'] = self.get_parameter_value('defaultValveProtect')
         self._cycle_time = self.get_parameter_value('cycle_time')
         self._defaultOnExpiredTimer = self.get_parameter_value('defaultOnExpiredTimer')
 
@@ -104,6 +107,7 @@ class RTR(SmartPlugin):
         self.logger.debug("run method called")
         self.alive = True
         self.scheduler_add('cycle', self.update_items, prio=5, cycle=int(self._cycle_time))
+        self.scheduler_add('protect', self.valve_protect, prio=5, cron='0 2 * 0')
 
         try:
             self._restoreTimer()
@@ -139,15 +143,19 @@ class RTR(SmartPlugin):
             self._controller[c]['currentItem'] = item.id()
             self.logger.info("rtr: bound item '{1}' to currentItem for controller '{0}'".format(c, item.id()))
 
-            if not self.has_iattr(item.conf, 'rtr_Kp'):
-                self.logger.info("rtr: missing rtr_Kp in item {0}, setting to default: {1}".format(item.id(), self._controller[c]['Kp']))
-            else:
-                self._controller[c]['Kp'] = float(item.conf['rtr_Kp'])
+            # check for optional item attribute rtr_Kp (float)
+            if self.has_iattr(item.conf, 'rtr_Kp'):
+                if item.conf['rtr_Kp'].replace(".", "", 1).isdigit():
+                    self._controller[c]['Kp'] = float(item.conf['rtr_Kp'])
+                else:
+                    self.logger.error("rtr: item {0}, rtr_Kp need to be a number".format(item.id()))
 
-            if not self.has_iattr(item.conf, 'rtr_Ki'):
-                self.logger.info("rtr: missing rtr_Ki in item {0}, setting to default: {1}".format(item.id(), self._controller[c]['Ki']))
-            else:
-                self._controller[c]['Ki'] = float(item.conf['rtr_Ki'])
+            # check for optional item attribute rtr_Ki (float)
+            if self.has_iattr(item.conf, 'rtr_Ki'):
+                if item.conf['rtr_Ki'].replace(".", "", 1).isdigit():
+                    self._controller[c]['Ki'] = float(item.conf['rtr_Ki'])
+                else:
+                    self.logger.error("rtr: item {0}, rtr_Ki need to be a number".format(item.id()))
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
@@ -170,17 +178,33 @@ class RTR(SmartPlugin):
             self._controller[c]['setpointItem'] = item.id()
             self.logger.info("rtr: bound item '{1}' to setpointItem for controller '{0}'".format(c, item.id()))
 
+            # check for optional item attribute rtr_temp_default (float)
             if self.has_iattr(item.conf, 'rtr_temp_default'):
-                self._controller[c]['tempDefault'] = float(item.conf['rtr_temp_default'])
+                if item.conf['rtr_temp_default'].replace(".", "", 1).isdigit():
+                    self._controller[c]['tempDefault'] = float(item.conf['rtr_temp_default'])
+                else:
+                    self.logger.error("rtr: item {0}, rtr_temp_default need to be a number".format(item.id()))
 
+            # check for optional item attribute rtr_temp_drop (float)
             if self.has_iattr(item.conf, 'rtr_temp_drop'):
-                self._controller[c]['tempDrop'] = float(item.conf['rtr_temp_drop'])
+                if item.conf['rtr_temp_drop'].replace(".", "", 1).isdigit():
+                    self._controller[c]['tempDrop'] = float(item.conf['rtr_temp_drop'])
+                else:
+                    self.logger.error("rtr: item {0}, rtr_temp_drop need to be a number".format(item.id()))
 
+            # check for optional item attribute rtr_temp_boost (float)
             if self.has_iattr(item.conf, 'rtr_temp_boost'):
-                self._controller[c]['tempBoost'] = float(item.conf['rtr_temp_boost'])
+                if item.conf['rtr_temp_boost'].replace(".", "", 1).isdigit():
+                    self._controller[c]['tempBoost'] = float(item.conf['rtr_temp_boost'])
+                else:
+                    self.logger.error("rtr: item {0}, rtr_temp_boost need to be a number".format(item.id()))
 
+            # check for optional item attribute rtr_temp_boost_time (float)
             if self.has_iattr(item.conf, 'rtr_temp_boost_time'):
-                self._controller[c]['tempBoostTime'] = int(item.conf['rtr_temp_boost_time'])
+                if item.conf['rtr_temp_boost_time'].isdigit():
+                    self._controller[c]['tempBoostTime'] = int(item.conf['rtr_temp_boost_time'])
+                else:
+                    self.logger.error("rtr: item {0}, rtr_temp_boost_time need to be a number".format(item.id()))
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
@@ -203,6 +227,15 @@ class RTR(SmartPlugin):
             self._controller[c]['actuatorItem'] = item.id()
             self.logger.info("rtr: bound item '{1}' to actuatorItem for controller '{0}'".format(c, item.id()))
 
+            # check for optional item attribute rtr_valve_protect (bool)
+            if self.has_iattr(item.conf, 'rtr_valve_protect'):
+                if item.conf['rtr_valve_protect'].lower() in ['yes', 'true', 'on', '1']:
+                    self._controller[c]['valveProtect'] = True
+                elif item.conf['rtr_valve_protect'].lower() in ['no', 'false', 'off', '0']:
+                    self._controller[c]['valveProtect'] = False
+                else:
+                    self.logger.error("rtr: item {0}, rtr_valve_protect need to be boolean".format(item.id()))
+
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
 
@@ -215,6 +248,11 @@ class RTR(SmartPlugin):
 
             c = 'c' + item.conf['rtr_timer_end_text']
 
+            # init controller with defaults when it not exist
+            if c not in self._controller:
+                self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values".format(c))
+                self._controller[c] = self._defaults.copy()
+
             self._controller[c]['timerendItem'] = item.id()
 
             return
@@ -226,6 +264,11 @@ class RTR(SmartPlugin):
 
             c = 'c' + item.conf['rtr_hvac_mode']
 
+            # init controller with defaults when it not exist
+            if c not in self._controller:
+                self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values".format(c))
+                self._controller[c] = self._defaults.copy()
+
             self._controller[c]['HVACModeItem'] = item.id()
 
             return self.update_HVACMode
@@ -236,7 +279,7 @@ class RTR(SmartPlugin):
 
         if self.has_iattr(item.conf, 'rtr_stops'):
             # validate this optional Item
-            if item._type != 'bool':
+            if item.type() != 'bool':
                 self.logger.error("rtr: error in item {0}, rtr_stops Item need to be bool (current {1})".format(item.id(), item._type))
                 return
 
@@ -338,8 +381,7 @@ class RTR(SmartPlugin):
     def update_items(self):
         """ this is the callback function for the scheduler """
         for c in self._controller.keys():
-            if self._controller[c]['validated']:
-
+            if self._controller[c]['validated'] and not self._controller[c]['valveProtectActive']:
                 self.pi_controller(c)
 
     def validate_controller(self, c):
@@ -620,3 +662,31 @@ class RTR(SmartPlugin):
                     self._createTimer('drop_' + c, c, edt)
         else:
             self.logger.error("drop() unknown controller '{}' - we only have '{}'".format(c, self._controller.keys()))
+
+    def valve_protect(self, y=100):
+        """
+        Initalizes valve protecion
+        1. call = open valve (y=100) -> timer +5min
+        2. call = close valve (y=0) -> timer +5min
+        3. call = active = false
+        """
+        self.logger.info("run valve protecion")
+
+        shtime = Shtime.get_instance()
+        edt = shtime.now() + datetime.timedelta(minutes=5)
+
+        if y == 100:
+            self.scheduler_add('protectClose', self.valve_protect, value={'y': 0}, next=edt)
+        elif y == 0:
+            self.scheduler_add('protectOff', self.valve_protect, value={'y': -1}, next=edt)
+
+        for c in self._controller.keys():
+            if self._controller[c]['validated'] and self._controller[c]['valveProtect']:
+
+                if y >= 0:
+                    yItem = self._items.return_item(self._controller[c]['actuatorItem'])
+                    self.logger.debug("set item '{}' to '{}'".format(yItem.id(), y))
+                    self._controller[c]['valveProtectActive'] = True
+                    yItem(y)
+                else:
+                    self._controller[c]['valveProtectActive'] = False
