@@ -386,3 +386,62 @@ class Prepare_Packet_Data():
         self.logger.info('enocean-PrepareData: {} Packet Data Prepared for {} (VLD)'.format(tx_eep, tx_eep))
         optional = [SubTel, rx_id, db, Secu]
         return rorg, payload, optional
+
+        
+    def _prepare_data_for_tx_eep_D2_01_12(self, item, tx_eep):    
+        """
+        ### --- Data for D2_01_12 (VLD) --- ###
+        Prepare data for Devices with Varable Length Telegram.
+        """
+        self.logger.debug('enocean-PrepareData: prepare data for tx_eep {}'.format(tx_eep))
+        rorg = 0xD2
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        #Holen von Channel id, hängt am 'Child' Item
+        if self._plugin_instance.has_iattr(item.conf, 'enocean_chan'):
+            chan = int(self._plugin_instance.get_iattr_value(item.conf, 'enocean_chan'), 16)
+            if (chan < 0) or (chan > 0xFFFFFFFF):
+                self.logger.error('enocean-PrepareData: {} Enocean Channel out of range (0-127). Aborting.'.format(chan))
+                return None
+            self.logger.debug('enocean-PrepareData: {} enocean_chan found.'.format(chan))
+        else:
+            chan = 0
+            self.logger.debug('enocean-PrepareData: {} no enocean_chan found!'.format(chan))
+        #Item retten
+        rescue_item = item
+        #Holen von rx_id id, hängt am Parent Item
+        item = item.return_parent()
+        if self._plugin_instance.has_iattr(item.conf, 'enocean_rx_id'):
+            rx_id = int(self._plugin_instance.get_iattr_value(item.conf, 'enocean_rx_id'), 16)
+            if (rx_id < 0) or (rx_id > 0xFFFFFFFF):
+                self.logger.error('enocean-PrepareData: {} rx-ID-Offset out of range (0-127). Aborting.'.format(rx_id))
+                return None
+            self.logger.debug('enocean-PrepareData: {} enocean_rx_id found.'.format(rx_id))
+        else:
+            rx_id = 0
+            self.logger.debug('enocean-PrepareData: {} no enocean_rx_id found!'.format(tx_id))
+        #Item wiederherstellen, da wir den Schsltzustand noch brauchen
+        item = rescue_item
+       # Prepare Data Packet
+        if (item() == 0):
+            payload = [0x01, chan, 0x0]
+            optional = [SubTel, rx_id, db, Secu]
+        elif (item() == 1):
+            payload = [0x01, chan, 0x60]
+            optional = [SubTel, rx_id, db, Secu]
+        else:
+            self.logger.error('enocean-PrepareData: {} undefined Value. Error!'.format(item()))
+            return None
+        # packet_data_prepared = (id_offset, 0xD2, payload, [0x03, 0xFF, 0xBA, 0xD0, 0x00, 0xFF, 0x0])
+        #                                                   SubTel  x1    x2    x3    x4   dB    Secu
+        
+        #Zerlegen der rx_id in 4 Blöcke, Ziel: "0xFF, 0xFF, 0xFF, 0xFF"
+        x1, x2, x3, x4 = (rx_id & 0xFFFFFFFF).to_bytes(4, 'big')
+
+        self.logger.info('enocean-PrepareData: {} Packet Data Prepared for {} (VLD)'.format(tx_eep, tx_eep))
+        optional = [SubTel, x1, x2, x3, x4, db, Secu]
+        return rorg, payload, optional
+    
+        
+        
