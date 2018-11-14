@@ -453,9 +453,11 @@ class BackendSysteminfo:
         elif req_group == 'test':
             req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'tests', 'requirements.txt'))
             self.logger.info("get_requirements_info: filepath = {}".format(os.path.join(self._sh_dir, 'tests', 'requirements.txt')))
+            pass
         elif req_group == 'doc':
             req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'doc', 'requirements.txt'))
             self.logger.info("get_requirements_info: filepath = {}".format(os.path.join(self._sh_dir, 'doc', 'requirements.txt')))
+            pass
         else:
             self.logger.error("get_requirements_info: Unknown requirements group '{}' requested".format(req_group))
 
@@ -484,7 +486,10 @@ class BackendSysteminfo:
                                 'plugins.', '') + ')'
 
         if req_group in ['doc','test']:
-            req_dict = req_dict_base.copy()
+            try:
+                req_dict = req_dict_base.copy()
+            except:
+                pass
 
         self.logger.info("get_requirements_info: req_dict for group {} = {}".format(req_group, req_dict))
         return req_dict
