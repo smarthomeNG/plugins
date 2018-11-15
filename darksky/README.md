@@ -30,7 +30,7 @@ weather_darksky:
     key: xxxxyyyyxxxxyyyy
     latitude: '48.04712'
     longitude: '11.81421'
-    # language: de
+    # lang: de
     # cycle: 600
     # instance: ...
 ```
