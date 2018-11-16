@@ -319,7 +319,28 @@ EnOcean_Item:
             enocean_rx_key: DI_3
             ref_level: 80
             dim_speed: 100
-            color: white   
+            color: white
+
+    dual_actuator:
+    remark: Nodon SIN-2-2-01 – actuator 2 channels
+    enocean_rx_id: 01020304
+    enocean_rx_eep: D2_01_12
+
+    channel1:
+        type: bool
+        enocean_rx_key: STAT1
+        enocean_tx_eep: D2_01_12
+        enocean_tx_id_offset: 3
+        enocean_chan: 0
+        
+
+    channel2:
+        type: bool
+        enocean_rx_key: STAT2
+        enocean_tx_eep: D2_01_12
+        enocean_tx_id_offset: 3
+        enocean_chan: 1
+        
 ```
 
 ### Add new listening EnOcean devices
@@ -340,6 +361,7 @@ The following status EEPs are supported:
 * A5_11_04		Dimmer status feedback
 * A5_12_01		Power Measurement, e.g. Eltako FSVA-230V
 * D2_01_07		Simple electronic switch
+* D2_01_12      Slot-in module with 2 channels, no metering capabilities
 * D5_00_01		Door/Window Contact, e.g. Eltako FTK, FTKB
 * F6_02_01		2-Button-Rocker
 * F6_02_02		2-Button-Rocker
@@ -357,6 +379,7 @@ A complete list of available EEPs is documented at [EnOcean Alliance](http://www
 * A5_38_08_03		Dimmer command with specified dim level (0-100)
 * A5_3F_7F		Universal actuator command, e.g. blind control
 * D2_01_07		Simple electronic switch
+* D2_01_12      Slot-in module with 2 channels, no metering capabilities
 ```
 
 The optional ref_level parameter defines default dim value when dimmer is switched on via on command.
