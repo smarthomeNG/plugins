@@ -62,11 +62,13 @@
 </div>
 {% endblock %}
 {% block bodytab2 %}
+    <div class="container ml-1 pl-1 mr-1 pr-1">
     <ul class="list-group">
     {%  for function in p.metadata.get_plugin_function_defstrings(with_type=True, with_default=True) %}
     <li class="list-group-item">{{ function }}</li>
     {% endfor %}
     </ul>
+    </div>
 {% endblock %}
 {% block bodytab3 %}
 		{% if p._call_monitor %}
