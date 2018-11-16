@@ -272,6 +272,9 @@ class Nuki(SmartPlugin):
         for nuki_id in paired_nukis:
             response = self._api_call(self._base_url, endpoint='lockState', nuki_id=nuki_id, token=self._token,
                                       no_wait=self._noWait)
+            if response is None:
+                self.logger.info("Plugin '{}': Getting Nuki status ... Response is None.".format(self.get_shortname()))
+                return
             Nuki.update_lock_state(nuki_id, response)
 
     def _api_call(self, base_url, endpoint=None, nuki_id=None, token=None, action=None, no_wait=None, callback_url=None,
