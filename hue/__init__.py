@@ -56,7 +56,7 @@ client = Tools()
 
 class HUE(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.3"
+    PLUGIN_VERSION = "1.4.4"
 
     def __init__(self, smarthome, hue_ip = '', hue_user = '', hue_port = '80', cycle_lamps = '10', cycle_bridges = '60', default_transitionTime = '0.4'):
 
