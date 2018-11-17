@@ -2,6 +2,11 @@
 {% set tab1title = _('AVM Items') %}
 {% set tab2title = _('Plugin-API') %}
 {% set tab3title = _('Call Monitor Items') %}
+{% set language = p._sh.get_defaultlanguage() %}
+{% if language not in ['en','de'] %}
+{% set language = 'en' %}
+{% endif %}
+
 {% block headtable %}
 <table class="table table-striped table-hover">
 	<tbody>
@@ -65,24 +70,22 @@
     <div class="container ml-1 pl-1 mr-1 pr-1">
     {%  for function, dict in p.metadata.plugin_functions.items() %}
         <div class="card mb-2">
-          <div class="card-header">
+          <div class="card-header p-2">
               <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
           </div>
-          <div class="card-body">
-              DE: {{ dict['description']['de'] }}<br/>
-              EN: {{ dict['description']['en'] }}<br/>
+          <div class="card-body p-2">
+              {{ dict['description'][language] }}<br/>
               {% if dict['parameters'] is not none %}
                   <div class="card mt-2">
-                      <div class="card-header">
+                      <div class="card-header p-2">
                         <strong>{{ _('Parameter') }}:</strong>
                       </div>
-                      <div class="card-body">
+                      <div class="card-body p-2">
                           <ul class="list-group">
                           {%  for name, paramdict in dict['parameters'].items() %}
-                            <li class="list-group-item">
+                            <li class="list-group-item p-2">
                                 <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
-                            DE: {{ paramdict['description']['de'] }}<br/>
-                            EN: {{ paramdict['description']['en'] }}
+                            {{ paramdict['description'][language] }}
                             </li>
                           {% endfor %}
                           </ul>

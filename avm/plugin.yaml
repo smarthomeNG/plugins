@@ -213,8 +213,8 @@ plugin_functions:
     set_call_origin:
         type: void
         description:
-            de: "Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'"
-            en: "Sets the 'call origin', e.g. before running 'start_call'"
+            de: "Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'."
+            en: "Sets the 'call origin', e.g. before running 'start_call'."
         parameters:
             phone_name:
                 type: mac

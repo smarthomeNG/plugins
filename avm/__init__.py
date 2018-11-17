@@ -540,6 +540,7 @@ class AVM(SmartPlugin):
         self._call_monitor_incoming_filter = self.get_parameter_value('call_monitor_incoming_filter')
 
         self._cycle = int(self.get_parameter_value('cycle'))
+        self._sh = sh
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
         self._calllist_cache = []
