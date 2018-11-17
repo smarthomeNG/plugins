@@ -1,0 +1,26 @@
+/**
+* Extended RTR (Room Temperatur Regulator)
+*
+* @param {id=} unique id for this widget (optional)
+* @param {text=} name of the rtr
+* @param {item} an item for the actual temperature
+* @param {item} an item for the set temperature
+* @param {item=} an item for comfort / standby (3x bit or 1x byte, optional)
+* @param {item=} an item for night (3x bit or 1x byte, optional)
+* @param {item=} an item for frost (3x bit or 1x byte, optional)
+* @param {item=} an item for the current state of the actor (optional)
+* @param {item=} an item for a text (some rtr have a text-display), (optional)
+* @param {value=0.5} step for plus/minus buttons (optional, default: 0.5)
+* @param {item=} an item for the offset temperature (optional, if provided set temperature changes will be written to this item instead of 'item_set')
+* @param {text[]=} list of additional widgets / content to display
+*/
+{% macro rtr(id, txt, item_actual, item_set, item_comfort, item_night, item_frost, item_state, item_txt, step, item_offset, supplements, item_actuator, item_endtime) %}
+
+	{% import "device.html" as device %}
+	{% import "basic.html" as basic %}
+
+	{{ device.rtr(id, txt, item_actual, item_set, item_comfort, item_night, item_frost, item_state, item_txt, step, item_offset, supplements) }}
+	{% if item_actuator %}{{ basic.print(id~"print_actuator", item_actuator, 'Heizt mit %d %')}}{% endif %}
+	{% if item_endtime %}<br>{{ basic.print(id~"print_endtime", item_endtime, 'text', 'VAR1=rtr_timer(VAR1  )')}}{% endif %}
+
+{% endmacro %}
