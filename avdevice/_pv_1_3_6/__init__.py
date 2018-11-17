@@ -24,18 +24,14 @@
 #########################################################################
 
 import logging
-
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
-
 import io
 import time
-import datetime
 import re
 import errno
+import sys
 import itertools
-from bin.smarthome import VERSION
-
 from .AVDeviceInit import Init
 from .AVDeviceInit import ProcessVariables
 from .AVDeviceFunctions import CreateResponse
@@ -51,48 +47,70 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.3.6"
 
-
-    def __init__(self, smarthome):
+    def __init__(self, smarthome,
+                 model='',
+                 ignoreresponse='RGB,RGC,RGD,GBH,GHH,VTA,AUA,AUB',
+                 errorresponse='E02,E04,E06',
+                 forcebuffer='GEH01020, GEH04022, GEH05024',
+                 inputignoredisplay='',
+                 dependson_item='',
+                 dependson_value=True,
+                 rs232_port='',
+                 rs232_baudrate=9600,
+                 rs232_timeout=0.1,
+                 tcp_ip='',
+                 tcp_port=23,
+                 tcp_timeout=1,
+                 resetonerror=False,
+                 depend0_power0=False,
+                 depend0_volume0=False,
+                 sendretries=10,
+                 resendwait=1.0,
+                 reconnectretries=13,
+                 secondstokeep=50,
+                 responsebuffer='5',
+                 autoreconnect=False,
+                 update_exclude='',
+                 statusquery=True):
         self.itemsApi = Items.get_instance()
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-        self.init_webinterface()
+        self.logger = logging.getLogger(__name__)
+        self._sh = smarthome
+        self.alive = False
+        self._name = self.get_instance_name()
+        self._serialwrapper = None
+        self._serial = None
+        self._tcpsocket = None
+        self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+        self._items = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+        self._query_zonecommands = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
+        self._items_speakers = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+        self._send_commands = []
+        self._init_commands = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
+        self._keep_commands = {}
+        self._specialparse = {}
+        self._query_commands = []
+        self._power_commands = []
+        self._expected_response = []
+        self._response_commands = {}
+        self._response_wildcards = {'wildcard': {}, 'original': {}}
+        self._number_of_zones = 0
+        self._trigger_reconnect = True
+        self._reconnect_counter = 0
+        self._resend_counter = 0
+        self._resend_on_empty_counter = 0
+        self._clearbuffer = False
+        self._sendingcommand = 'done'
+        self._special_commands = {}
+        self._is_connected = []
+        self._parsinginput = []
+        self._dependencies = {'Slave_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                              'Slave_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                              'Master_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
+                              'Master_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}}
+
         try:
-            self.alive = False
-            self._name = self.get_fullname()
-            self._serialwrapper = None
-            self._serial = None
-            self._tcpsocket = None
-            self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
-            self._items = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
-            self._query_zonecommands = {'zone0': [], 'zone1': [], 'zone2': [], 'zone3': [], 'zone4': []}
-            self._items_speakers = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
-            self._send_commands = []
-            self._init_commands = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
-            self._keep_commands = {}
-            self._specialparse = {}
-            self._query_commands = []
-            self._power_commands = []
-            self._expected_response = []
-            self._response_commands = {}
-            self._response_wildcards = {'wildcard': {}, 'original': {}}
-            self._number_of_zones = 0
-            self._trigger_reconnect = True
-            self._reconnect_counter = 0
-            self._resend_counter = 0
-            self._resend_on_empty_counter = 0
-            self._clearbuffer = False
-            self._sendingcommand = 'done'
-            self._special_commands = {}
-            self._is_connected = []
-            self._parsinginput = []
-            self._send_history = {'query': {}, 'command': {}}
-            self._dependencies = {'Slave_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
-                                  'Slave_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
-                                  'Master_function': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}},
-                                  'Master_item': {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}}
             self._model = self.get_parameter_value('model')
             self._resend_wait = float(self.get_parameter_value('resendwait'))
             self._secondstokeep = int(self.get_parameter_value('secondstokeep'))
@@ -117,40 +135,39 @@ class AVDevice(SmartPlugin):
             rs232_timeout = self.get_parameter_value('rs232_timeout')
             update_exclude = self.get_parameter_value('update_exclude')
             statusquery = self.get_parameter_value('statusquery')
+        except Exception:
+            self._model = model
+            self._resend_wait = float(resendwait)
+            self._secondstokeep = int(secondstokeep)
+            self._auto_reconnect = autoreconnect
+            self._resend_retries = int(sendretries)
+            self._reconnect_retries = int(reconnectretries)
+        # Initializing all variables
+        self.logger.debug("Initializing {}: Resendwait: {}. Seconds to keep: {}.".format(self._name, self._resend_wait,
+                                                                                         self._secondstokeep))
+        self.init = Init(self._sh, self._name, self._model, self._items)
+        self._rs232, self._baud, self._timeout = ProcessVariables([rs232_port, rs232_baudrate, rs232_timeout],
+                                                                  self._name).process_rs232()
+        self._tcp, self._port, self._tcp_timeout = ProcessVariables([tcp_ip, tcp_port, tcp_timeout],
+                                                                    self._name).process_tcp()
+        self._dependson, self._dependson_value, self._depend0_power0, self._depend0_volume0 = ProcessVariables(
+            [dependson_item, dependson_value, depend0_power0, depend0_volume0], self._name).process_dependson()
 
-            # Initializing all variables
-            self.logger.debug("Initializing {}: Resendwait: {}. Seconds to keep: {}.".format(self._name, self._resend_wait,
-                                                                                             self._secondstokeep))
-            self.init = Init(self._name, self._model, self._items, self.logger)
-            self._rs232, self._baud, self._timeout = ProcessVariables([rs232_port, rs232_baudrate, rs232_timeout],
-                                                                      self._name, self.logger).process_rs232()
-            self._tcp, self._port, self._tcp_timeout = ProcessVariables([tcp_ip, tcp_port, tcp_timeout],
-                                                                        self._name, self.logger).process_tcp()
-            self._dependson, self._dependson_value, self._depend0_power0, self._depend0_volume0 = ProcessVariables(
-                [dependson_item, dependson_value, depend0_power0, depend0_volume0],
-                self._name, self.logger).process_dependson()
-
-            self._response_buffer = ProcessVariables(responsebuffer, self._name, self.logger).process_responsebuffer()
-            self._reset_onerror = ProcessVariables(resetonerror, self._name, self.logger).process_resetonerror()
-            self._statusquery = ProcessVariables(statusquery, self._name, self.logger).process_statusquery()
-            self._ignore_response, self._error_response, self._force_buffer, self._ignoredisplay = ProcessVariables(
-                [ignoreresponse, errorresponse, forcebuffer, inputignoredisplay],
-                self._name, self.logger).process_responses()
-            self.logger.debug(
-                "Initializing {}: Special Settings: Ignoring responses {}.".format(self._name, self._ignore_response))
-            self.logger.debug(
-                "Initializing {}: Special Settings: Error responses {}.".format(self._name, self._error_response))
-            self.logger.debug("Initializing {}: Special Settings: Force buffer {}.".format(self._name, self._force_buffer))
-            self.logger.debug(
-                "Initializing {}: Special Settings: Ignore Display {}".format(self._name, self._ignoredisplay))
-            self.logger.debug(
-                "Initializing {}: Querying at plugin init is set to {}".format(self._name, self._statusquery))
-            self._update_exclude = ProcessVariables(update_exclude, self._name, self.logger).process_update_exclude()
-
-        except Exception as err:
-            self.logger.error(err)
-            self._init_complete = False
-            return
+        self._response_buffer = ProcessVariables(responsebuffer, self._name).process_responsebuffer()
+        self._reset_onerror = ProcessVariables(resetonerror, self._name).process_resetonerror()
+        self._statusquery = ProcessVariables(statusquery, self._name).process_statusquery()
+        self._ignore_response, self._error_response, self._force_buffer, self._ignoredisplay = ProcessVariables(
+            [ignoreresponse, errorresponse, forcebuffer, inputignoredisplay], self._name).process_responses()
+        self.logger.debug(
+            "Initializing {}: Special Settings: Ignoring responses {}.".format(self._name, self._ignore_response))
+        self.logger.debug(
+            "Initializing {}: Special Settings: Error responses {}.".format(self._name, self._error_response))
+        self.logger.debug("Initializing {}: Special Settings: Force buffer {}.".format(self._name, self._force_buffer))
+        self.logger.debug(
+            "Initializing {}: Special Settings: Ignore Display {}".format(self._name, self._ignoredisplay))
+        self.logger.debug(
+            "Initializing {}: Querying at plugin init is set to {}".format(self._name, self._statusquery))
+        self._update_exclude = ProcessVariables(update_exclude, self._name).process_update_exclude()
 
     # Non-blocking wait function
     @staticmethod
@@ -310,7 +327,7 @@ class AVDevice(SmartPlugin):
                         value = data[valuestart:valueend]
                         invert = True if entry[6].lower() in ['1', 'true', 'yes', 'on'] else False
                         received = ConvertValue(value, expectedtype, invert, entry[0], command,
-                                                self._name, self._special_commands, self.logger).convert_value() \
+                                                self._name, self._special_commands).convert_value() \
                             if not value == '' else data[valuestart:valueend]
                         receivedvalue = received[1] if isinstance(received, list) else received
                         try:
@@ -322,7 +339,7 @@ class AVDevice(SmartPlugin):
                             sametype = True if receivedvalue == '' and expectedtype == 'empty' else False
                         if sametype is True:
                             self._items[zone][av_function]['Value'] = Translate(
-                                value, entry[9], self._name, 'writedict', self._specialparse, self.logger).translate()
+                                value, entry[9], self._name, 'writedict', self._specialparse).translate()
                             self.logger.debug(
                                 "Storing Values {}: Found writeable dict key: {}. Zone: {}. "
                                 "Value {} with type {}. Function: {}.".format(
@@ -459,50 +476,6 @@ class AVDevice(SmartPlugin):
 
     # Processing the response from the AV device, dealing with buffers, etc.
     def _processing_response(self, socket):
-
-        def _sortbuffer(buffer, bufferlist):
-            expectedsplit = []
-            self._expected_response = CreateExpectedResponse(buffer, self._name,
-                                                             self._send_commands, self.logger).create_expected()
-            expectedsplit = list(itertools.chain(*[x.split('|') for x in self._expected_response]))
-            sortedbuffer = []
-            for e in expectedsplit:
-                for entry in bufferlist:
-                    if entry == e and entry not in self._ignore_response:
-                        sortedbuffer.append(entry)
-                        self.logger.log(VERBOSE2,
-                                        "Processing Response {}: Response is same as expected. adding: {}.".format(
-                                            self._name, entry))
-                        break
-                    elif entry.startswith(e):
-                        try:
-                            realresponse = self._response_wildcards['original'][e]
-                        except Exception:
-                            realresponse = e
-                        try:
-                            for resp in self._response_commands[realresponse]:
-                                self.logger.log(VERBOSE2,
-                                                "Processing Response {}: realresponse: {}. Length: {}, expected length: {}.".format(
-                                                    self._name, realresponse, len(entry), resp[1]))
-                                cond1 = len(entry) == resp[1] or resp[1] == 100 or resp[0] == 100
-                                cond2 = entry not in sortedbuffer and entry not in self._ignore_response
-                                if cond1 and cond2:
-                                    self.logger.log(VERBOSE2,
-                                                    "Processing Response {}: length is same. adding: {}.".format(
-                                                        self._name, entry))
-                                    sortedbuffer.append(entry)
-                                    break
-                        except Exception:
-                            pass
-
-            self.logger.log(VERBOSE2,
-                            "Processing Response {}: expected response: {}, bufferlist {}. Sortedbuffer: {}".format(
-                                self._name, expectedsplit, bufferlist, sortedbuffer))
-            bufferlist = [x for x in bufferlist if x not in sortedbuffer]
-            buffer = "\r\n".join(sortedbuffer + bufferlist)
-            buffer = "{}\r\n".format(buffer)
-            return buffer, expectedsplit
-
         try:
             buffer = ''
             tidy = lambda c: re.sub(
@@ -546,7 +519,7 @@ class AVDevice(SmartPlugin):
                     if cond1 and not cond2:
                         buffering = True
                         self._expected_response = CreateExpectedResponse(buffer, self._name,
-                                                                         self._send_commands, self.logger).create_expected()
+                                                                         self._send_commands).create_expected()
                         self.logger.log(VERBOSE1,
                                         "Processing Response {}: Error reading.. Error: {}. Sending Command: {}.".format(
                                             self._name, err, self._sendingcommand))
@@ -611,10 +584,48 @@ class AVDevice(SmartPlugin):
                             buffer_cleaned.append(buff)
                     bufferlist = buffer_cleaned
                     buffer = "\r\n".join(bufferlist) + "\r\n"
+                    expectedsplit = []
 
                     if self._send_commands:
-                        _, expectedsplit = _sortbuffer(buffer, bufferlist)
-                        # first entry should be buffer as soon as resorting works perfectly smooth. Problem now: On very short interval settings the sorting results in wrong reponses.
+                        self._expected_response = CreateExpectedResponse(buffer, self._name,
+                                                                         self._send_commands).create_expected()
+                        expectedsplit = list(itertools.chain(*[x.split('|') for x in self._expected_response]))
+                        sortedbuffer = []
+                        for e in expectedsplit:
+                            for entry in bufferlist:
+                                if entry == e and entry not in self._ignore_response:
+                                    sortedbuffer.append(entry)
+                                    self.logger.log(VERBOSE2,
+                                                    "Processing Response {}: Response is same as expected. adding: {}.".format(
+                                                        self._name, entry))
+                                    break
+                                elif entry.startswith(e):
+                                    try:
+                                        realresponse = self._response_wildcards['original'][e]
+                                    except Exception:
+                                        realresponse = e
+                                    try:
+                                        for resp in self._response_commands[realresponse]:
+                                            self.logger.log(VERBOSE2,
+                                                            "Processing Response {}: realresponse: {}. Length: {}, expected length: {}.".format(
+                                                                self._name, realresponse, len(entry), resp[1]))
+                                            cond1 = len(entry) == resp[1] or resp[1] == 100 or resp[0] == 100
+                                            cond2 = entry not in sortedbuffer and entry not in self._ignore_response
+                                            if cond1 and cond2:
+                                                self.logger.log(VERBOSE2,
+                                                                "Processing Response {}: length is same. adding: {}.".format(
+                                                                    self._name, entry))
+                                                sortedbuffer.append(entry)
+                                                break
+                                    except Exception:
+                                        pass
+
+                        self.logger.log(VERBOSE2,
+                                        "Processing Response {}: expected response: {}, bufferlist {}. Sortedbuffer: {}".format(
+                                            self._name, expectedsplit, bufferlist, sortedbuffer))
+                        bufferlist = [x for x in bufferlist if x not in sortedbuffer]
+                        buffer = "\r\n".join(sortedbuffer + bufferlist)
+                        buffer = "{}\r\n".format(buffer)
                         self.logger.log(VERBOSE2, "Processing Response {}: Buffer after sorting: {}.".format(
                             self._name, re.sub('[\r\n]', ' --- ', buffer)))
 
@@ -663,7 +674,7 @@ class AVDevice(SmartPlugin):
                     line = re.sub('[\\n\\r]', '', line).strip()
                     responseforsending = False
                     for entry in self._response_commands:
-                        newentry = Translate(line, entry, self._name, '', '', self.logger).wildcard()
+                        newentry = Translate(line, entry, self._name, '', '').wildcard()
                         self._response_wildcards['wildcard'].update({newentry: entry})
                         self._response_wildcards['original'].update({entry: newentry})
                     responsecommands = list(self._response_wildcards['wildcard'].keys())
@@ -674,7 +685,7 @@ class AVDevice(SmartPlugin):
                     try:
                         for resp in ','.join(self._sendingcommand.split(';')[0].split(',')[2:]).split('|'):
                             resp = resp.split(',')[0]
-                            resp = Translate(line, resp, self._name, '', '', self.logger).wildcard() if len(line) == len(
+                            resp = Translate(line, resp, self._name, '', '').wildcard() if len(line) == len(
                                 resp) else resp
                             self.logger.log(VERBOSE2,
                                             "Processing Response {}: Testing sendingcommand {}. Line: {}, expected response: {}".format(
@@ -711,7 +722,7 @@ class AVDevice(SmartPlugin):
                             keyfound = False
                             compare = ','.join(self._send_commands[0].split(';')[0].split(',')[2:]).split('|')
                             for comp in compare:
-                                comp = Translate(line, comp.split(',')[0], self._name, '', '', self.logger).wildcard()
+                                comp = Translate(line, comp.split(',')[0], self._name, '', '').wildcard()
                                 keyfound = True if line.startswith(comp) else False
                             if keyfound is True:
                                 self.logger.log(VERBOSE1,
@@ -780,7 +791,7 @@ class AVDevice(SmartPlugin):
                 buffering = False
                 if bufferlist:
                     self._expected_response = CreateExpectedResponse('\r\n'.join(bufferlist), self._name,
-                                                                     self._send_commands, self.logger).create_expected()
+                                                                     self._send_commands).create_expected()
                 for buf in bufferlist:
                     cond1 = not re.sub('[ ]', '', buf) == ''
                     cond2 = not buf.startswith(tuple(self._ignore_response))
@@ -810,13 +821,8 @@ class AVDevice(SmartPlugin):
                         self._wait(0.2)
                         yield buf
         except Exception as err:
-            self.logger.error("Processing Response {}: Problems: {}".format(self._name, err))
-
-    def _clear_history(self, part):
-        if part == 'keep':
-            self._keep_commands.clear()
-        else:
-            self._send_history[part].clear()
+            self.logger.error("Processing Response {}: Problems: {} in line {}.".format(
+                self._name, err, sys.exc_info()[-1].tb_lineno))
 
     # init function
     def _initialize(self):
@@ -858,7 +864,6 @@ class AVDevice(SmartPlugin):
 
     # Run function
     def run(self):
-        self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         if self._tcp is None and self._rs232 is None:
             self.logger.error(
                 "Initializing {}: Neither IP address nor RS232 port given. Not running.".format(self._name))
@@ -900,18 +905,15 @@ class AVDevice(SmartPlugin):
         if depending is False:
             if self._tcp is not None and 'TCP' not in self._is_connected:
                 self.logger.log(VERBOSE1, "Connecting {}: Starting TCP scheduler".format(self._name))
-                try:
-                    self.scheduler_add('avdevice-tcp-reconnect', self.connect_tcp, cycle=7)
-                except Exception as err:
-                    self.logger.error(err)
-                self.scheduler_change('avdevice-tcp-reconnect', active=True)
-                self.scheduler_trigger('avdevice-tcp-reconnect')
+                self._sh.scheduler.add('avdevice-tcp-reconnect', self.connect_tcp, cycle=7)
+                self._sh.scheduler.change('avdevice-tcp-reconnect', active=True)
+                self._sh.scheduler.trigger('avdevice-tcp-reconnect')
                 self._trigger_reconnect = False
             if self._rs232 is not None and 'Serial' not in self._is_connected:
                 self.logger.log(VERBOSE1, "Connecting {}: Starting RS232 scheduler".format(self._name))
-                self.scheduler_add('avdevice-serial-reconnect', self.connect_serial, cycle=7)
-                self.scheduler_change('avdevice-serial-reconnect', active=True)
-                self.scheduler_trigger('avdevice-serial-reconnect')
+                self._sh.scheduler.add('avdevice-serial-reconnect', self.connect_serial, cycle=7)
+                self._sh.scheduler.change('avdevice-serial-reconnect', active=True)
+                self._sh.scheduler.trigger('avdevice-serial-reconnect')
                 self._trigger_reconnect = False
         elif depending is True and trigger == 'parse_dataerror':
             self._resetondisconnect('connect')
@@ -920,15 +922,7 @@ class AVDevice(SmartPlugin):
     def connect_tcp(self):
         try:
             if self._tcp is not None and 'TCP' not in self._is_connected:
-                try:
-                    socket = __import__('socket')
-                    REQUIRED_PACKAGE_IMPORTED = True
-                except:
-                    REQUIRED_PACKAGE_IMPORTED = False
-                if not REQUIRED_PACKAGE_IMPORTED:
-                    self.logger.error("{}: Unable to import Python package 'socket'".format(self.get_fullname()))
-                    self._init_complete = False
-                    return
+                socket = __import__('socket')
                 self.logger.log(VERBOSE1, "Connecting TCP {}: Starting to connect to {}.".format(self._name, self._tcp))
                 self._tcpsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self._tcpsocket.setblocking(0)
@@ -959,7 +953,7 @@ class AVDevice(SmartPlugin):
                 self.logger.warning("Connecting TCP {}: Reconnecting. Command list while connecting: {}.".format(
                     self._name, self._send_commands))
             elif cond3 or cond4:
-                self.scheduler_change('avdevice-tcp-reconnect', active=False)
+                self._sh.scheduler.change('avdevice-tcp-reconnect', active=False)
                 self._reconnect_counter = 0
                 if cond4:
                     self._addorremove_keepcommands('disconnect', 'all')
@@ -967,7 +961,7 @@ class AVDevice(SmartPlugin):
                     self._addorremove_keepcommands('connected', 'all')
                 self._trigger_reconnect = True
                 self.logger.debug(
-                    "Connecting TCP {}: Deactivating reconnect schedulerApi. Command list while connecting: {}. "
+                    "Connecting TCP {}: Deactivating reconnect scheduler. Command list while connecting: {}. "
                     "Keep Commands: {}. Reconnecttrigger: {}".format(
                         self._name, self._send_commands, self._keep_commands, self._trigger_reconnect))
             self._reconnect_counter += 1
@@ -981,15 +975,7 @@ class AVDevice(SmartPlugin):
     def connect_serial(self):
         try:
             if self._rs232 is not None and 'Serial' not in self._is_connected:
-                try:
-                    serial = __import__('serial')
-                    REQUIRED_PACKAGE_IMPORTED = True
-                except:
-                    REQUIRED_PACKAGE_IMPORTED = False
-                if not REQUIRED_PACKAGE_IMPORTED:
-                    self.logger.error("{}: Unable to import Python package 'serial'".format(self.get_fullname()))
-                    self._init_complete = False
-                    return
+                serial = __import__('serial')
                 ser = serial.serial_for_url('{}'.format(self._rs232), baudrate=int(self._baud),
                                             timeout=float(self._timeout), write_timeout=float(self._timeout))
                 i = 0
@@ -1049,10 +1035,10 @@ class AVDevice(SmartPlugin):
             if cond1 and cond2:
                 self._trigger_reconnect = False
                 self.logger.log(VERBOSE1,
-                                "Connecting Serial {}: Activating reconnect schedulerApi. Command list while connecting: {}.".format(
+                                "Connecting Serial {}: Activating reconnect scheduler. Command list while connecting: {}.".format(
                                     self._name, self._send_commands))
             elif cond3 or cond4:
-                self.scheduler_change('avdevice-serial-reconnect', active=False)
+                self._sh.scheduler.change('avdevice-serial-reconnect', active=False)
                 self._reconnect_counter = 0
                 if cond4:
                     self._addorremove_keepcommands('disconnect', 'all')
@@ -1060,7 +1046,7 @@ class AVDevice(SmartPlugin):
                     self._addorremove_keepcommands('connected', 'all')
                 self._trigger_reconnect = True
                 self.logger.debug(
-                    "Connecting Serial {}: Deactivating reconnect schedulerApi. Command list while connecting: {}. "
+                    "Connecting Serial {}: Deactivating reconnect scheduler. Command list while connecting: {}. "
                     "Keep commands: {}. Reconnecttrigger: {}".format(
                         self._name, self._send_commands, self._keep_commands, self._trigger_reconnect))
             self._reconnect_counter += 1
@@ -1195,7 +1181,7 @@ class AVDevice(SmartPlugin):
                                         else:
                                             dict_entry = None
                                     expectedvalue = Translate(expectedvalue, dict_entry, self._name, 'parse',
-                                                              self._specialparse, self.logger).translate() or expectedvalue
+                                                          self._specialparse).translate() or expectedvalue
                                     self.logger.log(VERBOSE2,
                                                     "Checking Dependency {}: Expectedvalue after Translation {}. Dependitem: {}, expected {}".format(
                                                         self._name, expectedvalue, dependitem, expectedvalue))
@@ -1237,7 +1223,6 @@ class AVDevice(SmartPlugin):
                                 if primarycount > 0 and queryentry is not None:
                                     if queryentry not in self._send_commands:
                                         self._send_commands.append(queryentry)
-                                        self._send_history['query'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = queryentry
                                         self.logger.debug(
                                             "Checking Dependency {}: Dependent Query command {} added to Send Commands. Dependencies: {}".format(
                                                 self._name, queryentry, dependitems))
@@ -1252,7 +1237,7 @@ class AVDevice(SmartPlugin):
                             elif primarycount == 0 and queryentry is not None:
                                 try:
                                     self._send_commands.remove(queryentry)
-                                    self._clearbuffer = True if not self._send_commands else False
+                                    self._clearbuffer = True
                                     self.logger.debug(
                                         "Checking Dependency {}: Dependent Query command {} removed from Send Commands. Dependencies: {}".format(
                                             self._name, queryentry, self._send_commands, dependitems))
@@ -1780,7 +1765,7 @@ class AVDevice(SmartPlugin):
                                         received = ConvertValue(
                                             data[responseposition:responseposition + valuelength], expectedtype, False,
                                             valuelength, self._special_commands['Display']['Command'],
-                                            self._name, self._special_commands, self.logger).convert_value()
+                                            self._name, self._special_commands).convert_value()
                                         self.logger.debug(
                                             "Parsing Input {}: Displaycommand found in response {}. Converted to {}.".format(
                                                 self._name, data, receivedvalue))
@@ -1824,7 +1809,7 @@ class AVDevice(SmartPlugin):
                                         receivedvalue = ConvertValue(
                                             data[responseposition:responseposition + valuelength], expectedtype, False,
                                             valuelength, self._special_commands['Speakers']['Command'], self._name,
-                                            self._special_commands, self.logger).convert_value()
+                                            self._special_commands).convert_value()
                                         try:
                                             for _ in self._special_commands['Speakers']['Command']:
                                                 for zone in self._items_speakers:
@@ -1859,7 +1844,7 @@ class AVDevice(SmartPlugin):
                                         if not receivedvalue == '':
                                             receivedvalue = ConvertValue(value, expectedtype, invert, valuelength,
                                                                          data, self._name,
-                                                                         self._special_commands, self.logger).convert_value()
+                                                                         self._special_commands).convert_value()
                                     try:
                                         sametype = True if isinstance(receivedvalue, eval(expectedtype)) else False
                                     except Exception:
@@ -1880,7 +1865,7 @@ class AVDevice(SmartPlugin):
                                                 self._name, dictkey, responseposition, value))
                                         self._addorremove_keepcommands('removefromkeep', data)
                                         value = Translate(origvalue, entry[9], self._name, 'parse',
-                                                          self._specialparse, self.logger).translate() or value
+                                                          self._specialparse).translate() or value
                                         if av_function in self._items[zone].keys():
                                             self._items[zone][av_function]['Value'] = value
                                             self.logger.log(VERBOSE1,
@@ -1950,7 +1935,7 @@ class AVDevice(SmartPlugin):
                         if commanditem:
                                 command = '{};{}'.format(command_split, commanditem)
                         self.logger.log(VERBOSE1,
-                                        "Parsing Input {}: Adding command commandsplit {}, commanditem {}. Command: {}".format(
+                                            "Parsing Input {}: Adding command commandsplit {}, commanditem {}. Command: {}".format(
                                                 self._name, command_split, commanditem, command))
                         if command_split in self._query_commands:
                             reorderlist.append(command)
@@ -2166,7 +2151,6 @@ class AVDevice(SmartPlugin):
                                                     depending = self._checkdependency(query, 'statusupdate')
                                                 if query not in self._send_commands and depending is False:
                                                     self._send_commands.append(query)
-                                                    self._send_history['query'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = query
                                             self._reconnect_counter = 0
                                             self._trigger_reconnect = True
 
@@ -2194,7 +2178,7 @@ class AVDevice(SmartPlugin):
                                                 self._name, command))
 
                                         responsecommand, _ = CreateResponse(commandinfo, '', '', self._name,
-                                                                            self._specialparse, self.logger).response_standard()
+                                                                            self._specialparse).response_standard()
                                         appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3],
                                                                              responsecommand, item.id())
                                         cond1 = appendcommand not in self._query_commands
@@ -2213,7 +2197,6 @@ class AVDevice(SmartPlugin):
                                                 "Updating Item {}: Readonly. Updating Zone {} Commands {} for {}".format(
                                                     self._name, zone, self._send_commands, item))
                                             self._send_commands.append(appendcommand)
-                                            self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
 
                             except Exception as err:
                                 self.logger.log(VERBOSE2,
@@ -2229,7 +2212,7 @@ class AVDevice(SmartPlugin):
                                 if command in self._functions['zone{}'.format(zone)]:
                                     commandinfo = self._functions['zone{}'.format(zone)][command]
                                     replacedresponse, _ = CreateResponse(commandinfo, '', '', self._name,
-                                                                         self._specialparse, self.logger).response_standard()
+                                                                         self._specialparse).response_standard()
                                     appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
                                     cond1 = appendcommand not in self._query_commands
                                     cond2 = appendcommand not in self._special_commands['Display']['Command']
@@ -2247,7 +2230,6 @@ class AVDevice(SmartPlugin):
                                             "Updating Item {}: Updating Zone {} Commands {} for {}".format(
                                                 self._name, zone, self._send_commands, item))
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                         checkquery = True
                                 elif command_increase in self._functions['zone{}'.format(zone)]:
                                     commandinfo = self._functions['zone{}'.format(zone)][command_increase]
@@ -2261,7 +2243,7 @@ class AVDevice(SmartPlugin):
                                             reverseinfo = ''
                                     replacedresponse, replacedreverse = CreateResponse(
                                         commandinfo, reverseinfo, '', self._name,
-                                        self._specialparse, self.logger).response_in_decrease()
+                                        self._specialparse).response_in_decrease()
                                     try:
                                         reverseitem = self._items['zone{}'.format(zone)][command.replace('+', '-', 1)].get('Item')
                                     except Exception:
@@ -2301,7 +2283,6 @@ class AVDevice(SmartPlugin):
                                             "Updating Item {}: Updating Zone {} Command Increase {} for {}".format(
                                                 self._name, zone, self._send_commands, item))
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                 elif command_decrease in self._functions['zone{}'.format(zone)]:
                                     commandinfo = self._functions['zone{}'.format(zone)][command_decrease]
                                     try:
@@ -2314,7 +2295,7 @@ class AVDevice(SmartPlugin):
                                             reverseinfo = ''
                                     replacedresponse, replacedreverse = CreateResponse(
                                         commandinfo, reverseinfo, '', self._name,
-                                        self._specialparse, self.logger).response_in_decrease()
+                                        self._specialparse).response_in_decrease()
                                     try:
                                         reverseitem = self._items['zone{}'.format(zone)][command.replace('-', '+', 1)].get('Item')
                                     except Exception:
@@ -2354,14 +2335,13 @@ class AVDevice(SmartPlugin):
                                             "Updating Item {}: Updating Zone {} Command Decrease {} for {}".format(
                                                 self._name, zone, self._send_commands, item))
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
 
                                 elif command_on in self._functions['zone{}'.format(zone)] and \
                                         isinstance(value, bool) and value == 1:
                                     commandinfo = self._functions['zone{}'.format(zone)][command_on]
                                     reverseinfo = self._functions['zone{}'.format(zone)][command_off]
                                     replacedresponse, replacedreverse = CreateResponse(
-                                        commandinfo, reverseinfo, '', self._name, self._specialparse, self.logger).response_on()
+                                        commandinfo, reverseinfo, '', self._name, self._specialparse).response_on()
 
                                     appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
                                     reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.id())
@@ -2405,7 +2385,6 @@ class AVDevice(SmartPlugin):
                                                 self._name, appendcommand, self._keep_commands))
                                     else:
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                         self._sendingcommand = appendcommand
                                         checkquery = True
                                         self.logger.log(VERBOSE1,
@@ -2421,14 +2400,13 @@ class AVDevice(SmartPlugin):
                                             depending = self._checkdependency(query, 'statusupdate')
                                             if query not in self._send_commands and depending is False:
                                                 self._send_commands.append(query)
-                                                self._send_history['query'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = query
 
                                 elif command_off in self._functions['zone{}'.format(zone)] and \
                                         isinstance(value, bool) and value == 0:
                                     commandinfo = self._functions['zone{}'.format(zone)][command_off]
                                     reverseinfo = self._functions['zone{}'.format(zone)][command_on]
                                     replacedresponse, replacedreverse = CreateResponse(
-                                        commandinfo, reverseinfo, '', self._name, self._specialparse, self.logger).response_off()
+                                        commandinfo, reverseinfo, '', self._name, self._specialparse).response_off()
 
                                     appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
                                     reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.id())
@@ -2472,7 +2450,6 @@ class AVDevice(SmartPlugin):
                                                 self._name, appendcommand, self._keep_commands))
                                     else:
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                         self._sendingcommand = appendcommand
                                         checkquery = True
                                         self.logger.log(VERBOSE1,
@@ -2484,11 +2461,11 @@ class AVDevice(SmartPlugin):
                                     newvalue = None
                                     if not command.lower().startswith('speakers'):
                                         response, _ = CreateResponse(commandinfo, '', value, self._name,
-                                                                     self._specialparse, self.logger).response_set()
+                                                                     self._specialparse).response_set()
                                     try:
                                         newvalue = value.lower() if isinstance(value, str) else value
                                         newvalue = Translate(newvalue, commandinfo[10], self._name, 'update',
-                                                             self._specialparse, self.logger).translate()
+                                                             self._specialparse).translate()
                                         self.logger.log(VERBOSE2,
                                                         "Updating Item {}: Translated value: {}".format(self._name,
                                                                                                         newvalue))
@@ -2545,16 +2522,16 @@ class AVDevice(SmartPlugin):
                                                                 self._name, self._items['zone{}'.format(zone)]['speakers']['Item'],
                                                                 currentvalue, item, item(), multiply, value))
                                             response, _ = CreateResponse(commandinfo, '', value, self._name,
-                                                                         self._specialparse, self.logger).response_set()
+                                                                         self._specialparse).response_set()
                                             command_re = CreateResponse(commandinfo, '', value, self._name,
-                                                                        self._specialparse, self.logger).replace_number(
+                                                                        self._specialparse).replace_number(
                                                                             commandinfo[2], value, translatecode)
                                             self.logger.log(VERBOSE2,
                                                             "Updating Item {}: Speakers commandinfo 2: {}, value: {}. command_re: {}".format(
                                                                 self._name, commandinfo[2], value, command_re))
                                             if value > 0:
                                                 replacedresponse, _ = CreateResponse(powerinfo, '', True, self._name,
-                                                                                     self._specialparse, self.logger).response_power()
+                                                                                     self._specialparse).response_power()
                                                 try:
                                                     poweritem = self._items['zone{}'.format(zone)][powerinfo[1]].get('Item')
                                                 except Exception:
@@ -2569,7 +2546,7 @@ class AVDevice(SmartPlugin):
                                                         self._name, powerinfo))
                                         else:
                                             command_re = CreateResponse(commandinfo, '', value, self._name,
-                                                                        self._specialparse, self.logger).replace_number(
+                                                                        self._specialparse).replace_number(
                                                                             commandinfo[2], value, translatecode)
                                             self.logger.log(VERBOSE2,
                                                             "Updating Item {}: commandinfo 2: {}, value: {}. command_re: {}".format(
@@ -2578,7 +2555,7 @@ class AVDevice(SmartPlugin):
                                     elif isinstance(value, str) and 'str' in commandinfo[9]:
                                         setting = True
                                         command_re = CreateResponse(commandinfo, '', value, self._name,
-                                                                    self._specialparse, self.logger).replace_string(
+                                                                    self._specialparse).replace_string(
                                                                         commandinfo[2], value, translatecode)
 
                                     else:
@@ -2609,7 +2586,6 @@ class AVDevice(SmartPlugin):
                                                     self._name, appendcommand, self._keep_commands))
                                         else:
                                             self._send_commands.append(appendcommand)
-                                            self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                             self._sendingcommand = appendcommand
                                             self._resend_counter = 0
                                             checkquery = True
@@ -2637,7 +2613,6 @@ class AVDevice(SmartPlugin):
                                                 self._name, appendcommand, self._keep_commands))
                                     else:
                                         self._send_commands.append(appendcommand)
-                                        self._send_history['command'][datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")] = appendcommand
                                         self._resend_counter = 0
                                         checkquery = True
                                         self.logger.log(VERBOSE1,
@@ -2796,7 +2771,7 @@ class AVDevice(SmartPlugin):
                             self._special_commands['Input']['Ignore']))
             except Exception as err:
                 self.logger.debug(
-                    "Display Ignore {}: Problems: {}".format(self._name, err))
+                    "Display Ignore {}: Problems: {} in line {}.".format(self._name, err, sys.exc_info()[-1].tb_lineno))
         else:
             try:
                 cond1 = response.startswith(tuple(inputcommands))
@@ -2965,13 +2940,13 @@ class AVDevice(SmartPlugin):
     def stop(self):
         self.alive = False
         try:
-            self.scheduler_change('avdevice-tcp-reconnect', active=False)
-            self.scheduler_remove('avdevice-tcp-reconnect')
+            self._sh.scheduler.change('avdevice-tcp-reconnect', active=False)
+            self._sh.scheduler.remove('avdevice-tcp-reconnect')
         except Exception:
             pass
         try:
-            self.scheduler_change('avdevice-serial-reconnect', active=False)
-            self.scheduler_remove('avdevice-serial-reconnect')
+            self._sh.scheduler.change('avdevice-serial-reconnect', active=False)
+            self._sh.scheduler.remove('avdevice-serial-reconnect')
         except Exception:
             pass
         try:
@@ -2985,103 +2960,9 @@ class AVDevice(SmartPlugin):
         except Exception:
             self.logger.log(VERBOSE1, "Stopping {}: No Serial socket to close.".format(self._name))
 
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
 
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')
-        except:
-            self.mod_http = None
-        if self.mod_http is None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        import sys
-        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, action=None, item_id=None, item_path=None, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        config_reloaded = False
-        keep_cleared = False
-        command_cleared = False
-        query_cleared = False
-        if action is not None:
-            if action == "reload":
-                self.plugin._initialize()
-                config_reloaded = True
-            if action == "connect":
-                self.plugin.connect('webif')
-            if action == "clear_query_history":
-                self.plugin._clear_history('query')
-                query_cleared = True
-            if action == "clear_command_history":
-                self.plugin._clear_history('command')
-                command_cleared = True
-            if action == "clear_keep_commands":
-                self.plugin._clear_history('keep')
-                keep_cleared = True
-
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           config_reloaded=config_reloaded, query_cleared=query_cleared,
-                           command_cleared=command_cleared, keep_cleared=keep_cleared,
-                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
+if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+    # noinspection PyUnresolvedReferences
+    PluginClassName(AVDevice).run()

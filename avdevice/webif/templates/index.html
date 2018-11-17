@@ -1,0 +1,381 @@
+{% extends "base_plugin.html" %}
+{% block scripts %}
+{{ super() }}
+<script>
+function mainpage() {
+  var url = window.location.href;
+  var page = url.substring(url.lastIndexOf('/') + 1);
+  var final = url.replace(page, '');
+  if ( url.includes("?action=") ) {
+    window.location.href = final;
+  };
+}
+</script>
+{% endblock scripts %}
+
+{%- block styles %}
+{{ super() }}
+<link rel="stylesheet" href="static/avdevice.css" type="text/css"/>
+{%- endblock styles %}
+
+{% set logo_frame = false %}
+
+
+{% set item_count_zone0 = p.init.get_items('zone0')|length %}
+{% set item_count_zone1 = p.init.get_items('zone1')|length %}
+{% set item_count_zone2 = p.init.get_items('zone2')|length %}
+{% set item_count_zone3 = p.init.get_items('zone3')|length %}
+{% set tab1title = "<strong>Zone 0 Items</strong> (" ~ item_count_zone0 ~ ")" %}
+{% set tab2title = "<strong>Zone 1 Items</strong> (" ~ item_count_zone1 ~ ")" %}
+{% set tab3title = "<strong>Zone 2 Items</strong> (" ~ item_count_zone2 ~ ")" %}
+{% set tab4title = "<strong>Zone 3 Items</strong> (" ~ item_count_zone3 ~ ")" %}
+
+{% set tabcount = 1 %}
+{% if item_count_zone1>0 %}
+  {% set tabcount = 2 %}
+{% endif %}
+{% if item_count_zone2>0 %}
+  {% set tabcount = 3 %}
+{% endif %}
+{% if item_count_zone3>0 %}
+  {% set tabcount = 4 %}
+{% endif %}
+
+{% if item_count_zone0==0 %}
+  {% set start_tab = 2 %}
+{% endif %}
+
+{% block headtable %}
+
+{% if (p._tcp and 'TCP' not in p._is_connected) or (p._rs232 and 'Serial' not in p._is_connected) %}
+  {% set conn_color = 'red' %}
+{% else %}
+  {% set conn_color = 'green' %}
+{% endif %}
+
+<table class="table table-striped table-hover">
+  <tbody>
+    <tr>
+      <td class="py-1 left-head"><strong>{{ _('Modell') }}</strong></td>
+      <td class="py-1">{{ p.get_parameter_value_for_display('model').replace('models/', '').upper() }}</td>
+      <td class="py-1"><strong style="color:{{ conn_color }};">{{ _('Verbindung') }}</strong></td>
+      <td class="py-1" style="color:{{ conn_color }};">{% if p._rs232 %}{{ p._rs232 }}:{{ p._baud }}, {{ p._timeout }}
+        {% else %}{{ p._tcp }}:{{ p._port }}, {{ p._tcp_timeout }}{% endif %}
+        {{ p._is_connected }}
+        {% if p._tcp and 'TCP' not in p._is_connected %}
+        <button type="button" class="btn btn-shng btn-sm reload" title="{{ _('Try to connect TCP') }}" onclick="location.href='?action=connect';">C</button>
+        {% elif p._rs232 and 'Serial' not in p._is_connected %}
+        <button type="button" class="btn btn-shng btn-sm reload" title="{{ _('Try to connect RS232') }}" onclick="location.href='?action=connect';">C</button>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td class="py-1 header"><div class="oneliner"><strong>{{ _('Abhängig von') }}</strong></div></td>
+      <td class="py-1 content"><div>{{ p._dependson|default('nichts') }}
+        {% if p._dependson_value %} = {{ p._dependson_value }}{% endif %}</div></td>
+      <td class="py-1 header"><div class="oneliner"><strong>{{ _('0 wenn') }}</strong></div></td>
+      <td class="py-1 content"><div>
+        {% if p._depend0_power0 %}Power{% endif %}{% if p._depend0_power0 and p._depend0_volume0%}, {% endif %}
+        {% if p._depend0_volume0 %}Volume{% endif %}
+        {% if not p._depend0_volume0 and not p._depend0_power0 %}None{% endif %}</div></td>
+    </tr>
+    <tr>
+      <td class="py-1 header"><div class="oneliner"><strong>{{ _('Ignorieren') }}</strong></div></td>
+      <td class="py-1 content" colspan=3><div class="oneliner">{% if p._ignore_response %}{{ p._ignore_response }}
+        {% else %}None{% endif %}</div></td>
+    </tr>
+    <tr>
+      <td class="py-1 header"><div class="oneliner"><strong>{{ _('Fehlermeldung') }}</strong></div></td>
+      <td class="py-1 content" colspan=3><div class="oneliner">{% if p._error_response %}{{ p._error_response }}
+        {% else %}None{% endif %}</div></td>
+    </tr>
+  </tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+  Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==1 %}
+<button id="#reload" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Reload Config') }}" onclick="location.href='?action=reload';">Reload Config</button>
+
+{% if config_reloaded %}
+<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert" style="position:fixed;">
+    {{ _('Die Text-Datei mit den Kommands wurde neu geladen.') }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close" onClick="mainpage();">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block bodytab1 %}
+<div class="container-fluid m-2" style="margin-top:250px;">
+{% if item_count_zone0>0 %}
+  <div class="mb-2">
+    {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
+  </div>
+  <table class="table table-striped table-hover pluginList">
+    <thead>
+    <tr>
+      <th>{{ _('Item') }}</th>
+      <th>{{ _('Wert') }}</th>
+    </tr>
+    </thead>
+    {% for item in p.init.get_items('zone0') %}
+
+      {% if p.has_iattr(item.conf, 'avdevice_zone0') %}
+        <tr>
+          <td class="py-1">{{ item._path }}</td>
+          <td class="py-1">{{ item() }}</td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+  </table>
+{% else %}
+    <div class="mb-2">
+      {{ _('Es sind keine Item in dieser Zone definiert.') }}
+    </div>
+{% endif %}
+
+  <div class="mb-2">
+    {{ _('DEBUGGING') }}:
+  </div>
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th width="250">
+        <strong>{{ _('Abfrageprotokoll') }}</strong>&nbsp;
+        <button id="#clear_query" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Empty Query History') }}" onclick="location.href='?action=clear_query_history';"><i class="fas fa-trash-alt"></i></button>
+      </th>
+      <th width="250">
+        {% if query_cleared %}
+          <div class="mb-2 alert alert-success alert-dismissible fade show" role="alert" style="top: 8px; left: 0px;z-index:1;width:200px;height:23px;margin:0;padding:0px 1px 1px 5px;position:relative">
+              {{ _('Gelöscht') }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close" onClick="mainpage();" style="margin:-2px 5px 0 0;padding:0;">
+              <span aria-hidden="true">&times;</span>
+          </button>
+          </div>
+      {% else %}
+        <strong>{{ _('Zeit') }}</strong>
+      {% endif %}
+      </th>
+      <th><strong>{{ _('Abfrage') }}</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+      {% if p._send_history['query'].items() %}
+          {% for key, value in p._send_history['query'].items() %}
+              <tr><td class="py-1">
+
+              </td>
+                <td class="py-1">{{key}}</td>
+                <td class="py-1">{{value}}</td>
+              </tr>
+           {% endfor %}
+     {% else %}
+      <tr><td class="py-1">
+
+        </td>
+        <td class="py-1">-</td>
+        <td class="py-1">{{ _('noch keine Abfrage gesendet') }}</td>
+      </tr>
+      {% endif %}
+  </tbody>
+</table>
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th width="250">
+        <strong>{{ _('Kommandoprotokoll') }}</strong>&nbsp;
+        <button id="#clear_command" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Empty Command History') }}" onclick="location.href='?action=clear_command_history';"><i class="fas fa-trash-alt"></i></button>
+      </th>
+      <th width="250">
+        {% if command_cleared %}
+          <div class="mb-2 alert alert-success alert-dismissible fade show" role="alert" style="top: 8px; left: 0px;z-index:1;width:200px;height:23px;margin:0;padding:0px 1px 1px 5px;position:relative">
+              {{ _('Gelöscht') }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close" onClick="mainpage();" style="margin:-2px 5px 0 0;padding:0;">
+              <span aria-hidden="true">&times;</span>
+          </button>
+          </div>
+      {% else %}
+        <strong>{{ _('Zeit') }}</strong>
+      {% endif %}
+      </th>
+      <th><strong>{{ _('Kommando') }}</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+        {% if p._send_history['command'].items() %}
+            {% for key, value in p._send_history['command'].items() %}
+              <tr><td class="py-1">
+              </td>
+                <td class="py-1">{{ key }}</td>
+                <td class="py-1">{{ value }}</td>
+              </tr>
+            {% endfor %}
+       {% else %}
+        <tr><td class="py-1">
+        </td>
+          <td class="py-1">-</td>
+          <td class="py-1">{{ _('noch kein Kommando gesendet') }}</td>
+        </tr>
+        {% endif %}
+
+  </tbody>
+</table>
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th width="250">
+        <strong>{{ _('Zwischenspeicher') }}</strong>&nbsp;
+        <button id="#clear_keep_commands" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Empty Query History') }}" onclick="location.href='?action=clear_keep_commands';"><i class="fas fa-trash-alt"></i></button>
+
+      </th>
+      <th width="250">
+        {% if keep_cleared %}
+          <div class="mb-2 alert alert-success alert-dismissible fade show" role="alert" style="top: 8px; left: 0px;z-index:1;width:200px;height:23px;margin:0;padding:0px 1px 1px 5px;position:relative">
+              {{ _('Gelöscht') }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close" onClick="mainpage();" style="margin:-2px 5px 0 0;padding:0;">
+              <span aria-hidden="true">&times;</span>
+          </button>
+          </div>
+      {% else %}
+        <strong>{{ _('Zeit') }}</strong>
+      {% endif %}
+      </th>
+      <th><strong>{{ _('Kommando') }}</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+        {% if p._keep_commands.items() %}
+            {% for key, value in p._keep_commands.items() %}
+              <tr><td class="py-1">
+            </td>
+                <td class="py-1">{{ key }}</td>
+                <td class="py-1">{{ value }}</td>
+              </tr>
+            {% endfor %}
+       {% else %}
+        <tr><td class="py-1">
+
+          </td>
+          <td class="py-1">-</td>
+          <td class="py-1">{{ _('noch kein Kommando gespeichert') }}</td>
+        </tr>
+        {% endif %}
+
+  </tbody>
+</table>
+<table class="table table-striped table-hover">
+  <tbody>
+    <tr>
+      <td class="py-1" width="200"><strong>Sending Command</strong></td>
+      <td class="py-1">{{ p._sendingcommand }}</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+{% endblock bodytab1 %}
+
+
+<!--
+  Content block for the second tab of the Webinterface
+-->
+{% block bodytab2 %}
+<div class="container-fluid m-2">
+{% if item_count_zone1>0 %}
+  <div class="mb-2">
+    {{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
+  </div>
+  <table class="table table-striped table-hover pluginList">
+    <thead>
+    <tr>
+      <th>{{ _('Item') }}</th>
+      <th>{{ _('Wert') }}</th>
+    </tr>
+    </thead>
+    {% for item in p.init.get_items('zone1') %}
+
+      {% if p.has_iattr(item.conf, 'avdevice_zone1') %}
+        <tr>
+          <td class="py-1">{{ item._path }}</td>
+          <td class="py-1">{{ item() }}</td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+  </table>
+{% else %}
+    <div class="mb-2">
+      {{ _('Es sind keine Item in dieser Zone definiert.') }}
+    </div>
+{% endif %}
+</div>
+{% endblock bodytab2 %}
+
+{% block bodytab3 %}
+<div class="container-fluid m-2">
+{% if item_count_zone2>0 %}
+  <div class="mb-2">
+    {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
+  </div>
+  <table class="table table-striped table-hover pluginList">
+    <thead>
+    <tr>
+      <th>{{ _('Item') }}</th>
+      <th>{{ _('Wert') }}</th>
+    </tr>
+    </thead>
+    {% for item in p.init.get_items('zone2') %}
+
+      {% if p.has_iattr(item.conf, 'avdevice_zone2') %}
+        <tr>
+          <td class="py-1">{{ item._path }}</td>
+          <td class="py-1">{{ item() }}</td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+  </table>
+{% else %}
+    <div class="mb-2">
+      {{ _('Es sind keine Item in dieser Zone definiert.') }}
+    </div>
+{% endif %}
+</div>
+{% endblock bodytab3 %}
+
+
+{% block bodytab4 %}
+<div class="container-fluid m-2">
+{% if item_count_zone3>0 %}
+  <div class="mb-2">
+    {{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
+  </div>
+  <table class="table table-striped table-hover pluginList">
+    <thead>
+    <tr>
+      <th>{{ _('Item') }}</th>
+      <th>{{ _('Wert') }}</th>
+    </tr>
+    </thead>
+    {% for item in p.init.get_items('zone3') %}
+
+      {% if p.has_iattr(item.conf, 'avdevice_zone3') %}
+        <tr>
+          <td class="py-1">{{ item._path }}</td>
+          <td class="py-1">{{ item() }}</td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+  </table>
+{% else %}
+    <div class="mb-2">
+      {{ _('Es sind keine Item in dieser Zone definiert.') }}
+    </div>
+{% endif %}
+</div>
+{% endblock bodytab4 %}
