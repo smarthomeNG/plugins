@@ -317,8 +317,8 @@ plugin_functions:
     get_calllist:
         type: list(dict(str))
         description:
-            de: "Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id','Type','Caller','Called','CalledNumber','Name','Numbertype','Device','Port','Date','Duration' (some optional))."
-            en: "Returns an array of dicts with all calllist entries (attributes 'Id','Type','Caller','Called','CalledNumber','Name','Numbertype','Device','Port','Date','Duration' (some optional))."
+            de: "Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige optional))."
+            en: "Returns an array of dicts with all calllist entries (attributes 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date', 'Duration' (some optional))."
         parameters:
             filter_incoming:
                 type: str
