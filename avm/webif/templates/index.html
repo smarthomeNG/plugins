@@ -63,11 +63,35 @@
 {% endblock %}
 {% block bodytab2 %}
     <div class="container ml-1 pl-1 mr-1 pr-1">
-    <ul class="list-group">
-    {%  for function in p.metadata.get_plugin_function_defstrings(with_type=True, with_default=True) %}
-    <li class="list-group-item m-1 p-1">{{ function }}</li>
+    {%  for function, dict in p.metadata.plugin_functions.items() %}
+        <div class="card mb-2">
+          <div class="card-header">
+              <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
+          </div>
+          <div class="card-body">
+              DE: {{ dict['description']['de'] }}<br/>
+              EN: {{ dict['description']['en'] }}<br/>
+              {% if dict['parameters'] is not none %}
+                  <div class="card mt-2">
+                      <div class="card-header">
+                        <strong>{{ _('Parameter') }}:</strong>
+                      </div>
+                      <div class="card-body">
+                          <ul class="list-group">
+                          {%  for name, paramdict in dict['parameters'].items() %}
+                            <li class="list-group-item">
+                                <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
+                            DE: {{ paramdict['description']['de'] }}<br/>
+                            EN: {{ paramdict['description']['en'] }}
+                            </li>
+                          {% endfor %}
+                          </ul>
+                      </div>
+                  </div>
+              {% endif %}
+          </div>
+        </div>
     {% endfor %}
-    </ul>
     </div>
 {% endblock %}
 {% block bodytab3 %}
