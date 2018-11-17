@@ -2051,7 +2051,6 @@ class AVM(SmartPlugin):
 
 import cherrypy
 
-
 class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):

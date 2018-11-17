@@ -193,7 +193,7 @@ plugin_functions:
     start_call:
         type: void
         description:
-            de: "Startet einen anruf an eine übergebene Telefonnummer (intern oder extern)."
+            de: "Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern)."
             en: "Starts a call for a given phone number (internal or external)."
         parameters:
             phone_number:

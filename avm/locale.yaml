@@ -9,3 +9,4 @@ plugin_translations:
     'Letzter Change':   {'de': '=', 'en': 'Last Change', 'fr': ''}
     'Plugin-API':       {'de': '=', 'en': 'Plugin API', 'fr': ''}
     'Call Monitor Items':       {'de': '=', 'en': '=', 'fr': ''}
+    'Parameter':       {'de': '=', 'en': 'Parameters', 'fr': ''}
