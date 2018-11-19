@@ -35,10 +35,12 @@ class InfluxData(SmartPlugin):
         self.influx_host = influx_host
         self.influx_port = influx_port
         self.influx_keyword = influx_keyword
+        self.influx_update_cyle = influx_update_cyle
         self._items = []
 
     def run(self):
         self.alive = True
+        self._sh.scheduler.add('InfluxData', self._update_values, prio=5, cycle=self.influx_update_cyle)
 
     def stop(self):
         self.alive = False
@@ -68,7 +70,11 @@ class InfluxData(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         message = "{},caller={},source={},dest={} value={}".format(item.id(), caller, source, dest, float(item()))
         self.udp(message)
+        logger.info( "InfluxData: sending item {0} with value {1}. Caller {2}".format(item.id(),item(),caller) )  
         return None
 
     def _update_values(self):
+        for item in self._items:
+          if item.conf[self.influx_keyword].lower() in ['cycle']:
+            self.update_item(item,caller="cycle")
         return None
