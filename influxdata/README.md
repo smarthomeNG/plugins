@@ -91,6 +91,9 @@ influx_keyword: sqlite
 you do not have to update anything in your item configuration files.
 All data that is pushed to sqlite (i.e. for smartVISU) will automatically be copied to InfluxData also.
 
+By default the plugin sends data on change only to InfluxDB.
+For items with influx: 'cyclic' (instead of 'true') is set, the update will be done every influx_update_cyle seconds
+
 ## Check data
 
 Open influx terminal or webui and change to database 'smarthome' and run:
