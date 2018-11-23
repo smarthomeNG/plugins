@@ -304,12 +304,12 @@ class Nuki(SmartPlugin):
             response = requests.get(url=urllib.parse.urljoin(base_url, endpoint), params=payload)
             self.logger.debug("Plugin '{}': finishing API Call to Nuki Bridge at {}.".format(self.get_shortname(), url))
             response.raise_for_status()
-            lock = False
-            self.logger.debug("Plugin '{}': Lock removed.".format(self.get_shortname()))
             return json.loads(response.text)
         except Exception as ex:
-            lock = False
             self.logger.error(ex)
+        finally:
+            lock = False
+            self.logger.debug("Plugin '{}': Lock removed.".format(self.get_shortname()))
 
     def get_event_items(self):
         return nuki_event_items
