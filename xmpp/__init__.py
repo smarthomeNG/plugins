@@ -122,6 +122,8 @@ class XMPP(SmartPlugin):
 
 class XMPPLogHandler(logging.Handler):
 
+    _errors = []
+
     def __init__(self, xmpp_plugin, xmpp_receiver, xmpp_receiver_type='chat'):
         logging.Handler.__init__(self)
         self._plugin = None
@@ -130,15 +132,18 @@ class XMPPLogHandler(logging.Handler):
         self._xmpp_receiver_type = xmpp_receiver_type
 
     def emit(self, record):
-        if self._plugin is None:
+        if self._plugin is None and Plugins.get_instance() is not None:
             self._plugin = Plugins.get_instance().return_plugin(self._xmpp_plugin)
             if self._plugin is None:
-                logging.getLogger(__name__).error('Can not get XMPP plugin for {} - disabling XMPP logging!'.format(self._xmpp_plugin))
-                self._plugin = False
+                if self._xmpp_plugin not in self._errors:
+                    self._errors.append(self._xmpp_plugin)
+                    logging.getLogger(__name__).error('Can not get plugin \'{}\' used to log messages via XMPP - trying later!'.format(self._xmpp_plugin))
+                else:
+                    logging.getLogger(__name__).error('Can not get XMPP plugin \'{}\' - trying again later!'.format(self._xmpp_plugin))
             else:
                 logging.getLogger(__name__).info('Configured XMPP logging using pluing {}'.format(self._xmpp_plugin))
 
-        if self._plugin is not False:
+        if self._plugin is not None:
             self._plugin.send(self._xmpp_receiver, self.format(record), self._xmpp_receiver_type)
 
 
