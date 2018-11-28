@@ -815,6 +815,8 @@ class AVDevice(SmartPlugin):
     def _clear_history(self, part):
         if part == 'keep':
             self._keep_commands.clear()
+        elif part == 'send':
+            self._send_commands[:] = []
         else:
             self._send_history[part].clear()
 
@@ -3063,6 +3065,7 @@ class WebInterface(SmartPluginWebIf):
         keep_cleared = False
         command_cleared = False
         query_cleared = False
+        send_cleared = False
         if action is not None:
             if action == "reload":
                 self.plugin._initialize()
@@ -3072,6 +3075,9 @@ class WebInterface(SmartPluginWebIf):
             if action == "clear_query_history":
                 self.plugin._clear_history('query')
                 query_cleared = True
+            if action == "clear_send":
+                self.plugin._clear_history('send')
+                send_cleared = True
             if action == "clear_command_history":
                 self.plugin._clear_history('command')
                 command_cleared = True
@@ -3083,5 +3089,5 @@ class WebInterface(SmartPluginWebIf):
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
                            config_reloaded=config_reloaded, query_cleared=query_cleared,
-                           command_cleared=command_cleared, keep_cleared=keep_cleared,
+                           command_cleared=command_cleared, keep_cleared=keep_cleared, send_cleared=send_cleared,
                            language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())

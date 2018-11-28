@@ -344,8 +344,8 @@ class CreateResponse(object):
 
         self.logger = logger
         self.logger.log(VERBOSE1,
-                        "Creating Response {}: Create response command {}, reverse {}, value {}".format(
-                            self._name, commandinfo, reverseinfo, value))
+                        "Creating Response {}: Create response command {} with expected response {}, reverse {} with expected response {}, value {}".format(
+                            self._name, commandinfo, self._splitresponse, reverseinfo, self._splitreverse, value))
 
     def _finalize(self, responselist, reverselist, func_type):
         replacedresponse = "|".join(responselist)
@@ -406,7 +406,6 @@ class CreateResponse(object):
         for splitre in self._splitresponse:
             valuelength = splitre.count('*')
             if valuelength > 0 or 'R' in self._commandinfo[5]:
-                responselist = []
                 if self._commandinfo[6].lower() in ['1', 'true', 'yes', 'on']:
                     replacedvalue = '0'
                 else:
@@ -424,7 +423,6 @@ class CreateResponse(object):
         for splitre in self._splitresponse:
             valuelength = splitre.count('*')
             if valuelength > 0 or 'R' in self._commandinfo[5]:
-                responselist = []
                 replacedresponse = splitre.split('*')[0].strip()
                 if splitre.count('?') == 1:
                     replacedresponse = re.sub('[?]', '', replacedresponse)
@@ -441,8 +439,6 @@ class CreateResponse(object):
         for counting, splitre in enumerate(self._splitresponse):
             valuelength = reverselength = splitre.count('*')
             if valuelength > 0 or 'R' in self._commandinfo[5]:
-                responselist = []
-                reverselist = []
                 replacedresponse = re.sub('[*]', '', splitre.strip())
                 if splitre.count('?') == 1:
                     replacedresponse = re.sub('[?]', '', replacedresponse)
@@ -472,9 +468,10 @@ class CreateResponse(object):
         reverselist = []
         for counting, splitre in enumerate(self._splitresponse):
             valuelength = reverselength = splitre.count('*')
+            self.logger.log(VERBOSE2,
+                            "Response Off {}: valuelength: {}, splitre: {}".format(
+                                self._name, valuelength, splitre))
             if valuelength > 0 or 'R' in self._commandinfo[5]:
-                responselist = []
-                reverselist = []
                 replacedreverse = ''
                 replacedresponse = splitre.replace('*******', 'STANDBY')
                 replacedresponse = replacedresponse.replace('*****', 'CLOSE')
