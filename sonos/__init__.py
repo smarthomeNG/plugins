@@ -50,7 +50,6 @@ from plugins.sonos.soco.music_services.data_structures import get_class
 from plugins.sonos.soco.snapshot import Snapshot
 from plugins.sonos.soco.xml import XML
 import time
-
 from plugins.sonos.tts import gTTS
 from plugins.sonos.utils import file_size, get_tts_local_file_path, get_free_diskspace, get_folder_size
 
@@ -156,7 +155,7 @@ class SimpleHttpServer:
 
 
 class SubscriptionHandler(object):
-    def __init__(self, endpoint, service, logger):
+    def __init__(self, endpoint, service, logger, threadName):
         self._lock = threading.Lock()
         self._thread = None
         self._service = service
@@ -164,16 +163,17 @@ class SubscriptionHandler(object):
         self._event = None
         self._signal = None
         self._logger = logger
+        self._threadName = threadName
 
     def subscribe(self):
         with self._lock:
             self._signal = threading.Event()
             try:
-                self._event = self._service.subscribe(auto_renew=True)
+                self._event = self._service.subscribe(auto_renew=False)
             except Exception as err:
                 self._logger.warning("Sonos: {err}".format(err=err))
             if self._event:
-                self._thread = threading.Thread(target=self._endpoint, args=(self,))
+                self._thread = threading.Thread(target=self._endpoint, name=self._threadName, args=(self,))
                 self._thread.setDaemon(True)
                 self._thread.start()
 
@@ -315,24 +315,25 @@ class Speaker(object):
             self._soco = value
             self._logger.debug("Sonos: {uid}: soco set to {value}".format(uid=self.uid, value=value))
             if self._soco:
+                self.uid = self.soco.uid.lower()
                 self.render_subscription = \
                     SubscriptionHandler(endpoint=self._rendering_control_event, service=self._soco.renderingControl,
-                                        logger=self._logger)
+                                        logger=self._logger, threadName="sonos_{uid}_eventRenderingControl".format(uid=self.uid))
                 self.av_subscription = \
                     SubscriptionHandler(endpoint=self._av_transport_event, service=self._soco.avTransport,
-                                        logger=self._logger)
+                                        logger=self._logger,threadName="sonos_{uid}_eventAvTransport".format(uid=self.uid))
                 self.system_subscription = \
                     SubscriptionHandler(endpoint=self._system_properties_event, service=self._soco.systemProperties,
-                                        logger=self._logger)
+                                        logger=self._logger, threadName="sonos_{uid}_eventSystemProperties".format(uid=self.uid))
                 self.zone_subscription = \
                     SubscriptionHandler(endpoint=self._zone_topology_event, service=self._soco.zoneGroupTopology,
-                                        logger=self._logger)
+                                        logger=self._logger, threadName="sonos_{uid}_eventZoneTopology".format(uid=self.uid))
                 self.alarm_subscription = \
                     SubscriptionHandler(endpoint=self._alarm_event, service=self._soco.alarmClock,
-                                        logger=self._logger)
+                                        logger=self._logger, threadName="sonos_{uid}_eventAlarm".format(uid=self.uid))
                 self.device_subscription = \
                     SubscriptionHandler(endpoint=self._device_properties_event, service=self._soco.deviceProperties,
-                                        logger=self._logger)
+                                        logger=self._logger, threadName="sonos_{uid}_eventDeviceProperties".format(uid=self.uid))
 
                 # just to have a list for disposing all events
                 self._events = [
@@ -343,8 +344,8 @@ class Speaker(object):
                     self.alarm_subscription,
                     self.device_subscription
                 ]
-                self._is_coordinator = self._soco.is_coordinator
-                self.uid = self.soco.uid.lower()
+                self.is_coordinator = self._soco.is_coordinator
+                
                 self.household_id = self.soco.household_id
 
     def dispose(self):
@@ -447,6 +448,7 @@ class Speaker(object):
                     if 'dialog_mode' in event.variables:
                         self.dialog_mode = event.variables['dialog_mode']
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
@@ -463,6 +465,7 @@ class Speaker(object):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
@@ -479,6 +482,7 @@ class Speaker(object):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
@@ -497,6 +501,7 @@ class Speaker(object):
                     if 'zone_name' in event.variables:
                         self.player_name = event.variables['zone_name']
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
@@ -540,6 +545,7 @@ class Speaker(object):
                                 self.sonos_playlists()
 
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
@@ -554,8 +560,7 @@ class Speaker(object):
             self._logger.debug("Sonos: {uid}: av transport event handler active".format(uid=self.uid))
             while not sub_handler.signal.wait(1):
                 try:
-                    event = sub_handler.event.events.get(timeout=0.5)
-
+                    event = sub_handler.event.events.get()
                     if 'transport_state' in event.variables:
                         transport_state = event.variables['transport_state']
                         if transport_state:
@@ -668,7 +673,6 @@ class Speaker(object):
                                     self.radio_station = str(radio_metadata.title)
                     else:
                         self.radio_station = ''
-
                     sub_handler.event.events.task_done()
                 except Empty:
                     pass
@@ -2284,7 +2288,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.6"
+    PLUGIN_VERSION = "1.4.7"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
                  discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
@@ -2408,10 +2412,9 @@ class Sonos(SmartPlugin):
 
     def run(self):
         self._logger.debug("Sonos: run method called")
-        self._sh.scheduler.add("sonos_discover_scheduler", self._discover, prio=3, cron=None,
-                               cycle=self._discover_cycle, value=None, offset=None, next=None)
+        self._sh.scheduler.add("sonos_discover_scheduler", self._discover, prio=3, cron=None, cycle=self._discover_cycle, value=None, offset=None, next=None)
         self.alive = True
-
+        
     def stop(self):
         self._logger.debug("Sonos: stop method called")
         for uid, speaker in sonos_speaker.items():
@@ -2775,15 +2778,13 @@ class Sonos(SmartPlugin):
                 uid = zone.uid.lower()
                 # don't trust the discover function, offline speakers can be cached
                 # we try to ping the speaker
-                with open(os.devnull, 'w') as DEVNULL:
-                    try:
-                        subprocess.check_call(['ping', '-i', '0.2', '-c', '2', zone.ip_address],
-                                              stdout=DEVNULL, stderr=DEVNULL, timeout=1)
-                        is_up = True
-                    except subprocess.CalledProcessError:
-                        is_up = False
-                    except subprocess.TimeoutExpired:
-                        is_up = False
+
+                try:
+                    response = requests.get("http://{url}:1400/status".format(url=zone.ip_address), timeout=2)
+                    response.raise_for_status()
+                    is_up = True
+                except requests.RequestException as ex:
+                    is_up = False
 
             if is_up:
                 self._logger.debug("Sonos: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
@@ -2822,7 +2823,7 @@ class Sonos(SmartPlugin):
                 self._logger.debug(
                     "Sonos: Removing undiscovered speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 sonos_speaker[uid].dispose()
-
+        
 
 def _initialize_speaker(uid: str, logger: logging) -> None:
     """
