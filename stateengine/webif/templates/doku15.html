@@ -111,25 +111,25 @@ function mainpage() {
 
                 gt43k:
                     type: bool
-                    name: Flag: Helligkeit größer als 43 kLux
+                    name: Flag Helligkeit größer als 43 kLux
                     eval: sh.beispiel.wetterstation.helligkeit() &gt; 43000
                     eval_trigger beispiel.wetterstation.helligkeit
 
                 gt35k:
                     type: bool
-                    name: Flag: Helligkeit größer als 35 kLux
+                    name: Flag Helligkeit größer als 35 kLux
                     eval: sh.beispiel.wetterstation.helligkeit() &gt; 35000
                     eval_trigger beispiel.wetterstation.helligkeit
 
                 gt25k:
                     type: bool
-                    name: Flag: Helligkeit größer als 25 kLux
+                    name: Flag Helligkeit größer als 25 kLux
                     eval: sh.beispiel.wetterstation.helligkeit() &gt; 25000
                     eval_trigger beispiel.wetterstation.helligkeit
 
                 gt20k:
                     type: bool
-                    name: Flag: Helligkeit größer als 20 kLux
+                    name: Flag Helligkeit größer als 20 kLux
                     eval: sh.beispiel.wetterstation.helligkeit() &gt; 20000
                     eval_trigger beispiel.wetterstation.helligkeit
 
@@ -312,8 +312,8 @@ function mainpage() {
                     # Einstieg in "Nacht": Wenn
                     enter:
                         # - es zwischen 16:00 und 08:00 Uhr ist
-                        se_min_time: 08:00
-                        se_max_time: 16:00
+                        se_min_time: '08:00'
+                        se_max_time: '16:00'
                         se_negate_time: True
                         # - die Helligkeit höchstens 90 Lux beträgt
                         se_max_brightness: 90
@@ -336,8 +336,8 @@ function mainpage() {
                         se_min_brightness: 90
                         se_max_brightness: 250
                         # - es zwischen 00:00 und 12:00 Uhr ist
-                        se_min_time: 00:00
-                        se_max_time: 12:00
+                        se_min_time: '00:00'
+                        se_max_time: '12:00'
 
                 # Zustand "Abends"
                 Abends:
@@ -357,8 +357,8 @@ function mainpage() {
                         se_min_brightness: 90
                         se_max_brightness: 250
                         # - es zwischen 12:00 und 24:00 Uhr ist
-                        se_min_time: 12:00
-                        se_max_time: 24:00
+                        se_min_time: '12:00'
+                        se_max_time: '24:00'
                         # Anmerkung: "24:00" ist eigentlich eine ungültige Zeit. Sie wird aber automatisch zu 23:59:59 umgewandelt
 
                 # Zustand "Tag"
@@ -376,8 +376,8 @@ function mainpage() {
                     # Einstieg in "Tag": Wenn
                     enter:
                         # - es zwischen 06:30 und 21:30 Uhr ist
-                        se_min_time: 06:30
-                        se_max_time: 21:30
+                        se_min_time: '06:30'
+                        se_max_time: '21:30'
     </code></pre>
 
     <h2 id="automatisierungraffstore1">Automatisierung Raffstore 1</h2>
@@ -654,8 +654,8 @@ function mainpage() {
                         enter_schlafenszeit_woche:
                             # Einstieg in "Nacht": Wenn
                             # - es zwischen 21:00 und 07:00 Uhr ist
-                            se_min_time: 07:00
-                            se_max_time: 21:00
+                            se_min_time: '07:00'
+                            se_max_time: '21:00'
                             se_negate_time: True
                             # - der Wochentag zwischen Montag und Freitag liegt
                             se_min_weekday: 0
@@ -664,8 +664,8 @@ function mainpage() {
                         enter_schlafenszeit_wochenende:
                             # Einstieg in "Nacht": Wenn
                             # - es zwischen 21:00 und 08:30 Uhr ist
-                            se_min_time: 08:30
-                            se_max_time: 21:00
+                            se_min_time: '08:30'
+                            se_max_time: '21:00'
                             se_negate_time: True
                             # - der Wochentag Samstag oder Sonntag ist
                             se_value_weekday: 5 | 6
