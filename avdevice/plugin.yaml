@@ -191,6 +191,13 @@ parameters:
             de: "Verbindet sich das Plugin, werden die Werte automatisch abgefragt, auch wenn kein Depend=Init im Item angegeben ist. Sollen nur Items abgefragt werden, bei denen das depend-Attribut auf init gesetzt ist, sollte dieser Wert auf False gestellt werden."
             en: "As soon as the plugin connects to the device the values get queried automatically even if the Depend=Init is not set in the items. If you want to query only those items that are set explicitly change this value to False."
 
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 item_attributes:
     avdevice_zone0_depend:
         type: list(str)
@@ -335,6 +342,7 @@ item_attributes:
         description:
             de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
             en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

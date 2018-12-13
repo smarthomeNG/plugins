@@ -88,6 +88,13 @@ parameters:
             de: 'Wenn diese Option auf "True" gesetzt ist, werden die Statistikfunktionen aktiviert um Daten erfassen'
             en: 'if set to True, the statistic functions are enabled to collect data'
 
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 
 
 item_attributes:

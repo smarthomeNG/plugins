@@ -42,3 +42,10 @@ parameters:
         description:
             de: 'Gibt an nach wie vielen Sekunden die Statusitems aktualisiert werden'
             en: 'The time interval that will be used for update the status items'
+
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'

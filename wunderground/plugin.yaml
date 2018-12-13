@@ -10,7 +10,7 @@ plugin:
     state: 'qa-passed'
     keywords: weather
     documentation: http://smarthomeng.de/user/plugins/wunderground/user_doc.html
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1059124-neues-wunderground-plugin
 
     version: 1.4.8                 # Plugin version
     sh_minversion: 1.4c             # minimum shNG version to use this plugin
@@ -61,11 +61,12 @@ parameters:
                 
                 The subtrees defined by item_subtree for the different instances must not intersect!'
 
-#    instance:
-#        type: str
-#        description:
-#            de: 'Name der Plugin Instanz (SmartHomeNG Standard-Parameter). Die Angabe ist notwendig, wenn Wetterdaten für mehrere Orte über mehrere Plugin-Instanzen abgefragt werden sollen.'
-#            en: 'Name of the plugin instance (SmartHomeNG standard parameter). This is important if you define multiple weather locations using multiple instances of the wunderground plugin.'
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
 
 
 

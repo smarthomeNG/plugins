@@ -332,6 +332,13 @@ parameters:
                  This parameter defines the default access control for items, which have no individual access control configured.
                  '        
         
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 
 item_attributes:
     # Definition of item attributes defined by this plugin

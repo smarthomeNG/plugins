@@ -52,6 +52,14 @@ parameters:
             de: '(optional) Verzögerung in Sekunden, falls mehr als eine Taste gesendet wird. Reduziert Probleme, wenn bspw. TV-Programme wie "135" aufgerufen werden. Default: 1'
             en: '(optional) Specify a delay (in seconds), in case more than 1 key is sent. Reduces problems when switching e.g. to TV programs with numbers like "135". Default: 1.'
 
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     smarttv:
