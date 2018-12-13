@@ -9,7 +9,7 @@ plugin:
     tester: Sandman60, msinn
     state: 'qa-passed'
 #    keywords: iot xyz
-    documentation: http://smarthomeng.de/user/plugins_doc/config/enigma2.html        # url of documentation (wiki) page
+#    documentation: http://smarthomeng.de/user/plugins/enigma2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
     version: 1.4.11                # Plugin version
