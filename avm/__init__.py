@@ -505,7 +505,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.5.4"
+    PLUGIN_VERSION = "1.5.5"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -1674,7 +1674,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["dev_info_" + action] = response.content
         else:
-            self.logger.debug("Accessing DeviceInfo reponse cache for action %s!" % action)
+            self.logger.debug("Accessing DeviceInfo response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["dev_info_" + action])
@@ -1748,7 +1748,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["tam_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["tam_" + action])
@@ -1787,7 +1787,7 @@ class AVM(SmartPlugin):
                         self.set_device_availability(True)
                     self._response_cache["tam_messages"] = message_result.content
                 else:
-                    self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+                    self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
                 try:
                     message_xml = minidom.parseString(self._response_cache["tam_messages"])
@@ -1857,7 +1857,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)])
@@ -1923,7 +1923,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["wan_dsl_interface_config_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wan_dsl_interface_config_" + action])
@@ -1999,7 +1999,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["wan_common_interface_configuration_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wan_common_interface_configuration_" + action])
@@ -2113,7 +2113,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["wan_ip_connection_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wan_ip_connection_" + action])
