@@ -884,7 +884,7 @@ class AVM(SmartPlugin):
             except Exception as e:
                 if self._fritz_device.is_available():
                     self.logger.error(
-                    "Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
+                        "Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
@@ -1598,7 +1598,11 @@ class AVM(SmartPlugin):
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
             element_xml = xml.getElementsByTagName('NewSwitchState')
             if len(element_xml) > 0:
-                item(element_xml[0].firstChild.data)
+                if element_xml[0].firstChild.data not in ['UNDEFINED', 'TOGGLE']:
+                    item(element_xml[0].firstChild.data)
+                else:
+                    self.logger.error(
+                        'NewSwitchState für AHA Device has a non-supported value of %s' % element_xml[0].firstChild.data)
                 for child in item.return_children():
                     if self.has_iattr(child.conf, 'avm_data_type'):
                         if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
