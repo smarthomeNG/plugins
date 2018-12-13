@@ -1600,6 +1600,9 @@ class AVM(SmartPlugin):
             if len(element_xml) > 0:
                 if element_xml[0].firstChild.data not in ['UNDEFINED', 'TOGGLE']:
                     item(element_xml[0].firstChild.data)
+                elif element_xml[0].firstChild.data in 'TOGGLE':
+                    value = item()
+                    item(not value)
                 else:
                     self.logger.error(
                         'NewSwitchState für AHA Device has a non-supported value of %s' % element_xml[0].firstChild.data)
