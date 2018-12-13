@@ -57,6 +57,7 @@ class MonitoringService:
         self._items_outgoing = []  # items for outgoing calls
         self._duration_item = dict()  # 2 items, on for counting the incoming, one for counting the outgoing call duration
         self._call_active = dict()
+        self._listen_active = False
         self._call_active['incoming'] = False
         self._call_active['outgoing'] = False
         self._call_incoming_cid = dict()
@@ -68,12 +69,17 @@ class MonitoringService:
         """
         Connects to the call monitor of the AVM device
         """
+        if self._listen_active:
+            self.logger.debug("MonitoringService: Connect called while listen active")
+            return
+            
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.conn.connect((self._host, self._port))
             self._listen_thread = threading.Thread(target=self._listen,
                                                    name="MonitoringService_{}".format(
                                                        self._plugin_instance.get_fullname())).start()
+            self.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
             self.logger.error("MonitoringService: Cannot connect to " + self._host + " on port: " + str(
@@ -84,6 +90,7 @@ class MonitoringService:
         """
         Disconnects from the call monitor of the AVM device
         """
+        self.logger.debug("MonitoringService: disconnecting")
         self._listen_active = False
         self._stop_counter('incoming')
         self._stop_counter('outgoing')
@@ -231,18 +238,22 @@ class MonitoringService:
         self.logger.debug(line)
         line = line.split(";")
 
-        if line[1] == "RING":
-            call_from = line[3]
-            call_to = line[4]
-            self._trigger(call_from, call_to, line[0], line[2], line[1], '')
-        elif line[1] == "CALL":
-            call_from = line[4]
-            call_to = line[5]
-            self._trigger(call_from, call_to, line[0], line[2], line[1], line[3])
-        elif line[1] == "CONNECT":
-            self._trigger('', '', line[0], line[2], line[1], line[3])
-        elif line[1] == "DISCONNECT":
-            self._trigger('', '', '', line[2], line[1], '')
+        try:
+            if line[1] == "RING":
+                call_from = line[3]
+                call_to = line[4]
+                self._trigger(call_from, call_to, line[0], line[2], line[1], '')
+            elif line[1] == "CALL":
+                call_from = line[4]
+                call_to = line[5]
+                self._trigger(call_from, call_to, line[0], line[2], line[1], line[3])
+            elif line[1] == "CONNECT":
+                self._trigger('', '', line[0], line[2], line[1], line[3])
+            elif line[1] == "DISCONNECT":
+                self._trigger('', '', '', line[2], line[1], '')
+        except Exception as e:
+            self.logger.error("MonitoringService: " + type(e) + " while handling Callmonitor response: " + str(e))
+            return
 
     def _trigger(self, call_from, call_to, time, callid, event, branch):
         """
@@ -637,6 +648,11 @@ class AVM(SmartPlugin):
                 self._update_myfritz(item)
         # empty response cache
         self._response_cache = dict()
+        
+        if self._call_monitor:
+            if not self.alive:
+                return
+            self._monitoring_service.connect()
 
     def get_calllist_from_cache(self):
         """
@@ -1065,6 +1081,8 @@ class AVM(SmartPlugin):
             self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()),
                                verify=self._verify)
+            if self._call_monitor:
+                self._monitoring_service.disconnect()
         except Exception as e:
             self.logger.error("Exception when sending POST request: %s" % str(e))
             return
