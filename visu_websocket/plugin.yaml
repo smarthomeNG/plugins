@@ -9,7 +9,7 @@ plugin:
     tester: psilo909
     state: qa-passed
 #    keywords: iot xyz
-    documentation: https://github.com/smarthomeNG/smarthome/wiki/Visu_Unterstuetzung        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/visu_websocket/user_doc.html
 
     version: 1.4.5                # Plugin version
     sh_minversion: 1.4c            # minimum shNG version to use this plugin

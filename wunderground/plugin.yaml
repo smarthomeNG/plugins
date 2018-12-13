@@ -9,7 +9,7 @@ plugin:
     tester: msinn                       # Who tests this plugin?
     state: 'qa-passed'
     keywords: weather
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/wunderground/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
 
     version: 1.4.8                 # Plugin version

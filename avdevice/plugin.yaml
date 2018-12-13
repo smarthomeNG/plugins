@@ -10,7 +10,7 @@ plugin:
     state: develop
 
     keywords: av denon pioneer epson oppo player amp receiver projector rs232 telnet tcpip
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    documentation: http://smarthomeng.de/user/plugins/avdevice/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc
 
     version: 1.5.0                # Plugin version

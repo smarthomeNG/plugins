@@ -10,7 +10,7 @@ plugin:
     tester: onkelandy, Sandman60, ohinckel
     state: qa-passed
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/cli/user_doc.html
 
     version: 1.4.2                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin

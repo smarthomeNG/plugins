@@ -10,6 +10,7 @@ plugin:
     state: qa-passed
     keywords: REST, API, Webservice
     documentation: https://www.smarthomeng.de/?category_name=plugins&s=webservices
+#    documentation: http://smarthomeng.de/user/plugins/webservices/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1163886-support-thread-f%C3%BCr-das-webservices-plugin
 
     version: 1.5.0.5               # Plugin version

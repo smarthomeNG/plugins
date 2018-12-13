@@ -48,7 +48,7 @@ plugin:
     maintainer: psilo909, msinn, bmxp
     tester: Sandman60
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/backend/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
 
     version: 1.4.14                # Plugin version

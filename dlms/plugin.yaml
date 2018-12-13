@@ -9,7 +9,7 @@ plugin:
 #    tester:                       # Who tests this plugin?
     state: ready
     keywords: dlms obis smartmeter
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/DLMS-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/dlms/user_doc.html
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
     version: 1.5.1                 # Plugin version

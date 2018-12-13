@@ -10,7 +10,7 @@ plugin:
     state: qa-passed
 #    tester: efgh                   # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/homematic/user_doc.html
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
 # Following entries are for Smart-Plugins:
