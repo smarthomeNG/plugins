@@ -127,7 +127,7 @@ class OpenWeatherMap(SmartPlugin):
 
             # if a value was found, store it to item
             if wrk is not None:
-                item(wrk, 'DarkSky')
+                item(wrk, 'OpenWeatherMap')
                 self.logger.debug('_update: Value "{0}" written to item'.format(wrk))
 
         return
