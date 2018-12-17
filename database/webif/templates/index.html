@@ -1,5 +1,5 @@
 {% extends "base_database.html" %}
-
+{% set tab1title = _('Database Items') %}
 {% block bodytab1 %}
 <script type="text/javascript" language="javascript">
 	function confirmDelete(url, text) {
@@ -57,6 +57,7 @@
 	{% endfor %}
 </table>
 {% endblock bodytab1 %}
+
 {% block buttons %}
 <button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.dump')">{{ _('Datenbank-Dump') }}</button>
 <button type="button" class="btn btn-shng btn-sm" onclick="location.href='?action=cleanup'">{{ _('Datenbank-Cleanup') }}</button>

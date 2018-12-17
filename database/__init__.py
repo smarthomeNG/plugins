@@ -794,7 +794,7 @@ class WebInterface(SmartPluginWebIf):
                 return tmpl.render(p=self.plugin,
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
                                                 reverse=False), item=item,
-                                   tabcount=1, action=action, item_id=item_id, item_path=item_path,
+                                   tabcount=2, action=action, item_id=item_id, item_path=item_path,
                                    language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now(),
                                    log_array=reversed_arr, day=day, month=month, year=year,
                                    delete_triggered=delete_triggered, cleanup_triggered=cleanup_triggered)
@@ -805,7 +805,7 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
-                           tabcount=1, action=action, item_id=item_id, delete_triggered=delete_triggered,
+                           tabcount=2, action=action, item_id=item_id, delete_triggered=delete_triggered,
                            cleanup_triggered=cleanup_triggered)
 
     @cherrypy.expose

@@ -1,4 +1,6 @@
 {% extends "base_plugin.html" %}
+{% set tab2title = _('Plugin-API') %}
+{% set language = p.get_sh().get_defaultlanguage() %}
 
 {%- block scripts %}
 {{ super() }}
@@ -44,3 +46,36 @@
 </table>
 {% endblock headtable %}
 
+{% block bodytab2 %}
+    <div class="container ml-1 pl-1 mr-1 pr-1">
+    {%  for function, dict in p.metadata.plugin_functions.items() %}
+        <div class="card mb-2">
+          <div class="card-header p-2">
+              <strong>{{ dict['type'] }} {{ function }}({% if 'parameters' in dict %}{% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %}{% endif %})</strong>
+          </div>
+          <div class="card-body p-2">
+              {{ dict['description'][language] }}<br/>
+              {%  if 'parameters' in dict %}
+                  {% if dict['parameters'] is not none %}
+                      <div class="card mt-2">
+                          <div class="card-header p-2">
+                            <strong>{{ _('Parameter') }}:</strong>
+                          </div>
+                          <div class="card-body p-2">
+                              <ul class="list-group">
+                              {%  for name, paramdict in dict['parameters'].items() %}
+                                <li class="list-group-item p-2">
+                                    <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
+                                {{ paramdict['description'][language] }}
+                                </li>
+                              {% endfor %}
+                              </ul>
+                          </div>
+                      </div>
+                  {% endif %}
+              {% endif %}
+          </div>
+        </div>
+    {% endfor %}
+    </div>
+{% endblock bodytab2 %}
