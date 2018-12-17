@@ -21,7 +21,7 @@
             </td>
 			<td class="py-1">
                 {% if p.get_fritz_device().is_available() %}
-                    {{ _('Ja') }} {% if p._fritz_device.is_ssl() %}, SSL{% endif %}
+                    {{ _('Ja') }}{% if p._fritz_device.is_ssl() %}, SSL{% endif %}
                 {% else %}
                      {{ _('Nein') }}
                 {% endif %}
