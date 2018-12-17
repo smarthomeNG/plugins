@@ -795,7 +795,7 @@ class WebInterface(SmartPluginWebIf):
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
                                                 reverse=False), item=item,
                                    tabcount=2, action=action, item_id=item_id, item_path=item_path,
-                                   language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now(),
+                                   language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now(),
                                    log_array=reversed_arr, day=day, month=month, year=year,
                                    delete_triggered=delete_triggered, cleanup_triggered=cleanup_triggered)
             elif action == "cleanup":
@@ -806,7 +806,7 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(p=self.plugin,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
                            tabcount=2, action=action, item_id=item_id, delete_triggered=delete_triggered,
-                           cleanup_triggered=cleanup_triggered)
+                           cleanup_triggered=cleanup_triggered, language=self.plugin.get_sh().get_defaultlanguage())
 
     @cherrypy.expose
     def item_csv(self, item_id):
