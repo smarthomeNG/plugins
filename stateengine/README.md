@@ -8,17 +8,22 @@ Finite state machine plugin for smarthomeNG, previously known as AutoBlind
 If you require support, please raise an issue at GitHub: <https://github.com/i-am-offline/smarthome.plugin.autoblind>
 
 ## Documentation
-The manual can be found in the Wiki at GitHub: <https://github.com/i-am-offline/smarthome.plugin.autoblind/wiki>.
+The manual can be found on the official SmarthomeNG plugin documentation: <https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html>.
 
+A "Getting Started" blog entry can be found at the [SmarthomeNG Blog]
+(https://www.smarthomeng.de/starting-with-state-machine-automation-autoblind-plugin)
 ## Configuration
 
 ### plugin.yaml
-See the [manual at GitHub](https://github.com/i-am-offline/smarthome.plugin.autoblind/wiki)
+See the [manual at SmarthomeNG](https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html)
 
 ### items.yaml
-See the [manual at GitHub](https://github.com/i-am-offline/smarthome.plugin.autoblind/wiki)
+See the [manual at SmarthomeNG](https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html)
 
 ## Changelog
+### v1.4.2
+* Added and fixed documentation (onkelandy)
+
 ### v1.4.1
 * Added to official develop repository (onkelandy)
 * Renamed to StateEngine (onkelandy)

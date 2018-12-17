@@ -5,10 +5,10 @@ plugin:
     description:
         de: 'Zustandsautomat für SmarthomeNG, ehemals AutoBlind'
         en: 'Finite state machine for SmarthomeNG, previously known as AutoBlind'
-    mainainer: i-am-offline
-    documentation: https://github.com/i-am-offline/smarthome.plugin.autoblind/wiki
+    maintainer: i-am-offline, onkelandy
+    documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
 
-    version: 1.4.1
+    version: 1.4.2
     sh_minversion: 1.4.1
     multi_instance: False
     classname: StateEngine
