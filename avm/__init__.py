@@ -669,7 +669,8 @@ class AVM(SmartPlugin):
         if self._call_monitor:
             if not self.alive:
                 return
-            self._monitoring_service.connect()
+            if self._fritz_device.is_available():
+                self._monitoring_service.connect()
 
     def set_device_availability(self, availability):
         self._fritz_device.set_available(availability)
@@ -707,7 +708,7 @@ class AVM(SmartPlugin):
                                                                 'call_event_outgoing', 'last_number_outgoing',
                                                                 'last_called_number_outgoing',
                                                                 'call_event', 'call_direction', 'monitor_trigger']:
-            # initally - if item empty - get data from calllist
+            # initially - if item empty - get data from calllist
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'last_caller_incoming' and item() == '':
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
