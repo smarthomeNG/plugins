@@ -15,19 +15,26 @@
 		<strong>{{ _('Löschauftrag für die Einträge von Item ID') }} {{ item_id }} {{ _('in der Tabelle "log" wurde erfolgreich initiiert!') }}</strong><br/>
 		{{ _('Das Löschen kann noch kurze Zeit dauern, da die Ausführung des Delete Queries erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-			<span aria-hidden="true">&times;</span>
+			<i class="nc-icon nc-simple-remove"></i>
 		</button>
 	</div>
 {% endif %}
-{%  if cleanup_triggered %}
-	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
-		<strong>{{ _('Datenbank-Cleanup wurde erfolgreich initiiert!') }}</strong><br/>
-		{{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann noch kurze Zeit dauern, da die Ausführung erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
-		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-			<span aria-hidden="true">&times;</span>
-		</button>
-	</div>
-{%  endif %}
+
+<div id="cleanup" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+    <strong>{{ _('Datenbank-Cleanup wurde erfolgreich initiiert!') }}</strong><br/>
+    {{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann noch kurze Zeit dauern, da die Ausführung erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
+    <button type="button" class="close" data-hide="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+<script>
+    $('#cleanup').hide();
+    $(function(){
+        $("[data-hide]").on("click", function(){
+            $("." + $(this).attr("data-hide")).hide();
+        });
+    });
+</script>
 
 <div class="mb-2">
 	{{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
@@ -60,5 +67,5 @@
 
 {% block buttons %}
 <button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.dump')">{{ _('Datenbank-Dump') }}</button>
-<button type="button" class="btn btn-shng btn-sm" onclick="location.href='?action=cleanup'">{{ _('Datenbank-Cleanup') }}</button>
+<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); }">{{ _('Datenbank-Cleanup') }}</button>
 {% endblock buttons %}

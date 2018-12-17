@@ -756,7 +756,6 @@ class WebInterface(SmartPluginWebIf):
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
         delete_triggered = False
-        cleanup_triggered = False
         if action is not None:
             if action == "delete_log" and item_id is not None:
                 if time_orig is not None and changed_orig is not None:
@@ -797,16 +796,13 @@ class WebInterface(SmartPluginWebIf):
                                    tabcount=2, action=action, item_id=item_id, item_path=item_path,
                                    language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now(),
                                    log_array=reversed_arr, day=day, month=month, year=year,
-                                   delete_triggered=delete_triggered, cleanup_triggered=cleanup_triggered)
-            elif action == "cleanup":
-                self.plugin.cleanup()
-                cleanup_triggered = True
+                                   delete_triggered=delete_triggered)
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
                            tabcount=2, action=action, item_id=item_id, delete_triggered=delete_triggered,
-                           cleanup_triggered=cleanup_triggered, language=self.plugin.get_sh().get_defaultlanguage())
+                           language=self.plugin.get_sh().get_defaultlanguage())
 
     @cherrypy.expose
     def item_csv(self, item_id):
@@ -856,3 +852,7 @@ class WebInterface(SmartPluginWebIf):
         return cherrypy.lib.static.serve_file(
             "%s/var/db/smarthomedb_%s.dump" % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()),
             mime, "%s/var/db/" % self.plugin.get_sh().base_dir)
+
+    @cherrypy.expose
+    def cleanup(self):
+        self.plugin.cleanup()

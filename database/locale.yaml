@@ -75,3 +75,6 @@ plugin_translations:
     'Plugin-API':       {'de': '=', 'en': 'Plugin API', 'fr': ''}
     'Database Items':       {'de': '=', 'en': '=', 'fr': ''}
     'Parameter':       {'de': '=', 'en': 'Parameters', 'fr': ''}
+    'Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?':
+        'de': '='
+        'en': 'Do you really want to delete all data sets without corresponding item?'
