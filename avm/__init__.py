@@ -32,7 +32,7 @@ from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 from lib.model.smartplugin import *
 from lib.module import Modules
-
+import cherrypy
 
 class MonitoringService:
     """
@@ -2212,9 +2212,6 @@ class AVM(SmartPlugin):
 #    Webinterface of the plugin
 # ------------------------------------------
 
-import cherrypy
-
-
 class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
@@ -2233,7 +2230,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
-    def index(self, reload=None):
+    def index(self, reload=None, action=None):
         """
         Build index.html for cherrypy
 
@@ -2250,6 +2247,17 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(), tabcount=tabcount,
-                           avm_items=self.plugin._fritz_device.get_item_count(),
+                           avm_items=self.plugin.get_fritz_device().get_item_count(),
                            call_monitor_items=call_monitor_items,
                            p=self.plugin)
+
+    @cherrypy.expose
+    def reboot(self):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        self.plugin.reboot()

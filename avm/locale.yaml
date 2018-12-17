@@ -9,6 +9,7 @@ plugin_translations:
     'Letzter Change':   {'de': '=', 'en': 'Last Change', 'fr': ''}
     'Plugin-API':       {'de': '=', 'en': 'Plugin API', 'fr': ''}
     'Call Monitor Items':       {'de': '=', 'en': '=', 'fr': ''}
+    'Call Monitor':     {'de': '=', 'en': '=', 'fr': ''}
     'Parameter':        {'de': '=', 'en': 'Parameters', 'fr': ''}
     'Ja':               {'de': '=', 'en': 'Yes', 'fr': ''}
     'Nein':             {'de': '=', 'en': 'No', 'fr': ''}
@@ -17,3 +18,8 @@ plugin_translations:
     'Call Monitor nicht verbunden':  {'de': '=', 'en': 'Call Monitor Not Connected', 'fr': ''}
     'Call Monitor verbunden': {'de': '=', 'en': 'Device Connected', 'fr': ''}
     'nicht verbunden': {'de': '=', 'en': 'not connected', 'fr': ''}
+    'Reboot': {'de': '=', 'en': '=', 'fr': ''}
+    'Wollen Sie das Gerät wirklich neu starten?':
+        'de': '='
+        'en': 'Do you really want to reboot the device?'
+        'fr': ''
