@@ -754,7 +754,7 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         if item_path is not None:
-            item = Items.return_item(item_path)
+            item = self.plugin.items.return_item(item_path)
         delete_triggered = False
         cleanup_triggered = False
         if action is not None:
