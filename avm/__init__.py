@@ -683,6 +683,8 @@ class AVM(SmartPlugin):
         self.logger.debug('Availability for FritzDevice set to %s' % availability)
         if not availability and self._call_monitor:
             self._monitoring_service.disconnect()
+        elif availability and self._call_monitor and self.alive:
+            self._monitoring_service.connect()
 
     def get_calllist_from_cache(self):
         """
