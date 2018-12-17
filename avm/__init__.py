@@ -2255,11 +2255,4 @@ class WebInterface(SmartPluginWebIf):
 
     @cherrypy.expose
     def reboot(self):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
         self.plugin.reboot()
