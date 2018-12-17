@@ -672,6 +672,9 @@ class AVM(SmartPlugin):
             if self._fritz_device.is_available():
                 self._monitoring_service.connect()
 
+    def get_fritz_device(self):
+        return self._fritz_device
+
     def set_device_availability(self, availability):
         self._fritz_device.set_available(availability)
         self.logger.debug('Availability for FritzDevice set to %s' % availability)

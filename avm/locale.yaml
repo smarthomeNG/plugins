@@ -9,4 +9,8 @@ plugin_translations:
     'Letzter Change':   {'de': '=', 'en': 'Last Change', 'fr': ''}
     'Plugin-API':       {'de': '=', 'en': 'Plugin API', 'fr': ''}
     'Call Monitor Items':       {'de': '=', 'en': '=', 'fr': ''}
-    'Parameter':       {'de': '=', 'en': 'Parameters', 'fr': ''}
+    'Parameter':        {'de': '=', 'en': 'Parameters', 'fr': ''}
+    'Ja':               {'de': '=', 'en': 'Yes', 'fr': ''}
+    'Nein':             {'de': '=', 'en': 'No', 'fr': ''}
+    'Gerät verfügbar':  {'de': '=', 'en': 'Device Available', 'fr': ''}
+    'Gerät nicht verfügbar':  {'de': '=', 'en': 'Device Not Available', 'fr': ''}
