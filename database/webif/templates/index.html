@@ -19,6 +19,15 @@
 		</button>
 	</div>
 {% endif %}
+{%  if cleanup_triggered %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Datenbank-Cleanup wurde erfolgreich initiiert!') }}</strong><br/>
+		{{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann noch kurze Zeit dauern, da die Ausführung erst nach Abschluß der bestehenden Transaktionen erfolgen kann') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{%  endif %}
 
 <div class="mb-2">
 	{{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
