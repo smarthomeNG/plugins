@@ -69,6 +69,6 @@ plugin_translations:
     'Datenbank-Cleanup wurde erfolgreich initiiert!':
         'de': '='
         'en': 'Database cleanup successfully initiated!'
-    'Das Löschen von Einträgen, für die es keine Items mehr gibt, kann noch kurze Zeit dauern, da die Ausführung erst nach Abschluß der bestehenden Transaktionen erfolgen kann':
+    'Das Löschen von Einträgen, für die es keine Items mehr gibt, kann noch kurze Zeit dauern, da die Ausführung erst nach Abschluß der bestehenden Transaktionen erfolgen kann.':
         'de': '='
         'en': 'The cleanup of entries, for which no items exist anymore, can take a while, as it can only be processed after the end of already existing database transactions.'
