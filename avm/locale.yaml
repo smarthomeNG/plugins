@@ -14,3 +14,6 @@ plugin_translations:
     'Nein':             {'de': '=', 'en': 'No', 'fr': ''}
     'Gerät verfügbar':  {'de': '=', 'en': 'Device Available', 'fr': ''}
     'Gerät nicht verfügbar':  {'de': '=', 'en': 'Device Not Available', 'fr': ''}
+    'Call Monitor nicht verbunden':  {'de': '=', 'en': 'Call Monitor Not Connected', 'fr': ''}
+    'Call Monitor verbunden': {'de': '=', 'en': 'Device Connected', 'fr': ''}
+    'nicht verbunden': {'de': '=', 'en': 'not connected', 'fr': ''}

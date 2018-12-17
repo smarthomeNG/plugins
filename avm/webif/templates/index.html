@@ -30,8 +30,17 @@
 			<td class="py-1">{{ p.get_parameter_value_for_display('username') }}</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ _('Call Monitor') }}</strong></td>
-			<td class="py-1">{% if p._call_monitor %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1">
+                {% if p._call_monitor %}
+                    {% if p.get_monitoring_service()._listen_active %}
+                    <img src="static/img/lamp_green.png" alt="{{ _('Call Monitor verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
+                    {% else %}
+                    <img src="static/img/lamp_red.png" alt="{{ _('Call Monitor nicht verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
+                    {% endif %}
+                {% endif %}
+                <strong>{{ _('Call Monitor') }}</strong>
+            </td>
+			<td class="py-1">{% if p._call_monitor %}{{ _('Ja') }}{% if not p.get_monitoring_service()._listen_active %}{{ _('nicht verbunden') }}{% endif %}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
 			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
 		</tr>
