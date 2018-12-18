@@ -2256,3 +2256,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def reboot(self):
         self.plugin.reboot()
+
+    @cherrypy.expose
+    def reconnect(self):
+        self.plugin.reconnect()
