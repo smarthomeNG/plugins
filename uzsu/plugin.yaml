@@ -8,9 +8,9 @@ plugin:
     maintainer: cmalo, bmxp, onkelandy
     tester: Sandman60, cmalo, schuma
 #    keywords: iot xyz
-    documentation: https://github.com/smarthomeNG/smarthome/wiki/UZSU-%28Universelle-Zeitschaltuhr%29        # url of documentation (wiki) page
+    documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html
 
-    version: 1.5.2                 # Plugin version
+    version: 1.5.3                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -22,7 +22,7 @@ parameters:
         type: bool
         default: True
         description:
-            de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu geätigten Eintrag ersetzt'
+            de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu getätigten Eintrag ersetzt'
             en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
 
 item_attributes:
@@ -32,3 +32,43 @@ item_attributes:
         description:
             de: 'Das Item, das durch die UZSU geschaltet werden soll'
             en: 'The item that gets changed by the UZSU'
+
+plugin_functions:
+    # Definition of function interface of the plugin
+    planned:
+        description:
+            de: 'Abfrage des nächsten Aktualisierungszeitpunkts'
+            en: 'query the next scheduled value and time'
+
+    clear:
+        description:
+            de: 'Beim Aufrufen mit dem Parameter True werden die Einträge der UZSU gelöscht.'
+            en: 'Using this function with the parameter True clears the UZSU.'
+
+    activate:
+        description:
+            de: 'Abfrage oder Setzen, ob die uzsu aktiv ist oder nicht. Leer: Abfrage, True: aktivieren, False: deaktivieren'
+            en: 'query or set whether the uzsu is set active or not. Empty: query, True: activate, False: deactivate'
+
+    interpolation:
+        description:
+            de: 'Abfrage (leerer Parameter) oder Setzen der Interpolationseinstellungen'
+            en: 'query (empty parameter) or set the interpolation settings'
+        parameter:
+            type:
+                type: str
+                description:
+                    de: "Interpolationstyp: linear/none/cubic"
+                    en: "interpolation type: linear/none/cubic"
+            interval:
+                type: int
+                default: 5
+                description:
+                    de: "Intervall in Minuten, in dem der Wert aktualisiert werden soll"
+                    en: "interval in minutes to update the value"
+            backintime:
+                type: int
+                default: 0
+                description:
+                    de: "Maximales Alter eines UZSU Eintrags in Sekunden, um beim Plugin-Start versäumte Einträge nachzuholen."
+                    en: "maximum age of an uzsu entry in seconds to be catched up at the plugin start"
