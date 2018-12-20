@@ -70,5 +70,5 @@ plugin_functions:
                 type: int
                 default: 0
                 description:
-                    de: "Maximales Alter eines UZSU Eintrags in Sekunden, um beim Plugin-Start versäumte Einträge nachzuholen."
-                    en: "maximum age of an uzsu entry in seconds to be catched up at the plugin start"
+                    de: "Maximales Alter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen."
+                    en: "maximum age of an uzsu entry in minutes to be catched up at the plugin start"

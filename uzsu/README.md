@@ -99,7 +99,7 @@ Interpolation is a separate dict within the uzsu dict-entry with the following k
 
 * __interval__: integer, sets the time span in seconds between the automatic triggers based on the interpolation calculation
 
-* __initage__: integer, sets the amount of seconds the plugin should go back in time at startup to find the last UZSU item and triggers that right on startup of the plugin. This is useless if interpolation is active as the interpolated time will get set on init anyhow.
+* __initage__: integer, sets the amount of minutes the plugin should go back in time at startup to find the last UZSU item and triggers that right on startup of the plugin. This is useless if interpolation is active as the interpolated time will get set on init anyhow.
 
 * __itemtype__: the type of the item that should be changed by the UZSU. This is set automatically on init and should not be touched.
 
