@@ -27,7 +27,6 @@ from lib.network import Http
 import time
 import json
 
-
 class Pushover(SmartPlugin):
 
     PLUGIN_VERSION = "1.6.1.0"
@@ -41,7 +40,7 @@ class Pushover(SmartPlugin):
         self._apiKey = self.get_parameter_value('apiKey')
         self._userKey = self.get_parameter_value('userKey')
         self._device = self.get_parameter_value('device')
-        self._po = Http()
+        self._po = Http();
 
     def run(self):
         pass
