@@ -1,9 +1,9 @@
-.. index:: Plugins; DarkSky (darksky.net / forecast.io Wetterdaten)
+.. index:: Plugins; openweathermap (darksky.net / forecast.io Wetterdaten)
 .. index:: DarkSky
-.. index:: Wetter; darksky
+.. index:: Wetter; openweathermap
 
-darksky
-#######
+openweathermap
+##############
 
 Konfiguration
 =============
@@ -15,12 +15,12 @@ Web Interface
 =============
 
 Das darksky Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
-übersichtlich dargestellt werden. 
+übersichtlich dargestellt werden.
 
-.. important:: 
+.. important::
 
    Das Webinterface des Plugins kann mit SmartHomeNG v1.4.2 und davor **nicht** genutzt werden.
-   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt 
+   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt
    für das Plugin die in den Metadaten angegebene minimale SmartHomeNG Version.
 
 
@@ -39,7 +39,7 @@ Beispiele
 
 Folgende Informationen können im Webinterface angezeigt werden:
 
-Oben rechts werden allgemeine Parameter zum Plugin angezeigt. 
+Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 
 Im ersten Tab werden die Items angezeigt, die das darksky Plugin nutzen:
 
