@@ -76,9 +76,12 @@ hilfreich sind. Inzwischen kann man damit auch eine Reihe von Administrationsauf
 .. image:: user_doc/assets/backend_systeminfo.jpg
    :class: screenshot
 
-Genauer ist das unter :doc:`/backend/backend` beschrieben.
 
-Die Konfiguration de Plugins ist unter :doc:`/plugins_doc/config/backend` ausführlich beschrieben.
+Neues Adiministrations-Interface
+--------------------------------
+
+Das neu ab SmartHomeNG v1.6 hinzukommende graphische Administrations-Interface ist unter :doc:`/admin/admin` beschrieben.
+
 
 
 .. toctree::
