@@ -10,6 +10,9 @@ function mainpage() {
     window.location.href = final;
   };
 }
+document.addEventListener("DOMContentLoaded", function() {
+  mainpage();
+});
 </script>
 {% endblock scripts %}
 
@@ -98,7 +101,7 @@ function mainpage() {
   Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
 -->
 {% block buttons %}
-{% if 1==1 %}
+
 <button id="#reload" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Reload Config') }}" onclick="location.href='?action=reload';">Reload Config</button>
 
 {% if config_reloaded %}
@@ -110,7 +113,6 @@ function mainpage() {
 </div>
 {% endif %}
 
-{% endif %}
 {% endblock %}
 
 {% block bodytab1 %}
@@ -128,7 +130,7 @@ function mainpage() {
     </thead>
     {% for item in p.init.get_items('zone0') %}
 
-      {% if p.has_iattr(item.conf, 'avdevice_zone0') %}
+      {% if p.has_iattr(item.conf, 'avdevice_zone0') or p.has_iattr(item.conf, 'avdevice') %}
         <tr>
           <td class="py-1">{{ item._path }}</td>
           <td class="py-1">{{ item() }}</td>
@@ -138,7 +140,7 @@ function mainpage() {
   </table>
 {% else %}
     <div class="mb-2">
-      {{ _('Es sind keine Item in dieser Zone definiert.') }}
+      {{ _('Es sind keine Items in dieser Zone definiert.') }}
     </div>
 {% endif %}
 
@@ -277,6 +279,23 @@ function mainpage() {
       <td class="py-1" width="200"><strong>Sending Command</strong></td>
       <td class="py-1">{{ p._sendingcommand }}</td>
     </tr>
+    <tr>
+      <td class="py-1" width="200"><strong>Commandlist</strong>
+      <button id="#clear_send" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Empty Send Commands') }}" onclick="location.href='?action=clear_send';"><i class="fas fa-trash-alt"></i></button>
+      </td><td class="py-1">
+      {% if command_cleared %}
+        <div class="mb-2 alert alert-success alert-dismissible fade show" role="alert" style="top: 8px; left: 0px;z-index:1;width:200px;height:23px;margin:0;padding:0px 1px 1px 5px;position:relative">
+            {{ _('Gelöscht') }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close" onClick="mainpage();" style="margin:-2px 5px 0 0;padding:0;">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        </div>
+      {% else %}
+      {{ p._send_commands }}
+      {% endif %}
+      </td>
+      </tr>
+
   </tbody>
 </table>
 </div>
@@ -290,7 +309,7 @@ function mainpage() {
 <div class="container-fluid m-2">
 {% if item_count_zone1>0 %}
   <div class="mb-2">
-    {{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
+    {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
   </div>
   <table class="table table-striped table-hover pluginList">
     <thead>
