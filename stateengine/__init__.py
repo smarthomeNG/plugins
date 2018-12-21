@@ -32,7 +32,7 @@ from bin.smarthome import VERSION
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.4.1'
+    PLUGIN_VERSION = '1.4.2'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
