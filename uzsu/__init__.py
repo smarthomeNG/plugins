@@ -86,7 +86,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.5.2"
+    PLUGIN_VERSION = "1.5.3"
 
     _items = {}         # item buffer for all uzsu enabled items
 
@@ -169,7 +169,7 @@ class UZSU(SmartPlugin):
             success = self._update_sun(item)
             if success:
                 self.logger.debug('Updating sun info for item {}'.format(item))
-                item(self._items[item])
+                item(self._items[item], 'UZSU Plugin', 'update_all_suns')
 
     def _update_sun(self, item, caller=None):
         """
@@ -340,12 +340,16 @@ class UZSU(SmartPlugin):
                 self._items[item] = copy.deepcopy(item())
             try:
                 self._items[item]['interpolation']['initialized'] = False
-                item(self._items[item], 'UZSU Plugin', 'init')
             except Exception:
                 self._items[item]['interpolation'] = {}
                 self._items[item]['interpolation']['type'] = 'none'
                 self._items[item]['interpolation']['initialized'] = False
-                item(self._items[item], 'UZSU Plugin', 'init')
+            if self._items[item].get('list'):
+                for entry, _ in enumerate(self._items[item]['list']):
+                    self._items[item]['list'][entry].pop('condition', None)
+                    self._items[item]['list'][entry].pop('holiday', None)
+                    self._items[item]['list'][entry].pop('delayedExec', None)
+            item(self._items[item], 'UZSU Plugin', 'init')
             self.logger.debug('Dict for item {} is: {}'.format(item, self._items[item]))
             return self.update_item
 
@@ -567,7 +571,7 @@ class UZSU(SmartPlugin):
         :param caller:  if given it represents the callers name
         """
         _uzsuitem = self.itemsApi.return_item(self.get_iattr_value(item.conf, ITEM_TAG[0]))
-        _uzsuitem(value, caller='UZSU Plugin')
+        _uzsuitem(value, 'UZSU Plugin', 'set')
         if not caller:
             self._schedule(item, caller='set')
 
