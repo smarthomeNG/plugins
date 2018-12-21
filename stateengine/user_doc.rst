@@ -1,7 +1,7 @@
 .. index:: Plugins; Stateengine
 .. index:: Stateengine
 
-Stateengine
+stateengine
 ###########
 
 Konfiguration

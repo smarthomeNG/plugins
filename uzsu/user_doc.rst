@@ -1,7 +1,7 @@
-.. index:: Plugins; UZSU
-.. index:: UZSU
+.. index:: Plugins; uzsu
+.. index:: uzsu
 
-UZSU
+uzsu
 ####
 
 Konfiguration
