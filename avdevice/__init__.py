@@ -1943,6 +1943,7 @@ class AVDevice(SmartPlugin):
                 elif not self._send_commands == [] and not data == 'waiting':
                     reorderlist = []
                     index = 0
+                    # Moving query commands to the back of the command list and power commands to the front
                     for command in self._send_commands:
                         command_split = command.split(';')[0]
                         try:
@@ -1952,22 +1953,23 @@ class AVDevice(SmartPlugin):
                         if commanditem:
                                 command = '{};{}'.format(command_split, commanditem)
                         self.logger.log(VERBOSE1,
-                                        "Parsing Input {}: Adding command commandsplit {}, commanditem {}. Command: {}".format(
+                                        "Parsing Input {}: Reorder command commandsplit {}, commanditem {}. Command: {}".format(
                                                 self._name, command_split, commanditem, command))
                         if command_split in self._query_commands:
                             reorderlist.append(command)
                         elif command_split in self._power_commands:
                             self.logger.log(VERBOSE1,
-                                            "Parsing Input {}: Adding command and ordering power command {} to first position.".format(
+                                            "Parsing Input {}: Reorder power command {} to first position.".format(
                                                 self._name, command))
                             reorderlist.insert(0, command)
                             index += 1
                         else:
                             reorderlist.insert(index, command)
                             self.logger.log(VERBOSE1,
-                                            "Parsing Input {}: Adding command {} to position {}.".format(
+                                            "Parsing Input {}: Reorder command {} to position {}.".format(
                                                 self._name, command, index))
                             index += 1
+
                     self._send_commands = reorderlist
                     self.logger.debug(
                         'Parsing Input {}: Newly sorted send commands at end of parsing: {}'.format(self._name,
@@ -2672,7 +2674,31 @@ class AVDevice(SmartPlugin):
                             else:
                                 reorderlist.insert(index, command)
                                 index += 1
-                        self._send_commands = reorderlist
+                        # Moving init commands to the front of the command list
+                        newreorderlist = []
+                        for command in reorderlist:
+                            try:
+                                commanditem = command.split(';')[1]
+                            except Exception:
+                                commanditem = None
+                            for zone in range(self._number_of_zones, -1, -1):
+                                for entry in self._init_commands['zone{}'.format(zone)]:
+                                    try:
+                                        compareitem = self._init_commands['zone{}'.format(zone)][entry].get('Item').id()
+                                        self.logger.log(VERBOSE2,
+                                                        "Updating Item {}: Compare {} with {}.".format(self._name, commanditem, compareitem))
+                                        if commanditem == compareitem:
+                                            self.logger.log(VERBOSE1,
+                                                            "Updating Item {}: Reorder init command {} from zone {} to start of command list.".format(
+                                                                self._name, command, zone))
+                                            newreorderlist.insert(0, command)
+                                    except Exception as err:
+                                        self.logger.log(VERBOSE1,
+                                                        "Updating Item {}: Problem with command reorder in zone {}: {}.".format(
+                                                            self._name, zone, err))
+                                        pass
+                        reorderlist = [i for i in reorderlist if not i in newreorderlist]
+                        self._send_commands = newreorderlist + reorderlist
                         self._sendingcommand = self._send_commands[0]
 
                     try:
