@@ -113,8 +113,8 @@ def _get_translation_for_block(lang, txt, block):
         blockdict = translation_dict.get('_' + block, {})
 
     return blockdict.get(txt, '')
-        
-        
+
+
 def _get_translation(txt, block):
     """
     Get translation with fallback to english and further fallback to german
@@ -137,12 +137,12 @@ def _get_translation(txt, block):
                 logger.info("Language '{0}': Translation for '{1}' is missing".format('en', txt))
                 tr = translation_dict_de.get(txt, '')
     return tr
-    
+
 
 def translate(txt, block=''):
     """
     returns translated text
-    
+
     This function extends the jinja2 template engine
     """
     logger = logging.getLogger(__name__)
@@ -180,7 +180,7 @@ def parse_requirements(file_path):
                 line = rline.lower().strip()
             else:
                 line = line[0:line.find("#")].lower().strip()
-            
+
         if len(line) > 0:
             if ">" in line:
                 if line[0:line.find(">")].lower().strip() in req_dict:
@@ -226,7 +226,82 @@ def get_process_info(command, wait=True):
     if wait:
         ## Wait for date to terminate. Get return returncode ##
         p_status = p.wait()
-    return str(result, encoding='utf-8', errors='strict')
+    return str(result, encoding='utf-8', errors='strict')3rdpartylicenses.txt
+assets
+color.c7a33805ffda0d32bd2a.png
+fa-brands-400.3f4d4ad447e748754e99.svg
+fa-brands-400.a31c967484b343189fc5.eot
+fa-brands-400.dec02372212aab5a2e52.ttf
+fa-brands-400.e4a6cecbe2bb89b0722b.woff2
+fa-brands-400.eef6051639f95300dbf0.woff
+fa-regular-400.0e2e26fb3527ae47f9eb.ttf
+fa-regular-400.52899632324b722c9c79.woff
+fa-regular-400.b5a61b229c9c92a6ac21.svg
+fa-regular-400.c38ef825039cbe8ec76d.eot
+fa-regular-400.dd25437adf06f377113f.woff2
+fa-solid-900.3f759796d3d16b843484.svg
+fa-solid-900.09bc9e8c7d6dfdace635.woff
+fa-solid-900.baa1e2496e8c71f63658.eot
+fa-solid-900.e143b57de78138e6d596.ttf
+fa-solid-900.fd531d212b567d6049f4.woff2
+favicon.ico
+hue.0614c27197fc3ce572e1.png
+index.html
+line.567f57385ea3dde2c9ae.gif
+loading.8732a6660b528fadfaeb.gif
+main.b7498a334d5bb97ef8e4.js
+password-meter.d59e6dc2616c53ce8e77.png
+polyfills.d1c7bf4a2ae7c3435f95.js
+primeicons.38d77552b0353684a208.svg
+primeicons.71bb3d79dcf18b45ae84.woff
+primeicons.473e2a746d3c151d7dca.ttf
+primeicons.b8eccb1059ea5faaf6d8.eot
+roboto-v15-latin-regular.3d3a53586bd78d1069ae.svg
+roboto-v15-latin-regular.7e367be02cd17a96d513.woff2
+roboto-v15-latin-regular.9f916e330c478bbfa2a0.eot
+roboto-v15-latin-regular.16e1d930cf13fb7a9563.woff
+roboto-v15-latin-regular.38861cba61c66739c145.ttf
+runtime.ec2944dd8b20ec099bf3.js
+scripts.bf34f41efa4f4868edea.js
+slider_handles.1868e2550c9853a938a6.png
+styles.b129e6ddb26879580c4a.css3rdpartylicenses.txt
+color.c7a33805ffda0d32bd2a.png
+fa-brands-400.3f4d4ad447e748754e99.svg
+fa-brands-400.a31c967484b343189fc5.eot
+fa-brands-400.dec02372212aab5a2e52.ttf
+fa-brands-400.e4a6cecbe2bb89b0722b.woff2
+fa-brands-400.eef6051639f95300dbf0.woff
+fa-regular-400.0e2e26fb3527ae47f9eb.ttf
+fa-regular-400.52899632324b722c9c79.woff
+fa-regular-400.b5a61b229c9c92a6ac21.svg
+fa-regular-400.c38ef825039cbe8ec76d.eot
+fa-regular-400.dd25437adf06f377113f.woff2
+fa-solid-900.3f759796d3d16b843484.svg
+fa-solid-900.09bc9e8c7d6dfdace635.woff
+fa-solid-900.baa1e2496e8c71f63658.eot
+fa-solid-900.e143b57de78138e6d596.ttf
+fa-solid-900.fd531d212b567d6049f4.woff2
+favicon.ico
+hue.0614c27197fc3ce572e1.png
+index.html
+line.567f57385ea3dde2c9ae.gif
+loading.8732a6660b528fadfaeb.gif
+main.8aa979b98626a369d1e4.js
+password-meter.d59e6dc2616c53ce8e77.png
+polyfills.d1c7bf4a2ae7c3435f95.js
+primeicons.38d77552b0353684a208.svg
+primeicons.71bb3d79dcf18b45ae84.woff
+primeicons.473e2a746d3c151d7dca.ttf
+primeicons.b8eccb1059ea5faaf6d8.eot
+roboto-v15-latin-regular.3d3a53586bd78d1069ae.svg
+roboto-v15-latin-regular.7e367be02cd17a96d513.woff2
+roboto-v15-latin-regular.9f916e330c478bbfa2a0.eot
+roboto-v15-latin-regular.16e1d930cf13fb7a9563.woff
+roboto-v15-latin-regular.38861cba61c66739c145.ttf
+runtime.ec2944dd8b20ec099bf3.js
+scripts.bf34f41efa4f4868edea.js
+slider_handles.1868e2550c9853a938a6.png
+styles.b129e6ddb26879580c4a.css
 
 
 def os_with_systemd():
