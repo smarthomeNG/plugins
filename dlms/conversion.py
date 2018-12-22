@@ -28,6 +28,8 @@ __version__ = "2.0"
 __revision__ = "0.1"
 __docformat__ = 'reStructuredText'
 
+import datetime
+
 class Conversion:
     def _to_datetime_ZST10(self, text):
         """
