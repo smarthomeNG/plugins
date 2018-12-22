@@ -1,22 +1,65 @@
-.. index:: Plugins; Stateengine; Variablen
-.. index:: Variablen
-.. _Variablen:
+.. index:: Plugins; Stateengine; Sperren
+.. index:: Sperren
+.. _Lock-Zustand:
 
-Variablen
-#########
+Sperren
+#######
 
-.. rubric:: Variablen
-   :name: variablen
+Für das Sperren der automatischen Zustandsermittlung führt man ein
+Sperr-Item ein, das beispielsweise über einen Taster oder die Visu änderbar
+ist.
 
-Mit dem Datentyp AbValue kann
-auf Variablen des Plugins zugegriffen werden. Derzeit stehen
-folgende Variablen zur Verfügung:
+Die Sperre soll aktiv sein, wenn das Sperr-Item den Wert ``True``
+hat.
 
-| **item.suspend_time:**
-| *Die Suspend-Time des Items*
+.. rubric:: Das Sperr-Item
+   :name: dassperritem
 
-| **current.state_id:**
-| *Die Id des Status, der gerade geprüft wird*
+Das Sperritem definiert man wie folgt:
 
-| **current.state_name:**
-| *Der Name des Status, der gerade geprüft wird*
+.. code-block:: yaml
+
+   beispiel:
+     lock:
+         item:
+             type: bool
+             name: Sperr-Item
+             visu_acl: rw
+             cache: on
+
+.. rubric:: Der Sperrzustand
+   :name: dersperrzustand
+
+Eine Änderung des Sperr-Items muss direkt eine
+Zustandsermittlung auslösen, das Sperr-Item wird daher in die
+Liste der ``eval_trigger`` aufgenommen.
+
+Einstiegsbedingung für den Sperrzustand ist nun einfach, dass das
+Sperr-Item den Wert ``True`` hat. Für das Sperr-Item werden in
+diesem Beispiel keinerlei Aktionen definiert. Solange also das
+Sperr-Item aktiv ist, passiert nichts.
+
+.. code-block:: yaml
+
+   beispiel:
+       jalousie1:
+           rules:
+               # Sperr-Item zu eval_trigger:
+               eval_trigger:
+                   - <andere Einträge>
+                   - beispiel.lock.item
+
+               # Items für Bedingungen und Aktionen
+               se_item_lock: beispiel.lock.item #Siehe Beispiel oben
+
+               locked:
+                   type: foo
+                   name: Manuell gesperrt
+
+                   enter:
+                       se_value_lock: true
+
+
+Bei der Zustandsermittlung ist die Reihenfolge der
+Zustände relevant. Da der Sperrzustand allen anderen Zuständen
+vorgeht, ist er üblicherweise der erste Zustand in der Definition.

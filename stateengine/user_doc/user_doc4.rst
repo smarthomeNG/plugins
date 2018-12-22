@@ -1,119 +1,133 @@
-.. index:: Plugins; Stateengine; Zustand-Item
-.. index:: Zustand-Item
+.. index:: Plugins; Stateengine; Bedingungen
+.. index:: Bedingungen
+.. _Bedingungen:
 
-Zustand-Item
-############
+Bedingungen
+###########
 
-.. rubric:: Zustände: Das Zustands-Item
-   :name: daszustandsitem
+.. rubric:: Grundlagen
+   :name: grundlagen
 
-Alle Items unterhalb des Objekt-Items beschreiben Zustände des
-Objekts ("Zustands-Item"). Die Ids der Zustands-Items sind
-beliebig. Sie werden als Werte für das über
-``se_laststate_item_id`` angegebene Item verwendet um den
-aktuellen Zustand abzulegen.
+Jede Bedingung erfordert drei Dinge:
+
+-  Einen Namen, der die Bedingung und die zugehörigen Elemente
+   identifiziert
+-  Grenzwerte um zu prüfen, ob die Bedingung erfüllt ist
+-  Eine Möglichkeit, den aktuellen Wert zu ermitteln, gegen den die
+   Grenzwerte geprüft werden
+
+.. rubric:: Name der Bedingung
+   :name: namederbedingung
+
+Der Name der Bedingung ist beliebig und wird lediglich zur
+Benennung der Attribute verwendet. Die Namen aller Attribute, die
+zu einer Bedingung gehören, folgen dem Muster
+``se_<Funktion>_<Bedingungsname>``. Es gibt verschiedene
+"besondere" Bedingungsnamen, die später erläutert werden.
+
+.. rubric:: Grenzwerte
+   :name: grenzwerte
+
+Die Grenzwerte einer Bedingung werden in den Bedingungsgruppen
+definiert. Die folgenden Grenzwerte sind möglich:
+
+**Minimum**
 
 .. code-block:: yaml
 
-   beispiel:
-           raffstore1:
-               automatik:
-                   rules:
-                       Tag:
-                           type: foo
-                           name: Tag
-                           se_name: eval: sh.eine_funktion()
+       se_min_<Bedingungsname>: [Wert]
 
+Die Bedingung ist erfüllt, wenn der aktuelle Wert größer als das
+angegebene Minimum ist.
 
-| **type (obligatorisch):**
-| *Datentp des Items*
+**Maximum**
 
-Für das Zustands-Item muss immer der Datentyp "foo" verwendet
-werden
+.. code-block:: yaml
 
-| **name (optional):**
-| *Name des Zustands*
+       se_max_<Bedingungsname>: [Wert]
 
-Der Name des Zustands wird im Protokoll sowie als Wert für das
-über ``se_laststate_item_name`` angegebene Item verwendet. Wenn
-kein Name angegeben ist, wird hier ebenfalls die Id des
-Zustands-Items verwendet.
+Die Bedingung ist erfüllt, wenn der aktuelle Wert kleiner als das
+angegebene Maximum ist.
 
-| **se_name (optional):**
-| *Ermittlung des Namens des Zustands*
+**Bestimmter Wert**
 
-| Über das Attribut ``se_name`` kann der im Attribut ``name``
-  überschrieben werden. Dies wirkt sich jedoch nur auf den Wert
-  aus, der in das über ``se_laststate_item_name`` angegebene
-  Item geschrieben wird. Im Protokoll wird immer der über das
-  Attribut ``name`` angegebene Wert verwendet.
-| Der Parameter verwendet den Datentyp AbValue
+.. code-block:: yaml
 
-.. rubric:: Bedingungsgruppen
-   :name: bedingungsgruppen
+       se_value_<Bedingungsname>: [Wert]
 
-Jeder Zustand kann eine beliebige Anzahl von Bedingungsgruppen
-haben. Jede Bedingungsgruppe definiert ein Set an Bedingungen das
-überprüft wird, wenn der aktuelle Status neu ermittelt wird.
-Sobald die Bedingungen einer Bedingungsgruppe vollständig erfüllt
-sind, kann der Status aktiv werden.
+Die Bedingung ist erfüllt, wenn der aktuelle Wert gleich dem
+angegebenen Wert oder gleich einem der in einer Liste angegebenen Wert ist.
 
-Jede Bedingungsgruppe wird durch ein Item
-("Bedingungsgruppen-Item") unterhalb des Zustands-Items
-abgebildet. Eine Bedingungsgruppe kann beliebig viele Bedingungen
-umfassen. Bedingungen werden als Attribute im
-Bedingungsgruppen-Item definiert. Details zu den Bedingungen
-werden im Abschnitt :ref:`Bedingungen` erläutert.
+.. code-block:: yaml
 
-Die folgenden Regeln kommen zur Anwendung:
+       se_value_<Bedingungsname>:
+          - [Wert1]
+          - [Wert2]
+          - [WertN]
 
--  Zustände und Bedingungsgruppen werden in der Reihenfolge
-   geprüft, in der sie in der Konfigurationsdatei definiert sind.
+**Negieren**
 
--  Eine einzelne Bedingungsgruppe ist erfüllt, wenn alle
-   Bedingungen, die in der Bedingungsgruppe definiert sind,
-   erfüllt sind (UND-Verknüpfung). Einschränkungen, die in der
-   Bedingungsgruppe nicht definiert sind, werden nicht geprüft.
+.. code-block:: yaml
 
--  Ein Zustand kann aktueller Zustand werden, wenn eine beliebige
-   der definierten Bedingungsgruppen des Zustands erfüllt ist. Die
-   Prüfung ist mit der ersten erfüllten Bedingungsgruppe beendet
-   (ODER-Verknüpfung).
+       se_negate_<Bedingungsname>: True|False
 
--  Ein Zustand der keine Bedingungsgruppen hat kann immer
-   aktueller Zustand werden. Solch ein Zustand kann als
-   Default-Zustand am Ende der Zustände definiert werden.
+Die gesamte Bedingung (Minimum, Maximum und Wert) wird negiert
+(umgekehrt). Für das Attribut wird der Datentyp Boolean verwendet,
+zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
+"no", "off"
 
-.. rubric:: Aktionen
-   :name: aktionen
+**Mindestalter**
 
-Jeder Zustand kann eine beliebige Anzahl an Aktionen definieren.
-Sobald ein Zustand aktueller Zustand wird werden die Aktionen des
-Zustands ausgeführt. Für die Aktionen gibt es vier Ereignisse, die
-festlegen, wann eine Aktion ausgeführt wird:
+.. code-block:: yaml
 
--  **on_enter**: Aktionen, die beim erstmaligen Aktivieren des
-   Zustands ausgeführt werden
+       se_agemin_<Bedingungsname>: [Wert]
 
--  **on_stay**: Aktionen, die ausgeführt werden, wenn der Zustand
-   zuvor bereits aktiv war und weiterhin aktiv bleibt.
+Die Bedingung ist erfüllt, wenn das Alter des Items, dass zur
+Ermittlung des Werts angegeben ist, größer als das angegebene
+Mindestalter ist.
 
--  **on_enteror_stay**: Aktionen, die ausgeführt werden, wenn der
-   Zustand aktiv ist, unabhängig davon, ob er bereits zuvor aktiv
-   war oder nicht.
+**Höchstalter**
 
--  **on_leave**: Aktionen, die ausgeführt werden, direkt bevor ein
-   anderer Zustand aktiv wird.
+.. code-block:: yaml
 
-   Details zu den Aktionen werden im Abschnitt
-   :ref:`Aktionen` erläutert.
+       se_agemax_<Bedingungsname>: [Wert]
 
-.. rubric:: Items
-   :name: items
+Die Bedingung ist erfüllt, wenn das Alter des Items, dass zur
+Ermittlung des Werts angegeben ist, kleiner als das angegebene
+Höchstalter ist.
 
-Bedingungen und Aktionen beziehen sich überlicherweise auf Items.
-Diese Items müssen auf Ebene des Objekt-Items über das Attribut
-``se_item_<Bedingungsname/Aktionsname>`` bekannt gemacht werden.
+**Altersbedingung negieren**
+
+.. code-block:: yaml
+
+       se_agenegate_<Bedingungsname>: True|False
+
+Die Altersbedingung (Mindestalter, Höchstalter) wird negiert
+(umgekehrt). Für das Attribut wird der Datentyp Boolean verwendet,
+zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
+"no", "off"
+
+.. rubric:: Bereitstellung des zu setzenden Werts
+   :name: bereitstellungdesaktuellenwerts
+
+Der zu setzende Wert kann entweder über einen statischen Wert, ein Item oder über eine
+Eval-Funktion bereitgestellt werden. Wenn beides angegeben ist,
+wird das Item verwendet und die Eval-Funktion ignoriert.
+
+Der Name des Items, über das der aktuelle Wert abgerufen werden
+soll, wird auf Ebene des Objekt-Items über das Attribut
+``se_item_<Bedingungsname>`` angegeben. Die Eval-Funktion, über
+die der aktuelle Wert abgerufen werden soll, wird auf Ebene des
+Objekt-Items über das Attribut
+``se_eval_<Bedingungsname>`` angegeben. Der Bedingungsname
+in ``se_item`` bzw. ``se_eval``
+muss mit den Bedingungsnamen in den Bedingungen korrespondieren.
+
+Da sich Altersbedingungen auf das Alter der hinterlegten Items
+beziehen, können ``se_agemin_<Bedingungsname>``,
+``se_agemax_<Bedingungsname>`` und
+``se_agenegate_<Bedingungsname>`` nur verwendet werden, wenn der
+aktuelle Wert über ein Item bereitgestellt wird.
 
 .. rubric:: Beispiel
    :name: beispiel
@@ -121,45 +135,121 @@ Diese Items müssen auf Ebene des Objekt-Items über das Attribut
 .. code-block:: yaml
 
    beispiel:
-           raffstore1:
-               automatik:
-                   rules:
-                       <Allgemeine Objektkonfiguration>
+       raffstore1:
+           automatik:
+               rules:
+                   <...>
+                   se_item_height: beispiel.raffstore1.hoehe
+                   se_item_lamella: beispiel.raffstore1.lamelle
+                   se_item_brightness: beispiel.wetterstation.helligkeit
+                   Daemmerung:
+                       type: foo
+                       name: Dämmerung
+                       <Aktionen>
+                       enter:
+                           se_min_brightness: 500
+                           se_max_brightness: value:1000
 
-                       Tag:
-                           type: foo
-                           name: Tag
-                           <Aktionen bei Zustand "Tag">
-                           enter:
-                               <Bedingungen>
-                       Nacht:
-                           type: foo
-                           name: Nacht
-                           <Aktionen bei Zustand "Nacht">
-                           enter_toodark:
-                               <Bedingungen um den Zustand anzusteuern, wenn es zu dunkel ist>
-                           enter_toolate:
-                               <Bedingungen um den Zustand anzusteuern, wenn es zu spät ist>
+                   Nacht:
+                       type: foo
+                       name: Nacht
+                       <Aktionen>
+                       enter_toodark:
+                           se_max_brightness: 500
+
+                   Sonder:
+                       type: foo
+                       name: Ein spezielles Bedingungsset
+                       <Aktionen>
+                       enter:
+                           se_min_brightness: item:test.wert
+                           se_max_brightness: eval:sh.test.wert() + 500
 
 
-| **Attribute se_item_height und se_item_lamella:**
-| *Definition der Items, die durch die Aktionen
-  se_set_height und se_set_lamella verändert werden*
+.. rubric:: "Besondere" Bedingungen
+   :name: besonderebedingungen
 
-Die Items werden durch ihre Item-Id angegeben
+Das Plugin stellt die Werte für einige "besondere" Bedingungen
+automatisch bereit. Für diese Bedingungen muss daher kein Item und
+keine Eval-Funktion zur Ermittlung des aktuellen Werts angegeben
+werden. Die "besonderen" Bedingungen werden über reservierte
+Bedingungsnamen gekennzeichnet. Diese Bedingungsnamen dürfen daher
+nicht für andere Bedingungen verwendet werden.
 
-| **Attribut nam:**
-| *Name des Zustands*
+Die folgenden "besonderen" Bedingungsnamen können verwendet werden
 
-Der Name wird in das über ``se_laststate_item_name`` definierte
-Item geschrieben, wenn der Zustand aktueller Zustand wird. Dieser
-Wert kann z. B. in einer Visualisierung dargestellt werden.
+**time**
+*Aktuelle Uhreit*
+Die Werte für ``se_value_time``, ``se_min_time`` und
+``se_max_time`` müssen im Format "hh:mm" (":") angegeben werden.
+Es wird ein 24 Stunden-Zeitformat verwendet. Beispiele: "08:00"
+oder "13:37". Um das Ende des Tages anzugeben kann der Wert
+"24:00" verwendet werden, der für die Prüfungen automatisch zu
+"23:59:59" konvertiert wird. Wichtig sind die Anführungszeichen
+oder Hochkommas!
 
-| **Attribute se_set_height und se_set_leave:**
-| *Neue statische Werte für die Items die über
-  se_item_height und se_item_leave festgelegt wurden*
+**weekday**
+*Wochentag*
+0 = Montag, 1 = Dienstag, 2 = Mittwoch, 3 = Donnerstag, 4 =
+Freitag, 5 = Samstag, 6 = Sonntag
 
-| **Untergeordnete Items enter, enter_toodark und
-  enter_toolate:**
-| *Bedingungsgruppen die erfüllt sein müssen, damit ein Zustand
-  aktueller Zustand werden kann*
+**month**
+*Monat*
+1 = Januar, ..., 12 = Dezember
+
+**sun_azimut**
+*Sonnenstand (Horizontalwinkel)*
+Der Azimut (Horizontalwinkel) ist die Kompassrichtung, in der die
+Sonne steht. Der Azimut wird von smarthomeNg auf Basis der
+aktuellen Zeit sowie der konfigurierten geographischen Position
+berechnet. Siehe auch `SmarthomeNg
+Dokumentation <https://www.smarthomeng.de/user/logiken/objekteundmethoden_zeit_sonne_mond.html>`_
+für Voraussetzungen zur Berechnung der Sonnenposition.
+Beispielwerte: 0 → Sonne exakt im Norden, 90 → Sonne exakt im
+Osten, 180 → Sonne exakt im Süden, 270 → Sonne exakt im Westen
+
+**sun_altitude**
+*Sonnenstand (Vertikalwinkel)*
+Die Altitude (Vertikalwikel) ist der Winkel, in dem die Sonne über
+dem Horizont steht. Die Altitude wird von smarthomeNg auf Basis
+der aktuellen Zeit sowie der konfigurierten geographischen
+Position berechnet. Siehe auch `SmarthomeNG
+Dokumentation <https://www.smarthomeng.de/user/logiken/objekteundmethoden_zeit_sonne_mond.html>`_
+für Voraussetzungen zur Berechnung der Sonnenposition. Werte:
+negativ → Sonne unterhalb des Horizonts, 0 →
+Sonnenaufgang/Sonnenuntergang, 90 → Sonne exakt im Zenith
+(passiert nur in äquatorialen Bereichen)
+
+**age**
+*Zeit seit der letzten Änderung des Zustands (Sekunden)*
+Das Alter wird über die letzte Änderung des Items, das als
+``se_laststate_item_id`` angegeben ist, ermittelt.
+
+**random**
+*Zufallszahl zwischen 0 und 100*
+Wenn etwas zufällig mit einer Wahrscheinlichkeit von 60% passieren
+soll, kan beispielsweise die Bedingung ``max_random: 60``
+verwendet werden.
+
+**laststate**
+*Id des Zustandsitems des aktuellen Status*
+Wichtig: Hier muss die vollständige Item-Id angegeben werden
+
+**trigger_item, trigger_caller, trigger_source, trigger_dest**
+*item, caller, source und dest-Werte, durch die die
+Zustandsermittlung direkt ausgelöst wurde*
+Über diese vier Bedingungen kann der direkte Auslöser der
+Zustandsermittlung abgeprüft werden, also die Änderung, die
+smarthomeNG veranlasst, die Zustandsermittlung des
+stateengine-Plugins aufzurufen.
+
+**original_item, original_caller, original_source**
+*item, caller, source und dest-Werte, durch die die
+Zustandsermittlung ursprünglich ausgelöst wurde*
+Über diese vier Bedingungen kann der ursprüngliche Auslöser der
+Zustandsermittlung abgeprüft werden. Beim Aufruf der
+Zustandsermittung über einen ``eval_trigger`` Eintrag wird über
+``trigger_caller`` beispielsweise nur ``Eval`` weitergegeben.
+In den drei ``original_*`` Bedingungen wird in diesem Fall der
+Auslöser der Änderung zurückverfolgt und der Einstieg in die
+``Eval``-Kette ermittelt.

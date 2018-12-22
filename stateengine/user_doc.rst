@@ -1,14 +1,13 @@
-.. index:: Plugins; Stateengine
-.. index:: Stateengine
+.. index:: Plugins; stateengine
+.. index:: stateengine
 
-Stateengine
+stateengine
 ###########
 
-Konfiguration
+Dokumentation
 =============
 
 .. toctree::
-   :numbered:
 
    user_doc/user_doc1.rst
    user_doc/user_doc2.rst
@@ -24,4 +23,3 @@ Konfiguration
    user_doc/user_doc12.rst
    user_doc/user_doc13.rst
    user_doc/user_doc14.rst
-   user_doc/user_doc15.rst
