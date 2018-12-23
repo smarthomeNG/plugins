@@ -1,23 +1,24 @@
-.. index:: Plugins; UZSU
-.. index:: UZSU
+.. index:: Plugins; uzsu
+.. index:: uzsu
 
-UZSU
+uzsu
 ####
 
 Konfiguration
 =============
 
-In der etc/plugin.yaml muss das Plugin standardmäßig eingebunden werden. Falls remove_duplicates auf True gesetzt ist (default), werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu getätigten Eintrag ersetzt. Da diese Funktionalität nur gewährleistet ist, wenn die Einträge abgesehen vom zu setzenden Wert identisch sind, werden vom Plugin nicht unterstützte Dictionary-Keys, die evtl. durch das UZSU Widget der SmartVISU hinzugefügt wurden, beim Pluginstart ab v1.5.3 gelöscht.
+.. important::
+
+      Detaillierte Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/uzsu` zu finden.
+
 
 .. code-block:: yaml
 
     # etc/plugin.yaml
     uzsu:
-        class_name: UZSU
-        class_path: plugins.uzsu
+        plugin_name: uzsu
         #remove_duplicates: True
 
-Im items Ordner ist pro Item, das geschaltet werden soll, ein UZSU Item mit ``type: dict`` zu erstellen. Die Hierarchie spielt dabei keine Rolle, es wird allerdings empfohlen, das UZSU Item als Kind des zu schaltenden Items zu deklarieren und die relative Item-Referenzierung ``'..'`` für den Parameter ``uzsu_item`` zu nutzen. Es wird dringend empfohlen, das ``cache: True`` zu setzen, damit die Einstellungen bei einem Neustart nicht verloren gehen.
 
 .. code-block:: yaml
 
@@ -37,6 +38,10 @@ Im items Ordner ist pro Item, das geschaltet werden soll, ein UZSU Item mit ``ty
                     eval: sh...activate(value)
                     visu_acl: rw
 
+SmartVISU
+=========
+
+Das UZSU Plugin wird durch die smartVISU2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung unterstützt. Bei Problemen bitte das entsprechende Supportforum konsultieren. Es wird empfohlen, die Visualisierung für das Einstellen der UZSU zu verwenden. Die folgenden Informationen zum Datenformat können übersprungen werden.
 
 Datenformat
 ===========
@@ -59,7 +64,7 @@ Interpolation
 
 .. important::
 
-      Wenn die Interpolation aktiviert ist, wird das UZUS Item im gegebenen Intervall aktualisiert, auch wenn der nächste UZSU Eintrag über die Tagesgrenze hinaus geht. Gibt es beispielsweise heute um 23:00 einen Eintrag mit dem Wert 100 und morgen um 1:00 einen Eintrag mit dem Wert 0, wird zwischen den beiden Zeitpunkten der Wert kontinuierlich abnehmen. Bei linearer Interpolation wird um Mitternacht der Wert 50 geschrieben.
+      Wenn die Interpolation aktiviert ist, wird das UZSU Item im gegebenen Intervall aktualisiert, auch wenn der nächste UZSU Eintrag über die Tagesgrenze hinaus geht. Gibt es beispielsweise heute um 23:00 einen Eintrag mit dem Wert 100 und morgen um 1:00 einen Eintrag mit dem Wert 0, wird zwischen den beiden Zeitpunkten der Wert kontinuierlich abnehmen. Bei linearer Interpolation wird um Mitternacht der Wert 50 geschrieben.
 
 Interpolation ist ein eigenes Dict innerhalb des UZSU Dictionary mit folgenden Einträgen:
 
@@ -77,27 +82,9 @@ Interpolation ist ein eigenes Dict innerhalb des UZSU Dictionary mit folgenden E
 Funktionen
 ==========
 
-UZSU Items können über folgende Funktion z.B. in Logiken oder eval-Aufrufen abgefragt oder verändert werden.
+.. important::
 
-.. code-block:: python
-
-    # Abfrage des nächsten Aktualisierungszeitpunkts
-    sh.eg.wohnen.kugellampe.uzsu.planned()
-
-    # Abfrage, ob die uzsu aktiv ist oder nicht.
-    sh.eg.wohnen.kugellampe.uzsu.activate()
-
-    # Setzen, ob die uzsu aktiv ist oder nicht. True: aktivieren, False: deaktivieren
-    sh.eg.wohnen.kugellampe.uzsu.activate(True/False)
-
-    # Abfrage der Interpolationseinstellungen
-    sh.eg.wohnen.kugellampe.uzsu.interpolation()
-
-    # Setzen der Interpolationseinstellungen
-    sh.eg.wohnen.kugellampe.uzsu.interpolation(type='linear/none/cubic', interval=5, backintime=0)
-
-    # Beim Aufrufen mit dem Parameter True werden die Einträge der UZSU gelöscht. VORSICHT!
-    sh.eg.wohnen.kugellampe.uzsu.clear(True)
+      Detaillierte Informationen zu den Funktionen des Plugins sind unter :doc:`/plugins_doc/config/uzsu` zu finden.
 
 
 Webinterface
@@ -113,7 +100,7 @@ Das Webinterface bietet folgende Informationen:
 
 -  **UZSU Interpolation**: Interpolationstyp und Intervall
 
--  **UZSU Init**: Back in Time bz.w init age Wert
+-  **UZSU Init**: Back in Time bzw. init age Wert
 
 -  **UZSU dict**: Durch Klicken auf eine Zeile wird das gesamte Dictionary einer UZSU angezeigt.
 
@@ -143,9 +130,3 @@ Weitere Infos
 =============
 
 Beispiele und zusätzliche Infos können im `SmarthomeNG Blog <https://www.smarthomeng.de/tag/uzsu>`_ gefunden werden.
-
-
-SmartVISU
-=========
-
-Das UZSU plugin wird durch die smartVISU2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung unterstützt.

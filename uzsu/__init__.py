@@ -256,6 +256,7 @@ class UZSU(SmartPlugin):
             self._items[item]['active'] = activevalue
             self.logger.info("Item {} is set via logic to: {}".format(item, activevalue))
             item(self._items[item], 'UZSU Plugin', 'logic')
+            return activevalue
         if activevalue is None:
             return self._items[item].get('active')
 
@@ -273,6 +274,7 @@ class UZSU(SmartPlugin):
             self.logger.info("Item {} interpolation is set via logic to: type={}, interval={}, backintime={}".format(
                 item, type, abs(interval), backintime))
             item(self._items[item], 'UZSU Plugin', 'logic')
+            return self._items[item].get('interpolation')
 
     def _logics_clear(self, clear=False, item=None):
         if isinstance(clear, str):
@@ -285,6 +287,9 @@ class UZSU(SmartPlugin):
             self._items[item] = {'interpolation': {}, 'active': False}
             self.logger.info("UZSU settings for item '{}' are cleared".format(item))
             item(self._items[item], 'UZSU Plugin', 'clear')
+            return True
+        else:
+            return False
 
     def _logics_itpl(self, clear=False, item=None):
         if isinstance(clear, str):
@@ -293,6 +298,7 @@ class UZSU(SmartPlugin):
         if isinstance(clear, bool) and clear is True:
             self._itpl[item].clear()
             self.logger.info("UZSU interpolation dict for item '{}' is cleared".format(item))
+            return self._itpl[item]
         else:
             self.logger.info("UZSU interpolation dict for item '{}' is: {}".format(item, self._itpl[item]))
             return self._itpl[item]
@@ -305,6 +311,7 @@ class UZSU(SmartPlugin):
         elif not self._planned.get(item) and self._items[item].get('active') is True:
             self.logger.warning("Item '{}' is active but has no (active) entries.".format(item))
             self._planned.update({item: None})
+            return None
         else:
             self.logger.info("Nothing planned for item '{}'.".format(item))
             return None
