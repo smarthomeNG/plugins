@@ -185,7 +185,7 @@ darksky:
             ds_matchstring: daily/data
             cache: 'yes'
 
-        # all day0 child items wont show up in WebIf of plugin! Use item tree to check!
+        # all day0, day1, day2 ... items won't show up in WebIf of plugin! Use item tree to check!
         day0:
             date:
                 type: str
@@ -206,7 +206,48 @@ darksky:
                 type: num
                 eval_trigger: darksky.daily.data
                 eval: sh.darksky.daily.data()[0]['temperatureMax']
+      
+        day1:
+            date:
+                type: str
+                eval_trigger: darksky.daily.data
+                eval: datetime.datetime.fromtimestamp(sh.darksky.daily.data()[1]['time']).strftime('%a %d.%m.%Y')
 
+            icon:
+                type: str
+                eval_trigger: darksky.daily.data
+                eval: sh.darksky.daily.data()[1]['icon']
+            
+            icon_sv:
+                type: str
+                eval_trigger: darksky.daily.day1.icon
+                eval: sh.darksky_weather.map_icon(sh.darksky.daily.day1.icon())
+
+            temperature_max:
+                type: num
+                eval_trigger: darksky.daily.data
+                eval: sh.darksky.daily.data()[1]['temperatureMax']
+                
+        day2:
+            date:
+                type: str
+                eval_trigger: darksky.daily.data
+                eval: datetime.datetime.fromtimestamp(sh.darksky.daily.data()[2]['time']).strftime('%a %d.%m.%Y')
+
+            icon:
+                type: str
+                eval_trigger: darksky.daily.data
+                eval: sh.darksky.daily.data()[2]['icon']
+            
+            icon_sv:
+                type: str
+                eval_trigger: darksky.daily.day2.icon
+                eval: sh.darksky_weather.map_icon(sh.darksky.daily.day2.icon())
+
+            temperature_max:
+                type: num
+                eval_trigger: darksky.daily.data
+                eval: sh.darksky.daily.data()[2]['temperatureMax']
                 
     alerts:
 
