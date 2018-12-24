@@ -70,6 +70,12 @@ darksky:
         icon:
             type: str
             ds_matchstring: currently/icon
+        
+        # create item with icon representation for SmartVisu  
+        icon_sv:
+            type: str
+            eval_trigger: darksky.currently.icon
+            eval: sh.weather_darksky.map_icon(sh.darksky.currently.icon())
 
         nearestStormDistance:
             type: num
