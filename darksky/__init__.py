@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2018 René Frieß                      rene.friess(a)gmail.com
-#  Version 1.5.0.1
+#  Version 1.5.0.2
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -32,7 +32,7 @@ from lib.model.smartplugin import *
 
 class DarkSky(SmartPlugin):
 
-    PLUGIN_VERSION = "1.5.0.1"
+    PLUGIN_VERSION = "1.5.0.2"
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
