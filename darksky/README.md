@@ -5,7 +5,7 @@
 This plugins can be used retrieve weather information from darksky.net / forecast.io.
 
 ## Support
-Support is provided trough the support thread within the smarthomeNG forum: [Smarthome.py](https://knx-user-forum.de/forum/supportforen/smarthome-py)
+Support is provided trough the support thread within the smarthomeNG forum: [Neues Plugin: Wetterdaten via darksky.net / forecast.io](https://knx-user-forum.de/forum/supportforen/smarthome-py/1244744-neues-plugin-wetterdaten-via-darksky-net-forecast-io)
 
 
 ### Requirements
