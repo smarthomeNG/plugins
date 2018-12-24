@@ -71,7 +71,7 @@ darksky:
             type: str
             ds_matchstring: currently/icon
         
-        # create item with icon representation for SmartVisu  
+        # create item with icon representation for SmartVisu, won't show up in Plugin's Web Interface 
         icon_sv:
             type: str
             eval_trigger: darksky.currently.icon
@@ -173,13 +173,19 @@ darksky:
 
         icon:
             type: str
-            ds_matchstring: daily/icon      
+            ds_matchstring: daily/icon    
+        
+        icon_sv:
+                type: str
+                eval_trigger: darksky.daily.icon
+                eval: sh.darksky_weather.map_icon(sh.darksky.daily.icon())  
             
         data:
             type: list
             ds_matchstring: daily/data
             cache: 'yes'
 
+        # all day0 child items wont show up in WebIf of plugin! Use item tree to check!
         day0:
             date:
                 type: str
@@ -190,11 +196,11 @@ darksky:
                 type: str
                 eval_trigger: darksky.daily.data
                 eval: sh.darksky.daily.data()[0]['icon']
-
+            
             icon_sv:
                 type: str
                 eval_trigger: darksky.daily.day0.icon
-                eval: sh.darksky_weather.map_icon(sh.darksky.daily.day0())
+                eval: sh.darksky_weather.map_icon(sh.darksky.daily.day0.icon())
 
             temperature_max:
                 type: num
