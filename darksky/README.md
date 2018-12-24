@@ -173,7 +173,34 @@ darksky:
 
         icon:
             type: str
-            ds_matchstring: daily/icon        
+            ds_matchstring: daily/icon      
+            
+        data:
+            type: list
+            ds_matchstring: daily/data
+            cache: 'yes'
+
+        day0:
+            date:
+                type: str
+                eval_trigger: darksky.daily.data
+                eval: datetime.datetime.fromtimestamp(sh.darksky.daily.data()[0]['time']).strftime('%a %d.%m.%Y')
+
+            icon:
+                type: str
+                eval_trigger: darksky.daily.data
+                eval: sh.darksky.daily.data()[0]['icon']
+
+            icon_sv:
+                type: str
+                eval_trigger: darksky.daily.day0.icon
+                eval: sh.darksky_weather.map_icon(sh.darksky.daily.day0())
+
+            temperature_max:
+                type: num
+                eval_trigger: darksky.daily.data
+                eval: sh.darksky.daily.data()[0]['temperatureMax']
+
                 
     alerts:
 
