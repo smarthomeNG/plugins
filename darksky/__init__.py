@@ -158,6 +158,36 @@ class DarkSky(SmartPlugin):
         json_obj = response.json()
         return json_obj
 
+    def map_icon(self, icon):
+        """
+        Maps the icons from darksky.net to the icons in SmartVisu
+
+        :param icon icon to map, as string.
+        :return SmartVisu icon as string.
+        """
+        if icon == 'clear-day':
+            return 'sun_1'
+        elif icon == 'clear-night':
+            return 'sun_1'
+        elif icon == 'partly-cloudy-day':
+            return 'sun_4'
+        elif icon == 'partly-cloudy-night':
+            return 'sun_4'
+        elif icon == 'fog':
+            return 'sun_6'
+        elif icon == 'rain':
+            return 'cloud_8'
+        elif icon == 'wind':
+            return 'sun_10'
+        elif icon == 'snow':
+            return 'sun_12'
+        elif icon == 'cloudy':
+            return 'cloud_4'
+        elif icon == 'sleet':
+            return 'cloud_11'
+        else:
+            return 'high'
+
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to
