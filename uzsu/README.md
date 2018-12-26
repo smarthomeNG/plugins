@@ -1,6 +1,12 @@
 # UZSU
 
-Provides universal time switches for items (German: *U*niverselle *Z*eit*s*chalt *U*hr)
+## Description
+Provides universal time switches for items
+
+## Documentation
+
+For info on the features and detailed setup see the [User Documentation](https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html "Manual")
+For info on how to configure the plugin see the [Configuration Documentation](https://www.smarthomeng.de/plugins_doc/config/uzsu "Configuration")
 
 ## Changelog
 
