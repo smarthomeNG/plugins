@@ -4,23 +4,9 @@ Created by i-am-offline
 ## Description
 Finite state machine plugin for smarthomeNG, previously known as AutoBlind
 
-## Support
-If you require support, please raise an issue at GitHub: <https://github.com/i-am-offline/smarthome.plugin.autoblind>
-
 ## Documentation
-The manual can be found on the official SmarthomeNG plugin documentation: <https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html>.
-
-A "Getting Started" blog entry can be found at the [SmarthomeNG Blog]
-(https://www.smarthomeng.de/starting-with-state-machine-automation-autoblind-plugin)
-
-## Configuration
-If you have already setup the older autoblind plugin you can use the shell script in the plugin directory to convert your item.yaml files.
-
-### plugin.yaml
-See the [manual at SmarthomeNG](https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html)
-
-### items.yaml
-See the [manual at SmarthomeNG](https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html)
+For info on the features and the different command files, etc. see the [User Documentation](https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html "Manual")
+For info on how to configure the plugin see the [Configuration Documentation](https://www.smarthomeng.de/plugins_doc/config/stateengine "Configuration")
 
 ### smartvisu widget
 Copy stateengine.example.html from the sv_widgets folder to your smartvisu/dropins/widgets folder and use the URL in your browser:
