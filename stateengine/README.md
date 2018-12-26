@@ -5,7 +5,7 @@ Created by i-am-offline
 Finite state machine plugin for smarthomeNG, previously known as AutoBlind
 
 ## Documentation
-For info on the features and the different command files, etc. see the [User Documentation](https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html "Manual")
+For info on the features and detailed setup see the [User Documentation](https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html "Manual")
 For info on how to configure the plugin see the [Configuration Documentation](https://www.smarthomeng.de/plugins_doc/config/stateengine "Configuration")
 
 ### smartvisu widget
