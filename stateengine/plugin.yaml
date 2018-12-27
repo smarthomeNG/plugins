@@ -1,48 +1,127 @@
 # Metadata for the StateEngine plugin
 plugin:
     # Global plugin attributes
-    type: system                # plugin type (gateway, interface, protocol, system, web)
+    type: system
     description:
         de: 'Zustandsautomat für SmarthomeNG, ehemals AutoBlind'
         en: 'Finite state machine for SmarthomeNG, previously known as AutoBlind'
+    description_long:
+        de: 'Der ursprüngliche Zweck dieses Plugins war es, Jalousien zu
+             steuern. Mit den steigenden Anforderungen hat es sich jedoch zu
+             einem flexiblen Zustandsautomaten entwickelt, mit dem nahezu alles
+             gesteuert werden kann. Im Prinzip ist es ein `endlicher
+             Automat <https://de.wikipedia.org/wiki/Endlicher_Automat>`_.
+             Dabei arbeitet das Plugin nicht mit Events, die zu konkreten Zuständen
+             führen, sondern mit einer hierarchischen Evaluierung der Zustände.
+             '
+        en: 'Initially this plugin was used to automatically control blinds.
+             Meanwhile it is a flexible fully featured `finite state machine
+             <https://en.wikipedia.org/wiki/Finite-state_machine>`_. It does not
+             work with typical events to define which state is evaluated next but
+             with hierarchical states.
+            '
     maintainer: i-am-offline, onkelandy
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
     version: 1.4.2
     sh_minversion: 1.4.1
     multi_instance: False
     classname: StateEngine
+    attribute_prefix: se
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     startup_delay_default:
         type: int
         default: 10
+        valid_min: -1
+        valid_max: 600
         description:
             de: 'Vorgabe für Verzögerung der ersten Zustandsermittlung beim Start'
             en: 'Default delay for first state determination at startup'
-        valid_min: -1
-        valid_max: 600
+        description_long:
+            de: '**Vorgabewert für die Startverzögerung der ersten Zustandsermittlung beim Start von smarthomeNG:**\n
+                Beim Starten von smarthomeNG dauert es üblicherweise einige
+                Sekunden, bis alle Items initialisiert sind. Um zu verhindern,
+                dass die erste Zustandsermittlung stattfindet, bevor alle Items
+                ihren Initialwert haben, wird die erste Zustandsermittlung
+                verzögert. Die Dauer der Verzögerung kann bei den Objekt-Items
+                angegeben werden. Wenn bei einem Objekt-Item kein Wert angegeben
+                ist, wird der hier angegebene Standardwert verwendet.\n
+                \n
+                - Zahl größer 0:
+                Angabe der Startverzögerung in Sekunden. Während der
+                Startverzögerung sind die Auslöser der Zustandsermittlung
+                inaktiv.\n
+                - 0:
+                Keine Startverzögerung. Die erste Zustandsermittlung wird direkt
+                nach der Initialisierung des Objekt-Items durchgeführt.\n
+                - -1:
+                Es wird keine erste Zustandsermittlung durchgeführt.\n
+                \n
+                Ohne Angabe dieses Parameters wird der Standardwert von 10 Sekunden angenommen.
+                '
+            en: '**Default delay for first state determination at startup:**\n
+                At smarthome startup some items might not be initialized correctly.
+                To avoid a wrong state evaluation the evaluation can be postponed by the
+                given amount of seconds.
+                \n
+                - digit higher than 0: start delay in seconds\n
+                - 0: no start delay, immediate init\n
+                - -1: no init\n
+                \n
+                '
 
     suspend_time_default:
         type: int
         default: 3600
+        valid_min: 1
+        valid_max: 86400
         description:
             de: 'Vorgabezeit zur Unterbrechung der automatischen Steuerung nach manuellen Aktionen'
             en: 'Default suspend duration after manual actions'
-        valid_min: 1
-        valid_max: 86400
+        description_long:
+            de: '**Vorgabezeit zur Unterbrechung der automatischen Steuerung nach manuellen Aktionen:**\n
+                 Nach manuellen Aktionen kann die Automatik für eine bestimmte Zeit
+                 Unterbrochen werden. Die Dauer dieser Unterbrechungen kann bei den
+                 Objekt-Items angegeben werden. Die Einheit für den Wert sind
+                 Sekunden. Wenn bei einem Objekt-Item kein Wert angegeben ist, wird
+                 der hier angegebene Standardwert verwendet. Wenn kein abweichender
+                 Standardwert in der Plugin-Konfiguration angegeben ist, ist der
+                 Vorgabewert 3600 Sekunden (1 Stunde)
+                 '
+            en: '**Default suspend duration after manual actions**:
+                After a manual change of the item the automatic evaluation is paused.
+                This value defines the duration of the pause in seconds if the
+                value is not defined in the object item itself.
+                '
 
     log_level:
         type: int
         default: 0
-        description:
-            de: 'Erweiterte Protokollierung: Loglevel (0: aus, 1: Info, 2: Debug)'
-            en: 'Extended Logging: Loglevel (0: off, 1: Info, 2: Debug)'
         valid_list:
           - 0
           - 1
           - 2
+        valid_list_description:
+            de: ['deaktiviert', 'Info', 'Debug']
+            en: ['deactivated', 'Info', 'Debug']
+        description:
+            de: 'Erweiterte Protokollierung: Loglevel (0: aus, 1: Info, 2: Debug)'
+            en: 'Extended Logging: Loglevel (0: off, 1: Info, 2: Debug)'
+        description_long:
+            de: '**Erweiterte Protokollierung:**\n
+                 Bei einem Wert von 1 oder 2 wird pro Item eine eigene Logdatei im unter log_directory
+                 angegebenen Verzeichnis angelegt.
+                 Wenn der Parameter nicht angegeben oder auf 0 gestellt ist,
+                 ist die erweiterte Protokollierung deaktiviert.
+                 '
+            en: '**Extended Logging**:\n
+                If 1 or 2 is given  there will be a seperate log file for each item in the folder
+                defined as log_directory.
+                If the parameter is absent or set to 0 no extended logging is active
+                '
 
     log_directory:
         type: str
@@ -50,13 +129,196 @@ parameters:
         description:
             de: 'Erweiterte Protokollierung: Verzeichnis für die Protokolldateien'
             en: 'Extended Logging: Directory for log files'
-
+        description_long:
+            de: '**Verzeichnis für die Protokolldateien:**\n
+                 Die Logdateien der erweiterten Protokollierung werden in das
+                 hier angegebene Verzeichnis geschrieben.
+                 Wenn der angegebene Verzeichnisname mit "/" beginnt wird er als
+                 absoluter Verzeichnisname behandelt. Alle anderen
+                 Verzeichnisnamen werden als Unterverzeichnisse des smarthomeNG
+                 Basisverzeichnisses behandelt. Das angegebene Verzeichnis wird
+                 angelegt, wenn es nicht existiert.
+                 Wenn hier kein abweichendes Verzeichnis angegeben ist, wird das
+                 Verzeichnis ``<smarthome_base_directory>/var/log/AutoState/``
+                 verwendet.
+                 '
+            en: '**Directory for log files**:\n
+                If the parameter is absent the log files will be saved to
+                ``<smarthome_base_directory>/var/log/AutoState/``
+                '
     log_maxage:
         type: int
         default: 0
         description:
             de: 'Erweiterte Protokollierung: Anzahl der Tage, nach der die Dateien im Verzeichnis für die Protokolldateien wieder gelöscht werden sollen'
             en: 'Extended Logging: Number of days after which the files in the directory for log files should be deleted'
+        description_long:
+            de: '**Log Rotation für erweiterte Protokollierung:**\n
+                 Alte Protokolldateien können nach einer bestimmten Zeit
+                 automatisch gelöscht werden. Durch diesen Parameter wird die Anzahl
+                 der Tage festgelegt, nach der die Dateien gelöscht werden sollen.
+                 Das Löschen ist ausgesetzt, solange der Parameter den Wert 0 hat.
+                 Wenn der Parameter auf einen anderen Wert gesetzt wird, wird das
+                 Alter der Dateien im Protokollverzeichnis ``log_directory``
+                 täglich geprüft und überalterte Dateien werden gelöscht.\n
+                 \n
+                 **Achtung:**\n
+                 Die Löschfunktionalität prüft und löscht alle
+                 Dateien im Protokollverzeichnis, ob sie Protokolldateien sind
+                 oder nicht. Daher sollten keine anderen Dateien in diesem
+                 Verzeichnis abgelegt werden!
+                 '
+            en: '**Log rotation for extended logging:**\n
+                If this parameter is not set to 0 older log files get deleted after
+                the given amount of days from the ``log_directory``.\n
+                \n
+                **Warning:**\n
+                Everything gets deleted from the given directory, not just log files!
+                '
 
 item_attributes:
     # Definition of item attributes defined by this plugin
+    type:
+        type: string
+        valid_list:
+          - 'bool'
+        valid_list_description:
+            de: ['Der Item Typ muss auf bool gestellt werden!']
+            en: ['The item type has to be set to bool']
+        description:
+            de: 'Datentyp des Objekt-Items. Muss "bool" sein.'
+            en: 'Data type of the object item. Has to be "bool"'
+
+    se_plugin:
+        type: string
+        mandatory: True
+        valid_list:
+          - 'active'
+          - 'inactive'
+        valid_list_description:
+            de: ['Aktiviert die State Machine', 'Jeder andere Wert deaktiviert die State Machine']
+            en: ['Activates the state machine', 'Any other value deactivates the state machine']
+        description:
+            de: 'Kennzeichnet das Item als Objekt-Item des StateEngine-Plugins. Ist der Wert nicht "active", werden keine Zustände evaluiert.'
+            en: 'Makes the StateEngine-Plugin aware of this item as an object item. If the value is not "active", the state are not evaluated.'
+
+    se_startup_delay:
+        type: int
+        valid_min: -1
+        valid_max: 600
+        description:
+            de: 'Vorgabe für Verzögerung der ersten Zustandsermittlung beim Start'
+            en: 'Default delay for first state determination at startup'
+        description_long:
+            de: '**Startverzögerung der ersten Zustandsermittlung beim Start von smarthomeNG:**\n
+                Beim Starten von smarthomeNG dauert es üblicherweise einige
+                Sekunden, bis alle Items initialisiert sind. Um zu verhindern,
+                dass die erste Zustandsermittlung stattfindet, bevor alle Items
+                ihren Initialwert haben, wird die erste Zustandsermittlung
+                verzögert. Zustandsermittlungen, die durch Items oder Timer vor Ablauf der
+                Startverzögerung ausgelöst werden, werden nicht durchgeführt.
+                Die zulässigen Werte für ``se_startup_delay`` sind identisch
+                mit den zulässigen Werten für den Plugin-Parameter
+                ``startup_delay_default``.
+                '
+            en: '**Delay for first state determination at startup:**\n
+                 All evaluations are suspended until the startup delay has passed.
+                 The values for ``se_startup_delay`` are the same as for the plugin
+                 parameter ``startup_delay_default``.
+                 '
+
+    se_laststate_item_name:
+        type: string
+        description:
+            de: 'Id des Items, in dem der Name des aktuellen Zustands abgelegt wird'
+            en: 'Id of the item that saves the name of the current state'
+        description_long:
+            de: '**Id des Items, in dem der Name des aktuellen Zustands abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des aktuellen Zustands
+                abgelegt. Das Item kann für Displayzwecke verwendet werden. Wenn
+                das Item ``se_laststate_item_name`` nicht angegeben ist, steht
+                der Name des aktuellen Zustands nicht zur Verfügung.
+                '
+            en: '**Id of the item that saves the name of the current state:**\n
+                 The item defined here saves the name of the current state for
+                 visualization purposes. If ``se_laststate_item_name`` is not defined
+                 you cannot access the name of the current state.
+                 '
+
+    se_laststate_item_id:
+        type: string
+        description:
+            de: 'Id des Items, in dem die ID des aktuellen Zustands abgelegt wird'
+            en: 'Id of the item that saves the ID of the current state'
+        description_long:
+            de: '**Id des Items, in dem der aktuelle Zustand abgelegt wird:**\n
+                In das hier verknüpfte Item wird die Id des aktuellen Zustands
+                abgelegt. Das Item kann mit dem Attribut ``cache: yes``
+                versehen werden, dann bleibt der vorherige Zustand bei einem
+                Neustart von smarthomeNG erhalten. Wenn das Item nicht angegeben ist,
+                wird der aktuelle Zustand nur im Plugin gespeichert und geht mit
+                einem Neustart von smarthomeNG verloren.
+                '
+            en: '**Id of the item that saves the id of the current state:**\n
+                 In combination with the attribute ``cache: yes`` the defined item
+                 can be used to load the last state after the plugin start. Otherwise
+                 it does not know the last valid state before a system restart.
+                 '
+
+    se_repeat_actions:
+        type: bool
+        description:
+            de: 'Wiederholen der Aktionen bei unverändertem Zustand'
+            en: 'Repeat actions on eval even if the state stays the same'
+        description_long:
+            de: '**Wiederholen der Aktionen bei unverändertem Zustand:**\n
+                Im Normalfall werden Aktionen jedesmal ausgeführt wenn der
+                aktuelle Zustand neu ermittelt wurde. Dies ist unabhängig davon,
+                ob sich der Zustand bei der Neuermittlung geändert hat oder nicht.
+                Durch die Angabe von ``se_repeat_actions: false`` werden die Aktionen
+                nur beim erstmaligen Aktivieren des Zustands ausgeführt. Diese Option
+                ist auch für jede Aktion separat verfügbar, um vom hier angegebenen
+                Wert abzuweichen.
+                '
+            en: '**Repeat actions on eval even if the state stays the same:**\n
+                 Generally actions are executed every time a state is entered, even if
+                 the state does not change. By setting ``se_repeat_actions: false``
+                 the actions are exclusively when entering the first state the first time.
+                 This option is also available for every action seperately to overrule this setting.
+                 '
+
+    se_suspend_time:
+        type: int
+        valid_min: 1
+        valid_max: 86400
+        description:
+            de: 'Dauer der Unterbrechung der automatischen Steuerung nach manuellen Aktionen'
+            en: 'Suspend duration after manual actions'
+        description_long:
+            de: '**Unterbrechung der automatischen Steuerung nach manuellen Aktionen:**\n
+                 Nach manuellen Aktionen kann die Automatik für eine bestimmte Zeit
+                 Unterbrochen werden. Wird die Dauer nicht im Objekt-Item definiert,
+                 wird die Standarddauer aus der Plugin Konfiguration oder der Standardwert
+                 von 3600 Sekunden (1 Stunde) angenommen.
+                 '
+            en: '**Suspend duration after manual actions**:
+                After a manual change of the item the automatic evaluation is paused.
+                If this value is not defined in the object item, the default value
+                from the plugin configuration or the default value of 3600 seconds (1 hour)
+                is used.
+                '
+
+    se_item_suspend_end:
+        type: string
+        description:
+            de: 'Id des Items, in dem das Ende der Suspendzeit abgelegt werden soll'
+            en: 'Id of the item that saves the suspend end time'
+        description_long:
+            de: '**Id des Items, in dem das Ende der Suspendzeit abgelegt werden soll:**\n
+                Für Visualisierungszwecke kann der Inhalt des hier verknüpften Items
+                angezeigt werden. Dadurch ist ersichtlich, bis wann die Statusevaluierung
+                noch ausgesetzt wird.
+                '
+            en: '**Id of the item that saves the suspend end time:**\n
+                 To visualize the end time of the suspend state.
+                 '

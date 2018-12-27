@@ -1,99 +1,88 @@
-.. index:: Plugins; Stateengine; Vorgabezustände
-.. index:: Vorgabezustände
+.. index:: Plugins; Stateengine; Vordefinierte Funktionen
+.. index:: Vordefinierte Funktionen
 
-Vorgabezustände
-###############
+Vordefinierte Funktionen
+########################
 
-.. rubric:: Vorgabezustände verwenden
-   :name: vorgabezustndeverwenden
+Das stateengine Plugin stellt verschiedene vordefinierte
+Funktionen zur Verfügung, die einfach für
+``se_set_<Aktionsname>`` und ``se_run_<Aktionsname>`` Aktionen
+verwendet werden können:
 
-Es ist möglich Vorgabezustände in der Konfiguration zu definieren
-und diese später für konkrete Objekte anzuwenden. Dabei können im
-konkreten Zustand auch Einstellungen des Vorgabezustands
-überschrieben werden.
-
-Vorgabezustände werden als Item an beliebiger Stelle innerhalb der
-Item-Struktur definiert. Es ist sinnvoll, die Vorgabezustände
-unter eingem gemeinsamen Item zusammenzufassen. Innerhalb der
-Vorgabezustand-Items stehen die gleichen Möglichkeiten wie in
-normalen Zustands-Items zur Verfügung. Das dem
-Vorgabezustands-Item übergeordnete Item darf nicht das Attribut
-``se_plugin: active`` haben. Im Item über dem
-Vorgabezustands-Item können jedoch Items über
-``se_item_<Bedingungsname|Aktionsname>`` angegeben werden. Diese
-stehen in den Vorgabezuständen und in den von den Vorgabezuständen
-abgeleiteten Zuständen zur Verfügung und müssen so nicht jedes mal
-neu definiert werden.
-
-Im konkreten Zustands-Item kann das Vorgabezustand-Item über das
-Attribut
+.. rubric:: Winkel zum Nachführen der Jalousielamellen auf Basis des Sonnenstands
+   :name: winkel
 
 .. code-block:: yaml
 
-   se_use: <Id des Vorgabezustand-Item>
+   stateengine_eval.sun_tracking()
 
-eingebunden werden. Die Vorgabezustand-Items können geschachtelt
-werden, dass heißt ein Vorgabezustand kann also selbst wiederum
-über ``se_use`` von einem weiteren Vorgabezustand abgeleitet
-werden. Um unnötige Komplexität und Zirkelbezüge zu vermeiden ist
-die maximale Tiefe jedoch auf 5 Ebenen begrenzt.
 
-.. rubric:: Beispiel
-   :name: beispiel
+.. rubric:: Zufallszahl
+   :name: zufallszahl
 
 .. code-block:: yaml
 
-   beispiel:
-           default:
-               <...>
-               se_item_height: ...hoehe
-               Nacht:
-                   <...>
-                   enter:
-                       (...)
-                   se_set_height: value:100
-                   se_set_lamella: 0
-               Morgens:
-                   <...>
-                   enter:
-                       <...>
-                   se_set_height: value:100
-                   se_set_lamella: 25
+   stateengine_eval.get_random_int(min,max)
 
-               Abends:
-                   <...>
-                   enter:
-                       <...>
-                   se_set_height: value:100
-                   se_set_lamella: 75
+Über ``min`` und ``max`` kann die kleinste/größte Nummer, die
+zurückgegeben werden soll, festgelegt werden. ``min`` und
+``max`` können weggelassen werden, in diesem Fall sind die
+Vorgabewerte 0 für ``min`` und 255 für ``max``.
 
-               Tag:
-                   <...>
-                   enter:
-                       <...>
-                   se_set_height: value:0
-                   se_set_lamella: 100
+.. rubric:: Shell-Kommando ausführen
+   :name: shellkommandoausfhren
 
-       beispiel
-           raffstore1:
-               automatik:
-                   rules:
-                       <...>
-                       se_item_lamella: beispiel.raffstore1.lamelle
-                       Nacht:
-                           se_use: beispiel.default.Nacht
-                           enter_additional:
-                               <... zusätzliche Einstiegsbedingung ...>
-                       Morgens:
-                           se_use: beispiel.default.Morgens
-                       Abends:
-                           se_use: beispiel.default.Abends
-                           enter:
-                               <... Änderungen an der Einstiegsbedingung des Vorgabezustands ...>
-                       Nachfuehren:
-                           <...>
-                           name: Zusätzlicher Zustand, der nicht aus den Vorgabezuständen kommt
-                           se_set_height: value:100
-                           se_set_lamella: eval:stateengine_eval.sun_tracking()
-                       Tag:
-                           se_use: stateengine.default.day
+.. code-block:: yaml
+
+   stateengine_eval.execute(command)
+
+Führt das Shell-Kommando ``command`` aus
+
+.. rubric:: Wert einer Variable ermitteln
+   :name: werteinervariableermitteln
+
+.. code-block:: yaml
+
+   stateengine_eval.get_variable(varname)
+
+Liefert den Wert der :ref:`Variablen` ``varname``
+
+.. rubric:: Item-Id relativ zum Objekt-Item ermitteln
+   :name: itemidrelativzumobjektitemermitteln
+
+.. code-block:: yaml
+
+   stateengine_eval.get_relative_itemid(subitem_id)
+
+Eine Item-Id relativ zur Item-Id des Objekt-Items wird ermittelt.
+
+.. rubric:: Item-Wert relativ zum Objekt-Item ermitteln
+   :name: itemwertrelativzumobjektitemermitteln
+
+.. code-block:: yaml
+
+   stateengine_eval.get_relative_itemvalue(subitem_id)
+
+Der Wert eines Items relativ zur Item-Id des Objekt-Items wird
+ermittelt.
+
+.. rubric:: Suspend-Ende in einen Text einsetzen
+   :name: suspendendeineinentexteinsetzen
+
+.. code-block:: yaml
+
+   stateengine_eval.insert_suspend_time(suspend_item_id, suspend_text="Ausgesetzt bis %X")
+
+Das Ende der Suspend-Zeit wird in den Text ``suspend_text``
+eingesetzt. Im Text sind daher entsprechende Platzhalter
+vorzusehen (Siehe `strftime() and strptime()
+Behavior <https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior>`_).
+Wird kein ``suspend_text`` angegeben, so wird als Vorgabewert
+"Ausgesetzt bis %X" verwendet.
+
+Zur Ermittlung des Endes der Suspend-Zeit muss über
+``suspend_item_id`` ein Item angegeben werden, dessen Wert bei
+Eintritt in den Suspend-Status geändert wird. Über das Alter des
+Werts in diesem Item wird die bereits abgelaufene Suspend-Zeit
+bestimmt. Dies könnte auch über ein relatives Item angegeben werden,
+wobei dieses unbedingt in Anführungszeichen gesetzt werden muss, z.B. ``'..suspend'``

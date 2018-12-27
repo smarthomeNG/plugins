@@ -6,7 +6,7 @@ Allgemein
 
 .. important::
 
-      Es ist nicht empfehlenswert das stateengine Plugin
+      Es ist nicht empfehlenswert, das stateengine Plugin
       für sicherheitsrelevante Zustände, wie zum Beispiel das Hochfahren
       von Jalousien bei zu viel Wind, zu verwenden. Sicherheitsrelevante
       Funktionen müssen so einfach wie möglich aufgebaut sein. Es wird
@@ -19,24 +19,19 @@ Allgemein
 .. rubric:: Funktionalität
    :name: funktionalitaet
 
-Über zusätzliche Items in den items/\*.conf-Dateien können Objekte
+Über zusätzliche Items in den items/\*.yaml Dateien können Objekt-Items
 definiert werden, die eine beliebige Anzahl benutzerdefinierter
-Zustand haben. Jeder Zustand kann Sets von Einstiegs- und
-Ausstiegsbedingungen haben, sowie diverse Aktionen auslösen, wenn
-der Zustand aktiv wird. In regelmäßigen Intervallen werden die
-Zustände für jedes Objekt geprüft.
+Zustände haben. Jeder Zustand kann Sets von Einstiegsbedingungen haben
+und diverse Aktionen auslösen, wenn der Zustand aktiv wird.
 
--  Wenn die Ausstiegsbedingungen des aktuellen Zustands nicht
-   erfüllt sind bleibt das Objekt im aktuellen Zustand.
--  Wenn der aktuelle Zustand verlassen werden kann werden alle
-   Zustände in der Reihenfolge, in der sie in der
-   Konfigurationsdatei definiert sind, abgeprüft.
--  Der erste Zustand bei dem eine Gruppe Einstiegsbedingungen
-   vollständig erfüllt ist, wird zum aktuellen Zustand. Die
-   Aktionen, die für diesen Zustand definiert sind, werden
-   ausgeführt.
--  Wenn kein passender Zustand gefunden wird passiert nichts. Das
-   Objekt verbleibt im vorherigen Zustand.
+In regelmäßigen Intervallen werden die Zustände für jedes Objekt der angegebenen
+Reihe nach geprüft. Der erste Zustand, bei dem eine Gruppe Einstiegsbedingungen
+vollständig erfüllt ist, wird zum aktuellen Zustand. Die
+Aktionen, die für diesen Zustand definiert sind, werden ausgeführt.
+
+Wenn kein passender Zustand gefunden wird, passiert nichts. Das Objekt verbleibt im vorherigen Zustand.
+Dies kann in manchen Fällen Sinn machen, meist bietet es sich aber an,
+einen Standardzustand ganz am Ende festzulegen, der keine Eingangsbedingungen hat.
 
 Die folgenden Bedingungen können Teil der Bedingungsgruppen sein:
 
@@ -47,13 +42,7 @@ Die folgenden Bedingungen können Teil der Bedingungsgruppen sein:
 -  Alter des aktuellen Zustands (Minimum, Maximum, Wert)
 -  Zufallszahl (Minimum, Maximum, Wert)
 -  Vorheriger Zustand (Wert)
--  Trigger-Objekt, dass die Zustandsermittlung ausgelöst hat
+-  Trigger-Objekt, das die Zustandsermittlung ausgelöst hat
 
-Zusätzlich können beliebige Items als Bedingungen geprüft werden
+Zusätzlich können beliebige Items (z.B. Temperatur) als Bedingungen geprüft werden
 (Minimum, Maximum oder Wert)
-
-Der ursprüngliche Zweck dieses Plugins war es, Jalousien zu
-steuern. Mit den steigenden Anforderungen hat es sich jedoch zu
-einem flexiblen Zustandsautomaten entwickelt, mit dem nahezu alles
-gesteuert werden kann. Im Prinzip ist es ein `endlicher
-Automat <https://de.wikipedia.org/wiki/Endlicher_Automat>`_.

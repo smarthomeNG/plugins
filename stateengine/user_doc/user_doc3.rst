@@ -1,204 +1,147 @@
-.. index:: Plugins; Stateengine; Objekt-Item
-.. index:: Objekt-Item
+.. index:: Plugins; Stateengine; Zustand-Item
+.. index:: Zustand-Item
 
-Objekt-Item
-###########
+Zustand-Item
+############
 
-.. rubric:: Die Grundkonfiguration für eine Automatik: Das Objekt-Item
-   :name: diegrundkonfiguration
+.. rubric:: Zustände: Das Zustands-Item
+   :name: daszustandsitem
 
-Für jedes Objekt, dass mit dem StateEngine Plugin gesteuert werden
-soll, ist ein Item erforderlich, dass alle Konfigurationsdaten für
-dieses Objekt enthält. Dieses Item wird aus "Objekt-Item"
-bezeichnet. Es können beliebig viele Objekt-Items und damit
-beliebig viele Automatiken angelegt werden.
-
-.. rubric:: Grundlegende Einstellungen
-   :name: grundlegendeeinstellungen
-
-Über die folgenden Attribute werden die grundlegenden
-Einstellungen für eine Automatik festgelegt
+Alle Items unterhalb des Objekt-Items (z.B. ``rules``)
+beschreiben Zustände des Objekts ("Zustands-Item").
+Die Ids der Zustands-Items sind
+beliebig. Sie werden als Werte für das über
+``se_laststate_item_id`` angegebene Item verwendet, um den
+aktuellen Zustand abzulegen.
 
 .. code-block:: yaml
 
    beispiel:
-           raffstore1:
-               automatik:
-                   rules:
-                       type: bool
-                       name: Automatik Raffstore 1
-                       se_plugin: active
-                       se_startup_delay: 30
-                       se_laststate_item_id: beispiel.raffstore1.automatik.state_id
-                       se_laststate_item_name: beispiel.raffstore1.automatik.state_name
-                       se_repeat_actions: true
-                       se_suspend_time: 7200
+     raffstore1:
+         automatik:
+             rules:
+                 Tag:
+                     name: Tag
+                     se_name: eval: sh.eine_funktion()
 
+**name (optional):**
+*Name des Zustands*
 
-| **type (obligatorisch):**
-| *Datentp des Items*
+Der Name des Zustands wird im Protokoll sowie als Wert für das
+über ``se_laststate_item_name`` angegebene Item verwendet. Wenn
+kein Name angegeben ist, wird hier die Id des
+Zustands-Items verwendet.
 
-Für das Objekt-Item muss immer der Datentyp "bool" verwendet
-werden
+**se_name (optional):**
+*Ermittlung des Namens des Zustands*
 
-| **name (optional):**
-| *Name des Items*
+Über das Attribut ``se_name`` kann der im Attribut ``name`` angegebene Wert
+überschrieben werden. Dies wirkt sich jedoch nur auf den Wert
+aus, der in das über ``se_laststate_item_name`` angegebene
+Item geschrieben wird. Im Protokoll wird immer der über das
+Attribut ``name`` angegebene Wert verwendet.
 
-Wenn das Attribut nicht angegeben ist, wird die Id des Items als
-Name verwendet.
+.. rubric:: Bedingungsgruppen
+   :name: bedingungsgruppen
 
-| **se_plugin (obligatorisch):**
-| *Kennzeichnet das Item als Objekt-Item des StateEngine-Plugins*
+Jeder Zustand kann eine beliebige Anzahl von Bedingungsgruppen
+haben. Jede Bedingungsgruppe definiert ein Set an Bedingungen das
+überprüft wird, wenn der aktuelle Status neu ermittelt wird.
+Sobald die Bedingungen einer Bedingungsgruppe vollständig erfüllt
+sind, kann der Status aktiv werden.
 
-Der Wert dieses Attributs muss zwingend ``active`` sein, damit
-das Plugin das Item berücksichtigt. Zu Debuggingzwecken kann der
-Wert dieses Attributs auf einen anderen Wert geändert werden,
-dadurch wird das Plugin das Objekt ignorieren.
+Jede Bedingungsgruppe wird durch ein Item
+("Bedingungsgruppen-Item") unterhalb des Zustands-Items
+abgebildet. Eine Bedingungsgruppe kann beliebig viele Bedingungen
+umfassen. Bedingungen werden als Attribute im
+Bedingungsgruppen-Item definiert. Details zu den Bedingungen
+werden im Abschnitt :ref:`Bedingungen` erläutert.
 
-| **se_startupdelay (optional):**
-| *Startverzögerung der ersten Zustandsermittlung beim Start von
-  smarthomeNG*
+Die folgenden Regeln kommen zur Anwendung:
 
-| Beim Starten von smarthomeNG dauert es üblicherweise einige
-  Sekunden, bis alle Items initialisiert sind. Um zu verhindern,
-  dass die erste Zustandsermittlung stattfindet, bevor alle Items
-  ihren Initialwert haben, wird die erste Zustandsermittlung
-  verzögert. Erst nach der ersten Zustandsermittlung werden alle
-  Auslöser und Funktionen vollständig aktiviert.
-  Zustandsermittlungen, die durch Items oder Timer vor Ablauf der
-  Startverzögerung ausgelöst werden, werden nicht durchgeführt.
-  Die zulässigen Werte für ``se_startup_delay`` sind identisch
-  mit den zulässigen Werten für den Plugin-Parameter
-  ``startup_delay_default``.
-| Der Parameter verwendet den Datentyp AbValue
+-  Zustände und Bedingungsgruppen werden in der Reihenfolge
+   geprüft, in der sie in der Konfigurationsdatei definiert sind.
 
-| **se_laststate_item_id (optional):**
-| *Id des Items, in dem die Id des aktuellen Zustands abgelegt wird*
+-  Eine einzelne Bedingungsgruppe ist erfüllt, wenn alle
+   Bedingungen, die in der Bedingungsgruppe definiert sind,
+   erfüllt sind (UND-Verknüpfung).
 
-In das hier angegebene Item wird die Id des aktuellen Zustands
-abgelegt. Das Item kann mit dem Attribut ``cache: yes``
-versehen werden, dann bleibt der vorherige Zustand bei einem
-Neustart von smarthomeNG erhalten. Wenn das Item
-``se_laststate_item_id`` nicht angegeben ist, wird der aktuelle
-Zustand nur im Plugin gespeichert und geht mit einem Neustart von
-smarthomeNG verloren.
+-  Ein Zustand kann aktueller Zustand werden, wenn eine beliebige
+   der definierten Bedingungsgruppen des Zustands erfüllt ist. Die
+   Prüfung ist mit der ersten erfüllten Bedingungsgruppe beendet
+   (ODER-Verknüpfung).
 
-Sofern verwendet, sollte das Item für ``se_laststate_item_id``
-wie folgt definiert werden
+-  Ein Zustand, der keine Bedingungsgruppen hat, kann immer
+   aktueller Zustand werden. Solch ein Zustand kann als
+   Default-Zustand am Ende der Zustände definiert werden.
 
-.. code-block:: yaml
+.. rubric:: Aktionen
+   :name: aktionenintro
 
-   beispiel:
-           raffstore1:
-               automatik:
-                   state_id:
-                       type: str
-                       name: Id des aktuellen Zustands
-                       visu_acl: r
-                       cache: yes
+Jeder Zustand kann eine beliebige Anzahl an Aktionen definieren.
+Sobald ein Zustand aktueller Zustand wird, werden die Aktionen des
+Zustands ausgeführt. Für die Aktionen gibt es vier Ereignisse, die
+festlegen, wann eine Aktion ausgeführt wird.
 
+   Details zu den Aktionen werden im Abschnitt
+   :ref:`Aktionen` erläutert.
 
-| **se_laststate_item_name (optional):**
-| *Id des Items, in dem der Name des aktuellen Zustands abgelegt wird*
+.. rubric:: Items
+   :name: items
 
-In das hier angegebene Item wird der Name des aktuellen Zustands
-abgelegt. Das Item kann für Displayzwecke verwendet werden. Wenn
-das Item ``se_laststate_item_name`` nicht angegeben ist, steht
-der Name des aktuellen Zustands nicht zur Verfügung
+Bedingungen und Aktionen beziehen sich überlicherweise auf Items.
+Diese Items müssen auf Ebene des Objekt-Items über das Attribut
+``se_item_<Bedingungsname/Aktionsname>`` bekannt gemacht werden.
 
-Sofern verwendet, sollte das Item für ``se_laststate_item_name``
-wie folgt definiert werden
+.. rubric:: Beispiel
+   :name: beispielzustand
 
 .. code-block:: yaml
 
    beispiel:
-           raffstore1:
-               automatik:
-                   state_name:
-                       type: str
-                       name: Name des aktuellen Zustands
-                       visu_acl: r
-                       cache: yes
+     raffstore1:
+         automatik:
+             rules:
+                 <Allgemeine Objektkonfiguration>
+                 se_mindelta_lamella: 10
+                 se_item_height: beispiel.raffstore1.hoehe
+                 se_item_lamella: beispiel.raffstore1.lamelle
+                 se_item_brightness: beispiel.wetterstation.helligkeit
 
+                 Nacht:
+                     name: Nacht
+                     on_enter_or_stay:
+                        se_set_height: 100
+                        se_set_lamella: 100
+                     enter_toodark:
+                        se_max_brightness: 25
+                     enter_toolate:
+                         <Bedingungen um den Zustand anzusteuern, wenn es zu spät ist>
 
-| **se_repeat_actions (optional):**
-| *Wiederholen der Aktionen bei unverändertem Zustand*
+                 Tag:
+                     name: Tag
+                     on_enter_or_stay:
+                        se_set_hoehe: 0
+                     enter:
+                        <Bedingungen oder leer lassen für "Standardzustand">
 
-Im Normalfall werden Aktionen jedesmal ausgeführt wenn der
-aktuelle Zustand neu ermittelt wurde. Dies ist unabhängig davon,
-ob sich der Zustand bei der Neuermittlung geändert hat oder nicht.
-Dieses Verhalten kann über die Angabe von
-``se_repeat_actions: false`` umgestellt werden. Wenn das
-Attribut auf ``false`` gesetzt ist, werden Aktionen nur
-ausgeführt, wenn sich der Zustand tatsächlich geändert hat. Der
-Parameter verwendet den Datentyp AbValue
+**Attribute se_item_height und se_item_lamella:**
+*Definition der Items, die durch die Aktionen se_set_height und se_set_lamella verändert werden*
 
-| **se_suspendtime (optional):**
-| *Zeit zur Unterbrechung der automatischen Steuerung nach
-  manuellen Aktionen*
+Die Items werden durch ihre Item-Id angegeben
 
-Nach manuellen Aktionen kann die Automatik für eine bestimmte Zeit
-Unterbrochen werden. Die Dauer dieser Unterbrechungen wird hier
-angegeben. Die Einheit für den Wert sind Sekunden. Wenn bei einem
-Objekt-Item kein Wert angegeben ist, wird der in der
-Pluginkonfiguration angegebene Standardwert
-(se_suspend_time) verwendet. Der Parameter verwendet den
-Datentyp AbValue
+**Attribut name:**
+*Name des Zustands*
 
-.. rubric:: Einstellungen zum Auslösen der Zustandsermittlung
-   :name: einstellungenzumauslsenderzustandsermittlung
+Der Name wird in das über ``se_laststate_item_name`` definierte
+Item geschrieben, wenn der Zustand aktueller Zustand wird. Dieser
+Wert kann z. B. in einer Visualisierung dargestellt werden.
 
-Eine Neuermittlung des aktuellen Zustands wird jedesmal
-durchgeführt, wenn ein Wert für das Objekt-Item geschrieben wird.
-Somit können die Standardmöglichkeiten von smarthomeNG wie
-``cycle``, ``crontab`` und ``eval_trigger`` verwendet
-werden, um die Neuermittlung des aktuellen Zustands auszulösen.
+**Attribute se_set_height und se_set_lamella:**
+*Neu zu setzende Werte für die Items, die über se_item_height und se_item_lamella festgelegt wurden*
 
-.. code-block:: yaml
+**Attribut se_mindelta_lamella:**
+*Nur, wenn sich Lamellen min. um x Grad ändern würden, werden sie aktualisiert.*
 
-   beispiel:
-           rafffstore2:
-               automatik:
-                   rules:
-                       <...>
-                       cycle: 300
-                       crontab:
-                           - 0 5 * *
-                           - 0 6 * *
-                       eval_trigger:
-                           - beispiel.trigger.raffstore
-                           - beispiel.raffstore2.automatik.anwesenheit
-
-
-Details zu diesen Attributen können der `smarthomeNG
-Dokumentation <https://www.smarthomeng.de/user/konfiguration/items_standard_attribute.html>`_
-entnommen werden.
-
-Um die Konfiguration einfach zu halten, verändert das Plugin
-einige Einstellungen des Objekt-Items. Folgende Erleichterungen
-werden dabei vorgenommen:
-
--  Es ist nicht erforderlich mit ``cycle`` bzw. ``crontab``
-   Werte anzugeben. Das StateEngine Plugin ergänzt diese
-   automatisch, sofern erforderlich. Statt ``cycle: 300 = 1`` ist
-   es ausreichend, wenn man ``cycle: 300`` angibt.
-
--  Es ist nicht erforderlich das Attribut ``eval = (irgendwas)``
-   anzugeben, wenn ``eval_trigger`` verwendet wird. Das
-   StateEngine plugin ergänzt dies automatisch, sofern
-   erforderlich.
-
--  ``crontab: init`` funktioniert nicht für das StateEngine
-   Plugin. Die Neuberechnung des ersten Zustands nach dem Start
-   von smarthomeNG wird über das Attribut ``se_startup_delay``
-   gesteuert.
-
-Es ist auch möglich andere Wege zu verwenden, um den Wert des
-Objekt-Items zu setzen:
-
--  Zuweisung einer hörenden KNX Gruppenadresse zum Objekt-Item und
-   Senden eines Wertes auf diese Gruppenadresse.
-
--  Setzen des Werts des Objekt-Items aus einer Logik, einer
-   anderen Automatik oder sogar aus der selben Automatik (ggf. mit
-   Verzögerung).
+**Untergeordnete Items enter, enter_toodark und enter_toolate:**
+*Bedingungsgruppen die erfüllt sein müssen, damit ein Zustand aktueller Zustand werden kann*
