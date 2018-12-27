@@ -421,7 +421,7 @@ class Mqtt(SmartPlugin):
         try:
             self._client.connect(self.broker_ip, self.broker_port, 60)
         except ERROR as e:
-            self.logger.error(self.get_loginstance()+'Connection error:', e)
+            self.logger.error(self.get_loginstance()+'Connection error: {0}'.format(e))
             return False
         return True
 
