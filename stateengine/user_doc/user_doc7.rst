@@ -42,12 +42,12 @@ Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten.
        delay: 30         --> 30 Sekunden
        delay: 30m        --> 30 Minuten
 
-| Der Timer zur Ausführung der Aktion nach der angegebenen
-  Verzögerung wird entfernt, wenn eine gleichartike Aktion
-  ausgeführt werden soll (egal ob verzögert oder nicht). Wenn also
-  die Verzögerung größer als der ``cycle`` ist, wird die Aktion
-  nie durchgeführt werden, es sei denn die Aktion soll nur
-  einmalig ausgeführt werden.
+Der Timer zur Ausführung der Aktion nach der angegebenen
+Verzögerung wird entfernt, wenn eine gleichartike Aktion
+ausgeführt werden soll (egal ob verzögert oder nicht). Wenn also
+die Verzögerung größer als der ``cycle`` ist, wird die Aktion
+nie durchgeführt werden, es sei denn die Aktion soll nur
+einmalig ausgeführt werden.
 
 .. rubric:: repeat: ``<repeat>``
    :name: repeat
@@ -90,10 +90,10 @@ Aktionen jedoch an der angegebenen Position ausgeführt.
 .. rubric:: function: ``<func>``
    :name: function
 
-| Mit dem Parameter ``<func>`` wird die auszuführende Funktion
-  festgelegt. In Abhängigkeit zur gewählten Funktion werden
-  zusätzliche Detailparameter erforderlich.
-| Folgende Werte sind möglich:
+Mit dem Parameter ``<func>`` wird die auszuführende Funktion
+festgelegt. In Abhängigkeit zur gewählten Funktion werden
+zusätzliche Detailparameter erforderlich.
+Folgende Werte sind möglich:
 
 **Funktion ``set``: Item auf einen Wert setzen**
 
@@ -155,8 +155,7 @@ Auslösen einen Wert an die Logik zu übergeben, kann dieser Wert
 angegeben werden. Wenn kein Wert übergeben werden, soll lässt man
 den Teil weg.
 
-**Funktion ``byattr``: Alle Items, die ein bestimmtes
-   Attribut haben, auf den Wert dieses Attributs setzen**
+**Funktion ``byattr``: Alle Items, die ein bestimmtes Attribut haben, auf den Wert dieses Attributs setzen**
 
 .. code-block:: yaml
 
@@ -176,8 +175,8 @@ Items jeweils zugewiesen ist.
                type: num
                <Attributname>: 42
 
-| wird dann auf ``42`` gesetzt.
-| Ein anderes Item
+wird dann auf ``42`` gesetzt.
+Ein anderes Item
 
 .. code-block:: yaml
 
@@ -201,7 +200,7 @@ definiert (z. B. für das Suspend). Diese werden jedoch nicht hier
 erläutert, sondern an den Stellen, andenen Sie verwendet werden.
 
 .. rubric:: Beispiel zu Aktionen
-   :name: beispielzuaktionen
+   :name: beispielzuaktionenkombiniert
 
 .. code-block:: yaml
 

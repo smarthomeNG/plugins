@@ -48,26 +48,30 @@ parameters:
                 ihren Initialwert haben, wird die erste Zustandsermittlung
                 verzögert. Die Dauer der Verzögerung kann bei den Objekt-Items
                 angegeben werden. Wenn bei einem Objekt-Item kein Wert angegeben
-                ist, wird der hier angegebene Standardwert verwendet.
+                ist, wird der hier angegebene Standardwert verwendet.\n
                 \n
-                 - Zahl größer 0:
-                 Angabe der Startverzögerung in Sekunden. Während der
-                 Startverzögerung sind die Auslöser der Zustandsermittlung
-                 inaktiv.\n
-                 - 0:
-                 Keine Startverzögerung. Die erste Zustandsermittlung wird direkt
-                 nach der Initialisierung des Objekt-Items durchgeführt.\n
-                 - -1:
-                 Es wird keine erste Zustandsermittlung durchgeführt.\n
+                - Zahl größer 0:
+                Angabe der Startverzögerung in Sekunden. Während der
+                Startverzögerung sind die Auslöser der Zustandsermittlung
+                inaktiv.\n
+                - 0:
+                Keine Startverzögerung. Die erste Zustandsermittlung wird direkt
+                nach der Initialisierung des Objekt-Items durchgeführt.\n
+                - -1:
+                Es wird keine erste Zustandsermittlung durchgeführt.\n
                 \n
                 Ohne Angabe dieses Parameters wird der Standardwert von 10 Sekunden angenommen.
                 '
             en: '**Default delay for first state determination at startup:**\n
-                 - digit higher than 0: start delay in seconds\n
-                 - 0: no start delay, immediate init\n
-                 - -1: no init\n
-                 \n
-                 '
+                At smarthome startup some items might not be initialized correctly.
+                To avoid a wrong state evaluation the evaluation can be postponed by the
+                given amount of seconds.
+                \n
+                - digit higher than 0: start delay in seconds\n
+                - 0: no start delay, immediate init\n
+                - -1: no init\n
+                \n
+                '
 
     suspend_time_default:
         type: int

@@ -130,7 +130,7 @@ beziehen, können ``se_agemin_<Bedingungsname>``,
 aktuelle Wert über ein Item bereitgestellt wird.
 
 .. rubric:: Beispiel
-   :name: beispiel
+   :name: beispielbedingungen
 
 .. code-block:: yaml
 

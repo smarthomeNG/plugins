@@ -37,7 +37,7 @@ werden. Um unnötige Komplexität und Zirkelbezüge zu vermeiden, ist
 die maximale Tiefe jedoch auf 5 Ebenen begrenzt.
 
 .. rubric:: Beispiel
-   :name: beispiel
+   :name: vorgabebeispiel
 
 .. code-block:: yaml
 

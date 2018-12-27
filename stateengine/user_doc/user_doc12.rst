@@ -71,13 +71,11 @@ Rückmeldung der Raffstore-Position nach dem Verfahren durch den
 Jalousieaktor. Hierfür stehen zwei für das Manuell-Item weitere
 Attribute bereit:
 
-| **as_manual_include**
-| *Liste der Aufrufe, die als "manuelle Betätigung" gewertet
-  werden sollen*
+**as_manual_include**
+*Liste der Aufrufe, die als "manuelle Betätigung" gewertet werden sollen*
 
-| **as_manual_exclude**
-| *Liste der Aufrufe, die nicht als "manuelle Betätigung" gewertet
-  werden sollen*
+**as_manual_exclude**
+*Liste der Aufrufe, die nicht als "manuelle Betätigung" gewertet werden sollen*
 
 Bei beiden Attributen wird eine Liste von Elementen angegeben. Die
 einzelnen Elemente bestehen dabei aus dem Aufrufenden

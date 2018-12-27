@@ -24,20 +24,22 @@ aktuellen Zustand abzulegen.
                      name: Tag
                      se_name: eval: sh.eine_funktion()
 
-| **name (optional):**
-| *Name des Zustands*
+**name (optional):**
+*Name des Zustands*
+
 Der Name des Zustands wird im Protokoll sowie als Wert für das
 über ``se_laststate_item_name`` angegebene Item verwendet. Wenn
 kein Name angegeben ist, wird hier die Id des
 Zustands-Items verwendet.
 
-| **se_name (optional):**
-| *Ermittlung des Namens des Zustands*
-| Über das Attribut ``se_name`` kann der im Attribut ``name`` angegebene Wert
-  überschrieben werden. Dies wirkt sich jedoch nur auf den Wert
-  aus, der in das über ``se_laststate_item_name`` angegebene
-  Item geschrieben wird. Im Protokoll wird immer der über das
-  Attribut ``name`` angegebene Wert verwendet.
+**se_name (optional):**
+*Ermittlung des Namens des Zustands*
+
+Über das Attribut ``se_name`` kann der im Attribut ``name`` angegebene Wert
+überschrieben werden. Dies wirkt sich jedoch nur auf den Wert
+aus, der in das über ``se_laststate_item_name`` angegebene
+Item geschrieben wird. Im Protokoll wird immer der über das
+Attribut ``name`` angegebene Wert verwendet.
 
 .. rubric:: Bedingungsgruppen
    :name: bedingungsgruppen
@@ -74,7 +76,7 @@ Die folgenden Regeln kommen zur Anwendung:
    Default-Zustand am Ende der Zustände definiert werden.
 
 .. rubric:: Aktionen
-   :name: aktionen
+   :name: aktionenintro
 
 Jeder Zustand kann eine beliebige Anzahl an Aktionen definieren.
 Sobald ein Zustand aktueller Zustand wird, werden die Aktionen des
@@ -92,7 +94,7 @@ Diese Items müssen auf Ebene des Objekt-Items über das Attribut
 ``se_item_<Bedingungsname/Aktionsname>`` bekannt gemacht werden.
 
 .. rubric:: Beispiel
-   :name: beispiel
+   :name: beispielzustand
 
 .. code-block:: yaml
 
@@ -123,25 +125,23 @@ Diese Items müssen auf Ebene des Objekt-Items über das Attribut
                      enter:
                         <Bedingungen oder leer lassen für "Standardzustand">
 
-| **Attribute se_item_height und se_item_lamella:**
-| *Definition der Items, die durch die Aktionen
-  se_set_height und se_set_lamella verändert werden*
+**Attribute se_item_height und se_item_lamella:**
+*Definition der Items, die durch die Aktionen se_set_height und se_set_lamella verändert werden*
+
 Die Items werden durch ihre Item-Id angegeben
 
-| **Attribut name:**
-| *Name des Zustands*
+**Attribut name:**
+*Name des Zustands*
+
 Der Name wird in das über ``se_laststate_item_name`` definierte
 Item geschrieben, wenn der Zustand aktueller Zustand wird. Dieser
 Wert kann z. B. in einer Visualisierung dargestellt werden.
 
-| **Attribute se_set_height und se_set_lamella:**
-| *Neu zu setzende Werte für die Items, die über
-  se_item_height und se_item_lamella festgelegt wurden*
+**Attribute se_set_height und se_set_lamella:**
+*Neu zu setzende Werte für die Items, die über se_item_height und se_item_lamella festgelegt wurden*
 
-| **Attribut se_mindelta_lamella:**
-| *Nur, wenn sich Lamellen min. um x Grad ändern würden, werden sie aktualisiert.*
+**Attribut se_mindelta_lamella:**
+*Nur, wenn sich Lamellen min. um x Grad ändern würden, werden sie aktualisiert.*
 
-| **Untergeordnete Items enter, enter_toodark und
-  enter_toolate:**
-| *Bedingungsgruppen die erfüllt sein müssen, damit ein Zustand
-  aktueller Zustand werden kann*
+**Untergeordnete Items enter, enter_toodark und enter_toolate:**
+*Bedingungsgruppen die erfüllt sein müssen, damit ein Zustand aktueller Zustand werden kann*

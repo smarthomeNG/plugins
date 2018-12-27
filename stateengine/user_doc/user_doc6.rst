@@ -102,8 +102,8 @@ Items jeweils zugewiesen ist.
                type: num
                mein_eigenes_Attribut: 42
 
-| wird dann auf ``42`` gesetzt.
-| Ein anderes Item
+wird dann auf ``42`` gesetzt.
+Ein anderes Item
 
 .. code-block:: yaml
 
@@ -178,7 +178,7 @@ zufällig. Innerhalb der gesamten Aktionen werden die beiden
 Aktionen jedoch an der angegebenen Position ausgeführt.
 
 .. rubric:: Beispiel zu Aktionen
-   :name: beispielzuaktionen
+   :name: beispielzuaktioneneinzeln
 
 .. code-block:: yaml
 
