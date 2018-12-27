@@ -8,6 +8,7 @@ plugin:
     description_long:
         de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle.\n
             Das Plugin unterstützt eine Vielzahl von AV-Geräten und wurde mit folgenden Geräten getestet:\n
+            \n
             - Pioneer AV Receiver < 2016\n
             - Denon AV Receiver > 2016\n
             - Epson Projektor < 2010\n
@@ -15,6 +16,7 @@ plugin:
             '
         en: 'Controlling AV devices via TCP/IP and RS232\n
             The plugin supports a variety of AV devices and was tested with the following models:\n
+            \n
             - Pioneer AV Receiver < 2016\n
             - Denon AV Receiver > 2016\n
             - Epson Projektor < 2010\n
@@ -320,6 +322,7 @@ item_attributes:
         description_long:
             de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei im Ordner models hinterlegt ist, zB power oder volume\n
                 Außerdem gibt es zwei spezielle Parameter, die bei Bedarf eingesetzt werden können:\n
+                \n
                 - **avdevice: statusupdate**: Dieses Item wird genutzt, um eine komplette Statusabfrage durchzuführen.
                 Es werden alle Query-Kommandos an das Gerät geschickt, was vor allem nach dem
                 Einschalten einer geschaltenen Steckdose relevant ist.\n
@@ -330,6 +333,7 @@ item_attributes:
             en: 'This attribute has to be followed by one of the commands declared in the
                 device text file in the models folders like power or volume\n
                 You can use two special avdevice attribute values if you want:\n
+                \n
                 - **avdevice: statusupdate**: Use this item to trigger a full
                 statusupdate. All query commands regarding the currently powered on
                 zones are sent. This is especially useful if you have a power socket you

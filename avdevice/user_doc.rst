@@ -9,7 +9,7 @@ Konfiguration
 
 .. important::
 
-Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/avdevice` beschrieben.
+    Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/avdevice` beschrieben.
 
 .. code-block:: yaml
 
@@ -125,8 +125,7 @@ Das folgende Beispiel zeigt diese Abhängigkeiten:
 
 - Tonencoding und -sprache werden nach der Verbindung abgefragt oder sobald auf ``play`` gedrückt wurde
 
-- Die Tracknummer wird unter folgenden Bedingungen abgefragt oder aktualisiert: play ODER status sind wahr UND
-Verbose ist auf 2 gesetzt UND der Audiotyp ist entweder PCM ODER PCM 44.1/16
+- Die Tracknummer wird unter folgenden Bedingungen abgefragt oder aktualisiert: play ODER status sind wahr UND Verbose ist auf 2 gesetzt UND der Audiotyp ist entweder PCM ODER PCM 44.1/16
 
 - Der Trackname wird aktualisiert/abgefragt, wenn folgende Bedingung erfüllt ist: (play == True OR status == "play") AND verbose == 2 AND audiotype == (PCM or PCM 44.1/16) AND disctpye == (DVD-AUDIO or CDDA or DATA-DISC)
 

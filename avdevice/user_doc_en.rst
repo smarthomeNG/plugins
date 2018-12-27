@@ -9,7 +9,7 @@ Configuration
 
 .. important::
 
-You can find the configuration information at :doc:`/plugins_doc/config/avdevice`.
+    You can find the configuration information at :doc:`/plugins_doc/config/avdevice`.
 
 .. code-block:: yaml
 
@@ -47,7 +47,7 @@ Items
 =====
 
 avdevice_zone[0-4]@[instance]: [function]
-----------------------------------------
+-----------------------------------------
 
 Specifiy the zone number and instance. If you don’t use zones you can
 either use ``avdevice`` or ``avdevice_zone0`` as attributes.
@@ -69,7 +69,7 @@ Special attribute values (statusupdate and reload) are described at :doc:`/plugi
 
 
 avdevice_zone[0-4]_speakers@[instance]: [function]
--------------------------------------------------
+--------------------------------------------------
 
 Specifiy the zone number and instance. This attribute is used to switch between
 Speaker A, B and AB layout. Speakers Items are special and
@@ -100,7 +100,7 @@ Pioneer receivers < 2016).
 
 
 avdevice_zone[0-4]_depend@[instance]: [function]
------------------------------------------------
+------------------------------------------------
 
 Specifiy the zone number and instance. The depend attribute lets you
 specifiy for each item if it depends on another item/function. If you
@@ -108,14 +108,11 @@ define such a dependency several things will happen:
 
 - The item only gets updated/changed if the dependency is fullfilled
 
-- Query command of the item will get removed from the queue if the dependency is not
-fullfilled
+- Query command of the item will get removed from the queue if the dependency is not fullfilled
 
-- Query command of the item will (only) get added if one of
-the master items gets changed and the dependency is fullfilled.
+- Query command of the item will (only) get added if one of the master items gets changed and the dependency is fullfilled.
 
-- After connecting to the device the query command of an item only gets
-added if you add ``init`` to the dependency configuration.
+- After connecting to the device the query command of an item only gets added if you add ``init`` to the dependency configuration.
 
 You can use multiple depend items and attributes even for different
 zones. You can even define ``and/or`` for the dependencies by adding up to
@@ -133,20 +130,14 @@ functions/items corresponds to the given value.
 
 The example below shows the following dependencies:
 
-- The disctype will always be queried after connecting to the device (as long as you have
-specified a query command in the command-file)
+- The disctype will always be queried after connecting to the device (as long as you have specified a query command in the command-file)
 
-- Audio language and encoding will be queried after connecting to the device or as so
-on as
-the item with the ``play`` function (Oppo.Play) is True
-- The track will get updated/queried if these dependencies are fullfilled: (play is True
-or status is play) AND verbose is set to 2 AND audiotype is either PCM
-or PCM 44.1/16
+- Audio language and encoding will be queried after connecting to the device or as so on as the item with the ``play`` function (Oppo.Play) is True
 
-- The trackname will get updated/queried if these
-dependencies are fullfilled: (play is True or status is play) AND
-verbose is set to 2 AND audiotype is either PCM or PCM 44.1/16 AND
-disctpye is one of these three values: DVD-AUDIO, CDDA, DATA-DISC
+- The track will get updated/queried if these dependencies are fullfilled: (play is True or status is play) AND verbose is set to 2 AND audiotype is either PCM or PCM 44.1/16
+
+- The trackname will get updated/queried if these dependencies are fullfilled: (play is True or status is play) AND verbose is set to 2 AND audiotype is either PCM or PCM 44.1/16 AND disctpye is one of these three values: DVD-AUDIO, CDDA, DATA-DISC
+
 
 .. code-block:: yaml
 
@@ -242,7 +233,7 @@ disctpye is one of these three values: DVD-AUDIO, CDDA, DATA-DISC
             - verbose = 2, d
 
 avdevice_zone[0-4]_init@[instance]: [function]
----------------------------------------------
+----------------------------------------------
 
 Specifiy the zone number and instance.
 The init attribute lets you set a specific command to a specific value as soon as the device is connected. For example if you want to always set the verbose level to 2 as soon as the plugin connects to it (at startup and after turning on the power socket or reconnecting the cable) you can define an additional item with the attribute "avdevice_init". The value of that item (Oppo.Verbose.Init) gets appended to the command linked to the verbose item (Oppo.Verbose).
