@@ -37,7 +37,8 @@ weather_darksky:
 
 
 ### Example: items.yaml
-Example configuration of an item-tree for the darksky plugin in yaml-format:
+Example configuration of an item-tree for the darksky plugin in yaml-format. For the meaning of some of the matchstrings
+please directly consult https://darksky.net/dev/docs:
 
 ```yaml
 
