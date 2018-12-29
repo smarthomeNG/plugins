@@ -165,6 +165,8 @@ class Database(SmartPlugin):
         self.logger.info("Starting file dump to {} ...".format(dumpfile))
 
         item_ids = self.readItems(cur=cur) if id is None else [self.readItem(id, cur=cur)]
+        if item_ids is None:
+            item_ids = {}
 
         s = ';'
         h = ['item_id', 'item_name', 'time', 'duration', 'val_str', 'val_num', 'val_bool', 'changed', 'time_date',
@@ -176,6 +178,8 @@ class Database(SmartPlugin):
 
             rows = self.readLogs(item[0], time=time, time_start=time_start, time_end=time_end, changed=changed,
                                  changed_start=changed_start, changed_end=changed_end, cur=cur)
+            if rows is None:
+                rows = {}
 
             for row in rows:
                 cols = []
@@ -213,12 +217,12 @@ class Database(SmartPlugin):
         if id is None and create == True:
             id = [self.insertItem(item.id(), cur)]
 
-        return None if id == None else int(id[COL_ITEM_ID])
+        return None if id is None else int(id[COL_ITEM_ID])
 
     def insertItem(self, name, cur=None):
         id = self._fetchone("SELECT MAX(id) FROM {item};", cur=cur)
         self._execute(self._prepare("INSERT INTO {item}(id, name) VALUES(:id, :name);"),
-                      {'id': 1 if id[0] == None else id[0] + 1, 'name': name}, cur=cur)
+                      {'id': 1 if id[0] is None else id[0] + 1, 'name': name}, cur=cur)
         id = self._fetchone("SELECT id FROM {item} where name = :name;", {'name': name}, cur=cur)
         return int(id[0])
 
@@ -277,12 +281,12 @@ class Database(SmartPlugin):
                          changed_end=None):
         params = {
             'id': id,
-            'time': time, 'time_flag': 1 if time == None else 0,
-            'time_start': time_start, 'time_start_flag': 1 if time_start == None else 0,
-            'time_end': time_end, 'time_end_flag': 1 if time_end == None else 0,
-            'changed': changed, 'changed_flag': 1 if changed == None else 0,
-            'changed_start': changed_start, 'changed_start_flag': 1 if changed_start == None else 0,
-            'changed_end': changed_end, 'changed_end_flag': 1 if changed_end == None else 0
+            'time': time, 'time_flag': 1 if time is None else 0,
+            'time_start': time_start, 'time_start_flag': 1 if time_start is None else 0,
+            'time_end': time_end, 'time_end_flag': 1 if time_end is None else 0,
+            'changed': changed, 'changed_flag': 1 if changed is None else 0,
+            'changed_start': changed_start, 'changed_start_flag': 1 if changed_start is None else 0,
+            'changed_end': changed_end, 'changed_end_flag': 1 if changed_end is None else 0
         }
 
         condition = "(item_id = :id                                      ) AND " + \
@@ -338,7 +342,7 @@ class Database(SmartPlugin):
             self._dump_lock.release()
             return
 
-        if items == None:
+        if items is None:
             self._buffer_lock.acquire()
             items = list(self._buffer.keys())
             self._buffer_lock.release()
@@ -693,7 +697,7 @@ class Database(SmartPlugin):
                 'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
@@ -733,7 +737,7 @@ class WebInterface(SmartPluginWebIf):
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str
@@ -779,6 +783,8 @@ class WebInterface(SmartPluginWebIf):
                 tmpl = self.tplenv.get_template('item_details.html')
 
                 rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
+                if rows is None:
+                    rows = {}
                 log_array = []
                 for row in rows:
                     value_dict = {}
@@ -818,6 +824,8 @@ class WebInterface(SmartPluginWebIf):
             return None
         else:
             rows = self.plugin.readLogs(item_id)
+            if rows is None:
+                rows = {}
             log_array = []
             for row in rows:
                 value_dict = {}
