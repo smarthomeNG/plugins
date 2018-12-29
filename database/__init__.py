@@ -407,7 +407,10 @@ class Database(SmartPlugin):
                     self._db.commit()
                 except Exception as e:
                     self.logger.warning("Database: problem updating {}: {}".format(item.id(), e))
-                    self._db.rollback()
+                    try:
+                        self._db.rollback()
+                    except Exception as er:
+                        self.logger.warning("Database: Error rolling back transaction: {}".format(er))
                 finally:
                     if cur is not None:
                         cur.close()
