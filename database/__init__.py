@@ -406,11 +406,12 @@ class Database(SmartPlugin):
 
                     self._db.commit()
                 except Exception as e:
-                    self.logger.warning("Database: problem updating {}: {}".format(item.id(), e))
+                    self.logger.warning("Database: Problem dumping {}: {}".format(item.id(), e))
                     try:
                         self._db.rollback()
                     except Exception as er:
-                        self.logger.warning("Database: Error rolling back transaction: {}".format(er))
+                        self._buffer_insert(item, tuples)
+                        self.logger.warning("Database: Error rolling back: {}".format(er))
                 finally:
                     if cur is not None:
                         cur.close()
@@ -616,7 +617,6 @@ class Database(SmartPlugin):
         self._query(self._db.execute, query, params, cur)
 
     def _query(self, func, query, params, cur=None):
-        self.logger.debug(query)
         if not self._initialize():
             return None
         if cur is None:
@@ -632,10 +632,12 @@ class Database(SmartPlugin):
         try:
             tuples = func(self._prepare(query), params, cur=cur)
         except Exception as e:
-            self.logger.warning("Database: Running query {}: {}".format(query_readable, e))
-        if cur is None:
-            self._db.release()
-        self.logger.debug("Fetch {}: {}".format(query_readable, tuples))
+            self.logger.error("Database: Error for query {}: {}".format(query_readable, e))
+            raise e
+        finally:
+            if cur is None:
+                self._db.release()
+        self.logger.debug("Database: Fetch {}: {}".format(query_readable, tuples))
         return tuples
 
     def _initialize(self):
@@ -647,7 +649,7 @@ class Database(SmartPlugin):
                     {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
                 self._initialized = True
         except Exception as e:
-            self.logger.error("Database: initialization failed: {}".format(e))
+            self.logger.error("Database: Initialization failed: {}".format(e))
             return False
         return True
 
