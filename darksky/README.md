@@ -178,8 +178,8 @@ darksky:
         
         icon_sv:
                 type: str
-                eval_trigger: darksky.daily.icon
-                eval: sh.darksky_weather.map_icon(sh.darksky.daily.icon())  
+                eval_trigger: ..icon
+                eval: sh.darksky_weather.map_icon(sh...icon())  
             
         data:
             type: list
@@ -200,12 +200,12 @@ darksky:
             
             icon_sv:
                 type: str
-                eval_trigger: ...data.day0.icon
-                eval: sh.darksky_weather.map_icon(sh...day0.icon())
+                eval_trigger: ..icon
+                eval: sh.darksky_weather.map_icon(sh...icon())
 
             temperature_max:
                 type: num
-                eval_trigger: ...data.data
+                eval_trigger: ...data
                 eval: sh....data()[0]['temperatureMax']
       
         day1:
