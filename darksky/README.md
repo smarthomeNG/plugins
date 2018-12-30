@@ -211,43 +211,43 @@ darksky:
         day1:
             date:
                 type: str
-                eval_trigger: ...data.data
+                eval_trigger: ...data
                 eval: datetime.datetime.fromtimestamp(sh....data()[1]['time']).strftime('%a %d.%m.%Y')
 
             icon:
                 type: str
-                eval_trigger: ...data.data
+                eval_trigger: ...data
                 eval: sh....data()[1]['icon']
             
             icon_sv:
                 type: str
-                eval_trigger: ...data.day1.icon
-                eval: sh.darksky_weather.map_icon(sh....data.day1.icon())
+                eval_trigger: ..icon
+                eval: sh.darksky_weather.map_icon(sh...icon())
 
             temperature_max:
                 type: num
-                eval_trigger: ...data.data
+                eval_trigger: ...data
                 eval: sh....data()[1]['temperatureMax']
                 
         day2:
             date:
                 type: str
-                eval_trigger: ...data.data
+                eval_trigger: ...data
                 eval: datetime.datetime.fromtimestamp(sh....data()[2]['time']).strftime('%a %d.%m.%Y')
 
             icon:
                 type: str
-                eval_trigger: ...data.data
+                eval_trigger: ...data
                 eval: sh....data()[2]['icon']
             
             icon_sv:
                 type: str
-                eval_trigger: ...data.day2.icon
-                eval: sh.darksky_weather.map_icon(sh....data.day2.icon())
+                eval_trigger: ..icon
+                eval: sh.darksky_weather.map_icon(sh...icon())
 
             temperature_max:
                 type: num
-                eval_trigger: ...data.data
+                eval_trigger: ...data
                 eval: sh....data()[2]['temperatureMax']
                 
     alerts:
