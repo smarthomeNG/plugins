@@ -75,8 +75,8 @@ darksky:
         # create item with icon representation for SmartVisu, won't show up in Plugin's Web Interface 
         icon_sv:
             type: str
-            eval_trigger: darksky.currently.icon
-            eval: sh.weather_darksky.map_icon(sh.darksky.currently.icon())
+            eval_trigger: ..icon
+            eval: sh.weather_darksky.map_icon(sh...icon())
 
         nearestStormDistance:
             type: num
@@ -155,6 +155,12 @@ darksky:
         icon:
             type: str
             ds_matchstring: minutely/icon
+        
+        # create item with icon representation for SmartVisu, won't show up in Plugin's Web Interface 
+        icon_sv:
+            type: str
+            eval_trigger: ..icon
+            eval: sh.weather_darksky.map_icon(sh...icon())
 
     hourly:
 
@@ -165,6 +171,12 @@ darksky:
         icon:
             type: str
             ds_matchstring: hourly/icon
+            
+        # create item with icon representation for SmartVisu, won't show up in Plugin's Web Interface 
+        icon_sv:
+            type: str
+            eval_trigger: ..icon
+            eval: sh.weather_darksky.map_icon(sh...icon())
 
     daily:
 
