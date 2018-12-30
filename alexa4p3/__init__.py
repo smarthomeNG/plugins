@@ -1,4 +1,5 @@
-# !/usr/bin/env python3
+
+#!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2016 Kai Meder <kai@meder.info>
@@ -19,9 +20,15 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
+import os
+import sys
+
+
 
 from lib.model.smartplugin import SmartPlugin
 import logging
+import json
+
 
 from .device import AlexaDevices, AlexaDevice
 from .action import AlexaActions
@@ -34,12 +41,14 @@ from . import actions_lock
 from . import p3_action
 
 
+
+
+
 class Alexa4P3(SmartPlugin):
     PLUGIN_VERSION = "1.0.0.0.0"
     ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, sh, service_host='0.0.0.0', service_port=9000, service_https_certfile=None,
-                 service_https_keyfile=None):
+    def __init__(self, sh, service_host='0.0.0.0', service_port=9000, service_https_certfile=None, service_https_keyfile=None):
         self.logger = logging.getLogger(__name__)
         self.sh = sh
         self.devices = AlexaDevices()
@@ -57,22 +66,22 @@ class Alexa4P3(SmartPlugin):
         self.service.stop()
         self.alive = False
 
+
     def parse_item(self, item):
         # device/appliance
         self.logger.debug('Parse-Item')
         device_id = None
         if 'alexa_device' in item.conf:
             device_id = item.conf['alexa_device']
-        # supported actions/directives
+        
+        #supported actions/directives
         action_names = None
         if 'alexa_actions' in item.conf:
-            action_names = list(map(str.strip, item.conf['alexa_actions'].split(' ')))
+            action_names = list( map(str.strip, item.conf['alexa_actions'].split(' ')) )
             self.logger.debug("Alexa: {}-actions = {}".format(item.id(), action_names))
             for action_name in action_names:
                 if action_name and self.actions.by_name(action_name) is None:
-                    self.logger.error(
-                        "Alexa: invalid alexa action '{}' specified in item {}, ignoring item".format(action_name,
-                                                                                                      item.id()))
+                    self.logger.error("Alexa: invalid alexa action '{}' specified in item {}, ignoring item".format(action_name, item.id()))
                     return None
 
         # friendly name
@@ -84,7 +93,9 @@ class Alexa4P3(SmartPlugin):
         elif action_names and 'name' in item.conf:
             name = item.conf['name']
             name_is_explicit = False
-
+        
+        if name == 'Doorcam':
+            
         # deduce device-id from name
         if name and not device_id:
             device_id = AlexaDevice.create_id_from_name(name)
@@ -93,26 +104,24 @@ class Alexa4P3(SmartPlugin):
         if device_id:
             self.logger.debug("Alexa: {}-device = {}".format(item.id(), device_id))
         else:
-            return None  # skip this item
+            return None # skip this item
 
         # create device if not yet existing
         if not self.devices.exists(device_id):
-            self.devices.put(AlexaDevice(device_id))
+            self.devices.put( AlexaDevice(device_id) )
 
         device = self.devices.get(device_id)
 
         # types
         if 'alexa_types' in item.conf:
-            device.types = list(map(str.strip, item.conf['alexa_types'].split(' ')))
+            device.types = list( map(str.strip, item.conf['alexa_types'].split(' ')) )
             self.logger.debug("Alexa: {}-types = {}".format(item.id(), device.types))
 
         # friendly name
         if name and (not device.name or name_is_explicit):
             self.logger.debug("Alexa: {}-name = {}".format(item.id(), name))
             if device.name and device.name != name:
-                self.logger.warning(
-                    "Alexa: item {} is changing device-name of {} from '{}' to '{}'".format(item.id(), device_id,
-                                                                                            device.name, name))
+                self.logger.warning("Alexa: item {} is changing device-name of {} from '{}' to '{}'".format(item.id(), device_id, device.name, name))
             device.name = name
 
         # friendly description
@@ -120,15 +129,12 @@ class Alexa4P3(SmartPlugin):
             descr = item.conf['alexa_description']
             self.logger.debug("Alexa: {}-description = {}".format(item.id(), descr))
             if device.description and device.description != descr:
-                self.logger.warning(
-                    "Alexa: item {} is changing device-description of {} from '{}' to '{}'".format(item.id(), device_id,
-                                                                                                   device.description,
-                                                                                                   descr))
+                self.logger.warning("Alexa: item {} is changing device-description of {} from '{}' to '{}'".format(item.id(), device_id, device.description, descr))
             device.description = descr
 
         # alias names
         if 'alexa_alias' in item.conf:
-            alias_names = list(map(str.strip, item.conf['alexa_alias'].split(',')))
+            alias_names = list( map(str.strip, item.conf['alexa_alias'].split(',')) )
             for alias_name in alias_names:
                 self.logger.debug("Alexa: {}-alias = {}".format(item.id(), alias_name))
                 device.alias.append(alias_name)
@@ -136,23 +142,43 @@ class Alexa4P3(SmartPlugin):
         # value-range
         if 'alexa_item_range' in item.conf:
             item_min_raw, item_max_raw = item.conf['alexa_item_range'].split('-')
-            item_min = float(item_min_raw.strip())
-            item_max = float(item_max_raw.strip())
+            item_min = float( item_min_raw.strip() )
+            item_max = float( item_max_raw.strip() )
             item.alexa_range = (item_min, item_max)
             self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
 
         # special turn on/off values
         if 'alexa_item_turn_on' in item.conf or 'alexa_item_turn_off' in item.conf:
-            turn_on = item.conf['alexa_item_turn_on'] if 'alexa_item_turn_on' in item.conf else True
+            turn_on  = item.conf['alexa_item_turn_on']  if 'alexa_item_turn_on'  in item.conf else True
             turn_off = item.conf['alexa_item_turn_off'] if 'alexa_item_turn_off' in item.conf else False
             item.alexa_range = (turn_on, turn_off)
             self.logger.debug("Alexa: {}-range = {}".format(item.id(), item.alexa_range))
-        # ===============================================
-        # P3 - Properties
-        # ===============================================
-        if 'alexa_thermo_config' in item.conf:  # only for Version 1.0.0.0.0
+        #===============================================
+        #P3 - Properties
+        #===============================================
+        # ---- Start CamerStreamController
+        if 'alexa_camera' in item.conf:
+            camera_setting = item.conf['alexa_camera']
+            camera_setting = json.loads(camera_setting)
+            device.camera_setting=camera_setting
+            self.logger.debug("Alexa: {}-Camera-Config = {}".format(item.id(), device.camera_setting))
+            
+        #if 'alexa_camera_uri' in item.conf:
+        #    alexa_camera_uri = item.conf['alexa_camera']
+        #    device.camera_uri = alexa_camera_uri
+        #    self.logger.debug("Alexa: {}-Camera-Uri = {}".format(item.id(), device.camera_uri))
+        
+        if 'alexa_camera_imageUri' in item.conf:
+            alexa_camera_imageUri = item.conf['alexa_camera_imageUri']
+            device.camera_imageUri = alexa_camera_imageUri
+            self.logger.debug("Alexa: {}-Camera-Image-Uri = {}".format(item.id(), device.camera_imageUri))
+        # ---- Ende CamerStreamController    
+        
+        
+        
+        if 'alexa_thermo_config' in item.conf:
             thermo_config = item.conf['alexa_thermo_config']
-            device.thermo_config = item.conf['alexa_thermo_config']
+            device.thermo_config =item.conf['alexa_thermo_config']
             self.logger.debug("Alexa: {}-Thermo-Config = {}".format(item.id(), device.thermo_config))
         # Icon for Alexa-App - default = SWITCH
         if 'alexa_icon' in item.conf:
@@ -165,18 +191,19 @@ class Alexa4P3(SmartPlugin):
             retrievable = item.conf['alexa_retrievable']
             device.retrievable = retrievable
             self.logger.debug("Alexa: {}-alexa_retrievable = {}".format(item.id(), device.retrievable))
-
+        
+        
         if 'alexa_proactivelyReported' in item.conf:
             proactivelyReported = item.conf['alexa_proactivelyReported']
             device.proactivelyReported = proactivelyReported
             self.logger.debug("Alexa: {}-alexa_proactivelyReported = {}".format(item.id(), device.proactivelyReported))
-
+        
+            
         # register item-actions with the device
         if action_names:
             for action_name in action_names:
                 device.register(action_name, item)
-            self.logger.info("Alexa: {} supports {} as device {}".format(item.id(), action_names, device_id,
-                                                                         device.supported_actions()))
+            self.logger.info("Alexa: {} supports {} as device {}".format(item.id(), action_names, device_id, device.supported_actions()))
 
         return None
 
@@ -193,8 +220,7 @@ class Alexa4P3(SmartPlugin):
         for device in self.devices.all():
             alias_devices = device.create_alias_devices()
             for alias_device in alias_devices:
-                self.logger.info(
-                    "Alexa: device {} aliased '{}' via {}".format(device.id, alias_device.name, alias_device.id))
-                self.devices.put(alias_device)
+                self.logger.info("Alexa: device {} aliased '{}' via {}".format(device.id, alias_device.name, alias_device.id))
+                self.devices.put( alias_device )
 
-        self.logger.info("Alexa: providing {} devices".format(len(self.devices.all())))
+        self.logger.info("Alexa: providing {} devices".format( len(self.devices.all()) ))

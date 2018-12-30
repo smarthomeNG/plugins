@@ -152,7 +152,7 @@ def TurnOff(self, directive):
 
 # Alexa-Doorlock Controller
 
-@alexa('Lock', 'Lock', 'LockConfirmation','Alexa.LockController',[])
+@alexa('Lock', 'Lock', 'lockState','Alexa.LockController',[])
 def Lock(self, directive):
     device_id = directive['endpoint']['endpointId']
     items = self.items(device_id)
@@ -167,7 +167,7 @@ def Lock(self, directive):
     
     return self.p3_respond(directive)
 
-@alexa('Unlock', 'Unlock', 'UnlockConfirmation','Alexa.LockController',[])
+@alexa('Unlock', 'Unlock', 'lockState','Alexa.LockController',[])
 def Unlock(self, directive):
     device_id = directive['endpoint']['endpointId']
     items = self.items(device_id)
@@ -267,7 +267,7 @@ def SetPercentage(self, directive):
 def Activate(self, directive):
     device_id = directive['endpoint']['endpointId']
     items = self.items(device_id)
-    new_percentage = float( directive['payload']['percentage'] )
+
 
     for item in items:
         on, off = self.item_range(item, DEFAULT_RANGE_LOGIC)
@@ -279,6 +279,35 @@ def Activate(self, directive):
     
     return self.p3_respond(directive)
 
+# CameraStreamController
+@alexa('InitializeCameraStreams', 'InitializeCameraStreams', 'cameraStreamConfigurations','Alexa.CameraStreamController',[])
+def InitializeCameraStreams(self, directive):
+    device_id = directive['endpoint']['endpointId']
+    items = self.items(device_id)
+    for item in items:
+        self.logger.info("Alexa P3: CameraStream Init ({})".format(item.id()))
+
+    
+    return self.p3_respond(directive)
+
+# CameraStreamController
+@alexa('AcceptGrant', 'AcceptGrant', 'AcceptGrant.Response','Alexa.Authorization',[])
+def AcceptGrant(self, directive):
+    self.logger.info("Alexa P3: AcceptGrant received ({})")
+    myResponse = {
+                  "event": {
+                    "header": {
+                      "messageId": "",
+                      "namespace": "Alexa.Authorization",
+                      "name": "AcceptGrant.Response",
+                      "payloadVersion": "3"
+                    },
+                    "payload": {
+                    }
+                  }
+                }
+    self.replace(myResponse,'messageId',uuid.uuid4().hex)
+    return myResponse
 
 #======================================================
 # No directives only Responses for Reportstate

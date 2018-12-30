@@ -8,22 +8,23 @@
 ## Table of Content
 
 1. [Generell](#generell)
-2. [Icon / Display Categories](#icons)
-3. [Entwicklung / Einbau von neuen Skills](#entwicklung)
-4. [Alexa-ThermostatController](#thermostatcontroller) + [Thermosensor](#thermostatsensor)
-5. [Alexa-PowerController](#powercontroller)
-6. [Alexa-BrightnessController](#brightnesscontroller)
-7. [Alexa-PowerLevelController](#powerlevelcontroller)
-8. [Alexa-PercentageController](#percentagecontroller)
-9. [Alexa-LockController](#lockcontroller)
-10. [Alexa-CameraStreamController](#camerastreamcontroller)
-11. [Alexa-SceneController](#scenecontroller)
+2. [Change Log](#changelog)
+3. [Icon / Display Categories](#Icons)
+4. [Entwicklung / Einbau von neuen Skills](#Entwicklung)
+5. [Alexa-ThermostatController](#ThermostatController) + [Thermosensor](#Thermostatsensor)
+6. [Alexa-PowerController](#PowerController)
+7. [Alexa-BrightnessController](#BrightnessController)
+8. [Alexa-PowerLevelController](#PowerLevelController)
+9. [Alexa-PercentageController](#PercentageController)
+10. [Alexa-LockController](#LockController)
+11. [Alexa-CameraStreamController](#CameraStreamController)
+12. [Alexa-SceneController](#SceneController)
 
 
 
 # --------------------------------------
 
-## Generell <a name="generell"/></a>
+##Generell <a name="generell"/></a>
 
 Die Daten des Plugin müssen in den Ordner /usr/local/smarthome/plugins/alexa4p3/ (wie gewohnt)
 Die Rechte entsprechend setzen.
@@ -63,12 +64,24 @@ PayloadV2 : turnon
 PayloadV3 : TurnOn
 
 Die Actions unterscheiden sich zwischen Payload V2 und V3 oft nur durch Gross/Klein-Schreibung
+##Change Log <a name="changelog"/></a>
+###24.12.2018
+- CameraStream Controller eingebaut
+- Doku für CameraStreamController erstellt
+- Doku für PercentageController erstellt
+- Bug Fix für fehlerhafte Testfunktionen aus der Lambda
 
-## Icons / Catagories <a name="icons"/></a>
+###12.12.2018
+- Scene Controller eingebaut
+- Doku für Scene Controller erstellt
+- PercentageController eingebaut
+
+##Icons / Catagories<a name="Icons"/></a>
 Optional kann im Item angegeben werden welches Icon in der Alexa-App verwendet werden soll :
-
-        alexa_icon = "LIGHT"
-
+<pre><code>
+alexa_icon = "LIGHT"
+</code></pre>
+<pre>
 <table>
   <thead>
     <tr>
@@ -165,6 +178,7 @@ Optional kann im Item angegeben werden welches Icon in der Alexa-App verwendet w
     </tr>
   </tbody>
 </table>
+</pre>
 default = "Switch" (vergleiche : https://developer.amazon.com/docs/device-apis/alexa-discovery.html#display-categories )
 
 Optional kann im Item angegeben werden ob es durch Amazon abgefragt werden kann :
@@ -260,7 +274,7 @@ OG:
             enforce_updates: 'true'
 </code></pre>
 
-## Entwicklung / Einbau von neuen Fähigkeiten <a name="entwicklung"/></a>
+##Entwicklung / Einbau von neuen Fähigkeiten <a name="Entwicklung"/></a>
 Um weitere Actions hinzuzufügen muss die Datei p3_actions.py mit den entsprechenden Actions ergänzt werden.
 (wie ursprünglich als selbstregistrierende Funktion)
 
@@ -288,7 +302,7 @@ siehe Amazon z.B.: https://developer.amazon.com/docs/device-apis/list-of-interfa
 In der "service.py" muss für den ReportState der Rückgabewert für die neue Action hinzugefügt werden.
 (siehe Quellcode)
 
-## Alexa-ThermostatController + Thermosensor <a name="thermostatcontroller"/></a>
+## Alexa-ThermostatController + Thermosensor <a name="ThermostatController"/></a>
 
 Es kann nun via Alexa die Solltemperatur verändert werden und der Modus des Thermostaten kann umgestellt werden.
 Die Konfiguration der YAML-Datei sieht wie folgt aus
@@ -316,7 +330,7 @@ alexa_icon = "THERMOSTAT" = Thermostatcontroller
 alexa_icon = "TEMPERATURE_SENSOR" = Temperatursensor
 </code></pre>
 
-### Thermostatsensor<a name="thermostatsensor"/></a>
+###Thermostatsensor<a name="Thermostatsensor"/></a>
 
 Der Temperartursensor wird beim Item der Ist-Temperatur hinterlegt.
 Der Thermostatconroller wird beim Thermostat-Item hinterlegt. An Amazon werden die Icons als Array übertragen.
@@ -328,7 +342,7 @@ alexa_actions : "ReportTemperature"
 
 Alexa wie ist die Temperatur in der Küche ?
 
-### Verändern der Temperatur (SetTargetTemperature AdjustTargetTemperature)
+###Verändern der Temperatur (SetTargetTemperature AdjustTargetTemperature)
 
 <pre><code>
 alexa_actions = "SetTargetTemperature AdjustTargetTemperature"
@@ -341,7 +355,7 @@ Alexa erhöhe die Temperatur in der Küche um zwei Grad
 
 Alexa stelle die Temperatur in der Küche auf zweiundzwanzig Grad
 
-### Thermostatmode<a name="Thermostatmode"/></a>
+###Thermostatmode<a name="Thermostatmode"/></a>
 
 alexa_actions = "SetThermostatMode"
 
@@ -465,7 +479,7 @@ Gruppenadresse anlegen)
 
 </code></pre>
 
-## Alexa-PowerController<a name="powercontroller"/></a>
+## Alexa-PowerController<a name="PowerController"/></a>
 
 Alexa schalte das Licht im Flur OG ein
 
@@ -493,7 +507,7 @@ Beispiel
         enforce_updates = true
 </code></pre>
 
-## Alexa-BrightnessController<a name="brightnesscontroller"/></a>
+## Alexa-BrightnessController<a name="BrightnessController"/></a>
 Alexa stelle das Licht am Esstisch auf fünfzig Prozent
 Alexa dimme das Licht am Esstisch um zehn Prozent
 Folgende Parameter sind anzugeben :
@@ -534,15 +548,17 @@ Beispiel :
         enforce_updates = true
 </code></pre>
 
-## Alexa-PowerLevelController<a name="powerlevelcontroller"/></a>
+## Alexa-PowerLevelController<a name="PowerLevelController"/></a>
 tbd
-## Alexa-PercentageController<a name="percentagecontroller"/></a>
+## Alexa-PercentageController<a name="PercentageController"/></a>
 tbd
-## Alexa-LockController<a name="lockcontroller"/></a>
+## Alexa-LockController<a name="LockController"/></a>
 tbd
-## Alexa-CameraStreamContoller<a name="camerastreamcontroller"/></a>
-tbd
-## Alexa-SceneController<a name="scenecontroller"/></a>
+## Alexa-CameraStreamContoller<a name="CameraStreamContoller"/></a>
+
+
+
+## Alexa-SceneController<a name="SceneController"/></a>
 
 Alexa aktiviere Szene kommen
 
