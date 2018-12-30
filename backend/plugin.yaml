@@ -51,7 +51,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/backend/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
 
-    version: 1.4.14                # Plugin version
+    version: 1.5.15                # Plugin version
     sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance

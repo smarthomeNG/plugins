@@ -443,9 +443,9 @@ class BackendSysteminfo:
         if req_group == 'base':
             req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'requirements', 'base.txt'))
 #            req_dict_base = self.shpypi.parse_requirementsfile(os.path.join(self._sh_dir, 'requirements', 'base.txt'))
-            dummy = self.shpypi.parse_requirementsfile(os.path.join(self._sh_dir, 'requirements', 'all.txt'))
+            dummy = self.shpypi.parse_requirementsfile(os.path.join(self._sh_dir, 'requirements', 'conf-all.txt'))
             dummy = self.shpypi.test_base_requirements()
-            dummy = self.shpypi.test_requirements(os.path.join(self._sh_dir, 'requirements', 'all.txt'))
+            dummy = self.shpypi.test_requirements(os.path.join(self._sh_dir, 'requirements', 'conf-all.txt'))
             dummy = self.shpypi.get_packagelist()
             self.logger.warning("get_requirements_info: get_packagelist = {}".format(dummy))
 
