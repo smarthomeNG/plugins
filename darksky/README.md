@@ -191,7 +191,7 @@ darksky:
         icon_sv:
                 type: str
                 eval_trigger: ..icon
-                eval: sh.darksky_weather.map_icon(sh...icon())  
+                eval: sh.weather_darksky.map_icon(sh...icon())  
             
         data:
             type: list
@@ -213,7 +213,7 @@ darksky:
             icon_sv:
                 type: str
                 eval_trigger: ..icon
-                eval: sh.darksky_weather.map_icon(sh...icon())
+                eval: sh.weather_darksky.map_icon(sh...icon())
 
             temperature_max:
                 type: num
@@ -234,7 +234,7 @@ darksky:
             icon_sv:
                 type: str
                 eval_trigger: ..icon
-                eval: sh.darksky_weather.map_icon(sh...icon())
+                eval: sh.weather_darksky.map_icon(sh...icon())
 
             temperature_max:
                 type: num
@@ -255,7 +255,7 @@ darksky:
             icon_sv:
                 type: str
                 eval_trigger: ..icon
-                eval: sh.darksky_weather.map_icon(sh...icon())
+                eval: sh.weather_darksky.map_icon(sh...icon())
 
             temperature_max:
                 type: num
