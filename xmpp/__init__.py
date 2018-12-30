@@ -141,9 +141,7 @@ class XMPPLogHandler(logging.Handler):
             if self._plugin is None:
                 if self._xmpp_plugin not in self._errors:
                     self._errors.append(self._xmpp_plugin)
-                    logging.getLogger(__name__).error('Can not get plugin \'{}\' used to log messages via XMPP - trying later!'.format(self._xmpp_plugin))
-                else:
-                    logging.getLogger(__name__).error('Can not get XMPP plugin \'{}\' - trying again later!'.format(self._xmpp_plugin))
+                    logging.getLogger(__name__).error('Can not get XMPP plugin \'{}\' used to log messages via XMPP - trying later!'.format(self._xmpp_plugin))
             else:
                 logging.getLogger(__name__).info('Configured XMPP logging using pluing {}'.format(self._xmpp_plugin))
 
