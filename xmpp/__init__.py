@@ -84,10 +84,14 @@ class XMPP(SmartPlugin):
                 pass
 
     def handleXMPPConnected(self, event):
-        self.xmpp.sendPresence(pstatus="Send me a message")
-        self.xmpp.get_roster()
-        for chat in self._join:
-            self.xmpp.plugin['xep_0045'].joinMUC(chat, self.xmpp.boundjid.bare, wait=True)
+        try:
+            self.xmpp.sendPresence(pstatus="Send me a message")
+            self.xmpp.get_roster()
+            for chat in self._join:
+                self.xmpp.plugin['xep_0045'].joinMUC(chat, self.xmpp.boundjid.bare, wait=True)
+        except Exception as e:
+            self.logger.error("XMPP: Reconnecting, because can not set/get presence/roster: {}".format(e))
+            self.xmpp.reconnect()
 
     def handleIncomingMessage(self, msg):
         """
