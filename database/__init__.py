@@ -60,7 +60,7 @@ COL_LOG_CHANGED = 6
 
 class Database(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.2'
+    PLUGIN_VERSION = '1.5.7'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
