@@ -82,12 +82,12 @@
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.id() }}</td>
-						<td class="py-1">{{ item.type() }}</td>
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
@@ -147,12 +147,12 @@
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.id() }}</td>
-						<td class="py-1">{{ item.type() }}</td>
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 				{% for item in p._monitoring_service.get_trigger_items() %}
