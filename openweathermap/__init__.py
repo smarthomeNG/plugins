@@ -32,7 +32,7 @@ from bin.smarthome import VERSION
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.2"
+    PLUGIN_VERSION = "1.5.0.3"
 
     _base_url = 'https://api.openweathermap.org/%s'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
