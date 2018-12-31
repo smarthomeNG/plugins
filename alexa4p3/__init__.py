@@ -94,9 +94,6 @@ class Alexa4P3(SmartPlugin):
             name = item.conf['name']
             name_is_explicit = False
 
-        if name == 'Doorcam':
-            pass
-        
         # deduce device-id from name
         if name and not device_id:
             device_id = AlexaDevice.create_id_from_name(name)
