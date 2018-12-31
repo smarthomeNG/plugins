@@ -44,8 +44,8 @@
 			<tbody>
 				{% for item, value in p.get_event_items().items() %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.id() }}</td>
-						<td class="py-1">{{ item.type() }}</td>
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ value }}</td>
 						<td class="py-1">
 							{{ item() }}
@@ -60,8 +60,8 @@
 							{% if item() == 254 %}({{ _('motor blocked') }}){% endif %}
 							{% if item() == 255 %}({{ _('undefined') }}){% endif %}
 						</td>
-						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
@@ -100,10 +100,10 @@
 			</thead>
 			<tbody>
 				{% for item, value in p.get_action_items().items() %}
-					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.id() }}</td>
-						<td class="py-1">{{ item.type() }}</td>
-						<td class="py-1">{{ item._enforce_updates }}</td>
+                    <tr id="{{ loop.index }}_click">
+                        <td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
+						<td class="py-1">{{ item.property.enforce_updates }}</td>
 						<td class="py-1">{{ value }}</td>
 						<td class="py-1" >
 							{{ item() }}
@@ -114,8 +114,8 @@
 							{% if item() == 4 %}({{ _('lockAndGo') }}){% endif %}
 							{% if item() == 5 %}({{ _('lockAndGoWithUnlatch') }}){% endif %}
 						</td>
-						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1 pr-5" style="width: 400px;">
 							<form>
 								<div class="input-group-sm input-group">
@@ -164,16 +164,16 @@
 			<tbody>
 				{% for item, value in p.get_battery_items().items() %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.id() }}</td>
-						<td class="py-1">{{ item.type() }}</td>
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ value }}</td>
 						<td class="py-1">
 							{{ item() }}
 							{% if item() == 0 %}({{ _('Batteries are good. No need to replace it.') }}){% endif %}
 							{% if item() == 1 %}({{ _('Batteries are low. Please replace as soon as possible!') }}){% endif %}
 						</td>
-						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>

@@ -70,7 +70,7 @@ class NukiTCPDispatcher(lib.connection.Server):
             state_name = nuki_bridge_response['stateName']
             self.plugin.logger.debug(
                 "Plugin '{pluginname}' - NukiTCPDispatcher: Status Smartlock: ID: {nuki_id} Status: {state_name}".
-                format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
+                    format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
             conn.send(b"HTTP/1.1 200 OK\nContent-Type: text/html\n\n")
 
             Nuki.update_lock_state(nuki_id, nuki_bridge_response)
@@ -80,7 +80,7 @@ class NukiTCPDispatcher(lib.connection.Server):
 
 
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.4"
+    PLUGIN_VERSION = "1.5.0.5"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):
@@ -151,7 +151,7 @@ class Nuki(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'nuki_id'):
-            self.logger.debug("Plugin '{0}': parse item: {1}".format(self.get_shortname(), item))
+            self.logger.debug("Plugin '{0}': parse item: {1}".format(self.get_shortname(), item.property.path))
             nuki_id = self.get_iattr_value(item.conf, 'nuki_id')
 
             if self.has_iattr(item.conf, 'nuki_trigger'):
@@ -169,7 +169,7 @@ class Nuki(SmartPlugin):
                     nuki_battery_items[item] = int(nuki_id)
             else:
                 self.logger.warning("Plugin '{pluginname}': Item {item} defines a Nuki ID but no nuki trigger! "
-                                    "This item has no effect.".format(pluginname=self.get_shortname(), item=item))
+                                    "This item has no effect.".format(pluginname=self.get_shortname(), item=item.property.path))
                 return
             return self.update_item
 
@@ -191,7 +191,8 @@ class Nuki(SmartPlugin):
                 if response is not None:
                     if response['success']:
                         # self._get_nuki_status()
-                        self.logger.info("Plugin '{0}': update item: {1}".format(self.get_shortname(), item.id()))
+                        self.logger.info(
+                            "Plugin '{0}': update item: {1}".format(self.get_shortname(), item.property.path))
                 else:
                     self.logger.error("Plugin '{}': no response.".format(self.get_shortname()))
 
@@ -253,8 +254,9 @@ class Nuki(SmartPlugin):
                     response = self._api_call(self._base_url, endpoint='callback/add', token=self._token,
                                               callback_url=self._callback_url)
                     if not response['success']:
-                        self.logger.warning("Plugin '{pluginname}': Error establishing the callback url: {message}".format
-                                            (pluginname=self.get_shortname(), message=response['message']))
+                        self.logger.warning(
+                            "Plugin '{pluginname}': Error establishing the callback url: {message}".format
+                            (pluginname=self.get_shortname(), message=response['message']))
                     else:
                         self.logger.info("Plugin '{}': Callback URL registered.".format
                                          (self.get_shortname()))
@@ -300,7 +302,9 @@ class Nuki(SmartPlugin):
             if id is not None:
                 payload['id'] = id
             url = urllib.parse.urljoin(base_url, endpoint)
-            self.logger.debug("Plugin '{}': starting API Call to Nuki Bridge at {} with payload {}.".format(self.get_shortname(), url, payload))
+            self.logger.debug(
+                "Plugin '{}': starting API Call to Nuki Bridge at {} with payload {}.".format(self.get_shortname(), url,
+                                                                                              payload))
             response = requests.get(url=urllib.parse.urljoin(base_url, endpoint), params=payload)
             self.logger.debug("Plugin '{}': finishing API Call to Nuki Bridge at {}.".format(self.get_shortname(), url))
             response.raise_for_status()
@@ -407,10 +411,12 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def triggerAction(self, path, value):
         if path is None:
-            self.plugin.logger.error("Plugin '{}': Path parameter is missing when setting action item value!".format(self.get_shortname()))
+            self.plugin.logger.error(
+                "Plugin '{}': Path parameter is missing when setting action item value!".format(self.get_shortname()))
             return
         if value is None:
-            self.plugin.logger.error("Plugin '{}': Value parameter is missing when setting action item value!".format(self.get_shortname()))
+            self.plugin.logger.error(
+                "Plugin '{}': Value parameter is missing when setting action item value!".format(self.get_shortname()))
             return
         item = self.plugin.items.return_item(path)
         item(int(value), caller=self.plugin.get_shortname(), source='triggerAction()')
