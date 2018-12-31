@@ -12,8 +12,8 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins_doc/config/sma_em.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1030610-sma_em-plugin
 
-    version: 1.5.0.3               # Plugin version
-    sh_minversion: 1.4c            # minimum shNG version to use this plugin
+    version: 1.5.0.4               # Plugin version
+    sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
