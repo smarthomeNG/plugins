@@ -467,6 +467,7 @@ class Database(SmartPlugin):
             'avg': 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'avg.order': 'ORDER BY time ASC',
             'count': 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
+            'countall' : 'MIN(time), COUNT(*)',
             'min': 'MIN(time), MIN(val_num)',
             'max': 'MIN(time), MAX(val_num)',
             'on': 'MIN(time), ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
@@ -515,6 +516,7 @@ class Database(SmartPlugin):
         queries = {
             'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
+            'countall' : 'COUNT(*)',
             'min': 'MIN(val_num)',
             'max': 'MAX(val_num)',
             'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
