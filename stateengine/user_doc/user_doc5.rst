@@ -23,61 +23,49 @@ als Attribute definiert werden.
 -  **on_leave**: Aktionen, die ausgeführt werden, direkt bevor ein
    anderer Zustand aktiv wird.
 
-Aktionen können auch direkt im Zustands-Item definiert werden.
-Solche Aktionen werden analog zum Ereignis ``on_enter_or_stay`` behandelt.
-
 **Beispiel**
 
 .. code-block:: yaml
 
-   test:
-       events:
-           name: stateengine Event Beispiel
-           type: foo
+  test:
+      events:
+          name: stateengine Event Beispiel
+          type: foo
 
-           item:
-               name: Dummy Item
-               type: bool
-               value: False
+          rules:
+              type: bool
+              name: Automatik Test Event
+              # Dies ist ein Objekt-Item für das stateengine-Plugin:
+              se_plugin: active
 
-           rules:
-               type: bool
-               name: Automatik Test Event
-               # Dies ist ein Objekt-Item für das stateengine-Plugin:
-               se_plugin: active
+              state1:
+                  type: foo
+                  name: Status 1
 
-               state1:
-                   type: foo
-                   name: Status 1
+                  on_enter:
+                     name: Ausführen immer wenn ein Zustand gerade aktiv geworden ist
+                     <... Aktionen ...>
 
-                   on_enter:
-                       name: Ausführen immer wenn ein Zustand gerade aktiv geworden ist
-                       <... Aktionen ...>
+                  on_stay:
+                     name: Ausführen immer wenn ein Zustand aktiv geworden ist und bereits vorher aktiv war
+                     <... Aktionen ...>
 
-                   on_stay:
-                       name: Ausführen immer wenn ein Zustand aktiv geworden ist und bereits vorher aktiv war
-                       <... Aktionen ...>
+                  on_enter_or_stay:
+                     name: Ausführen immer wenn ein Zustand aktiv ist
+                     <... Aktionen ...>
 
-                   on_enter_or_stay:
-                       name: Ausführen immer wenn ein Zustand aktiv ist
-                       <... Aktionen ...>
+                  on_leave:
+                     name: Ausführen beim Verlassen des Zustands
+                     <... Aktionen ...>
 
-                   on_leave:
-                       name: Ausführen beim Verlassen des Zustands
-                       <... Aktionen ...>
+                  enter_1:
+                     name: Bedingung 1
+                     <...Einstiegs-Bedingungsset 1...>
 
-                   enter_1:
-                       name: Bedingung 1
-                       <...Einstiegs-Bedingungsset 1...>
+                  enter_2:
+                     name: Bedingung 2
+                     <...Einstiegs-Bedingungsset 2...>
 
-                   enter_2:
-                       name: Bedingung 2
-                       <...Einstiegs-Bedingungsset 2...>
-
-               state2:
-                   name: Status 2
-                   <... Weitere Bedingungssets und Aktionsgruppen ...>
-
-               state3:
-                   name: Status 3
-                   <... Weitere Bedingungssets und Aktionsgruppen ...>
+              state2:
+                  name: Status 2
+                  <... Weitere Bedingungssets und Aktionsgruppen ...>
