@@ -30,19 +30,27 @@
 # sudo pip install -r requirements.txt    or    pip install -r requirements.txt
 
 import time
-import random
+#import random
 import datetime
 import logging
-import urllib3
-import telegram
-import telegram.ext
-from telegram.ext import Updater
-from telegram.ext import CommandHandler
-from telegram.ext import MessageHandler, Filters
-
-from lib.model.smartplugin import SmartPlugin
-from lib.logic import Logics
+#import urllib3
 import re
+
+from lib.model.smartplugin import *
+from lib.logic import Logics
+
+try:
+    import telegram
+    import telegram.ext
+    from telegram.error import TelegramError
+    from telegram.ext import Updater
+    from telegram.ext import CommandHandler
+    from telegram.ext import MessageHandler, Filters
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
+
+
 
 PLUGIN_ATTR_TOKEN       = 'token'
 PLUGIN_ATTR_CHAT_IDS    = 'trusted_chat_ids'
@@ -50,7 +58,7 @@ PLUGIN_ATTR_CHAT_IDS    = 'trusted_chat_ids'
 ITEM_ATTR_MESSAGE       = 'telegram_message'            # Send message on item change 
 ITEM_ATTR_INFO          = 'telegram_info'               # read items with specific item-values 
 ITEM_ATTR_TEXT          = 'telegram_text'               # write message-text into the item
-ITEM_ATTR_MATCHREGEX    = 'telegram_value_match_regex'  #  check a value against a condition before sending a message
+ITEM_ATTR_MATCHREGEX    = 'telegram_value_match_regex'  # check a value against a condition before sending a message
 
 MESSAGE_TAG_ID          = '[ID]'
 MESSAGE_TAG_NAME        = '[NAME]'
@@ -61,21 +69,50 @@ MESSAGE_TAG_DEST        = '[DEST]'
 
 
 class Telegram(SmartPlugin):
-    PLUGIN_VERSION = "1.4.4"
+    PLUGIN_VERSION = "1.5.0"
     ALLOW_MULTIINSTANCE = False
 
     _items = []                 # Storage Array for all items using telegram attributes ITEM_ATTR_MESSAGE
-    _items_info = {}            # dict used whith the info-command: key = attibute_value, val= item_list ITEM_ATTR_INFO
+    _items_info = {}            # dict used whith the info-command: key = attribute_value, val= item_list ITEM_ATTR_INFO
     _items_text_message = []    # items in which the text message is written ITEM_ATTR_TEXT
     _chat_ids = []              # array whith registred chat_ids
 
     # called, before items are loaded
-    def __init__(self, smarthome, token='dummy', trusted_chat_ids='none', name='SH Telegram Gateway', welcome_msg='SmarthomeNG Telegram Plugin is up and running'):
-        self._sh = smarthome
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, sh, *args, **kwargs):
+        """
+        Initializes the Telegram Plugin
+        The params may be obtained through get_parameter_value(parameter_name)
+        
+        """
+        
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        self.logger.debug("init {}".format(__name__))
+        self._init_complete = False
+
+        # Exit if the required package(s) could not be imported
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'python-telegram-bot'".format(self.get_fullname()))
+            return
+
+        #self._instance = self.get_parameter_value('instance')    # the instance of the plugin
+        self._name = self.get_parameter_value('name')
+        self._token = self.get_parameter_value('token')
+        trusted_chat_ids = self.get_parameter_value('trusted_chat_ids')
+        self._chat_ids = list(map(int, trusted_chat_ids.split(',')))
+
+        if len(self._chat_ids) < 1:
+            self.logger.info("No trusted chat ids configured!")
+            
+        self._welcome_msg = self.get_parameter_value('welcome_msg')
+        self._bye_msg = self.get_parameter_value('bye_msg')
+        self._long_polling_timeout = self.get_parameter_value('long_polling_timeout')
+
 
         # the Updater class continuously fetches new updates from telegram and passes them on to the Dispatcher class.
-        self._updater = Updater(token=token) 
+        self._updater = Updater(token=self._token) 
         self._bot = self._updater.bot
 
         self.logger.info("Telegram bot is listening: {0}".format(self._bot.getMe()))
@@ -88,25 +125,15 @@ class Telegram(SmartPlugin):
         dispatcher.add_handler(CommandHandler('hide', self.cHandler_hide))
         dispatcher.add_handler(CommandHandler('list', self.cHandler_list))
         dispatcher.add_handler(CommandHandler('info', self.cHandler_info))
+        dispatcher.add_handler(CommandHandler('subscribe', self.cHandler_subscribe))
         dispatcher.add_handler(CommandHandler('lo', self.cHandler_lo))
         dispatcher.add_handler(CommandHandler('tr', self.cHandler_tr, pass_args=True))
-        
+
         dispatcher.add_handler( MessageHandler(Filters.text, self.mHandler))
-        
-        #self._updater.start_polling()   # (poll_interval=0.0, timeout=10, network_delay=None, clean=False, bootstrap_retries=0, read_latency=2.0, allowed_updates=None)
+        self.init_webinterface()
 
-        self._chat_ids = list(map(int, trusted_chat_ids.split(',')))
-
-        if len(self._chat_ids) < 1:
-            self.logger.info("No trusted chat ids configured!")
-
-        self._name = name
-
-        self._msg_broadcast(welcome_msg)
-
-    # triggered by sh.telegram(msg)
-    # def __call__(self, msg):
-    #    self._msg_broadcast(msg)
+        self.logger.debug("init done")
+        self._init_complete = True
 
     def __call__(self, msg, chat_id=None):
         if chat_id == None:
@@ -114,29 +141,38 @@ class Telegram(SmartPlugin):
         else:
             self._msg_broadcast(msg, chat_id)
 
-
-    # called once at startup after all items are loaded
     def run(self):
+        """
+        This is called when the plugins thread is about to run
+        """
         self.alive = True
         self.logics = Logics.get_instance() # Returns the instance of the Logics class, to be used to access the logics-api
-        
-        self._updater.start_polling()   # (poll_interval=0.0, timeout=10, network_delay=None, clean=False, bootstrap_retries=0, read_latency=2.0, allowed_updates=None)
-        
-        # if you want to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
-    
-    
-    # close files and data connections
+        q = self._updater.start_polling(timeout=self._long_polling_timeout)   # (poll_interval=0.0, timeout=10, network_delay=None, clean=False, bootstrap_retries=0, read_latency=2.0, allowed_updates=None)
+        self.logger.debug("started polling the updater, Queue is {}".format(q))
+        self._msg_broadcast(self._welcome_msg)
+        self.logger.debug("sent welcome message {}")
+
     def stop(self):
         self.alive = False
+        """
+        This is called when the plugins thread is about to stop
+        """
         try:
-            self.logger.info("stop updater")
+            self.logger.debug("stop telegram plugin")
+            self._msg_broadcast(self._bye_msg)
+            self.logger.debug("sent bye message")
+            # Todo: we need to wait until the bye message was sent
             self._updater.stop()
+            self.logger.debug("telegram plugin stopped")
         except:
             pass
         
     # called for each item during startup, items.yaml contains the "attibute: value" entries
     def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        :param item: The item to process.
+        """
         if ITEM_ATTR_MESSAGE in item.conf:
             self.logger.debug("parse item: {0}".format(item))
             value = item.conf[ITEM_ATTR_MESSAGE]
@@ -202,8 +238,6 @@ class Telegram(SmartPlugin):
             else:
                 item_name = 'NONAME'
 
-            # TODO: item.__changed_by
-
             # replace Tags with id,value,caller,source,dest,...
             msg_txt = msg_txt_tmpl.replace(MESSAGE_TAG_ID, item_id)
             msg_txt = msg_txt.replace(MESSAGE_TAG_NAME, item_name)
@@ -223,9 +257,12 @@ class Telegram(SmartPlugin):
         for cid in self.get_chat_id_list(chat_id):
             try:
                 self._bot.sendMessage(chat_id=cid, text=msg)
-            except:
-                self.logger.error("could not broadcast to chat id [%d]" % cid)
-                
+            except TelegramError as e:
+                self.logger.error("could not broadcast to chat id [{}] due to error {}".format(cid,e))
+            except Exception as e:
+                    self.logger.debug("Exception '{0}' occurred, please inform plugin author!".format(e))
+
+
     def _photo_broadcast(self, photofile, msg, chat_id=None):
         for cid in self.get_chat_id_list(chat_id):
             try:
@@ -265,7 +302,7 @@ class Telegram(SmartPlugin):
         
     # /help: show available commands as keyboard
     def cHandler_help(self, bot, update):
-        bot.send_message(chat_id=update.message.chat_id, text=self.translate("choose"), reply_markup={"keyboard":[["/hide"], ["/time","/list"], ["/lo","/info"]]})
+        bot.send_message(chat_id=update.message.chat_id, text=self.translate("choose"), reply_markup={"keyboard":[["/hide","/subscribe"], ["/time","/list"], ["/lo","/info"]]})
     
     # /hide: hide keyboard
     def cHandler_hide(self, bot, update):
@@ -279,6 +316,10 @@ class Telegram(SmartPlugin):
     # /info: show item-menu with registered items with specific attribute
     def cHandler_info(self, bot, update):
         bot.send_message(chat_id=update.message.chat_id, text=self.translate("Infos from the items:"), reply_markup={"keyboard":self.create_info_reply_markup()})
+        
+    # /info: show item-menu with registered items with specific attribute
+    def cHandler_subscribe(self, bot, update):
+        bot.send_message(chat_id=update.message.chat_id, text=self.translate("Your chat id is '{}'".format(update.message.chat_id)))
         
     # /xx show registered items and value with specific attribute/key
     def cHandler_info_attr(self, bot, update):
@@ -359,8 +400,81 @@ class Telegram(SmartPlugin):
         if footer_buttons:
             menu.append(footer_buttons)
         return menu
- 
-# if __name__ == '__main__':
-#     logging.basicConfig(level=logging.DEBUG)
-#     myplugin = PluginName('smarthome-telegram')
-#     myplugin.run()
+
+    def init_webinterface(self):
+        """
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+        except:
+             self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+        
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+        
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self), 
+                                     self.get_shortname(), 
+                                     config, 
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+                                   
+        return True
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+        
+        Render the template and return the html file to be delivered to the browser
+            
+        :return: contents of the template after beeing rendered 
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin, )
+
