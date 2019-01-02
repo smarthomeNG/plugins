@@ -863,3 +863,10 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def cleanup(self):
         self.plugin.cleanup()
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def countall(self, item_path):
+        if item_path is not None:
+            item = self.plugin.items.return_item(item_path)
+            return int(item.db('countall', 0))
