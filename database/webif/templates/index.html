@@ -80,7 +80,7 @@
 				<td class="py-1">
 					<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
 					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}';"><i class="fas fa-search"></i></button>
-					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anzahl Datensätze') }}" onclick="countAll('{{ item.property.path }}')" data-container="body" data-toggle="popover" data-placement="right"><i class="fas fa-calculator"></i></button>
+					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anzahl Datensätze in LOG Tabelle') }}" onclick="countAll('{{ item.property.path }}')" data-container="body" data-toggle="popover" data-placement="right"><i class="fas fa-calculator"></i></button>
 					<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
 				</td>
 			</tr>

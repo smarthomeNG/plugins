@@ -771,7 +771,7 @@ class WebInterface(SmartPluginWebIf):
                 else:
                     self.plugin.deleteLog(item_id)
                 delete_triggered = True
-            elif action == "item_details" and item_id is not None:
+            if action == "item_details" and item_id is not None:
                 if day is not None and month is not None and year is not None:
                     time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (month, day, year),
                                                                         "%m/%d/%Y").timetuple()) * 1000
@@ -869,4 +869,8 @@ class WebInterface(SmartPluginWebIf):
     def countall(self, item_path):
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
-            return int(item.db('countall', 0))
+            count = item.db('countall', 0)
+            if count is not None:
+                return int(count)
+            else:
+                return 0

@@ -78,3 +78,12 @@ plugin_translations:
     'Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?':
         'de': '='
         'en': 'Do you really want to delete all data sets without corresponding item?'
+    'Anzahl Einträge in LOG Tabelle für Item':
+        'de': '='
+        'en': 'Number of data sets in LOG table for item'
+    'Loading...':
+        'de': '='
+        'en': '='
+    'Anzahl Datensätze in LOG Tabelle':
+        'de': '='
+        'en': 'Number of data sets in LOG table'
