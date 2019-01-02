@@ -5,8 +5,8 @@
 Bedingungen
 ###########
 
-.. rubric:: Grundlagen
-   :name: grundlagen
+.. rubric:: Grundlagen von Bedingungen
+   :name: grundlagenbedingungen
 
 Jede Bedingung erfordert drei Dinge:
 
@@ -82,7 +82,7 @@ zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
 
        se_agemin_<Bedingungsname>: [Wert]
 
-Die Bedingung ist erfüllt, wenn das Alter des Items, dass zur
+Die Bedingung ist erfüllt, wenn das Alter des Items, das zur
 Ermittlung des Werts angegeben ist, größer als das angegebene
 Mindestalter ist.
 
@@ -92,7 +92,7 @@ Mindestalter ist.
 
        se_agemax_<Bedingungsname>: [Wert]
 
-Die Bedingung ist erfüllt, wenn das Alter des Items, dass zur
+Die Bedingung ist erfüllt, wenn das Alter des Items, das zur
 Ermittlung des Werts angegeben ist, kleiner als das angegebene
 Höchstalter ist.
 
@@ -111,26 +111,22 @@ zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
    :name: bereitstellungdesaktuellenwerts
 
 Der zu setzende Wert kann entweder über einen statischen Wert, ein Item oder über eine
-Eval-Funktion bereitgestellt werden. Wenn beides angegeben ist,
-wird das Item verwendet und die Eval-Funktion ignoriert.
+Eval-Funktion bereitgestellt werden.
 
-Der Name des Items, über das der aktuelle Wert abgerufen werden
-soll, wird auf Ebene des Objekt-Items über das Attribut
-``se_item_<Bedingungsname>`` angegeben. Die Eval-Funktion, über
-die der aktuelle Wert abgerufen werden soll, wird auf Ebene des
-Objekt-Items über das Attribut
-``se_eval_<Bedingungsname>`` angegeben. Der Bedingungsname
-in ``se_item`` bzw. ``se_eval``
-muss mit den Bedingungsnamen in den Bedingungen korrespondieren.
+Der Name des Items wird auf Ebene des Objekt-Items über das Attribut
+``se_item_<Bedingungsname>`` angegeben und in der Bedingung mit dem
+gleichen Bedingungsnamen referenziert.
 
-Da sich Altersbedingungen auf das Alter der hinterlegten Items
-beziehen, können ``se_agemin_<Bedingungsname>``,
-``se_agemax_<Bedingungsname>`` und
-``se_agenegate_<Bedingungsname>`` nur verwendet werden, wenn der
-aktuelle Wert über ein Item bereitgestellt wird.
 
 .. rubric:: Beispiel
    :name: beispielbedingungen
+
+Im folgenden Beispiel wird der Zustand "Daemmerung" eingenommen, sobald
+die Helligkeit (über se_item_brightness definiert) zwischen 500 und 1000 Lux liegt.
+
+Der Zustand "Sonder" wird eingenommen, sobald die Helligkeit mindestens dem im
+Item test.wert hinterlegten Wert entspricht, aber nicht mehr als 500 Einheiten
+über diesem Wert liegt.
 
 .. code-block:: yaml
 
@@ -139,8 +135,6 @@ aktuelle Wert über ein Item bereitgestellt wird.
            automatik:
                rules:
                    <...>
-                   se_item_height: beispiel.raffstore1.hoehe
-                   se_item_lamella: beispiel.raffstore1.lamelle
                    se_item_brightness: beispiel.wetterstation.helligkeit
                    Daemmerung:
                        type: foo
@@ -148,14 +142,7 @@ aktuelle Wert über ein Item bereitgestellt wird.
                        <Aktionen>
                        enter:
                            se_min_brightness: 500
-                           se_max_brightness: value:1000
-
-                   Nacht:
-                       type: foo
-                       name: Nacht
-                       <Aktionen>
-                       enter_toodark:
-                           se_max_brightness: 500
+                           se_max_brightness: 1000
 
                    Sonder:
                        type: foo

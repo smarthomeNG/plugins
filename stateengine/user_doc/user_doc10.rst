@@ -5,9 +5,7 @@
 Variablen
 #########
 
-Mit dem Datentyp AbValue kann
-auf Variablen des Plugins zugegriffen werden. Derzeit stehen
-folgende Variablen zur Verfügung:
+Im Plugin stehen folgende Variablen zur Verfügung:
 
 **item.suspend_time:**
 *Die Suspend-Time des Items*

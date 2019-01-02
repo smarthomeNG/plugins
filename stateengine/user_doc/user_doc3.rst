@@ -89,7 +89,8 @@ festlegen, wann eine Aktion ausgeführt wird.
 .. rubric:: Items
    :name: items
 
-Bedingungen und Aktionen beziehen sich überlicherweise auf Items.
+Bedingungen und Aktionen beziehen sich überlicherweise auf Items wie beispielsweise
+die Höhe einer Jalousie oder die Außenhelligkeit.
 Diese Items müssen auf Ebene des Objekt-Items über das Attribut
 ``se_item_<Bedingungsname/Aktionsname>`` bekannt gemacht werden.
 
@@ -103,45 +104,22 @@ Diese Items müssen auf Ebene des Objekt-Items über das Attribut
          automatik:
              rules:
                  <Allgemeine Objektkonfiguration>
-                 se_mindelta_lamella: 10
                  se_item_height: beispiel.raffstore1.hoehe
-                 se_item_lamella: beispiel.raffstore1.lamelle
                  se_item_brightness: beispiel.wetterstation.helligkeit
 
                  Nacht:
                      name: Nacht
                      on_enter_or_stay:
                         se_set_height: 100
-                        se_set_lamella: 100
                      enter_toodark:
                         se_max_brightness: 25
-                     enter_toolate:
-                         <Bedingungen um den Zustand anzusteuern, wenn es zu spät ist>
 
-                 Tag:
-                     name: Tag
-                     on_enter_or_stay:
-                        se_set_hoehe: 0
-                     enter:
-                        <Bedingungen oder leer lassen für "Standardzustand">
+**Attribut se_item_height:**
+*Definition des Items, das durch die Aktion se_set_height verändert wird*
 
-**Attribute se_item_height und se_item_lamella:**
-*Definition der Items, die durch die Aktionen se_set_height und se_set_lamella verändert werden*
+**Attribut se_item_brightness:**
+*Definition des Items, dessen Wert für die Bedingung abgefragt werden soll*
 
-Die Items werden durch ihre Item-Id angegeben
-
-**Attribut name:**
-*Name des Zustands*
-
-Der Name wird in das über ``se_laststate_item_name`` definierte
-Item geschrieben, wenn der Zustand aktueller Zustand wird. Dieser
-Wert kann z. B. in einer Visualisierung dargestellt werden.
-
-**Attribute se_set_height und se_set_lamella:**
-*Neu zu setzende Werte für die Items, die über se_item_height und se_item_lamella festgelegt wurden*
-
-**Attribut se_mindelta_lamella:**
-*Nur, wenn sich Lamellen min. um x Grad ändern würden, werden sie aktualisiert.*
-
-**Untergeordnete Items enter, enter_toodark und enter_toolate:**
-*Bedingungsgruppen die erfüllt sein müssen, damit ein Zustand aktueller Zustand werden kann*
+Im Beispiel wird also im Zustand Nacht das Item ``beispiel.raffstore1.hoehe`` auf
+den Wert 100 gesetzt, sobald ``beispiel.wetterstation.helligkeit`` den Wert 25
+übersteigt.

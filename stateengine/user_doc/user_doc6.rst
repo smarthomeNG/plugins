@@ -4,7 +4,9 @@
 Aktionen - einzeln
 ##################
 
-Bei der Einzelvariante zur Definition von Aktionen werden alle
+Es gibt zwei Möglichkeiten, Aktionen zu definieren.
+
+Bei der Einzelvariante werden alle
 Parameter einer Aktion in separaten Attributen definiert. Über den
 gemeinsamen Aktionsnamen gehören die Attribute einer Aktion
 zusammen.
@@ -28,37 +30,6 @@ angegeben werden.
 Der Wert, auf den das Item gesezt wird, kann als statischer Wert, als Wert eines
 Items oder als Ergebnis der Ausführung einer Funktion festgelegt
 werden.
-
-.. rubric:: Aktion: Minimumabweichung
-   :name: minimumabweichung
-
-Es ist möglich, eine Minimumabweichung für
-Änderungen zu definieren. Wenn die Differenz zwischen dem
-aktuellen Wert des Items und dem ermittelten neuen Wert kleiner
-ist als die festgelegte Minimumabweichung wird keine Änderung
-vorgenommen. Die Minimumabweichung wird über das Attribut
-``se_mindelta_<Aktionsname>`` auf der Ebene des Objekt-Items
-festgelegt.
-
-.. rubric:: Aktion: Item zwangsweise auf einen Wert setzen
-   :name: aktionitemzwangsweiseaufeinenwertsetzen
-
-.. code-block:: yaml
-
-       se_force_<Aktionsname>
-
-Diese Aktion funktioniert analog zu ``se_set_<Aktionsname>``.
-Einziger Unterschied ist, dass die Wertänderung erzwungen wird:
-Wenn das Item bereits den zu setzenden Wert hat, dann ändert
-smarthomeNG das Item nicht. Selbst wenn beim Item das Attribut
-``enforce_updates: yes`` gesetzt ist, wird zwar der Wert neu
-gesetzt, der von smarthomeNG die Änderungszeit nicht neu gesetzt. Mit
-dem Attribut ``se_force_<Aktionsname>`` wird das Plugin den Wert
-des Items bei Bedarf zuerst auf einen anderen Wert ändern und dann
-auf dem Zielwert setzen. Damit erfolgt auf jeden Fall eine
-Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
-stehenden Änderungen (eval's, Aktualisierung der Änderungszeiten,
-etc).
 
 .. rubric:: Aktion: Ausführen einer Funktion
    :name: aktionausfuehreneinerfunktion
@@ -176,6 +147,37 @@ Es ist möglich, zwei Aktionen die gleiche Zahl zuzuweisen, die
 Reihenfolge der beiden Aktionen untereinander ist dann wieder
 zufällig. Innerhalb der gesamten Aktionen werden die beiden
 Aktionen jedoch an der angegebenen Position ausgeführt.
+
+.. rubric:: Aktion: Minimumabweichung
+   :name: minimumabweichung
+
+Es ist möglich, eine Minimumabweichung für
+Änderungen zu definieren. Wenn die Differenz zwischen dem
+aktuellen Wert des Items und dem ermittelten neuen Wert kleiner
+ist als die festgelegte Minimumabweichung wird keine Änderung
+vorgenommen. Die Minimumabweichung wird über das Attribut
+``se_mindelta_<Aktionsname>`` auf der Ebene des Objekt-Items
+festgelegt.
+
+.. rubric:: Aktion: Item zwangsweise auf einen Wert setzen
+   :name: aktionitemzwangsweiseaufeinenwertsetzen
+
+.. code-block:: yaml
+
+       se_force_<Aktionsname>
+
+Diese Aktion funktioniert analog zu ``se_set_<Aktionsname>``.
+Einziger Unterschied ist, dass die Wertänderung erzwungen wird:
+Wenn das Item bereits den zu setzenden Wert hat, dann ändert
+smarthomeNG das Item nicht. Selbst wenn beim Item das Attribut
+``enforce_updates: yes`` gesetzt ist, wird zwar der Wert neu
+gesetzt, der von smarthomeNG die Änderungszeit nicht neu gesetzt. Mit
+dem Attribut ``se_force_<Aktionsname>`` wird das Plugin den Wert
+des Items bei Bedarf zuerst auf einen anderen Wert ändern und dann
+auf dem Zielwert setzen. Damit erfolgt auf jeden Fall eine
+Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
+stehenden Änderungen (eval's, Aktualisierung der Änderungszeiten,
+etc).
 
 .. rubric:: Beispiel zu Aktionen
    :name: beispielzuaktioneneinzeln

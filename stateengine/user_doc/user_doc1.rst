@@ -16,6 +16,12 @@ Allgemein
       Sperrfunktionalität verwendet werden, über die alle aktuellen
       Jalousieaktoren verfügen!
 
+.. rubric:: Einführung
+   :name: einfuehrungstateengine
+
+Als Einstieg in das Plugin empfiehlt es sich, den `Blogeintrag <https://www.smarthomeng.de/tag/stateengine>`_
+auf der SmarthomeNG Seite zu lesen!
+
 .. rubric:: Funktionalität
    :name: funktionalitaet
 

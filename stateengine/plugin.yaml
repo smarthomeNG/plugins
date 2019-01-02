@@ -179,7 +179,7 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
     type:
-        type: string
+        type: str
         valid_list:
           - 'bool'
         valid_list_description:
@@ -190,7 +190,7 @@ item_attributes:
             en: 'Data type of the object item. Has to be "bool"'
 
     se_plugin:
-        type: string
+        type: str
         mandatory: True
         valid_list:
           - 'active'
@@ -228,7 +228,7 @@ item_attributes:
                  '
 
     se_laststate_item_name:
-        type: string
+        type: str
         description:
             de: 'Id des Items, in dem der Name des aktuellen Zustands abgelegt wird'
             en: 'Id of the item that saves the name of the current state'
@@ -246,7 +246,7 @@ item_attributes:
                  '
 
     se_laststate_item_id:
-        type: string
+        type: str
         description:
             de: 'Id des Items, in dem die ID des aktuellen Zustands abgelegt wird'
             en: 'Id of the item that saves the ID of the current state'
@@ -309,7 +309,7 @@ item_attributes:
                 '
 
     se_item_suspend_end:
-        type: string
+        type: str
         description:
             de: 'Id des Items, in dem das Ende der Suspendzeit abgelegt werden soll'
             en: 'Id of the item that saves the suspend end time'
