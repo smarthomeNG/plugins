@@ -10,6 +10,7 @@ plugin:
     state: ready
     keywords: database
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
     version: 1.5.7                 # Plugin version
     sh_minversion: 1.5b            # minimum shNG version to use this plugin
