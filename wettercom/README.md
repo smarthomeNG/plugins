@@ -27,8 +27,6 @@ Create a yaml file in the items folder with the following content or copy the fi
 #### Example
 
 ```yaml
-%yaml 1.1
----
 wetter:
     vorhersage:
         heute:
