@@ -6,7 +6,7 @@ plugin:
         de: 'Plugin zur Ansteuerung von SmartHomeNG via Amazon Echo / Alexa, supports Payload V3'
         en: ''
     maintainer: AndreK
-    tester: ????????
+    # tester: ????????
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021150-amazon-alexa-plugin
