@@ -121,6 +121,7 @@ Supported functions are:
 
    * `avg`: for the average value
    * `count`: for the amount of values not "0" (more examples: `count>10`, `count<10`, `count=10`)
+   * `countall`: for the amount of values (without checking any condition)
    * `max`: for the maximum value
    * `min`: for the minimum value
    * `on`: percentage (as float from 0.00 to 1.00) where the value has been greater than 0.
