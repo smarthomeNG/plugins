@@ -23,7 +23,9 @@ als Attribute definiert werden.
 -  **on_leave**: Aktionen, die ausgeführt werden, direkt bevor ein
    anderer Zustand aktiv wird.
 
-**Beispiel**
+
+Beispiel
+--------
 
 .. code-block:: yaml
 
