@@ -36,8 +36,8 @@ werden, das heißt ein Vorgabezustand kann also selbst wiederum
 werden. Um unnötige Komplexität und Zirkelbezüge zu vermeiden, ist
 die maximale Tiefe jedoch auf 5 Ebenen begrenzt.
 
-.. rubric:: Beispiel X
-   :name: vorgabebeispiel
+Beispiel
+--------
 
 .. code-block:: yaml
 

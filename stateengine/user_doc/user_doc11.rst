@@ -12,8 +12,9 @@ ist.
 Die Sperre soll aktiv sein, wenn das Sperr-Item den Wert ``True``
 hat.
 
-.. rubric:: Das Sperr-Item
-   :name: dassperritem
+
+Das Sperr-Item
+--------------
 
 Das Sperritem definiert man wie folgt:
 
@@ -27,8 +28,9 @@ Das Sperritem definiert man wie folgt:
              visu_acl: rw
              cache: on
 
-.. rubric:: Der Sperrzustand
-   :name: dersperrzustand
+
+Der Sperrzustand
+----------------
 
 Eine Änderung des Sperr-Items muss direkt eine
 Zustandsermittlung auslösen, das Sperr-Item wird daher in die

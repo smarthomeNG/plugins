@@ -9,16 +9,17 @@ Funktionen zur Verfügung, die einfach für
 ``se_set_<Aktionsname>`` und ``se_run_<Aktionsname>`` Aktionen
 verwendet werden können:
 
-.. rubric:: Winkel zum Nachführen der Jalousielamellen auf Basis des Sonnenstands
-   :name: winkel
+
+Winkel zum Nachführen der Jalousielamellen auf Basis des Sonnenstands
+---------------------------------------------------------------------
 
 .. code-block:: yaml
 
    stateengine_eval.sun_tracking()
 
 
-.. rubric:: Zufallszahl
-   :name: zufallszahl
+Zufallszahl
+-----------
 
 .. code-block:: yaml
 
@@ -28,6 +29,7 @@ verwendet werden können:
 zurückgegeben werden soll, festgelegt werden. ``min`` und
 ``max`` können weggelassen werden, in diesem Fall sind die
 Vorgabewerte 0 für ``min`` und 255 für ``max``.
+
 
 .. rubric:: Shell-Kommando ausführen
    :name: shellkommandoausfhren

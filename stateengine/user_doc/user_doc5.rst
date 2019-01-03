@@ -5,6 +5,7 @@ Ausführungszeitpunkt
 ####################
 
 Um festzulegen, wann die Aktionen eines Zustands ausgeführt
+Um festzulegen, wann die Aktionen eines Zustands ausgeführtbeding
 werden, gibt es vier Ereignisse, denen die Aktionen zugeordnet
 werden können: Für jedes dieser Ereignisse wird ein Item unterhalb
 des Zustands-Items angelegt, unterhalb dem die jeweiligen Aktionen
