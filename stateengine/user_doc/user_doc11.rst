@@ -1,6 +1,5 @@
 .. index:: Plugins; Stateengine; Sperren
 .. index:: Sperren
-.. _Lock-Zustand:
 
 Sperren
 #######
