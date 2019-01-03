@@ -13,8 +13,8 @@ wetter.com account with project, recommended: 3 days, all data transmitted
 wettercom:
     class_name: wettercom
     class_path: plugins.wettercom
-    apikey: <enter your api code here>
-    project: <enter your project name here>
+    # apikey: <enter your api code here>
+    # project: <enter your project name here>
 ```
 
 add your project on wetter.com and paste API-key and project name
