@@ -641,6 +641,8 @@ class AVM(SmartPlugin):
                 self._update_tam(item)
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 self._update_home_automation(item)
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'hkr_device':
+                self._update_home_automation(item)
             elif self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'wlanconfig_ssid',
                                                                       'wlan_guest_time_remaining']:
                 self._update_wlan_config(item)
@@ -1644,6 +1646,63 @@ class AVM(SmartPlugin):
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+
+        #handling hkr devices (AVM dect 301)
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'hkr_device':
+            self.logger.debug('handling hkr device')
+            element_xml = xml.getElementsByTagName('NewHkrSetVentilStatus')
+            if len(element_xml) > 0:
+                # Decoding hrk valve state: open, closed or temp (temperature controlled)
+                tempstring  = element_xml[0].firstChild.data
+                tempstate = 3
+                if tempstring == 'OPEN':
+                    tempstate = 1
+                elif tempstring == 'CLOSED':
+                    tempstate = 0
+                elif tempstring == 'TEMP':
+                    tempstate = 2
+                else: 
+                    tempstate = 3
+                item(int(tempstate))
+                for child in item.return_children():
+                    if self.has_iattr(child.conf, 'avm_data_type'):
+                        if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
+                            is_temperature = xml.getElementsByTagName('NewTemperatureCelsius')
+                            if len(is_temperature) > 0:
+                                child(int(is_temperature[0].firstChild.data))
+                            else:
+                                self.logger.error(
+                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                                                                                           'avm_data_type'))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature':
+                            set_temperature = xml.getElementsByTagName('NewHkrSetTemperature')
+                            if len(set_temperature) > 0:
+                                child(int(set_temperature[0].firstChild.data))
+                            else:
+                                self.logger.error(
+                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                                                                                           'avm_data_type'))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_reduced':
+                            set_temperature_reduced= xml.getElementsByTagName('NewHkrReduceTemperature')
+                            if len(set_temperature_reduced) > 0:
+                                child(int(set_temperature_reduced[0].firstChild.data))
+                            else:
+                                self.logger.error(
+                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                                                                                           'avm_data_type'))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_comfort':
+                            set_temperature_comfort= xml.getElementsByTagName('NewHkrComfortTemperature')
+                            if len(set_temperature_comfort) > 0:
+                                child(int(set_temperature_comfort[0].firstChild.data))
+                            else:
+                                self.logger.error(
+                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                                                                                           'avm_data_type'))
+
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+
 
     def _update_fritz_device_info(self, item):
         """
