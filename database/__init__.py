@@ -466,6 +466,7 @@ class Database(SmartPlugin):
         queries = {
             'avg': 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'avg.order': 'ORDER BY time ASC',
+            'integrate' : 'MIN(time), SUM(val_num * duration)',
             'count': 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'countall' : 'MIN(time), COUNT(*)',
             'min': 'MIN(time), MIN(val_num)',
@@ -515,6 +516,7 @@ class Database(SmartPlugin):
         func, expression = self._expression(func)
         queries = {
             'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
+            'integrate' : 'SUM(val_num * duration)',
             'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'countall' : 'COUNT(*)',
             'min': 'MIN(val_num)',

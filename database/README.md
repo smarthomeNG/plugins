@@ -127,6 +127,7 @@ Supported functions are:
    * `on`: percentage (as float from 0.00 to 1.00) where the value has been greater than 0.
    * `sum`: for the summarized value
    * `raw`: for the raw values
+   * `integrate`: Discrete time integration of values within given time span. Is equivalent to: sum (value*duration)
 
 For the timeframe you have to specify a start point and a optional end point. By default it ends 'now'.
 The time point could be specified with `<number><interval>`, where interval could be:
