@@ -671,7 +671,7 @@ class UZSU(SmartPlugin):
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                 else:
                     self._itpl[item][next.timestamp() * 1000.0] = value
-                    self.logger.debug("Include previous today: {}, value {} for interpolation.".format(next, value))
+                    self.logger.debug("Include previous today (sun): {}, value {} for interpolation.".format(next, value))
                     if entryindex:
                         self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                     next = self._sun(datetime.combine(tomorrow, datetime.min.time()).replace(
@@ -682,14 +682,14 @@ class UZSU(SmartPlugin):
                 cond_future = next > datetime.now(self._timezone)
                 if not cond_future:
                     self._itpl[item][next.timestamp() * 1000.0] = value
-                    self.logger.debug("Include next today: {}, value {} for interpolation.".format(next, value))
+                    self.logger.debug("Include {} today: {}, value {} for interpolation.".format(timescan, next, value))
                     next = datetime.combine(tomorrow, parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
             cond_today = next.date() == today.date()
             cond_yesterday = next.date() - timedelta(days=1) == yesterday.date()
             cond_tomorrow = next.date() == tomorrow.date()
             cond_next = next > datetime.now(self._timezone)
-            cond_previous_today = next - timedelta(seconds=1) < datetime.now(self._timezone) and timescan == 'previous'
-            cond_previous_yesterday = next - timedelta(days=1) < datetime.now(self._timezone) and timescan == 'previous'
+            cond_previous_today = next - timedelta(seconds=1) < datetime.now(self._timezone)
+            cond_previous_yesterday = next - timedelta(days=1) < datetime.now(self._timezone)
             if next and cond_today and cond_next:
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug("Return next today: {}, value {}".format(next, value))
@@ -700,12 +700,10 @@ class UZSU(SmartPlugin):
                 return next, value
             if next and cond_today and cond_previous_today:
                 self._itpl[item][(next - timedelta(seconds=1)).timestamp() * 1000.0] = value
-                self.logger.debug("Return previous today: {}, value {}".format(next, value))
-                return next, value
+                self.logger.debug("Not returning previous today {} because it's in the past.".format(next))
             if next and cond_yesterday and cond_previous_yesterday:
                 self._itpl[item][(next - timedelta(days=1)).timestamp() * 1000.0] = value
-                self.logger.debug("Return previous yesterday: {}, value {}".format(next - timedelta(days=1), value))
-                return next - timedelta(days=1), value
+                self.logger.debug("Not returning previous yesterday {} because it's in the past.".format(next))
         except Exception as e:
             self.logger.error("Error '{}' parsing time: {}".format(time, e))
         return None, None
