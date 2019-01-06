@@ -4,6 +4,13 @@
 uzsu
 ####
 
+Einführung
+==========
+
+Die Funktionsweise der universellen Zeitschaltuhr wird auf dem `SmarthomeNG Blog <https://www.smarthomeng.de/tag/uzsu>`_
+beschrieben. Dort finden sich auch einige praktische Beispiele.
+
+
 Konfiguration
 =============
 
@@ -124,9 +131,3 @@ Folgender Python Aufruf bzw. Dictionary Eintrag schaltet das Licht jeden zweiten
    {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2', 'time': '17:30'}],
    {'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0}
    })
-
-
-Weitere Infos
-=============
-
-Beispiele und zusätzliche Infos können im `SmarthomeNG Blog <https://www.smarthomeng.de/tag/uzsu>`_ gefunden werden.

@@ -102,6 +102,15 @@ plugin_functions:
         description:
             de: 'Beim Aufrufen mit dem Parameter True werden die Einträge der UZSU gelöscht.'
             en: 'Using this function with the parameter True clears the UZSU.'
+        description_long:
+            de: 'Löschen der UZSU Einträge eines Items.\n
+                - Leer: nichts ausführen\n
+                - True: löschen\n
+                '
+            en: 'Delete the UZSU entries of an item.\n
+                - Empty: do nothing\n
+                - True: delete\n
+                '
 
     activate:
         type: bool
@@ -111,12 +120,12 @@ plugin_functions:
         description_long:
             de: 'Abfrage oder Setzen, ob die uzsu aktiv ist oder nicht.\n
                 - Leer: Abfrage\n
-                - True: aktivieren\
+                - True: aktivieren\n
                 - False: deaktivieren\n
                 '
             en: 'Query or set whether the uzsu is set active or not.\n
                 - Empty: query\n
-                - True: activate\
+                - True: activate\n
                 - False: deactivate\n
                 '
 
@@ -128,7 +137,7 @@ plugin_functions:
         parameters:
             'type':
                 type: str
-                default: None
+                default: none
                 description:
                     de: 'Interpolationstyp: linear/none/cubic'
                     en: 'interpolation type: linear/none/cubic'
