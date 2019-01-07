@@ -391,6 +391,7 @@ class UZSU(SmartPlugin):
     def _check_rruleandplanned(self, item):
         if self._items[item].get('list'):
             _inactive = 0
+            count = 0
             for entry in self._items[item]['list']:
                 if entry.get('active') is False:
                     _inactive += 1
@@ -398,10 +399,12 @@ class UZSU(SmartPlugin):
                     try:
                         _index = self._items[item]['list'].index(entry)
                         self._items[item]['list'][_index]['rrule'] = 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU'
+                        count += 1
                     except Exception as err:
                         self.logger.warning("Error creating rrule: {}".format(err))
-            self.logger.debug("Updated rrule for item: {}".format(item))
-            item(self._items[item], 'UZSU Plugin', 'create_rrule')
+            if count > 0:
+                self.logger.debug("Updated {} rrule entries for item: {}".format(count, item))
+                item(self._items[item], 'UZSU Plugin', 'create_rrule')
             if _inactive >= len(self._items[item]['list']):
                 self._planned.update({item: None})
 
@@ -422,7 +425,8 @@ class UZSU(SmartPlugin):
         cond = (not caller == 'UZSU Plugin') or source == 'logic'
         self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}. Will update: {}'.format(
             item, caller, source, dest, cond))
-        self._check_rruleandplanned(item)
+        if not source == 'create_rrule':
+            self._check_rruleandplanned(item)
         # Removing Duplicates
         if self._remove_duplicates is True and self._items[item].get('list') and cond:
             self._remove_dupes(item)
