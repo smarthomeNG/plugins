@@ -138,6 +138,7 @@ class UZSU(SmartPlugin):
             cond2 = self._items[item].get('list')
             self._check_rruleandplanned(item)
             if cond1 and cond2:
+                self._planned.update({item: 'notinit'})
                 self._schedule(item, caller='run')
             elif cond1 and not cond2:
                 self.logger.warning("Item '{}' is active but has no entries.".format(item))
@@ -304,10 +305,13 @@ class UZSU(SmartPlugin):
             return self._itpl[item]
 
     def _logics_planned(self, item=None):
-        if self._planned.get(item) not in [None, {}] and self._items[item].get('active') is True:
+        if self._planned.get(item) not in [None, {}, 'notinit'] and self._items[item].get('active') is True:
             self.logger.info("Item '{}' is going to be set to {} at {}".format(
                 item, self._planned[item]['value'], self._planned[item]['next']))
             return self._planned[item]
+        elif self._planned.get(item) == 'notinit' and self._items[item].get('active') is True:
+            self.logger.debug("Item '{}' is active but not fully initialized yet.".format(item))
+            return None
         elif not self._planned.get(item) and self._items[item].get('active') is True:
             self.logger.warning("Item '{}' is active but has no (active) entries.".format(item))
             self._planned.update({item: None})
