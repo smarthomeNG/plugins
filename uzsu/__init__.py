@@ -138,7 +138,6 @@ class UZSU(SmartPlugin):
             cond2 = self._items[item].get('list')
             self._check_rruleandplanned(item)
             if cond1 and cond2:
-                self._planned.update({item: 'notinit'})
                 self._schedule(item, caller='run')
             elif cond1 and not cond2:
                 self.logger.warning("Item '{}' is active but has no entries.".format(item))
@@ -361,6 +360,7 @@ class UZSU(SmartPlugin):
                     self._items[item]['list'][entry].pop('holiday', None)
                     self._items[item]['list'][entry].pop('delayedExec', None)
             item(self._items[item], 'UZSU Plugin', 'init')
+            self._planned.update({item: 'notinit'})
             self.logger.debug('Dict for item {} is: {}'.format(item, self._items[item]))
             return self.update_item
 
