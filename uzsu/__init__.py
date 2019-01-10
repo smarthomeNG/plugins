@@ -309,7 +309,7 @@ class UZSU(SmartPlugin):
                 item, self._planned[item]['value'], self._planned[item]['next']))
             return self._planned[item]
         elif self._planned.get(item) == 'notinit' and self._items[item].get('active') is True:
-            self.logger.debug("Item '{}' is active but not fully initialized yet.".format(item))
+            self.logger.info("Item '{}' is active but not fully initialized yet.".format(item))
             return None
         elif not self._planned.get(item) and self._items[item].get('active') is True:
             self.logger.warning("Item '{}' is active but has no (active) entries.".format(item))
