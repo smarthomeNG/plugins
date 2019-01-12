@@ -93,3 +93,169 @@ plugin_functions:
                 description:
                     de: "Icon als String."
                     en: "Icon as string."
+
+item_structs:
+    weather:
+        name: Weather report from darksky.net
+
+        latitude:
+            type: num
+            ds_matchstring: latitude
+
+        longitude:
+            type: num
+            ds_matchstring: longitude
+
+        timezone:
+            type: str
+            ds_matchstring: timezone
+
+        currently:
+
+            time:
+                type: num
+                ds_matchstring: currently/time
+
+            summary:
+                type: str
+                ds_matchstring: currently/summary
+
+            icon:
+                type: str
+                ds_matchstring: currently/icon
+
+            nearestStormDistance:
+                type: num
+                ds_matchstring: currently/nearestStormDistance
+
+            precipIntensity:
+                type: num
+                ds_matchstring: currently/precipIntensity
+                database: init
+
+            precipIntensityError:
+                type: num
+                ds_matchstring: currently/precipIntensityError
+
+            precipProbability:
+                type: num
+                ds_matchstring: currently/precipProbability
+                database: init
+
+            precipType:
+                type: str
+                ds_matchstring: currently/precipType
+
+            temperature:
+                type: num
+                ds_matchstring: currently/temperature
+                database: init
+
+            apparenttemperature:
+                type: num
+                ds_matchstring: currently/apparentTemperature
+                database: init
+
+            dewpoint:
+                type: num
+                ds_matchstring: currently/dewPoint
+                database: init
+
+            humidity:
+                type: num
+                ds_matchstring: currently/humidity
+                database: init
+
+            pressure:
+                type: num
+                ds_matchstring: currently/pressure
+                database: init
+
+            windSpeed:
+                type: num
+                ds_matchstring: currently/windSpeed
+                database: init
+
+            windGust:
+                type: num
+                ds_matchstring: currently/windGust
+                database: init
+
+            windBearing:
+                type: num
+                ds_matchstring: currently/windBearing
+                database: init
+
+            cloudCover:
+                type: num
+                ds_matchstring: currently/cloudCover
+                database: init
+
+            uvIndex:
+                type: num
+                ds_matchstring: currently/uvIndex
+                database: init
+
+            visibility:
+                type: num
+                ds_matchstring: currently/visibility
+                database: init
+
+            ozone:
+                type: num
+                ds_matchstring: currently/ozone
+                database: init
+
+        minutely:
+
+            summary:
+                type: str
+                ds_matchstring: minutely/summary
+
+            icon:
+                type: str
+                ds_matchstring: minutely/icon
+
+        hourly:
+
+            summary:
+                type: str
+                ds_matchstring: hourly/summary
+
+            icon:
+                type: str
+                ds_matchstring: hourly/icon
+
+        daily:
+
+            summary:
+                type: str
+                ds_matchstring: daily/summary
+
+            icon:
+                type: str
+                ds_matchstring: daily/icon
+
+        alerts:
+
+            list:
+                type: list
+                ds_matchstring: alerts
+
+            string_detail:
+                type: str
+                ds_matchstring@home: alerts_string
+
+        flags:
+
+            sources:
+                type: str
+                ds_matchstring: flags/sources
+
+            units:
+                type: str
+                ds_matchstring: flags/units
+
+            nearest_station:
+                type: num
+                ds_matchstring: flags/nearest-station
