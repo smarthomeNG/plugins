@@ -2,8 +2,11 @@
 .. index:: Advanced
 .. _Advanced:
 
+Advanced
+========
+
 Vordefinierte Funktionen
-########################
+------------------------
 
 Das stateengine Plugin stellt verschiedene vordefinierte
 Funktionen zur Verfügung, die einfach für
@@ -78,7 +81,7 @@ wobei dieses unbedingt in Anführungszeichen gesetzt werden muss, z.B. ``'..susp
 
 
 Variablen
-#########
+---------
 
 Im Plugin stehen folgende Variablen zur Verfügung:
 
@@ -96,7 +99,7 @@ Im Plugin stehen folgende Variablen zur Verfügung:
 
 
 Zustandsnamen
-#############
+-------------
 
 **name (optional):**
 *Name des Zustands*
@@ -121,7 +124,7 @@ Im Protokoll wird immer der über das Attribut ``name`` angegebene Wert verwende
 
 
 CLI
-###
+---
 
 Sofern die eingesetzte smarthomeNG-Version dies unterstützt,
 registriert das stateengine-Plugin zwei eigene Kommandos beim
@@ -135,7 +138,7 @@ CLI-Plugin.
 
 
 Sperren
-#######
+-------
 
 Für das Sperren der automatischen Zustandsermittlung führt man ein
 Sperr-Item ein, das beispielsweise über einen Taster oder die Visu änderbar
@@ -188,7 +191,7 @@ werden, da er anderen Zuständen gegenüber priorisiert werden soll.
 
 
 Aussetzen
-#########
+---------
 
 Eine besondere Anforderung: Nach bestimmten manuellen Aktionen (z.
 B. über einen Taster, die Visu, o. ä.) soll die automatische

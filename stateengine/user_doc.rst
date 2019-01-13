@@ -8,6 +8,7 @@ Dokumentation
 =============
 
 .. toctree::
+  :titlesonly:
 
    user_doc/user_doc1.rst
    user_doc/user_doc2.rst
