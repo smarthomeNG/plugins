@@ -30,6 +30,7 @@ class SeCliCommands:
         self.__items = items
         self._sh = smarthome
         self.logger = logger
+        self.plugins = Plugins.get_instance()
 
 
         # Add additional cli commands if cli is active (and functionality to add own cli commands is available)
@@ -72,7 +73,7 @@ class SeCliCommands:
     def _get_cli_plugin(self):
         # noinspection PyBroadException
         try:
-            for plugin in self._sh.return_plugins():
+            for plugin in self.plugins.return_plugins():
                 if plugin.__module__ == 'plugins.cli':
                     return plugin
             return None

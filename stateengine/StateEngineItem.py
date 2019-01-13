@@ -25,6 +25,8 @@ from . import StateEngineState
 from . import StateEngineDefaults
 from . import StateEngineCurrent
 from . import StateEngineValue
+from lib.item import Items
+from lib.shtime import Shtime
 
 
 # Class representing a blind item
@@ -49,6 +51,8 @@ class SeItem:
     # smarthome: instance of smarthome.py
     # item: item to use
     def __init__(self, smarthome, item):
+        self.items = Items.get_instance()
+        self.shtime = Shtime.get_instance()
         self.__sh = smarthome
         self.__item = item
         self.__id = self.__item.id()
@@ -112,7 +116,7 @@ class SeItem:
         # start timer with startup-delay
         startup_delay = 0 if self.__startup_delay.is_empty() else self.__startup_delay.get()
         if startup_delay > 0:
-            first_run = self.__sh.now() + datetime.timedelta(seconds=startup_delay)
+            first_run = self.shtime.now() + datetime.timedelta(seconds=startup_delay)
             scheduler_name = self.__id + "-Startup Delay"
             value = {"item": self.__item, "caller": "Init"}
             self.__sh.scheduler.add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)
@@ -450,7 +454,7 @@ class SeItem:
     # - item_id = "..threedots.further.down" will return item "my.threedots.further.down"
     def return_item(self, item_id: str):
         if not item_id.startswith("."):
-            item = self.__sh.return_item(item_id)
+            item = self.items.return_item(item_id)
             if item is None:
                 raise ValueError("Item '{0}' not found!".format(item_id))
             return item
@@ -472,7 +476,7 @@ class SeItem:
         rel_item_id = item_id[parent_level:]
         if rel_item_id != "":
             result += "." + rel_item_id
-        item = self.__sh.return_item(result)
+        item = self.items.return_item(result)
         if item is None:
             raise ValueError("Determined item '{0}' does not exist.".format(result))
         return item
