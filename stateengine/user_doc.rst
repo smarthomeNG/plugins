@@ -20,6 +20,3 @@ Dokumentation
    user_doc/user_doc9.rst
    user_doc/user_doc10.rst
    user_doc/user_doc11.rst
-   user_doc/user_doc12.rst
-   user_doc/user_doc13.rst
-   user_doc/user_doc14.rst

@@ -1,67 +1,297 @@
-.. index:: Plugins; Stateengine; Sperren
-.. index:: Sperren
-.. _Lock-Zustand:
+.. index:: Plugins; Stateengine; Zustands-Templates
+.. index:: Zustands-Templates
+.. _Zustands-Templates:
 
-Sperren
-#######
+Zustands-Templates
+##################
 
-Für das Sperren der automatischen Zustandsermittlung führt man ein
-Sperr-Item ein, das beispielsweise über einen Taster oder die Visu änderbar
-ist.
+.. rubric:: Struktur Templates
+   :name: strukturtemplates
 
-Die Sperre soll aktiv sein, wenn das Sperr-Item den Wert ``True``
-hat.
+Neben der vom Plugin bereitgestellten Möglichkeit, :ref:`Zustands-Templates` zu definieren,
+bietet sich ab **smarthomeNG 1.6** das ``struct`` Attribut an. Zum einen können in der Datei ``etc/struct.yaml``
+eigene Vorlagen definiert werden, zum anderen stellt das Plugin einige Vorlagen fix fertig bereit. Sie
+können wie folgt eingebunden werden:
+
+.. code-block:: yaml
+
+   #items/item.yaml
+   beispiel:
+       raffstore1:
+           automatik:
+               struct:
+                 - stateengine.general
+                 - stateengine.state_lock
+                 - stateengine.state_suspend
+                 - stateengine_default_raffstore
+
+               manuell:
+                   # Weitere Attribute werden bereits über das Template stateengine.state_suspend geladen
+                   eval_trigger:
+                       - beispiel.raffstore1.aufab
+                       - beispiel.raffstore1.step
+                       - beispiel.raffstore1.hoehe
+                       - beispiel.raffstore1.lamelle
+                   se_manual_exclude:
+                       - KNX:y.y.y
+                       - Init:*
+
+               rules:
+                   additional_state1:
+                      type: foo
+
+Die Vorlagen beinhalten dabei folgende Strukturen:
+
+.. code-block:: yaml
+
+   #stateengine.general
+   state_id:
+       # The id/path of the actual state is assigned to this item by the stateengine
+       type: str
+       visu_acl: r
+       cache: True
+
+   state_name:
+       # The name of the actual state is assigned to this item by the stateengine
+       type: str
+       visu_acl: r
+       cache: True
+
+   rules:
+       name: Regeln und Item Verweise für den Zustandsautomaten
+       type: bool
+       se_plugin: active
+       eval: True
+
+       # se_startup_delay: 30
+       # se_repeat_actions: true     # Ist das nicht eine Doublette zu anderen Möglichkeiten das zu konfigurieren?
+       # se_suspend_time: 7200
+
+       se_laststate_item_id: ..state_id
+       se_laststate_item_name: ..state_name
+
+.. code-block:: yaml
+
+  #stateengine.state_lock
+  lock:
+      type: bool
+      knx_dpt: 1
+      visu_acl: rw
+      cache: 'on'
+
+  rules:
+      se_item_lock: ..lock
+
+      lock:
+          name: gesperrt
+
+          on_leave:
+              se_action_lock:
+                - 'function: set'
+                - 'to: False'
+
+          enter:
+              se_value_lock: 'True'
+
+.. code-block:: yaml
+
+  #stateengine.state_suspend
+  suspend:
+      type: bool
+      knx_dpt: 1
+      visu_acl: rw
+      cache: 'True'
+
+  suspend_end:
+      type: str
+      visu_acl: ro
+      cache: 'True'
+
+  manuell:
+      type: bool
+      name: manuell
+      se_manual_invert: 'True'
+      se_manual_exclude:
+        - database:*
+
+  settings:
+      suspendduration:
+          type: num
+          visu_acl: rw
+          cache: 'True'
+
+      suspend_active:
+          type: bool
+          visu_acl: rw
+          cache: 'True'
+
+  rules:
+      se_item_suspend: ..suspend
+      se_item_retrigger: ..rules
+      se_item_suspend_end: ..suspend_end
+      se_item_suspend_active: ..settings.suspend_active
+      se_suspend_time: eval:stateengine_eval.get_relative_itemvalue('..settings.suspendduration') * 60
+      eval_trigger: ..manuell
+
+      suspend:
+          name: ausgesetzt
+
+          on_enter_or_stay:
+              se_action_suspend:
+                - 'function: special'
+                - 'value: suspend:..suspend, ..manuell'
+                - 'repeat: True'
+                - 'order: 1'
+              se_action_suspend_end:
+                - 'function: set'
+                - "to: eval:stateengine_eval.insert_suspend_time('..suspend', suspend_text='%X')"
+                - 'repeat: True'
+                - 'order: 2'
+              se_action_retrigger:
+                - 'function: set'
+                - 'to: True'
+                - 'delay: var:item.suspend_remaining'
+                - 'repeat: True'
+                - 'order: 3'
+
+          on_leave:
+              se_action_suspend:
+                - 'function: set'
+                - 'to: False'
+              se_action_suspend_end:
+                - 'function: set'
+                - 'to:  '
+
+          enter_manuell:
+              se_value_trigger_source: eval:stateengine_eval.get_relative_itemid('..manuell')
+              se_value_suspend_active: 'True'
+
+          enter_stay:
+              se_value_laststate: var:current.state_id
+              se_agemax_suspend: var:item.suspend_time
+              se_value_suspend: 'True'
+              se_value_suspend_active: 'True'
+
+.. code-block:: yaml
+
+  #stateengine.state_release
+  release: #triggers the release
+      type: bool
+      knx_dpt: 1
+      visu_acl: rw
+      enforce_updates: 'True'
+
+  rules:
+      se_item_lock: ..lock
+      se_item_suspend: ..suspend
+      se_item_retrigger: ..rules
+      se_item_release: ..release
+      se_item_suspend_end: ..suspend_end
+      eval_trigger: ..release
+
+      release:
+          name: release
+
+          on_enter_or_stay:
+              se_action_suspend:
+                - 'function: set'
+                - 'to: False'
+                - 'order: 1'
+              se_action_lock:
+                - 'function: set'
+                - 'to: False'
+                - 'order: 2'
+              se_action_release:
+                - 'function: set'
+                - 'to: False'
+                - 'order: 3'
+              se_action_suspend_end:
+                - 'function: set'
+                - 'to: '
+                - 'order: 4'
+              se_action_retrigger:
+                - 'function: set'
+                - 'to: True'
+                - 'order: 5'
+                - 'repeat: True'
+                - 'delay: 1'
+
+          enter:
+              se_value_release: 'True'
 
 
-Das Sperr-Item
---------------
+.. rubric:: Pluginspezifische Templates
+   :name: pluginspezifisch
 
-Das Sperritem definiert man wie folgt:
+Es ist möglich, Vorgabezustände in der Konfiguration zu definieren
+und diese später für konkrete Objekte anzuwenden. Dabei können im
+konkreten Zustand auch Einstellungen des Vorgabezustands
+überschrieben werden.
+
+Vorgabezustände werden als Item an beliebiger Stelle innerhalb der
+Item-Struktur definiert. Es ist sinnvoll, die Vorgabezustände
+unter einem gemeinsamen Item namens ``default`` zusammenzufassen. Innerhalb der
+Vorgabezustand-Items stehen die gleichen Möglichkeiten wie in
+normalen Zustands-Items zur Verfügung. Das dem
+Vorgabezustands-Item übergeordnete Item darf nicht das Attribut
+``se_plugin: active`` haben, da diese Items nur Vorlagen und keine
+tatsächlichen State Machines darstellen. Im Item über dem
+Vorgabezustands-Item können jedoch Items über
+``se_item_<Bedingungsname|Aktionsname>`` angegeben werden. Diese
+stehen in den Vorgabezuständen und in den von den Vorgabezuständen
+abgeleiteten Zuständen zur Verfügung und müssen so nicht jedes Mal
+neu definiert werden.
+
+Im konkreten Zustands-Item kann das Vorgabezustand-Item über das
+Attribut
+
+.. code-block:: yaml
+
+   se_use: <Id des Vorgabezustand-Item>
+
+eingebunden werden. Die Vorgabezustand-Items können geschachtelt
+werden, das heißt ein Vorgabezustand kann also selbst wiederum
+über ``se_use`` von einem weiteren Vorgabezustand abgeleitet
+werden. Um unnötige Komplexität und Zirkelbezüge zu vermeiden, ist
+die maximale Tiefe jedoch auf 5 Ebenen begrenzt.
+
+.. rubric:: Beispiel
+   :name: vorgabebeispiel
 
 .. code-block:: yaml
 
    beispiel:
-     lock:
-         item:
-             type: bool
-             name: Sperr-Item
-             visu_acl: rw
-             cache: on
+       default:
+           <...>
+           se_item_height: ...hoehe
+           Nacht:
+               <...>
+               enter:
+                   (...)
+               se_set_height: value:100
+               se_set_lamella: 0
+           Morgens:
+               <...>
+               enter:
+                   <...>
+               se_set_height: value:100
+               se_set_lamella: 25
 
+       raffstore1:
+           lamelle:
+              type: num
+           hoehe:
+              type: num
 
-Der Sperrzustand
-----------------
-
-Eine Änderung des Sperr-Items muss direkt eine
-Zustandsermittlung auslösen, das Sperr-Item wird daher in die
-Liste der ``eval_trigger`` aufgenommen.
-
-Einstiegsbedingung für den Sperrzustand ist nun einfach, dass das
-Sperr-Item den Wert ``True`` hat. Für das Sperr-Item werden in
-diesem Beispiel keinerlei Aktionen definiert. Solange also das
-Sperr-Item aktiv ist, passiert nichts.
-
-.. code-block:: yaml
-
-   beispiel:
-       jalousie1:
-           rules:
-               # Sperr-Item zu eval_trigger:
-               eval_trigger:
-                   - <andere Einträge>
-                   - beispiel.lock.item
-
-               # Items für Bedingungen und Aktionen
-               se_item_lock: beispiel.lock.item #Siehe Beispiel oben
-
-               locked:
-                   type: foo
-                   name: Manuell gesperrt
-
-                   enter:
-                       se_value_lock: true
-
-
-Bei der Zustandsermittlung ist die Reihenfolge der
-Zustände relevant. Da der Sperrzustand allen anderen Zuständen
-vorgeht, ist er üblicherweise der erste Zustand in der Definition.
+           automatik:
+               rules:
+                   <...>
+                   se_item_lamella: beispiel.raffstore1.lamelle
+                   Nacht:
+                       se_use: beispiel.default.Nacht
+                       enter_additional:
+                           <... zusätzliche Einstiegsbedingung ...>
+                       enter:
+                           <... Änderungen an der Einstiegsbedingung des Vorgabezustands ...>
+                   Morgens:
+                       se_use: beispiel.default.Morgens

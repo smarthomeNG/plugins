@@ -1,67 +1,150 @@
-.. index:: Plugins; Stateengine; Aktionen - einzeln
-.. index:: Aktionen - einzeln
+.. index:: Plugins; Stateengine; Aktionen
+.. index:: Aktionen
+.. _Aktionen:
 
-Aktionen - einzeln
-##################
+Aktionen
+########
 
-Es gibt zwei Möglichkeiten, Aktionen zu definieren.
+Es gibt zwei Möglichkeiten, Aktionen zu definieren. Die :ref:`Aktionen - einzeln`
+Variante wird am Ende der Dokumentation der Vollständigkeit halber beschrieben,
+kann aber ignoriert werden.
 
-Bei der Einzelvariante werden alle
-Parameter einer Aktion in separaten Attributen definiert. Über den
-gemeinsamen Aktionsnamen gehören die Attribute einer Aktion
-zusammen.
+Bei der hier beschriebenen kombinierten Variante zur Definition von Aktionen werden
+alle Parameter einer Aktion in einem Attribut definiert. Der Aktionsname ``se_action_<Bedingungsname/Aktionsname>``
+bezieht sich dabei auf das Item, das über ``se_item_<Bedingungsname/Aktionsname>`` unter dem Regelwerk-Item
+definiert und benannt wurde. Die Herangehensweise ähnelt also stark der Deklaration von Bedingungen.
 
-Ähnlich wie Bedingungen benötigen auch Aktionen einen Namen. Der
-Name ist auch hier beliebig und wird lediglich in der Benennung
-der Attribute verwendet. Die Namen aller Attribute, die zu einer
-Bedingung gehören, folgen dem Muster ``se_<Funktion>_<Aktionsname>``.
+.. rubric:: Beispiel zu Aktionen
+  :name: beispielzuaktionenkombiniert
 
-.. rubric:: Aktion: Item auf einen Wert setzen
-   :name: aktionitemaufeinenwertsetzen
+Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
+
+- Daemmerung: Höhe des Raffstores: 100(%), Lamellendrehung: 25(%)
+- Nachfuehren: Höhe des Raffstores: 100(%), Lamellendrehung: je nach Sonnenausrichtung
+- Sonder: Ausführen der Logic myLogic mit dem Wert 42 und einer Verzögerung von 10 Sekunden.
 
 .. code-block:: yaml
 
-       se_set_<Aktionsname>
+    #items/item.yaml
+    raffstore1:
+        automatik:
+            struct: stateengine.general
+            rules:
+                se_item_height: raffstore1.hoehe # Definition des zu ändernden Höhe-Items
+                se_item_lamella: raffstore1.lamelle # Definition des zu ändernden Lamellen-Items
+                Daemmerung:
+                    <...>
+                    se_action_height:
+                        - 'function: set'
+                        - 'to: value:100'
+                    se_action_lamella:
+                        - 'function: set'
+                        - 'to: value:25'
+                    <...>
+                Nachfuehren:
+                    <...>
+                    se_action_height:
+                        - 'function: set'
+                        - 'to: value:100'
+                    se_action_lamella:
+                        - 'function: set'
+                        - 'to: eval:stateengine_eval.sun_tracking()'
+                    <...>
+                Sonder:
+                    <...>
+                    se_action_logic1:
+                        - 'function: trigger'
+                        - 'logic: myLogic'
+                        - 'value: 42'
+                        - 'delay: 10'
+                    <...>
+
+.. rubric:: Aufbau von Aktionen
+  :name: aufbauvonaktionen
+
+Bei yaml Files werden die Parameter mittels Aufzählungszeichen "-"
+untereinander definiert, die Listeneinträge müssen in Anführungszeichen oder
+Hochkommas gesetzt werden:
+
+.. code-block:: yaml
+
+    se_action_<Aktionsname>:
+       - 'function: <func>'
+       - Detailparameter der Funktion, z.B. "to: .."
+       - 'delay: <delay>'
+       - 'order: <order>'
+       - 'repeat: <repeat>'
+
+.. rubric:: Auszuführende Aktionsart
+   :name: function
+
+Mit dem Parameter ``<func>`` wird die auszuführende Funktion
+festgelegt. In Abhängigkeit zur gewählten Funktion werden
+zusätzliche Detailparameter erforderlich.
+Folgende Werte sind möglich:
+
+**Funktion set: Item auf einen Wert setzen**
+
+.. code-block:: yaml
+
+   se_action_<Aktionsname>:
+       - 'function: set'
+       - 'to: <val>'
+       - 'force: [True/False]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
-Objekt-Items über das Attribut ``se_item_<Aktionsname>``
+Regelwerk-Items über das Attribut ``se_item_<Aktionsname>``
 angegeben werden.
 
-Der Wert, auf den das Item gesezt wird, kann als statischer Wert, als Wert eines
-Items oder als Ergebnis der Ausführung einer Funktion festgelegt
-werden.
+Der Parameter ``to: <val>`` legt fest, auf welchen Wert das Item
+gesetzt werden soll. Der Wert,
+auf den das Item gesezt wird, kann als statischer Wert, als
+Wert eines Items oder als Ergebnis der Ausführung einer Funktion
+festgelegt werden. Wichtig ist, dass bei z.B. ``to: item:<item>``
+nach dem item: kein Leerzeichen eingesetzt werden darf!
 
-.. rubric:: Aktion: Ausführen einer Funktion
-   :name: aktionausfuehreneinerfunktion
+Über den optionalen Parameter
+``force: True`` kann eine Item-Aktualisierung erzwungen werden,
+auch wenn sich der Wert nicht ändert. Damit erfolgt auf jeden Fall eine
+Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
+stehenden Änderungen (evals, Aktualisierung der Änderungszeiten,
+etc).
+
+**Funktion run: Ausführen einer Funktion**
 
 .. code-block:: yaml
 
-       se_run_<Aktionsname>: eval:(Funktion)
+   se_action_<Aktionsname>:
+       - 'function: run'
+       - 'eval:(Funktion)'
 
 Die Angabe ist vergleichbar mit dem Ausführen einer Funktion zur
 Ermittlung des Werts für ein Item, hier wird jedoch kein Item
 benötigt. Außerdem wird der Rückgabewert der Funktion ignoriert.
 
-.. rubric:: Aktion: Auslösen einer Logikausführung
-   :name: aktionauslseneinerlogikausfhrung
+**Funktion trigger: Auslösen einer Logikausführung**
 
 .. code-block:: yaml
 
-       se_trigger_<Aktionsname>: meineLogik:Zu übergebender Wert
+   se_action_<Aktionsname>:
+       - 'function: trigger'
+       - 'logic: <Logikname>'
+       - 'value: <Wert>'
 
-Um beim Auslösen einen Wert an die Logik zu übergeben, kann dieser
-Wert im Attribut über die Angabe von ``: <Wert>`` hinter dem
-Logiknamen angegeben werden.
+Löst die Ausführung der Logik ``<Logikname>`` aus. Um beim
+Auslösen einen Wert an die Logik zu übergeben, kann dieser Wert
+über die Angabe von ``value: <Wert>`` hinter dem Logiknamen
+angegeben werden. Die Angabe kann aber auch entfallen.
 
-.. rubric:: Aktion: Alle Items, die ein bestimmtes Attribut haben,
-   auf den Wert dieses Attributs setzen
-   :name: aktionalleitemsdieeinbestimmtesattributhabenaufdenwertdiesesattributssetzen
+**Funktion byattr: Alle Items, die ein bestimmtes Attribut haben, auf den Wert dieses Attributs setzen**
 
 .. code-block:: yaml
 
-       se_byattr_<Aktionsname>: mein_eigenes_Attribut
+   se_action_<Aktionsname>:
+       - 'function: byattr'
+       - 'attribute: <Attributname>'
 
-Mit diesem Attribut wird der Name eines anderen (beliebigen)
+Mit dieser Funktion wird der Name eines anderen (beliebigen)
 Attributs angegeben. Beim Ausführen werden alle Items
 herausgesucht, die das angegebene Attribut enthalten. Diese Items
 werden auf den Wert gesetzt, der dem genannten Attribut in den
@@ -69,148 +152,75 @@ Items jeweils zugewiesen ist.
 
 .. code-block:: yaml
 
-       dummy:
+       dummy1:
                type: num
-               mein_eigenes_Attribut: 42
+               <Attributname>: 42
 
-wird dann auf ``42`` gesetzt.
-Ein anderes Item
+dumm1 wird auf ``42`` gesetzt.
+Ein anderes Item, dummy2,
 
 .. code-block:: yaml
 
        dummy2:
                type: str
-               mein_eigenes_Attribut: Rums
+               <Attributname>: Rums
 
 wird gleichzeitig auf ``Rums`` gesetzt.
 
-.. rubric:: Aktion: Sondervorgänge
-   :name: aktionsondervorgnge
+**Funktion special: Sondervorgänge**
 
 .. code-block:: yaml
 
-       se_special_<Aktionsname>: (Sondervorgang)
+   se_action_<Aktionsname>:
+       - function: special
+       - value: <Sondervorgang>
 
 Für bestimmte Sondervorgänge sind besondere Aktionen im Plugin
 definiert (z. B. für das Suspend). Diese werden jedoch nicht hier
-erläutert, sondern an den Stellen, an denen Sie verwendet werden.
+erläutert, sondern an den Stellen, an denen sie verwendet werden.
 
-.. rubric:: Verzögertes Ausführen einer Aktion
-   :name: verzgertesausfhreneineraktion
+.. rubric:: Zusätzliche Parameter
+   :name: parameter
+
+**delay: <delay>**
+
+Über den optionalen Parameter ``<delay>`` wird die Verzögerung angegeben, nach der die
+Aktion ausgeführt werden soll.
+
+Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten.
 
 .. code-block:: yaml
 
-       se_delay_<Aktionsname>: 30 (Sekunden)|30m (Minuten)
-
-Über das Attribut wird die Verzögerung angegeben, nach der die
-Aktion ausgeführt werden soll. Die Angabe erfolgt in Sekunden oder
-mit dem Suffix "m" in Minuten.
+       'delay: 30'         --> 30 Sekunden
+       'delay: 30m'        --> 30 Minuten
 
 Der Timer zur Ausführung der Aktion nach der angegebenen
-Verzögerung wird entfernt, wenn eine gleichartike Aktion
-ausgeführt werden soll (egal ob verzögert oder nicht). Wenn also
-die Verzögerung größer als der ``cycle`` ist, wird die Aktion
-nie durchgeführt werden, es sei denn die Aktion soll nur
-einmalig ausgeführt werden.
+Verzögerung wird entfernt, wenn eine gleichartige Aktion
+ausgeführt werden soll (egal ob verzögert oder nicht).
 
-.. rubric:: Wiederholen einer Aktion
-   :name: wiederholeneineraktion
+**repeat: <repeat>**
 
 .. code-block:: yaml
 
-       se_repeat_<Aktionsname>: True|False
+       'repeat: [True|False]'
 
 Über das Attribut wird unabhängig vom globalen Setting für das
 stateengine Item festgelegt, ob eine Aktion auch beim erneuten
 Eintritt in den Status ausgeführt wird oder nicht.
 
-.. rubric:: Festlegen der Ausführungsreihenfolge von Aktionen
-   :name: festlegenderausfhrungsreihenfolgevonaktionen
-
-.. code-block:: yaml
-
-       se_order_<Aktionsname>
-       se_order_aktion1: 3
-       se_order_aktion2: 2
-       se_order_aktion3: 1
-       se_order_aktion4: 2
+**order: <order>**
 
 Die Reihenfolge, in der die Aktionen ausgeführt werden, ist nicht
 zwingend die Reihenfolge in der die Attribute definiert sind. In
-den meisten Fällen ist dies kein Problem, da die Aktionen
+den meisten Fällen ist dies kein Problem, da oftmals die Aktionen
 voneinander unabhängig sind und daher in beliebiger Reihenfolge
 ausgeführt werden können. In Einzelfällen kann es jedoch
 erforderlich sein, mehrere Aktionen in einer bestimmten
-Reihenfolge auszuführen.
-
-Es ist möglich, zwei Aktionen die gleiche Zahl zuzuweisen, die
-Reihenfolge der beiden Aktionen untereinander ist dann wieder
-zufällig. Innerhalb der gesamten Aktionen werden die beiden
-Aktionen jedoch an der angegebenen Position ausgeführt.
-
-.. rubric:: Aktion: Minimumabweichung
-   :name: minimumabweichung
-
-Es ist möglich, eine Minimumabweichung für
-Änderungen zu definieren. Wenn die Differenz zwischen dem
-aktuellen Wert des Items und dem ermittelten neuen Wert kleiner
-ist als die festgelegte Minimumabweichung wird keine Änderung
-vorgenommen. Die Minimumabweichung wird über das Attribut
-``se_mindelta_<Aktionsname>`` auf der Ebene des Objekt-Items
-festgelegt.
-
-.. rubric:: Aktion: Item zwangsweise auf einen Wert setzen
-   :name: aktionitemzwangsweiseaufeinenwertsetzen
+Reihenfolge auszuführen. Dies kann über den Parameter
+``order: <order>`` erfolgen. Mit diesem Attribut wird der Aktion
+eine Zahl zugewiesen. Aktionen werden in aufsteigender Reihenfolge
+der zugewiesenen Zahlen ausgeführt.
 
 .. code-block:: yaml
 
-       se_force_<Aktionsname>
-
-Diese Aktion funktioniert analog zu ``se_set_<Aktionsname>``.
-Einziger Unterschied ist, dass die Wertänderung erzwungen wird:
-Wenn das Item bereits den zu setzenden Wert hat, dann ändert
-smarthomeNG das Item nicht. Selbst wenn beim Item das Attribut
-``enforce_updates: yes`` gesetzt ist, wird zwar der Wert neu
-gesetzt, der von smarthomeNG die Änderungszeit nicht neu gesetzt. Mit
-dem Attribut ``se_force_<Aktionsname>`` wird das Plugin den Wert
-des Items bei Bedarf zuerst auf einen anderen Wert ändern und dann
-auf dem Zielwert setzen. Damit erfolgt auf jeden Fall eine
-Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
-stehenden Änderungen (eval's, Aktualisierung der Änderungszeiten,
-etc).
-
-.. rubric:: Beispiel zu Aktionen
-   :name: beispielzuaktioneneinzeln
-
-.. code-block:: yaml
-
-   beispiel:
-       raffstore:
-           automatik:
-               rules:
-                   <...>
-                   se_item_height: beispiel.raffstore1.hoehe
-                   se_mindelta_height: 10
-                   se_item_lamella: beispiel.raffstore1.lamelle
-                   se_mindelta_lamella: 5
-
-                   Daemmerung:
-                       <...>
-                       se_set_height: value:100
-                       se_set_lamella: value:25
-                       <...>
-                   Nacht:
-                       <...>
-                       se_set_height: value:100
-                       se_set_lamella: value:0
-                       <...>
-                   Sonnenstand:
-                       <...>
-                       se_set_height: value:100
-                       se_set_lamella: eval:stateengine_eval.sun_tracking()
-                       <...>
-                   Sonder:
-                       <...>
-                       se_trigger_logic1: myLogic:42
-                       se_delay_logic1: 10
-                       <...>
+       'order: [1|2|...]'
