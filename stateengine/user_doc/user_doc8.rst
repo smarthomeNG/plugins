@@ -193,10 +193,8 @@ definiert und jederzeit abgeändert werden.
            Nachfuehren_Seite_Zwei:
                type: foo
                # Einstellungen des Vorgabezustands "Nachfuehren_Seite_Eins" übernehmen
-               # Wird die Vorlage in den normalen Item-Baum eingebunden, muss das Attribut wie folgt gesetzt sein:
-               #se_use: beispiel.default.raffstore.Nachfuehren_Seite_Eins
-               # Beim Einbinden via struct, muss hier ein tatsächlich vorhandener Punkt in der Hierarchie gewählt werden
-               se_use: beispiel.raffstore1.automatik.rules.Nachfuehren_Seite_Eins
+               # Hier sollte eine relative Addressierung vorgenommen werden.
+               se_use: ..Nachfuehren_Seite_Eins
 
                # Sonnenwinkel in den Bedingungsgruppen anpassen
                enter:
@@ -209,7 +207,7 @@ definiert und jederzeit abgeändert werden.
                    se_min_sun_azimut: 220
                    se_max_sun_azimut: 340
 
-               :enter_delay:
+               enter_delay:
                    # ... die Sonne aus Richtung 220° bis 340° kommt
                    se_min_sun_azimut: 220
                    se_max_sun_azimut: 340
