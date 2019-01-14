@@ -1,214 +1,17 @@
-.. index:: Plugins; Stateengine; Advanced
-.. index:: Advanced
-.. _Advanced:
-
-Advanced
-========
-
-Vordefinierte Funktionen
-------------------------
-
-Das stateengine Plugin stellt verschiedene vordefinierte
-Funktionen zur Verfügung, die einfach für
-``se_set_<Aktionsname>`` und ``se_run_<Aktionsname>`` Aktionen
-verwendet werden können:
-
-
-**Sonnenstandsabhängige Lamellenausrichtung**
-*Die Neigung der Lamellen wird automatisch von der Höhe der Sonne bestimmt.*
-
-.. code-block:: yaml
-
-   stateengine_eval.sun_tracking()
-
-**Zufallszahl**
-*Über min und max kann die kleinste/größte Nummer, die zurückgegeben werden soll, festgelegt werden.*
-
-.. code-block:: yaml
-
-   stateengine_eval.get_random_int(min,max)
-
-``min`` und ``max`` können weggelassen werden, in diesem Fall sind die
-Vorgabewerte 0 für ``min`` und 255 für ``max``.
-
-**Shell-Kommando ausführen**
-*Führt ein Shell-Kommando aus*
-
-.. code-block:: yaml
-
-   stateengine_eval.execute(command)
-
-**Wert einer Variable ermitteln**
-*Liefert den Wert der Variablen <varname>*
-
-.. code-block:: yaml
-
-   stateengine_eval.get_variable(varname)
-
-**Item-Id relativ zum Regelwerk-Item ermitteln**
-*Eine Item-Id relativ zur Item-Id des Regelwerk-Items wird ermittelt.*
-
-.. code-block:: yaml
-
-   stateengine_eval.get_relative_itemid(subitem_id)
-
-**Item-Wert relativ zum Regelwerk-Item ermitteln**
-*Der Wert eines Items relativ zur Item-Id des Regelwerk-Items wird ermittelt.*
-
-.. code-block:: yaml
-
-   stateengine_eval.get_relative_itemvalue(subitem_id)
-
-**Suspend-Ende in einen Text einsetzen**
-*Das Ende der Suspend-Zeit wird in den Text suspend_text eingesetzt.*
-
-.. code-block:: yaml
-
-   stateengine_eval.insert_suspend_time(suspend_item_id, suspend_text="Ausgesetzt bis %X")
-
-Im Text sind entsprechende Platzhalter
-vorzusehen (Siehe `strftime() and strptime()
-Behavior <https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior>`_).
-Wird kein ``suspend_text`` angegeben, so wird als Vorgabewert
-"Ausgesetzt bis %X" verwendet.
-
-Zur Ermittlung des Endes der Suspend-Zeit muss über
-``suspend_item_id`` ein Item angegeben werden, dessen Wert bei
-Eintritt in den Suspend-Status geändert wird. Über das Alter des
-Werts in diesem Item wird die bereits abgelaufene Suspend-Zeit
-bestimmt. Dies könnte auch über ein relatives Item angegeben werden,
-wobei dieses unbedingt in Anführungszeichen gesetzt werden muss, z.B. ``'..suspend'``
-
-
-Variablen
----------
-
-Im Plugin stehen folgende Variablen zur Verfügung:
-
-**item.suspend_time:**
-*Die Suspend-Time des Items*
-
-**item.suspend_remaining:**
-*Die übrige Dauer des Suspend Zustands*
-
-**current.state_id:**
-*Die Id des Status, der gerade geprüft wird*
-
-**current.state_name:**
-*Der Name des Status, der gerade geprüft wird*
-
-
-Zustandsnamen
--------------
-
-**name (optional):**
-*Name des Zustands*
-
-Der Name des Zustands wird im Protokoll sowie als Wert für das
-über ``se_laststate_item_name`` angegebene Item verwendet. Wenn
-kein Name angegeben ist, wird hier die Id des
-Zustands-Items verwendet.
-
-**se_name:**
-*Überschreiben des Namens des Zustands*
-
-Über das Attribut ``se_name`` kann der im Attribut ``name`` angegebene Wert
-überschrieben werden, beispielsweise mittels ``eval:sh.eine_funktion()``.
-Dies wirkt sich jedoch nur auf den Wert aus, der in das über
-``se_laststate_item_name`` angegebene Item geschrieben wird. Dies kann
-beispielsweise nützlich sein, um den Namen abhängig von einer Bedingungsgruppe
-zu ändern. Ist also z.B. der Zustand auf Grund der Temperatur eingenommen worden,
-könnte der Name auf "Zustand (Temp)" geändert werden. Ist der Zustand aufgrund
-der Helligkeitsbedingung aktiv, könnte der Name auf "Zustand (Hell)" geändert werden.
-Im Protokoll wird immer der über das Attribut ``name`` angegebene Wert verwendet.
-
-
-CLI
----
-
-Sofern die eingesetzte smarthomeNG-Version dies unterstützt,
-registriert das stateengine-Plugin zwei eigene Kommandos beim
-CLI-Plugin.
-
-**se_list**
-*Zeigt eine Liste der Regelwerk-Items, für die das stateengine-Plugin aktiv ist*
-
-**se_detail <Id eines Regelwerk-Items>**
-*Zeigt Details zum Objekt Item*
-
-
-Sperren
--------
-
-Für das Sperren der automatischen Zustandsermittlung führt man ein
-Sperr-Item ein, das beispielsweise über einen Taster oder die Visu änderbar
-ist. Sperr-Item und Zustand können durch ``struct: stateengine.state_lock``
-auf Höhe des Regelwerk-Items automatisch implementiert werden.
-
-.. rubric:: Das "Sperr"-Item
-  :name: dassperritem
-
-Die Sperre soll aktiv sein, wenn das Sperr-Item den Wert ``True`` hat.
-Das Sperritem definiert man wie folgt:
-
-.. code-block:: yaml
-
-   #items/item.yaml
-   beispiel:
-     lock:
-         item:
-             type: bool
-             name: Sperr-Item
-             visu_acl: rw
-             cache: on
-
-.. rubric:: Der Sperr-Zustand
- :name: dersperrzustand
-
-Der zugehörige Zustand könnte so aussehen und sollte als erster Zustand definiert
-werden, da er anderen Zuständen gegenüber priorisiert werden soll.
-
-.. code-block:: yaml
-
-   #items/item.yaml
-   beispiel:
-       jalousie1:
-           rules:
-               # Sperr-Item zu eval_trigger:
-               eval_trigger:
-                   - <andere Einträge>
-                   - beispiel.lock.item
-
-               # Items für Bedingungen und Aktionen
-               se_item_lock: beispiel.lock.item #Siehe Beispiel oben
-
-               locked:
-                   type: foo
-                   name: Manuell gesperrt
-
-                   enter:
-                       se_value_lock: true
-
-
-Aussetzen
----------
-
-Eine besondere Anforderung: Nach bestimmten manuellen Aktionen (z.
-B. über einen Taster, die Visu, o. ä.) soll die automatische
-Zustandsermittlung für eine gewisse Zeit ausgesetzt werden. Nach
-Ablauf dieser Zeit soll die Automatik wieder aktiv werden.
-
-Für dieses Verhalten sind zunächst einige weitere Steueritems
-erforderlich, dann kann das Verhalten in einem Zustand abgebildet
-werden. Suspend-Item und Zustand können durch ``struct: stateengine.state_suspend``
-auf Höhe des Regelwerk-Items automatisch implementiert werden.
-
-.. rubric:: Das "Suspend"-Item
-  :name: dassuspenditem
-
-Zunächst wird ein "Suspend"-Item benötigt. Dieses Item zeigt zum
-einen die zeitweise Deaktivierung an, zum, anderen kann die
-Deaktivierung über dieses Item vorzeitig beendet werden:
+.. index:: Plugins; Stateengine; Zustands-Templates
+.. index:: Zustands-Templates
+.. _Zustands-Templates:
+
+Zustands-Templates
+##################
+
+.. rubric:: Struktur Templates
+   :name: strukturtemplates
+
+Neben der vom Plugin bereitgestellten Möglichkeit, Templates zu definieren (siehe weiter unten),
+bietet sich ab **smarthomeNG 1.6** das ``struct`` Attribut an. Zum einen können in der Datei ``etc/struct.yaml``
+eigene Vorlagen definiert werden, zum anderen stellt das Plugin einige Vorlagen fix fertig bereit. Sie
+können wie folgt eingebunden werden:
 
 .. code-block:: yaml
 
@@ -216,161 +19,305 @@ Deaktivierung über dieses Item vorzeitig beendet werden:
    beispiel:
        raffstore1:
            automatik:
-
-               suspend:
-                   type: bool
-                   knx_dpt: 1
-                   visu_acl: rw
-                   cache: 'True'
-
-.. rubric:: Das "Manuell"-Item
-  :name: dasmanuellitem
-
-Ein weiteres Item wird benötigt, um alle Aktionen, die den
-Suspend-Zustand auslösen sollen, zu kapseln. Dieses Item ist das
-"Manuell"-Item. Es wird so angelegt, dass der Wert dieses Items
-bei jeder manuellen Betätigung invertiert wird:
-
-.. code-block:: yaml
-
-   #items/item.yaml
-   beispiel:
-       raffstore1:
-           automatik:
+               struct:
+                 - stateengine.general
+                 - stateengine.state_lock
+                 - stateengine.state_suspend
+                 - stateengine_default_raffstore #beispielsweise eine in etc/struct.yaml angelegte Vorlage
 
                manuell:
-                   type: bool
-                   se_manual_invert: 'True'
-                   se_manual_logitem: beispiel.raffstore1.automatik.manuell
-                   se_manual_exclude:
-                     - database:*
-                     - KNX:1.1.4
+                   # Weitere Attribute werden bereits über das Template stateengine.state_suspend geladen
                    eval_trigger:
-                     - taster1
-                     - taster2
+                       - beispiel.raffstore1.aufab
+                       - beispiel.raffstore1.step
+                       - beispiel.raffstore1.hoehe
+                       - beispiel.raffstore1.lamelle
+                   se_manual_exclude:
+                       - KNX:y.y.y
+                       - Init:*
 
-In das Attribut ``eval_trigger`` werden alle Items eingetragen,
-deren Änderung als manuelle Betätigung gewertet werden soll.
+               rules:
+                   additional_state1:
+                      type: foo
 
-Das Attribut ``se_manual_invert: true`` veranlasst das
-stateengine-Plugin dabei, den Wert des Items bei Änderungen zu
-invertieren, wie es für das Auslösen des Suspend-Zustands
-erforderlich ist.
+Die Vorlagen beinhalten dabei folgende Strukturen.
 
-In bestimmten Fällen ist es erforderlich, dass Item-Änderungen, die
-durch bestimmte Aufrufe ausgelöst werden, nicht als manuelle
-Betätigung gewertet werden. Hierzu zählt zum Beispiel die
-Rückmeldung der Raffstore-Position nach dem Verfahren durch den
-Jalousieaktor. Hierfür stehen zwei weitere Attribute bereit:
-
-**as_manual_include**
-*Liste der Aufrufe, die als "manuelle Betätigung" gewertet werden sollen*
-
-**as_manual_exclude**
-*Liste der Aufrufe, die nicht als "manuelle Betätigung" gewertet werden sollen*
-
-Bei beiden Attributen wird eine Liste von Elementen angegeben. Die
-einzelnen Elemente bestehen dabei aus dem Aufrufenden
-(``Caller``) einem Doppelpunkt und der Quelle (``Source``). Ohne Leerzeichen!
-Mehrere Elemente werden durch "|" getrennt bzw. im yaml als Liste deklariert.
-Für ``Caller`` und ``Source`` kann dabei jeweils auch ``"*"`` angegeben werden, dies
-bedeutet, dass der jeweilige Teil nicht berücksichtigt werd.
-
-Wenn bei der Prüfung festgestellt wird, dass ein Wert über eine
-Eval-Funktionalität geändert wurde, so wird die Änderung
-zurückverfolgt bis zur ursprünglichen Änderung, die die Eval-Kette
-ausgelöst hat. Diese ursprüngliche Änderung wird dann geprüft.
-
-Der Wert von ``Caller`` zeigt an, welche Funktionalität das Item
-geändert hat. Der Wert von ``Source`` ist Abhängig vom Caller.
-Häufig verwendete ``Caller`` sind:
-
--  ``Init``: Initialisierung von smarthomeNG. ``Source`` ist in der Regel leer
--  ``Visu``: Änderung über die Visualisierung (Visu-Plugin). ``Source`` beinhaltet die IP und den Port der Gegenstelle
--  ``KNX``: Änderung über das KNX-Plugin. ``Source`` ist die physische Adresse des sendenden Geräts
-
-
-Wenn ``se_manual_include`` oder ``se_manual_exclude`` angegeben
-sind, muss ``se_manual_invert`` nicht angegeben werden.
-
-Um etwaige Probleme mit den exclude und include Funktionen einfacher erkennen zu können,
-kann ein spezielles Logging aktiviert werden: ``se_manual_logitem: <dateiname>``
-
-.. rubric:: Der Suspend-Zustand
-  :name: dersuspendzustand
-
-Mit diesen beiden Items kann nun ein einfacher Suspend-Zustand
-definiert werden. Als Aktion im Suspend-Zustand wird dabei die
-Sonderaktion "suspend" verwendet. Diese hat zwei Parameter:
+Die ``general`` Vorlage enthält die Items, die generell für einen Zustandsautomaten
+angelegt werden sollten. Das "rules" Item ist das Regelwerk-Item mit aktiviertem
+se_plugin. Dieser Codeblock wird zwingend von jedem Zustandsautomaten benötigt.
 
 .. code-block:: yaml
 
-  se_special_suspend: suspend:<Suspend-Item>,<Manuell-Item>
+   #stateengine.general
+   state_id:
+       # The id/path of the actual state is assigned to this item by the stateengine
+       type: str
+       visu_acl: r
+       cache: True
 
+   state_name:
+       # The name of the actual state is assigned to this item by the stateengine
+       type: str
+       visu_acl: r
+       cache: True
 
-Der Suspend-Zustand sieht damit wie folgt aus:
+   rules:
+       name: Regeln und Item Verweise für den Zustandsautomaten
+       type: bool
+       se_plugin: active
+       eval: True
 
-.. code-block:: yaml
+       # se_startup_delay: 30
+       # se_repeat_actions: true     # Ist das nicht eine Doublette zu anderen Möglichkeiten das zu konfigurieren?
+       # se_suspend_time: 7200
 
- #items/item.yaml
- beispiel:
-   raffstore1:
-       automatik:
-           rules:
-               suspend:
-                  type: foo
-                  name: Ausgesetzt
+       se_laststate_item_id: ..state_id
+       se_laststate_item_name: ..state_name
 
-                  on_enter_or_stay:
-                      type: foo
-                      name: Ausführen immer wenn ein Zustand aktiv ist
-
-                      # Suspend-Item setzen
-                      se_special_suspend: suspend:beispiel.raffstore1.automatik.suspend,beispiel.raffstore1.automatik.manuell
-
-                  on_leave:
-                      type: foo
-                      name: Ausführen beim Verlassen des Zustands
-
-                      # Suspend-Item zurücksetzen
-                      se_set_suspend: False
-
-                  enter_manuell:
-                      type: foo
-                      name: Bedingung: Suspend beginnen
-
-                      #Bedingung: Manuelle Aktion wurde durchgeführt
-                      se_value_trigger_source: beispiel.raffstore1.automatik.manuell
-
-                  enter_stay:
-                      type: foo
-                      name: Bedingung: Im Suspend verbleiben
-
-                      #Bedingung: Suspend ist aktiv
-                      se_value_laststate: var:current.state_id
-
-                      #Bedingung: Suspendzeit ist noch nicht abgelaufen
-                      se_agemax_manuell: var:item.suspend_time
-
-                      #Bedingung: Suspend-Item wurde nicht extern geändert
-                      se_value_suspend: True
-
-Da der Suspend-Zustand anderen Zuständen
-vorgehen sollte, steht er üblicherweise sehr weit vorrne in der
-Reihenfolge. In der Regel wird der Suspend-Zustand in der
-Definition der zweite Zustand nach dem Lock-Zustand sein.
-
-.. rubric:: Dauer der zeitweisen Deaktivierung
-  :name: dauerderzeitweisendeaktivierung
-
-Die Dauer der zeitweisen Deaktivierung wird in der
-Plugin-Konfiguration über die Einstellung ``suspend_time_default``
-angegeben. Vorgabewert sind 3600 Sekunden (1 Stunde). Wenn die
-Dauer der zeitweisen Deaktivierung für ein einzelnes Regelwerk-Item
-abweichend sein soll, kann dort das Attribut
+Die ``state_lock`` Vorlage beinhaltet zum einen den Lock Zustand mit dem Namen "gesperrt",
+zum anderen ein Item mit dem Namen ``lock``. Wird dieses auf "1/True" gesetzt, wird der
+Zustand eingenommen. Der Zustand sollte immer als erster Zustand eingebunden werden.
 
 .. code-block:: yaml
 
-      se_suspend_time: <Sekunden>
+  #stateengine.state_lock
+  lock:
+      type: bool
+      knx_dpt: 1
+      visu_acl: rw
+      cache: 'on'
 
-angegeben werden. Der Parameter kann auch durch ein Item festgelegt werden.
+  rules:
+      se_item_lock: ..lock
+      eval_trigger: ..lock
+
+      lock:
+          name: gesperrt
+
+          on_leave:
+              se_action_lock:
+                - 'function: set'
+                - 'to: False'
+
+          enter:
+              se_value_lock: True
+
+Die ``state_suspend`` Vorlage dient dem Abfragen von manuellen Tätigkeiten, wie
+z.B. das Schalten eines Lichts oder Fahren einer Jalousie mittels Taster oder Visu.
+In diesem Fall soll die automatiche Evaluierung für eine gewisse Zeit pausieren.
+
+Beim ``manuell`` Item muss unter Umständen der Eintrag ``se_manual_exclude`` in der eigenen
+Baumstruktur überschrieben und durch einen Eintrag ``- KNX:GA des Aktors``
+ergänzt werden.
+
+Das Item ``settings.suspendduration`` ermöglicht es, die Dauer der Pausierung bequem
+über eine Visu oder das Backend zu ändern. Setzt man das Item ``settings.suspend_active``
+auf False, wird der Pause-Zustand deaktiviert und manuelle Betätigungen werden
+beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
+
+.. code-block:: yaml
+
+  #stateengine.state_suspend
+  suspend:
+      type: bool
+      knx_dpt: 1
+      visu_acl: rw
+      cache: True
+
+  suspend_end:
+      type: str
+      visu_acl: ro
+      cache: True
+
+  manuell:
+      type: bool
+      name: manuell
+      se_manual_invert: True
+      se_manual_exclude:
+        - database:*
+
+  settings:
+      suspendduration:
+          type: num
+          visu_acl: rw
+          cache: True
+
+      suspend_active:
+          type: bool
+          visu_acl: rw
+          cache: True
+
+  rules:
+      se_item_suspend: ..suspend
+      se_item_retrigger: ..rules
+      se_item_suspend_end: ..suspend_end
+      se_item_suspend_active: ..settings.suspend_active
+      se_suspend_time: eval:stateengine_eval.get_relative_itemvalue('..settings.suspendduration') * 60
+      eval_trigger: ..manuell
+
+      suspend:
+          name: ausgesetzt
+
+          on_enter_or_stay:
+              se_action_suspend:
+                - 'function: special'
+                - 'value: suspend:..suspend, ..manuell'
+                - 'repeat: True'
+                - 'order: 1'
+              se_action_suspend_end:
+                - 'function: set'
+                - "to: eval:stateengine_eval.insert_suspend_time('..suspend', suspend_text='%X')"
+                - 'repeat: True'
+                - 'order: 2'
+              se_action_retrigger:
+                - 'function: set'
+                - 'to: True'
+                - 'delay: var:item.suspend_remaining'
+                - 'repeat: True'
+                - 'order: 3'
+
+          on_leave:
+              se_action_suspend:
+                - 'function: set'
+                - 'to: False'
+              se_action_suspend_end:
+                - 'function: set'
+                - 'to:  '
+
+          enter_manuell:
+              se_value_trigger_source: eval:stateengine_eval.get_relative_itemid('..manuell')
+              se_value_suspend_active: True
+
+          enter_stay:
+              se_value_laststate: var:current.state_id
+              se_agemax_suspend: var:item.suspend_time
+              se_value_suspend: True
+              se_value_suspend_active: True
+
+Die ``state_release`` Vorlage ist nicht unbedingt nötig, kann aber dazu genutzt werden,
+schnell den Sperr- oder Pause-Zustand zu verlassen und die erneute Evaluierung
+der Zustände anzuleiern.
+
+.. code-block:: yaml
+
+  #stateengine.state_release
+  release: #triggers the release
+      type: bool
+      knx_dpt: 1
+      visu_acl: rw
+      enforce_updates: True
+
+  rules:
+      se_item_lock: ..lock
+      se_item_suspend: ..suspend
+      se_item_retrigger: ..rules
+      se_item_release: ..release
+      se_item_suspend_end: ..suspend_end
+      eval_trigger: ..release
+
+      release:
+          name: release
+
+          on_enter_or_stay:
+              se_action_suspend:
+                - 'function: set'
+                - 'to: False'
+                - 'order: 1'
+              se_action_lock:
+                - 'function: set'
+                - 'to: False'
+                - 'order: 2'
+              se_action_release:
+                - 'function: set'
+                - 'to: False'
+                - 'order: 3'
+              se_action_suspend_end:
+                - 'function: set'
+                - 'to: '
+                - 'order: 4'
+              se_action_retrigger:
+                - 'function: set'
+                - 'to: True'
+                - 'order: 5'
+                - 'repeat: True'
+                - 'delay: 1'
+
+          enter:
+              se_value_release: True
+
+
+.. rubric:: Pluginspezifische Templates
+   :name: pluginspezifisch
+
+Es ist möglich, Vorgabezustände in der Item-Konfiguration zu definieren
+und diese später für konkrete Regelwerke anzuwenden. Dabei können im
+konkreten Zustand auch Einstellungen des Vorgabezustands
+überschrieben werden.
+
+Vorgabezustände werden als Item an beliebiger Stelle innerhalb der
+Item-Struktur definiert. Es ist sinnvoll, die Vorgabezustände
+unter einem gemeinsamen Item namens ``default`` zusammenzufassen. Innerhalb der
+Vorgabezustand-Items stehen die gleichen Möglichkeiten wie in
+normalen Zustands-Items zur Verfügung. Das dem
+Vorgabezustands-Item übergeordnete Item darf nicht das Attribut
+``se_plugin: active`` haben, da diese Items nur Vorlagen und keine
+tatsächlichen State Machines darstellen. Im Item über dem
+Vorgabezustands-Item können jedoch Items über
+``se_item_<Bedingungsname|Aktionsname>`` angegeben werden. Diese
+stehen in den Vorgabezuständen und in den von den Vorgabezuständen
+abgeleiteten Zuständen zur Verfügung und müssen so nicht jedes Mal
+neu definiert werden.
+
+Im konkreten Zustands-Item kann das Vorgabezustand-Item über das
+Attribut
+
+.. code-block:: yaml
+
+   se_use: <Id des Vorgabezustand-Item>
+
+eingebunden werden. Die Vorgabezustand-Items können geschachtelt
+werden, das heißt ein Vorgabezustand kann also selbst wiederum
+über ``se_use`` von einem weiteren Vorgabezustand abgeleitet
+werden. Um unnötige Komplexität und Zirkelbezüge zu vermeiden, ist
+die maximale Tiefe jedoch auf 5 Ebenen begrenzt.
+
+.. rubric:: Beispiel
+   :name: vorgabebeispiel
+
+.. code-block:: yaml
+
+   beispiel:
+       default:
+           <...>
+           se_item_height: ...hoehe
+           Nacht:
+               <...>
+               enter:
+                   (...)
+               se_set_height: value:100
+               se_set_lamella: 0
+           Morgens:
+               <...>
+               enter:
+                   <...>
+               se_set_height: value:100
+               se_set_lamella: 25
+
+       raffstore1:
+           lamelle:
+              type: num
+           hoehe:
+              type: num
+
+           automatik:
+               rules:
+                   <...>
+                   se_item_lamella: beispiel.raffstore1.lamelle
+                   Nacht:
+                       se_use: beispiel.default.Nacht
+                       enter_additional:
+                           <... zusätzliche Einstiegsbedingung ...>
+                       enter:
+                           <... Änderungen an der Einstiegsbedingung des Vorgabezustands ...>
+                   Morgens:
+                       se_use: beispiel.default.Morgens

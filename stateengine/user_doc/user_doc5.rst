@@ -35,6 +35,24 @@ getrennt durch einen Unterstrich "_" hinzugefügt werden. Das Bedinungsgruppen-I
 könnte dann ``enter_zuhell`` heißen. Der Name ist dabei völlig beliebig und nimmt
 keinen Bezug auf irgendwelche anderen Elemente.
 
+Die folgenden Regeln kommen zur Anwendung:
+
+-  Zustände und Bedingungsgruppen werden in der Reihenfolge
+   geprüft, in der sie in der Konfigurationsdatei definiert sind.
+
+-  Eine einzelne Bedingungsgruppe ist erfüllt, wenn alle
+   Bedingungen, die in der Bedingungsgruppe definiert sind,
+   erfüllt sind (UND-Verknüpfung).
+
+-  Ein Zustand kann aktueller Zustand werden, wenn eine beliebige
+   der definierten Bedingungsgruppen des Zustands erfüllt ist. Die
+   Prüfung ist mit der ersten erfüllten Bedingungsgruppe beendet
+   (ODER-Verknüpfung).
+
+-  Ein Zustand, der keine Bedingungsgruppen hat, kann immer
+   aktueller Zustand werden. Solch ein Zustand kann als
+   Default-Zustand am Ende der Zustände definiert werden.
+
 .. rubric:: Zu vergleichender Wert der Bedingung
    :name: bereitstellungdesaktuellenwerts
 

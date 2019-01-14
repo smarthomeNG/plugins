@@ -33,24 +33,6 @@ Jede Bedingungsgruppe wird durch ein Item
 abgebildet. Details zu den Bedingungen
 werden im Abschnitt :ref:`Bedingungen` erläutert.
 
-Die folgenden Regeln kommen zur Anwendung:
-
--  Zustände und Bedingungsgruppen werden in der Reihenfolge
-   geprüft, in der sie in der Konfigurationsdatei definiert sind.
-
--  Eine einzelne Bedingungsgruppe ist erfüllt, wenn alle
-   Bedingungen, die in der Bedingungsgruppe definiert sind,
-   erfüllt sind (UND-Verknüpfung).
-
--  Ein Zustand kann aktueller Zustand werden, wenn eine beliebige
-   der definierten Bedingungsgruppen des Zustands erfüllt ist. Die
-   Prüfung ist mit der ersten erfüllten Bedingungsgruppe beendet
-   (ODER-Verknüpfung).
-
--  Ein Zustand, der keine Bedingungsgruppen hat, kann immer
-   aktueller Zustand werden. Solch ein Zustand kann als
-   Default-Zustand am Ende der Zustände definiert werden.
-
 .. rubric:: Aktionen
    :name: aktionenintro
 

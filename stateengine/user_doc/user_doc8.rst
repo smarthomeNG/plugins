@@ -42,6 +42,7 @@ wieder öffnen, wenn die Sonne länger als Y Minuten verdeckt ist.
                helligkeit:
                    name: Helligkeit
                    type: num
+                   value: 50000 #nur für Demozwecke
 
                    gt43k:
                        type: bool
@@ -70,6 +71,7 @@ wieder öffnen, wenn die Sonne länger als Y Minuten verdeckt ist.
                temperatur:
                    name: Temperatur
                    type: num
+                   value: 24 #nur für Demozwecke
 
 .. rubric:: Trigger
    :name: trigger
@@ -87,11 +89,10 @@ Trigger, auf den dann alle Automatiken hören:
                    type: bool
                    name: Gemeinsamer Trigger für alle Raffstores
                    enforce_updates: yes #Wichtig!
-                   cycle: 300 = 1
+                   cycle: 60 = 1
 
 
-In diesem Fall wird die Zustandsermittlung alle 300 Sekunden (5
-Minuten) ausgelöst.
+In diesem Fall wird die Zustandsermittlung jede Minute ausgelöst.
 
 .. rubric:: Default-Konfiguration
    :name: defaultkonfiguration
@@ -103,12 +104,21 @@ Objekte, die die Einstellungen aus der Default-Konfiguration
 verwenden, oft sehr simpel aufgebaut werden können.
 
 Es bietet sich an, diese Struktur unter ``etc/struct.yaml`` abzulegen und später
-über ``struct: stateengine_default_raffstore`` zu importieren.
+über ``struct: stateengine_default_raffstore`` zu importieren. Auf diese Art
+können auch einfach pro Automat Einstellungen wie z.B. die Dauer, welche die
+Helligkeit den Schwellwert überschritten haben muss, über ein Item (settings.mindestdauer_helligkeit)
+definiert und jederzeit abgeändert werden.
 
 .. code-block:: yaml
 
    #etc/struct.yaml
    stateengine_default_raffstore:
+       settings:
+           mindestdauer_helligkeit:
+              type: num
+              cache: True
+              value: 30 #nur für Demozwecke
+
        rules:
            # Item für Helligkeit außen
            se_item_brightness: beispiel.wetterstation.helligkeit
@@ -130,7 +140,7 @@ Es bietet sich an, diese Struktur unter ``etc/struct.yaml`` abzulegen und späte
            # Zustand "Nachführen der Lamellen zum Sonnenstand bei großer Helligkeit", Gebäudeseite 1
            Nachfuehren_Seite_Eins:
                type: foo
-               name: Tag (nachführen)
+               name: Sonnenschutz
                # Aktionen:
                # - Behang ganz herunterfahren
                se_action_hoehe:
@@ -143,13 +153,13 @@ Es bietet sich an, diese Struktur unter ``etc/struct.yaml`` abzulegen und späte
 
                # Einstieg in "Nachführen": Wenn
                enter:
-                   # - das Flag "Helligkeit > 43kLux" seit mindestens 60 Sekunden gesetzt ist
+                   # - das Flag "Helligkeit > 43kLux" seit mindestens 30 Sekunden gesetzt ist
                    se_value_brightnessGt43k: true
-                   se_agemin_brightnessGt43k: 60
-                   # - die Sonnenhöhe mindestens 18° ist
-                   se_min_sun_altitude: 18
-                   # - die Sonne aus Richtung 130° bis 270° kommt
-                   se_min_sun_azimut: 130
+                   se_agemin_brightnessGt43k: item:..settings.mindestdauer_helligkeit
+                   # - die Sonnenhöhe mindestens 1° ist
+                   se_min_sun_altitude: 1
+                   # - die Sonne aus Richtung 90° bis 270° kommt
+                   se_min_sun_azimut: 90
                    se_max_sun_azimut: 270
                    # - es draußen mindestens 22° hat
                    se_min_temperature: 22
@@ -160,10 +170,8 @@ Es bietet sich an, diese Struktur unter ``etc/struct.yaml`` abzulegen und späte
                    se_value_laststate: var:current.state_id
                    # .... das Flag "Helligkeit > 25kLux" gesetzt ist
                    se_value_brightnessGt25k: true
-                   # ... die Sonnenhöhe mindestens 18° ist
-                   se_min_sun_altitude: 18
-                   # ... die Sonne aus Richtung 130° bis 270° kommt
-                   se_min_sun_azimut: 130
+                   se_min_sun_altitude: 1
+                   se_min_sun_azimut: 90
                    se_max_sun_azimut: 270
                    # Anmerkung: Hier keine erneute Prüfung der Temperatur, damit Temperaturschwankungen nicht
                    # zum Auf-/Abfahren der Raffstores führen
@@ -172,13 +180,11 @@ Es bietet sich an, diese Struktur unter ``etc/struct.yaml`` abzulegen und späte
                enter_delay:
                    # ... wir bereits in "Nachführen" sind
                    se_value_laststate: var:current.state_id
-                   # .... das Flag "Helligkeit > 25kLux" nicht (!) gesetzt ist, aber diese Änderung nicht mehr als 20 Minuten her ist
+                   # .... das Flag "Helligkeit > 25kLux" nicht (!) gesetzt ist, aber diese Änderung nicht mehr als 1 Minute her ist
                    se_value_brightnessGt25k: false
-                   se_agemax_brightnessGt25k: 1200
-                   # ... die Sonnenhöhe mindestens 18° ist
-                   se_min_sun_altitude: 18
-                   # ... die Sonne aus Richtung 130° bis 270° kommt
-                   se_min_sun_azimut: 130
+                   se_agemax_brightnessGt25k: 60
+                   se_min_sun_altitude: 1
+                   se_min_sun_azimut: 90
                    se_max_sun_azimut: 270
                    # Anmerkung: Auch hier keine erneute Prüfung der Temperatur, damit Temperaturschwankungen nicht
                    # zum Auf-/Abfahren der Raffstores führen
@@ -187,7 +193,10 @@ Es bietet sich an, diese Struktur unter ``etc/struct.yaml`` abzulegen und späte
            Nachfuehren_Seite_Zwei:
                type: foo
                # Einstellungen des Vorgabezustands "Nachfuehren_Seite_Eins" übernehmen
-               se_use: beispiel.default.raffstore.Nachfuehren_Seite_Eins
+               # Wird die Vorlage in den normalen Item-Baum eingebunden, muss das Attribut wie folgt gesetzt sein:
+               #se_use: beispiel.default.raffstore.Nachfuehren_Seite_Eins
+               # Beim Einbinden via struct, muss hier ein tatsächlich vorhandener Punkt in der Hierarchie gewählt werden
+               se_use: beispiel.raffstore1.automatik.rules.Nachfuehren_Seite_Eins
 
                # Sonnenwinkel in den Bedingungsgruppen anpassen
                enter:
@@ -278,7 +287,11 @@ gesteuert wird.
                name: Lamellenwinkel des Raffstores
 
 Jetzt kommen noch die Items zur Automatisierung und schließlich
-das stateengine Regelwerk-Item hinzu:
+das stateengine Regelwerk-Item hinzu. Das Erledigen wir über das Einbinden
+der :ref:`Zustands-Templates`, die das Plugin mitbringt sowie der eigenen vorhin angelegten
+Vorlage. Beim ``manuell`` Item müssen Eval-Trigger und manual_exclude den
+eigenen Umständen entsprechen angepasst werden. Die ``eval_trigger`` des
+Regelwerk-Items "rules" sollen ebenfalls je nach Bedarf ergänzt werden.
 
 .. code-block:: yaml
 
@@ -300,14 +313,15 @@ das stateengine Regelwerk-Item hinzu:
                        - beispiel.raffstore1.hoehe
                        - beispiel.raffstore1.lamelle
                    se_manual_exclude:
-                       - KNX:y.y.y
-                       - Init:*
+                       - 'KNX:0.0.0' # Hier die Gruppenadresse des Schalt/Jalousieaktors angeben!
+                       - 'Init:*'
+                       - 'database:*'
 
                rules:
                    # Relevante Standard-Attribute werden durch den Import der Templates automatisch eingebunden.
                    # Item-Referenzen mittels se_item werden durch das oben eigens angelegte Template eingebunden.
                    # Erste Zustandsermittlung nach 30 Sekunden
-                   se_startup_delay: 30
+                   se_startup_delay: 5
                    # Über diese Items soll die Statusermittlung ausgelöst werden
                    eval_trigger:
                      - beispiel.trigger.raffstore
@@ -315,13 +329,82 @@ das stateengine Regelwerk-Item hinzu:
                      - beispiel.raffstore1.automatik.manuell
                      - beispiel.raffstore1.automatik.lock
                      - beispiel.raffstore1.automatik.suspend
+                     - beispiel.wetterstation.*
 
-                   # Sämtliche Zustände werden über den Import der struct-Vorlagen automatisch geladen.
-                   # Alternativ könnte auf die Zustandsvorlagen wie folgt referenziert werden, sofern
-                   # die obigen Defaults in einem normalen etc/item.yaml definiert wurden:
-                   Tag:
-                       # Zustand "Tag": Vorgabeeinstellungen übernehmen
-                       se_use: stateengine_default_raffstore.rules.Tag
+                   # Als letzter Zustandseintrag sollte ein bedingungsloser Standardzustand deklariert werden.
+                   # Dieser könnte natürlich auch im Template definiert sein, hier soll aber veranschaulicht werden,
+                   # Dass Vorlagen auch durch eigene Zustände ergänzt werden können.
+                   Default:
+                       name: Tag
+                       on_enter_or_stay:
+                         # Setzen der Höhe auf 0.
+                         se_action_hoehe:
+                          - 'function: set'
+                          - 'to: 0'
+                       enter:
+                          type: foo
+                          # Dieser Eintrag bleibt leer, damit der Zustand ohne Bedingung aktiviert werden kann.
+
+
+.. rubric:: Testen der State Engine
+  :name: testenderstateengine
+
+Nachdem die oben angegebenen Itemstrukturen angelegt worden sind, bietet sich ein
+Test des Systems an, weshalb smarthomeNG mit aktiviertem Plugin gestartet werden sollte.
+Es wird empfohlen, das Logfile unter ``var/log/stateengine`` mittels tail -f zu beobachten.
+
+Folgendes wird passieren:
+
+a) 5 Sekunden nach dem Start werden die Zustände lock, suspend, Tag (nachführen) evaluiert.
+
+- Beim ersten Durchlauf wird die Bedingung "Hellligkeit höher 43000" wahr sein, da die Helligkeit der Wetterstation für diesen Test auf 50000 gesetzt wurde.
+- Das Alter der Helligkeit ist zu gering (muss mindestens eine Minute sein)
+
+Beim ersten Durchlauf wird kein Zustand eingenommen. Der Raffstore bleibt wo er ist.
+
+b) Nach 60 Sekunden wird auf Grund der cycle Angabe der Zustandsautomat erneut aufgerufen. Die Bedingungen werden wie folgt evaluiert:
+
+- Die Helligkeit ist nach wie vor höher als 43000 und diesmal auch alt genug.
+- Die Sonnenposition sollte untertags innerhalb der gegebenen Grenzwerte liegen. Findet der Test in der Nacht statt, sollten die entsprechenden Wert für min_altitude und max_azimut angepasst werden.
+- Die Temperatur entspricht beim Start 24 Grad, ist also über den vorgegebenen 22 Grad
+
+Beim zweiten Durchlauf wird somit der Zustand Sonnenschutz aktiviert. Der Raffstore fährt herunter.
+
+Let's play god. Ändern wir das Wetter ;) Entweder über das CLI, Visu oder Backend-Plugin oder Admin-Interface:
+
+c) up beispiel.wetterstation.helligkeit=35000
+
+- Die erste Bedingungsgruppe des Sonnenstandzustands ist nicht mehr "wahr", da die Helligkeit zu niedrig ist.
+- Es wird ``enter_hysterese`` evaluiert. Da die Helligkeit noch über 25000 und die Sonnenposition gleich wie zuvor ist, ist diese Gruppe wahr.
+
+Der Sonnenschutz bleibt somit aktiv, weil trotz der Helligkeitsverringerung der untere Schwellwert noch überschritten wurde. Der Raffstore bleibt unten.
+
+d) up beispiel.wetterstation.helligkeit=15000
+
+- Die ersten beiden Bedingungsgruppen sind unwahr, da die Helligkeit zu gering ist.
+- Durch den Eintrag ``se_agemax_brightnessGt25k: 60`` in der Gruppe ``enter_delay`` wird 60 Sekunden gewartet.
+
+Der Sonnenschutz bleibt nach wie vor, diesmal für 60 Sekunden aktiv, sofern sich sonst beim Wetter nichts mehr ändert. Der Raffstore bleibt unten.
+
+e) Es erfolgt eine weitere Evaluierung des Automaten durch das cycle Attribut:
+
+- Die Helligkeit ist nach wie vor zu gering.
+- Es ist schon zu lange her, als die Helligkeit den unteren Grenzwert unterschritten hat.
+
+Der Zustand wird verlassen. Gibt es einen nachfolgenden Zustand, der eingenommen werden kann, ist dies der neue aktive Zustand. Gibt es keine Zustände, die aktiviert werden könnten, verbleibt die State Engine beim letzten aktiven Zustand, also beim Sonnenschutz. Im Beispiel gibt es noch einen Standard "Tag" Eintrag, wodurch der Raffstore hoch fährt.
+
+f) up beispiel.raffstore1.aufab =1
+
+- Durch Triggern des "Manuell" Items wird die Zustandsevaluierung pausiert.
+
+Sämtliche Änderungen der Helligkeit, Temperatur, etc. werden für die suspend_time ignoriert. Die Dauer ist im Template auf 60 Minuten festgelegt, kann aber manuell durch Ändern des entsprechenden Items geändert werden.
+
+g) up beispiel.raffstore1.automatik.settings.suspendduration = 1
+
+- Die Suspendzeit wird auf eine Minute verkürzt.
+- Beim erneuten Durchlauf ist die Suspendzeit abgelaufen, daher dieser Zustand nicht mehr aktiv.
+
+Es werden wieder sämtliche Zustände evaluiert.
 
 
 .. rubric:: Automatisierung Raffstore 2

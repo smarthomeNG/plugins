@@ -1,297 +1,217 @@
-.. index:: Plugins; Stateengine; Zustands-Templates
-.. index:: Zustands-Templates
-.. _Zustands-Templates:
+.. index:: Plugins; Stateengine; Aktionen - einzeln
+.. index:: Aktionen - einzeln
+.. _Aktionen - einzeln:
 
-Zustands-Templates
+Aktionen - einzeln
 ##################
 
-.. rubric:: Struktur Templates
-   :name: strukturtemplates
+Es gibt zwei Möglichkeiten, Aktionen zu definieren.
 
-Neben der vom Plugin bereitgestellten Möglichkeit, :ref:`Zustands-Templates` zu definieren,
-bietet sich ab **smarthomeNG 1.6** das ``struct`` Attribut an. Zum einen können in der Datei ``etc/struct.yaml``
-eigene Vorlagen definiert werden, zum anderen stellt das Plugin einige Vorlagen fix fertig bereit. Sie
-können wie folgt eingebunden werden:
+Bei der Einzelvariante werden alle
+Parameter einer Aktion in separaten Attributen definiert. Über den
+gemeinsamen Aktionsnamen gehören die Attribute einer Aktion
+zusammen.
 
-.. code-block:: yaml
+Ähnlich wie Bedingungen benötigen auch Aktionen einen Namen. Der
+Name ist auch hier beliebig und wird lediglich in der Benennung
+der Attribute verwendet. Die Namen aller Attribute, die zu einer
+Bedingung gehören, folgen dem Muster ``se_<Funktion>_<Aktionsname>``.
 
-   #items/item.yaml
-   beispiel:
-       raffstore1:
-           automatik:
-               struct:
-                 - stateengine.general
-                 - stateengine.state_lock
-                 - stateengine.state_suspend
-                 - stateengine_default_raffstore
-
-               manuell:
-                   # Weitere Attribute werden bereits über das Template stateengine.state_suspend geladen
-                   eval_trigger:
-                       - beispiel.raffstore1.aufab
-                       - beispiel.raffstore1.step
-                       - beispiel.raffstore1.hoehe
-                       - beispiel.raffstore1.lamelle
-                   se_manual_exclude:
-                       - KNX:y.y.y
-                       - Init:*
-
-               rules:
-                   additional_state1:
-                      type: foo
-
-Die Vorlagen beinhalten dabei folgende Strukturen:
+.. rubric:: Aktion: Item auf einen Wert setzen
+   :name: aktionitemaufeinenwertsetzen
 
 .. code-block:: yaml
 
-   #stateengine.general
-   state_id:
-       # The id/path of the actual state is assigned to this item by the stateengine
-       type: str
-       visu_acl: r
-       cache: True
+       se_set_<Aktionsname>
 
-   state_name:
-       # The name of the actual state is assigned to this item by the stateengine
-       type: str
-       visu_acl: r
-       cache: True
+Das Item, das verändert werden soll, muss auf Ebene des
+Regelwerk-Items über das Attribut ``se_item_<Aktionsname>``
+angegeben werden.
 
-   rules:
-       name: Regeln und Item Verweise für den Zustandsautomaten
-       type: bool
-       se_plugin: active
-       eval: True
+Der Wert, auf den das Item gesezt wird, kann als statischer Wert, als Wert eines
+Items oder als Ergebnis der Ausführung einer Funktion festgelegt
+werden.
 
-       # se_startup_delay: 30
-       # se_repeat_actions: true     # Ist das nicht eine Doublette zu anderen Möglichkeiten das zu konfigurieren?
-       # se_suspend_time: 7200
-
-       se_laststate_item_id: ..state_id
-       se_laststate_item_name: ..state_name
+.. rubric:: Aktion: Ausführen einer Funktion
+   :name: aktionausfuehreneinerfunktion
 
 .. code-block:: yaml
 
-  #stateengine.state_lock
-  lock:
-      type: bool
-      knx_dpt: 1
-      visu_acl: rw
-      cache: 'on'
+       se_run_<Aktionsname>: eval:(Funktion)
 
-  rules:
-      se_item_lock: ..lock
+Die Angabe ist vergleichbar mit dem Ausführen einer Funktion zur
+Ermittlung des Werts für ein Item, hier wird jedoch kein Item
+benötigt. Außerdem wird der Rückgabewert der Funktion ignoriert.
 
-      lock:
-          name: gesperrt
-
-          on_leave:
-              se_action_lock:
-                - 'function: set'
-                - 'to: False'
-
-          enter:
-              se_value_lock: 'True'
+.. rubric:: Aktion: Auslösen einer Logikausführung
+   :name: aktionauslseneinerlogikausfhrung
 
 .. code-block:: yaml
 
-  #stateengine.state_suspend
-  suspend:
-      type: bool
-      knx_dpt: 1
-      visu_acl: rw
-      cache: 'True'
+       se_trigger_<Aktionsname>: meineLogik:Zu übergebender Wert
 
-  suspend_end:
-      type: str
-      visu_acl: ro
-      cache: 'True'
+Um beim Auslösen einen Wert an die Logik zu übergeben, kann dieser
+Wert im Attribut über die Angabe von ``: <Wert>`` hinter dem
+Logiknamen angegeben werden.
 
-  manuell:
-      type: bool
-      name: manuell
-      se_manual_invert: 'True'
-      se_manual_exclude:
-        - database:*
-
-  settings:
-      suspendduration:
-          type: num
-          visu_acl: rw
-          cache: 'True'
-
-      suspend_active:
-          type: bool
-          visu_acl: rw
-          cache: 'True'
-
-  rules:
-      se_item_suspend: ..suspend
-      se_item_retrigger: ..rules
-      se_item_suspend_end: ..suspend_end
-      se_item_suspend_active: ..settings.suspend_active
-      se_suspend_time: eval:stateengine_eval.get_relative_itemvalue('..settings.suspendduration') * 60
-      eval_trigger: ..manuell
-
-      suspend:
-          name: ausgesetzt
-
-          on_enter_or_stay:
-              se_action_suspend:
-                - 'function: special'
-                - 'value: suspend:..suspend, ..manuell'
-                - 'repeat: True'
-                - 'order: 1'
-              se_action_suspend_end:
-                - 'function: set'
-                - "to: eval:stateengine_eval.insert_suspend_time('..suspend', suspend_text='%X')"
-                - 'repeat: True'
-                - 'order: 2'
-              se_action_retrigger:
-                - 'function: set'
-                - 'to: True'
-                - 'delay: var:item.suspend_remaining'
-                - 'repeat: True'
-                - 'order: 3'
-
-          on_leave:
-              se_action_suspend:
-                - 'function: set'
-                - 'to: False'
-              se_action_suspend_end:
-                - 'function: set'
-                - 'to:  '
-
-          enter_manuell:
-              se_value_trigger_source: eval:stateengine_eval.get_relative_itemid('..manuell')
-              se_value_suspend_active: 'True'
-
-          enter_stay:
-              se_value_laststate: var:current.state_id
-              se_agemax_suspend: var:item.suspend_time
-              se_value_suspend: 'True'
-              se_value_suspend_active: 'True'
+.. rubric:: Aktion: Alle Items, die ein bestimmtes Attribut haben,
+   auf den Wert dieses Attributs setzen
+   :name: aktionalleitemsdieeinbestimmtesattributhabenaufdenwertdiesesattributssetzen
 
 .. code-block:: yaml
 
-  #stateengine.state_release
-  release: #triggers the release
-      type: bool
-      knx_dpt: 1
-      visu_acl: rw
-      enforce_updates: 'True'
+       se_byattr_<Aktionsname>: mein_eigenes_Attribut
 
-  rules:
-      se_item_lock: ..lock
-      se_item_suspend: ..suspend
-      se_item_retrigger: ..rules
-      se_item_release: ..release
-      se_item_suspend_end: ..suspend_end
-      eval_trigger: ..release
-
-      release:
-          name: release
-
-          on_enter_or_stay:
-              se_action_suspend:
-                - 'function: set'
-                - 'to: False'
-                - 'order: 1'
-              se_action_lock:
-                - 'function: set'
-                - 'to: False'
-                - 'order: 2'
-              se_action_release:
-                - 'function: set'
-                - 'to: False'
-                - 'order: 3'
-              se_action_suspend_end:
-                - 'function: set'
-                - 'to: '
-                - 'order: 4'
-              se_action_retrigger:
-                - 'function: set'
-                - 'to: True'
-                - 'order: 5'
-                - 'repeat: True'
-                - 'delay: 1'
-
-          enter:
-              se_value_release: 'True'
-
-
-.. rubric:: Pluginspezifische Templates
-   :name: pluginspezifisch
-
-Es ist möglich, Vorgabezustände in der Konfiguration zu definieren
-und diese später für konkrete Objekte anzuwenden. Dabei können im
-konkreten Zustand auch Einstellungen des Vorgabezustands
-überschrieben werden.
-
-Vorgabezustände werden als Item an beliebiger Stelle innerhalb der
-Item-Struktur definiert. Es ist sinnvoll, die Vorgabezustände
-unter einem gemeinsamen Item namens ``default`` zusammenzufassen. Innerhalb der
-Vorgabezustand-Items stehen die gleichen Möglichkeiten wie in
-normalen Zustands-Items zur Verfügung. Das dem
-Vorgabezustands-Item übergeordnete Item darf nicht das Attribut
-``se_plugin: active`` haben, da diese Items nur Vorlagen und keine
-tatsächlichen State Machines darstellen. Im Item über dem
-Vorgabezustands-Item können jedoch Items über
-``se_item_<Bedingungsname|Aktionsname>`` angegeben werden. Diese
-stehen in den Vorgabezuständen und in den von den Vorgabezuständen
-abgeleiteten Zuständen zur Verfügung und müssen so nicht jedes Mal
-neu definiert werden.
-
-Im konkreten Zustands-Item kann das Vorgabezustand-Item über das
-Attribut
+Mit diesem Attribut wird der Name eines anderen (beliebigen)
+Attributs angegeben. Beim Ausführen werden alle Items
+herausgesucht, die das angegebene Attribut enthalten. Diese Items
+werden auf den Wert gesetzt, der dem genannten Attribut in den
+Items jeweils zugewiesen ist.
 
 .. code-block:: yaml
 
-   se_use: <Id des Vorgabezustand-Item>
+       dummy:
+               type: num
+               mein_eigenes_Attribut: 42
 
-eingebunden werden. Die Vorgabezustand-Items können geschachtelt
-werden, das heißt ein Vorgabezustand kann also selbst wiederum
-über ``se_use`` von einem weiteren Vorgabezustand abgeleitet
-werden. Um unnötige Komplexität und Zirkelbezüge zu vermeiden, ist
-die maximale Tiefe jedoch auf 5 Ebenen begrenzt.
+wird dann auf ``42`` gesetzt.
+Ein anderes Item
 
-.. rubric:: Beispiel
-   :name: vorgabebeispiel
+.. code-block:: yaml
+
+       dummy2:
+               type: str
+               mein_eigenes_Attribut: Rums
+
+wird gleichzeitig auf ``Rums`` gesetzt.
+
+.. rubric:: Aktion: Sondervorgänge
+   :name: aktionsondervorgnge
+
+.. code-block:: yaml
+
+       se_special_<Aktionsname>: (Sondervorgang)
+
+Für bestimmte Sondervorgänge sind besondere Aktionen im Plugin
+definiert (z. B. für das Suspend). Diese werden jedoch nicht hier
+erläutert, sondern an den Stellen, an denen Sie verwendet werden.
+
+.. rubric:: Verzögertes Ausführen einer Aktion
+   :name: verzgertesausfhreneineraktion
+
+.. code-block:: yaml
+
+       se_delay_<Aktionsname>: 30 (Sekunden)|30m (Minuten)
+
+Über das Attribut wird die Verzögerung angegeben, nach der die
+Aktion ausgeführt werden soll. Die Angabe erfolgt in Sekunden oder
+mit dem Suffix "m" in Minuten.
+
+Der Timer zur Ausführung der Aktion nach der angegebenen
+Verzögerung wird entfernt, wenn eine gleichartike Aktion
+ausgeführt werden soll (egal ob verzögert oder nicht). Wenn also
+die Verzögerung größer als der ``cycle`` ist, wird die Aktion
+nie durchgeführt werden, es sei denn die Aktion soll nur
+einmalig ausgeführt werden.
+
+.. rubric:: Wiederholen einer Aktion
+   :name: wiederholeneineraktion
+
+.. code-block:: yaml
+
+       se_repeat_<Aktionsname>: True|False
+
+Über das Attribut wird unabhängig vom globalen Setting für das
+stateengine Item festgelegt, ob eine Aktion auch beim erneuten
+Eintritt in den Status ausgeführt wird oder nicht.
+
+.. rubric:: Festlegen der Ausführungsreihenfolge von Aktionen
+   :name: festlegenderausfhrungsreihenfolgevonaktionen
+
+.. code-block:: yaml
+
+       se_order_<Aktionsname>
+       se_order_aktion1: 3
+       se_order_aktion2: 2
+       se_order_aktion3: 1
+       se_order_aktion4: 2
+
+Die Reihenfolge, in der die Aktionen ausgeführt werden, ist nicht
+zwingend die Reihenfolge in der die Attribute definiert sind. In
+den meisten Fällen ist dies kein Problem, da die Aktionen
+voneinander unabhängig sind und daher in beliebiger Reihenfolge
+ausgeführt werden können. In Einzelfällen kann es jedoch
+erforderlich sein, mehrere Aktionen in einer bestimmten
+Reihenfolge auszuführen.
+
+Es ist möglich, zwei Aktionen die gleiche Zahl zuzuweisen, die
+Reihenfolge der beiden Aktionen untereinander ist dann wieder
+zufällig. Innerhalb der gesamten Aktionen werden die beiden
+Aktionen jedoch an der angegebenen Position ausgeführt.
+
+.. rubric:: Aktion: Minimumabweichung
+   :name: minimumabweichung
+
+Es ist möglich, eine Minimumabweichung für
+Änderungen zu definieren. Wenn die Differenz zwischen dem
+aktuellen Wert des Items und dem ermittelten neuen Wert kleiner
+ist als die festgelegte Minimumabweichung wird keine Änderung
+vorgenommen. Die Minimumabweichung wird über das Attribut
+``se_mindelta_<Aktionsname>`` auf der Ebene des Regelwerk-Items
+festgelegt.
+
+.. rubric:: Aktion: Item zwangsweise auf einen Wert setzen
+   :name: aktionitemzwangsweiseaufeinenwertsetzen
+
+.. code-block:: yaml
+
+       se_force_<Aktionsname>
+
+Diese Aktion funktioniert analog zu ``se_set_<Aktionsname>``.
+Einziger Unterschied ist, dass die Wertänderung erzwungen wird:
+Wenn das Item bereits den zu setzenden Wert hat, dann ändert
+smarthomeNG das Item nicht. Selbst wenn beim Item das Attribut
+``enforce_updates: yes`` gesetzt ist, wird zwar der Wert neu
+gesetzt, der von smarthomeNG die Änderungszeit nicht neu gesetzt. Mit
+dem Attribut ``se_force_<Aktionsname>`` wird das Plugin den Wert
+des Items bei Bedarf zuerst auf einen anderen Wert ändern und dann
+auf dem Zielwert setzen. Damit erfolgt auf jeden Fall eine
+Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
+stehenden Änderungen (eval's, Aktualisierung der Änderungszeiten,
+etc).
+
+.. rubric:: Beispiel zu Aktionen
+   :name: beispielzuaktioneneinzeln
 
 .. code-block:: yaml
 
    beispiel:
-       default:
-           <...>
-           se_item_height: ...hoehe
-           Nacht:
-               <...>
-               enter:
-                   (...)
-               se_set_height: value:100
-               se_set_lamella: 0
-           Morgens:
-               <...>
-               enter:
-                   <...>
-               se_set_height: value:100
-               se_set_lamella: 25
-
-       raffstore1:
-           lamelle:
-              type: num
-           hoehe:
-              type: num
-
+       raffstore:
            automatik:
                rules:
                    <...>
+                   se_item_height: beispiel.raffstore1.hoehe
+                   se_mindelta_height: 10
                    se_item_lamella: beispiel.raffstore1.lamelle
+                   se_mindelta_lamella: 5
+
+                   Daemmerung:
+                       <...>
+                       se_set_height: value:100
+                       se_set_lamella: value:25
+                       <...>
                    Nacht:
-                       se_use: beispiel.default.Nacht
-                       enter_additional:
-                           <... zusätzliche Einstiegsbedingung ...>
-                       enter:
-                           <... Änderungen an der Einstiegsbedingung des Vorgabezustands ...>
-                   Morgens:
-                       se_use: beispiel.default.Morgens
+                       <...>
+                       se_set_height: value:100
+                       se_set_lamella: value:0
+                       <...>
+                   Sonnenstand:
+                       <...>
+                       se_set_height: value:100
+                       se_set_lamella: eval:stateengine_eval.sun_tracking()
+                       <...>
+                   Sonder:
+                       <...>
+                       se_trigger_logic1: myLogic:42
+                       se_delay_logic1: 10
+                       <...>
