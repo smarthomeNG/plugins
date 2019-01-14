@@ -456,7 +456,7 @@ class SeItem:
         if not item_id.startswith("."):
             item = self.items.return_item(item_id)
             if item is None:
-                raise ValueError("Item '{0}' not found!".format(item_id))
+                self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
 
         parent_level = 0
@@ -478,7 +478,7 @@ class SeItem:
             result += "." + rel_item_id
         item = self.items.return_item(result)
         if item is None:
-            raise ValueError("Determined item '{0}' does not exist.".format(result))
+            self.__logger.warning("Determined item '{0}' does not exist.".format(result))
         return item
 
     # Return an item related to the StateEngine object item
