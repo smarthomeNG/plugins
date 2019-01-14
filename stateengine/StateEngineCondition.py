@@ -269,11 +269,11 @@ class SeCondition(StateEngineTools.SeItemChild):
 
                 if not self.__negate:
                     if min_value is not None and current < min_value:
-                        self._log_debug("to low -> not matching")
+                        self._log_debug("too low -> not matching")
                         return False
 
                     if max_value is not None and current > max_value:
-                        self._log_debug("to high -> not matching")
+                        self._log_debug("too high -> not matching")
                         return False
                 else:
                     if min_value is not None and current > min_value and (max_value is None or current < max_value):
@@ -312,11 +312,11 @@ class SeCondition(StateEngineTools.SeItemChild):
 
             if not self.__agenegate:
                 if agemin is not None and current < agemin:
-                    self._log_debug("to young -> not matching")
+                    self._log_debug("too young -> not matching")
                     return False
 
                 if agemax is not None and current > agemax:
-                    self._log_debug("to old -> not matching")
+                    self._log_debug("too old -> not matching")
                     return False
             else:
                 if agemin is not None and current > agemin and (agemax is None or current < agemax):
