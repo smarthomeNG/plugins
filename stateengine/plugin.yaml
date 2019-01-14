@@ -363,6 +363,7 @@ item_structs:
 
         rules:
             se_item_lock: ..lock
+            eval_trigger: ..lock
 
             lock:
                 name: gesperrt
@@ -373,7 +374,7 @@ item_structs:
                       - 'to: False'
 
                 enter:
-                    se_value_lock: 'True'
+                    se_value_lock: True
 
     state_suspend:
         name: Zustandsvorlage für manuelles Aussetzen
@@ -382,17 +383,17 @@ item_structs:
             type: bool
             knx_dpt: 1
             visu_acl: rw
-            cache: 'True'
+            cache: True
 
         suspend_end:
             type: str
             visu_acl: ro
-            cache: 'True'
+            cache: True
 
         manuell:
             type: bool
             name: manuell
-            se_manual_invert: 'True'
+            se_manual_invert: True
             se_manual_exclude:
               - database:*
 
@@ -400,12 +401,14 @@ item_structs:
             suspendduration:
                 type: num
                 visu_acl: rw
-                cache: 'True'
+                cache: True
+                value: 60
 
             suspend_active:
                 type: bool
                 visu_acl: rw
-                cache: 'True'
+                cache: True
+                value: True
 
         rules:
             se_item_suspend: ..suspend
@@ -446,13 +449,13 @@ item_structs:
 
                 enter_manuell:
                     se_value_trigger_source: eval:stateengine_eval.get_relative_itemid('..manuell')
-                    se_value_suspend_active: 'True'
+                    se_value_suspend_active: True
 
                 enter_stay:
                     se_value_laststate: var:current.state_id
                     se_agemax_suspend: var:item.suspend_time
-                    se_value_suspend: 'True'
-                    se_value_suspend_active: 'True'
+                    se_value_suspend: True
+                    se_value_suspend_active: True
 
     state_release:
         name: Zustandsvorlage für Deaktivieren von Suspend und Lock und erneutes Evaluieren der Regeln
@@ -461,7 +464,7 @@ item_structs:
             type: bool
             knx_dpt: 1
             visu_acl: rw
-            enforce_updates: 'True'
+            enforce_updates: True
 
         rules:
             se_item_lock: ..lock
@@ -499,4 +502,4 @@ item_structs:
                       - 'delay: 1'
 
                 enter:
-                    se_value_release: 'True'
+                    se_value_release: True
