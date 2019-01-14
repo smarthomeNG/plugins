@@ -14,7 +14,7 @@ beschrieben werden. Folgende Zustände sollen abgedeckt werden:
 
 -  Sperre über Sperr-Item
 -  Zeitweises Deaktivieren ("Suspend") bei manuellen Aktionen
--  Nachführen der Lamellen zum Sonnenstand bei großer Helligkeit
+-  Sonnenschutz: Nachführen der Lamellen zum Sonnenstand bei großer Helligkeit
 -  Nacht
 -  Tag
 
@@ -151,7 +151,7 @@ definiert und jederzeit abgeändert werden.
                  - 'function: set'
                  - 'to: eval:stateengine_eval.sun_tracking()'
 
-               # Einstieg in "Nachführen": Wenn
+               # Einstieg in "Sonnenschutz": Wenn
                enter:
                    # - das Flag "Helligkeit > 43kLux" seit mindestens 30 Sekunden gesetzt ist
                    se_value_brightnessGt43k: true
@@ -166,7 +166,7 @@ definiert und jederzeit abgeändert werden.
 
                # Hysterese für Helligkeit: Wenn
                enter_hysterese:
-                   # ... wir bereits in "Nachführen" sind
+                   # ... wir bereits in "Sonnenschutz" sind
                    se_value_laststate: var:current.state_id
                    # .... das Flag "Helligkeit > 25kLux" gesetzt ist
                    se_value_brightnessGt25k: true
@@ -178,7 +178,7 @@ definiert und jederzeit abgeändert werden.
 
                # Verzögerter Ausstieg nach Unterschreitung der Mindesthelligkeit: Wenn
                enter_delay:
-                   # ... wir bereits in "Nachführen" sind
+                   # ... wir bereits in "Sonnenschutz" sind
                    se_value_laststate: var:current.state_id
                    # .... das Flag "Helligkeit > 25kLux" nicht (!) gesetzt ist, aber diese Änderung nicht mehr als 1 Minute her ist
                    se_value_brightnessGt25k: false
@@ -353,7 +353,7 @@ Es wird empfohlen, das Logfile unter ``var/log/stateengine`` mittels tail -f zu 
 
 Folgendes wird passieren:
 
-a) 5 Sekunden nach dem Start werden die Zustände lock, suspend, Tag (nachführen) evaluiert.
+a) 5 Sekunden nach dem Start werden die Zustände lock, suspend, Sonnenschutz, Nacht, Tag evaluiert.
 
 - Beim ersten Durchlauf wird die Bedingung "Hellligkeit höher 43000" wahr sein, da die Helligkeit der Wetterstation für diesen Test auf 50000 gesetzt wurde.
 - Das Alter der Helligkeit ist zu gering (muss mindestens eine Minute sein)
