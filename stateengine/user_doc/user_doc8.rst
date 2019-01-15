@@ -42,7 +42,7 @@ wieder öffnen, wenn die Sonne länger als Y Minuten verdeckt ist.
                helligkeit:
                    name: Helligkeit
                    type: num
-                   value: 50000 #nur für Demozwecke
+                   initial_value: 50000 #nur für Demozwecke
 
                    gt43k:
                        type: bool
@@ -71,7 +71,7 @@ wieder öffnen, wenn die Sonne länger als Y Minuten verdeckt ist.
                temperatur:
                    name: Temperatur
                    type: num
-                   value: 24 #nur für Demozwecke
+                   initial_value: 24 #nur für Demozwecke
 
 .. rubric:: Trigger
    :name: trigger
@@ -117,7 +117,7 @@ definiert und jederzeit abgeändert werden.
            mindestdauer_helligkeit:
               type: num
               cache: True
-              value: 30 #nur für Demozwecke
+              initial_value: 30 #nur für Demozwecke
 
        rules:
            # Item für Helligkeit außen
