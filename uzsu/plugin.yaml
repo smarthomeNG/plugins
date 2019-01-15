@@ -171,11 +171,12 @@ item_structs:
 
         uzsu:
             type: dict
-            uzsu_item: ..
+            uzsu_item: '..'
             cache: 'True'
             visu_acl: rw
 
-            active: # Dieser Eintrag kann genutzt werden, um die UZSU durch einen einfachen Item Call zu (de)aktivieren.
+            active:
+                remark: Use this item to easily turn on or off your UZSU
                 type: bool
                 eval: sh...activate(value)
                 visu_acl: rw
