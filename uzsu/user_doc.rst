@@ -26,6 +26,7 @@ Konfiguration
         plugin_name: uzsu
         #remove_duplicates: True
 
+In der Item Hierarchie muss ein Kind-Item zum Item erstellt werden, das zeitlich gesteuert werden soll.
 
 .. code-block:: yaml
 
@@ -35,7 +36,7 @@ Konfiguration
         someitem:
             type: num
 
-            UZSU:
+            uzsu:
                 type: dict
                 uzsu_item: someroom.someitem #Ab smarthomeNG 1.6 ist es möglich, einfach nur '..' zu nutzen, um auf das Parent-Item zu verweisen.
                 cache: 'True'
@@ -44,6 +45,17 @@ Konfiguration
                     type: bool
                     eval: sh...activate(value)
                     visu_acl: rw
+
+Ab *smarthomeNG 1.6* ist das Anlegen der nötigen Items via ``struct`` besonders einfach:
+
+.. code-block:: yaml
+
+    # items/my.yaml
+    someroom:
+
+        someitem:
+            type: num
+            struct: uzsu.child
 
 SmartVISU
 =========

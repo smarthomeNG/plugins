@@ -164,3 +164,18 @@ plugin_functions:
                 description:
                     de: 'Maximales Alter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen.'
                     en: 'maximum age of an uzsu entry in minutes to be catched up at the plugin start'
+
+item_structs:
+    child:
+        name: Vorlage-Struktur für Zeitschaltuhren
+
+        uzsu:
+            type: dict
+            uzsu_item: ..
+            cache: 'True'
+            visu_acl: rw
+
+            active: # Dieser Eintrag kann genutzt werden, um die UZSU durch einen einfachen Item Call zu (de)aktivieren.
+                type: bool
+                eval: sh...activate(value)
+                visu_acl: rw
