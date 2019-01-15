@@ -328,25 +328,26 @@ item_structs:
         name: Vorlage-Struktur für einen Zustandsautomaten
 
         state_id:
-            # The id/path of the actual state is assigned to this item by the stateengine
+            remark: The id/path of the actual state is assigned to this item by the stateengine
             type: str
             visu_acl: r
             cache: True
 
         state_name:
-            # The name of the actual state is assigned to this item by the stateengine
+            remark: The name of the actual state is assigned to this item by the stateengine
             type: str
             visu_acl: r
             cache: True
 
         rules:
             name: Regeln und Item Verweise für den Zustandsautomaten
+            remark: configure your se_item_* and eval_triggers here
             type: bool
             se_plugin: active
             eval: True
 
             # se_startup_delay: 30
-            # se_repeat_actions: true     # Ist das nicht eine Doublette zu anderen Möglichkeiten das zu konfigurieren?
+            # se_repeat_actions: true
             # se_suspend_time: 7200
 
             se_laststate_item_id: ..state_id
@@ -394,21 +395,28 @@ item_structs:
             type: bool
             name: manuell
             se_manual_invert: True
+            remark: Adapt the se_manual_exclude the way you need it
+            #se_manual_include: KNX:* Force manual mode based on source
             se_manual_exclude:
               - database:*
 
         settings:
+            remark: Use these settings for your condition values
+
             suspendduration:
+                remark: duration of suspend mode
                 type: num
                 visu_acl: rw
                 cache: True
-                value: 60
+                initial_value: 60
 
             suspend_active:
+                remark: Use this to (de)activate suspend mode in general
                 type: bool
                 visu_acl: rw
                 cache: True
-                value: True
+                initial_value: True
+
 
         rules:
             se_item_suspend: ..suspend
