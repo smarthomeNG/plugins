@@ -452,3 +452,717 @@ logic_parameters: NONE
 
 plugin_functions: NONE
     # Definition of function interface of the plugin
+
+struct_items:
+    general:
+        name: Generelle AVR Items
+
+        cursorup:
+            type: bool
+            visu_acl: rw
+            avdevice: up
+            enforce_updates: 'yes'
+
+        cursordown:
+            type: bool
+            visu_acl: rw
+            avdevice: down
+            enforce_updates: 'yes'
+
+        cursorleft:
+            type: bool
+            visu_acl: rw
+            avdevice: left
+            enforce_updates: 'yes'
+
+        cursorright:
+            type: bool
+            visu_acl: rw
+            avdevice: right
+            enforce_updates: 'yes'
+
+        cursorenter:
+            type: bool
+            visu_acl: rw
+            avdevice: enter
+            enforce_updates: 'yes'
+
+        firmware:
+            type: foo
+            visu_acl: rw
+            avdevice: firmware
+            avdevice_zone1_depend: power
+
+        info:
+            type: bool
+            visu_acl: rw
+            avdevice: info
+            avdevice_zone1_depend: power
+
+        menu:
+            type: bool
+            visu_acl: rw
+            avdevice: menu
+            avdevice_zone1_depend: power
+
+        powerall:
+            type: bool
+            visu_acl: rw
+            avdevice_zone0: power
+            avdevice_zone1_depend: init
+
+        reload:
+            remark: Reload your config text file
+            visu_acl: rw
+            type: bool
+            cache: 'false'
+            enforce_updates: True
+            avdevice: reload
+
+        update:
+            remark: Send all queries
+            type: bool
+            visu_acl: rw
+            avdevice_zone0: statusupdate
+            enforce_updates: True
+
+        display:
+            type: str
+            visu_acl: ro
+            avdevice_zone0: display
+            avdevice_zone1_depend: power
+            avdevice_zone2_depend: power
+
+        title:
+            type: str
+            visu_acl: ro
+            avdevice_zone0: title
+            avdevice_zone1_depend:
+              - power, a
+              - source = 'net', b
+              - source = 'iradio', b
+              - source = 'tuner', b
+
+        station:
+            type: str
+            visu_acl: ro
+            avdevice_zone0: station
+            avdevice_zone1_depend:
+              - power, a
+              - source = 'net', b
+              - source = 'iradio', b
+              - source = 'tuner', b
+
+        genre:
+            type: str
+            visu_acl: ro
+            avdevice_zone0: genre
+            avdevice_zone1_depend:
+              - power, a
+              - source = 'net', b
+              - source = 'iradio', b
+              - source = 'tuner', b
+
+        eco:
+            type: str
+            visu_acl: rw
+            avdevice_zone0: eco
+
+    speaker_selection:
+
+        mainspeakers:
+            remark: select main speakers, mainly for Denon devices
+            type: str
+            visu_acl: rw
+            avdevice_zone1: mainspeakers
+            avdevice_zone1_depend: power
+
+        speakers:
+            remark: Set speaker to A or B, mainly Pioneer devices
+            type: num
+            visu_acl: rw
+            avdevice_zone1: speakers
+            avdevice_zone1_depend: power
+
+        speakera:
+            remark: set the speakers attribute to the value your device is expecting
+            type: bool
+            visu_acl: rw
+            avdevice_zone1_speakers: 1
+            avdevice_zone1_depend: power
+
+        speakerb:
+            remark: set the speakers attribute to the value your device is expecting
+            type: bool
+            visu_acl: rw
+            avdevice_zone1_speakers: 2
+            avdevice_zone1_depend: power
+
+    individual_volume:
+        volumefl:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: volumefl
+            avdevice_zone1_depend: power
+            cache: 'true'
+
+        volumeflup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumefl+
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+        volumefldown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumefl-
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+        volumefr:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: volumefr
+            avdevice_zone1_depend: power
+            cache: 'true'
+
+        volumefrup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumefr+
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+        volumefrdown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumefr-
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+        volumesr:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: volumesr
+            avdevice_zone1_depend: power
+            cache: 'true'
+
+        volumesrup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumesr+
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+        volumesrdown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumesr-
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+        volumesl:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: volumesl
+            avdevice_zone1_depend: power
+            cache: 'true'
+
+        volumeslup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumesl+
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+        volumesldown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumesl-
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+        volumec:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: volumec
+            avdevice_zone1_depend: power
+            cache: 'true'
+
+        volumecup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumec+
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+        volumecdown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volumec-
+            avdevice_zone1_depend: power
+            enforce_updates: 'yes'
+
+    sound_settings:
+        set_listeningmode:
+            type: foo
+            visu_acl: rw
+            avdevice_zone1: set_listeningmode
+            avdevice_zone1_depend: power
+
+        query_listeningmode:
+            type: foo
+            visu_acl: ro
+            avdevice_zone1: query_listeningmode
+            avdevice_zone1_depend: power
+
+        bass:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: bass
+            avdevice_zone1_depend: tone
+
+        bassup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: bass+
+            enforce_updates: True
+            avdevice_zone1_depend: tone
+
+        bassdown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: bass-
+            enforce_updates: True
+            avdevice_zone1_depend: tone
+
+        dialog:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: dialog
+            avdevice_zone1_depend: power
+
+        trebble:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: trebble
+            avdevice_zone1_depend: tone
+
+        trebbleup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: trebble+
+            enforce_updates: True
+            avdevice_zone1_depend: tone
+
+        trebbledown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: trebble-
+            enforce_updates: True
+            avdevice_zone1_depend: tone
+
+        tone:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: tone
+            avdevice_zone1_depend: power
+
+        dynamicrange:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: dynamicrange
+            avdevice_zone1_depend: power
+
+        dynamicrangeup:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: dynamicrange+
+            avdevice_zone1_depend: power
+
+        dynamicrangedown:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: dynamicrange-
+            avdevice_zone1_depend: power
+
+        dialog:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: dialog
+            avdevice_zone1_depend: power
+
+        dialogtoggle:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: dialogtoggle
+            avdevice_zone1_depend: power
+
+        subwoofer:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: subwoofer
+            avdevice_zone1_depend: power
+
+        subwoofertoggle:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: subwoofertoggle
+            avdevice_zone1_depend: power
+
+        cinemaeq:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: cinemaeq
+            avdevice_zone1_depend: power
+
+    video_settings:
+        type: foo
+
+        aspectratio:
+            type: str
+            visu_acl: rw
+            avdevice_zone1: aspectratio
+            avdevice_zone1_depend: power
+
+        monitorout:
+            type: foo
+            visu_acl: rw
+            avdevice_zone1: monitorout
+            avdevice_zone1_depend: power
+
+        resolution:
+            type: str
+            visu_acl: rw
+            avdevice_zone1: resolution
+            avdevice_zone1_depend: power
+
+        audioout:
+            type: str
+            visu_acl: rw
+            avdevice_zone1: audioout
+            avdevice_zone1_depend: power
+
+        videoprocessing:
+            type: str
+            visu_acl: rw
+            avdevice_zone1: videoprocessing
+            avdevice_zone1_depend: power
+
+        stretch:
+            type: str
+            visu_acl: rw
+            avdevice_zone1: stretch
+            avdevice_zone1_depend:
+                - power, a
+                - aspectratio = nrm, b
+
+    zone1:
+        sleep:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: sleep
+            avdevice_zone1_depend: power
+
+        standby:
+            type: foo
+            visu_acl: rw
+            avdevice_zone1: standby
+            avdevice_zone1_depend: power
+
+        power:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: power
+            avdevice_zone1_depend: init
+
+        mute:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: mute
+            avdevice_zone1_depend: power
+
+        volume:
+            type: num
+            visu_acl: rw
+            avdevice_zone1: volume
+            avdevice_zone1_depend: power
+            cache: True
+
+            max:
+                type: num
+                visu_acl: ro
+                avdevice_zone1: volumemax
+                avdevice_zone1_depend: power
+
+            fading:
+                type: num
+                remark: you might want to use this item for the fade() function
+                on_change: .. = value
+
+        volumeup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volume+
+            enforce_updates: True
+            avdevice_zone1_depend:
+              - power, a
+              - volume < 160, b
+
+        volumedown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1: volume-
+            enforce_updates: True
+            avdevice_zone1_depend:
+              - volume > 10, b
+              - power, a
+
+        volumelow:
+            remark: sets volume to a specific low value
+            type: bool
+            enforce_updates: True
+            visu: rw
+            avdevice_zone1: volumelow
+            avdevice_zone1_depend: power
+
+        volumehigh:
+            remark: sets volume to a specific high value
+            type: bool
+            enforce_updates: True
+            visu: rw
+            avdevice_zone1: volumehigh
+            avdevice_zone1_depend: power
+
+        source:
+            type: foo
+            visu_acl: rw
+            avdevice_zone1: source
+            avdevice_zone1_depend: power
+
+            music:
+                remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
+                type: bool
+                visu_acl: ro
+                eval: True if (sh....source() == '13' and sh....power()) else False
+                eval_trigger:
+                  - '..'
+                  - '...power'
+                enforce_updates: True
+
+        hdmi:
+            type: num
+            visu_acl: ro
+            avdevice_zone1: hdmi
+            avdevice_zone1_depend: power
+            avdevice_zone1_depend: power
+
+        videoinput:
+            type: str
+            visu_acl: rw
+            avdevice_zone1: videoinput
+            avdevice_zone1_depend: power
+
+        audioinput:
+            type: str
+            visu_acl: rw
+            avdevice_zone1: audioinput
+            avdevice_zone1_depend: power
+
+    zone2:
+        sleep:
+            type: num
+            visu_acl: rw
+            avdevice_zone2: sleep
+            avdevice_zone2_depend: power
+
+        standby:
+            type: foo
+            visu_acl: rw
+            avdevice_zone2: standby
+            avdevice_zone2_depend: power
+
+        power:
+            type: bool
+            visu_acl: rw
+            avdevice_zone2: power
+            avdevice_zone2_depend: init
+
+        source:
+            type: foo
+            visu_acl: rw
+            avdevice_zone2: source
+            avdevice_zone2_depend: power
+
+            music:
+                remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
+                type: bool
+                visu_acl: ro
+                eval: True if (sh....source() == 'usb-dac' and sh....power()) else False
+                eval_trigger:
+                  - '..'
+                  - '...power'
+                enforce_updates: True
+
+        mute:
+            type: bool
+            visu_acl: rw
+            avdevice_zone2: mute
+            avdevice_zone2_depend: power
+
+        volume:
+            type: num
+            visu_acl: rw
+            avdevice_zone2: volume
+            cache: True
+            avdevice_zone2_depend: power
+
+            fading:
+                type: num
+                remark: you might want to use this item for the fade() function
+                on_change: .. = value
+
+        volumeup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone2: volume+
+            enforce_updates: True
+            avdevice_zone2_depend: power
+
+        volumedown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone2: volume-
+            enforce_updates: True
+            avdevice_zone2_depend: power
+
+        volumehigh:
+            type: num
+            visu_acl: rw
+            avdevice_zone2: volumehigh
+            enforce_updates: True
+            avdevice_zone2_depend: power
+
+        volumelow:
+            type: num
+            visu_acl: rw
+            avdevice_zone2: volumelow
+            enforce_updates: True
+            avdevice_zone2_depend: power
+
+    zone3:
+        sleep:
+            type: num
+            visu_acl: rw
+            avdevice_zone3: sleep
+            avdevice_zone3_depend: power
+
+        standby:
+            type: foo
+            visu_acl: rw
+            avdevice_zone3: standby
+            avdevice_zone3_depend: power
+
+        power:
+            type: bool
+            visu_acl: rw
+            avdevice_zone3: power
+            avdevice_zone3_depend: init
+
+        source:
+            type: foo
+            visu_acl: rw
+            avdevice_zone3: source
+            avdevice_zone3_depend: power
+
+            music:
+                remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
+                type: bool
+                visu_acl: ro
+                eval: True if (sh....source() == 'usb-dac' and sh....power()) else False
+                eval_trigger:
+                  - '..'
+                  - '...power'
+                enforce_updates: True
+
+        mute:
+            type: bool
+            visu_acl: rw
+            avdevice_zone3: mute
+            avdevice_zone3_depend: power
+
+        volume:
+            type: num
+            visu_acl: rw
+            avdevice_zone3: volume
+            cache: True
+            avdevice_zone3_depend: power
+
+            fading:
+                type: num
+                remark: you might want to use this item for the fade() function
+                on_change: .. = value
+
+        volumeup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone3: volume+
+            enforce_updates: True
+            avdevice_zone3_depend: power
+
+        volumedown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone3: volume-
+            enforce_updates: True
+            avdevice_zone3_depend: power
+
+        volumehigh:
+            type: num
+            visu_acl: rw
+            avdevice_zone3: volumehigh
+            enforce_updates: True
+            avdevice_zone3_depend: power
+
+        volumelow:
+            type: num
+            visu_acl: rw
+            avdevice_zone3: volumelow
+            enforce_updates: True
+            avdevice_zone3_depend: power
+
+    zone4:
+        sleep:
+            type: num
+            visu_acl: rw
+            avdevice_zone4: sleep
+            avdevice_zone4_depend: power
+
+        standby:
+            type: foo
+            visu_acl: rw
+            avdevice_zone4: standby
+            avdevice_zone4_depend: power
+
+        power:
+            type: bool
+            visu_acl: rw
+            avdevice_zone4: power
+            avdevice_zone4_depend: init
+
+        source:
+            type: foo
+            visu_acl: rw
+            avdevice_zone4: source
+            avdevice_zone4_depend: power
+
+            music:
+                remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
+                type: bool
+                visu_acl: ro
+                eval: True if (sh....source() == 'usb-dac' and sh....power()) else False
+                eval_trigger:
+                  - '..'
+                  - '...power'
+                enforce_updates: True

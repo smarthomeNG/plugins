@@ -529,7 +529,7 @@ class Init(object):
                                 except Exception:
                                     specialparse = ''
                                 valuelength = response.count('*')
-                                commandlength = 100 if response.find('?{str}') >= 0 else len(response)
+                                commandlength = 100 if (response.find('?{str}') >= 0 or response.find('*{str}') >= 0) else len(response)
                                 response = re.sub('\?\{str\}', '?', response) if response.find('?{str}') >= 0 else response
                                 cond1 = response.count('?') == 1 and response.count('*') == 0
                                 cond2 = response.count('*') == 1

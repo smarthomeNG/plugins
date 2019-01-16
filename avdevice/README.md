@@ -1,9 +1,16 @@
 # AV Device
 
-## Documentation
+## Requirements
+If you want to connect to your device via RS232 (recommended) you need to install:
+Serial Python module
 
-For info on the features and the different command files, etc. see the [User Documentation](https://www.smarthomeng.de/user/plugins/avdevice/user_doc.html "Manual")
-For info on how to configure the plugin see the [Configuration Documentation](https://www.smarthomeng.de/plugins_doc/config/avdevice "Configuration")
+Install it with:
+sudo pip3 install serial --upgrade
+
+## Supported Hardware
+
+Hopefully several different AV devices based on TCP or Serial RS232 connections
+Tested with Pioneer (< 2016 models) and Denon AV receivers, Epson projector Oppo Bluray player
 
 ## Changelog
 
