@@ -1,5 +1,5 @@
-.. index:: Plugins; Stateengine; Allgemein
-.. index:: Allgemein
+.. index:: Plugins; Stateengine
+.. index:: Stateengine; Allgemein
 
 Allgemein
 #########
@@ -25,9 +25,8 @@ auf der SmarthomeNG Seite zu lesen!
 .. rubric:: Funktionalität
    :name: funktionalitaet
 
-Über zusätzliche Items in den items/\*.yaml Dateien können Objekt-Items
-definiert werden, die eine beliebige Anzahl benutzerdefinierter
-Zustände haben. Jeder Zustand kann Sets von Einstiegsbedingungen haben
+Über zusätzliche Items in den items/\*.yaml Dateien können für beliebige Items
+Zustandsautomaten implementiert werden. Jeder Zustand kann Sets von Einstiegsbedingungen haben
 und diverse Aktionen auslösen, wenn der Zustand aktiv wird.
 
 In regelmäßigen Intervallen werden die Zustände für jedes Objekt der angegebenen
@@ -35,9 +34,9 @@ Reihe nach geprüft. Der erste Zustand, bei dem eine Gruppe Einstiegsbedingungen
 vollständig erfüllt ist, wird zum aktuellen Zustand. Die
 Aktionen, die für diesen Zustand definiert sind, werden ausgeführt.
 
-Wenn kein passender Zustand gefunden wird, passiert nichts. Das Objekt verbleibt im vorherigen Zustand.
+Wenn kein passender Zustand gefunden wird, passiert nichts, das Objekt verbleibt im vorherigen Zustand.
 Dies kann in manchen Fällen Sinn machen, meist bietet es sich aber an,
-einen Standardzustand ganz am Ende festzulegen, der keine Eingangsbedingungen hat.
+einen Standardzustand ohne Eingangsbedingungen ganz am Ende der Hierarchie festzulegen.
 
 Die folgenden Bedingungen können Teil der Bedingungsgruppen sein:
 
