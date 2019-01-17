@@ -1,5 +1,5 @@
-.. index:: Plugins; Stateengine; Beispiel
-.. index:: Beispiel
+.. index:: Plugins; Stateengine
+.. index:: Stateengine; Beispiel
 
 Beispiel
 ########

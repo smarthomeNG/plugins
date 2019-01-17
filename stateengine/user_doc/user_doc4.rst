@@ -1,5 +1,5 @@
-.. index:: Plugins; Stateengine; Zustand-Item
-.. index:: Zustand-Item
+.. index:: Plugins; Stateengine
+.. index:: Stateengine; Zustand-Item
 
 Zustand-Item
 ############

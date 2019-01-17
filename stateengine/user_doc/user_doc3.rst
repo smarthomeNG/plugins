@@ -1,5 +1,5 @@
-.. index:: Plugins; Stateengine; Regelwerk-Item
-.. index:: Regelwerk-Item
+.. index:: Plugins; Stateengine
+.. index:: Stateengine; Regelwerk-Item
 
 Regelwerk-Item
 ##############

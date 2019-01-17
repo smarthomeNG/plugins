@@ -1,5 +1,5 @@
-.. index:: Plugins; Stateengine; Advanced
-.. index:: Advanced
+.. index:: Plugins; Stateengine
+.. index:: Stateengine; Advanced
 .. _Advanced:
 
 Advanced

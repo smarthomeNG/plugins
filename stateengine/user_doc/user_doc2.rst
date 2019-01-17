@@ -1,5 +1,5 @@
-.. index:: Plugins; Stateengine; Konfiguration
-.. index:: Konfiguration
+.. index:: Plugins; Stateengine
+.. index:: Stateengine; Konfiguration
 
 Konfiguration
 #############

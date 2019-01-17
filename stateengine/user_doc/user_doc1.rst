@@ -1,5 +1,5 @@
-.. index:: Plugins; Stateengine; Allgemein
-.. index:: Allgemein
+.. index:: Plugins; Stateengine
+.. index:: Stateengine; Allgemein
 
 Allgemein
 #########

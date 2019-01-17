@@ -1,5 +1,5 @@
-.. index:: Plugins; Stateengine; Zustands-Templates
-.. index:: Zustands-Templates
+.. index:: Plugins; Stateengine
+.. index:: Stateengine; Zustands-Templates
 .. _Zustands-Templates:
 
 Zustands-Templates
