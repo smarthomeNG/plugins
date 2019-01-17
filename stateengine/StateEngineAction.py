@@ -23,6 +23,8 @@ from . import StateEngineEval
 from . import StateEngineValue
 from . import StateEngineDefaults
 import datetime
+from lib.shtime import Shtime
+from lib.item import Items
 
 
 # Base class from which all action classes are derived
@@ -49,6 +51,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
     # name: Name of action
     def __init__(self, abitem, name: str):
         super().__init__(abitem)
+        self.shtime = Shtime.get_instance()
+        self.items = Items.get_instance()
         self._name = name
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
@@ -100,7 +104,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
             repeat_text = ""
 
         plan_next = self._sh.scheduler.return_next(self._scheduler_name)
-        if plan_next is not None and plan_next > self._sh.now():
+        if plan_next is not None and plan_next > self.shtime.now():
             self._log_info("Action '{0}: Removing previous delay timer '{1}'.", self._name, self._scheduler_name)
             self._sh.scheduler.remove(self._scheduler_name)
 
@@ -116,7 +120,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         else:
             self._log_info("Action '{0}: Add {1} second timer '{2}' for delayed execution. {3}", self._name, delay,
                            self._scheduler_name, repeat_text)
-            next_run = self._sh.now() + datetime.timedelta(seconds=delay)
+            next_run = self.shtime.now() + datetime.timedelta(seconds=delay)
             self._sh.scheduler.add(self._scheduler_name, self._execute, value={'actionname': actionname}, next=next_run)
 
     # set the action based on a set_(action_name) attribute
@@ -244,7 +248,7 @@ class SeActionSetByattr(SeActionBase):
     # Really execute the action
     def _execute(self, actionname: str, repeat_text: str = ""):
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
-        for item in self._sh.find_items(self.__byattr):
+        for item in self.items.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.id(), item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=StateEngineDefaults.plugin_identification)
 

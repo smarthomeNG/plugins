@@ -23,6 +23,7 @@ from . import StateEngineCurrent
 from random import randint
 import subprocess
 import datetime
+from lib.shtime import Shtime
 
 
 class SeEval(StateEngineTools.SeItemChild):
@@ -30,6 +31,7 @@ class SeEval(StateEngineTools.SeItemChild):
     # abitem: parent SeItem instance
     def __init__(self, abitem):
         super().__init__(abitem)
+        self.shtime = Shtime.get_instance()
 
     # Get lamella angle based on sun_altitute for sun tracking
     def sun_tracking(self):
@@ -116,7 +118,7 @@ class SeEval(StateEngineTools.SeItemChild):
             if suspend_remaining < 0:
                 self._log_debug("Eval-Method 'insert_suspend_time': Suspend should alredy be finished!")
                 return "Suspend already over."
-            suspend_until = self._abitem.sh.now() + datetime.timedelta(seconds=suspend_remaining)
+            suspend_until = self._abitem.shtime.now() + datetime.timedelta(seconds=suspend_remaining)
             self._log_debug("Suspend finished at {0}", suspend_until)
             return suspend_until.strftime(suspend_text)
         except Exception as ex:

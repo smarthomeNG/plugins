@@ -324,29 +324,190 @@ item_attributes:
                  '
 
 item_structs:
-    stateengine:
+    general:
         name: Vorlage-Struktur für einen Zustandsautomaten
 
-        rules:
-            name: Regeln und Item Verweise für den Zustandsautomaten
-            type: bool
-            se_plugin: active
-
-            # se_startup_delay: 30
-            # se_repeat_actions: true     # Ist das nicht eine Doublette zu anderen Möglichkeiten das zu konfigurieren?
-            # se_suspend_time: 7200
-
-            se_laststate_item_id: ..state_id        # optional
-            se_laststate_item_name: ..state_name    # optional
-
         state_id:
-            # The id/path of the actual state is assigned to this item by the stateengine
+            remark: The id/path of the actual state is assigned to this item by the stateengine
             type: str
             visu_acl: r
             cache: True
 
         state_name:
-            # The name of the actual state is assigned to this item by the stateengine
+            remark: The name of the actual state is assigned to this item by the stateengine
             type: str
             visu_acl: r
             cache: True
+
+        rules:
+            name: Regeln und Item Verweise für den Zustandsautomaten
+            remark: configure your se_item_* and eval_triggers here
+            type: bool
+            se_plugin: active
+            eval: True
+
+            # se_startup_delay: 30
+            # se_repeat_actions: true
+            # se_suspend_time: 7200
+
+            se_laststate_item_id: ..state_id
+            se_laststate_item_name: ..state_name
+
+    state_lock:
+        name: Zustandsvorlage zum Sperren der Evaluierung
+
+        lock:
+            type: bool
+            knx_dpt: 1
+            visu_acl: rw
+            cache: 'on'
+
+        rules:
+            se_item_lock: ..lock
+            eval_trigger: ..lock
+
+            lock:
+                name: gesperrt
+
+                on_leave:
+                    se_action_lock:
+                      - 'function: set'
+                      - 'to: False'
+
+                enter:
+                    se_value_lock: True
+
+    state_suspend:
+        name: Zustandsvorlage für manuelles Aussetzen
+
+        suspend:
+            type: bool
+            knx_dpt: 1
+            visu_acl: rw
+            cache: True
+
+        suspend_end:
+            type: str
+            visu_acl: ro
+            cache: True
+
+        manuell:
+            type: bool
+            name: manuell
+            se_manual_invert: True
+            remark: Adapt the se_manual_exclude the way you need it
+            #se_manual_include: KNX:* Force manual mode based on source
+            se_manual_exclude:
+              - database:*
+
+        settings:
+            remark: Use these settings for your condition values
+
+            suspendduration:
+                remark: duration of suspend mode
+                type: num
+                visu_acl: rw
+                cache: True
+                initial_value: 60
+
+            suspend_active:
+                remark: Use this to (de)activate suspend mode in general
+                type: bool
+                visu_acl: rw
+                cache: True
+                initial_value: True
+
+
+        rules:
+            se_item_suspend: ..suspend
+            se_item_retrigger: ..rules
+            se_item_suspend_end: ..suspend_end
+            se_item_suspend_active: ..settings.suspend_active
+            se_suspend_time: eval:stateengine_eval.get_relative_itemvalue('..settings.suspendduration') * 60
+            eval_trigger: ..manuell
+
+            suspend:
+                name: ausgesetzt
+
+                on_enter_or_stay:
+                    se_action_suspend:
+                      - 'function: special'
+                      - 'value: suspend:..suspend, ..manuell'
+                      - 'repeat: True'
+                      - 'order: 1'
+                    se_action_suspend_end:
+                      - 'function: set'
+                      - "to: eval:stateengine_eval.insert_suspend_time('..suspend', suspend_text='%X')"
+                      - 'repeat: True'
+                      - 'order: 2'
+                    se_action_retrigger:
+                      - 'function: set'
+                      - 'to: True'
+                      - 'delay: var:item.suspend_remaining'
+                      - 'repeat: True'
+                      - 'order: 3'
+
+                on_leave:
+                    se_action_suspend:
+                      - 'function: set'
+                      - 'to: False'
+                    se_action_suspend_end:
+                      - 'function: set'
+                      - 'to:  '
+
+                enter_manuell:
+                    se_value_trigger_source: eval:stateengine_eval.get_relative_itemid('..manuell')
+                    se_value_suspend_active: True
+
+                enter_stay:
+                    se_value_laststate: var:current.state_id
+                    se_agemax_suspend: var:item.suspend_time
+                    se_value_suspend: True
+                    se_value_suspend_active: True
+
+    state_release:
+        name: Zustandsvorlage für Deaktivieren von Suspend und Lock und erneutes Evaluieren der Regeln
+
+        release:
+            type: bool
+            knx_dpt: 1
+            visu_acl: rw
+            enforce_updates: True
+
+        rules:
+            se_item_lock: ..lock
+            se_item_suspend: ..suspend
+            se_item_retrigger: ..rules
+            se_item_release: ..release
+            se_item_suspend_end: ..suspend_end
+            eval_trigger: ..release
+
+            release:
+                name: release
+
+                on_enter_or_stay:
+                    se_action_suspend:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'order: 1'
+                    se_action_lock:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'order: 2'
+                    se_action_release:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'order: 3'
+                    se_action_suspend_end:
+                      - 'function: set'
+                      - 'to: '
+                      - 'order: 4'
+                    se_action_retrigger:
+                      - 'function: set'
+                      - 'to: True'
+                      - 'order: 5'
+                      - 'repeat: True'
+                      - 'delay: 1'
+
+                enter:
+                    se_value_release: True
