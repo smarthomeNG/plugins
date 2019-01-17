@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Wetterdaten über darksky.net.'
-        en: 'Weather data via darksky.net.'
+        de: 'Wetterdaten über OpenWeatherMap.'
+        en: 'Weather data via OpenWeatherMap.'
     maintainer: psilo909
     tester: psilo909
     state: qa-passed
@@ -25,8 +25,8 @@ parameters:
         type: str
         mandatory: True
         description:
-            de: 'Persönlicher API Key für darksky.net. Registrierung unter https://openweathermap.org/.'
-            en: 'Your own personal API key for darksky.net. For your own key register to https://openweathermap.org/.'
+            de: 'Persönlicher API Key für OpenWeatherMap. Registrierung unter https://openweathermap.org/.'
+            en: 'Your own personal API key for OpenWeatherMap. For your own key register to https://openweathermap.org/.'
     latitude:
         type: str
         mandatory: False
