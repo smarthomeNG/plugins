@@ -29,6 +29,7 @@ import logging
 import os
 from lib.model.smartplugin import *
 from bin.smarthome import VERSION
+from lib.item import Items
 
 
 class StateEngine(SmartPlugin):
@@ -40,6 +41,7 @@ class StateEngine(SmartPlugin):
 
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
+        self.items = Items.get_instance()
         self.__items = {}
         self.alive = False
         self.__cli = None
@@ -93,7 +95,7 @@ class StateEngine(SmartPlugin):
     def run(self):
         # Initialize
         self.logger.info("Init StateEngine items")
-        for item in self.get_sh().find_items("se_plugin"):
+        for item in self.items.find_items("se_plugin"):
             if item.conf["se_plugin"] == "active":
                 try:
                     ab_item = StateEngineItem.SeItem(self.get_sh(), item)
@@ -216,7 +218,7 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        item = self.plugin.get_sh().return_item(item_path)
+        item = self.plugin.items.return_item(item_path)
 
         tmpl = self.tplenv.get_template('{}.html'.format(page))
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
