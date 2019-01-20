@@ -324,7 +324,7 @@ item_attributes:
                  '
 
 item_structs:
-    stateengine:
+    general:
         name: Vorlage-Struktur für einen Zustandsautomaten
 
         rules:
@@ -339,6 +339,11 @@ item_structs:
             se_laststate_item_id: ..state_id        # optional
             se_laststate_item_name: ..state_name    # optional
 
+            locked:
+                name: Manuell gesperrt
+                enter:
+                    se_value_lock: True
+
         state_id:
             # The id/path of the actual state is assigned to this item by the stateengine
             type: str
@@ -350,3 +355,14 @@ item_structs:
             type: str
             visu_acl: r
             cache: True
+
+    no_cache:
+        name: Vorlage-Struktur für einen Zustandsautomaten ohne caching
+
+        state_id:
+            # The id/path of the actual state is assigned to this item by the stateengine
+            cache: False
+
+        state_name:
+            # The name of the actual state is assigned to this item by the stateengine
+            cache: False
