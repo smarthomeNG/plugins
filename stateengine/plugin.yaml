@@ -25,7 +25,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
     version: 1.4.2
-    sh_minversion: 1.4.1
+    sh_minversion: 1.5d
     multi_instance: False
     classname: StateEngine
     attribute_prefix: se
