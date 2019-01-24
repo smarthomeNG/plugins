@@ -53,7 +53,6 @@ class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.5.0"
 
-
     def __init__(self, smarthome):
         self.itemsApi = Items.get_instance()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -925,7 +924,7 @@ class AVDevice(SmartPlugin):
                 try:
                     socket = __import__('socket')
                     REQUIRED_PACKAGE_IMPORTED = True
-                except:
+                except Exception:
                     REQUIRED_PACKAGE_IMPORTED = False
                 if not REQUIRED_PACKAGE_IMPORTED:
                     self.logger.error("{}: Unable to import Python package 'socket'".format(self.get_fullname()))
@@ -986,7 +985,7 @@ class AVDevice(SmartPlugin):
                 try:
                     serial = __import__('serial')
                     REQUIRED_PACKAGE_IMPORTED = True
-                except:
+                except Exception:
                     REQUIRED_PACKAGE_IMPORTED = False
                 if not REQUIRED_PACKAGE_IMPORTED:
                     self.logger.error("{}: Unable to import Python package 'serial'".format(self.get_fullname()))
@@ -2697,7 +2696,7 @@ class AVDevice(SmartPlugin):
                                                         "Updating Item {}: Problem with command reorder in zone {}: {}.".format(
                                                             self._name, zone, err))
                                         pass
-                        reorderlist = [i for i in reorderlist if not i in newreorderlist]
+                        reorderlist = [i for i in reorderlist if i not in newreorderlist]
                         self._send_commands = newreorderlist + reorderlist
                         self._sendingcommand = self._send_commands[0]
 
@@ -3021,7 +3020,7 @@ class AVDevice(SmartPlugin):
         """
         try:
             self.mod_http = Modules.get_instance().get_module('http')
-        except:
+        except Exception:
             self.mod_http = None
         if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))

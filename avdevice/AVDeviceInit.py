@@ -29,7 +29,6 @@ import re
 import os
 
 from lib.item import Items
-from bin.smarthome import VERSION
 
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
@@ -136,7 +135,7 @@ class Init(object):
                                                                     alreadydone.append(commandlist)
                                                                 self.logger.log(VERBOSE2, "Updating Dependencies {}: Skipping {}.".format(
                                                                     self._name, commandlist))
-                                        except Exception as err:
+                                        except Exception:
                                             pass
                                         if commandlist in alreadydone:
                                             self.logger.log(VERBOSE2, "Updating Dependencies {}: Commandlist {} is alreadydone: {}, skipping.".format(
@@ -157,9 +156,8 @@ class Init(object):
                                                 except Exception:
                                                     dependencies['Slave_query'][depend_zone].update({commandlist: [toadd]})
                                                     self.logger.log(VERBOSE2,
-                                                                        "Updating Dependencies {}: Creating {} for {} in {}".format(
-                                                                            self._name, commandlist, dependingfunction,
-                                                                            depend_zone))
+                                                                    "Updating Dependencies {}: Creating {} for {} in {}".format(
+                                                                        self._name, commandlist, dependingfunction, depend_zone))
                                     done = True
                                     # break
                         if done is True:
