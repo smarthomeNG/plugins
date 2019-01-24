@@ -420,7 +420,7 @@ class AVDevice(SmartPlugin):
                                 {'Zone': dependzone, 'Item': depend, 'Dependvalue': dependvalue, 'Compare': comparing,
                                  'Group': dependgroup}]})
                             self.logger.log(VERBOSE1,
-                                            "Initializing {}: Creating dependency for {}.".format(self._name, info))
+                                            "Initializing {}: Creating dependency for {} in zone {}.".format(self._name, info, zone))
 
     # Finding relevant items for the plugin based on the avdevice keyword
     def parse_item(self, item):

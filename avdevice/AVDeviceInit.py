@@ -84,19 +84,19 @@ class Init(object):
                     if self._functions[zone][device_function][1] == entry:
                         for instance in dependencies['Master_function'][zone][entry]:
                             dependingfunction = instance.get('Function')
-                            dependzone = instance.get('Zone')
-                            # self.logger.log(VERBOSE2, "Updating Dependencies {}: Testing depending {}.".format(self._name, dependzone))
-                            for command in self._functions[dependzone]:
+                            depend_zone = instance.get('Zone')
+                            # self.logger.log(VERBOSE2, "Updating Dependencies {}: Testing depending {}.".format(self._name, depend_zone))
+                            for command in self._functions[depend_zone]:
                                 # self.logger.log(VERBOSE2, "Updating Dependencies {}: Command {}.".format(self._name, command))
-                                if self._functions[dependzone][command][1] == dependingfunction:
-                                    for entrylist in self._items[dependzone][dependingfunction]['Master']:
-                                        querycommand = self._functions[dependzone][command][3]
-                                        valuetype = self._functions[dependzone][command][9]
-                                        splitresponse = self._functions[dependzone][command][4].split('|')
+                                if self._functions[depend_zone][command][1] == dependingfunction:
+                                    for entrylist in self._items[depend_zone][dependingfunction]['Master']:
+                                        querycommand = self._functions[depend_zone][command][3]
+                                        valuetype = self._functions[depend_zone][command][9]
+                                        splitresponse = self._functions[depend_zone][command][4].split('|')
                                         responselist = []
                                         for splitted in splitresponse:
                                             valuelength = splitted.count('*')
-                                            if valuelength > 0 or 'R' in self._functions[dependzone][command][5]:
+                                            if valuelength > 0 or 'R' in self._functions[depend_zone][command][5]:
                                                 response_toadd = splitted.strip()
                                                 cond1 = splitted.count('?') == 1 and splitted.count('*') == 0
                                                 response_toadd = re.sub('[?]', '*', response_toadd) if cond1 else response_toadd
@@ -105,7 +105,7 @@ class Init(object):
                                         commandlist = '{},{},{}'.format(querycommand, querycommand, responsecommand)
                                         try:
                                             if command.split(' ')[1] in ['on', 'off', 'increase', 'decrease']:
-                                                for already in dependencies['Slave_query'][dependzone]:
+                                                for already in dependencies['Slave_query'][depend_zone]:
                                                     if already.split(',')[0] == querycommand:
                                                         alreadylist = ','.join(already.split(',')[2:]).split('|')
                                                         responses = [re.sub('[*]', '', x.split(',')[0]) for x in alreadylist]
@@ -122,9 +122,9 @@ class Init(object):
                                                                                 responses, cond2_1, cond2_2))
                                                             if resp not in alreadylist and cond1 and cond2:
                                                                 newquery = already + '|' + resp
-                                                                dependencies['Slave_query'][dependzone][newquery] = \
-                                                                    dependencies['Slave_query'][dependzone].get(already)
-                                                                dependencies['Slave_query'][dependzone].pop(already)
+                                                                dependencies['Slave_query'][depend_zone][newquery] = \
+                                                                    dependencies['Slave_query'][depend_zone].get(already)
+                                                                dependencies['Slave_query'][depend_zone].pop(already)
                                                                 instance['Query'] = newquery
                                                                 self.logger.log(VERBOSE2,
                                                                                 "Updating Dependencies {}: Adding {} to {}.".format(
@@ -145,21 +145,21 @@ class Init(object):
                                             toadd = {'Item': entrylist['Item'], 'Dependvalue': entrylist['Dependvalue'],
                                                      'Compare': entrylist['Compare'], 'Zone': entrylist['Zone'],
                                                      'Function': entrylist['Function'], 'Group': entrylist['Group']}
-                                            if not querycommand == '' and self._functions[dependzone][command][4].find('*') >= 0:
+                                            if not querycommand == '' and self._functions[depend_zone][command][4].find('*') >= 0:
                                                 instance['Query'] = commandlist
                                                 try:
-                                                    if toadd not in dependencies['Slave_query'][dependzone][commandlist]:
-                                                        dependencies['Slave_query'][dependzone][commandlist].append(toadd)
+                                                    if toadd not in dependencies['Slave_query'][depend_zone][commandlist]:
+                                                        dependencies['Slave_query'][depend_zone][commandlist].append(toadd)
                                                         self.logger.log(VERBOSE2,
                                                                         "Updating Dependencies {}: Adding {} to {} in {}".format(
                                                                             self._name, commandlist, dependingfunction,
-                                                                            dependzone))
+                                                                            depend_zone))
                                                 except Exception:
-                                                    dependencies['Slave_query'][dependzone].update({commandlist: [toadd]})
+                                                    dependencies['Slave_query'][depend_zone].update({commandlist: [toadd]})
                                                     self.logger.log(VERBOSE2,
                                                                         "Updating Dependencies {}: Creating {} for {} in {}".format(
                                                                             self._name, commandlist, dependingfunction,
-                                                                            dependzone))
+                                                                            depend_zone))
                                     done = True
                                     # break
                         if done is True:
@@ -168,6 +168,7 @@ class Init(object):
         return dependencies
 
     def _dependstage1(self, dependson_list, problems):
+        self.logger.log(VERBOSE2, "Initializing {}: Starting dependency Init Stage 1.".format(self._name))
         for zone in self._items.keys():
             for entry in self._items[zone]:
                 try:
@@ -176,166 +177,197 @@ class Init(object):
                         dependson_list[zone].update({entry: depend})
                 except Exception:
                     pass
+        problems_inlist = []
         for zone in dependson_list:
             for entry in dependson_list[zone]:
                 for count, entrylist in enumerate(dependson_list[zone][entry]):
                     sub = dependson_list[zone][entry][count].get('Item')
-                    # self.logger.log(VERBOSE2, "Initializing {}: List {}, Entry {}, {}.".format(self._name, entrylist, entry, sub))
                     try:
                         itemzone = dependson_list[zone][entry][count].get('Zone')
                         dependson_list[zone][entry][count].update({'Item': self._items[itemzone][sub].get('Item')})
                         dependson_list[zone][entry][count].update({'Function': sub})
-                        self.logger.log(VERBOSE2,
-                                        "Initializing {}: Updated Dependon entry for {} with entry {}.".format(
-                                            self._name, sub, entrylist))
+                        if not dependson_list[zone][entry][count].get('Item'):
+                            self.logger.log(VERBOSE2,
+                                            "Initializing {}: Updated Dependon entry for {} with entry {}.".format(
+                                                self._name, sub, entrylist))
                     except Exception as err:
                         if sub == 'init':
                             problems[zone].append("{}=init".format(entry))
                             dependson_list[zone][entry][count].update({'Item': None})
                             dependson_list[zone][entry][count].update({'Function': sub})
                             self.logger.log(VERBOSE2,
-                                            "Initializing {}: Item with function {} is set to init. Problems: {}".format(
-                                                self._name, sub, problems))
+                                            "Initializing {}: Item with function {} is set to init.".format(
+                                                self._name, sub))
                         else:
                             problems[zone].append(sub)
-                            self.logger.error(
-                                "Initializing {}: Item with function {} for dependency does not exist. Entry: {}, Error: {}".format(
-                                    self._name, sub, entry, err))
-                self._items[zone][entry]['Master'] = dependson_list[zone][entry]
+                            problems_inlist.append(dependson_list[zone][entry][count])
+                            if sub not in problems[zone]:
+                                self.logger.error(
+                                    "Initializing {}: Item with function {} for dependency does not exist. Entry: {}, Error: {}".format(
+                                        self._name, sub, entry, err))
+                self._items[zone][entry]['Master'] = [item for item in dependson_list[zone][entry] if item not in problems_inlist]
+        self.logger.log(VERBOSE2, "Initializing {}: Finished dependency Init Stage 1.".format(self._name))
         return dependson_list, problems
 
     def _dependstage2(self, dependson_list, problems):
+        self.logger.log(VERBOSE2, "Initializing {}: Starting dependency Init Stage 2.".format(self._name))
+        problems_inlist = []
         for zone in dependson_list:
             for entry in dependson_list[zone]:
                 for count, _ in enumerate(dependson_list[zone][entry]):
                     if entry not in problems[zone] and '{}=init'.format(entry) not in problems[zone]:
-                        item = self._items[zone][entry]['Item']
-                        try:
-                            self._items[dependson_list[zone][entry][count]['Zone']][
-                                dependson_list[zone][entry][count]['Function']]['Slave'].append(
-                                {'Function': entry, 'Item': item,
-                                 'Compare': dependson_list[zone][entry][count]['Compare'],
-                                 'Zone': zone,
-                                 'Group': dependson_list[zone][entry][count]['Group'],
-                                 'Dependvalue': dependson_list[zone][entry][count]['Dependvalue']})
-                        except Exception:
-                            self._items[dependson_list[zone][entry][count]['Zone']][
-                                dependson_list[zone][entry][count]['Function']].update(
-                                {'Slave':
-                                 [{'Function': entry,
-                                   'Item': item,
-                                   'Compare': dependson_list[zone][entry][count]['Compare'],
-                                   'Zone': zone,
-                                   'Dependvalue': dependson_list[zone][entry][count]['Dependvalue'],
-                                   'Group': dependson_list[zone][entry][count]['Group']}]})
+                        item = self._items[zone][entry].get('Item')
+                        depend_zone = dependson_list[zone][entry][count].get('Zone')
+                        depend_function = dependson_list[zone][entry][count].get('Function')
+                        depend_compare = dependson_list[zone][entry][count].get('Compare')
+                        depend_group = dependson_list[zone][entry][count].get('Group')
+                        depend_value = dependson_list[zone][entry][count].get('Dependvalue')
+                        depend_item = dependson_list[zone][entry][count].get('Item')
+                        if depend_function:
+                            try:
+                                self._items[depend_zone][depend_function]['Slave'].append(
+                                    {'Function': entry, 'Item': item,
+                                     'Compare': depend_compare,
+                                     'Zone': zone,
+                                     'Group': depend_group,
+                                     'Dependvalue': depend_value})
+                            except Exception:
+                                self._items[depend_zone][depend_function].update(
+                                    {'Slave':
+                                     [{'Function': entry,
+                                       'Item': item,
+                                       'Compare': depend_compare,
+                                       'Zone': zone,
+                                       'Dependvalue': depend_value,
+                                       'Group': depend_group}]})
+                        else:
+                            self.logger.log(VERBOSE2,
+                                            "Initializing {}: Dependency Init Stage 2. Ignoring dependency {}"
+                                            " for {} because there is no item defined for function {}.".format(
+                                                self._name, dependson_list[zone][entry][count], item, depend_item))
+                            problems_inlist.append(dependson_list[zone][entry][count])
+                if entry not in problems[zone] and '{}=init'.format(entry) not in problems[zone]:
+                    dependson_list[zone][entry] = [item for item in dependson_list[zone][entry] if item not in problems_inlist]
+                    self.logger.log(VERBOSE2, "Initializing {}: Final dependency list for item {}: {}".format(
+                                    self._name, item, dependson_list[zone][entry]))
+        self.logger.log(VERBOSE2, "Initializing {}: Finished dependency Init Stage 2.".format(self._name))
 
     def _dependstage3(self, dependson_list, problems, finaldepend):
+        self.logger.log(VERBOSE2, "Initializing {}: Starting dependency Init Stage 3.".format(self._name))
         for zone in dependson_list:
             for entry in dependson_list[zone]:
                 for count, _ in enumerate(dependson_list[zone][entry]):
                     if entry not in problems[zone] and '{}=init'.format(entry) not in problems[zone]:
-                        dependzone = dependson_list[zone][entry][count].get('Zone')
+                        depend_zone = dependson_list[zone][entry][count].get('Zone')
                         item = dependson_list[zone][entry][count].get('Item')
+                        depend_function = dependson_list[zone][entry][count].get('Function')
+                        depend_compare = dependson_list[zone][entry][count].get('Compare')
+                        depend_group = dependson_list[zone][entry][count].get('Group')
+                        depend_value = dependson_list[zone][entry][count].get('Dependvalue')
                         try:
                             finaldepend['Slave_function'][zone][entry].append(
                                 {'Item': item,
-                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue'),
-                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
-                                 'Zone': dependson_list[zone][entry][count].get('Zone'),
-                                 'Group': dependson_list[zone][entry][count].get('Group'),
-                                 'Function': dependson_list[zone][entry][count].get('Function')})
+                                 'Dependvalue': depend_value,
+                                 'Compare': depend_compare,
+                                 'Zone': depend_zone,
+                                 'Group': depend_group,
+                                 'Function': depend_function})
                         except Exception:
                             finaldepend['Slave_function'][zone].update(
                                 {entry:
                                  [{'Item': item,
-                                   'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue'),
-                                   'Compare': dependson_list[zone][entry][count].get('Compare'),
-                                   'Zone': dependson_list[zone][entry][count].get('Zone'),
-                                   'Group': dependson_list[zone][entry][count].get('Group'),
-                                   'Function': dependson_list[zone][entry][count].get('Function')}]})
-
+                                   'Dependvalue': depend_value,
+                                   'Compare': depend_compare,
+                                   'Zone': depend_zone,
+                                   'Group': depend_group,
+                                   'Function': depend_function}]})
                         try:
                             finaldepend['Slave_item'][zone][self._items[zone][entry].get('Item').id()].append(
                                 {'Item': item,
-                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue'),
-                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
-                                 'Zone': dependson_list[zone][entry][count].get('Zone'),
-                                 'Group': dependson_list[zone][entry][count].get('Group'),
-                                 'Function': dependson_list[zone][entry][count].get('Function')})
+                                 'Dependvalue': depend_value,
+                                 'Compare': depend_compare,
+                                 'Zone': depend_zone,
+                                 'Group': depend_group,
+                                 'Function': depend_function})
                         except Exception:
                             finaldepend['Slave_item'][zone].update(
                                 {self._items[zone][entry].get('Item').id():
                                  [{'Item': item,
-                                   'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue'),
-                                   'Compare': dependson_list[zone][entry][count].get('Compare'),
-                                   'Zone': dependson_list[zone][entry][count].get('Zone'),
-                                   'Group': dependson_list[zone][entry][count].get('Group'),
-                                   'Function': dependson_list[zone][entry][count].get('Function')}]})
-
+                                   'Dependvalue': depend_value,
+                                   'Compare': depend_compare,
+                                   'Zone': depend_zone,
+                                   'Group': depend_group,
+                                   'Function': depend_function}]})
                         try:
-                            finaldepend['Master_item'][dependzone][
-                                self._items[dependzone][dependson_list[zone][entry][count]['Function']].get(
+                            finaldepend['Master_item'][depend_zone][
+                                self._items[depend_zone][dependson_list[zone][entry][count]['Function']].get(
                                     'Item').id()].append(
                                 {'Item': self._items[zone][entry].get('Item'),
                                  'Function': entry,
-                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                 'Compare': depend_compare,
                                  'Zone': zone,
-                                 'Group': dependson_list[zone][entry][count].get('Group'),
-                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')})
+                                 'Group': depend_group,
+                                 'Dependvalue': depend_value})
                         except Exception:
-                            finaldepend['Master_item'][dependzone].update(
-                                {self._items[dependzone][dependson_list[zone][entry][count]['Function']].get(
+                            finaldepend['Master_item'][depend_zone].update(
+                                {self._items[depend_zone][dependson_list[zone][entry][count]['Function']].get(
                                     'Item').id():
                                     [{'Item': self._items[zone][entry].get('Item'),
                                       'Function': entry,
-                                      'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                      'Compare': depend_compare,
                                       'Zone': zone,
-                                      'Group': dependson_list[zone][entry][count].get('Group'),
-                                      'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')}]})
+                                      'Group': depend_group,
+                                      'Dependvalue': depend_value}]})
                         try:
-                            finaldepend['Master_function'][dependzone][
+                            finaldepend['Master_function'][depend_zone][
                                 dependson_list[zone][entry][count]['Function']].append(
                                 {'Item': self._items[zone][entry].get('Item'),
                                  'Function': entry,
-                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                 'Compare': depend_compare,
                                  'Zone': zone,
-                                 'Group': dependson_list[zone][entry][count].get('Group'),
-                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')})
+                                 'Group': depend_group,
+                                 'Dependvalue': depend_value})
                         except Exception:
-                            finaldepend['Master_function'][dependzone].update(
+                            finaldepend['Master_function'][depend_zone].update(
                                 {dependson_list[zone][entry][count]['Function']:
                                  [{'Item': self._items[zone][entry].get('Item'),
                                    'Function': entry,
-                                   'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                   'Compare': depend_compare,
                                    'Zone': zone,
-                                   'Group': dependson_list[zone][entry][count].get('Group'),
-                                   'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')}]})
+                                   'Group': depend_group,
+                                   'Dependvalue': depend_value}]})
+        self.logger.log(VERBOSE2, "Initializing {}: Finished dependency Init Stage 3.".format(self._name))
         return finaldepend
 
     def _dependstage4(self, dependson_list, problems, finaldepend):
+        self.logger.log(VERBOSE2, "Initializing {}: Starting dependency Init Stage 4.".format(self._name))
         for zone in dependson_list:
             for entry in dependson_list[zone]:
                 for count, _ in enumerate(dependson_list[zone][entry]):
                     if '{}=init'.format(entry) in problems[zone]:
-                        dependzone = dependson_list[zone][entry][count].get('Zone')
+                        depend_zone = dependson_list[zone][entry][count].get('Zone')
+                        depend_compare = dependson_list[zone][entry][count].get('Compare')
+                        depend_group = dependson_list[zone][entry][count].get('Group')
+                        depend_value = dependson_list[zone][entry][count].get('Dependvalue')
                         try:
-                            finaldepend['Master_function'][dependzone][
+                            finaldepend['Master_function'][depend_zone][
                                 dependson_list[zone][entry][count]['Function']].append(
                                 {'Item': self._items[zone][entry].get('Item'),
                                  'Function': entry,
-                                 'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                 'Compare': depend_compare,
                                  'Zone': zone,
-                                 'Group': dependson_list[zone][entry][count].get('Group'),
-                                 'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')})
+                                 'Group': depend_group,
+                                 'Dependvalue': depend_value})
                         except Exception:
-                            finaldepend['Master_function'][dependzone].update(
+                            finaldepend['Master_function'][depend_zone].update(
                                 {dependson_list[zone][entry][count]['Function']:
                                  [{'Item': self._items[zone][entry].get('Item'),
                                    'Function': entry,
-                                   'Compare': dependson_list[zone][entry][count].get('Compare'),
+                                   'Compare': depend_compare,
                                    'Zone': zone,
-                                   'Group': dependson_list[zone][entry][count].get('Group'),
-                                   'Dependvalue': dependson_list[zone][entry][count].get('Dependvalue')}]})
+                                   'Group': depend_group,
+                                   'Dependvalue': depend_value}]})
+        self.logger.log(VERBOSE2, "Initializing {}: Finished dependency Init Stage 4.".format(self._name))
         return finaldepend
 
     def process_items(self):
