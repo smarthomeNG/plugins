@@ -359,6 +359,10 @@ class UZSU(SmartPlugin):
                     self._items[item]['list'][entry].pop('condition', None)
                     self._items[item]['list'][entry].pop('holiday', None)
                     self._items[item]['list'][entry].pop('delayedExec', None)
+            else:
+                self._items[item]['list'] = []
+            if not self._items[item].get('active'):
+                self._items[item]['active'] = False
             item(self._items[item], 'UZSU Plugin', 'init')
             self._planned.update({item: 'notinit'})
             self.logger.debug('Dict for item {} is: {}'.format(item, self._items[item]))
