@@ -1,0 +1,27 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Item':                                                 {'de': '=', 'en': '='}
+    'Wert':                                                 {'de': '=', 'en': 'Value'}
+    'Abhängig von':                                         {'de': '=', 'en': 'Depending on'}
+    'Es sind keine Items in dieser Zone definiert.':         {'de': '=', 'en': 'No items defined in this zone.'}
+    'Modell':                                               {'de': '=', 'en': 'Model'}
+    'Verbindung':                                           {'de': '=', 'en': 'Connection'}
+    'Verbindungsversuch TCP':                               {'de': '=', 'en': 'Try to connect TCP'}
+    'Verbindungsversuch RS232':                             {'de': '=', 'en': 'Try to connect RS232'}
+    '0 wenn':                                               {'de': '=', 'en': '0 if'}
+    'Ignorieren':                                           {'de': '=', 'en': 'Ignore'}
+    'Fehlermeldung':                                        {'de': '=', 'en': 'Error message'}
+    'Config neuladen':                                      {'de': '=', 'en': 'Reload config'}
+    'Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen': {'de': '=', 'en': 'The following items are assigned to this instance of the AV device plugin'}
+    'DEBUGGING':                                            {'de': '=', 'en': '='}
+    'Abfrageprotokoll':                                     {'de': '=', 'en': 'Query history'}
+    'Abfrageprotokoll löschen':                             {'de': '=', 'en': 'Empty query history'}
+    'Gelöscht':                                             {'de': '=', 'en': 'Erased'}
+    'Zeit':                                                 {'de': '=', 'en': 'Time'}
+    'Abfrage':                                              {'de': '=', 'en': 'Query'}
+    'noch keine Abfrage gesendet':                          {'de': '=', 'en': 'No query sent yet'}
+    'noch kein Kommando gesendet':                          {'de': '=', 'en': 'No command sent yet'}
+    'Zwischenspeicher':                                     {'de': '=', 'en': 'Buffer'}
+    'Kommando':                                             {'de': '=', 'en': 'Command'}
+    'noch kein Kommando gespeichert':                       {'de': '=', 'en': 'No command saved for later yet'}
+    'Liste mit Sendekommandos löschen':                     {'de': '=', 'en': 'Empty Send Commands'}
