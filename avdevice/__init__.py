@@ -24,6 +24,7 @@
 #########################################################################
 
 import logging
+import functools
 
 from lib.model.smartplugin import *
 from lib.item import Items
@@ -421,6 +422,23 @@ class AVDevice(SmartPlugin):
                             self.logger.log(VERBOSE1,
                                             "Initializing {}: Creating dependency for {} in zone {}.".format(self._name, info, zone))
 
+    def _logics_dependencies(self, zone=None, item=None):
+        deps = {'a': [], 'b':[], 'c':[], 'd':[]}
+        try:
+            info = item.id()
+            search = 'Slave_item'
+        except Exception:
+            search = 'Slave_function'
+            info = item
+        try:
+            depitem = self._dependencies[search][zone].get(info)
+            for d in depitem:
+                deps[d.get('Group')].append("{}{}{}".format(d['Item'], d['Compare'], d['Dependvalue']))
+            deps = dict( [(k,v) for k,v in deps.items() if len(v)>0])
+        except Exception as err:
+            deps = None        
+        return deps
+
     # Finding relevant items for the plugin based on the avdevice keyword
     def parse_item(self, item):
         if self._tcp is not None or self._rs232 is not None:
@@ -446,12 +464,15 @@ class AVDevice(SmartPlugin):
                     if info is not None:
                         if '_init' in keyword:
                             self._init_commands[zone][info] = {'Inititem': item, 'Item': item, 'Value': item()}
+                            item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             return self.update_item
                         elif '_speakers' in keyword:
                             self._items_speakers[zone][info] = {'Item': item, 'Value': item()}
+                            item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             return self.update_item
                         else:
                             self._items[zone][info] = {'Item': item, 'Value': item()}
+                            item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             self._parse_depend_item(item, info, zone)
                             return self.update_item
             return None
