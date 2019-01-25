@@ -547,6 +547,8 @@ class Init(object):
                 for command in self._functions['zone{}'.format(zone)]:
                     if not command == 'init' and not command == 'statusupdate':
                         try:
+                            # remove *{str}
+                            self._functions['zone{}'.format(zone)][command][4] = self._functions['zone{}'.format(zone)][command][4].replace('*{str}', '*')
                             response_to_split = self._functions['zone{}'.format(zone)][command][4].split("|")
                             for response in response_to_split:
                                 if not response:
@@ -561,6 +563,7 @@ class Init(object):
                                 valuelength = response.count('*')
                                 commandlength = 100 if (response.find('?{str}') >= 0 or response.find('*{str}') >= 0) else len(response)
                                 response = re.sub('\?\{str\}', '?', response) if response.find('?{str}') >= 0 else response
+                                response = re.sub('\*\{str\}', '*', response) if response.find('*{str}') >= 0 else response
                                 cond1 = response.count('?') == 1 and response.count('*') == 0
                                 cond2 = response.count('*') == 1
                                 cond3 = 'str' in self._functions['zone{}'.format(zone)][command][9].split(',')
@@ -764,6 +767,8 @@ class Init(object):
                         row[9] = row[9].replace('string', 'str')
                         row[9] = row[9].replace('num', 'int,float')
                         row[9] = row[9].replace('|', ',')
+                        row[2] = row[2].replace('{str}', '')
+                        row[3] = row[3].replace('{str}', '')
                         row[9] = 'empty' if (row[4].count('*') == 0 and row[4].count('?') == 0 and row[9] == '') \
                             else 'bool,int,str' if row[9] == '' else row[9]
                         row[2] = row[3] if not row[2] else row[2]
