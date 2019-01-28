@@ -4,6 +4,8 @@ plugin_translations:
     'Klick auf ein Item um dessen Konfiguration anzuzeigen':         {'de': '=', 'en': 'Click on an item to show its configuration'}
     'Aktives Item, keine (aktiven) Einträge!':                  {'de': '=', 'en': 'Active item, no (active) entries!'}
     'Item existiert nicht!':                  {'de': '=', 'en': 'Item does not exist!'}
+    'Interpolationsinformation fehlt!':  {'de': '=', 'en': 'Interpolation entry missing!'}
+    'Init Information fehlt!':  {'de': '=', 'en': 'Init entry missing!'}
     'UZSU Item':                  {'de': '=', 'en': '='}
     'Abhängige Items (mit Typ)':  {'de': '=', 'en': 'Dependant Item (with type)'}
     'Wert des abhängigen Items':  {'de': '=', 'en': 'Value of dependant Item'}
