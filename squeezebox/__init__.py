@@ -26,18 +26,26 @@ import urllib.parse
 import lib.connection
 import re
 from lib.model.smartplugin import SmartPlugin
+from bin.smarthome import VERSION
 
 class Squeezebox(SmartPlugin,lib.connection.Client):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0"
+    PLUGIN_VERSION = "1.3.1"
 
-    def __init__(self, smarthome, host='127.0.0.1', port=9090):
-        lib.connection.Client.__init__(self, host, port, monitor=True)
-        self._sh = smarthome
-        self._val = {}
-        self._obj = {}
-        self._init_cmds = []
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, smarthome):
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+        try:
+            host = self.get_parameter_value('host')
+            port = self.get_parameter_value('port')
+            lib.connection.Client.__init__(self, host, port, monitor=True)
+            self._val = {}
+            self._obj = {}
+            self._init_cmds = []
+        except Exception:
+            self._init_complete = False
+            return
+        
 
     def _check_mac(self, mac):
         return re.match("[0-9a-fA-F]{2}([:][0-9a-fA-F]{2}){5}", mac)
@@ -76,17 +84,17 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 if not item in self._val[cmd]['items']:
                     self._val[cmd]['items'].append(item)
 
-            if self.has_iattr(item.conf, 'squeezebox_init'):
-                cmd = self._resolv_full_cmd(item, 'squeezebox_init')
-                if (cmd is None):
-                    return None
+        if self.has_iattr(item.conf, 'squeezebox_init'):
+            cmd = self._resolv_full_cmd(item, 'squeezebox_init')
+            if (cmd is None):
+                return None
 
-                self.logger.debug("squeezebox: {0} is initialized by \"{1}\"".format(item, cmd))
-                if not cmd in self._val:
-                    self._val[cmd] = {'items': [item], 'logics': []}
-                else:
-                    if not item in self._val[cmd]['items']:
-                        self._val[cmd]['items'].append(item)
+            self.logger.debug("squeezebox: {0} is initialized by \"{1}\"".format(item, cmd))
+            if not cmd in self._val:
+                self._val[cmd] = {'items': [item], 'logics': []}
+            else:
+                if not item in self._val[cmd]['items']:
+                    self._val[cmd]['items'].append(item)
 
             if not cmd in self._init_cmds:
                 self._init_cmds.append(cmd)
@@ -281,7 +289,8 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             if self.connected:
                 self.logger.debug('squeezebox: init read')
                 for cmd in self._init_cmds:
-                    self._send(cmd + ' ?')
+                    cmd = '{} ?'.format(cmd) if '?' not in cmd else cmd
+                    self._send(cmd)
 
     def run(self):
         self.alive = True
