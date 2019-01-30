@@ -231,3 +231,28 @@ You will need to copy the script into your ``logics`` directory and add these li
 Check_KNX:
     filename: Check_KNX.py
 ```
+
+
+Check_KNX.py
+------------
+
+The logic Check_KNX.py was extended to create the following output at the end of the report. (Example lines only)
+
+A type comparison has to be done manually e.g. in Excel. But with this output gaps/delta between ETS Configuration and Items can be easily spotted.
+
+```
+Folgende Items sind mit Bezug zu KNX konfiguriert:
+===================================================================================================================================================================
+item                                                        |type      |dpt       |GA        |bindtype  |ETS Name
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+wurzel.zentral.klingelknopf                                 |      bool|         1|     0/3/5|knx_listen| in ETS => Globale Daten.Meldungen.Türklingel Klingeln
+wurzel.zentral.klingelknopf                                 |      bool|         1|     0/3/5|knx_send  | in ETS => Globale Daten.Meldungen.Türklingel Klingeln
+
+Folgende GAs sind in ETS konfiguriert:
+================================================================================================================================================================
+        GA|ETS Name                                                         |ETS Typ                            |#Items |       DPT|      Type|  BindType|Item
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+    0/0/14|Gerätefehler Dimmaktor 4Kanal EG                                 |EIS 1 'Switching' (1 Bit)          |     1 |         1|      bool|knx_listen|wurzel.stoerungen.geraetefehlerDimmaktorEg
+    0/0/15|Gerätefehler Dimmaktor 2Kanal EG                                 |EIS 1 'Switching' (1 Bit)          |     0 |       N/A|         ?|     knx_?|NICHT ALS ITEM ANGELEGT
+
+```
