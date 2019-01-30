@@ -11,14 +11,14 @@ plugin:
             - Logitech Squeezebox Radio\n
             - Squeezelite auf Windows, Mac OS X und Linux\n
             \n
-            Sämtliche Kommandos sollten manuell über die Telnet-Schnittstelle auf Port 9090 getestet werden.
+            Sämtliche Kommandos sollten manuell über die Telnet-Schnittstelle auf Port 9090 getestet werden. Für Abfragen muss hierbei ein "?" am Ende des Befehls stehen, z.B. "<playerid> name ?"
             '
         en: 'Connecting squeezebox devices.\n
             Tested with the following devices:\n
             - Logitech Squeezebox Radio\n
             - Squeezelite on Windows, Mac OS X and Linux\n
             \n
-            You should verify all your commands manually by using the telnet-interface on port 9090.
+            You should verify all your commands manually by using the telnet-interface on port 9090. For query commands via telnet you need to add an "?" at the end, like "<playerid> name ?"
             '
     maintainer: Robert, onkelandy
     requirements:
@@ -102,14 +102,14 @@ item_attributes:
             en: 'Is used to initialize the item at plugin startup. The commands are liste in the CLI documentation of the Media Server.'
         description_long:
             de: 'Wird genutzt, um beim Start des Plugins das Item zu aktualisierenn. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.\n
-            Der Platzhalter &lt;playerid&gt; wird durch die im Parent-Item gesetzte Player-ID ersetzt\n
+            Der Platzhalter &lt;playerid&gt; wird durch die im Parent-Item gesetzte Player-ID ersetzt. Das Fragezeichen wird automatisch an den Befehl angehängt, kann also wegfallen\n
             \n
-            Beispiel: &lt;playerid&gt; playlist name ? um den Namen des Player beim Pluginstart abzufragen
+            Beispiel: &lt;playerid&gt; playlist name, um den Namen des Player beim Pluginstart abzufragen
             '
             en: 'Is used to initialize the item at plugin startup. The commands are liste in the CLI documentation of the Media Server.\n
-            The placeholder &lt;playerid&gt; gets replaced by the player-id set in the parent item\n
+            The placeholder &lt;playerid&gt; gets replaced by the player-id set in the parent item. The question will be added automatically to the query command.\n
             \n
-            Example: &lt;playerid&gt; playlist name ? to query the name of the player at startup
+            Example: &lt;playerid&gt; playlist name, to query the name of the player at startup
             '
             
 item_structs:
