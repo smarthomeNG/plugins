@@ -30,6 +30,7 @@ from lib.shtime import Shtime
 from lib.tools import Tools
 from bin.smarthome import VERSION
 
+
 class iCal(SmartPlugin):
     PLUGIN_VERSION = "1.3.1"
     ALLOW_MULTIINSTANCE = False
@@ -52,7 +53,6 @@ class iCal(SmartPlugin):
             self.logger.error(err)
             self._init_complete = False
             return
-
 
         for calendar in calendars:
             if ':' in calendar and 'http' != calendar[:4]:
@@ -138,7 +138,7 @@ class iCal(SmartPlugin):
     def _filter_events(self, events, delta=1, offset=0):
         now = self.shtime.now()
         offset = offset - 1  # start at 23:59:59 the day before
-        delta += 1  # extend delta for negetiv offset
+        delta += 1  # extend delta for negative offset
         start = now.replace(hour=23, minute=59, second=59, microsecond=0) + datetime.timedelta(days=offset)
         end = start + datetime.timedelta(days=delta)
         revents = {}
@@ -205,15 +205,9 @@ class iCal(SmartPlugin):
         return dt
 
     def _parse_ical(self, ical, ics):
-        #skip = False
         events = {}
         tzinfo = self.shtime.tzinfo()
-        #ical = ical.replace('\n', '')
         for line in ical.splitlines():
-            #if line == 'BEGIN:VTIMEZONE':
-            #    skip = True
-            #elif line == 'END:VTIMEZONE':
-            #    skip = False
             if line == 'BEGIN:VEVENT':
                 event = {'EXDATES': []}
             elif line == 'END:VEVENT':
@@ -228,7 +222,7 @@ class iCal(SmartPlugin):
                     continue
                 if 'DTEND' not in event:
                     self.logger.warning("iCal: Warning in parsing {0} no DTEND for UID: {1}. Setting DTEND from DTSTART".format(ics, event['UID']))
-                    #Set end to start time:
+                    # Set end to start time:
                     event['DTEND'] = event['DTSTART']
                     continue
                 if 'RRULE' in event:
@@ -308,9 +302,7 @@ class iCal(SmartPlugin):
                 self.logger.warning("Problem parsing UNTIL: {1} --- {0} ".format(event, e))
                 return
         for par in rrule:
-            #self.logger.info("par: {0}".format(par))
             args[par.lower()] = rrule[par]
-            #self.logger.info("arg: {0}".format(rrule[par]))
 
         self.logger.debug("Args: {0}".format(args))
         return dateutil.rrule.rrule(freq, **args)
