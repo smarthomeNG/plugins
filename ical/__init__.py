@@ -26,26 +26,38 @@ import dateutil.tz
 import dateutil.rrule
 import dateutil.relativedelta
 from lib.model.smartplugin import SmartPlugin
+from lib.shtime import Shtime
+from lib.tools import Tools
+from bin.smarthome import VERSION
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.3.0"
+    PLUGIN_VERSION = "1.3.1"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
     PROPERTIES = ("SUMMARY", "DESCRIPTION", "LOCATION", "CATEGORIES", "CLASS")
 
-    def __init__(self, smarthome, cycle=3600, calendars = []):
-        self._sh = smarthome
-        self._items = []
-        self._icals = {}
-        self._ical_aliases = {}
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, smarthome):
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+        try:
+            self.shtime = Shtime.get_instance()
+            self.tools = Tools
+            self._items = []
+            self._icals = {}
+            self._ical_aliases = {}
+            cycle = self.get_parameter_value('cycle')
+            calendars = self.get_parameter_value('calendars')
+        except Exception as err:
+            self.logger.error(err)
+            self._init_complete = False
+            return
 
 
         for calendar in calendars:
             if ':' in calendar and 'http' != calendar[:4]:
                 name, sep, cal = calendar.partition(':')
-                self.logger.info('iCal: Registering calendar {0} ({1})'.format(name, cal))
+                self.logger.info('iCal: Registering online calendar {0} ({1})'.format(name, cal))
                 self._ical_aliases[name] = cal
                 calendar = cal
             else:
@@ -63,8 +75,8 @@ class iCal(SmartPlugin):
         self.alive = False
 
     def parse_item(self, item):
-        if 'ical_calendar' in item.conf:
-            uri = item.conf['ical_calendar']
+        if self.has_iattr(item.conf, 'ical_calendar'):
+            uri = self.get_iattr_value(item.conf, 'ical_calendar')
 
             if uri in self._ical_aliases:
                 uri = self._ical_aliases[uri]
@@ -80,7 +92,7 @@ class iCal(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
 
-    def __call__(self, ics, delta=1, offset=0, username=None, password=None, timeout=2):
+    def __call__(self, ics='', delta=1, offset=0, username=None, password=None, timeout=2):
         if ics in self._ical_aliases:
             self.logger.debug('iCal retrieve events by alias {0} -> {1}'.format(ics, self._ical_aliases[ics]))
             return self._filter_events(self._icals[self._ical_aliases[ics]], delta, offset)
@@ -94,7 +106,7 @@ class iCal(SmartPlugin):
 
     def _update_items(self):
         if len(self._items):
-            now = self._sh.now()
+            now = self.shtime.now()
 
             events = {}
             for calendar in self._icals:
@@ -124,7 +136,7 @@ class iCal(SmartPlugin):
             self._update_items()
 
     def _filter_events(self, events, delta=1, offset=0):
-        now = self._sh.now()
+        now = self.shtime.now()
         offset = offset - 1  # start at 23:59:59 the day before
         delta += 1  # extend delta for negetiv offset
         start = now.replace(hour=23, minute=59, second=59, microsecond=0) + datetime.timedelta(days=offset)
@@ -162,14 +174,16 @@ class iCal(SmartPlugin):
 
     def _read_events(self, ics, username=None, password=None, timeout=2):
         if ics.startswith('http'):
-            ical = self._sh.tools.fetch_url(ics, username=username, password=password, timeout=timeout)
+            ical = self.tools.fetch_url(self, url=ics, username=username, password=password, timeout=timeout)
             if ical is False:
                 return {}
             ical = ical.decode()
+            self.logger.debug('ical online: {}'.format(ical))
         else:
             try:
                 with open(ics, 'r') as f:
                     ical = f.read()
+                    self.logger.debug('ical offline: {}'.format(ical))
             except IOError as e:
                 self.logger.error('Could not open ics file {0}: {1}'.format(ics, e))
                 return {}
@@ -193,8 +207,8 @@ class iCal(SmartPlugin):
     def _parse_ical(self, ical, ics):
         #skip = False
         events = {}
-        tzinfo = self._sh.tzinfo()
-        ical = ical.replace('\n', '')
+        tzinfo = self.shtime.tzinfo()
+        #ical = ical.replace('\n', '')
         for line in ical.splitlines():
             #if line == 'BEGIN:VTIMEZONE':
             #    skip = True
@@ -224,7 +238,7 @@ class iCal(SmartPlugin):
                         events[event['UID']]['EXDATES'].append(event['RECURRENCE-ID'])
                         events[event['UID'] + event['DTSTART'].isoformat()] = event
                     else:
-                        self.logger.warning("iCal: problem parsing {0} duplicate UID: {1}".format(ics, event['UID']))
+                        self.logger.warning("iCal: problem parsing {0} duplicate UID: {1} ({2})".format(ics, event['UID'], event['SUMMARY']))
                         continue
                 else:
                     events[event['UID']] = event
@@ -283,6 +297,10 @@ class iCal(SmartPlugin):
             rrule['COUNT'] = int(rrule['COUNT'])
         if 'INTERVAL' in rrule:
             rrule['INTERVAL'] = int(rrule['INTERVAL'])
+        if 'BYMONTHDAY' in rrule:
+            rrule['BYMONTHDAY'] = int(rrule['BYMONTHDAY'])
+        if 'BYMONTH' in rrule:
+            rrule['BYMONTH'] = int(rrule['BYMONTH'])
         if 'UNTIL' in rrule:
             try:
                 rrule['UNTIL'] = self._parse_date(rrule['UNTIL'], tzinfo)
@@ -293,7 +311,6 @@ class iCal(SmartPlugin):
             #self.logger.info("par: {0}".format(par))
             args[par.lower()] = rrule[par]
             #self.logger.info("arg: {0}".format(rrule[par]))
-        
+
         self.logger.debug("Args: {0}".format(args))
         return dateutil.rrule.rrule(freq, **args)
-        
