@@ -8,6 +8,7 @@ plugin:
     description_long:
         de: 'Anbindung von Squeezebox Devices.\n
             Getestet mit folgenden Geräten:\n
+            \n
             - Logitech Squeezebox Radio\n
             - Squeezelite auf Windows, Mac OS X und Linux\n
             \n
@@ -15,6 +16,7 @@ plugin:
             '
         en: 'Connecting squeezebox devices.\n
             Tested with the following devices:\n
+            \n
             - Logitech Squeezebox Radio\n
             - Squeezelite on Windows, Mac OS X and Linux\n
             \n
@@ -41,22 +43,22 @@ parameters:
         default: 9090
         description:
             de: 'Der Port der CLI Schnittstelle vom Logitech Media Server'
-            en: 'Port number of the Logitech Media Server CLI'    
+            en: 'Port number of the Logitech Media Server CLI'
     host:
         type: ip
         default: 127.0.0.1
         description:
             de: 'IP des Logitech Media Servers'
             en: 'IP of the Logitech Media Server'
-            
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     squeezebox_playerid:
         type: str
         description:
-            de: 'MAC Adresse des Players. Kann im Parent-Item angegeben werden, um in den anderen Items den &lt;playerid&gt; Platzhalter nutzen zu können.'
-            en: 'MAC address of your player. Used in the parent item to allow using &lt;playerid&gt; placeholder in the children.'
- 
+            de: 'MAC Adresse des Players. Kann im Parent-Item angegeben werden, um in den anderen Items den <playerid> Platzhalter nutzen zu können.'
+            en: 'MAC address of your player. Used in the parent item to allow using <playerid> placeholder in the children.'
+
     squeezebox_send:
         type: str
         description:
@@ -65,17 +67,19 @@ item_attributes:
         description_long:
             de: 'Wird genutzt, um einen Befehl zu senden. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.\n
             Folgende Platzhalter können genutzt werden:\n
-            - &lt;playerid&gt;: Wird durch die im Parent-Item gesetzte Player-ID ersetzt\n
+            \n
+            - <playerid>: Wird durch die im Parent-Item gesetzte Player-ID ersetzt\n
             - {}: Der Wert des Items wird in diesen Platzhalter geschrieben (sollte nicht verwendet werden, wenn ein fixer oder kein Wert nötig ist).\n
             \n
-            Beispiel: &lt;playerid&gt; name {} zum Ersetzen des Playernamen durch den Itemwert
+            Beispiel: <playerid> name {} zum Ersetzen des Playernamen durch den Itemwert
             '
             en: 'Is used to send a command. The commands are liste in the CLI documentation of the Media Server.\n
             The following placeholder can be used:\n
-            - &lt;playerid&gt;: gets replaced by the player-id set in the parent item\n
-            - {}: the value of the item is written to this placeholder (don't use if a fixed/no value is required)\n
             \n
-            Example: &lt;playerid&gt; name {} to replace the player name by the item value
+            - <playerid>: gets replaced by the player-id set in the parent item\n
+            - {}: the value of the item is written to this placeholder (do not use if a fixed/no value is required)\n
+            \n
+            Example: <playerid> name {} to replace the player name by the item value
             '
 
     squeezebox_recv:
@@ -85,14 +89,14 @@ item_attributes:
             en: 'Is used to receive updates from the player. The commands are liste in the CLI documentation of the Media Server.'
         description_long:
             de: 'Wird genutzt, um Änderungen vom Player zu empfangen. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.\n
-            Der Platzhalter &lt;playerid&gt; wird durch die im Parent-Item gesetzte Player-ID ersetzt\n
+            Der Platzhalter <playerid> wird durch die im Parent-Item gesetzte Player-ID ersetzt\n
             \n
-            Beispiel: &lt;playerid&gt; prefset server volume zum Updaten des Itemwerts durch die Lautstärke des Players
+            Beispiel: <playerid> prefset server volume zum Updaten des Itemwerts durch die Lautstärke des Players
             '
             en: 'Is used to receive updates from the player. The commands are liste in the CLI documentation of the Media Server.\n
-            The placeholder &lt;playerid&gt; gets replaced by the player-id set in the parent item\n
+            The placeholder <playerid> gets replaced by the player-id set in the parent item\n
             \n
-            Example: &lt;playerid&gt; prefset server volume to update the item value by the volume of the player
+            Example: <playerid> prefset server volume to update the item value by the volume of the player
             '
 
     squeezebox_init:
@@ -102,20 +106,20 @@ item_attributes:
             en: 'Is used to initialize the item at plugin startup. The commands are liste in the CLI documentation of the Media Server.'
         description_long:
             de: 'Wird genutzt, um beim Start des Plugins das Item zu aktualisierenn. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.\n
-            Der Platzhalter &lt;playerid&gt; wird durch die im Parent-Item gesetzte Player-ID ersetzt. Das Fragezeichen wird automatisch an den Befehl angehängt, kann also wegfallen\n
+            Der Platzhalter <playerid> wird durch die im Parent-Item gesetzte Player-ID ersetzt. Das Fragezeichen wird automatisch an den Befehl angehängt, kann also wegfallen\n
             \n
-            Beispiel: &lt;playerid&gt; playlist name, um den Namen des Player beim Pluginstart abzufragen
+            Beispiel: <playerid> playlist name, um den Namen des Player beim Pluginstart abzufragen
             '
             en: 'Is used to initialize the item at plugin startup. The commands are liste in the CLI documentation of the Media Server.\n
-            The placeholder &lt;playerid&gt; gets replaced by the player-id set in the parent item. The question will be added automatically to the query command.\n
+            The placeholder <playerid> gets replaced by the player-id set in the parent item. The question will be added automatically to the query command.\n
             \n
-            Example: &lt;playerid&gt; playlist name, to query the name of the player at startup
+            Example: <playerid> playlist name, to query the name of the player at startup
             '
-            
+
 item_structs:
     playeritems:
         name: Vorlage-Struktur für Squeezebox Player
-        
+
         squeezebox_playerid: 00:00:00:00:00:00
         remark: Overwrite the playerid attribute with your real MAC address
 
@@ -290,7 +294,7 @@ item_structs:
             visu_acl: ro
             squeezebox_recv: <playerid> album
             squeezebox_init: <playerid> album
-            
+
             currentalbumarturl:
                 type: str
                 visu_acl: ro
@@ -309,13 +313,13 @@ item_structs:
             visu_acl: ro
             squeezebox_recv: <playerid> playlist newsong
             squeezebox_init: <playerid> current_title
-            
+
         path:
             type: str
             visu_acl: ro
             squeezebox_recv: <playerid> path
             squeezebox_init: <playerid> path
-            
+
         duration:
             type: num
             visu_acl: ro
@@ -335,14 +339,14 @@ item_structs:
             visu_acl: rw
             enforce_updates: 'True'
             squeezebox_send: <playerid> sync -
-            
+
         time:
             type: num
             visu_acl: rw
             enforce_updates: 'True'
             squeezebox_recv: <playerid> time
             squeezebox_send: <playerid> time {}
-            
+
             query:
                 type: num
                 visu_acl: rw
@@ -352,7 +356,7 @@ item_structs:
                 autotimer: 10 = value
                 enforce_updates: 'True'
                 remark: Queries current song time every 10 seconds and updates time item
-                eval_trigger: 
+                eval_trigger:
                     - sh...forward
                     - sh...rewind
                 on_change:
@@ -375,7 +379,7 @@ item_structs:
             squeezebox_send: <playerid> time -{}
 
         playlist:
-        
+
             index:
                 type: num
                 visu_acl: rw
@@ -409,7 +413,7 @@ item_structs:
                 enforce_updates: 'True'
                 visu_acl: rw
                 squeezebox_send: <playerid> playlist resume {}
-             
+
             next:
                 type: bool
                 enforce_updates: 'True'
