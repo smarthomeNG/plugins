@@ -123,18 +123,19 @@ item_structs:
         squeezebox_playerid: 00:00:00:00:00:00
         remark: Overwrite the playerid attribute with your real MAC address
 
-        status:
+        mode:
             type: str
             visu_acl: rw
-            enforce_update: True
-            squeezebox_send: <playerid> mode ?
+            squeezebox_send: <playerid> mode {}
             squeezebox_recv: <playerid> mode
             squeezebox_init: <playerid> mode
-            remark: Sets the play/pause/stop value correctly
-            on_update:
-                - ..play = False if not value == 'play' else True
-                - ..stop = False if not value == 'stop' else True
-                - ..pause = False if not value == 'pause' else True
+            remark: the mode gets automatically updated when using play, stop or pause and the other way around
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: <playerid> mode ?
 
         power:
             type: bool
@@ -177,13 +178,13 @@ item_structs:
                 squeezebox_send: <playerid> button voldown
 
             low:
-                type: bool
+                type: num
                 value: 60
                 remark: Sets the volume to a given (low) value
                 squeezebox_send: <playerid> mixer volume {}
 
             high:
-                type: bool
+                type: num
                 value: 80
                 remark: Sets the volume to a given (high) value
                 squeezebox_send: <playerid> mixer volume {}
@@ -203,7 +204,7 @@ item_structs:
             squeezebox_init: <playerid> playlist repeat
             squeezebox_recv: <playerid> playlist repeat
             remark: Sets the repeat song, playlist, none values correctly
-            on_update:
+            on_change:
                 - .song = False if not value == 1 else True
                 - .playlist = False if not value == 2 else True
                 - .none = False if not value == 0 else True
@@ -233,7 +234,7 @@ item_structs:
             squeezebox_init: <playerid> playlist shuffle
             squeezebox_recv: <playerid> playlist shuffle
             remark: Sets the shuffle song, album, none values correctly
-            on_update:
+            on_change:
                 - .song = False if not value == 1 else True
                 - .album = False if not value == 2 else True
                 - .none = False if not value == 0 else True
@@ -345,22 +346,16 @@ item_structs:
             visu_acl: rw
             enforce_updates: 'True'
             squeezebox_recv: <playerid> time
+            squeezebox_init: <playerid> time
             squeezebox_send: <playerid> time {}
 
             query:
-                type: num
+                type: bool
                 visu_acl: rw
-                squeezebox_init: <playerid> time
-                squeezebox_recv: <playerid> time
                 squeezebox_send: <playerid> time ?
-                autotimer: 10 = value
+                cycle: 100
                 enforce_updates: 'True'
                 remark: Queries current song time every 10 seconds and updates time item
-                eval_trigger:
-                    - sh...forward
-                    - sh...rewind
-                on_change:
-                    - ..time = value
 
         forward:
             type: num
