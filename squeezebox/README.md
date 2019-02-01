@@ -3,8 +3,9 @@
 ## New in version 1.3.1
 
 * Parse the plugin parameters in Smart Plugin style
-* Update the plugin.yaml  (move documentation there)
+* Update the plugin.yaml (move documentation there)
 * Include item struct templates for players
+* fix umlaut problems
 * small tweaks
 
 ## New in version 1.3.0
