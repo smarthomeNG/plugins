@@ -102,3 +102,17 @@ plugin_functions:
                 description:
                     de: 'wann der zu analysierende Zeitrahmen starten soll.'
                     en: 'when should the analysed timeframe start.'
+
+            prio:
+                type: int
+                default: 1
+                description:
+                    de: 'Falls in einem Kalendereintrag Felder mehrfach vorkommen, kann hier bestimmt werden, das wievielte Feld priorisiert werden soll.'
+                    en: 'If in one calendar entry a field is present multiple times you can define which occurence should be prioritized.'
+
+            verify:
+                type: bool
+                default: True
+                description:
+                    de: 'Bestimmt, ob eine https URL per SSL verifiziert werden soll oder nicht.'
+                    en: 'Defines if a https URL should be verified via SSL or not.'

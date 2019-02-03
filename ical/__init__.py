@@ -92,7 +92,7 @@ class iCal(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
 
-    def __call__(self, ics='', delta=1, offset=0, username=None, password=None, timeout=2):
+    def __call__(self, ics='', delta=1, offset=0, username=None, password=None, timeout=2, prio=1, verify=True):
         if ics in self._ical_aliases:
             self.logger.debug('iCal retrieve events by alias {0} -> {1}'.format(ics, self._ical_aliases[ics]))
             return self._filter_events(self._icals[self._ical_aliases[ics]], delta, offset)
@@ -102,7 +102,7 @@ class iCal(SmartPlugin):
             return self._filter_events(self._icals[ics], delta, offset)
 
         self.logger.debug('iCal retrieve events {0}'.format(ics))
-        return self._filter_events(self._read_events(ics, username=username, password=password, timeout=timeout), delta, offset)
+        return self._filter_events(self._read_events(ics, username=username, password=password, timeout=timeout, prio=prio, verify=verify), delta, offset)
 
     def _update_items(self):
         if len(self._items):
@@ -135,7 +135,7 @@ class iCal(SmartPlugin):
         if len(self._icals):
             self._update_items()
 
-    def _filter_events(self, events, delta=1, offset=0):
+    def _filter_events(self, events, delta=1, offset=0, prio=1):
         now = self.shtime.now()
         offset = offset - 1  # start at 23:59:59 the day before
         delta += 1  # extend delta for negative offset
@@ -172,9 +172,10 @@ class iCal(SmartPlugin):
                         revents[date].append(revent)
         return revents
 
-    def _read_events(self, ics, username=None, password=None, timeout=2):
+    def _read_events(self, ics, username=None, password=None, timeout=2, prio=1, verify=True):
         if ics.startswith('http'):
             ical = self.tools.fetch_url(self, url=ics, username=username, password=password, timeout=timeout)
+            # maybe future feature ical = self.tools.fetch_url(self, url=ics, username=username, password=password, timeout=timeout, verify=verify)
             if ical is False:
                 return {}
             ical = ical.decode()
@@ -188,7 +189,7 @@ class iCal(SmartPlugin):
                 self.logger.error('Could not open ics file {0}: {1}'.format(ics, e))
                 return {}
 
-        return self._parse_ical(ical, ics)
+        return self._parse_ical(ical, ics, prio)
 
     def _parse_date(self, val, dtzinfo, par=''):
         if par.startswith('TZID='):
@@ -204,9 +205,13 @@ class iCal(SmartPlugin):
         dt = dt.replace(tzinfo=dtzinfo)
         return dt
 
-    def _parse_ical(self, ical, ics):
+    def _parse_ical(self, ical, ics, prio):
         events = {}
         tzinfo = self.shtime.tzinfo()
+        ical = ical.replace("\r\n\\n", ", ")
+        ical = ical.replace("\n\\n", ", ").replace("\\n", ", ")
+        ical = ical.replace("\\n", ", ")
+        prio_count = {'UID': 1, 'SUMMARY': 1, 'SEQUENCE': 1, 'RRULE': 1, 'CLASS': 1, 'DESCRIPTION': 1}
         for line in ical.splitlines():
             if line == 'BEGIN:VEVENT':
                 event = {'EXDATES': []}
@@ -243,8 +248,12 @@ class iCal(SmartPlugin):
                 key = key.upper()
                 if key == 'TZID':
                     tzinfo = dateutil.tz.gettz(val)
-                elif key in ['UID', 'SUMMARY', 'SEQUENCE', 'RRULE', 'CLASS']:
-                    event[key] = val  # noqa
+                elif key in ['UID', 'SUMMARY', 'SEQUENCE', 'RRULE', 'CLASS', 'DESCRIPTION']:
+                    if event.get(key) is None or prio_count[key] == prio:
+                        prio_count[key] = prio_count.get(key) + 1
+                        event[key] = val
+                    else:
+                        self.logger.info('Value {} for entry {} ignored because of prio setting'.format(val, key))
                 elif key in ['DTSTART', 'DTEND', 'EXDATE', 'RECURRENCE-ID']:
                     try:
                         date = self._parse_date(val, tzinfo, par)
