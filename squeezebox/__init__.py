@@ -36,9 +36,9 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         try:
-            host = self.get_parameter_value('host')
-            port = self.get_parameter_value('port')
-            lib.connection.Client.__init__(self, host, port, monitor=True)
+            self._host = self.get_parameter_value('host')
+            self._port = self.get_parameter_value('port')
+            lib.connection.Client.__init__(self, self._host, self._port, monitor=True)
             self._val = {}
             self._obj = {}
             self._init_cmds = []
@@ -83,6 +83,14 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             else:
                 if not item in self._val[cmd]['items']:
                     self._val[cmd]['items'].append(item)
+
+        if self.has_iattr(item.conf, 'squeezebox_albumart'):
+            playerid = self._resolv_full_cmd(item, 'squeezebox_albumart')
+            if (playerid is None):
+                return None
+            url = 'http://{}:{}/music/current/cover.jpg?player={}'.format(self._host, self._port, playerid)
+            item(url, 'LMS', 'parse')
+            self.logger.debug("squeezebox: album art item {0} is set to \"{1}\"".format(item, url))
 
         if self.has_iattr(item.conf, 'squeezebox_init'):
             cmd = self._resolv_full_cmd(item, 'squeezebox_init')

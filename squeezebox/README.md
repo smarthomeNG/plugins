@@ -6,6 +6,7 @@
 * Update the plugin.yaml (move documentation there)
 * Include item struct templates for players
 * fix umlaut problems
+* add album art url automatically
 * small tweaks
 
 ## New in version 1.3.0
