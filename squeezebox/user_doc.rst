@@ -19,6 +19,7 @@ Konfiguration
         plugin_name: squeezebox
         #host: 127.0.0.1
         #port: 9090
+        #web_port: 9000
 
 Kommandos
 =========

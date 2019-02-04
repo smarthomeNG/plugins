@@ -38,6 +38,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
         try:
             self._host = self.get_parameter_value('host')
             self._port = self.get_parameter_value('port')
+            self._web_port = self.get_parameter_value('web_port')
             lib.connection.Client.__init__(self, self._host, self._port, monitor=True)
             self._val = {}
             self._obj = {}
@@ -88,7 +89,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             playerid = self._resolv_full_cmd(item, 'squeezebox_albumart')
             if (playerid is None):
                 return None
-            url = 'http://{}:{}/music/current/cover.jpg?player={}'.format(self._host, self._port, playerid)
+            url = 'http://{}:{}/music/current/cover.jpg?player={}'.format(self._host, self._web_port, playerid)
             item(url, 'LMS', 'parse')
             self.logger.debug("squeezebox: album art item {0} is set to \"{1}\"".format(item, url))
 
