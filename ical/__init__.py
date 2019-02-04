@@ -175,7 +175,7 @@ class iCal(SmartPlugin):
     def _read_events(self, ics, username=None, password=None, timeout=2, prio=1, verify=True):
         if ics.startswith('http'):
             ical = self.tools.fetch_url(self, url=ics, username=username, password=password, timeout=timeout)
-            # maybe future feature ical = self.tools.fetch_url(self, url=ics, username=username, password=password, timeout=timeout, verify=verify)
+            # ical = self.tools.fetch_url(self, url=ics, username=username, password=password, timeout=timeout, verify=verify)
             if ical is False:
                 return {}
             ical = ical.decode()
@@ -211,9 +211,9 @@ class iCal(SmartPlugin):
         ical = ical.replace("\r\n\\n", ", ")
         ical = ical.replace("\n\\n", ", ").replace("\\n", ", ")
         ical = ical.replace("\\n", ", ")
-        prio_count = {'UID': 1, 'SUMMARY': 1, 'SEQUENCE': 1, 'RRULE': 1, 'CLASS': 1, 'DESCRIPTION': 1}
         for line in ical.splitlines():
             if line == 'BEGIN:VEVENT':
+                prio_count = {'UID': 1, 'SUMMARY': 1, 'SEQUENCE': 1, 'RRULE': 1, 'CLASS': 1, 'DESCRIPTION': 1}
                 event = {'EXDATES': []}
             elif line == 'END:VEVENT':
                 if 'UID' not in event:

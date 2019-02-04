@@ -10,22 +10,22 @@ today = sh.now().date()
 
 holidays = sh.ical('/usr/local/smarthome/holidays.ical')
 if today in holidays:
-    print 'yeah'
+    logger.info('yeah')
 else:
-    print 'naah'
+    logger.info('naah')
 
 events = sh.ical('http://cal.server/events.ical')
 for day in events:
-    print("Date: {0}".format(day))
+    logger.info("Date: {0}".format(day))
     for event in events[day]:
         start = event['Start']
         summary = event['Summary']
         cal_class = event['Class']
-        print("Time: {0} {1}".format(start, summary))
+        logger.info("Time: {0} {1}".format(start, summary))
         if 'testword' in str(summary).lower():
-            print 'calendar entry with testword found'
+            logger.info('calendar entry with testword found')
             if start.date() == tomorrow:
-                print 'Textword calendar entry starts tommorrow')
+                logger.info('Textword calendar entry starts tommorrow')
         if 'private' in str(cal_class).lower():
-            print 'Private calendar entry found.'
+            logger.info('Private calendar entry found.')
 ```
