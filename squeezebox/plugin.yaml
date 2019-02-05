@@ -44,6 +44,14 @@ parameters:
         description:
             de: 'Der Port der CLI Schnittstelle vom Logitech Media Server'
             en: 'Port number of the Logitech Media Server CLI'
+
+    web_port:
+        type: int
+        default: 9000
+        description:
+            de: 'Der Port der Web Schnittstelle vom Logitech Media Server, wird für die Abfrage des aktuellen Album Artworks genutzt.'
+            en: 'Port number of the Logitech Media Server web interface. Is used to query the current album art.'
+
     host:
         type: ip
         default: 127.0.0.1
@@ -56,7 +64,7 @@ item_attributes:
     squeezebox_playerid:
         type: mac
         description:
-            de: 'MAC Adresse des Players. Kann im Parent-Item angegeben werden, um in den anderen Items den <playerid> Platzhalter nutzen zu können.'
+            de: 'MAC Adresse des Players. Sollte im Parent-Item angegeben werden, um in den anderen Items den <playerid> Platzhalter nutzen zu können.'
             en: 'MAC address of your player. Used in the parent item to allow using <playerid> placeholder in the children.'
 
     squeezebox_send:
@@ -176,6 +184,7 @@ item_structs:
             enforce_updates: 'True'
             squeezebox_send: info total genres ?
             squeezebox_recv: info total genres
+            squeezebox_init: info total genres
 
         totalduration:
             type: num
@@ -183,6 +192,7 @@ item_structs:
             enforce_updates: 'True'
             squeezebox_send: info total duration ?
             squeezebox_recv: info total duration
+            squeezebox_init: info total duration
 
         totalartists:
             type: num
@@ -190,6 +200,7 @@ item_structs:
             enforce_updates: 'True'
             squeezebox_send: info total artists ?
             squeezebox_recv: info total artists
+            squeezebox_init: info total artists
 
         totalalbums:
             type: num
@@ -197,6 +208,7 @@ item_structs:
             enforce_updates: 'True'
             squeezebox_send: info total albums ?
             squeezebox_recv: info total albums
+            squeezebox_init: info total albums
 
         totalsongs:
             type: num
@@ -204,6 +216,7 @@ item_structs:
             enforce_updates: 'True'
             squeezebox_send: info total songs ?
             squeezebox_recv: info total songs
+            squeezebox_init: info total songs
 
         rescan:
             type: str
@@ -212,18 +225,23 @@ item_structs:
             squeezebox_recv: rescan
             squeezebox_init: rescan
 
-            progress:
-                type: str
-                visu_acl: ro
-                squeezebox_send: rescanprogress
-                squeezebox_recv: rescanprogress
-                squeezebox_init: rescanprogress
-
             query:
                 type: bool
                 visu_acl: rw
                 enforce_updates: 'True'
                 squeezebox_send: rescan ?
+
+            progress:
+                type: str
+                visu_acl: ro
+                squeezebox_send: rescanprogress
+                squeezebox_recv: scanner notify
+
+                query:
+                    type: bool
+                    visu_acl: rw
+                    enforce_updates: 'True'
+                    squeezebox_send: rescanprogress
 
     server:
         name: Vorlage-Struktur für Squeezebox Server
@@ -245,13 +263,10 @@ item_structs:
                 type: bool
                 visu_acl: rw
                 enforce_updates: 'True'
-                squeezebox_send: <playerid> player count ?
+                squeezebox_send: player count ?
 
     player:
         name: Vorlage-Struktur für Squeezebox Player
-
-        squeezebox_playerid: 00:00:00:00:00:00
-        remark: Overwrite the playerid attribute with your real MAC address
 
         alarms:
             type: str
@@ -293,7 +308,7 @@ item_structs:
                 squeezebox_send: <playerid> signalstrength ?
 
         name:
-            type: num
+            type: str
             visu_acl: rw
             squeezebox_send: <playerid> name {}
             squeezebox_recv: <playerid> name
@@ -398,7 +413,7 @@ item_structs:
                 visu_acl: ro
                 cache: 'True'
                 squeezebox_albumart: <playerid>
-                remark: Will get set to http://<SERVER IP>:9002/music/current/cover.jpg?player=<PLAYER MAC> automatically on plugin start
+                remark: Will get set to http://<SERVER IP>:<WEB_PORT>/music/current/cover.jpg?player=<PLAYER MAC> automatically on plugin start
 
         title:
             type: str
@@ -426,9 +441,6 @@ item_structs:
 
     controls:
         name: Vorlage-Struktur für Squeezebox Player
-
-        squeezebox_playerid: 00:00:00:00:00:00
-        remark: Overwrite the playerid attribute with your real MAC address
 
         mode:
             type: str
@@ -624,9 +636,6 @@ item_structs:
 
     playlist:
         name: Vorlage-Struktur für Squeezebox Playlists
-
-        squeezebox_playerid: 00:00:00:00:00:00
-        remark: Overwrite the playerid attribute with your real MAC address
 
         index:
             type: num
