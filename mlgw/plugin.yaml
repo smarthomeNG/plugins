@@ -26,7 +26,7 @@ parameters:
         description:
             de: 'IP Adresse bzw. Hostname des Masterlink Gateways'
             en: 'ip address or hostname of the masterlink gateway'
-        
+
     port:
         type: int
         default: 9000
@@ -34,35 +34,35 @@ parameters:
         description:
             de: 'Port Nummer des Masterlink Gateways'
             en: 'port number of the masterlink gateway'
-        
+
     username:
         type: str
         default: 'mlgw'
         description:
             de: 'Username für das Login'
             en: 'Username for the login'
-        
+
     password:
         type: str
         default: 'mlgw'
         description:
             de: 'Passwort für das Login'
             en: 'Password for the login'
-        
+
     rooms:
         type: list
         default: []
         description:
             de: 'Liste der Räume'
             en: 'List of rooms'
-        
+
     mlns:
         type: str
         default: []
         description:
             de: 'Liste der MLNs'
             en: 'List of MLNs'
-        
+
     log_mlgwtelegrams:
         type: int
         default: 0
@@ -71,7 +71,7 @@ parameters:
         description:
             de: 'Loglevel für die mlgw Telegramme'
             en: 'Loglevel for mlgw telegrams'
-        
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     mlgw_send:
@@ -80,28 +80,28 @@ item_attributes:
         description:
             de: 'Kommando welches gesendet werden soll'
             en: 'Command to be sent'
-        
+
     mlgw_mln:
         type: str
         default: []
         description:
             de: 'MLN an die das Kommando gesendet werden soll'
             en: 'Destination MLN for the command'
-        
+
     mlgw_listen:
         type: str
         default: []
         description:
             de: 'Befehlstyp auf den gehört werden soll (LIGHT/COMMAND)'
             en: 'Type of command (LIGHT/COMMAND)'
-        
+
     mlgw_room:
         type: str
         default: []
         description:
             de: 'Raum aus dem der Befehl kommt'
             en: 'Room where the command is originating from'
-        
+
     mlgw_cmd:
         type: str
         default: []
@@ -109,6 +109,9 @@ item_attributes:
             de: 'Befehl auf den reagiert werden soll'
             en: 'Command to listen for'
 
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions: NONE
     # Definition of function interface of the plugin

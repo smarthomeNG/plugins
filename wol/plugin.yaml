@@ -44,5 +44,8 @@ item_attributes:
             de: '(optional) IP Adresse des per WOL aufzuweckenden Geräts.'
             en: '(optional) IP address of device that shall be started by WOL.'
 
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions: NONE
     # Definition of function interface of the plugin

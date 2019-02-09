@@ -37,7 +37,10 @@ parameters:
 
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
-    
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions:
 
     get_radiation_data_for_id:

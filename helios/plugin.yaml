@@ -25,4 +25,13 @@ plugin:
 #        description:
 #            de: 'Abfrage-Intervall'
 #            en: 'Polling interval'
-# item_attributes:
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+

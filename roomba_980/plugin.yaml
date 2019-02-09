@@ -6,7 +6,8 @@ plugin:
         de: 'Anbindung von iRobot Roomba Staubsaugern der Serie 900'
         en: 'integration of the iRobot Roomba vacuum cleaner series 900'
     maintainer: 'Zapfen83'
-    tester: 
+    tester:
+    state: ready
     keywords: irobot roomba             # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
@@ -93,4 +94,10 @@ item_attributes:
     description:
       de: "Roomba fährt zur Homebase"
       en: "Roomba goes back to the homebase"
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
 
