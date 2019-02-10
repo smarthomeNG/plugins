@@ -9,6 +9,7 @@ plugin:
     maintainer: Robert Budde / A. Schwithal
     # Who tests this plugin?
     #tester:
+    state: ready
     keywords: EnOcean, Eltako
     # url of documentation (wiki) page
     #documentation: https://...

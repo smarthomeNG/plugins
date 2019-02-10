@@ -7,6 +7,7 @@ plugin:
         en: ''
     maintainer: rthill
     tester: Sandman60
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py

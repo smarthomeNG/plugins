@@ -49,6 +49,7 @@ plugin:
         en: ''
     maintainer: msinn
 #    tester:                        # Who tests this plugin?
+    state: ready
     keywords: iot
     documentation: http://smarthomeng.de/user/plugins/mqtt/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin

@@ -5,6 +5,7 @@ plugin:
         en: 'Plugin for Helios EC x00 Pro / Vallox xx SE control'
     maintainer: 'Tom Bombadil'
     tester: '-'
+    state: ready
     keywords: 'helios vallox ventilation'
     documentation: https://github.com/Tom-Bom-badil/helios/wiki
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/40092-erweiterung-helios-vallox-plugin
@@ -27,7 +28,7 @@ plugin:
 #            en: 'Polling interval'
 
 item_attributes:
-    # Definition of item attributes defined by this plugin
+# Definition of item attributes defined by this plugin
 
 plugin_functions: NONE
 # Definition of plugin functions defined by this plugin

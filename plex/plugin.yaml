@@ -7,6 +7,7 @@ plugin:
         en: ''
     maintainer: rthill
 #    tester:                        # Who tests this plugin?
+    state: ready
     keywords: mediacenter
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py

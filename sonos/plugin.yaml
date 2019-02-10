@@ -7,6 +7,7 @@ plugin:
       en: 'Sonos plugin'
   maintainer: pfischi
   tester: pfischi
+  state: ready
   keywords: Sonos sonos multimedia
   documentation: https://github.com/smarthomeNG/plugins/tree/master/sonos # url of documentation (wiki) page
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung

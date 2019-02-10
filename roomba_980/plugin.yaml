@@ -95,6 +95,9 @@ item_attributes:
       de: "Roomba fährt zur Homebase"
       en: "Roomba goes back to the homebase"
 
+item_structs:
+# Definition of item-structure templates for this plugin
+
 plugin_functions: NONE
 # Definition of plugin functions defined by this plugin
 

@@ -5,6 +5,7 @@ plugin:
         de: 'Raum Temperatur Regler'
         en: 'Room Temperatur controller'
     maintainer: Thomas Creutz / bmxp
+    state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/31450-rtr-heizungs-plugin
 
     version: 1.2.3                 # Plugin version

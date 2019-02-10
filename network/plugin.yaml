@@ -7,6 +7,7 @@ plugin:
         en: 'Support for the protocols UDP and TCP'
     maintainer: cmalo (mknx)
     tester: onkelandy, psilo909
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 

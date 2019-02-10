@@ -7,6 +7,7 @@ plugin:
         en: ''
     maintainer: '? (lbernau)'
     tester: onkelandy, psilo909, Sandman60
+    state: ready
     keywords: messaging
     documentation: https://www.smarthomeng.de/developer/plugins/pushbullet/README.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/36001-neues-plugin-pushbullet
