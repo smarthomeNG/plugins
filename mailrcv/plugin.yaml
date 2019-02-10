@@ -1,0 +1,78 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Empfangen von eMails via imap'
+        en: 'Receive emails via imap'
+    maintainer: msinn
+    tester: psilo909, onkelandy, Sandman60
+    state: develop
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.4.0                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    classname: IMAP                # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+
+    host:
+        type: str
+        default: ''
+        description:
+            de: 'Adresse des IMAP Hosts'
+            en: 'Address of IMAP host'
+
+    port:
+        type: int
+        default: 993
+        valid_min: 0
+        valid_max: 65535
+        description:
+            de: 'Port des IMAP service (bitte 143 nutzen, fals tls deaktiviert wird)'
+            en: 'Port used by IMAP service (use 143 if tls is set to False)'
+
+    tls:
+        type: bool
+        default: True
+        description:
+            de: 'tls zur Verschlüsselung nutzen'
+            en: 'Use tls for encyption'
+
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: 'Abfrage-Intervall für das IMAP Postfach'
+            en: 'check-intervall for the IMAP inbox'
+
+    username:
+        type: str
+        default: ''
+        description:
+            de: 'Username für die Anmeldung am IMAP host'
+            en: 'Username for login to the IMAP host'
+
+    password:
+        type: str
+        default: ''
+        hide: True
+        description:
+            de: 'Passwort für die Anmeldung am IMAP host'
+            en: 'Password for login to the IMAP host'
+
+item_attributes: NONE
+    # Definition of item attributes defined by this plugin
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters:
+# Definition of logic parameters defined by this plugin
+
+
