@@ -15,9 +15,9 @@ imap:
     host: mail.example.com
     username: smarthome
     password: secret
-    # tls = False
-    # port = default
-    # cycle = 300
+    # tls: False
+    # port: default
+    # cycle: 300
 ```
 
 #### Attributes
