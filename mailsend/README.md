@@ -13,10 +13,9 @@ mail:
     plugin_name: mailsend
     host: mail.example.com
     mail_from: mail@example.com
-
-# tls = True
-# username = False
-# password = False
+    # tls: True
+    # username: False
+    # password: False
 
 ```
 
