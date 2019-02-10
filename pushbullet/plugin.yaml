@@ -33,7 +33,7 @@ parameters:
             de: '(optional) Id des anzusprechenden Geräts, wo eine Pushbullet App läuft. Auf http://www.pushbullet.com einloggen, Gerät auswählen und den Teil der URL kopieren, der hinter "device_iden=" kommt. Falls nicht gesetzt, muss der Wert explizit in Funktionsaufrufen als Parameter angegeben werden.'
             en: '(optional) Id of referenced device, where Pushbullet app is running. Log in into http://www.pushbullet.com, select target device, copy the part of the browser URL behind "device_iden=" If not set, you have to use it in function calls.'
 
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
 
 plugin_functions:
@@ -194,3 +194,7 @@ plugin_functions:
                 description:
                     de: "Inhalt der Nachricht."
                     en: "Body of the note."
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
