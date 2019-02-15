@@ -208,7 +208,6 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 elif (data[1] == 'stop'):
                     self._update_items_with_data([data[0], 'play', '0'])
                     self._update_items_with_data([data[0], 'stop', '1'])
-                    self._update_items_with_data([data[0], 'pause', '0'])
                     self._update_items_with_data([data[0], 'mode', 'stop'])
                     self._send(data[0] + ' time ?')
                     return
