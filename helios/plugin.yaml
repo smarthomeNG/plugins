@@ -13,22 +13,31 @@ plugin:
     sh_minversion: 1.1             # minimum shNG version to use this plugin
     multi_instance:  False         # plugin supports multi instance
     classname: 'Helios'            # class containing the plugin
-# parameters:                        # Definition of parameters to be configured in etc/plugin.yaml
-#    tty:
-#        type: str
-#        default: '/dev/ttyUSB0'
-#        description:
-#            de: 'Port für die Kommunikation'
-#            en: 'Port for communication'
-#    cycle: 'Polling interval in seconds'
-#        type: num
-#        default: 300
-#        description:
-#            de: 'Abfrage-Intervall'
-#            en: 'Polling interval'
+
+parameters:                        # Definition of parameters to be configured in etc/plugin.yaml
+    tty:
+        type: str
+        default: '/dev/ttyUSB0'
+        description:
+            de: 'Port für die Kommunikation'
+            en: 'Port for communication'
+
+    cycle:
+        type: num
+        default: 60
+        description:
+            de: 'Abfrage-Intervall in Sekunden'
+            en: 'Polling interval in seconds'
+
 
 item_attributes:
 # Definition of item attributes defined by this plugin
+    helios_var:
+        type: str
+        description:
+            de: 'Keine Beschreibung angegeben. (Bitte in den Support Thread im SmatHomeNG Forum schauen)'
+            en: 'No description given (Please visit the support thread in the SmartHomeNG Forum)'
+
 
 plugin_functions: NONE
 # Definition of plugin functions defined by this plugin
