@@ -8,6 +8,7 @@ plugin:
     maintainer: E3EAT
     tester: Onkelandy
     keywords: infrared
+    state: ready
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/lirc/....md
 #    support:
 

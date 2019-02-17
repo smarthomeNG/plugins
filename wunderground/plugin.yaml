@@ -103,7 +103,8 @@ item_attributes:
             de: 'Veraltet. Bitte stattdessen wug_matchstring verwenden.'
             en: 'Deprecated. Use wug_matchstring instead.'
 
-structs:
+item_structs:
+  # Definition of item-structure templates for this plugin
     wug_wetter:
         ort:
             type: str

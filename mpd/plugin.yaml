@@ -8,6 +8,7 @@ plugin:
     maintainer: 'E3EAT'
 #    tester:                        # Who tests this plugin?
     keywords: MPD Music             # keywords, where applicable
+    state: ready
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mpd/...md # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:

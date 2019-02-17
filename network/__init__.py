@@ -284,7 +284,7 @@ class Network(SmartPlugin):
 
     def parse_item(self, item):
         self.parse_obj(item, 'item')
-        if 'nw_udp_send' in item.conf:
+        if ('nw_udp_send' in item.conf):
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
