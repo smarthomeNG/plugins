@@ -54,12 +54,12 @@ parameters:
     http:
         type: str
         default: 'no'
-        valid_list:
-          - yes
-          - no
+        #valid_list:
+        #  - yes
+        #  - no
         description:
-            de: "Eingehende HTTP Verbindungen akzeptieren"
-            en: "Accept incoming HTTP connections"
+            de: "Eingehende HTTP Verbindungen akzeptieren (no oder Portnummer)"
+            en: "Accept incoming HTTP connections (no or protnumber)"
     udp_acl:
         type: list
         default: '*'
