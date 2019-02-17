@@ -20,7 +20,6 @@ plugin:
     classname: SMTP                # class containing the plugin
 
 
-#   def __init__(host, mail_from, username=False, password=False, port=25, ssl=False):
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     host:
