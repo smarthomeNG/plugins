@@ -23,12 +23,11 @@ If you like, you can also give the serial port a descriptive name with this.
 
 ### Optional:
 
-A script ``get_manufacturer_ids.py`` is provided. Upon execution within the directory of ``plugins/dlms`` this script 
-loads an XLSX file with list of known manufacturers from 
-``https://www.dlms.com/srv/lib/Export_Flagids.php``, reads the ids and the corresponding manufacturer for convenience 
-and finally write a YAML file to ``manufacturer.yaml``
+A script get_manufacturer_ids.py is provided. Upon execution this script loads a list of known manufacturers from 
+http://dlms.com/organization/flagmanufacturesids/index.html
+then parses out the ids and the corresponding manufacturer for convenience and finally write a file ``manufacturer.yaml``
 
-The main module will use the ``manufacturer.yaml`` if it's existing to output more information for debug purposes
+The main module will use the ``manufacturer.yaml`` if it's existing to output more information
 
 
 ### Supported Hardware
