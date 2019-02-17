@@ -1,16 +1,18 @@
 '''
 Created on 23.06.2018
 
-@author: akohler
+@author: andreK
 '''
 import os
 import sys
 import uuid
+import colorsys
+
 from datetime import datetime
 
 
 
-
+from . import p3_tools as p3tools
 from .action import alexa
 
 DEFAULT_RANGE = (0, 100)
@@ -176,7 +178,7 @@ def Unlock(self, directive):
         on, off = self.item_range(item, DEFAULT_RANGE_LOGIC)
         self.logger.info("Alexa: Unlock({}, {})".format(item.id(), off))
         if off != None:
-            item( off )
+            item( on )
             self.response_Value = None
             self.response_Value = 'UNLOCKED'
     
@@ -241,7 +243,7 @@ def AdjustPercentage(self, directive):
         self.logger.info("Alexa P3: AdjustPercentage({}, {:.1f})".format(item.id(), item_new))
         item( item_new )
         self.response_Value = None
-        self.response_Value = int(new_percentage)
+        self.response_Value = int(percentage_new)
     
     return self.p3_respond(directive)
     
@@ -261,6 +263,46 @@ def SetPercentage(self, directive):
     
     return self.p3_respond(directive)
 
+
+# Alexa.PowerLevelController
+
+@alexa('AdjustPowerLevel', 'AdjustPowerLevel', 'powerLevel','Alexa.PowerLevelController',[])
+def AdjustPowerLevel(self, directive):
+    device_id = directive['endpoint']['endpointId']
+    items = self.items(device_id)
+    
+    percentage_delta = float( directive['payload']['powerLevelDelta'] )
+
+    for item in items:
+        item_range = self.item_range(item, DEFAULT_RANGE)
+        item_now = item()
+        percentage_now = what_percentage(item_now, item_range)
+        percentage_new = clamp_percentage(percentage_now + percentage_delta, item_range)
+        item_new = calc_percentage(percentage_new, item_range)
+        self.logger.info("Alexa P3: AdjustPowerLevel({}, {:.1f})".format(item.id(), item_new))
+        item( item_new )
+        self.response_Value = None
+        self.response_Value = int(percentage_new)
+    
+    return self.p3_respond(directive)
+
+@alexa('SetPowerLevel', 'SetPowerLevel', 'powerLevel','Alexa.PowerLevelController',[])
+def SetPowerLevel(self, directive):
+    device_id = directive['endpoint']['endpointId']
+    items = self.items(device_id)
+    new_percentage = float( directive['payload']['powerLevel'] )
+
+    for item in items:
+        item_range = self.item_range(item, DEFAULT_RANGE)
+        item_new = calc_percentage(new_percentage, item_range)
+        self.logger.info("Alexa P3: SetPowerLevel({}, {:.1f})".format(item.id(), item_new))
+        item( item_new )
+        self.response_Value = None
+        self.response_Value = int(new_percentage)
+    
+    return self.p3_respond(directive)
+
+
 # Scene Controller
 
 @alexa('Activate', 'Activate', 'ActivationStarted','Alexa.SceneController',[])
@@ -279,18 +321,45 @@ def Activate(self, directive):
     
     return self.p3_respond(directive)
 
+
+@alexa('Play', 'Play', '','Alexa.PlaybackController',[])
+def Play(self, directive):
+    device_id = directive['endpoint']['endpointId']
+    items = self.items(device_id)
+
+@alexa('Stop', 'Stop', '','Alexa.PlaybackController',[])
+def Stop(self, directive):
+    device_id = directive['endpoint']['endpointId']
+    items = self.items(device_id)
+
+
+    for item in items:
+        item_new = 1                   
+        self.logger.info("Alexa P3: PBC Stop received ({}, {})".format(item.id(), item_new))
+        item( item_new )
+        self.response_Value = None
+        self.response_Value = item_new
+    
+    return self.p3_respond(directive)
+
+
 # CameraStreamController
 @alexa('InitializeCameraStreams', 'InitializeCameraStreams', 'cameraStreamConfigurations','Alexa.CameraStreamController',[])
 def InitializeCameraStreams(self, directive):
+    
+    p3tools.DumpStreamInfo(directive)
     device_id = directive['endpoint']['endpointId']
     items = self.items(device_id)
     for item in items:
         self.logger.info("Alexa P3: CameraStream Init ({})".format(item.id()))
-
-    
+        response_Value = None
+        AlexaItem = self.devices.get(device_id)
+        response_Value = p3tools.CreateStreamPayLoad(AlexaItem)
+        self.response_Value = None
+        self.response_Value = response_Value
     return self.p3_respond(directive)
 
-# CameraStreamController
+# Authorization Interface
 @alexa('AcceptGrant', 'AcceptGrant', 'AcceptGrant.Response','Alexa.Authorization',[])
 def AcceptGrant(self, directive):
     self.logger.info("Alexa P3: AcceptGrant received ({})")
@@ -309,11 +378,67 @@ def AcceptGrant(self, directive):
     self.replace(myResponse,'messageId',uuid.uuid4().hex)
     return myResponse
 
+# Scene Controller
+
+@alexa('SetColor', 'SetColor', 'color','Alexa.ColorController',[])
+def SetColor(self, directive):
+    new_hue = float( directive['payload']['color']['hue'] )
+    new_saturation = float( directive['payload']['color']['saturation'] )
+    new_brightness = float( directive['payload']['color']['brightness'] )
+    # Calc to RGB
+    try:
+        r,g,b = p3tools.hsv_to_rgb(new_hue,new_saturation,new_brightness)
+    except Exception as err:
+        self.logger.error("Alexa P3: SetColor Calculate to RGB failed ({}, {})".format(item.id(), err))
+    
+    retValue=[]
+    retValue.append(r)
+    retValue.append(g)
+    retValue.append(b)
+    
+    device_id = directive['endpoint']['endpointId']
+    items = self.items(device_id)
+    
+    
+
+    for item in items:
+        
+        if 'alexa_color_value_type' in item.conf:
+            colortype = item.conf['alexa_color_value_type']
+            if colortype == 'HSB':
+                old_Values = item()
+                retValue=[]
+                retValue.append(new_hue)
+                retValue.append(new_saturation)
+                if len(old_Values) > 0:
+                    if int(old_Values[2])>0:
+                        retValue.append(old_Values[2])
+                    else:
+                        retValue.append(1.0)
+                else:
+                    retValue.append(new_brightness)
+            
+        self.logger.info("Alexa P3: SetColor ({}, {})".format(item.id(), str(retValue)))
+        item( retValue )
+        self.response_Value = None
+        self.response_Value = directive['payload']['color']
+    
+    return self.p3_respond(directive)
+
+
 #======================================================
 # No directives only Responses for Reportstate
 #======================================================
 @alexa('ReportTemperature', 'ReportTemperature', 'temperature','Alexa.TemperatureSensor',[])
 def ReportTemperature(self, directive):
+    print ("")
+
+@alexa('ReportLockState', 'ReportLockState', 'lockState','Alexa.LockController',[])
+def ReportLockState(self, directive):
+    print ("")
+
+@alexa('ReportContactState', 'ReportContactState', 'detectionState','Alexa.ContactSensor',[])
+def ReportContactState(self, directive):
     print ("")
 #======================================================
 # Ende - A.Kohler
