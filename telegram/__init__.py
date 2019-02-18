@@ -70,7 +70,7 @@ class Telegram(SmartPlugin):
     _items = []              # Storage Array for all items using telegram attributes ITEM_ATTR_MESSAGE
     _items_info = {}         # dict used whith the info-command: key = attribute_value, val= item_list ITEM_ATTR_INFO
     _items_text_message = [] # items in which the text message is written ITEM_ATTR_TEXT
-    _chat_ids = {}           # an item with a dict of chat_id and write access
+    _chat_ids_item = {}           # an item with a dict of chat_id and write access
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -166,10 +166,10 @@ class Telegram(SmartPlugin):
         :param item: The item to process.
         """
         if self.has_iattr(item.conf, ITEM_ATTR_CHAT_IDS):
-            if self._chat_ids:
+            if self._chat_ids_item:
                 self.logger.warning("Item: {} declares chat_id for telegram plugin which are already defined, aborting!")
             else:
-                self._chat_ids = item
+                self._chat_ids_item = item
 
         if self.has_iattr(item.conf, ITEM_ATTR_MESSAGE):
             self.logger.debug("parse item: {0}".format(item))
@@ -296,8 +296,8 @@ class Telegram(SmartPlugin):
     def get_chat_id_list(self, att_chat_id):
         chat_ids_to_send = []                           # new list
         if att_chat_id is None:                         # no attribute specified
-            if self._chat_ids:
-                chat_ids_to_send = [l for l in self._chat_ids()] # chat_ids from chat_ids item
+            if self._chat_ids_item:
+                chat_ids_to_send = [l for l in self._chat_ids_item()] # chat_ids from chat_ids item
         else:
             if isinstance(att_chat_id, list):           # if attribute is a list
                 chat_ids_to_send = att_chat_id
@@ -309,8 +309,8 @@ class Telegram(SmartPlugin):
         """
         if given chat id is not in list of trusted chat ids then reject with a message
         """
-        if self._chat_ids:
-            if user_id in self._chat_ids():
+        if self._chat_ids_item:
+            if user_id in self._chat_ids_item():
                 return True
             else:
                 self._bot.send_message(chat_id=user_id, text=self._no_access_msg)
@@ -321,9 +321,9 @@ class Telegram(SmartPlugin):
         """
         if given chat id is not in list of trusted chat ids then reject with a message
         """
-        if self._chat_ids:
-            if user_id in self._chat_ids():
-                return self._chat_ids()[user_id]
+        if self._chat_ids_item:
+            if user_id in self._chat_ids_item():
+                return self._chat_ids_item()[user_id]
             else:
                 self._bot.send_message(chat_id=user_id, text=self._no_write_access_msg)
 
@@ -392,8 +392,8 @@ class Telegram(SmartPlugin):
         /start: show a welcome together with asking to add chat id to trusted chat ids
         """
         text=""
-        if self._chat_ids:
-            ids = self._chat_ids()
+        if self._chat_ids_item:
+            ids = self._chat_ids_item()
             text=self.translate("Your chat id is")+' {}'.format( update.message.chat_id)
             if update.message.chat_id in ids:
                 if ids[update.message.chat_id]:
@@ -403,7 +403,7 @@ class Telegram(SmartPlugin):
             else:
                 text=text+self.translate(", please add it to the list of trusted chat ids to get access")
         else:
-            self.logger.warning('No chat_ids defined'.format(update, error))
+            self.logger.warning('No chat_ids defined')
         
         bot.send_message(chat_id=update.message.chat_id, text=text)
        
