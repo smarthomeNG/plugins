@@ -7,7 +7,7 @@ plugin:
         de: 'Blockly - graphischer Editor für Logiken - Noch in der Entwicklung, nicht für die Nutzung gedacht'
         en: 'Blockly - graphical editor for logics - Still in development, not for use'
     maintainer: msinn, psilo909
-#    tester: '?'
+    tester: '?'
     state: develop
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
@@ -17,6 +17,7 @@ plugin:
     sh_minversion: 1.3b            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Blockly             # class containing the plugin
 
 
@@ -32,6 +33,9 @@ parameters:
 
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin

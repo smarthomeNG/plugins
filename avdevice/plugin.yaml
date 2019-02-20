@@ -344,6 +344,9 @@ item_attributes:
             en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
 
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
