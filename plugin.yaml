@@ -78,6 +78,9 @@ item_attributes:
             de: 'Matchstring für die OpenWeatherMap Daten, siehe Beispiele in der README.'
             en: 'Matchstring for the OpenWeatherMap data, see examples in README.'
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
