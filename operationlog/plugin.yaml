@@ -15,6 +15,7 @@ plugin:
     sh_minversion: 1.4c            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: OperationLog        # class containing the plugin
 
 parameters:
@@ -82,6 +83,9 @@ item_attributes:
         description:
             de: 'Definiert bestimmte Regel/Mappings für das Logging'
             en: 'Declares specific rules/mappings for the logging'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters:
     # Definition of logic parameters defined by this plugin

@@ -233,6 +233,9 @@ item_attributes:
             en: 'Specify a group address to poll and the time interval in seconds for an automated query of KNX in form of a list. First entry is the group address, second entry is the poll interval in seconds. This may be used for actors or sensors that do no support a regular sending of values themselves.'
 
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 logic_parameters:
     # Definition of logic parameters defined by this plugin
     knx_listen:

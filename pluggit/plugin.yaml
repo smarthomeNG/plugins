@@ -6,7 +6,7 @@ plugin:
         de: 'Anbindung einer KWL Pluggit AP310 über das Modbus Protokoll'
         en: 'Connection of a Pluggit AP310 unit using Modbus protocol'
     maintainer: '? (Henning Behrend / ratzi82)'
-#    tester:                        # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
     state: ready
     keywords: modbus
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.2             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Pluggit             # class containing the plugin
 
 parameters:
@@ -93,9 +94,12 @@ item_attributes:
             de: "In die Pluggit Einheit zu schreibender Wert"
             en: "Value to be written to Plugitt unit"
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 plugin_functions: NONE
-# Definition of plugin functions defined by this plugin
+    # Definition of plugin functions defined by this plugin
 
 logic_parameters: NONE
-# Definition of logic parameters defined by this plugin
+    # Definition of logic parameters defined by this plugin
 

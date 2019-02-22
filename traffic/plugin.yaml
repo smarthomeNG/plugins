@@ -6,7 +6,7 @@ plugin:
         de: 'Abfrage der Reisezeit über die kostenlose Google Directions API. Für einen eigenen Key siehe <a href="https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model" target="_blank">https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model</a>.'
         en: 'Get travel times and directions via the (free) Google Directions API. For your own key see <a href="https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model" target="_blank">https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model</a>'
     maintainer: psilo909
-#    tester:                        # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
     state: ready
     keywords: google directions, travel times, routing information
     documentation: http://smarthomeng.de/user/plugins_doc/config/traffic.html
@@ -39,6 +39,8 @@ parameters:
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

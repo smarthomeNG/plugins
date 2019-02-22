@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Ermöglicht die Verwendung der Join API'
-        en: 'Allows to use the Join API with SmartHomeNG'
+        de: "Ermöglicht die Verwendung der Join API (https://joaoapps.com/join/api/)"
+        en: "This plugin allows to send command to your mobile phone via the Join API: https://joaoapps.com/join/api/"
     maintainer: Knx_fan
     tester: psilo909
     state: ready
@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.3a            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Join                # class containing the plugin
 
 parameters:
@@ -37,9 +38,161 @@ parameters:
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
 
 plugin_functions:
 # Definition of plugin functions defined by this plugin
+    send:
+        description:
+            de: "send Funktion"
+            en: "send function"
+        parameters:
+            title:
+                type: str
+                default: None
+                description:
+                    de: "Titel"
+                    en: "Title"
+            text:
+                type: str
+                default: None
+                description:
+                    de: "Text"
+                    en: "Text"
+            icon:
+                type: str
+                default: None
+                description:
+                    de: "Icon"
+                    en: "Icon"
+            find:
+                type: str
+                default: None
+                description:
+                    de: "Find"
+                    en: "Find"
+            smallicon:
+                type: str
+                default: None
+                description:
+                    de: "Smallicon"
+                    en: "Smallicon"
+            device_id:
+                type: str
+                default: None
+                description:
+                    de: "Device_id"
+                    en: "Device_id"
+            device_ids:
+                type: str
+                default: None
+                description:
+                    de: "Device_ids"
+                    en: "Device_ids"
+            device_name:
+                type: str
+                default: None
+                description:
+                    de: "Device_names"
+                    en: "Device_names"
+            url:
+                type: str
+                default: None
+                description:
+                    de: "Url"
+                    en: "Url"
+            image:
+                type: str
+                default: None
+                description:
+                    de: "Image"
+                    en: "Image"
+            sound:
+                type: str
+                default: None
+                description:
+                    de: "Sound"
+                    en: "Sound"
+            group:
+                type: str
+                default: None
+                description:
+                    de: "Group"
+                    en: "Group"
+            clipboard:
+                type: str
+                default: None
+                description:
+                    de: "Clipboard"
+                    en: "Clipboard"
+            file:
+                type: str
+                default: None
+                description:
+                    de: "File"
+                    en: "File"
+            callnumber:
+                type: str
+                default: None
+                description:
+                    de: "Callnumber"
+                    en: "Callnumber"
+            smsnumber:
+                type: str
+                default: None
+                description:
+                    de: "Smsnumber"
+                    en: "Smsnumber"
+            smstext:
+                type: str
+                default: None
+                description:
+                    de: "Smstext"
+                    en: "Smstext"
+            mmsfile:
+                type: str
+                default: None
+                description:
+                    de: "Mmsfile"
+                    en: "Mmsfile"
+            wallpaper:
+                type: str
+                default: None
+                description:
+                    de: "Wallpaper"
+                    en: "Wallpaper"
+            lockwallpaper:
+                type: str
+                default: None
+                description:
+                    de: "Lockwallpaper"
+                    en: "Lockwallpaper"
+            interruptionFilter:
+                type: str
+                default: None
+                description:
+                    de: "InterruptionFilter"
+                    en: "InterruptionFilter"
+            mediaVolume:
+                type: str
+                default: None
+                description:
+                    de: "MediaVolume"
+                    en: "MediaVolume"
+            ringVolume:
+                type: str
+                default: None
+                description:
+                    de: "RingVolume"
+                    en: "RingVolume"
+            alarmVolume:
+                type: str
+                default: None
+                description:
+                    de: "AlarmVolume"
+                    en: "AlarmVolume"
 

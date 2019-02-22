@@ -26,7 +26,7 @@ parameters:
         description:
             de: 'IP Adresse, falls nicht auf allen IPs des hosts gelauscht werden soll'
             en: 'ip address to use, if not listening on all ip addresses of the host'
-    
+
     port:
         type: int
         default: 2424
@@ -34,14 +34,14 @@ parameters:
         description:
             de: 'Port der für den Websocket Zugriff verwendet wird'
             en: 'Port that is used for the websocket protocol'
-    
+
     tls:
         type: bool
         default: False
         description:
             de: 'TLS benutzen? Falls auf True gesetzt, muss SmartHomeNGs /etc Directory die Zertifikat-Dateien home.crt, home.key und ca.crt enthalten'
             en: 'Use TLS? If set to True, SmartHomeNGs /etc directory must contain the certificate files: home.crt, home.key, ca.crt'
-    
+
     acl:
         type: str
         default: ro
@@ -58,7 +58,7 @@ parameters:
         description:
             de: 'Steuert den Zugriff über Websocket Protokoll - Voreinstellung für alle Items'
             en: 'Control access through wbsocket protocol - Default for all items'
-    
+
     wsproto:
         type: int
         default: 4
@@ -69,14 +69,14 @@ parameters:
         description:
             de: 'Verwendete Version des Websocket Protokolls'
             en: 'Used version of the websocket protocol'
-    
+
     querydef:
         type: bool
         default: False
         description:
             de: 'Wenn dieser Wert auf True gesetzt wird, ist es Websocket Clients möglich Item- und Logik Definitionen abzufragen'
             en: 'Websocket clients can query item- and logic definitions, if set to True'
-    
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     visu_acl:
@@ -95,6 +95,9 @@ item_attributes:
         description:
             de: 'Steuert den Zugriff auf das Item über Websocket Protokoll'
             en: 'Control access to this item through wbsocket protocol'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters:
     # Definition of item attributes defined by this plugin

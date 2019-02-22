@@ -100,6 +100,9 @@ item_attributes:
             - 'battery'
             - 'action'
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 

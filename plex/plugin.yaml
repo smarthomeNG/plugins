@@ -3,10 +3,10 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Erlaubt das Senden von Notifications an Plex Clients (wie RasPlex), **seit SmartHomeNG v1.3**'
-        en: ''
+        de: 'Erlaubt das Senden von Notifications an Plex Clients (wie RasPlex)'
+        en: 'Send notifications to Plex clients'
     maintainer: rthill
-#    tester:                        # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
     state: ready
     keywords: mediacenter
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Plex                # class containing the plugin
 
 parameters:
@@ -44,6 +45,9 @@ item_attributes:
         description:
             de: "Port Nummer auf dem Plex Host"
             en: "port number on the plex hosts"
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 plugin_functions:
 # Definition of plugin functions defined by this plugin

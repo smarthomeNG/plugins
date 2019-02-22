@@ -15,7 +15,7 @@ plugin:
             The plugin can be used standalone to list available variables using command `upsc your_ups_name`. \
             More about NUT: http://networkupstools.org/"
     maintainer: 4d4mu
-#    tester:                        # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
     state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
