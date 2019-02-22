@@ -1,12 +1,12 @@
 # Metadata for the classic-plugin
 plugin:
     # Global plugin attributes
-    type: system                    # plugin type (gateway, interface, protocol, system, web)
+    type: system                   # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Loggen von Daten in ein anderes Logfile als das Standard Log'
         en: 'Logging of data in another log aside from default one'
     maintainer: ohinckel
-#    tester: efgh                   # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
     state: ready
 #    keywords: kwd1 kwd2            # keywords, where applicable
     documentation: https://github.com/smarthomeNG/plugins/blob/develop/datalog/README.md        # url of documentation (wiki) page
@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
+    restartable: unknown
     classname: DataLog              # class containing the plugin
 
 parameters:
@@ -78,6 +79,15 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
+
+    datalog:
+        type: list(str)
+        description:
+            de: "Liste des Logs in die der Wert geschrieben werden soll."
+            en: "List of logs to which the value shall be written"
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
