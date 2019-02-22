@@ -4,6 +4,7 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Steuerung von Buderus Heizkesseln über ein Logamatic web KM200 Modul (noch in der Entwicklung), **seit SmartHomeNG v1.3**'
+        fr: "Contrôle d'un chauffage Buderus via un module Logamatic web KM200 (en développement)"
         en: 'Control Buderus heating through a Logamatic web KM200 module (still under development)'
     maintainer: rthill
 #    tester:                        # Who tests this plugin?
@@ -26,13 +27,15 @@ parameters:
         default: False
         description:
             de: "IP Adresse"
+            fr: "Adresse IP"
             en: "IP address"
 
     key:
-        type: ip
+        type: str
         default: False
         description:
             de: "key - zu erzeugen auf https://ssl-account.com/km200.andreashah"
+            fr: "clé - a générer sur https://ssl-account.com/km200.andreashah"
             en: "key - generated from https://ssl-account.com/km200.andreashah"
 
     cycle:
@@ -40,6 +43,7 @@ parameters:
         default: 900
         description:
             de: "Zykluszeit (in Sekunden)"
+            fr: "Temps d'un cycle (en secondes)"
             en: "Cycle time (in seconds)"
 
 
