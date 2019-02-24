@@ -401,7 +401,7 @@ The optional ref_level parameter defines default dim value when dimmer is switch
 
 ## Functions
 ### Learning Mode
-There are two different ways of leran in enocean actuators
+There are two different ways of learn in enocean actuators
 a) with the interactive console
 b) via trigger an learn routine by the backend
 
