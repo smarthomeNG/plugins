@@ -7,7 +7,7 @@ This plugin adds EnOcean support to SmarthomeNG.
 If you have special hardware not supported yet, please feel free to improve and contribute!
 
 ## Version / Change History
-Version: 1.3.4
+Version: 1.3.5
 
 Change History: currently not maintained.
 
@@ -401,7 +401,11 @@ The optional ref_level parameter defines default dim value when dimmer is switch
 
 ## Functions
 ### Learning Mode
+There are two different ways of leran in enocean actuators
+a) with the interactive console
+b) via trigger an learn routine by the backend
 
+For a):
 Devices that shall receive commands from the SmarthomeNG plugin must be subscribed (tought-in) first.
 Generally follow the teach-in procedure as described by EnOcean:
 1. Set the EnOcean device/actor into learn mode. See the manual of the respective EnOcean device for detailed information on how to enter learn mode.
@@ -410,13 +414,15 @@ Generally follow the teach-in procedure as described by EnOcean:
 
 The SmarthomeNG interactive console can be reached via:
 
-```bash
+```
+bash
 cd /usr/local/smarthome/bin
 sudo systemctl stop smarthome
 sudo ./smarthome.py -i
 ```
 The learn message is issued by the following command:
-```python
+```
+python
 sh.enocean.send_learn_protocol(id_offset, device)
 ```
 Then teach-in commands vary for different EnOcean sensor/actors. The following classes are currently supported:
@@ -431,7 +437,8 @@ With device are different actuators defined:
 - 40: Eltako shutter actors FSB61NP-230V, FSB14, FSB61, FSB71
 
 Examples are:
-```python
+```
+python
 sh.enocean.send_learn_protocol() or sh.enocean.send_learn_protocol(0,10)
 sh.enocean.send_learn_protocol(id_offset,20)
 ```
@@ -441,6 +448,23 @@ Later, the ID-offset is specified in the <item.yaml> for every outgoing send com
 
 Use different ID-offsets for different groups of actors.
 After complete the teach-in procedure, leave the interactive console by `STRG+C` and add the applied id_offset to the respective EnOcean send item (enocean_tx_id_offset = ID_Offset).
+
+For b):
+
+The result of ths method is the same than in the above described one, but it is an mor comfortable way.
+For using this method you should be able to use the SHNG backend.
+
+These steps show you how to teach-in an encocean actor with this method
+
+1. Create the logic file
+   - copy the file <enocean_learn.py> from the plugin folder to the logics folder
+   - OR create a new logic in the backend and copy the complete code from <enocean_learn.py> inside this new logic
+2. modify the logic via backend and be sure that the right learn method is uncommented in the logic
+3. save and load the logic in the backend
+4. set you enocean actuator into learn mode
+5. trigger the learn logic ones --> learning should be sucessfully finished
+6. unload the logic in the backend
+finish... 
 
 ### UTE teach-in
 
