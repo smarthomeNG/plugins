@@ -401,12 +401,11 @@ The optional ref_level parameter defines default dim value when dimmer is switch
 
 ## Functions
 ### Learning Mode
-There are two different ways of learn in enocean actuators
-a) with the interactive console
-b) via trigger an learn routine by the backend
+There are two different ways of learn in enocean actuators:  
+a) With the interactive console  
+b) Via trigger an learn routine over the backend module
 
-For a)
-
+For a)  
 Devices that shall receive commands from the SmarthomeNG plugin must be subscribed (tought-in) first.
 Generally follow the teach-in procedure as described by EnOcean:
 1. Set the EnOcean device/actor into learn mode. See the manual of the respective EnOcean device for detailed information on how to enter learn mode.
@@ -450,22 +449,21 @@ Later, the ID-offset is specified in the <item.yaml> for every outgoing send com
 Use different ID-offsets for different groups of actors.
 After complete the teach-in procedure, leave the interactive console by `STRG+C` and add the applied id_offset to the respective EnOcean send item (enocean_tx_id_offset = ID_Offset).
 
-For b)
-
+For b)  
 The result of ths method is the same than in the above described one, but it is an mor comfortable way.
 For using this method you should be able to use the SHNG backend.
 
 These steps show you how to teach-in an encocean actor with this method
 
-1. Create the logic file
-   - a) copy the file <enocean_learn.py> from the plugin folder to the logics folder
-   - b) OR create a new logic in the backend and copy the complete code from <enocean_learn.py> inside this new logic
+1. Create the logic file  
+   a) copy the file <enocean_learn.py> from the plugin folder to the logics folder  
+   b) OR create a new logic in the backend and copy the complete code from <enocean_learn.py> inside this new logic
 2. modify the logic via backend and be sure that the right learn method is uncommented in the logic
 3. save and load the logic in the backend
 4. set you enocean actuator into learn mode
 5. trigger the learn logic ones
    - learning should be sucessfully finished
-6. unload the logic in the backend
+6. unload the logic in the backend  
 finish... 
 
 ### UTE teach-in
