@@ -418,11 +418,10 @@ The SmarthomeNG interactive console can be reached via:
 bash
 cd /usr/local/smarthome/bin
 sudo systemctl stop smarthome
-sudo ./smarthome.py -i
+sudo python3 ./smarthome.py -i
 ```
 The learn message is issued by the following command:
 ```
-python
 sh.enocean.send_learn_protocol(id_offset, device)
 ```
 Then teach-in commands vary for different EnOcean sensor/actors. The following classes are currently supported:
@@ -438,7 +437,6 @@ With device are different actuators defined:
 
 Examples are:
 ```
-python
 sh.enocean.send_learn_protocol() or sh.enocean.send_learn_protocol(0,10)
 sh.enocean.send_learn_protocol(id_offset,20)
 ```
