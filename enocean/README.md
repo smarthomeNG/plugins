@@ -405,7 +405,8 @@ There are two different ways of leran in enocean actuators
 a) with the interactive console
 b) via trigger an learn routine by the backend
 
-For a):
+For a)
+
 Devices that shall receive commands from the SmarthomeNG plugin must be subscribed (tought-in) first.
 Generally follow the teach-in procedure as described by EnOcean:
 1. Set the EnOcean device/actor into learn mode. See the manual of the respective EnOcean device for detailed information on how to enter learn mode.
@@ -449,7 +450,7 @@ Later, the ID-offset is specified in the <item.yaml> for every outgoing send com
 Use different ID-offsets for different groups of actors.
 After complete the teach-in procedure, leave the interactive console by `STRG+C` and add the applied id_offset to the respective EnOcean send item (enocean_tx_id_offset = ID_Offset).
 
-For b):
+For b)
 
 The result of ths method is the same than in the above described one, but it is an mor comfortable way.
 For using this method you should be able to use the SHNG backend.
