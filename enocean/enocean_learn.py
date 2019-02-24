@@ -24,7 +24,7 @@ Usage:
 OR
 copy make a new logic via SHNG backend and copy the complete code inside the new logic.
 
-When finished you can trigger the logic ones via backend to lern in your specific actuator.
+When finished you can trigger the logic ones via backend to learn in your specific actuator.
 '''
 # =====================================
 # ### --- General Learn Routine --- ###
