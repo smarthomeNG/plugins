@@ -328,7 +328,7 @@ class RTR(SmartPlugin):
             if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
                 for item in self._controller[c]['stopItems']:
                     if item():
-                       if self._controller[c]['actuatorItem']() > 0:
+                       if self._items.return_item(self._controller[c]['actuatorItem'])() > 0:
                            logger.info("rtr: controller {0} stopped, because of item {1}".format(c, item.id()))
                        self._controller[c]['actuatorItem'](0)
 
