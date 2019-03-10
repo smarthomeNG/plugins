@@ -4,17 +4,19 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Unterstützt Drexel & Weiss USB Devices'
-        en: ''
+        en: 'Support for Drexel & Weiss USB devices'
     maintainer: 'onkelandy'
     tester: onkelandy, brandst
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/34582-drexel-weiss-plugin
 
-    version: 1.5.1                 # Plugin version
+    version: 1.5.2                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: DuW                 # class containing the plugin
 
 parameters:
@@ -73,4 +75,14 @@ item_attributes:
         type: int
         description:
             de: 'Register für Lüftung entsprechend Textdatei'
-            en: 'Register for ventilation based on text file'            
+            en: 'Register for ventilation based on text file'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+

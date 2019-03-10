@@ -9,13 +9,14 @@ plugin:
     tester: Sandman60, cmalo
 #    keywords: iot xyz
     state: 'qa-passed'
-    documentation: http://smarthomeng.de/user/plugins_doc/config/avm.html
+    documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 1.5.4                 # Plugin version
-    sh_minversion: 1.4c            # minimum shNG version to use this plugin
+    version: 1.5.6                 # Plugin version
+    sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: True
     classname: AVM                 # class containing the plugin
 
 parameters:
@@ -79,9 +80,9 @@ parameters:
         type: str
         default: ''
         description:
-            de: '(optional) Eindeutiger Identifier für die Instanz des Plugins, also für jedes FritzDevice. Kann bei nur einem Gerät / Single Instance Betrieb des Plugins entfallen.'
-            en: '(optional) Unique identifier for each FritzDevice / each instance of the plugin. Can be skipped if only one device is used / the plugin is operated single instance.'
-    
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     avm_data_type:
@@ -171,8 +172,26 @@ item_attributes:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions:
     # Definition of function interface of the plugin
+
+    map_icon:
+        type: str
+        description:
+            de: "Gibt das SmartVisu Icon zum übergebenen DarkSky Icon zurück."
+            en: "Returns the SmartVisu icon to the provided DarkSky icon."
+        parameters:
+            icon:
+                type: str
+                description:
+                    de: "Icon als String."
+                    en: "Icon as string."
 
     reboot:
         type: void
@@ -193,7 +212,7 @@ plugin_functions:
     start_call:
         type: void
         description:
-            de: "Startet einen anruf an eine übergebene Telefonnummer (intern oder extern)."
+            de: "Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern)."
             en: "Starts a call for a given phone number (internal or external)."
         parameters:
             phone_number:
@@ -213,14 +232,14 @@ plugin_functions:
     set_call_origin:
         type: void
         description:
-            de: "Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'"
-            en: "Sets the 'call origin', e.g. before running 'start_call'"
+            de: "Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'."
+            en: "Sets the 'call origin', e.g. before running 'start_call'."
         parameters:
             phone_name:
                 type: mac
                 description:
-                    de: "Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. Bspw. '**610' für ein internes Gerät."
-                    en: "Full phone identifier, could be e.g. '**610' for an internal device."
+                    de: "Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. Bspw. zwei Sterne gefolgt von '610' für ein internes Gerät."
+                    en: "Full phone identifier, could be e.g. two asterix followed by '610' for an internal device."
 
     get_phone_name:
         type: str
@@ -317,8 +336,8 @@ plugin_functions:
     get_calllist:
         type: list(dict(str))
         description:
-            de: "Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id','Type','Caller','Called','CalledNumber','Name','Numbertype','Device','Port','Date','Duration' (some optional))."
-            en: "Returns an array of dicts with all calllist entries (attributes 'Id','Type','Caller','Called','CalledNumber','Name','Numbertype','Device','Port','Date','Duration' (some optional))."
+            de: "Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige optional))."
+            en: "Returns an array of dicts with all calllist entries (attributes 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date', 'Duration' (some optional))."
         parameters:
             filter_incoming:
                 type: str

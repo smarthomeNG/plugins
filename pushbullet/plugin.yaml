@@ -4,17 +4,19 @@ plugin:
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Anbindung des Pushbullet Service'
-        en: ''
+        en: 'Support fro Pushbullet service'
     maintainer: '? (lbernau)'
     tester: onkelandy, psilo909, Sandman60
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    state: ready
+    keywords: messaging
+    documentation: https://www.smarthomeng.de/developer/plugins/pushbullet/README.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/36001-neues-plugin-pushbullet
 
     version: 1.5.2                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Pushbullet          # class containing the plugin
 
 parameters:
@@ -33,5 +35,171 @@ parameters:
             de: '(optional) Id des anzusprechenden Geräts, wo eine Pushbullet App läuft. Auf http://www.pushbullet.com einloggen, Gerät auswählen und den Teil der URL kopieren, der hinter "device_iden=" kommt. Falls nicht gesetzt, muss der Wert explizit in Funktionsaufrufen als Parameter angegeben werden.'
             en: '(optional) Id of referenced device, where Pushbullet app is running. Log in into http://www.pushbullet.com, select target device, copy the part of the browser URL behind "device_iden=" If not set, you have to use it in function calls.'
 
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions:
+    # Definition of item attributes defined by this plugin
+    note:
+        type: str | bool
+        description:
+            de: "Sendet eine Nachricht an Pushbullet."
+            en: "Sends a note to pushbullet."
+        parameters:
+            title:
+                type: str
+                mandatory: True
+                description:
+                    de: "Titel der Nachricht."
+                    en: "Title of the note."
+            body:
+                type: str
+                mandatory: True
+                description:
+                    de: "Inhalt der Nachricht."
+                    en: "Body of the note."
+            deviceid:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Id des anzusprechenden Geräts, wo eine Pushbullet App läuft. Auf http://www.pushbullet.com einloggen, Gerät auswählen und den Teil der URL kopieren, der hinter "device_iden=" kommt. Falls nicht gesetzt, muss der Wert explizit in Funktionsaufrufen als Parameter angegeben werden.'
+                    en: '(optional) Id of referenced device, where Pushbullet app is running. Log in into http://www.pushbullet.com, select target device, copy the part of the browser URL behind "device_iden=" If not set, you have to use it in function calls.'
+            apikey:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Persönlicher API Key für Pushbullet. Registrierung siehe https://docs.pushbullet.com/. Wenn der Key nicht gesetzt ist, muss er expizit in Funktionsaufrufen gesetzt werden.'
+                    en: '(optional) Your own personal API key for Pushbullet. For your own key refer to https://docs.pushbullet.com/. If key is not set, you have to use it in function calls.'
+    link:
+        type: 'str | bool'
+        description:
+            de: "Sendet einen Link an Pushbullet."
+            en: "Sends a link to pushbullet."
+        parameters:
+            title:
+                type: str
+                mandatory: True
+                description:
+                    de: "Titel des Links."
+                    en: "Title of the link."
+            url:
+                type: str
+                mandatory: True
+                description:
+                    de: "URL des Links."
+                    en: "URL of the link."
+            deviceid:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Id des anzusprechenden Geräts, wo eine Pushbullet App läuft. Auf http://www.pushbullet.com einloggen, Gerät auswählen und den Teil der URL kopieren, der hinter "device_iden=" kommt. Falls nicht gesetzt, muss der Wert explizit in Funktionsaufrufen als Parameter angegeben werden.'
+                    en: '(optional) Id of referenced device, where Pushbullet app is running. Log in into http://www.pushbullet.com, select target device, copy the part of the browser URL behind "device_iden=" If not set, you have to use it in function calls.'
+            apikey:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Persönlicher API Key für Pushbullet. Registrierung siehe https://docs.pushbullet.com/. Wenn der Key nicht gesetzt ist, muss er expizit in Funktionsaufrufen gesetzt werden.'
+                    en: '(optional) Your own personal API key for Pushbullet. For your own key refer to https://docs.pushbullet.com/. If key is not set, you have to use it in function calls.'
+            body:
+                type: str
+                mandatory: False
+                description:
+                    de: "Inhalt der Nachricht."
+                    en: "Body of the note."
+    address:
+        type: 'str | bool'
+        description:
+            de: "Sendet eine Adresse an Pushbullet."
+            en: "Sends an address to pushbullet."
+        parameters:
+            name:
+                type: str
+                mandatory: True
+                description:
+                    de: "Name der Adresse / des Kontakts."
+                    en: "Name of the address / of the contact."
+            address:
+                type: str
+                mandatory: True
+                description:
+                    de: "Adresse."
+                    en: "Address."
+            deviceid:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Id des anzusprechenden Geräts, wo eine Pushbullet App läuft. Auf http://www.pushbullet.com einloggen, Gerät auswählen und den Teil der URL kopieren, der hinter "device_iden=" kommt. Falls nicht gesetzt, muss der Wert explizit in Funktionsaufrufen als Parameter angegeben werden.'
+                    en: '(optional) Id of referenced device, where Pushbullet app is running. Log in into http://www.pushbullet.com, select target device, copy the part of the browser URL behind "device_iden=" If not set, you have to use it in function calls.'
+            apikey:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Persönlicher API Key für Pushbullet. Registrierung siehe https://docs.pushbullet.com/. Wenn der Key nicht gesetzt ist, muss er expizit in Funktionsaufrufen gesetzt werden.'
+                    en: '(optional) Your own personal API key for Pushbullet. For your own key refer to https://docs.pushbullet.com/. If key is not set, you have to use it in function calls.'
+    list:
+        type: 'str | bool'
+        description:
+            de: "Sendet eine Liste an Pushbullet."
+            en: "Sends a list to pushbullet."
+        parameters:
+            title:
+                type: str
+                mandatory: True
+                description:
+                    de: "Titel der Liste."
+                    en: "Title of the list."
+            items:
+                type: str
+                mandatory: True
+                description:
+                    de: "Items der Liste (als JSON Array)."
+                    en: "Items of the list (as JSON array)."
+            deviceid:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Id des anzusprechenden Geräts, wo eine Pushbullet App läuft. Auf http://www.pushbullet.com einloggen, Gerät auswählen und den Teil der URL kopieren, der hinter "device_iden=" kommt. Falls nicht gesetzt, muss der Wert explizit in Funktionsaufrufen als Parameter angegeben werden.'
+                    en: '(optional) Id of referenced device, where Pushbullet app is running. Log in into http://www.pushbullet.com, select target device, copy the part of the browser URL behind "device_iden=" If not set, you have to use it in function calls.'
+            apikey:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Persönlicher API Key für Pushbullet. Registrierung siehe https://docs.pushbullet.com/. Wenn der Key nicht gesetzt ist, muss er expizit in Funktionsaufrufen gesetzt werden.'
+                    en: '(optional) Your own personal API key for Pushbullet. For your own key refer to https://docs.pushbullet.com/. If key is not set, you have to use it in function calls.'
+    file:
+        type: 'str | bool'
+        description:
+            de: "Sendet eine Datei an Pushbullet."
+            en: "Sends a file to pushbullet."
+        parameters:
+            filepath:
+                type: str
+                mandatory: True
+                description:
+                    de: "Pfad der Datei."
+                    en: "Path of the file."
+            deviceid:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Id des anzusprechenden Geräts, wo eine Pushbullet App läuft. Auf http://www.pushbullet.com einloggen, Gerät auswählen und den Teil der URL kopieren, der hinter "device_iden=" kommt. Falls nicht gesetzt, muss der Wert explizit in Funktionsaufrufen als Parameter angegeben werden.'
+                    en: '(optional) Id of referenced device, where Pushbullet app is running. Log in into http://www.pushbullet.com, select target device, copy the part of the browser URL behind "device_iden=" If not set, you have to use it in function calls.'
+            apikey:
+                type: str
+                mandatory: False
+                description:
+                    de: '(optional) Persönlicher API Key für Pushbullet. Registrierung siehe https://docs.pushbullet.com/. Wenn der Key nicht gesetzt ist, muss er expizit in Funktionsaufrufen gesetzt werden.'
+                    en: '(optional) Your own personal API key for Pushbullet. For your own key refer to https://docs.pushbullet.com/. If key is not set, you have to use it in function calls.'
+            body:
+                type: str
+                mandatory: False
+                description:
+                    de: "Inhalt der Nachricht."
+                    en: "Body of the note."
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+

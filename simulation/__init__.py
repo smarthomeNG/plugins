@@ -52,7 +52,7 @@ class Simulation(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Init Simulation release 1.5.0.6')
+        self.logger.info('Init Simulation release %s' % self.PLUGIN_VERSION)
         self.shtime = Shtime.get_instance()
         self._datafile = self.get_parameter_value('data_file')
         self.lastday = ''

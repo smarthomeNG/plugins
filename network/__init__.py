@@ -72,10 +72,10 @@ class HTTPHandler(lib.connection.Stream):
                 request = line.split(' ')[1].strip('/')
                 if self.parser(self.source, self.dest, urllib.parse.unquote(request)) is not False:
                     self.send(b'HTTP/1.1 200 OK\r\n\r\n', close=True)
-                    
+
                 else:
                     self.send(b'HTTP/1.1 400 Bad Request\r\n\r\n', close=True)
-                   
+
                 break
 
 
@@ -284,7 +284,7 @@ class Network(SmartPlugin):
 
     def parse_item(self, item):
         self.parse_obj(item, 'item')
-        if 'nw_udp_send' in item.conf:
+        if ('nw_udp_send' in item.conf):
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):

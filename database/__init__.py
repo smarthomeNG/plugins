@@ -59,26 +59,30 @@ COL_LOG_CHANGED = 6
 
 
 class Database(SmartPlugin):
-
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.4.1'
+    PLUGIN_VERSION = '1.5.7'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
     _setup = {
-      '1' : ["CREATE TABLE {log} (time BIGINT, item_id INTEGER, duration BIGINT, val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);", "DROP TABLE {log};"],
-      '2' : ["CREATE TABLE {item} (id INTEGER, name varchar(255), time BIGINT, val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);", "DROP TABLE {item};"],
-      '3' : ["CREATE UNIQUE INDEX {log}_{item}_id_time ON {log} (item_id, time);", "DROP INDEX {log}_{item}_id_time;"],
-      '4' : ["CREATE INDEX {log}_{item}_id_changed ON {log} (item_id, changed);", "DROP INDEX {log}_{item}_id_changed;"],
-      '5' : ["CREATE UNIQUE INDEX {item}_id ON {item} (id);", "DROP INDEX {item}_id;"],
-      '6' : ["CREATE INDEX {item}_name ON {item} (name);", "DROP INDEX {item}_name;"]
+        '1': [
+            "CREATE TABLE {log} (time BIGINT, item_id INTEGER, duration BIGINT, val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);",
+            "DROP TABLE {log};"],
+        '2': [
+            "CREATE TABLE {item} (id INTEGER, name varchar(255), time BIGINT, val_str TEXT, val_num REAL, val_bool BOOLEAN, changed BIGINT);",
+            "DROP TABLE {item};"],
+        '3': ["CREATE UNIQUE INDEX {log}_{item}_id_time ON {log} (item_id, time);", "DROP INDEX {log}_{item}_id_time;"],
+        '4': ["CREATE INDEX {log}_{item}_id_changed ON {log} (item_id, changed);",
+              "DROP INDEX {log}_{item}_id_changed;"],
+        '5': ["CREATE UNIQUE INDEX {item}_id ON {item} (id);", "DROP INDEX {item}_id;"],
+        '6': ["CREATE INDEX {item}_name ON {item} (name);", "DROP INDEX {item}_name;"]
     }
 
     def __init__(self, smarthome, driver, connect, prefix="", cycle=60, precision=2):
         self._sh = smarthome
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
-        
+
         self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
         self._precision = int(precision)
@@ -90,15 +94,16 @@ class Database(SmartPlugin):
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver, Utils.string_to_list(connect))
+        self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver,
+                                   Utils.string_to_list(connect))
         self._initialized = False
         self._initialize()
 
-        smarthome.scheduler.add('Database dump ' + self._name + ("" if prefix == "" else " [" + prefix + "]"), self._dump, cycle=self._dump_cycle, prio=5)
+        smarthome.scheduler.add('Database dump ' + self._name + ("" if prefix == "" else " [" + prefix + "]"),
+                                self._dump, cycle=self._dump_cycle, prio=5)
 
         self.init_webinterface()
         return
-
 
     def parse_item(self, item):
         self.logger.debug(item.conf)
@@ -116,11 +121,13 @@ class Database(SmartPlugin):
                 try:
                     cache = self.readItem(str(item.id()), cur=cur)
                     if cache is not None:
-                        value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL+1])
+                        value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL + 1])
                         last_change = self._datetime(cache[COL_ITEM_TIME])
-                        prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id', {'id':cache[COL_ITEM_ID]}, cur=cur)
+                        prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id',
+                                                     {'id': cache[COL_ITEM_ID]}, cur=cur)
                         if value is not None and prev_change is not None:
-                            item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
+                            item.set(value, 'Database', prev_change=self._datetime(prev_change[0]),
+                                     last_change=last_change)
                         self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                 except Exception as e:
                     self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
@@ -143,37 +150,42 @@ class Database(SmartPlugin):
         if acl is 'rw':
             start = self._timestamp(item.prev_change())
             end = self._timestamp(item.last_change())
-            last = None if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None else self._buffer[item][-1]
+            last = None if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None else \
+            self._buffer[item][-1]
             if last:  # update current value with duration
                 self._buffer[item][-1] = (last[0], end - start, last[2])
-            else:     # append new value with none duration
+            else:  # append new value with none duration
                 self._buffer[item].append((start, end - start, item.prev_value()))
 
             # add current value with None duration
             self._buffer[item].append((end, None, item()))
 
-    def dump(self, dumpfile, id = None, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None):
+    def dump(self, dumpfile, id=None, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
+             changed_end=None, cur=None):
         self.logger.info("Starting file dump to {} ...".format(dumpfile))
 
         item_ids = self.readItems(cur=cur) if id is None else [self.readItem(id, cur=cur)]
 
         s = ';'
-        h = ['item_id', 'item_name', 'time', 'duration', 'val_str', 'val_num', 'val_bool', 'changed', 'time_date', 'changed_date']
+        h = ['item_id', 'item_name', 'time', 'duration', 'val_str', 'val_num', 'val_bool', 'changed', 'time_date',
+             'changed_date']
         f = open(dumpfile, 'w')
         f.write(s.join(h) + "\n")
         for item in item_ids:
             self.logger.debug("... dumping item {}/{}".format(item[1], item[0]))
 
-            rows = self.readLogs(item[0], time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end, cur=cur)
+            rows = self.readLogs(item[0], time=time, time_start=time_start, time_end=time_end, changed=changed,
+                                 changed_start=changed_start, changed_end=changed_end, cur=cur)
 
             for row in rows:
                 cols = []
                 for key in [COL_ITEM_ID, COL_ITEM_NAME]:
                     cols.append(item[key])
-                for key in [COL_LOG_TIME, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM, COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                for key in [COL_LOG_TIME, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM, COL_LOG_VAL_BOOL,
+                            COL_LOG_CHANGED]:
                     cols.append(row[key])
                 for key in [COL_ITEM_ID, COL_LOG_CHANGED]:
-                  cols.append('' if row[key] is None else datetime.datetime.fromtimestamp(row[key]/1000.0))
+                    cols.append('' if row[key] is None else datetime.datetime.fromtimestamp(row[key] / 1000.0))
                 cols = map(lambda col: '' if col is None else col, cols)
                 cols = map(lambda col: str(col) if not '"' in str(col) else col.replace('"', '\\"'), cols)
                 f.write(s.join(cols) + "\n")
@@ -205,17 +217,20 @@ class Database(SmartPlugin):
 
     def insertItem(self, name, cur=None):
         id = self._fetchone("SELECT MAX(id) FROM {item};", cur=cur)
-        self._execute(self._prepare("INSERT INTO {item}(id, name) VALUES(:id, :name);"), {'id':1 if id[0] == None else id[0]+1, 'name':name}, cur=cur)
-        id = self._fetchone("SELECT id FROM {item} where name = :name;", {'name':name}, cur=cur)
+        self._execute(self._prepare("INSERT INTO {item}(id, name) VALUES(:id, :name);"),
+                      {'id': 1 if id[0] == None else id[0] + 1, 'name': name}, cur=cur)
+        id = self._fetchone("SELECT id FROM {item} where name = :name;", {'name': name}, cur=cur)
         return int(id[0])
 
     def updateItem(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
-        params = {'id':id, 'time':time, 'changed':changed}
+        params = {'id': id, 'time': time, 'changed': changed}
         params.update(self._item_value_tuple(it, val))
-        self._execute(self._prepare("UPDATE {item} SET time = :time, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE id = :id;"), params, cur=cur)
+        self._execute(self._prepare(
+            "UPDATE {item} SET time = :time, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE id = :id;"),
+                      params, cur=cur)
 
     def readItem(self, id, cur=None):
-        params = {'id':id}
+        params = {'id': id}
         if type(id) == str:
             return self._fetchone("SELECT {item_columns} from {item} WHERE name = :id;", params, cur=cur)
         return self._fetchone("SELECT {item_columns} from {item} WHERE id = :id;", params, cur=cur)
@@ -224,41 +239,50 @@ class Database(SmartPlugin):
         return self._fetchall("SELECT {item_columns} from {item};", cur=cur)
 
     def deleteItem(self, id, cur=None):
-        params = {'id':id}
+        params = {'id': id}
         self.deleteLog(id, cur=cur)
         self._execute(self._prepare("DELETE FROM {item} WHERE id = :id;"), params, cur=cur)
 
     def insertLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
-        params = {'id':id, 'time':time, 'changed':changed, 'duration':duration}
+        params = {'id': id, 'time': time, 'changed': changed, 'duration': duration}
         params.update(self._item_value_tuple(it, val))
-        self._execute(self._prepare("INSERT INTO {log}(item_id, time, val_str, val_num, val_bool, duration, changed) VALUES (:id,:time,:val_str,:val_num,:val_bool,:duration,:changed);"), params, cur=cur)
+        self._execute(self._prepare(
+            "INSERT INTO {log}(item_id, time, val_str, val_num, val_bool, duration, changed) VALUES (:id,:time,:val_str,:val_num,:val_bool,:duration,:changed);"),
+                      params, cur=cur)
 
     def updateLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
-        params = {'id':id, 'time':time, 'changed':changed, 'duration':duration}
+        params = {'id': id, 'time': time, 'changed': changed, 'duration': duration}
         params.update(self._item_value_tuple(it, val))
-        self._execute(self._prepare("UPDATE {log} SET duration = :duration, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE item_id = :id AND time = :time;"), params, cur=cur)
+        self._execute(self._prepare(
+            "UPDATE {log} SET duration = :duration, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE item_id = :id AND time = :time;"),
+                      params, cur=cur)
 
-    def readLog(self, id, time, cur = None):
-        params = {'id':id, 'time':time}
+    def readLog(self, id, time, cur=None):
+        params = {'id': id, 'time': time}
         return self._fetchall("SELECT {log_columns} FROM {log} WHERE item_id = :id AND time = :time;", params, cur=cur)
 
-    def readLogs(self, id, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None):
-        condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end)
+    def readLogs(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
+                 changed_end=None, cur=None):
+        condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
+                                                  changed=changed, changed_start=changed_start, changed_end=changed_end)
         return self._fetchall("SELECT {log_columns} FROM {log} WHERE " + condition, params, cur=cur)
 
-    def deleteLog(self, id, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None, cur = None):
-        condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end, changed=changed, changed_start=changed_start, changed_end=changed_end)
+    def deleteLog(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
+                  changed_end=None, cur=None):
+        condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
+                                                  changed=changed, changed_start=changed_start, changed_end=changed_end)
         self._execute(self._prepare("DELETE FROM {log} WHERE " + condition), params, cur=cur)
 
-    def _slice_condition(self, id, time = None, time_start = None, time_end = None, changed = None, changed_start = None, changed_end = None):
+    def _slice_condition(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
+                         changed_end=None):
         params = {
-          'id'            : id,
-          'time'          : time,          'time_flag'          : 1 if time          == None else 0,
-          'time_start'    : time_start,    'time_start_flag'    : 1 if time_start    == None else 0,
-          'time_end'      : time_end,      'time_end_flag'      : 1 if time_end      == None else 0,
-          'changed'       : changed,       'changed_flag'       : 1 if changed       == None else 0,
-          'changed_start' : changed_start, 'changed_start_flag' : 1 if changed_start == None else 0,
-          'changed_end'   : changed_end,   'changed_end_flag'   : 1 if changed_end   == None else 0
+            'id': id,
+            'time': time, 'time_flag': 1 if time == None else 0,
+            'time_start': time_start, 'time_start_flag': 1 if time_start == None else 0,
+            'time_end': time_end, 'time_end_flag': 1 if time_end == None else 0,
+            'changed': changed, 'changed_flag': 1 if changed == None else 0,
+            'changed_start': changed_start, 'changed_start_flag': 1 if changed_start == None else 0,
+            'changed_end': changed_end, 'changed_end_flag': 1 if changed_end == None else 0
         }
 
         condition = "(item_id = :id                                      ) AND " + \
@@ -275,27 +299,27 @@ class Database(SmartPlugin):
 
     def _item_value_tuple(self, item_type, item_val):
         if item_type == 'num':
-           val_str = None
-           val_num = float(item_val)
-           val_bool = int(bool(item_val))
+            val_str = None
+            val_num = float(item_val)
+            val_bool = int(bool(item_val))
         elif item_type == 'bool':
-           val_str = None
-           val_num = float(item_val)
-           val_bool = int(bool(item_val))
+            val_str = None
+            val_num = float(item_val)
+            val_bool = int(bool(item_val))
         else:
-           val_str = str(item_val)
-           val_num = None
-           val_bool = int(bool(item_val))
+            val_str = str(item_val)
+            val_num = None
+            val_bool = int(bool(item_val))
 
-        return {'val_str':val_str, 'val_num':val_num, 'val_bool':val_bool}
+        return {'val_str': val_str, 'val_num': val_num, 'val_bool': val_bool}
 
     def _item_value_tuple_rev(self, item_type, item_val_tuple):
         if item_type == 'num':
-           return None if item_val_tuple[1] is None else float(item_val_tuple[1])
+            return None if item_val_tuple[1] is None else float(item_val_tuple[1])
         elif item_type == 'bool':
-           return None if item_val_tuple[2] is None else bool(int(item_val_tuple[2]))
+            return None if item_val_tuple[2] is None else bool(int(item_val_tuple[2]))
         else:
-           return None if item_val_tuple[0] is None else str(item_val_tuple[0])
+            return None if item_val_tuple[0] is None else str(item_val_tuple[0])
 
     def _datetime(self, ts):
         return datetime.datetime.fromtimestamp(ts / 1000, self.shtime.tzinfo())
@@ -335,9 +359,12 @@ class Database(SmartPlugin):
                 if not self._db.lock(300):
                     self._buffer_insert(item, tuples)
                     if finalize:
-                        self.logger.error("Database: can't dump {} items due to fail to acquire lock!".format(len(self._buffer)))
+                        self.logger.error(
+                            "Database: can't dump {} items due to fail to acquire lock!".format(len(self._buffer)))
                     else:
-                        self.logger.error("Database: can't dump {} items due to fail to acquire lock - will try on next dump".format(len(self._buffer)))
+                        self.logger.error(
+                            "Database: can't dump {} items due to fail to acquire lock - will try on next dump".format(
+                                len(self._buffer)))
                     self._dump_lock.release()
                     return
 
@@ -379,8 +406,12 @@ class Database(SmartPlugin):
 
                     self._db.commit()
                 except Exception as e:
-                    self.logger.warning("Database: problem updating {}: {}".format(item.id(), e))
-                    self._db.rollback()
+                    self.logger.warning("Database: Problem dumping {}: {}".format(item.id(), e))
+                    try:
+                        self._db.rollback()
+                    except Exception as er:
+                        self._buffer_insert(item, tuples)
+                        self.logger.warning("Database: Error rolling back: {}".format(er))
                 finally:
                     if cur is not None:
                         cur.close()
@@ -405,10 +436,10 @@ class Database(SmartPlugin):
         return tuples
 
     def _expression(self, func):
-        expression = {'params' : {'op':'!=', 'value':'0'}, 'finalizer' : None}
+        expression = {'params': {'op': '!=', 'value': '0'}, 'finalizer': None}
         if ':' in func:
             expression['finalizer'] = func[:func.index(":")]
-            func = func[func.index(":")+1:]
+            func = func[func.index(":") + 1:]
         if func is 'count' or func.startswith('count'):
             parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
             func = 'count'
@@ -421,8 +452,8 @@ class Database(SmartPlugin):
     def _finalize(self, func, tuples):
         if func == 'diff':
             final_tuples = []
-            for i in range(1, len(tuples)-1):
-                final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i-1][1]))
+            for i in range(1, len(tuples) - 1):
+                final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i - 1][1]))
             return final_tuples
         else:
             return tuples
@@ -430,26 +461,28 @@ class Database(SmartPlugin):
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
         init = not update
         if sid is None:
-            sid = item + '|' + func + '|' + str(start) + '|' + str(end)  + '|' + str(count)
+            sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
         func, expression = self._expression(func)
         queries = {
-            'avg' : 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
-            'avg.order' : 'ORDER BY time ASC',
-            'count' : 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-            'min' : 'MIN(time), MIN(val_num)',
-            'max' : 'MIN(time), MAX(val_num)',
-            'on'  : 'MIN(time), ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            'on.order' : 'ORDER BY time ASC',
-            'sum' : 'MIN(time), SUM(val_num)',
-            'raw' : 'time, val_num',
-            'raw.order' : 'ORDER BY time ASC',
-            'raw.group' : ''
+            'avg': 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
+            'avg.order': 'ORDER BY time ASC',
+            'integrate' : 'MIN(time), SUM(val_num * duration)',
+            'count': 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
+            'countall' : 'MIN(time), COUNT(*)',
+            'min': 'MIN(time), MIN(val_num)',
+            'max': 'MIN(time), MAX(val_num)',
+            'on': 'MIN(time), ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
+            'on.order': 'ORDER BY time ASC',
+            'sum': 'MIN(time), SUM(val_num)',
+            'raw': 'time, val_num',
+            'raw.order': 'ORDER BY time ASC',
+            'raw.group': ''
         }
         if func not in queries:
             raise NotImplementedError
 
-        order = '' if func+'.order' not in queries else queries[func+'.order']
-        group = 'GROUP BY ROUND(time / :step)' if func+'.group' not in queries else queries[func+'.group']
+        order = '' if func + '.order' not in queries else queries[func + '.order']
+        group = 'GROUP BY ROUND(time / :step)' if func + '.group' not in queries else queries[func + '.group']
         logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group=group, order=order)
         tuples = logs['tuples']
         if tuples:
@@ -474,27 +507,30 @@ class Database(SmartPlugin):
 
         return {
             'cmd': 'series', 'series': tuples, 'sid': sid,
-            'params' : {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end, 'step': logs['step'], 'sid': sid},
-            'update' : self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
+            'params': {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end,
+                       'step': logs['step'], 'sid': sid},
+            'update': self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
         }
 
     def _single(self, func, start, end='now', item=None):
         func, expression = self._expression(func)
         queries = {
-            'avg' : self._precision_query('AVG(val_num * duration) / AVG(duration)'),
-            'count' : 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-            'min' : 'MIN(val_num)',
-            'max' : 'MAX(val_num)',
-            'on'  : self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            'sum' : 'SUM(val_num)',
-            'raw' : 'val_num',
-            'raw.order' : 'ORDER BY time DESC',
-            'raw.group' : ''
+            'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
+            'integrate' : 'SUM(val_num * duration)',
+            'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
+            'countall' : 'COUNT(*)',
+            'min': 'MIN(val_num)',
+            'max': 'MAX(val_num)',
+            'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
+            'sum': 'SUM(val_num)',
+            'raw': 'val_num',
+            'raw.order': 'ORDER BY time DESC',
+            'raw.group': ''
         }
         if func not in queries:
             self.logger.warning("Unknown export function: {0}".format(func))
             return
-        order = '' if func+'.order' not in queries else queries[func+'.order']
+        order = '' if func + '.order' not in queries else queries[func + '.order']
         logs = self._fetch_log(item, queries[func], start, end, order=order)
         if logs['tuples'] is None:
             return
@@ -525,7 +561,7 @@ class Database(SmartPlugin):
         if self._buffer[_item] != []:
             self._dump(items=[_item])
 
-        params = {'id':id, 'time_start':istart, 'time_end':iend, 'inow':inow, 'step':step}
+        params = {'id': id, 'time_start': istart, 'time_end': iend, 'inow': inow, 'step': step}
         duration_now = "COALESCE(duration, :inow - time)"
 
         # Duration calculation (S=Start, E=End):
@@ -550,12 +586,12 @@ class Database(SmartPlugin):
 
         # Create base query including the replaced columns
         query = (
-            "SELECT " + columns + " FROM {log} WHERE "
-            "item_id = :id AND "
-            "time >= (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND "
-            "time <= :time_end AND "
-            "time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) "
-            "" + group + " " + order
+                "SELECT " + columns + " FROM {log} WHERE "
+                                      "item_id = :id AND "
+                                      "time >= (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND "
+                                      "time <= :time_end AND "
+                                      "time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) "
+                                      "" + group + " " + order
         )
 
         # Replace duration_now with value from start time til current time to
@@ -565,12 +601,12 @@ class Database(SmartPlugin):
         logs = self._fetchall(query, params)
 
         return {
-            'tuples' : logs,
-            'item'   : _item,
-            'istart' : istart,
-            'iend'   : iend,
-            'step'   : step,
-            'count'  : count
+            'tuples': logs,
+            'item': _item,
+            'istart': istart,
+            'iend': iend,
+            'step': step,
+            'count': count
         }
 
     def _fetchone(self, query, params={}, cur=None):
@@ -585,7 +621,6 @@ class Database(SmartPlugin):
         self._query(self._db.execute, query, params, cur)
 
     def _query(self, func, query, params, cur=None):
-        self.logger.debug(query)
         if not self._initialize():
             return None
         if cur is None:
@@ -601,10 +636,12 @@ class Database(SmartPlugin):
         try:
             tuples = func(self._prepare(query), params, cur=cur)
         except Exception as e:
-            self.logger.warning("Database: Running query {}: {}".format(query_readable, e))
-        if cur is None:
-            self._db.release()
-        self.logger.debug("Fetch {}: {}".format(query_readable, tuples))
+            self.logger.error("Database: Error for query {}: {}".format(query_readable, e))
+            raise e
+        finally:
+            if cur is None:
+                self._db.release()
+        self.logger.debug("Database: Fetch {}: {}".format(query_readable, tuples))
         return tuples
 
     def _initialize(self):
@@ -612,11 +649,12 @@ class Database(SmartPlugin):
             if not self._db.connected():
                 self._db.connect()
             if not self._initialized:
-                self._db.setup({i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
+                self._db.setup(
+                    {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
                 self._initialized = True
         except Exception as e:
-           self.logger.error("Database: initialization failed: {}".format(e))
-           return False
+            self.logger.error("Database: Initialization failed: {}".format(e))
+            return False
         return True
 
     def _parse_ts(self, frame):
@@ -686,6 +724,7 @@ class Database(SmartPlugin):
 
         return True
 
+
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
@@ -713,7 +752,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None, action=None, item_id=None, item_path=None, day=None, month=None, year=None,
               time_orig=None, changed_orig=None):
@@ -724,7 +762,8 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        item = self.plugin.get_sh().return_item(item_path)
+        if item_path is not None:
+            item = self.plugin.items.return_item(item_path)
         delete_triggered = False
         if action is not None:
             if action == "delete_log" and item_id is not None:
@@ -737,11 +776,11 @@ class WebInterface(SmartPluginWebIf):
             if action == "item_details" and item_id is not None:
                 if day is not None and month is not None and year is not None:
                     time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (month, day, year),
-                                                                        "%m/%d/%Y").timetuple())*1000
+                                                                        "%m/%d/%Y").timetuple()) * 1000
                 else:
                     now = self.plugin.shtime.now()
                     time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (now.month, now.day, now.year),
-                                                                        "%m/%d/%Y").timetuple())*1000
+                                                                        "%m/%d/%Y").timetuple()) * 1000
                 time_end = time_start + 24 * 60 * 60 * 1000
                 tmpl = self.tplenv.get_template('item_details.html')
 
@@ -754,24 +793,25 @@ class WebInterface(SmartPluginWebIf):
                         if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
                             value_dict[key] = row[key]
                         else:
-                            value_dict[key] = datetime.datetime.fromtimestamp(row[key]/1000, tz=self.plugin.shtime.tzinfo())
+                            value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
+                                                                              tz=self.plugin.shtime.tzinfo())
                             value_dict["%s_orig" % key] = row[key]
 
                     log_array.append(value_dict)
                 reversed_arr = log_array[::-1]
                 return tmpl.render(p=self.plugin,
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
-                                                reverse=False), item = item,
-                                   tabcount=1, action=action, item_id=item_id, item_path=item_path,
-                                   language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now(),
+                                                reverse=False), item=item,
+                                   tabcount=2, action=action, item_id=item_id, item_path=item_path,
+                                   language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now(),
                                    log_array=reversed_arr, day=day, month=month, year=year,
                                    delete_triggered=delete_triggered)
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
-                           tabcount=1, action=action, item_id=item_id, delete_triggered=delete_triggered)
-
+                           tabcount=2, action=action, item_id=item_id, delete_triggered=delete_triggered,
+                           language=self.plugin.get_sh().get_defaultlanguage())
 
     @cherrypy.expose
     def item_csv(self, item_id):
@@ -787,26 +827,27 @@ class WebInterface(SmartPluginWebIf):
             log_array = []
             for row in rows:
                 value_dict = {}
-                for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM, COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
+                            COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
                     value_dict[key] = row[key]
                 log_array.append(value_dict)
             reversed_arr = log_array[::-1]
-            csv_file_path = '%s/var/db/%s_item_%s.csv' % (self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
+            csv_file_path = '%s/var/db/%s_item_%s.csv' % (
+            self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
 
             with open(csv_file_path, 'w', encoding='utf-8') as f:
                 writer = csv.writer(f, dialect="excel")
                 writer.writerow(['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed'])
                 for dataset in reversed_arr:
-                    writer.writerow([dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6]])
+                    writer.writerow(
+                        [dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6]])
 
             cherrypy.request.fileName = csv_file_path
             cherrypy.request.hooks.attach('on_end_request', self.download_complete)
             return cherrypy.lib.static.serve_download(csv_file_path)
 
-
     def download_complete(self):
         os.unlink(cherrypy.request.fileName)
-
 
     @cherrypy.expose
     def db_dump(self):
@@ -814,8 +855,24 @@ class WebInterface(SmartPluginWebIf):
         returns the smarthomeNG sqlite database as download
         """
 
-        self.plugin.dump('%s/var/db/smarthomedb_%s.dump' % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()))
+        self.plugin.dump(
+            '%s/var/db/smarthomedb_%s.dump' % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()))
         mime = 'application/octet-stream'
         return cherrypy.lib.static.serve_file(
             "%s/var/db/smarthomedb_%s.dump" % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()),
             mime, "%s/var/db/" % self.plugin.get_sh().base_dir)
+
+    @cherrypy.expose
+    def cleanup(self):
+        self.plugin.cleanup()
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def countall(self, item_path):
+        if item_path is not None:
+            item = self.plugin.items.return_item(item_path)
+            count = item.db('countall', 0)
+            if count is not None:
+                return int(count)
+            else:
+                return 0

@@ -288,7 +288,7 @@ class Homematic(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        if caller != 'HomeMatic':
+        if caller != 'homematic':
             if self.has_iattr(item.conf, 'hm_address'):
 #               self.hm_items[] = [str(item), item, hm_address, hm_channel, hm_function, hm_node]
                 myitem = None
@@ -456,8 +456,12 @@ class Homematic(SmartPlugin):
             if address == i[2]+':'+str(i[3]):
                 if value_key == i[4]:
                     self.logger.info("eventcallback: address={}, {}='{}' -> {}".format(address, value_key, value, i[0]))
-#                    i[1](value, 'HomeMatic', address)
-                    i[1](value, 'HomeMatic')
+                    src = self.get_instance_name()
+                    if src != '':
+                        src += ':'
+                    src += address
+                    i[1](value, self.get_shortname(), src)
+#                    i[1](value, 'HomeMatic')
                     defined = True
 
         if not defined:

@@ -76,7 +76,7 @@ function mainpage() {
     {% for item in p.get_items() %}
       {% if p.has_iattr(item.conf, 'uzsu_item') %}
         {% set planned = p._logics_planned(item) %}
-        {% if (p._items[item]['active'] == True and planned == none) or p._items[item]['interpolation']['itemtype'] == none %}
+        {% if (p._items[item]['active'] == True and planned == none) or p._items[item]['interpolation'] is not defined or p._items[item]['interpolation']['itemtype'] == none %}
           {% set color = 'red' %}
         {% elif p._items[item]['active'] == True %}
             {% set color = 'green' %}
@@ -87,22 +87,39 @@ function mainpage() {
           <tr style="color:{{ color }};" onClick="togglevis('detail_{{item._path}}')" onMouseOut="hide('detail_{{item._path}}')">
             <td class="py-1">{{ item._path }}</td>
             <td class="py-1">{{ p.get_iattr_value(item.conf, 'uzsu_item') }}
-              {% if p._items[item]['interpolation']['itemtype'] == none %} -
-              {{ _('Item existiert nicht!') }}{% else %}
-              ({{ p._items[item]['interpolation']['itemtype'] }})
+              {% if p._items[item]['interpolation'] is not defined %}
+
+              {% elif p._items[item]['interpolation']['itemtype'] == none %} -
+                {{ _('Item existiert nicht!') }}
+              {% else %}
+                ({{ p._items[item]['interpolation']['itemtype'] }})
               {% endif %}
             </td>
               <td class="py-1" >{{ p._get_dependant(item) }}<br>
                 {% if planned != none %}{{ planned }}{% endif %}
                 {% if planned == none and p._items[item]['active'] == True %}
-                {{ _('Aktives Item, keine (aktiven) Einträge!') }}
+                  {{ _('Aktives Item, keine (aktiven) Einträge!') }}
                 {% endif %}
               </td>
-              <td class="py-1">{% if p._items[item]['interpolation']['type'] %}
-                {{ p._items[item]['interpolation']['type'] }} ({% if p._items[item]['interpolation']['interval'] %}{{ p._items[item]['interpolation']['interval'] }}{% else %}<span style="color: gray;">5</span>{% endif %})
-                {% else %}-{% endif %}</td>
-              <td class="py-1">{% if p._items[item]['interpolation']['initage'] %}
-                {{ p._items[item]['interpolation']['initage'] }}{% else %}-{% endif %}</td>
+              <td class="py-1">
+                {% if p._items[item]['interpolation'] is not defined %}
+                  {{ _('Interpolationsinformation fehlt!') }}
+                {% elif p._items[item]['interpolation']['type'] %}
+                  {{ p._items[item]['interpolation']['type'] }}
+                  ({% if p._items[item]['interpolation']['interval'] %}
+                    {{ p._items[item]['interpolation']['interval'] }}
+                  {% else %}
+                    <span style="color: gray;">5</span>
+                  {% endif %})
+                {% else %}-
+                {% endif %}</td>
+              <td class="py-1">
+                {% if p._items[item]['interpolation'] is not defined %}
+                  {{ _('Init Information fehlt!') }}
+                {% elif p._items[item]['interpolation']['initage'] %}
+                  {{ p._items[item]['interpolation']['initage'] }}
+                {% else %}-
+                {% endif %}</td>
           </tr>
         {% endif %}
     {% endfor %}

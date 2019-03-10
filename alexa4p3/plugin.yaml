@@ -1,0 +1,151 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                     # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Ansteuerung von SmartHomeNG via Amazon Echo bzw. Alexa, ** seit SmartHomeNG v1.3 **'
+        en: 'Plugin to connect SmartHomeNG via Amazon Echo bzw. Alexa, ** since SmartHomeNG v1.3 **'
+    maintainer: andrek
+    tester: psilo909, cannon, ASSR85, Juergen
+    keywords: Amazon Echo Alexa Voicecontrol Sprachsteuerung Show Spot FireTV
+    documentation: http://smarthomeng.de/user/plugins_doc/config/Alexa4P3.html        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021150-amazon-alexa-plugin
+    version: 1.0.1                   # Plugin version
+    sh_minversion: 1.3               # minimum shNG version to use this plugin
+    multi_instance: False            # plugin supports multi instance
+    classname: alexap3               # class containing the plugin
+    state: develop                   # State of the Plugin
+    restartable: True                # Plugin is restartable 
+
+
+plugin_functions: NONE               # the Plugin provides no public functions
+logic_parameters: NONE               # No logic parameters for this plugin
+item_structs: NONE                   # no item structure needed
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    service_port:
+        type: int
+        default: 9000
+        description:
+            de: 'Portnummer auf dem das Plugin die Anfragen von Amazon-Alexa erwartet'
+            en: 'Port-No. where the Plugin listens to request from Amazon/Alexa'  
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    alexa_name:
+        type: str
+        mandatory: True
+        description:
+            de: 'Alexa Gerätename um das Gerät anzusprechen as default fall back to alexa_device'
+            en: 'Alexa device name to get acces to the device'  
+
+    alexa_description:
+        type: str
+        mandatory: False
+        description:
+            de: 'Alexa Gerätename um das Gerät anzusprechen als Standard-Wert wird alexa_name verwendet'
+            en: 'Alexa device name to get acces to the device as default fall back to alexa_device'  
+
+    alexa_device:
+        type: str
+        mandatory: True
+        description:
+            de: 'interner Gerätename um das Gerät in smarthomeNG zu indentifizieren (endpoint)'
+            en: 'internal devicenam to identify the device in smarthomeNG (endpoint)'  
+
+    alexa_icon: 
+        type: str
+        mandatory: False
+        description:
+            de: 'Alexa Kategorie/Symbol welche in der Alexa-App angezeigt wird, Standard-Wert SWITCH '
+            en: 'Alexa Categorie/icon which will be displayed in the Alexa-App, default is SWITCH'
+
+    alexa_actions:
+        type: str
+        mandatory: True
+        description:
+            de: 'Alexa Aktionen die für diese Gerät bereitgestellt werden'
+            en: 'Alexa Action which will be supported by this device'
+
+    alexa_retrievable:
+        type: bool
+        mandatory: False
+        description:
+            de: 'legt fest ob die Statuswerte durch Amazon/Alexa abgefragt werden können, default FALSE'
+            en: 'determine if the status values can be asked by Amazon/Alexa, default FALSE'
+
+    alexa_proactivelyReported:
+        type: bool
+        mandatory: False
+        description:
+            de: 'legt fest ob die Statuswerte bei Änderung an Amazon / Alexa übermittelt werden sollen, default FALSE'
+            en: 'determine if the status values should be committed to Amazon/Alexa if they change, default FALSE'
+
+    alexa_types:
+        type: str
+        mandatory: False
+        description:
+            de: 'nur für Payload-V2 benötigt'
+            en: 'only for Payload V2 needed'
+
+    alexa_item_range:
+        type: str
+        mandatory: False
+        description:
+            de: 'Wertbereich in dem das Gerät eingestellt werden kann z.B. 0-255 oder 0-100, default ist 0-255'
+            en: 'valuerange in which the device could be set to, example 0-255 or 0-100, default is 0-255'
+
+    alexa_item_turn_on:
+        type: str
+        mandatory: False
+        description:
+            de: 'Wert der beim Einschalten zum Item gesendet werden soll'
+            en: 'value which will be send to the item on Turn On order'
+
+    alexa_color_value_type:
+        type: str
+        mandatory: False
+        description:
+            de: 'Farbsystem für RGB/HSV Leuchten, Wert = RGB oder HSV, Standardwert ist RGB '
+            en: 'Colorsystem for RGB/HSV lights, value = HSV or RGB, default is RGB'
+
+    alexa_thermo_config:
+        type: str
+        mandatory: False
+        description:
+            de: 'moegliche Modi für einen Raumthermostaten, möglich Werte -  0:AUTO 1:HEAT 2:OFF 3:ECO 4:ECO, Standardwert ist = 0:AUTO'
+            en: 'possible Modes for an Roomtemperaturcontroller, possible Valurs - 0:AUTO 1:HEAT 2:OFF 3:ECO 4:ECO, default value is  = 0:AUTO'
+
+    alexa_stream_(1)1(2)(3):
+        type: str
+        mandatory: False
+        description:
+            de: 'Streamdefinition (Codecs, Aufloesung, ...)für Kamerastreams, es sind drei Streams moeglich (alexa_stream_1, alexa_stream_2, alexa_stream_3)'
+            en: 'stream defintions (codes, resolutions, ...)for Camera streams, three streams are possible (alexa_stream_1, alexa_stream_2, alexa_stream_3)'
+
+    alexa_csc_uri:
+        type: str
+        mandatory: False
+        description:
+            de: 'URLs der Kamerastreams als String im Format {"Stream1":"192.168.178.9","Stream2":"192.168.178.9/2"},"Stream3":"...."'
+            en: 'URLs of the Camerastreams in string format  {"Stream1":"192.168.178.9","Stream2":"192.168.178.9/2"},"Stream3":"...."'
+
+    alexa_auth_cred:
+        type: str
+        mandatory: False
+        description:
+            de: 'Benutzer und Passwort für Kamerastreams als String im Format USER:PWD'
+            en: 'User and Password for Camerastreams string format USER:PWD'
+
+    alexa_camera_imageUri:
+        type: str
+        mandatory: False
+        description:
+            de: 'URL für das Standbild einer Kamera'
+            en: 'URL for the preview picture of the camera'
+#    alexa_alias:
+#        type: str
+#        mandatory: False
+#        description:
+#            de: 'nur für Payload-V2 benötigt'
+#            en: 'only for Payload V2 needed'

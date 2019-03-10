@@ -82,7 +82,7 @@ class Pushbullet(SmartPlugin):
         return self._push(data={"type": "list", "title": title, "items": items}, deviceid=deviceid, apikey=apikey)
 
     def file(self, filepath, deviceid=None, apikey=None, body=None):
-        if os.path.exists(filepath) == False:
+        if os.path.exists(filepath):
             self.logger.error(
                 "Plugin '{}': Trying to push non existing file: {}".format(self.get_fullname(),
                                                                            filepath))

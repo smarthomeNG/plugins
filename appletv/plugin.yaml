@@ -8,6 +8,7 @@ plugin:
         fr: 'Contrôle un Apple TV'
     maintainer: Foxi352
 #    tester:                        # Who tests this plugin?
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1223483-plugin-apple-tv
@@ -33,7 +34,20 @@ parameters:
             de: 'Login ID des Gerätes, kann im Webinterface gefunden werden.'
             en: 'Login ID of the device. Can be found in the web interface.'
             fr: "ID de connexion de l'appareil. Peut être trouvé sur l'interface web"
-   
-#item_attributes:
+
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
+item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+plugin_functions:
+# Definition of plugin functions defined by this plugin
+

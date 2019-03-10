@@ -89,16 +89,21 @@ class BackendSysteminfo:
         seconds = uptime
         uptime = self.age_to_string(days, hours, minutes, seconds)
 
+        # # return SmarthomeNG runtime
+        # rt = str(Shtime.get_instance().runtime())
+        # daytest = rt.split(' ')
+        # if len(daytest) == 3:
+        #     days = int(daytest[0])
+        #     hours, minutes, seconds = [float(val) for val in str(daytest[2]).split(':')]
+        # else:
+        #     days = 0
+        #     hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
+        # sh_uptime = self.age_to_string(days, hours, minutes, seconds)
+
         # return SmarthomeNG runtime
-        rt = str(Shtime.get_instance().runtime())
-        daytest = rt.split(' ')
-        if len(daytest) == 3:
-            days = int(daytest[0])
-            hours, minutes, seconds = [float(val) for val in str(daytest[2]).split(':')]
-        else:
-            days = 0
-            hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
-        sh_uptime = self.age_to_string(days, hours, minutes, seconds)
+        rt = Shtime.get_instance().runtime_as_dict()
+        sh_uptime = self.age_to_string(rt['days'], rt['hours'], rt['minutes'], rt['seconds'])
+
 
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
                                              sys.version_info[3])
@@ -438,9 +443,9 @@ class BackendSysteminfo:
         if req_group == 'base':
             req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'requirements', 'base.txt'))
 #            req_dict_base = self.shpypi.parse_requirementsfile(os.path.join(self._sh_dir, 'requirements', 'base.txt'))
-            dummy = self.shpypi.parse_requirementsfile(os.path.join(self._sh_dir, 'requirements', 'all.txt'))
+            dummy = self.shpypi.parse_requirementsfile(os.path.join(self._sh_dir, 'requirements', 'conf-all.txt'))
             dummy = self.shpypi.test_base_requirements()
-            dummy = self.shpypi.test_requirements(os.path.join(self._sh_dir, 'requirements', 'all.txt'))
+            dummy = self.shpypi.test_requirements(os.path.join(self._sh_dir, 'requirements', 'conf-all.txt'))
             dummy = self.shpypi.get_packagelist()
             self.logger.warning("get_requirements_info: get_packagelist = {}".format(dummy))
 
@@ -448,9 +453,11 @@ class BackendSysteminfo:
         elif req_group == 'test':
             req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'tests', 'requirements.txt'))
             self.logger.info("get_requirements_info: filepath = {}".format(os.path.join(self._sh_dir, 'tests', 'requirements.txt')))
+            pass
         elif req_group == 'doc':
             req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'doc', 'requirements.txt'))
             self.logger.info("get_requirements_info: filepath = {}".format(os.path.join(self._sh_dir, 'doc', 'requirements.txt')))
+            pass
         else:
             self.logger.error("get_requirements_info: Unknown requirements group '{}' requested".format(req_group))
 
@@ -479,7 +486,10 @@ class BackendSysteminfo:
                                 'plugins.', '') + ')'
 
         if req_group in ['doc','test']:
-            req_dict = req_dict_base.copy()
+            try:
+                req_dict = req_dict_base.copy()
+            except:
+                pass
 
         self.logger.info("get_requirements_info: req_dict for group {} = {}".format(req_group, req_dict))
         return req_dict

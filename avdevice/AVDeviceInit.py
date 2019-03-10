@@ -28,6 +28,9 @@ import logging
 import re
 import os
 
+from lib.item import Items
+from bin.smarthome import VERSION
+
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
 logging.addLevelName(logging.DEBUG - 1, 'VERBOSE1')
@@ -36,14 +39,13 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 class Init(object):
 
-    def __init__(self, smarthome, name, model, items):
+    def __init__(self, name, model, items, logger):
         self._items = items
         self._name = name
         self._model = model
-        self._sh = smarthome
         self._ignoreresponse = []
-
-        self.logger = logging.getLogger(__name__)
+        self.itemsApi = Items.get_instance()
+        self.logger = logger
         self.logger.log(VERBOSE1, "Initializing {}: Started".format(self._name))
 
         self._functions = {'zone0': {}, 'zone1': {}, 'zone2': {}, 'zone3': {}, 'zone4': {}}
@@ -54,6 +56,23 @@ class Init(object):
         self._specialparse = {}
         self._number_of_zones = 0
         self._special_commands = {}
+
+    def get_items(self, zone):
+        itemlist = []
+        sortedlist = []
+        finallist = []
+        for item in self._items[zone]:
+            _result = self._items[zone][item].get('Item')
+            itemlist.append(_result)
+            if not item == 'dependson':
+                try:
+                    sortedlist.append(_result.id())
+                except Exception:
+                    sortedlist.append(_result)
+        sortedlist.sort()
+        for i in sortedlist:
+            finallist.append(self.itemsApi.return_item(i))
+        return finallist
 
     def update_dependencies(self, dependencies):
         done = False
@@ -758,10 +777,10 @@ class Init(object):
 
 
 class ProcessVariables(Init):
-    def __init__(self, value, name):
+    def __init__(self, value, name, logger):
         self._value = value
         self._name = name
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
 
     def process_rs232(self):
         baud = serial_timeout = None

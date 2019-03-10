@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2018 René Frieß                      rene.friess(a)gmail.com
-#  Version 1.5.0.1
+#  Version 1.5.0.2
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -32,7 +32,7 @@ from lib.model.smartplugin import *
 
 class DarkSky(SmartPlugin):
 
-    PLUGIN_VERSION = "1.5.0.1"
+    PLUGIN_VERSION = "1.5.0.2"
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
@@ -81,6 +81,9 @@ class DarkSky(SmartPlugin):
         Updates information on diverse items
         """
         forecast = self.get_forecast()
+        if forecast is None:
+            self.logger.error("Forecast is None! Perhaps server did not reply?")
+            return
         self._jsonData = forecast
         for s, item in self._items.items():
             sp = s.split('/')
@@ -157,6 +160,36 @@ class DarkSky(SmartPlugin):
             return
         json_obj = response.json()
         return json_obj
+
+    def map_icon(self, icon):
+        """
+        Maps the icons from darksky.net to the icons in SmartVisu
+
+        :param icon icon to map, as string.
+        :return SmartVisu icon as string.
+        """
+        if icon == 'clear-day':
+            return 'sun_1'
+        elif icon == 'clear-night':
+            return 'sun_1'
+        elif icon == 'partly-cloudy-day':
+            return 'sun_4'
+        elif icon == 'partly-cloudy-night':
+            return 'sun_4'
+        elif icon == 'fog':
+            return 'sun_6'
+        elif icon == 'rain':
+            return 'cloud_8'
+        elif icon == 'wind':
+            return 'sun_10'
+        elif icon == 'snow':
+            return 'sun_12'
+        elif icon == 'cloudy':
+            return 'cloud_4'
+        elif icon == 'sleet':
+            return 'cloud_11'
+        else:
+            return 'high'
 
     def parse_item(self, item):
         """
