@@ -454,7 +454,7 @@ For using this method you should be able to use the SHNG backend.
 These steps show you how to teach-in an encocean actor with this method
 
 1. Create the logic file  
-   a) copy the file <enocean_learn.py> from the plugin folder to the logics folder  
+   a) copy the file <enocean_learn.py> from the <plugin/scripts> folder to the logics folder  
    b) OR create a new logic in the backend and copy the complete code from <enocean_learn.py> inside this new logic
 2. modify the logic via backend and be sure that the right learn method is uncommented in the logic
 3. save and load the logic in the backend
