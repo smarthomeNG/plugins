@@ -120,3 +120,5 @@ plugin_functions:
 
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
+
+item_structs: NONE
