@@ -163,10 +163,8 @@ class OpenWeatherMap(SmartPlugin):
         """
         s = s.replace("forecast/daily/", "")
         forecast = self._jsonData['forecast']
-        #print("!!! forecast:")
-        date_current = datetime.now()
-        #print("current: " + str(date_current))
-        date_requested = datetime(date_current.year, date_current.month, date_current.day)
+        datetime_now = datetime.now()
+        date_requested = datetime(datetime_now.year, datetime_now.month, datetime_now.day)
         sp = s.split('/')
         if self.is_int(sp[0]):
             days_in_future = int(sp[0]) + 1
@@ -178,12 +176,8 @@ class OpenWeatherMap(SmartPlugin):
                     s))
             return None
 
-        #print("requested: " + date_requested.strftime('%Y-%m-%d %H:%M:%S'))
-
         too_far = date_requested + timedelta(days=1)
-
         wrk = []
-        #print("calculating: " + s)
         for entry in forecast.get('list'):
             dt = int(entry.get('dt'))
             if dt >= int(too_far.timestamp()):
@@ -191,16 +185,13 @@ class OpenWeatherMap(SmartPlugin):
             if dt >= int(date_requested.timestamp()):
                 val = self.get_val_from_dict("/".join(sp), entry)
                 if isinstance(val, float) or isinstance(val,int):
-                    #print("value: " + str(val))
                     wrk.append(val)
                 elif val is None:
                     self.logger.error("_update: found None value while calculating daily forecast for matchstring '{}'.".format(s))
                     return 0
                 else:
-                    #print("type: "+ str(type(val)))
                     self.logger.error("_update: found unknown value while calculating daily forecast for matchstring '{}'; daily forecast only supported for int and float.".format(s))
                     return 0
-                #print("including " + datetime.fromtimestamp(dt).strftime('%Y-%m-%d %H:%M:%S') + ", value: " + str(val))
 
         result = 0
         if "max" in sp[len(sp)-1]:
