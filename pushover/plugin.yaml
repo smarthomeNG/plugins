@@ -8,6 +8,7 @@ plugin:
         fr: "Connexion au service Pushover"
 
     maintainer: 'Thomas Creutz'
+    state: ready
     version: 1.6.1.0               # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
     multi_instance: True           # plugin supports multi instance
@@ -41,4 +42,4 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+

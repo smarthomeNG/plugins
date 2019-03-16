@@ -1,0 +1,92 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set item_count = items|length %}
+
+{% block headtable %}	
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Instanz') }}</strong></td>
+			<td class="py-1">{{ c['instance'] }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Update Zyklus') }}</strong></td>
+			<td class="py-1">{{ cycle }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Schnittstelle') }}</strong></td>
+			<td class="py-1">{{ c['serialport'] }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Gerätesubadresse') }}</strong></td>
+			<td class="py-1">'{{ c['device'] }}'</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Timeout') }}</strong></td>
+			<td class="py-1">{{ c['timeout'] }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Prüfsumme nutzen') }}</strong></td>
+			<td class="py-1">{{ c['use_checksum'] }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Abfragecode') }}</strong></td>
+			<td class="py-1">{{ c['querycode'] }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<form action="" method="post">
+	<button id="btn1" class="btn btn-shng btn-sm" name="learn" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;Mach was&nbsp;</button>
+	</form>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Letzte Auslesung') ~ "</strong>" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+    {% autoescape false %}
+    {{ r | replace("\r\n", "<br/>") }}
+    {% endautoescape %}
+</div>
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " " ~ _('OBIS Items') ~ "</strong>" %}
+{% block bodytab2 %}
+<div class="container-fluid m-2">
+    {% for item in items %}
+        <div>{{ item }}</div>
+    {% endfor %}
+</div>
+{% endblock bodytab2 %}

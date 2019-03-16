@@ -50,10 +50,13 @@ parameters:
         description:
             de: 'Gibt die Liste der Gruppenchats an die automatisch betreten werden sollen (optional)'
             en: 'Specifies the list of group chats to join automatically (optional)'
-    
+
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
-    
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 

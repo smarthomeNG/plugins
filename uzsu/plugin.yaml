@@ -38,6 +38,7 @@ plugin:
              '
     maintainer: cmalo, bmxp, onkelandy
     tester: Sandman60, cmalo, schuma
+    state: ready
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1270230-uzsu-neue-version-von-onkelandy
@@ -46,6 +47,7 @@ plugin:
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: UZSU                # class containing the plugin
 
 parameters:
@@ -80,6 +82,25 @@ item_attributes:
                  for the uzsu_item parameter. It is highly recommended to specify
                  ``cache: True`` as well for persistent storage of the UZSU information.
                  '
+
+item_structs:
+    child:
+        name: Vorlage-Struktur für Zeitschaltuhren
+
+        uzsu:
+            type: dict
+            uzsu_item: '..'
+            cache: 'True'
+            visu_acl: rw
+
+            active:
+                remark: Use this item to easily turn on or off your UZSU
+                type: bool
+                eval: sh...activate(value)
+                visu_acl: rw
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions:
     # Definition of function interface of the plugin
@@ -165,18 +186,3 @@ plugin_functions:
                     de: 'Maximales Alter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen.'
                     en: 'maximum age of an uzsu entry in minutes to be catched up at the plugin start'
 
-item_structs:
-    child:
-        name: Vorlage-Struktur für Zeitschaltuhren
-
-        uzsu:
-            type: dict
-            uzsu_item: '..'
-            cache: 'True'
-            visu_acl: rw
-
-            active:
-                remark: Use this item to easily turn on or off your UZSU
-                type: bool
-                eval: sh...activate(value)
-                visu_acl: rw

@@ -6,13 +6,13 @@ plugin:
         de: 'Unterstützung für Smartmeter, die DLMS (Device Language Message Specification, IEC 62056-21) nutzen und OBIS codes liefern'
         en: 'Support for smartmeter using DLMS (Device Language Message Specification, IEC 62056-21) and delivering OBIS codes'
     maintainer: bmxp (JuMi2006)
-#    tester:                       # Who tests this plugin?
+    tester: NONE                   # Who tests this plugin?
     state: ready
     keywords: dlms obis smartmeter
     documentation: http://smarthomeng.de/user/plugins/dlms/user_doc.html
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.5.1                 # Plugin version
+    version: 1.5.3                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
@@ -105,4 +105,6 @@ logic_parameters: NONE
 
 plugin_functions: NONE
     # Definition of function interface of the plugin
+
+item_structs: NONE
 

@@ -1,10 +1,5 @@
 # Alexa4PayloadV3
 
-
-
-
-
-
 ## Table of Content
 
 1. [Generell](#generell)
@@ -16,10 +11,11 @@
 7. [Alexa-BrightnessController](#BrightnessController)
 8. [Alexa-PowerLevelController](#PowerLevelController)
 9. [Alexa-PercentageController](#PercentageController)
-10. [Alexa-LockController](#LockController)
-11. [Alexa-CameraStreamController](#CameraStreamController)
+10. [Alexa-LockController](#LockController) <sup><span style="color:blue"> **Update**</sup></span>
+11. [Alexa-CameraStreamController](#CameraStreamController) <sup><span style="color:blue"> **Update**</sup></span>
 12. [Alexa-SceneController](#SceneController)
-
+13. [Alexa-ContactSensor](#ContactSensor) <sup><span style="color:red"> **Neu**</sup></span>
+14. [Alexa-ColorController](#ColorController) <sup><span style="color:red"> **Neu**</sup></span>
 
 
 # --------------------------------------
@@ -65,9 +61,33 @@ PayloadV3 : TurnOn
 
 Die Actions unterscheiden sich zwischen Payload V2 und V3 oft nur durch Gross/Klein-Schreibung
 ##Change Log <a name="changelog"/></a>
+###17.02.2019
+- Version erhöht aktuell 1.0.1
+- CameraStreamController Integration für Beta-Tests fertiggestellt
+
+###26.01.2019
+- ColorController eingebaut
+- Doku für ColorController erstellt
+- Neues Attribut für CameraStreamController (**alexa_csc_proxy_uri**) zum streamen von Kameras in lokalen Netzwerken in Verbindung mit CamProxy4AlexaP3
+
+###19.01.2019
+- Version auf 1.0.0.2 erhöht
+- ContactSensor Interface eingebaut
+- Doku für ContactSensor Interface ergänzt
+- DoorLockController fertiggestellt
+- DoorLockController Doku ergänzt
+- ReportLockState eingebaut
+- Doku für die Erstellung des Alexa-Skill´s auf Amazon als PDF erstellt
+
+###31.12.2018
+- Version auf 1.0.0.1 erhöht
+- CameraStreamController eingebaut
+- Dokumentation für CameraStreamController ergänzt
+- PowerLevelController eingebaut
+- Dokumentation für PowerLevelController ergänzt
+- Debugs und Testfunktionen kontrolliert und für Upload entfernt
+
 ###24.12.2018
-- CameraStream Controller eingebaut
-- Doku für CameraStreamController erstellt
 - Doku für PercentageController erstellt
 - Bug Fix für fehlerhafte Testfunktionen aus der Lambda
 
@@ -355,6 +375,8 @@ Alexa erhöhe die Temperatur in der Küche um zwei Grad
 
 Alexa stelle die Temperatur in der Küche auf zweiundzwanzig Grad
 
+Alexa wie ist die Temperatur in der Küche eingestellt ?
+
 ###Thermostatmode<a name="Thermostatmode"/></a>
 
 alexa_actions = "SetThermostatMode"
@@ -481,7 +503,7 @@ Gruppenadresse anlegen)
 
 ## Alexa-PowerController<a name="PowerController"/></a>
 
-Alexa schalte das Licht im Flur OG ein
+Alexa schalte das Licht im Büro ein
 
 Mit dem PowerController können beliebige Geräte ein und ausgeschalten werden.
 Folgende Paramter sind anzugeben :
@@ -549,15 +571,273 @@ Beispiel :
 </code></pre>
 
 ## Alexa-PowerLevelController<a name="PowerLevelController"/></a>
-tbd
+## !!!! erst ab Plugin-Version 1.0.0.0.1 oder höher !!!!
+
+Alexa stelle Energie Licht Küche auf achtzig
+Alexa erhöhe Energie Licht Küche um zehn
+
+Es können Werte von 0-100 angesagt werden.
+
+Der PowerLevelController kann in Verbindung mit dem PowerController verwendet werden. Funktionsweise entspricht der von PercentageController und BrightnessController
+
+Folgende Parameter sind anzugeben :
+
+<pre><code>
+    alexa_actions = "SetPowerLevel AdjustPowerLevel"
+    alexa_item_range = 0-255
+</code></pre>
+
 ## Alexa-PercentageController<a name="PercentageController"/></a>
-tbd
+
+Alexa stelle Rolladen Essen West auf achtzig Prozent
+
+Mit dem PercentageController können Geräte auf einen bestimmten Prozentwert  gestellt werden. Der PercentageController eignet sich für die Umsetzung von
+Rolladen/Jalousien. 
+
+Folgende Parameter sind anzugeben :
+
+<pre><code>
+    alexa_actions = "SetPercentage AdjustPercentage"
+    alexa_item_range = 0-255
+</code></pre>
+
+In Verbindung mit dem PowerController (TurnOn / TurnOff) kann der Rolladen
+dann mit "Schalte Rolladen Büro EIN" zugefahren werden und mit "Schalte Rolladen Büro AUS" aufgefahren werden.
+(Zwar nicht wirklich schön aber funktioniert)
+
+'enforce_updates' sollte auf true gesetzt sein damit auch auf den Bus gesendet wird wenn keine Änderung des Wertes erfolgt.
+
+Beispiel Konfiguration im yaml-Format:
+<pre><code>
+        Rolladen:
+            alexa_name: Rollladen Büro
+            alexa_device: rolladen_buero
+            alexa_description: Rollladen Büro
+            alexa_icon: SWITCH
+
+            move:
+                type: num
+                alexa_device: rolladen_buero
+                alexa_actions: TurnOn TurnOff
+                alexa_retrievable: 'True'
+                visu_acl: rw
+                knx_dpt: 1
+                knx_send: 3/2/23
+                enforce_updates: 'true'
+
+            stop:
+                type: num
+                visu_acl: rw
+                enforce_updates: 'true'
+                knx_dpt: 1
+                knx_send: 3/1/23
+
+            pos:
+                type: num
+                visu_acl: rw
+                alexa_device: rolladen_buero
+                alexa_actions: SetPercentage AdjustPercentage
+                alexa_item_range: 0-255
+                knx_dpt: 5
+                knx_listen: 3/3/23
+                knx_send: 3/4/23
+                knx_init: 3/3/23
+                enforce_updates: 'true'
+
+</code></pre>
+
 ## Alexa-LockController<a name="LockController"/></a>
-tbd
-## Alexa-CameraStreamContoller<a name="CameraStreamContoller"/></a>
+## !!!! erst ab Plugin-Version 1.0.0.0.2 oder höher !!!!
+Die Probleme in der Amazon-Cloud mit dem LockController sind behoben.
+
+Die Funktion ist im Moment so realisiert, das bei "Unlock" ein "ON" (=1) auf
+das Item geschrieben wird. Bei "Lock" wird ebenfalls ein "ON" (=1) auf die Gruppenadresse geschrieben. Eventuell die Werte mittels "eval"-Funktion direkt
+in der Item Config anpassen.
+Für den Zustand Smartlock geschlossen oder offen ist
+"OFF" 	(=0)	Tür offen
+"ON" 	(=1)	Tür geschlossen
+
+Wenn keine Rückmeldewert angegeben ist **(ReportLockState)** wird als default Wert "Locked" gemeldet.
+Es wird beim Öffnen oder Schliessen immer der
+ausgeführte Befehl als Rückmeldng gegeben.(Locked/Unlocked)
+
+Directive "Alexa schliesse die Haustür auf", Rückgabewert "Unlocked"
+Directive "Alexa schliesse die Haustür ab", Rückgabewert "Locked"
+
+Es muss nach dem das Smartlock gefunden wurden die Sprachsteuerung über die Alexa-App freigegeben werden. Es muss für die Sprachsteuerung ein 4-stelliger PIN eingegeben werden welcher immer bei öffnen abgefragt wird. (Vorgabe Amazon, kann nicht umgangen werden)
+
+Folgende Befehle sind möglich :
+
+Alexa, entsperre die Haustür
+
+Alexa, schliesse die Haustür auf
+
+Alexa, sperre die Haustür
+
+Alexa, schliesse die Haustür ab
+
+Folgende Parameter sind anzugeben :
+
+<pre><code>
+    alexa_actions : Lock Unlock ReportLockState
+    alexa_icon: SMARTLOCK
+</code></pre>
+
+Beispiel mit einem Aktor-Kanal für öffnen, ein Aktor-Kanal für schliessen mit virtueller Rückmeldung, rücksetzen des Aktorkanals nach 5 Sekunden via autotimer
+
+<pre><code>
+        haustuer:
+            name: haustuer
+            alexa_description: Haustür
+            alexa_name: Haustuer
+            alexa_device: haustuer
+            alexa_icon: SMARTLOCK
+            unlock:
+                knx_send: 9/9/1
+                type: bool
+                visu_acl: rw
+                knx_dpt: 1
+                alexa_device: haustuer
+                alexa_actions: Unlock
+                autotimer: 5 = 0
+                on_change: 
+                - test.testzimmer.haustuer.state = 0 if sh.test.testzimmer.haustuer.unlock() == True else None
+            lock:
+                knx_send: 9/9/2
+                type: bool
+                visu_acl: rw
+                knx_dpt: 1
+                alexa_device: haustuer
+                alexa_actions: Lock
+                autotimer: 5 = 0
+                on_change: 
+                - test.testzimmer.haustuer.state = 1 if sh.test.testzimmer.haustuer.lock() == True else None
+            state:
+                type: num
+                visu_acl: rw
+                alexa_device: haustuer
+                alexa_actions: ReportLockStatelexa_actions: ReportLockState
+</code></pre>
+
+Beispiel mit einem Aktor-Kanal für öffnen, ein Aktor-Kanal für schliessen mit KNX-Eingang für die  Rückmeldung.Der jeweilige Aktor-Kanel ist als Treppenlicht-Automat konfiguriert und stellt selbstständig zurück.
+
+<pre><code>
+        haustuer:
+            name: haustuer
+            alexa_description: Haustür
+            alexa_name: Haustuer
+            alexa_device: haustuer
+            alexa_icon: SMARTLOCK
+            unlock:
+                knx_send: 9/9/1
+                type: bool
+                visu_acl: rw
+                knx_dpt: 1
+                alexa_device: haustuer
+                alexa_actions: Unlock
+            lock:
+                knx_send: 9/9/2
+                type: bool
+                visu_acl: rw
+                knx_dpt: 1
+                alexa_device: haustuer
+                alexa_actions: Lock
+            state:
+				knx_listen: 9/9/3
+                knx_init: 9/9/3
+                type: num
+                visu_acl: rw
+                knx_dpt: 20
+                alexa_device: haustuer
+                alexa_actions: ReportLockState
+</code></pre>
+
+## Alexa-CameraStreamContoller<a name="CameraStreamController"/></a>
+## !!!! erst ab Plugin-Version 1.0.0.0.1 oder höher !!!!
+
+Alexa zeige die Haustür Kamera.
+
+Der CameraController funktioniert mit Cameras die den Anforderungen von Amazon entsprechen.
+d.h. :
+- TLSv1.2 Verschlüsselung
+- Kamera auf Port 443 erreichbar
+<span style="color:red">
+##!! für Kameras im lokalen Netzwerk wird gerade noch ein Camera Proxy entwickelt - dieser gibt dann die Möglichkeit auch private Kameras einzubinden !!
+#Look out for : CamProxy4AlexpaP3
+
+</span>
+Aus den bereitgestellten Streams wird
+immer der mit der höchsten Auflösung an Alexa übermittelt.
+
+Folgende Parameter sind anzugeben :
+
+#####alexa_csc_proxy_uri <sup><span style="color:blue"> **Update**</sup></span>: URL über DynDNS vergeben um die Kamera mittels CamProxy4AlexaP3 zu streamen
+#####alexa_camera_imageUri: die URL des Vorschau-Pictures der Kamera
+
+#####alexa_stream_1: Definition für den ersten Stream der Kamara, es werden bis zu 3 Streams unterstützt. Hier müssen die Details zum Stream definiert werden (protocol = rtsp, resolutions = Array mit der Auflösung, authorizationTypes = Autorisierung, videoCodecs = Array der VideoCodes, autoCodecs = Array der Audiocodes)
+
+alexa_csc_uri: Auflistung der Stream-URL´s für Stream1: / Stream2: / Stream3
+siehe Tabelle unten für mögliche Werte
+
+(Beispiel im YAML-Format):
+
+<pre><code>
+        doorcam:
+            name: doorcam
+            alexa_description: Haustürkamera
+            alexa_name: Doorcam
+            alexa_device: doorcam
+            alexa_icon: CAMERA
+            alexa_actions: InitializeCameraStreams
+            alexa_camera_imageUri: 'http://192.168.178.9/snapshot/view0.jpg'
+            alexa_csc_uri: '{"Stream1":"192.168.178.9","Stream2":"192.168.178./2","Stream3:...."}'
+            alexa_auth_cred: 'USER:PWD'
+            alexa_stream_1: '{
+            "protocols":["RTSP"],
+            "resolutions":[{"width":1920,"height":1080}],
+            "authorizationTypes":["BASIC"],
+            "videoCodecs":["H264"],
+            "audioCodecs":["G711"]
+            }'
+            alexa_stream_2: '{
+            "protocols":["RTSP"],
+            "resolutions":[{"width":1920,"height":1080}],
+            "authorizationTypes":["NONE"],
+            "videoCodecs":["H264"],
+            "audioCodecs":["AAC"]
+            }'
+            alexa_stream_3: '{.......
+            }'
+            alexa_csc_proxy_uri: alexatestcam.ddns.de:443
+</code></pre>
+
+Als Action ist fix "alexa_actions: InitializeCameraStreams" anzugeben.
+Als Icon empfiehlt sich "alexa_icon: CAMERA".
+
+Es können aktuell bis zu drei Streams pro Kamera definiert werden. In <b>"alexa_csc_uri"</b> werden die URL´s der Streams definiert. Die Items <b>"alexa_csc_uri"</b> und <b>"alexa_stream_X"</b> werden beim Laden der Items als Json geladen.
+
+<font size="5">
+<b>!! Unbedingt auf korrekte Struktur im Json-Format achten !!</b>
+</font>
+
+Die Kamera URL´s müssen in der gleichen Reihenfolge zu den Streams (<b>alexa_stream_X</b>) sein.
 
 
+Mit dem Eintrag "alexa_auth_cred" werden User und Passwort für den Zugriff auf die Kamera hinterlegt.
 
+Mit dem Eintrag "alexa_camera_imageUri" wird die URL für den eventuell Snapshot der Kamera definiert.
+
+Für die Streams werden folgende Einstellungen untersützt:
+
+<pre>
+protocols    		  : RTSP
+resolutions  		  : alle die von der Kamera unterstützt werden
+authorizationTypes	 : "BASIC", "DIGEST" or "NONE"
+videoCodecs			: "H264", "MPEG2", "MJPEG", oder "JPG"
+audioCodecs			: "G711", "AAC", or "NONE"
+</pre>
+
+<b>!! alle Einstellungen sind als Array definiert [] !!</b>
 ## Alexa-SceneController<a name="SceneController"/></a>
 
 Alexa aktiviere Szene kommen
@@ -565,7 +845,7 @@ Alexa aktiviere Szene kommen
 Mit dem Scene-Controller können Szenen aufgerufen werden.
 Folgende Parameter sind anzugeben:
 <pre><code>
-alexa-actions = "Activate"
+alexa_actions = "Activate"
 alexa_item_turn_on = 3
 alexa_icon = "SCENE_TRIGGER"
 </code></pre>
@@ -575,14 +855,91 @@ Das "alexa_item_turn_on" ist die Nummer der Szene die aufgerufen werden soll.
 
 Beispiel Konfiguration :
 <pre><code>
-        scene:
+scene:
+    type: num
+    name: scene_kommen
+    alexa_description : "Szene Kommen"
+    alexa_name : "Szene Kommen"
+    alexa_device : Szene_Kommen
+    alexa_icon : "SCENE_TRIGGER"
+    alexa_item_turn_on : 3
+    alexa_actions : "Activate"
+    alexa_retrievable : false
+</code></pre>
+
+##ContactSensor Interface <a name="ContactSensor"/></a>
+
+Alexa ist das Küchenfenster geschlossen ?
+Alexa ist das Küchenfenster geöffnet ?
+
+Folgende Parameter sind anzugeben:
+<pre><code>
+alexa_actions = "ReportContactState"
+alexa_icon = "CONTACT_SENSOR"
+</code></pre>
+
+Beispiel Konfiguration :
+<pre><code>
+fensterkontakt:
+    type: bool
+    name: kuechenfenster
+    alexa_description: Küchenfenster
+    alexa_name: kuechenfenster
+    alexa_device: kuechenfenster
+    alexa_icon: CONTACT_SENSOR
+    alexa_actions: ReportContactState
+    alexa_retrievable: 'True'
+</code></pre>
+
+
+##ColorController <a name="ColorController"/></a>
+
+Alexa, setze Licht Speicher auf rot
+
+Folgende Paramter sind anzugeben :
+
+<pre><code>
+alexa_actions = "SetColor"
+alexa_color_value_type = RGB
+alexa_icon = "LIGHT"
+</code></pre>
+
+
+**"alexa_color_value_type" = RGB oder HSB**
+
+Der Parameter "alexa_color_value_type" gibt an ob die Werte von Alexa
+als RGB-Werte [120, 40, 65] oder als HSB-Werte[350.5, 0.7138, 0.6524] im list-Objekt an das Item übergeben werden.
+Default-Wert ist : RGB
+
+Die Helligkeit wird bei Farbwechsel unverändert beibehalten. Bei HSB-Werten wird der ursprüngliche Wert gepuffert und als aktueller Wert wieder an das Item übergeben.
+
+Zum Wechseln der Helligkeit einen BrightnessController hinzufügen
+Details siehe [BrightnessController](#BrightnessController)
+Beispiel Konfiguration (wobei R_Wert, G_Wert, B_Wert für die Gruppenadressen stehen :
+<pre><code>
+%YAML 1.1
+---
+Speicher:
+    Lampe_Speicher:
+        alexa_description: Licht Speicher
+        alexa_device: DALI_RGB_Speicher
+        alexa_name: Licht Speicher
+        alexa_icon: LIGHT
+        Dimmwert:
             type: num
-            name: scene_kommen
-            alexa_description : "Szene Kommen"
-            alexa_name : "Szene Kommen"
-            alexa_device : Szene_Kommen
-            alexa_icon : "SCENE_TRIGGER"
-            alexa_item_turn_on : 3
-            alexa_actions : "Activate"
-            alexa_retrievable : false
+            alexa_device: DALI_RGB_Speicher
+            alexa_actions: AdjustBrightness SetBrightness
+            alexa_retrievable: True
+            alexa_item_range: 0-255
+        Farbwert_RGB:
+            type: list
+            alexa_device: DALI_RGB_Speicher
+            alexa_color_value_type: RGB
+            alexa_actions: SetColor
+            alexa_retrievable: True
+            alexa_color_value_type: RGB
+            on_change:
+              - R_WERT = list[0]
+              - G_WERT = list[1]
+              - B_WERT = list[2]
 </code></pre>
