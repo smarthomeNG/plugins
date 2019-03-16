@@ -79,21 +79,6 @@ item_attributes:
             de: 'Matchstring basierend auf der Response des "Forecast Request" aus https://darksky.net/dev/docs (Example Request), bspw. "currently/temperature". Ausnahmen: Im Fall von "alerts" wird ein Item vom Typ "list" benötigt, der Wert "alerts_string" schreibt die Alerts-Liste in einen HTML String. Das Array in "flags/sources" wird in ein "str" Item gemerged.'
             en: 'Matchstring according to the response of the "forecast request" described in https://darksky.net/dev/docs (Example Request), e.g. "currently/temperature". Exceptions: In case of "alerts" an item of type "list" will be filled with raw data, the value "alerts_string" creates a html string with alerts data. The array "flags/sources" will be merged to a string.'
 
-plugin_functions:
-    # Definition of function interface of the plugin
-
-    map_icon:
-        type: str
-        description:
-            de: "Gibt das SmartVisu Icon zum übergebenen DarkSky Icon zurück."
-            en: "Returns the SmartVisu icon to the provided DarkSky icon."
-        parameters:
-            icon:
-                type: str
-                description:
-                    de: "Icon als String."
-                    en: "Icon as string."
-
 item_structs:
     weather:
         name: Weather report from darksky.net
@@ -259,3 +244,22 @@ item_structs:
             nearest_station:
                 type: num
                 ds_matchstring: flags/nearest-station
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    map_icon:
+        type: str
+        description:
+            de: "Gibt das SmartVisu Icon zum übergebenen DarkSky Icon zurück."
+            en: "Returns the SmartVisu icon to the provided DarkSky icon."
+        parameters:
+            icon:
+                type: str
+                description:
+                    de: "Icon als String."
+                    en: "Icon as string."
+

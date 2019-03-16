@@ -1,5 +1,4 @@
-# Mail 
-## Deprecated, use plugins mailsend and mailrcv instead
+# Mail
 
 ## Requirements
 
@@ -10,21 +9,13 @@ This plugin has no requirements or dependencies.
 ### plugin.yaml
 
 ```yaml
-mail:
-    class_name: SMTP
-    class_path: plugins.mail
-    host: mail.example.com
-    mail_from: mail@example.com
-    # ssl: False
-    # username: False
-    # password: False
 imap:
     class_name: IMAP
     class_path: plugins.mail
     host: mail.example.com
     username: smarthome
     password: secret
-    # ssl: False
+    # tls: False
     # port: default
     # cycle: 300
 ```
@@ -33,8 +24,7 @@ imap:
   * `host`: specifies the hostname of your mail server.
   * `port`: if you want to use a nonstandard port.
   * `username`/`password`: login information
-  * `ssl`: specifies if you want to use SSL/TLS.
-  * `mail_from`: for SMTP you have to specify an origin mail address.
+  * `tls`: specifies if you want to use SSL/TLS.
   * `cycle`: for IMAP you could specify the intervall how often the inbox is checked
 
 ### items.yaml
@@ -89,7 +79,3 @@ If a logic is triggered by this plugin it will set the trigger `source` to the f
 
 See the [phonebook logic](https://github.com/smarthomeNG/smarthome/wiki/Phonebook) for a logic which is triggerd by IMAP.
 
-## Functions
-
-The SMTP object provides one function (sending) and you access without specifing a method name.
-`sh.mail(to, subject, message)` e.g. `sh.mail('admin@smart.home', 'Rain: Help me', 'You could send UTF-8 encoded subjects and messages')`

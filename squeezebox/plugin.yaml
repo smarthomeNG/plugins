@@ -6,7 +6,7 @@ plugin:
         de: 'Anbindung von Squeezebox Devices (Hard- und Softwareplayer)'
         en: 'Connecting squeezebox devices (hard- and software players)'
     description_long:
-        de: 'Anbindung von Squeezebox Devices.\n
+        de: 'Anbindung von Squeezebox Devices. Eine laufender Logitech Media Server wird benötigt.\n
             Getestet mit folgenden Geräten:\n
             \n
             - Logitech Squeezebox Radio\n
@@ -14,7 +14,7 @@ plugin:
             \n
             Sämtliche Kommandos sollten manuell über die Telnet-Schnittstelle auf Port 9090 getestet werden. Für Abfragen muss hierbei ein "?" am Ende des Befehls stehen, z.B. "<playerid> name ?"
             '
-        en: 'Connecting squeezebox devices.\n
+        en: 'Connecting squeezebox devices. You need a running Logitech Media Server.\n
             Tested with the following devices:\n
             \n
             - Logitech Squeezebox Radio\n
@@ -28,6 +28,7 @@ plugin:
         en: 'Running Logitech Media Server'
     tester: onkelandy, Sandman60, cmalo, brandst
     keywords: squeezebox squeezelite music playercontrol
+    state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/28692-√-neues-plugin-logitech-squeezebox-anregungen
 
     version: 1.3.1                 # Plugin version
@@ -152,6 +153,8 @@ logic_parameters:
         description:
             de: 'Wird genutzt, um Änderungen vom Player zu empfangen. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.'
             en: 'Is used to receive updates from the player. The commands are liste in the CLI documentation of the Media Server.'
+
+plugin_functions: NONE
 
 item_structs:
     database:

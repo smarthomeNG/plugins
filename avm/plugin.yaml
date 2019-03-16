@@ -172,6 +172,24 @@ item_attributes:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
 
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    map_icon:
+        type: str
+        description:
+            de: "Gibt das SmartVisu Icon zum übergebenen DarkSky Icon zurück."
+            en: "Returns the SmartVisu icon to the provided DarkSky icon."
+        parameters:
+            icon:
+                type: str
+                description:
+                    de: "Icon als String."
+                    en: "Icon as string."
+
 plugin_functions:
     # Definition of function interface of the plugin
 

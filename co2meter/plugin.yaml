@@ -7,6 +7,7 @@ plugin:
         en: 'The CO2Meter Plugin allows to access a Dostmann TFA Dostmann AirCO2ntrol device via its raw USB data.'
     maintainer: psilo909
     tester:
+    state: qa-passed
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1165010-supportthread-f%C3%BCr-das-co2meter-plugin
@@ -41,3 +42,10 @@ item_attributes:
         description:
             de: 'Der auszulesende Datentyp, "temperature" oder "co2"'
             en: 'The data type to read: "temperature" or "co2"'
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
+

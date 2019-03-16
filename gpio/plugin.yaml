@@ -23,6 +23,7 @@ plugin:
             '
     maintainer: onkelandy
     tester: cmalo, ohinckel
+    state: ready
     requirements:
         de: 'RPi.GPIO Python Modul'
         en: 'RPi.GPIO python module'
@@ -93,3 +94,10 @@ item_attributes:
             en: '**Pin number of the GPIO output.**\n
                 Define the pin number of your Raspberry Pi that should be written, i.e. where a LED is attached. Beware that the number has to follow the rules of the "mode" you have defined in the plugin.yaml (Board or BCM). The Output-Pin will also automatically be read by the plugin as Input.
                         '
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+

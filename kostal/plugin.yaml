@@ -7,6 +7,7 @@ plugin:
         en: ''
     maintainer: ohinckel
     tester: ohinckel, datenschuft
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
@@ -30,7 +31,7 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 

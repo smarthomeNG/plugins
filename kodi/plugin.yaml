@@ -24,7 +24,7 @@ parameters:
     host:
         type: ipv4
         mandatory: True
-    
+
     port:
         type: int
         valid_min: 0
@@ -49,6 +49,9 @@ item_attributes:
         description:
             de: ''
             en: ''
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions:
     # Definition of function interface of the plugin

@@ -7,6 +7,7 @@ plugin:
         en: ''
     maintainer: hotzen
     tester: psilo909
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021150-amazon-alexa-plugin
@@ -35,4 +36,13 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
+item_structs:
+# Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+

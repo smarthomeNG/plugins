@@ -72,3 +72,10 @@ item_attributes:
         description:
             en: 'connects the item to the defined value'
 
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+

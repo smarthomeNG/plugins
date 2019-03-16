@@ -60,6 +60,9 @@ item_attributes:
             de: 'Auszulesender Wert, möglich sind: PLUGIN_ACTIVE, AC_P_TOTAL, E_DAY, E_TOTAL, INV_SERIAL, INV_ADDRESS, LAST_UPDATE, DC_STRING1_P, DC_STRING2_P, DC_STRING1_U, DC_STRING2_U, DC_STRING1_I, DC_STRING2_I, OPERATING_TIME, FEEDING_TIME, GRID_FREQUENCY, STATUS, GRID_RELAY, SW_VERSION.'
             en: 'Value to read. Possible: PLUGIN_ACTIVE, AC_P_TOTAL, E_DAY, E_TOTAL, INV_SERIAL, INV_ADDRESS, LAST_UPDATE, DC_STRING1_P, DC_STRING2_P, DC_STRING1_U, DC_STRING2_U, DC_STRING1_I, DC_STRING2_I, OPERATING_TIME, FEEDING_TIME, GRID_FREQUENCY, STATUS, GRID_RELAY, SW_VERSION.'
 
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions: NONE
     # Definition of function interface of the plugin
 

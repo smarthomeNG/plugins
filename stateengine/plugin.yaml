@@ -21,6 +21,7 @@ plugin:
              with hierarchical states.
             '
     maintainer: i-am-offline, onkelandy
+    state: ready
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
@@ -511,3 +512,10 @@ item_structs:
 
                 enter:
                     se_value_release: True
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
