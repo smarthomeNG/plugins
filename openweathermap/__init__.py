@@ -28,10 +28,11 @@ import datetime
 import json
 from lib.module import Modules
 from lib.model.smartplugin import *
+from bin.smarthome import VERSION
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.1"
+    PLUGIN_VERSION = "1.5.0.3"
 
     _base_url = 'https://api.openweathermap.org/%s'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
@@ -40,7 +41,8 @@ class OpenWeatherMap(SmartPlugin):
         """
         Initializes the plugin
         """
-        self.logger = logging.getLogger(__name__)
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
         self._key = self.get_parameter_value('key')
         if self.get_parameter_value('latitude') != '' and self.get_parameter_value('longitude') != '':
             self._lat = self.get_parameter_value('latitude')
@@ -56,8 +58,7 @@ class OpenWeatherMap(SmartPlugin):
         self._cycle = int(self.get_parameter_value('cycle'))
         self._items = {}
 
-        if not self.init_webinterface():
-            self._init_complete = False
+        self.init_webinterface()
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
@@ -126,7 +127,7 @@ class OpenWeatherMap(SmartPlugin):
 
             # if a value was found, store it to item
             if wrk is not None:
-                item(wrk, 'DarkSky')
+                item(wrk, 'OpenWeatherMap')
                 self.logger.debug('_update: Value "{0}" written to item'.format(wrk))
 
         return
@@ -160,7 +161,12 @@ class OpenWeatherMap(SmartPlugin):
             self.logger.error(
                 "get_uv: Exception when sending GET request for get_uv: %s" % str(e))
             return
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "get_uv: Exception when decoding json data: %s" % str(e))
+            return
         return json_obj
 
     def parse_item(self, item):
@@ -286,9 +292,9 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
-        self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self.logger = self.plugin.logger
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose

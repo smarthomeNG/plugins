@@ -30,13 +30,13 @@
     </div>
     <table class="table table-striped table-hover">
         <tr style="border-bottom: 1px solid grey;">
-            <th>
+            <th class="p-1 m-1">
                 REST
             </th>
-            <th>
+            <th class="p-1 m-1">
                 Simple
             </th>
-            <th>
+            <th class="p-1 m-1">
                 Type
             </th>
         </tr>
@@ -48,14 +48,14 @@
             </tr>
             {% for item in value %}
                 <tr>
-                    <td class="p-1">
-                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item.id()}}/">{{item.id()}}</a>
+                    <td class="p-1 m-0">
+                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item.id()}}/">{{item.property.path}}</a>
                     </td>
-                    <td class="p-1">
-                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item.id()}}/">{{item.id()}}</a>
+                    <td class="p-1 m-0">
+                        <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item.id()}}/">{{item.property.path}}</a>
                     </td>
-                    <td>
-                         {{item.type()}}
+                    <td class="p-1 m-0">
+                         {{item.property.type}}
                     </td>
                 </tr>
             {% endfor %}
@@ -67,14 +67,14 @@
         </tr>
         {% for item in item_data %}
         <tr>
-            <td class="p-1">
-                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item.id()}}/">{{item.id()}}</a>
+            <td class="p-1 m-0"">
+                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/rest/items/{{item.property.path}}/">{{item.property.path}}</a>
             </td>
-            <td class="p-1">
-                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item.id()}}/">{{item.id()}}</a>
+            <td class="p-1 m-0">
+                <a class="text-shng" href="http://{{ip}}:{{servicesport}}/ws/items/{{item.property.path}}/">{{item.property.path}}</a>
             </td>
-            <td>
-                 {{item.type()}}
+            <td class="p-1 m-0">
+                 {{item.property.type}}
             </td>
         </tr>
         {% endfor %}

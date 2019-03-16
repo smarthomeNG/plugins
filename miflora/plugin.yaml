@@ -21,14 +21,14 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-     bt_addr:
+    bt_addr:
         type: str
         mandatory: True
         description:
             de: 'Bluetooth-Adresse des MiFlora Pflanzensensors (mit "hcitool lescan" herauszufinden).'
             en: 'Bluetooth address of MiFlora plant sensor (find out with "hcitool lescan").'
 
-     cycle:
+    cycle:
         type: int
         default: 300
         mandatory: False
@@ -36,7 +36,14 @@ parameters:
             de: '(optional) Dieser Parameter muss normalerweise nicht angegeben werden. Er erlaubt es die Update-Frquenz anzupassen (Standard: alle 300 Sekunden).'
             en: "(optional) This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 300 seconds)."
 
-    
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     miflora_data_type:
@@ -54,6 +61,11 @@ item_attributes:
         - 'firmware'
         - 'battery'
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions: NONE
     # Definition of function interface of the plugin

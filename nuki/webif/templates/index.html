@@ -1,0 +1,193 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+
+{% set tab1title = "GFGFDG" %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+
+		<tr>
+			<td class="py-1"><strong>{{ _('Token') }}</strong></td>
+			<td class="py-1">{{ p._token }}</td>
+			<td class="py-1"><strong>{{ _('Callback URL (SHNG)') }}</strong></td>
+			<td class="py-1">{{ p.get_callback_url() }}</td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('NoWait') }}</strong></td>
+			<td class="py-1">{{ p._noWait }}</td>
+			<td class="py-1"><strong>{{ _('Base URL (Nuki Bridge)') }}</strong></td>
+			<td class="py-1">{{ p._base_url }}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock %}
+
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<h5>{{ _('Nuki Event Items') }} ({{ p.get_event_items()|length }})</h5>
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Nuki ID') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item, value in p.get_event_items().items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
+						<td class="py-1">{{ value }}</td>
+						<td class="py-1">
+							{{ item() }}
+							{% if item() == 0 %}({{ _('uncalibrated') }}){% endif %}
+							{% if item() == 1 %}({{ _('locked') }}){% endif %}
+							{% if item() == 2 %}({{ _('unlocking') }}){% endif %}
+							{% if item() == 3 %}({{ _('unlocked') }}){% endif %}
+							{% if item() == 4 %}({{ _('locking') }}){% endif %}
+							{% if item() == 5 %}({{ _('unlatched') }}){% endif %}
+							{% if item() == 6 %}({{ _('unlatched (lock and go)') }}){% endif %}
+							{% if item() == 7 %}({{ _('unlatching') }}){% endif %}
+							{% if item() == 254 %}({{ _('motor blocked') }}){% endif %}
+							{% if item() == 255 %}({{ _('undefined') }}){% endif %}
+						</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		<div class="card m-0 p-0" style="width: 100%;">
+		  <div class="card-body m-1 p-1">
+			<h5 class="card-title">{{ _('Possible Lock States') }}:</h5>
+			<p class="card-text">
+				0: {{ _('uncalibrated') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				1: {{ _('locked') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				2: {{ _('unlocking') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				3: {{ _('unlocked') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				4: {{ _('locking') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				5: {{ _('unlatched') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				6: {{ _('unlatched (lock and go)') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				7: {{ _('unlatching') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				254: {{ _('motor blocked') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				255: {{ _('undefined') }}
+			</p>
+		  </div>
+		</div><br/>
+		<h5>{{ _('Nuki Action Items') }} ({{ p.get_action_items()|length }})</h5>
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Enforce Updates') }}</th>
+					<th>{{ _('Nuki ID') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item, value in p.get_action_items().items() %}
+                    <tr id="{{ loop.index }}_click">
+                        <td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
+						<td class="py-1">{{ item.property.enforce_updates }}</td>
+						<td class="py-1">{{ value }}</td>
+						<td class="py-1" >
+							{{ item() }}
+							{% if item() == 0 %}({{ _('none') }}){% endif %}
+							{% if item() == 1 %}({{ _('unlock') }}){% endif %}
+							{% if item() == 2 %}({{ _('lock') }}){% endif %}
+							{% if item() == 3 %}({{ _('unlatch') }}){% endif %}
+							{% if item() == 4 %}({{ _('lockAndGo') }}){% endif %}
+							{% if item() == 5 %}({{ _('lockAndGoWithUnlatch') }}){% endif %}
+						</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1 pr-5" style="width: 400px;">
+							<form>
+								<div class="input-group-sm input-group">
+									<select class="form-control" id="nuki_actions_{{ value }}" name="nuki_actions_{{ value }}">
+										<option value="1" {% if item() == 1 %}selected{% endif %}>{{ _('unlock') }}</option>
+										<option value="2" {% if item() == 2 %}selected{% endif %}>{{ _('lock') }}</option>
+										<option value="3" {% if item() == 3 %}selected{% endif %}>{{ _('unlatch') }}</option>
+										<option value="4" {% if item() == 4 %}selected{% endif %}>{{ _('lockAndGo') }}</option>
+										<option value="5" {% if item() == 5 %}selected{% endif %}>{{ _('lockAndGoWithUnlatch') }}</option>
+									</select>
+									<div class="input-group-append">
+										<button class="btn btn-outline-secondary" type="button" onClick="$.get( 'triggerAction?path={{ item.path() }}&value='+$('#nuki_actions_{{ value }}').val());">{{ _('Send') }}</button>
+								    </div>
+								</div>
+							</form>
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		<div class="card m-0 p-0" style="width: 100%;">
+		  <div class="card-body m-1 p-1">
+			<h5 class="card-title">{{ _('Possible Lock Actions') }}:</h5>
+			<p class="card-text">
+				1: {{ _('unlock') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				2: {{ _('lock') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				3: {{ _('unlatch') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				4: {{ _('lockAndGo') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				5: {{ _('lockAndGoWithUnlatch') }}
+			</p>
+		  </div>
+		</div><br/>
+		<h5>{{ _('Nuki Battery Items') }} ({{ p.get_battery_items()|length }})</h5>
+
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Nuki ID') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item, value in p.get_battery_items().items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
+						<td class="py-1">{{ value }}</td>
+						<td class="py-1">
+							{{ item() }}
+							{% if item() == 0 %}({{ _('Batteries are good. No need to replace it.') }}){% endif %}
+							{% if item() == 1 %}({{ _('Batteries are low. Please replace as soon as possible!') }}){% endif %}
+						</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		<div class="card m-0 p-0" style="width: 100%;">
+		  <div class="card-body m-1 p-1">
+			<h5 class="card-title">{{ _('Possible Battery Values') }}:</h5>
+			<p class="card-text">
+				0: {{ _('Batteries are good. No need to replace it.') }}&nbsp;&nbsp;-&nbsp;&nbsp;
+				1: {{ _('Batteries are low. Please replace as soon as possible!') }}
+			</p>
+		  </div>
+		</div><br/>
+	</div>
+</div>
+
+{% endblock %}

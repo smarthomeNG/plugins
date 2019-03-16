@@ -7,6 +7,7 @@ plugin:
         en: ''
     maintainer: cmalo (mknx)
     tester: ohinckel
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
@@ -18,8 +19,39 @@ plugin:
     classname: iCal                # class containing the plugin
 
 parameters:
-    # Definition of parameters to be configured in etc/plugin.yaml
-    
+# Definition of parameters to be configured in etc/plugin.yaml
+    cycle:
+        type: int
+        default: 3600
+        description:
+            de: "Zykluszeit in Sekunden"
+            en: "Cycle time in seconds"
+    calendars:
+        type: list(str)
+        description:
+            de: "Liste der Kalenderdateien (Beispiele: private:http://example.com/private.ics, http://example.com/public.ics, holiday:http://example.com/holidays.ics)"
+            en: "List of calender files (Examples: private:http://example.com/private.ics, http://example.com/public.ics, holiday:http://example.com/holidays.ics)"
+
+
 item_attributes:
-    # Definition of item attributes defined by this plugin
-    
+# Definition of item attributes defined by this plugin
+    ical_calendar:
+        type: str
+        descripton:
+            de: ""
+            en: "Configures a connection between the item and the given calendar. You can specify the calendar URI or \
+                the calendar alias (holiday, private). The configured calendar will automatically be added to the \
+                internal calendar cache and will automatically be updated.
+
+                When configured, each time an event is taken place at the moment, the item will be set to true or if \
+                not, to false.
+
+                The update interval for the item updates is currently at one minutes. Which means each minutes it \
+                will be checked if an event is take place and the items will be updated."
+
+plugin_functions:
+# Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+

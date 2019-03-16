@@ -25,6 +25,8 @@ from . import StateEngineState
 from . import StateEngineDefaults
 from . import StateEngineCurrent
 from . import StateEngineValue
+from lib.item import Items
+from lib.shtime import Shtime
 
 
 # Class representing a blind item
@@ -49,6 +51,8 @@ class SeItem:
     # smarthome: instance of smarthome.py
     # item: item to use
     def __init__(self, smarthome, item):
+        self.items = Items.get_instance()
+        self.shtime = Shtime.get_instance()
         self.__sh = smarthome
         self.__item = item
         self.__id = self.__item.id()
@@ -112,7 +116,7 @@ class SeItem:
         # start timer with startup-delay
         startup_delay = 0 if self.__startup_delay.is_empty() else self.__startup_delay.get()
         if startup_delay > 0:
-            first_run = self.__sh.now() + datetime.timedelta(seconds=startup_delay)
+            first_run = self.shtime.now() + datetime.timedelta(seconds=startup_delay)
             scheduler_name = self.__id + "-Startup Delay"
             value = {"item": self.__item, "caller": "Init"}
             self.__sh.scheduler.add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)
@@ -254,7 +258,7 @@ class SeItem:
         self.__item._enforce_updates = True
 
         # set "eval" for item if initial
-        if self.__item._eval_trigger and self.__item._eval is None:
+        if self.__item._trigger and self.__item._eval is None:
             self.__item._eval = "1"
 
         # Check scheduler settings and update if requred
@@ -292,14 +296,14 @@ class SeItem:
             self.__sh.scheduler.change(self.id, cycle=new_cycle, cron=new_cron)
 
     # get triggers in readable format
-    def __verbose_eval_triggers(self):
+    def __verbose_triggers(self):
         # noinspection PyProtectedMember
-        if not self.__item._eval_trigger:
+        if not self.__item._trigger:
             return "Inactive"
 
         triggers = ""
         # noinspection PyProtectedMember
-        for trigger in self.__item._eval_trigger:
+        for trigger in self.__item._trigger:
             if triggers != "":
                 triggers += ", "
             triggers += trigger
@@ -335,7 +339,7 @@ class SeItem:
     def __write_to_log(self):
         # get crons and cycles
         crons, cycles = self.__verbose_crons_and_cycles()
-        triggers = self.__verbose_eval_triggers()
+        triggers = self.__verbose_triggers()
 
         # log general config
         self.__logger.header("Configuration of item {0}".format(self.__name))
@@ -364,7 +368,7 @@ class SeItem:
     def cli_detail(self, handler):
         # get data
         crons, cycles = self.__verbose_crons_and_cycles()
-        triggers = self.__verbose_eval_triggers()
+        triggers = self.__verbose_triggers()
         handler.push("AutoState Item {0}:\n".format(self.id))
         handler.push("\tCurrent state: {0}\n".format(self.__laststate_internal_name))
         handler.push(self.__startup_delay.get_text("\t", "\n"))
@@ -450,9 +454,9 @@ class SeItem:
     # - item_id = "..threedots.further.down" will return item "my.threedots.further.down"
     def return_item(self, item_id: str):
         if not item_id.startswith("."):
-            item = self.__sh.return_item(item_id)
+            item = self.items.return_item(item_id)
             if item is None:
-                raise ValueError("Item '{0}' not found!".format(item_id))
+                self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
 
         parent_level = 0
@@ -472,9 +476,9 @@ class SeItem:
         rel_item_id = item_id[parent_level:]
         if rel_item_id != "":
             result += "." + rel_item_id
-        item = self.__sh.return_item(result)
+        item = self.items.return_item(result)
         if item is None:
-            raise ValueError("Determined item '{0}' does not exist.".format(result))
+            self.__logger.warning("Determined item '{0}' does not exist.".format(result))
         return item
 
     # Return an item related to the StateEngine object item

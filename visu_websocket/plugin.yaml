@@ -9,14 +9,14 @@ plugin:
     tester: psilo909
     state: qa-passed
 #    keywords: iot xyz
-    documentation: https://github.com/smarthomeNG/smarthome/wiki/Visu_Unterstuetzung        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/visu_websocket/user_doc.html
 
-    version: 1.4.5                # Plugin version
-    sh_minversion: 1.4c            # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
+    version: 1.5.0                # Plugin version
+    sh_minversion: 1.4c           # minimum shNG version to use this plugin
+#    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False         # plugin supports multi instance
     restartable: unknown
-    classname: WebSocket           # class containing the plugin
+    classname: WebSocket          # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
@@ -24,7 +24,7 @@ parameters:
         type: ipv4
         default: '0.0.0.0'
         description:
-            de: 'IP Adresse, falls nicht auf allen IPs des hosts gelauscht werden soll'
+            de: 'IP Adresse, falls nicht auf allen IPs des Hosts gelauscht werden soll'
             en: 'ip address to use, if not listening on all ip addresses of the host'
     
     port:
@@ -117,7 +117,7 @@ plugin_functions:
     url:
         type: void
         description:
-            de: "Diese Funktion weist smartVISU Clients an, auf die angegebene Url (Visu Seite) zu wechseln. Die Funktion funktioniert mit smartVISU v2.9 und später. Für smartVISU v2.8 muss ein modifiziertes Treiber io_smarthome.js verwendet werden - Beispiel: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+            de: "Diese Funktion weist smartVISU Clients an, auf die angegebene Url (Visu Seite) zu wechseln. Die Funktion funktioniert mit smartVISU v2.9 und später. Für smartVISU v2.8 muss ein modifizierter Treiber io_smarthome.js verwendet werden - Beispiel: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
             en: "This function instructs the smartVISU clients to change to the specified url (visu page). This function works with smartVISU v2.9 and up, for smartVISU v2.8 a modified driver io_smarthome.js is needed - Example: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
         parameters:
             url:
@@ -132,3 +132,5 @@ plugin_functions:
                     de: "Falls angegeben, werden nur Clients (Browser) die auf dem Host mit der angegebenen IP Adresse laufen angewiesen die Seite zu wechseln. "
                     en: "If specified, only clients (browsers) running on the host with the specified ip address are instructed to change the page."
 
+item_structs: NONE
+    # Definition of item-structure templates for this plugin

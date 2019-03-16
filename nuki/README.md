@@ -76,7 +76,7 @@ whenever these lock state was changed. Find the list with the possible values be
 * 4     (locking)
 * 5     (unlatched)
 * 6     (unlatched (lock 'n' go))
-* 7     (unlachting)
+* 7     (unlatching)
 * 254   (motor blocked)
 * 255   (undefined)
 

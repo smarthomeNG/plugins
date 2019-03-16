@@ -136,11 +136,12 @@ class SeState(StateEngineTools.SeItemChild):
     # abitem_object: Related SeItem instance for later determination of current age and current delay
     def __fill(self, item_state, recursion_depth):
         if recursion_depth > 5:
-            self._log_error("{0}/{1}: to many levels of 'use'", self.id, item_state.id())
+            self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.id())
             return
 
         # Import data from other item if attribute "use" is found
         if "se_use" in item_state.conf:
+            item_state.expand_relativepathes('se_use', '', '')
             use_item = self._abitem.return_item(item_state.conf["se_use"])
             if use_item is not None:
                 self.__fill(use_item, recursion_depth + 1)

@@ -5,11 +5,13 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Anbindung des Pushover Dienstes'
         en: 'Connect to the Pushover Service'
-    maintainer: 'Thomas Creutz'
+        fr: "Connexion au service Pushover"
 
-    version: 1.3.1.0               # Plugin version
-    sh_minversion: 1.2             # minimum shNG version to use this plugin
-    multi_instance: False          # plugin supports multi instance
+    maintainer: 'Thomas Creutz'
+    state: ready
+    version: 1.6.1.0               # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
+    multi_instance: True           # plugin supports multi instance
     classname: Pushover            # class containing the plugin
 
 parameters:
@@ -20,13 +22,15 @@ parameters:
         description:
             de: 'Der API Schlüssel'
             en: 'The API key'
+            fr: 'Clé API'
 
     userKey:
         type: str
         mandatory: True
         description:
             de: 'Der Benutzer Schlüssel, an den die Meldungen versendet werden'
-            en: 'The user key, which receive the messages'
+            en: 'The user key, which receives the messages'
+            fr: "La clé de l'utilisateur qui reçoit les messages"
 
     device:
         type: str
@@ -34,7 +38,8 @@ parameters:
         description:
             de: 'Das Gerät des Benutzer'
             en: 'The device of the user'
+            fr: "Appareil de l'utilisateur"
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+

@@ -10,9 +10,9 @@ plugin:
     tester: psilo909, onkelandy, Sandman60, brandst
     state: qa-passed
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
 
-    version: 1.4.5                 # Plugin version
+    version: 1.4.6                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -88,6 +88,13 @@ parameters:
             de: 'Wenn diese Option auf "True" gesetzt ist, werden die Statistikfunktionen aktiviert um Daten erfassen'
             en: 'if set to True, the statistic functions are enabled to collect data'
 
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 
 
 item_attributes:
@@ -117,6 +124,8 @@ item_attributes:
          - '16001'
          - '16.001'
          - '17'
+         - '17001'
+         - '17.001'
          - '20'
          - '24'
          - '232'
@@ -144,6 +153,8 @@ item_attributes:
              - 'Zeichenkette [8859_1] (14 Byte) -> str'
              - 'Zeichenkette [8859_1] (14 Byte) -> str'
              - 'Szenennummer: 0 - 63 (8 Bit) -> num'
+             - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+             - 'Szenennummer: 1 - 64 (8 Bit) -> num'
              - 'HVAC: 0 - 255 (8 Bit) -> num'
              - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
@@ -170,6 +181,8 @@ item_attributes:
              - 'String [8859_1] (14 Byte) -> str'
              - 'String [8859_1] (14 Byte) -> str'
              - 'Scene number: 0 - 63 (8 Bit) -> num'
+             - 'Scene number: 1 - 64 (8 Bit) -> num'
+             - 'Scene number: 1 - 64 (8 Bit) -> num'
              - 'HVAC: 0 - 255 (8 Bit) -> num'
              - 'unlimited string [8859_1] (var) -> str'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
@@ -219,6 +232,9 @@ item_attributes:
             de: 'Geben Sie eine abzurufende Gruppenadresse und das Zeitintervall in Sekunden für eine automatisierte Abfrage vom KNX Bus in Form einer Liste an. Der erste Eintrag ist die Gruppenadresse, der zweite Eintrag ist das Pollintervall in Sekunden. Dies kann für Aktoren oder Sensoren verwendet werden, die keine regelmäßige Übermittlung von Werten unterstützen.'
             en: 'Specify a group address to poll and the time interval in seconds for an automated query of KNX in form of a list. First entry is the group address, second entry is the poll interval in seconds. This may be used for actors or sensors that do no support a regular sending of values themselves.'
 
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters:
     # Definition of logic parameters defined by this plugin
@@ -296,6 +312,8 @@ plugin_functions:
                  - '16001'
                  - '16.001'
                  - '17'
+                 - '17001'
+                 - '17.001'
                  - '20'
                  - '24'
                  - '232'
@@ -323,6 +341,8 @@ plugin_functions:
                      - 'Zeichenkette [8859_1] (14 Byte) -> str'
                      - 'Zeichenkette [8859_1] (14 Byte) -> str'
                      - 'Szenennummer: 0 - 63 (8 Bit) -> num'
+                     - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+                     - 'Szenennummer: 1 - 64 (8 Bit) -> num'
                      - 'HVAC: 0 - 255 (8 Bit) -> num'
                      - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
@@ -349,6 +369,8 @@ plugin_functions:
                      - 'String [8859_1] (14 Byte) -> str'
                      - 'String [8859_1] (14 Byte) -> str'
                      - 'Scene number: 0 - 63 (8 Bit) -> num'
+                     - 'Scene number: 1 - 64 (8 Bit) -> num'
+                     - 'Scene number: 1 - 64 (8 Bit) -> num'
                      - 'HVAC: 0 - 255 (8 Bit) -> num'
                      - 'unlimited string [8859_1] (var) -> str'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'

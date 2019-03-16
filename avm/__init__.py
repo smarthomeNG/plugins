@@ -32,7 +32,7 @@ from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 from lib.model.smartplugin import *
 from lib.module import Modules
-
+import cherrypy
 
 class MonitoringService:
     """
@@ -57,6 +57,7 @@ class MonitoringService:
         self._items_outgoing = []  # items for outgoing calls
         self._duration_item = dict()  # 2 items, on for counting the incoming, one for counting the outgoing call duration
         self._call_active = dict()
+        self._listen_active = False
         self._call_active['incoming'] = False
         self._call_active['outgoing'] = False
         self._call_incoming_cid = dict()
@@ -68,12 +69,17 @@ class MonitoringService:
         """
         Connects to the call monitor of the AVM device
         """
+        if self._listen_active:
+            self.logger.debug("MonitoringService: Connect called while listen active")
+            return
+
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.conn.connect((self._host, self._port))
             self._listen_thread = threading.Thread(target=self._listen,
                                                    name="MonitoringService_{}".format(
                                                        self._plugin_instance.get_fullname())).start()
+            self.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
             self.logger.error("MonitoringService: Cannot connect to " + self._host + " on port: " + str(
@@ -84,6 +90,7 @@ class MonitoringService:
         """
         Disconnects from the call monitor of the AVM device
         """
+        self.logger.debug("MonitoringService: disconnecting")
         self._listen_active = False
         self._stop_counter('incoming')
         self._stop_counter('outgoing')
@@ -231,18 +238,22 @@ class MonitoringService:
         self.logger.debug(line)
         line = line.split(";")
 
-        if line[1] == "RING":
-            call_from = line[3]
-            call_to = line[4]
-            self._trigger(call_from, call_to, line[0], line[2], line[1], '')
-        elif line[1] == "CALL":
-            call_from = line[4]
-            call_to = line[5]
-            self._trigger(call_from, call_to, line[0], line[2], line[1], line[3])
-        elif line[1] == "CONNECT":
-            self._trigger('', '', line[0], line[2], line[1], line[3])
-        elif line[1] == "DISCONNECT":
-            self._trigger('', '', '', line[2], line[1], '')
+        try:
+            if line[1] == "RING":
+                call_from = line[3]
+                call_to = line[4]
+                self._trigger(call_from, call_to, line[0], line[2], line[1], '')
+            elif line[1] == "CALL":
+                call_from = line[4]
+                call_to = line[5]
+                self._trigger(call_from, call_to, line[0], line[2], line[1], line[3])
+            elif line[1] == "CONNECT":
+                self._trigger('', '', line[0], line[2], line[1], line[3])
+            elif line[1] == "DISCONNECT":
+                self._trigger('', '', '', line[2], line[1], '')
+        except Exception as e:
+            self.logger.error("MonitoringService: " + type(e) + " while handling Callmonitor response: " + str(e))
+            return
 
     def _trigger(self, call_from, call_to, time, callid, event, branch):
         """
@@ -405,6 +416,7 @@ class FritzDevice:
         self._username = username
         self._password = password
         self._identifier = identifier
+        self._available = True
         self._items = []
 
     def get_identifier(self):
@@ -455,6 +467,22 @@ class FritzDevice:
         """
         return self._ssl
 
+    def is_available(self):
+        """
+        Returns information if the device is currently available
+
+        :return: boolean, if device is available
+        """
+        return self._available
+
+    def set_available(self, is_available):
+        """
+        Sets the boolean, if the device is available
+
+        :param is_available: boolean of the availability status
+        """
+        self._available = is_available
+
     def get_user(self):
         """
         Returns the user for the FritzDevice
@@ -477,7 +505,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.5.4"
+    PLUGIN_VERSION = "1.5.6"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -540,6 +568,7 @@ class AVM(SmartPlugin):
         self._call_monitor_incoming_filter = self.get_parameter_value('call_monitor_incoming_filter')
 
         self._cycle = int(self.get_parameter_value('cycle'))
+        self._sh = sh
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
         self._calllist_cache = []
@@ -612,6 +641,8 @@ class AVM(SmartPlugin):
                 self._update_tam(item)
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 self._update_home_automation(item)
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'hkr_device':
+                self._update_home_automation(item)
             elif self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'wlanconfig_ssid',
                                                                       'wlan_guest_time_remaining']:
                 self._update_wlan_config(item)
@@ -636,6 +667,26 @@ class AVM(SmartPlugin):
                 self._update_myfritz(item)
         # empty response cache
         self._response_cache = dict()
+
+        if self._call_monitor:
+            if not self.alive:
+                return
+            if self._fritz_device.is_available():
+                self._monitoring_service.connect()
+
+    def get_fritz_device(self):
+        return self._fritz_device
+
+    def get_monitoring_service(self):
+        return self._monitoring_service
+
+    def set_device_availability(self, availability):
+        self._fritz_device.set_available(availability)
+        self.logger.debug('Availability for FritzDevice set to %s' % availability)
+        if not availability and self._call_monitor:
+            self._monitoring_service.disconnect()
+        elif availability and self._call_monitor and self.alive:
+            self._monitoring_service.connect()
 
     def get_calllist_from_cache(self):
         """
@@ -667,7 +718,7 @@ class AVM(SmartPlugin):
                                                                 'call_event_outgoing', 'last_number_outgoing',
                                                                 'last_called_number_outgoing',
                                                                 'call_event', 'call_direction', 'monitor_trigger']:
-            # initally - if item empty - get data from calllist
+            # initially - if item empty - get data from calllist
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'last_caller_incoming' and item() == '':
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
@@ -842,9 +893,13 @@ class AVM(SmartPlugin):
                                    auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                        self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:
-                self.logger.error(
-                    "Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error(
+                        "Exception when sending POST request for updating item towards the FritzDevice: %s" % str(e))
+                    self.set_device_availability(False)
                 return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
 
             if self.get_iattr_value(item.conf,
                                     'avm_data_type') == 'wlanconfig':  # check if item was guest wifi item and remaining time is set as item..
@@ -879,8 +934,12 @@ class AVM(SmartPlugin):
                                                               self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:
-            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         pb_url_xml = xml.getElementsByTagName('NewPhonebookURL')
         if len(pb_url_xml) > 0:
@@ -889,8 +948,13 @@ class AVM(SmartPlugin):
                 pb_result = self._session.get(pb_url, timeout=self._timeout, verify=self._verify)
                 pb_xml = minidom.parseString(pb_result.content)
             except Exception as e:
-                self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                    self.set_device_availability(False)
                 return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
+
             contacts = pb_xml.getElementsByTagName('contact')
             if len(contacts) > 0:
                 for contact in contacts:
@@ -929,8 +993,12 @@ class AVM(SmartPlugin):
                                                               self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:
-            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         pb_url_xml = xml.getElementsByTagName('NewPhonebookURL')
         if len(pb_url_xml) > 0:
@@ -939,8 +1007,12 @@ class AVM(SmartPlugin):
                 pb_result = self._session.get(pb_url, timeout=self._timeout, verify=self._verify)
                 pb_xml = minidom.parseString(pb_result.content)
             except Exception as e:
-                self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                    self.set_device_availability(False)
                 return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
 
             contacts = pb_xml.getElementsByTagName('contact')
             result_numbers = {}
@@ -991,8 +1063,12 @@ class AVM(SmartPlugin):
                                                               self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:
-            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         calllist_url_xml = xml.getElementsByTagName('NewCallListURL')
         if (len(calllist_url_xml) > 0):
@@ -1002,8 +1078,12 @@ class AVM(SmartPlugin):
                 calllist_result = self._session.get(calllist_url, timeout=self._timeout, verify=self._verify)
                 calllist_xml = minidom.parseString(calllist_result.content)
             except Exception as e:
-                self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error("Exception when sending GET request or parsing response: %s" % str(e))
+                    self.set_device_availability(False)
                 return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
 
             calllist_entries = calllist_xml.getElementsByTagName('Call')
             result_entries = []
@@ -1064,9 +1144,15 @@ class AVM(SmartPlugin):
             self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()),
                                verify=self._verify)
+            if self._call_monitor:
+                self._monitoring_service.disconnect()
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
     def wol(self, mac_address):
         """
@@ -1088,7 +1174,7 @@ class AVM(SmartPlugin):
 
     def get_hosts(self, only_active):
         """
-        Gets the name of all hosts as an array
+        Gets the information (host details) of all hosts as an array of dicts
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
 
@@ -1106,7 +1192,12 @@ class AVM(SmartPlugin):
                                                               self._fritz_device.get_password()),
                                           verify=self._verify)
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
+            return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         xml = minidom.parseString(response.content)
 
@@ -1121,7 +1212,7 @@ class AVM(SmartPlugin):
 
     def get_host_details(self, index):
         """
-        Gets the name of a hosts at a specific index
+        Gets the information of a hosts at a specific index
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
 
@@ -1139,7 +1230,12 @@ class AVM(SmartPlugin):
                                                               self._fritz_device.get_password()),
                                           verify=self._verify)
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
+            return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         xml = minidom.parseString(response.content)
         host = {
@@ -1170,8 +1266,12 @@ class AVM(SmartPlugin):
                                auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()),
                                verify=self._verify)
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
     def get_call_origin(self):
         """
@@ -1191,8 +1291,12 @@ class AVM(SmartPlugin):
                                                               self._fritz_device.get_password()),
                                           verify=self._verify)
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         xml = minidom.parseString(response.content)
 
@@ -1228,8 +1332,12 @@ class AVM(SmartPlugin):
                                                               self._fritz_device.get_password()),
                                           verify=self._verify)
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         xml = minidom.parseString(response.content)
 
@@ -1259,8 +1367,12 @@ class AVM(SmartPlugin):
                                auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()),
                                verify=self._verify)
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
     def start_call(self, phone_number):
         """
@@ -1281,8 +1393,12 @@ class AVM(SmartPlugin):
                                auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()),
                                verify=self._verify)
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
     def cancel_call(self):
         """
@@ -1300,8 +1416,12 @@ class AVM(SmartPlugin):
                                auth=HTTPDigestAuth(self._fritz_device.get_user(), self._fritz_device.get_password()),
                                verify=self._verify)
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
     def is_host_active(self, mac_address):
         """
@@ -1361,8 +1481,12 @@ class AVM(SmartPlugin):
                                                               self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:
-            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         tag_content = xml.getElementsByTagName('NewEnabled')
         if len(tag_content) > 0:
@@ -1398,8 +1522,12 @@ class AVM(SmartPlugin):
                                                               self._fritz_device.get_password()), verify=self._verify)
             xml = minidom.parseString(response.content)
         except Exception as e:
-            self.logger.error("Exception when sending POST request: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         tag_content = xml.getElementsByTagName('NewActive')
         if len(tag_content) > 0:
@@ -1471,13 +1599,24 @@ class AVM(SmartPlugin):
             xml = minidom.parseString(response.content)
 
         except Exception as e:
-            self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request or parsing response: %s" % str(e))
+                self.set_device_availability(False)
             return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
             element_xml = xml.getElementsByTagName('NewSwitchState')
             if len(element_xml) > 0:
-                item(element_xml[0].firstChild.data)
+                if element_xml[0].firstChild.data not in ['UNDEFINED', 'TOGGLE']:
+                    item(element_xml[0].firstChild.data)
+                elif element_xml[0].firstChild.data in 'TOGGLE':
+                    value = item()
+                    item(not value)
+                else:
+                    self.logger.error(
+                        'NewSwitchState für AHA Device has a non-supported value of %s' % element_xml[0].firstChild.data)
                 for child in item.return_children():
                     if self.has_iattr(child.conf, 'avm_data_type'):
                         if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
@@ -1507,6 +1646,63 @@ class AVM(SmartPlugin):
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+
+        #handling hkr devices (AVM dect 301)
+        elif self.get_iattr_value(item.conf, 'avm_data_type') == 'hkr_device':
+            self.logger.debug('handling hkr device')
+            element_xml = xml.getElementsByTagName('NewHkrSetVentilStatus')
+            if len(element_xml) > 0:
+                # Decoding hrk valve state: open, closed or temp (temperature controlled)
+                tempstring  = element_xml[0].firstChild.data
+                tempstate = 3
+                if tempstring == 'OPEN':
+                    tempstate = 1
+                elif tempstring == 'CLOSED':
+                    tempstate = 0
+                elif tempstring == 'TEMP':
+                    tempstate = 2
+                else: 
+                    tempstate = 3
+                item(int(tempstate))
+                for child in item.return_children():
+                    if self.has_iattr(child.conf, 'avm_data_type'):
+                        if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
+                            is_temperature = xml.getElementsByTagName('NewTemperatureCelsius')
+                            if len(is_temperature) > 0:
+                                child(int(is_temperature[0].firstChild.data))
+                            else:
+                                self.logger.error(
+                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                                                                                           'avm_data_type'))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature':
+                            set_temperature = xml.getElementsByTagName('NewHkrSetTemperature')
+                            if len(set_temperature) > 0:
+                                child(int(set_temperature[0].firstChild.data))
+                            else:
+                                self.logger.error(
+                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                                                                                           'avm_data_type'))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_reduced':
+                            set_temperature_reduced= xml.getElementsByTagName('NewHkrReduceTemperature')
+                            if len(set_temperature_reduced) > 0:
+                                child(int(set_temperature_reduced[0].firstChild.data))
+                            else:
+                                self.logger.error(
+                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                                                                                           'avm_data_type'))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_comfort':
+                            set_temperature_comfort= xml.getElementsByTagName('NewHkrComfortTemperature')
+                            if len(set_temperature_comfort) > 0:
+                                child(int(set_temperature_comfort[0].firstChild.data))
+                            else:
+                                self.logger.error(
+                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                                                                                           'avm_data_type'))
+
+            else:
+                self.logger.error(
+                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+
 
     def _update_fritz_device_info(self, item):
         """
@@ -1538,11 +1734,15 @@ class AVM(SmartPlugin):
                                                                   self._fritz_device.get_password()),
                                               verify=self._verify)
             except Exception as e:
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.set_device_availability(False)
                 return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
             self._response_cache["dev_info_" + action] = response.content
         else:
-            self.logger.debug("Accessing DeviceInfo reponse cache for action %s!" % action)
+            self.logger.debug("Accessing DeviceInfo response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["dev_info_" + action])
@@ -1608,11 +1808,15 @@ class AVM(SmartPlugin):
                                                                   self._fritz_device.get_password()),
                                               verify=self._verify)
             except Exception as e:
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.set_device_availability(False)
                 return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
             self._response_cache["tam_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["tam_" + action])
@@ -1643,11 +1847,15 @@ class AVM(SmartPlugin):
                     try:
                         message_result = self._session.get(message_url, timeout=self._timeout, verify=self._verify)
                     except Exception as e:
-                        self.logger.error("Exception when sending GET request: %s" % str(e))
+                        if self._fritz_device.is_available():
+                            self.logger.error("Exception when sending GET request: %s" % str(e))
+                            self.set_device_availability(False)
                         return
+                    if not self._fritz_device.is_available():
+                        self.set_device_availability(True)
                     self._response_cache["tam_messages"] = message_result.content
                 else:
-                    self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+                    self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
                 try:
                     message_xml = minidom.parseString(self._response_cache["tam_messages"])
@@ -1709,11 +1917,15 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
 
             except Exception as e:
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.set_device_availability(False)
                 return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
             self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)])
@@ -1771,11 +1983,15 @@ class AVM(SmartPlugin):
                                                                   self._fritz_device.get_password()),
                                               verify=self._verify)
             except Exception as e:
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.set_device_availability(False)
                 return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
             self._response_cache["wan_dsl_interface_config_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wan_dsl_interface_config_" + action])
@@ -1843,11 +2059,15 @@ class AVM(SmartPlugin):
                                                                   self._fritz_device.get_password()),
                                               verify=self._verify)
             except Exception as e:
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.set_device_availability(False)
                 return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
             self._response_cache["wan_common_interface_configuration_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wan_common_interface_configuration_" + action])
@@ -1953,10 +2173,15 @@ class AVM(SmartPlugin):
                                                                   self._fritz_device.get_password()),
                                               verify=self._verify)
             except Exception as e:
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                if self._fritz_device.is_available():
+                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.set_device_availability(False)
+                return
+            if not self._fritz_device.is_available():
+                self.set_device_availability(True)
             self._response_cache["wan_ip_connection_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM reponse cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s!" % action)
 
         try:
             xml = minidom.parseString(self._response_cache["wan_ip_connection_" + action])
@@ -2048,9 +2273,6 @@ class AVM(SmartPlugin):
 #    Webinterface of the plugin
 # ------------------------------------------
 
-import cherrypy
-
-
 class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
@@ -2069,7 +2291,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
-    def index(self, reload=None):
+    def index(self, reload=None, action=None):
         """
         Build index.html for cherrypy
 
@@ -2077,15 +2299,23 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        tabcount = 1
-        tab2title = ""
+        tabcount = 2
+        call_monitor_items = 0
         if self.plugin._call_monitor:
-            tab2title = "Call Monitor Items (%s)" % self.plugin._monitoring_service.get_item_count_total()
-            tabcount = 2
+            call_monitor_items = self.plugin._monitoring_service.get_item_count_total()
+            tabcount = 3
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(), tabcount=tabcount,
-                           tab1title="AVM Items (%s)" % self.plugin._fritz_device.get_item_count(),
-                           tab2title=tab2title,
+                           avm_items=self.plugin.get_fritz_device().get_item_count(),
+                           call_monitor_items=call_monitor_items,
                            p=self.plugin)
+
+    @cherrypy.expose
+    def reboot(self):
+        self.plugin.reboot()
+
+    @cherrypy.expose
+    def reconnect(self):
+        self.plugin.reconnect()

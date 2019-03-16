@@ -1,4 +1,5 @@
-# Mail
+# Mail 
+## Deprecated, use plugins mailsend and mailrcv instead
 
 ## Requirements
 
@@ -14,19 +15,18 @@ mail:
     class_path: plugins.mail
     host: mail.example.com
     mail_from: mail@example.com
-
-# ssl = False
-# username = False
-# password = False
+    # ssl: False
+    # username: False
+    # password: False
 imap:
     class_name: IMAP
     class_path: plugins.mail
     host: mail.example.com
     username: smarthome
     password: secret
-    # ssl = False
-    # port = default
-    # cycle = 300
+    # ssl: False
+    # port: default
+    # cycle: 300
 ```
 
 #### Attributes
