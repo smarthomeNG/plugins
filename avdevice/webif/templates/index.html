@@ -66,9 +66,9 @@ document.addEventListener("DOMContentLoaded", function() {
         {% else %}{{ p._tcp }}:{{ p._port }}, {{ p._tcp_timeout }}{% endif %}
         {{ p._is_connected }}
         {% if p._tcp and 'TCP' not in p._is_connected %}
-        <button type="button" class="btn btn-shng btn-sm reload" title="{{ _('Try to connect TCP') }}" onclick="location.href='?action=connect';">C</button>
+        <button type="button" class="btn btn-shng btn-sm reload" title="{{ _('Verbindungsversuch TCP') }}" onclick="location.href='?action=connect';">C</button>
         {% elif p._rs232 and 'Serial' not in p._is_connected %}
-        <button type="button" class="btn btn-shng btn-sm reload" title="{{ _('Try to connect RS232') }}" onclick="location.href='?action=connect';">C</button>
+        <button type="button" class="btn btn-shng btn-sm reload" title="{{ _('Verbindungsversuch RS232') }}" onclick="location.href='?action=connect';">C</button>
         {% endif %}
       </td>
     </tr>
@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", function() {
 -->
 {% block buttons %}
 
-<button id="#reload" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Reload Config') }}" onclick="location.href='?action=reload';">Reload Config</button>
+<button id="#reload" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Config neuladen') }}" onclick="location.href='?action=reload';">Reload Config</button>
 
 {% if config_reloaded %}
 <div class="mb-2 alert alert-success alert-dismissible fade show" role="alert" style="position:fixed;">
@@ -126,6 +126,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <tr>
       <th>{{ _('Item') }}</th>
       <th>{{ _('Wert') }}</th>
+      <th>{{ _('Abhängig von') }}</th>
     </tr>
     </thead>
     {% for item in p.init.get_items('zone0') %}
@@ -134,6 +135,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <tr>
           <td class="py-1">{{ item._path }}</td>
           <td class="py-1">{{ item() }}</td>
+          <td class="py-1">{{ p._logics_dependencies('zone0', item) }}</td>
         </tr>
       {% endif %}
     {% endfor %}
@@ -152,7 +154,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <tr>
       <th width="250">
         <strong>{{ _('Abfrageprotokoll') }}</strong>&nbsp;
-        <button id="#clear_query" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Empty Query History') }}" onclick="location.href='?action=clear_query_history';"><i class="fas fa-trash-alt"></i></button>
+        <button id="#clear_query" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Abfrageprotokoll löschen') }}" onclick="location.href='?action=clear_query_history';"><i class="fas fa-trash-alt"></i></button>
       </th>
       <th width="250">
         {% if query_cleared %}
@@ -281,7 +283,7 @@ document.addEventListener("DOMContentLoaded", function() {
     </tr>
     <tr>
       <td class="py-1" width="200"><strong>Commandlist</strong>
-      <button id="#clear_send" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Empty Send Commands') }}" onclick="location.href='?action=clear_send';"><i class="fas fa-trash-alt"></i></button>
+      <button id="#clear_send" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Liste mit Sendekommandos löschen') }}" onclick="location.href='?action=clear_send';"><i class="fas fa-trash-alt"></i></button>
       </td><td class="py-1">
       {% if command_cleared %}
         <div class="mb-2 alert alert-success alert-dismissible fade show" role="alert" style="top: 8px; left: 0px;z-index:1;width:200px;height:23px;margin:0;padding:0px 1px 1px 5px;position:relative">
@@ -316,6 +318,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <tr>
       <th>{{ _('Item') }}</th>
       <th>{{ _('Wert') }}</th>
+      <th>{{ _('Abhängig von') }}</th>
     </tr>
     </thead>
     {% for item in p.init.get_items('zone1') %}
@@ -324,6 +327,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <tr>
           <td class="py-1">{{ item._path }}</td>
           <td class="py-1">{{ item() }}</td>
+          <td class="py-1">{{ p._logics_dependencies('zone1', item) }}</td>
         </tr>
       {% endif %}
     {% endfor %}
@@ -347,6 +351,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <tr>
       <th>{{ _('Item') }}</th>
       <th>{{ _('Wert') }}</th>
+      <th>{{ _('Abhängig von') }}</th>
     </tr>
     </thead>
     {% for item in p.init.get_items('zone2') %}
@@ -355,6 +360,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <tr>
           <td class="py-1">{{ item._path }}</td>
           <td class="py-1">{{ item() }}</td>
+          <td class="py-1">{{ p._logics_dependencies('zone2', item) }}</td>
         </tr>
       {% endif %}
     {% endfor %}
@@ -379,6 +385,7 @@ document.addEventListener("DOMContentLoaded", function() {
     <tr>
       <th>{{ _('Item') }}</th>
       <th>{{ _('Wert') }}</th>
+      <th>{{ _('Abhängig von') }}</th>
     </tr>
     </thead>
     {% for item in p.init.get_items('zone3') %}
@@ -387,6 +394,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <tr>
           <td class="py-1">{{ item._path }}</td>
           <td class="py-1">{{ item() }}</td>
+          <td class="py-1">{{ p._logics_dependencies('zone3', item) }}</td>
         </tr>
       {% endif %}
     {% endfor %}

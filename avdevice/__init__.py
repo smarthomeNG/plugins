@@ -24,6 +24,7 @@
 #########################################################################
 
 import logging
+import functools
 
 from lib.model.smartplugin import *
 from lib.item import Items
@@ -52,7 +53,6 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.5.0"
-
 
     def __init__(self, smarthome):
         self.itemsApi = Items.get_instance()
@@ -420,7 +420,24 @@ class AVDevice(SmartPlugin):
                                 {'Zone': dependzone, 'Item': depend, 'Dependvalue': dependvalue, 'Compare': comparing,
                                  'Group': dependgroup}]})
                             self.logger.log(VERBOSE1,
-                                            "Initializing {}: Creating dependency for {}.".format(self._name, info))
+                                            "Initializing {}: Creating dependency for {} in zone {}.".format(self._name, info, zone))
+
+    def _logics_dependencies(self, zone=None, item=None):
+        deps = {'a': [], 'b':[], 'c':[], 'd':[]}
+        try:
+            info = item.id()
+            search = 'Slave_item'
+        except Exception:
+            search = 'Slave_function'
+            info = item
+        try:
+            depitem = self._dependencies[search][zone].get(info)
+            for d in depitem:
+                deps[d.get('Group')].append("{}{}{}".format(d['Item'], d['Compare'], d['Dependvalue']))
+            deps = dict( [(k,v) for k,v in deps.items() if len(v)>0])
+        except Exception as err:
+            deps = None        
+        return deps
 
     # Finding relevant items for the plugin based on the avdevice keyword
     def parse_item(self, item):
@@ -447,12 +464,15 @@ class AVDevice(SmartPlugin):
                     if info is not None:
                         if '_init' in keyword:
                             self._init_commands[zone][info] = {'Inititem': item, 'Item': item, 'Value': item()}
+                            item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             return self.update_item
                         elif '_speakers' in keyword:
                             self._items_speakers[zone][info] = {'Item': item, 'Value': item()}
+                            item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             return self.update_item
                         else:
                             self._items[zone][info] = {'Item': item, 'Value': item()}
+                            item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             self._parse_depend_item(item, info, zone)
                             return self.update_item
             return None
@@ -925,7 +945,7 @@ class AVDevice(SmartPlugin):
                 try:
                     socket = __import__('socket')
                     REQUIRED_PACKAGE_IMPORTED = True
-                except:
+                except Exception:
                     REQUIRED_PACKAGE_IMPORTED = False
                 if not REQUIRED_PACKAGE_IMPORTED:
                     self.logger.error("{}: Unable to import Python package 'socket'".format(self.get_fullname()))
@@ -986,7 +1006,7 @@ class AVDevice(SmartPlugin):
                 try:
                     serial = __import__('serial')
                     REQUIRED_PACKAGE_IMPORTED = True
-                except:
+                except Exception:
                     REQUIRED_PACKAGE_IMPORTED = False
                 if not REQUIRED_PACKAGE_IMPORTED:
                     self.logger.error("{}: Unable to import Python package 'serial'".format(self.get_fullname()))
@@ -2697,7 +2717,7 @@ class AVDevice(SmartPlugin):
                                                         "Updating Item {}: Problem with command reorder in zone {}: {}.".format(
                                                             self._name, zone, err))
                                         pass
-                        reorderlist = [i for i in reorderlist if not i in newreorderlist]
+                        reorderlist = [i for i in reorderlist if i not in newreorderlist]
                         self._send_commands = newreorderlist + reorderlist
                         self._sendingcommand = self._send_commands[0]
 
@@ -3021,7 +3041,7 @@ class AVDevice(SmartPlugin):
         """
         try:
             self.mod_http = Modules.get_instance().get_module('http')
-        except:
+        except Exception:
             self.mod_http = None
         if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
