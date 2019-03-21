@@ -18,7 +18,7 @@ This plugin requires
 ## Enable the plugin in etc/plugin.yaml
 
 You can add as many instances as you have JSON sources to process. Make sure to add a 
-unique instance name to each instance if you configure more than on instance. Those
+unique instance name to each instance if you configure more than on instance. That
 instance name will serve as a key to the item configuration further down.
 
 ### Plugin specific attributes
@@ -55,13 +55,13 @@ but testing.  Examples were taken from
       cycle: 30
 
 ### multi instance
-    shjquk:
+    shjqlon:
       class_name: SHJQ
       class_path: plugins.shjq
       url: https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22
       instance: london
 
-    shjquk:
+    shjqcair:
       class_name: SHJQ
       class_path: plugins.shjq
       url: https://samples.openweathermap.org/data/2.5/weather?id=2172797&appid=b6907d289e10d714a6e88b30761fae22
@@ -94,7 +94,7 @@ Use any kind of jq filter that suites your needs. Make sure your filter returns 
 Jq filters can be tricky to develop for complex json structures. Getting them straight might be easier
 outside of smarthome by using the commandline version of jq and curl like this
 
-    curl https://json.server.org/data.json | jq -f '.object'
+    curl https://json.server.org/data.json | jq '.object'
 
 Look at [https://stedolan.github.io/jq/tutorial/] to get startet with jq filters.
 
