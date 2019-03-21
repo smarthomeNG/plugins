@@ -25,6 +25,12 @@ parameters:
         description:
             de: 'URL of the json input (e.g. http://foo.bar/input.json or file:///path/to/data.json)'
             en: 'URL of the json input (e.g. http://foo.bar/input.json or file:///path/to/data.json)'
+    cycle:
+        type: num
+        mandatory: False
+        description:
+            de: 'The polling interval for the given url in seconds'
+            en: 'The polling interval for the given url in seconds'
 
 
 item_attributes:
