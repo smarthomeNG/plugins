@@ -37,10 +37,17 @@ class SHJQ(SmartPlugin):
         """
         Initializes the plugin
         @param url: URL of the json data to fetch
+        @param cycle: the polling interval in seconds
         """
         self.logger = logging.getLogger(__name__)
         self._url = self.get_parameter_value('url')
-        self._cycle = 30
+        try:
+            self._cycle = int(self.get_parameter_value('cycle'))
+        except Exception:
+            self._cycle = 0
+        if self._cycle <= 0:
+            self._cycle = 30
+            self.logger.error("Bad or missing value for 'cycle', using {}".format(self._cycle))
         self._session = requests.Session()
         self._session.mount('file://', FileAdapter())
         self._items = {}
@@ -66,11 +73,22 @@ class SHJQ(SmartPlugin):
             return
 
         if response.status_code != 200:
-            self.logger.error("Bad response code when GETting {}".format(self._url))
+            self.logger.error("Bad response code from GET '{}': {}".format(self._url, response.status_code))
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as ex:
+            self.logger.error("Response from '{}' doesn't look like json '{}'".format(self._url, str(response.content)[:30]))
+            return
+
         for k in self._items.keys():
-            jqres = pyjq.first(self._items[k], json_obj)
+            try:
+                jqres = pyjq.first(self._items[k], json_obj)
+
+            except Exception as ex:
+                self.logger.error("jq filter failed: {}'".format(str(ex)))
+                continue
+
             k(jqres)
 
