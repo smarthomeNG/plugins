@@ -274,6 +274,15 @@ def de17001(payload):
         return None
     return (struct.unpack('>B', payload)[0] & 0x3f) + 1
 
+def en18001(value):
+    return [0, (int(value) & 0x4f) - 1]
+
+
+def de18001(payload):
+    if len(payload) != 1:
+        return None
+    return (struct.unpack('>B', payload)[0] & 0x4f) + 1
+
 
 def en20(value):
     return [0, int(value) & 0xff]
@@ -350,6 +359,8 @@ decode = {
     '17': de17,
     '17001': de17001,
     '17.001': de17001,
+    '18001': de18001,
+    '18.001': de18001,    
     '20': de20,
     '24': de24,
     '232': de232,
@@ -382,6 +393,8 @@ encode = {
     '17': en17,
     '17001': en17001,
     '17.001': en17001,
+    '18001': en18001,
+    '18.001': en18001,    
     '20': en20,
     '24': en24,
     '232': en232,
