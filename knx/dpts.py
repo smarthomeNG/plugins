@@ -275,13 +275,13 @@ def de17001(payload):
     return (struct.unpack('>B', payload)[0] & 0x3f) + 1
 
 def en18001(value):
-    return [0, (int(value) & 0x4f) - 1]
+    return [0, (int(value) & 0xbf) - 1]
 
 
 def de18001(payload):
     if len(payload) != 1:
         return None
-    return (struct.unpack('>B', payload)[0] & 0x4f) + 1
+    return (struct.unpack('>B', payload)[0] & 0xbf) + 1
 
 
 def en20(value):
