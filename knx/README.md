@@ -91,6 +91,8 @@ The following datapoint types are supported:
 |  16         |  14 byte      |  str     |  14 characters (ASCII)
 |  16.001     |  14 byte      |  str     |  14 characters (8859_1)
 |  17         |  8 bit        |  num     |  Scene: 0 - 63
+|  17.001     |  8 bit        |  num     |  Scene: 1 - 64
+|  18.001     |  8 bit        |  num     |  Scene: 1 - 64 (call) and 65-128 (save)
 |  20         |  8 bit        |  num     |  HVAC: 0 - 255
 |  24         |  var          |  str     |  unlimited string (8859_1)
 |  232        |  3 byte       |  list    |  RGB: [0, 0, 0] - [255, 255, 255]
