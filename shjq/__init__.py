@@ -56,8 +56,7 @@ class SHJQ(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'shjq_source'):
-            attr_value = self.get_iattr_value(item.conf, 'shjq_source')
-            self._items[item] = attr_value
+            self._items[item] = self.get_iattr_value(item.conf, 'shjq_source')
 
     def poll_device(self):
         try:
