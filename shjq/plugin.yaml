@@ -7,7 +7,7 @@ plugin:
         en: 'jq json parser plugin'
     maintainer: t3r
     tester: none (yet)
-    keywords: solar power
+    keywords: json
     documentation: http://smarthomeng.de/user/plugins_doc/config/not-yet.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/not-yet
 
@@ -26,7 +26,7 @@ parameters:
             de: 'URL of the json input (e.g. http://foo.bar/input.json or file:///path/to/data.json)'
             en: 'URL of the json input (e.g. http://foo.bar/input.json or file:///path/to/data.json)'
     cycle:
-        type: num
+        type: int
         mandatory: False
         default: 30
         valid_min: 0
