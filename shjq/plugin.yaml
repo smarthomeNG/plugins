@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: interface               # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'jq json parser plugin'
-        en: 'jq json parser plugin'
+        de: 'json parser plugin basierend auf jq'
+        en: 'json parser plugin based on jq'
     maintainer: t3r
     tester: none (yet)
     keywords: json
@@ -23,7 +23,7 @@ parameters:
         type: str
         mandatory: True
         description:
-            de: 'URL of the json input (e.g. http://foo.bar/input.json or file:///path/to/data.json)'
+            de: 'URL der json Eingabe-Daten (z.B. http://foo.bar/input.json oder file:///pfad/zu/data.json)'
             en: 'URL of the json input (e.g. http://foo.bar/input.json or file:///path/to/data.json)'
     cycle:
         type: int
@@ -31,7 +31,7 @@ parameters:
         default: 30
         valid_min: 0
         description:
-            de: 'The polling interval for the given url in seconds'
+            de: 'Das Abfrage-Intervall für die gegebene URL in Sekunden'
             en: 'The polling interval for the given url in seconds'
 
 
