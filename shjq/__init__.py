@@ -51,6 +51,7 @@ class SHJQ(SmartPlugin):
         self.scheduler_add(__name__, self.poll_device, cycle=self._cycle)
 
     def stop(self):
+        self.scheduler_remove(__name__ )
         self.alive = False
 
     def parse_item(self, item):
