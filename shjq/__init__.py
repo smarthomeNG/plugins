@@ -41,13 +41,7 @@ class SHJQ(SmartPlugin):
         """
         self.logger = logging.getLogger(__name__)
         self._url = self.get_parameter_value('url')
-        try:
-            self._cycle = int(self.get_parameter_value('cycle'))
-        except Exception:
-            self._cycle = 0
-        if self._cycle <= 0:
-            self._cycle = 30
-            self.logger.error("Bad or missing value for 'cycle', using {}".format(self._cycle))
+        self._cycle = int(self.get_parameter_value('cycle'))
         self._session = requests.Session()
         self._session.mount('file://', FileAdapter())
         self._items = {}

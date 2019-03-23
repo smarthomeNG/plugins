@@ -28,6 +28,8 @@ parameters:
     cycle:
         type: num
         mandatory: False
+        default: 30
+        valid_min: 0
         description:
             de: 'The polling interval for the given url in seconds'
             en: 'The polling interval for the given url in seconds'
