@@ -7,7 +7,7 @@ plugin:
         en: 'Get weather data from wunderground.com'
     maintainer: msinn
     tester: msinn                       # Who tests this plugin?
-    state: 'qa-passed'
+    state: deprecated
     keywords: weather
     documentation: http://smarthomeng.de/user/plugins/wunderground/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1059124-neues-wunderground-plugin
