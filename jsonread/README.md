@@ -1,4 +1,4 @@
-# shjq
+# The jsonread plugin
 
 This is a generic JSON to smarthome plugin. Fetch any JSON encoded
 data via http(s) or from a file, extract the interesting data and feed
@@ -40,56 +40,56 @@ but testing.  Examples were taken from
 
 ### http client
 
-    shjq:
-      class_name: SHJQ
-      class_path: plugins.shjq
+    jsonread:
+      class_name: JSONREAD
+      class_path: plugins.jsonread
       url: https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22
       cycle: 30
 
 ### file client
 
-    shjq:
-      class_name: SHJQ
-      class_path: plugins.shjq
+    jsonread:
+      class_name: JSONREAD
+      class_path: plugins.jsonread
       url: file:///path/to/data.json
       cycle: 30
 
 ### multi instance
-    shjqlon:
-      class_name: SHJQ
-      class_path: plugins.shjq
+    jsonreadlon:
+      class_name: JSONREAD
+      class_path: plugins.jsonread
       url: https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22
       instance: london
 
-    shjqcair:
-      class_name: SHJQ
-      class_path: plugins.shjq
+    jsonreadcair:
+      class_name: JSONREAD
+      class_path: plugins.jsonread
       url: https://samples.openweathermap.org/data/2.5/weather?id=2172797&appid=b6907d289e10d714a6e88b30761fae22
       instance: cairns
 
 
 ## item configuration in items/myitem.yaml
-This is the fun part. This is a sample item. Notice the special attribute shjq_source.
+This is the fun part. This is a sample item. Notice the special attribute jsonread_filter.
 
 ### Single instance
-just use the shjq_source attribute
+just use the jsonread_filter attribute
 
     temperature:
       type: num
-      shjq_source: .main.temp
+      jsonread_filter: .main.temp
 
 ### Multi instance
-Use the shjq_source@instance attribute syntax
+Use the jsonread_filter@instance attribute syntax
 
     temperature:
       london:
         type: num
-        shjq_source@london: .main.temp
+        jsonread_filter@london: .main.temp
       cairns:
         type: num
-        shjq_source@cairns: .main.temp
+        jsonread_filter@cairns: .main.temp
 
-The value for the shjq_source attribute is a jq filter, passed directly to jq itself
+The value for the jsonread_filter attribute is a jq filter, passed directly to jq itself
 Use any kind of jq filter that suites your needs. Make sure your filter returns a single value.
 Jq filters can be tricky to develop for complex json structures. Getting them straight might be easier
 outside of smarthome by using the commandline version of jq and curl like this
@@ -148,16 +148,16 @@ This is an example, stripped down to what we use in this document
 ### etc/plugin.yaml
 
     swem:
-      class_name: SHJQ
-      class_path: plugins.shjq
+      class_name: JSONREAD
+      class_path: plugins.jsonread
       # Replace with the ip address or hostname of your energy-manager
       url: http://192.168.x.y/rest/kiwigrid/wizard/devices
       instance: swem
       cycle: 30
 
     myreserve:
-      class_name: SHJQ
-      class_path: plugins.shjq
+      class_name: JSONREAD
+      class_path: plugins.jsonread
       # Replace with the path to your BMSData-file
       url: file:///tmp/BMSData.shtml
       instance: myreserve
@@ -173,15 +173,15 @@ Get the batteries voltage, charge current and charge power.
         # note: we are fetching from the 'myreserve' plugin instance
         # easy: get attribute VBat of the FData object
         type: num
-        shjq_source@myreserve: .FData.VBat
+        jsonread_filter@myreserve: .FData.VBat
       i:
         # easy: get attribute IBat of the FData object
         type: num
-        shjq_source@myreserve: .FData.IBat
+        jsonread_filter@myreserve: .FData.IBat
       power:
         # doing simple math is also straightforward
         type: num
-        shjq_source@myreserve: (.FData.VBat * .FData.IBat * -1)
+        jsonread_filter@myreserve: (.FData.VBat * .FData.IBat * -1)
 
 Get the current inverter AC out power
 
@@ -190,7 +190,7 @@ Get the current inverter AC out power
       # note: we are fetching from the 'swem' plugin instance
       # from the items array in the result object, fetch the object where the guid matches our given guid
       # from the resulting object, walk down the tree and fetch the "value" attribute
-      shjq_source@swem: (.result.items[] | select(.guid == "urn:your-inverter-guid").tagValues.PowerACOut.value)
+      jsonread_filter@swem: (.result.items[] | select(.guid == "urn:your-inverter-guid").tagValues.PowerACOut.value)
       # all standard attributes work as expected
       visu_acl: r
       sqlite: yes
@@ -199,14 +199,14 @@ Compute the grid power, use yaml's block style feature (https://yaml-multiline.i
 
     grid:
       type: num
-      shjq_source@swem: >
+      jsonread_filter@swem: >
         (.result.items[] |
           select(.deviceModel[].deviceClass == "com.kiwigrid.devices.solarwatt.MyReservePowermeter").tagValues.PowerOut.value) -
         (.result.items[] |
           select(.deviceModel[].deviceClass == "com.kiwigrid.devices.solarwatt.MyReservePowermeter").tagValues.PowerIn.value)
 
 # Disclaimer and License
-This document and the shjq plugin for smarthome.py is free software:
+This document and the jsonread plugin for smarthome.py is free software:
 you can redistribute it and/or modify it under the terms of the
 GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -218,4 +218,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with shjq. If not, see <http://www.gnu.org/licenses/>.
+along with jsonread. If not, see <http://www.gnu.org/licenses/>.
