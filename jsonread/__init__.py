@@ -29,7 +29,7 @@ import pyjq
 from lib.model.smartplugin import SmartPlugin
 
 
-class SHJQ(SmartPlugin):
+class JSONREAD(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.0.0"
 
@@ -55,8 +55,8 @@ class SHJQ(SmartPlugin):
         self.alive = False
 
     def parse_item(self, item):
-        if self.has_iattr(item.conf, 'shjq_source'):
-            self._items[item] = self.get_iattr_value(item.conf, 'shjq_source')
+        if self.has_iattr(item.conf, 'jsonread_filter'):
+            self._items[item] = self.get_iattr_value(item.conf, 'jsonread_filter')
 
     def poll_device(self):
         try:
