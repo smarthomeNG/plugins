@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2019 Torsten Dreyer torsten (at) t3r (dot) de
-#  Version 0.0.1
+#  Version 1.0.0
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -31,7 +31,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class SHJQ(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "0.0.1"
+    PLUGIN_VERSION = "1.0.0"
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -41,7 +41,7 @@ class SHJQ(SmartPlugin):
         """
         self.logger = logging.getLogger(__name__)
         self._url = self.get_parameter_value('url')
-        self._cycle = int(self.get_parameter_value('cycle'))
+        self._cycle = self.get_parameter_value('cycle')
         self._session = requests.Session()
         self._session.mount('file://', FileAdapter())
         self._items = {}
