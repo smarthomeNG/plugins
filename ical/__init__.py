@@ -21,13 +21,15 @@
 
 import logging
 import datetime
+import os
+import errno
 
 import dateutil.tz
 import dateutil.rrule
 import dateutil.relativedelta
 from lib.model.smartplugin import SmartPlugin
 from lib.shtime import Shtime
-from lib.tools import Tools
+from lib.network import Http
 from bin.smarthome import VERSION
 
 
@@ -43,17 +45,27 @@ class iCal(SmartPlugin):
             self.logger = logging.getLogger(__name__)
         try:
             self.shtime = Shtime.get_instance()
-            self.tools = Tools
+            self.dl = Http('')
             self._items = []
             self._icals = {}
             self._ical_aliases = {}
+            self.sh = smarthome
             cycle = self.get_parameter_value('cycle')
             calendars = self.get_parameter_value('calendars')
         except Exception as err:
             self.logger.error(err)
             self._init_complete = False
             return
-
+        try:
+            dir = '{}/var/ical'.format(self.sh.get_basedir())
+            os.makedirs(dir)
+            self.logger.debug('Created ical subfolder in var')
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                self.logger.error('Problem creating ical folder in {}var'.format(self.sh.get_basedir()))
+                self._init_complete = False
+                return
+        
         for calendar in calendars:
             if ':' in calendar and 'http' != calendar[:4]:
                 name, sep, cal = calendar.partition(':')
@@ -92,7 +104,7 @@ class iCal(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
 
-    def __call__(self, ics='', delta=1, offset=0, username=None, password=None, timeout=2, prio=1, verify=True):
+    def __call__(self, ics='', delta=1, offset=0, username=None, password=None, prio=1, verify=True):
         if ics in self._ical_aliases:
             self.logger.debug('iCal retrieve events by alias {0} -> {1}'.format(ics, self._ical_aliases[ics]))
             return self._filter_events(self._icals[self._ical_aliases[ics]], delta, offset)
@@ -102,7 +114,7 @@ class iCal(SmartPlugin):
             return self._filter_events(self._icals[ics], delta, offset)
 
         self.logger.debug('iCal retrieve events {0}'.format(ics))
-        return self._filter_events(self._read_events(ics, username=username, password=password, timeout=timeout, prio=prio, verify=verify), delta, offset)
+        return self._filter_events(self._read_events(ics, username=username, password=password, prio=prio, verify=verify), delta, offset)
 
     def _update_items(self):
         if len(self._items):
@@ -172,22 +184,29 @@ class iCal(SmartPlugin):
                         revents[date].append(revent)
         return revents
 
-    def _read_events(self, ics, username=None, password=None, timeout=2, prio=1, verify=True):
-        if ics.startswith('http'):
-            ical = self.tools.fetch_url(self, url=ics, username=username, password=password, timeout=timeout)
-            # ical = self.tools.fetch_url(self, url=ics, username=username, password=password, timeout=timeout, verify=verify)
-            if ical is False:
+    def _read_events(self, ics, username=None, password=None, prio=1, verify=True):
+        dir = '{}/var/ical/'.format(self.sh.get_basedir())
+        if ics.startswith('http'):           
+            name = ics[ics.rfind("/")+1:]
+            name = '{}_downloaded.{}'.format(name.split(".")[0], name.split(".")[1])
+            for entry in self._ical_aliases:
+                name = '{}_downloaded.ics'.format(entry) if ics == self._ical_aliases[entry] else name
+            filename = '{}{}'.format(dir, name)
+            auth = 'HTTPBasicAuth' if username else None
+            downloaded = self.dl.download(url=ics, local=filename, params={username:username, password:password}, verify=verify, auth=auth)
+            if downloaded is False:
+                self.logger.error('Could not download online ics file {0}.'.format(ics))
                 return {}
-            ical = ical.decode()
-            self.logger.debug('ical online: {}'.format(ical))
-        else:
-            try:
-                with open(ics, 'r') as f:
-                    ical = f.read()
-                    self.logger.debug('ical offline: {}'.format(ical))
-            except IOError as e:
-                self.logger.error('Could not open ics file {0}: {1}'.format(ics, e))
-                return {}
+            self.logger.debug('Online ics {} successfully downloaded to {}'.format(ics, filename))
+            ics = os.path.normpath(filename)
+        try:
+            ics = '{}{}'.format(dir, ics) if dir not in ics else ics
+            with open(ics, 'r') as f:
+                ical = f.read()
+                self.logger.debug('Read offline ical file {}'.format(ics))
+        except IOError as e:
+            self.logger.error('Could not open local ics file {0}: {1}'.format(ics, e))
+            return {}
 
         return self._parse_ical(ical, ics, prio)
 

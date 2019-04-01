@@ -38,10 +38,10 @@ parameters:
             de: "Liste von Kalendern die automatisch aktualisiert und via `sh.ical()` Funktion abgerufen werden kann."
             en: "list of calendars to automatically keep up to date and provided via `sh.ical()` function."
         description_long:
-            de: "Liste von Kalendern die automatisch aktualisiert und via `sh.ical()` Funktion abgerufen werden kann. Konfiguriert optional einen Alias und die URI des Kalenders, die sowohl auf ein lokales File als auch einen Onlinefeed mit `http://` verweisen kann.\n
-            Beispiel: holidays:http://cal.server/holidays.ical"
-            en: "list of calendars to automatically keep up to date and provided via `sh.ical()` function. Configures an alias (optional) and the URI of calendar, which can be a local file or a remote file when starting with `http://`.\n
-            Example: holidays:http://cal.server/holidays.ical"
+            de: "Liste von Kalendern die automatisch aktualisiert und via `sh.ical()` Funktion abgerufen werden kann. Konfiguriert optional einen Alias und die URI des Kalenders, die sowohl auf ein lokales File als auch einen Onlinefeed mit `https://` verweisen kann. Onlinekalender werden in den Ordner var/ical gespeichert und je nach cycle-Angabe aktualisiert.\n
+            Beispiel: holidays:http://cal.server/holidays.ics"
+            en: "list of calendars to automatically keep up to date and provided via `sh.ical()` function. Configures an alias (optional) and the URI of calendar, which can be a local file or a remote file when starting with `https://`. Online calendars are downloaded in the folder var/ical and updated depending on the cycle attribute.\n
+            Example: holidays:https://cal.server/holidays.ics"
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -51,13 +51,13 @@ item_attributes:
             de: "Dieses Attribut konfiguriert eine Verbindung zwischen Item und entsprechendem Kalender."
             en: "This configures a connection between the item and the given calendar."
         description_long:
-            de: "Dieses Attribut konfiguriert eine Verbindung zwischen Item und entsprechendem Kalender, der entweder als URI oder als Kalender Alias (im etc/plugin.yaml definiert) angegeben wird. Der konfigurierte Kalender wird automatisch zum internen Kalender-Zwischenspeicher hinzugefügt und aktualisiert.\n
+            de: "Dieses Attribut konfiguriert eine Verbindung zwischen Item und entsprechendem Kalender, der entweder als Dateinamen (die Datei muss in var/ical vom smarthomeNG Verzeichnis liegen), URI oder als Kalender Alias (im etc/plugin.yaml definiert) angegeben wird. Der konfigurierte Kalender wird automatisch zum internen Kalender-Zwischenspeicher hinzugefügt und aktualisiert.\n
             \n
             Das Item wird auf Wahr gesetzt, sobald ein Event im Moment stattfindet. Ansonsten ist es falsch.\n
             \n
             Das Aktualisierungsintervall ist derzeit auf eine Minute festgelegt. Das beduetet, jede Minute wird der Kalender auf Events geprüft und das Item bei Bedarf aud Wahr geschaltet.
             "
-            en: "This configures a connection between the item and the given calendar. You can specify the calendar URI or the calendar alias (as defined in the etc/plugin.yaml). The configured calendar will automatically be added to the internal calendar cache and will automatically be updated.\n
+            en: "This configures a connection between the item and the given calendar. You can specify the calendar filename (the file has to be in var/ical of your smarthomeNG folder), URI or the calendar alias (as defined in the etc/plugin.yaml). The configured calendar will automatically be added to the internal calendar cache and will automatically be updated.\n
             \n
             When configured, each time an event is taken place at the moment, the item will be set to true or if not, to false.\n
             \n
