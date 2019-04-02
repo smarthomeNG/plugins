@@ -53,12 +53,12 @@ class iCal(SmartPlugin):
             cycle = self.get_parameter_value('cycle')
             calendars = self.get_parameter_value('calendars')
         except Exception as err:
-            self.logger.error(err)
+            self.logger.error('Problems initializing: {}'.format(err))
             self._init_complete = False
             return
         try:
-            dir = '{}/var/ical'.format(self.sh.get_basedir())
-            os.makedirs(dir)
+            directory = '{}/var/ical'.format(self.sh.get_basedir())
+            os.makedirs(directory)
             self.logger.debug('Created ical subfolder in var')
         except OSError as e:
             if e.errno != errno.EEXIST:
@@ -185,13 +185,13 @@ class iCal(SmartPlugin):
         return revents
 
     def _read_events(self, ics, username=None, password=None, prio=1, verify=True):
-        dir = '{}/var/ical/'.format(self.sh.get_basedir())
+        directory = '{}/var/ical/'.format(self.sh.get_basedir())
         if ics.startswith('http'):           
             name = ics[ics.rfind("/")+1:]
             name = '{}_downloaded.{}'.format(name.split(".")[0], name.split(".")[1])
             for entry in self._ical_aliases:
                 name = '{}_downloaded.ics'.format(entry) if ics == self._ical_aliases[entry] else name
-            filename = '{}{}'.format(dir, name)
+            filename = '{}{}'.format(directory, name)
             auth = 'HTTPBasicAuth' if username else None
             downloaded = self.dl.download(url=ics, local=filename, params={username:username, password:password}, verify=verify, auth=auth)
             if downloaded is False:
@@ -200,7 +200,7 @@ class iCal(SmartPlugin):
             self.logger.debug('Online ics {} successfully downloaded to {}'.format(ics, filename))
             ics = os.path.normpath(filename)
         try:
-            ics = '{}{}'.format(dir, ics) if dir not in ics else ics
+            ics = '{}{}'.format(directory, ics) if directory not in ics else ics
             with open(ics, 'r') as f:
                 ical = f.read()
                 self.logger.debug('Read offline ical file {}'.format(ics))
