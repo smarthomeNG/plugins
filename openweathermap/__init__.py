@@ -184,21 +184,24 @@ class OpenWeatherMap(SmartPlugin):
                 break
             if dt >= int(date_requested.timestamp()):
                 val = self.get_val_from_dict("/".join(sp), entry)
-                if isinstance(val, float) or isinstance(val,int):
+                if isinstance(val, float) or isinstance(val, int):
                     wrk.append(val)
                 elif val is None:
-                    self.logger.error("_update: found None value while calculating daily forecast for matchstring '{}'.".format(s))
+                    self.logger.error(
+                        "_update: found None value while calculating daily forecast for matchstring '{}'.".format(s))
                     return 0
                 else:
-                    self.logger.error("_update: found unknown value while calculating daily forecast for matchstring '{}'; daily forecast only supported for int and float.".format(s))
+                    self.logger.error(
+                        "_update: found unknown value while calculating daily forecast for matchstring '{}'; daily forecast only supported for int and float.".format(
+                            s))
                     return 0
 
         result = 0
-        if "max" in sp[len(sp)-1]:
+        if "max" in sp[len(sp) - 1]:
             result = max(wrk)
-        elif "min" in sp[len(sp)-1]:
+        elif "min" in sp[len(sp) - 1]:
             result = min(wrk)
-        else: #average
+        else:  # average
             result = round(functools.reduce(lambda x, y: x + y, wrk) / len(wrk), 2)
         return result
 
