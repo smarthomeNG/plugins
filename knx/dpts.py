@@ -304,6 +304,29 @@ def en24(value):
 def de24(payload):
     return payload.rstrip(b'\x00').decode('iso-8859-1')
 
+"""
+    Datapoint Types V32N8Z8
+    229.001 DPT_MeteringValue
+    Item Value then is a list of V32, N8 and Z8
+"""
+
+def en229(value):
+    if len(value) != 3:
+        return None
+    retval = [0]
+    retval.extend(struct.pack('>lBB',value[0],[value[1],value[2]))
+    return retval
+
+
+def de229(payload):
+    if len(payload) != 6:
+        return None
+    return list(struct.unpack('>lBB',payload))
+
+"""
+    Datapoint Types U8U8U8
+    232.600 DPT_Colour_RGB
+"""
 
 def en232(value):
     return [0, int(value[0]) & 0xff, int(value[1]) & 0xff, int(value[2]) & 0xff]
@@ -363,6 +386,7 @@ decode = {
     '18.001': de18001,    
     '20': de20,
     '24': de24,
+    '229': de229,
     '232': de232,
     'pa': depa,
     'ga': dega
@@ -397,6 +421,7 @@ encode = {
     '18.001': en18001,    
     '20': en20,
     '24': en24,
+    '229': en229,
     '232': en232,
     'ga': enga
 }
