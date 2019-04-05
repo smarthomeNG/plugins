@@ -95,6 +95,7 @@ The following datapoint types are supported:
 |  18.001     |  8 bit        |  num     |  Scene: 1 - 64 (call) and 65-128 (save)
 |  20         |  8 bit        |  num     |  HVAC: 0 - 255
 |  24         |  var          |  str     |  unlimited string (8859_1)
+|  229        |  6 byte       |  list    |  integer (4 Bytes), 0-255, 0-255
 |  232        |  3 byte       |  list    |  RGB: [0, 0, 0] - [255, 255, 255]
 ```
 

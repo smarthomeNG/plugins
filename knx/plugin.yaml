@@ -130,6 +130,7 @@ item_attributes:
          - '18.001'
          - '20'
          - '24'
+         - '229'
          - '232'
         valid_list_description:
             de:
@@ -161,6 +162,7 @@ item_attributes:
              - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
              - 'HVAC: 0 - 255 (8 Bit) -> num'
              - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
+             - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
             en:
              - 'Switch (1 Bit) -> bool'
@@ -191,6 +193,7 @@ item_attributes:
              - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
              - 'HVAC: 0 - 255 (8 Bit) -> num'
              - 'unlimited string [8859_1] (var) -> str'
+             - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
         description:
             de: 'Dieses Attribut setzt den Typ des KNX-Datenpunktes, der für die Konvertierung der KNX-Nachrichten in das interne SmartHomeNG-Format verwendet wird. Die Angabe ist zwingend erforderlich ist. Wenn Sie keinen Wert angeben, wird das Element vom Plugin ignoriert. Der DPT muss dem Typ des Artikels entsprechen!'
@@ -324,6 +327,7 @@ plugin_functions:
                  - '18.001'
                  - '20'
                  - '24'
+                 - '229'
                  - '232'
                 valid_list_description:
                     de:
@@ -355,6 +359,7 @@ plugin_functions:
                      - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
                      - 'HVAC: 0 - 255 (8 Bit) -> num'
                      - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
+                     - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
                     en:
                      - 'Switch (1 Bit) -> bool'
@@ -385,6 +390,7 @@ plugin_functions:
                      - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
                      - 'HVAC: 0 - 255 (8 Bit) -> num'
                      - 'unlimited string [8859_1] (var) -> str'
+                     - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
                 description:
                     de: "KNX Datenpunkttyp"
