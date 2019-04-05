@@ -314,7 +314,7 @@ def en229(value):
     if len(value) != 3:
         return None
     retval = [0]
-    retval.extend(struct.pack('>lBB',value[0],[value[1],value[2]))
+    retval.extend(struct.pack('>lBB',value[0],value[1],value[2]))
     return retval
 
 
