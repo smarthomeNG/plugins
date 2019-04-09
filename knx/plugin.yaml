@@ -132,6 +132,7 @@ item_attributes:
          - '24'
          - '229'
          - '232'
+         - '275.100'
         valid_list_description:
             de:
              - 'Schalten (1 Bit) -> bool'
@@ -164,6 +165,7 @@ item_attributes:
              - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
              - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
             en:
              - 'Switch (1 Bit) -> bool'
              - 'forced control (2 Bit) -> list'
@@ -195,6 +197,7 @@ item_attributes:
              - 'unlimited string [8859_1] (var) -> str'
              - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
         description:
             de: 'Dieses Attribut setzt den Typ des KNX-Datenpunktes, der für die Konvertierung der KNX-Nachrichten in das interne SmartHomeNG-Format verwendet wird. Die Angabe ist zwingend erforderlich ist. Wenn Sie keinen Wert angeben, wird das Element vom Plugin ignoriert. Der DPT muss dem Typ des Artikels entsprechen!'
             en: "This attribute set the KNX datapoint type used for conversion of the KNX messages to internal SmartHomeNG format. It is mandatory. If you don't provide one the item will be ignored by the plugin. The DPT has to match the type of the item! BE CAREFUL to put the value in quotes to ensure they are interpreted as strings and not as numbers!"
@@ -329,6 +332,7 @@ plugin_functions:
                  - '24'
                  - '229'
                  - '232'
+                 - '275.100'
                 valid_list_description:
                     de:
                      - 'Schalten (1 Bit) -> bool'
@@ -361,6 +365,7 @@ plugin_functions:
                      - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
                      - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
                     en:
                      - 'Switch (1 Bit) -> bool'
                      - 'forced control (2 Bit) -> list'
@@ -392,6 +397,7 @@ plugin_functions:
                      - 'unlimited string [8859_1] (var) -> str'
                      - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
                 description:
                     de: "KNX Datenpunkttyp"
                     en: "KNX datapoint type"
