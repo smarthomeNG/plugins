@@ -589,6 +589,7 @@ class AVM(SmartPlugin):
         """
         if self._call_monitor:
             self._monitoring_service.disconnect()
+        self.scheduler_remove('update')
         self.alive = False
 
     def _assemble_soap_data(self, action, service, argument=''):
