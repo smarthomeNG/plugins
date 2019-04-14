@@ -4,13 +4,13 @@ plugin:
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Ermöglicht die Verwendung von Kalendern (ICS)'
-        en: ''
+        en: 'Provide access to calendars based on ics files'
     maintainer: cmalo (mknx)
     tester: ohinckel
     state: ready
-#    keywords: iot xyz
+    keywords: ical ics calendar
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1352089-support-thread-zum-ical-plugin
 
     version: 1.3.0                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
@@ -37,8 +37,10 @@ item_attributes:
 # Definition of item attributes defined by this plugin
     ical_calendar:
         type: str
-        descripton:
-            de: ""
+        description:
+            de: "Erstellt eine Verbindung zwischen einem Item und einem Kalender. Es kann eine Kalender URI oder ein Alias \
+                angegeben werden (urlaub, privat). Der konfigurierte Kalender wird automatisch hinzugefügt zum internen \
+                Zwischenspeicher und automatisch aktualisiert."
             en: "Configures a connection between the item and the given calendar. You can specify the calendar URI or \
                 the calendar alias (holiday, private). The configured calendar will automatically be added to the \
                 internal calendar cache and will automatically be updated.
@@ -49,9 +51,11 @@ item_attributes:
                 The update interval for the item updates is currently at one minutes. Which means each minutes it \
                 will be checked if an event is take place and the items will be updated."
 
-plugin_functions:
+plugin_functions: NONE
 # Definition of plugin functions defined by this plugin
 
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
+
+item_structs: NONE
 
