@@ -25,8 +25,8 @@ parameters:
         type: str
         default: ''
         description:
-            de: '(optional) Nutzername für den Login. Kann für manche Features benötigt werden!'
-            en: '(optional) Login information (user). Can be needed to use some features of the AVM device.'
+            de: '(optional) Nutzername für den Login. Kann für manche Features benötigt werden! (Speziell für Fritz!OS 7 ist die Konfiguration der Fritz!Box auf 'Anmeldung mit FRITZ!Box-Benutzernamen und Kennwort' notwendig"
+            en: '(optional) Login information (user). Can be needed to use some features of the AVM device. (Specially for Firtz!OS 7 the Fritz!Box should be configured for login with username and password'
     password:
         type: str
         default: ''
