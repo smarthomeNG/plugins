@@ -17,8 +17,8 @@ plugin:
     keywords: calendar ical ics
     state: testing
 
-    version: 1.3.1                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.5.1                 # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: iCal                # class containing the plugin
@@ -32,6 +32,20 @@ parameters:
             de: "Definiert in Sekunden das Intervall, in dem der Kalender aktualisert werden soll."
             en: "Specifies the interval in seconds to update the calendars."
 
+    directory:
+        type: str
+        default: 'ics'
+        description:
+            de: "Definiert den Unterordner im var-Pfad, in dem die Kalenderdateien gespeichert werden sollen."
+            en: "Defines the subfolder in the var path where the calendar files should be saved to."
+    
+    timeout:
+        type: int
+        default: 10
+        description:
+            de: "Wartezeit in Sekunden auf eine Antwort vom Server beim Download eines Onlinekalenders."
+            en: "Timeout in seconds to wait for a response when downloading an online calendar."
+            
     calendars:
         type: list(str)
         description:

@@ -34,7 +34,7 @@ from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.5.1"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -45,24 +45,31 @@ class iCal(SmartPlugin):
             self.logger = logging.getLogger(__name__)
         try:
             self.shtime = Shtime.get_instance()
-            self.dl = Http('')
+            try:
+                self.dl = Http(timeout=self.get_parameter_value('timeout'))
+            except:
+                self.dl = Http('')
             self._items = []
             self._icals = {}
             self._ical_aliases = {}
             self.sh = smarthome
             cycle = self.get_parameter_value('cycle')
             calendars = self.get_parameter_value('calendars')
+            config_dir = self.get_parameter_value('directory')
         except Exception as err:
             self.logger.error('Problems initializing: {}'.format(err))
             self._init_complete = False
             return
         try:
-            directory = '{}/var/ical'.format(self.sh.get_basedir())
-            os.makedirs(directory)
-            self.logger.debug('Created ical subfolder in var')
+            self._directory = self.get_vardir(config_dir)
+        except Exception:
+            self._directory = '{}/var/{}'.format(self.sh.get_basedir(), config_dir)
+        try:         
+            os.makedirs(self._directory)
+            self.logger.debug('Created {} subfolder in var'.format(config_dir))
         except OSError as e:
             if e.errno != errno.EEXIST:
-                self.logger.error('Problem creating ical folder in {}var'.format(self.sh.get_basedir()))
+                self.logger.error('Problem creating {} folder in {}/var'.format(config_dir, self.sh.get_basedir()))
                 self._init_complete = False
                 return
         
@@ -185,13 +192,12 @@ class iCal(SmartPlugin):
         return revents
 
     def _read_events(self, ics, username=None, password=None, prio=1, verify=True):
-        directory = '{}/var/ical/'.format(self.sh.get_basedir())
         if ics.startswith('http'):           
             name = ics[ics.rfind("/")+1:]
-            name = '{}_downloaded.{}'.format(name.split(".")[0], name.split(".")[1])
+            name = '{}.{}'.format(name.split(".")[0], name.split(".")[1])
             for entry in self._ical_aliases:
-                name = '{}_downloaded.ics'.format(entry) if ics == self._ical_aliases[entry] else name
-            filename = '{}{}'.format(directory, name)
+                name = '{}.ics'.format(entry) if ics == self._ical_aliases[entry] else name
+            filename = '{}/{}'.format(self._directory, name)
             auth = 'HTTPBasicAuth' if username else None
             downloaded = self.dl.download(url=ics, local=filename, params={username:username, password:password}, verify=verify, auth=auth)
             if downloaded is False:
@@ -200,7 +206,7 @@ class iCal(SmartPlugin):
             self.logger.debug('Online ics {} successfully downloaded to {}'.format(ics, filename))
             ics = os.path.normpath(filename)
         try:
-            ics = '{}{}'.format(directory, ics) if directory not in ics else ics
+            ics = '{}/{}'.format(self._directory, ics) if self._directory not in ics else ics
             with open(ics, 'r') as f:
                 ical = f.read()
                 self.logger.debug('Read offline ical file {}'.format(ics))
