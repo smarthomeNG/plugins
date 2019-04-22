@@ -7,7 +7,7 @@ plugin:
         en: 'Integration of a SQLite database - use this version of the plugin for smartVISU v2.7'
     maintainer: '?'
     tester: '?'                    # Who tests this plugin?
-    state: ready
+    state: deprecated
     keywords: database
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
