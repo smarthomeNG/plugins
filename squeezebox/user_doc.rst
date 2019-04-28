@@ -2,7 +2,7 @@
 .. index:: squeezebox
 
 squeezebox
-########
+##########
 
 Konfiguration
 =============
@@ -24,11 +24,13 @@ Konfiguration
 Kommandos
 =========
 
-Die Kommandos sind der technischen Logitech Dokumentation zum "Command Line Interface" zu entnehmen. Folgende Platzhalter können genutzt werden:
+Die Kommandos sind der technischen Logitech Dokumentation zum **Command Line Interface** zu entnehmen. Folgende Platzhalter können genutzt werden:
 - <playerid>: Wird durch die im Parent-Item gesetzte Player-ID ersetzt
 - {}: Der Wert des Items wird in diesen Platzhalter geschrieben (sollte nicht verwendet werden, wenn ein fixer oder kein Wert nötig ist).
 
-Sämtliche Kommandos sollten manuell über die Telnet-Schnittstelle auf Port 9090 getestet werden. Für Abfragen muss hierbei ein "?" am Ende des Befehls stehen, z.B. "<playerid> name ?. Dieses Fragezeichen kann bei squeezebox_init Befehl weggelassen werden, da es vom Plugin hinzugefügt wird.
+Sämtliche Kommandos sollten manuell über die Telnet-Schnittstelle auf Port 9090 getestet werden.
+Für Abfragen muss hierbei ein "?" am Ende des Befehls stehen, z.B. "<playerid> name ?.
+Dieses Fragezeichen kann bei squeezebox_init Befehl weggelassen werden, da es vom Plugin hinzugefügt wird.
 
 
 Struct Vorlagen

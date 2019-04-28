@@ -13,8 +13,8 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
 Konfiguration der Fritz!Box
 ===========================
 
-Für die Nutzung der Informationen über Telefoneireignisse muss der CallMonitor aktiviert werden. Dazu muss auf
-einem direkt an die Fritz!Box angeschlossenen Telefon (Analog, ISDN S0 oder DECT) *96#5# eingegeben werden.
+Für die Nutzung der Informationen über Telefonereignisse muss der CallMonitor aktiviert werden. Dazu muss auf
+einem direkt an die Fritz!Box angeschlossenen Telefon (Analog, ISDN S0 oder DECT) \*96#5# eingegeben werden.
 
 Bei neueren Firmware Versionen (ab Fritz!OS v7) Muss die Anmeldung an der Box von "nur mit Kennwort" auf "Benutzername
 und Kennwort umgestellt werden" und es sollte ein eigener User für das AVM Plugin auf der Fritz!Box eingerichtet werden.
