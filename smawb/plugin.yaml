@@ -1,7 +1,7 @@
 # Metadata for the classic-plugin
 plugin:
     # Global plugin attributes
-    type: gateway                    # plugin type (gateway, interface, protocol, system, web)
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Anbindung einer oder mehrerer SMA-Sunny-WebBox(en)'
         en: ''
