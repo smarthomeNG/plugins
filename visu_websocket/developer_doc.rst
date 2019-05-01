@@ -80,18 +80,18 @@ above could look like this:
 
 .. code-block:: JSON
 
-  {
-    "items": [
-      ["wohnung.hauswirtschaft.deckenlicht", False],
-      ["wohnung.hauswirtschaft.waschmaschine", True],
-      ["wohnung.hauswirtschaft.waschmaschine.status", 1],
-      ["wohnung.hauswirtschaft.waschmaschine.ma", 37],
-      ["wohnung.hauswirtschaft.trockner", True],
-      ["wohnung.hauswirtschaft.trockner.status", 1],
-      ["wohnung.hauswirtschaft.trockner.ma", 0],
-    ],
-    "cmd": "item"
-  }
+    {
+        "items": [
+          ["wohnung.hauswirtschaft.deckenlicht", False],
+          ["wohnung.hauswirtschaft.waschmaschine", True],
+          ["wohnung.hauswirtschaft.waschmaschine.status", 1],
+          ["wohnung.hauswirtschaft.waschmaschine.ma", 37],
+          ["wohnung.hauswirtschaft.trockner", True],
+          ["wohnung.hauswirtschaft.trockner.status", 1],
+          ["wohnung.hauswirtschaft.trockner.ma", 0]
+        ]
+        "cmd": "item"
+    }
 
 Additionally, the plugin initiates an update routine, which sends
 updates for item values, if the item in smarthome.py has changed. For
@@ -184,21 +184,22 @@ The answer to the request above could look like this:
 .. .. code-block:: JS
 
   <code>
+
 .. code-block:: JSON
 
   {
-  "series": [
-    (1460636598495, 1831.97),
-    (1460637648422, 1458.14),
-    (1460639298307, 757.22),
-    (1460641098243, 577.38),
-    ... (102 values in total)
-    (1460802051217, 740.61),
-    (1460803884973, 637.61),
-    (1460805521319, 744.41),
-    (1460807229532, 718.03),
-    (1460808823757, 681.25),
-    (1460809294663, 681.25)
+    "series": [
+        (1460636598495, 1831.97),
+        (1460637648422, 1458.14),
+        (1460639298307, 757.22),
+        (1460641098243, 577.38),
+        ... (102 values in total)
+        (1460802051217, 740.61),
+        (1460803884973, 637.61),
+        (1460805521319, 744.41),
+        (1460807229532, 718.03),
+        (1460808823757, 681.25),
+        (1460809294663, 681.25)
     ],
     "cmd": "series",
     "params": {
@@ -209,7 +210,7 @@ The answer to the request above could look like this:
       "step": 1728000.01,
       "func": "avg",
       "sid": "wohnung.verteilung.zaehler.wirkleistung|avg|48h|now"
-      },
+    },
     "update": "2016-04-16T21:14:50.20.8227+02:00",
     "sid": "wohnung.verteilung.zaehler.wirkleistung|avg|48h|now"
   }
@@ -227,14 +228,14 @@ updates for series values after a defined period of time. For example:
 
 .. code-block:: JSON
 
-{
-  "series": [
-    (1460810141323, 711.25),
-    (1460811024119, 711.25)
-    ],
-  "cmd": "series",
-  "sid": "wohnung.verteilung.zaehler.wirkleistung|avg|48h|now"
-}
+    {
+      "series": [
+        (1460810141323, 711.25),
+        (1460811024119, 711.25)
+        ],
+      "cmd": "series",
+      "sid": "wohnung.verteilung.zaehler.wirkleistung|avg|48h|now"
+    }
 
 log
 ~~~
