@@ -6,21 +6,19 @@ plugin:
         de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle, **seit SmartHomeNG v1.3**'
         en: 'Controlling AV devices via TCP/IP and RS232, **since SmartHomeNG v1.3**'
     description_long:
-        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle.\n
-            Das Plugin unterstützt eine Vielzahl von AV-Geräten und wurde mit folgenden Geräten getestet:\n
-            \n
-            - Pioneer AV Receiver < 2016\n
-            - Denon AV Receiver > 2016\n
-            - Epson Projektor < 2010\n
-            - Oppo UHD Player\n
+        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle.
+            Das Plugin unterstützt eine Vielzahl von AV-Geräten und wurde mit folgenden Geräten getestet:
+            - Pioneer AV Receiver < 2016
+            - Denon AV Receiver > 2016
+            - Epson Projektor < 2010
+            - Oppo UHD Player
             '
-        en: 'Controlling AV devices via TCP/IP and RS232\n
-            The plugin supports a variety of AV devices and was tested with the following models:\n
-            \n
-            - Pioneer AV Receiver < 2016\n
-            - Denon AV Receiver > 2016\n
-            - Epson Projektor < 2010\n
-            - Oppo UHD Player\n
+        en: 'Controlling AV devices via TCP/IP and RS232
+            The plugin supports a variety of AV devices and was tested with the following models:
+            - Pioneer AV Receiver < 2016
+            - Denon AV Receiver > 2016
+            - Epson Projektor < 2010
+            - Oppo UHD Player
             '
     requirements:
         de: 'pyserial Python Modul'
@@ -327,29 +325,28 @@ item_attributes:
             de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei im Ordner models hinterlegt ist, zB power oder volume'
             en: 'This attribute has to be followed by one of the commands declared in the device text file in the models folders like power or volume'
         description_long:
-            de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei im Ordner models hinterlegt ist, zB power oder volume\n
-                Außerdem gibt es zwei spezielle Parameter, die bei Bedarf eingesetzt werden können:\n
-                \n
+            de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei im Ordner models hinterlegt ist, zB power oder volume
+                Außerdem gibt es zwei spezielle Parameter, die bei Bedarf eingesetzt werden können:
                 - **avdevice: statusupdate**: Dieses Item wird genutzt, um eine komplette Statusabfrage durchzuführen.
                 Es werden alle Query-Kommandos an das Gerät geschickt, was vor allem nach dem
-                Einschalten einer geschaltenen Steckdose relevant ist.\n
+                Einschalten einer geschaltenen Steckdose relevant ist.
                 - **avdevice: reload**: Dieses Item wird genutzt, um die Textkonfiguration neu zu laden.
                 Dadurch werden das Kommando-File im models Ordner sowie die Dateien im translations Ordner
-                neu gelesen. So ist ein Ausbessern von Befehlen ohne Plugin-Neustart möglich.\n
+                neu gelesen. So ist ein Ausbessern von Befehlen ohne Plugin-Neustart möglich.
                 '
             en: 'This attribute has to be followed by one of the commands declared in the
-                device text file in the models folders like power or volume\n
-                You can use two special avdevice attribute values if you want:\n
-                \n
+                device text file in the models folders like power or volume
+                You can use two special avdevice attribute values if you want:
+                
                 - **avdevice: statusupdate**: Use this item to trigger a full
                 statusupdate. All query commands regarding the currently powered on
                 zones are sent. This is especially useful if you have a power socket you
-                can switch on or off and want to update all items on connection.\n
+                can switch on or off and want to update all items on connection.
                 - **avdevice: reload**: Use this item to reload your text configurations.
                 This re-reads the config as well as translation files and recreates all
                 functions and commands. This is useful if you find an error in your
                 configuration file or if you want to add new commands while smarthomeNG
-                is running. You don’t need to restart the plugin to reload the config!\n
+                is running. You don’t need to restart the plugin to reload the config!
                 '
 
     avdevice_zone0:
