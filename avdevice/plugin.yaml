@@ -576,6 +576,7 @@ item_structs:
             avdevice_zone0: eco
 
     speaker_selection:
+        name: Lautsprecherwahl A/B
 
         mainspeakers:
             remark: select main speakers, mainly for Denon devices
@@ -606,6 +607,8 @@ item_structs:
             avdevice_zone1_depend: power
 
     individual_volume:
+        name: Lautstärkeeinstellung pro Kanal (wird nur von manchen Verstärkern unterstützt)
+
         volumefl:
             type: num
             visu_acl: rw
@@ -712,6 +715,8 @@ item_structs:
             enforce_updates: 'yes'
 
     sound_settings:
+        name: Soundeinstellungen (Bass, Treble, etc.)
+
         set_listeningmode:
             type: foo
             visu_acl: rw
@@ -825,7 +830,7 @@ item_structs:
             avdevice_zone1_depend: power
 
     video_settings:
-        type: foo
+        name: Videoeinstellungen (Auflösung, Processing, etc.)
 
         aspectratio:
             type: str
@@ -866,6 +871,8 @@ item_structs:
                 - aspectratio = nrm, b
 
     zone1:
+        name: Steuern der Zone 1
+
         sleep:
             type: num
             visu_acl: rw
@@ -978,6 +985,8 @@ item_structs:
             avdevice_zone1_depend: power
 
     zone2:
+        name: Steuern der Zone 2
+
         sleep:
             type: num
             visu_acl: rw
@@ -1059,6 +1068,8 @@ item_structs:
             avdevice_zone2_depend: power
 
     zone3:
+        name: Steuern der Zone 3
+
         sleep:
             type: num
             visu_acl: rw
@@ -1140,6 +1151,8 @@ item_structs:
             avdevice_zone3_depend: power
 
     zone4:
+        name: Steuern der Zone 4 (limitierte Steuerfunktionalität)
+
         sleep:
             type: num
             visu_acl: rw
