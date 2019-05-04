@@ -181,14 +181,6 @@ logic_parameters: NONE
 plugin_functions:
     # Definition of function interface of the plugin
 
-    reboot:
-        type: void
-        description:
-            de: "Startet das Gerät neu."
-            en: "Reboots the device."
-        parameters:
-        # This function has no parameters
-
     cancel_call:
         type: void
         description:
@@ -197,23 +189,111 @@ plugin_functions:
         parameters:
         # This function has no parameters
 
-    start_call:
-        type: void
-        description:
-            de: "Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern)."
-            en: "Starts a call for a given phone number (internal or external)."
-        parameters:
-            phone_number:
-                type: str
-                description:
-                    de: "Vollständige Telefonnummer, die angerufen werden soll."
-                    en: "Full phone number to call"
-
     get_call_origin:
         type: str
         description:
             de: "Gib den Namen des Telefons zurück, das aktuell als 'call origin' gesetzt ist."
             en: "Gets the phone name, currently set as 'call origin'."
+        parameters:
+        # This function has no parameters
+
+    get_calllist:
+        type: list(dict(str))
+        description:
+            de: "Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige optional))."
+            en: "Returns an array of dicts with all calllist entries (attributes 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date', 'Duration' (some optional))."
+        parameters:
+            filter_incoming:
+                type: str
+                description:
+                    de: "Filter, um nur die Anrufe zu erhalten, die zu einer bestimmten angerufenen Nummer gehören."
+                    en: "Filter to filter calls to a specific destination phone number."
+
+    get_contact_name_by_phone_number:
+        type: str
+        description:
+            de: "Durchsucht das Telefonbuch mit einer (vollständigen) Telefonnummer nach Kontakten. Falls kein Name gefunden wird, wird die Telefonnummer zurückgeliefert."
+            en: "Searches the phonebook for a contact by a given (complete) phone number. In case no name is found, the phone number is returned."
+        parameters:
+            phone_number:
+                type: str
+                description:
+                    de: "Vollständige Telefonnummer"
+                    en: "Complete phone number"
+
+    get_host_details:
+        type: dict(str)
+        description:
+            de: "Ermittelt die Informationen zu einem Host an einem angegebenen Index."
+            en: "Gets the information of a hosts at a specific index."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Index"
+                    en: "Index"
+
+    get_hosts:
+        type: list(dict(str))
+        description:
+            de: "Ermittelt ein Array mit den Namen aller verbundener Hosts."
+            en: "Gets the name of all connected hosts as an array."
+        parameters:
+            only_active:
+                type: bool
+                description:
+                    de: "True, wenn nur aktuell aktive Hosts zurückgegeben werden sollen."
+                    en: "True, if only active hosts shall be returned."
+
+    get_phone_name:
+        type: str
+        description:
+            de: "Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden."
+            en: "Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Index"
+                    en: "Index"
+
+    get_phone_numbers_by_name:
+        type: dict(dict(str))
+        description:
+            de: "Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehörigen Telefonnummern."
+            en: "Searches the phonebook for a contact by a given name and returns the corresponding phone numbers."
+        parameters:
+            name:
+                type: str
+                description:
+                    de: "Anteiliger oder vollständiger Name des Kontakts."
+                    en: "Partial or full name of the contact."
+
+    is_host_active:
+        type: bool
+        description:
+            de: "Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt werden."
+            en: "Checks if a MAC address is active on the FritzDevice, e.g. the status can be used for simple presence detection."
+        parameters:
+            mac_address:
+                type: mac
+                description:
+                    de: "MAC Adresse"
+                    en: "MAC address"
+
+    reboot:
+        type: void
+        description:
+            de: "Startet das Gerät neu."
+            en: "Reboots the device."
+        parameters:
+        # This function has no parameters
+
+    reconnect:
+        type: void
+        description:
+            de: "Verbindet das Gerät neu mit dem WAN (Wide Area Network)."
+            en: "Reconnects the device to the WAN (Wide Area Network)."
         parameters:
         # This function has no parameters
 
@@ -229,25 +309,17 @@ plugin_functions:
                     de: "Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. Bspw. zwei Sterne gefolgt von '610' für ein internes Gerät."
                     en: "Full phone identifier, could be e.g. two asterix followed by '610' for an internal device."
 
-    get_phone_name:
-        type: str
-        description:
-            de: "Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden."
-            en: "Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin."
-        parameters:
-            index:
-                type: int
-                description:
-                    de: "Index"
-                    en: "Index"
-
-    reconnect:
+    start_call:
         type: void
         description:
-            de: "Verbindet das Gerät neu mit dem WAN (Wide Area Network)."
-            en: "Reconnects the device to the WAN (Wide Area Network)."
+            de: "Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern)."
+            en: "Starts a call for a given phone number (internal or external)."
         parameters:
-        # This function has no parameters
+            phone_number:
+                type: str
+                description:
+                    de: "Vollständige Telefonnummer, die angerufen werden soll."
+                    en: "Full phone number to call"
 
     wol:
         type: void
@@ -260,75 +332,3 @@ plugin_functions:
                 description:
                     de: "MAC Adresse"
                     en: "MAC address"
-
-    get_hosts:
-        type: list(dict(str))
-        description:
-            de: "Ermittelt ein Array mit den Namen aller verbundener Hosts."
-            en: "Gets the name of all connected hosts as an array."
-        parameters:
-            only_active:
-                type: bool
-                description:
-                    de: "True, wenn nur aktuell aktive Hosts zurückgegeben werden sollen."
-                    en: "True, if only active hosts shall be returned."
-
-    get_host_details:
-        type: dict(str)
-        description:
-            de: "Ermittelt die Informationen zu einem Host an einem angegebenen Index."
-            en: "Gets the information of a hosts at a specific index."
-        parameters:
-            index:
-                type: int
-                description:
-                    de: "Index"
-                    en: "Index"
-
-    is_host_active:
-        type: bool
-        description:
-            de: "Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt werden."
-            en: "Checks if a MAC address is active on the FritzDevice, e.g. the status can be used for simple presence detection."
-        parameters:
-            mac_address:
-                type: mac
-                description:
-                    de: "MAC Adresse"
-                    en: "MAC address"
-
-    get_contact_name_by_phone_number:
-        type: str
-        description:
-            de: "Durchsucht das Telefonbuch mit einer (vollständigen) Telefonnummer nach Kontakten. Falls kein Name gefunden wird, wird die Telefonnummer zurückgeliefert."
-            en: "Searches the phonebook for a contact by a given (complete) phone number. In case no name is found, the phone number is returned."
-        parameters:
-            phone_number:
-                type: str
-                description:
-                    de: "Vollständige Telefonnummer"
-                    en: "Complete phone number"
-
-    get_phone_numbers_by_name:
-        type: dict(dict(str))
-        description:
-            de: "Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehörigen Telefonnummern."
-            en: "Searches the phonebook for a contact by a given name and returns the corresponding phone numbers."
-        parameters:
-            name:
-                type: str
-                description:
-                    de: "Anteiliger oder vollständiger Name des Kontakts."
-                    en: "Partial or full name of the contact."
-
-    get_calllist:
-        type: list(dict(str))
-        description:
-            de: "Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige optional))."
-            en: "Returns an array of dicts with all calllist entries (attributes 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date', 'Duration' (some optional))."
-        parameters:
-            filter_incoming:
-                type: str
-                description:
-                    de: "Filter, um nur die Anrufe zu erhalten, die zu einer bestimmten angerufenen Nummer gehören."
-                    en: "Filter to filter calls to a specific destination phone number."
