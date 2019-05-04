@@ -181,18 +181,6 @@ logic_parameters: NONE
 plugin_functions:
     # Definition of function interface of the plugin
 
-    map_icon:
-        type: str
-        description:
-            de: "Gibt das SmartVisu Icon zum übergebenen DarkSky Icon zurück."
-            en: "Returns the SmartVisu icon to the provided DarkSky icon."
-        parameters:
-            icon:
-                type: str
-                description:
-                    de: "Icon als String."
-                    en: "Icon as string."
-
     reboot:
         type: void
         description:
