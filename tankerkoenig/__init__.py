@@ -41,7 +41,6 @@ class TankerKoenig(SmartPlugin):
         @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
         api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
-        self.logger = logging.getLogger(__name__)
         self._apikey = self.get_parameter_value('apikey')
         self._session = requests.Session()
 
