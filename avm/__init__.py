@@ -45,11 +45,10 @@ class MonitoringService:
     """
 
     def __init__(self, host, port, callback, call_monitor_incoming_filter, plugin_instance):
-        self.logger = logging.getLogger(__name__)
-        self.logger.debug("starting monitoring service")
+        self._plugin_instance = plugin_instance
+        self._plugin_instance.logger.debug("starting monitoring service")
         self._host = host
         self._port = port
-        self._plugin_instance = plugin_instance
         self._callback = callback
         self._trigger_items = []  # items which can be used to trigger sth, e.g. a logic
         self._items = []  # more general items for the call monitor
@@ -70,7 +69,7 @@ class MonitoringService:
         Connects to the call monitor of the AVM device
         """
         if self._listen_active:
-            self.logger.debug("MonitoringService: Connect called while listen active")
+            self._plugin_instance.logger.debug("MonitoringService: Connect called while listen active")
             return
 
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -79,10 +78,10 @@ class MonitoringService:
             self._listen_thread = threading.Thread(target=self._listen,
                                                    name="MonitoringService_{}".format(
                                                        self._plugin_instance.get_fullname())).start()
-            self.logger.debug("MonitoringService: connection established")
+            self._plugin_instance.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
-            self.logger.error("MonitoringService: Cannot connect to " + self._host + " on port: " + str(
+            self._plugin_instance.logger.error("MonitoringService: Cannot connect to " + self._host + " on port: " + str(
                 self._port) + ", CallMonitor activated by #96*5*? - Error: " + str(e))
             return
 
@@ -90,7 +89,7 @@ class MonitoringService:
         """
         Disconnects from the call monitor of the AVM device
         """
-        self.logger.debug("MonitoringService: disconnecting")
+        self._plugin_instance.logger.debug("MonitoringService: disconnecting")
         self._listen_active = False
         self._stop_counter('incoming')
         self._stop_counter('outgoing')
@@ -168,9 +167,9 @@ class MonitoringService:
         while self._listen_active:
             data = self.conn.recv(recv_buffer)
             if data == "":
-                self.logger.error("CallMonitor connection not open anymore.")
+                self._plugin_instance.logger.error("CallMonitor connection not open anymore.")
             else:
-                self.logger.debug("Data Received from CallMonitor: %s" % data.decode("utf-8"))
+                self._plugin_instance.logger.debug("Data Received from CallMonitor: %s" % data.decode("utf-8"))
             buffer += data.decode("utf-8")
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
@@ -185,20 +184,20 @@ class MonitoringService:
                 datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_incoming = threading.Thread(target=self._count_duration_incoming,
                                                                       name="MonitoringService_Duration_Incoming_%s" % self._plugin_instance.get_instance_name()).start()
-            self.logger.debug('Counter incoming - STARTED')
+            self._plugin_instance.logger.debug('Counter incoming - STARTED')
         elif direction == 'outgoing':
             self._call_connect_timestamp = time.mktime(
                 datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_outgoing = threading.Thread(target=self._count_duration_outgoing,
                                                                       name="MonitoringService_Duration_Outgoing_%s" % self._plugin_instance.get_instance_name()).start()
-            self.logger.debug('Counter outgoing - STARTED')
+            self._plugin_instance.logger.debug('Counter outgoing - STARTED')
 
     def _stop_counter(self, direction):
         # only stop of thread is active
 
         if self._call_active[direction]:
             self._call_active[direction] = False
-            self.logger.debug('STOPPING ' + direction)
+            self._plugin_instance.logger.debug('STOPPING ' + direction)
             try:
                 if direction == 'incoming':
                     self._duration_counter_thread_incoming.join(1)
@@ -235,7 +234,7 @@ class MonitoringService:
 
         :param line: data line which is parsed
         """
-        self.logger.debug(line)
+        self._plugin_instance.logger.debug(line)
         line = line.split(";")
 
         try:
@@ -252,14 +251,14 @@ class MonitoringService:
             elif line[1] == "DISCONNECT":
                 self._trigger('', '', '', line[2], line[1], '')
         except Exception as e:
-            self.logger.error("MonitoringService: " + type(e) + " while handling Callmonitor response: " + str(e))
+            self._plugin_instance.logger.error("MonitoringService: " + type(e) + " while handling Callmonitor response: " + str(e))
             return
 
     def _trigger(self, call_from, call_to, time, callid, event, branch):
         """
         Triggers the event: sets item values and looks up numbers in the phone book.
         """
-        self.logger.debug(
+        self._plugin_instance.logger.debug(
             "Event: %s, Call From: %s, Call To: %s, Time: %s, CallID: %s" % (event, call_from, call_to, time, callid))
         # in each case set current call event and direction
         for item in self._items:
@@ -277,11 +276,11 @@ class MonitoringService:
             for trigger_item in self._trigger_items:
                 if self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') == 'monitor_trigger':
                     trigger_item(0)
-                    self.logger.debug(self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +
+                    self._plugin_instance.logger.debug(self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +
                                       trigger_item.conf['avm_incoming_allowed'] + " " + trigger_item.conf[
                                           'avm_target_number'])
                     if 'avm_incoming_allowed' not in trigger_item.conf or 'avm_target_number' not in trigger_item.conf:
-                        self.logger.error(
+                        self._plugin_instance.logger.error(
                             "both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes in a trigger item.")
                     elif trigger_item.conf['avm_incoming_allowed'] == call_from and trigger_item.conf[
                         'avm_target_number'] == call_to:
@@ -297,7 +296,7 @@ class MonitoringService:
                 # process items specific to incoming calls
                 for item in self._items_incoming:  # update items for incoming calls
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_incoming']:
-                        self.logger.debug("Setting is_call_incoming: %s" % True)
+                        self._plugin_instance.logger.debug("Setting is_call_incoming: %s" % True)
                         item(True)
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_caller_incoming']:
                         if call_from != '' and call_from is not None:
@@ -310,17 +309,17 @@ class MonitoringService:
                             item("Unbekannt")
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in [
                         'last_call_date_incoming']:
-                        self.logger.debug("Setting last_call_date_incoming: %s" % time)
+                        self._plugin_instance.logger.debug("Setting last_call_date_incoming: %s" % time)
                         item(time)
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
-                        self.logger.debug("Setting call_event_incoming: %s" % event.lower())
+                        self._plugin_instance.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_number_incoming']:
-                        self.logger.debug("Setting last_number_incoming: %s" % call_from)
+                        self._plugin_instance.logger.debug("Setting last_number_incoming: %s" % call_from)
                         item(call_from)
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in [
                         'last_called_number_incoming']:
-                        self.logger.debug("Setting last_called_number_incoming: %s" % call_to)
+                        self._plugin_instance.logger.debug("Setting last_called_number_incoming: %s" % call_to)
                         item(call_to)
 
         # call is outgoing
@@ -368,11 +367,11 @@ class MonitoringService:
                 if not self._duration_item[
                            'call_duration_incoming'] is None:  # start counter thread only if duration item set and call is incoming
                     self._stop_counter('incoming')  # stop potential running counter for parallel (older) incoming call
-                    self.logger.debug("Starting Counter for Call Time")
+                    self._plugin_instance.logger.debug("Starting Counter for Call Time")
                     self._start_counter(time, 'incoming')
                 for item in self._items_incoming:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
-                        self.logger.debug("Setting call_event_incoming: %s" % event.lower())
+                        self._plugin_instance.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
 
         # connection ended
@@ -392,13 +391,13 @@ class MonitoringService:
             elif callid == self._call_incoming_cid:
                 for item in self._items_incoming:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_incoming':
-                        self.logger.debug("Setting call_event_incoming: %s" % event.lower())
+                        self._plugin_instance.logger.debug("Setting call_event_incoming: %s" % event.lower())
                         item(event.lower())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_incoming':
-                        self.logger.debug("Setting is_call_incoming: %s" % False)
+                        self._plugin_instance.logger.debug("Setting is_call_incoming: %s" % False)
                         item(False)
                 if not self._duration_item['call_duration_incoming'] is None:  # stop counter threads
-                    self.logger.debug("Stopping Counter for Call Time")
+                    self._plugin_instance.logger.debug("Stopping Counter for Call Time")
                     self._stop_counter('incoming')
                 self._call_incoming_cid = None
 
@@ -542,7 +541,6 @@ class AVM(SmartPlugin):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
-        self.logger = logging.getLogger(__name__)
         self.logger.info('Init AVM Plugin')
 
         self._session = requests.Session()
@@ -1521,6 +1519,7 @@ class AVM(SmartPlugin):
             response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                           auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                               self._fritz_device.get_password()), verify=self._verify)
+            #self.logger.debug(response.content)
             xml = minidom.parseString(response.content)
         except Exception as e:
             if self._fritz_device.is_available():
@@ -2285,10 +2284,8 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
-        self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
-
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
