@@ -719,7 +719,7 @@ class Init(object):
             self._specialparse = {}
             self.logger.debug("Initializing {}: Starting to read file {}. Functions: {}".format(
                 self._name, self._model, self._functions))
-            filename = '{}/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
+            filename = '{}/models/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
 
             with open(filename, encoding='utf-8') as commands:
                 zones = [0]
@@ -912,7 +912,6 @@ class ProcessVariables(Init):
         for ignore in ignoredisplay:
             newignore.append(re.sub('^0', '', ignore))
         ignoredisplay = newignore
-        self.logger.debug("Initializing {}: Ignore Display: {}".format(self._name, ignoredisplay))
         return ignoreresponse, errorresponse, force_buffer, ignoredisplay
 
     def process_update_exclude(self):

@@ -436,7 +436,7 @@ class AVDevice(SmartPlugin):
                 deps[d.get('Group')].append("{}{}{}".format(d['Item'], d['Compare'], d['Dependvalue']))
             deps = dict( [(k,v) for k,v in deps.items() if len(v)>0])
         except Exception as err:
-            deps = None        
+            deps = None
         return deps
 
     # Finding relevant items for the plugin based on the avdevice keyword
@@ -924,17 +924,22 @@ class AVDevice(SmartPlugin):
                 self.logger.log(VERBOSE1, "Connecting {}: Starting TCP scheduler".format(self._name))
                 try:
                     self.scheduler_add('avdevice-tcp-reconnect', self.connect_tcp, cycle=7)
+                    self.scheduler_change('avdevice-tcp-reconnect', active=True)
+                    self.scheduler_trigger('avdevice-tcp-reconnect')
+                    self._trigger_reconnect = False
                 except Exception as err:
-                    self.logger.error(err)
-                self.scheduler_change('avdevice-tcp-reconnect', active=True)
-                self.scheduler_trigger('avdevice-tcp-reconnect')
-                self._trigger_reconnect = False
+                    self.logger.error("Connecting TCP {}: Cannot add or change scheduler: {}.".format(
+                        self._name, err))
             if self._rs232 is not None and 'Serial' not in self._is_connected:
                 self.logger.log(VERBOSE1, "Connecting {}: Starting RS232 scheduler".format(self._name))
-                self.scheduler_add('avdevice-serial-reconnect', self.connect_serial, cycle=7)
-                self.scheduler_change('avdevice-serial-reconnect', active=True)
-                self.scheduler_trigger('avdevice-serial-reconnect')
-                self._trigger_reconnect = False
+                try:
+                    self.scheduler_add('avdevice-serial-reconnect', self.connect_serial, cycle=7)
+                    self.scheduler_change('avdevice-serial-reconnect', active=True)
+                    self.scheduler_trigger('avdevice-serial-reconnect')
+                    self._trigger_reconnect = False
+                except Exception as err:
+                    self.logger.error("Connecting Serial {}: Cannot add or change scheduler: {}.".format(
+                        self._name, err))
         elif depending is True and trigger == 'parse_dataerror':
             self._resetondisconnect('connect')
 
@@ -981,7 +986,8 @@ class AVDevice(SmartPlugin):
                 self.logger.warning("Connecting TCP {}: Reconnecting. Command list while connecting: {}.".format(
                     self._name, self._send_commands))
             elif cond3 or cond4:
-                self.scheduler_change('avdevice-tcp-reconnect', active=False)
+                if self.scheduler_get('avdevice-tcp-reconnect') is not None:
+                    self.scheduler_change('avdevice-tcp-reconnect', active=False)
                 self._reconnect_counter = 0
                 if cond4:
                     self._addorremove_keepcommands('disconnect', 'all')
@@ -1074,7 +1080,8 @@ class AVDevice(SmartPlugin):
                                 "Connecting Serial {}: Activating reconnect schedulerApi. Command list while connecting: {}.".format(
                                     self._name, self._send_commands))
             elif cond3 or cond4:
-                self.scheduler_change('avdevice-serial-reconnect', active=False)
+                if self.scheduler_get('avdevice-serial-reconnect') is not None:
+                    self.scheduler_change('avdevice-serial-reconnect', active=False)
                 self._reconnect_counter = 0
                 if cond4:
                     self._addorremove_keepcommands('disconnect', 'all')
@@ -3012,26 +3019,30 @@ class AVDevice(SmartPlugin):
     # Stopping function when SmarthomeNG is stopped
     def stop(self):
         self.alive = False
-        try:
-            self.scheduler_change('avdevice-tcp-reconnect', active=False)
-            self.scheduler_remove('avdevice-tcp-reconnect')
-        except Exception:
-            pass
-        try:
-            self.scheduler_change('avdevice-serial-reconnect', active=False)
-            self.scheduler_remove('avdevice-serial-reconnect')
-        except Exception:
-            pass
-        try:
-            self._tcpsocket.shutdown(2)
-            self._tcpsocket.close()
-            self.logger.debug("Stopping {}: closed".format(self._name))
-        except Exception:
-            self.logger.log(VERBOSE1, "Stopping {}: No TCP socket to close.".format(self._name))
-        try:
-            self._serialwrapper.close()
-        except Exception:
-            self.logger.log(VERBOSE1, "Stopping {}: No Serial socket to close.".format(self._name))
+        if self.scheduler_get('avdevice-tcp-reconnect') is not None:
+            try:
+                self.scheduler_change('avdevice-tcp-reconnect', active=False)
+                self.scheduler_remove('avdevice-tcp-reconnect')
+            except Exception:
+                pass
+        if self.scheduler_get('avdevice-serial-reconnect') is not None:
+            try:
+                self.scheduler_change('avdevice-serial-reconnect', active=False)
+                self.scheduler_remove('avdevice-serial-reconnect')
+            except Exception:
+                pass
+        if self._tcp:
+            try:
+                self._tcpsocket.shutdown(2)
+                self._tcpsocket.close()
+                self.logger.debug("Stopping {}: closed".format(self._name))
+            except Exception:
+                self.logger.log(VERBOSE1, "Stopping {}: No TCP socket to close.".format(self._name))
+        if self._rs232:
+            try:
+                self._serialwrapper.close()
+            except Exception:
+                self.logger.log(VERBOSE1, "Stopping {}: No Serial socket to close.".format(self._name))
 
     def init_webinterface(self):
         """"
