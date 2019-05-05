@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle, **seit SmartHomeNG v1.3**'
-        en: 'Controlling AV devices via TCP/IP and RS232, **since SmartHomeNG v1.3**'
+        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle'
+        en: 'Controlling AV devices via TCP/IP and RS232'
     description_long:
         de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle.\n
             Das Plugin unterstützt eine Vielzahl von AV-Geräten und wurde mit folgenden Geräten getestet:\n
