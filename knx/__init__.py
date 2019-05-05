@@ -6,7 +6,7 @@
 #  Copyright 2017- Serge Wagener                     serge@wagener.family
 #  Copyright 2017- Bernd Meiners                    Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.py.  
+#  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
 #          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
@@ -32,6 +32,7 @@ import time
 from datetime import timedelta
 
 import lib.connection
+from lib.utils import Utils
 from lib.item import Items
 from lib.model.smartplugin import *
 from lib.shtime import Shtime
@@ -41,9 +42,9 @@ from . import dpts
 # types from knxd\src\include\eibtypes.h
 KNXD_OPEN_GROUPCON  = 38     # 0x26
 KNXD_GROUP_PACKET   = 39     # 0x27 ‭
-KNXD_CACHE_ENABLE   = 112    # 0x70 
+KNXD_CACHE_ENABLE   = 112    # 0x70
 KNXD_CACHE_DISABLE  = 113    # 0x71
-KNXD_CACHE_READ     = 116    # 0x74 
+KNXD_CACHE_READ     = 116    # 0x74
 
 KNXD_CACHEREAD_DELAY  = 0.35
 KNXD_CACHEREAD_DELAY  = 0.0
@@ -92,7 +93,7 @@ class KNX(lib.connection.Client,SmartPlugin):
         lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self.logger.debug("init knx")
         self.shtime = Shtime.get_instance()
-        
+
         busmonitor = self.get_parameter_value('busmonitor')
 
         self.gal = {}                   # group addresses to listen to {DPT: dpt, ITEMS: [item 1, item 2, ..., item n], LOGICS: [ logic 1, logic 2, ..., logic n]}
@@ -105,7 +106,7 @@ class KNX(lib.connection.Client,SmartPlugin):
         send_time = self.get_parameter_value('send_time')
         self._bm_separatefile = False
         self._bm_format= "BM': {1} set {2} to {3}"
-        
+
         # following needed for statistics
         self.enable_stats = self.get_parameter_value('enable_stats')
         self.stats_ga = {}              # statistics for used group addresses on the BUS
@@ -132,7 +133,7 @@ class KNX(lib.connection.Client,SmartPlugin):
             self._sh.scheduler.add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(send_time))
 
         self.readonly = self.get_parameter_value('readonly')
-        if self.readonly: 
+        if self.readonly:
             self.logger.warning("!!! KNX Plugin in READONLY mode !!! ")
 
         self.init_webinterface()
@@ -275,7 +276,7 @@ class KNX(lib.connection.Client,SmartPlugin):
     def parse_telegram(self, data):
         """
         inspects a received eibd/knxd compatible telegram
-        
+
         :param data: expected is a bytearray with
             2 byte type   --> see eibtypes.h
             2 byte source as physical address
@@ -391,7 +392,7 @@ class KNX(lib.connection.Client,SmartPlugin):
     def run(self):
         """
         Run method for the plugin
-        """        
+        """
         self.logger.debug("run method called")
         self.alive = True
 
@@ -459,6 +460,9 @@ class KNX(lib.connection.Client,SmartPlugin):
         if self.has_iattr(item.conf, KNX_CACHE):
             ga = self.get_iattr_value(item.conf, KNX_CACHE)
             self.logger.debug("{} listen on and init with cache {}".format(item, ga))
+            if Utils.get_type(ga) == 'list':
+                self.logger.warning("{} Problem while reading KNX cache: Multiple GA specified in item definition, using first GA ({}) for reading cache".format(item, ga))
+                ga = ga[0]
             if not ga in self.gal:
                 self.gal[ga] = {DPT: dpt, ITEMS: [item], LOGICS: []}
             else:
@@ -556,11 +560,11 @@ class KNX(lib.connection.Client,SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         Item has been updated
-        
+
         This method is called, if the value of an item has been updated by SmartHomeNG.
-        It should write the changed value out to the device (hardware/interface) that 
+        It should write the changed value out to the device (hardware/interface) that
         is managed by this plugin.
-        
+
         :param item: item to be updated towards the plugin
         :param caller: if given it represents the callers name
         :param source: if given it represents the source
@@ -589,7 +593,7 @@ class KNX(lib.connection.Client,SmartPlugin):
         if self.mod_http == None:
             self.logger.error("Not initializing the web interface")
             return False
-        
+
         import sys
         if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
@@ -606,14 +610,14 @@ class KNX(lib.connection.Client,SmartPlugin):
                 'tools.staticdir.dir': 'static'
             }
         }
-        
+
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self), 
-                                     self.get_shortname(), 
-                                     config, 
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
                                      self.get_classname(), self.get_instance_name(),
                                      description='')
-                                   
+
         return True
 
 
@@ -763,7 +767,7 @@ class WebInterface(SmartPluginWebIf):
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str
@@ -809,14 +813,14 @@ class WebInterface(SmartPluginWebIf):
     def index(self, reload=None):
         """
         Build index.html for cherrypy
-        
+
         Render the template and return the html file to be delivered to the browser
-            
-        :return: contents of the template after beeing rendered 
+
+        :return: contents of the template after beeing rendered
         """
         plgitems = []
         for item in self.items.return_items():
-            if (self.plugin.has_iattr(item.conf, KNX_DPT) or self.plugin.has_iattr(item.conf, KNX_STATUS) or self.plugin.has_iattr(item.conf, KNX_SEND) or 
+            if (self.plugin.has_iattr(item.conf, KNX_DPT) or self.plugin.has_iattr(item.conf, KNX_STATUS) or self.plugin.has_iattr(item.conf, KNX_SEND) or
                 self.plugin.has_iattr(item.conf, KNX_REPLY) or self.plugin.has_iattr(item.conf, KNX_CACHE) or self.plugin.has_iattr(item.conf, KNX_INIT) or
                 self.plugin.has_iattr(item.conf, KNX_LISTEN) or self.plugin.has_iattr(item.conf, KNX_POLL)):
                 plgitems.append(item)
