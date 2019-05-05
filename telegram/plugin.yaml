@@ -70,6 +70,13 @@ parameters:
             de: 'Mitteilung die der Telegram Benutzer erhält, weil der chat id keine Schreibrechte auf Items hat'
             en: 'Message the telegram user get when chat id has no write access to items'
 
+    pretty_thread_names:
+        type: bool
+        default: true
+        description:
+            de: 'Telegram Threads zur leichteren Unterscheidung in der Thread Liste umbenennen'
+            en: 'Rename Telegram threads for easier distinction in thread list'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     telegram_message:

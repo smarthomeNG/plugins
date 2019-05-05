@@ -99,6 +99,7 @@ class Telegram(SmartPlugin):
         self._no_access_msg = self.get_parameter_value('no_access_msg')
         self._no_write_access_msg = self.get_parameter_value('no_write_access_msg')
         self._long_polling_timeout = self.get_parameter_value('long_polling_timeout')
+        self._pretty_thread_names =  self.get_parameter_value('pretty_thread_names')
 
 
         # the Updater class continuously fetches new updates from telegram and passes them on to the Dispatcher class.
@@ -142,6 +143,22 @@ class Telegram(SmartPlugin):
         self.alive = True
         self.logics = Logics.get_instance() # Returns the instance of the Logics class, to be used to access the logics-api
         q = self._updater.start_polling(timeout=self._long_polling_timeout)   # (poll_interval=0.0, timeout=10, network_delay=None, clean=False, bootstrap_retries=0, read_latency=2.0, allowed_updates=None)
+        if self._pretty_thread_names:
+            self.logger.debug("Changing Telegrams thread names to pretty thread names")
+            try:
+                for t in self._updater._Updater__threads:
+                  if 'dispatcher' in t.name: 
+                    t.name = 'Telegram Dispatcher'
+                    
+                  if 'updater' in t.name: 
+                    t.name = 'Telegram Updater'
+                    
+                for t in self._updater.dispatcher._Dispatcher__async_threads:
+                  *_, num = t.name.split('_')
+                  t.name = 'Telegram Worker {}'.format(num) if num.isnumeric() else num
+
+            except:
+                self.logger.warning("Could not assign pretty names to Telegrams threads, maybe object model of python-telegram-bot module has changed? Please inform the author of plugin!")
         self.logger.debug("started polling the updater, Queue is {}".format(q))
         self.msg_broadcast(self._welcome_msg)
         self.logger.debug("sent welcome message {}")
