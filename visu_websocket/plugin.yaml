@@ -107,7 +107,7 @@ logic_parameters:
             - yes
             - no
         valid_list_description:
-            de: ['Logik kann durch smartVISU getriggert werden', 'Logik kann durch smartVISU getriggert werden', 'Logik kann durch smartVISU getriggert werden', 'Logik kann nicht durch smartVISU getriggert werden']]
+            de: ['Logik kann durch smartVISU getriggert werden', 'Logik kann durch smartVISU getriggert werden', 'Logik kann durch smartVISU getriggert werden', 'Logik kann nicht durch smartVISU getriggert werden']
             en: ['Logic can be triggered by smartVISU', 'Logic can be triggered by smartVISU', 'Logic can be triggered by smartVISU', 'Logic cannot be triggered by smartVISU']
         description:
             de: 'Mit diesem Attribut kann für jede Logik festgelegt werden, ob die Logik durch die Visu getriggert werden kann.'
