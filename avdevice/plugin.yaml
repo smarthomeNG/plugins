@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle, **seit SmartHomeNG v1.3**'
-        en: 'Controlling AV devices via TCP/IP and RS232, **since SmartHomeNG v1.3**'
+        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle'
+        en: 'Controlling AV devices via TCP/IP and RS232'
     description_long:
         de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle.
             Das Plugin unterstützt eine Vielzahl von AV-Geräten und wurde mit folgenden Geräten getestet:
@@ -31,8 +31,8 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc
 
-    version: 1.5.0                # Plugin version
-    sh_minversion: 1.5            # minimum shNG version to use this plugin
+    version: 1.6.0                # Plugin version
+    sh_minversion: 1.6            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
     restartable: unknown
@@ -373,7 +373,7 @@ item_attributes:
             de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei für Zone 3 hinterlegt ist, zB power oder volume'
             en: 'This attribute has to be followed by one of the commands declared in the device text file for zone 3 like power or volume'
 
-    avdevice_zone4:
+    avdevice_zone:
         type: str
         description:
             de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei für Zone 4 hinterlegt ist, zB power oder volume'
@@ -464,56 +464,56 @@ item_structs:
         cursorup:
             type: bool
             visu_acl: rw
-            avdevice: up
+            avdevice@instance: up
             enforce_updates: 'yes'
 
         cursordown:
             type: bool
             visu_acl: rw
-            avdevice: down
+            avdevice@instance: down
             enforce_updates: 'yes'
 
         cursorleft:
             type: bool
             visu_acl: rw
-            avdevice: left
+            avdevice@instance: left
             enforce_updates: 'yes'
 
         cursorright:
             type: bool
             visu_acl: rw
-            avdevice: right
+            avdevice@instance: right
             enforce_updates: 'yes'
 
         cursorenter:
             type: bool
             visu_acl: rw
-            avdevice: enter
+            avdevice@instance: enter
             enforce_updates: 'yes'
 
         firmware:
             type: foo
             visu_acl: rw
-            avdevice: firmware
-            avdevice_zone1_depend: power
+            avdevice@instance: firmware
+            avdevice_zone1_depend@instance: power
 
         info:
             type: bool
             visu_acl: rw
-            avdevice: info
-            avdevice_zone1_depend: power
+            avdevice@instance: info
+            avdevice_zone1_depend@instance: power
 
         menu:
             type: bool
             visu_acl: rw
-            avdevice: menu
-            avdevice_zone1_depend: power
+            avdevice@instance: menu
+            avdevice_zone1_depend@instance: power
 
         powerall:
             type: bool
             visu_acl: rw
-            avdevice_zone0: power
-            avdevice_zone1_depend: init
+            avdevice_zone0@instance: power
+            avdevice_zone1_depend@instance: init
 
         reload:
             remark: Reload your config text file
@@ -521,27 +521,27 @@ item_structs:
             type: bool
             cache: 'false'
             enforce_updates: True
-            avdevice: reload
+            avdevice@instance: reload
 
         update:
             remark: Send all queries
             type: bool
             visu_acl: rw
-            avdevice_zone0: statusupdate
+            avdevice_zone0@instance: statusupdate
             enforce_updates: True
 
         display:
             type: str
             visu_acl: ro
-            avdevice_zone0: display
-            avdevice_zone1_depend: power
-            avdevice_zone2_depend: power
+            avdevice_zone0@instance: display
+            avdevice_zone1_depend@instance: power
+            avdevice_zone2_depend@instance: power
 
         title:
             type: str
             visu_acl: ro
-            avdevice_zone0: title
-            avdevice_zone1_depend:
+            avdevice_zone0@instance: title
+            avdevice_zone1_depend@instance:
               - power, a
               - source = 'net', b
               - source = 'iradio', b
@@ -550,8 +550,8 @@ item_structs:
         station:
             type: str
             visu_acl: ro
-            avdevice_zone0: station
-            avdevice_zone1_depend:
+            avdevice_zone0@instance: station
+            avdevice_zone1_depend@instance:
               - power, a
               - source = 'net', b
               - source = 'iradio', b
@@ -560,8 +560,8 @@ item_structs:
         genre:
             type: str
             visu_acl: ro
-            avdevice_zone0: genre
-            avdevice_zone1_depend:
+            avdevice_zone0@instance: genre
+            avdevice_zone1_depend@instance:
               - power, a
               - source = 'net', b
               - source = 'iradio', b
@@ -570,7 +570,7 @@ item_structs:
         eco:
             type: str
             visu_acl: rw
-            avdevice_zone0: eco
+            avdevice_zone0@instance: eco
 
     speaker_selection:
         name: Lautsprecherwahl A/B
@@ -579,29 +579,29 @@ item_structs:
             remark: select main speakers, mainly for Denon devices
             type: str
             visu_acl: rw
-            avdevice_zone1: mainspeakers
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: mainspeakers
+            avdevice_zone1_depend@instance: power
 
         speakers:
             remark: Set speaker to A or B, mainly Pioneer devices
             type: num
             visu_acl: rw
-            avdevice_zone1: speakers
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: speakers
+            avdevice_zone1_depend@instance: power
 
         speakera:
             remark: set the speakers attribute to the value your device is expecting
             type: bool
             visu_acl: rw
-            avdevice_zone1_speakers: 1
-            avdevice_zone1_depend: power
+            avdevice_zone1_speakers@instance: 1
+            avdevice_zone1_depend@instance: power
 
         speakerb:
             remark: set the speakers attribute to the value your device is expecting
             type: bool
             visu_acl: rw
-            avdevice_zone1_speakers: 2
-            avdevice_zone1_depend: power
+            avdevice_zone1_speakers@instance: 2
+            avdevice_zone1_depend@instance: power
 
     individual_volume:
         name: Lautstärkeeinstellung pro Kanal (wird nur von manchen Verstärkern unterstützt)
@@ -609,106 +609,106 @@ item_structs:
         volumefl:
             type: num
             visu_acl: rw
-            avdevice_zone1: volumefl
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumefl
+            avdevice_zone1_depend@instance: power
             cache: 'true'
 
         volumeflup:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumefl+
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumefl+
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
         volumefldown:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumefl-
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumefl-
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
         volumefr:
             type: num
             visu_acl: rw
-            avdevice_zone1: volumefr
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumefr
+            avdevice_zone1_depend@instance: power
             cache: 'true'
 
         volumefrup:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumefr+
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumefr+
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
         volumefrdown:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumefr-
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumefr-
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
         volumesr:
             type: num
             visu_acl: rw
-            avdevice_zone1: volumesr
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumesr
+            avdevice_zone1_depend@instance: power
             cache: 'true'
 
         volumesrup:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumesr+
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumesr+
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
         volumesrdown:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumesr-
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumesr-
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
         volumesl:
             type: num
             visu_acl: rw
-            avdevice_zone1: volumesl
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumesl
+            avdevice_zone1_depend@instance: power
             cache: 'true'
 
         volumeslup:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumesl+
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumesl+
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
         volumesldown:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumesl-
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumesl-
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
         volumec:
             type: num
             visu_acl: rw
-            avdevice_zone1: volumec
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumec
+            avdevice_zone1_depend@instance: power
             cache: 'true'
 
         volumecup:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumec+
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumec+
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
         volumecdown:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volumec-
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumec-
+            avdevice_zone1_depend@instance: power
             enforce_updates: 'yes'
 
     sound_settings:
@@ -717,114 +717,114 @@ item_structs:
         set_listeningmode:
             type: foo
             visu_acl: rw
-            avdevice_zone1: set_listeningmode
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: set_listeningmode
+            avdevice_zone1_depend@instance: power
 
         query_listeningmode:
             type: foo
             visu_acl: ro
-            avdevice_zone1: query_listeningmode
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: query_listeningmode
+            avdevice_zone1_depend@instance: power
 
         bass:
             type: num
             visu_acl: rw
-            avdevice_zone1: bass
-            avdevice_zone1_depend: tone
+            avdevice_zone1@instance: bass
+            avdevice_zone1_depend@instance: tone
 
         bassup:
             type: bool
             visu_acl: rw
-            avdevice_zone1: bass+
+            avdevice_zone1@instance: bass+
             enforce_updates: True
-            avdevice_zone1_depend: tone
+            avdevice_zone1_depend@instance: tone
 
         bassdown:
             type: bool
             visu_acl: rw
-            avdevice_zone1: bass-
+            avdevice_zone1@instance: bass-
             enforce_updates: True
-            avdevice_zone1_depend: tone
+            avdevice_zone1_depend@instance: tone
 
         dialog:
             type: num
             visu_acl: rw
-            avdevice_zone1: dialog
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: dialog
+            avdevice_zone1_depend@instance: power
 
         trebble:
             type: num
             visu_acl: rw
-            avdevice_zone1: trebble
-            avdevice_zone1_depend: tone
+            avdevice_zone1@instance: trebble
+            avdevice_zone1_depend@instance: tone
 
         trebbleup:
             type: bool
             visu_acl: rw
-            avdevice_zone1: trebble+
+            avdevice_zone1@instance: trebble+
             enforce_updates: True
-            avdevice_zone1_depend: tone
+            avdevice_zone1_depend@instance: tone
 
         trebbledown:
             type: bool
             visu_acl: rw
-            avdevice_zone1: trebble-
+            avdevice_zone1@instance: trebble-
             enforce_updates: True
-            avdevice_zone1_depend: tone
+            avdevice_zone1_depend@instance: tone
 
         tone:
             type: bool
             visu_acl: rw
-            avdevice_zone1: tone
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: tone
+            avdevice_zone1_depend@instance: power
 
         dynamicrange:
             type: num
             visu_acl: rw
-            avdevice_zone1: dynamicrange
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: dynamicrange
+            avdevice_zone1_depend@instance: power
 
         dynamicrangeup:
             type: num
             visu_acl: rw
-            avdevice_zone1: dynamicrange+
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: dynamicrange+
+            avdevice_zone1_depend@instance: power
 
         dynamicrangedown:
             type: num
             visu_acl: rw
-            avdevice_zone1: dynamicrange-
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: dynamicrange-
+            avdevice_zone1_depend@instance: power
 
         dialog:
             type: num
             visu_acl: rw
-            avdevice_zone1: dialog
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: dialog
+            avdevice_zone1_depend@instance: power
 
         dialogtoggle:
             type: bool
             visu_acl: rw
-            avdevice_zone1: dialogtoggle
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: dialogtoggle
+            avdevice_zone1_depend@instance: power
 
         subwoofer:
             type: num
             visu_acl: rw
-            avdevice_zone1: subwoofer
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: subwoofer
+            avdevice_zone1_depend@instance: power
 
         subwoofertoggle:
             type: bool
             visu_acl: rw
-            avdevice_zone1: subwoofertoggle
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: subwoofertoggle
+            avdevice_zone1_depend@instance: power
 
         cinemaeq:
             type: bool
             visu_acl: rw
-            avdevice_zone1: cinemaeq
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: cinemaeq
+            avdevice_zone1_depend@instance: power
 
     video_settings:
         name: Videoeinstellungen (Auflösung, Processing, etc.)
@@ -832,38 +832,38 @@ item_structs:
         aspectratio:
             type: str
             visu_acl: rw
-            avdevice_zone1: aspectratio
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: aspectratio
+            avdevice_zone1_depend@instance: power
 
         monitorout:
             type: foo
             visu_acl: rw
-            avdevice_zone1: monitorout
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: monitorout
+            avdevice_zone1_depend@instance: power
 
         resolution:
             type: str
             visu_acl: rw
-            avdevice_zone1: resolution
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: resolution
+            avdevice_zone1_depend@instance: power
 
         audioout:
             type: str
             visu_acl: rw
-            avdevice_zone1: audioout
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: audioout
+            avdevice_zone1_depend@instance: power
 
         videoprocessing:
             type: str
             visu_acl: rw
-            avdevice_zone1: videoprocessing
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: videoprocessing
+            avdevice_zone1_depend@instance: power
 
         stretch:
             type: str
             visu_acl: rw
-            avdevice_zone1: stretch
-            avdevice_zone1_depend:
+            avdevice_zone1@instance: stretch
+            avdevice_zone1_depend@instance:
                 - power, a
                 - aspectratio = nrm, b
 
@@ -873,39 +873,39 @@ item_structs:
         sleep:
             type: num
             visu_acl: rw
-            avdevice_zone1: sleep
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: sleep
+            avdevice_zone1_depend@instance: power
 
         standby:
             type: foo
             visu_acl: rw
-            avdevice_zone1: standby
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: standby
+            avdevice_zone1_depend@instance: power
 
         power:
             type: bool
             visu_acl: rw
-            avdevice_zone1: power
-            avdevice_zone1_depend: init
+            avdevice_zone1@instance: power
+            avdevice_zone1_depend@instance: init
 
         mute:
             type: bool
             visu_acl: rw
-            avdevice_zone1: mute
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: mute
+            avdevice_zone1_depend@instance: power
 
         volume:
             type: num
             visu_acl: rw
-            avdevice_zone1: volume
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volume
+            avdevice_zone1_depend@instance: power
             cache: True
 
             max:
                 type: num
                 visu_acl: ro
-                avdevice_zone1: volumemax
-                avdevice_zone1_depend: power
+                avdevice_zone1@instance: volumemax
+                avdevice_zone1_depend@instance: power
 
             fading:
                 type: num
@@ -915,18 +915,18 @@ item_structs:
         volumeup:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volume+
+            avdevice_zone1@instance: volume+
             enforce_updates: True
-            avdevice_zone1_depend:
+            avdevice_zone1_depend@instance:
               - power, a
               - volume < 160, b
 
         volumedown:
             type: bool
             visu_acl: rw
-            avdevice_zone1: volume-
+            avdevice_zone1@instance: volume-
             enforce_updates: True
-            avdevice_zone1_depend:
+            avdevice_zone1_depend@instance:
               - volume > 10, b
               - power, a
 
@@ -935,22 +935,22 @@ item_structs:
             type: bool
             enforce_updates: True
             visu: rw
-            avdevice_zone1: volumelow
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumelow
+            avdevice_zone1_depend@instance: power
 
         volumehigh:
             remark: sets volume to a specific high value
             type: bool
             enforce_updates: True
             visu: rw
-            avdevice_zone1: volumehigh
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: volumehigh
+            avdevice_zone1_depend@instance: power
 
         source:
             type: foo
             visu_acl: rw
-            avdevice_zone1: source
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: source
+            avdevice_zone1_depend@instance: power
 
             music:
                 remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
@@ -965,21 +965,21 @@ item_structs:
         hdmi:
             type: num
             visu_acl: ro
-            avdevice_zone1: hdmi
-            avdevice_zone1_depend: power
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: hdmi
+            avdevice_zone1_depend@instance: power
+            avdevice_zone1_depend@instance: power
 
         videoinput:
             type: str
             visu_acl: rw
-            avdevice_zone1: videoinput
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: videoinput
+            avdevice_zone1_depend@instance: power
 
         audioinput:
             type: str
             visu_acl: rw
-            avdevice_zone1: audioinput
-            avdevice_zone1_depend: power
+            avdevice_zone1@instance: audioinput
+            avdevice_zone1_depend@instance: power
 
     zone2:
         name: Steuern der Zone 2
@@ -987,26 +987,26 @@ item_structs:
         sleep:
             type: num
             visu_acl: rw
-            avdevice_zone2: sleep
-            avdevice_zone2_depend: power
+            avdevice_zone2@instance: sleep
+            avdevice_zone2_depend@instance: power
 
         standby:
             type: foo
             visu_acl: rw
-            avdevice_zone2: standby
-            avdevice_zone2_depend: power
+            avdevice_zone2@instance: standby
+            avdevice_zone2_depend@instance: power
 
         power:
             type: bool
             visu_acl: rw
-            avdevice_zone2: power
-            avdevice_zone2_depend: init
+            avdevice_zone2@instance: power
+            avdevice_zone2_depend@instance: init
 
         source:
             type: foo
             visu_acl: rw
-            avdevice_zone2: source
-            avdevice_zone2_depend: power
+            avdevice_zone2@instance: source
+            avdevice_zone2_depend@instance: power
 
             music:
                 remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
@@ -1021,15 +1021,15 @@ item_structs:
         mute:
             type: bool
             visu_acl: rw
-            avdevice_zone2: mute
-            avdevice_zone2_depend: power
+            avdevice_zone2@instance: mute
+            avdevice_zone2_depend@instance: power
 
         volume:
             type: num
             visu_acl: rw
-            avdevice_zone2: volume
+            avdevice_zone2@instance: volume
             cache: True
-            avdevice_zone2_depend: power
+            avdevice_zone2_depend@instance: power
 
             fading:
                 type: num
@@ -1039,30 +1039,30 @@ item_structs:
         volumeup:
             type: bool
             visu_acl: rw
-            avdevice_zone2: volume+
+            avdevice_zone2@instance: volume+
             enforce_updates: True
-            avdevice_zone2_depend: power
+            avdevice_zone2_depend@instance: power
 
         volumedown:
             type: bool
             visu_acl: rw
-            avdevice_zone2: volume-
+            avdevice_zone2@instance: volume-
             enforce_updates: True
-            avdevice_zone2_depend: power
+            avdevice_zone2_depend@instance: power
 
         volumehigh:
             type: num
             visu_acl: rw
-            avdevice_zone2: volumehigh
+            avdevice_zone2@instance: volumehigh
             enforce_updates: True
-            avdevice_zone2_depend: power
+            avdevice_zone2_depend@instance: power
 
         volumelow:
             type: num
             visu_acl: rw
-            avdevice_zone2: volumelow
+            avdevice_zone2@instance: volumelow
             enforce_updates: True
-            avdevice_zone2_depend: power
+            avdevice_zone2_depend@instance: power
 
     zone3:
         name: Steuern der Zone 3
@@ -1070,26 +1070,26 @@ item_structs:
         sleep:
             type: num
             visu_acl: rw
-            avdevice_zone3: sleep
-            avdevice_zone3_depend: power
+            avdevice_zone3@instance: sleep
+            avdevice_zone3_depend@instance: power
 
         standby:
             type: foo
             visu_acl: rw
-            avdevice_zone3: standby
-            avdevice_zone3_depend: power
+            avdevice_zone3@instance: standby
+            avdevice_zone3_depend@instance: power
 
         power:
             type: bool
             visu_acl: rw
-            avdevice_zone3: power
-            avdevice_zone3_depend: init
+            avdevice_zone3@instance: power
+            avdevice_zone3_depend@instance: init
 
         source:
             type: foo
             visu_acl: rw
-            avdevice_zone3: source
-            avdevice_zone3_depend: power
+            avdevice_zone3@instance: source
+            avdevice_zone3_depend@instance: power
 
             music:
                 remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
@@ -1104,15 +1104,15 @@ item_structs:
         mute:
             type: bool
             visu_acl: rw
-            avdevice_zone3: mute
-            avdevice_zone3_depend: power
+            avdevice_zone3@instance: mute
+            avdevice_zone3_depend@instance: power
 
         volume:
             type: num
             visu_acl: rw
-            avdevice_zone3: volume
+            avdevice_zone3@instance: volume
             cache: True
-            avdevice_zone3_depend: power
+            avdevice_zone3_depend@instance: power
 
             fading:
                 type: num
@@ -1122,30 +1122,30 @@ item_structs:
         volumeup:
             type: bool
             visu_acl: rw
-            avdevice_zone3: volume+
+            avdevice_zone3@instance: volume+
             enforce_updates: True
-            avdevice_zone3_depend: power
+            avdevice_zone3_depend@instance: power
 
         volumedown:
             type: bool
             visu_acl: rw
-            avdevice_zone3: volume-
+            avdevice_zone3@instance: volume-
             enforce_updates: True
-            avdevice_zone3_depend: power
+            avdevice_zone3_depend@instance: power
 
         volumehigh:
             type: num
             visu_acl: rw
-            avdevice_zone3: volumehigh
+            avdevice_zone3@instance: volumehigh
             enforce_updates: True
-            avdevice_zone3_depend: power
+            avdevice_zone3_depend@instance: power
 
         volumelow:
             type: num
             visu_acl: rw
-            avdevice_zone3: volumelow
+            avdevice_zone3@instance: volumelow
             enforce_updates: True
-            avdevice_zone3_depend: power
+            avdevice_zone3_depend@instance: power
 
     zone4:
         name: Steuern der Zone 4 (limitierte Steuerfunktionalität)
@@ -1153,26 +1153,26 @@ item_structs:
         sleep:
             type: num
             visu_acl: rw
-            avdevice_zone4: sleep
-            avdevice_zone4_depend: power
+            avdevice_zone4@instance: sleep
+            avdevice_zone4_depend@instance: power
 
         standby:
             type: foo
             visu_acl: rw
-            avdevice_zone4: standby
-            avdevice_zone4_depend: power
+            avdevice_zone4@instance: standby
+            avdevice_zone4_depend@instance: power
 
         power:
             type: bool
             visu_acl: rw
-            avdevice_zone4: power
-            avdevice_zone4_depend: init
+            avdevice_zone4@instance: power
+            avdevice_zone4_depend@instance: init
 
         source:
             type: foo
             visu_acl: rw
-            avdevice_zone4: source
-            avdevice_zone4_depend: power
+            avdevice_zone4@instance: source
+            avdevice_zone4_depend@instance: power
 
             music:
                 remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs

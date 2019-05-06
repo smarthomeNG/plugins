@@ -52,7 +52,7 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.6.0"
 
     def __init__(self, smarthome):
         self.itemsApi = Items.get_instance()
@@ -414,13 +414,13 @@ class AVDevice(SmartPlugin):
                                 {'Zone': dependzone, 'Item': depend, 'Dependvalue': dependvalue, 'Compare': comparing,
                                  'Group': dependgroup})
                             self.logger.log(VERBOSE1,
-                                            "Initializing {}: Adding dependency for {}.".format(self._name, info))
+                                            "Initializing {}: Adding dependency for {} in {}: {}".format(self._name, info, zone, self._items[zone][info]))
                         except Exception:
                             self._items[zone][info].update({'Master': [
                                 {'Zone': dependzone, 'Item': depend, 'Dependvalue': dependvalue, 'Compare': comparing,
                                  'Group': dependgroup}]})
                             self.logger.log(VERBOSE1,
-                                            "Initializing {}: Creating dependency for {} in zone {}.".format(self._name, info, zone))
+                                            "Initializing {}: Creating dependency for {} in {}: {}".format(self._name, info, zone, self._items[zone][info]))
 
     def _logics_dependencies(self, zone=None, item=None):
         deps = {'a': [], 'b':[], 'c':[], 'd':[]}
@@ -463,15 +463,18 @@ class AVDevice(SmartPlugin):
                     info = self.get_iattr_value(item.conf, keyword)
                     if info is not None:
                         if '_init' in keyword:
-                            self._init_commands[zone][info] = {'Inititem': item, 'Item': item, 'Value': item()}
+                            if not self._init_commands[zone].get(info):
+                                self._init_commands[zone][info] = {'Inititem': item, 'Item': item, 'Value': item()}
                             item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             return self.update_item
                         elif '_speakers' in keyword:
-                            self._items_speakers[zone][info] = {'Item': item, 'Value': item()}
+                            if not self._items_speakers[zone].get(info):
+                                self._items_speakers[zone][info] = {'Item': item, 'Value': item()}
                             item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             return self.update_item
                         else:
-                            self._items[zone][info] = {'Item': item, 'Value': item()}
+                            if not self._items[zone].get(info):
+                                self._items[zone][info] = {'Item': item, 'Value': item()}
                             item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             self._parse_depend_item(item, info, zone)
                             return self.update_item
@@ -1102,10 +1105,11 @@ class AVDevice(SmartPlugin):
     def _checkdependency(self, dep_function, dep_type):
         depending = False
         self.logger.log(VERBOSE2,
-                        "Checking Dependency {}: dep_function: {}, dep_type: {}.".format(self._name, dep_function,
-                                                                                         dep_type))
+                        "Checking Dependency {}: dep_function: {}, dep_type: {}.".format(self._name, dep_function, dep_type))
         cond1 = dep_type == 'statusupdate' or dep_type == 'initupdate' or dep_type == 'checkquery' or dep_type == 'keepcommand'
         cond2 = dep_type == 'update' and not dep_function == ''
+        cond3 = dep_type == 'globaldepend' or dep_type == 'parseinput' or dep_type == 'connect' or dep_type == 'dependitem'
+        self.logger.log(VERBOSE2, "Checking Dependency {}: cond1 {}, cond2 {}".format(self._name, cond1, cond2))
         if cond1 or cond2:
             totest = queryzone = orig_function = dependitem = stopdepend = None
             if dep_type == 'statusupdate' or dep_type == 'initupdate':
@@ -1124,7 +1128,6 @@ class AVDevice(SmartPlugin):
                 totest = self._dependencies['Master_function']
                 queryzone = orig_function.split(', ')[0]
                 dep_function = orig_function.split(', ')[1]
-
             for zone in totest:
                 cond1 = dep_function in totest[zone] and not dep_type == 'checkquery'
                 cond2 = dep_type == 'checkquery' and zone == queryzone and dep_function in totest[zone]
@@ -1325,7 +1328,7 @@ class AVDevice(SmartPlugin):
                 elif dep_type == 'initupdate' and self._statusquery is False:
                     depending = True
 
-        elif dep_type == 'globaldepend' or dep_type == 'parseinput' or dep_type == 'connect' or dep_type == 'dependitem':
+        elif cond3:
             try:
                 dependsvalue = self._dependson()
                 self.logger.debug(
