@@ -74,7 +74,7 @@ DPT='dpt'
 
 class KNX(lib.connection.Client,SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.6"
+    PLUGIN_VERSION = "1.6.0"
 
 
     # tags actually used by the plugin are shown here
