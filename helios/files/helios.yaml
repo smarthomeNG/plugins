@@ -1,35 +1,58 @@
-%YAML 1.1
----
-
-# smarthome/items/helios.conf, version 0.95
-# Item file for smarthome.py - Helios/Vallox ventilation unit control & visualization through RS485.
+# smarthome/items/helios.yaml, version 1.0a
+# Item file for smarthome.py - Helios/Vallox ventilation unit control & visualization through RS485
 # Use at own risk - ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.
-
 ventilation:
 
     # Settings - by default for Helios EC/ET 300 Pro; adjust as necessary
-    # ==============================================================================================
-
     parameters:
 
+        # '============================================================================================ #'
         house_volume:
             name: Volumen des Hauses in m³ ("umbauter Raum", der von der Lüftung durchströmt wird)
             type: num
-            # value = 546   # umbauter Raum (546m³); gem. Helios-Rechner nur 384 m³ belüftet (???)
+            # "value: 546         # Original 'umbauter Raum' = 546; gem. Helios-Rechner aber nur 384"
             value: 384
             visu_acl: r
 
-        Ane:
-            name: 'DIN: Fläche (A) der Nutzungseinheit (ne) in m² (=belüftete Fläche, Wohnfläche)'
+        max_airflow:
+            name: Maximaler Volumenstrom der KWL in m³ (siehe Anlagendoku)
             type: num
-            # value = 143
-            value: 143
+            # 'value: 360                                             # Default Helios EC/ET 300 Pro'
+            value: 360
+            visu_acl: r
+
+        fanspeed_levels:
+            name: Anzahl der Schaltstufen der KWL (siehe Anlagendoku); wird z.Z. nicht verwendet
+            type: num
+            # 'value: 8                                               # Default Helios EC/ET 300 Pro'
+            value: 8
+            visu_acl: r
+
+        airflow_per_mode:
+            name: Volumenstrom je Stufe in m³/h  (siehe Anlagendoku); F7-Filter = jeweils -10%!
+            type: str
+            # 'value: "0 105 165 195 240 270 305 335 360"             # Default Helios EC/ET 300 Pro'
+            value: 0 105 165 195 240 270 305 335 360
+            visu_acl: r
+
+        consumption_per_mode:
+            name: Verbrauch _beider_ Ventilatoren je Stufe in W (siehe Anlagendoku)
+            type: str
+            # 'value: "0 20 36 50 72 92 130 160 194"                  # Default Helios EC/ET 300 Pro'
+            value: 0 20 36 50 72 92 130 160 194
+            visu_acl: r
+
+        preheating_consumption:
+            name: Stromverbrauch der Vorheizung in W (siehe Anlagendoku)
+            type: num
+            # 'value: 1000                                            # Default Helios EC/ET 300 Pro'
+            value: 1000
             visu_acl: r
 
         fWS:
-            name: 'DIN: Wärmeschutzfaktor (0,3 für Haus mit aktueller Wärmedämmung, sonst 0,4)'
+            name: DIN - Wärmeschutzfaktor; 0,3 für Haus mit Wärmeschutzdämmung, sonst 0,4
             type: num
-            # value = 0.3
+            # value: 0.3
             value: '0.3'
             visu_acl: r
 
@@ -40,50 +63,21 @@ ventilation:
                 eval: '"gedämmt" if (sh.ventilation.parameters.fWS()<0.4) else "teil-/ungedämmt"'
                 eval_trigger: ventilation.parameters.fWS
 
-        max_airflow:
-            name: Maximaler Volumenstrom der KWL in m³ (siehe Anlagendoku)
+        Ane:
+            name: DIN - Fläche (A) der Nutzungseinheit (ne) in m²
             type: num
-            # value = 360                                             # Default Helios EC/ET 300 Pro
-            value: 360
-            visu_acl: r
-
-        fanspeed_levels:
-            name: Anzahl der Schaltstufen der KWL (siehe Anlagendoku); wird z.Z. nicht verwendet
-            type: num
-            # value = 8                                               # Default Helios EC/ET 300 Pro
-            value: 8
-            visu_acl: r
-
-        airflow_per_mode:
-            name: Volumenstrom je Stufe in m³/h  (siehe Anlagendoku); F7-Filter = jeweils -10%!
-            type: str
-            # value = "0 105 165 195 240 270 305 335 360"             # Default Helios EC/ET 300 Pro
-            value: 0 105 165 195 240 270 305 335 360
-            visu_acl: r
-
-        consumption_per_mode:
-            name: Verbrauch _beider_ Ventilatoren je Stufe in W (siehe Anlagendoku)
-            type: str
-            # value = "0 20 36 50 72 92 130 160 194"                  # Default Helios EC/ET 300 Pro
-            value: 0 20 36 50 72 92 130 160 194
-            visu_acl: r
-
-        preheating_consumption:
-            name: Stromverbrauch der Vorheizung in W (siehe Anlagendoku)
-            type: num
-            # value = 1000                                            # Default Helios EC/ET 300 Pro
-            value: 1000
+            # 'value: 143                                  # Lüftungsrelevante Nutzfläche des Hauses'
+            value: 143
             visu_acl: r
 
     # sh.py/logics/helios_logics.py - Booster ("Stoßlüftung") settings
-    # ==============================================================================================
-    
     logics_settings:
 
+        # ============================================================================================ #
+        # 1=Helios default, 2=Logic with fixed values, 3=Logic (interactive Popup)
         boost_mode:
             name: Setting for booster
             type: num
-            # value: 1=Helios default, 2=Logic with fixed values, 3=Logic (interactive Popup)
             value: 3
             visu_acl: r
 
@@ -96,19 +90,17 @@ ventilation:
         boost_time:
             name: Setting for booster - duration for logic with fixed values (only for boost_mode 2)
             type: num
-            # value = 2700   ---> 45 minutes * 60 seconds = 2700 seconds
+            # 'value: 2700   # 45 minutes * 60 seconds = 2700 seconds'
             value: 2700
             visu_acl: r
 
-    # ==============================================================================================
-    # Don't modify the items below unless you know what you're doing
-    # ==============================================================================================
-
+    # ============================================================================================ #
+    # Don't modify items below unless you know what you're doing                    #
+    # ============================================================================================ #
     # UZSU - Universelle Zeit Schalt Uhr
-    # ==============================================================================================
-    
     uzsu:
 
+        # '============================================================================================ #'
         fanspeed_uzsu:
             name: 'Zeitschaltuhr: Hilfsitem für Tests'
             type: num
@@ -122,104 +114,100 @@ ventilation:
             visu_acl: rw
 
     # Connectors to the plugin values
-    # ============================================================================================ #
-
     rs485:
 
-        _powerstate:
+        # '============================================================================================ #'
+        _power_state:
             name: Anlage an / aus
             type: num
             helios_var: power_state
             visu_acl: rw
 
         _bypass_disabled:
-            name: 0 = Sommermodus (aut. Bypass), 1= Wintermodus (Bypass deakt., LED an FBD ist an)
+            name: Sommerbypass an / aus
             type: num
             helios_var: bypass_disabled
             visu_acl: rw
 
         _bypass_setpoint:
-            name: Temperatur für automatische Umschaltung des Sommerbypasses, Standard = 10°C
-            # Siehe Handbuch - der Bypass wird aktiviert wenn:
-            # - die Aussentemperatur über dem hier eingestellten Wert liegt  *UND*
-            # - die Raumtemperatur > Aussentemperatur ist
-            # ToDo: Macht Wert 18...20°C hier eher Sinn?
+            name: Temperatur für automatische Umschaltung des Sommerbypasses
             type: num
             helios_var: bypass_temp
             visu_acl: r
 
         _outside_temp:
             name: 'DIN/EN: Außenluft, outdoor air / ODA, grün; Luft von draussen'
-            # Achtung: Bei starkem Frost wird der Zuluftventilator automatisch gestoppt.
-            # In diesem Fall weicht die 'outside_temp' von der tatsächlichen Außentemperatur
-            # stark ab, da keine Frischluft mehr in die Anlage geführt wird.
-            # (Erwärmung des WT Anlage durch die Raumtemperatur sowie durch die ggf. gerade
-            # abkühlende Vorheizung verfälschen dann die Werte)            
             type: num
             helios_var: outside_temp
             visu_acl: r
-            # sqlite = yes
-            database: 'init'
-            
+            sqlite: 'yes'
+
+        # rrd: yes
+        # rrd_min: yes
+        # rrd_max: yes
+        # Achtung: Bei starkem Frost wird der Zuluftventilator automatisch gestoppt.
+        # In diesem Fall weicht die 'outside_temp' von der tatsächlichen Außentemperatur
+        # stark ab, da keine Frischluft mehr in die Anlage geführt wird.
+        # (Erwärmung des WT Anlage durch die Raumtemperatur sowie durch die ggf. gerade
+        # abkühlende Vorheizung verfälschen dann die Werte)
         _incoming_temp:
             name: 'DIN/EN: Zuluft, supply air / SUP, blau; Luft in die Räume'
             type: num
             helios_var: incoming_temp
             visu_acl: r
-            # sqlite = yes
-            database: 'init'
+            sqlite: 'yes'
 
+        # rrd: yes
+        # rrd_min: yes
+        # rrd_max: yes
         _inside_temp:
             name: 'DIN/EN: Abluft, extract air / ETA, gelb; Luft aus den Räumen'
             type: num
-            cache: true
-            # cache = true --> sonst beim Start Fehler div/0 bei Berechnungen
+            cache: true    # schmeisst sonst beim Start Fehler div/0 bei Berechnungen
             helios_var: inside_temp
             visu_acl: r
-            # sqlite = yes
-            database: 'init'
+            sqlite: 'yes'
 
+        # rrd: yes
+        # rrd_min: yes
+        # rrd_max: yes
         _exhaust_temp:
             name: 'DIN/EN: Fortluft, exhaust air, braun; Luft nach draussen'
             type: num
             helios_var: exhaust_temp
             visu_acl: r
-            # sqlite = yes
-            database: 'init'
+            sqlite: 'yes'
 
+        # rrd: yes
+        # rrd_min: yes
+        # rrd_max: yes
+        _heating_on_off:
+            name: Vorheizung ein
+            type: num
+            visu_acl: rw
+            helios_var: heating_on_off
+            sqlite: 'yes'
+
+        # rrd: yes
+        # rrd_min: yes
+        # rrd_max: yes
         _heating_setpoint:
             name: Einschalttemperatur Vorheizung
             type: num
             visu_acl: rw
             helios_var: heating_setpoint
 
-        _heating_on_off:
-            name: Vorheizung ein
-            type: num
-            visu_acl: rw
-            helios_var: heating_on_off
-            # sqlite = yes
-            database: 'true'
-
-        _defrost_setpoint:
+        _frost_setpoint:
             name: Frostschutztemperatur - Zuluft aus unter dieser Temperatur
             type: num
             visu_acl: rw
             helios_var: frost_stop
 
-        _defrost_hysteresis:
+        _frost_hysteresis:
             name: Hysteresetemperatur Frostschutz, 0x03 ~ 1°C
             type: num
             visu_acl: rw
             helios_var: cell_defrost
-
-        _fanspeed:
-            name: 'Aktuelle Lüftungsstufe (EC300Pro: 1..8)'
-            type: num
-            helios_var: fanspeed
-            visu_acl: rw
-            # sqlite = yes
-            database: 'true'
 
         _min_fanspeed:
             name: 'Lüftungerstufe min (EC300Pro: 1..8)'
@@ -233,6 +221,16 @@ ventilation:
             helios_var: max_fanspeed
             visu_acl: rw
 
+        _fanspeed:
+            name: 'Aktuelle Lüftungsstufe (EC300Pro: 1..8)'
+            type: num
+            helios_var: fanspeed
+            visu_acl: rw
+            sqlite: 'yes'
+
+        # rrd: yes
+        # rrd_min: yes
+        # rrd_max: yes
         _fan_in_on_off:
             name: Ausschaltregister (1=aus); u.a. vom Frostschutz benutzt; ggf zweifach beschreiben
             type: num
@@ -244,7 +242,11 @@ ventilation:
             type: num
             helios_var: fan_in_percent
             visu_acl: rw
+            sqlite: 'yes'
 
+        # rrd: yes
+        # rrd_min: yes
+        # rrd_max: yes
         _fan_out_on_off:
             name: Ausschaltregister (1=aus); ggf zweifach beschreiben
             type: num
@@ -256,6 +258,16 @@ ventilation:
             type: num
             helios_var: fan_out_percent
             visu_acl: rw
+            sqlite: 'yes'
+
+        # rrd: yes
+        # rrd_min: yes
+        # rrd_max: yes
+        _boost_on:
+            name: Stoßlüftung ein (Anlage setzt selbstständig zurück)
+            type: bool
+            helios_var: boost_on
+            visu_acl: rw
 
         _boost_mode:
             name: 'Grundeinstellung: 0=Kaminlüftung ("Anheizen"), 1=Stoßlüftung'
@@ -263,13 +275,7 @@ ventilation:
             helios_var: boost_mode
             visu_acl: rw
 
-        _boost_on:
-            name: Einschalter für Stoßlüftung (Anlage setzt selbstständig zurück)
-            type: bool
-            helios_var: boost_on
-            visu_acl: rw
-
-        # ToDo: Wird in den Logiken nicht verwendet???? --> prüfen
+        # Wird in den Logiken nicht verwendet???? --> prüfen
         _boost_status:
             name: Aktueller Status
             type: bool
@@ -293,36 +299,35 @@ ventilation:
             type: num
             helios_var: device_error
             visu_acl: r
-            # Konstanten für Fehleranzeige in der Visu --> ErrNo:Name:Description:Countermeasures
-            e0:   0:Kein Fehler:Kein Fehlertext:Keine Fehlerbehebung
-            e1:   1:?:?:?
-            e2:   2:?:?:?
-            e3:   3:?:?:?
-            e4:   4:?:?:?
-            e5:   5:Zuluftsensor defekt:Fühler lose, Kurzschluss <br/>oder Temperatur >90°C gemessen:Gerätestecker ziehen (ausschalten), kurz warten und wieder einstecken
-            e6:   6:CO2-Alarm:CO2-Wert >5.000 ppm seit mehr als 3 Minuten:Ursache ermitteln oder ggf. Sensor überprüfen lassen.
-            e7:   7:Außenluftsensor defekt:Fühler lose, Kurzschluss oder Temperatur >90°C gemessen:Gerätestecker ziehen (ausschalten), kurz warten und wieder einstecken
-            e8:   8:Abluftsensor defekt:Fühler lose, Kurzschluss oder Temperatur >90°C gemessen:Gerätestecker ziehen (ausschalten), kurz warten und wieder einstecken
-            e9:   9:Frostwarnung:Außenluft <0°C und Zuluft <8°C - Frostgefahr am Wärmetauscher:Der Alarm verschwindet automatisch bei normalisierten Temperaturen
+            e0: 0:Kein Fehler:Kein Fehlertext:Keine Fehlerbehebung    # Format = ErrNo:Name:Description:Countermeasures
+            e1: 1:?:?:?
+            e2: 2:?:?:?
+            e3: 3:?:?:?
+            e4: 4:?:?:?
+            e5: 5:Zuluftsensor  defekt:Fühler lose, Kurzschluss <br/>oder Temperatur >90°C gemessen:Gerätestecker ziehen (ausschalten), kurz warten und wieder einstecken
+            e6: 6:CO2-Alarm:CO2-Wert >5.000 ppm seit mehr als 3 Minuten:Ursache ermitteln oder ggf. Sensor überprüfen lassen.
+            e7: 7:Außenluftsensor defekt:Fühler lose, Kurzschluss oder Temperatur >90°C gemessen:Gerätestecker ziehen (ausschalten), kurz warten und wieder einstecken
+            e8: 8:Abluftsensor defekt:Fühler lose, Kurzschluss oder Temperatur >90°C gemessen:Gerätestecker ziehen (ausschalten), kurz warten und wieder einstecken
+            e9: 9:Frostwarnung:Außenluft <0°C und Zuluft <8°C - Frostgefahr am Wärmetauscher:Der Alarm verschwindet automatisch bei normalisierten Temperaturen
             e10: 10:Fortluftsensor defekt:Fühler lose, Kurzschluss oder Temperatur >90°C gemessen:Gerätestecker ziehen (ausschalten), kurz warten und wieder einstecken
 
     # Fresh air heating ("pre-heating")
-    # ==============================================================================================
-    
     heating:
 
+        # ============================================================================================ #
+        # hier noch prüfen, was passiert, wenn der Frostschutz greift (angeblich Motor aus = Heizung aus)
         is_on:
             name: Pre-heating on --> 1
             type: num
-            eval: (sh.ventilation.rs485._heating_on_off() and sh.ventilation.rs485._powerstate())
+            eval: (sh.ventilation.rs485._heating_on_off() and sh.ventilation.rs485._power_state())
             eval_trigger:
               - ventilation.rs485._heating_on_off
-              - ventilation.rs485._powerstate
+              - ventilation.rs485._power_state
 
             as_text:
                 name: Item als formatierter Text
                 type: str
-                eval: "'an' if sh.ventilation.heating.is_on() else 'aus'"
+                eval: "'An' if sh.ventilation.heating.is_on() else 'Aus'"
                 eval_trigger: ventilation.heating.is_on
 
         setpoint:
@@ -330,50 +335,47 @@ ventilation:
             as_text:
                 name: Item als formatierter Text
                 type: str
-                # ToDo: alle as_text noch umstellen, Beispiel: eval: '{0},{1},{2}'.format(sh...Hue(), sh...Sat(), sh...Bright())
-                # also hier: eval: '{0}°C'.format(sh..())   (Anzahl Punkte noch prüfen)
                 eval: str(int(sh.ventilation.rs485._heating_setpoint())) + '°C'
                 eval_trigger: ventilation.rs485._heating_setpoint
 
-    # Fresh air fan auto-stop (frost) - measured at EXHAUST temperature (!)
-    # ==============================================================================================
-        
+    # Fresh air fan auto-stop (frost)
     frost_protection:
 
+        # ============================================================================================ #
+        # hier evtl. noch Logikfehler --> wird wieder 1, wenn setpoint überschritten, aber hysterese noch nicht erreicht ist; Test mit neuem eval_trigger
         is_on:
-            name: Defrost eingeschaltet --> 1
+            name: Frost-protection on --> 1
             type: num
-            eval: 1 if ((sh.ventilation.rs485._exhaust_temp()<=sh.ventilation.frost_protection.defrost_end()) and not sh.ventilation.fans.supply.is_on()) else 0
+            eval: 1 if ((sh.ventilation.rs485._exhaust_temp()<=sh.ventilation.rs485._frost_setpoint()) and not sh.ventilation.fans.supply.is_on()) else 0
+
+            # eval_trigger: ventilation.rs485._exhaust_temp | ventilation.rs485._frost_setpoint | ventilation.fans.supply.is_on
             eval_trigger:
-              - ventilation.rs485._exhaust_temp
-              - ventilation.rs485._defrost_setpoint
+              - ventilation.rs485._frost_setpoint
               - ventilation.fans.supply.is_on
 
             as_text:
                 name: Item als formatierter Text
                 type: str
-                eval: "'an' if sh.ventilation.frost_protection.is_on() else 'aus'"
+                eval: "'An' if sh.ventilation.frost_protection.is_on() else 'Aus'"
                 eval_trigger: ventilation.frost_protection.is_on
 
-        # '---> ventilation.rs485._defrost_setpoint'
+        # '---> ventilation.rs485._frost_setpoint'
         setpoint:
-            name: 'Temperatur der Fortluft in °C - 1°C = Zuluft aus (Frost-/Vereisungsschutz)'
 
             as_text:
                 name: Item als formatierter Text
                 type: str
-                eval: str(int(sh.ventilation.rs485._defrost_setpoint())) + '°C'
-                eval_trigger: ventilation.rs485._defrost_setpoint
+                eval: str(int(sh.ventilation.rs485._frost_setpoint())) + '°C'
+                eval_trigger: ventilation.rs485._frost_setpoint
 
-        # '---> ventilation.rs485._defrost_hysteresis'
+        # '---> ventilation.rs485._frost_hysteresis'
         hysteresis:
-            name: Setpoint °C + Hysterese °C + 1°C = Zuluft wieder an
 
             celsius:
                 name: Umrechnung    # 03h ~ 1°C
                 type: num
-                eval: sh.ventilation.rs485._defrost_hysteresis() / 3
-                eval_trigger: ventilation.rs485._defrost_hysteresis
+                eval: sh.ventilation.rs485._frost_hysteresis() / 3
+                eval_trigger: ventilation.rs485._frost_hysteresis
 
                 as_text:
                     name: Item als formatierter Text
@@ -381,49 +383,50 @@ ventilation:
                     eval: str(int(sh.ventilation.frost_protection.hysteresis.celsius())) + '°C'
                     eval_trigger: ventilation.frost_protection.hysteresis.celsius
 
-        defrost_end:
-            name: Ausschalttemperatur Fostschutz nach Erwärmung
+        end_setpoint:
+            name: Ausschalttemperatur Fostschutz
             type: num
-            eval: sh.ventilation.rs485._defrost_setpoint() + (sh.ventilation.rs485._defrost_hysteresis() / 3)
+            eval: sh.ventilation.rs485._frost_setpoint() + (sh.ventilation.rs485._frost_hysteresis() / 3)
             eval_trigger:
-              - ventilation.rs485._defrost_setpoint
-              - ventilation.rs485._defrost_hysteresis
+              - sh.ventilation.frost_protection.setpoint
+              - ventilation.frost_protection.hysteresis.celsius
 
             as_text:
                 name: Item als formatierter Text
                 type: str
-                eval: str(int(sh.ventilation.frost_protection.defrost_end())) + '°C'
-                eval_trigger: ventilation.frost_protection.defrost_end
+                eval: str(int(sh.ventilation.frost_protection.end_setpoint())) + '°C'
+                eval_trigger: ventilation.frost_protection.end_setpoint
 
     # Fans
-    # ==============================================================================================
-    # Hinweis: Für 0..10V-Signal sollten in den evals entsprechende Formeln gesetzt werden.
-    # Die anliegende Spannung ist im Register 2EH als Wert 0..FFh gespeichert.
-
     fans:
 
-        supply:
+        # ============================================================================================ #
+        # Hinweis: Für 0..10V-Signal sollten in den evals entsprechende Formeln gesetzt werden.
+        # Die anliegende Spannung ist im Register 2EH als Wert 0..FFh gespeichert.
         # Fresh air
-        
+        supply:
+
             is_on:
                 name: Lüfter ist wirklich an
-                # type = num  --> in bool gewandelt, Diagramme falsch
+                # type: num ## rene 12/2016: Diagramme falsch
                 type: bool
-                eval: 0 if (sh.ventilation.rs485._fan_in_on_off()==1 or not sh.ventilation.rs485._powerstate()) else 1
+                eval: 0 if (sh.ventilation.rs485._fan_in_on_off()==1 or sh.ventilation.rs485._power_state()==0) else 1
                 eval_trigger:
                   - ventilation.rs485._fan_in_on_off
-                  - ventilation.rs485._powerstate
-                # sqlite = yes
-                # database: 'init'
-                database: 'true'
+                  - ventilation.rs485._power_state
+                sqlite: 'yes'
 
+                # rrd: yes
+                # rrd_min: yes
+                # rrd_max: yes
                 as_text:
                     name: Item als formatierter Text
                     type: str
-                    eval: "'an' if sh.ventilation.fans.supply.is_on() else 'aus'"
+                    # eval: "'An' if sh.ventilation.fans.supply.is_on()==1 else 'Aus'"
+                    eval: "'An' if sh.ventilation.fans.supply.is_on() else 'Aus'"
                     eval_trigger: ventilation.fans.supply.is_on
 
-            # ---> ventilation.rs485._fan_in_percent
+            # '---> ventilation.rs485._fan_in_percent'
             percent:
 
                 as_text:
@@ -433,10 +436,12 @@ ventilation:
                     eval_trigger: ventilation.rs485._fan_in_percent
 
                 effective:
-                    name: Tatsächliche Leistung in % unter Berücksichtigung von an/aus
+                    name: Tatsächliche Drehzahl in % unter Berücksichtigung von an/aus
                     type: num
                     visu_acl: rw
-                    eval: sh.ventilation.rs485._fan_in_percent() * int(sh.ventilation.fans.supply.is_on())
+                    eval: sh.ventilation.rs485._fan_in_percent() * int(sh.ventilation.fans.supply.is_on())    # # int hinzugefügt
+
+                    # 'eval_trigger: | ventilation.rs485._fanspeed | ventilation.rs485._exhaust_temp'
                     eval_trigger:
                       - ventilation.rs485._fan_in_percent
                       - ventilation.fans.supply.is_on
@@ -452,6 +457,8 @@ ventilation:
                 visu_acl: r
                 type: str
                 eval: sh.ventilation.fans.supply.is_on.as_text() + ', ' + sh.ventilation.power.supply_fan.effective.as_text()
+
+                # eval_trigger: ventilation.rs485._fanspeed | ventilation.rs485._fan_in_percent | ventilation.fans.supply.is_on
                 eval_trigger:
                   - ventilation.fans.supply.is_on.as_text
                   - ventilation.power.supply_fan.effective.as_text
@@ -461,6 +468,8 @@ ventilation:
                 visu_acl: r
                 type: str
                 eval: sh.ventilation.airflow.supply_fan.effective.as_text() + ' (' + sh.ventilation.fans.supply.percent.effective.as_text() + ')'
+
+                # eval_trigger: ventilation.rs485._fanspeed ventilation.rs485._fan_in_percent | ventilation.fans.supply.is_on
                 eval_trigger:
                   - ventilation.airflow.supply_fan.effective.as_text
                   - ventilation.fans.supply.percent.effective.as_text
@@ -471,16 +480,19 @@ ventilation:
             is_on:
                 name: Lüfter ist wirklich an
                 type: num
-                eval: 0 if (sh.ventilation.rs485._fan_out_on_off()==1 or not sh.ventilation.rs485._powerstate()) else 1
+                eval: 0 if (sh.ventilation.rs485._fan_out_on_off()==1 or sh.ventilation.rs485._power_state()==0) else 1
                 eval_trigger:
                   - ventilation.rs485._fan_out_on_off
-                  - ventilation.rs485._powerstate
-                # sqlite = yes
+                  - ventilation.rs485._power_state
+                sqlite: 'yes'
 
+                # rrd: yes
+                # rrd_min: yes
+                # rrd_max: yes
                 as_text:
                     name: Item als formatierter Text
                     type: str
-                    eval: "'an' if sh.ventilation.fans.exhaust.is_on()==1 else 'aus'"
+                    eval: "'An' if sh.ventilation.fans.exhaust.is_on()==1 else 'Aus'"
                     eval_trigger: ventilation.fans.exhaust.is_on
 
             # '---> ventilation.rs485._fan_out_percent'
@@ -497,6 +509,8 @@ ventilation:
                     type: num
                     visu_acl: rw
                     eval: sh.ventilation.rs485._fan_out_percent() * sh.ventilation.fans.exhaust.is_on()
+
+                    # 'eval_trigger: | ventilation.rs485._fanspeed'
                     eval_trigger:
                       - ventilation.rs485._fan_out_percent
                       - ventilation.fans.exhaust.is_on
@@ -553,10 +567,9 @@ ventilation:
                   - ventilation.rs485._max_fanspeed
 
     # Booster (built-in and logic-triggered)
-    # ==============================================================================================
-    
     booster:
 
+        # '============================================================================================ #'
         built_in:
             name: Original-Stoßlueftung der Anlagen-Firmware
             type: num
@@ -605,19 +618,17 @@ ventilation:
                 value: 10
                 visu_acl: r
 
-        # ToDo
         boost_remaining_a:
-            # name = Verbleibende Stosslüftungszeit - Logik 1
+            # name: Verbleibende Stosslüftungszeit - Logik 1
             type: num
-            # eval_trigger = ventilation.booster.logics.boost_duration # muss was anderes sein
+            # eval_trigger: ventilation.booster.logics.boost_duration # muss was anderes sein
             # eval: funktioniert, aber item noch korrigieren --> nur bei boost true
             eval: __import__('math').ceil(sh.ventilation.booster.logics.boost_duration()/60)
 
     # Summer bypass
-    # ==============================================================================================
-    
     bypass:
 
+        # '============================================================================================ #'
         is_on:
             name: Summer bypass on --> 1
             type: num
@@ -630,7 +641,7 @@ ventilation:
                 eval: "'an' if sh.ventilation.bypass.is_on() else 'aus'"
                 eval_trigger: ventilation.bypass.is_on
 
-        # 'ToDo: rs485-variable prüfen'
+        # '---> ventilation.rs485._frost_setpoint'
         setpoint:
 
             as_text:
@@ -652,10 +663,9 @@ ventilation:
                 eval_trigger: ventilation.bypass.heat_recovery
 
     # Device errors, alarms, filter change
-    # ==============================================================================================
-    
     alarms:
 
+        # '============================================================================================ #'
         last_error:
             name: Aktueller Fehler
             type: str
@@ -694,10 +704,9 @@ ventilation:
         filter_warning:
 
     # Input / output air flow and air exchange rate
-    # ==============================================================================================
-        
     airflow:
 
+        # '============================================================================================ #'
         supply_fan:
             name: Luftdurchsatz in m³ gem. Messung oder Ventilatorkurve
             type: num
@@ -716,7 +725,11 @@ ventilation:
                 eval_trigger:
                   - ventilation.airflow.supply_fan
                   - ventilation.fans.supply.percent.effective
+                sqlite: 'yes'
 
+                # rrd: yes
+                # rrd_min: yes
+                # rrd_max: yes
                 as_text:
                     name: Item als formatierter Text
                     type: str
@@ -741,7 +754,11 @@ ventilation:
                 eval_trigger:
                   - ventilation.airflow.exhaust_fan
                   - ventilation.fans.exhaust.percent.effective
+                sqlite: 'yes'
 
+                # rrd: yes
+                # rrd_min: yes
+                # rrd_max: yes
                 as_text:
                     name: Item als formatierter Text
                     type: str
@@ -756,32 +773,30 @@ ventilation:
             eval_trigger: ventilation.airflow.supply_fan.effective
 
         # Recommended air echange volumes for your house in m³/h as per DIN 1946-6
-        # ==========================================================================================
-        #
-        # Die KWL sollte so ausgelegt sein, dass sie einen Luftaustausch zwischen
-        # Feuchteschutz (min) und Intensivlüftung (max) gewährleistet.
-        # 
-        # Beispiel für eine Gebäudefläche von 280 m² in einem gedämmten Gebäude:
-        # Feuchteschutz = 0,3 *(-0,001*280² + 1,15*280+20) = 0,3*(-78,4+322+20) = 79,08
-        # Nennlüftung = -0,001*280² + 1,15*280+20 = 263,6
-        # Reduzierte Lüftung = 0,7 *(-0,001*280² + 1,15*280+20) = 184,52
-        # Intensivlüftung = 1,15 *(-0,001*280² + 1,15*280+20) = 303,14
-        # Für Auslegung nach DIN wird also KWL benötigt, die zwischen 80m³/h und 300 m³/h liefert.
-        # 
-        # Die errechneten Werte wurden mit denen des Helios Auslegungsprogramms verglichen.
-        # Die beiden wichtigsten Werte (Feuchteschutz, Intensivlüftung) sind zu 100% identisch.
-        # Die beiden anderen Werte (reduzierte Lüftung, Nennlüftung) weichen leicht ab (~10%).
-        # Grund ist vermutlich, dass das Helios-Auslegungsprogramm sowohl Volumina als auch
-        # Hausgeometrie berücksichtigt, die DIN-Formeln aber nur pauschale Flächen. 10% sind für die
-        # Gesamtbetrachtung aber unwesentlich (ergibt ~10...15 m³/h mehr Luftaustausch als Helios).
-        # 
-        # Eigene Berechnungen im Auslegungsassistenten unter:
-        # https://www.kwleasyplan.de/Erstellen-Sie-Ihr-Angebot/2.html?lang=de&stland=de&nav=auslegung
-        # 
-        # unklar ist --> Wieso berechnet die DIN nach Fläche statt Volumen???
-
         DIN:
 
+            # ======================================================================================== #
+            # Die KWL sollte so ausgelegt sein, dass sie einen Luftaustausch zwischen
+            # Feuchteschutz (min) und Intensivlüftung (max) gewährleistet.
+            #
+            # Beispiel für eine Gebäudefläche von 280 m² in einem gedämmten Gebäude:
+            # Feuchteschutz = 0,3 *(-0,001*280² + 1,15*280+20) = 0,3*(-78,4+322+20) = 79,08
+            # Nennlüftung = -0,001*280² + 1,15*280+20 = 263,6
+            # Reduzierte Lüftung = 0,7 *(-0,001*280² + 1,15*280+20) = 184,52
+            # Intensivlüftung = 1,15 *(-0,001*280² + 1,15*280+20) = 303,14
+            # Für Auslegung nach DIN wird also KWL benötigt, die zwischen 80m³/h und 300 m³/h liefert.
+            #
+            # Die errechneten Werte wurden mit denen des Helios Auslegungsprogramms verglichen.
+            # Die beiden wichtigsten Werte (Feuchteschutz, Intensivlüftung) sind zu 100% identisch.
+            # Die beiden anderen Werte (reduzierte Lüftung, Nennlüftung) weichen leicht ab (~10%).
+            # Grund ist vermutlich, dass das Helios-Auslegungsprogramm sowohl Volumina als auch
+            # Hausgeometrie berücksichtigt, die DIN-Formeln aber nur pauschale Flächen. Die Abweichungen
+            # waren aber unwesentlich (dieses Plugin errechnet ~15 m³/h mehr Luftaustausch als Helios).
+            #
+            # Eigene Berechnungen im Auslegungsassistenten unter:
+            # https://www.kwleasyplan.de/Erstellen-Sie-Ihr-Angebot/2.html?lang=de&stland=de&nav=auslegung
+            #
+            # unklar ist --> Wieso berechnet die DIN nach Fläche statt Volumen???
             # Mindestlüftung für Feuchteschutz in m³/h (nach DIN)
             moisture_protection:
                 name: Feuchteschutz    # fWS * (-0,001 * Ane² + 1,15 * Ane + 20)
@@ -789,7 +804,7 @@ ventilation:
                 visu_acl: r
                 eval: round(sh.ventilation.parameters.fWS() * (-0.001 * (sh.ventilation.parameters.Ane()*sh.ventilation.parameters.Ane()) + 1.15 * sh.ventilation.parameters.Ane() + 20))
                 eval_trigger:
-                  - ventilation.parameters.Ane
+                  - ventilation.parameter.ane
                   - ventilation.parameters.fWS
 
                 air_exchange_rate:
@@ -805,7 +820,7 @@ ventilation:
                 type: num
                 visu_acl: r
                 eval: round(0.7 * (-0.001 * (sh.ventilation.parameters.Ane()*sh.ventilation.parameters.Ane()) + 1.15 * sh.ventilation.parameters.Ane() + 20))
-                eval_trigger: ventilation.parameters.Ane
+                eval_trigger: ventilation.parameter.ane
 
                 air_exchange_rate:
                     name: Luftaustauschrate bei reduzierter Lüftung
@@ -820,7 +835,7 @@ ventilation:
                 type: num
                 visu_acl: r
                 eval: round(-0.001 * (sh.ventilation.parameters.Ane()*sh.ventilation.parameters.Ane()) + 1.15 * sh.ventilation.parameters.Ane() + 20)
-                eval_trigger: ventilation.parameters.Ane
+                eval_trigger: ventilation.parameter.ane
 
                 air_exchange_rate:
                     name: Luftaustauschrate bei Nennlüftung
@@ -835,7 +850,7 @@ ventilation:
                 type: num
                 visu_acl: r
                 eval: round(1.15 * (-0.001 * (sh.ventilation.parameters.Ane()*sh.ventilation.parameters.Ane()) + 1.15 * sh.ventilation.parameters.Ane() + 20))
-                eval_trigger: ventilation.parameters.Ane
+                eval_trigger: ventilation.parameter.ane
 
                 air_exchange_rate:
                     name: Luftaustauschrate bei Intensivlüftung
@@ -845,160 +860,92 @@ ventilation:
                     eval_trigger: ventilation.airflow.DIN.boost_air_exchange
 
     # Efficiency calculations - interpret with care
-    # ==============================================================================================
-    thermal_energy:
+    thermal_efficiency:
 
-        total_outgoing:
-            name: Energiegehalt der Abluft
+        # '============================================================================================ #'
+        energy_lost:
+            name: Verlustwärme
             type: num
             visu_acl: r
-            cache: 'true'
-            # 'cache = true  # otherwise often div/0 at startup; cache not working for some reason'
-            # database: 'init'
-            database: 'true'
-            eval: round(1.005 * 1.204 / 3.6 * sh.ventilation.airflow.exhaust_fan.effective() * (sh.ventilation.rs485._inside_temp() - sh.ventilation.rs485._outside_temp()))
+            eval: round(1.005 * 1.024 / 3.6 * sh.ventilation.airflow.exhaust_fan.effective() * (sh.ventilation.rs485._inside_temp() - sh.ventilation.rs485._incoming_temp()))
             eval_trigger:
               - ventilation.airflow.exhaust_fan.effective
               - ventilation.rs485._inside_temp
+              - ventilation.rs485._incoming_temp
+            sqlite: 'yes'
+
+            # rrd: yes
+            # rrd_min: yes
+            # rrd_max: yes
+            as_text:
+                name: Verlustwärme + 'W'
+                type: str
+                visu_acl: r
+                eval: "'%sW' % (sh.ventilation.thermal_efficiency.energy_lost())"
+                eval_trigger: ventilation.thermal_efficiency.energy_lost
+
+        energy_recovered:
+            name: Rückgewonnene Wärme
+            type: num
+            visu_acl: r
+            eval: round(1.005 * 1.024 / 3.6 * sh.ventilation.airflow.supply_fan.effective() * (sh.ventilation.rs485._incoming_temp() - sh.ventilation.rs485._outside_temp()))
+            eval_trigger:
+              - ventilation.airflow.supply_fan.effective
+              - ventilation.rs485._incoming_temp
               - ventilation.rs485._outside_temp
+            sqlite: 'yes'
+
+            # rrd: yes
+            # rrd_min: yes
+            # rrd_max: yes
+            as_text:
+                name: Rückgewonnene Wärme + 'W'
+                type: str
+                visu_acl: r
+                eval: "'%sW' % (sh.ventilation.thermal_efficiency.energy_recovered())"
+                eval_trigger: ventilation.thermal_efficiency.energy_recovered
+
+        energy_total:
+            name: Summe rückgewonnen + verloren (=Wärmeenergie der Abluft aus den Räumen)
+            type: num
+            visu_acl: r
+            eval: sh.ventilation.thermal_efficiency.energy_lost() + sh.ventilation.thermal_efficiency.energy_recovered()
+            eval_trigger:
+              - ventilation.thermal_efficiency.energy_lost
+              - ventilation.thermal_efficiency.energy_recovered
 
             as_text:
                 name: Wärmeenergie + 'W'
                 type: str
                 visu_acl: r
-                eval: "'%sW' % (sh.ventilation.thermal_energy.total_outgoing())"
-                eval_trigger: ventilation.thermal_energy.total_outgoing
-
-        loss:
-            name: Restenrgiegehalt der Fortluft (=Verlustwärme)
-            eval: round(1.005 * 1.204 / 3.6 * sh.ventilation.airflow.exhaust_fan.effective() * (sh.ventilation.rs485._exhaust_temp() - sh.ventilation.rs485._outside_temp()))
-            eval_trigger:
-              - ventilation.airflow.exhaust_fan.effective
-              - ventilation.rs485._exhaust_temp
-              - ventilation.rs485._outside_temp
-            type: num
-            visu_acl: r
-            # sqlite = yes
-            # database: 'init'
-            database: 'true'
-
-            as_text:
-                name: Verlustwärme + 'W'
-                type: str
-                visu_acl: r
-                eval: "'%sW' % (sh.ventilation.thermal_energy.loss())"
-                eval_trigger: ventilation.thermal_energy.loss
-
-        recovery:
-            name: Rückgewonnene Wärme
-            type: num
-            visu_acl: r
-            eval: round(1.005 * 1.204 / 3.6 * sh.ventilation.airflow.supply_fan.effective() * (sh.ventilation.rs485._incoming_temp() - sh.ventilation.rs485._outside_temp()))
-            eval_trigger:
-              - ventilation.airflow.supply_fan.effective
-              - ventilation.rs485._incoming_temp
-              - ventilation.rs485._outside_temp
-            # sqlite = yes
-            # database: 'init'
-            database: 'true'
-
-            as_text:
-                name: Rückgewonnene Wärme + 'W'
-                type: str
-                visu_acl: r
-                eval: "'%sW' % (sh.ventilation.thermal_energy.recovery())"
-                eval_trigger: ventilation.thermal_energy.recovery
-
-        # = total - loss - recovery
-        defrost:
-            name: Verlustwärme durch Aufheizen des Wärmetauschers
-            type: num
-            visu_acl: r
-            eval: sh.ventilation.thermal_energy.total_outgoing() - sh.ventilation.thermal_energy.loss() - sh.ventilation.thermal_energy.recovery()
-            eval_trigger:
-              - ventilation.thermal_energy.total_outgoing
-              - ventilation.thermal_energy.loss
-              - ventilation.thermal_energy.recovery
-            # sqlite = yes
-            # database: 'init'
-            database: 'true'
-
-            as_text:
-                name: Verlustwärme durch Aufheizen + 'W'
-                type: str
-                visu_acl: r
-                eval: "'%sW' % (sh.ventilation.thermal_energy.defrost())"
-                eval_trigger: ventilation.thermal_energy.defrost
+                eval: "'%sW' % (sh.ventilation.thermal_efficiency.energy_total())"
+                eval_trigger: ventilation.thermal_efficiency.energy_total
 
         efficiency:
             name: Wirkungsgrad in %
             type: num
             visu_acl: r
-            # 0.000001 addieren, sonst beim Start DIV/0
-            eval: round(sh.ventilation.thermal_energy.recovery() / (sh.ventilation.thermal_energy.total_outgoing()+0.000001) * 100)
+            eval: round((sh.ventilation.rs485._incoming_temp() - sh.ventilation.rs485._outside_temp()) / (sh.ventilation.rs485._inside_temp() - sh.ventilation.rs485._outside_temp()) * 100)
             eval_trigger:
-              - ventilation.thermal_energy.recovery
-              - ventilation.thermal_energy.total_outgoing
-            # sqlite = yes
-            # database: 'init'
-            database: 'true'
+              - ventilation.rs485._incoming_temp
+              - ventilation.rs485._outside_temp
+              - ventilation.rs485._inside_temp
+            sqlite: 'yes'
 
+            # rrd: yes
+            # rrd_min: yes
+            # rrd_max: yes
             as_text:
                 name: Wirkungsgrad + '%'
                 type: str
                 visu_acl: r
-                eval: str(int(sh.ventilation.thermal_energy.efficiency())) + '%'
-                eval_trigger: ventilation.thermal_energy.efficiency
-
-        # =========== alternative calculations ======================#
-        alt_total_outgoing:
-            name: Energieverlust Abluft total
-            type: num
-            visu_acl: r
-            eval: round(1.005 * 101325 / ( 287.05 * (sh.ventilation.rs485._inside_temp() - sh.ventilation.rs485._outside_temp() + 273.15)) / 3.6 * sh.ventilation.airflow.exhaust_fan.effective() * (sh.ventilation.rs485._inside_temp() - sh.ventilation.rs485._outside_temp()))
-            eval_trigger:
-              - ventilation.airflow.exhaust_fan.effective
-              - ventilation.rs485._inside_temp
-              - ventilation.rs485._outside_temp
-
-        alt_loss:
-            name: Restenrgiegehalt der Fortluft (=Verlustwärme)
-            eval: round(1.005 * (101325 / (287.05 * (sh.ventilation.rs485._exhaust_temp() - sh.ventilation.rs485._outside_temp() + 273.15))) / 3.6 * sh.ventilation.airflow.exhaust_fan.effective() * (sh.ventilation.rs485._exhaust_temp() - sh.ventilation.rs485._outside_temp()))
-            eval_trigger:
-              - ventilation.airflow.exhaust_fan.effective
-              - ventilation.rs485._exhaust_temp
-              - ventilation.rs485._outside_temp
-            type: num
-            visu_acl: r
-
-        alt_recovery:
-            name: Rückgewonnene Wärme
-            type: num
-            visu_acl: r
-            eval: round(1.005 * (101325 / (287.05 * (sh.ventilation.rs485._incoming_temp() - sh.ventilation.rs485._outside_temp() + 273.15))) / 3.6 * sh.ventilation.airflow.supply_fan.effective() * (sh.ventilation.rs485._incoming_temp() - sh.ventilation.rs485._outside_temp()))
-            eval_trigger:
-              - ventilation.airflow.supply_fan.effective
-              - ventilation.rs485._incoming_temp
-              - ventilation.rs485._outside_temp
-
-        alt_defrost:
-            name: Verlustwärme durch Aufheizen des Wärmetauschers
-            type: num
-            visu_acl: r
-            eval: sh.ventilation.thermal_energy.alt_total_outgoing() - sh.ventilation.thermal_energy.alt_loss() - sh.ventilation.thermal_energy.alt_recovery()
-            eval_trigger:
-              - ventilation.thermal_energy.total_outgoing
-              - ventilation.thermal_energy.loss
-              - ventilation.thermal_energy.recovery
-
-    # sqlite = yes
-    # 101325/(287,05*(temp+273,15))
-    # 101325/(287,05*(sh.ventilation.rs485._exhaust_temp()+273,15))
+                eval: str(int(sh.ventilation.thermal_efficiency.efficiency())) + '%'
+                eval_trigger: ventilation.thermal_efficiency.efficiency
 
     # Electrical power consumption
-    # ==============================================================================================
     power:
 
+        # '============================================================================================ #'
         heating:
             name: Aktueller Stromverbrauch der Vorheizung in W
             type: num
@@ -1079,9 +1026,9 @@ ventilation:
                 eval_trigger: ventilation.power.total
 
     # Helper items for testing
-    # ==============================================================================================
     testing:
 
+        # '============================================================================================ #'
         a_num:
             name: Numerisches Testitem
             type: num
