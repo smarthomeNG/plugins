@@ -24,7 +24,7 @@ parameters:                        # Definition of parameters to be configured i
             en: 'Port for communication'
 
     cycle:
-        type: num
+        type: int                   # used to be num until 1.6, then caused error
         default: 60
         description:
             de: 'Abfrage-Intervall in Sekunden'
