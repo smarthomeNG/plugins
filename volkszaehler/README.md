@@ -1,10 +1,10 @@
 # Volkszaehler Plugin
 
-The Plugin can be used for S0 energy meters and sensors that use float values.
+The Plugin can be used to send data to a running Volkszaehler server.
 
 ## Requirements
 
-Volkszaehler Server
+Installed and running Volkszaehler server.
 
 ## Configuration
 

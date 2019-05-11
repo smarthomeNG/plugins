@@ -1,4 +1,3 @@
-requests>=2.9.1;python_version>'3.2'
-requests==2.5.1;python_version=='3.2'
+#requests requirement moved to core
 xmltodict>=0.11.0
 tinytag>=0.18.0

@@ -132,6 +132,24 @@ class EEP_Parser():
             self.logger.info('enocean: brightness: {0}'.format(result['BRI']))
         return result
 
+    def _parse_eep_A5_07_03(self, payload, status):
+        # Occupancy sensor with supply voltage monitor, NodOne
+        self.logger.debug("enocean: parsing A5_07_03: Occupancy sensor")
+        result = {}
+        is_data = ((payload[3] & 0x08) == 0x08)                           # learn or data telegeram: 1:data, 0:learn
+        if not is_data:
+            self.logger.info("enocean: occupancy sensor: Received learn telegram.")
+            return result
+
+        if payload[0] > 250:
+            self.logger.error("enocean: occupancy sensor issued error code: {0}".format(payload[0]))
+        else:
+            result['SVC'] = (payload[0] / 255.0 * 5.0)                  # supply voltage in volts
+        result['ILL'] = (payload[1] << 2) + ((payload[2] & 0xC0) >> 6)  # 10 bit illumination in lux
+        result['PIR'] = ((payload[3] & 0x80) == 0x80)                   # Movement flag, 1:motion detected
+        self.logger.debug("occupancy: PIR:{0} illumination: {1}lx, voltage: {2}V".format(result['PIR'],result['ILL'],result['SVC']))
+        return result
+
     def _parse_eep_A5_08_01(self, payload, status):
         # Brightness and movement sensor, for example eltako FBH65TFB
         self.logger.debug("enocean: parsing A5_08_01: Movement sensor")
@@ -139,7 +157,6 @@ class EEP_Parser():
         result['BRI'] = (payload[1] / 255.0 * 2048)          # brightness in lux
         result['MOV'] = not ((payload[3] & 0x02) == 0x02)    # movement
         #self.logger.debug("enocean: movement: {0}, brightness: {1}".format(result['MOV'],result['BRI']))
-        #self.logger.debug("enocean: movement data byte0: {0}".format(payload[3]))
         return result
 
     def _parse_eep_A5_11_04(self, payload, status):
@@ -262,6 +279,27 @@ class EEP_Parser():
             self.logger.debug('enocean: D2 Switch on')
         return results
 
+    def _parse_eep_D2_01_12(self, payload, status):
+        # self.logger.debug("enocean: processing D2_01_12: VLD Switch")
+        results = {}
+        # self.logger.info('enocean: D2 Switch Feedback  0:{} 1:{} 2:{}').format(payload[0],payload[1],payload[2])
+        if (payload[1] == 0x60) and (payload[2] == 0x80):
+            # Switch is off
+            results['STAT_A'] = 0
+            self.logger.debug('enocean: D2 Switch Channel A: off')
+        elif (payload[1] == 0x60) and (payload[2] == 0xe4):
+            # Switch is on
+            results['STAT_A'] = 1
+            self.logger.debug('enocean: D2 Channel A: Switch on')
+        elif (payload[1] == 0x61) and (payload[2] == 0x80):
+            # Switch is off
+            results['STAT_B'] = 0
+            self.logger.debug('enocean: D2 SwitchChannel A:  off')
+        elif (payload[1] == 0x61) and (payload[2] == 0xe4):
+            # Switch is on
+            results['STAT_B'] = 1
+            self.logger.debug('enocean: D2 Switch Channel B: on')
+        return results
 
 ####################################################
 ### --- Definitions for RORG = D5 / ORG = 06 --- ###

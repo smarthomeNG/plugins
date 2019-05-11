@@ -11,7 +11,7 @@ Support-Thread für das Plugin: https://knx-user-forum.de/forum/supportforen/sma
 ## Requirements
 
 This plugin requires CherryPy to be installed via pip.
-It requires SmartHomeNG 1.4 or higher!
+It requires SmartHomeNG 1.5 or higher!
 
 ## Configuration
 

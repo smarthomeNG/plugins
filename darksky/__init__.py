@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2018 René Frieß                      rene.friess(a)gmail.com
-#  Version 1.5.0.1
+#  Version 1.5.0.2
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -32,15 +32,13 @@ from lib.model.smartplugin import *
 
 class DarkSky(SmartPlugin):
 
-    PLUGIN_VERSION = "1.5.0.1"
+    PLUGIN_VERSION = "1.5.0.2"
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
-        @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
-        api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
         self.logger = logging.getLogger(__name__)
         self._key = self.get_parameter_value('key')
@@ -83,6 +81,9 @@ class DarkSky(SmartPlugin):
         Updates information on diverse items
         """
         forecast = self.get_forecast()
+        if forecast is None:
+            self.logger.error("Forecast is None! Perhaps server did not reply?")
+            return
         self._jsonData = forecast
         for s, item in self._items.items():
             sp = s.split('/')
@@ -95,19 +96,23 @@ class DarkSky(SmartPlugin):
                         wrk = wrk['alerts']
                     else:
                         alerts_string = ''
-                        for alert in wrk['alerts']:
-                            start_time = datetime.datetime.fromtimestamp(
-                                int(alert['time'])
-                            ).strftime('%d.%m.%Y %H:%M')
-                            expire_time = datetime.datetime.fromtimestamp(
-                                int(alert['expires'])
-                            ).strftime('%d.%m.%Y %H:%M')
-                            alerts_string_wrk = "<p><h1>"+alert['title']+" ("+start_time+" - "+expire_time+")</h1>"
-                            alerts_string_wrk = alerts_string_wrk + "<span>"+alert['description']+"</span></p>"
-                            alerts_string = alerts_string + alerts_string_wrk
+                        if 'alerts' in wrk:
+                            for alert in wrk['alerts']:
+                                start_time = datetime.datetime.fromtimestamp(
+                                    int(alert['time'])
+                                ).strftime('%d.%m.%Y %H:%M')
+                                expire_time = datetime.datetime.fromtimestamp(
+                                    int(alert['expires'])
+                                ).strftime('%d.%m.%Y %H:%M')
+                                alerts_string_wrk = "<p><h1>"+alert['title']+" ("+start_time+" - "+expire_time+")</h1>"
+                                alerts_string_wrk = alerts_string_wrk + "<span>"+alert['description']+"</span></p>"
+                                alerts_string = alerts_string + alerts_string_wrk
                         wrk = alerts_string
                 else:
-                    wrk = []
+                    if s == "alerts_string":
+                        wrk = ''
+                    else:
+                        wrk = []
             else:
                 while True:
                     if (len(sp) == 0) or (wrk is None):
@@ -155,6 +160,36 @@ class DarkSky(SmartPlugin):
             return
         json_obj = response.json()
         return json_obj
+
+    def map_icon(self, icon):
+        """
+        Maps the icons from darksky.net to the icons in SmartVisu
+
+        :param icon icon to map, as string.
+        :return SmartVisu icon as string.
+        """
+        if icon == 'clear-day':
+            return 'sun_1'
+        elif icon == 'clear-night':
+            return 'sun_1'
+        elif icon == 'partly-cloudy-day':
+            return 'sun_4'
+        elif icon == 'partly-cloudy-night':
+            return 'sun_4'
+        elif icon == 'fog':
+            return 'sun_6'
+        elif icon == 'rain':
+            return 'cloud_8'
+        elif icon == 'wind':
+            return 'sun_10'
+        elif icon == 'snow':
+            return 'sun_12'
+        elif icon == 'cloudy':
+            return 'cloud_4'
+        elif icon == 'sleet':
+            return 'cloud_11'
+        else:
+            return 'high'
 
     def parse_item(self, item):
         """

@@ -8,13 +8,15 @@ plugin:
         fr: 'Connexion de systèmes KNX via EIBD/KNXD'
     maintainer: msinn, (cmalo)
     tester: psilo909, onkelandy, Sandman60, brandst
+    state: qa-passed
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
 
-    version: 1.4.5                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    version: 1.6.0                 # Plugin version
+    sh_minversion: 1.5e            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: KNX                 # class containing the plugin
     attribute_prefix: knx          # prefix of the item-attributes, so attributes have to start with 'knx_'
 
@@ -35,9 +37,10 @@ parameters:
     send_time:
         type: int
         default: 0
+        valid_min: 0
         description:
-            de: 'Zeitintervall zum Senden von Uhrzeit und Datum an den KNX-Bus'
-            en: 'time interval to send time and date to the knx bus'
+            de: 'Zeitintervall (in Sekunden) zum Senden von Uhrzeit und Datum an den KNX-Bus'
+            en: 'time interval (in seconds) to send time and date to the knx bus'
 
     busmonitor:
         type: str
@@ -48,6 +51,9 @@ parameters:
           - 'true'
           - 'false'
           - 'logger'
+        valid_list_description:
+            de: ['Ein', 'Aus', 'Ein', 'Aus', 'in eigenen Logger']
+            en: ['On', 'Off', 'On', 'Off', 'to own logger']
         description:
             de: "Wenn auf 'on'/'true' gesetzt, wird jedes KNX-Paket im Standard-Logger protokolliert. Wenn 'logger' eingestellt ist, werden alle KNX-Meldungen in einem separaten Logger 'knx_busmonitor' protokolliert."
             en: "If set to 'on'/'true' every KNX packet will be logged to the default plugin logger. If set to 'logger', all knx messages will be logged to a separate logger 'knx_busmonitor'"
@@ -61,6 +67,8 @@ parameters:
 
     port:
         type: int
+        valid_min: 0
+        valid_max: 65535
         default: 6720
         description:
             de: 'Port, der bei der Kommunikation mit dem Eibd- oder Knxd-Daemon verwendet wird'
@@ -79,6 +87,13 @@ parameters:
         description:
             de: 'Wenn diese Option auf "True" gesetzt ist, werden die Statistikfunktionen aktiviert um Daten erfassen'
             en: 'if set to True, the statistic functions are enabled to collect data'
+
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
 
 
 
@@ -109,9 +124,80 @@ item_attributes:
          - '16001'
          - '16.001'
          - '17'
+         - '17001'
+         - '17.001'
+         - '18001'
+         - '18.001'
          - '20'
          - '24'
+         - '229'
          - '232'
+         - '275.100'
+        valid_list_description:
+            de:
+             - 'Schalten (1 Bit) -> bool'
+             - 'Zwangssteuerung (2 Bit) -> list'
+             - 'Dimmen (4 Bit) -> list'
+             - 'Zeichen [8859_1] (8 Bit) -> str'
+             - 'Zeichen [8859_1] (8 Bit) -> str'
+             - 'Relativwert, 0 … 255 (8 Bit) -> num'
+             - 'Relativwert, 0 … 100 % (8 Bit) -> num'
+             - 'Relativwert, 0 … 100 % (8 Bit) -> num'
+             - 'Ganzzahl -128 - 127 (8 Bit) -> num'
+             - 'Ganzzahl 0 - 65535 (16 Bit) -> num'
+             - 'Ganzzahl -32768 - 32767 (16 Bit) -> num'
+             - 'Gleitkomma -671088,64 - 670760,96 (16 Bit) -> num'
+             - 'Uhrzeit [datetime.time] (24 Bit) -> foo'
+             - 'Datum [datetime.date] (24 Bit) -> foo'
+             - 'Ganzzahl 0 - 4294967295 (32 Bit) -> num'
+             - 'Ganzzahl -2147483648 - 2147483647(32 Bit) -> num'
+             - 'Gleitkommazahl (32 Bit) -> num'
+             - 'Zeichenkette [ASCII] (14 Byte) -> str'
+             - 'Zeichenkette [ASCII] (14 Byte) -> str'
+             - 'Zeichenkette [8859_1] (14 Byte) -> str'
+             - 'Zeichenkette [8859_1] (14 Byte) -> str'
+             - 'Szenennummer: 0 - 63 (8 Bit) -> num'
+             - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+             - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+             - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
+             - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
+             - 'HVAC: 0 - 255 (8 Bit) -> num'
+             - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
+             - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
+             - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
+            en:
+             - 'Switch (1 Bit) -> bool'
+             - 'forced control (2 Bit) -> list'
+             - 'Dim (4 Bit) -> list'
+             - 'Char [8859_1] (8 Bit) -> str'
+             - 'Char [8859_1] (8 Bit) -> str'
+             - 'Relative value, 0 … 255 (8 Bit) -> num'
+             - 'Relative value, 0 … 100 % (8 Bit) -> num'
+             - 'Relative value, 0 … 100 % (8 Bit) -> num'
+             - 'Integer -128 - 127 (8 Bit) -> num'
+             - 'Integer 0 - 65535 (16 Bit) -> num'
+             - 'Integer -32768 - 32767 (16 Bit) -> num'
+             - 'Float -671088,64 - 670760,96 (16 Bit) -> num'
+             - 'Time [datetime.time] (24 Bit) -> foo'
+             - 'Date [datetime.date] (24 Bit) -> foo'
+             - 'Integer 0 - 4294967295 (32 Bit) -> num'
+             - 'Integer -2147483648 - 2147483647(32 Bit) -> num'
+             - 'Float (32 Bit) -> num'
+             - 'String [ASCII] (14 Byte) -> str'
+             - 'String [ASCII] (14 Byte) -> str'
+             - 'String [8859_1] (14 Byte) -> str'
+             - 'String [8859_1] (14 Byte) -> str'
+             - 'Scene number: 0 - 63 (8 Bit) -> num'
+             - 'Scene number: 1 - 64 (8 Bit) -> num'
+             - 'Scene number: 1 - 64 (8 Bit) -> num'
+             - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
+             - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
+             - 'HVAC: 0 - 255 (8 Bit) -> num'
+             - 'unlimited string [8859_1] (var) -> str'
+             - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
+             - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
         description:
             de: 'Dieses Attribut setzt den Typ des KNX-Datenpunktes, der für die Konvertierung der KNX-Nachrichten in das interne SmartHomeNG-Format verwendet wird. Die Angabe ist zwingend erforderlich ist. Wenn Sie keinen Wert angeben, wird das Element vom Plugin ignoriert. Der DPT muss dem Typ des Artikels entsprechen!'
             en: "This attribute set the KNX datapoint type used for conversion of the KNX messages to internal SmartHomeNG format. It is mandatory. If you don't provide one the item will be ignored by the plugin. The DPT has to match the type of the item! BE CAREFUL to put the value in quotes to ensure they are interpreted as strings and not as numbers!"
@@ -129,16 +215,16 @@ item_attributes:
             en: "Group address (or list of group addresses) to listen for. KNX messages to this group address(es) will change the item's value"
 
     knx_init:
-        type: knx_ga
+        type: list(knx_ga)
         description:
-            de: 'Gruppenadresse für die Initialisierung des Items. Der KNX-Bus wird nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden.'
-            en: 'Group address to use for initialization of the item. The KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address.'
+            de: 'Gruppenadresse für die Initialisierung des Items. Der KNX-Bus wird nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden. Wie bei knx_listen kann eine Liste von GAs angegeben werden. Dann wird der erste Eintrag der Liste für die Initialisierung verwendet.'
+            en: 'Group address to use for initialization of the item. The KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address. Like for knx_listen a list of GAs can be specified. In this case, the first list entry is used to read the KNX cache.'
 
     knx_cache:
-        type: knx_ga
+        type: list(knx_ga)
         description:
-            de: 'Gruppenadresse für die Initialisierung des Items. Der Wert wird aus dem Cache von KNXD/EIBD gelesen. Wenn kein Cache-Wert vorhanden ist, wird der KNX-Bus nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden.'
-            en: 'Group address to use for initialization of the item. The value is read from the cache of KNXD/EIBD. If no cached value exists, the KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address.'
+            de: 'Gruppenadresse für die Initialisierung des Items. Der Wert wird aus dem Cache von KNXD/EIBD gelesen. Wenn kein Cache-Wert vorhanden ist, wird der KNX-Bus nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden. Wie bei knx_listen kann eine Liste von GAs angegeben werden. Dann wird der erste Eintrag der Liste für die Initialisierung verwendet.'
+            en: 'Group address to use for initialization of the item. The value is read from the cache of KNXD/EIBD. If no cached value exists, the KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address. Like for knx_listen a list of GAs can be specified. In this case, the first list entry is used to read the KNX cache.'
 
     knx_reply:
         type: list(knx_ga)
@@ -159,49 +245,200 @@ item_attributes:
             en: 'Specify a group address to poll and the time interval in seconds for an automated query of KNX in form of a list. First entry is the group address, second entry is the poll interval in seconds. This may be used for actors or sensors that do no support a regular sending of values themselves.'
 
 
-logic_trigger_attributes:
-    # Definition of logic trigger attributes defined by this plugin
-    knx_dpt:
-        type: str
-        valid_list:
-         - '1'
-         - '2'
-         - '3'
-         - '4002'
-         - '4.002'
-         - '5'
-         - '5001'
-         - '5.001'
-         - '6'
-         - '7'
-         - '8'
-         - '9'
-         - '10'
-         - '11'
-         - '12'
-         - '13'
-         - '14'
-         - '16000'
-         - '16'
-         - '16001'
-         - '16.001'
-         - '17'
-         - '20'
-         - '24'
-         - '232'
-        description:
-            de: 'Dieses Attribut setzt den Typ des KNX-Datenpunktes, der für die Konvertierung der KNX-Nachrichten in das interne SmartHomeNG-Format verwendet wird. Die Angabe ist zwingend erforderlich ist. Wenn Sie keinen Wert angeben, wird das Element vom Plugin ignoriert. Der DPT muss dem Typ des Artikels entsprechen!'
-            en: "This attribute set the KNX datapoint type used for conversion of the KNX messages to internal SmartHomeNG format. It is mandatory. If you don't provide one the item will be ignored by the plugin. The DPT has to match the type of the item!"
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
+logic_parameters:
+    # Definition of logic parameters defined by this plugin
     knx_listen:
         type: list(knx_ga)
         description:
-            de: 'Gruppenadresse (oder Liste von Gruppenadressen), auf die gehört werden soll. KNX-Nachrichten an diese Gruppenadresse(n) ändern den Wert des Items'
-            en: "Group address (or list of goup addresses) to listen for. KNX messages to this group address will change the item's value"
+            de: 'Gruppenadresse (oder Liste von Gruppenadressen), auf die gehört werden soll. KNX-Nachrichten an diese Gruppenadresse(n) werden an die Logik weitergegeben'
+            en: "Group address (or list of group addresses) to listen for. KNX messages to this group address(es) will be directed to th logic"
 
     knx_reply:
         type: list(knx_ga)
         description:
             de: 'Eine oder mehrere Gruppenadressen angeben, um den Objektwert vom KNX-Bus aus lesen zu können.'
             en: 'Specify one or more group addresses to allow reading the item value from the KNX bus.'
+
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    encode:
+        type: foo
+        description:
+            de: "Diese Funktion codiert Ihre Daten entsprechend dem angegebenen Datenpunkt - Beispiel: data = sh.knx.encode(data, 9)"
+            en: "This function encodes your data according to the specified datapoint - Example: data = sh.knx.encode(data, 9)"
+        parameters:
+            data:
+                type: foo
+                description:
+                    de: "Zu codierende Daten"
+                    en: "Data to encode"
+            dpt:
+                type: foo
+                description:
+                    de: "KNX Datenpunkttyp"
+                    en: "KNX datapoint type"
+
+    groupwrite:
+        type: foo
+        description:
+            de: "Mit dieser Funktion könnten Sie die Daten an die angegebene Gruppenadresse senden - Beispiel: sh.knx.groupwrite('1/1/10', 10.3, '9')"
+            en: "With this function you could send the data to the specified group address - Example: sh.knx.groupwrite('1/1/10', 10.3, '9')"
+        parameters:
+            ga:
+                type: knx_ga
+                description:
+                    de: "Gruppenadresse an die der Wert gesendet werden soll"
+                    en: "Group adress to write to"
+            data:
+                type: foo
+                description:
+                    de: "Zu sendende Daten. Der Datentyp wird durch den Parameter 'dpt' bestimmt."
+                    en: "Data to be sent. The data type is determined by the parameter 'dpt'"
+            dpt:
+                type: str
+                valid_list:
+                 - '1'
+                 - '2'
+                 - '3'
+                 - '4002'
+                 - '4.002'
+                 - '5'
+                 - '5001'
+                 - '5.001'
+                 - '6'
+                 - '7'
+                 - '8'
+                 - '9'
+                 - '10'
+                 - '11'
+                 - '12'
+                 - '13'
+                 - '14'
+                 - '16000'
+                 - '16'
+                 - '16001'
+                 - '16.001'
+                 - '17'
+                 - '17001'
+                 - '17.001'
+                 - '18001'
+                 - '18.001'
+                 - '20'
+                 - '24'
+                 - '229'
+                 - '232'
+                 - '275.100'
+                valid_list_description:
+                    de:
+                     - 'Schalten (1 Bit) -> bool'
+                     - 'Zwangssteuerung (2 Bit) -> list'
+                     - 'Dimmen (4 Bit) -> list'
+                     - 'Zeichen [8859_1] (8 Bit) -> str'
+                     - 'Zeichen [8859_1] (8 Bit) -> str'
+                     - 'Relativwert, 0 … 255 (8 Bit) -> num'
+                     - 'Relativwert, 0 … 100 % (8 Bit) -> num'
+                     - 'Relativwert, 0 … 100 % (8 Bit) -> num'
+                     - 'Ganzzahl -128 - 127 (8 Bit) -> num'
+                     - 'Ganzzahl 0 - 65535 (16 Bit) -> num'
+                     - 'Ganzzahl -32768 - 32767 (16 Bit) -> num'
+                     - 'Gleitkomma -671088,64 - 670760,96 (16 Bit) -> num'
+                     - 'Uhrzeit [datetime.time] (24 Bit) -> foo'
+                     - 'Datum [datetime.date] (24 Bit) -> foo'
+                     - 'Ganzzahl 0 - 4294967295 (32 Bit) -> num'
+                     - 'Ganzzahl -2147483648 - 2147483647(32 Bit) -> num'
+                     - 'Gleitkommazahl (32 Bit) -> num'
+                     - 'Zeichenkette [ASCII] (14 Byte) -> str'
+                     - 'Zeichenkette [ASCII] (14 Byte) -> str'
+                     - 'Zeichenkette [8859_1] (14 Byte) -> str'
+                     - 'Zeichenkette [8859_1] (14 Byte) -> str'
+                     - 'Szenennummer: 0 - 63 (8 Bit) -> num'
+                     - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+                     - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+                     - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
+                     - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
+                     - 'HVAC: 0 - 255 (8 Bit) -> num'
+                     - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
+                     - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
+                     - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
+                    en:
+                     - 'Switch (1 Bit) -> bool'
+                     - 'forced control (2 Bit) -> list'
+                     - 'Dim (4 Bit) -> list'
+                     - 'Char [8859_1] (8 Bit) -> str'
+                     - 'Char [8859_1] (8 Bit) -> str'
+                     - 'Relative value, 0 … 255 (8 Bit) -> num'
+                     - 'Relative value, 0 … 100 % (8 Bit) -> num'
+                     - 'Relative value, 0 … 100 % (8 Bit) -> num'
+                     - 'Integer -128 - 127 (8 Bit) -> num'
+                     - 'Integer 0 - 65535 (16 Bit) -> num'
+                     - 'Integer -32768 - 32767 (16 Bit) -> num'
+                     - 'Float -671088,64 - 670760,96 (16 Bit) -> num'
+                     - 'Time [datetime.time] (24 Bit) -> foo'
+                     - 'Date [datetime.date] (24 Bit) -> foo'
+                     - 'Integer 0 - 4294967295 (32 Bit) -> num'
+                     - 'Integer -2147483648 - 2147483647(32 Bit) -> num'
+                     - 'Float (32 Bit) -> num'
+                     - 'String [ASCII] (14 Byte) -> str'
+                     - 'String [ASCII] (14 Byte) -> str'
+                     - 'String [8859_1] (14 Byte) -> str'
+                     - 'String [8859_1] (14 Byte) -> str'
+                     - 'Scene number: 0 - 63 (8 Bit) -> num'
+                     - 'Scene number: 1 - 64 (8 Bit) -> num'
+                     - 'Scene number: 1 - 64 (8 Bit) -> num'
+                     - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
+                     - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
+                     - 'HVAC: 0 - 255 (8 Bit) -> num'
+                     - 'unlimited string [8859_1] (var) -> str'
+                     - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
+                     - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
+                description:
+                    de: "KNX Datenpunkttyp"
+                    en: "KNX datapoint type"
+
+    groupread:
+        type: foo
+        description:
+            de: "Diese Funktion löst eine Leseanforderung für die angegebene Gruppenadresse aus. Da KNX ereignisgesteuert ist **wird der empfangene Wert nicht zurückgegeben**!"
+            en: "This function triggers a read request on the specified group address. Since KNX is event driven **it will not return the received value**!"
+        parameters:
+            ga:
+                type: knx_ga
+                description:
+                    de: "Gruppenadresse von der gelesen werden soll"
+                    en: "Group address from which to read"
+            cache:
+                type: bool
+                default: False
+                description:
+                    de: "Versuchen den Wert aus dem Cache von KNXD zu lesen?"
+                    en: "Try to read the value from the cache of KNXD?"
+
+    send_time:
+        type: foo
+        description:
+            de: "Diese Funktion sendet die aktuelle Uhrzeit und/oder das aktuelle Datum an die angegebene Gruppenadresse. Hinweis: Anstelle dieser Funktion können Sie das Plugin-Attribut 'send_time' wie oben beschrieben verwenden - Beispiele: sh.knx.send_time('1/1/1', '1/1/2') # sendet die Zeit zu 1/1/1 und das Datum zu 1/1/2; sh.knx.send_time('1/1/1') # sendet nur die Zeit zu 1/1/1; sh.knx.send_time(data_ga='1/1/2') # Sendet nur das Datum zu 1/1/2"
+            en: "This function sends the current time and/or date to the specified group address. Hint: instead of this function you could use the plugin attribute 'send_time' as described above - Examples: sh.knx.send_time('1/1/1', '1/1/2') # send the time to 1/1/1 and the date to 1/1/2; sh.knx.send_time('1/1/1') # only send the time to 1/1/1; sh.knx.send_time(data_ga='1/1/2') # only send the date to 1/1/2"
+        parameters:
+            time_ga:
+                type: knx_ga
+                description:
+                    de: "Gruppenadresse an die die Uhrzeit gesendet wird"
+                    en: "Group address to send the time to"
+            date_ga:
+                type: knx_ga
+                description:
+                    de: "Gruppenadresse an die das Datum gesendet wird"
+                    en: "Group address to send the date to"
+
+
+
+
+
 

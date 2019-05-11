@@ -6,15 +6,17 @@ plugin:
         de: 'Abfrage der Daten des Wetterdienstes Wunderground.com'
         en: 'Get weather data from wunderground.com'
     maintainer: msinn
-#    tester:                        # Who tests this plugin?
+    tester: msinn                       # Who tests this plugin?
+    state: deprecated
     keywords: weather
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
+    documentation: http://smarthomeng.de/user/plugins/wunderground/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1059124-neues-wunderground-plugin
 
     version: 1.4.8                 # Plugin version
     sh_minversion: 1.4c             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Wunderground        # class containing the plugin
 
 
@@ -48,7 +50,7 @@ parameters:
         description:
             de: 'Dieser Parameter muss normalerweise nicht angegeben werden. Er erlaubt es die Update-Frquenz anzupassen (Standard: alle 600 Sekunden). Mit dem Standardwert werden die Wetterdaten alle 10 Minuten aktualisiert. Das stellt sicher, dass die maximale Tagesmenge von 500 Requests für den gebührenfreien Account nicht überschritten werden, selbst wenn Wetter für zwei Orte oder für die smartVISU angefordert wird.'
             en: "This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 600 seconds). As a standard, the plugin updates the weather data every 10 minutes. This ensures that the maximum of 500 requests for the free-of-charge- account are not maxed out, even if you use wunderground weather for two locations and/or smartVISU."
-        
+
     item_subtree:
         type: str
         description:
@@ -56,20 +58,21 @@ parameters:
             en: 'item_subtree defines the part of the item-tree which the wunderground plugin searches during data updates for the wug_matchstring attribute.
                 If item_subtree is not defined or empty, the whole item-tree is searched, which creates unnecessary overhead vor SmartHomeNG.
                 If you are going to configure multiple instances of the plugin to get the weather report for multiple locations, you have to specify the parameter, or you will get da data mix up.
-                
+
                 The subtrees defined by item_subtree for the different instances must not intersect!'
 
-#    instance:
-#        type: str
-#        description:
-#            de: 'Name der Plugin Instanz (SmartHomeNG Standard-Parameter). Die Angabe ist notwendig, wenn Wetterdaten für mehrere Orte über mehrere Plugin-Instanzen abgefragt werden sollen.'
-#            en: 'Name of the plugin instance (SmartHomeNG standard parameter). This is important if you define multiple weather locations using multiple instances of the wunderground plugin.'
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
 
 
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
     wug_matchstring:
         type: str
         description:
@@ -80,11 +83,11 @@ item_attributes:
         type: str
         description:
             de: 'wug_datatype kann genutzt werden, um fehlerhafte Daten herauszufiltern, die evtl. von Zeit zu Zeit von einer Wunderground Wetterstation gesendet werden. Diese fehlerhaften Werte werden dann nicht in das Item geschrieben. Dieses Attribut kann die Werte positive und percent annehmen.
-                
+
                 - positive: Filtert alle Werte kleiner 0 heraus.
                 - percent: Filtert alle Werte heraus, die kleiner 0 oder größer als 100 sind.'
             en: 'wug_datatype is used to filter out wrong data that may be sent by a weatherstation from time to time. Those wrong values are filtered and not written to the item. This attribute can have the values positive and percent.
-                
+
                 - positive filters out all values less than 0.
                 - percent filters out values less than 0 and values greater than 100.'
 
@@ -99,3 +102,68 @@ item_attributes:
         description:
             de: 'Veraltet. Bitte stattdessen wug_matchstring verwenden.'
             en: 'Deprecated. Use wug_matchstring instead.'
+
+item_structs:
+  # Definition of item-structure templates for this plugin
+    wug_wetter:
+        ort:
+            type: str
+            wug_matchstring: current_observation/display_location/city
+            log_change: q21-items
+
+        ort_wetterstation:
+            type: str
+            wug_matchstring: current_observation/observation_location/city
+            log_change: q21-items
+            value: unbekannt
+
+        lokale_zeit:
+            type: str
+            wug_matchstring: current_observation/local_time_rfc822
+            log_change: q21-items
+
+        beobachtungszeitpunkt:
+            type: str
+            wug_matchstring: current_observation/observation_time_rfc822
+            log_change: q21-items
+
+        beobachtungszeitpunkt_datetime:
+            type: num
+            wug_matchstring: current_observation/observation_epoch
+            log_change: q21-items
+
+        wetter:
+            type: str
+            wug_matchstring: current_observation/weather
+            log_change: q21-items
+
+            icon:
+                type: str
+                wug_matchstring: current_observation/icon
+                log_change: q21-items
+
+        temperatur:
+            type: num
+            value: -9999
+            wug_matchstring: current_observation/temp_c
+            log_change: q21-items
+
+        temperatur_gefuehlt:
+            type: num
+            value: -9999
+            wug_matchstring: current_observation/feelslike_c
+            log_change: q21-items
+
+        rel_luftfeuchtigkeit:
+            type: num
+            value: -9999
+            wug_matchstring: current_observation/relative_humidity
+            wug_datatype: percent
+            log_change: q21-items
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

@@ -4,7 +4,7 @@
 
 ## Supported Hardware
 
-* ETA Pellet Unit PU (http://www.eta.at) with remote access enabled (there are 3 modes available: none, readonly, read/write)
+* ETA Pellet Unit PU (http://www.eta.co.at) with remote access enabled (there are 3 modes available: none, readonly, read/write)
 
 ## Configuration
 

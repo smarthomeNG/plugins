@@ -6,10 +6,13 @@ plugin:
         en: '1-Wire support via owserver'
         fr: 'Support de 1-Wire à travers owserver'
     maintainer: cmalo (mknx)
+    tester: '?'
+    state: ready
     keywords: 1wire onewire
     version: 1.3.2                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
     multi_instance: False
+    restartable: unknown
     classname: OneWire              # class containing the plugin
 
 parameters:
@@ -50,7 +53,7 @@ parameters:
             de: 'Zeitraum zwischen zwei Anfragen an einen iButton Busmaster'
             en: 'timeperiod between two requests of ibutton-busmaster.'
 
-            
+
 item_attributes:
     ow_addr:
         type: str
@@ -82,3 +85,28 @@ item_attributes:
             en: 'Sensor type. See plugin readme for supported types'
             fr: 'Type du capteur. Voir dans readme du plugin pour formats supportés'
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    ibutton_hook:
+        type: void
+        description:
+            de: 'Dieses ist eine spezielle Funktion, die aufgerufen wird, wenn ein unbekannter iButton an den Bus gehängt wird. Falls der unbekannte iButton bereits erkannt wurde, wird die Id gecached und die Funktion nicht erneut aufgerufen. Der Cache wird alle 10 Minuten geleert. Die Funktion muss zwei Argumente akzeptieren.  - Um die Funktionalität zu nutzen, muss eine (sinnvolle) Funktion zugewiesen werden. (z.B.: sh.ow.ibutton_hook = intruder_alert)'
+            en: 'This is a special function which is called if an unknown ibutton is attached to the bus. If the unknown ibutton is already seen, the id will be cached and the function is not called again. The cache will be reset every ten minutes. The function must take two arguments. The first will be the id of the ibutton and the second is the item of the ibutton busmaster (e.g. sh.home.key_hanger). - To use it you have to assign a (useful) function. (e.g.: sh.ow.ibutton_hook = intruder_alert)'
+        parameter:
+            ibutton:
+                type: str
+            description:
+                de: 'Id des iButten der benutzt wurde'
+                en: 'Id of the iButton that was used'
+            item:
+                type: str
+            description:
+            de: 'Item des Busmasters an dem der iButton genutzt wurde'
+            en: 'item of the busmaster at which the ibutton was used'

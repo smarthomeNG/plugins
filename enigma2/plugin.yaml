@@ -6,15 +6,17 @@ plugin:
         de: 'Plugin zur Einbindung von Enigma2 kompatiblen Sat-Receivern mit openwebif'
         en: 'Plugin to include Enigma2 sat receivers compatible to openwebif'
     maintainer: psilo909
-    tester: Sandman60, cmalo
+    tester: Sandman60, msinn
+    state: 'qa-passed'
 #    keywords: iot xyz
-    documentation: http://smarthomeng.de/user/plugins_doc/config/enigma2.html        # url of documentation (wiki) page
+#    documentation: http://smarthomeng.de/user/plugins/enigma2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
     version: 1.4.11                # Plugin version
     sh_minversion: 1.3c            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Enigma2             # class containing the plugin
 
 parameters:
@@ -71,10 +73,10 @@ parameters:
         type: str
         default: ''
         description:
-            de: '(optional) Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einem Gerät / Single Instance Betrieb des Plugins entfallen.'
-            en: '(optional) Unique identifier for each instance of the plugin. Can be skipped if only one device is used / the plugin is operated single instance.'
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
 
-    
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     enigma2_data_type:
@@ -94,3 +96,76 @@ item_attributes:
         description:
             de: 'Referenz auf Services (bspw. Sender), siehe README.'
             en: 'Service reference, see README.'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    get_audio_tracks:
+        type: list
+        description:
+            de: "Diese Funktion liefert eine Liste von dicts mit den folgenden Keys: 'e2audiotrackdescription' (str), 'e2audiotrackid' (int), 'e2audiotrackpid' (int), 'e2audiotrackactive' (bool) - Beispiel: sh.vusolo2.get_audio_tracks()"
+            en: "This function returns a list of dicts with the following keys: 'e2audiotrackdescription' (str), 'e2audiotrackid' (int), 'e2audiotrackpid' (int), 'e2audiotrackactive' (bool) - Example: sh.vusolo2.get_audio_tracks()"
+
+        parameters:
+            # This function has no parameters
+
+    send_message:
+        type: void
+        description:
+            de: "Sendet eine Message an das Enigma2 Device - Beispiel: sh.vusolo2.send_message('Testnachricht', 1, 10)"
+            en: "Sends a message to the device - Example: sh.vusolo2.send_message('Testmessage', 1, 10)"
+
+        parameters:
+            messagetext:
+                type: str
+                description:
+                    de: "Anzuzeignder Text"
+                    en: "Text to be displayed"
+            messagetype:
+                type: int
+                default: 1
+                valid_list: [0, 1, 2, 3]
+                valid_list_description:
+                    de: ['Ja/Nein', 'Info', 'Mitteilung', 'Achtung']
+                    en: ['Yes/No', 'Info', 'Message', 'Attention']
+                description:
+                    de: "messagetype bestimmt die Art wie die Mitteilung angezeigt werden soll"
+                    en: "messagetype determines the way the message shall be shown"
+            timeout:
+                type: int
+                default: 10
+                description:
+                    de: "Anzeigedauer der Message in Sekunden"
+                    en: "Number of seconds the message should stay on the device"
+
+    set_power_state:
+        type: void
+        description:
+            de: "Setzt den Power-Status auf einen bestimmten Wert - Beispiel (toggle standby): sh.vusolo2.set_power_state(0)"
+            en: "Sets the power state to a specific value - Example (toggle standby): sh.vusolo2.set_power_state(0)"
+
+        parameters:
+            value:
+                type: int
+                valid_list: [0, 1, 2, 3, 4, 5]
+                valid_list_description:
+                    de: ['Toggle Standby', 'Deepstandby', 'Reboot', 'Restart Enigma2', 'Wakeup from Standby', 'Standby']
+                    en: ['Toggle Standby', 'Deepstandby', 'Reboot', 'Restart Enigma2', 'Wakeup from Standby', 'Standby']
+                description:
+                    de: "Status in den die Enigma2 Box versetzt werden soll"
+                    en: "State into which the Enigma2 box should be changed"
+
+    get_answer:
+        type: foo
+        description:
+            de: "Diese Funktion prüft, ob eine Antwort zu einer gesendeten Message eingegangen ist. Dabei ist ddas timeout zu beachten, bis eine Message beantwortet wird. - Beispiel: sh.vusolo2.get_answer()"
+            en: "This function checks for an answer to a sent message. If you call this method, take into account the timeout until the message can be answered and e.g. set a 'while (count < 0)' - Example: sh.vusolo2.get_answer()"
+
+        parameters:
+            # This function has no parameters

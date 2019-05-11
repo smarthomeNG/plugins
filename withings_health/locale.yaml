@@ -1,0 +1,36 @@
+plugin_translations:
+    'Warnung':  {'de': 'Warnung', 'en': 'Warning'}
+    'Info':     {'de': 'Info', 'en': 'Info'}
+    'Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.':
+        'de': 'Das Token ist abgelaufen und wurde nicht verlängert. Bitte den OAuth2 Prozess neu starten.'
+        'en': 'The token has expired and was not renewed. Please start OAuth2 process again.'
+    'Withings Health Items':
+        'de': 'Withings Health Items'
+        'en': 'Withings Health Items'
+    'Withings Health Data Type':
+        'de': 'Withings Health Datentyp'
+        'en': 'Withings Health Data Type'
+    'Hier klicken, um OAuth2 Prozess zu starten!':
+        'de': 'Hier klicken, um OAuth2 Prozess zu starten!'
+        'en': 'Click here, to start OAuth2 process!'
+    'OAuth2 Authorization URL':
+        'de': 'OAuth2 Authorization URL'
+        'en': 'OAuth2 Authorization URL'
+    'Callback URL':
+        'de': 'Callback URL'
+        'en': 'Callback URL'
+    'Code Parameter für OAuth2 an Callback gesendet. Bitte Prüfen, ob die Werte, insbesondere Token Expiry aktualisiert wurden. Der Code ist nur einmal gültig, daher ist bspw. beim Reload der Seite mit gestztem "code" Parameter keine Änderung an Token Expiry mehr zu sehen!':
+        'de': 'Code Parameter für OAuth2 an Callback Funktion gesendet. Bitte Prüfen, ob die Werte, insbesondere Token Expiry aktualisiert wurden. Der Code ist nur einmal gültig, daher ist bspw. beim Reload der Seite mit gestztem "code" Parameter keine Änderung an Token Expiry mehr zu sehen!'
+        'en': 'Code parameter sent to callback function for OAuth2. Please verify, if the values, especially Token Expiry have updated. The code is valid only for one time. So when e.g. reloading the page with set "code" parameter, no change will happend anymore.'
+    'Code':
+        'de': 'Code'
+        'en': 'Code'
+    'State':
+        'de': 'State'
+        'en': 'State'
+    'OAuth2 noch nicht durchlaufen. Bitte unter dem Tab "OAuth2 Data" via Link starten. Erst danach funktioniert das Plugin.':
+        'de': 'OAuth2 noch nicht durchlaufen. Bitte unter dem Tab "OAuth2 Data" via Link starten. Erst danach funktioniert das Plugin.'
+        'en': 'OAuth2 was not run. Please start under the tab "OAuth2 Data" by clicking the link. Otherwise the plugin won`t work properly'
+    'Hier zuerst registrieren:':
+        'de': 'Hier zuerst registrieren:'
+        'en': 'Register here first:'

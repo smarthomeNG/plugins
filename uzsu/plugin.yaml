@@ -5,20 +5,184 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Universelle Zeitschaltuhr'
         en: 'Universal time switch'
-    maintainer: cmalo (Niko Will)
-    tester: Sandman60, cmalo
+    description_long:                  # Alternative: description in multiple languages
+        de: 'Dieses Plugin ermöglicht gezielte Schaltvorgänge von Items zu bestimmten Uhrzeiten oder
+             abhängig vom Sonnenstand. Die automatischen Schaltungen können dabei pro Wochentag separat
+             definiert werden.\n
+             Außerdem ermöglicht eine Interpolationsfunktion das Errechnen von
+             Werten zwischen zwei manuell angelegten Schaltzeiten, wodurch z.B. Lichtkurven über den
+             Tagesverlauf umgesetzt werden können.
+             '
+        en: 'This plugin provides specific item changes at a given time or sun position. Those automatic
+             switchings can be defined for each day of the week separately.\n
+             Furthermore the interpolation function allows the calculation of values between two manual
+             settings. You can use this feature for smooth light curves based on the time of the day.
+             '
+    requirements:
+        de: 'SciPy python Modul'
+        en: 'SciPy python module'
+    requirements_long:
+        de: 'Das Plugin benötigt die folgende Software:\n
+             \n
+             - libatlas-base-dev: Zumindest auf einem Raspberry Pi mit Debian Stretch ist der Befehl nötig: ``sudo apt install libatlas-base-dev``\n
+             - Python Modul scipy: ``pip3 install scipy``. Es wird empfohlen, zuerst die Pythonmodule zu aktualisieren,
+             aber unbedingt darauf zu achten, dass die Requirements von SmarthomeNG erfüllt bleiben!
+             Sollte die Installation via pip nicht funktionieren: ``sudo apt update && sudo apt install -y python3-scipy``\n
+             '
+        en: 'This plugin needs the following software to be installed and running:\n
+             \n
+             - libatlas-base-dev: On Raspberry Pi debian stretch you also have to run ``sudo apt install libatlas-base-dev``\n
+             - Python module scipy: ``pip3 install scipy``. Update your Python packages first
+             (but make sure they still meet the requirements for smarthomeng)!
+             If that does not work you can use: ``sudo apt update && sudo apt install -y python3-scipy``\n
+             '
+    maintainer: cmalo, bmxp, onkelandy
+    tester: Sandman60, cmalo, schuma
+    state: ready
 #    keywords: iot xyz
-    documentation: https://github.com/smarthomeNG/smarthome/wiki/UZSU-%28Universelle-Zeitschaltuhr%29        # url of documentation (wiki) page
+    documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1270230-uzsu-neue-version-von-onkelandy
 
-    version: 1.3.0                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.5.3                 # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: UZSU                # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    remove_duplicates:
+        type: bool
+        default: True
+        description:
+            de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu getätigten Eintrag ersetzt'
+            en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    uzsu_item:
+        type: str
+        description:
+            de: 'Das Item, das durch die UZSU geschaltet werden soll. Entweder als komplette ID oder relativer Pfad angegeben.'
+            en: 'The item that gets changed by the UZSU. Declare as full ID or relative path.'
+        description_long:
+            de: '**Das Item, das durch die UZSU geschaltet werden soll:**\n
+                Im items Ordner ist pro Item, das geschaltet werden soll, ein UZSU Item-Eintrag mit
+                ``type: dict`` zu erstellen. Die Hierarchie spielt dabei keine Rolle, es wird allerdings empfohlen,
+                das UZSU Item als Kind des zu schaltenden Items zu deklarieren und die relative Item-Referenzierung
+                ``".."`` für den Parameter ``uzsu_item`` zu nutzen. Es wird dringend empfohlen,
+                ``cache: True`` zu setzen, damit die Einstellungen bei einem Neustart nicht verloren gehen.
+                '
+            en: '**The item that gets changed by the UZSU:**\n
+                 You have to specify an item with ``type: dict`` and with the ``uzsu_item``
+                 attribute set to the path of the item which will be set by this item.
+                 The hierarchy does not matter but it is recommended to define the UZSU item
+                 as a child of the item to be set and use the relative item reference ``".."``
+                 for the uzsu_item parameter. It is highly recommended to specify
+                 ``cache: True`` as well for persistent storage of the UZSU information.
+                 '
+
+item_structs:
+    child:
+        name: Vorlage-Struktur für Zeitschaltuhren
+
+        uzsu:
+            type: dict
+            uzsu_item: '..'
+            cache: 'True'
+            visu_acl: rw
+
+            active:
+                remark: Use this item to easily turn on or off your UZSU
+                type: bool
+                eval: sh...activate(value)
+                visu_acl: rw
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+    planned:
+        type: dict
+        description:
+            de: 'Abfrage des nächsten Aktualisierungszeitpunkts'
+            en: 'Query the next scheduled value and time'
+        description_long:
+            de: 'Abfrage des nächsten Aktualisierungszeitpunkts. Ist keine Aktualisierung geplant, z.B. weil das
+                UZSU Item nicht aktiviert ist, wird None zurückgegeben, ansonsten ein Dictionary
+                mit den Einträgen Zeit und Wert.
+                '
+            en: 'Query the next scheduled value and time. If no update is planned, e.g. if the UZSU item
+                is not active, the result is None, otherwise a dictionary containing entries for time and value.
+                '
+
+    clear:
+        type: bool
+        description:
+            de: 'Beim Aufrufen mit dem Parameter True werden die Einträge der UZSU gelöscht.'
+            en: 'Using this function with the parameter True clears the UZSU.'
+        description_long:
+            de: 'Löschen der UZSU Einträge eines Items.\n
+                - Leer: nichts ausführen\n
+                - True: löschen\n
+                '
+            en: 'Delete the UZSU entries of an item.\n
+                - Empty: do nothing\n
+                - True: delete\n
+                '
+
+    activate:
+        type: bool
+        description:
+            de: 'Abfrage oder Setzen, ob die uzsu aktiv ist oder nicht.'
+            en: 'query or set whether the uzsu is set active or not.'
+        description_long:
+            de: 'Abfrage oder Setzen, ob die uzsu aktiv ist oder nicht.\n
+                - Leer: Abfrage\n
+                - True: aktivieren\n
+                - False: deaktivieren\n
+                '
+            en: 'Query or set whether the uzsu is set active or not.\n
+                - Empty: query\n
+                - True: activate\n
+                - False: deactivate\n
+                '
+
+    interpolation:
+        type: dict
+        description:
+            de: 'Abfrage (leerer Parameter) oder Setzen der Interpolationseinstellungen'
+            en: 'Query (empty parameter) or set the interpolation settings'
+        parameters:
+            'type':
+                type: str
+                default: none
+                description:
+                    de: 'Interpolationstyp: linear/none/cubic'
+                    en: 'interpolation type: linear/none/cubic'
+                description_long:
+                    de: 'Interpolationstyp:\n
+                        - linear: konstant gleiche Zwischenberechnung\n
+                        - cubic: Spline-Interpolation mit verzögertem Start und sanftem Verlangsamen\n
+                        - none: keine Interpolation\n
+                        '
+                    en: 'interpolation type:\n
+                        - linear: constant interpolation\n
+                        - cubic: splinte interpolation with ease in and out\n
+                        - none: no interpolation\n
+                        '
+            interval:
+                type: int
+                default: 5
+                description:
+                    de: 'Intervall in Minuten, in dem der Wert aktualisiert werden soll'
+                    en: 'interval in minutes to update the value'
+            backintime:
+                type: int
+                default: 0
+                description:
+                    de: 'Maximales Alter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen.'
+                    en: 'maximum age of an uzsu entry in minutes to be catched up at the plugin start'
+
