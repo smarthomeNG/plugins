@@ -13,8 +13,8 @@ plugin:
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
 # Following entries are for Smart-Plugins:
-    version: 1.3c.0                 # Plugin version
-    sh_minversion: 1.3c            # minimum shNG version to use this plugin
+    version: 1.4.0                 # Plugin version
+    sh_minversion: 1.4            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
     classname: Kodi                # class containing the plugin
@@ -39,6 +39,33 @@ parameters:
             de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
             en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
 
+    autoreconnect:
+        type: bool
+        default: False
+        description:
+            de: 'Erneuter Verbindungsversuch bei Verlust der Verbindung.'
+            en: 'Try to reconnect after connection loss.'
+
+    connect_retries:
+        type: int
+        default: 10
+        description:
+            de: 'Anzahl Verbindungsversuche'
+            en: 'Amount of connection retries'
+
+    connect_cycle:
+        type: int
+        default: 5
+        description:
+            de: 'Pause zwischen Verbindungsversuchen'
+            en: 'Pause between connection retries'
+
+    send_retries:
+        type: int
+        default: 5
+        description:
+            de: 'Maximale Versuche zum Senden eines Befehls, der von Kodi nicht bestätigt wurde.'
+            en: 'Maximum retries to send a command that did not get confirmed by Kodi.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -88,4 +115,3 @@ plugin_functions:
                 description:
                     de: 'Dauer der Anzeige in msec'
                     en: ''
-
