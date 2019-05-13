@@ -9,10 +9,11 @@ plugin:
     tester: psilo909, onkelandy, brandst
     state: ready
     keywords: database
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.4.1                 # Plugin version
-    sh_minversion: 1.4c            # minimum shNG version to use this plugin
+    version: 1.5.7                 # Plugin version
+    sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
@@ -48,6 +49,12 @@ parameters:
         description:
             de: 'Genauigkeit der aus der Datenbank ausgelesenen Werte (Nachkommastellen).'
             en: 'Precision of values read from database (digits after comma).'
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
 
 
 item_attributes:
@@ -59,6 +66,9 @@ item_attributes:
             de: "Wenn auf 'yes' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert in die Datenbank geschrieben."
             en: "This attribute enables the database logging when set (just use value 'yes'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
 
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

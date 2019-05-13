@@ -21,26 +21,27 @@
 #  along with SmartHomeNG If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
+from lib.network import Http
 
 import time
 import json
-import requests
+
 
 class Pushover(SmartPlugin):
 
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.1.0"
+    PLUGIN_VERSION = "1.6.1.0"
 
     _url = "https://api.pushover.net/1/messages.json"
 
-    def __init__(self, sh, apiKey=None, userKey=None, device=None):
-        self._sh = sh
-        self.logger = logging.getLogger(__name__)
-        self._apiKey = apiKey
-        self._userKey = userKey
-        self._device = device
+    def __init__(self, sh, *args, **kwargs):
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+        self._apiKey = self.get_parameter_value('apiKey')
+        self._userKey = self.get_parameter_value('userKey')
+        self._device = self.get_parameter_value('device')
+        self._po = Http()
 
     def run(self):
         pass
@@ -48,16 +49,15 @@ class Pushover(SmartPlugin):
     def stop(self):
         pass
 
-    def __call__(self, title=None, message='', priority=None, retry=None, expire=None, sound=None, url=None, url_title=None, device=None, userKey=None, apiKey=None):
+    def __call__(self, title=None, message='', priority=None, retry=None, expire=None, sound=None, url=None, url_title=None, device=None, userKey=None, apiKey=None, attachment=None):
         data = {}
-        headers = {'User-Agent': "SmartHomeNG", 'Content-Type': "application/x-www-form-urlencoded"}
 
         data['timestamp'] = int(time.time())
 
         if title:
-            data['title'] = title[:250].encode()
+            data['title'] = title[:250]
 
-        data['message'] = message[:1000].encode()
+        data['message'] = message[:1000]
 
         if priority:
             if isinstance(priority, int) and priority >= -2 and priority <= 2:
@@ -74,7 +74,7 @@ class Pushover(SmartPlugin):
                     data['priority'] = 1
 
                 if expire and priority == 2:
-                    if isinstance(expire, int) and expire > 10800:
+                    if isinstance(expire, int) and expire <= 10800:
                         data['expire'] = expire
                     else:
                         data['expire'] = 10800
@@ -122,20 +122,22 @@ class Pushover(SmartPlugin):
         elif self._device:
             data['device'] = self._device
 
-        try:
-            resp = requests.post(self._url, headers=headers, data=data)
+        if attachment:
+            files = {'attachment': open(attachment, 'rb')}
+        else:
+            files = {}
 
-            # read json response on successful status 200 
-            if (resp.status_code == 200):
-                json_data = resp.json()
+        try:
+            json_data = self._po.post_json(self._url, json=data, files=files)
+            (_status_code, _reason) = self._po.response_status()
 
             # process response
-            if (resp.status_code == 200 and json_data['status'] == 1):
+            if (_status_code == 200 and json_data['status'] == 1):
                 self.logger.debug("Pushover returns: Notification successful submitted.")
-            elif (resp.status_code == 429):
+            elif (_status_code == 429):
                 self.logger.warning("Pushover returns: Message limits have been reached.")
             else:
-                self.logger.warning("Pushover returns: {0} - {1}".format(resp.status_code, resp.text))
+                self.logger.warning("Pushover returns: {0} - {1}".format(_status_code, _reason))
 
         except Exception as e:
-            self.logger.warning("Could not send Pushover notification: {0}. Error: {1}".format(event, e))
+            self.logger.warning("Could not send Pushover notification. Error: {}".format(e))

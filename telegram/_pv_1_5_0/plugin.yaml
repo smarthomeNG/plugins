@@ -1,0 +1,95 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Anbindung des Telegram Service (verwendet python-telegram-bot Package statt telepot Package)'
+        en: 'Connects to the telegram service (uses python-telegram-bot package instead of telebot package)'
+    maintainer: gamade, ivan73, bmxp
+    state: ready
+#    tester:                        # Who tests this plugin?
+    keywords: telegram chat messenger photo
+    documentation: http://smarthomeng.de/user/plugins/telegram/user_doc.html
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.5.0                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    restartable: True
+    classname: Telegram            # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    token:
+        type: str
+        description:
+            de: 'geteilter geheimer Schlüssel zur Authentifizierung bei Telegram'
+            en: 'shared secret key to authenticate to telegram network'
+
+    trusted_chat_ids:
+        type: str
+        description:
+            de: 'Liste von Chat IDs denen vertraut wird'
+            en: 'list of trusted chat ids'
+
+    name:
+        type: str
+        default: 'SmartHomeNG Telegram Gateway'
+        description:
+            de: 'Name um diese Instanz zu identifizieren'
+            en: 'used to identify this Telegram Instance'
+
+    long_polling_timeout:
+        type: num
+        # 2 minutes should be long enough to avoid problems with too many connections to telegram server
+        default: 120
+        description:
+            de: 'Zeit nachdem eine neue Verbindung zum Telegram Server aufgebaut um Updates zu holen'
+            en: 'Time after a new link to telegram server will be established to get updates'
+
+    welcome_msg:
+        type: str
+        default: 'SmarthomeNG Telegram Plugin is up and running'
+        description:
+            de: 'Willkommensnachricht, wird an alle vertrauenswürdigen Clients beim Start des Plugins gesendet'
+            en: 'Welcome message, will be sent to all trusted chat clients at plugin start'
+
+    bye_msg:
+        type: str
+        default: 'SmartHomeNG Telegram Plugin stops'
+        description:
+            de: 'Endenachricht, wird an alle vertrauenswürdigen Clients beim Stop des Plugins gesendet'
+            en: 'Bye message, will be sent to all trusted chat clients at plugin stop'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    telegram_message:
+        type: str
+        description:
+            de: 'Mitteilung senden wenn sich der Itemwert ändert'
+            en: 'Send message on item change'
+
+    telegram_info:
+        type: str
+        description:
+            de: 'Item lesen mit bestimmten Itemwerten'
+            en: 'read items with specific item-values'
+
+    telegram_text:
+        type: str
+        description:
+            de: 'Mitteilungstext als Itemwert setzen'
+            en: 'write message-text into the item'
+
+    telegram_value_match_regex:
+        type: str
+        description:
+            de: 'Itemwert gegen einen regulän Ausdruck prüfen vor versenden einer Mitteilung'
+            en: 'check a value against a condition before sending a message'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin

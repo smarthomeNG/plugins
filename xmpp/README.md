@@ -53,6 +53,7 @@ xmpp:
     class_path: plugins.xmpp
     jid: 'user account eg skender@somexmppserver.com'
     password: your xmpp server password
+    #server: 127.0.0.1:5222
     #use_ipv6: 1
     #plugins:
     #  - xep_0199  # MUC
@@ -63,6 +64,7 @@ Description of the attributes:
 
 * jid: jabber/xmpp user account
 * password: jabber/xmpp user password
+* server: IP and (optionally) port of server to connect
 * use_ipv6: enable IPv6 support, which is the default
 * plugins: list of plugins (XEP to support)
 

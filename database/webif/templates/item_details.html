@@ -1,5 +1,5 @@
 {% extends "base_database.html" %}
-
+{% set tab1title = _('Database Items')+' ('+item_path+')' %}
 {% block buttons %}
 {{ super() }}
 <button type="button" class="btn btn-shng btn-sm" onclick="location.href='?'">{{ _('Übersicht') }}</button>

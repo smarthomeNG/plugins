@@ -9,8 +9,8 @@ $('#rulers').click(function(e) {
     switchRulers();
 });
 
-window.addEventListener("resize", function(){resizeCodeMirror(logicsCodeMirror, 15)}, false);
-resizeCodeMirror(logicsCodeMirror, 15);
+window.addEventListener("resize", function(){resizeCodeMirror(logicsCodeMirror, 95)}, false);
+resizeCodeMirror(logicsCodeMirror, 95);
 
 var dict = [];
 var watch_items_dict = [];

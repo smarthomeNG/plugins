@@ -49,6 +49,12 @@ item_attributes:
             may only be assigned one time over all items. They are used for plugin internal information storage.
             "track" may be assigned to multiple items and is used to record the value changes of that item.'
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions: NONE
     # Definition of function interface of the plugin
 

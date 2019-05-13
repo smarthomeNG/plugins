@@ -21,6 +21,7 @@
 import logging
 import threading
 from . import StateEngineLogger
+from lib.item import Items
 
 
 class SeFunctions:
@@ -38,6 +39,7 @@ class SeFunctions:
         self.__sh = smarthome
         self.__locks = {}
         self.__ab_alive = False
+        self.items = Items.get_instance()
 
     # get a lock object
     # lock_id: Id of the lock object to return
@@ -55,7 +57,7 @@ class SeFunctions:
     # If the original caller/source should be consiedered, the method returns the inverted value of the item.
     # Otherwise, the method returns the current value of the item, so that no change will be made
     def manual_item_update_eval(self, item_id, caller=None, source=None):
-        item = self.__sh.return_item(item_id)
+        item = self.items.return_item(item_id)
         if item is None:
             self.logger.error("manual_item_update_eval: item {0} not found!".format(item_id))
 
@@ -69,7 +71,7 @@ class SeFunctions:
 
             if "se_manual_logitem" in item.conf:
                 elog_item_id = item.conf["se_manual_logitem"]
-                elog_item = self.__sh.return_item(elog_item_id)
+                elog_item = self.items.return_item(elog_item_id)
                 if elog_item is None:
                     self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!".format(elog_item_id))
                     elog = StateEngineLogger.SeLoggerDummy()
@@ -169,7 +171,7 @@ class SeFunctions:
         original_caller = caller
         original_source = source
         while original_caller == "Eval":
-            original_item = self.__sh.return_item(original_source)
+            original_item = self.items.return_item(original_source)
             if original_item is None:
                 elog.debug("get_original_caller({0}, {1}): original item not found", original_caller, original_source)
                 break

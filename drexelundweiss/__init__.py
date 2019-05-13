@@ -38,7 +38,7 @@ except Exception:
 
 class DuW(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.5.2"
 
     def __init__(self, smarthome):
         self._name = self.get_fullname()
@@ -95,6 +95,8 @@ class DuW(SmartPlugin):
                              smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_business.txt'}
             self.devl[17] = {'device': 'aerosilent stratos', 'cmdpath':
                              smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_stratos.txt'}
+            self.devl[25] = {'device': 'aerosilent exos', 'cmdpath':
+                             smarthome.base_dir + '/plugins/drexelundweiss/aerosilent_exos.txt'}
         except Exception as err:
             self.logger.error("Error on init {}.".format(err))
             self._init_complete = False

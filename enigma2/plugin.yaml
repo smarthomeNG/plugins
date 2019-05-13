@@ -9,7 +9,7 @@ plugin:
     tester: Sandman60, msinn
     state: 'qa-passed'
 #    keywords: iot xyz
-    documentation: http://smarthomeng.de/user/plugins_doc/config/enigma2.html        # url of documentation (wiki) page
+#    documentation: http://smarthomeng.de/user/plugins/enigma2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
     version: 1.4.11                # Plugin version
@@ -73,10 +73,10 @@ parameters:
         type: str
         default: ''
         description:
-            de: '(optional) Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einem Gerät / Single Instance Betrieb des Plugins entfallen.'
-            en: '(optional) Unique identifier for each instance of the plugin. Can be skipped if only one device is used / the plugin is operated single instance.'
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
 
-    
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     enigma2_data_type:
@@ -96,6 +96,12 @@ item_attributes:
         description:
             de: 'Referenz auf Services (bspw. Sender), siehe README.'
             en: 'Service reference, see README.'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions:
     # Definition of function interface of the plugin

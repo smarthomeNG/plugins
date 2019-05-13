@@ -3,14 +3,14 @@
 #########################################################################
 #  Copyright 2017-2018  Martin Sinn                         m.sinn@gmx.de
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
-#  The mqtt-plugin implements a MQTT client. 
+#  The mqtt-plugin implements a MQTT client.
 #
-#  MQTT is a machine-to-machine (M2M)/"Internet of Things" connectivity 
-#  protocol. It was designed as an extremely lightweight publish/subscribe 
+#  MQTT is a machine-to-machine (M2M)/"Internet of Things" connectivity
+#  protocol. It was designed as an extremely lightweight publish/subscribe
 #  messaging transport.
-#  
+#
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -55,18 +55,18 @@ class Mqtt(SmartPlugin):
     Main class of the Mqtt-Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
-    
+
     ALLOW_MULTIINSTANCE = True
-    
+
     PLUGIN_VERSION = "1.4.7"
 
     __plugif_CallbackTopics = {}         # for plugin interface
     __plugif_Sub = None
-        
+
     _broker_version = '?'
     _broker = {}
-    
-    
+
+
     def __init__(self, sh, *args, **kwargs):
 
         """
@@ -161,7 +161,7 @@ class Mqtt(SmartPlugin):
 
         self._connected = False
         self._connect_result = ''
-        
+
         # tls ...
         # ca_certs ...
 
@@ -170,12 +170,12 @@ class Mqtt(SmartPlugin):
             return
 
         self.init_webinterface()
-        
+
 
     def run(self):
         """
         Run method for the plugin
-        """        
+        """
         self.alive = True
         if (self.birth_topic != '') and (self.birth_payload != ''):
             self._client.publish(self.birth_topic, self.birth_payload, self.qos, retain=True)
@@ -217,12 +217,12 @@ class Mqtt(SmartPlugin):
             item.conf['mqtt_topic_out'+self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt_topic')
 
         if self.has_iattr(item.conf, 'mqtt_topic_init'):
-            item.conf['mqtt_topic_out'+self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt_topic_init') 
-        
+            item.conf['mqtt_topic_out'+self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt_topic_init')
+
         # check other mqtt attributes, if a topic attribute has been specified
         if self.has_iattr(item.conf, 'mqtt_topic_in') or self.has_iattr(item.conf, 'mqtt_topic_out'):
             self.logger.debug(self.get_loginstance()+"parsing item: {0}".format(item.id()))
-        
+
             # checking attribute 'mqtt_qos'
             if self.has_iattr(item.conf, 'mqtt_qos'):
                 self.logger.debug(self.get_loginstance()+"Setting QoS '{}' for item '{}'".format( str(self.get_iattr_value(item.conf, 'mqtt_qos')), str(item) ))
@@ -233,15 +233,15 @@ class Mqtt(SmartPlugin):
                     self.logger.warning(self.get_loginstance()+"Item '{}' invalid value specified for mqtt_qos, using plugin's default".format(item.id()))
                     qos = self.qos
                 self.set_attr_value(item.conf, 'mqtt_qos', str(qos))
-            	
+
             # checking attribute 'mqtt_retain'
             if Utils.to_bool(self.get_iattr_value(item.conf, 'mqtt_retain'), default=False):
                 self.set_attr_value(item.conf, 'mqtt_retain', 'True')
             else:
                 self.set_attr_value(item.conf, 'mqtt_retain', 'False')
-            
+
             self.logger.debug(self.get_loginstance()+"(parsing result): item.conf '{}'".format( str(item.conf) ))
-                   
+
         # subscribe to configured topics
         if self.has_iattr(item.conf, 'mqtt_topic_in'):
             if self._connected or True:
@@ -282,8 +282,8 @@ class Mqtt(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         Write items values
-        
-        This function is called by the core when a value changed, 
+
+        This function is called by the core when a value changed,
         so the plugin can update it's peripherals
 
         :param item:   item to be updated towards the plugin
@@ -314,7 +314,7 @@ class Mqtt(SmartPlugin):
         if self.mod_http == None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
-        
+
         import sys
         if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
@@ -331,14 +331,14 @@ class Mqtt(SmartPlugin):
                 'tools.staticdir.dir': 'static'
             }
         }
-        
+
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self), 
-                                     self.get_shortname(), 
-                                     config, 
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
                                      self.get_classname(), self.get_instance_name(),
                                      description='')
-                                   
+
         return True
 
 
@@ -368,7 +368,7 @@ class Mqtt(SmartPlugin):
             data = '0'
             if Utils.is_int(str_data):
                 if (int(str_data) >= 0) and (int(str_data) < 0):
-                    data = str_data        
+                    data = str_data
         elif datatype == 'foo':
             data = raw_data
         else:
@@ -412,7 +412,7 @@ class Mqtt(SmartPlugin):
             if (self.birth_topic != '') and (self.birth_payload != ''):
                 retain = True
             self._client.will_set(self.last_will_topic, self.last_will_payload, self.qos, retain=retain)
-            
+
         if self.username != '':
             self._client.username_pw_set(self.username, self.password)
         self._client.on_connect = self.on_connect
@@ -420,8 +420,8 @@ class Mqtt(SmartPlugin):
         self._client.on_message = self.on_mqtt_message
         try:
             self._client.connect(self.broker_ip, self.broker_port, 60)
-        except ERROR as e:
-            self.logger.error(self.get_loginstance()+'Connection error:', e)
+        except Exception as e:
+            self.logger.error(self.get_loginstance()+'Connection error: {0}'.format(e))
             return False
         return True
 
@@ -519,7 +519,7 @@ class Mqtt(SmartPlugin):
         if (self.last_will_topic != '') and (self.last_will_payload != ''):
             if (self.birth_topic != '') and (self.birth_payload != ''):
                 self._client.publish(self.last_will_topic, self.last_will_payload+' (shutdown)', self.qos, retain=True)
-                
+
         self.logger.info(self.get_loginstance()+"Stopping mqtt client '{}'. Disconnecting from broker.".format(self._client._client_id.decode('utf-8')))
         self._client.loop_stop()
         self._connected = False
@@ -573,7 +573,7 @@ class Mqtt(SmartPlugin):
 
         :param client:    the client instance for this callback
         :param userdata:  the private user data as set in Client() or userdata_set()
-        :param message:   an instance of MQTTMessage. 
+        :param message:   an instance of MQTTMessage.
                           This is a class with members topic, payload, qos, retain.
         """
         item = self.topics.get(message.topic, None)
@@ -640,10 +640,10 @@ class Mqtt(SmartPlugin):
     def publish_topic(self, plug, topic, payload, qos=None, retain=False):
         """
         function to publish a topic
-        
+
         this function is to be called from other plugins, which are utilizing
         the mqtt plugin
-        
+
         :param topic:      topic to publish to
         :param payload:    payload to publish
         :param qos:        quality of service (optional) otherwise the default of the mqtt plugin will be used
@@ -660,10 +660,10 @@ class Mqtt(SmartPlugin):
     def subscription_callback(self, plug, sub, callback=None):
         """
         function set a callback function
-        
+
         this function is to be called from other plugins, which are utilizing
         the mqtt plugin
-        
+
         :param plug:       identifier of plgin/logic using the MQTT plugin
         :param sub:        topic(s) which should call the callback function
                            example: 'device/eno-gw1/#'
@@ -676,7 +676,7 @@ class Mqtt(SmartPlugin):
                 self.__plugif_Sub = sub + '/#'
             else:
                 self.__plugif_Sub = sub
-        
+
             self.logger.warning(self.get_loginstance()+"(interface): Plugin '{}' is registering a callback function for subscription of topics '{}'".format( str(plug), str(self.__plugif_Sub) ))
             self._client.message_callback_add(self.__plugif_Sub, callback)
         else:
@@ -691,10 +691,10 @@ class Mqtt(SmartPlugin):
     def subscribe_topic(self, plug, topic, qos=None):
         """
         function to subscribe to a topic
-         
+
         this function is to be called from other plugins, which are utilizing
         the mqtt plugin
-         
+
         :param topic:      topic to subscribe to
         :param qos:        quality of service (optional) otherwise the default of the mqtt plugin will be used
         """
@@ -717,7 +717,7 @@ class WebInterface(SmartPluginWebIf):
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str
@@ -726,9 +726,9 @@ class WebInterface(SmartPluginWebIf):
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
-        
+
         self.tplenv = self.init_template_environment()
-        
+
         self.items = Items.get_instance()
 
 
@@ -737,10 +737,10 @@ class WebInterface(SmartPluginWebIf):
     def index(self, reload=None):
         """
         Build index.html for cherrypy
-        
+
         Render the template and return the html file to be delivered to the browser
-            
-        :return: contents of the template after beeing rendered 
+
+        :return: contents of the template after beeing rendered
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)

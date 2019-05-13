@@ -3,10 +3,11 @@ plugin:
     # Global plugin attributes
     type: gateway                 # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Amazon Dashbutton plugin, **seit SmartHomeNG v1.3**'
-        en: ''
+        de: 'Einbindung von Amazon Dashbuttons'
+        en: 'Integration of Amazon dashbuttons'
     maintainer: pfischi
     tester: psilo909
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1005266-plugin-amazon-dashbutton
@@ -15,17 +16,60 @@ plugin:
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Dashbutton          # class containing the plugin
 
 parameters: NONE
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
-logic_parameters:
-    # Definition of logic parameters defined by this plugin
 
-plugin_functions:
-    # Definition of function interface of the plugin
+    dashbutton_mac:
+        type: list
+        description:
+            de: "MAC Adresse des Dah-Buttons. Es können beliebig viele MAC Adressen mit dem Item verbunden werden."
+            en: "The mac address of the dash button. You can add as many mac addresses you want to your item."
+
+    dashbutton_mode:
+        type: str
+        valid_list:
+          - 'flip'
+          - 'value'
+        description:
+            de: "Falls 'flip' gewählt wird, muss der Item type 'bool' sein und das Attribut 'dashbutton_value' wird \
+                 ignoriert. In diesem Modus wird der Wert des Items bei Druck auf den Dash-Button umgeschaltet \
+                 (0->1 oder 1->0)"
+            en: "The value can be 'flip' or 'value. If 'flip' mode is chosen, the item type has to be 'bool' and \
+                 the attribute 'dashbutton_value' will be ignored. If the configured button was pressed in this mode, \
+                 the current item value is flipped. (0->1 or 1->0)"
+
+    dashbutton_value:
+        type: list
+        description:
+            de: ""
+            en: "If 'dashbutton_mode' is set to 'value', the attribute 'dashbutton_value' has to be set. It can be \
+                 a single value or a list af values. If the attribute value is a list, the values will be processed \
+                in the given order. After the last element of the list is reached, the next button press triggers the \
+                first element of the list. If a item value is changed by another action than a button press and the \
+                new item value is not in the configured list, the next dashbutton press triggers the first element."
+
+    dashbutton_reset:
+        type: list
+        description:
+            de: ""
+            en: "It is possible to configure a reset timer (in seconds). If there is no item value change after \
+                 the configured time in seconds (neither a button press nor another action), the first element of \
+                 the list is taken when the item is triggered the next time. This attribute will be ignored, if no \
+                 list is passed to the attribute 'dashbutton_value'."
+
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
 

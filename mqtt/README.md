@@ -192,7 +192,7 @@ path to certificate files
 Example configuration in yaml-format:
 
 ```yaml
-alarm_in_
+alarm_in:
     # messages coming from the alarm panel
     # (called 'alarm/out' by the alarm panel)
     name: alarm_test_mqtt_in
@@ -207,27 +207,7 @@ alarm_out:
 
 ```
 
-### Example: items.yaml
-Example configuration in the old conf-format:
-
-```
-[[alarm_in_]]
-    # messages coming from the alarm panel
-    # (called 'alarm/out' by the alarm panel)
-    name = alarm_test_mqtt_in
-    type = foo
-    mqtt_topic_in = 'alarm/out'
-
-[[alarm_out]]
-    # messages published, to be read by the alarm panel
-    name = alarm_test_mqtt_out
-    type = foo
-    mqtt_topic_out = 'alarm/in'
-
-```
-
-
-Datatype foo delivers the raw data from the MQTT message to the item (as an array of bytes).
+Datatype **foo** delivers the raw data from the MQTT message to the item (as an array of bytes).
 
 **NEW:** You can use any of the other datatypes. If you use any of those datatypes, the data from the mqtt message will be casted to the desired format.
 

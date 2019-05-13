@@ -10,10 +10,10 @@ plugin:
     tester: psilo909, onkelandy, Sandman60, brandst
     state: qa-passed
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
 
-    version: 1.4.6                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    version: 1.6.0                 # Plugin version
+    sh_minversion: 1.5e            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
@@ -88,6 +88,13 @@ parameters:
             de: 'Wenn diese Option auf "True" gesetzt ist, werden die Statistikfunktionen aktiviert um Daten erfassen'
             en: 'if set to True, the statistic functions are enabled to collect data'
 
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 
 
 item_attributes:
@@ -117,9 +124,15 @@ item_attributes:
          - '16001'
          - '16.001'
          - '17'
+         - '17001'
+         - '17.001'
+         - '18001'
+         - '18.001'
          - '20'
          - '24'
+         - '229'
          - '232'
+         - '275.100'
         valid_list_description:
             de:
              - 'Schalten (1 Bit) -> bool'
@@ -144,9 +157,15 @@ item_attributes:
              - 'Zeichenkette [8859_1] (14 Byte) -> str'
              - 'Zeichenkette [8859_1] (14 Byte) -> str'
              - 'Szenennummer: 0 - 63 (8 Bit) -> num'
+             - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+             - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+             - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
+             - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
              - 'HVAC: 0 - 255 (8 Bit) -> num'
              - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
+             - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
             en:
              - 'Switch (1 Bit) -> bool'
              - 'forced control (2 Bit) -> list'
@@ -170,9 +189,15 @@ item_attributes:
              - 'String [8859_1] (14 Byte) -> str'
              - 'String [8859_1] (14 Byte) -> str'
              - 'Scene number: 0 - 63 (8 Bit) -> num'
+             - 'Scene number: 1 - 64 (8 Bit) -> num'
+             - 'Scene number: 1 - 64 (8 Bit) -> num'
+             - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
+             - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
              - 'HVAC: 0 - 255 (8 Bit) -> num'
              - 'unlimited string [8859_1] (var) -> str'
+             - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
         description:
             de: 'Dieses Attribut setzt den Typ des KNX-Datenpunktes, der für die Konvertierung der KNX-Nachrichten in das interne SmartHomeNG-Format verwendet wird. Die Angabe ist zwingend erforderlich ist. Wenn Sie keinen Wert angeben, wird das Element vom Plugin ignoriert. Der DPT muss dem Typ des Artikels entsprechen!'
             en: "This attribute set the KNX datapoint type used for conversion of the KNX messages to internal SmartHomeNG format. It is mandatory. If you don't provide one the item will be ignored by the plugin. The DPT has to match the type of the item! BE CAREFUL to put the value in quotes to ensure they are interpreted as strings and not as numbers!"
@@ -190,16 +215,16 @@ item_attributes:
             en: "Group address (or list of group addresses) to listen for. KNX messages to this group address(es) will change the item's value"
 
     knx_init:
-        type: knx_ga
+        type: list(knx_ga)
         description:
-            de: 'Gruppenadresse für die Initialisierung des Items. Der KNX-Bus wird nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden.'
-            en: 'Group address to use for initialization of the item. The KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address.'
+            de: 'Gruppenadresse für die Initialisierung des Items. Der KNX-Bus wird nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden. Wie bei knx_listen kann eine Liste von GAs angegeben werden. Dann wird der erste Eintrag der Liste für die Initialisierung verwendet.'
+            en: 'Group address to use for initialization of the item. The KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address. Like for knx_listen a list of GAs can be specified. In this case, the first list entry is used to read the KNX cache.'
 
     knx_cache:
-        type: knx_ga
+        type: list(knx_ga)
         description:
-            de: 'Gruppenadresse für die Initialisierung des Items. Der Wert wird aus dem Cache von KNXD/EIBD gelesen. Wenn kein Cache-Wert vorhanden ist, wird der KNX-Bus nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden.'
-            en: 'Group address to use for initialization of the item. The value is read from the cache of KNXD/EIBD. If no cached value exists, the KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address.'
+            de: 'Gruppenadresse für die Initialisierung des Items. Der Wert wird aus dem Cache von KNXD/EIBD gelesen. Wenn kein Cache-Wert vorhanden ist, wird der KNX-Bus nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden. Wie bei knx_listen kann eine Liste von GAs angegeben werden. Dann wird der erste Eintrag der Liste für die Initialisierung verwendet.'
+            en: 'Group address to use for initialization of the item. The value is read from the cache of KNXD/EIBD. If no cached value exists, the KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address. Like for knx_listen a list of GAs can be specified. In this case, the first list entry is used to read the KNX cache.'
 
     knx_reply:
         type: list(knx_ga)
@@ -219,6 +244,9 @@ item_attributes:
             de: 'Geben Sie eine abzurufende Gruppenadresse und das Zeitintervall in Sekunden für eine automatisierte Abfrage vom KNX Bus in Form einer Liste an. Der erste Eintrag ist die Gruppenadresse, der zweite Eintrag ist das Pollintervall in Sekunden. Dies kann für Aktoren oder Sensoren verwendet werden, die keine regelmäßige Übermittlung von Werten unterstützen.'
             en: 'Specify a group address to poll and the time interval in seconds for an automated query of KNX in form of a list. First entry is the group address, second entry is the poll interval in seconds. This may be used for actors or sensors that do no support a regular sending of values themselves.'
 
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters:
     # Definition of logic parameters defined by this plugin
@@ -296,9 +324,15 @@ plugin_functions:
                  - '16001'
                  - '16.001'
                  - '17'
+                 - '17001'
+                 - '17.001'
+                 - '18001'
+                 - '18.001'
                  - '20'
                  - '24'
+                 - '229'
                  - '232'
+                 - '275.100'
                 valid_list_description:
                     de:
                      - 'Schalten (1 Bit) -> bool'
@@ -323,9 +357,15 @@ plugin_functions:
                      - 'Zeichenkette [8859_1] (14 Byte) -> str'
                      - 'Zeichenkette [8859_1] (14 Byte) -> str'
                      - 'Szenennummer: 0 - 63 (8 Bit) -> num'
+                     - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+                     - 'Szenennummer: 1 - 64 (8 Bit) -> num'
+                     - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
+                     - 'Szenen-Kontrolle: 1 - 64 (Aufruf) 129-192 (Speichern) (8 Bit) -> num'
                      - 'HVAC: 0 - 255 (8 Bit) -> num'
                      - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
+                     - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
                     en:
                      - 'Switch (1 Bit) -> bool'
                      - 'forced control (2 Bit) -> list'
@@ -349,9 +389,15 @@ plugin_functions:
                      - 'String [8859_1] (14 Byte) -> str'
                      - 'String [8859_1] (14 Byte) -> str'
                      - 'Scene number: 0 - 63 (8 Bit) -> num'
+                     - 'Scene number: 1 - 64 (8 Bit) -> num'
+                     - 'Scene number: 1 - 64 (8 Bit) -> num'
+                     - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
+                     - 'Scene control: 1 - 64 (call) 129-192 (save) (8 Bit) -> num'
                      - 'HVAC: 0 - 255 (8 Bit) -> num'
                      - 'unlimited string [8859_1] (var) -> str'
+                     - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
                 description:
                     de: "KNX Datenpunkttyp"
                     en: "KNX datapoint type"
