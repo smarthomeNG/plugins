@@ -1471,7 +1471,7 @@ class AVM(SmartPlugin):
             soap_data = self._assemble_soap_data(action, self._urn_map['MyFritz'])
         else:
             self.logger.error(
-                "Attribute %s not supported by plugin method" % self.get_iattr_value(item.conf, 'avm_data_type'))
+                "Attribute %s not supported by plugin method (updatemyfritz)" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         try:
@@ -1512,7 +1512,7 @@ class AVM(SmartPlugin):
             soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'], {'NewMACAddress': item.conf['mac']})
         else:
             self.logger.error(
-                "Attribute %s not supported by plugin method" % self.get_iattr_value(item.conf, 'avm_data_type'))
+                "Attribute %s not supported by plugin (update hosts)" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         try:
@@ -1577,19 +1577,19 @@ class AVM(SmartPlugin):
         CURL for testing which data is coming back:
         curl --anyauth -u user:'password' "https://192.168.178.1:49443/upnp/control/x_homeauto" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:X_AVM-DE_Homeauto:1#GetSpecificDeviceInfos" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:GetSpecificDeviceInfos xmlns:u='urn:dslforum-org:service:X_AVM-DE_Homeauto:1'><s:NewAIN>xxxxx xxxxxxx</s:NewAIN></u:GetSpecificDeviceInfos></s:Body></s:Envelope>" -s -k
 
-        :param item: item to be updated (Supported item avm_data_types: aha_device)
+        :param item: item to be updated (Supported item avm_data_types: aha_device, hkr_device)
         """
         url = self._build_url("/upnp/control/x_homeauto")
         headers = self._header.copy()
 
-        if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device' or self.get_iattr_value(item.conf, 'avm_data_type') == 'hkr_device':
             action = 'GetSpecificDeviceInfos'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Homeauto'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],
                                                  {'NewAIN': item.conf['ain'].strip()})
         else:
             self.logger.error(
-                "Attribute %s not supported by plugin method" % self.get_iattr_value(item.conf, 'avm_data_type'))
+                "Attribute %s not supported by plugin method (home automation)" % self.get_iattr_value(item.conf, 'avm_data_type'))
             return
 
         try:
@@ -1669,7 +1669,7 @@ class AVM(SmartPlugin):
                         if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
                             is_temperature = xml.getElementsByTagName('NewTemperatureCelsius')
                             if len(is_temperature) > 0:
-                                child(int(is_temperature[0].firstChild.data))
+                                child(int(is_temperature[0].firstChild.data)/10)
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1677,7 +1677,7 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature':
                             set_temperature = xml.getElementsByTagName('NewHkrSetTemperature')
                             if len(set_temperature) > 0:
-                                child(int(set_temperature[0].firstChild.data))
+                                child(int(set_temperature[0].firstChild.data)/10)
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1685,7 +1685,7 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_reduced':
                             set_temperature_reduced= xml.getElementsByTagName('NewHkrReduceTemperature')
                             if len(set_temperature_reduced) > 0:
-                                child(int(set_temperature_reduced[0].firstChild.data))
+                                child(int(set_temperature_reduced[0].firstChild.data)/10)
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1693,7 +1693,7 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_comfort':
                             set_temperature_comfort= xml.getElementsByTagName('NewHkrComfortTemperature')
                             if len(set_temperature_comfort) > 0:
-                                child(int(set_temperature_comfort[0].firstChild.data))
+                                child(int(set_temperature_comfort[0].firstChild.data)/10)
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
