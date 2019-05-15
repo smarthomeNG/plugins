@@ -4,7 +4,7 @@ plugin:
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Ermöglicht die Verwendung von Kalendern (ICS)'
-        en: 'Allows using of calendars (ICS)'
+        en: 'Provide access to calendars based on ics files'
     description_long:
         de: 'Ermöglicht die Verwendung von Kalendern (ICS)\n
             Es können sowohl Dateien als auch Onlinefeeds eingebunden werden.
@@ -13,9 +13,11 @@ plugin:
             You can use offline files and online feeds.
             '
     maintainer: cmalo (mknx)
-    tester: ohinckel, onkelandy
-    keywords: calendar ical ics
-    state: testing
+    tester: onkelandy
+    state: ready
+    keywords: ical ics calendar
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1352089-support-thread-zum-ical-plugin
 
     version: 1.5.1                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
@@ -38,14 +40,14 @@ parameters:
         description:
             de: "Definiert den Unterordner im var-Pfad, in dem die Kalenderdateien gespeichert werden sollen."
             en: "Defines the subfolder in the var path where the calendar files should be saved to."
-    
+
     timeout:
         type: int
         default: 10
         description:
             de: "Wartezeit in Sekunden auf eine Antwort vom Server beim Download eines Onlinekalenders."
             en: "Timeout in seconds to wait for a response when downloading an online calendar."
-            
+
     calendars:
         type: list(str)
         description:
