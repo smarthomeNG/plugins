@@ -8,7 +8,7 @@ plugin:
     maintainer: mode2k
 #    tester: efgh                   # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
-    state: ready
+    state: deprecated
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 

@@ -1,12 +1,12 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    type: interface                # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Ansteuerung einer Siemens LOGO PLC'
         en: 'Control a Siemens LOGO PLC'
     maintainer: '?'
-#    tester:                        # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
     state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.2             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: LOGO                # class containing the plugin
 
 parameters:
@@ -58,6 +59,21 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
+
+    logo_read:
+        type: str
+        description:
+            de: "Lesebefehl für die Siemens LOGO PLC"
+            en: "Read command for the Siemens LOGO PLC"
+    logo_write:
+        type: str
+        description:
+            de: "Schreibbefehl für die Siemens LOGO PLC"
+            en: "Write command for the Siemens LOGO PLC"
+
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 plugin_functions: NONE
 # Definition of plugin functions defined by this plugin

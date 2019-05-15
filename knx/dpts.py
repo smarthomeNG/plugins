@@ -111,6 +111,11 @@ def de6(payload):
         return None
     return struct.unpack('b', payload)[0]
 
+"""
+    Datapoint Type U16
+    unsigned integer 
+    range = [ 0 ... 65535]
+"""
 
 def en7(value):
     ret = bytearray([0])
@@ -139,6 +144,16 @@ def de8(payload):
         return None
     return struct.unpack('>h', payload)[0]
 
+"""
+    Datapoint Type F16
+    Encoding: MEEEEMMM MMMMMMMM
+    Float Value = (0,01*M)*2^E
+    E = [0..15]
+    M = [-2048 ... 2047 ] in two's complement notation
+    Range:
+[-671 088,64 … 670 760,96]
+    For all Datapoint Types 9.xxx, the encoded value 7FFFh shall always be used to denote invalid data.
+"""
 
 def en9(value):
     s = 0
@@ -274,6 +289,15 @@ def de17001(payload):
         return None
     return (struct.unpack('>B', payload)[0] & 0x3f) + 1
 
+def en18001(value):
+    return [0, (int(value) & 0xbf) - 1]
+
+
+def de18001(payload):
+    if len(payload) != 1:
+        return None
+    return (struct.unpack('>B', payload)[0] & 0xbf) + 1
+
 
 def en20(value):
     return [0, int(value) & 0xff]
@@ -295,6 +319,29 @@ def en24(value):
 def de24(payload):
     return payload.rstrip(b'\x00').decode('iso-8859-1')
 
+"""
+    Datapoint Types V32N8Z8
+    229.001 DPT_MeteringValue
+    Item Value then is a list of V32, N8 and Z8
+"""
+
+def en229(value):
+    if len(value) != 3:
+        return None
+    retval = [0]
+    retval.extend(struct.pack('>lBB',value[0],value[1],value[2]))
+    return retval
+
+
+def de229(payload):
+    if len(payload) != 6:
+        return None
+    return list(struct.unpack('>lBB',payload))
+
+"""
+    Datapoint Types U8U8U8
+    232.600 DPT_Colour_RGB
+"""
 
 def en232(value):
     return [0, int(value[0]) & 0xff, int(value[1]) & 0xff, int(value[2]) & 0xff]
@@ -305,6 +352,31 @@ def de232(payload):
         return None
     return list(struct.unpack('>BBB', payload))
 
+"""
+    Datapoint Type F16F16F16F16
+    275.100 DPT_TempRoomSetpSetF16[4]
+    Item Value then is a list of four F16 values
+"""
+
+def en275100(value):
+    if len(value) != 4:
+        return None
+    retval = [0]
+    for v in range(0,4):
+        payload = en9(value[v])
+        retval.extend(payload[1:])
+        #retval.extend(struct.pack('>eeee',value[0],value[1],value[2], value[3]))
+    return retval
+
+def de275100(payload):
+    if len(payload) != 8:
+        return None
+    return [de9(payload[0:2]),de9(payload[2:4]), de9(payload[4:6]), de9(payload[6:8])]
+
+
+"""
+    Decode Physical Address
+"""
 
 def depa(string):
     if len(string) != 2:
@@ -312,6 +384,9 @@ def depa(string):
     pa = struct.unpack(">H", string)[0]
     return "{0}.{1}.{2}".format((pa >> 12) & 0x0f, (pa >> 8) & 0x0f, (pa) & 0xff)
 
+"""
+    Group Address from and to string
+"""
 
 def enga(ga):
     ga = ga.split('/')
@@ -350,9 +425,13 @@ decode = {
     '17': de17,
     '17001': de17001,
     '17.001': de17001,
+    '18001': de18001,
+    '18.001': de18001,
     '20': de20,
     '24': de24,
+    '229': de229,
     '232': de232,
+    '275.100' : de275100,
     'pa': depa,
     'ga': dega
 }
@@ -382,9 +461,13 @@ encode = {
     '17': en17,
     '17001': en17001,
     '17.001': en17001,
+    '18001': en18001,
+    '18.001': en18001,    
     '20': en20,
     '24': en24,
+    '229': en229,
     '232': en232,
+    '275.100' : en275100,
     'ga': enga
 }
 # DPT: 19, 28

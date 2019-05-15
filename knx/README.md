@@ -82,7 +82,7 @@ The following datapoint types are supported:
 |  6          |  8 bit        |  num     |  -128 - 127
 |  7          |  2 byte       |  num     |  0 - 65535
 |  8          |  2 byte       |  num     |  -32768 - 32767
-|  9          |  2 byte       |  num     |  -671088,64 - 670760,96
+|  9          |  2 byte       |  num     |  -671088,64 - 670760,96 (f16)
 |  10         |  3 byte       |  foo     |  datetime.time
 |  11         |  3 byte       |  foo     |  datetime.date
 |  12         |  4 byte       |  num     |  0 - 4294967295
@@ -92,9 +92,12 @@ The following datapoint types are supported:
 |  16.001     |  14 byte      |  str     |  14 characters (8859_1)
 |  17         |  8 bit        |  num     |  Scene: 0 - 63
 |  17.001     |  8 bit        |  num     |  Scene: 1 - 64
+|  18.001     |  8 bit        |  num     |  Scene: 1 - 64 (call) and 65-128 (save)
 |  20         |  8 bit        |  num     |  HVAC: 0 - 255
 |  24         |  var          |  str     |  unlimited string (8859_1)
+|  229        |  6 byte       |  list    |  integer (4 Bytes), 0-255, 0-255
 |  232        |  3 byte       |  list    |  RGB: [0, 0, 0] - [255, 255, 255]
+|  275.100    |  8 byte       |  list    |  set temperatures comfort, standby, night reduction, frost protection encoded as f16, see DPT9
 ```
 
 

@@ -8,7 +8,7 @@ plugin:
     maintainer: '? (Matthieu Gaigniere)'
 #    tester: efgh                   # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
-    state: ready
+    state: deprecated
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:
