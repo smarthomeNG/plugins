@@ -1,14 +1,14 @@
 # Metadata for the classic-plugin
 plugin:
     # Global plugin attributes
-    type: gateway                    # plugin type (gateway, interface, protocol, system, web)
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Anbindung einer oder mehrerer SMA-Sunny-WebBox(en)'
         en: ''
     maintainer: '? (Brootux)'
 #    tester: efgh                   # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
-    state: ready
+    state: deprecated
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:

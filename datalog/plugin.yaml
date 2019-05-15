@@ -12,8 +12,8 @@ plugin:
     documentation: https://github.com/smarthomeNG/plugins/blob/develop/datalog/README.md        # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:
-    version: 1.3.3                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.5.0                 # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
     restartable: unknown
@@ -21,8 +21,6 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-
-#    def __init__(self, smarthome, path="var/log/data", filepatterns={ "default" : "{log}-{year}-{month}-{day}.csv" }, logpatterns={ "csv" : "{time};{item};{value}\n" }, cycle=10):
 
         path:
             type: str
@@ -35,8 +33,9 @@ parameters:
                     It's not possible to configure different log paths for different log files."
 
         filepatterns:
-            type: str
-            default: '{ "default" : "{log}-{year}-{month}-{day}.csv" }'
+            type: dict
+            default:
+                default: "{log}-{year}-{month}-{day}.csv"
             description:
                 de: "Angabe einer Dictionary von Mustern, welche die Dateinamen der Log-Dateien spezifizieren. \
                      Dazu wird ein Key-Value-Pair Syntax benutzt, was bedeutet, dass mehrere Muster oder Logdateien \
@@ -56,8 +55,9 @@ parameters:
                         * `day` - the current day"
 
         logpatterns:
-            type: str
-            default: '{ "csv" : "{time};{item};{value}\n" }'
+            type: dict
+            default:
+                csv: "{time};{item};{value}\n"
             description:
                 de: "Der logpatterns Parameter konfiguriert das Format in dem die Daten in die Log-Datei geschrieben \
                     werden. Dazu wird ein Key-Value-Pair Syntax benutzt, was bedeutet, dass mehrere Muster \

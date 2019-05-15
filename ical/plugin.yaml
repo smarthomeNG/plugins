@@ -12,6 +12,7 @@ plugin:
         en: 'Allows using of calendars (ICS)\n
             You can use offline files and online feeds.
             '
+
     maintainer: cmalo (mknx)
     tester: onkelandy
     state: ready

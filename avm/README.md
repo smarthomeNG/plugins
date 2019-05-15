@@ -641,7 +641,7 @@ avm:
                 visu_acl: ro
 
     hkr_bathroom:
-            # Current hkr state: 0 = closed, 1: open, 2: temperature controlled
+            # Current hkr state: 0 = closed, 1: open, 2: temperature controlled, 3: error
             type: num
             value: 3
             avm_data_type@fritzbox_7490: hkr_device
@@ -654,28 +654,24 @@ avm:
                 avm_data_type@fritzbox_7490: temperature
                 type: num
                 visu_acl: ro
-                eval: value / 10
             
             set_temperature:
                 value: -1
                 avm_data_type@fritzbox_7490: set_temperature
                 type: num
                 visu_acl: ro
-                eval: value / 10
 
             set_temperature_reduced:
                 value: -1
                 avm_data_type@fritzbox_7490: set_temperature_reduced
                 type: num
                 visu_acl: ro
-                eval: value / 10
 
             set_temperature_comfort:
                 value: -1
                 avm_data_type@fritzbox_7490: set_temperature_comfort
                 type: num
                 visu_acl: ro
-                eval: value / 10
 
 ```
 

@@ -1,27 +1,54 @@
-# Metadata for the classic-plugin
+# Metadata for the plugin
 plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Auslesen von Energiemessern und Sensoren, die das S0 Protokoll unterstützen'
-        en: ''
-    maintainer: '? (st0ne)'
-    tester: brandst
-#    keywords: kwd1 kwd2            # keywords, where applicable
+        de: 'Item Werte bei Änderung an einen Volkszähler Server senden'
+        en: 'Send item values at change to a Volkszaehler Server'
+    maintainer: 'bmxp'
+#    tester: none
+    keywords: Volkszähler Server vz_uuid     # keywords, where applicable
     state: ready
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    documentation: https://www.smarthomeng.de/user/plugins/volkszaehler/README.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1357253-support-thread-zum-volkszähler-plugin
 
 # Following entries are for Smart-Plugins:
-#    version: 1.3.3                 # Plugin version
-#    sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    multi_instance: False
+    version: 1.6.0                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True
+    restartable: unknown
     classname: Volkszaehler        # class containing the plugin
 
-#parameters:
-    # Definition of parameters to be configured in etc/plugin.yaml
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    host:
+        type: str
+        default: 'localhost'
+        description:
+            de: 'Hostadresse (inklusive Port falls benötigt) auf der der Volkszähler HTTP Anfragen annimmt'
+            en: 'Host address (including port if needed) where Volkszähler listens to HTTP requests'
+    url:
+        type: str
+        default: '/middleware.php/data/{0}.json'
+        description:
+            de: 'URL auf der der Volkszähler die Daten vom Plugin entgegennimmt. Für {0} wird die vz_uuid des Datenpunktes substituiert'
+            en: 'URL where Volkszaehler Server accepts data from plugin. For {0} the plugin substitutes the vz_uuid of datapoint'
 
-#item_attributes:
-    # Definition of item attributes defined by this plugin
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    vz_uuid:
+        type: str
+        description:
+            de: 'Datenpunkt Identifikationsnummer vom Volkszähler Server der Daten entgegennimmt'
+            en: 'Datapoint id of Volkszaehler Server that accepts data'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 

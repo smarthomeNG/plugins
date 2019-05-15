@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Abfrage der Reisezeit über die kostenlose Google Directions API. Für einen eigenen Key siehe <a href="https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model" target="_blank">https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model</a>.'
-        en: 'Get travel times and directions via the (free) Google Directions API. For your own key see <a href="https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model" target="_blank">https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model</a>'
+        de: 'Abfrage der Reisezeit über die kostenlose Google Directions API. Für einen eigenen Key siehe https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model.'
+        en: 'Get travel times and directions via the (free) Google Directions API. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model.'
     maintainer: psilo909
     tester: '?'                    # Who tests this plugin?
     state: ready
@@ -25,8 +25,8 @@ parameters:
         type: str
         mandatory: True
         description:
-            de: 'Persönlicher API Key die kostenlose "Google Directions API". Für einen eigenen Key siehe <a href="https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model" target="_blank">https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model</a>.'
-            en: 'For accessing the free "Google Directions API" you need a personal api key. For your own key see <a href="https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model" target="_blank">https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model</a>'
+            de: 'Persönlicher API Key für die kostenlose "Google Directions API". Für einen eigenen Key siehe https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model.'
+            en: 'For accessing the free "Google Directions API" you need a personal api key. For your own key see https://developers.google.com/maps/documentation/directions/intro?hl=de#traffic-model.'
 
     language:
         type: str

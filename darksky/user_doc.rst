@@ -1,6 +1,7 @@
-.. index:: Plugins; DarkSky (darksky.net / forecast.io Wetterdaten)
-.. index:: DarkSky
+.. index:: Plugins; darksky (darksky.net / forecast.io Wetterdaten)
+.. index:: darksky
 .. index:: Wetter; darksky
+.. index:: struct; darksky
 
 darksky
 #######
@@ -15,13 +16,49 @@ Web Interface
 =============
 
 Das darksky Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
-übersichtlich dargestellt werden. 
+übersichtlich dargestellt werden.
 
-.. important:: 
+.. important::
 
    Das Webinterface des Plugins kann mit SmartHomeNG v1.4.2 und davor **nicht** genutzt werden.
-   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt 
+   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt
    für das Plugin die in den Metadaten angegebene minimale SmartHomeNG Version.
+
+   Die Nutzung des Item Templates funktionert erst ab SmartHomeNG v1.6.
+
+
+Item Konfiguration
+------------------
+
+Eine sehr einfache Möglichkeit die benötigten Items das Plugins zu definieren, ist die Nutzung des mit dem
+Plugin mitgelieferten struct-Templates.
+
+Hierzu kann einfach ein Item (hier wetter_darksky) angelegt und als ``struct`` vom Typ ``darksky.weather`` definiert
+werden:
+
+.. code-block:: yaml
+
+   ...
+
+   wetter_darksky:
+       struct: darksky.weather
+
+
+Wenn mehrere Instanzen des Plugins konfiguriert sind, kann das struct-Template auch mehrfach eingebunden werden.
+Hierbei muss bei der eingebundenen struct-Template angegeben werden, für welche Instanz des Plugins sie verwendet
+werden soll:
+
+.. code-block:: yaml
+
+   ...
+
+   wetter_ham:
+       struct: darksky.weather
+       instance: ham
+
+   wetter_bos:
+       struct: darksky.weather
+       instance: bos
 
 
 Aufruf des Webinterfaces
@@ -39,7 +76,7 @@ Beispiele
 
 Folgende Informationen können im Webinterface angezeigt werden:
 
-Oben rechts werden allgemeine Parameter zum Plugin angezeigt. 
+Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 
 Im ersten Tab werden die Items angezeigt, die das darksky Plugin nutzen:
 
