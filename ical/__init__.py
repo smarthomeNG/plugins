@@ -61,10 +61,10 @@ class iCal(SmartPlugin):
             self._init_complete = False
             return
         try:
-            self._directory = self.get_vardir(config_dir)
+            self._directory = '{}/{}'.format(self.get_vardir(), config_dir)
         except Exception:
             self._directory = '{}/var/{}'.format(self.sh.get_basedir(), config_dir)
-        try:         
+        try:
             os.makedirs(self._directory)
             self.logger.debug('Created {} subfolder in var'.format(config_dir))
         except OSError as e:
@@ -72,7 +72,7 @@ class iCal(SmartPlugin):
                 self.logger.error('Problem creating {} folder in {}/var'.format(config_dir, self.sh.get_basedir()))
                 self._init_complete = False
                 return
-        
+
         for calendar in calendars:
             if ':' in calendar and 'http' != calendar[:4]:
                 name, sep, cal = calendar.partition(':')
@@ -192,7 +192,7 @@ class iCal(SmartPlugin):
         return revents
 
     def _read_events(self, ics, username=None, password=None, prio=1, verify=True):
-        if ics.startswith('http'):           
+        if ics.startswith('http'):
             name = ics[ics.rfind("/")+1:]
             name = '{}.{}'.format(name.split(".")[0], name.split(".")[1])
             for entry in self._ical_aliases:
