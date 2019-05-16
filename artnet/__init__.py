@@ -153,9 +153,20 @@ class ArtNet(SmartPlugin):
         if self._model._update_cycle > 0:
             self.scheduler_add('updateArtnet', self._update_loop, prio=5, cycle=self._model._update_cycle, offset=2)
         self.alive = True
+        for it in self._model._items:
+            adr = int(self.get_iattr_value(it.conf, self.ADDR_ATTR))
+            val = it()
+            if val < 0 or val > 255:
+                self.logger.warning("Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, val, it))
+            else:
+                self.logger.debug("Updating address: %s to value %s" % (adr, vaL))
+            set_address_value(adr, val)
+        self.__ArtDMX_broadcast()
+       
+            
 
     def stop(self):
-        self.close()
+        self.s.close()
         self.alive = False
 
     def __call__(self, var1=None, var2=None):
@@ -169,7 +180,9 @@ class ArtNet(SmartPlugin):
     def _update_loop(self):
         if not self.alive:
             return
-        self.logger.debug("Update Loop")
+        if len(self.dmxdata) < 1:
+            return
+        self.__ArtDMX_broadcast()
 
     def get_address_value(self, req_adr):
         adr = int(req_adr)
@@ -177,14 +190,17 @@ class ArtNet(SmartPlugin):
             self.dmxdata.append(0)
         return self.dmxdata[adr - 1]
         
+    def set_address_value(self, req_adr, val):
+        while len(self.dmxdata) < req_adr:
+            self.dmxdata.append(0)
+        self.dmxdata[adr - 1] = value
+        
     def send_single_value(self, adr, value):
         if adr < 1 or adr > 512:
             self.logger.error("DMX address %s invalid" % adr)
             return
 
-        while len(self.dmxdata) < adr:
-            self.dmxdata.append(0)
-        self.dmxdata[adr - 1] = value
+        set_address_value(adr, value)
         self.__ArtDMX_broadcast()
 
     def send_frame_starting_at(self, adr, values):
@@ -245,9 +261,6 @@ class ArtNet(SmartPlugin):
 #       self.logger.info("Outgoing Artnet:%s"%(':'.join(x.encode('hex') for x in data)))
         # send over ethernet
         self.s.sendto(result, (self._model._host, self._model._port))
-
-    def close(self):
-        self.s.close()
 
     def init_webinterface(self):
         """"
