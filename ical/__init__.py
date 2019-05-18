@@ -34,7 +34,7 @@ from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.5.2"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -74,14 +74,16 @@ class iCal(SmartPlugin):
                 return
 
         for calendar in calendars:
+            if isinstance(calendar, dict):
+                calendar=list("{!s}:{!s}".format(k,v) for (k,v) in calendar.items())[0]
             if ':' in calendar and 'http' != calendar[:4]:
-                name, sep, cal = calendar.partition(':')
-                self.logger.info('iCal: Registering online calendar {0} ({1})'.format(name, cal))
-                self._ical_aliases[name] = cal
-                calendar = cal
+                name, _, cal = calendar.partition(':')
+                calendar = cal.strip()
+                self.logger.info('Registering calendar {} with alias {}.'.format(calendar, name))
+                self._ical_aliases[name.strip()] = calendar
             else:
-                self.logger.info('iCal: Registering calendar {0}'.format(calendar))
-
+                self.logger.info('Registering calendar {} without alias.'.format(calendar))
+            calendar = calendar.strip()
             self._icals[calendar] = self._read_events(calendar)
 
         smarthome.scheduler.add('iCalUpdate', self._update_items, cron='* * * *', prio=5)
@@ -95,7 +97,7 @@ class iCal(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'ical_calendar'):
-            uri = self.get_iattr_value(item.conf, 'ical_calendar')
+            uri = self.get_iattr_value(item.conf, 'ical_calendar').strip()
 
             if uri in self._ical_aliases:
                 uri = self._ical_aliases[uri]
@@ -149,7 +151,7 @@ class iCal(SmartPlugin):
     def _update_calendars(self):
         for uri in self._icals:
             self._icals[uri] = self._read_events(uri)
-            self.logger.debug('iCal: Updated calendar {0}'.format(uri))
+            self.logger.debug('Updated calendar {0}'.format(uri))
 
         if len(self._icals):
             self._update_items()
@@ -193,8 +195,8 @@ class iCal(SmartPlugin):
 
     def _read_events(self, ics, username=None, password=None, prio=1, verify=True):
         if ics.startswith('http'):
-            name = ics[ics.rfind("/")+1:]
-            name = '{}.{}'.format(name.split(".")[0], name.split(".")[1])
+            _, _, cal = ics.partition('//')
+            name = '{}.ics'.format(cal.split('/')[0].replace('.', '_'))
             for entry in self._ical_aliases:
                 name = '{}.ics'.format(entry) if ics == self._ical_aliases[entry] else name
             filename = '{}/{}'.format(self._directory, name)
@@ -242,16 +244,16 @@ class iCal(SmartPlugin):
                 event = {'EXDATES': []}
             elif line == 'END:VEVENT':
                 if 'UID' not in event:
-                    self.logger.warning("iCal: problem parsing {0} no UID for event: {1}".format(ics, event))
+                    self.logger.warning("problem parsing {0} no UID for event: {1}".format(ics, event))
                     continue
                 if 'SUMMARY' not in event:
-                    self.logger.warning("iCal: problem parsing {0} no SUMMARY for UID: {1}".format(ics, event['UID']))
+                    self.logger.warning("problem parsing {0} no SUMMARY for UID: {1}".format(ics, event['UID']))
                     continue
                 if 'DTSTART' not in event:
-                    self.logger.warning("iCal: problem parsing {0} no DTSTART for UID: {1}".format(ics, event['UID']))
+                    self.logger.warning("problem parsing {0} no DTSTART for UID: {1}".format(ics, event['UID']))
                     continue
                 if 'DTEND' not in event:
-                    self.logger.warning("iCal: Warning in parsing {0} no DTEND for UID: {1}. Setting DTEND from DTSTART".format(ics, event['UID']))
+                    self.logger.warning("Warning in parsing {0} no DTEND for UID: {1}. Setting DTEND from DTSTART".format(ics, event['UID']))
                     # Set end to start time:
                     event['DTEND'] = event['DTSTART']
                     continue
@@ -262,7 +264,7 @@ class iCal(SmartPlugin):
                         events[event['UID']]['EXDATES'].append(event['RECURRENCE-ID'])
                         events[event['UID'] + event['DTSTART'].isoformat()] = event
                     else:
-                        self.logger.warning("iCal: problem parsing {0} duplicate UID: {1} ({2})".format(ics, event['UID'], event['SUMMARY']))
+                        self.logger.warning("problem parsing {0} duplicate UID: {1} ({2})".format(ics, event['UID'], event['SUMMARY']))
                         continue
                 else:
                     events[event['UID']] = event
@@ -295,13 +297,13 @@ class iCal(SmartPlugin):
 
     def _parse_rrule(self, event, tzinfo):
         rrule = dict(a.split('=') for a in event['RRULE'].upper().split(';'))
-        self.logger.debug("iCal: Rrule {0}".format(rrule))
+        self.logger.debug("Rrule {0}".format(rrule))
         args = {}
         if 'FREQ' not in rrule:
-            self.logger.debug("iCal: Rrule has no frequency")
+            self.logger.debug("Rrule has no frequency")
             return
         freq = self.FREQ.index(rrule['FREQ'])
-        self.logger.debug("iCal: Frequency: {0}".format(freq))
+        self.logger.debug("Frequency: {0}".format(freq))
         del(rrule['FREQ'])
         if 'DTSTART' not in rrule:
             rrule['DTSTART'] = event['DTSTART']
@@ -338,5 +340,4 @@ class iCal(SmartPlugin):
         for par in rrule:
             args[par.lower()] = rrule[par]
 
-        self.logger.debug("Args: {0}".format(args))
         return dateutil.rrule.rrule(freq, **args)

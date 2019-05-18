@@ -1,7 +1,11 @@
 # iCal
 
 ## Changelog
-1.6.1:
+1.5.2:
+- Use domain name as filename if no alias is defined
+- Parse calendars in plugin.yaml more robust
+
+1.5.1:
 - Fix reading offline files and line breaks
 - Updated code
 - using network library instead of fetch_url to download online calendars into var/ical
