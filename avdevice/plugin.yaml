@@ -337,7 +337,6 @@ item_attributes:
             en: 'This attribute has to be followed by one of the commands declared in the
                 device text file in the models folders like power or volume
                 You can use two special avdevice attribute values if you want:
-
                 - **avdevice: statusupdate**: Use this item to trigger a full
                 statusupdate. All query commands regarding the currently powered on
                 zones are sent. This is especially useful if you have a power socket you
