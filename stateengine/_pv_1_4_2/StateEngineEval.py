@@ -75,28 +75,26 @@ class SeEval(StateEngineTools.SeItemChild):
     # Return the absolute id of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose absolute id should be returned
     #
-    # See description of StateEngineItem.SeItem.return_item for details
+    # See describtion if StateEngineItem.SeItem.return_item for details
     def get_relative_itemid(self, subitem_id):
         self._log_debug("Executing method 'get_relative_itemid({0})'", subitem_id)
         try:
             item = self._abitem.return_item(subitem_id)
             return item.property.name
         except Exception as ex:
-            self.__logger.warning("Problem evaluating name of {}: {}".format(subitem_id, ex))
-            #self._log_exception(ex)
+            self._log_exception(ex)
 
     # Return the value of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose value should be returned
     #
-    # See description of StateEngineItem.SeItem.return_item for details
+    # See describtion if StateEngineItem.SeItem.return_item for details
     def get_relative_itemvalue(self, subitem_id):
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
             item = self._abitem.return_item(subitem_id)
             return item()
         except Exception as ex:
-            self.__logger.warning("Problem evaluating value of {}: {}".format(subitem_id, ex))
-            #self._log_exception(ex)
+            self._log_exception(ex)
 
     # Insert end time of suspension into text
     # suspend_item_id: Item whose age is used to determine how much of the suspend time is already over

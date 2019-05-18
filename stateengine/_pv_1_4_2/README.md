@@ -13,10 +13,6 @@ Copy stateengine.example.html from the sv_widgets folder to your smartvisu/dropi
 http://URL/index.php?page=widgets/stateengine.example
 
 ## Changelog
-### v1.5.0
-* Use new item property feature
-* Fix exception if rules item does not exist
-
 ### v1.4.2
 * Added and fixed documentation (onkelandy)
 * Added a smartvisu widget (onkelandy)
