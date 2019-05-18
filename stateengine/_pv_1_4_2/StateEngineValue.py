@@ -132,7 +132,7 @@ class SeValue(StateEngineTools.SeItemChild):
         if self.__value is not None:
             self._log_debug("{0}: {1}", self.__name, self.__value)
         elif self.__item is not None:
-            self._log_debug("{0} from item: {1}", self.__name, self.__item.property.name)
+            self._log_debug("{0} from item: {1}", self.__name, self.__item.id())
         elif self.__eval is not None:
             self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
         elif self.__varname is not None:
@@ -145,7 +145,7 @@ class SeValue(StateEngineTools.SeItemChild):
         if self.__value is not None:
             value = "{0}: {1}".format(self.__name, self.__value, prefix, suffix)
         elif self.__item is not None:
-            value = "{0} from item: {1}".format(self.__name, self.__item.property.name)
+            value = "{0} from item: {1}".format(self.__name, self.__item.id())
         elif self.__eval is not None:
             value = "{0} from eval: {1}".format(self.__name, self.__eval)
         elif self.__varname is not None:
@@ -203,7 +203,7 @@ class SeValue(StateEngineTools.SeItemChild):
             # noinspection PyCallingNonCallable
             value = self.__item()
         except Exception as ex:
-            self._log_info("Problem while reading item '{0}': {1}.", self.__item.property.name, str(ex))
+            self._log_info("Problem while reading item '{0}': {1}.", self.__item.id(), str(ex))
             return None
 
         return self.__do_cast(value)

@@ -30,9 +30,9 @@ import datetime
 # child_id: Id of child item to search (without prefixed id of "item")
 # returns: child item if found, otherwise None
 def get_child_item(item, child_id):
-    search_id = item.property.name + "." + child_id
+    search_id = item.id() + "." + child_id
     for child in item.return_children():
-        if child.property.name == search_id:
+        if child.id() == search_id:
             return child
     return None
 
@@ -41,7 +41,7 @@ def get_child_item(item, child_id):
 # item: Item for which the last part of the id should be returned
 # returns: last part of item id
 def get_last_part_of_item_id(item):
-    return item.property.name.rsplit(".", 1)[1]
+    return item.id().rsplit(".", 1)[1]
 
 
 # cast a value as numeric. Throws ValueError if cast not possible

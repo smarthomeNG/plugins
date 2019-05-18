@@ -173,7 +173,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         if self.__error is not None:
             self._log_debug("error: {0}", self.__error)
         if self.__item is not None:
-            self._log_debug("item: {0}", self.__item.property.name)
+            self._log_debug("item: {0}", self.__item.property.path)
         if self.__eval is not None:
             self._log_debug("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
         self.__value.write_to_logger()

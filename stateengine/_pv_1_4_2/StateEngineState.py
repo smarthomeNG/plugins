@@ -47,7 +47,7 @@ class SeState(StateEngineTools.SeItemChild):
     def __init__(self, abitem, item_state):
         super().__init__(abitem)
         self.__item = item_state
-        self.__id = self.__item.property.name
+        self.__id = self.__item.id()
         self.__name = ""
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__conditions = StateEngineConditionSets.SeConditionSets(self._abitem)
@@ -55,7 +55,7 @@ class SeState(StateEngineTools.SeItemChild):
         self.__actions_enter = StateEngineActions.SeActions(self._abitem)
         self.__actions_stay = StateEngineActions.SeActions(self._abitem)
         self.__actions_leave = StateEngineActions.SeActions(self._abitem)
-        self._log_info("Init state {}", item_state.property.name)
+        self._log_info("Init state {}", item_state.id())
         self._log_increase_indent()
         try:
             self.__fill(self.__item, 0)
@@ -136,7 +136,7 @@ class SeState(StateEngineTools.SeItemChild):
     # abitem_object: Related SeItem instance for later determination of current age and current delay
     def __fill(self, item_state, recursion_depth):
         if recursion_depth > 5:
-            self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.property.name)
+            self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.id())
             return
 
         # Import data from other item if attribute "use" is found
@@ -146,7 +146,7 @@ class SeState(StateEngineTools.SeItemChild):
             if use_item is not None:
                 self.__fill(use_item, recursion_depth + 1)
             else:
-                self._log_error("{0}: Referenced item '{1}' not found!", item_state.property.name, item_state.conf["se_use"])
+                self._log_error("{0}: Referenced item '{1}' not found!", item_state.id(), item_state.conf["se_use"])
 
         # Get action sets and condition sets
         parent_item = item_state.return_parent()
@@ -177,7 +177,7 @@ class SeState(StateEngineTools.SeItemChild):
 
         # if an item name is given, or if we do not have a name after returning from all recursions,
         # use item name as state name
-        if str(item_state) != item_state.property.name or (self.__name == "" and recursion_depth == 0):
+        if str(item_state) != item_state.id() or (self.__name == "" and recursion_depth == 0):
             self.__name = str(item_state)
         if "se_name" in item_state.conf:
             self.__text.set_from_attr(item_state, "se_name", self.__text.get(None))

@@ -80,7 +80,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemid({0})'", subitem_id)
         try:
             item = self._abitem.return_item(subitem_id)
-            return item.property.name
+            return item.id()
         except Exception as ex:
             self._log_exception(ex)
 
@@ -110,7 +110,7 @@ class SeEval(StateEngineTools.SeItemChild):
             if suspend_item is None:
                 text = "Eval-Method 'insert_suspend_time': Suspend Item {0} not found!"
                 raise ValueError(text.format(suspend_item_id))
-            self._log_debug("Suspend item is {0}", suspend_item.property.name)
+            self._log_debug("Suspend item is {0}", suspend_item.id())
             suspend_over = suspend_item.age()
             self._log_debug("Current suspend age: {0}", suspend_over)
             suspend_remaining = suspend_time - suspend_over

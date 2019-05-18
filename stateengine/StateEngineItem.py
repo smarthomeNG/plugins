@@ -55,7 +55,7 @@ class SeItem:
         self.shtime = Shtime.get_instance()
         self.__sh = smarthome
         self.__item = item
-        self.__id = self.__item.property.name
+        self.__id = self.__item.property.path
         self.__name = str(self.__item)
         # initialize logging
         self.__logger = SeLogger.create(self.__item)
@@ -105,7 +105,7 @@ class SeItem:
             try:
                 self.__states.append(StateEngineState.SeState(self, item_state))
             except ValueError as ex:
-                self.__logger.error("Ignoring state {0} because:  {1}".format(item_state.property.name, str(ex)))
+                self.__logger.error("Ignoring state {0} because:  {1}".format(item_state.property.path, str(ex)))
 
         if len(self.__states) == 0:
             raise ValueError("{0}: No states defined!".format(self.id))
@@ -138,25 +138,25 @@ class SeItem:
         self.__logger.update_logfile()
         self.__logger.header("Update state of item {0}".format(self.__name))
         if caller:
-            item_id = item.property.name if item is not None else "(no item)"
+            item_id = item.property.path if item is not None else "(no item)"
             self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id, source, dest)
 
         # Find out what initially caused the update to trigger if the caller is "Eval"
         orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.sh, caller, source, item)
         if orig_caller != caller:
             text = "Eval initially triggered by {0} (item={1} source={2})"
-            self.__logger.debug(text, orig_caller, orig_item.property.name, orig_source)
+            self.__logger.debug(text, orig_caller, orig_item.property.path, orig_source)
 
         if orig_caller == StateEngineDefaults.plugin_identification or caller == StateEngineDefaults.plugin_identification:
             self.__logger.debug("Ignoring changes from {0}", StateEngineDefaults.plugin_identification)
             self.__update_in_progress = False
             return
 
-        self.__update_trigger_item = item.property.name
+        self.__update_trigger_item = item.property.path
         self.__update_trigger_caller = caller
         self.__update_trigger_source = source
         self.__update_trigger_dest = dest
-        self.__update_original_item = orig_item.property.name
+        self.__update_original_item = orig_item.property.path
         self.__update_original_caller = orig_caller
         self.__update_original_source = orig_source
 
@@ -351,9 +351,9 @@ class SeItem:
 
         # log laststate settings
         if self.__laststate_item_id is not None:
-            self.__logger.info("Item 'Laststate Id': {0}", self.__laststate_item_id.property.name)
+            self.__logger.info("Item 'Laststate Id': {0}", self.__laststate_item_id.property.path)
         if self.__laststate_item_name is not None:
-            self.__logger.info("Item 'Laststate Name': {0}", self.__laststate_item_name.property.name)
+            self.__logger.info("Item 'Laststate Name': {0}", self.__laststate_item_name.property.path)
 
         # log states
         for state in self.__states:

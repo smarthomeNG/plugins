@@ -176,15 +176,15 @@ class SeActionSetItem(SeActionBase):
         if self.__item is not None:
             self.__value.set_cast(self.__item.cast)
             self.__mindelta.set_cast(self.__item.cast)
-            self._scheduler_name = self.__item.property.name + "-SeItemDelayTimer"
-            if self._abitem.id == self.__item.property.name:
+            self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
+            if self._abitem.id == self.__item.property.path:
                 self.__caller += '_self'
 
     # Write action to logger
     def write_to_logger(self):
         SeActionBase.write_to_logger(self)
         if self.__item is not None:
-            self._log_debug("item: {0}", self.__item.property.name)
+            self._log_debug("item: {0}", self.__item.property.path)
         self.__mindelta.write_to_logger()
         self.__value.write_to_logger()
 
@@ -212,10 +212,10 @@ class SeActionSetItem(SeActionBase):
             delta = float(abs(self.__item() - value))
             if delta < mindelta:
                 text = "{0}: Not setting '{1}' to '{2}' because delta '{3:.2}' is lower than mindelta '{4}'"
-                self._log_debug(text, actionname, self.__item.property.name, value, delta, mindelta)
+                self._log_debug(text, actionname, self.__item.property.path, value, delta, mindelta)
                 return
 
-        self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.name, value, repeat_text)
+        self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.path, value, repeat_text)
         # noinspection PyCallingNonCallable
         self.__item(value, caller=self.__caller)
 
@@ -249,7 +249,7 @@ class SeActionSetByattr(SeActionBase):
     def _execute(self, actionname: str, repeat_text: str = ""):
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
         for item in self.items.find_items(self.__byattr):
-            self._log_info("\t{0} = {1}", item.property.name, item.conf[self.__byattr])
+            self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=StateEngineDefaults.plugin_identification)
 
 
@@ -378,13 +378,13 @@ class SeActionForceItem(SeActionBase):
         if self.__item is not None:
             self.__value.set_cast(self.__item.cast)
             self.__mindelta.set_cast(self.__item.cast)
-            self._scheduler_name = self.__item.property.name + "-SeItemDelayTimer"
+            self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
 
     # Write action to logger
     def write_to_logger(self):
         SeActionBase.write_to_logger(self)
         if self.__item is not None:
-            self._log_debug("item: {0}", self.__item.property.name)
+            self._log_debug("item: {0}", self.__item.property.path)
         self.__mindelta.write_to_logger()
         self.__value.write_to_logger()
         self._log_debug("force update: yes")
@@ -414,34 +414,34 @@ class SeActionForceItem(SeActionBase):
             delta = float(abs(self.__item() - value))
             if delta < mindelta:
                 text = "{0}: Not setting '{1}' to '{2}' because delta '{3:.2}' is lower than mindelta '{4}'"
-                self._log_debug(text, actionname, self.__item.property.name, value, delta, mindelta)
+                self._log_debug(text, actionname, self.__item.property.path, value, delta, mindelta)
                 return
 
         # Set to different value first ("force")
         if self.__item() == value:
             if self.__item._type == 'bool':
-                self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.name, not value)
+                self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, not value)
                 self.__item(not value, caller=StateEngineDefaults.plugin_identification)
             elif self.__item._type == 'str':
                 if value != '':
-                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.name, '')
+                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, '')
                     self.__item('', caller=StateEngineDefaults.plugin_identification)
                 else:
-                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.name, '-')
+                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, '-')
                     self.__item('-', caller=StateEngineDefaults.plugin_identification)
             elif self.__item._type == 'num':
                 if value != 0:
-                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.name, 0)
+                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 0)
                     self.__item(0, caller=StateEngineDefaults.plugin_identification)
                 else:
-                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.name, 1)
+                    self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 1)
                     self.__item(1, caller=StateEngineDefaults.plugin_identification)
             else:
                 self._log_warning("{0}: Force not implemented for item type '{1}'", actionname, self.__item._type)
         else:
             self._log_debug("{0}: New value differs from old value, no force required.", actionname)
 
-        self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.name, value, repeat_text)
+        self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.path, value, repeat_text)
         # noinspection PyCallingNonCallable
         self.__item(value, caller=StateEngineDefaults.plugin_identification)
 
@@ -506,19 +506,19 @@ class SeActionSpecial(SeActionBase):
         if manual_item is None:
             raise ValueError("Action {0}: Manual item '{1}' not found!", self._name, manual)
 
-        return [suspend_item, manual_item.property.name]
+        return [suspend_item, manual_item.property.path]
 
     def suspend_execute(self):
         suspend_item = self.__value[0]
         if self._abitem.get_update_trigger_source() == self.__value[1]:
             # triggered by manual-item: Update suspend item
             if suspend_item():
-                self._log_debug("Set '{0}' to '{1}' (Force)", suspend_item.property.name, False)
+                self._log_debug("Set '{0}' to '{1}' (Force)", suspend_item.property.path, False)
                 suspend_item(False)
-            self._log_debug("Set '{0}' to '{1}'.", suspend_item.property.name, True)
+            self._log_debug("Set '{0}' to '{1}'.", suspend_item.property.path, True)
             suspend_item(True)
         else:
-            self._log_debug("Leaving '{0}' untouched.", suspend_item.property.name)
+            self._log_debug("Leaving '{0}' untouched.", suspend_item.property.path)
 
         # determine remaining suspend time and write to variable item.suspend_remaining
         suspend_time = self._abitem.get_variable("item.suspend_time")

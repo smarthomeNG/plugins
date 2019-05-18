@@ -221,7 +221,7 @@ class SeActions(StateEngineTools.SeItemChild):
             try:
                 self.__actions[name].complete(item_state)
             except ValueError as ex:
-                raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.property.name, name, str(ex)))
+                raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.id(), name, str(ex)))
 
     # Execute all actions
     # is_repeat: Inidicate if this is a repeated action without changing the state

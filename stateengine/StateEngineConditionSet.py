@@ -76,7 +76,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     self.__conditions[name].set(func, grandparent_item.conf[attribute])
                 except ValueError as ex:
                     text = "Item '{0}', Attribute '{1}': {2}"
-                    raise ValueError(text.format(grandparent_item.property.name, attribute, str(ex)))
+                    raise ValueError(text.format(grandparent_item.property.path, attribute, str(ex)))
 
     # Check the condition set, optimize and complete it
     # item_state: item to read from
@@ -90,7 +90,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     continue
             except ValueError as ex:
                 text = "State '{0}', Condition Set '{1}', Condition '{2}': {3}"
-                raise ValueError(text.format(item_state.property.name, self.name, name, str(ex)))
+                raise ValueError(text.format(item_state.property.path, self.name, name, str(ex)))
 
         # Remove incomplete conditions
         for name in conditions_to_remove:

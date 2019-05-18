@@ -85,9 +85,9 @@ class StateEngine(SmartPlugin):
     # noinspection PyMethodMayBeStatic
     def parse_item(self, item):
         if "se_manual_include" in item.conf or "se_manual_exclude" in item.conf:
-            item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.property.name + "', caller, source)"
+            item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.property.path + "', caller, source)"
         elif "se_manual_invert" in item.conf:
-            item._eval = "not sh." + item.property.name + "()"
+            item._eval = "not sh." + item.property.path + "()"
 
         return None
 
@@ -101,7 +101,7 @@ class StateEngine(SmartPlugin):
                     ab_item = StateEngineItem.SeItem(self.get_sh(), item)
                     self.__items[ab_item.id] = ab_item
                 except ValueError as ex:
-                    self.logger.error("Item: {0}: {1}".format(item.property.name, str(ex)))
+                    self.logger.error("Item: {0}: {1}".format(item.property.path, str(ex)))
 
         if len(self.__items) > 0:
             self.logger.info("Using StateEngine for {} items".format(len(self.__items)))

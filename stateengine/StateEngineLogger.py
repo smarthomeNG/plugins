@@ -95,7 +95,7 @@ class SeLogger:
     # item: item for which the detailed log is (used as part of file name)
     def __init__(self, item):
         self.logger = logging.getLogger(__name__)
-        self.__section = item.property.name.replace(".", "_").replace("/", "")
+        self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
         self.__date = None
         self.__filename = ""
