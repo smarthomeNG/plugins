@@ -38,7 +38,6 @@ class WebServices(SmartPlugin):
     ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
     def __init__(self, smarthome, mode="all"):
-        self.logger = logging.getLogger(__name__)
         self.logger.debug("Plugin '{}': '__init__'".format(self.get_fullname()))
         self._mode = mode
         self.items = Items.get_instance()

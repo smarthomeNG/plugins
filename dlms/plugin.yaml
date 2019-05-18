@@ -28,18 +28,21 @@ parameters:
             en: 'serial port at which the smartmeter is attached'
     baudrate:
         type: int
+        valid_min: 50
         default: 300
         description:
             de: 'Baudrate bei der die Kommunikation erfolgen soll'
             en: 'Baudrate at which the communikation should take place'
     update_cycle:
         type: int
+        valid_min: 1
         default: 60
         description:
             de: 'Zeitlicher Abstand zwischen zwei Abfragen des Smartmeters'
             en: 'Time between two queries of smartmeter'
     update_cycle_start_offset:
         type: int
+        valid_min: 0
         default: 0
         description:
             de: 'Zeit die beim Start des Plugins zusätzlich gewartet wird, damit sich verschiedene Instanzen die gleiche Schnittstellen abfragen nicht in die Quere kommen'
@@ -62,13 +65,13 @@ parameters:
         description:
             de: 'Timeout in Sekunden nach dem der Lesevorgang automatisch beendet wird'
             en: 'timeout in seconds for automatic abortion of readout'
-    use_checksum: 
+    use_checksum:
         type: bool
         default: True
         description:
             de: 'Wenn wahr, wird eine Prüfsumme über die ausgelesenen Daten gebildet'
             en: 'if true then a checksum will be calculated of the readout result'
-    reset_baudrate: 
+    reset_baudrate:
         type: bool
         default: True
         description:
@@ -89,12 +92,12 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    dlms_obis_code: 
+    dlms_obis_code:
         type: str
         description:
             de: 'Anweisung welcher Teil einer OBIS Zeile geparst und dem Item zugewiesen werden soll `1-1:1.6.2*01|Index|Value/Unit|Value Type`'
             en: 'instruction which part of obis line should be parsed and assigned to an item `1-1:1.6.2*01|Index|Value/Unit|Value Type`'
-    dlms_obis_readout: 
+    dlms_obis_readout:
         type: str
         description:
             de: 'In Items mit diesem Attribut wird der komplette Auslesepuffer abgelegt für eigene Untersuchungen'

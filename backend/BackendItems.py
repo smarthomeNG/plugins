@@ -26,7 +26,7 @@ import cherrypy
 import platform
 import collections
 import datetime
-import pwd
+#import pwd
 import html
 import subprocess
 import socket

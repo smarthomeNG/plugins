@@ -1,52 +1,759 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: gateway                 # plugin type (gateway, interface, protocol, system, web)
-    description:                  # Alternative: description in multiple languages
-        de: 'Anbindung von Squeezebox Devices. Eine laufender Logitech Media Server wird benötigt.'
-        en: 'Connects Squeezebox devices through a running Logitech Media Server'
-    maintainer: Robert
+    type: gateway
+    description:
+        de: 'Anbindung von Squeezebox Devices (Hard- und Softwareplayer)'
+        en: 'Connecting squeezebox devices (hard- and software players)'
+    description_long:
+        de: 'Anbindung von Squeezebox Devices. Eine laufender Logitech Media Server wird benötigt.\n
+            Getestet mit folgenden Geräten:\n
+            \n
+            - Logitech Squeezebox Radio\n
+            - Squeezelite auf Windows, Mac OS X und Linux\n
+            \n
+            Sämtliche Kommandos sollten manuell über die Telnet-Schnittstelle auf Port 9090 getestet werden. Für Abfragen muss hierbei ein "?" am Ende des Befehls stehen, z.B. "<playerid> name ?"
+            '
+        en: 'Connecting squeezebox devices. You need a running Logitech Media Server.\n
+            Tested with the following devices:\n
+            \n
+            - Logitech Squeezebox Radio\n
+            - Squeezelite on Windows, Mac OS X and Linux\n
+            \n
+            You should verify all your commands manually by using the telnet-interface on port 9090. For query commands via telnet you need to add an "?" at the end, like "<playerid> name ?"
+            '
+    maintainer: Robert, onkelandy
+    requirements:
+        de: 'laufender Logitech Media Server'
+        en: 'Running Logitech Media Server'
     tester: onkelandy, Sandman60, cmalo, brandst
+    keywords: squeezebox squeezelite music playercontrol
     state: ready
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/28692-√-neues-plugin-logitech-squeezebox-anregungen
 
-    version: 1.3.0                 # Plugin version
+    version: 1.3.1                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: Squeezebox          # class containing the plugin
 
 parameters:
-# Definition of parameters to be configured in etc/plugin.yaml
-
-#    def __init__(self, smarthome, host='127.0.0.1', port=9090):
-
-
-    host:
-        type: str
-        default: '127.0.0.1'
-        description:
-            de: 'Adresse (IP oder hostname) des Logitech Media Servers'
-            en: 'Address (IP or hostname) of the Logitech Media Server'
-
+    # Definition of parameters to be configured in etc/plugin.yaml
     port:
         type: int
         default: 9090
-        valid_min: 0
-        valid_max: 65535
         description:
-            de: 'Port Nummer des Logitech Media Servers'
-            en: 'Port number of the Logitech Media Server'
+            de: 'Der Port der CLI Schnittstelle vom Logitech Media Server'
+            en: 'Port number of the Logitech Media Server CLI'
 
+    web_port:
+        type: int
+        default: 9000
+        description:
+            de: 'Der Port der Web Schnittstelle vom Logitech Media Server, wird für die Abfrage des aktuellen Album Artworks genutzt.'
+            en: 'Port number of the Logitech Media Server web interface. Is used to query the current album art.'
+
+    host:
+        type: ip
+        default: 127.0.0.1
+        description:
+            de: 'IP des Logitech Media Servers'
+            en: 'IP of the Logitech Media Server'
 
 item_attributes:
-# Definition of item attributes defined by this plugin
+    # Definition of item attributes defined by this plugin
+    squeezebox_playerid:
+        type: mac
+        description:
+            de: 'MAC Adresse des Players. Sollte im Parent-Item angegeben werden, um in den anderen Items den <playerid> Platzhalter nutzen zu können.'
+            en: 'MAC address of your player. Used in the parent item to allow using <playerid> placeholder in the children.'
+
+    squeezebox_send:
+        type: str
+        description:
+            de: 'Wird genutzt, um einen Befehl zu senden. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.'
+            en: 'Is used to send a command. The commands are liste in the CLI documentation of the Media Server.'
+        description_long:
+            de: 'Wird genutzt, um einen Befehl zu senden. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.\n
+            Folgende Platzhalter können genutzt werden:\n
+            \n
+            - <playerid>: Wird durch die im Parent-Item gesetzte Player-ID ersetzt\n
+            - {}: Der Wert des Items wird in diesen Platzhalter geschrieben (sollte nicht verwendet werden, wenn ein fixer oder kein Wert nötig ist).\n
+            \n
+            Beispiel: <playerid> name {} zum Ersetzen des Playernamen durch den Itemwert
+            '
+            en: 'Is used to send a command. The commands are liste in the CLI documentation of the Media Server.\n
+            The following placeholder can be used:\n
+            \n
+            - <playerid>: gets replaced by the player-id set in the parent item\n
+            - {}: the value of the item is written to this placeholder (do not use if a fixed/no value is required)\n
+            \n
+            Example: <playerid> name {} to replace the player name by the item value
+            '
+
+    squeezebox_recv:
+        type: str
+        description:
+            de: 'Wird genutzt, um Änderungen vom Player zu empfangen. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.'
+            en: 'Is used to receive updates from the player. The commands are liste in the CLI documentation of the Media Server.'
+        description_long:
+            de: 'Wird genutzt, um Änderungen vom Player zu empfangen. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.\n
+            Der Platzhalter <playerid> wird durch die im Parent-Item gesetzte Player-ID ersetzt\n
+            \n
+            Beispiel: <playerid> prefset server volume zum Updaten des Itemwerts durch die Lautstärke des Players
+            '
+            en: 'Is used to receive updates from the player. The commands are liste in the CLI documentation of the Media Server.\n
+            The placeholder <playerid> gets replaced by the player-id set in the parent item\n
+            \n
+            Example: <playerid> prefset server volume to update the item value by the volume of the player
+            '
+
+    squeezebox_init:
+        type: str
+        description:
+            de: 'Wird genutzt, um beim Start des Plugins das Item zu aktualisieren. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.'
+            en: 'Is used to initialize the item at plugin startup. The commands are liste in the CLI documentation of the Media Server.'
+        description_long:
+            de: 'Wird genutzt, um beim Start des Plugins das Item zu aktualisierenn. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.\n
+            Der Platzhalter <playerid> wird durch die im Parent-Item gesetzte Player-ID ersetzt. Das Fragezeichen wird automatisch an den Befehl angehängt, kann also wegfallen\n
+            \n
+            Beispiel: <playerid> playlist name, um den Namen des Player beim Pluginstart abzufragen
+            '
+            en: 'Is used to initialize the item at plugin startup. The commands are liste in the CLI documentation of the Media Server.\n
+            The placeholder <playerid> gets replaced by the player-id set in the parent item. The question will be added automatically to the query command.\n
+            \n
+            Example: <playerid> playlist name, to query the name of the player at startup
+            '
+
+    squeezebox_albumart:
+        type: str
+        description:
+            de: 'Wird genutzt, um die URL zum aktuellen Cover Artwork automatisch zu generieren. Als Wert ist <playerid> anzugeben.'
+            en: 'Is used to define the URL to the current cover artwork. Value of this item is simply <playerid>'
+        description_long:
+            de: 'Wird genutzt, um die URL zum aktuellen Cover Artwork automatisch zu generieren. Als Wert ist <playerid> anzugeben.\n
+            Der Wert des Items wird auf http://<SERVER IP>:9002/music/current/cover.jpg?player=<PLAYER MAC> gesetzt, wobei die Server IP und der Port
+            aus der Pluginkonfiguration, und die MAC-Adresse aus der playerid Angabe im (Grand)parent Item gelesen wird.
+            '
+            en: 'Is used to define the URL to the current cover artwork. Value of this item is simply <playerid>\n
+            The item value is set to http://<SERVER IP>:9002/music/current/cover.jpg?player=<PLAYER MAC>, whereas the server ip and port get read from
+            the plugin configuration and the MAC address is defined by the playerid setting in the (grand)parent item.
+            '
+
+logic_parameters:
+    # Definition of logic parameters defined by this plugin
+    squeezebox_playerid:
+        type: mac
+        description:
+            de: 'MAC Adresse des Players. Kann im Parent-Item angegeben werden, um in den anderen Items den <playerid> Platzhalter nutzen zu können.'
+            en: 'MAC address of your player. Used in the parent item to allow using <playerid> placeholder in the children.'
+
+    squeezebox_recv:
+        type: str
+        description:
+            de: 'Wird genutzt, um Änderungen vom Player zu empfangen. Der Befehl ist der CLI Dokumentation des Media Servers zu entnehmen.'
+            en: 'Is used to receive updates from the player. The commands are liste in the CLI documentation of the Media Server.'
 
 plugin_functions: NONE
-# Definition of plugin functions defined by this plugin
 
-logic_parameters: NONE
-# Definition of logic parameters defined by this plugin
+item_structs:
+    database:
+        name: Vorlage-Struktur für Squeezebox Server Database
 
+        abortscan:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: abortscan
+            squeezebox_recv: abortscan
+
+        wipecache:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: wipecache
+            squeezebox_recv: wipecache
+
+        libraries:
+            type: str
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: libraries
+            squeezebox_recv: libraries
+
+        totalgenres:
+            type: num
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: info total genres ?
+            squeezebox_recv: info total genres
+            squeezebox_init: info total genres
+
+        totalduration:
+            type: num
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: info total duration ?
+            squeezebox_recv: info total duration
+            squeezebox_init: info total duration
+
+        totalartists:
+            type: num
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: info total artists ?
+            squeezebox_recv: info total artists
+            squeezebox_init: info total artists
+
+        totalalbums:
+            type: num
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: info total albums ?
+            squeezebox_recv: info total albums
+            squeezebox_init: info total albums
+
+        totalsongs:
+            type: num
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: info total songs ?
+            squeezebox_recv: info total songs
+            squeezebox_init: info total songs
+
+        rescan:
+            type: str
+            visu_acl: rw
+            squeezebox_send: rescan {}
+            squeezebox_recv: rescan
+            squeezebox_init: rescan
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: rescan ?
+
+            progress:
+                type: str
+                visu_acl: ro
+                squeezebox_send: rescanprogress
+                squeezebox_recv: scanner notify
+
+                query:
+                    type: bool
+                    visu_acl: rw
+                    enforce_updates: 'True'
+                    squeezebox_send: rescanprogress
+
+    server:
+        name: Vorlage-Struktur für Squeezebox Server
+
+        alarm_playlists:
+            type: str
+            visu_acl: rw
+            squeezebox_send: alarm playlists {}
+            squeezebox_recv: alarm playlists
+
+        playercount:
+            type: num
+            visu_acl: ro
+            squeezebox_send: player count ?
+            squeezebox_recv: player count
+            squeezebox_init: player count
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: player count ?
+
+    player:
+        name: Vorlage-Struktur für Squeezebox Player
+
+        alarms:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> alarms ?
+            squeezebox_recv: <playerid> alarms
+            squeezebox_init: <playerid> alarms
+
+        alarm:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> alarm {}
+            squeezebox_recv: <playerid> alarm
+
+        syncgroups:
+            type: num
+            visu_acl: ro
+            squeezebox_send: <playerid> syncgroups ?
+            squeezebox_recv: <playerid> syncgroups
+            squeezebox_init: <playerid> syncgroups
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: <playerid> syncgroups ?
+
+        signalstrength:
+            type: num
+            visu_acl: ro
+            squeezebox_send: <playerid> signalstrength ?
+            squeezebox_recv: <playerid> signalstrength
+            squeezebox_init: <playerid> signalstrength
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: <playerid> signalstrength ?
+
+        name:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> name {}
+            squeezebox_recv: <playerid> name
+            squeezebox_init: <playerid> name
+
+        connected:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> connected ?
+            squeezebox_recv: <playerid> connected
+            squeezebox_init: <playerid> connected
+
+        sleep:
+            type: num
+            visu_acl: rw
+            squeezebox_send: <playerid> sleep {}
+            squeezebox_recv: <playerid> sleep
+            squeezebox_init: <playerid> sleep
+
+        sync:
+            type: str
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> sync {}
+            squeezebox_init: <playerid> sync
+            squeezebox_recv: <playerid> sync
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: <playerid> sync ?
+
+        unsync:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> sync -
+
+        power:
+            type: bool
+            visu_acl: rw
+            squeezebox_send: <playerid> power {}
+            squeezebox_recv: <playerid> prefset server power
+            squeezebox_init: <playerid> power
+
+        button:
+            type: bool
+            visu_acl: rw
+            squeezebox_send: <playerid> button {}
+            squeezebox_recv: <playerid> button
+
+        display:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> display {}
+            squeezebox_init: <playerid> display ?
+            squeezebox_recv: <playerid> display
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: <playerid> display ? ?
+
+        connect:
+            type: str
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> connect {}
+            squeezebox_recv: <playerid> connect
+
+        disconnect:
+            type: str
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: disconnect <playerid> {}
+            squeezebox_recv: disconnect <playerid>
+
+    info:
+        genre:
+            type: str
+            visu_acl: ro
+            squeezebox_recv: <playerid> genre
+            squeezebox_init: <playerid> genre
+
+        artist:
+            type: str
+            visu_acl: ro
+            squeezebox_recv: <playerid> artist
+            squeezebox_init: <playerid> artist
+
+        album:
+            type: str
+            visu_acl: ro
+            squeezebox_recv: <playerid> album
+            squeezebox_init: <playerid> album
+
+            currentalbumarturl:
+                type: str
+                visu_acl: ro
+                cache: 'True'
+                squeezebox_albumart: <playerid>
+                remark: Will get set to http://<SERVER IP>:<WEB_PORT>/music/current/cover.jpg?player=<PLAYER MAC> automatically on plugin start
+
+        title:
+            type: str
+            visu_acl: ro
+            squeezebox_recv: <playerid> title
+            squeezebox_init: <playerid> title
+
+        current_title:
+            type: str
+            visu_acl: ro
+            squeezebox_recv: <playerid> playlist newsong
+            squeezebox_init: <playerid> current_title
+
+        path:
+            type: str
+            visu_acl: ro
+            squeezebox_recv: <playerid> path
+            squeezebox_init: <playerid> path
+
+        duration:
+            type: num
+            visu_acl: ro
+            squeezebox_recv: <playerid> duration
+            squeezebox_init: <playerid> duration
+
+    controls:
+        name: Vorlage-Struktur für Squeezebox Player
+
+        mode:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> mode {}
+            squeezebox_recv: <playerid> mode
+            squeezebox_init: <playerid> mode
+            remark: the mode gets automatically updated when using play, stop or pause and the other way around
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: <playerid> mode ?
+
+        mute:
+            type: bool
+            enforce_updates: 'True'
+            visu_acl: rw
+            squeezebox_send: <playerid> mixer muting {}
+            squeezebox_recv: <playerid> prefset server mute
+            squeezebox_init: <playerid> mixer muting
+
+        volume:
+            type: num
+            visu_acl: rw
+            squeezebox_send: <playerid> mixer volume {}
+            squeezebox_recv: <playerid> prefset server volume
+            squeezebox_init: <playerid> mixer volume
+
+            fading:
+                type: num
+                squeezebox_send: <playerid> mixer volume {}
+                remark: Use this item in conjunction with the fade() item function
+                enforce_updates: 'True'
+
+            up:
+                type: bool
+                enforce_updates: 'True'
+                visu_acl: rw
+                squeezebox_send: <playerid> button volup
+
+            down:
+                type: bool
+                enforce_updates: 'True'
+                visu_acl: rw
+                squeezebox_send: <playerid> button voldown
+
+            low:
+                type: num
+                value: 60
+                remark: Sets the volume to a given (low) value
+                squeezebox_send: <playerid> mixer volume {}
+
+            high:
+                type: num
+                value: 80
+                remark: Sets the volume to a given (high) value
+                squeezebox_send: <playerid> mixer volume {}
+
+        customskip:
+            type: str
+            visu_acl: rw
+            enforce_updates: 'True'
+            cache: 'True'
+            remark: Use a filter to potentially skip songs with specific attributes (low rating, genre, etc.)
+            squeezebox_send: <playerid> customskip setfilter filter{}.cs.xml
+
+        repeat:
+            type: num
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist repeat {}
+            squeezebox_init: <playerid> playlist repeat
+            squeezebox_recv: <playerid> playlist repeat
+            remark: Sets the repeat song, playlist, none values correctly
+            on_change:
+                - .song = False if not value == 1 else True
+                - .playlist = False if not value == 2 else True
+                - .none = False if not value == 0 else True
+
+            song:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'yes'
+                squeezebox_send: <playerid> playlist repeat 1
+
+            playlist:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'yes'
+                squeezebox_send: <playerid> playlist repeat 2
+
+            none:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'yes'
+                squeezebox_send: <playerid> playlist repeat 0
+
+        shuffle:
+            type: num
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist shuffle {}
+            squeezebox_init: <playerid> playlist shuffle
+            squeezebox_recv: <playerid> playlist shuffle
+            remark: Sets the shuffle song, album, none values correctly
+            on_change:
+                - .song = False if not value == 1 else True
+                - .album = False if not value == 2 else True
+                - .none = False if not value == 0 else True
+
+            song:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'yes'
+                squeezebox_send: <playerid> playlist shuffle 1
+
+            album:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'yes'
+                squeezebox_send: <playerid> playlist shuffle 2
+
+            none:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'yes'
+                squeezebox_send: <playerid> playlist shuffle 0
+
+        play:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> play 3
+            squeezebox_recv: <playerid> play
+
+        stop:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> stop
+            squeezebox_recv: <playerid> stop
+
+        pause:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> pause {} 3
+            squeezebox_recv: <playerid> pause
+
+        time:
+            type: num
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_recv: <playerid> time
+            squeezebox_init: <playerid> time
+            squeezebox_send: <playerid> time {}
+
+            query:
+                type: bool
+                visu_acl: rw
+                squeezebox_send: <playerid> time ?
+                cycle: 100
+                enforce_updates: 'True'
+                remark: Queries current song time every 10 seconds and updates time item
+
+        forward:
+            type: num
+            visu_acl: rw
+            enforce_updates: 'True'
+            value: 10
+            remark: Item value defines time in seconds to skip in current song
+            squeezebox_send: <playerid> time +{}
+
+        rewind:
+            type: num
+            visu_acl: rw
+            enforce_updates: 'True'
+            value: 10
+            remark: Item value defines time in seconds to go back in current song
+            squeezebox_send: <playerid> time -{}
+
+        next:
+            type: bool
+            enforce_updates: 'True'
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist index +1
+
+        previous:
+            type: bool
+            enforce_updates: 'True'
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist index -1
+
+    playlist:
+        name: Vorlage-Struktur für Squeezebox Playlists
+
+        index:
+            type: num
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> playlist index {}
+            squeezebox_init: <playerid> playlist index
+            squeezebox_recv: <playerid> playlist index
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: <playerid> playlist index ?
+
+        name:
+            type: str
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> playlist name {}
+            squeezebox_init: <playerid> playlist name
+            squeezebox_recv: <playerid> playlist name
+
+            query:
+                type: bool
+                visu_acl: rw
+                enforce_updates: 'True'
+                squeezebox_send: <playerid> playlist name ?
+
+        save:
+            type: str
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> playlist save {}
+
+        load:
+            type: str
+            enforce_updates: 'True'
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist resume {}
+
+        loadalbum:
+            type: str
+            enforce_updates: 'True'
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist loadalbum {}
+
+        loadtracks:
+            type: str
+            enforce_updates: 'True'
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist loadtracks {}
+
+        add:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist add {}
+            squeezebox_recv: <playerid> playlist add
+
+        addalbum:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist addalbum {}
+            squeezebox_recv: <playerid> playlist addalbum
+
+        addtracks:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist addtracks {}
+
+        tracks:
+            type: num
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist tracks ?
+            squeezebox_recv: <playerid> playlist tracks
+
+        insert:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist insert {}
+            squeezebox_recv: <playerid> playlist insert
+
+        insertalbum:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist insertalbum {}
+            squeezebox_recv: <playerid> playlist insertalbum
+
+        clear:
+            type: bool
+            visu_acl: rw
+            enforce_updates: 'True'
+            squeezebox_send: <playerid> playlist clear
+            squeezebox_recv: <playerid> playlist clear
+
+        delete:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist delete {}
+            squeezebox_recv: <playerid> playlist delete
+
+        deletealbum:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist deletealbum {}
+            squeezebox_recv: <playerid> playlist deletealbum
+
+        deleteitem:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist deleteitem {}
+            squeezebox_recv: <playerid> playlist deleteitem
+
+        preview:
+            type: str
+            visu_acl: rw
+            squeezebox_send: <playerid> playlist preview {}
+            squeezebox_recv: <playerid> playlist preview

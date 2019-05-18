@@ -4,54 +4,138 @@ plugin:
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Ermöglicht die Verwendung von Kalendern (ICS)'
-        en: ''
-    maintainer: cmalo (mknx)
-    tester: ohinckel
-    state: ready
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+        en: 'Provide access to calendars based on ics files'
+    description_long:
+        de: 'Ermöglicht die Verwendung von Kalendern (ICS)\n
+            Es können sowohl Dateien als auch Onlinefeeds eingebunden werden.
+            '
+        en: 'Allows using of calendars (ICS)\n
+            You can use offline files and online feeds.
+            '
 
-    version: 1.3.0                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    maintainer: cmalo (mknx)
+    tester: onkelandy
+    state: ready
+    keywords: ical ics calendar
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1352089-support-thread-zum-ical-plugin
+
+    version: 1.5.2                 # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: iCal                # class containing the plugin
 
 parameters:
-# Definition of parameters to be configured in etc/plugin.yaml
+    # Definition of parameters to be configured in etc/plugin.yaml
     cycle:
         type: int
         default: 3600
         description:
-            de: "Zykluszeit in Sekunden"
-            en: "Cycle time in seconds"
+            de: "Definiert in Sekunden das Intervall, in dem der Kalender aktualisert werden soll."
+            en: "Specifies the interval in seconds to update the calendars."
+
+    directory:
+        type: str
+        default: 'ics'
+        description:
+            de: "Definiert den Unterordner im var-Pfad, in dem die Kalenderdateien gespeichert werden sollen."
+            en: "Defines the subfolder in the var path where the calendar files should be saved to."
+
+    timeout:
+        type: int
+        default: 10
+        description:
+            de: "Wartezeit in Sekunden auf eine Antwort vom Server beim Download eines Onlinekalenders."
+            en: "Timeout in seconds to wait for a response when downloading an online calendar."
+
     calendars:
         type: list(str)
         description:
-            de: "Liste der Kalenderdateien (Beispiele: private:http://example.com/private.ics, http://example.com/public.ics, holiday:http://example.com/holidays.ics)"
-            en: "List of calender files (Examples: private:http://example.com/private.ics, http://example.com/public.ics, holiday:http://example.com/holidays.ics)"
-
+            de: "Liste von Kalendern die automatisch aktualisiert und via `sh.ical()` Funktion abgerufen werden kann."
+            en: "list of calendars to automatically keep up to date and provided via `sh.ical()` function."
+        description_long:
+            de: "Liste von Kalendern die automatisch aktualisiert und via `sh.ical()` Funktion abgerufen werden kann. Konfiguriert optional einen Alias und die URI des Kalenders, die sowohl auf ein lokales File als auch einen Onlinefeed mit `https://` verweisen kann. Onlinekalender werden in den Ordner var/ical gespeichert und je nach cycle-Angabe aktualisiert.\n
+            Beispiel: holidays:http://cal.server/holidays.ics"
+            en: "list of calendars to automatically keep up to date and provided via `sh.ical()` function. Configures an alias (optional) and the URI of calendar, which can be a local file or a remote file when starting with `https://`. Online calendars are downloaded in the folder var/ical and updated depending on the cycle attribute.\n
+            Example: holidays:https://cal.server/holidays.ics"
 
 item_attributes:
-# Definition of item attributes defined by this plugin
+    # Definition of item attributes defined by this plugin
     ical_calendar:
         type: str
-        descripton:
-            de: ""
-            en: "Configures a connection between the item and the given calendar. You can specify the calendar URI or \
-                the calendar alias (holiday, private). The configured calendar will automatically be added to the \
-                internal calendar cache and will automatically be updated.
-
-                When configured, each time an event is taken place at the moment, the item will be set to true or if \
-                not, to false.
-
-                The update interval for the item updates is currently at one minutes. Which means each minutes it \
-                will be checked if an event is take place and the items will be updated."
+        description:
+            de: "Dieses Attribut konfiguriert eine Verbindung zwischen Item und entsprechendem Kalender."
+            en: "This configures a connection between the item and the given calendar."
+        description_long:
+            de: "Dieses Attribut konfiguriert eine Verbindung zwischen Item und entsprechendem Kalender, der entweder als Dateinamen (die Datei muss in var/ical vom smarthomeNG Verzeichnis liegen), URI oder als Kalender Alias (im etc/plugin.yaml definiert) angegeben wird. Der konfigurierte Kalender wird automatisch zum internen Kalender-Zwischenspeicher hinzugefügt und aktualisiert.\n
+            \n
+            Das Item wird auf Wahr gesetzt, sobald ein Event im Moment stattfindet. Ansonsten ist es falsch.\n
+            \n
+            Das Aktualisierungsintervall ist derzeit auf eine Minute festgelegt. Das beduetet, jede Minute wird der Kalender auf Events geprüft und das Item bei Bedarf aud Wahr geschaltet.
+            "
+            en: "This configures a connection between the item and the given calendar. You can specify the calendar filename (the file has to be in var/ical of your smarthomeNG folder), URI or the calendar alias (as defined in the etc/plugin.yaml). The configured calendar will automatically be added to the internal calendar cache and will automatically be updated.\n
+            \n
+            When configured, each time an event is taken place at the moment, the item will be set to true or if not, to false.\n
+            \n
+            The update interval for the item updates is currently at one minute, which means each minute it will be checked if an event is taking place and
+            the items will be updated."
 
 plugin_functions:
-# Definition of plugin functions defined by this plugin
+    # Definition of function interface of the plugin
+    ical:
+        type: dict
+        description:
+            de: "Es wird ein dictionary mit einem datetime.date Objekt als Key und verschiedenen Detailwerten zurückgeliefert."
+            en: "It returns a dictonary with a datetime.date object as key and an array with different detail values."
+        description_long:
+            de: "Es wird ein dictionary mit einem datetime.date Objekt als Key und folgenden Arraywerten zurückgeliefert:\n
+            die Event Startzeit, die Event Endzeit, die Eventkategorie (z.B. privat), die Eventzusammenfassung (z.B. die Notizen)\n
+            \n
+            Wenn ein Kalender öfters verwendet werden soll, wird empfohlen, diesen in der etc/plugin.yaml zu konfigurieren.
+            "
+            en: "It returns a dictonary with a datetime.date object as key and an array including\n
+            the event start time, the event end time, the event's class type (e.g. private calendar entry), the event's summary, i.e. content\n
+            \n
+            If you want to use a calendar more regularly it could be helpful to configure this calendar in the plugin configuration.
+            "
+        parameters:
+            ics:
+                type: str
+                default: None
+                description:
+                    de: 'eine lokale Datei, eine mit http://  startende URL oder ein Kalender-Alias aus der Pluginkonfiguration'
+                    en: 'specify a local file, a url starting with http:// or a calendar alias configured in the plugin configuration.'
+
+            delta:
+                type: int
+                default: 1
+                description:
+                    de: 'wieviele zusätzliche Tage analysiert werden sollen.'
+                    en: 'how many additional days should the analysed.'
+
+            offset:
+                type: int
+                default: 0
+                description:
+                    de: 'wann der zu analysierende Zeitrahmen starten soll.'
+                    en: 'when should the analysed timeframe start.'
+
+            prio:
+                type: int
+                default: 1
+                description:
+                    de: 'Falls in einem Kalendereintrag Felder mehrfach vorkommen, kann hier bestimmt werden, das wievielte Feld priorisiert werden soll.'
+                    en: 'If in one calendar entry a field is present multiple times you can define which occurence should be prioritized.'
+
+            verify:
+                type: bool
+                default: True
+                description:
+                    de: 'Bestimmt, ob eine https URL per SSL verifiziert werden soll oder nicht.'
+                    en: 'Defines if a https URL should be verified via SSL or not.'
 
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
 
+item_structs: NONE

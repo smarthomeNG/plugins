@@ -1,7 +1,7 @@
 .. index:: Plugins; Alexa4P3 (Unterstützung von Amazon Echo/Alexa Geräten
 .. index:: Alexa
 
-avm
+alexa4p3
 ###
 
 Konfiguration
@@ -28,12 +28,15 @@ Beispielfunktionen
 Beleuchtung einschalten :
 
 **Alexa, schalte das Küchenlicht ein**
+
 **Alexa, dimme das Küchenlicht um 10 Prozent**
+
 **Alexa, stelle das Küchenlicht auf 40 Prozent**
 
 Temperatur einstellen:
 
 **Alexa, stelle die Temperatur in der Küche auf 25 Grad**
+
 **Alexa, erhöhe die Temperatur in der Küche um 2 Grad**
 
 Temperatur abfragen :

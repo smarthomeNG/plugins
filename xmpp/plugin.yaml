@@ -34,6 +34,11 @@ parameters:
         description:
             de: 'Gibt das Passwort für den zu nutzenden Account an'
             en: 'Specifies the password of the account to use'
+    server:
+        type: str
+        description:
+            de: 'Gibt die Adresse und Port an (z.B. "127.0.0.1:5222"), zu welchem XMPP-Server eine Verbindung aufgebaut werden soll (optional)'
+            en: 'Specifies the address of the XMPP server to connect to (optional)'
     use_ipv6:
         type: bool
         default: True

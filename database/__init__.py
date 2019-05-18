@@ -83,7 +83,6 @@ class Database(SmartPlugin):
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
 
-        self.logger = logging.getLogger(__name__)
         self._dump_cycle = int(cycle)
         self._precision = int(precision)
         self._name = self.get_instance_name()
@@ -745,7 +744,7 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
-        self.logger = logging.getLogger(__name__)
+        self.logger = plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.items = Items.get_instance()

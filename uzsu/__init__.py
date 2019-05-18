@@ -784,8 +784,8 @@ class UZSU(SmartPlugin):
             cron = tabs[1].strip()
             smax = tabs[2].strip()
         else:
-            self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
-                tstr))
+            self.logger.error('Wrong syntax: {} - wrong amount of tabs. Should be'
+                              ' [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(tstr))
             return
         # calculate the time offset
         doff = 0  # degree offset
@@ -826,16 +826,16 @@ class UZSU(SmartPlugin):
                 self.logger.warning("next_time.tzinfo was not given as utc!")
             self.logger.debug("Sunset is included and calculated as {}".format(next_time))
         else:
-            self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
-                tstr))
+            self.logger.error('Wrong syntax: {} not starting with sunrise/set. Should be '
+                              '[H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(tstr))
             return
         if smin is not None:
             h, sep, m = smin.partition(':')
             try:
                 dmin = next_time.replace(day=dt.day, hour=int(h), minute=int(m), second=0, tzinfo=self._timezone)
-            except Exception:
-                self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
-                    tstr))
+            except Exception as err:
+                self.logger.error('Problems assigning dmin: {}. Wrong syntax: {}. Should be '
+                                  '[H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(err, tstr))
                 return
         elif smax is None:
             dmin = next_time
@@ -843,9 +843,9 @@ class UZSU(SmartPlugin):
             h, sep, m = smax.partition(':')
             try:
                 dmax = next_time.replace(day=dt.day, hour=int(h), minute=int(m), second=0, tzinfo=self._timezone)
-            except Exception:
-                self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
-                    tstr))
+            except Exception as err:
+                self.logger.error('Problems assigning dmax: {}. Wrong syntax: {}. Should be '
+                                  '[H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(err, tstr))
                 return
         elif smin is None:
             dmax = next_time
