@@ -25,17 +25,17 @@ Kalenderdateien können in der etc/plugin.yaml als "Alias" hinterlegt werden. Au
     ical:
         plugin_name: ical
         #calendars:
-		#	- example:http://server.com/test.ics
-		#cycle: 3600
+		    #	- example:http://server.com/test.ics
+		    #cycle: 3600
 
 Außerdem können Kalender Items zugewiesen werden, indem das entsprechende Attribut im gewünschten Item angegeben wird. Das Item wird auf wahr gesetzt, sobald aktuell ein Event stattfindet.
-		
+
 .. code-block:: yaml
 
     # items/item.yaml
     calendaritem:
         type: bool
-		ical_calendar: test_downloaded.ics
+		    ical_calendar: test_downloaded.ics
 
 
 Funktionen
@@ -61,8 +61,8 @@ Beispiel
 	# b) Reference a calendar defined in the etc/plugin.yaml. Query tomorrow
 	# The second found entry for an event should be considered.
 	holidays = sh.ical('holidays', delta=0, offset=1, prio=2)
-		
-	# c) http(s) file, disabled https verification. 
+
+	# c) http(s) file, disabled https verification.
 	holidays = sh.ical('https://cal.server/holidays.ics', verify=false)
 
 	# Test if there is an entry for today or not.
