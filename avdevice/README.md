@@ -14,7 +14,7 @@ Tested with Pioneer (< 2016 models) and Denon AV receivers, Epson projector Oppo
 
 ## Changelog
 ### v1.6.1
-* use property.name instead of id()
+* use property.path instead of id()
 * fix folder for command files reading
 
 ### v1.6.0
