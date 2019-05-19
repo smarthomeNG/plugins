@@ -3,18 +3,22 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Anbindung von Kodi (ehemals XBMC) v12 (Frodo) oder neuer'
-        en: 'Connecting Kodi (formerly XBMC) v12 (Frode) or newer'
-    maintainer: ggf. msinn
-    tester: onkelandy
-    state: develop
-    keywords: mediacenter
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+        de: 'Anbindung von Kodi (ehemals XBMC)'
+        en: 'Connecting Kodi (formerly XBMC)'
+    requirements:
+        de: 'Es ist eine Kodi Installation v12 oder höher notwendig, bei der in den Einstellungen "Allow programs on other systems to control Kodi" aktiviert ist.'
+        en: 'You only need one or more Kodi (12 a.k.a. Frodo or above) with
+        System-Settings-Service "Allow programs on other systems to control Kodi" enabled.'
+    maintainer: onkelandy
+    tester: psilo
+    state: ready
+    keywords: mediacenter kodi xmbc
+    documentation: http://smarthomeng.de/user/plugins/kodi/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364598-supportthread-für-kodi-plugin
 
 # Following entries are for Smart-Plugins:
-    version: 1.3c.0                 # Plugin version
-    sh_minversion: 1.3c            # minimum shNG version to use this plugin
+    version: 1.5.0                 # Plugin version
+    sh_minversion: 1.4            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
     classname: Kodi                # class containing the plugin
@@ -39,16 +43,107 @@ parameters:
             de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
             en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
 
+    autoreconnect:
+        type: bool
+        default: False
+        description:
+            de: 'Erneuter Verbindungsversuch bei Verlust der Verbindung.'
+            en: 'Try to reconnect after connection loss.'
+
+    connect_retries:
+        type: int
+        default: 10
+        description:
+            de: 'Anzahl Verbindungsversuche'
+            en: 'Amount of connection retries'
+
+    connect_cycle:
+        type: int
+        default: 5
+        description:
+            de: 'Pause zwischen Verbindungsversuchen'
+            en: 'Pause between connection retries'
+
+    send_retries:
+        type: int
+        default: 5
+        description:
+            de: 'Maximale Versuche zum Senden eines Befehls, der von Kodi nicht bestätigt wurde.'
+            en: 'Maximum retries to send a command that did not get confirmed by Kodi.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
 
-    kody_item:
+    kodi_item:
         type: str
-        valid_list: ['on_off', 'volume', 'mute', 'title', 'media', 'state', 'favorites', 'input']
+        valid_list: ['on_off', 'volume', 'mute', 'title', 'media', 'state', 'favourites', 'input', 'macro', 'player']
         description:
-            de: ''
-            en: ''
+            de: 'Der Attributwert hängt von der gewünschten Funktion ab. Siehe Dokumentation für Details.'
+            en: 'The attribute value is dependant on the wanted function. Look at the documentation for details.'
+
+item_structs:
+    query:
+        name: Vorlage-Struktur für Kodi Infos, die nicht aktiv verämndert werden können.
+
+        state:
+          kodi_item@instance: state
+          type: str
+          visu_acl: ro
+
+        title:
+          kodi_item@instance: title
+          type: str
+          visu_acl: ro
+
+        media:
+          kodi_item@instance: media
+          type: str
+          visu_acl: ro
+
+        player:
+          kodi_item@instance: player
+          type: num
+          visu_acl: rw
+          enforce_updates: true
+
+    control:
+        name: Vorlage-Struktur für Kodi Befehle zum Steuern
+
+        mute:
+          kodi_item@instance: mute
+          type: bool
+          visu_acl: rw
+          enforce_updates: true
+
+        volume:
+          kodi_item@instance: volume
+          type: num
+          visu_acl: rw
+          enforce_updates: true
+
+        on_off:
+          kodi_item@instance: on_off
+          enforce_updates: true
+          type: bool
+          visu_acl: rw
+
+        input:
+          kodi_item@instance: input
+          type: str
+          visu_acl: rw
+          enforce_updates: true
+
+        favourites:
+          kodi_item@instance: favourites
+          type: str
+          visu_acl: rw
+          enforce_updates: true
+
+        macro:
+          kodi_item@instance: macro
+          type: str
+          visu_acl: rw
+          enforce_updates: true
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
@@ -88,4 +183,3 @@ plugin_functions:
                 description:
                     de: 'Dauer der Anzeige in msec'
                     en: ''
-
