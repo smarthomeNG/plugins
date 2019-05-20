@@ -719,7 +719,7 @@ class Init(object):
             self._specialparse = {}
             self.logger.debug("Initializing {}: Starting to read file {}. Functions: {}".format(
                 self._name, self._model, self._functions))
-            filename = '{}/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
+            filename = '{}/models/{}.txt'.format(os.path.abspath(os.path.dirname(__file__)), self._model)
 
             with open(filename, encoding='utf-8') as commands:
                 zones = [0]
