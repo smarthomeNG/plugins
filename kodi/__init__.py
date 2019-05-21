@@ -88,6 +88,11 @@ class Kodi(SmartPlugin):
                   'on_off': dict(method='System.Shutdown', params=None),
                   'player': dict(method='Player.GetActivePlayers', params=None)}
 
+    _player_items = {'audiostream': dict(method='Player.SetAudioStream', params=dict(stream='ITEM_VALUE')),
+                     'subtitle': dict(method='Player.SetAudioStream', params=dict(subtitle='ITEM_VALUE[0]', enable='ITEM_VALUE[1]')),
+                     'seek': dict(method='Player.Seek', params=dict(value='ITEM_VALUE')),
+                     'speed': dict(method='Player.SetSpeed', params=dict(speed='ITEM_VALUE'))}
+
     _macro = {'resume': {"play": dict(method='Input.ExecuteAction', params=dict(action='play')), "resume": dict(method='Input.ExecuteAction', params=dict(action='select'))},
               'beginning': {"play": dict(method='Input.ExecuteAction', params=dict(action='play')),
                            "down": dict(method='Input.ExecuteAction', params=dict(action='down')), "select": dict(method='Input.ExecuteAction', params=dict(action='select'))}}
@@ -95,6 +100,7 @@ class Kodi(SmartPlugin):
     _initcommands = {"ping": {"method": "JSONRPC.Ping"}, "getvolume": {"method": 'Application.GetProperties', "params": dict(properties=['volume', 'muted'])},
                     "favourites": {"method": 'Favourites.GetFavourites', "params": dict(properties=['window', 'path', 'thumbnail', 'windowparameter'])},
                     "player": {"method": "Player.GetActivePlayers"} }
+
 
     def __init__(self, sh, *args, **kwargs):
         '''
@@ -125,12 +131,12 @@ class Kodi(SmartPlugin):
         self.response_id = None
         self.sendingcommand = None
         self.senderrors = {}
-        self.cmd_lock = threading.Lock()
+        self.cmd_lock = threading.Condition()
         self.reply_lock = threading.Condition()
         self.reply = None
-
+        self.activeplayers = []
         self.sendcommands = []
-        self.registered_items = {key: [] for key in set(list(Kodi._set_items.keys()) + ['macro'] + Kodi._get_items)}
+        self.registered_items = {key: [] for key in set(list(Kodi._set_items.keys()) + ['macro'] + Kodi._get_items + list(Kodi._player_items.keys()))}
 
     def run(self):
         '''
@@ -209,7 +215,7 @@ class Kodi(SmartPlugin):
                 self.registered_items[kodi_item].append(item)
             else:
                 self.logger.warning('I do not know the kodi_item {}, skipping!'.format(kodi_item))
-            if kodi_item in Kodi._set_items or kodi_item == 'macro':
+            if kodi_item in Kodi._set_items or kodi_item == 'macro' or kodi_item in Kodi._player_items:
                 return self.update_item
 
     def parse_logic(self, logic):
@@ -264,7 +270,20 @@ class Kodi(SmartPlugin):
                         for key, value in params.items():
                             if value == 'ITEM_VALUE':
                                 params[key] = item_value
-                    self.send_kodi_rpc(method, params, wait=False)
+                    self._send_player_command(method, params, kodi_item)
+            elif kodi_item in Kodi._player_items:
+                self.logger.debug('Plugin \'%s\': update_item was called with item \'%s\' from caller \'%s\', source \'%s\' and dest \'%s\'',
+                                  self.get_shortname(), item, caller, source, dest)
+                method = self._player_items[kodi_item]['method']
+                params = self._player_items[kodi_item]['params'] or {}
+                if params is not None:
+                    # copy so we don't interfer with the class variable
+                    params = params.copy()
+                    # replace the wild card ITEM_VALUE with the item's value
+                    for key, value in params.items():
+                        if value == 'ITEM_VALUE':
+                            params[key] = item_value
+                    self._send_player_command(method, params, kodi_item)
             else:
                 self.logger.info('kodi_item \'%s\' not in send_keys, skipping!', kodi_item)
 
@@ -295,15 +314,21 @@ class Kodi(SmartPlugin):
                      response from Kodi
         '''
         reply = None
+        self.logger.debug("Sending method {}. Alive: {}".format(method, self.kodi_server_alive))
         if self.kodi_server_alive:
             self.cmd_lock.acquire()
+            self.logger.debug("Command lock acquired")
             self.reply = None
+            '''
             if message_id is None:
                 self.message_id += 1
                 message_id = self.message_id
                 if message_id > 99:
                     self.message_id = 0
-            message_id = "{}_{}".format(method, message_id)
+                message_id = "{}_{}".format(method, message_id)
+            '''
+            message_id = method
+            self.logger.debug('Sendcommands while sending: {0}'.format(self.sendcommands))
             self.response_id = message_id
             if params is not None:
                 data = {'jsonrpc': '2.0', 'id': message_id, 'method': method, 'params': params}
@@ -311,11 +336,17 @@ class Kodi(SmartPlugin):
                 data = {'jsonrpc': '2.0', 'id': message_id, 'method': method}
             if not data in self.sendcommands:
                 self.sendcommands.append(data)
+            else:
+                self.sendcommands[self.sendcommands.index(data)] = data
             self.logger.debug('Sendcommands while sending: {0}'.format(self.sendcommands))
             self.reply_lock.acquire()
-            self.sendingcommand = json.dumps(data, separators=(',', ':'))
-            self.logger.debug('Kodi sending: {0}'.format(json.dumps(data, separators=(',', ':'))))
-            self.kodi_tcp_connection.send((json.dumps(data, separators=(',', ':')) + '\r\n').encode())
+            try:
+                self.sendingcommand = json.dumps(data, separators=(',', ':'))
+            except Exception as err:
+                self.sendingcommand = data
+                self.logger.error("Problem with json.dumps: {}".format(err))
+            self.logger.debug('Kodi sending: {0}'.format(self.sendingcommand))
+            self.kodi_tcp_connection.send((self.sendingcommand + '\r\n').encode())
             if wait:
                 self.logger.debug("Waiting for reply_lock..")
                 self.reply_lock.wait(1)
@@ -323,6 +354,7 @@ class Kodi(SmartPlugin):
             reply = self.reply
             self.reply = None
             self.cmd_lock.release()
+            self.logger.debug("Command lock released")
         else:
             self.logger.debug('JSON-RPC command requested without an established connection to Kodi.')
         return reply
@@ -337,9 +369,12 @@ class Kodi(SmartPlugin):
             events = (re.sub(r'\}\{', '}-#-{', data)).split("-#-")
             events = list(OrderedDict((x, True) for x in events).keys())
         except Exception as err:
-            self.logger.error(err)
+            self.logger.warning("Could not optimize reply. Error: {}".format(err))
         for event in events:
-            event = json.loads(event)
+            try:
+                event = json.loads(event)
+            except Exception as err:
+                self.logger.warning("Could not json.load reply. Error: {}".format(err))
             if len(events) > 1:
                 self.logger.debug('Kodi checking from multianswer: {0}'.format(event))
             if 'id' in event:
@@ -348,16 +383,28 @@ class Kodi(SmartPlugin):
                 templist = self.sendcommands
                 for entry in templist:
                     if entry.get('id') == event.get('id'):
-                        if entry.get('method') == 'Player.GetActivePlayers':
-                            if len(event.get('result')) > 0:
-                                for elem in self.registered_items['player']:
-                                    elem(event.get('result')[0].get('playerid'), caller='Kodi')
-                            self.logger.debug("Getting player info for {}".format(event.get('result')))
-                            self._get_player_info(event.get('result'))
-                        self.sendcommands.remove(entry)
+                        if self.senderrors.get(event.get('id')):
+                            self.senderrors[event.get('id')] = 0
                         if 'error' in event:
                             self.logger.warning("There was a problem with the {} command: {}. Removing from queue.".format(event.get('id'), event.get('error').get('message')))
-                        elif event.get('result') and entry.get('method').startswith('Application.GetProperties'):
+                        elif event.get('id').startswith('Player.GetActivePlayers'):
+                            if len(event.get('result')) > 1:
+                                self.logger.info('There is more than one active player. Sending request to each player!')
+                                self.activeplayers = []
+                                for player in event.get('result'):
+                                    self.activeplayers.append(player.get('playerid'))
+                                    self._get_player_info(player)
+                            elif len(event.get('result')) > 0:
+                                self.activeplayers = [event.get('result')[0].get('playerid')]
+                                self.logger.debug("Getting player info for {}".format(event.get('result')))
+                                self._get_player_info(event.get('result'))
+                                for elem in self.registered_items['player']:
+                                    elem(event.get('result')[0].get('playerid'), caller='Kodi')
+                            else:
+                                self.activeplayers = []
+                                for elem in self.registered_items['state']:
+                                    elem('No Active Player', caller='Kodi')
+                        elif event.get('result') and event.get('id').startswith('Application.GetProperties'):
                             muted = event['result'].get('muted')
                             volume = event['result'].get('volume')
                             self.logger.debug("Received GetProperties: Change mute to {} and volume to {}".format(muted, volume))
@@ -365,7 +412,7 @@ class Kodi(SmartPlugin):
                                 elem(muted, caller='Kodi')
                             for elem in self.registered_items['volume']:
                                 elem(volume, caller='Kodi')
-                        elif event.get('result') and entry.get('method').startswith('Favourites.GetFavourites'):
+                        elif event.get('result') and event.get('id').startswith('Favourites.GetFavourites'):
                             item_dict = dict()
                             if event.get('result').get('favourites') is None:
                                 self.logger.debug("No favourites found.")
@@ -374,11 +421,28 @@ class Kodi(SmartPlugin):
                                 self.logger.debug("Favourites found: {}".format(item_dict))
                                 for elem in self.registered_items['favourites']:
                                     elem(item_dict, caller='Kodi')
+                        elif event.get('result') and event.get('id').startswith('Player.GetItem'):
+                            title = event.get('result')['item'].get('title')
+                            typ = event.get('result')['item'].get('type')
+                            if not title and 'label' in event.get('result')['item']:
+                                title = event.get('result')['item']['label']
+                            for elem in self.registered_items['media']:
+                                elem(typ.capitalize(), caller='Kodi')
+                            if event.get('result')['item'].get('artist'):
+                                artist = 'unknown' if len(event.get('result')['item'].get('artist')) == 0 else event.get('result')['item'].get('artist')[0]
+                                title = artist + ' - ' + title
+                            for elem in self.registered_items['title']:
+                                elem(title, caller='Kodi')
+                            self.logger.debug("Updated player info: title={}, type={}".format(title, typ))
                         else:
                             self.logger.debug("Sent successfully {}.".format(entry))
+                        try:
+                            self.sendcommands.remove(entry)
+                        except Exception as err:
+                            self.logger.error(err)
                         self.reply_lock.notify()
                         self.reply_lock.release()
-                    self.logger.debug('Sendcommands after receiving: {0}'.format(self.sendcommands))
+                self.logger.debug('Sendcommands after receiving: {0}'.format(self.sendcommands))
             elif 'favourites' in event:
                 item_dict = dict()
                 item_dict = {elem['title']: elem for elem in result['favourites']}
@@ -405,7 +469,12 @@ class Kodi(SmartPlugin):
                 if event['method'] in ['Player.OnPlay', 'Player.OnAVChange']:
                     # use a different thread for event handling
                     self.logger.debug("Getting player info after player started")
-                    self.scheduler_trigger('kodi-player-start', self.send_kodi_rpc, 'Kodi', 'OnPlay', {"method": "Player.GetActivePlayers"})
+                    data = {'jsonrpc': '2.0', 'id': 'Player.GetActivePlayers', 'method': 'Player.GetActivePlayers'}
+                    if not data in self.sendcommands:
+                        self.sendcommands.append(data)
+                    else:
+                        self.sendcommands[self.sendcommands.index(data)] = data
+                    #self.scheduler_trigger('kodi-player-start', self.send_kodi_rpc, 'Kodi', 'OnPlay', {"method": "Player.GetActivePlayers"})
                 elif event['method'] in ['Application.OnVolumeChanged']:
                     self.logger.debug("Change mute to {} and volume to {}".format(event['params']['data']['muted'], event['params']['data']['volume']))
                     for elem in self.registered_items['mute']:
@@ -433,34 +502,30 @@ class Kodi(SmartPlugin):
                     self.logger.debug("Sending next command: {}".format(self.sendcommands[0]))
                     self.send_kodi_rpc(self.sendcommands[0].get('method'), params=self.sendcommands[0].get('params'), message_id=self.sendcommands[0].get('id'))
 
-    def _send_player_command(self, kodi_item):
+    def _send_player_command(self, method, params, kodi_item):
         '''
         This method should only be called from the update item method in
         a new thread in order to handle Play/Pause and Stop commands to
         the active Kodi players
         '''
-        # get the currently active players
-        self.logger.debug("Getting player command")
-        if 1 == 2:
-            result = self.send_kodi_rpc(method='Player.GetActivePlayers')
-            result = result['result']
-            if len(result) == 0:
-                self.logger.warning('No active player found, skipping request!')
-            else:
-                if len(result) > 1:
-                    self.logger.info('There is more than one active player. Sending request to each player!')
-                for player in result:
-                    player_id = player['playerid']
-                    self.send_kodi_rpc(method=self._set_items[kodi_item]['method'],
-                                       params=dict(playerid=player_id),
-                                       wait=False)
+        self.logger.debug("Active players: {}".format(self.activeplayers))
+        if len(self.activeplayers) == 0:
+            self.logger.warning('Kodi: no active player found, skipping request!')
+        else:
+            if len(self.activeplayers) > 1:
+                self.logger.info('Kodi: there is more than one active player. Sending request to each player!')
+            params = params or {}
+            for player in self.activeplayers:
+                params.update({'playerid':player})
+                self.send_kodi_rpc(method=method,
+                                   params=params,
+                                   wait=False)
 
     def _get_player_info(self, result=None):
         '''
         Extract information from Kodi regarding the active player and save it
         to the respective items
         '''
-        #result = self.send_kodi_rpc(method='Player.GetActivePlayers')['result']
         self.logger.debug("Getting player info. Checking {}".format(result))
         if not isinstance(result, list):
             return
@@ -477,38 +542,24 @@ class Kodi(SmartPlugin):
         typ = result[0].get('type')
         for elem in self.registered_items['state']:
             elem('Playing', caller='Kodi')
-        self.logger.debug("Now checking player item")
-        if typ == 'video2':
+        self.logger.debug("Now checking player item for player with id {}".format(playerid))
+        if typ == 'video':
             self.send_kodi_rpc(method='Player.GetItem',
-                                        params=dict(properties=['title'], playerid=playerid),
-                                        message_id='VideoGetItem')['result']
-            try:
-                self.logger.debug(result)
-                title = result['item'].get('title')
-                typ = result['item'].get('type')
-                if not title and 'label' in result['item']:
-                    title = result['item']['label']
-                for elem in self.registered_items['media']:
-                    elem(typ.capitalize(), caller='Kodi')
-            except Exception as err:
-                self.logger.error(err)
+                               params=dict(properties=['title'], playerid=playerid),
+                               message_id='Player.GetItem_Video')
         elif typ == 'audio':
             for elem in self.registered_items['media']:
                 elem('Audio', caller='Kodi')
-            result = self.send_kodi_rpc(method='Player.GetItem',
-                                        params=dict(properties=['title', 'artist'], playerid=playerid),
-                                        message_id='AudioGetItem')['result']
-            if len(result['item']['artist']) == 0:
-                artist = 'unknown'
-            else:
-                artist = result['item']['artist'][0]
-            title = artist + ' - ' + result['item']['title']
+            self.send_kodi_rpc(method='Player.GetItem',
+                               params=dict(properties=['title', 'artist'], playerid=playerid),
+                               message_id='Player.GetItem_Audio')
+
         elif typ == 'picture':
             for elem in self.registered_items['media']:
                 elem('Picture', caller='Kodi')
             title = ''
+            for elem in self.registered_items['title']:
+                elem(title, caller='Kodi')
         else:
             self.logger.warning('Unknown type: {0}'.format(typ))
             return
-        for elem in self.registered_items['title']:
-            elem(title, caller='Kodi')
