@@ -121,6 +121,12 @@ item_structs:
           visu_acl: rw
           enforce_updates: true
 
+        speed:
+          kodi_item@instance: speed
+          type: num
+          visu_acl: rw
+          enforce_updates: true
+
         on_off:
           kodi_item@instance: on_off
           enforce_updates: true
@@ -142,6 +148,24 @@ item_structs:
         macro:
           kodi_item@instance: macro
           type: str
+          visu_acl: rw
+          enforce_updates: true
+
+        audiostream:
+          kodi_item@instance: audiostream
+          type: foo
+          visu_acl: rw
+          enforce_updates: true
+
+        subtitle:
+          kodi_item@instance: subtitle
+          type: list
+          visu_acl: rw
+          enforce_updates: true
+
+        seek:
+          kodi_item@instance: seek
+          type: num
           visu_acl: rw
           enforce_updates: true
 

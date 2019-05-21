@@ -11,3 +11,4 @@
 * Bug Fix: on_off, Mute, etc. funktionieren nun sowohl mit True als auch False Werten
 * Sendet Kodi mehrere Antworten gleichzeitig, werden diese nacheinander abgearbeitet (führte früher zu einem Freeze des Plugins)
 * Optimierungen von Logging und Code
+* zusätzliche Kommandos

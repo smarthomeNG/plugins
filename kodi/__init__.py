@@ -88,7 +88,9 @@ class Kodi(SmartPlugin):
                   'on_off': dict(method='System.Shutdown', params=None),
                   'player': dict(method='Player.GetActivePlayers', params=None)}
 
-    _player_items = {'stop': dict(method='Player.Stop', params=None),
+    _player_items = {'audiostream': dict(method='Player.SetAudioStream', params=dict(stream='ITEM_VALUE')),
+                     'subtitle': dict(method='Player.SetAudioStream', params=dict(subtitle='ITEM_VALUE[0]', enable='ITEM_VALUE[1]')),
+                     'seek': dict(method='Player.Seek', params=dict(value='ITEM_VALUE')),
                      'speed': dict(method='Player.SetSpeed', params=dict(speed='ITEM_VALUE'))}
 
     _macro = {'resume': {"play": dict(method='Input.ExecuteAction', params=dict(action='play')), "resume": dict(method='Input.ExecuteAction', params=dict(action='select'))},
@@ -400,6 +402,8 @@ class Kodi(SmartPlugin):
                                     elem(event.get('result')[0].get('playerid'), caller='Kodi')
                             else:
                                 self.activeplayers = []
+                                for elem in self.registered_items['state']:
+                                    elem('No Active Player', caller='Kodi')
                         elif event.get('result') and event.get('id').startswith('Application.GetProperties'):
                             muted = event['result'].get('muted')
                             volume = event['result'].get('volume')

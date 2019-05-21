@@ -35,6 +35,12 @@ Item type ``bool``. Wird das Item auf "False" gesetzt, wird Kodi heruntergefahre
 **volume**
 Item type ``num``. Einstellen der Lautstärke in Prozent, ein Wert zwischen 0 und 100.
 
+**speed**
+Item type ``num``. Einstellen der Abspielgeschwindigkeit. Muss einen gültigen geraden Wert enthalten, also zB 2, 4, etc. (oder 1 für Normalgeschwindigkeit)
+
+**seek**
+Item type ``num``. Zu einem bestimmten Punkt des aktuellen Mediums springen, in Prozent
+
 **mute**
 Item type ``bool``. Stummschalten.
 
@@ -57,6 +63,12 @@ Item type ``str``. Informaation zum aktuellen Status von Kodi (Playing, Stopped,
 
 **favourites**
 Item type ``dict``. Die in Kodi definierten Favoriten werden als Dictionary in dieses Item gespeichert. Ein Ändern der Einträge ist nicht möglich.
+
+**audiostream**
+Item type ``foo``. Ändern der Tonspur, entweder next, previous oder eine Zahl zur Direktanwahl
+
+**subtitle**
+Item type ``list``. Einstellen des Untertitels als Liste. Der erste Wert muss die Untertitelspur deklarieren, der zweite ist True oder False
 
 **input**
 Item type ``str``. Diese Funktion ermöglicht die Kontrolle über Kodi wie mit einer Fernbedienung. Für dieses Item sollte ``enforce_updates`` aktiviert werden. Eine Übersicht über mögliche Aktion ist auf der `Kodi Wiki Seite <https://kodi.wiki/view/Action_IDs>`_
