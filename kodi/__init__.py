@@ -42,43 +42,47 @@ class Kodi(SmartPlugin):
     PLUGIN_VERSION = '1.5.0'
     ALLOW_MULTIINSTANCE = True
 
-    # list of all possible input actions for Kodi
+    # list of all possible input actions for Kodi except player specific actions
     _possible_input_actions = [
         'left', 'right', 'up', 'down', 'pageup', 'pagedown', 'select', 'highlight',
-        'parentdir', 'parentfolder', 'back', 'menu', 'previousmenu', 'info',
-        'pause', 'stop', 'skipnext', 'skipprevious', 'fullscreen', 'aspectratio',
-        'stepforward', 'stepback', 'bigstepforward', 'bigstepback',
-        'chapterorbigstepforward', 'chapterorbigstepback', 'osd', 'showsubtitles',
-        'nextsubtitle', 'cyclesubtitle', 'playerdebug', 'codecinfo', 'playerprocessinfo',
-        'nextpicture', 'previouspicture', 'zoomout', 'zoomin', 'playlist', 'queue',
-        'zoomnormal', 'zoomlevel1', 'zoomlevel2', 'zoomlevel3', 'zoomlevel4',
-        'zoomlevel5', 'zoomlevel6', 'zoomlevel7', 'zoomlevel8', 'zoomlevel9',
-        'nextcalibration', 'resetcalibration', 'analogmove', 'analogmovex',
-        'analogmovey', 'rotate', 'rotateccw', 'close', 'subtitledelayminus',
-        'subtitledelay', 'subtitledelayplus', 'audiodelayminus', 'audiodelay',
-        'audiodelayplus', 'subtitleshiftup', 'subtitleshiftdown', 'subtitlealign',
-        'audionextlanguage', 'verticalshiftup', 'verticalshiftdown', 'nextresolution',
-        'audiotoggledigital', 'number0', 'number1', 'number2', 'number3', 'number4',
-        'number5', 'number6', 'number7', 'number8', 'number9', 'smallstepback',
-        'fastforward', 'rewind', 'play', 'playpause', 'switchplayer', 'delete', 'copy',
+        'parentdir', 'parentfolder', 'back', 'menu', 'previousmenu', 'osd', 'playlist', 'queue',
+        'nextcalibration', 'resetcalibration', 'close', 'fullscreen',
+        'number0', 'number1', 'number2', 'number3', 'number4',
+        'number5', 'number6', 'number7', 'number8', 'number9', 'play', 'playpause',
+        'switchplayer', 'delete', 'copy', 'moveitemup', 'moveitemdown', 'contextmenu',
         'move', 'screenshot', 'rename', 'togglewatched', 'scanitem', 'reloadkeymaps',
         'volumeup', 'volumedown', 'mute', 'backspace', 'scrollup', 'scrolldown',
-        'analogfastforward', 'analogrewind', 'moveitemup', 'moveitemdown', 'contextmenu',
-        'shift', 'symbols', 'cursorleft', 'cursorright', 'showtime', 'analogseekforward',
-        'analogseekback', 'showpreset', 'nextpreset', 'previouspreset', 'lockpreset', 'randompreset',
+        'shift', 'symbols', 'cursorleft', 'cursorright', 'showpreset', 'nextpreset', 'previouspreset', 'lockpreset', 'randompreset',
         'increasevisrating', 'decreasevisrating', 'showvideomenu', 'enter', 'increaserating',
-        'decreaserating', 'setrating', 'togglefullscreen', 'nextscene', 'previousscene', 'nextletter',
-        'prevletter', 'jumpsms2', 'jumpsms3', 'jumpsms4', 'jumpsms5', 'jumpsms6', 'jumpsms7', 'jumpsms8',
-        'jumpsms9', 'filter', 'filterclear', 'filtersms2', 'filtersms3', 'filtersms4', 'filtersms5',
+        'decreaserating', 'setrating', 'togglefullscreen', 'nextletter',
+        'prevletter', 'filter', 'filterclear', 'filtersms2', 'filtersms3', 'filtersms4', 'filtersms5',
         'filtersms6', 'filtersms7', 'filtersms8', 'filtersms9', 'firstpage', 'lastpage', 'guiprofile',
         'red', 'green', 'yellow', 'blue', 'increasepar', 'decreasepar', 'volampup', 'volampdown',
         'volumeamplification', 'createbookmark', 'createepisodebookmark', 'settingsreset',
-        'settingslevelchange', 'stereomode', 'nextstereomode', 'previousstereomode',
-        'togglestereomode', 'stereomodetomono', 'channelup', 'channeldown', 'previouschannelgroup',
+        'settingslevelchange', 'channelup', 'channeldown', 'previouschannelgroup',
         'nextchannelgroup', 'playpvr', 'playpvrtv', 'playpvrradio', 'record', 'togglecommskip',
         'showtimerrule', 'leftclick', 'rightclick', 'middleclick', 'doubleclick', 'longclick',
         'wheelup', 'wheeldown', 'mousedrag', 'mousemove', 'tap', 'longpress', 'pangesture',
-        'zoomgesture', 'rotategesture', 'swipeleft', 'swiperight', 'swipeup', 'swipedown', 'error', 'noop', 'resume']
+        'zoomgesture', 'rotategesture', 'swipeleft', 'swiperight', 'swipeup', 'swipedown', 'error', 'noop']
+
+    _possible_player_actions = [
+        'pause', 'stop', 'skipnext', 'skipprevious', 'aspectratio',
+        'stepforward', 'stepback', 'bigstepforward', 'bigstepback',
+        'chapterorbigstepforward', 'chapterorbigstepback', 'showsubtitles',
+        'nextsubtitle', 'cyclesubtitle', 'playerdebug', 'codecinfo', 'playerprocessinfo',
+        'nextpicture', 'previouspicture', 'zoomout', 'zoomin',
+        'zoomnormal', 'zoomlevel1', 'zoomlevel2', 'zoomlevel3', 'zoomlevel4',
+        'zoomlevel5', 'zoomlevel6', 'zoomlevel7', 'zoomlevel8', 'zoomlevel9',
+        'analogmove', 'analogmovex', 'analogmovey', 'rotate', 'rotateccw', 'subtitledelayminus',
+        'subtitledelay', 'subtitledelayplus', 'audiodelayminus', 'audiodelay',
+        'audiodelayplus', 'subtitleshiftup', 'subtitleshiftdown', 'subtitlealign',
+        'audionextlanguage', 'verticalshiftup', 'verticalshiftdown', 'nextresolution',
+        'audiotoggledigital', 'smallstepback', 'fastforward', 'rewind',
+        'analogfastforward', 'analogrewind', 'showtime', 'analogseekforward',
+        'analogseekback', 'nextscene', 'previousscene', 'jumpsms2', 'jumpsms3',
+        'jumpsms4', 'jumpsms5', 'jumpsms6', 'jumpsms7', 'jumpsms8',
+        'jumpsms9', 'stereomode', 'nextstereomode', 'previousstereomode',
+        'togglestereomode', 'stereomodetomono']
 
     _get_items = ['volume', 'mute', 'title', 'media', 'state', 'favourites']
 
@@ -263,11 +267,11 @@ class Kodi(SmartPlugin):
                 if kodi_item == 'player':
                     for elem in self.registered_items['player']:
                         elem(0, caller='Kodi')
-                if kodi_item == 'input' and item() not in self._possible_input_actions:
-                    self.logger.error('The action \'%s\' for the kodi_item \'input\' is not allowed, skipping!', item_value)
+                if kodi_item == 'input' and item() not in self._possible_input_actions + self._possible_player_actions:
+                    self.logger.error("The action {} for the kodi_item 'input' is not allowed, skipping".format(item_value))
                 else:
-                    self.logger.debug('Plugin \'%s\': update_item was called with item \'%s\' from caller \'%s\', source \'%s\' and dest \'%s\'',
-                                      self.get_shortname(), item, caller, source, dest)
+                    self.logger.debug("update_item was called with item {} from caller {}, source {} and dest {}".format(
+                                      item, caller, source, dest))
                     method = self._set_items[kodi_item]['method']
                     params = self._set_items[kodi_item]['params']
                     if params is not None:
@@ -277,7 +281,10 @@ class Kodi(SmartPlugin):
                         for key, value in params.items():
                             if value == 'ITEM_VALUE':
                                 params[key] = item_value
-                    self._send_player_command(method, params, kodi_item)
+                    if item() in self._possible_input_actions:
+                        self.send_kodi_rpc(method=method, params=params, wait=False)
+                    elif item() in self._possible_player_actions:
+                        self._send_player_command(method, params, kodi_item)
             elif kodi_item in Kodi._player_items:
                 self.logger.debug('Plugin \'%s\': update_item was called with item \'%s\' from caller \'%s\', source \'%s\' and dest \'%s\'',
                                   self.get_shortname(), item, caller, source, dest)
