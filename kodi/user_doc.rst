@@ -85,7 +85,6 @@ Ein Auszug der wichtigsten Aktionen:
 - ``down`` Cursor nach unten
 - ``select`` Aktuelles Navigationselement aktivieren
 - ``contextmenu`` Anzeigen des Kontextmenüs
-- ``home`` Home Menu
 - ``back`` Einen Schritt zurück
 - ``volumeup`` Erhöhen der Lautstärke
 - ``volumedown`` Verringern der Lautstärke
@@ -96,4 +95,4 @@ Struct Vorlagen
 Ab smarthomeNG 1.6 können Vorlagen aus dem Plugin einfach eingebunden werden. Dabei stehen folgende Vorlagen zur Verfügung:
 
 - query: Enthält Funktionen, die zur Abfrage von Kodi Infos dienen.
-- control: Enthält Funktionen, mit denen Kodi gesteuert werden kann.
+- control: Enthält Funktionen, mit denen Kodi gesteuert werden kann. Hier sind auch die wichtigsten input Befehle als eigene Items hinterlegt (play, pause, next, etc.)

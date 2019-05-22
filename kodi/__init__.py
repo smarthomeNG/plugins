@@ -86,18 +86,20 @@ class Kodi(SmartPlugin):
                   'mute'  : dict(method='Application.SetMute', params=dict(mute='ITEM_VALUE')),
                   'input' : dict(method='Input.ExecuteAction', params=dict(action='ITEM_VALUE')),
                   'on_off': dict(method='System.Shutdown', params=None),
+                  'home': dict(method='Input.Home', params=None),
                   'player': dict(method='Player.GetActivePlayers', params=None)}
 
     _player_items = {'audiostream': dict(method='Player.SetAudioStream', params=dict(stream='ITEM_VALUE')),
-                     'subtitle': dict(method='Player.SetAudioStream', params=dict(subtitle='ITEM_VALUE[0]', enable='ITEM_VALUE[1]')),
+                     'subtitle': dict(method='Player.SetSubtitle', params=dict(subtitle='ITEM_VALUE[0]', enable='ITEM_VALUE[1]')),
                      'seek': dict(method='Player.Seek', params=dict(value='ITEM_VALUE')),
                      'speed': dict(method='Player.SetSpeed', params=dict(speed='ITEM_VALUE'))}
 
-    _macro = {'resume': {"play": dict(method='Input.ExecuteAction', params=dict(action='play')), "resume": dict(method='Input.ExecuteAction', params=dict(action='select'))},
-              'beginning': {"play": dict(method='Input.ExecuteAction', params=dict(action='play')),
+    _macro = {'resume': {"play": dict(method='Input.ExecuteAction', params=dict(action='play')), "wait": 1, "resume": dict(method='Input.ExecuteAction', params=dict(action='select'))},
+              'beginning': {"play": dict(method='Input.ExecuteAction', params=dict(action='play')), "wait": 1,
                            "down": dict(method='Input.ExecuteAction', params=dict(action='down')), "select": dict(method='Input.ExecuteAction', params=dict(action='select'))}}
 
-    _initcommands = {"ping": {"method": "JSONRPC.Ping"}, "getvolume": {"method": 'Application.GetProperties', "params": dict(properties=['volume', 'muted'])},
+    _initcommands = {"ping": {"method": "JSONRPC.Ping"},
+                    "getvolume": {"method": 'Application.GetProperties', "params": dict(properties=['volume', 'muted'])},
                     "favourites": {"method": 'Favourites.GetFavourites', "params": dict(properties=['window', 'path', 'thumbnail', 'windowparameter'])},
                     "player": {"method": "Player.GetActivePlayers"} }
 
@@ -131,7 +133,7 @@ class Kodi(SmartPlugin):
         self.response_id = None
         self.sendingcommand = None
         self.senderrors = {}
-        self.cmd_lock = threading.Condition()
+        self.cmd_lock = threading.Lock()
         self.reply_lock = threading.Condition()
         self.reply = None
         self.activeplayers = []
@@ -248,10 +250,15 @@ class Kodi(SmartPlugin):
             elif kodi_item == 'macro' and item() in self._macro:
                 macro = item()
                 for command in self._macro.get(macro):
-                    method = self._macro.get(macro).get(command).get('method')
-                    params = self._macro.get(macro).get(command).get('params')
-                    self.logger.debug("Command - Method: {}, Params: {}".format(method, params))
-                    self.send_kodi_rpc(method=method, params=params, wait=False)
+                    if command == "wait":
+                        waittime = int(self._macro.get(macro).get(command))
+                        self.logger.debug("Macro waiting for {} second(s)".format(waittime))
+                        time.sleep(waittime)
+                    else:
+                        method = self._macro.get(macro).get(command).get('method')
+                        params = self._macro.get(macro).get(command).get('params')
+                        self.logger.debug("Command - Method: {}, Params: {}".format(method, params))
+                        self.send_kodi_rpc(method=method, params=params, wait=False)
             elif kodi_item in Kodi._set_items:
                 if kodi_item == 'player':
                     for elem in self.registered_items['player']:
@@ -381,6 +388,7 @@ class Kodi(SmartPlugin):
                 self.reply_lock.acquire()
                 templist = []
                 templist = self.sendcommands
+                query_playerinfo = []
                 for entry in templist:
                     if entry.get('id') == event.get('id'):
                         if self.senderrors.get(event.get('id')):
@@ -391,17 +399,18 @@ class Kodi(SmartPlugin):
                             if len(event.get('result')) > 1:
                                 self.logger.info('There is more than one active player. Sending request to each player!')
                                 self.activeplayers = []
+                                query_playerinfo = True
                                 for player in event.get('result'):
                                     self.activeplayers.append(player.get('playerid'))
-                                    self._get_player_info(player)
+                                    query_playerinfo.append(player.get('playerid'))
                             elif len(event.get('result')) > 0:
                                 self.activeplayers = [event.get('result')[0].get('playerid')]
-                                self.logger.debug("Getting player info for {}".format(event.get('result')))
-                                self._get_player_info(event.get('result'))
+                                query_playerinfo = [event.get('result')[0].get('playerid')]
                                 for elem in self.registered_items['player']:
                                     elem(event.get('result')[0].get('playerid'), caller='Kodi')
                             else:
                                 self.activeplayers = []
+                                query_playerinfo = []
                                 for elem in self.registered_items['state']:
                                     elem('No Active Player', caller='Kodi')
                         elif event.get('result') and event.get('id').startswith('Application.GetProperties'):
@@ -439,9 +448,12 @@ class Kodi(SmartPlugin):
                         try:
                             self.sendcommands.remove(entry)
                         except Exception as err:
-                            self.logger.error(err)
+                            self.logger.error("Could not remove sent command from queue. Error: {}". format(err))
                         self.reply_lock.notify()
                         self.reply_lock.release()
+                for player in query_playerinfo:
+                    self.logger.debug("Getting player info for {}".format(event.get('result')))
+                    self._get_player_info(player)
                 self.logger.debug('Sendcommands after receiving: {0}'.format(self.sendcommands))
             elif 'favourites' in event:
                 item_dict = dict()
@@ -508,15 +520,17 @@ class Kodi(SmartPlugin):
         a new thread in order to handle Play/Pause and Stop commands to
         the active Kodi players
         '''
+        self.send_kodi_rpc(method='Player.GetActivePlayers', params=None, message_id='Player.GetActivePlayers')
         self.logger.debug("Active players: {}".format(self.activeplayers))
         if len(self.activeplayers) == 0:
             self.logger.warning('Kodi: no active player found, skipping request!')
         else:
+            params = params or {}
             if len(self.activeplayers) > 1:
                 self.logger.info('Kodi: there is more than one active player. Sending request to each player!')
-            params = params or {}
             for player in self.activeplayers:
-                params.update({'playerid':player})
+                if len(self.activeplayers) > 1:
+                    params.update({'playerid':player})
                 self.send_kodi_rpc(method=method,
                                    params=params,
                                    wait=False)

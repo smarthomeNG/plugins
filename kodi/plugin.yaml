@@ -169,6 +169,47 @@ item_structs:
           visu_acl: rw
           enforce_updates: true
 
+        home:
+            kodi_item@instance: home
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+
+        stop:
+            type: bool
+            eval: sh...input('stop')
+            enforce_updates: True
+
+        play:
+            type: bool
+            eval: sh...input('play')
+            enforce_updates: True
+
+        pause:
+            type: bool
+            eval: sh...input('pause')
+            enforce_updates: True
+
+        previous:
+            type: bool
+            eval: sh...input('skipprevious')
+            enforce_updates: True
+
+        next:
+            type: bool
+            eval: sh...input('skipnext')
+            enforce_updates: True
+
+        select:
+            type: bool
+            eval: sh...input('select')
+            enforce_updates: True
+
+        contextmenu:
+            type: str
+            eval: sh...input('contextmenu')
+            enforce_updates: True
+
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
