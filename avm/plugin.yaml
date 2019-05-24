@@ -146,6 +146,10 @@ item_attributes:
         - 'energy'
         - 'power'
         - 'temperature'
+        - 'set_temperature'
+        - 'set_temperature_reduced'
+        - 'set_temperature_compfort'
+        - 'hkr_device'
 
     avm_incoming_allowed:
         type: str

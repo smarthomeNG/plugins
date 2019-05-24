@@ -11,9 +11,9 @@ plugin:
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/developer/plugins/network/README.html       # url of documentation (wiki) page
 
-    version: 1.3.1                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.4.0                 # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
     classname: Network             # class containing the plugin
@@ -38,8 +38,8 @@ parameters:
         type: str
         default: 'no'
         valid_list:
-          - yes
-          - no
+          - 'yes'
+          - 'no'
         description:
             de: "Eingehende UDP Verbindungen akzeptieren"
             en: "Accept incoming UDP connections"
@@ -47,8 +47,8 @@ parameters:
         type: str
         default: 'no'
         valid_list:
-          - yes
-          - no
+          - 'yes'
+          - 'no'
         description:
             de: "Eingehende TCP Verbindungen akzeptieren"
             en: "Accept incoming TCP connections"
@@ -65,19 +65,19 @@ parameters:
         type: list
         default: '*'
         description:
-            de: ""
+            de: "Mit diesem Attribut kann man eine Liste von / eine einzelne IP Adresse definieren, von der UDP Updates kommen dürfen. Per Default wird jeder eingehende Request angenommen."
             en: "with this attribute you could specify a list or a single IP address to allow UDP updates from. By default it accepts every incoming request."
     tcp_acl:
         type: list
         default: '*'
         description:
-            de: ""
+            de: "Mit diesem Attribut kann man eine Liste von / eine einzelne IP Adresse definieren, von der TCP Updates kommen dürfen. Per Default wird jeder eingehende Request angenommen."
             en: "with this attribute you could specify a list or a single IP address to allow TCP updates from. By default it accepts every incoming request."
     http_acl:
         type: list
         default: '*'
         description:
-            de: ""
+            de:  "Mit diesem Attribut kann man eine Liste von / eine einzelne IP Adresse definieren, von der HTTP Updates kommen dürfen. Per Default wird jeder eingehende Request angenommen."
             en: "with this attribute you could specify a list or a single IP address to allow HTTP updates from. By default it accepts every incoming request."
 
 
