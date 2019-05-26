@@ -191,11 +191,10 @@ class SeItem:
         # get data for new state
         if last_state is not None and new_state.id == last_state.id:
             self.__logger.info("Staying at {0} ('{1}')", new_state.id, new_state.name)
-            new_state.run_stay(self.__repeat_actions.get())
-
             # New state is last state
             if self.__laststate_internal_name != new_state.name:
                 self.__laststate_set(new_state)
+            new_state.run_stay(self.__repeat_actions.get())            
 
         else:
             # New state is different from last state
@@ -204,9 +203,8 @@ class SeItem:
                 last_state.run_leave(self.__repeat_actions.get())
 
             self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
-            new_state.run_enter(self.__repeat_actions.get())
-
             self.__laststate_set(new_state)
+            new_state.run_enter(self.__repeat_actions.get())
 
         self.__update_in_progress = False
 
