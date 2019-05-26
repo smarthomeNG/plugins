@@ -30,10 +30,9 @@ import struct
 from lib.model.smartplugin import *
 from lib.module import Modules
 
-
 class ArtNet_Model:
 
-    def __init__(self, ip, port, net, subnet, universe, instance_name, update_cycle):
+    def __init__(self, ip, port: int, net: int, subnet: int, universe: int, instance_name, update_cycle: int, min_channels: int):
         self._ip = ip
         self._port = port
 
@@ -42,6 +41,7 @@ class ArtNet_Model:
         self._subnet = subnet
         self._instance_name = instance_name
         self._update_cycle = update_cycle
+        self._min_channels = min_channels
 
         self._items = []
 
@@ -89,9 +89,21 @@ class ArtNet_Model:
         """
         Returns added items
 
-        :return: array of items held by the device
+        :return: array of items held by the device, sorted by their DMX-address
         """
-        return self._items
+        instance_key = "artnet_address"
+        if self._instance_name:
+            instance_key = "artnet_address@"+self._instance_name
+
+        return sorted(self._items, key=lambda i: i.conf[instance_key])
+
+    def get_min_channels(self):
+        """
+        Returns minimum channels to be sent
+
+        :return: number of minimum channels to be sent
+        """
+        return self._min_channels
 
 
 class ArtNet(SmartPlugin):
@@ -109,19 +121,18 @@ class ArtNet(SmartPlugin):
         """
         self.logger.info('Init ArtNet Plugin')
 
-        self._model = ArtNet_Model(self.get_parameter_value('ip') or '127.0.0.1',
-                                   port=int(self.get_parameter_value(
-                                       'port') or 6454),
-                                   net=int(self.get_parameter_value(
-                                       'artnet_net') or 0),
-                                   subnet=int(self.get_parameter_value(
-                                       'artnet_subnet') or 0),
-                                   universe=int(self.get_parameter_value(
-                                       'artnet_universe') or 0),
+        self._model = ArtNet_Model(ip=self.get_parameter_value('ip'),
+                                   port=self.get_parameter_value('port'),
+                                   net=self.get_parameter_value('artnet_net'),
+                                   subnet=self.get_parameter_value('artnet_subnet'),
+                                   universe=self.get_parameter_value('artnet_universe'),
                                    instance_name=self.get_instance_name(),
-                                   update_cycle=int(
-                                       self.get_parameter_value('update_cycle') or 0),
+                                   update_cycle=self.get_parameter_value('update_cycle'),
+                                   min_channels=self.get_parameter_value('min_channels')
                                    )
+
+        while len(self.dmxdata) < self._model._min_channels:
+            self.dmxdata.append(0)
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.init_webinterface()
@@ -141,8 +152,7 @@ class ArtNet(SmartPlugin):
                 self._model._items.append(item)
                 return self.update_item
             else:
-                self.logger.error(
-                    "Invalid address %s in item %s" % (adr, item))
+                self.logger.error("Invalid address %s in item %s" % (adr, item))
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'ArtNet':
@@ -151,8 +161,7 @@ class ArtNet(SmartPlugin):
                 self.logger.warning(
                     "Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, item(), item))
             else:
-                self.logger.debug(
-                    "Updating address: %s to value %s" % (adr, item()))
+                self.logger.debug("Updating address: %s to value %s" % (adr, item()))
                 self.send_single_value(adr, item())
 
     def _update_loop(self):
@@ -178,8 +187,7 @@ class ArtNet(SmartPlugin):
                 self.logger.warning(
                     "Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, val, it))
             else:
-                self.logger.debug(
-                    "Updating address: %s to value %s" % (adr, val))
+                self.logger.debug("Updating address: %s to value %s" % (adr, val))
             self.set_address_value(adr, val)
         self.__ArtDMX_broadcast()
 
@@ -216,8 +224,7 @@ class ArtNet(SmartPlugin):
 
     def send_frame_starting_at(self, adr, values):
         if adr < 1 or adr > (512 - len(values) + 1):
-            self.logger.error("DMX address %s with length %s invalid" %
-                              (adr, len(values)))
+            self.logger.error("DMX address %s with length %s invalid" % (adr, len(values)))
             return
 
         while len(self.dmxdata) < (adr + len(values) - 1):
@@ -265,11 +272,14 @@ class ArtNet(SmartPlugin):
                 result = result + token.encode('utf-8', 'ignore')
             except:  # Handels all bytes
                 result = result + token
-        # data = "".join(data)
-        # debug
-        # self.logger.info("Outgoing Artnet:%s"%(':'.join(x.encode('hex') for x in data)))
         # send over ethernet
-        self.s.sendto(result, (self._model._host, self._model._port))
+        self.logger.debug("Sending %s channels to %s:%s as Net/SubNet/Unv: %s/%s/%s" % (len(self.dmxdata),
+                                                                                        self._model._ip,
+                                                                                        self._model._port,
+                                                                                        self._model._net,
+                                                                                        self._model._subnet,
+                                                                                        self._model._universe))
+        self.s.sendto(result, (self._model._ip, self._model._port))
 
     def init_webinterface(self):
         """"
@@ -278,13 +288,12 @@ class ArtNet(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
+            # try/except to handle running in a core version that does not support modules
+            self.mod_http = Modules.get_instance().get_module('http')
         except:
             self.mod_http = None
         if self.mod_http == None:
-            self.logger.error(
-                "Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
