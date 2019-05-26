@@ -2,6 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2013-     mode2k                              mode@gmx.co.uk
+#  Extended  2019      jentz1986
 #########################################################################
 #  This file is part of SmartHomeNG
 #  https://github.com/smarthomeNG/smarthome
@@ -21,36 +22,175 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
+import cherrypy
 import logging
 import socket
 import struct
 
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
+from lib.module import Modules
+
+class ArtNet_Model:
+
+    def __init__(self, ip, port: int, net: int, subnet: int, universe: int, instance_name, update_cycle: int, min_channels: int):
+        self._ip = ip
+        self._port = port
+
+        self._universe = universe
+        self._net = net
+        self._subnet = subnet
+        self._instance_name = instance_name
+        self._update_cycle = update_cycle
+        self._min_channels = min_channels
+
+        self._items = []
+
+    def get_ip(self):
+        """
+        Returns the IP of the ArtNet node
+
+        :return: IP-address of the device, as set in plugin.conf
+        """
+        return self._ip
+
+    def get_port(self):
+        """
+        Returns the port of the ArtNet node
+
+        :return: port of the device, as set in plugin.conf
+        """
+        return self._port
+
+    def get_net(self):
+        """
+        Returns the net of the ArtNet node
+
+        :return: net of the device, as set in plugin.conf
+        """
+        return self._net
+
+    def get_subnet(self):
+        """
+        Returns the Subnet of the ArtNet node
+
+        :return: Subnet of the device, as set in plugin.conf
+        """
+        return self._subnet
+
+    def get_universe(self):
+        """
+        Returns the Universe of the ArtNet node
+
+        :return: Universe of the device, as set in plugin.conf
+        """
+        return self._universe
+
+    def get_items(self):
+        """
+        Returns added items
+
+        :return: array of items held by the device, sorted by their DMX-address
+        """
+        return sorted(self._items, key=lambda i: self.get_iattr_value(i.conf, "artnet_address"))
+        
+
+    def get_min_channels(self):
+        """
+        Returns minimum channels to be sent
+
+        :return: number of minimum channels to be sent
+        """
+        return self._min_channels
 
 
 class ArtNet(SmartPlugin):
 
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.3.0'
+    ALLOW_MULTIINSTANCE = True
+    PLUGIN_VERSION = "1.6.0"
+    ADDR_ATTR = 'artnet_address'
 
     packet_counter = 1
     dmxdata = [0, 0]
 
-    def __init__(self, smarthome, artnet_net, artnet_subnet, artnet_universe, ip, port):
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+        """
+        self.logger.info('Init ArtNet Plugin')
+
+        self._model = ArtNet_Model(ip=self.get_parameter_value('ip'),
+                                   port=self.get_parameter_value('port'),
+                                   net=self.get_parameter_value('artnet_net'),
+                                   subnet=self.get_parameter_value('artnet_subnet'),
+                                   universe=self.get_parameter_value('artnet_universe'),
+                                   instance_name=self.get_instance_name(),
+                                   update_cycle=self.get_parameter_value('update_cycle'),
+                                   min_channels=self.get_parameter_value('min_channels')
+                                   )
+
+        while len(self.dmxdata) < self._model._min_channels:
+            self.dmxdata.append(0)
+
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.net = int(artnet_net)
-        self.subnet = int(artnet_subnet)
-        self.universe = int(artnet_universe)
-        self.ip = ip
-        self.port = int(port)
-        self.logger.debug("Init ArtNet Plugin done")
+        self.init_webinterface()
+
+        self.logger.debug("Init ArtNet Plugin for %s done" %
+                          self._model._instance_name)
+
+    def parse_item(self, item):
+        # items bound to this artnet-universe
+        if self.has_iattr(item.conf, self.ADDR_ATTR):
+            adr = int(self.get_iattr_value(item.conf, self.ADDR_ATTR))
+            if adr > 0 and adr < 513:
+                while len(self.dmxdata) < (adr - 1):
+                    self.dmxdata.append(0)
+
+                self.logger.debug("Bound address %s to item %s" % (adr, item))
+                self._model._items.append(item)
+                return self.update_item
+            else:
+                self.logger.error("Invalid address %s in item %s" % (adr, item))
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        if caller != 'ArtNet':
+            adr = int(self.get_iattr_value(item.conf, self.ADDR_ATTR))
+            if item() < 0 or item() > 255:
+                self.logger.warning(
+                    "Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, item(), item))
+            else:
+                self.logger.debug("Updating address: %s to value %s" % (adr, item()))
+                self.send_single_value(adr, item())
+
+    def _update_loop(self):
+        if not self.alive:
+            return
+        if len(self.dmxdata) < 1:
+            return
+        self.__ArtDMX_broadcast()
 
     def run(self):
-        pass
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("run method called")
+        if self._model._update_cycle > 0:
+            self.scheduler_add('updateArtnet', self._update_loop,
+                               prio=5, cycle=self._model._update_cycle, offset=2)
+        self.alive = True
+        for it in self._model._items:
+            adr = int(self.get_iattr_value(it.conf, self.ADDR_ATTR))
+            val = it()
+            if val < 0 or val > 255:
+                self.logger.warning(
+                    "Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, val, it))
+            else:
+                self.logger.debug("Updating address: %s to value %s" % (adr, val))
+            self.set_address_value(adr, val)
+        self.__ArtDMX_broadcast()
 
     def stop(self):
-        self.close()
+        self.s.close()
+        self.alive = False
 
     def __call__(self, var1=None, var2=None):
         if type(var1) == int and type(var2) == int:
@@ -60,20 +200,28 @@ class ArtNet(SmartPlugin):
         if type(var1) == list and type(var2) == type(None):
             self.send_frame(var1)
 
+    def get_address_value(self, req_adr):
+        adr = int(req_adr)
+        while len(self.dmxdata) < adr:
+            self.dmxdata.append(0)
+        return self.dmxdata[adr - 1]
+
+    def set_address_value(self, req_adr, val):
+        while len(self.dmxdata) < req_adr:
+            self.dmxdata.append(0)
+        self.dmxdata[req_adr - 1] = val
+
     def send_single_value(self, adr, value):
         if adr < 1 or adr > 512:
             self.logger.error("DMX address %s invalid" % adr)
             return
 
-        while len(self.dmxdata) < adr:
-            self.dmxdata.append(0)
-        self.dmxdata[adr - 1] = value
+        self.set_address_value(adr, value)
         self.__ArtDMX_broadcast()
 
     def send_frame_starting_at(self, adr, values):
         if adr < 1 or adr > (512 - len(values) + 1):
-            self.logger.error("DMX address %s with length %s invalid" %
-                         (adr, len(values)))
+            self.logger.error("DMX address %s with length %s invalid" % (adr, len(values)))
             return
 
         while len(self.dmxdata) < (adr + len(values) - 1):
@@ -92,8 +240,6 @@ class ArtNet(SmartPlugin):
         self.__ArtDMX_broadcast()
 
     def __ArtDMX_broadcast(self):
-#       self.logger.info("Incomming DMX: %s"%self.dmxdata)
-        # New Array
         data = []
         # Fix ID 7byte + 0x00
         data.append("Art-Net\x00")
@@ -110,7 +256,7 @@ class ArtNet(SmartPlugin):
         data.append(struct.pack('B', 0))
         # Artnet source address
         data.append(
-            struct.pack('<H', self.net << 8 | self.subnet << 4 | self.universe))
+            struct.pack('<H', self._model._net << 8 | self._model._subnet << 4 | self._model._universe))
         # Length of DMX Data, High Byte First
         data.append(struct.pack('>H', len(self.dmxdata)))
         # DMX Data
@@ -123,11 +269,87 @@ class ArtNet(SmartPlugin):
                 result = result + token.encode('utf-8', 'ignore')
             except:  # Handels all bytes
                 result = result + token
-#       data = "".join(data)
-        # debug
-#       self.logger.info("Outgoing Artnet:%s"%(':'.join(x.encode('hex') for x in data)))
         # send over ethernet
-        self.s.sendto(result, (self.ip, self.port))
+        self.logger.debug("Sending %s channels to %s:%s as Net/SubNet/Unv: %s/%s/%s" % (len(self.dmxdata),
+                                                                                        self._model._ip,
+                                                                                        self._model._port,
+                                                                                        self._model._net,
+                                                                                        self._model._subnet,
+                                                                                        self._model._universe))
+        self.s.sendto(result, (self._model._ip, self._model._port))
 
-    def close(self):
-        self.s.close()
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            # try/except to handle running in a core version that does not support modules
+            self.mod_http = Modules.get_instance().get_module('http')
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tabcount = 1
+
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
+                           plugin_version=self.plugin.get_version(),
+                           plugin_info=self.plugin.get_info(),
+                           tabcount=tabcount,
+                           p=self.plugin)
