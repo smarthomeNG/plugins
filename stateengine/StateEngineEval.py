@@ -82,7 +82,7 @@ class SeEval(StateEngineTools.SeItemChild):
             item = self._abitem.return_item(subitem_id)
             return item.property.path
         except Exception as ex:
-            self.__logger.warning("Problem evaluating name of {}: {}".format(subitem_id, ex))
+            self._log_warning("Problem evaluating name of {0}: {1}", subitem_id, ex)
             #self._log_exception(ex)
 
     # Return the value of an item related to the StateEngine Object Item
@@ -93,10 +93,19 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
             item = self._abitem.return_item(subitem_id)
-            return item()
+            return item.property.value
         except Exception as ex:
-            self.__logger.warning("Problem evaluating value of {}: {}".format(subitem_id, ex))
+            self._log_warning("Problem evaluating value of {0}: {1}", subitem_id, ex)
             #self._log_exception(ex)
+
+    def get_relative_itemname(self, subitem_id):
+        self._log_debug("Executing method 'get_relative_itemname({0})'", subitem_id)
+        try:
+            item = self._abitem.return_item(subitem_id)
+            self._log_debug("Item Name from {0}: {1}", subitem_id, item.property.name)
+            return item.property.name
+        except Exception as ex:
+            self._log_warning("Problem evaluating value of {0}: {1}", subitem_id, ex)
 
     # Insert end time of suspension into text
     # suspend_item_id: Item whose age is used to determine how much of the suspend time is already over
