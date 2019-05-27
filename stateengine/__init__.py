@@ -33,7 +33,7 @@ from lib.item import Items
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.5.0'
+    PLUGIN_VERSION = '1.5.1'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor

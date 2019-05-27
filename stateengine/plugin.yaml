@@ -26,7 +26,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.5.0
+    version: 1.5.1
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -367,7 +367,8 @@ item_structs:
 
         rules:
             se_item_lock: ..lock
-            eval_trigger: ..lock
+            eval_trigger:
+                - ..lock
 
             lock:
                 name: gesperrt
@@ -427,7 +428,8 @@ item_structs:
             se_item_suspend_end: ..suspend_end
             se_item_suspend_active: ..settings.suspend_active
             se_suspend_time: eval:stateengine_eval.get_relative_itemvalue('..settings.suspendduration') * 60
-            eval_trigger: ..manuell
+            eval_trigger:
+                - ..manuell
 
             suspend:
                 name: ausgesetzt
@@ -483,7 +485,8 @@ item_structs:
             se_item_retrigger: ..rules
             se_item_release: ..release
             se_item_suspend_end: ..suspend_end
-            eval_trigger: ..release
+            eval_trigger:
+                - ..release
 
             release:
                 name: release
