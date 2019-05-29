@@ -37,6 +37,14 @@ parameters:
         description:
             de: 'Gibt an, wie oft (Sekunden) die aktuelle Lichtsituation neu verschickt werden soll (optional, 0 deaktiviert dies)'
             en: 'Defines Refresh-cycle for re-sending the current setting in seconds, 0 deactivates this'
+    artnet_universe:
+        type: int
+        default: 0
+        description:
+            de: 'Gibt das Art-Net Universe an'
+            en: 'Specifies the Art-Net Universe to use'
+        valid_min: 0
+        valid_max: 15
     artnet_net:
         type: int
         default: 0
@@ -53,15 +61,6 @@ parameters:
             en: 'Specifies the Art-Net Sub-Net to use'
         valid_min: 0
         valid_max: 15 
-    artnet_universe:
-        type: int
-        default: 0
-        description:
-            de: 'Gibt das Art-Net Universe an'
-            en: 'Specifies the Art-Net Universe to use'
-        valid_min: 0
-        valid_max: 15
-
 
 item_attributes:
     artnet_address:
@@ -75,55 +74,7 @@ item_attributes:
 
 logic_parameters: NONE
 
-plugin_functions: 
-    send_single_value:
-        type: void
-        description:
-            de: "Sendet einen einzelnen DMX Kanalwert"
-            en: "Sends a single DMX Channel-Value"
-        parameters:
-            adr:
-                type: num
-                valid_min: 1
-                valid_max: 512
-                description:
-                    de: "Zu adressierender DMX-Kanal"
-                    en: "DMX Channel to be addressed"
-            value:
-                type: num
-                valid_min: 0
-                valid_max: 255
-                description:
-                    de: "Wert auf den der Kanal gesetzt werden soll"
-                    en: "Value this Channel is to be set to"
-    send_frame_starting_at:
-        type: void
-        description:
-            de: "Sendet einen Satz an DMX Kanalwerten, beginnend bei einer Startadresse"
-            en: "Sends a set of DMX-channel-value starting from a certain address"
-        parameters:
-            adr:
-                type: num
-                valid_min: 1
-                valid_max: 512
-                description:
-                    de: "Erster zu adressierender DMX-Kanal"
-                    en: "First DMX-channel to be addressed"
-            values:
-                type: list(num)
-                description:
-                    de: "Werte die ab dem Startkanal gesetzt werden sollen"
-                    en: "Values to be transferred"
-    send_frame:
-        type: void
-        description:
-            de: "Sendet einen vollständingen DMX-Frame"
-            en: "Sends a full DMX-Frame"
-        parameters:
-            values:
-                type: list(num)
-                description:
-                    de: "Wertemenge"
-                    en: "Values to be transferred"
+plugin_functions: NONE
+    # Definition of function interface of the plugin
 
 item_structs: NONE

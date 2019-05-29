@@ -22,7 +22,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import cherrypy
 import logging
 import socket
 import struct
@@ -30,20 +29,19 @@ import struct
 from lib.model.smartplugin import *
 from lib.module import Modules
 
-
 class ArtNet_Model:
 
-    def __init__(self, host, port, net, subnet, universe, instance_name, update_cycle):
+    def __init__(self, host, port, universe, net, subnet, instance_name, update_cycle):
         self._host = host
         self._port = port
-
+        
         self._universe = universe
         self._net = net
         self._subnet = subnet
         self._instance_name = instance_name
         self._update_cycle = update_cycle
-
-        self._items = []
+        
+        self._items = []        
 
     def get_ip(self):
         """
@@ -76,7 +74,7 @@ class ArtNet_Model:
         :return: net of the device, as set in plugin.conf
         """
         return self._net
-
+        
     def get_subnet(self):
         """
         Returns the Subnet of the ArtNet node
@@ -84,7 +82,7 @@ class ArtNet_Model:
         :return: Subnet of the device, as set in plugin.conf
         """
         return self._subnet
-
+        
     def get_items(self):
         """
         Returns added items
@@ -93,95 +91,79 @@ class ArtNet_Model:
         """
         return self._items
 
-
 class ArtNet(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.5.1"
     ADDR_ATTR = 'artnet_address'
 
     packet_counter = 1
     dmxdata = [0, 0]
-
+    
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         """
+        # self.logger = logging.getLogger(__name__)
         self.logger.info('Init ArtNet Plugin')
-
-        self._model = ArtNet_Model(self.get_parameter_value('ip') or '127.0.0.1',
-                                   port=int(self.get_parameter_value(
-                                       'port') or 6454),
-                                   net=int(self.get_parameter_value(
-                                       'artnet_net') or 0),
-                                   subnet=int(self.get_parameter_value(
-                                       'artnet_subnet') or 0),
-                                   universe=int(self.get_parameter_value(
-                                       'artnet_universe') or 0),
+        
+        self._model = ArtNet_Model(self.get_parameter_value('ip') or '127.0.0.1', 
+                                   port=int(self.get_parameter_value('port') or 6454),
+                                   universe=int(self.get_parameter_value('artnet_universe') or 0),
+                                   net=int(self.get_parameter_value('artnet_net') or 0),
+                                   subnet=int(self.get_parameter_value('artnet_subnet') or 0),
                                    instance_name=self.get_instance_name(),
-                                   update_cycle=int(
-                                       self.get_parameter_value('update_cycle') or 0),
+                                   update_cycle=int(self.get_parameter_value('update_cycle') or 0),
                                    )
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.init_webinterface()
 
-        self.logger.debug("Init ArtNet Plugin for %s done" %
-                          self._model._instance_name)
+        self.logger.debug("Init ArtNet Plugin for %s done" % self._model._instance_name)
 
     def parse_item(self, item):
-        # items bound to this artnet-universe
+        # items bound to this artnet-subnet
         if self.has_iattr(item.conf, self.ADDR_ATTR):
             adr = int(self.get_iattr_value(item.conf, self.ADDR_ATTR))
             if adr > 0 and adr < 513:
                 while len(self.dmxdata) < (adr - 1):
                     self.dmxdata.append(0)
-
+                
                 self.logger.debug("Bound address %s to item %s" % (adr, item))
                 self._model._items.append(item)
                 return self.update_item
             else:
-                self.logger.error(
-                    "Invalid address %s in item %s" % (adr, item))
+                self.logger.error("Invalid address %s in item %s" % (adr, item))
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'ArtNet':
             adr = int(self.get_iattr_value(item.conf, self.ADDR_ATTR))
             if item() < 0 or item() > 255:
-                self.logger.warning(
-                    "Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, item(), item))
+                self.logger.warning("Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, item(), item))
             else:
-                self.logger.debug(
-                    "Updating address: %s to value %s" % (adr, item()))
+                self.logger.debug("Updating address: %s to value %s" % (adr, item()))
                 self.send_single_value(adr, item())
-
-    def _update_loop(self):
-        if not self.alive:
-            return
-        if len(self.dmxdata) < 1:
-            return
-        self.__ArtDMX_broadcast()
-
+            
+                
     def run(self):
         """
         Run method for the plugin
         """
         self.logger.debug("run method called")
         if self._model._update_cycle > 0:
-            self.scheduler_add('updateArtnet', self._update_loop,
-                               prio=5, cycle=self._model._update_cycle, offset=2)
+            self.scheduler_add('updateArtnet', self._update_loop, prio=5, cycle=self._model._update_cycle, offset=2)
         self.alive = True
         for it in self._model._items:
             adr = int(self.get_iattr_value(it.conf, self.ADDR_ATTR))
             val = it()
             if val < 0 or val > 255:
-                self.logger.warning(
-                    "Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, val, it))
+                self.logger.warning("Impossible to update address: %s to value %s from item %s, value has to be >=0 and <=255" % (adr, val, it))
             else:
-                self.logger.debug(
-                    "Updating address: %s to value %s" % (adr, val))
-            self.set_address_value(adr, val)
+                self.logger.debug("Updating address: %s to value %s" % (adr, vaL))
+            set_address_value(adr, val)
         self.__ArtDMX_broadcast()
+       
+            
 
     def stop(self):
         self.s.close()
@@ -195,17 +177,24 @@ class ArtNet(SmartPlugin):
         if type(var1) == list and type(var2) == type(None):
             self.send_frame(var1)
 
+    def _update_loop(self):
+        if not self.alive:
+            return
+        if len(self.dmxdata) < 1:
+            return
+        self.__ArtDMX_broadcast()
+
     def get_address_value(self, req_adr):
         adr = int(req_adr)
         while len(self.dmxdata) < adr:
             self.dmxdata.append(0)
         return self.dmxdata[adr - 1]
-
+        
     def set_address_value(self, req_adr, val):
         while len(self.dmxdata) < req_adr:
             self.dmxdata.append(0)
-        self.dmxdata[req_adr - 1] = val
-
+        self.dmxdata[adr - 1] = value
+        
     def send_single_value(self, adr, value):
         if adr < 1 or adr > 512:
             self.logger.error("DMX address %s invalid" % adr)
@@ -217,7 +206,7 @@ class ArtNet(SmartPlugin):
     def send_frame_starting_at(self, adr, values):
         if adr < 1 or adr > (512 - len(values) + 1):
             self.logger.error("DMX address %s with length %s invalid" %
-                              (adr, len(values)))
+                         (adr, len(values)))
             return
 
         while len(self.dmxdata) < (adr + len(values) - 1):
@@ -236,6 +225,8 @@ class ArtNet(SmartPlugin):
         self.__ArtDMX_broadcast()
 
     def __ArtDMX_broadcast(self):
+#       self.logger.info("Incomming DMX: %s"%self.dmxdata)
+        # New Array
         data = []
         # Fix ID 7byte + 0x00
         data.append("Art-Net\x00")
@@ -265,9 +256,9 @@ class ArtNet(SmartPlugin):
                 result = result + token.encode('utf-8', 'ignore')
             except:  # Handels all bytes
                 result = result + token
-        # data = "".join(data)
+#       data = "".join(data)
         # debug
-        # self.logger.info("Outgoing Artnet:%s"%(':'.join(x.encode('hex') for x in data)))
+#       self.logger.info("Outgoing Artnet:%s"%(':'.join(x.encode('hex') for x in data)))
         # send over ethernet
         self.s.sendto(result, (self._model._host, self._model._port))
 
@@ -283,8 +274,7 @@ class ArtNet(SmartPlugin):
         except:
             self.mod_http = None
         if self.mod_http == None:
-            self.logger.error(
-                "Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
@@ -312,13 +302,14 @@ class ArtNet(SmartPlugin):
 #    Webinterface of the plugin
 # ------------------------------------------
 
+import cherrypy
 
 class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-
+        
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str
@@ -342,8 +333,8 @@ class WebInterface(SmartPluginWebIf):
         tabcount = 1
 
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), 
                            plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(),
+                           plugin_info=self.plugin.get_info(), 
                            tabcount=tabcount,
                            p=self.plugin)
