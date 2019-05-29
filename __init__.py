@@ -34,7 +34,7 @@ from bin.smarthome import VERSION
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.3"
+    PLUGIN_VERSION = "1.5.0.4"
 
     _base_url = 'https://api.openweathermap.org/%s'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
@@ -163,6 +163,10 @@ class OpenWeatherMap(SmartPlugin):
         """
         s = s.replace("forecast/daily/", "")
         forecast = self._jsonData['forecast']
+        if forecast is None:
+            self.logger.error(
+                "get_daily_forecast: forecast is None")
+            return None
         datetime_now = datetime.now()
         date_requested = datetime(datetime_now.year, datetime_now.month, datetime_now.day)
         sp = s.split('/')
@@ -172,7 +176,7 @@ class OpenWeatherMap(SmartPlugin):
             sp.pop(0)
         else:
             self.logger.error(
-                "_update: invalid owm_matchstring '{}'; integer expected after forecast/daily/ matchstring".format(
+                "get_daily_forecast: invalid owm_matchstring '{}'; integer expected after forecast/daily/ matchstring".format(
                     s))
             return None
 
@@ -188,11 +192,11 @@ class OpenWeatherMap(SmartPlugin):
                     wrk.append(val)
                 elif val is None:
                     self.logger.error(
-                        "_update: found None value while calculating daily forecast for matchstring '{}'.".format(s))
+                        "get_daily_forecast: found None value while calculating daily forecast for matchstring '{}'.".format(s))
                     return 0
                 else:
                     self.logger.error(
-                        "_update: found unknown value while calculating daily forecast for matchstring '{}'; daily forecast only supported for int and float.".format(
+                        "get_daily_forecast: found unknown value while calculating daily forecast for matchstring '{}'; daily forecast only supported for int and float.".format(
                             s))
                     return 0
 
