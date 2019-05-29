@@ -4,7 +4,7 @@
 
 You need a device understanding Artnet.
 I suggest to use the software OLA http://www.opendmx.net/index.php/Open_Lighting_Architecture to translate the ArtNet packets into DMX Signals.
-Alternatively you can use any Art-Net to DMX Adapter. (Tested with https://www.ulrichradig.de/home/index.php/dmx/art-net-box)
+Alternatively you can use any Art-Net to DMX Adapter
 OLA supports most USB -> DMX Adapters available at the moment.
 
 ## Supported Hardware
@@ -22,19 +22,19 @@ artnet1:
     artnet_universe: 0
     artnet_net: 0
     artnet_subnet: 0
-    ip: 192.168.0.99
+    ip: 192.168.159.216
     port: 6454
     update_cycle: 120
     instance: keller
 ```
 
 #### Attributes
-  * `artnet_universe`: Art-Net Universe, default: 0
-  * `artnet_net`: Art-Net Net, default: 0
-  * `artnet_subnet`:  Art-Net Subnet, default: 0
-  * `ip`: IP-address of your Art-Net node, mandatory, no default
-  * `port`: Port to reach your Art-Net node, defaul 6454
-  * `update_cycle`: timeperiod between two update cycles, default 0 for no update. If a cycle is provided the current channel-settings is updated to Art-Net every n-th second.
+  * `artnet_universe`: Optional login information
+  * `artnet_net`: Required login information
+  * `artnet_subnet`: Hostname or ip address of the FritzDevice.
+  * `ip`: Port of the FritzDevice, typically 49433 for https or 49000 for http
+  * `port`: True or False => True will add "https", False "http" to the URLs in the plugin
+  * `update_cycle`: timeperiod between two update cycles. Default is 300 seconds.
   * `instance`: Name of this plugin instance (e.g. above: keller)
 
 ### items.yaml
