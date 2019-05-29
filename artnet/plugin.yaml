@@ -5,46 +5,21 @@ plugin:
     description:
         de: 'Ansteuerung der meisten USB/Netwerk DMX Adapter'
         en: 'Can control most of USB/network DMX adapters'
-    maintainer: mode2k, jentz1986
+    maintainer: mode2k
     tester: ohinckel
-    state: ready
+    state: qa-passed
     keywords: dmx
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
-
-    version: 1.5.1                 # Plugin version
-    sh_minversion: 1.5.1           # minimum shNG version to use this plugin
-#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True
-    classname: ArtNet              # class containing the plugin
+    version: 1.3.0                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False
+    restartable: unknown
+    classname: ArtNet               # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    ip:
-        type: ip
-        description:
-            de: 'Gibt die Adresse des angesprochenen Art-Net Node an'
-            en: 'Specifies the address of a Art-Net node'
-    port:
-        type: int
-        valid_min: 0
-        description:
-            de: 'Gibt den Port des angesprochenen Art-Net Node an'
-            en: 'Specifies the port of a Art-Net node'
-    update_cycle:
-        type: int
-        valid_min: 0
-        description:
-            de: 'Gibt an, wie oft (Sekunden) die aktuelle Lichtsituation neu verschickt werden soll (optional, 0 deaktiviert dies)'
-            en: 'Defines Refresh-cycle for re-sending the current setting in seconds, 0 deactivates this'
-    artnet_universe:
-        type: int
-        default: 0
-        description:
-            de: 'Gibt das Art-Net Universe an'
-            en: 'Specifies the Art-Net Universe to use'
-        valid_min: 0
-        valid_max: 15
     artnet_net:
         type: int
         default: 0
@@ -60,12 +35,36 @@ parameters:
             de: 'Gibt das Art-Net Sub-Net an'
             en: 'Specifies the Art-Net Sub-Net to use'
         valid_min: 0
-        valid_max: 15 
-
-item_attributes:
-    artnet_address:
+        valid_max: 15
+    artnet_universe:
         type: int
-        mandatory: True
+        default: 0
         description:
-            de: 'Definition der DMX Adresse'
-            en: 'Defition of DMX address'
+            de: 'Gibt das Art-Net Universe an'
+            en: 'Specifies the Art-Net Universe to use'
+        valid_min: 0
+        valid_max: 15
+    ip:
+        type: ip
+        description:
+            de: 'Gibt die Adresse einer Art-Net Node an'
+            en: 'Specifies the address of a Art-Net node'
+    port:
+        type: int
+        valid_min: 0
+        description:
+            de: 'Gibt den Port einer Art-Net Node an'
+            en: 'Specifies the port of a Art-Net node'
+
+item_attributes: NONE
+    # Definition of item attributes defined by this plugin
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+
