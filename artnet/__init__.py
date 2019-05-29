@@ -33,8 +33,8 @@ from lib.module import Modules
 
 class ArtNet_Model:
 
-    def __init__(self, ip, port, net, subnet, universe, instance_name, update_cycle):
-        self._ip = ip
+    def __init__(self, host, port, net, subnet, universe, instance_name, update_cycle):
+        self._host = host
         self._port = port
 
         self._universe = universe
@@ -49,9 +49,9 @@ class ArtNet_Model:
         """
         Returns the IP of the ArtNet node
 
-        :return: IP-address of the device, as set in plugin.conf
+        :return: hostname of the device, as set in plugin.conf
         """
-        return self._ip
+        return self._host
 
     def get_port(self):
         """
@@ -60,6 +60,14 @@ class ArtNet_Model:
         :return: port of the device, as set in plugin.conf
         """
         return self._port
+
+    def get_universe(self):
+        """
+        Returns the Universe of the ArtNet node
+
+        :return: Universe of the device, as set in plugin.conf
+        """
+        return self._universe
 
     def get_net(self):
         """
@@ -76,14 +84,6 @@ class ArtNet_Model:
         :return: Subnet of the device, as set in plugin.conf
         """
         return self._subnet
-
-    def get_universe(self):
-        """
-        Returns the Universe of the ArtNet node
-
-        :return: Universe of the device, as set in plugin.conf
-        """
-        return self._universe
 
     def get_items(self):
         """
@@ -211,7 +211,7 @@ class ArtNet(SmartPlugin):
             self.logger.error("DMX address %s invalid" % adr)
             return
 
-        self.set_address_value(adr, value)
+        set_address_value(adr, value)
         self.__ArtDMX_broadcast()
 
     def send_frame_starting_at(self, adr, values):

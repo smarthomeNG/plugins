@@ -11,7 +11,7 @@ plugin:
     keywords: dmx
 #   documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
-    version: 1.6.0                 # Plugin version
+    version: 1.5.1                 # Plugin version
     sh_minversion: 1.5.1           # minimum shNG version to use this plugin
 #   sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
