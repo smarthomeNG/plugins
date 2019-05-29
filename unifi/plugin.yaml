@@ -1,0 +1,121 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin um einige Features von UniFi Controllern auszulesen und fernzusteuern'
+        en: 'Plugin to read and control some features of UniFi Controllers'
+    maintainer: jentz1986
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: wifi unifi ubiquiti network
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1278068-unifi-controller-api-wlan
+
+    version: 1.6.0                  # Plugin version
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
+#    sh_maxversion:                  # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: True
+    classname: UniFiControllerClient         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    unifi_controller_url:
+        type: str
+        mandatory: True
+        default: ''
+        description:
+            de: 'Basis URL des Controller, z.B. https://unifi:8443'
+            en: 'Base URL of the controller, e.g. https://unifi:8443'
+    
+    unifi_user:
+        type: str
+        mandatory: True
+        default: ''
+        description:
+            de: 'Nutzername für den Login am Controller.'
+            en: 'Login information (user).'
+    
+    unifi_password:
+        type: str
+        mandatory: True
+        default: ''
+        hide: True
+        description:
+            de: 'Passwort für den Login.'
+            en: 'Password for login.'
+    
+item_attributes: 
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    unifi_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'UniFi Datentyp des jeweiligen Items.'
+            en: 'UniFi Data Type of the respective item.'
+        valid_list:
+            - 'client_present'
+            - 'client_ip'
+            - 'client_hostname'
+            - 'client_present_at_ap'
+            - 'switch_port_enabled'
+            - 'switch_port_profile'
+            - 'ap_enabled'
+            - 'device_ip'
+            - 'device_name'
+    mac:
+        type: mac
+        mandatory: False
+        description:
+            de: 'Definition der MAC Adresse für Items vom unifi_type `client_*`. Nur für diese Items mandatory!'
+            en: 'Definition of the MAC address for items of unifi_type `client_*`. Only mandatory for these items!'
+    unifi_switch_mac:
+        type: mac
+        mandatory: False
+        description:
+            de: 'Definition der MAC Adresse für Items vom unifi_type `switch_*`. Nur für diese Items mandatory!'
+            en: 'Definition of the MAC address for items of unifi_type `switch_*`. Only mandatory for these items!'
+    unifi_device_mac:
+        type: mac
+        mandatory: False
+        description:
+            de: 'Definition der MAC Adresse für Items vom unifi_type `device_*`. Nur für diese Items mandatory!'
+            en: 'Definition of the MAC address for items of unifi_type `device_*`. Only mandatory for these items!'
+    unifi_ap_mac:
+        type: mac
+        mandatory: False
+        description:
+            de: 'Definition der MAC Adresse für Items vom unifi_type `ap_*`. Nur für diese Items mandatory!'
+            en: 'Definition of the MAC address for items of unifi_type `ap_*`. Only mandatory for these items!'
+    unifi_switch_port_no:
+        type: int
+        valid_min: 1
+        valid_max: 50
+        description:
+            de: 'Definition der Portnummer an den ein Gerät an einen UniFi Switch angeschlossen ist'
+            en: 'Definition of the port-number the device is connected to a UniFi-switch.'
+    unifi_switch_port_profile_on:
+        type: str
+        mandatory: False
+        description:
+            de: 'Name des zu selektierenden Portprofils wenn dieses Gerät An sein soll.'
+            en: 'Name of the port-profile to be chosen if this device should be on.'
+    unifi_switch_port_profile_off:
+        type: str
+        mandatory: False
+        description:
+            de: 'Name des zu selektierenden Portprofils wenn dieses Gerät Aus sein soll.'
+            en: 'Name of the port-profile to be chosen if this device should be off.'
+
+
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+
