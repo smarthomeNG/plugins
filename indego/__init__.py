@@ -262,10 +262,10 @@ class Indego(SmartPlugin):
         :return:
         """
         item = self.get_sh().return_item(self.parent_item + '.' + itemname)  
-        if item: 
+        if item is not None: 
             item(value, 'indego_plugin')
         else:
-            self.logger.warning("Could not set item '{}' to '{}'".format(self.parent_item+itemname, value))
+            self.logger.warning("Could not set item '{}.{}' to '{}'".format(self.parent_item, itemname, value))
 
     def get_url(self, url, contextid=None, timeout=40, method='GET'):
         headers = {'Content-Type': 'application/json'}
