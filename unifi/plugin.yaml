@@ -45,6 +45,14 @@ parameters:
         description:
             de: 'Passwort für den Login.'
             en: 'Password for login.'
+
+    unifi_site_id:
+        type: str
+        mandatory: False
+        default: 'default'
+        description:
+            de: 'UniFi Site Id.'
+            en: 'UniFi Site Id.'
     
 item_attributes: 
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)

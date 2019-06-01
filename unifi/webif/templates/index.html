@@ -48,7 +48,7 @@
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
-{% set tabcount = 2 %}
+{% set tabcount = 3 %}
 
 
 <!--
@@ -144,9 +144,12 @@
 
 	It has to be defined before (and outside) the block bodytab3
 -->
+{% set tab3title = "<strong>Item-Generator</strong>" %}
 {% block bodytab3 %}
 <div class="container-fluid m-2">
-	{{ _('Hier kommt der Inhalt des Webinterfaces Tab3 hin.') }}
+<pre>
+{{ p._model.get_item_hierarchy() }}
+</pre>
 </div>
 {% endblock bodytab3 %}
 
