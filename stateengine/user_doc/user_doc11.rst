@@ -44,7 +44,7 @@ Ermittlung des Werts für ein Item, hier wird jedoch kein Item
 benötigt. Außerdem wird der Rückgabewert der Funktion ignoriert.
 
 .. rubric:: Aktion: Auslösen einer Logikausführung
-   :name: aktionauslseneinerlogikausfhrung
+   :name: aktionausloeseneinerlogikausfuehrung
 
 .. code-block:: yaml
 
