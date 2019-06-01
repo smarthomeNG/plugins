@@ -65,8 +65,6 @@ class StateEngine(SmartPlugin):
                     log_directory = base + log_directory
                 if not os.path.exists(log_directory):
                     os.makedirs(log_directory)
-                SeLogger.set_loglevel(log_level)
-                SeLogger.set_logdirectory(log_directory)
                 text = "StateEngine extended logging is active. Logging to '{0}' with loglevel {1}."
                 self.logger.info(text.format(log_directory, log_level))
             log_maxage = self.get_parameter_value("log_maxage")
@@ -75,7 +73,8 @@ class StateEngine(SmartPlugin):
                 SeLogger.set_logmaxage(log_maxage)
                 cron = ['init', '30 0 * *']
                 self.scheduler_add('StateEngine: Remove old logfiles', SeLogger.remove_old_logfiles, cron=cron, offset=0)
-
+            SeLogger.set_loglevel(log_level)
+            SeLogger.set_logdirectory(log_directory)
             self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
         except Exception:
             self._init_complete = False
@@ -101,7 +100,7 @@ class StateEngine(SmartPlugin):
                     ab_item = StateEngineItem.SeItem(self.get_sh(), item)
                     self.__items[ab_item.id] = ab_item
                 except ValueError as ex:
-                    self.logger.error("Item: {0}: {1}".format(item.property.path, str(ex)))
+                    self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, str(ex)))
 
         if len(self.__items) > 0:
             self.logger.info("Using StateEngine for {} items".format(len(self.__items)))
