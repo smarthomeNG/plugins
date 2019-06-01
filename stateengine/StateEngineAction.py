@@ -335,14 +335,14 @@ class SeActionRun(SeActionBase):
                 eval(self.__eval)
             except Exception as ex:
                 text = "{0}: Problem evaluating '{1}': {2}."
-                self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), str(ex)))
+                self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), ex))
         else:
             try:
                 # noinspection PyCallingNonCallable
                 self.__eval()
             except Exception as ex:
                 text = "{0}: Problem calling '{0}': {1}."
-                self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), str(ex)))
+                self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), ex))
 
 
 # Class representing a single "se_force" action

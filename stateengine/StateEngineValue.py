@@ -21,7 +21,6 @@
 from . import StateEngineTools
 from . import StateEngineEval
 
-
 # Class representing a value for a condition (either value or via item/eval)
 class SeValue(StateEngineTools.SeItemChild):
     # Constructor
@@ -49,6 +48,9 @@ class SeValue(StateEngineTools.SeItemChild):
         else:
             self.__cast_func = None
 
+    def __repr__(self):
+        return "SeValue item: {}, name {}, value {}.".format(self.__item, self.__name, self.__value)
+
     # Indicate of object is empty (neither value nor item nor eval set)
     def is_empty(self):
         return self.__value is None and self.__item is None and self.__eval is None and self.__varname is None
@@ -67,13 +69,22 @@ class SeValue(StateEngineTools.SeItemChild):
     # name: name of object ("time" is being handeled different)
     def set(self, value, name=""):
         if isinstance(value, list):
-            source, field_value = StateEngineTools.partition_strip(value[0], ":")
-            if field_value == "":
-                source = "value"
-                field_value = value
-            else:
-                value[0] = field_value
-                field_value = value
+            source = []
+            field_value = []
+            for i, val in enumerate(value):
+                if isinstance(val, str):
+                    s, f = StateEngineTools.partition_strip(val, ":")
+                else:
+                    s = "value"
+                    f = val
+                source.append(s)
+                field_value.append(f)
+                if field_value[i] == "":
+                    source[i] = "value"
+                    field_value[i] = value[i]
+                else:
+                    value[i] = field_value[i]
+                    field_value[i] = value[i]
         elif isinstance(value, str):
             source, field_value = StateEngineTools.partition_strip(value, ":")
             if name == "time" and source.isdigit() and field_value.isdigit():
@@ -86,15 +97,37 @@ class SeValue(StateEngineTools.SeItemChild):
             source = "value"
             field_value = value
 
-        if source == "value":
-            if isinstance(field_value, list) and not self.__allow_value_list:
-                raise ValueError("{0}: value_in is not allowed".format(self.__name))
-            self.__value = self.__do_cast(field_value)
+        if isinstance(source, list):
+            for i, s in enumerate(source):
+                if isinstance(field_value[i], list) and not self.__allow_value_list:
+                    raise ValueError("{0}: value_in is not allowed. Field_value: {1} ({2})".format(self.__name, field_value[i], self.__allow_value_list))
+                else:
+                    self.__value = [] if self.__value is None else self.__value
+                    self.__value.append(None if s != "value" else self.__do_cast(field_value[i]))
+                self.__item = [] if self.__item is None else self.__item
+                self.__item.append(None if s != "item" else self._abitem.return_item(field_value[i]))
+                self.__eval = [] if self.__eval is None else self.__eval
+                self.__eval.append(None if s != "eval" else field_value[i])
+                self.__varname = [] if self.__varname is None else self.__varname
+                self.__varname.append(None if s != "var" else field_value[i])
+            self.__item = [i for i in self.__item if i]
+            self.__eval = [i for i in self.__eval if i]
+            self.__varname = [i for i in self.__varname if i]
+            self.__value = [i for i in self.__value if i]
+            self.__value = self.__value[0] if len(self.__value) == 1 else None if len(self.__value) == 0 else self.__value
+            self.__item = self.__item[0] if len(self.__item) == 1 else None if len(self.__item) == 0 else self.__item
+            self.__eval = self.__eval[0] if len(self.__eval) == 1 else None if len(self.__eval) == 0 else self.__eval
+            self.__varname = self.__varname[0] if len(self.__varname) == 1 else None if len(self.__varname) == 0 else self.__varname
         else:
-            self.__value = None
-        self.__item = None if source != "item" else self._abitem.return_item(field_value)
-        self.__eval = None if source != "eval" else field_value
-        self.__varname = None if source != "var" else field_value
+            self.__item = None if source != "item" else self._abitem.return_item(field_value)
+            self.__eval = None if source != "eval" else field_value
+            self.__varname = None if source != "var" else field_value
+            if source == "value":
+                if isinstance(field_value, list) and not self.__allow_value_list:
+                    raise ValueError("{0}: value_in is not allowed".format(self.__name))
+                self.__value = self.__do_cast(field_value)
+            else:
+                self.__value = None
 
     # Set cast function
     # cast_func: cast function
@@ -104,16 +137,21 @@ class SeValue(StateEngineTools.SeItemChild):
 
     # determine and return value
     def get(self, default=None):
+        returnvalues = []
         if self.__value is not None:
-            return self.__value
-        elif self.__eval is not None:
-            return self.__get_eval()
-        elif self.__item is not None:
-            return self.__get_from_item()
-        elif self.__varname is not None:
-            return self.__get_from_variable()
-        else:
+            returnvalues.append(self.__value)
+        if self.__eval is not None:
+            returnvalues.append(self.__get_eval())
+        if self.__item is not None:
+            returnvalues.append(self.__get_from_item())
+        if self.__varname is not None:
+            returnvalues.append(self.__get_from_variable())
+        if len(returnvalues) == 0:
             return default
+        elif len(returnvalues) == 1:
+            return returnvalues[0]
+        else:
+            return returnvalues
 
     def get_type(self):
         if self.__value is not None:
@@ -131,11 +169,15 @@ class SeValue(StateEngineTools.SeItemChild):
     def write_to_logger(self):
         if self.__value is not None:
             self._log_debug("{0}: {1}", self.__name, self.__value)
-        elif self.__item is not None:
-            self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
-        elif self.__eval is not None:
+        if self.__item is not None:
+            if isinstance(self.__item, list):
+                for i in self.__item:
+                    self._log_debug("{0} from item: {1}", self.__name, i.property.path)
+            else:
+                self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
+        if self.__eval is not None:
             self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
-        elif self.__varname is not None:
+        if self.__varname is not None:
             self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
 
     # Get Text (similar to logger text)
@@ -145,7 +187,11 @@ class SeValue(StateEngineTools.SeItemChild):
         if self.__value is not None:
             value = "{0}: {1}".format(self.__name, self.__value, prefix, suffix)
         elif self.__item is not None:
-            value = "{0} from item: {1}".format(self.__name, self.__item.property.path)
+            if isinstance(self.__item, list):
+                for i in self.__item:
+                    self._log_debug("{0} from item: {1}", self.__name, i.property.path)
+            else:
+                self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
         elif self.__eval is not None:
             value = "{0} from eval: {1}".format(self.__name, self.__eval)
         elif self.__varname is not None:
@@ -162,58 +208,96 @@ class SeValue(StateEngineTools.SeItemChild):
     def __do_cast(self, value):
         if value is not None and self.__cast_func is not None:
             try:
-                if type(value) == list:
+                if isinstance(value, list):
                     # noinspection PyCallingNonCallable
-                    value = [self.__cast_func(element) for element in value]
+                    valuelist = []
+                    for element in value:
+                        valuelist.append(element if element == 'novalue' else self.__cast_func(element))
+                    value = valuelist
                 else:
                     # noinspection PyCallingNonCallable
                     value = self.__cast_func(value)
             except Exception as ex:
-                self._log_info("Problem casting value '{0}': {1}.", value, str(ex))
+                self._log_info("Problem casting value '{0}' to {2}: {1}.", value, ex, self.__cast_func)
                 return None
 
         return value
 
     # Determine value by executing eval-function
     def __get_eval(self):
+        # noinspection PyUnusedLocal
+        sh = self._sh
         if isinstance(self.__eval, str):
-            # noinspection PyUnusedLocal
-            sh = self._sh
             if "stateengine_eval" in self.__eval:
                 # noinspection PyUnusedLocal
                 stateengine_eval = StateEngineEval.SeEval(self._abitem)
             try:
-                value = eval(self.__eval)
+                values = eval(self.__eval)
             except Exception as ex:
-                self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), str(ex))
+                self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
                 return None
         else:
-            try:
-                # noinspection PyCallingNonCallable
-                value = self.__eval()
-            except Exception as ex:
-                self._log_info("Problem calling '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), str(ex))
-                return None
+            if isinstance(self.__eval, list):
+                values = []
+                for val in self.__eval:
+                    self._log_info("Checking eval '{0}': {1}.", self.__eval, val)
+                    if isinstance(val, str):
+                        if "stateengine_eval" in val:
+                            # noinspection PyUnusedLocal
+                            stateengine_eval = StateEngineEval.SeEval(self._abitem)
+                            self._log_debug("Using internal eval function {}".format(stateengine_eval))
+                        try:
+                            value = eval(val)
+                        except Exception as ex:
+                            self._log_info("Problem evaluating from list '{0}': {1}.", StateEngineTools.get_eval_name(val), ex)
+                            value = None
+                    else:
+                        try:
+                            value = val()
+                        except Exception as ex:
+                            self._log_info("Problem calling '{0}': {1}.", StateEngineTools.get_eval_name(val), ex)
+                            value = None
+                    if value is not None:
+                        values.append(self.__do_cast(value))
+            else:
+                try:
+                    values = self.__eval()
+                except Exception as ex:
+                    self._log_info("Problem calling '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
+                    return None
 
-        return self.__do_cast(value)
+        return self.__do_cast(values)
 
     # Determine value from item
     def __get_from_item(self):
         try:
-            # noinspection PyCallingNonCallable
-            value = self.__item()
+            if isinstance(self.__item, list):
+                values = []
+                for val in self.__item:
+                    self._log_info("Checking item '{0}': {1}.", self.__item, val)
+                    value = val.property.value
+                    values.append(self.__do_cast(value))
+            else:
+                values = self.__item.property.value
         except Exception as ex:
-            self._log_info("Problem while reading item '{0}': {1}.", self.__item.property.path, str(ex))
+            self._log_info("Problem while reading item '{0}': {1}.", self.__item.property.path, ex)
             return None
 
-        return self.__do_cast(value)
+        return self.__do_cast(values)
 
-    # Fetermine value from variable
+    # Determine value from variable
     def __get_from_variable(self):
         try:
-            value = self._abitem.get_variable(self.__varname)
+            if isinstance(self.__varname, list):
+                values = []
+                for var in self.__varname:
+                    self._log_info("Checking variable '{0}': {1}.", self.__varname, var)
+                    value = self._abitem.get_variable(var)
+                    values.append(self.__do_cast(value))
+            else:
+                values = self._abitem.get_variable(self.__varname)
         except Exception as ex:
-            self._log_info("Problem while reading variable '{0}': {1}.", self.__varname, str(ex))
+            self._log_info("Problem while reading variable '{0}': {1}.", self.__varname, ex)
             return None
 
-        return self.__do_cast(value)
+        return values

@@ -47,7 +47,11 @@ class SeState(StateEngineTools.SeItemChild):
     def __init__(self, abitem, item_state):
         super().__init__(abitem)
         self.__item = item_state
-        self.__id = self.__item.property.path
+        try:
+            self.__id = self.__item.property.path
+            self._log_info("Init state {}", self.__id)
+        except Exception as err:
+            self._log_info("Problem init state ID of Item {}. {}", self.__item, err)
         self.__name = ""
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__conditions = StateEngineConditionSets.SeConditionSets(self._abitem)
@@ -55,12 +59,14 @@ class SeState(StateEngineTools.SeItemChild):
         self.__actions_enter = StateEngineActions.SeActions(self._abitem)
         self.__actions_stay = StateEngineActions.SeActions(self._abitem)
         self.__actions_leave = StateEngineActions.SeActions(self._abitem)
-        self._log_info("Init state {}", item_state.property.path)
         self._log_increase_indent()
         try:
             self.__fill(self.__item, 0)
         finally:
             self._log_decrease_indent()
+
+    def __repr__(self):
+        return "SeState item: {}, id {}.".format(self.__item, self.__id)
 
     # Check conditions if state can be entered
     # returns: True = At least one enter condition set is fulfulled, False = No enter condition set is fulfilled
@@ -169,7 +175,7 @@ class SeState(StateEngineTools.SeItemChild):
                 elif child_name == "enter" or child_name.startswith("enter_"):
                     self.__conditions.update(child_name, child_item, parent_item)
             except ValueError as ex:
-                raise ValueError("Condition {0}: {1}".format(child_name, str(ex)))
+                raise ValueError("Condition {0} error: {1}".format(child_name, ex))
 
         # Actions defined directly in the item go to "enter_or_stay"
         for attribute in item_state.conf:

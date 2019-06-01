@@ -76,8 +76,8 @@ class SeActions(StateEngineTools.SeItemChild):
         except ValueError as ex:
             if name in self.__actions:
                 del self.__actions[name]
-            self._log_warning("Ignoring action {0} because: {1} (2)".format(attribute, str(ex)))
-            #raise ValueError("Action {0}: {1}".format(attribute, str(ex)))
+            self._log_warning("Ignoring action {0} because: {1} (2)".format(attribute, ex))
+            #raise ValueError("Action {0}: {1}".format(attribute, ex))
 
     # ensure that action exists and create if missing
     # func: action function
@@ -197,7 +197,7 @@ class SeActions(StateEngineTools.SeItemChild):
             exists = False
             if name in self.__actions:
                 del self.__actions[name]
-            self._log_warning("Ignoring action {0} because: {1}".format(name, str(ex)))
+            self._log_warning("Ignoring action {0} because: {1}".format(name, ex))
 
 
         # add additional parameters
@@ -221,7 +221,7 @@ class SeActions(StateEngineTools.SeItemChild):
             try:
                 self.__actions[name].complete(item_state)
             except ValueError as ex:
-                raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.property.path, name, str(ex)))
+                raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.property.path, name, ex))
 
     # Execute all actions
     # is_repeat: Inidicate if this is a repeated action without changing the state

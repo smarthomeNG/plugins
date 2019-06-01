@@ -55,7 +55,11 @@ class SeItem:
         self.shtime = Shtime.get_instance()
         self.__sh = smarthome
         self.__item = item
-        self.__id = self.__item.property.path
+        try:
+            self.__id = self.__item.property.path
+        except Exception as err:
+            self._log_info("Problem initializing ID of item {}. {}", self.__item, err)
+            self.__id = item
         self.__name = str(self.__item)
         # initialize logging
         self.__logger = SeLogger.create(self.__item)
@@ -105,7 +109,7 @@ class SeItem:
             try:
                 self.__states.append(StateEngineState.SeState(self, item_state))
             except ValueError as ex:
-                self.__logger.error("Ignoring state {0} because:  {1}".format(item_state.property.path, str(ex)))
+                self.__logger.error("Ignoring state {0} because:  {1}".format(item_state.property.path, ex))
 
         if len(self.__states) == 0:
             raise ValueError("{0}: No states defined!".format(self.id))
@@ -125,6 +129,9 @@ class SeItem:
             self.__add_triggers()
         else:
             self.__startup_delay_callback(self.__item, "Init", None, None)
+
+    def __repr__(self):
+        return "SeItem item: {}.".format(self.__id)
 
     # Find the state, matching the current conditions and perform the actions of this state
     # caller: Caller that triggered the update
@@ -194,7 +201,7 @@ class SeItem:
             # New state is last state
             if self.__laststate_internal_name != new_state.name:
                 self.__laststate_set(new_state)
-            new_state.run_stay(self.__repeat_actions.get())            
+            new_state.run_stay(self.__repeat_actions.get())
 
         else:
             # New state is different from last state
@@ -215,6 +222,8 @@ class SeItem:
             self.__variables["current.state_id"] = state.id
             self.__variables["current.state_name"] = state.name
             return state.can_enter()
+        except Exception as ex:
+            self.__logger.warning("Problem with currentstate {0}", ex)
         finally:
             self.__variables["current.state_id"] = ""
             self.__variables["current.state_name"] = ""
@@ -483,5 +492,6 @@ class SeItem:
     # attribute: Name of the attribute of the StateEngine object item, which contains the item_id to read
     def return_item_by_attribute(self, attribute):
         if attribute not in self.__item.conf:
+            self.__logger.warning("Problem with attribute '{0}'.".format(attribute))
             return None
         return self.return_item(self.__item.conf[attribute])

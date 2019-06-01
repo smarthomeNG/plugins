@@ -19,7 +19,9 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 import datetime
+import logging
 
+logger = logging.getLogger(__name__)
 #
 # Some general tool functions
 #
@@ -60,7 +62,7 @@ def cast_num(value):
         return float(value)
     except:
         pass
-    raise ValueError("Can't cast {0} to int!".format(str(value)))
+    raise ValueError("Can't cast {0} to int!".format(value))
 
 
 # cast a value as boolean. Throws ValueError or TypeError if cast is not possible
@@ -166,10 +168,21 @@ def get_eval_name(eval_func):
     if eval_func is None:
         return None
     if eval_func is not None:
-        if isinstance(eval_func, str):
-            return eval_func
+        if isinstance(eval_func, list):
+            functionnames = []
+            for func in eval_func:
+                if isinstance(func, str):
+                    functionnames.append(func)
+                else:
+                    functionnames.append(func.__module__ + "." + func.__name__)
+            logger.error("eval func return {}".format(functionnames))
+            return functionnames
         else:
-            return eval_func.__module__ + "." + eval_func.__name__
+            if isinstance(eval_func, str):
+                return eval_func
+            else:
+                logger.error("module return {}".format(eval_func.__module__ + "." + eval_func.__name__))
+                return eval_func.__module__ + "." + eval_func.__name__
 
 
 # determine original caller/source

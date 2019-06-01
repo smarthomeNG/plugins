@@ -42,6 +42,9 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         self.__name = name
         self.__conditions = {}
 
+    def __repr__(self):
+        return "SeConditionSet for condition name {}: {}.".format(self.__name, self.__conditions)
+
     # Update condition set
     # item: item containing settings for condition set
     # grandparent_item: grandparent item of item (containing the definition if items and evals)
@@ -52,7 +55,6 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                 func, name = StateEngineTools.partition_strip(attribute, "_")
                 if name == "":
                     continue
-
                 try:
                     # update this condition
                     if name not in self.__conditions:
@@ -60,7 +62,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     self.__conditions[name].set(func, item.conf[attribute])
 
                 except ValueError as ex:
-                    raise ValueError("Condition {0}: {1}".format(name, str(ex)))
+                    raise ValueError("Condition {0} error: {1}".format(name, ex))
 
         # Update item from grandparent_item
         for attribute in grandparent_item.conf:
@@ -75,8 +77,8 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                 try:
                     self.__conditions[name].set(func, grandparent_item.conf[attribute])
                 except ValueError as ex:
-                    text = "Item '{0}', Attribute '{1}': {2}"
-                    raise ValueError(text.format(grandparent_item.property.path, attribute, str(ex)))
+                    text = "Item '{0}', Attribute '{1}' Error: {2}"
+                    raise ValueError(text.format(grandparent_item.property.path, attribute, ex))
 
     # Check the condition set, optimize and complete it
     # item_state: item to read from
@@ -89,8 +91,8 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     conditions_to_remove.append(name)
                     continue
             except ValueError as ex:
-                text = "State '{0}', Condition Set '{1}', Condition '{2}': {3}"
-                raise ValueError(text.format(item_state.property.path, self.name, name, str(ex)))
+                text = "State '{0}', Condition Set '{1}', Condition '{2}' Error: {3}"
+                raise ValueError(text.format(item_state.property.path, self.name, name, ex))
 
         # Remove incomplete conditions
         for name in conditions_to_remove:

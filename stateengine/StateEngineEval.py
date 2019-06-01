@@ -83,7 +83,6 @@ class SeEval(StateEngineTools.SeItemChild):
             return item.property.path
         except Exception as ex:
             self._log_warning("Problem evaluating name of {0}: {1}", subitem_id, ex)
-            #self._log_exception(ex)
 
     # Return the value of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose value should be returned
@@ -93,10 +92,10 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
             item = self._abitem.return_item(subitem_id)
+            self._log_info("Return {0} for item {1}", item.property.value, subitem_id)
             return item.property.value
         except Exception as ex:
             self._log_warning("Problem evaluating value of {0}: {1}", subitem_id, ex)
-            #self._log_exception(ex)
 
     def get_relative_itemname(self, subitem_id):
         self._log_debug("Executing method 'get_relative_itemname({0})'", subitem_id)
