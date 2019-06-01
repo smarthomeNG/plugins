@@ -73,6 +73,43 @@ die jeweils mit einem Unterstrich "_" getrennt werden:
 - ``<Vergleichsfunktion>``: siehe unten. Beispiel: min = der Wert des <Bedingungsitems> muss mindestens dem beim Attribut angegebenen Wert entsprechen.
 - ``<Vergleichsitem/Bedingungsname>``: Hier wird entweder das im Regelwerk-Item mittels ``se_item_<Name>`` deklarierte Item oder eine besondere Bedingung (siehe unten) referenziert.
 
+.. rubric:: Bedingungslisten
+   :name: bedingungslisten
+
+Sämtliche nun gelisteten Bedingungen können entweder eine einzelne Angabe haben oder aus einer Liste mit mehreren Bedingungen bestehen.
+In letzterem Fall fungiert die Liste als ODER Abfrage. Sobald eine der gelisteten Werte eingetroffen ist, wird die Bedingung als wahr angenommen
+und der Zustand aktiviert.
+
+.. code-block:: yaml
+
+      se_laststate:
+          - 'kochen'
+          - 'eval:1+2'
+          - 'item:..laststate_id'
+
+Im oben gezeigten Beispiel kann der letzte Status einen von drei Werten beinhalten, damit die Bedingung wahr ist. In welcher Form diese Werte
+angegeben werden, ist offen - es müssen also nicht nur reine Strings in die Liste eingefügt werden.
+
+Werden sowohl min(age) als auch max(age) als Liste definiert, spielt die Reihenfolge der Liste eine Rolle, da die beiden Werte als Paar herangezogen werden.
+
+.. code-block:: yaml
+
+      se_minage_<Bedingungsname>:
+          - '5'
+          - 'eval:1+2'
+          - 'novalue'
+
+      se_maxage_<Bedingungsname>:
+         - '10'
+         - 'eval:5*sh.meinwert()'
+         - 'item:EinzweitesItem'
+
+Obige Bedingung wird beispielsweise wahr bei:
+- einem Wert zwischen 5 und 10
+- einem Wert zwischen 3 und 5 * der Wert des Items meinwert
+- einem Wert maximal so hoch wie der in EinzweitesIem hinterlegte
+
+Wichtig ist dabei zu beachten, dass Abfragen von Items und Eval Funktionen am Ende der Liste platziert werden sollten.
 
 .. rubric:: Vergleichsfunktion
    :name: vergleichsfunktion
@@ -152,6 +189,7 @@ Die Altersbedingung (Mindestalter, Höchstalter) wird negiert
 (umgekehrt). Für das Attribut wird der Datentyp Boolean verwendet,
 zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
 "no", "off"
+
 
 .. rubric:: "Besondere" Bedingungen
    :name: besonderebedingungen
