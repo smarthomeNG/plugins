@@ -89,9 +89,9 @@ class StateEngine(SmartPlugin):
         except Exception:
             pass
         if self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
-            item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.property.path + "', caller, source)"
+            item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.id() + "', caller, source)"
         elif self.has_iattr(item.conf, "se_manual_invert"):
-            item._eval = "not sh." + item.property.value
+            item._eval = "not sh." + item.id() + "()"
 
         return None
 
