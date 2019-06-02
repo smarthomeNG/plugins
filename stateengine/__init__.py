@@ -85,7 +85,7 @@ class StateEngine(SmartPlugin):
     def parse_item(self, item):
         try:
             item.expand_relativepathes('se_item_*', '', '')
-            item.expand_relativepathes('se_*', ['item:', 'sh.', 'sh.', 'sh.', 'sh.'], ['', '.path', '.value', '.name', ')'])
+            item.expand_relativepathes('se_*', ['item:', 'sh.', 'sh.', 'sh.', 'sh.'], ['', '.property.path', '.property.value', '.property.name'])
         except Exception:
             pass
         if self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
