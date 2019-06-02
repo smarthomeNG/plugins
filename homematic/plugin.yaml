@@ -29,7 +29,7 @@ parameters:
         description:
             de: 'IP Adresse bzw. Hostname der HomeMatic CCU2 Zentrale'
             en: 'ip address or hostname of the HomeMatic CCU2 gateway'
-        
+
 #    port:
 #        type: int
 #        default: 2001
@@ -37,7 +37,7 @@ parameters:
 #        description:
 #            de: 'Port Nummer der HomeMatic CCU2 Zentrale'
 #            en: 'port number of the HomeMatic CCU2 gateway'
-#        
+#
 #    port_hmip:
 #        type: int
 #        default: 2010
@@ -45,14 +45,14 @@ parameters:
 #        description:
 #            de: 'Port Nummer der HomeMatic CCU2 Zentrale für HomeMaticIP Geräte'
 #            en: 'port number of the HomeMatic CCU2 gateway for HomeMaticIP Devices'
-        
+
     username:
         type: str
         default: 'Admin'
         description:
             de: 'Username für das Login'
             en: 'Username for the login'
-        
+
     password:
         type: str
         default: ''
@@ -60,7 +60,7 @@ parameters:
         description:
             de: 'Passwort für das Login'
             en: 'Password for the login'
-        
+
     learnmode_length:
         type: int
         default: 60
@@ -70,37 +70,36 @@ parameters:
             de: 'Dauer des Anlernmodus der HomeMatic CCU2 Zentrale nach Aktivierung durch das Web Interface'
             en: 'Duration of learnmode of the HomeMatic CCU2 gateway after activation through the web interface'
 
-    instance:
-        type: str
-        default: ''
-        description:
-            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
-            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
-
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
     hm_address:
         type: str
         description:
             de: 'Adresse des HomeMatic Devices, welches über die HomeMatic CCU2 Zentrale angesteuert werden soll'
             en: 'Adress of the HomeMatic device that shall be controlled (through the HomeMatic CCU2 central unit)'
-        
+
     hm_function:
         type: str
         description:
             de: 'Name der Funktion des HomeMatic Devices, welche genutzt werden soll'
             en: 'Name of the function of the HomeMatic Device that shall be used'
-        
-    hm_channel: 
+
+    hm_channel:
         type: int
         description:
-            de: 'Optional: Kanal des Devices auf dem die Funktion angesteuert werden soll. 
+            de: 'Optional: Kanal des Devices auf dem die Funktion angesteuert werden soll.
                  Muss nur angegeben werden, wenn die gewünschte Funktion von dem Device mehrfach zur Verfügung gestellt wird'
             en: 'Optional: Channel of the devicemon which the function shall be used.
                  Has only to be specified, if the requested function is implemented more than once on the device.'
-        
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions: NONE
     # Definition of function interface of the plugin
 

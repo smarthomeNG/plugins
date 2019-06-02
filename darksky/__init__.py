@@ -81,6 +81,9 @@ class DarkSky(SmartPlugin):
         Updates information on diverse items
         """
         forecast = self.get_forecast()
+        if forecast is None:
+            self.logger.error("Forecast is None! Perhaps server did not reply?")
+            return
         self._jsonData = forecast
         for s, item in self._items.items():
             sp = s.split('/')

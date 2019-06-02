@@ -43,6 +43,9 @@ class Prowl(SmartPlugin):
     def stop(self):
         pass
 
+    def notify(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHomeNG'):
+        self.__call__(self, event, description, priority, url, apikey, application)
+
     def __call__(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHomeNG'):
         data = {}
         origin = application

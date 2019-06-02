@@ -147,7 +147,7 @@ class HeliosBase(SmartPlugin):
         gotSlot = False
         backupTimeout = self._port.timeout
         end = time.time() + 3
-        self._port.timeout = 0.07
+        self._port.timeout = 0.007   # Changed from 0.07 --> 0.007 (7ms) according to Standard
         while end > time.time():
             chars = self._port.read(1)
             # nothing received so we got a slot of silence...hopefully
@@ -409,8 +409,8 @@ class HeliosBase(SmartPlugin):
                         .format(varname, '0x%0*X' % (2, CONST_MAP_VARIABLES_TO_ID[varname]["varid"]),
                         '0x%0*X' % (2,raw_value), "{0:08b}".format(raw_value), raw_value, value)
                     ) 
-                else:   # logging in debug only, so we stop spamming log file (noise on the bus seems to be normal)
-                    self.logger.debug("Helios: No valid value for '{0}' from ventilation system received."
+                else:   # logging as info only, so we stop spamming log file as some noise on the bus seems to be normal
+                    self.logger.info("Helios: No valid value for '{0}' from ventilation system received."
                         .format(varname)
                     ) 
             else:

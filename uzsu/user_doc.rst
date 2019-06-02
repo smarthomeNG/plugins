@@ -4,6 +4,13 @@
 uzsu
 ####
 
+Einführung
+==========
+
+Die Funktionsweise der universellen Zeitschaltuhr wird auf dem `SmarthomeNG Blog <https://www.smarthomeng.de/tag/uzsu>`_
+beschrieben. Dort finden sich auch einige praktische Beispiele.
+
+
 Konfiguration
 =============
 
@@ -19,6 +26,7 @@ Konfiguration
         plugin_name: uzsu
         #remove_duplicates: True
 
+In der Item Hierarchie muss ein Kind-Item zum Item erstellt werden, das zeitlich gesteuert werden soll.
 
 .. code-block:: yaml
 
@@ -28,7 +36,7 @@ Konfiguration
         someitem:
             type: num
 
-            UZSU:
+            uzsu:
                 type: dict
                 uzsu_item: someroom.someitem #Ab smarthomeNG 1.6 ist es möglich, einfach nur '..' zu nutzen, um auf das Parent-Item zu verweisen.
                 cache: 'True'
@@ -37,6 +45,17 @@ Konfiguration
                     type: bool
                     eval: sh...activate(value)
                     visu_acl: rw
+
+Ab *smarthomeNG 1.6* ist das Anlegen der nötigen Items via ``struct`` besonders einfach:
+
+.. code-block:: yaml
+
+    # items/my.yaml
+    someroom:
+
+        someitem:
+            type: num
+            struct: uzsu.child
 
 SmartVISU
 =========
@@ -124,9 +143,3 @@ Folgender Python Aufruf bzw. Dictionary Eintrag schaltet das Licht jeden zweiten
    {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2', 'time': '17:30'}],
    {'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0}
    })
-
-
-Weitere Infos
-=============
-
-Beispiele und zusätzliche Infos können im `SmarthomeNG Blog <https://www.smarthomeng.de/tag/uzsu>`_ gefunden werden.

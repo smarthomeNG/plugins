@@ -34,7 +34,7 @@ parameters:
         description:
             de: 'Legt fest auf welchen Netzwerk Interfaces CLI nach Verbindungen lauscht (127.0.0.1 für localhost, 0.0.0.0 für alle Netzwerk Interfaces)'
             en: 'used network interface, e.g. 127.0.0.1 (localhost) or listen on all network interfaces: 0.0.0.0'
-            
+
     port:
         type: int
         valid_min: 0
@@ -44,16 +44,19 @@ parameters:
             de: 'Netzwerk Port der für die Verbindung genutzt wird'
 
             en: 'used network port'
-            
+
     hashed_password:
         type: str
         description:
             de: "Hash (SHA-512) des Passwortes zum Login. Hashes können durch das backend Plugin erzeugt werden. Wenn kein Passwort verwendet werden soll wird eine Warnung geloggt. Soll dieses Log unterbleiben, muss für diesen Parameter 'none' eingegeben werden."
             en: "password that needs to be entered on login. SHA-512 hashed. Hashes can be created via the backend plugin. If you don't use a password, a warning will be logged. If you don't want that log entry, this parameter must be set to 'none'."
-            
-    
+
+
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

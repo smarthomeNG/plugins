@@ -7,6 +7,7 @@ plugin:
         en: 'Integrating Wetter.COM'
     maintainer: '? (Jan N. Klug)'
     tester: psilo909, onkelandy
+    state: ready
     keywords: weather
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
@@ -15,6 +16,7 @@ plugin:
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: wettercom           # class containing the plugin
 
 parameters:
@@ -35,5 +37,248 @@ parameters:
             de: 'Key für die wetter.com API'
             en: 'key for the wetter.com API'
 
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
+
+item_structs:
+    # definition of item structure for this plugin
+
+    wetter:
+        vorhersage:
+            heute:
+                frueh:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+                mittag:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+                spaet:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+                nacht:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+            morgen:
+                frueh:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+                mittag:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+                spaet:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+                nacht:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+            uebermorgen:
+                frueh:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+                mittag:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+                spaet:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+                nacht:
+                    temperatur:
+                        max:
+                            type: num
+                        min:
+                            type: num
+                    text:
+                        type: str
+                    code:
+                        type: num
+                    wind:
+                        geschwindigkeit:
+                            type: num
+                        richtung:
+                            type: num
+                            text:
+                                type: str
+                    niederschlag:
+                        type: num
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin

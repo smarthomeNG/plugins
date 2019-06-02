@@ -118,7 +118,7 @@
 		</tr>
 	</table>
 	<input type="hidden" id="original_content" value="{% for line in logic_lines %}{{ line }}{% endfor %}"/>
-	<div style="margin-bottom: 10px;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
+	<div style="margin-bottom: 10px; border-left: 1px solid #ccc;" {% if mode == 'python' %}class="python-tabs"{% endif %}>
 		{% if logic_lines %}
 			<textarea autocomplete="off" id="logics_code" name="logics_code">{% for line in logic_lines %}{{ line }}{% endfor %}</textarea>
 			{% if updates %}</form>{% endif %}

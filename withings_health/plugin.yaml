@@ -90,6 +90,9 @@ item_attributes:
         - 'token_type'
         - 'refresh_token'
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 

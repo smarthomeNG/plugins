@@ -6,7 +6,7 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Web Interface zur Anzeige von Informationen zum System und SmartHomeNG Backend-Daten'
         en: 'webinterface for displaying system information and SmartHomeNG backend data'
-        
+
     description_long:         # Alternative: long description in multiple languages
         de: 'Dieses Plugin liefert Informationen über die aktuell laufende SmartHomeNG Installation. Bisher dient es vorwiegend als Support Tool um Anwendern zu helfen, deren Installation nicht richtig läuft.\n
              \n
@@ -47,6 +47,8 @@ plugin:
              '
     maintainer: psilo909, msinn, bmxp
     tester: Sandman60
+    state: qa-passed
+    # state: deprecated
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/backend/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/959964-support-thread-für-das-backend-plugin
@@ -55,8 +57,9 @@ plugin:
     sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: False
     classname: BackendServer       # class containing the plugin
-    
+
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     updates_allowed:
@@ -80,6 +83,15 @@ parameters:
             de: 'Timeout bei der Abfrage der pypi Website'
             en: 'Timeout for getting data from the pypi website'
 
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
-    
+
+item_structs: NONE
+    # Item structures defined by this plugin
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
