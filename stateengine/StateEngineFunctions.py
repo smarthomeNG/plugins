@@ -86,8 +86,8 @@ class SeFunctions:
             retval_trigger = not item()
             elog.debug("Current value of item {0} is {1}", item_id, retval_no_trigger)
 
-            original_caller, original_source = self.get_original_caller(elog, caller, source)
-            elog.debug("original trigger by caller '{0}' source '{1}'", original_caller, original_source)
+            original_caller, original_source, original_source_details = self.get_original_caller(elog, caller, source)
+            elog.debug("original trigger by caller '{0}' source '{1}', details '{2}'", original_caller, original_source, original_source_details)
 
             if "se_manual_on" in item.conf:
                 # get list of include entries
@@ -102,9 +102,14 @@ class SeFunctions:
 
                 # If current value is in list -> Return "Trigger"
                 for entry in include:
-                    entry_caller, __, entry_source = entry.partition(":")
-                    if (entry_caller == original_caller or entry_caller == "*") and (
-                            entry_source == original_source or entry_source == "*"):
+                    try:
+                        entry_caller, entry_source, entry_source_details = entry.split(":")
+                    except Exception:
+                        entry_caller, __, entry_source = entry.partition(":")
+                        entry_source_details = "*"
+                    if (entry_caller.lower().strip() == original_caller.lower() or entry_caller == "*") and (
+                            entry_source.lower().strip() == original_source.lower() or entry_source == "*") and (
+                            entry_source_details.lower().strip() == original_source_details.lower() or entry_source_details == "*"):
                         elog.debug("{0}: matching. Writing value {1}", entry, retval_no_trigger)
                         return retval_no_trigger
                     elog.debug("{0}: not matching", entry)
@@ -124,10 +129,14 @@ class SeFunctions:
 
                 # If current value is in list -> Return "NoTrigger"
                 for entry in exclude:
-                    entry_caller, __, entry_source, entry_additional = entry.partition(":")
+                    try:
+                        entry_caller, entry_source, entry_source_details = entry.split(":")
+                    except Exception:
+                        entry_caller, __, entry_source = entry.partition(":")
+                        entry_source_details = "*"
                     if (entry_caller.lower().strip() == original_caller.lower() or entry_caller == "*") and (
                             entry_source.lower().strip() == original_source.lower() or entry_source == "*") and (
-                            entry_additional.lower().strip() == entry_additional.lower() or entry_additional == "*"):
+                            entry_source_details.lower().strip() == original_source_details.lower() or entry_source_details == "*"):
                         elog.debug("{0}: matching. Writing value {1}", entry, retval_no_trigger)
                         return retval_no_trigger
                     elog.debug("{0}: not matching", entry)
@@ -146,10 +155,14 @@ class SeFunctions:
 
                 # If current value is in list -> Return "Trigger"
                 for entry in include:
-                    entry_caller, __, entry_source, entry_additional = entry.partition(":")
+                    try:
+                        entry_caller, entry_source, entry_source_details = entry.split(":")
+                    except Exception:
+                        entry_caller, __, entry_source = entry.partition(":")
+                        entry_source_details = "*"
                     if (entry_caller.lower().strip() == original_caller.lower() or entry_caller == "*") and (
                             entry_source.lower().strip() == original_source.lower() or entry_source == "*") and (
-                            entry_additional.lower().strip() == entry_additional.lower() or entry_additional == "*"):
+                            entry_source_details.lower().strip() == original_source_details.lower() or entry_source_details == "*"):
                         elog.debug("{0}: matching. Writing value {1}", entry, retval_trigger)
                         return retval_trigger
                     elog.debug("{0}: not matching", entry)
@@ -178,14 +191,23 @@ class SeFunctions:
                 elog.debug("get_original_caller({0}, {1}): original item not found", original_caller, original_source)
                 break
             original_changed_by = original_item.changed_by()
+            elog.debug("Changed by {}", original_changed_by)
             if ":" not in original_changed_by:
                 text = "get_original_caller({0}, {1}): changed by {2} -> separator missing"
-                elog.debug(text, original_caller, original_source, original_changed_by)
+                elog.debug(text, original_caller, original_source)
                 break
             oc = original_caller
             os = original_source
-            original_caller, __, original_source = original_changed_by.partition(":")
-            elog.debug("get_original_caller({0}, {1}): changed by {2}, {3} at {4}", oc, os, original_caller, original_source, original_item.last_change())
 
-        elog.debug("get_original_caller: returning {0}, {1}", original_caller, original_source)
-        return original_caller, original_source
+            try:
+                original_caller, original_source, original_source_details = original_changed_by.split(":")
+                od = original_source_details
+            except Exception:
+                original_caller, __, original_source = original_changed_by.partition(":")
+                original_source_details = None
+                od = 'no details'
+            elog.debug("get_original_caller({0}, {1}, {2}): changed by {3}, {4}, {5} at {6}", oc, os, od,
+                        original_caller, original_source, original_source_details, original_item.last_change())
+
+        elog.debug("get_original_caller: returning {0}, {1}, {2}", original_caller, original_source, original_source_details)
+        return original_caller, original_source, original_source_details
