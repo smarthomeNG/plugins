@@ -72,10 +72,8 @@ class SeValue(StateEngineTools.SeItemChild):
             source = []
             field_value = []
             for i, val in enumerate(value):
-                self._log_debug("VALUE: {}", val)
                 if isinstance(val, dict) or isinstance(val, tuple):
                     val = list("{!s}:{!s}".format(k,v) for (k,v) in val.items())[0]
-                self._log_debug("VALUE: {}", val)
                 if isinstance(val, str):
                     s, f = StateEngineTools.partition_strip(val, ":")
                 else:
