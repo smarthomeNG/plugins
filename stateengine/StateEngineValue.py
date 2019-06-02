@@ -69,11 +69,13 @@ class SeValue(StateEngineTools.SeItemChild):
     # name: name of object ("time" is being handeled different)
     def set(self, value, name=""):
         if isinstance(value, list):
-            if isinstance(value[0], dict) or isinstance(value[0], tuple):
-                value = list("{!s}:{!s}".format(k,v) for (k,v) in value[0].items())
             source = []
             field_value = []
             for i, val in enumerate(value):
+                self._log_debug("VALUE: {}", val)
+                if isinstance(val, dict) or isinstance(val, tuple):
+                    val = list("{!s}:{!s}".format(k,v) for (k,v) in val.items())[0]
+                self._log_debug("VALUE: {}", val)
                 if isinstance(val, str):
                     s, f = StateEngineTools.partition_strip(val, ":")
                 else:
