@@ -128,7 +128,10 @@ class SeActions(StateEngineTools.SeItemChild):
         # parse parameters
         parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None}
         for entry in value_list:
+            if isinstance(entry, dict):
+                entry = list("{!s}:{!s}".format(k,v) for (k,v) in entry.items())[0]
             key, val = StateEngineTools.partition_strip(entry, ":")
+            val = ":".join(map(str.strip, val.split(":")))
             if key == "function":
                 parameter[key] = StateEngineTools.cast_str(val)
             elif key == "force":
