@@ -124,9 +124,10 @@ class SeFunctions:
 
                 # If current value is in list -> Return "NoTrigger"
                 for entry in exclude:
-                    entry_caller, __, entry_source = entry.partition(":")
-                    if (entry_caller == original_caller or entry_caller == "*") and (
-                            entry_source == original_source or entry_source == "*"):
+                    entry_caller, __, entry_source, entry_additional = entry.partition(":")
+                    if (entry_caller.lower().strip() == original_caller.lower() or entry_caller == "*") and (
+                            entry_source.lower().strip() == original_source.lower() or entry_source == "*") and (
+                            entry_additional.lower().strip() == entry_additional.lower() or entry_additional == "*"):
                         elog.debug("{0}: matching. Writing value {1}", entry, retval_no_trigger)
                         return retval_no_trigger
                     elog.debug("{0}: not matching", entry)
@@ -145,9 +146,10 @@ class SeFunctions:
 
                 # If current value is in list -> Return "Trigger"
                 for entry in include:
-                    entry_caller, __, entry_source = entry.partition(":")
-                    if (entry_caller == original_caller or entry_caller == "*") and (
-                            entry_source == original_source or entry_source == "*"):
+                    entry_caller, __, entry_source, entry_additional = entry.partition(":")
+                    if (entry_caller.lower().strip() == original_caller.lower() or entry_caller == "*") and (
+                            entry_source.lower().strip() == original_source.lower() or entry_source == "*") and (
+                            entry_additional.lower().strip() == entry_additional.lower() or entry_additional == "*"):
                         elog.debug("{0}: matching. Writing value {1}", entry, retval_trigger)
                         return retval_trigger
                     elog.debug("{0}: not matching", entry)

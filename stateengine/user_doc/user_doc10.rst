@@ -244,7 +244,7 @@ bei jeder manuellen Betätigung invertiert wird:
                    se_manual_logitem: beispiel.raffstore1.automatik.manuell
                    se_manual_exclude:
                      - database:*
-                     - KNX:1.1.4
+                     - KNX:1.1.4:*
                    eval_trigger:
                      - taster1
                      - taster2
@@ -271,9 +271,10 @@ Jalousieaktor. Hierfür stehen zwei weitere Attribute bereit:
 
 Bei beiden Attributen wird eine Liste von Elementen angegeben. Die
 einzelnen Elemente bestehen dabei aus dem Aufrufenden
-(``Caller``) einem Doppelpunkt und der Quelle (``Source``). Ohne Leerzeichen!
+(``Caller``) einem Doppelpunkt und der Quelle (``Source``), bei Bedarf auch einer
+weiteren durch Doppelpunkt getrennte Information wie z.B. die Gruppenadresse beim KNX Plugin.
 Mehrere Elemente werden durch "|" getrennt bzw. im yaml als Liste deklariert.
-Für ``Caller`` und ``Source`` kann dabei jeweils auch ``"*"`` angegeben werden, dies
+Für ``Caller`` und ``Source`` sowie ``Additional`` kann dabei jeweils auch ``"*"`` angegeben werden, dies
 bedeutet, dass der jeweilige Teil nicht berücksichtigt werd.
 
 Wenn bei der Prüfung festgestellt wird, dass ein Wert über eine
@@ -282,12 +283,12 @@ zurückverfolgt bis zur ursprünglichen Änderung, die die Eval-Kette
 ausgelöst hat. Diese ursprüngliche Änderung wird dann geprüft.
 
 Der Wert von ``Caller`` zeigt an, welche Funktionalität das Item
-geändert hat. Der Wert von ``Source`` ist Abhängig vom Caller.
+geändert hat. Der Wert von ``Source`` und ``Additional`` ist Abhängig vom Caller.
 Häufig verwendete ``Caller`` sind:
 
 -  ``Init``: Initialisierung von smarthomeNG. ``Source`` ist in der Regel leer
 -  ``Visu``: Änderung über die Visualisierung (Visu-Plugin). ``Source`` beinhaltet die IP und den Port der Gegenstelle
--  ``KNX``: Änderung über das KNX-Plugin. ``Source`` ist die physische Adresse des sendenden Geräts
+-  ``KNX``: Änderung über das KNX-Plugin. ``Source`` ist die physische Adresse des sendenden Geräts. ``Additional`` beinhaltet die Gruppenadresse.
 
 
 Wenn ``se_manual_include`` oder ``se_manual_exclude`` angegeben

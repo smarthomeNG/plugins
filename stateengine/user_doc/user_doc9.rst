@@ -37,7 +37,7 @@ können wie folgt eingebunden werden:
                        - beispiel.raffstore1.hoehe
                        - beispiel.raffstore1.lamelle
                     se_manual_exclude:
-                       - KNX:y.y.y
+                       - KNX:y.y.y:*
                        - Init:*
 
                 rules:
@@ -121,7 +121,7 @@ z.B. Schalten eines Lichts oder Fahren einer Jalousie mittels Taster oder Visu.
 In diesem Fall soll die automatiche Evaluierung für eine gewisse Zeit pausieren.
 
 Beim ``manuell`` Item muss unter Umständen der Eintrag ``se_manual_exclude`` in der eigenen
-Baumstruktur überschrieben und durch einen Eintrag ``- KNX:GA des Aktors``
+Baumstruktur überschrieben und durch einen Eintrag (z.B. beim Einsatz von KNX Aktoren) ``- KNX:physikalische Adresse:Gruppenadresse``
 ergänzt werden. Außerdem muss ein eval_trigger manuell deklariert werden. Hier sollten alle
 Items gelistet sein, die für ein vroübergehendes Aussetzen der Automatisierung sorgen sollen
 (z.B. Schalt- und Dimm-Items)

@@ -311,7 +311,7 @@ Regelwerk-Items "rules" sollen ebenfalls je nach Bedarf ergänzt werden.
                        - beispiel.raffstore1.hoehe
                        - beispiel.raffstore1.lamelle
                    se_manual_exclude:
-                       - 'KNX:0.0.0' # Hier die Gruppenadresse des Schalt/Jalousieaktors angeben!
+                       - 'KNX:0.0.0:*' # Hier die physikalische Adresse des Schalt/Jalousieaktors angeben!
                        - 'Init:*'
                        - 'database:*'
 
@@ -475,7 +475,7 @@ abgeändert. Es wird explizit auf Template-Imports via struct verzichtet.
                        - beispiel.raffstore2.lamelle
                    # Änderungen, die ursprünglich von diesen Triggern (<caller>:<source>) ausgelöst wurden, sollen nicht als manuelle Bedienung gewertet werden
                    se_manual_exclude:
-                       - KNX:y.y.y
+                       - KNX:*:ga=1/2/3 # Hier die Gruppenadresse angeben
                        - Init:*
 
                anwesenheit:
@@ -712,7 +712,7 @@ Letzten Endes wird alles in einem item.yaml auf folgende Art und Weise implement
                   - ...dimmen.taster
                 se_manual_exclude:
                   - Database:*
-                  - KNX:1.1.2
+                  - KNX:1.1.2:*
 
             settings_edited:
                 type: bool
