@@ -83,10 +83,12 @@ class StateEngine(SmartPlugin):
     # Parse an item
     # noinspection PyMethodMayBeStatic
     def parse_item(self, item):
-        if "se_manual_include" in item.conf or "se_manual_exclude" in item.conf:
+        if self.has_iattr(item.conf, "se_item_*"):
+            item.expand_relativepathes('se_item_*', '', '')
+        elif self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
             item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.property.path + "', caller, source)"
-        elif "se_manual_invert" in item.conf:
-            item._eval = "not sh." + item.property.path + "()"
+        elif self.has_iattr(item.conf, "se_manual_invert"):
+            item._eval = "not sh." + item.property.value
 
         return None
 
