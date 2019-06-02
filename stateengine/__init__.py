@@ -33,7 +33,7 @@ from lib.item import Items
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
@@ -83,9 +83,12 @@ class StateEngine(SmartPlugin):
     # Parse an item
     # noinspection PyMethodMayBeStatic
     def parse_item(self, item):
-        if self.has_iattr(item.conf, "se_item_*"):
+        try:
             item.expand_relativepathes('se_item_*', '', '')
-        elif self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
+            item.expand_relativepathes('se_*', ['item:', 'sh.', 'sh.', 'sh.'], ['', '.path', '.value', ')'])
+        except Exception:
+            pass
+        if self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
             item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.property.path + "', caller, source)"
         elif self.has_iattr(item.conf, "se_manual_invert"):
             item._eval = "not sh." + item.property.value
@@ -102,7 +105,7 @@ class StateEngine(SmartPlugin):
                     ab_item = StateEngineItem.SeItem(self.get_sh(), item)
                     self.__items[ab_item.id] = ab_item
                 except ValueError as ex:
-                    self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, str(ex)))
+                    self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, ex))
 
         if len(self.__items) > 0:
             self.logger.info("Using StateEngine for {} items".format(len(self.__items)))

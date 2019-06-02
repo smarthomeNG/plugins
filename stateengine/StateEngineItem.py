@@ -465,7 +465,7 @@ class SeItem:
             if item is None:
                 self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
-
+        self.__logger.debug("Testing for relative item declaration {}".format(item_id))
         parent_level = 0
         for c in item_id:
             if c != '.':
