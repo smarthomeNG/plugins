@@ -492,11 +492,11 @@ class SeActionSpecial(SeActionBase):
 
     def suspend_get_value(self, value):
         if value is None:
-            raise ValueError("Action {0}: Special action 'suspend' requires arguments!")
+            raise ValueError("Action {0}: Special action 'suspend' requires arguments!", self._name)
 
         suspend, manual = StateEngineTools.partition_strip(value, ",")
         if suspend is None or manual is None:
-            raise ValueError("Action {0}: Special action 'suspend' requires two arguments (separated by a comma)!")
+            raise ValueError("Action {0}: Special action 'suspend' requires two arguments (separated by a comma)!", self._name)
 
         suspend_item = self._abitem.return_item(suspend)
         if suspend_item is None:
@@ -525,4 +525,4 @@ class SeActionSpecial(SeActionBase):
         suspend_over = suspend_item.age()
         suspend_remaining = int(suspend_time - suspend_over + 0.5)   # adding 0.5 causes round up ...
         self._abitem.set_variable("item.suspend_remaining", suspend_remaining)
-        self._log_debug("Updated variable 'item.suspend_remaining' to {0}".format(suspend_remaining))
+        self._log_debug("Updated variable 'item.suspend_remaining' to {0}", suspend_remaining)

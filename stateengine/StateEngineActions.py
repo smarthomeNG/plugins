@@ -76,7 +76,7 @@ class SeActions(StateEngineTools.SeItemChild):
         except ValueError as ex:
             if name in self.__actions:
                 del self.__actions[name]
-            self._log_warning("Ignoring action {0} because: {1} (2)".format(attribute, ex))
+            self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
             #raise ValueError("Action {0}: {1}".format(attribute, ex))
 
     # ensure that action exists and create if missing
@@ -150,14 +150,16 @@ class SeActions(StateEngineTools.SeItemChild):
         if parameter['force'] is not None:
             # Parameter force is supported only for type "set" and type "force"
             if parameter['function'] != "set" and parameter['function'] != "force":
-                self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported for function '{1}'".format(name, parameter['function']))
+                self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported for function '{1}'", name, parameter['function'])
             elif parameter['force'] and parameter['function'] == "set":
                 # Convert type "set" with force=True to type "force"
-                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'set' to 'force', because parameter 'force' is 'True'!".format(name))
+                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'set' to 'force', " \
+                               "because parameter 'force' is 'True'!", name)
                 parameter['function'] = "force"
             elif not parameter['force'] and parameter['function'] == "force":
                 # Convert type "force" with force=False to type "set"
-                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'force' to 'set', because parameter 'force' is 'False'!".format(name))
+                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'force' to 'set', "\
+                               "because parameter 'force' is 'False'!", name)
                 parameter['function'] = "set"
 
         # create action based on function
@@ -200,7 +202,7 @@ class SeActions(StateEngineTools.SeItemChild):
             exists = False
             if name in self.__actions:
                 del self.__actions[name]
-            self._log_warning("Ignoring action {0} because: {1}".format(name, ex))
+            self._log_warning("Ignoring action {0} because: {1}", name, ex)
 
 
         # add additional parameters

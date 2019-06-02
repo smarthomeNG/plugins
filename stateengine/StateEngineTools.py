@@ -19,9 +19,6 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 import datetime
-import logging
-
-logger = logging.getLogger(__name__)
 #
 # Some general tool functions
 #
@@ -175,13 +172,11 @@ def get_eval_name(eval_func):
                     functionnames.append(func)
                 else:
                     functionnames.append(func.__module__ + "." + func.__name__)
-            logger.error("eval func return {}".format(functionnames))
             return functionnames
         else:
             if isinstance(eval_func, str):
                 return eval_func
             else:
-                logger.error("module return {}".format(eval_func.__module__ + "." + eval_func.__name__))
                 return eval_func.__module__ + "." + eval_func.__name__
 
 
