@@ -492,11 +492,11 @@ class SeActionSpecial(SeActionBase):
 
     def suspend_get_value(self, value):
         if value is None:
-            raise ValueError("Action {0}: Secial action 'suspend' requires arguments!")
+            raise ValueError("Action {0}: Special action 'suspend' requires arguments!")
 
         suspend, manual = StateEngineTools.partition_strip(value, ",")
         if suspend is None or manual is None:
-            raise ValueError("Action {0}: Secial action 'suspend' requires two arguments (separated by a comma)!")
+            raise ValueError("Action {0}: Special action 'suspend' requires two arguments (separated by a comma)!")
 
         suspend_item = self._abitem.return_item(suspend)
         if suspend_item is None:

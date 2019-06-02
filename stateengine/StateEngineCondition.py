@@ -390,7 +390,6 @@ class SeCondition(StateEngineTools.SeItemChild):
         if self.__eval is not None:
             # noinspection PyUnusedLocal
             sh = self._sh
-            self._log_debug("Gget current = {}".format(self.__eval))
             if isinstance(self.__eval, str):
                 # noinspection PyUnusedLocal
                 if "stateengine_eval" in self.__eval:
