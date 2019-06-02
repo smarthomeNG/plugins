@@ -149,7 +149,7 @@ definiert und jederzeit abgeändert werden.
                # - Lamellen zur Sonne ausrichten
                se_action_lamelle:
                  - 'function: set'
-                 - 'to: eval:stateengine_eval.sun_tracking()'
+                 - 'to: eval:se_eval.sun_tracking()'
 
                # Einstieg in "Sonnenschutz": Wenn
                enter:
@@ -633,10 +633,10 @@ weshalb diese Vorgehensweise erst ab 1.5.1 empfohlen wird.
        on_enter_or_stay:
           se_action_sollwert:
              - 'function: set'
-             - "to: eval:sh.return_item(stateengine_eval.get_relative_itemid('..settings.{}.sollwert'.format(stateengine_eval.get_relative_itemvalue('..state_name').lower())))()"
+             - "to: eval:sh.return_item(se_eval.get_relative_itemid('..settings.{}.sollwert'.format(se_eval.get_relative_itemvalue('..state_name').lower())))()"
           se_action_prio:
              - 'function: set'
-             - "to: eval:sh.return_item(stateengine_eval.get_relative_itemid('..settings.{}.prio'.format(stateengine_eval.get_relative_itemvalue('..state_name').lower())))()"
+             - "to: eval:sh.return_item(se_eval.get_relative_itemid('..settings.{}.prio'.format(se_eval.get_relative_itemvalue('..state_name').lower())))()"
 
 Außerdem werden pro Aktortyp entsprechende Setting Items angelegt. Je nach Bedarf
 kann dann auf diese zurückgegriffen werden.

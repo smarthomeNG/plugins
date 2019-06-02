@@ -97,14 +97,20 @@ class SeEval(StateEngineTools.SeItemChild):
         except Exception as ex:
             self._log_warning("Problem evaluating value of {0}: {1}", subitem_id, ex)
 
-    def get_relative_itemname(self, subitem_id):
-        self._log_debug("Executing method 'get_relative_itemname({0})'", subitem_id)
+    # Return the property of an item related to the StateEngine Object Item
+    # item_id: Relative id of item whose property should be returned
+    # prop: name of property, e.g. last_change. See https://www.smarthomeng.de/user/konfiguration/items_properties.html?highlight=property
+    #
+    # See description of StateEngineItem.SeItem.return_item for details
+    def get_relative_itemproperty(self, subitem_id, prop):
+        self._log_debug("Executing method 'get_relative_itemproperty({0}, {1})'", subitem_id, prop)
         try:
             item = self._abitem.return_item(subitem_id)
-            self._log_debug("Item Name from {0}: {1}", subitem_id, item.property.name)
-            return item.property.name
+            propvalue = getattr(item.property, prop)
+            self._log_debug("Item property {0} from {1} is: {2}", prop, item.property.path, propvalue)    
+            return propvalue
         except Exception as ex:
-            self._log_warning("Problem evaluating value of {0}: {1}", subitem_id, ex)
+            self._log_warning("Problem evaluating property {0} of {1}: {2}", prop, subitem_id, ex)
 
     # Insert end time of suspension into text
     # suspend_item_id: Item whose age is used to determine how much of the suspend time is already over

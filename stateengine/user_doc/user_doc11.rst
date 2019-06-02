@@ -208,7 +208,7 @@ etc).
                    Sonnenstand:
                        <...>
                        se_set_height: value:100
-                       se_set_lamella: eval:stateengine_eval.sun_tracking()
+                       se_set_lamella: eval:se_eval.sun_tracking()
                        <...>
                    Sonder:
                        <...>

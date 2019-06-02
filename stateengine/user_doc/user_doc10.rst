@@ -19,14 +19,14 @@ verwendet werden können:
 
 .. code-block:: yaml
 
-   stateengine_eval.sun_tracking()
+   se_eval.sun_tracking()
 
 **Zufallszahl**
 *Über min und max kann die kleinste/größte Nummer, die zurückgegeben werden soll, festgelegt werden.*
 
 .. code-block:: yaml
 
-   stateengine_eval.get_random_int(min,max)
+   se_eval.get_random_int(min,max)
 
 ``min`` und ``max`` können weggelassen werden, in diesem Fall sind die
 Vorgabewerte 0 für ``min`` und 255 für ``max``.
@@ -36,35 +36,52 @@ Vorgabewerte 0 für ``min`` und 255 für ``max``.
 
 .. code-block:: yaml
 
-   stateengine_eval.execute(command)
+   se_eval.execute(command)
 
 **Wert einer Variable ermitteln**
 *Liefert den Wert der Variablen <varname>*
 
 .. code-block:: yaml
 
-   stateengine_eval.get_variable(varname)
+   se_eval.get_variable(varname)
 
 **Item-Id relativ zum Regelwerk-Item ermitteln**
 *Eine Item-Id relativ zur Item-Id des Regelwerk-Items wird ermittelt.*
 
 .. code-block:: yaml
 
-   stateengine_eval.get_relative_itemid(subitem_id)
+   se_eval.get_relative_itemid(subitem_id)
+   se_eval.get_relative_itemid('..suspend')
+
+Statt dieser Funktion sollte se_eval.get_relative_itemproperty('..suspend', 'path') verwendet werden.
 
 **Item-Wert relativ zum Regelwerk-Item ermitteln**
 *Der Wert eines Items relativ zur Item-Id des Regelwerk-Items wird ermittelt.*
 
 .. code-block:: yaml
 
-   stateengine_eval.get_relative_itemvalue(subitem_id)
+   se_eval.get_relative_itemvalue(subitem_id)
+   se_eval.get_relative_itemvalue('..suspend')
+
+Statt dieser Funktion sollte se_eval.get_relative_itemproperty('..suspend', 'value') verwendet werden.
+
+**Item-Property relativ zum Regelwerk-Item ermitteln**
+*Eine Property eines Items relativ zur Item-Id des Regelwerk-Items wird ermittelt.*
+
+.. code-block:: yaml
+
+  se_eval.get_relative_itemproperty(subitem_id, property)
+  se_eval.get_relative_itemproperty('..suspend', 'last_change_age')
+
+Welche Werte für ``property`` genutzt werden können, ist hier nachzulesen:
+`Item Properties <https://www.smarthomeng.de/user/konfiguration/items_properties.html?highlight=property>`_).
 
 **Suspend-Ende in einen Text einsetzen**
 *Das Ende der Suspend-Zeit wird in den Text suspend_text eingesetzt.*
 
 .. code-block:: yaml
 
-   stateengine_eval.insert_suspend_time(suspend_item_id, suspend_text="Ausgesetzt bis %X")
+   se_eval.insert_suspend_time(suspend_item_id, suspend_text="Ausgesetzt bis %X")
 
 Im Text sind entsprechende Platzhalter
 vorzusehen (Siehe `strftime() and strptime()

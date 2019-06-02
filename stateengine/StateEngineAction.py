@@ -328,9 +328,9 @@ class SeActionRun(SeActionBase):
         if isinstance(self.__eval, str):
             # noinspection PyUnusedLocal
             sh = self._sh
-            if "stateengine_eval" in self.__eval:
+            if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
-                stateengine_eval = StateEngineEval.SeEval(self._abitem)
+                stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
             try:
                 eval(self.__eval)
             except Exception as ex:

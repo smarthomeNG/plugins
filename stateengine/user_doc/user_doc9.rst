@@ -168,7 +168,7 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
       se_item_retrigger: ..rules
       se_item_suspend_end: ..suspend_end
       se_item_suspend_active: ..settings.suspend_active
-      se_suspend_time: eval:stateengine_eval.get_relative_itemvalue('..settings.suspendduration') * 60
+      se_suspend_time: eval:se_eval.get_relative_itemvalue('..settings.suspendduration') * 60
       eval_trigger:
           - ..manuell
 
@@ -183,7 +183,7 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
                 - 'order: 1'
               se_action_suspend_end:
                 - 'function: set'
-                - "to: eval:stateengine_eval.insert_suspend_time('..suspend', suspend_text='%X')"
+                - "to: eval:se_eval.insert_suspend_time('..suspend', suspend_text='%X')"
                 - 'repeat: True'
                 - 'order: 2'
               se_action_retrigger:
@@ -202,7 +202,7 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
                 - 'to:  '
 
           enter_manuell:
-              se_value_trigger_source: eval:stateengine_eval.get_relative_itemid('..manuell')
+              se_value_trigger_source: eval:se_eval.get_relative_itemid('..manuell')
               se_value_suspend_active: True
 
           enter_stay:

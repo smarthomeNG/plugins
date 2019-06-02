@@ -392,10 +392,9 @@ class SeCondition(StateEngineTools.SeItemChild):
             sh = self._sh
             if isinstance(self.__eval, str):
                 # noinspection PyUnusedLocal
-                if "stateengine_eval" in self.__eval:
+                if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                     # noinspection PyUnusedLocal
-                    stateengine_eval = StateEngineEval.SeEval(self._abitem)
-                    self._log_debug("Using internal eval function {}".format(stateengine_eval))
+                    stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
                 try:
                     value = eval(self.__eval)
                 except Exception as ex:

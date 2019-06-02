@@ -69,6 +69,8 @@ class SeValue(StateEngineTools.SeItemChild):
     # name: name of object ("time" is being handeled different)
     def set(self, value, name=""):
         if isinstance(value, list):
+            if isinstance(value[0], dict) or isinstance(value[0], tuple):
+                value = list("{!s}:{!s}".format(k,v) for (k,v) in value[0].items())
             source = []
             field_value = []
             for i, val in enumerate(value):
@@ -228,9 +230,9 @@ class SeValue(StateEngineTools.SeItemChild):
         # noinspection PyUnusedLocal
         sh = self._sh
         if isinstance(self.__eval, str):
-            if "stateengine_eval" in self.__eval:
+            if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
-                stateengine_eval = StateEngineEval.SeEval(self._abitem)
+                stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
             try:
                 values = eval(self.__eval)
             except Exception as ex:
@@ -240,12 +242,12 @@ class SeValue(StateEngineTools.SeItemChild):
             if isinstance(self.__eval, list):
                 values = []
                 for val in self.__eval:
-                    self._log_info("Checking eval '{0}': {1}.", self.__eval, val)
+                    self._log_info("Checking eval: {0}.", val)
+                    self._log_increase_indent()
                     if isinstance(val, str):
-                        if "stateengine_eval" in val:
+                        if "stateengine_eval" in val or "se_eval" in val:
                             # noinspection PyUnusedLocal
-                            stateengine_eval = StateEngineEval.SeEval(self._abitem)
-                            self._log_debug("Using internal eval function {}".format(stateengine_eval))
+                            stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
                         try:
                             value = eval(val)
                         except Exception as ex:
@@ -259,9 +261,12 @@ class SeValue(StateEngineTools.SeItemChild):
                             value = None
                     if value is not None:
                         values.append(self.__do_cast(value))
+                    self._log_decrease_indent()
             else:
                 try:
+                    self._log_increase_indent()
                     values = self.__eval()
+                    self._log_decrease_indent()
                 except Exception as ex:
                     self._log_info("Problem calling '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
                     return None

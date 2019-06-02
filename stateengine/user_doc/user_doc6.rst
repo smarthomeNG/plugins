@@ -48,7 +48,7 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
                         - 'to: value:100'
                     se_action_lamella:
                         - 'function: set'
-                        - 'to: eval:stateengine_eval.sun_tracking()'
+                        - 'to: eval:se_eval.sun_tracking()'
                     <...>
                 Sonder:
                     <...>

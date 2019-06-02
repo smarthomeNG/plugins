@@ -13,21 +13,31 @@ Copy stateengine.example.html from the sv_widgets folder to your smartvisu/dropi
 http://URL/index.php?page=widgets/stateengine.example
 
 ## Changelog
+### v1.5.2
+* Get relative items at startup for all se_item_* attributes
+* Check for source_details in manual_exclude/include functions
+* Improve logging and some code parts, better problem handling
+* Allow list entries for conditions (original_caller, laststate, min/max, etc.)
+
+### v1.5.1
+* Include original 1.4.2 version in subfolder
+* Some fixes
+
 ### v1.5.0
 * Use new item property feature
 * Fix exception if rules item does not exist
 
 ### v1.4.2
-* Added and fixed documentation (onkelandy)
-* Added a smartvisu widget (onkelandy)
+* Added and fixed documentation
+* Added a smartvisu widget
 * Added conversion script for easy change from autoblind to stateengine plugin
 
 ### v1.4.1
-* Added to official develop repository (onkelandy)
-* Renamed to StateEngine (onkelandy)
-* Fixed compatibility of logic trigger for SmarthomeNG 1.4+ (onkelandy)
-* Changed state condition evaluation to OrderedDict to keep original order (onkelandy)
-* Added additional option for manual item called "manual_on" to figure out if item WAS trigger by specific KNX GA (onkelandy)
+* Added to official develop repository
+* Renamed to StateEngine
+* Fixed compatibility of logic trigger for SmarthomeNG 1.4+
+* Changed state condition evaluation to OrderedDict to keep original order
+* Added additional option for manual item called "manual_on" to figure out if item WAS trigger by specific KNX GA
 * Added Webinterface with documentation (german)
 
 ### v1.4.0
