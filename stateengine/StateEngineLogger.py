@@ -132,6 +132,7 @@ class SeLogger:
         self.__indentlevel = 0
         text += " "
         self.log(1, text.ljust(80, "="))
+        self.logger.info(text.ljust(80, "="))
 
     # log with level=info
     # @param text text to log
