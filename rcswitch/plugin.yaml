@@ -3,23 +3,87 @@ plugin:
     # Global plugin attributes
     type: gateway                 # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Schalten von 433 MHz Funksteckdosen **seit SmartHomeNG v1.3**'
-        en: ''
+        de: 'Schalten von 433 MHz Funksteckdosen'
+        en: 'Support for 433 MHz wireless sockets'
     maintainer: dafra
-#    tester:                        # Who tests this plugin?
+    tester: '?'                   # Who tests this plugin?
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen
 
-    version: 1.2.0.3               # Plugin version
-    sh_minversion: 1.2             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
-    classname: RCswitch            # class containing the plugin
+    version: 1.2.0.3              # Plugin version
+    sh_minversion: 1.2            # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False         # plugin supports multi instance
+    restartable: unknown
+    classname: RCswitch           # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    rcswitch_dir:
+        type: str
+        default: '/usr/local/bin/rcswitch-pi'
+        description:
+            de: "Pfad des rc-Switches - Muss auf das Verzeichnis zeigenm in dem der rcswitch-pi Sende-Befehl gefunden \
+                werden kann."
+            en: "path of rc switch - has to point to the directory where the rcswitch-pi send command can be found."
+
+    rcswitch_sendDuration:
+        type: num
+        default: 0.5
+        valid_min: 0.0
+        valid_max: 2.0
+        description:
+            de: "Minimale Zeit zwischen dem Senden von Befehlen in Sekundene"
+            en: "Minimum time in s between sending commands"
+
+    rcswitch_host:
+        type: str
+        default: ''
+        description:
+            de: "IP des rcswitch hosts, falls nicht das System auf dem SamrtHomeNG läuft. Achtung: Auf dem Remote \
+                 Host muss ein SSH Server installiert sein."
+            en: "ip of rcswitch host, in case rcswitch is running on a remote machine, the IPv4 address has to be \
+                 specified. Note: a SSH server has to be installed on the remote machine."
+
+    rcswitch_user:
+        type: str
+        default: ''
+        description:
+            de: "User auf dem Remote Host"
+            en: "user at remote host"
+
+    rcswitch_password:
+        type: str
+        default: ''
+        description:
+            de: "Passwort auf dem Remote Host"
+            en: "password for user at remote host"
+
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    rc_device:
+        type: str
+        valid_list: [1,2,3,4,5,a,b,c,d,e,A,B,C,D,E]
+        description:
+            de: "Nummer (oder Buchstabe) des Device"
+            en: "Number or letter or the device"
+
+    rc_code:
+        type: str
+        description:
+            de: "Code des Devices - Muss in der Form von 5 binären Digits angegeben werden [00000 - 11111]"
+            en: "code of device - Must be 5 binary digits [00000 - 11111]"
+
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+

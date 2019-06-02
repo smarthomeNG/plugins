@@ -8,6 +8,7 @@ plugin:
         en: 'Harmony hub plugin'
 
     maintainer: pfischi
+    state: ready
     documentation: https://github.com/smarthomeNG/plugins/blob/develop/harmony/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1046500-harmony-hub-plugin
 
@@ -43,4 +44,4 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+

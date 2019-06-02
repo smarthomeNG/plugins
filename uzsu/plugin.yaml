@@ -38,6 +38,7 @@ plugin:
              '
     maintainer: cmalo, bmxp, onkelandy
     tester: Sandman60, cmalo, schuma
+    state: ready
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1270230-uzsu-neue-version-von-onkelandy
@@ -46,6 +47,7 @@ plugin:
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: UZSU                # class containing the plugin
 
 parameters:
@@ -81,6 +83,25 @@ item_attributes:
                  ``cache: True`` as well for persistent storage of the UZSU information.
                  '
 
+item_structs:
+    child:
+        name: Vorlage-Struktur für Zeitschaltuhren
+
+        uzsu:
+            type: dict
+            uzsu_item: '..'
+            cache: 'True'
+            visu_acl: rw
+
+            active:
+                remark: Use this item to easily turn on or off your UZSU
+                type: bool
+                eval: sh...activate(value)
+                visu_acl: rw
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions:
     # Definition of function interface of the plugin
     planned:
@@ -102,6 +123,15 @@ plugin_functions:
         description:
             de: 'Beim Aufrufen mit dem Parameter True werden die Einträge der UZSU gelöscht.'
             en: 'Using this function with the parameter True clears the UZSU.'
+        description_long:
+            de: 'Löschen der UZSU Einträge eines Items.\n
+                - Leer: nichts ausführen\n
+                - True: löschen\n
+                '
+            en: 'Delete the UZSU entries of an item.\n
+                - Empty: do nothing\n
+                - True: delete\n
+                '
 
     activate:
         type: bool
@@ -111,12 +141,12 @@ plugin_functions:
         description_long:
             de: 'Abfrage oder Setzen, ob die uzsu aktiv ist oder nicht.\n
                 - Leer: Abfrage\n
-                - True: aktivieren\
+                - True: aktivieren\n
                 - False: deaktivieren\n
                 '
             en: 'Query or set whether the uzsu is set active or not.\n
                 - Empty: query\n
-                - True: activate\
+                - True: activate\n
                 - False: deactivate\n
                 '
 
@@ -128,7 +158,7 @@ plugin_functions:
         parameters:
             'type':
                 type: str
-                default: None
+                default: none
                 description:
                     de: 'Interpolationstyp: linear/none/cubic'
                     en: 'interpolation type: linear/none/cubic'
@@ -155,3 +185,4 @@ plugin_functions:
                 description:
                     de: 'Maximales Alter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen.'
                     en: 'maximum age of an uzsu entry in minutes to be catched up at the plugin start'
+

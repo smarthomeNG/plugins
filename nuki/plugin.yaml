@@ -75,7 +75,7 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
     nuki_id:
         type: str
         mandatory: True
@@ -99,6 +99,12 @@ item_attributes:
             - 'state'
             - 'battery'
             - 'action'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions: NONE
     # Definition of item attributes defined by this plugin

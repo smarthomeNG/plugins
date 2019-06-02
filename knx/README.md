@@ -82,7 +82,7 @@ The following datapoint types are supported:
 |  6          |  8 bit        |  num     |  -128 - 127
 |  7          |  2 byte       |  num     |  0 - 65535
 |  8          |  2 byte       |  num     |  -32768 - 32767
-|  9          |  2 byte       |  num     |  -671088,64 - 670760,96
+|  9          |  2 byte       |  num     |  -671088,64 - 670760,96 (f16)
 |  10         |  3 byte       |  foo     |  datetime.time
 |  11         |  3 byte       |  foo     |  datetime.date
 |  12         |  4 byte       |  num     |  0 - 4294967295
@@ -92,9 +92,12 @@ The following datapoint types are supported:
 |  16.001     |  14 byte      |  str     |  14 characters (8859_1)
 |  17         |  8 bit        |  num     |  Scene: 0 - 63
 |  17.001     |  8 bit        |  num     |  Scene: 1 - 64
+|  18.001     |  8 bit        |  num     |  Scene: 1 - 64 (call) and 65-128 (save)
 |  20         |  8 bit        |  num     |  HVAC: 0 - 255
 |  24         |  var          |  str     |  unlimited string (8859_1)
+|  229        |  6 byte       |  list    |  integer (4 Bytes), 0-255, 0-255
 |  232        |  3 byte       |  list    |  RGB: [0, 0, 0] - [255, 255, 255]
+|  275.100    |  8 byte       |  list    |  set temperatures comfort, standby, night reduction, frost protection encoded as f16, see DPT9
 ```
 
 
@@ -230,4 +233,29 @@ You will need to copy the script into your ``logics`` directory and add these li
 ```yaml
 Check_KNX:
     filename: Check_KNX.py
+```
+
+
+Check_KNX.py
+------------
+
+The logic Check_KNX.py was extended to create the following output at the end of the report. (Example lines only)
+
+A type comparison has to be done manually e.g. in Excel. But with this output gaps/delta between ETS Configuration and Items can be easily spotted.
+
+```
+Folgende Items sind mit Bezug zu KNX konfiguriert:
+===================================================================================================================================================================
+item                                                        |type      |dpt       |GA        |bindtype  |ETS Name
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+wurzel.zentral.klingelknopf                                 |      bool|         1|     0/3/5|knx_listen| in ETS => Globale Daten.Meldungen.Türklingel Klingeln
+wurzel.zentral.klingelknopf                                 |      bool|         1|     0/3/5|knx_send  | in ETS => Globale Daten.Meldungen.Türklingel Klingeln
+
+Folgende GAs sind in ETS konfiguriert:
+================================================================================================================================================================
+        GA|ETS Name                                                         |ETS Typ                            |#Items |       DPT|      Type|  BindType|Item
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+    0/0/14|Gerätefehler Dimmaktor 4Kanal EG                                 |EIS 1 'Switching' (1 Bit)          |     1 |         1|      bool|knx_listen|wurzel.stoerungen.geraetefehlerDimmaktorEg
+    0/0/15|Gerätefehler Dimmaktor 2Kanal EG                                 |EIS 1 'Switching' (1 Bit)          |     0 |       N/A|         ?|     knx_?|NICHT ALS ITEM ANGELEGT
+
 ```

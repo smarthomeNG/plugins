@@ -1,0 +1,22 @@
+code; translation
+00; phono
+01; cd
+02; tuner
+03; tape
+04; dvd
+05; tv
+10; video 1
+12; multi channel
+13; usb-dac
+14; video 2
+15; dvr
+17; usb
+18; xm radio
+19; hdmi 1
+20; hdmi 2
+21; hdmi 3
+22; hdmi 4
+23; hdmi 5
+25; bd
+26; iradio
+27; sirius

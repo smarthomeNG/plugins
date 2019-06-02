@@ -11,12 +11,12 @@ plugin:
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/visu_websocket/user_doc.html
 
-    version: 1.4.5                # Plugin version
-    sh_minversion: 1.4c            # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
+    version: 1.5.0                # Plugin version
+    sh_minversion: 1.4c           # minimum shNG version to use this plugin
+#    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False         # plugin supports multi instance
     restartable: unknown
-    classname: WebSocket           # class containing the plugin
+    classname: WebSocket          # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
@@ -24,9 +24,9 @@ parameters:
         type: ipv4
         default: '0.0.0.0'
         description:
-            de: 'IP Adresse, falls nicht auf allen IPs des hosts gelauscht werden soll'
+            de: 'IP Adresse, falls nicht auf allen IPs des Hosts gelauscht werden soll'
             en: 'ip address to use, if not listening on all ip addresses of the host'
-    
+
     port:
         type: int
         default: 2424
@@ -34,14 +34,14 @@ parameters:
         description:
             de: 'Port der für den Websocket Zugriff verwendet wird'
             en: 'Port that is used for the websocket protocol'
-    
+
     tls:
         type: bool
         default: False
         description:
             de: 'TLS benutzen? Falls auf True gesetzt, muss SmartHomeNGs /etc Directory die Zertifikat-Dateien home.crt, home.key und ca.crt enthalten'
             en: 'Use TLS? If set to True, SmartHomeNGs /etc directory must contain the certificate files: home.crt, home.key, ca.crt'
-    
+
     acl:
         type: str
         default: ro
@@ -58,7 +58,7 @@ parameters:
         description:
             de: 'Steuert den Zugriff über Websocket Protokoll - Voreinstellung für alle Items'
             en: 'Control access through wbsocket protocol - Default for all items'
-    
+
     wsproto:
         type: int
         default: 4
@@ -69,14 +69,14 @@ parameters:
         description:
             de: 'Verwendete Version des Websocket Protokolls'
             en: 'Used version of the websocket protocol'
-    
+
     querydef:
         type: bool
         default: False
         description:
             de: 'Wenn dieser Wert auf True gesetzt wird, ist es Websocket Clients möglich Item- und Logik Definitionen abzufragen'
             en: 'Websocket clients can query item- and logic definitions, if set to True'
-    
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     visu_acl:
@@ -99,17 +99,19 @@ item_attributes:
 logic_parameters:
     # Definition of item attributes defined by this plugin
     visu_acl:
-        type: bool
-        default: False
+        type: str
+        default: no
         valid_list:
-          - True
-          - False
+            - rw
+            - true
+            - yes
+            - no
         valid_list_description:
-            de: ['Logik kann durch smartVISU getriggert werden', 'Logik kann durch smartVISU getriggert werden']
-            en: ['Logic can be triggered by smartVISU', 'Logic cannot be triggered by smartVISU']
+            de: ['Logik kann durch smartVISU getriggert werden', 'Logik kann durch smartVISU getriggert werden', 'Logik kann durch smartVISU getriggert werden', 'Logik kann nicht durch smartVISU getriggert werden']
+            en: ['Logic can be triggered by smartVISU', 'Logic can be triggered by smartVISU', 'Logic can be triggered by smartVISU', 'Logic cannot be triggered by smartVISU']
         description:
-            de: 'Dieses Attribut kann für jede Logik in ../etc/logic.yaml angegeben werden.'
-            en: 'This attribute can be added to every logic in ../etc/logic.yaml.'
+            de: 'Mit diesem Attribut kann für jede Logik festgelegt werden, ob die Logik durch die Visu getriggert werden kann.'
+            en: 'Using this attribute it can be defined for every logic, if it could be triggered by the visu.'
 
 plugin_functions:
     # Definition of function interface of the plugin
@@ -117,7 +119,7 @@ plugin_functions:
     url:
         type: void
         description:
-            de: "Diese Funktion weist smartVISU Clients an, auf die angegebene Url (Visu Seite) zu wechseln. Die Funktion funktioniert mit smartVISU v2.9 und später. Für smartVISU v2.8 muss ein modifiziertes Treiber io_smarthome.js verwendet werden - Beispiel: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+            de: "Diese Funktion weist smartVISU Clients an, auf die angegebene Url (Visu Seite) zu wechseln. Die Funktion funktioniert mit smartVISU v2.9 und später. Für smartVISU v2.8 muss ein modifizierter Treiber io_smarthome.js verwendet werden - Beispiel: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
             en: "This function instructs the smartVISU clients to change to the specified url (visu page). This function works with smartVISU v2.9 and up, for smartVISU v2.8 a modified driver io_smarthome.js is needed - Example: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
         parameters:
             url:
@@ -132,3 +134,5 @@ plugin_functions:
                     de: "Falls angegeben, werden nur Clients (Browser) die auf dem Host mit der angegebenen IP Adresse laufen angewiesen die Seite zu wechseln. "
                     en: "If specified, only clients (browsers) running on the host with the specified ip address are instructed to change the page."
 
+item_structs: NONE
+    # Definition of item-structure templates for this plugin

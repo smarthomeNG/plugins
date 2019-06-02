@@ -43,6 +43,12 @@ item_attributes:
             de: 'Datentyp. Folgende Werte sind möglich: pregard, pregardcounter, psurplus, psurpluscounter, sregard, sregardcounter, ssurplus, ssurpluscounter, qregard, qregardcounter, qsurplus, qsurpluscounter, cosphi, p1regard, p1regardcounter, p1surplus, p1surpluscounter, s1regard, s1regardcounter, s1surplus, s1surpluscounter, q1regard, q1regardcounter, q1surplus, q1surpluscounter, v1, thd1, cosphi1, p2regard, p2regardcounter, p2surplus, p2surpluscounter, s2regard, s2regardcounter, s2surplus, s2surpluscounter, q2regard, q2regardcounter, q2surplus, q2surpluscounter, v2, thd2, cosphi2, p3regard, p3regardcounter, p3surplus, p3surpluscounter, s3regard, s3regardcounter, s3surplus, s3surpluscounter, q3regard, q3regardcounter, q3surplus, q3surpluscounter, v3, thd3, cosphi3.'
             en: 'Datentyp. The following values are possible: pregard, pregardcounter, psurplus, psurpluscounter, sregard, sregardcounter, ssurplus, ssurpluscounter, qregard, qregardcounter, qsurplus, qsurpluscounter, cosphi, p1regard, p1regardcounter, p1surplus, p1surpluscounter, s1regard, s1regardcounter, s1surplus, s1surpluscounter, q1regard, q1regardcounter, q1surplus, q1surpluscounter, v1, thd1, cosphi1, p2regard, p2regardcounter, p2surplus, p2surpluscounter, s2regard, s2regardcounter, s2surplus, s2surpluscounter, q2regard, q2regardcounter, q2surplus, q2surpluscounter, v2, thd2, cosphi2, p3regard, p3regardcounter, p3surplus, p3surpluscounter, s3regard, s3regardcounter, s3surplus, s3surpluscounter, q3regard, q3regardcounter, q3surplus, q3surpluscounter, v3, thd3, cosphi3.'
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions: NONE
 # Definition of function interface of the plugin
 

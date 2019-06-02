@@ -24,6 +24,7 @@
 #########################################################################
 
 import logging
+import functools
 
 from lib.model.smartplugin import *
 from lib.item import Items
@@ -51,8 +52,7 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.0"
-
+    PLUGIN_VERSION = "1.6.1"
 
     def __init__(self, smarthome):
         self.itemsApi = Items.get_instance()
@@ -414,13 +414,30 @@ class AVDevice(SmartPlugin):
                                 {'Zone': dependzone, 'Item': depend, 'Dependvalue': dependvalue, 'Compare': comparing,
                                  'Group': dependgroup})
                             self.logger.log(VERBOSE1,
-                                            "Initializing {}: Adding dependency for {}.".format(self._name, info))
+                                            "Initializing {}: Adding dependency for {} in {}: {}".format(self._name, info, zone, self._items[zone][info]))
                         except Exception:
                             self._items[zone][info].update({'Master': [
                                 {'Zone': dependzone, 'Item': depend, 'Dependvalue': dependvalue, 'Compare': comparing,
                                  'Group': dependgroup}]})
                             self.logger.log(VERBOSE1,
-                                            "Initializing {}: Creating dependency for {}.".format(self._name, info))
+                                            "Initializing {}: Creating dependency for {} in {}: {}".format(self._name, info, zone, self._items[zone][info]))
+
+    def _logics_dependencies(self, zone=None, item=None):
+        deps = {'a': [], 'b':[], 'c':[], 'd':[]}
+        try:
+            info = item.property.path
+            search = 'Slave_item'
+        except Exception:
+            search = 'Slave_function'
+            info = item
+        try:
+            depitem = self._dependencies[search][zone].get(info)
+            for d in depitem:
+                deps[d.get('Group')].append("{}{}{}".format(d['Item'], d['Compare'], d['Dependvalue']))
+            deps = dict( [(k,v) for k,v in deps.items() if len(v)>0])
+        except Exception as err:
+            deps = None
+        return deps
 
     # Finding relevant items for the plugin based on the avdevice keyword
     def parse_item(self, item):
@@ -446,13 +463,19 @@ class AVDevice(SmartPlugin):
                     info = self.get_iattr_value(item.conf, keyword)
                     if info is not None:
                         if '_init' in keyword:
-                            self._init_commands[zone][info] = {'Inititem': item, 'Item': item, 'Value': item()}
+                            if not self._init_commands[zone].get(info):
+                                self._init_commands[zone][info] = {'Inititem': item, 'Item': item, 'Value': item()}
+                            item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             return self.update_item
                         elif '_speakers' in keyword:
-                            self._items_speakers[zone][info] = {'Item': item, 'Value': item()}
+                            if not self._items_speakers[zone].get(info):
+                                self._items_speakers[zone][info] = {'Item': item, 'Value': item()}
+                            item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             return self.update_item
                         else:
-                            self._items[zone][info] = {'Item': item, 'Value': item()}
+                            if not self._items[zone].get(info):
+                                self._items[zone][info] = {'Item': item, 'Value': item()}
+                            item.dependencies = functools.partial(self._logics_dependencies, zone, info)
                             self._parse_depend_item(item, info, zone)
                             return self.update_item
             return None
@@ -904,17 +927,22 @@ class AVDevice(SmartPlugin):
                 self.logger.log(VERBOSE1, "Connecting {}: Starting TCP scheduler".format(self._name))
                 try:
                     self.scheduler_add('avdevice-tcp-reconnect', self.connect_tcp, cycle=7)
+                    self.scheduler_change('avdevice-tcp-reconnect', active=True)
+                    self.scheduler_trigger('avdevice-tcp-reconnect')
+                    self._trigger_reconnect = False
                 except Exception as err:
-                    self.logger.error(err)
-                self.scheduler_change('avdevice-tcp-reconnect', active=True)
-                self.scheduler_trigger('avdevice-tcp-reconnect')
-                self._trigger_reconnect = False
+                    self.logger.error("Connecting TCP {}: Cannot add or change scheduler: {}.".format(
+                        self._name, err))
             if self._rs232 is not None and 'Serial' not in self._is_connected:
                 self.logger.log(VERBOSE1, "Connecting {}: Starting RS232 scheduler".format(self._name))
-                self.scheduler_add('avdevice-serial-reconnect', self.connect_serial, cycle=7)
-                self.scheduler_change('avdevice-serial-reconnect', active=True)
-                self.scheduler_trigger('avdevice-serial-reconnect')
-                self._trigger_reconnect = False
+                try:
+                    self.scheduler_add('avdevice-serial-reconnect', self.connect_serial, cycle=7)
+                    self.scheduler_change('avdevice-serial-reconnect', active=True)
+                    self.scheduler_trigger('avdevice-serial-reconnect')
+                    self._trigger_reconnect = False
+                except Exception as err:
+                    self.logger.error("Connecting Serial {}: Cannot add or change scheduler: {}.".format(
+                        self._name, err))
         elif depending is True and trigger == 'parse_dataerror':
             self._resetondisconnect('connect')
 
@@ -925,7 +953,7 @@ class AVDevice(SmartPlugin):
                 try:
                     socket = __import__('socket')
                     REQUIRED_PACKAGE_IMPORTED = True
-                except:
+                except Exception:
                     REQUIRED_PACKAGE_IMPORTED = False
                 if not REQUIRED_PACKAGE_IMPORTED:
                     self.logger.error("{}: Unable to import Python package 'socket'".format(self.get_fullname()))
@@ -961,7 +989,8 @@ class AVDevice(SmartPlugin):
                 self.logger.warning("Connecting TCP {}: Reconnecting. Command list while connecting: {}.".format(
                     self._name, self._send_commands))
             elif cond3 or cond4:
-                self.scheduler_change('avdevice-tcp-reconnect', active=False)
+                if self.scheduler_get('avdevice-tcp-reconnect') is not None:
+                    self.scheduler_change('avdevice-tcp-reconnect', active=False)
                 self._reconnect_counter = 0
                 if cond4:
                     self._addorremove_keepcommands('disconnect', 'all')
@@ -986,7 +1015,7 @@ class AVDevice(SmartPlugin):
                 try:
                     serial = __import__('serial')
                     REQUIRED_PACKAGE_IMPORTED = True
-                except:
+                except Exception:
                     REQUIRED_PACKAGE_IMPORTED = False
                 if not REQUIRED_PACKAGE_IMPORTED:
                     self.logger.error("{}: Unable to import Python package 'serial'".format(self.get_fullname()))
@@ -1054,7 +1083,8 @@ class AVDevice(SmartPlugin):
                                 "Connecting Serial {}: Activating reconnect schedulerApi. Command list while connecting: {}.".format(
                                     self._name, self._send_commands))
             elif cond3 or cond4:
-                self.scheduler_change('avdevice-serial-reconnect', active=False)
+                if self.scheduler_get('avdevice-serial-reconnect') is not None:
+                    self.scheduler_change('avdevice-serial-reconnect', active=False)
                 self._reconnect_counter = 0
                 if cond4:
                     self._addorremove_keepcommands('disconnect', 'all')
@@ -1075,17 +1105,18 @@ class AVDevice(SmartPlugin):
     def _checkdependency(self, dep_function, dep_type):
         depending = False
         self.logger.log(VERBOSE2,
-                        "Checking Dependency {}: dep_function: {}, dep_type: {}.".format(self._name, dep_function,
-                                                                                         dep_type))
+                        "Checking Dependency {}: dep_function: {}, dep_type: {}.".format(self._name, dep_function, dep_type))
         cond1 = dep_type == 'statusupdate' or dep_type == 'initupdate' or dep_type == 'checkquery' or dep_type == 'keepcommand'
         cond2 = dep_type == 'update' and not dep_function == ''
+        cond3 = dep_type == 'globaldepend' or dep_type == 'parseinput' or dep_type == 'connect' or dep_type == 'dependitem'
+        self.logger.log(VERBOSE2, "Checking Dependency {}: cond1 {}, cond2 {}".format(self._name, cond1, cond2))
         if cond1 or cond2:
             totest = queryzone = orig_function = dependitem = stopdepend = None
             if dep_type == 'statusupdate' or dep_type == 'initupdate':
                 totest = self._dependencies['Slave_query']
             elif dep_type == 'update':
                 totest = self._dependencies['Slave_item']
-                dep_function = dep_function.id()
+                dep_function = dep_function.property.path
             elif dep_type == 'keepcommand':
                 totest = self._dependencies['Slave_item']
                 try:
@@ -1097,7 +1128,6 @@ class AVDevice(SmartPlugin):
                 totest = self._dependencies['Master_function']
                 queryzone = orig_function.split(', ')[0]
                 dep_function = orig_function.split(', ')[1]
-
             for zone in totest:
                 cond1 = dep_function in totest[zone] and not dep_type == 'checkquery'
                 cond2 = dep_type == 'checkquery' and zone == queryzone and dep_function in totest[zone]
@@ -1172,7 +1202,7 @@ class AVDevice(SmartPlugin):
                             grouptotal = {'a': 0, 'b': 0, 'c': 0, 'd': 0}
                             additional_zone = entry['Zone']
                             try:
-                                for additional in self._dependencies['Slave_item'][additional_zone][dependitem.id()]:
+                                for additional in self._dependencies['Slave_item'][additional_zone][dependitem.property.path]:
                                     dependitem = additional['Item']
                                     dependvalue = dependitem()
                                     expectedvalue = additional['Dependvalue']
@@ -1298,7 +1328,7 @@ class AVDevice(SmartPlugin):
                 elif dep_type == 'initupdate' and self._statusquery is False:
                     depending = True
 
-        elif dep_type == 'globaldepend' or dep_type == 'parseinput' or dep_type == 'connect' or dep_type == 'dependitem':
+        elif cond3:
             try:
                 dependsvalue = self._dependson()
                 self.logger.debug(
@@ -1319,10 +1349,10 @@ class AVDevice(SmartPlugin):
                 else:
                     depending = True
                     try:
-                        item = self.itemsApi.return_item(dep_function).id()
+                        item = self.itemsApi.return_item(dep_function).property.path
                     except Exception:
-                        item = dep_function.id()
-                    if not item == self._dependson.id():
+                        item = dep_function.property.path
+                    if not item == self._dependson.property.path:
                         self.logger.log(VERBOSE2,
                                         "Checking Dependency {}: Starting to reset item: {}.".format(self._name, item))
                         self._resetitem(item)
@@ -2200,7 +2230,7 @@ class AVDevice(SmartPlugin):
                                         responsecommand, _ = CreateResponse(commandinfo, '', '', self._name,
                                                                             self._specialparse, self.logger).response_standard()
                                         appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3],
-                                                                             responsecommand, item.id())
+                                                                             responsecommand, item.property.path)
                                         cond1 = appendcommand not in self._query_commands
                                         cond2 = appendcommand not in self._special_commands['Display']['Command']
                                         if appendcommand in self._send_commands:
@@ -2234,7 +2264,7 @@ class AVDevice(SmartPlugin):
                                     commandinfo = self._functions['zone{}'.format(zone)][command]
                                     replacedresponse, _ = CreateResponse(commandinfo, '', '', self._name,
                                                                          self._specialparse, self.logger).response_standard()
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
                                     cond1 = appendcommand not in self._query_commands
                                     cond2 = appendcommand not in self._special_commands['Display']['Command']
                                     if appendcommand in self._send_commands:
@@ -2269,9 +2299,9 @@ class AVDevice(SmartPlugin):
                                     try:
                                         reverseitem = self._items['zone{}'.format(zone)][command.replace('+', '-', 1)].get('Item')
                                     except Exception:
-                                        reverseitem = item.id()
+                                        reverseitem = item.property.path
 
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
                                     reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, reverseitem)
 
                                     self.logger.log(VERBOSE2,
@@ -2322,9 +2352,9 @@ class AVDevice(SmartPlugin):
                                     try:
                                         reverseitem = self._items['zone{}'.format(zone)][command.replace('-', '+', 1)].get('Item')
                                     except Exception:
-                                        reverseitem = item.id()
+                                        reverseitem = item.property.path
 
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
                                     reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, reverseitem)
 
                                     self.logger.log(VERBOSE2,
@@ -2367,8 +2397,8 @@ class AVDevice(SmartPlugin):
                                     replacedresponse, replacedreverse = CreateResponse(
                                         commandinfo, reverseinfo, '', self._name, self._specialparse, self.logger).response_on()
 
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
-                                    reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
+                                    reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.property.path)
 
                                     self.logger.log(VERBOSE2,
                                                     "Updating Item {}: Appendcommand on: {}, Reversecommand: {}, Send Commands: {}".format(
@@ -2434,8 +2464,8 @@ class AVDevice(SmartPlugin):
                                     replacedresponse, replacedreverse = CreateResponse(
                                         commandinfo, reverseinfo, '', self._name, self._specialparse, self.logger).response_off()
 
-                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.id())
-                                    reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.id())
+                                    appendcommand = '{},{},{};{}'.format(commandinfo[2], commandinfo[3], replacedresponse, item.property.path)
+                                    reversecommand = '{},{},{};{}'.format(reverseinfo[2], reverseinfo[3], replacedreverse, item.property.path)
 
                                     self.logger.log(VERBOSE1,
                                                     "Updating Item {}: Appendcommand off: {}. Reversecommand: {} Send Commands: {}".format(
@@ -2565,7 +2595,7 @@ class AVDevice(SmartPlugin):
                                                     poweritem = self._items['zone0'][powerinfo[1]].get('Item')
                                                 appendcommand = '{},{},{};{}'.format(powerinfo[2], powerinfo[3],
                                                                                      replacedresponse,
-                                                                                     poweritem.id())
+                                                                                     poweritem.property.path)
                                                 self._send_commands.insert(0, appendcommand)
                                                 self._sendingcommand = appendcommand
                                                 self.logger.debug(
@@ -2594,7 +2624,7 @@ class AVDevice(SmartPlugin):
 
                                 if not self._send_commands == [] and setting is True:
                                     appendcommand = '{},{},{};{}'.format(command_re, commandinfo[3], response,
-                                                                         item.id())
+                                                                         item.property.path)
                                     setting = False
                                     appending = _replace_setcommand(commandinfo, self._send_commands, appendcommand, value, 'append')
                                     removefromkeeping = _replace_setcommand(commandinfo, self._keep_commands, appendcommand, value, 'keep')
@@ -2625,7 +2655,7 @@ class AVDevice(SmartPlugin):
                                                                 self._name, zone, commandinfo[2], item, command_re))
                                 elif setting is True:
                                     appendcommand = '{},{},{};{}'.format(command_re, commandinfo[3], response,
-                                                                         item.id())
+                                                                         item.property.path)
                                     removefromkeeping = _replace_setcommand(commandinfo, self._keep_commands, appendcommand, value, 'keep')
                                     for i in removefromkeeping:
                                         self.logger.log(VERBOSE1,
@@ -2684,7 +2714,7 @@ class AVDevice(SmartPlugin):
                             for zone in range(self._number_of_zones, -1, -1):
                                 for entry in self._init_commands['zone{}'.format(zone)]:
                                     try:
-                                        compareitem = self._init_commands['zone{}'.format(zone)][entry].get('Item').id()
+                                        compareitem = self._init_commands['zone{}'.format(zone)][entry].get('Item').property.path
                                         self.logger.log(VERBOSE2,
                                                         "Updating Item {}: Compare {} with {}.".format(self._name, commanditem, compareitem))
                                         if commanditem == compareitem:
@@ -2697,7 +2727,7 @@ class AVDevice(SmartPlugin):
                                                         "Updating Item {}: Problem with command reorder in zone {}: {}.".format(
                                                             self._name, zone, err))
                                         pass
-                        reorderlist = [i for i in reorderlist if not i in newreorderlist]
+                        reorderlist = [i for i in reorderlist if i not in newreorderlist]
                         self._send_commands = newreorderlist + reorderlist
                         self._sendingcommand = self._send_commands[0]
 
@@ -2992,26 +3022,30 @@ class AVDevice(SmartPlugin):
     # Stopping function when SmarthomeNG is stopped
     def stop(self):
         self.alive = False
-        try:
-            self.scheduler_change('avdevice-tcp-reconnect', active=False)
-            self.scheduler_remove('avdevice-tcp-reconnect')
-        except Exception:
-            pass
-        try:
-            self.scheduler_change('avdevice-serial-reconnect', active=False)
-            self.scheduler_remove('avdevice-serial-reconnect')
-        except Exception:
-            pass
-        try:
-            self._tcpsocket.shutdown(2)
-            self._tcpsocket.close()
-            self.logger.debug("Stopping {}: closed".format(self._name))
-        except Exception:
-            self.logger.log(VERBOSE1, "Stopping {}: No TCP socket to close.".format(self._name))
-        try:
-            self._serialwrapper.close()
-        except Exception:
-            self.logger.log(VERBOSE1, "Stopping {}: No Serial socket to close.".format(self._name))
+        if self.scheduler_get('avdevice-tcp-reconnect') is not None:
+            try:
+                self.scheduler_change('avdevice-tcp-reconnect', active=False)
+                self.scheduler_remove('avdevice-tcp-reconnect')
+            except Exception:
+                pass
+        if self.scheduler_get('avdevice-serial-reconnect') is not None:
+            try:
+                self.scheduler_change('avdevice-serial-reconnect', active=False)
+                self.scheduler_remove('avdevice-serial-reconnect')
+            except Exception:
+                pass
+        if self._tcp:
+            try:
+                self._tcpsocket.shutdown(2)
+                self._tcpsocket.close()
+                self.logger.debug("Stopping {}: closed".format(self._name))
+            except Exception:
+                self.logger.log(VERBOSE1, "Stopping {}: No TCP socket to close.".format(self._name))
+        if self._rs232:
+            try:
+                self._serialwrapper.close()
+            except Exception:
+                self.logger.log(VERBOSE1, "Stopping {}: No Serial socket to close.".format(self._name))
 
     def init_webinterface(self):
         """"
@@ -3021,7 +3055,7 @@ class AVDevice(SmartPlugin):
         """
         try:
             self.mod_http = Modules.get_instance().get_module('http')
-        except:
+        except Exception:
             self.mod_http = None
         if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
