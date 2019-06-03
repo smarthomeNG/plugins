@@ -290,9 +290,8 @@ Bei beiden Attributen wird eine Liste von Elementen angegeben. Die
 einzelnen Elemente bestehen dabei aus dem Aufrufenden
 (``Caller``) einem Doppelpunkt und der Quelle (``Source``), bei Bedarf auch einer
 weiteren durch Doppelpunkt getrennte Information wie z.B. die Gruppenadresse beim KNX Plugin.
-Mehrere Elemente werden durch "|" getrennt bzw. im yaml als Liste deklariert.
-Für ``Caller`` und ``Source`` sowie ``Additional`` kann dabei jeweils auch ``"*"`` angegeben werden, dies
-bedeutet, dass der jeweilige Teil nicht berücksichtigt werd.
+Für den gesamten Ausdruck können RegEx genutzt werden, also beispielsweise "*" als Wildcard,
+damit der jeweilige Teil nicht berücksichtigt wird.
 
 Wenn bei der Prüfung festgestellt wird, dass ein Wert über eine
 Eval-Funktionalität geändert wurde, so wird die Änderung
@@ -313,6 +312,16 @@ sind, muss ``se_manual_invert`` nicht angegeben werden.
 
 Um etwaige Probleme mit den exclude und include Funktionen einfacher erkennen zu können,
 kann ein spezielles Logging aktiviert werden: ``se_manual_logitem: <dateiname>``
+
+Ein weiteres Beispiel mit Wildcards. Groß- und Kleinschreibung spielen generell keine Rolle.
+
+.. code-block:: yaml
+
+   #items/item.yaml
+   se_manual_exclude:
+      - cli:127.0.*.1
+      - knx:1.0.0:3/5/*
+
 
 .. rubric:: Der Suspend-Zustand
   :name: dersuspendzustand
