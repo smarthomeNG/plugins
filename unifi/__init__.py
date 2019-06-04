@@ -32,6 +32,7 @@ from lib.module import Modules
 from lib.model.smartplugin import *
 from lib.network import Network
 from plugins.unifi.ubiquiti.unifi import API as UniFiAPI
+from plugins.unifi.ubiquiti.unifi import DataException as UniFiDataException
 import ruamel.yaml as yaml
 import json
 
@@ -174,9 +175,10 @@ class UniFiControllerClientModel():
                     single_dev_key = portmap[port_no][0][0]
                     node_body[single_dev_key] = portmap[port_no][0][1]
                     node_body[single_dev_key]['port_enabled'] = {}
-                    node_body[single_dev_key]['port_enabled'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_SW_PORT_ENABLED
-                    node_body[single_dev_key]['port_enabled'][UniFiConst.ATTR_SW_PORT_PROF_OFF] = 'Disabled'
-                    node_body[single_dev_key]['port_enabled'][UniFiConst.ATTR_SW_PORT_PROF_ON] = 'All'
+                    # Removed Port-Prof-Off as the default will be considered during run-time.
+                    # node_body[single_dev_key]['port_enabled'][UniFiConst.ATTR_SW_PORT_PROF_OFF] = 'Disabled'
+                    node_body[single_dev_key]['port_enabled'][UniFiConst.ATTR_SW_PORT_PROF_ON] = self._api.get_port_profile_for(
+                        n['mac'], port_no)
                     node_body[single_dev_key]['port_enabled'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_SW_PORT_ENABLED
                     node_body[single_dev_key]['port_enabled']['type'] = 'bool'
                 else:
@@ -187,8 +189,10 @@ class UniFiControllerClientModel():
 
                     attached_clnts[UniFiConst.ATTR_SW_PORT_NO] = port_no
                     attached_clnts['port_enabled'] = {}
-                    attached_clnts['port_enabled'][UniFiConst.ATTR_SW_PORT_PROF_OFF] = 'Disabled'
-                    attached_clnts['port_enabled'][UniFiConst.ATTR_SW_PORT_PROF_ON] = 'All'                    
+                    # Removed Port-Prof-Off as the default will be considered during run-time.
+                    #attached_clnts['port_enabled'][UniFiConst.ATTR_SW_PORT_PROF_OFF] = 'Disabled'
+                    attached_clnts['port_enabled'][UniFiConst.ATTR_SW_PORT_PROF_ON] = self._api.get_port_profile_for(
+                        n['mac'], port_no)
                     attached_clnts['port_enabled'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_SW_PORT_ENABLED
                     attached_clnts['port_enabled']['type'] = 'bool'
                     node_body["non_unifi_switch_at_port_{}".format(port_no)] = attached_clnts
@@ -225,6 +229,17 @@ class UniFiControllerClientModel():
 
         return yaml.dump(model, Dumper=yaml.SafeDumper, indent=4, width=768, allow_unicode=True, default_flow_style=False)
 
+    def get_total_number_of_requests_to_controller(self):     
+        return self._api.get_request_count()
+
+    def get_controller_url(self):
+        return self._api.get_connection_data()['url']
+
+    def get_controller_user(self):
+        return self._api.get_connection_data()['user']
+
+    def get_controller_site(self):
+        return self._api.get_connection_data()['site']
 
 class UniFiControllerClient(SmartPlugin):
     """
@@ -232,7 +247,7 @@ class UniFiControllerClient(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -323,18 +338,22 @@ class UniFiControllerClient(SmartPlugin):
         self.logger.debug("Stop method called")
         self.alive = False
 
-    def _log_item_issue(self, item, msg, enable_logging=True):
-        self._model.append_item_issue(item, msg)
+    def _log_item_issue(self, item, msg, enable_logging=True, defaulting=False):
+        if defaulting:
+            self._model.append_item_issue(item, "DEFAULT: "+msg)
+        else:
+            self._model.append_item_issue(item, "INFO: "+msg)
+
         if enable_logging:
-            self.logger.debug(msg)
+            self.logger.info(msg)
 
     def _log_item_warning(self, item, msg, enable_logging=True):
-        self._model.append_item_issue(item, msg)
+        self._model.append_item_issue(item, "WARNING: "+msg)
         if enable_logging:
             self.logger.warning(msg)
 
     def _log_item_error(self, item, msg, enable_logging=True):
-        self._model.append_item_issue(item, msg)
+        self._model.append_item_issue(item, "ERROR: " + msg)
         if enable_logging:
             self.logger.error(msg)
 
@@ -347,7 +366,7 @@ class UniFiControllerClient(SmartPlugin):
 
     def _get_attribute_recursive(self, item, item_type: str, check=None, enable_logging=True, leaf_item=None):
         if item is None:
-            self._log_item_issue(leaf_item, "No {} attribute provided in item {} (or parent)".format(
+            self._log_item_warning(leaf_item, "No {} attribute provided in item {} (or parent)".format(
                 item_type, leaf_item.path()))
             return None
         if leaf_item is None:
@@ -363,14 +382,14 @@ class UniFiControllerClient(SmartPlugin):
                         item_type, item.path(), leaf_item.path()), enable_logging)
                 return item.conf[item_type]
         except AttributeError:
-            self._log_item_issue(leaf_item, "No {} attribute provided in item {} (or parent)".format(
+            self._log_item_warning(leaf_item, "No {} attribute provided in item {} (or parent)".format(
                 item_type, leaf_item.path()))
             return None
-        return self._get_attribute_recursive(item.return_parent(), item_type, check, leaf_item)
+        return self._get_attribute_recursive(item.return_parent(), item_type, check, enable_logging, leaf_item)
 
     def _get_one_of_attr_recursive(self, item, item_types: list, check=None, enable_logging=True, leaf_item=None):
         if item is None:
-            self._log_item_issue(leaf_item, "No {} attribute provided in item {} (or parent)".format(
+            self._log_item_warning(leaf_item, "No {} attribute provided in item {} (or parent)".format(
                 json.dump(item_types), leaf_item.path()))
             return None
         if leaf_item is None:
@@ -388,10 +407,10 @@ class UniFiControllerClient(SmartPlugin):
 
                     return item.conf[item_type]
             except AttributeError:
-                self._log_item_issue(leaf_item, "No {} attribute provided in item {} (or parent)".format(
+                self._log_item_warning(leaf_item, "No {} attribute provided in item {} (or parent)".format(
                     item_type, leaf_item.path()))
                 return None
-        return self._get_one_of_attr_recursive(item.return_parent(), item_types, check, leaf_item)
+        return self._get_one_of_attr_recursive(item.return_parent(), item_types, check, enable_logging, leaf_item)
 
     def parse_item(self, item):
         """
@@ -444,15 +463,15 @@ class UniFiControllerClient(SmartPlugin):
                 return
             prof_on = self._get_attribute_recursive(item, UniFiConst.ATTR_SW_PORT_PROF_ON)
             if prof_on is None:
-                return
+                self._log_item_issue(item, "Will use 'All' as Port Profile for on", defaulting=True)
             prof_off = self._get_attribute_recursive(item, UniFiConst.ATTR_SW_PORT_PROF_OFF)
             if prof_off is None:
-                return
+                self._log_item_issue(item, "Will use 'Disabled' as Port Profile for off", defaulting=True)
             self._model.append_item(item)
             return self.update_item
 
         else:
-            self._log_item_warning(item, "unifi_type %s unknown at %s" % (i_attr, item.path()))
+            self._log_item_error(item, "unifi_type %s unknown at %s" % (i_attr, item.path()))
 
     def parse_logic(self, logic):
         """
@@ -491,7 +510,7 @@ class UniFiControllerClient(SmartPlugin):
                 port_number=int(self._get_attribute_recursive(
                     i, UniFiConst.ATTR_SW_PORT_NO, enable_logging=self._logging)),
                 profile_name=self._get_attribute_recursive(
-                    i, UniFiConst.ATTR_SW_PORT_PROF_ON, enable_logging=self._logging) if i() else self._get_attribute_recursive(i, UniFiConst.ATTR_SW_PORT_PROF_OFF, enable_logging=self._logging))
+                    i, UniFiConst.ATTR_SW_PORT_PROF_ON, enable_logging=self._logging) or "All" if i() else self._get_attribute_recursive(i, UniFiConst.ATTR_SW_PORT_PROF_OFF, enable_logging=self._logging) or "Disabled")
             )
 
             self.logger.debug(
@@ -549,21 +568,28 @@ class UniFiControllerClient(SmartPlugin):
     def _get_sw_port_profile(self, i):
         sw_mac = self._get_attribute_recursive(
             i, UniFiConst.ATTR_SW_MAC, check=self._mac_check, enable_logging=self._logging)
-        sw_port = int(self._get_attribute_recursive(i, UniFiConst.ATTR_SW_PORT_NO,
-                                                    enable_logging=self._logging))
-        return self._model._api.get_port_profile_for(sw_mac, sw_port)
+        try:
+            sw_port = int(self._get_attribute_recursive(i, UniFiConst.ATTR_SW_PORT_NO,
+                                                        enable_logging=self._logging))
+            return self._model._api.get_port_profile_for(sw_mac, sw_port)
+        except UniFiDataException:
+            self._log_item_warning(i, "Unable to determine current switch-profile for switch {}".format(sw_mac))
+            return None
 
     def _check_sw_port_enabled(self, item):
         pp_on = self._get_attribute_recursive(
             item, UniFiConst.ATTR_SW_PORT_PROF_ON, enable_logging=self._logging)
         pp_off = self._get_attribute_recursive(
             item, UniFiConst.ATTR_SW_PORT_PROF_OFF, enable_logging=self._logging)
+
         rslt = self._get_sw_port_profile(item)
 
         if rslt == pp_off:
             return False
         elif rslt == pp_on:
             return True
+        elif rslt is None:
+            return None
         else:
             self._log_item_warning(item, "Current port-profile \{}}\" doesn't match \"{}\" (on) or \"{}\" (off) in {}".format(
                 rslt, pp_on, pp_off, item.path()), enable_logging=self._logging)

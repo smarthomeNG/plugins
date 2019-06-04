@@ -1,6 +1,6 @@
 # Unifi
 
-#### Version 1.6.0
+#### Version 1.6.1
 
 Plugin to read some data from UniFi Controllers and to control it
 
@@ -8,11 +8,11 @@ Plugin to read some data from UniFi Controllers and to control it
 
 ### Changes Since version 1.6.0
 
-- Initial upload
+- Fixed logging issues
+- Extended Web-Interface
 
 ## Todo
 
-* Auto generate items.yaml by reading details from UniFi Controller and populate this in the WebIf.
 * Add additional data as Itemtypes from the UniFi API, based on real-world demands.
 
 ## Requirements

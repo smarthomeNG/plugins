@@ -6,27 +6,27 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1"><strong>Prompt 1</strong></td>
-			<td class="py-1">{% if 1 == 2 %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1"><strong>Anzahl Requests seit Start</strong></td>
+			<td class="py-1">{{ p._model.get_total_number_of_requests_to_controller() }}</td>
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>Prompt 4</strong></td>
-			<td class="py-1">{{ _('Wert 4') }}</td>
+			<td class="py-1"><strong>Controller URL</strong></td>
+			<td class="py-1">{{ p._model.get_controller_url() }}</td>
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>Prompt 2</strong></td>
-			<td class="py-1">{{ _('Wert 2') }}</td>
+			<td class="py-1"><strong>&nbsp;</strong></td>
+			<td class="py-1">&nbsp;</td>
 			<td></td>
-			<td class="py-1"><strong>Prompt 5</strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>Username</strong></td>
+			<td class="py-1">{{ p._model.get_controller_user() }}</td>
 			<td></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>Prompt 3</strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>&nbsp;</strong></td>
+			<td class="py-1">&nbsp;</td>
 			<td></td>
-			<td class="py-1"><strong>Prompt 6</strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>Site</strong></td>
+			<td class="py-1">{{ p._model.get_controller_site() }}</td>
 			<td></td>
 		</tr>
 	</tbody>
@@ -109,7 +109,6 @@
 			<thead>
 				<tr class="shng_heading">
 					<th>{{ _('Pfad') }}</th>
-					<th>{{ _('Typ') }}</th>
 					<th>{{ _('Probleme') }}</th>
 				</tr>
 			</thead>
@@ -122,10 +121,20 @@
 					{% endif %}
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ ele.item }}</td>
-						<td class="py-1">TÜÜÜÜÜÜÜP</td>
 						<td class="py-1">
 							{% for issue in ele.get_issues() %}
-								{{ issue }}<br/>
+								{% if issue[0:5] == "INFO:" %}
+									<i class="fas fa-circle" style="color: white"></i>{{ issue[5:400] }}
+								{% elif issue[0:6] == "ERROR:" %}
+									<i class="fas fa-circle" style="color: red"></i>{{ issue[6:400] }}
+								{% elif issue[0:8] == "DEFAULT:" %}
+									<i class="fas fa-circle" style="color: green"></i>{{ issue[8:400] }}
+								{% elif issue[0:8] == "WARNING:" %}
+									<i class="fas fa-circle" style="color: yellow"></i>{{ issue[8:400] }}
+								{% else %}
+									{{ issue }}
+								{% endif %}
+								<br/>
 							{% endfor %}
 						</td>
 					</tr>

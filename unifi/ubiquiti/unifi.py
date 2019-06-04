@@ -380,3 +380,10 @@ class API(object):
 
     def get_request_count(self):
         return self._request_count
+
+    def get_connection_data(self):
+        to_ret = {}
+        to_ret['user'] = self._login_data['username']
+        to_ret['site'] = self._site
+        to_ret['url'] = self._baseurl
+        return to_ret
