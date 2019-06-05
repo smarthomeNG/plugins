@@ -131,7 +131,7 @@ class SeItem:
             self.__startup_delay_callback(self.__item, "Init", None, None)
 
     def __repr__(self):
-        return "SeItem item: {}.".format(self.__id)
+        return self.__id
 
     # Find the state, matching the current conditions and perform the actions of this state
     # caller: Caller that triggered the update
@@ -153,8 +153,9 @@ class SeItem:
         if orig_caller != caller:
             text = "Eval initially triggered by {0} (item={1} source={2})"
             self.__logger.debug(text, orig_caller, orig_item.property.path, orig_source)
-
-        if orig_caller == StateEngineDefaults.plugin_identification or caller == StateEngineDefaults.plugin_identification:
+        cond1 = orig_caller == '{} {}'.format(StateEngineDefaults.plugin_identification, item_id)
+        cond2 = caller == '{} {}'.format(StateEngineDefaults.plugin_identification, item_id)
+        if cond1 or cond2:
             self.__logger.debug("Ignoring changes from {0}", StateEngineDefaults.plugin_identification)
             self.__update_in_progress = False
             return

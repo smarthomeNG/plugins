@@ -51,6 +51,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     # name: Name of action
     def __init__(self, abitem, name: str):
         super().__init__(abitem)
+        self._parent = abitem
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
         self._name = name
@@ -217,7 +218,7 @@ class SeActionSetItem(SeActionBase):
 
         self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.path, value, repeat_text)
         # noinspection PyCallingNonCallable
-        self.__item(value, caller=self.__caller)
+        self.__item(value, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
 
 
 # Class representing a single "se_setbyattr" action
@@ -250,7 +251,7 @@ class SeActionSetByattr(SeActionBase):
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
         for item in self.items.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
-            item(item.conf[self.__byattr], caller=StateEngineDefaults.plugin_identification)
+            item(item.conf[self.__byattr], caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
 
 
 # Class representing a single "se_trigger" action
@@ -418,24 +419,25 @@ class SeActionForceItem(SeActionBase):
                 return
 
         # Set to different value first ("force")
+        _caller = '{} {}'.format(StateEngineDefaults.plugin_identification, self._parent)
         if self.__item() == value:
             if self.__item._type == 'bool':
                 self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, not value)
-                self.__item(not value, caller=StateEngineDefaults.plugin_identification)
+                self.__item(not value, caller=_caller)
             elif self.__item._type == 'str':
                 if value != '':
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, '')
-                    self.__item('', caller=StateEngineDefaults.plugin_identification)
+                    self.__item('', caller=_caller)
                 else:
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, '-')
-                    self.__item('-', caller=StateEngineDefaults.plugin_identification)
+                    self.__item('-', caller=_caller)
             elif self.__item._type == 'num':
                 if value != 0:
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 0)
-                    self.__item(0, caller=StateEngineDefaults.plugin_identification)
+                    self.__item(0, caller=_caller)
                 else:
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 1)
-                    self.__item(1, caller=StateEngineDefaults.plugin_identification)
+                    self.__item(1, caller=_caller)
             else:
                 self._log_warning("{0}: Force not implemented for item type '{1}'", actionname, self.__item._type)
         else:
@@ -443,7 +445,7 @@ class SeActionForceItem(SeActionBase):
 
         self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.path, value, repeat_text)
         # noinspection PyCallingNonCallable
-        self.__item(value, caller=StateEngineDefaults.plugin_identification)
+        self.__item(value, caller=_caller)
 
 
 # Class representing a single "se_special" action
