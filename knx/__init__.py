@@ -822,10 +822,9 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         plgitems = []
+
         for item in self.items.return_items():
-            if (self.plugin.has_iattr(item.conf, KNX_DPT) or self.plugin.has_iattr(item.conf, KNX_STATUS) or self.plugin.has_iattr(item.conf, KNX_SEND) or
-                self.plugin.has_iattr(item.conf, KNX_REPLY) or self.plugin.has_iattr(item.conf, KNX_CACHE) or self.plugin.has_iattr(item.conf, KNX_INIT) or
-                self.plugin.has_iattr(item.conf, KNX_LISTEN) or self.plugin.has_iattr(item.conf, KNX_POLL)):
+            if any(elem in item.property.attributes  for elem in [KNX_DPT,KNX_STATUS,KNX_SEND,KNX_REPLY,KNX_CACHE,KNX_INIT,KNX_LISTEN,KNX_POLL]):
                 plgitems.append(item)
 
         tmpl = self.tplenv.get_template('index.html')

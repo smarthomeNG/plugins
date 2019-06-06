@@ -181,6 +181,9 @@ def de9(payload):
     f = (m | s) * 0.01 * pow(2, e)
     return round(f, 2)
 
+"""
+    Datapoint Type Time
+"""
 
 def en10(dt):
     return [0, (dt.isoweekday() << 5) | dt.hour, dt.minute, dt.second]
@@ -192,6 +195,9 @@ def de10(payload):
     s = payload[2] & 0x3f
     return datetime.time(h, m, s)
 
+"""
+    Datapoint Type Date
+"""
 
 def en11(date):
     return [0, date.day, date.month, date.year - 2000]
@@ -202,6 +208,10 @@ def de11(payload):
     m = payload[1] & 0x0f
     y = (payload[2] & 0x7f) + 2000  # sorry no 20th century...
     return datetime.date(y, m, d)
+
+"""
+    Datapoint Unsigned long
+"""
 
 
 def en12(value):
@@ -219,6 +229,9 @@ def de12(payload):
         return None
     return struct.unpack('>I', payload)[0]
 
+"""
+    Datapoint Signed long
+"""
 
 def en13(value):
     if value < -2147483648:
@@ -235,6 +248,10 @@ def de13(payload):
         return None
     return struct.unpack('>i', payload)[0]
 
+"""
+    Datapoint float (4 bytes)
+"""
+
 
 def en14(value):
     ret = bytearray([0])
@@ -247,6 +264,11 @@ def de14(payload):
         return None
     return struct.unpack('>f', payload)[0]
 
+
+"""
+    Datapoint text
+    (up to 14 Bytes)
+"""
 
 def en16000(value):
     enc = bytearray(1)
