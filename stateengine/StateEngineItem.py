@@ -37,6 +37,10 @@ class SeItem:
     def id(self):
         return self.__id
 
+    @property
+    def variables(self):
+        return self.__variables
+
     # return instance of smarthome.py class
     @property
     def sh(self):
@@ -76,9 +80,15 @@ class SeItem:
 
         # Init laststate items/values
         self.__laststate_item_id = self.return_item_by_attribute("se_laststate_item_id")
-        self.__laststate_internal_id = "" if self.__laststate_item_id is None else self.__laststate_item_id()
+        self.__laststate_internal_id = "" if self.__laststate_item_id is None else self.__laststate_item_id.property.value
         self.__laststate_item_name = self.return_item_by_attribute("se_laststate_item_name")
-        self.__laststate_internal_name = "" if self.__laststate_item_name is None else self.__laststate_item_name()
+        self.__laststate_internal_name = "" if self.__laststate_item_name is None else self.__laststate_item_name.property.value
+
+        # Init lastconditionset items/values
+        self.__lastconditionset_item_id = self.return_item_by_attribute("se_lastconditionset_item_id")
+        self.__lastconditionset_internal_id = "" if self.__lastconditionset_item_id is None else self.__lastconditionset_item_id.property.value
+        self.__lastconditionset_item_name = self.return_item_by_attribute("se_lastconditionset_item_name")
+        self.__lastconditionset_internal_name = "" if self.__lastconditionset_item_name is None else self.__lastconditionset_item_name.property.value
 
         self.__states = []
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
@@ -101,7 +111,9 @@ class SeItem:
             "item.suspend_time": self.__suspend_time.get(),
             "item.suspend_remaining": 0,
             "current.state_id": "",
-            "current.state_name": ""
+            "current.state_name": "",
+            "current.conditionset_id": "",
+            "current.conditionset_name": ""
         }
 
         # initialize states
@@ -178,6 +190,11 @@ class SeItem:
         if last_state is not None:
             self.__logger.info("Last state: {0} ('{1}')", last_state.id, last_state.name)
 
+        _last_conditionset_id = self.__lastconditionset_get_id()
+        _last_conditionset_name = self.__lastconditionset_get_name()
+        if _last_conditionset_id not in ['', None]:
+            self.__logger.info("Last Conditionset: {0} ('{1}')", _last_conditionset_id, _last_conditionset_name)
+
         # find new state
         new_state = None
         for state in self.__states:
@@ -228,6 +245,8 @@ class SeItem:
         finally:
             self.__variables["current.state_id"] = ""
             self.__variables["current.state_name"] = ""
+            self.__variables["current.conditionset_id"] = ""
+            self.__variables["current.conditionset_name"] = ""
 
     # region Laststate *************************************************************************************************
     # Set laststate
@@ -250,6 +269,29 @@ class SeItem:
             if state.id == self.__laststate_internal_id:
                 return state
         return None
+
+    # return id of last conditionset
+    def __lastconditionset_get_id(self):
+        _lastconditionset_item_id = self.return_item_by_attribute("se_lastconditionset_item_id")
+        _lastconditionset_item_id = "" if _lastconditionset_item_id is None else _lastconditionset_item_id.property.value
+        return _lastconditionset_item_id
+
+    # return name of last conditionset
+    def __lastconditionset_get_name(self):
+        _lastconditionset_item_name = self.return_item_by_attribute("se_lastconditionset_item_name")
+        _lastconditionset_item_name = "" if _lastconditionset_item_name is None else _lastconditionset_item_name.property.value
+        return _lastconditionset_item_name
+
+    def lastconditionset_set(self, new_id, new_name):
+        self.__lastconditionset_internal_id = new_id
+        if self.__lastconditionset_item_id is not None:
+            # noinspection PyCallingNonCallable
+            self.__lastconditionset_item_id(self.__lastconditionset_internal_id)
+
+        self.__lastconditionset_internal_name = new_name
+        if self.__lastconditionset_item_name is not None:
+            # noinspection PyCallingNonCallable
+            self.__lastconditionset_item_name(self.__lastconditionset_internal_name)
 
     # endregion
 
@@ -363,6 +405,14 @@ class SeItem:
         if self.__laststate_item_name is not None:
             self.__logger.info("Item 'Laststate Name': {0}", self.__laststate_item_name.property.path)
 
+        # log lastcondition settings
+        _conditionset_id = self.return_item_by_attribute("se_lastconditionset_item_id")
+        _conditionset_name = self.return_item_by_attribute("se_lastconditionset_item_name")
+        if _conditionset_id is not None:
+            self.__logger.info("Item 'Lastcondition Id': {0}", _conditionset_id.property.path)
+        if _conditionset_name is not None:
+            self.__logger.info("Item 'Lastcondition Name': {0}", _conditionset_name.property.path)
+
         # log states
         for state in self.__states:
             state.write_to_log()
@@ -378,7 +428,8 @@ class SeItem:
         crons, cycles = self.__verbose_crons_and_cycles()
         triggers = self.__verbose_triggers()
         handler.push("AutoState Item {0}:\n".format(self.id))
-        handler.push("\tCurrent state: {0}\n".format(self.__laststate_internal_name))
+        handler.push("\tCurrent state: {0}\n".format(self.get_laststate_name()))
+        handler.push("\tCurrent conditionset: {0}\n".format(self.get_lastconditionset_name()))
         handler.push(self.__startup_delay.get_text("\t", "\n"))
         handler.push("\tCycle: {0}\n".format(cycles))
         handler.push("\tCron: {0}\n".format(crons))
@@ -391,14 +442,33 @@ class SeItem:
     # return age of item
     def get_age(self):
         if self.__laststate_item_id is not None:
-            return self.__laststate_item_id.age()
+            return self.__laststate_item_id.property.last_change_age
         else:
             self.__logger.warning('No item for last state id given. Can not determine age!')
+            return 0
+
+    def get_condition_age(self):
+        if self.__lastconditionset_item_id is not None:
+            return self.__lastconditionset_item_id.property.last_change_age
+        else:
+            self.__logger.warning('No item for last condition id given. Can not determine age!')
             return 0
 
     # return id of last state
     def get_laststate_id(self):
         return self.__laststate_internal_id
+
+    # return name of last state
+    def get_laststate_name(self):
+        return self.__laststate_internal_name
+
+    # return id of last conditionset
+    def get_lastconditionset_id(self):
+        return self.__lastconditionset_internal_id
+
+    # return name of last conditionset
+    def get_lastconditionset_name(self):
+        return self.__lastconditionset_internal_name
 
     # return update trigger item
     def get_update_trigger_item(self):

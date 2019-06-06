@@ -82,7 +82,7 @@ und der Zustand aktiviert.
 
 .. code-block:: yaml
 
-      se_laststate:
+      se_value_laststate:
           - 'kochen'
           - 'eval:1+2'
           - 'item:..laststate_id'
@@ -249,6 +249,11 @@ Sonnenaufgang/Sonnenuntergang, 90 → Sonne exakt im Zenith
 Das Alter wird über die letzte Änderung des Items, das als
 ``se_laststate_item_id`` angegeben ist, ermittelt.
 
+**condition_age**
+*Zeit seit der letzten Änderung des Bedingungssets (Sekunden)*
+Das Alter wird über die letzte Änderung des Items, das als
+``se_lastconditionset_item_id`` angegeben ist, ermittelt.
+
 **random**
 *Zufallszahl zwischen 0 und 100*
 Wenn etwas zufällig mit einer Wahrscheinlichkeit von 60% passieren
@@ -257,7 +262,19 @@ verwendet werden.
 
 **laststate**
 *Id des Zustandsitems des aktuellen Status*
+Die Abfrage se_value_laststate ist besonders wichtig für
+Bedingungsabfragen, die über das Verbleiben im aktuellen Zustand
+bestimmen (z.b. enter_stay). So können aber auch Stati übersprungen
+werden, wenn sie nicht nach einem bestimmten anderen Zustand aktiviert
+werden sollen.
 Wichtig: Hier muss die vollständige Item-Id angegeben werden
+
+**lastconditionset_id/name**
+*Id des Bedingungssets des aktuellen Status*
+Wie bei laststate sind auch die lastconditionset Bedingungsabfragen
+primär relevant für Abfragen zum Verbleiben in einem Zustand. Gerade bei
+komplexeren Bedingungssets macht es oftmals Sinn, nach dem Set zu fragen,
+das denn nun wirklich für die letzte Zustandsbestimmung relevant war.
 
 **trigger_item, trigger_caller, trigger_source, trigger_dest**
 *item, caller, source und dest-Werte, durch die die

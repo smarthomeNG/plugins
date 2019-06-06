@@ -95,6 +95,8 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self.__eval = StateEngineCurrent.values.get_sun_altitude
             elif self.__name == "age":
                 self.__eval = self._abitem.get_age
+            elif self.__name == "condition_age":
+                self.__eval = self._abitem.get_condition_age
             elif self.__name == "time":
                 self.__eval = StateEngineCurrent.values.get_time
             elif self.__name == "random":
@@ -103,6 +105,10 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self.__eval = StateEngineCurrent.values.get_month
             elif self.__name == "laststate":
                 self.__eval = self._abitem.get_laststate_id
+            elif self.__name == "lastconditionset" or self.__name == "lastconditionset_id":
+                self.__eval = self._abitem.get_lastconditionset_id
+            elif self.__name == "lastconditionset_name":
+                self.__eval = self._abitem.get_lastconditionset_name
             elif self.__name == "trigger_item":
                 self.__eval = self._abitem.get_update_trigger_item
             elif self.__name == "trigger_caller":
@@ -141,7 +147,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             elif self.__name in ("weekday", "sun_azimut", "sun_altitude", "age", "delay", "random", "month"):
                 self.__cast_all(StateEngineTools.cast_num)
             elif self.__name in (
-                    "laststate", "trigger_item", "trigger_caller", "trigger_source", "trigger_dest", "original_item",
+                    "laststate", "lastconditionset", "lastconditionset_id", "lastconditionset_name",
+                    "trigger_item", "trigger_caller", "trigger_source", "trigger_dest", "original_item",
                     "original_caller", "original_source"):
                 self.__cast_all(StateEngineTools.cast_str)
             elif self.__name == "time":

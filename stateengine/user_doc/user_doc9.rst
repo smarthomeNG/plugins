@@ -74,6 +74,18 @@ se_plugin. Dieser Codeblock wird zwingend von jedem Zustandsautomaten benötigt.
        visu_acl: r
        cache: True
 
+   conditionset_id:
+       remark: The id/path of the actual condition set is assigned to this item by the stateengine
+       type: str
+       visu_acl: r
+       cache: True
+
+   conditionset_name:
+       remark: The name of the actual condition set is assigned to this item by the stateengine
+       type: str
+       visu_acl: r
+       cache: True
+
    rules:
        name: Regeln und Item Verweise für den Zustandsautomaten
        type: bool
@@ -86,6 +98,8 @@ se_plugin. Dieser Codeblock wird zwingend von jedem Zustandsautomaten benötigt.
 
        se_laststate_item_id: ..state_id
        se_laststate_item_name: ..state_name
+       se_lastconditionset_item_id: ..conditionset_id
+       se_lastconditionset_item_name: ..conditionset_name
 
 Die ``state_lock`` Vorlage beinhaltet zum einen den Lock Zustand mit dem Namen "gesperrt",
 zum anderen ein Item mit dem Namen ``lock``. Wird dieses auf "1/True" gesetzt, wird der

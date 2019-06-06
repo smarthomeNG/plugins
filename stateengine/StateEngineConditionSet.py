@@ -21,13 +21,16 @@
 from . import StateEngineCondition
 from . import StateEngineTools
 
-
 # Class representing a set of conditions
 class SeConditionSet(StateEngineTools.SeItemChild):
     # Name of condition set
     @property
     def name(self):
         return self.__name
+
+    @property
+    def id(self):
+        return self.__id
 
     # List of conditions that are part of this condition set
     @property
@@ -37,9 +40,10 @@ class SeConditionSet(StateEngineTools.SeItemChild):
     # Initialize the condition set
     # abitem: parent SeItem instance
     # name: Name of condition set
-    def __init__(self, abitem, name):
+    def __init__(self, abitem, name, id):
         super().__init__(abitem)
         self.__name = name
+        self.__id = id
         self.__conditions = {}
 
     def __repr__(self):
@@ -106,15 +110,22 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             self.__conditions[name].write_to_logger()
             self._log_decrease_indent()
 
+    def __currentconditionset_set(self, id, name):
+        self._abitem.set_variable('current.conditionset_id', id)
+        self._abitem.set_variable('current.conditionset_name', name)
+
     # Check all conditions in the condition set. Return
     # returns: True = all conditions in set are matching, False = at least one condition is not matching
     def all_conditions_matching(self):
         try:
-            self._log_info("Check condition set '{0}':", self.__name)
+            self._log_info("Check condition set '{0}'", self.__name)
             self._log_increase_indent()
+            self.__currentconditionset_set(self.__id.property.path, self.__name)
             for name in self.__conditions:
                 if not self.__conditions[name].check():
+                    self.__currentconditionset_set('','')
                     return False
+            self._abitem.lastconditionset_set(self.__id.property.path, self.__name)
             return True
         finally:
             self._log_decrease_indent()

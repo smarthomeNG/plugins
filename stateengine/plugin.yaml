@@ -342,6 +342,18 @@ item_structs:
             visu_acl: r
             cache: True
 
+        conditionset_id:
+            remark: The id/path of the actual condition set is assigned to this item by the stateengine
+            type: str
+            visu_acl: r
+            cache: True
+
+        conditionset_name:
+            remark: The name of the actual condition set is assigned to this item by the stateengine
+            type: str
+            visu_acl: r
+            cache: True
+
         rules:
             name: Regeln und Item Verweise für den Zustandsautomaten
             remark: configure your se_item_* and eval_triggers here
@@ -355,6 +367,8 @@ item_structs:
 
             se_laststate_item_id: ..state_id
             se_laststate_item_name: ..state_name
+            se_lastconditionset_item_id: ..conditionset_id
+            se_lastconditionset_item_name: ..conditionset_name
 
     state_lock:
         name: Zustandsvorlage zum Sperren der Evaluierung
