@@ -226,18 +226,20 @@ class UZSU(SmartPlugin):
         :type item:     item
         :return:        The item type of the item that is changed
         """
+        _itemforuzsu = self.get_iattr_value(item.conf, ITEM_TAG[0])
         try:
-            _uzsuitem = self.itemsApi.return_item(self.get_iattr_value(item.conf, ITEM_TAG[0]))
+            _uzsuitem = self.itemsApi.return_item(_itemforuzsu)
         except Exception as err:
             _uzsuitem = None
-            self.logger.warning("Item to be set by uzsu '{}' does not exist. Error: {}".format(
-                self.get_iattr_value(item.conf, ITEM_TAG[0]), err))
+            self.logger.warning("Item to be set by uzsu '{}' does not exist. Error: {}".format(_itemforuzsu, err))
         try:
             _itemtype = _uzsuitem.type()
         except Exception as err:
-            _itemtype = 'foo' if _uzsuitem else None
-            self.logger.warning("Item to be set by uzsu '{}' does not have a type attribute. Error: {}".format(
-                self.get_iattr_value(item.conf, ITEM_TAG[0]), err))
+            _itemtype = 'foo' if _uzsuitem is not None else None
+            if _itemtype is None:
+                self.logger.warning("Item to be set by uzsu '{}' does not exist. Error: {}".format(_itemforuzsu, err))
+            else:
+                self.logger.warning("Item to be set by uzsu '{}' does not have a type attribute. Error: {}".format(_itemforuzsu, err))
         return _itemtype
 
     def _logics_activate(self, activevalue=None, item=None):
