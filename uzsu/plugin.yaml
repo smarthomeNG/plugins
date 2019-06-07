@@ -25,6 +25,8 @@ plugin:
         de: 'Das Plugin benötigt die folgende Software:\n
              \n
              - libatlas-base-dev: Zumindest auf einem Raspberry Pi mit Debian Stretch ist der Befehl nötig: ``sudo apt install libatlas-base-dev``\n
+             - Bei neueren SciPy Versionen kann auf einem Raspi der Build trotzdem scheitern. Es ist dann empfohlen, die aktuellste passende Datei (armv6 = Raspi1, armv7 = Rest)
+             von hier herunterzuladen und ``pip3 install scipy*.whl`` zu starten: https://www.piwheels.org/simple/scipy/\n
              - Python Modul scipy: ``pip3 install scipy``. Es wird empfohlen, zuerst die Pythonmodule zu aktualisieren,
              aber unbedingt darauf zu achten, dass die Requirements von SmarthomeNG erfüllt bleiben!
              Sollte die Installation via pip nicht funktionieren: ``sudo apt update && sudo apt install -y python3-scipy``\n
@@ -32,6 +34,8 @@ plugin:
         en: 'This plugin needs the following software to be installed and running:\n
              \n
              - libatlas-base-dev: On Raspberry Pi debian stretch you also have to run ``sudo apt install libatlas-base-dev``\n
+             - With newer SciPy versions build can still fail on Raspis. It is recommended to download the most recent file (armv6 = Raspi1, armv7 = others) from here and run
+             ``pip3 install scipy*.whl``: https://www.piwheels.org/simple/scipy/\n
              - Python module scipy: ``pip3 install scipy``. Update your Python packages first
              (but make sure they still meet the requirements for smarthomeng)!
              If that does not work you can use: ``sudo apt update && sudo apt install -y python3-scipy``\n
@@ -41,7 +45,7 @@ plugin:
     state: ready
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1270230-uzsu-neue-version-von-onkelandy
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364692-supportthread-für-uzsu-plugin
 
     version: 1.5.3                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
