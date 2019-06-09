@@ -106,11 +106,15 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemproperty({0}, {1})'", subitem_id, prop)
         try:
             item = self._abitem.return_item(subitem_id)
+        except Exception as ex:
+            self._log_warning("Problem evaluating property of {0} - relative item might not exist. Error: {1}", subitem_id, ex)
+            return
+        try:
             propvalue = getattr(item.property, prop)
-            self._log_debug("Item property {0} from {1} is: {2}", prop, item.property.path, propvalue)    
+            self._log_debug("Item property {0} from {1} is: {2}", prop, item.property.path, propvalue)
             return propvalue
         except Exception as ex:
-            self._log_warning("Problem evaluating property {0} of {1}: {2}", prop, subitem_id, ex)
+            self._log_warning("Problem evaluating property {0} of {1} - property might not exist. Error: {2}", prop, subitem_id, ex)
 
     # Insert end time of suspension into text
     # suspend_item_id: Item whose age is used to determine how much of the suspend time is already over
