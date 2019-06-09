@@ -116,6 +116,28 @@ class SeEval(StateEngineTools.SeItemChild):
         except Exception as ex:
             self._log_warning("Problem evaluating property {0} of {1} - property might not exist. Error: {2}", prop, subitem_id, ex)
 
+    # Return an attribute of the current state declaration
+    # item: can be a (relative) item or a stateengine variable
+    # attrib: name of attribute, can actually be any attribute name you can think of ;)
+    #
+    # See description of StateEngineItem.SeItem.return_item for details
+    def get_attributevalue(self, item, attrib):
+        self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
+        if ":" in item:
+            type, item = StateEngineTools.partition_strip(item, ":")
+            item = self._abitem.return_item(self._abitem.get_variable(item)) if type =="var" else item
+            #item = self._abitem.return_item(item) if type == "item" else item
+        else:
+            item = self._abitem.return_item(item)
+        try:
+            attribvalue = item.conf[attrib]
+            #attribvalue = getattr(item.property.attributes, attrib)
+            self._log_debug("Item attribute {0} from {1} is: {2}", attrib, item.property.path, attribvalue)
+            return attribvalue
+        except Exception as ex:
+            self._log_warning("Problem evaluating attribute {0} of {1} - attribute might not exist. "
+                              "Existing item attributes are: {3}. Error: {2}.", attrib, item, ex, getattr(item.property, 'attributes'))
+
     # Insert end time of suspension into text
     # suspend_item_id: Item whose age is used to determine how much of the suspend time is already over
     # suspend_text: Text to insert end time of suspension into. Use strftime/strptime format codes for the end time

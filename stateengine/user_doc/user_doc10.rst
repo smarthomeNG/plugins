@@ -76,6 +76,20 @@ Statt dieser Funktion sollte se_eval.get_relative_itemproperty('..suspend', 'val
 Welche Werte für ``property`` genutzt werden können, ist hier nachzulesen:
 `Item Properties <https://www.smarthomeng.de/user/konfiguration/items_properties.html?highlight=property>`_).
 
+**Wert eines Item-Attributs ermitteln**
+*Der Wert eines Attributs wird ermittelt.*
+
+.. code-block:: yaml
+
+  se_eval.get_attribute_value(item or var, attribute)
+  se_eval.get_attribute_value('..settings', 'some_special_attribute')
+  se_eval.get_attribute_value('var:current.state_id', 'some_special_attribute')
+
+Der erste Wert muss ein String sein, der entweder ein (relatives) Item enthält
+oder eine StateEngine Variable (startet mit var:). Der zweite Wert ist der
+Attributname, der eruiert werden soll. Gerade in Kombination mit der Abfrage
+der aktuellen Status- oder Conditionset-ID können hier Konfigurationen vereinfacht werden.
+
 **Suspend-Ende in einen Text einsetzen**
 *Das Ende der Suspend-Zeit wird in den Text suspend_text eingesetzt.*
 
