@@ -20,6 +20,7 @@
 #########################################################################
 from . import StateEngineAction
 from . import StateEngineTools
+import ast
 
 
 # Class representing a list of actions
@@ -32,6 +33,7 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__unassigned_delays = {}
         self.__unassigned_repeats = {}
         self.__unassigned_orders = {}
+        self.__unassigned_conditionsets = {}
 
     # Return number of actions in list
     def count(self):
@@ -59,6 +61,14 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__unassigned_repeats[name] = value
                 else:
                     self.__actions[name].update_repeat(value)
+                return
+            elif func == "se_conditionset":
+                # set repeat
+                if name not in self.__actions:
+                    # If we do not have the action yet (conditionset-attribute before action-attribute), ...
+                    self.__unassigned_conditionsets[name] = value
+                else:
+                    self.__actions[name].update_conditionsets(value)
                 return
             elif func == "se_order":
                 # set order
@@ -115,6 +125,10 @@ class SeActions(StateEngineTools.SeItemChild):
             action.update_order(self.__unassigned_orders[name])
             del self.__unassigned_orders[name]
 
+        if name in self.__unassigned_conditionsets:
+            action.update_conditionsets(self.__unassigned_conditionsets[name])
+            del self.__unassigned_conditionsets[name]
+
         self.__actions[name] = action
         return True
 
@@ -126,12 +140,16 @@ class SeActions(StateEngineTools.SeItemChild):
             raise ValueError("Attribute 'se_action_{0}': Value must be a string or a list!".format(name))
 
         # parse parameters
-        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None}
+        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None}
         for entry in value_list:
             if isinstance(entry, dict):
                 entry = list("{!s}:{!s}".format(k,v) for (k,v) in entry.items())[0]
             key, val = StateEngineTools.partition_strip(entry, ":")
             val = ":".join(map(str.strip, val.split(":")))
+            self._log_warning("Val is {}, type {}", val, type(val))
+            if val[:1] == '[' and val[-1:] == ']':
+                val = ast.literal_eval(val)
+            self._log_warning("Val is {}, type {}", val, type(val))
             if key == "function":
                 parameter[key] = StateEngineTools.cast_str(val)
             elif key == "force":
@@ -213,6 +231,8 @@ class SeActions(StateEngineTools.SeItemChild):
                 self.__actions[name].update_delay(parameter['delay'])
             if parameter['order'] is not None:
                 self.__actions[name].update_order(parameter['order'])
+            if parameter['conditionset'] is not None:
+                self.__actions[name].update_conditionsets(parameter['conditionset'])
 
     # noinspection PyMethodMayBeStatic
     def __raise_missing_parameter_error(self, parameter, param_name):

@@ -70,4 +70,5 @@ class SeConditionSets(StateEngineTools.SeItemChild):
         for name in self.__condition_sets:
             if self.__condition_sets[name].all_conditions_matching():
                 return True
+
         return False

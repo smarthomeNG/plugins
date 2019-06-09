@@ -25,6 +25,7 @@ from . import StateEngineDefaults
 import datetime
 from lib.shtime import Shtime
 from lib.item import Items
+import re
 
 
 # Base class from which all action classes are derived
@@ -57,6 +58,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._name = name
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
+        self.__conditionset = StateEngineValue.SeValue(self._abitem, "conditionset", True, "str")
         self.__order = StateEngineValue.SeValue(self._abitem, "order", False, "num")
         self._scheduler_name = None
 
@@ -72,6 +74,9 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def update_order(self, value):
         self.__order.set(value)
 
+    def update_conditionsets(self, value):
+        self.__conditionset.set(value)
+
     def get_order(self):
         return self.__order.get(1)
 
@@ -80,6 +85,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.__delay.write_to_logger()
         if self.__repeat is not None:
             self.__repeat.write_to_logger()
+        if self.__conditionset is not None:
+            self.__conditionset.write_to_logger()
         self.__order.write_to_logger()
 
     # Execute action (considering delay, etc)
@@ -87,6 +94,23 @@ class SeActionBase(StateEngineTools.SeItemChild):
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     def execute(self, is_repeat: bool, allow_item_repeat: bool):
         if not self._can_execute():
+            return
+        condition_to_meet = None if self.__conditionset.is_empty() else self.__conditionset.get()
+        condition_met = True if condition_to_meet is None else False
+        condition_to_meet = condition_to_meet if isinstance(condition_to_meet, list) else [condition_to_meet]
+        current_condition = self._abitem.get_lastconditionset_id()
+        for cond in condition_to_meet:
+            try:
+                cond = re.compile(cond)
+                matching = cond.match(current_condition)
+                if matching:
+                    self._log_debug("Given conditionset matches current one: {}", matching)
+                    condition_met = True
+            except Exception as ex:
+                if cond is not None:
+                    self._log_warning("Given conditionset {} is not a valid regex: {}", cond, ex)
+        if condition_met is False:
+            self._log_info("Action '{0}': Conditionset {1} not matching {2}. Skipping.", self._name, condition_to_meet, current_condition)
             return
 
         if is_repeat:

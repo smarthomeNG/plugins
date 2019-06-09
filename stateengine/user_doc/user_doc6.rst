@@ -74,6 +74,7 @@ Hochkommas gesetzt werden:
        - 'delay: <delay>'
        - 'order: <order>'
        - 'repeat: <repeat>'
+       - 'conditionset: <conditionset regex>'
 
 .. rubric:: Auszuführende Aktionsart
    :name: function
@@ -224,3 +225,20 @@ der zugewiesenen Zahlen ausgeführt.
 .. code-block:: yaml
 
        'order: [1|2|...]'
+
+**conditionset: <conditionset regex>**
+
+.. code-block:: yaml
+
+      'conditionset: ["enter_(.*)_test", "eval:sh.itemX.property.name"]'
+
+Über das Attribut wird festgelegt, dass die Aktion nur dann ausgeführt werden
+soll, wenn der Zustand durch die angegebene Bedingungsgruppe eingenommen wurde.
+Zum Vergleich wird immer der volle Pfad der Bedingungsgruppe herangezogen.
+Conditionset erlaubt sowohl eine Liste als auch reguläre Ausdrücke, wodurch
+nicht zwingend der komplette Pfad der Bedingungsgruppe bekannt sein muss.
+Der gesamte Pfad könnte wie folgt evaluiert werden:
+
+.. code-block:: yaml
+
+      "eval:se_eval.get_relative_itemid('{}.<bedingungsset>'.format(se_eval.get_relative_itemvalue('..state_id')))"
