@@ -123,7 +123,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             self.__currentconditionset_set(self.__id.property.path, self.__name)
             for name in self.__conditions:
                 if not self.__conditions[name].check():
-                    self.__currentconditionset_set('','')
+                    self.__currentconditionset_set('', '')
                     return False
             self._abitem.lastconditionset_set(self.__id.property.path, self.__name)
             return True

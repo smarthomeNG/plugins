@@ -284,8 +284,10 @@ class SeCondition(StateEngineTools.SeItemChild):
                     return False
 
             else:
-                min_value = [self.__min.get()] if not isinstance(self.__min.get(), list) else self.__min.get()
-                max_value = [self.__max.get()] if not isinstance(self.__max.get(), list) else self.__max.get()
+                min_get_value = self.__min.get()
+                max_get_value = self.__max.get()
+                min_value = [min_get_value] if not isinstance(min_get_value, list) else min_get_value
+                max_value = [max_get_value] if not isinstance(max_get_value, list) else max_get_value
                 min_value = self._flatten_list(min_value)
                 max_value = self._flatten_list(max_value)
                 diff_len = len(min_value) - len(max_value)
@@ -305,7 +307,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                     if min is not None and max is not None and min > max:
                         min, max = max, min
                         self._log_warning("Condition {}: min must not be greater than max! " \
-                            "Values got switched: min is now {}, max is now {}".format(self.__name, min, max))
+                            "Values got switched: min is now {}, max is now {}", self.__name, min, max)
                     if min is None and max is None:
                         self._log_debug("no limit given -> matching")
                         return True
@@ -329,6 +331,8 @@ class SeCondition(StateEngineTools.SeItemChild):
 
                 self._log_debug("given limits ok -> matching")
                 return True
+        except Exception as ex:
+            self._log_warning("Problem checking value {}", ex)
         finally:
             self._log_decrease_indent()
 

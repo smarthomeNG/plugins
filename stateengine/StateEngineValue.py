@@ -49,7 +49,7 @@ class SeValue(StateEngineTools.SeItemChild):
             self.__cast_func = None
 
     def __repr__(self):
-        return "SeValue item: {}, name {}, value {}.".format(self.__item, self.__name, self.__value)
+        return "SeValue item: {}, function {}.".format(self._abitem, self.__name)
 
     # Indicate of object is empty (neither value nor item nor eval set)
     def is_empty(self):
@@ -242,7 +242,7 @@ class SeValue(StateEngineTools.SeItemChild):
             if isinstance(self.__eval, list):
                 values = []
                 for val in self.__eval:
-                    self._log_info("Checking eval: {0}.", val)
+                    self._log_info("Checking eval: {0}.", val.replace("\n", ""))
                     self._log_increase_indent()
                     if isinstance(val, str):
                         if "stateengine_eval" in val or "se_eval" in val:
