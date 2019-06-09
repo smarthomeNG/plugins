@@ -141,6 +141,11 @@ Im Plugin stehen folgende Variablen zur Verfügung:
 **current.state_name:**
 *Der Name des Status, der gerade geprüft wird*
 
+**current.conditionset_id:**
+*Die Id der Bedingungsgruppe, die gerade geprüft wird*
+
+**current.conditionset_name:**
+*Der Name der Bedingungsgruppe, die gerade geprüft wird*
 
 Zustandsnamen
 -------------
