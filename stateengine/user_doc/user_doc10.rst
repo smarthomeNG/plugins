@@ -45,6 +45,17 @@ Vorgabewerte 0 für ``min`` und 255 für ``max``.
 
    se_eval.get_variable(varname)
 
+**Item relativ zum Regelwerk-Item ermitteln**
+*Ein Item Objekt relativ zur Item-Id des Regelwerk-Items wird ermittelt.*
+
+.. code-block:: yaml
+
+  se_eval.get_relative_item(subitem_id)
+  se_eval.get_relative_item('..suspend')
+
+Das zurückgelieferte Item kann nun genutzt werden, um in einem eval Ausdruck
+gesetzt oder abgefragt zu werden.
+
 **Item-Id relativ zum Regelwerk-Item ermitteln**
 *Eine Item-Id relativ zur Item-Id des Regelwerk-Items wird ermittelt.*
 
@@ -53,7 +64,8 @@ Vorgabewerte 0 für ``min`` und 255 für ``max``.
    se_eval.get_relative_itemid(subitem_id)
    se_eval.get_relative_itemid('..suspend')
 
-Statt dieser Funktion sollte se_eval.get_relative_itemproperty('..suspend', 'path') verwendet werden.
+Statt dieser Funktion kann se_eval.get_relative_itemproperty('..suspend', 'path')
+verwendet werden.
 
 **Item-Wert relativ zum Regelwerk-Item ermitteln**
 *Der Wert eines Items relativ zur Item-Id des Regelwerk-Items wird ermittelt.*
@@ -63,7 +75,8 @@ Statt dieser Funktion sollte se_eval.get_relative_itemproperty('..suspend', 'pat
    se_eval.get_relative_itemvalue(subitem_id)
    se_eval.get_relative_itemvalue('..suspend')
 
-Statt dieser Funktion sollte se_eval.get_relative_itemproperty('..suspend', 'value') verwendet werden.
+Statt dieser Funktion kann se_eval.get_relative_itemproperty('..suspend', 'value')
+verwendet werden.
 
 **Item-Property relativ zum Regelwerk-Item ermitteln**
 *Eine Property eines Items relativ zur Item-Id des Regelwerk-Items wird ermittelt.*
