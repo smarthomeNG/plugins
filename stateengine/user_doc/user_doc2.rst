@@ -27,14 +27,21 @@ Konfiguration
 
 Es gibt zwei Möglichkeiten, den Output des Plugins zu loggen:
 **intern**
-Hierbei werden, sofern das Loglevel 1 oder 2 beträgt, sämtliche Logeinträge in eigene Dateien in einem selbst definierten Verzeichnis geschrieben.
+Hierbei werden, sofern das Loglevel 1 oder 2 beträgt, sämtliche Logeinträge in
+eigene Dateien in einem selbst definierten Verzeichnis geschrieben.
 
 **logging.yaml**
-Sowohl der Output des Plugins generell, als auch der Einträge für bestimmte Items können in der logging.yaml Datei wie folgt deklariert werden:
+Sowohl der Output des Plugins generell, als auch der Einträge für bestimmte Items
+können in der logging.yaml Datei wie folgt deklariert werden:
 
 .. code-block:: yaml
 
   #etc/logging.yaml
+  filters:
+      notfound:
+          (): lib.logutils.Filter
+          msg: "(.*)Item (.*) not found!"
+
   handlers:
       stateengine_licht_file:
           class: logging.handlers.TimedRotatingFileHandler
@@ -45,6 +52,7 @@ Sowohl der Output des Plugins generell, als auch der Einträge für bestimmte It
           backupCount: 2
           filename: ./var/log/stateengine_licht.log
           encoding: utf8
+          filters: [notfound]
 
   loggers:
       plugins.stateengine:
@@ -57,4 +65,11 @@ Sowohl der Output des Plugins generell, als auch der Einträge für bestimmte It
           handlers: [stateengine_licht_file]
           level: DEBUG
 
-Das obige Beispiel würde in die Datei var/log/stateengine_licht.log sämtliche Debug Information schreiben, die für das Item "licht" und dessen Unteritem relevant sind. Zusätzlich werden alle Fehler des Plugins in die Datei smarthome-details.log geschrieben.
+Das obige Beispiel würde in die Datei var/log/stateengine_licht.log sämtliche
+Debug Information schreiben, die für das Item "licht" und dessen Unteritem
+relevant sind. Aufgrund des aktiven Filters "notfound" werden sämtliche
+Einträge zu nicht gefundenen Items übersprungen.
+
+Zusätzlich werden alle Fehler des Plugins in die Datei
+smarthome-details.log geschrieben. Da der Filter hier nicht aktiv ist,
+werden auch Informationen zu nicht gefundenen Items geloggt.
