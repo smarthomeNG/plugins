@@ -21,6 +21,7 @@ http://URL/index.php?page=widgets/stateengine.example
 * Functions can now be used by se_eval instead of stateengine_eval
 * New functions: get_attributevalue, get_relative_item, get_relative_itemproperty
 * Query current and last condition set is possible, also executing actions based on condition sets
+* Implement a new special function to retrigger the state machine
 
 ### v1.5.1
 * Include original 1.4.2 version in subfolder
