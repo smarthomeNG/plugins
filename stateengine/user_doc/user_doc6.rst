@@ -177,8 +177,10 @@ wird gleichzeitig auf ``Rums`` gesetzt.
        - value: <Sondervorgang>
 
 Für bestimmte Sondervorgänge sind besondere Aktionen im Plugin
-definiert (z. B. für das Suspend). Diese werden jedoch nicht hier
-erläutert, sondern an den Stellen, an denen sie verwendet werden.
+definiert. Aktuell gibt es zwei besondere Vorgänge:
+
+- suspend:<suspend_item>,<manuell_item> (z.B. suspend:..suspend,..manuell)
+- retrigger:<trigger_item> (z.B. retrigger:..retrigger)
 
 .. rubric:: Zusätzliche Parameter
    :name: parameter

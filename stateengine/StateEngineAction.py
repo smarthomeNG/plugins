@@ -488,6 +488,8 @@ class SeActionSpecial(SeActionBase):
         special, value = StateEngineTools.partition_strip(value, ":")
         if special == "suspend":
             self.__value = self.suspend_get_value(value)
+        elif special == "retrigger":
+            self.__value = self.retrigger_get_value(value)
         else:
             raise ValueError("Action {0}: Unknown special value '{1}'!".format(self._name, special))
         self.__special = special
@@ -501,16 +503,21 @@ class SeActionSpecial(SeActionBase):
     def write_to_logger(self):
         SeActionBase.write_to_logger(self)
         self._log_debug("Special Action: {0}", self.__special)
-        if self.__value is not None:
+        if isinstance(self.__value, list):
             self._log_debug("value: {0}", self.__value)
+        else:
+            self._log_debug("Retrigger item: {0}", self.__value.property.path)
 
     # Really execute the action
     def _execute(self, actionname: str, repeat_text: str = ""):
-        # Trigger logic
-        self._log_info("{0}: Executing special action '{1}' using value '{2}'.{3}", actionname, self.__special, self.__value, repeat_text)
+        self._log_info("{0}: Executing special action '{1}' using item '{2}'.{3}",
+                        actionname, self.__special, self.__value.property.path, repeat_text)
         self._log_increase_indent()
         if self.__special == "suspend":
             self.suspend_execute()
+        elif self.__special == "retrigger":
+            # noinspection PyCallingNonCallable
+            self.__value(True, caller='{} Retrigger'.format(StateEngineDefaults.plugin_identification))
         else:
             self._log_decrease_indent()
             raise ValueError("{0}: Unknown special value '{1}'!".format(actionname, self.__special))
@@ -533,6 +540,18 @@ class SeActionSpecial(SeActionBase):
             raise ValueError("Action {0}: Manual item '{1}' not found!", self._name, manual)
 
         return [suspend_item, manual_item.property.path]
+
+    def retrigger_get_value(self, value):
+        if value is None:
+            raise ValueError("Action {0}: Special action 'retrigger' requires item", self._name)
+
+        se_item, __ = StateEngineTools.partition_strip(value, ",")
+
+        se_item = self._abitem.return_item(se_item)
+        if se_item is None:
+            raise ValueError("Action {0}: Retrigger item '{1}' not found!", self._name, se_item)
+
+        return se_item
 
     def suspend_execute(self):
         suspend_item = self.__value[0]

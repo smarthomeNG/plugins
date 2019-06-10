@@ -63,7 +63,7 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__actions[name].update_repeat(value)
                 return
             elif func == "se_conditionset":
-                # set repeat
+                # set conditionset
                 if name not in self.__actions:
                     # If we do not have the action yet (conditionset-attribute before action-attribute), ...
                     self.__unassigned_conditionsets[name] = value
@@ -146,10 +146,8 @@ class SeActions(StateEngineTools.SeItemChild):
                 entry = list("{!s}:{!s}".format(k,v) for (k,v) in entry.items())[0]
             key, val = StateEngineTools.partition_strip(entry, ":")
             val = ":".join(map(str.strip, val.split(":")))
-            self._log_warning("Val is {}, type {}", val, type(val))
             if val[:1] == '[' and val[-1:] == ']':
                 val = ast.literal_eval(val)
-            self._log_warning("Val is {}, type {}", val, type(val))
             if key == "function":
                 parameter[key] = StateEngineTools.cast_str(val)
             elif key == "force":
