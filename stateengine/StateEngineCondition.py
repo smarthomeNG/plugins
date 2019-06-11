@@ -52,7 +52,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         return "SeCondition item: {}, name {}, eval {}, value {}.".format(self.__item, self.__name, self.__eval, self.__value)
 
     # set a certain function to a given value
-    # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'agemin', 'agemax' or 'agenegate'
+    # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'agemin', 'agemax' or 'agenegate')
     # value: Value for function
     def set(self, func, value):
         if func == "se_item":

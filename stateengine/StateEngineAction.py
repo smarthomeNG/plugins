@@ -128,6 +128,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         else:
             repeat_text = ""
 
+        self._getitem_fromeval()
         plan_next = self._sh.scheduler.return_next(self._scheduler_name)
         if plan_next is not None and plan_next > self.shtime.now():
             self._log_info("Action '{0}: Removing previous delay timer '{1}'.", self._name, self._scheduler_name)
@@ -151,12 +152,12 @@ class SeActionBase(StateEngineTools.SeItemChild):
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
-        raise NotImplementedError("Class %s doesn't implement update()" % self.__class__.__name__)
+        raise NotImplementedError("Class {} doesn't implement update()".format(self.__class__.__name__))
 
     # Complete action
     # item_state: state item to read from
     def complete(self, item_state):
-        raise NotImplementedError("Class %s doesn't implement complete()" % self.__class__.__name__)
+        raise NotImplementedError("Class {} doesn't implement complete()".format(self.__class__.__name__))
 
     # Check if execution is possible
     def _can_execute(self):
@@ -164,8 +165,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     # Really execute the action (needs to be implemented in derived classes)
     def _execute(self, actionname: str, repeat_text: str = ""):
-        raise NotImplementedError("Class %s doesn't implement _execute()" % self.__class__.__name__)
+        raise NotImplementedError("Class {} doesn't implement _execute()".format(self.__class__.__name__))
 
+    def _getitem_fromeval(self):
+        return
 
 # Class representing a single "se_set" action
 class SeActionSetItem(SeActionBase):
@@ -178,6 +181,28 @@ class SeActionSetItem(SeActionBase):
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self.__caller = StateEngineDefaults.plugin_identification
+
+    def _getitem_fromeval(self):
+        if isinstance(self.__item, str):
+            if "stateengine_eval" in self.__item or "se_eval" in self.__item:
+                # noinspection PyUnusedLocal
+                stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
+            try:
+                item = self.__item.replace('sh', 'self._sh')
+                item = eval(item)
+                if item is not None:
+                    self.__item = self._abitem.return_item(item)
+                    self.__value.set_cast(self.__item.cast)
+                    self.__mindelta.set_cast(self.__item.cast)
+                    self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
+                    if self._abitem.id == self.__item.property.path:
+                        self.__caller += '_self'
+                else:
+                    self._log_error("Problem evaluating item '{}' from eval. It is None.", item)
+                    return
+            except Exception as ex:
+                self._log_error("Problem evaluating item '{}' from eval: {}.", self.__item, ex)
+                return
 
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
@@ -192,13 +217,18 @@ class SeActionSetItem(SeActionBase):
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
             if item is not None:
                 self.__item = self._abitem.return_item(item)
+            else:
+                item = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self._name)
+                self.__item = str(item)
 
         if self.__mindelta.is_empty():
             mindelta = StateEngineTools.find_attribute(self._sh, item_state, "se_mindelta_" + self._name)
             if mindelta is not None:
                 self.__mindelta.set(mindelta)
 
-        if self.__item is not None:
+        if isinstance(self.__item, str):
+            pass
+        elif self.__item is not None:
             self.__value.set_cast(self.__item.cast)
             self.__mindelta.set_cast(self.__item.cast)
             self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
@@ -208,7 +238,9 @@ class SeActionSetItem(SeActionBase):
     # Write action to logger
     def write_to_logger(self):
         SeActionBase.write_to_logger(self)
-        if self.__item is not None:
+        if isinstance(self.__item, str):
+            self._log_debug("item from eval: {0}", self.__item)
+        elif self.__item is not None:
             self._log_debug("item: {0}", self.__item.property.path)
         self.__mindelta.write_to_logger()
         self.__value.write_to_logger()
@@ -240,9 +272,12 @@ class SeActionSetItem(SeActionBase):
                 self._log_debug(text, actionname, self.__item.property.path, value, delta, mindelta)
                 return
 
-        self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.path, value, repeat_text)
+        self._execute_set_add_remove(actionname, repeat_text, self.__item, value)
+
+    def _execute_set_add_remove(self, actionname, repeat_text, item, value):
+        self._log_debug("{0}: Set '{1}' to '{2}'. {3}", actionname, item.property.path, value, repeat_text)
         # noinspection PyCallingNonCallable
-        self.__item(value, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
+        item(value, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
 
 
 # Class representing a single "se_setbyattr" action
@@ -394,13 +429,18 @@ class SeActionForceItem(SeActionBase):
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
             if item is not None:
                 self.__item = self._abitem.return_item(item)
+            else:
+                item = StateEngineTools.find_attribute(self._sh, item_state, "se_eval_" + self._name)
+                self.__item = str(item)
 
         if self.__mindelta.is_empty():
             mindelta = StateEngineTools.find_attribute(self._sh, item_state, "se_mindelta_" + self._name)
             if mindelta is not None:
                 self.__mindelta.set(mindelta)
 
-        if self.__item is not None:
+        if isinstance(self.__item, str):
+            pass
+        elif self.__item is not None:
             self.__value.set_cast(self.__item.cast)
             self.__mindelta.set_cast(self.__item.cast)
             self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
@@ -408,7 +448,9 @@ class SeActionForceItem(SeActionBase):
     # Write action to logger
     def write_to_logger(self):
         SeActionBase.write_to_logger(self)
-        if self.__item is not None:
+        if isinstance(self.__item, str):
+            self._log_debug("item from eval: {0}", self.__item)
+        elif self.__item is not None:
             self._log_debug("item: {0}", self.__item.property.path)
         self.__mindelta.write_to_logger()
         self.__value.write_to_logger()
@@ -425,6 +467,28 @@ class SeActionForceItem(SeActionBase):
             return False
 
         return True
+
+    def _getitem_fromeval(self):
+        if isinstance(self.__item, str):
+            if "stateengine_eval" in self.__item or "se_eval" in self.__item:
+                # noinspection PyUnusedLocal
+                stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
+            try:
+                item = self.__item.replace('sh', 'self._sh')
+                item = eval(item)
+                if item is not None:
+                    self.__item = self._abitem.return_item(item)
+                    self.__value.set_cast(self.__item.cast)
+                    self.__mindelta.set_cast(self.__item.cast)
+                    self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
+                    if self._abitem.id == self.__item.property.path:
+                        self.__caller += '_self'
+                else:
+                    self._log_error("Problem evaluating item '{}' from eval. It is None.", item)
+                    return
+            except Exception as ex:
+                self._log_error("Problem evaluating item '{}' from eval: {}.", self.__item, ex)
+                return
 
     # Really execute the action (needs to be implemented in derived classes)
     # noinspection PyProtectedMember
@@ -571,3 +635,37 @@ class SeActionSpecial(SeActionBase):
         suspend_remaining = int(suspend_time - suspend_over + 0.5)   # adding 0.5 causes round up ...
         self._abitem.set_variable("item.suspend_remaining", suspend_remaining)
         self._log_debug("Updated variable 'item.suspend_remaining' to {0}", suspend_remaining)
+
+
+# Class representing a single "se_add" action
+class SeActionAddItem(SeActionSetItem):
+    # Initialize the action
+    # abitem: parent SeItem instance
+    # name: Name of action
+    def __init__(self, abitem, name: str):
+        super().__init__(abitem, name)
+
+    def _execute_set_add_remove(self, actionname, repeat_text, item, value):
+        value = item.property.value + value
+        self._log_debug("{0}: Add '{1}' to '{2}'. {3}", actionname, value, item.property.path, repeat_text)
+        # noinspection PyCallingNonCallable
+        item(value, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
+
+
+# Class representing a single "se_remove" action
+class SeActionRemoveItem(SeActionSetItem):
+    # Initialize the action
+    # abitem: parent SeItem instance
+    # name: Name of action
+    def __init__(self, abitem, name: str):
+        super().__init__(abitem, name)
+
+    def _execute_set_add_remove(self, actionname, repeat_text, item, value):
+        currentvalue = item.property.value
+        for v in value:
+            try:
+                currentvalue = currentvalue.remove(v)
+                self._log_debug("{0}: Remove '{1}' from '{2}'. {3}", actionname, v, item.property.path, repeat_text)
+            except Exception as ex:
+                self._log_warning("{0}: Remove '{1}' from '{2}' failed: {3}", actionname, value, item.property.path, ex)
+        item(currentvalue, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))

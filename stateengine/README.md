@@ -22,6 +22,8 @@ http://URL/index.php?page=widgets/stateengine.example
 * New functions: get_attributevalue, get_relative_item, get_relative_itemproperty
 * Query current and last condition set is possible, also executing actions based on condition sets
 * Implement a new special function to retrigger the state machine
+* Defining an item to be changed by an action can now be done via eval functions
+* New function to add and remove entries from Items with type list
 
 ### v1.5.1
 * Include original 1.4.2 version in subfolder

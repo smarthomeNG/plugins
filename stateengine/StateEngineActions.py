@@ -87,7 +87,6 @@ class SeActions(StateEngineTools.SeItemChild):
             if name in self.__actions:
                 del self.__actions[name]
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
-            #raise ValueError("Action {0}: {1}".format(attribute, ex))
 
     # ensure that action exists and create if missing
     # func: action function
@@ -110,6 +109,10 @@ class SeActions(StateEngineTools.SeItemChild):
             action = StateEngineAction.SeActionRun(self._abitem, name)
         elif func == "se_special":
             action = StateEngineAction.SeActionSpecial(self._abitem, name)
+        elif func == "se_add":
+            action = StateEngineAction.SeActionAddItem(self._abitem, name)
+        elif func == "se_remove":
+            action = StateEngineAction.SeActionRemoveItem(self._abitem, name)
         else:
             return False
 
@@ -143,7 +146,7 @@ class SeActions(StateEngineTools.SeItemChild):
         parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None}
         for entry in value_list:
             if isinstance(entry, dict):
-                entry = list("{!s}:{!s}".format(k,v) for (k,v) in entry.items())[0]
+                entry = list("{!s}:{!s}".format(k, v) for (k, v) in entry.items())[0]
             key, val = StateEngineTools.partition_strip(entry, ":")
             val = ":".join(map(str.strip, val.split(":")))
             if val[:1] == '[' and val[-1:] == ']':
@@ -159,7 +162,7 @@ class SeActions(StateEngineTools.SeItemChild):
         # function given and valid?
         if parameter['function'] is None:
             raise ValueError("Attribute 'se_action_{0}: Parameter 'function' must be set!".format(name))
-        if parameter['function'] not in ('set', 'force', 'run', 'byattr', 'trigger', 'special'):
+        if parameter['function'] not in ('set', 'force', 'run', 'byattr', 'trigger', 'special', 'add', 'remove'):
             raise ValueError("Attribute 'se_action_{0}: Invalid value '{1}' for parameter 'function'!".format(name, parameter['function']))
 
         # handle force
@@ -169,12 +172,12 @@ class SeActions(StateEngineTools.SeItemChild):
                 self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported for function '{1}'", name, parameter['function'])
             elif parameter['force'] and parameter['function'] == "set":
                 # Convert type "set" with force=True to type "force"
-                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'set' to 'force', " \
+                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'set' to 'force', "
                                "because parameter 'force' is 'True'!", name)
                 parameter['function'] = "force"
             elif not parameter['force'] and parameter['function'] == "force":
                 # Convert type "force" with force=False to type "set"
-                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'force' to 'set', "\
+                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'force' to 'set', "
                                "because parameter 'force' is 'False'!", name)
                 parameter['function'] = "set"
 
@@ -214,12 +217,21 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
                     exists = True
+            elif parameter['function'] == "add":
+                if self.__ensure_action_exists("se_add", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
+            elif parameter['function'] == "remove":
+                if self.__ensure_action_exists("se_remove", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
         except ValueError as ex:
             exists = False
             if name in self.__actions:
                 del self.__actions[name]
             self._log_warning("Ignoring action {0} because: {1}", name, ex)
-
 
         # add additional parameters
         if exists:

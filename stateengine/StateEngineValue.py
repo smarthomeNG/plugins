@@ -36,7 +36,6 @@ class SeValue(StateEngineTools.SeItemChild):
         self.__item = None
         self.__eval = None
         self.__varname = None
-
         if value_type == "str":
             self.__cast_func = StateEngineTools.cast_str
         elif value_type == "num":
@@ -45,11 +44,13 @@ class SeValue(StateEngineTools.SeItemChild):
             self.__cast_func = StateEngineTools.cast_bool
         elif value_type == "time":
             self.__cast_func = StateEngineTools.cast_time
+        elif value_type == "list":
+            self.__cast_func = StateEngineTools.cast_list
         else:
             self.__cast_func = None
 
     def __repr__(self):
-        return "SeValue item: {}, function {}.".format(self._abitem, self.__name)
+        return "SeValue item: {}, function {}, value {}.".format(self._abitem, self.__name, self.get())
 
     # Indicate of object is empty (neither value nor item nor eval set)
     def is_empty(self):
@@ -58,7 +59,6 @@ class SeValue(StateEngineTools.SeItemChild):
     # Set value directly from attribute
     # item: item containing the attribute
     # attribute_name: name of attribute to use
-    # value_type: type of value for casting (allowed: str, num ,bool, time)
     # default_value: default value to be used if item contains no such attribute
     def set_from_attr(self, item, attribute_name, default_value=None):
         value = item.conf[attribute_name] if attribute_name in item.conf else default_value
@@ -73,7 +73,7 @@ class SeValue(StateEngineTools.SeItemChild):
             field_value = []
             for i, val in enumerate(value):
                 if isinstance(val, dict) or isinstance(val, tuple):
-                    val = list("{!s}:{!s}".format(k,v) for (k,v) in val.items())[0]
+                    val = list("{!s}:{!s}".format(k, v) for (k, v) in val.items())[0]
                 if isinstance(val, str):
                     s, f = StateEngineTools.partition_strip(val, ":")
                 else:
@@ -211,18 +211,22 @@ class SeValue(StateEngineTools.SeItemChild):
         if value is not None and self.__cast_func is not None:
             try:
                 if isinstance(value, list):
-                    # noinspection PyCallingNonCallable
                     valuelist = []
                     for element in value:
                         valuelist.append(element if element == 'novalue' else self.__cast_func(element))
                     value = valuelist
                 else:
-                    # noinspection PyCallingNonCallable
                     value = self.__cast_func(value)
             except Exception as ex:
-                self._log_info("Problem casting value '{0}' to {2}: {1}.", value, ex, self.__cast_func)
+                if self.__cast_func == self.__cast_func.__globals__['_cast_list']:
+                    try:
+                        value = StateEngineTools.cast_num(value)
+                    except Exception:
+                        pass
+                    value = [value]
+                    return value
+                self._log_info("Problem casting value '{0}' to {1}: {2}.", value, self.__cast_func, ex)
                 return None
-
         return value
 
     # Determine value by executing eval-function

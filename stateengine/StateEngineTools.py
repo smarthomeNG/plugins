@@ -19,6 +19,7 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 import datetime
+from ast import literal_eval
 #
 # Some general tool functions
 #
@@ -53,11 +54,15 @@ def cast_num(value):
         return value
     try:
         return int(value)
-    except:
+    except Exception:
         pass
     try:
         return float(value)
-    except:
+    except Exception:
+        pass
+    try:
+        return literal_eval(value)
+    except Exception:
         pass
     raise ValueError("Can't cast {0} to int!".format(value))
 
@@ -73,16 +78,16 @@ def cast_bool(value):
         elif value in [True, 1]:
             return True
         else:
-            raise ValueError("Can't cast {0} to bool!".format(str(value)))
+            raise ValueError("Can't cast {0} to bool!".format(value))
     elif type(value) in [str, str]:
         if value.lower() in ['0', 'false', 'no', 'off']:
             return False
         elif value.lower() in ['1', 'true', 'yes', 'on']:
             return True
         else:
-            raise ValueError("Can't cast {0} to bool!".format(str(value)))
+            raise ValueError("Can't cast {0} to bool!".format(value))
     else:
-        raise ValueError("Can't cast {0} to bool!".format(str(value)))
+        raise ValueError("Can't cast {0} to bool!".format(value))
 
 
 # cast a value as string. Throws ValueError if cast is not possible
@@ -93,7 +98,24 @@ def cast_str(value):
     if isinstance(value, str):
         return value
     else:
-        raise ValueError("Can't cast {0} to str!".format(str(value)))
+        raise ValueError("Can't cast {0} to str!".format(value))
+
+
+# cast a value as list. Throws ValueError if cast is not possible
+# Taken from smarthome.py/lib/item.py
+# value: value to cast
+# returns: value as string
+def cast_list(value):
+    if isinstance(value, str):
+        try:
+            value = literal_eval(value)
+        except Exception:
+            pass
+    if isinstance(value, list):
+        return value
+    else:
+        value = [value]
+        return value
 
 
 # cast value as datetime.time. Throws ValueError if cast is not possible

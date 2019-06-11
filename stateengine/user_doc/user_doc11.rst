@@ -1,217 +1,254 @@
 .. index:: Plugins; Stateengine
-.. index:: Stateengine; Aktionen - einzeln
-.. _Aktionen - einzeln:
+.. index:: Stateengine; Besondere Zustände
+.. _Besondere Zustände:
 
-Aktionen - einzeln
-##################
+Besondere Zustände
+==================
 
-Es gibt zwei Möglichkeiten, Aktionen zu definieren.
+Sperren
+-------
 
-Bei der Einzelvariante werden alle
-Parameter einer Aktion in separaten Attributen definiert. Über den
-gemeinsamen Aktionsnamen gehören die Attribute einer Aktion
-zusammen.
+Für das Sperren der automatischen Zustandsermittlung führt man ein
+Sperr-Item ein, das beispielsweise über einen Taster oder die Visu änderbar
+ist. Sperr-Item und Zustand können durch ``struct: stateengine.state_lock``
+auf Höhe des Regelwerk-Items automatisch implementiert werden.
 
-Ähnlich wie Bedingungen benötigen auch Aktionen einen Namen. Der
-Name ist auch hier beliebig und wird lediglich in der Benennung
-der Attribute verwendet. Die Namen aller Attribute, die zu einer
-Bedingung gehören, folgen dem Muster ``se_<Funktion>_<Aktionsname>``.
+.. rubric:: Das "Sperr"-Item
+  :name: dassperritem
 
-.. rubric:: Aktion: Item auf einen Wert setzen
-   :name: aktionitemaufeinenwertsetzen
-
-.. code-block:: yaml
-
-       se_set_<Aktionsname>
-
-Das Item, das verändert werden soll, muss auf Ebene des
-Regelwerk-Items über das Attribut ``se_item_<Aktionsname>``
-angegeben werden.
-
-Der Wert, auf den das Item gesezt wird, kann als statischer Wert, als Wert eines
-Items oder als Ergebnis der Ausführung einer Funktion festgelegt
-werden.
-
-.. rubric:: Aktion: Ausführen einer Funktion
-   :name: aktionausfuehreneinerfunktion
+Die Sperre soll aktiv sein, wenn das Sperr-Item den Wert ``True`` hat.
+Das Sperritem definiert man wie folgt:
 
 .. code-block:: yaml
 
-       se_run_<Aktionsname>: eval:(Funktion)
-
-Die Angabe ist vergleichbar mit dem Ausführen einer Funktion zur
-Ermittlung des Werts für ein Item, hier wird jedoch kein Item
-benötigt. Außerdem wird der Rückgabewert der Funktion ignoriert.
-
-.. rubric:: Aktion: Auslösen einer Logikausführung
-   :name: aktionausloeseneinerlogikausfuehrung
-
-.. code-block:: yaml
-
-       se_trigger_<Aktionsname>: meineLogik:Zu übergebender Wert
-
-Um beim Auslösen einen Wert an die Logik zu übergeben, kann dieser
-Wert im Attribut über die Angabe von ``: <Wert>`` hinter dem
-Logiknamen angegeben werden.
-
-.. rubric:: Aktion: Alle Items, die ein bestimmtes Attribut haben,
-   auf den Wert dieses Attributs setzen
-   :name: aktionalleitemsdieeinbestimmtesattributhabenaufdenwertdiesesattributssetzen
-
-.. code-block:: yaml
-
-       se_byattr_<Aktionsname>: mein_eigenes_Attribut
-
-Mit diesem Attribut wird der Name eines anderen (beliebigen)
-Attributs angegeben. Beim Ausführen werden alle Items
-herausgesucht, die das angegebene Attribut enthalten. Diese Items
-werden auf den Wert gesetzt, der dem genannten Attribut in den
-Items jeweils zugewiesen ist.
-
-.. code-block:: yaml
-
-       dummy:
-               type: num
-               mein_eigenes_Attribut: 42
-
-wird dann auf ``42`` gesetzt.
-Ein anderes Item
-
-.. code-block:: yaml
-
-       dummy2:
-               type: str
-               mein_eigenes_Attribut: Rums
-
-wird gleichzeitig auf ``Rums`` gesetzt.
-
-.. rubric:: Aktion: Sondervorgänge
-   :name: aktionsondervorgnge
-
-.. code-block:: yaml
-
-       se_special_<Aktionsname>: (Sondervorgang)
-
-Für bestimmte Sondervorgänge sind besondere Aktionen im Plugin
-definiert (z. B. für das Suspend). Diese werden jedoch nicht hier
-erläutert, sondern an den Stellen, an denen Sie verwendet werden.
-
-.. rubric:: Verzögertes Ausführen einer Aktion
-   :name: verzgertesausfhreneineraktion
-
-.. code-block:: yaml
-
-       se_delay_<Aktionsname>: 30 (Sekunden)|30m (Minuten)
-
-Über das Attribut wird die Verzögerung angegeben, nach der die
-Aktion ausgeführt werden soll. Die Angabe erfolgt in Sekunden oder
-mit dem Suffix "m" in Minuten.
-
-Der Timer zur Ausführung der Aktion nach der angegebenen
-Verzögerung wird entfernt, wenn eine gleichartike Aktion
-ausgeführt werden soll (egal ob verzögert oder nicht). Wenn also
-die Verzögerung größer als der ``cycle`` ist, wird die Aktion
-nie durchgeführt werden, es sei denn die Aktion soll nur
-einmalig ausgeführt werden.
-
-.. rubric:: Wiederholen einer Aktion
-   :name: wiederholeneineraktion
-
-.. code-block:: yaml
-
-       se_repeat_<Aktionsname>: True|False
-
-Über das Attribut wird unabhängig vom globalen Setting für das
-stateengine Item festgelegt, ob eine Aktion auch beim erneuten
-Eintritt in den Status ausgeführt wird oder nicht.
-
-.. rubric:: Festlegen der Ausführungsreihenfolge von Aktionen
-   :name: festlegenderausfhrungsreihenfolgevonaktionen
-
-.. code-block:: yaml
-
-       se_order_<Aktionsname>
-       se_order_aktion1: 3
-       se_order_aktion2: 2
-       se_order_aktion3: 1
-       se_order_aktion4: 2
-
-Die Reihenfolge, in der die Aktionen ausgeführt werden, ist nicht
-zwingend die Reihenfolge in der die Attribute definiert sind. In
-den meisten Fällen ist dies kein Problem, da die Aktionen
-voneinander unabhängig sind und daher in beliebiger Reihenfolge
-ausgeführt werden können. In Einzelfällen kann es jedoch
-erforderlich sein, mehrere Aktionen in einer bestimmten
-Reihenfolge auszuführen.
-
-Es ist möglich, zwei Aktionen die gleiche Zahl zuzuweisen, die
-Reihenfolge der beiden Aktionen untereinander ist dann wieder
-zufällig. Innerhalb der gesamten Aktionen werden die beiden
-Aktionen jedoch an der angegebenen Position ausgeführt.
-
-.. rubric:: Aktion: Minimumabweichung
-   :name: minimumabweichung
-
-Es ist möglich, eine Minimumabweichung für
-Änderungen zu definieren. Wenn die Differenz zwischen dem
-aktuellen Wert des Items und dem ermittelten neuen Wert kleiner
-ist als die festgelegte Minimumabweichung wird keine Änderung
-vorgenommen. Die Minimumabweichung wird über das Attribut
-``se_mindelta_<Aktionsname>`` auf der Ebene des Regelwerk-Items
-festgelegt.
-
-.. rubric:: Aktion: Item zwangsweise auf einen Wert setzen
-   :name: aktionitemzwangsweiseaufeinenwertsetzen
-
-.. code-block:: yaml
-
-       se_force_<Aktionsname>
-
-Diese Aktion funktioniert analog zu ``se_set_<Aktionsname>``.
-Einziger Unterschied ist, dass die Wertänderung erzwungen wird:
-Wenn das Item bereits den zu setzenden Wert hat, dann ändert
-smarthomeNG das Item nicht. Selbst wenn beim Item das Attribut
-``enforce_updates: yes`` gesetzt ist, wird zwar der Wert neu
-gesetzt, der von smarthomeNG die Änderungszeit nicht neu gesetzt. Mit
-dem Attribut ``se_force_<Aktionsname>`` wird das Plugin den Wert
-des Items bei Bedarf zuerst auf einen anderen Wert ändern und dann
-auf dem Zielwert setzen. Damit erfolgt auf jeden Fall eine
-Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
-stehenden Änderungen (eval's, Aktualisierung der Änderungszeiten,
-etc).
-
-.. rubric:: Beispiel zu Aktionen
-   :name: beispielzuaktioneneinzeln
-
-.. code-block:: yaml
-
+   #items/item.yaml
    beispiel:
-       raffstore:
-           automatik:
-               rules:
-                   <...>
-                   se_item_height: beispiel.raffstore1.hoehe
-                   se_mindelta_height: 10
-                   se_item_lamella: beispiel.raffstore1.lamelle
-                   se_mindelta_lamella: 5
+     lock:
+         item:
+             type: bool
+             name: Sperr-Item
+             visu_acl: rw
+             cache: on
 
-                   Daemmerung:
-                       <...>
-                       se_set_height: value:100
-                       se_set_lamella: value:25
-                       <...>
-                   Nacht:
-                       <...>
-                       se_set_height: value:100
-                       se_set_lamella: value:0
-                       <...>
-                   Sonnenstand:
-                       <...>
-                       se_set_height: value:100
-                       se_set_lamella: eval:se_eval.sun_tracking()
-                       <...>
-                   Sonder:
-                       <...>
-                       se_trigger_logic1: myLogic:42
-                       se_delay_logic1: 10
-                       <...>
+.. rubric:: Der Sperr-Zustand
+ :name: dersperrzustand
+
+Der zugehörige Zustand könnte so aussehen und sollte als erster Zustand definiert
+werden, da er anderen Zuständen gegenüber priorisiert werden soll.
+
+.. code-block:: yaml
+
+   #items/item.yaml
+   beispiel:
+       jalousie1:
+           rules:
+               # Sperr-Item zu eval_trigger:
+               eval_trigger:
+                   - <andere Einträge>
+                   - beispiel.lock.item
+
+               # Items für Bedingungen und Aktionen
+               se_item_lock: beispiel.lock.item #Siehe Beispiel oben
+
+               locked:
+                   type: foo
+                   name: Manuell gesperrt
+
+                   enter:
+                       se_value_lock: true
+
+
+Aussetzen
+---------
+
+Eine besondere Anforderung: Nach bestimmten manuellen Aktionen (z.
+B. über einen Taster, die Visu, o. ä.) soll die automatische
+Zustandsermittlung für eine gewisse Zeit ausgesetzt werden. Nach
+Ablauf dieser Zeit soll die Automatik wieder aktiv werden.
+
+Der Aussetzenzustand kann einfach über ``struct: stateenginge.state_suspend`` in
+das Stateengine Item (auf der selben Hierarchieebene wie das rules Item)
+übernommen werden. Es muss dann lediglich noch
+das manuell Item angepasst werden - siehe weiter unten.
+
+.. rubric:: Das "Suspend"-Item
+  :name: dassuspenditem
+
+Zunächst wird ein "Suspend"-Item benötigt. Dieses Item zeigt zum
+einen die zeitweise Deaktivierung an, zum, anderen kann die
+Deaktivierung über dieses Item vorzeitig beendet werden:
+
+.. code-block:: yaml
+
+   #items/item.yaml
+   beispiel:
+       raffstore1:
+           automatik:
+
+               suspend:
+                   type: bool
+                   knx_dpt: 1
+                   visu_acl: rw
+                   cache: 'True'
+
+.. rubric:: Das "Manuell"-Item
+  :name: dasmanuellitem
+
+Ein weiteres Item wird benötigt, um alle Aktionen, die den
+Suspend-Zustand auslösen sollen, zu kapseln. Dieses Item ist das
+"Manuell"-Item. Es wird so angelegt, dass der Wert dieses Items
+bei jeder manuellen Betätigung invertiert wird:
+
+.. code-block:: yaml
+
+   #items/item.yaml
+   beispiel:
+       raffstore1:
+           automatik:
+
+               manuell:
+                   type: bool
+                   se_manual_invert: 'True'
+                   se_manual_logitem: beispiel.raffstore1.automatik.manuell
+                   se_manual_exclude:
+                     - database:*
+                     - KNX:1.1.4:*
+                   eval_trigger:
+                     - taster1
+                     - taster2
+
+In das Attribut ``eval_trigger`` werden alle Items eingetragen,
+deren Änderung als manuelle Betätigung gewertet werden soll.
+
+Das Attribut ``se_manual_invert: true`` veranlasst das
+stateengine-Plugin dabei, den Wert des Items bei Änderungen zu
+invertieren, wie es für das Auslösen des Suspend-Zustands
+erforderlich ist.
+
+In bestimmten Fällen ist es erforderlich, dass Item-Änderungen, die
+durch bestimmte Aufrufe ausgelöst werden, nicht als manuelle
+Betätigung gewertet werden. Hierzu zählt zum Beispiel die
+Rückmeldung der Raffstore-Position nach dem Verfahren durch den
+Jalousieaktor. Hierfür stehen zwei weitere Attribute bereit:
+
+**as_manual_include**
+*Liste der Aufrufe, die als "manuelle Betätigung" gewertet werden sollen*
+
+**as_manual_exclude**
+*Liste der Aufrufe, die nicht als "manuelle Betätigung" gewertet werden sollen*
+
+Bei beiden Attributen wird eine Liste von Elementen angegeben. Die
+einzelnen Elemente bestehen dabei aus dem Aufrufenden
+(``Caller``) einem Doppelpunkt und der Quelle (``Source``), bei Bedarf auch einer
+weiteren durch Doppelpunkt getrennte Information wie z.B. die Gruppenadresse beim KNX Plugin.
+Für den gesamten Ausdruck können RegEx genutzt werden, also beispielsweise "*" als Wildcard,
+damit der jeweilige Teil nicht berücksichtigt wird.
+
+Wenn bei der Prüfung festgestellt wird, dass ein Wert über eine
+Eval-Funktionalität geändert wurde, so wird die Änderung
+zurückverfolgt bis zur ursprünglichen Änderung, die die Eval-Kette
+ausgelöst hat. Diese ursprüngliche Änderung wird dann geprüft.
+
+Der Wert von ``Caller`` zeigt an, welche Funktionalität das Item
+geändert hat. Der Wert von ``Source`` und ``Additional`` ist Abhängig vom Caller.
+Häufig verwendete ``Caller`` sind:
+
+-  ``Init``: Initialisierung von smarthomeNG. ``Source`` ist in der Regel leer
+-  ``Visu``: Änderung über die Visualisierung (Visu-Plugin). ``Source`` beinhaltet die IP und den Port der Gegenstelle
+-  ``KNX``: Änderung über das KNX-Plugin. ``Source`` ist die physische Adresse des sendenden Geräts. ``Additional`` beinhaltet die Gruppenadresse.
+
+
+Wenn ``se_manual_include`` oder ``se_manual_exclude`` angegeben
+sind, muss ``se_manual_invert`` nicht angegeben werden.
+
+Um etwaige Probleme mit den exclude und include Funktionen einfacher erkennen zu können,
+kann ein spezielles Logging aktiviert werden: ``se_manual_logitem: <dateiname>``
+
+Ein weiteres Beispiel mit Wildcards. Groß- und Kleinschreibung spielen generell keine Rolle.
+
+.. code-block:: yaml
+
+   #items/item.yaml
+   se_manual_exclude:
+      - cli:127.0.*.1
+      - knx:1.0.0:3/5/*
+
+
+.. rubric:: Der Suspend-Zustand
+  :name: dersuspendzustand
+
+Mit diesen beiden Items kann nun ein einfacher Suspend-Zustand
+definiert werden. Als Aktion im Suspend-Zustand wird dabei die
+Sonderaktion "suspend" verwendet. Diese hat zwei Parameter:
+
+.. code-block:: yaml
+
+  se_special_suspend: suspend:<Suspend-Item>,<Manuell-Item>
+
+
+Der Suspend-Zustand sieht damit wie folgt aus:
+
+.. code-block:: yaml
+
+ #items/item.yaml
+ beispiel:
+   raffstore1:
+       automatik:
+           rules:
+               suspend:
+                  type: foo
+                  name: Ausgesetzt
+
+                  on_enter_or_stay:
+                      type: foo
+                      name: Ausführen immer wenn ein Zustand aktiv ist
+
+                      # Suspend-Item setzen
+                      se_special_suspend: suspend:beispiel.raffstore1.automatik.suspend,beispiel.raffstore1.automatik.manuell
+
+                  on_leave:
+                      type: foo
+                      name: Ausführen beim Verlassen des Zustands
+
+                      # Suspend-Item zurücksetzen
+                      se_set_suspend: False
+
+                  enter_manuell:
+                      type: foo
+                      name: Bedingung: Suspend beginnen
+
+                      #Bedingung: Manuelle Aktion wurde durchgeführt
+                      se_value_trigger_source: beispiel.raffstore1.automatik.manuell
+
+                  enter_stay:
+                      type: foo
+                      name: Bedingung: Im Suspend verbleiben
+
+                      #Bedingung: Suspend ist aktiv
+                      se_value_laststate: var:current.state_id
+
+                      #Bedingung: Suspendzeit ist noch nicht abgelaufen
+                      se_agemax_manuell: var:item.suspend_time
+
+                      #Bedingung: Suspend-Item wurde nicht extern geändert
+                      se_value_suspend: True
+
+Da der Suspend-Zustand anderen Zuständen
+vorgehen sollte, steht er üblicherweise sehr weit vorrne in der
+Reihenfolge. In der Regel wird der Suspend-Zustand in der
+Definition der zweite Zustand nach dem Lock-Zustand sein.
+
+.. rubric:: Dauer der zeitweisen Deaktivierung
+  :name: dauerderzeitweisendeaktivierung
+
+Die Dauer der zeitweisen Deaktivierung wird in der
+Plugin-Konfiguration über die Einstellung ``suspend_time_default``
+angegeben. Vorgabewert sind 3600 Sekunden (1 Stunde). Wenn die
+Dauer der zeitweisen Deaktivierung für ein einzelnes Regelwerk-Item
+abweichend sein soll, kann dort das Attribut
+
+.. code-block:: yaml
+
+      se_suspend_time: <Sekunden>
+
+angegeben werden. Der Parameter kann auch durch ein Item festgelegt werden.

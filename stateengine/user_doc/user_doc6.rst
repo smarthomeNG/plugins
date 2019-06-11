@@ -95,7 +95,7 @@ Folgende Werte sind möglich:
 
 Das Item, das verändert werden soll, muss auf Ebene des
 Regelwerk-Items über das Attribut ``se_item_<Aktionsname>``
-angegeben werden.
+oder ``se_eval_<Aktionsname>`` angegeben werden.
 
 Der Parameter ``to: <val>`` legt fest, auf welchen Wert das Item
 gesetzt werden soll. Der Wert,
@@ -111,13 +111,50 @@ Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
 stehenden Änderungen (evals, Aktualisierung der Änderungszeiten,
 etc).
 
+**Funktion add: Wert zu einem Listenitem hinzufügen**
+
+.. code-block:: yaml
+
+   se_action_<Aktionsname>:
+       - 'function: add'
+       - 'value: <val>/<eval>/<var>'
+       - 'force: [True/False]'
+
+Das Item, das verändert werden soll, muss auf Ebene des
+Regelwerk-Items über das Attribut ``se_item_<Aktionsname>`` oder
+``se_eval_<Aktionsname>`` angegeben werden.
+
+Der Parameter ``value: <val>`` legt fest, welcher Wert zum Item
+mit dem Typ ``list`` hinzugefügt werden soll. Wird hier direkt ein
+Wert angegeben, ist darauf zu achten, dass ein String unter Anführungszeichen
+stehen muss, während eine Zahl das nicht sollte.
+
+**Funktion remove: Wert von einem Listenitem entfernen**
+
+.. code-block:: yaml
+
+   se_action_<Aktionsname>:
+       - 'function: remove'
+       - 'value: <val>/<eval>/<var>'
+       - 'force: [True/False]'
+
+Das Item, das verändert werden soll, muss auf Ebene des
+Regelwerk-Items über das Attribut ``se_item_<Aktionsname>`` oder
+``se_eval_<Aktionsname>`` angegeben werden.
+
+Der Parameter ``value: <val>`` legt fest, welcher Wert vom Item
+mit dem Typ ``list`` entfernt werden soll. Dabei ist zu beachten,
+dass zwischen String (Anführungszeichen) und Zahlen unterschieden wird.
+Ist der angegegeben Wert nicht in der Liste, wird der originale
+Itemwert erneut geschrieben, ohne etwas zu entfernen.
+
 **Funktion run: Ausführen einer Funktion**
 
 .. code-block:: yaml
 
    se_action_<Aktionsname>:
        - 'function: run'
-       - 'eval:(Funktion)'
+       - 'eval: (Funktion)'
 
 Die Angabe ist vergleichbar mit dem Ausführen einer Funktion zur
 Ermittlung des Werts für ein Item, hier wird jedoch kein Item
