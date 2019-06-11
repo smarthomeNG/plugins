@@ -477,7 +477,7 @@ item_structs:
                       - 'function: special'
                       - 'value: retrigger:..retrigger'
                       - 'delay: var:item.suspend_remaining'
-                      - 'repeat: False'
+                      - 'repeat: True'
                       - 'order: 3'
 
                 on_leave:
