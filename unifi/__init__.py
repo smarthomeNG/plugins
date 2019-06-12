@@ -204,33 +204,39 @@ class UniFiControllerClientModel():
         return (node_key, node_body)
 
     def get_item_hierarchy(self):
-        hr = self._api.get_device_hierarchy()
-        model = {}
-        model['unifi_network'] = {}
-        model['unifi_network']['wifi_clients'] = {}
-        for wlc_data in hr['wireless_clients']:
-            wlc_key = ("client_" + wlc_data['name']).lower().replace('.', '_').replace('-', '_')
-            wlc_body = {}
-            wlc_body['hostname'] = {}
-            wlc_body['hostname'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_HOSTNAME
-            wlc_body['hostname']['type'] = 'str'
-            wlc_body['ip'] = {}
-            wlc_body['ip'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_IP
-            wlc_body['ip']['type'] = 'str'
-            wlc_body[UniFiConst.ATTR_MAC] = wlc_data['mac']
-            wlc_body[UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_PRESENT
-            wlc_body['type'] = 'bool'
-            model['unifi_network']['wifi_clients'][wlc_key] = wlc_body
+        try:
+            hr = self._api.get_device_hierarchy()
+            model = {}
+            model['unifi_network'] = {}
+            model['unifi_network']['wifi_clients'] = {}
+            for wlc_data in hr['wireless_clients']:
+                wlc_key = ("client_" + wlc_data['name']).lower().replace('.', '_').replace('-', '_')
+                wlc_body = {}
+                wlc_body['hostname'] = {}
+                wlc_body['hostname'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_HOSTNAME
+                wlc_body['hostname']['type'] = 'str'
+                wlc_body['ip'] = {}
+                wlc_body['ip'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_IP
+                wlc_body['ip']['type'] = 'str'
+                wlc_body[UniFiConst.ATTR_MAC] = wlc_data['mac']
+                wlc_body[UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_PRESENT
+                wlc_body['type'] = 'bool'
+                model['unifi_network']['wifi_clients'][wlc_key] = wlc_body
 
-        model['unifi_network']['devices'] = {}
-        for dev in hr['devices']:
-            child_data = self._get_device_node_item(dev)
-            model['unifi_network']['devices'][child_data[0]] = child_data[1]
+            model['unifi_network']['devices'] = {}
+            for dev in hr['devices']:
+                child_data = self._get_device_node_item(dev)
+                model['unifi_network']['devices'][child_data[0]] = child_data[1]
 
-        return yaml.dump(model, Dumper=yaml.SafeDumper, indent=4, width=768, allow_unicode=True, default_flow_style=False)
+            return yaml.dump(model, Dumper=yaml.SafeDumper, indent=4, width=768, allow_unicode=True, default_flow_style=False)
+        except Exception as e:
+            return e
 
     def get_total_number_of_requests_to_controller(self):
-        return self._api.get_request_count()
+        try:
+            return self._api.get_request_count()
+        except Exception:
+            return -1
 
     def get_controller_url(self):
         return self._api.get_connection_data()['url']
