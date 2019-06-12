@@ -229,7 +229,7 @@ class UniFiControllerClientModel():
 
         return yaml.dump(model, Dumper=yaml.SafeDumper, indent=4, width=768, allow_unicode=True, default_flow_style=False)
 
-    def get_total_number_of_requests_to_controller(self):     
+    def get_total_number_of_requests_to_controller(self):
         return self._api.get_request_count()
 
     def get_controller_url(self):
@@ -240,6 +240,7 @@ class UniFiControllerClientModel():
 
     def get_controller_site(self):
         return self._api.get_connection_data()['site']
+
 
 class UniFiControllerClient(SmartPlugin):
     """
@@ -572,6 +573,8 @@ class UniFiControllerClient(SmartPlugin):
             sw_port = int(self._get_attribute_recursive(i, UniFiConst.ATTR_SW_PORT_NO,
                                                         enable_logging=self._logging))
             return self._model._api.get_port_profile_for(sw_mac, sw_port)
+        except TypeError:
+            return None
         except UniFiDataException:
             self._log_item_warning(i, "Unable to determine current switch-profile for switch {}".format(sw_mac))
             return None

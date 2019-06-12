@@ -6,7 +6,7 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1"><strong>Anzahl Requests seit Start</strong></td>
+			<td class="py-1"><strong>{{ _('NumFromStart') }}</strong></td>
 			<td class="py-1">{{ p._model.get_total_number_of_requests_to_controller() }}</td>
 			<td class="py-1" width="50px"></td>
 			<td class="py-1"><strong>Controller URL</strong></td>
@@ -161,17 +161,3 @@
 </pre>
 </div>
 {% endblock bodytab3 %}
-
-
-<!--
-	Content block for the fourth tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{% set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
-
-	It has to be defined before (and outside) the block bodytab4
--->
-{% block bodytab4 %}
-<div class="container-fluid m-2">
-	{{ _('Hier kommt der Inhalt des Webinterfaces Tab4 hin.') }}
-</div>
-{% endblock bodytab4 %}
