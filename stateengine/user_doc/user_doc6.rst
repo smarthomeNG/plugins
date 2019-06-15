@@ -136,7 +136,7 @@ stehen muss, während eine Zahl das nicht sollte.
    se_action_<Aktionsname>:
        - 'function: remove'
        - 'value: <val>/<eval>/<var>'
-       - 'force: [True/False]'
+       - 'mode: [first/last/all]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
 Regelwerk-Items über das Attribut ``se_item_<Aktionsname>`` oder
@@ -146,7 +146,11 @@ Der Parameter ``value: <val>`` legt fest, welcher Wert vom Item
 mit dem Typ ``list`` entfernt werden soll. Dabei ist zu beachten,
 dass zwischen String (Anführungszeichen) und Zahlen unterschieden wird.
 Ist der angegegeben Wert nicht in der Liste, wird der originale
-Itemwert erneut geschrieben, ohne etwas zu entfernen.
+Itemwert erneut geschrieben, ohne etwas zu entfernen. Über den Parameter
+``mode`` lässt sich einstellen, ob jeweils alle mit dem Wert übereinstimmenden
+Einträge in der Liste (mode: all) oder nur der erste (first) bzw. der letzte (last)
+Eintrag gelöscht werden sollen. Wird der Parameter nicht angegeben, werden immer
+alle Einträge gelöscht.
 
 **Funktion run: Ausführen einer Funktion**
 
@@ -281,3 +285,23 @@ Der gesamte Pfad könnte wie folgt evaluiert werden:
 .. code-block:: yaml
 
       "eval:se_eval.get_relative_itemid('{}.<bedingungsset>'.format(se_eval.get_relative_itemvalue('..state_id')))"
+
+.. rubric:: Templates für Aktionen
+   :name: aktionstemplates
+
+Setzt man für mehrere Aktionen (z.B. Setzen auf einen Wert abhängig vom aktuellen
+Zustand) immer die gleichen Ausdrücke ein, so kann Letzteres als Template
+definiert und referenziert werden. Dadurch wird die die Handhabung
+komplexerer Wertdeklarationen deutlich vereinfacht. Diese Templates müssen wie se_item/se_eval
+auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
+
+.. code-block:: yaml
+    rules:
+      se_template_test: se_eval.get_relative_itemid('wetterstation.helligkeit_{}'.format(se_eval.get_relative_itemvalue('..state_name')))
+      se_item_specialitem: meinitem.specialitem # declare an existing item here
+
+      state_one:
+          on_enter:
+              se_action_specialitem:
+                  - 'function: set'
+                  - 'to: template:test'

@@ -41,6 +41,10 @@ class SeItem:
     def variables(self):
         return self.__variables
 
+    @property
+    def templates(self):
+        return self.__templates
+
     # return instance of smarthome.py class
     @property
     def sh(self):
@@ -91,6 +95,7 @@ class SeItem:
         self.__lastconditionset_internal_name = "" if self.__lastconditionset_item_name is None else self.__lastconditionset_item_name.property.value
 
         self.__states = []
+        self.__templates = {}
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
 
@@ -144,6 +149,12 @@ class SeItem:
 
     def __repr__(self):
         return self.__id
+
+    def updatetemplates(self, template, value):
+        if value is None:
+            self.__templates.pop(template)
+        else:
+            self.__templates[template] = value
 
     # Find the state, matching the current conditions and perform the actions of this state
     # caller: Caller that triggered the update
@@ -301,11 +312,23 @@ class SeItem:
         # add item trigger
         self.__item.add_method_trigger(self.update_state)
 
+
     # Check item settings and update if required
     # noinspection PyProtectedMember
     def __check_item_config(self):
         # set "enforce updates" for item
         self.__item._enforce_updates = True
+
+        # Update item from grandparent_item
+        for attribute in self.__item.conf:
+            func, name = StateEngineTools.partition_strip(attribute, "_")
+            if name == "":
+                continue
+
+            # update item/eval in this condition
+            if func == "se_template":
+                if name not in self.__templates:
+                    self.__templates[name] = self.__item.conf[attribute]
 
         # set "eval" for item if initial
         if self.__item._trigger and self.__item._eval is None:
@@ -394,6 +417,8 @@ class SeItem:
         # log general config
         self.__logger.header("Configuration of item {0}".format(self.__name))
         self.__startup_delay.write_to_logger()
+        for t in self.__templates:
+            self.__logger.info("Template {0}: {1}", t, self.__templates.get(t))
         self.__logger.info("Cycle: {0}", cycles)
         self.__logger.info("Cron: {0}", crons)
         self.__logger.info("Trigger: {0}".format(triggers))

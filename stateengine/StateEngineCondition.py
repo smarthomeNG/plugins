@@ -200,21 +200,6 @@ class SeCondition(StateEngineTools.SeItemChild):
         if self.__agenegate is not None:
             self._log_debug("age negate: {0}", self.__agenegate)
 
-    # Flatten list of values
-    # changelist: list to make flat
-    def _flatten_list(self, changelist):
-        if isinstance(changelist, list):
-            flat_list = []
-            for sublist in changelist:
-                if isinstance(sublist, list):
-                    for item in sublist:
-                        flat_list.append(item)
-                else:
-                    flat_list.append(sublist)
-        else:
-            flat_list = changelist
-        return flat_list
-
     # Cast 'value', 'min' and 'max' using given cast function
     # cast_func: cast function to use
     def __cast_all(self, cast_func):
@@ -235,7 +220,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             if not self.__value.is_empty():
                 # 'value' is given. We ignore 'min' and 'max' and check only for the given value
                 value = self.__value.get()
-                value = self._flatten_list(value)
+                value = StateEngineTools.flatten_list(value)
 
                 if isinstance(value, list):
                     text = "Condition '{0}': value={1} negate={2} current={3}"
@@ -288,8 +273,8 @@ class SeCondition(StateEngineTools.SeItemChild):
                 max_get_value = self.__max.get()
                 min_value = [min_get_value] if not isinstance(min_get_value, list) else min_get_value
                 max_value = [max_get_value] if not isinstance(max_get_value, list) else max_get_value
-                min_value = self._flatten_list(min_value)
-                max_value = self._flatten_list(max_value)
+                min_value = StateEngineTools.flatten_list(min_value)
+                max_value = StateEngineTools.flatten_list(max_value)
                 diff_len = len(min_value) - len(max_value)
                 min_value = min_value + [None] * abs(diff_len) if diff_len < 0 else min_value
                 max_value = max_value + [None] * diff_len if diff_len > 0 else max_value
@@ -297,17 +282,16 @@ class SeCondition(StateEngineTools.SeItemChild):
                 self._log_debug(text, self.__name, min_value, max_value, self.__negate, current)
                 if diff_len != 0:
                     self._log_debug("Min and max are always evaluated as valuepairs. If needed you can also provide 'novalue' as a list value")
-                if len(min_value) > 1 or len(max_value) > 1:
-                    self._log_debug("Be aware that 'eval:' and 'item:' definitions don't stay in the original list order but get appended to the end!")
                 self._log_increase_indent()
+                _notmatching = 0
                 for i, _ in enumerate(min_value):
                     min = None if min_value[i] == 'novalue' else min_value[i]
                     max = None if max_value[i] == 'novalue' else max_value[i]
                     self._log_debug("Checking minvalue {} and maxvalue {}", min, max)
                     if min is not None and max is not None and min > max:
                         min, max = max, min
-                        self._log_warning("Condition {}: min must not be greater than max! " \
-                            "Values got switched: min is now {}, max is now {}", self.__name, min, max)
+                        self._log_warning("Condition {}: min must not be greater than max! "
+                                          "Values got switched: min is now {}, max is now {}", self.__name, min, max)
                     if min is None and max is None:
                         self._log_debug("no limit given -> matching")
                         return True
@@ -315,22 +299,34 @@ class SeCondition(StateEngineTools.SeItemChild):
                     if not self.__negate:
                         if min is not None and current < min:
                             self._log_debug("too low -> not matching")
-                            return False
+                            _notmatching += 1
 
-                        if max is not None and current > max:
+                        elif max is not None and current > max:
                             self._log_debug("too high -> not matching")
-                            return False
+                            _notmatching += 1
+
+                        else:
+                            self._log_debug("given limits ok -> matching")
+                            return True
                     else:
                         if min is not None and current > min and (max is None or current < max):
                             self._log_debug("not lower than min -> not matching")
-                            return False
+                            _notmatching += 1
 
-                        if max is not None and current < max and (min is None or current > min):
+                        elif max is not None and current < max and (min is None or current > min):
                             self._log_debug("not higher than max -> not matching")
-                            return False
+                            _notmatching += 1
 
-                self._log_debug("given limits ok -> matching")
-                return True
+                        else:
+                            self._log_debug("given limits ok -> matching")
+                            return True
+
+                if _notmatching == len(min_value):
+                    return False
+                else:
+                    self._log_debug("given limits ok -> matching")
+                    return True
+
         except Exception as ex:
             self._log_warning("Problem checking value {}", ex)
         finally:
@@ -355,8 +351,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             # We check 'min' and 'max' (if given)
             agemin = [agemin] if not isinstance(agemin, list) else agemin
             agemax = [agemax] if not isinstance(agemax, list) else agemax
-            agemin = self._flatten_list(agemin)
-            agemax = self._flatten_list(agemax)
+            agemin = StateEngineTools.flatten_list(agemin)
+            agemax = StateEngineTools.flatten_list(agemax)
             diff_len = len(agemin) - len(agemax)
             agemin = agemin + [None] * abs(diff_len) if diff_len < 0 else agemin
             agemax = agemax + [None] * diff_len if diff_len > 0 else agemax
@@ -364,9 +360,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             self._log_debug(text, self.__name, agemin, agemax, self.__agenegate, current)
             if diff_len != 0:
                 self._log_debug("Min and max age are always evaluated as valuepairs. If needed you can also provide 'novalue' as a list value")
-            if len(agemin) > 1 or len(agemax) > 1:
-                self._log_debug("Be aware that 'eval:' and 'item:' definitions don't stay in the original list order but get appended to the end!")
             self._log_increase_indent()
+            _notmatching = 0
             for i, _ in enumerate(agemin):
                 min = None if agemin[i] == 'novalue' else agemin[i]
                 max = None if agemax[i] == 'novalue' else agemax[i]
@@ -374,22 +369,33 @@ class SeCondition(StateEngineTools.SeItemChild):
                 if not self.__agenegate:
                     if min is not None and current < min:
                         self._log_debug("too young -> not matching")
-                        return False
+                        _notmatching += 1
 
-                    if max is not None and current > max:
+                    elif max is not None and current > max:
                         self._log_debug("too old -> not matching")
-                        return False
+                        _notmatching += 1
+
+                    else:
+                        self._log_debug("given limits ok -> matching")
+                        return True
                 else:
                     if min is not None and current > min and (max is None or current < max):
                         self._log_debug("not younger than min -> not matching")
-                        return False
+                        _notmatching += 1
 
-                    if max is not None and current < max and (min is None or current > min):
+                    elif max is not None and current < max and (min is None or current > min):
                         self._log_debug("not older than max -> not matching")
-                        return False
+                        _notmatching += 1
 
-            self._log_debug("given age limits ok -> matching")
-            return True
+                    else:
+                        self._log_debug("given limits ok -> matching")
+                        return True
+
+            if _notmatching == len(agemin):
+                return False
+            else:
+                self._log_debug("given limits ok -> matching")
+                return True
         finally:
             self._log_decrease_indent()
 

@@ -20,9 +20,12 @@
 #########################################################################
 import datetime
 from ast import literal_eval
+# import logging
+
 #
 # Some general tool functions
 #
+# logger = logging.getLogger(__name__)
 
 
 # Find a certain item below a given item.
@@ -42,6 +45,22 @@ def get_child_item(item, child_id):
 # returns: last part of item id
 def get_last_part_of_item_id(item):
     return item.property.path.rsplit(".", 1)[1]
+
+
+# Flatten list of values
+# changelist: list to make flat
+def flatten_list(changelist):
+    if isinstance(changelist, list):
+        flat_list = []
+        for sublist in changelist:
+            if isinstance(sublist, list):
+                for item in sublist:
+                    flat_list.append(item)
+            else:
+                flat_list.append(sublist)
+    else:
+        flat_list = changelist
+    return flat_list
 
 
 # cast a value as numeric. Throws ValueError if cast not possible
@@ -136,7 +155,9 @@ def cast_time(value):
             minute = int(value_parts[1])
         except ValueError:
             raise ValueError("Can not cast '{0}' to data type 'time' due to non-numeric parts!".format(orig_value))
-        if hour == 24 and minute == 0:
+        if hour > 24 or minute > 59:
+            raise ValueError("Can not cast '{0}' to data type 'time'. Hour or minute values too high!".format(orig_value))
+        elif hour == 24 and minute >= 0:
             return datetime.time(23, 59, 59)
         else:
             return datetime.time(hour, minute)
@@ -172,7 +193,9 @@ def find_attribute(smarthome, base_item, attribute, recursion_depth=0):
 # splitchar: where to split
 # returns: Parts before and after split, whitespaces stripped
 def partition_strip(value, splitchar):
-    if value.startswith("se_") and splitchar == "_":
+    if isinstance(value, list):
+        raise ValueError("You can not use list entries!")
+    elif value.startswith("se_") and splitchar == "_":
         part1, __, part2 = value[3:].partition(splitchar)
         return "se_" + part1.strip(), part2.strip()
     else:

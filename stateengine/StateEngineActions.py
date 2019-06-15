@@ -34,6 +34,7 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__unassigned_repeats = {}
         self.__unassigned_orders = {}
         self.__unassigned_conditionsets = {}
+        self.__unassigned_modes = {}
 
     # Return number of actions in list
     def count(self):
@@ -69,6 +70,14 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__unassigned_conditionsets[name] = value
                 else:
                     self.__actions[name].update_conditionsets(value)
+                return
+            elif func == "se_mode":
+                # set remove mode
+                if name not in self.__actions:
+                    # If we do not have the action yet (conditionset-attribute before action-attribute), ...
+                    self.__unassigned_modes[name] = value
+                else:
+                    self.__actions[name].update_modes(value)
                 return
             elif func == "se_order":
                 # set order
@@ -111,8 +120,12 @@ class SeActions(StateEngineTools.SeItemChild):
             action = StateEngineAction.SeActionSpecial(self._abitem, name)
         elif func == "se_add":
             action = StateEngineAction.SeActionAddItem(self._abitem, name)
-        elif func == "se_remove":
-            action = StateEngineAction.SeActionRemoveItem(self._abitem, name)
+        elif func == "se_remove" or func == "se_removeall":
+            action = StateEngineAction.SeActionRemoveAllItem(self._abitem, name)
+        elif func == "se_removefirst":
+            action = StateEngineAction.SeActionRemoveFirstItem(self._abitem, name)
+        elif func == "se_removelast":
+            action = StateEngineAction.SeActionRemoveLastItem(self._abitem, name)
         else:
             return False
 
@@ -123,6 +136,10 @@ class SeActions(StateEngineTools.SeItemChild):
         if name in self.__unassigned_repeats:
             action.update_repeat(self.__unassigned_repeats[name])
             del self.__unassigned_repeats[name]
+
+        if name in self.__unassigned_modes:
+            action.update_modes(self.__unassigned_modes[name])
+            del self.__unassigned_modes[name]
 
         if name in self.__unassigned_orders:
             action.update_order(self.__unassigned_orders[name])
@@ -143,7 +160,7 @@ class SeActions(StateEngineTools.SeItemChild):
             raise ValueError("Attribute 'se_action_{0}': Value must be a string or a list!".format(name))
 
         # parse parameters
-        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None}
+        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None, 'mode': None}
         for entry in value_list:
             if isinstance(entry, dict):
                 entry = list("{!s}:{!s}".format(k, v) for (k, v) in entry.items())[0]
@@ -162,7 +179,8 @@ class SeActions(StateEngineTools.SeItemChild):
         # function given and valid?
         if parameter['function'] is None:
             raise ValueError("Attribute 'se_action_{0}: Parameter 'function' must be set!".format(name))
-        if parameter['function'] not in ('set', 'force', 'run', 'byattr', 'trigger', 'special', 'add', 'remove'):
+        if parameter['function'] not in ('set', 'force', 'run', 'byattr', 'trigger', 'special',
+                                         'add', 'remove', 'removeall', 'removefirst', 'removelast'):
             raise ValueError("Attribute 'se_action_{0}: Invalid value '{1}' for parameter 'function'!".format(name, parameter['function']))
 
         # handle force
@@ -180,6 +198,21 @@ class SeActions(StateEngineTools.SeItemChild):
                 self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'force' to 'set', "
                                "because parameter 'force' is 'False'!", name)
                 parameter['function'] = "set"
+
+        possible_mode_list = ['first', 'last', 'all']
+        if parameter['mode'] is not None:
+            # Parameter mode is supported only for type "remove"
+            if parameter['function'] != "remove":
+                self._log_warning("Attribute 'se_action_{0}': Parameter 'mode' not supported for function '{1}'", name, parameter['function'])
+            elif parameter['mode'] and parameter['function'] == "remove":
+                # Convert type "remove" with mode to specific remove type
+                if parameter['mode'] in possible_mode_list:
+                    parameter['function'] = "remove{}".format(parameter['mode'])
+                    self._log_info("Attribute 'se_action_{0}': Function 'remove' changed to '{1}'", name, parameter['function'])
+                else:
+                    parameter['function'] = "remove"
+                    self._log_info("Attribute 'se_action_{0}': Parameter '{1}' for 'mode' is wrong - can only be {2}",
+                                   name, parameter['mode'], possible_mode_list)
 
         # create action based on function
         exists = False
@@ -227,6 +260,21 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
                     exists = True
+            elif parameter['function'] == "removeall":
+                if self.__ensure_action_exists("se_removeall", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
+            elif parameter['function'] == "removefirst":
+                if self.__ensure_action_exists("se_removefirst", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
+            elif parameter['function'] == "removelast":
+                if self.__ensure_action_exists("se_removelast", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
         except ValueError as ex:
             exists = False
             if name in self.__actions:
@@ -243,6 +291,8 @@ class SeActions(StateEngineTools.SeItemChild):
                 self.__actions[name].update_order(parameter['order'])
             if parameter['conditionset'] is not None:
                 self.__actions[name].update_conditionsets(parameter['conditionset'])
+            if parameter['mode'] is not None:
+                self.__actions[name].update_modes(parameter['mode'])
 
     # noinspection PyMethodMayBeStatic
     def __raise_missing_parameter_error(self, parameter, param_name):

@@ -13,7 +13,7 @@ Copy stateengine.example.html from the sv_widgets folder to your smartvisu/dropi
 http://URL/index.php?page=widgets/stateengine.example
 
 ## Changelog
-### v1.5.2
+### v1.6
 * Get relative items at startup for all se_item_* attributes
 * Check for source_details in manual_exclude/include functions
 * Improve logging and some code parts, better problem handling
@@ -22,8 +22,9 @@ http://URL/index.php?page=widgets/stateengine.example
 * New functions: get_attributevalue, get_relative_item, get_relative_itemproperty
 * Query current and last condition set is possible, also executing actions based on condition sets
 * Implement a new special function to retrigger the state machine
-* Defining an item to be changed by an action can now be done via eval functions
+* Defining an item to be changed by an action can now be done via eval functions (se_eval_bla: xyz)
 * New function to add and remove entries from Items with type list
+* New se_template feature to use templates in conditions or actions
 
 ### v1.5.1
 * Include original 1.4.2 version in subfolder

@@ -153,6 +153,8 @@ class SeState(StateEngineTools.SeItemChild):
                 self.__fill(use_item, recursion_depth + 1)
             else:
                 self._log_error("{0}: Referenced item '{1}' not found!", item_state.property.path, item_state.conf["se_use"])
+            self._log_info("{0}: Reading se_use {1}. Nevertheless, it is recommended to use struct items instead.",
+                           item_state.property.path, item_state.conf["se_use"])
 
         # Get action sets and condition sets
         parent_item = item_state.return_parent()
@@ -184,7 +186,8 @@ class SeState(StateEngineTools.SeItemChild):
         # if an item name is given, or if we do not have a name after returning from all recursions,
         # use item name as state name
         if str(item_state) != item_state.property.path or (self.__name == "" and recursion_depth == 0):
-            self.__name = str(item_state)
+            self.__name = str(item_state).split('.')[-1]
+            self.__text.set(self.__name)
         if "se_name" in item_state.conf:
             self.__text.set_from_attr(item_state, "se_name", self.__text.get(None))
         elif self.__text.is_empty() and recursion_depth == 0:
