@@ -157,8 +157,17 @@ class SeCondition(StateEngineTools.SeItemChild):
             raise ValueError("Condition {0}: Error when casting: {1}".format(self.__name, ex))
 
         # 'agemin' and 'agemax' can only be used for items, not for eval
-        if self.__item is None and not (self.__agemin.is_empty() and self.__agemax.is_empty()):
-            raise ValueError("Condition {}: 'agemin'/'agemax' can not be used for eval!".format(self.__name))
+        cond_min_max = self.__agemin.is_empty() and self.__agemax.is_empty()
+        try:
+            cond_evalitem = self.__eval and ("get_relative_item(" in self.__eval or "return_item(" in self.__eval)
+        except Exception:
+            cond_evalitem = False
+        if self.__item is None and not cond_min_max:
+            if cond_evalitem:
+                self._log_info("Make sure your se_eval '{}' really contains an item and not an ID. If the agemin/max "
+                               "condition does not work though, please check your eval!", self.__eval)
+            else:
+                raise ValueError("Condition {}: 'agemin'/'agemax' can not be used for eval!".format(self.__name))
 
         return True
 

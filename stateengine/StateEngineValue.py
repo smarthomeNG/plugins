@@ -283,7 +283,7 @@ class SeValue(StateEngineTools.SeItemChild):
     # value: value to cast
     def __do_cast(self, value):
         if value is not None and self.__cast_func is not None:
-            self._log_debug("Casting value {}, function {}.", value, self.__cast_func)
+            # self._log_debug("Casting value {}, function {}.", value, self.__cast_func)
             try:
                 if isinstance(value, list):
                     valuelist = []
