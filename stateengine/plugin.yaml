@@ -375,6 +375,7 @@ item_structs:
             eval: True
             eval_trigger:
                 - ..retrigger
+                - ..settings.settings_edited
 
             # se_startup_delay: 30
             # se_repeat_actions: true
