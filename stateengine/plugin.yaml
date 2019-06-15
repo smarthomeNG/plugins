@@ -360,6 +360,13 @@ item_structs:
             visu_acl: rw
             enforce_updates: True
 
+        settings:
+            settings_edited:
+                type: bool
+                name: settings editiert
+                eval_trigger: ..settings.*
+                eval: not sh...settings_edited()
+
         rules:
             name: Zustandsautomat
             remark: configure your se_item_* and eval_triggers here
@@ -448,7 +455,6 @@ item_structs:
                 visu_acl: rw
                 cache: True
                 initial_value: True
-
 
         rules:
             se_item_suspend: ..suspend
