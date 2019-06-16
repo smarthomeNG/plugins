@@ -303,10 +303,7 @@ class API(object):
 
         poData = self.get_device_info(switch_mac, 'port_overrides')
         port_prof = poData[port_number - 1]['portconf_id']
-
-        # poData = self.device_stat(switch_mac)
-        # port_prof = poData[0]['port_overrides'][port_number - 1]['portconf_id']
-
+        
         profiles = self._get_port_profiles()
         if len(profiles) == 0:
             raise DataException("No port profiles found")
