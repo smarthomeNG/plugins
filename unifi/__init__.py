@@ -593,7 +593,7 @@ class UniFiControllerClient(SmartPlugin):
             return False
         rsl = self._model._api.get_device_info(mac, info_type)
         if rsl is None:
-            self._log_item_warning(item, "No device %s found for" % mac, enable_logging=self._logging)
+            self._log_item_warning(item, "No device %s found" % mac, enable_logging=self._logging)
 
         return rsl
 

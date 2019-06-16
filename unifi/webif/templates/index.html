@@ -90,13 +90,17 @@
 						<td class="py-1"><div class="rel" id="r{{ loop.index }}_lvl">
 						{% set warn_level =  p._model.get_item_issues(item.id()).get_worst_level() %}
 						{% if warn_level == 1 %}
-							<i class="fas fa-chevron-circle-down" style="color: #cccccc; font-size: 16pt;"></i>
+							<i class="fas fa-chevron-circle-down" style="color: #cccccc; font-size: 16pt;" id="r{{ loop.index }}_d"></i>
+							<i class="fas fa-chevron-circle-right" style="color: #cccccc; font-size: 16pt;" id="r{{ loop.index }}_r"></i>
 						{% elif warn_level == 2 %}
-							<i class="fas fa-chevron-circle-down" style="color: lightgreen; font-size: 16pt;"></i>
+							<i class="fas fa-chevron-circle-down" style="color: lightgreen; font-size: 16pt;" id="r{{ loop.index }}_d"></i>
+							<i class="fas fa-chevron-circle-right" style="color: lightgreen; font-size: 16pt;" id="r{{ loop.index }}_r"></i>
 						{% elif warn_level == 3 %}
-							<i class="fas fa-chevron-circle-down" style="color: #FFD700; font-size: 16pt;"></i>
+							<i class="fas fa-chevron-circle-down" style="color: #FFD700; font-size: 16pt;" id="r{{ loop.index }}_d"></i>
+							<i class="fas fa-chevron-circle-right" style="color: #FFD700; font-size: 16pt;" id="r{{ loop.index }}_r"></i>
 						{% elif warn_level == 4 %}
-							<i class="fas fa-chevron-circle-down" style="color: red; font-size: 16pt;"></i>
+							<i class="fas fa-chevron-circle-down" style="color: red; font-size: 16pt;" id="r{{ loop.index }}_d"></i>
+							<i class="fas fa-chevron-circle-right" style="color: red; font-size: 16pt;" id="r{{ loop.index }}_r"></i>
 						{% endif %}
 						</div></td>
 						<td class="py-1"><div class="rel" id="r{{ loop.index }}_id">{{ item.id() }}</div></td>
@@ -140,8 +144,12 @@ var lastShow = 0;
 
 function showRow(row) {
 	$("#r"+lastShow+"_body1").hide();
+	$("#r"+lastShow+"_d").hide();
+	$("#r"+lastShow+"_r").show();
 	if(lastShow != row) {
 		$("#r"+row+"_body1").show();
+		$("#r"+row+"_d").show();
+		$("#r"+row+"_r").hide();
 		lastShow = row;
 	} else {
 		lastShow = 0;
@@ -152,6 +160,7 @@ document.addEventListener('DOMContentLoaded', function(){
 {% for item in p._model.get_items() %}
 $("#r{{ loop.index }}_body1").hide();
 $("#r{{ loop.index }}_body2").hide();
+$("#r{{ loop.index }}_d").hide();
 $("#r{{ loop.index }}_lvl").click(function() {showRow({{ loop.index }}); });
 {% endfor %}
 

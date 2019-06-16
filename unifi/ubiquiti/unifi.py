@@ -302,8 +302,17 @@ class API(object):
             raise DataException("Cannot find switch with MAC {}".format(switch_mac))
 
         poData = self.get_device_info(switch_mac, 'port_overrides')
-        port_prof = poData[port_number - 1]['portconf_id']
-        
+        poIndex = -1
+        poFound = False
+        for port in poData:
+            poIndex = poIndex + 1
+            if port['port_idx'] == port_number:
+                poFound = True
+                break
+        if not poFound:
+            raise DataException("Could not match any port in data to given port-number {}".format(port_number))
+        port_prof = poData[poIndex]['portconf_id']
+
         profiles = self._get_port_profiles()
         if len(profiles) == 0:
             raise DataException("No port profiles found")
@@ -325,14 +334,18 @@ class API(object):
         if sid is None:
             raise DataException("Cannot find switch with MAC {}".format(switch_mac))
 
-        # poData = self.device_stat(switch_mac)
-        # poData = poData[0]['port_overrides']
-
         poData = self.get_device_info(switch_mac, 'port_overrides')
+        poIndex = -1
+        poFound = False
+        for port in poData:
+            poIndex = poIndex + 1
+            if port['port_idx'] == port_number:
+                poFound = True
+                break
+        if not poFound:
+            raise DataException("Could not match any port in data to given port-number {}".format(port_number))
 
-        if len(poData) < (port_number - 1):
-            raise DataException("Switch has less than {} ports".format(port_number))
-        poData[port_number - 1]['portconf_id'] = pid
+        poData[poIndex]['portconf_id'] = pid
         newPoData = {}
         newPoData['port_overrides'] = poData
 
