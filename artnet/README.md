@@ -56,7 +56,11 @@ This attribute assigns an item to the respective artnet-address (DMX channel)
 ### logic.yaml
 Notice: First DMX channel is 1! Not 0!
 
-To send DMX Data to the universe set in plugin.yaml you have 3 possibilities:
+To send DMX Data to the universe set in plugin.yaml you have 4 possibilities:
+
+#### 0) Use items
+
+as explained above you can use items for that
 
 #### 1) Send single value
 ``sh.artnet1(<DMX_CHAN>, <DMX_VALUE>)``
