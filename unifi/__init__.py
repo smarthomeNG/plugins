@@ -363,9 +363,15 @@ class UniFiControllerClient(SmartPlugin):
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
-        self._model._api.login()
+        try:
+            self._model._api.login()
+        except Exception as e:
+            self.logger.error(e)
+        try:
+            self.poll_device()
+        except Exception as e:
+            self.logger.error(e)
 
-        self.poll_device()
         self._logging = False
 
     def stop(self):
@@ -517,7 +523,10 @@ class UniFiControllerClient(SmartPlugin):
 
     def _update_unifi_with_item(self, item, item_type, func):
         if self._item_filter(item, UniFiConst.ATTR_TYPE, item_type):
-            func(item)
+            try:
+                func(item)
+            except Exception as e:
+                self._log_item_error(item, e, self._logging)
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -606,8 +615,9 @@ class UniFiControllerClient(SmartPlugin):
             return self._model._api.get_port_profile_for(sw_mac, sw_port)
         except TypeError:
             return None
-        except UniFiDataException:
-            self._log_item_warning(i, "Unable to determine current switch-profile for switch {}".format(sw_mac))
+        except UniFiDataException as e:
+            self._log_item_warning(
+                i, "Unable to determine current switch-profile for switch {}, error: {}".format(sw_mac, e))
             return None
 
     def _check_sw_port_enabled(self, item):
@@ -643,7 +653,10 @@ class UniFiControllerClient(SmartPlugin):
         # find all items that have the unifi_type attribute set to the given value:
         # apply func to item and set the value accordingly
         for item in self._model.get_items(lambda i: self._item_filter(i, UniFiConst.ATTR_TYPE, unifi_type)):
-            item(func(item), self.get_shortname())
+            try:
+                item(func(item), self.get_shortname())
+            except Exception as e:
+                self._log_item_error(item, e, self._logging)
 
     def poll_device(self):
         """
