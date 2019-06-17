@@ -402,7 +402,7 @@ class UniFiControllerClient(SmartPlugin):
             self.logger.error(msg + " in item " + item.path())
 
     def _mac_check(self, item, item_type: str, leaf_item=None):
-        if not Network.is_mac(item.conf[item_type]):
+        if not Network.is_mac(self.get_iattr_value(item.conf, item_type)):
             self._log_item_error(item, "invalid {} attribute provided from {}".format(item_type, item.path()))
             return False
         return True
@@ -422,7 +422,7 @@ class UniFiControllerClient(SmartPlugin):
                 if not (item.path() == leaf_item.path()):
                     self._log_item_info(leaf_item, "{} attribute provided from {}".format(
                         item_type, item.path()), enable_logging)
-                return item.conf[item_type]
+                return self.get_iattr_value(item.conf, item_type)
         except AttributeError:
             self._log_item_warning(leaf_item, "No {} attribute provided".format(item_type))
             return None
@@ -445,7 +445,7 @@ class UniFiControllerClient(SmartPlugin):
                         self._log_item_info(leaf_item, "{} attribute provided from {} ".format(
                             item_type, item.path()), enable_logging)
 
-                    return item.conf[item_type]
+                    return self.get_iattr_value(item.conf, item_type)
             except AttributeError:
                 self._log_item_warning(leaf_item, "No {} attribute provided".format(item_type))
                 return None
