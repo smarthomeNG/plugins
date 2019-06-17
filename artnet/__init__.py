@@ -91,11 +91,8 @@ class ArtNet_Model:
 
         :return: array of items held by the device, sorted by their DMX-address
         """
-        instance_key = "artnet_address"
-        if self._instance_name:
-            instance_key = "artnet_address@"+self._instance_name
-
-        return sorted(self._items, key=lambda i: i.conf[instance_key])
+        return sorted(self._items, key=lambda i: self.get_iattr_value(i.conf, "artnet_address"))
+        
 
     def get_min_channels(self):
         """
