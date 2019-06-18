@@ -364,7 +364,7 @@ item_structs:
             settings_edited:
                 type: bool
                 name: settings editiert
-                eval_trigger: ..settings.*
+                eval_trigger: ..*
                 eval: not sh...settings_edited()
 
         rules:
