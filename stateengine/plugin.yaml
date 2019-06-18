@@ -359,13 +359,15 @@ item_structs:
             type: bool
             visu_acl: rw
             enforce_updates: True
+            eval: True
+            eval_trigger: ..settings.settings_edited
 
         settings:
             settings_edited:
                 type: bool
                 name: settings editiert
-                eval_trigger: ..*
-                eval: not sh...settings_edited()
+                eval_trigger: ...settings.*
+                eval: not sh..self()
 
         rules:
             name: Zustandsautomat
@@ -375,7 +377,6 @@ item_structs:
             eval: True
             eval_trigger:
                 - ..retrigger
-                - ..settings.settings_edited
 
             # se_startup_delay: 30
             # se_repeat_actions: true
@@ -425,12 +426,6 @@ item_structs:
             visu_acl: ro
             cache: True
 
-        retrigger:
-            remark: Item to retrigger the rule set evaluation
-            type: bool
-            visu_acl: rw
-            enforce_updates: True
-
         manuell:
             type: bool
             name: manuell
@@ -439,6 +434,14 @@ item_structs:
             #se_manual_include: KNX:* Force manual mode based on source
             se_manual_exclude:
               - database:*
+
+        retrigger:
+            remark: Item to retrigger the rule set evaluation
+            type: bool
+            visu_acl: rw
+            enforce_updates: True
+            eval: True
+            eval_trigger: ..settings.settings_edited
 
         settings:
             remark: Use these settings for your condition values
@@ -456,6 +459,12 @@ item_structs:
                 visu_acl: rw
                 cache: True
                 initial_value: True
+
+            settings_edited:
+                type: bool
+                name: settings editiert
+                eval_trigger: ...settings.*
+                eval: not sh..self()
 
         rules:
             se_item_suspend: ..suspend
@@ -517,7 +526,6 @@ item_structs:
         rules:
             se_item_lock: ..lock
             se_item_suspend: ..suspend
-            se_item_retrigger: ..rules
             se_item_release: ..release
             se_item_suspend_end: ..suspend_end
             eval_trigger:
@@ -544,11 +552,10 @@ item_structs:
                       - 'to: '
                       - 'order: 4'
                     se_action_retrigger:
-                      - 'function: set'
-                      - 'to: True'
-                      - 'order: 5'
+                      - 'function: special'
+                      - 'value: retrigger:..retrigger'
                       - 'repeat: True'
-                      - 'delay: 1'
+                      - 'order: 5'
 
                 enter:
                     se_value_release: True
