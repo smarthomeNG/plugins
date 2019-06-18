@@ -238,4 +238,6 @@ Sperrzustand wieder hergestellt werden.
                     enter_stayafterlock:
                         se_value_wind: True
                         se_value_laststate: var:current.state_id
-                        se_value_conditionset_name: ['var:current.conditionset_name', 'enter_afterlock']
+                        se_value_lastconditionset_name:
+                            - 'var:current.conditionset_name'
+                            - 'enter_afterlock'

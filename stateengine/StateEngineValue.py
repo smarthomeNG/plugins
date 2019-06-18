@@ -92,22 +92,29 @@ class SeValue(StateEngineTools.SeItemChild):
                     value[i] = field_value[i]
                     field_value[i] = value[i]
                 if source[i] == "template":
-                    self.__template = field_value[i]
-                    _template = self._abitem.templates.get(self.__template)
+                    if self.__template is None:
+                        self.__template = []
+                    self.__template.append(field_value[i])
+                    _template = self._abitem.templates.get(field_value[i])
                     if _template is not None:
                         try:
                             source[i], field_value[i] = StateEngineTools.partition_strip(_template, ":")
-                            if val in self.__listorder and self.__template in self._abitem.templates:
-                                self.__listorder[self.__listorder.index(val)] = self._abitem.templates.get(self.__template)
+                            if val in self.__listorder and field_value[i] in self._abitem.templates:
+                                self.__listorder[self.__listorder.index(val)] = self._abitem.templates.get(field_value[i])
                         except Exception as ex:
-                            self._abitem.updatetemplates(self.__template, None)
+                            self._abitem.updatetemplates(field_value[i], None)
                             self.__listorder = [i for i in self.__listorder if i != val]
-                            self._log_warning("Removing template {}: {}", self.__template, ex)
+                            self._log_warning("Removing template {}: {}", field_value[i], ex)
                             val, field_value[i], source[i] = None, None, None
                     else:
-                        self._log_warning("Template with name {} does not exist for this SE Item!", self.__template)
+                        self._log_warning("Template with name {} does not exist for this SE Item!", field_value[i])
                         self.__listorder = [i for i in self.__listorder if i != val]
                         source[i], field_value[i], val = None, None, None
+            try:
+                if isinstance(self.__template, list) and len(self.__template == 1):
+                    self.__template = self.__template[0]
+            except Exception:
+                pass
 
         elif isinstance(value, str):
             self.__listorder.append(value)
@@ -152,12 +159,15 @@ class SeValue(StateEngineTools.SeItemChild):
                     raise ValueError("{0}: value_in is not allowed. Field_value: {1} ({2})".format(self.__name, field_value[i], self.__allow_value_list))
                 else:
                     if s == "template":
-                        if self._abitem.templates.get(self.__template) is not None:
-                            self._log_debug("Template {} exchanged with {}", self.__template, self._abitem.templates[field_value[i]])
-                            s, field_value[i] = StateEngineTools.partition_strip(self._abitem.templates[field_value[i]], ":")
-                        else:
-                            self._log_warning("Template with name {} does not exist for this SE Item!", self.__template)
-                            s = None
+                        if isinstance(self.__template, list):
+                            for t in self.__template:
+                                _template = self._abitem.templates.get(t)
+                                if _template is not None:
+                                    self._log_debug("Template {} exchanged with {}", self.__template, self._abitem.templates[field_value[i]])
+                                    s, field_value[i] = StateEngineTools.partition_strip(self._abitem.templates[field_value[i]], ":")
+                                else:
+                                    self._log_warning("Template with name {} does not exist for this SE Item!", self.__template)
+                                    s = None
                     try:
                         cond1 = s.isdigit()
                         cond2 = field_value[i].isdigit()
@@ -240,8 +250,8 @@ class SeValue(StateEngineTools.SeItemChild):
 
     # Write condition to logger
     def write_to_logger(self):
-        if self._abitem.templates.get(self.__template) is not None:
-            self._log_debug("{0}: Using template {1}", self.__name, self.__template)
+        if self.__template is not None:
+            self._log_debug("{0}: Using template(s) {1}", self.__name, self.__template)
         if self.__value is not None:
             self._log_debug("{0}: {1}", self.__name, self.__value)
         if self.__item is not None:
