@@ -36,6 +36,7 @@ from plugins.unifi.ubiquiti.unifi import DataException as UniFiDataException
 import ruamel.yaml as yaml
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.compat import ordereddict
+from requests.exceptions import ConnectionError
 import json
 import traceback
 
@@ -289,32 +290,12 @@ class UniFiControllerClient(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-
-        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
-        a reference to the sh object any more.
-
-        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
-        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
-        use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
-        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
-        returns the value in the datatype that is defined in the metadata.
+        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.yaml.
         """
+
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
-
-        # If an package import with try/except is done, handle an import error like this:
-
-        # Exit if the required package(s) could not be imported
-        # if not REQUIRED_PACKAGE_IMPORTED:
-        #     self.logger.error("Unable to import Python package '<exotic package>'")
-        #     self._init_complete = False
-        #     return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self._unifi_controller_url = self.get_parameter_value(UniFiConst.PARAMETER_URL)
@@ -334,20 +315,7 @@ class UniFiControllerClient(SmartPlugin):
         self._cycle = 60
         self._logging = True
 
-        # Initialization code goes here
-
-        # On initialization error use:
-        #   self._init_complete = False
-        #   return
-
-        # The following part of the __init__ method is only needed, if a webinterface is being implemented:
-
-        # if plugin should start even without web interface
         self.init_webinterface()
-
-        # if plugin should not start without web interface
-        # if not self.init_webinterface():
-        #     self._init_complete = False
 
         return
 
@@ -366,11 +334,11 @@ class UniFiControllerClient(SmartPlugin):
         try:
             self._model._api.login()
         except Exception as e:
-            self.logger.error(e)
+            self.logger.error(repr(e))
         try:
             self.poll_device()
         except Exception as e:
-            self.logger.error(e)
+            self.logger.error(repr(e))
 
         self._logging = False
 
@@ -378,11 +346,14 @@ class UniFiControllerClient(SmartPlugin):
         """
         Stop method for the plugin
         """
-        self._model._api.logout()
-        self.logger.debug("Stop method called")
+        try:
+            self._model._api.logout()
+            self.logger.debug("Logout done")
+        except:
+            self.logger.warning("Exception during logout")
         self.alive = False
 
-    def _log_item_info(self, item, msg, enable_logging=True, defaulting=False):
+    def _log_item_info(self, item, msg: str, enable_logging=True, defaulting=False):
         if defaulting:
             self._model.append_item_issue(item, "2: " + msg, 2)
         else:
@@ -391,12 +362,12 @@ class UniFiControllerClient(SmartPlugin):
         if enable_logging:
             self.logger.info(msg + " in item " + item.path())
 
-    def _log_item_warning(self, item, msg, enable_logging=True):
+    def _log_item_warning(self, item, msg: str, enable_logging=True):
         self._model.append_item_issue(item, "3: "+msg, 3)
         if enable_logging:
             self.logger.warning(msg + " in item " + item.path())
 
-    def _log_item_error(self, item, msg, enable_logging=True):
+    def _log_item_error(self, item, msg: str, enable_logging=True):
         self._model.append_item_issue(item, "4: " + msg, 4)
         if enable_logging:
             self.logger.error(msg + " in item " + item.path())
@@ -409,7 +380,7 @@ class UniFiControllerClient(SmartPlugin):
 
     def _get_attribute_recursive(self, item, item_type: str, check=None, enable_logging=True, leaf_item=None):
         if item is None:
-            self._log_item_warning(leaf_item, "No {} attribute provided parent or".format(item_type))
+            self._log_item_warning(leaf_item, "No {} attribute provided parent or".format(item_type), enable_logging)
             return None
         if leaf_item is None:
             leaf_item = item
@@ -424,13 +395,13 @@ class UniFiControllerClient(SmartPlugin):
                         item_type, item.path()), enable_logging)
                 return self.get_iattr_value(item.conf, item_type)
         except AttributeError:
-            self._log_item_warning(leaf_item, "No {} attribute provided".format(item_type))
+            self._log_item_warning(leaf_item, "No {} attribute provided".format(item_type), enable_logging)
             return None
         return self._get_attribute_recursive(item.return_parent(), item_type, check, enable_logging, leaf_item)
 
     def _get_one_of_attr_recursive(self, item, item_types: list, check=None, enable_logging=True, leaf_item=None):
         if item is None:
-            self._log_item_warning(leaf_item, "No {} attribute provided".format(json.dump(item_types)))
+            self._log_item_warning(leaf_item, "No {} attribute provided".format(json.dump(item_types)), enable_logging)
             return None
         if leaf_item is None:
             leaf_item = item
@@ -447,7 +418,7 @@ class UniFiControllerClient(SmartPlugin):
 
                     return self.get_iattr_value(item.conf, item_type)
             except AttributeError:
-                self._log_item_warning(leaf_item, "No {} attribute provided".format(item_type))
+                self._log_item_warning(leaf_item, "No {} attribute provided".format(item_type), enable_logging)
                 return None
         return self._get_one_of_attr_recursive(item.return_parent(), item_types, check, enable_logging, leaf_item)
 
@@ -526,7 +497,7 @@ class UniFiControllerClient(SmartPlugin):
             try:
                 func(item)
             except Exception as e:
-                self._log_item_error(item, e, self._logging)
+                self._log_item_error(item, repr(e), self._logging)
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -655,24 +626,29 @@ class UniFiControllerClient(SmartPlugin):
         for item in self._model.get_items(lambda i: self._item_filter(i, UniFiConst.ATTR_TYPE, unifi_type)):
             try:
                 item(func(item), self.get_shortname())
+            except ConnectionError:
+                # kills further processing in this round.
+                raise
             except Exception as e:
-                self._log_item_error(item, e, self._logging)
+                # log the error for this specific poll type and proceed with next
+                self._log_item_error(item, repr(e), self._logging)
 
     def poll_device(self):
         """
         Polls for updates of the devices connected to the controller
         """
-        rc_before = self._model._api.get_request_count()
-        self._poll_with_unifi_type(UniFiConst.TYPE_CL_PRESENT, lambda i: self._get_client_presence(i))
-        self._poll_with_unifi_type(UniFiConst.TYPE_CL_IP, lambda i: self._get_client_info(i, 'ip'))
-        self._poll_with_unifi_type(UniFiConst.TYPE_CL_HOSTNAME, lambda i: self._get_client_info(i, 'hostname'))
-        self._poll_with_unifi_type(UniFiConst.TYPE_CL_AT_AP, lambda i: self._check_client_at_ap(i))
-        self._poll_with_unifi_type(UniFiConst.TYPE_AP_ENABLED, lambda i: self._check_ap_enabled(i))
-        self._poll_with_unifi_type(UniFiConst.TYPE_SW_PORT_ENABLED, lambda i: self._check_sw_port_enabled(i))
-        self._poll_with_unifi_type(UniFiConst.TYPE_SW_PORT_PROFILE, lambda i: self._get_sw_port_profile(i))
-        self._poll_with_unifi_type(UniFiConst.TYPE_DV_IP, lambda i: self._get_device_info(i, 'ip'))
-        self._poll_with_unifi_type(UniFiConst.TYPE_DV_NAME, lambda i: self._get_device_info(i, 'name'))
-        self.logger.debug("Poll cycle took {} requests".format(self._model._api.get_request_count() - rc_before))
+        try:
+            self._poll_with_unifi_type(UniFiConst.TYPE_CL_PRESENT, lambda i: self._get_client_presence(i))
+            self._poll_with_unifi_type(UniFiConst.TYPE_CL_IP, lambda i: self._get_client_info(i, 'ip'))
+            self._poll_with_unifi_type(UniFiConst.TYPE_CL_HOSTNAME, lambda i: self._get_client_info(i, 'hostname'))
+            self._poll_with_unifi_type(UniFiConst.TYPE_CL_AT_AP, lambda i: self._check_client_at_ap(i))
+            self._poll_with_unifi_type(UniFiConst.TYPE_AP_ENABLED, lambda i: self._check_ap_enabled(i))
+            self._poll_with_unifi_type(UniFiConst.TYPE_SW_PORT_ENABLED, lambda i: self._check_sw_port_enabled(i))
+            self._poll_with_unifi_type(UniFiConst.TYPE_SW_PORT_PROFILE, lambda i: self._get_sw_port_profile(i))
+            self._poll_with_unifi_type(UniFiConst.TYPE_DV_IP, lambda i: self._get_device_info(i, 'ip'))
+            self._poll_with_unifi_type(UniFiConst.TYPE_DV_NAME, lambda i: self._get_device_info(i, 'name'))
+        except ConnectionError as ex:
+            self.logger.error("Poll failed: " + repr(ex))
 
     def init_webinterface(self):
         """"
