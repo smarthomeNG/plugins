@@ -359,8 +359,6 @@ item_structs:
             type: bool
             visu_acl: rw
             enforce_updates: True
-            eval: True
-            eval_trigger: ..settings.settings_edited
 
         settings:
             settings_edited:
@@ -368,6 +366,7 @@ item_structs:
                 name: settings editiert
                 eval_trigger: ...settings.*
                 eval: not sh..self()
+                on_update: ...retrigger = True
 
         rules:
             name: Zustandsautomat
@@ -440,8 +439,6 @@ item_structs:
             type: bool
             visu_acl: rw
             enforce_updates: True
-            eval: True
-            eval_trigger: ..settings.settings_edited
 
         settings:
             remark: Use these settings for your condition values
@@ -465,6 +462,7 @@ item_structs:
                 name: settings editiert
                 eval_trigger: ...settings.*
                 eval: not sh..self()
+                on_update: ...retrigger = True
 
         rules:
             se_item_suspend: ..suspend

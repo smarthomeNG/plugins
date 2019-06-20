@@ -601,13 +601,18 @@ class SeActionSpecial(SeActionBase):
 
     # Really execute the action
     def _execute(self, actionname: str, repeat_text: str = ""):
+        try:
+            _log_value = self.__value.property.path
+        except Exception:
+            _log_value = self.__value
         self._log_info("{0}: Executing special action '{1}' using item '{2}'.{3}",
-                        actionname, self.__special, self.__value.property.path, repeat_text)
+                       actionname, self.__special, _log_value, repeat_text)
         self._log_increase_indent()
         if self.__special == "suspend":
             self.suspend_execute()
         elif self.__special == "retrigger":
             # noinspection PyCallingNonCallable
+            self.__value(False, caller='{} Retrigger'.format(StateEngineDefaults.plugin_identification))
             self.__value(True, caller='{} Retrigger'.format(StateEngineDefaults.plugin_identification))
         else:
             self._log_decrease_indent()
