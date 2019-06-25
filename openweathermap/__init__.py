@@ -183,23 +183,27 @@ class OpenWeatherMap(SmartPlugin):
         too_far = date_requested + timedelta(days=1)
         wrk = []
         if forecast is not None:
-            for entry in forecast.get('list'):
-                dt = int(entry.get('dt'))
-                if dt >= int(too_far.timestamp()):
-                    break
-                if dt >= int(date_requested.timestamp()):
-                    val = self.get_val_from_dict("/".join(sp), entry)
-                    if isinstance(val, float) or isinstance(val, int):
-                        wrk.append(val)
-                    elif val is None:
-                        self.logger.error(
-                            "get_daily_forecast: found None value while calculating daily forecast for matchstring '{}'.".format(s))
-                        return 0
-                    else:
-                        self.logger.error(
-                            "get_daily_forecast: found unknown value while calculating daily forecast for matchstring '{}'; daily forecast only supported for int and float.".format(
-                                s))
-                        return 0
+            forecast_list = forecast.get('list')
+            if forecast_list is not None:
+                for entry in forecast_list:
+                    dt = int(entry.get('dt'))
+                    if dt >= int(too_far.timestamp()):
+                        break
+                    if dt >= int(date_requested.timestamp()):
+                        val = self.get_val_from_dict("/".join(sp), entry)
+                        if isinstance(val, float) or isinstance(val, int):
+                            wrk.append(val)
+                        elif val is None:
+                            self.logger.error(
+                                "get_daily_forecast: found None value while calculating daily forecast for matchstring '{}'.".format(s))
+                            return 0
+                        else:
+                            self.logger.error(
+                                "get_daily_forecast: found unknown value while calculating daily forecast for matchstring '{}'; daily forecast only supported for int and float.".format(
+                                    s))
+                            return 0
+            else:
+                self.logger.error("get_daily_forecast: forecast.get('list') is None.")
         else:
             self.logger.error("get_daily_forecast: forecast data is None.")
             return 0
