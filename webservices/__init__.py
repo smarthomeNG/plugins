@@ -329,7 +329,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                             items[item_data['path']] = item_data
                 return items
         else:
-            item = self.plugin.get_sh().return_item(item_path)
+            item = self.plugin.items.return_item(item_path)
             if item is None:
                 return {"Error": "No item with item path %s found." % item_path}
 
@@ -423,7 +423,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                             items[item_data['path']] = item_data
                 return items
         else:
-            item = self.plugin.get_sh().return_item(item_path)
+            item = self.plugin.items.return_item(item_path)
 
             if item is None:
                 return {"Error": "No item with item path %s found." % item_path}
