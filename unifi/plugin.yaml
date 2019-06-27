@@ -6,7 +6,7 @@ plugin:
         de: 'Plugin um einige Features von UniFi Controllern auszulesen und fernzusteuern'
         en: 'Plugin to read and control some features of UniFi Controllers'
     maintainer: jentz1986
-#    tester:                         # Who tests this plugin?
+    tester: Onkelandy                        # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: wifi unifi ubiquiti network
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
@@ -53,6 +53,13 @@ parameters:
         description:
             de: 'UniFi Site Id.'
             en: 'UniFi Site Id.'
+
+    poll_cycle_time:
+        type: int
+        default: 60
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 60 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 60 seconds.'
     
 item_attributes: 
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -99,7 +106,7 @@ item_attributes:
     unifi_switch_port_no:
         type: int
         valid_min: 1
-        valid_max: 50
+        valid_max: 54
         description:
             de: 'Definition der Portnummer an den ein Gerät an einen UniFi Switch angeschlossen ist'
             en: 'Definition of the port-number the device is connected to a UniFi-switch.'

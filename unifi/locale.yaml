@@ -1,11 +1,11 @@
 # translations for the web interface
 plugin_translations:
     'NumFromStart':     {'de': 'Anzahl Requests seit Start', 'en': 'Number of requests since start of plugin'}
-    'Probleme':         {'de': '=', 'en': 'Problems'}
     'Pfad':             {'de': '=', 'en': 'Path'}
     'Typ':              {'de': '=', 'en': 'Type'}
     'Item Wert':        {'de': '=', 'en': 'Item value'}
     'Letztes Update':   {'de': '=', 'en': 'Last update'}
     'Letzter Change':   {'de': '=', 'en': 'Last change'}
+    'PollCycle':        {'de': 'Abfragezyklus (s)', 'en': 'Poll cycle (s)'}
 
 

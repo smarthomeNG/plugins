@@ -14,8 +14,8 @@
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>&nbsp;</strong></td>
-			<td class="py-1">&nbsp;</td>
+			<td class="py-1"><strong>{{ _('PollCycle') }}</strong></td>
+			<td class="py-1">{{ p._cycle }}</td>
 			<td></td>
 			<td class="py-1"><strong>Username</strong></td>
 			<td class="py-1">{{ p._model.get_controller_user() }}</td>
@@ -81,11 +81,6 @@
 			</thead>
 			<tbody>
 				{% for item in p._model.get_items() %}
-					{% if p.get_instance_name() %}
-				    	{% set instance_append = "@"+p.get_instance_name() %}
-					{% else %}
-						{% set instance_append = "" %}
-					{% endif %}
 					<tr id="r{{ loop.index }}_head">
 						<td class="py-1"><div class="rel" id="r{{ loop.index }}_lvl">
 						{% set warn_level =  p._model.get_item_issues(item.id()).get_worst_level() %}

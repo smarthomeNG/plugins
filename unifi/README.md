@@ -41,10 +41,11 @@ Please refer to the documentation generated from plugin.yaml metadata.
 Example:
 ```
 unifi:
-plugin_name: unifi
-unifi_user: ubnt #User Name
-unifi_password: ubnt #Password
-unifi_controller_url: https://192.168.1.12:8443 # URL of YOUR controller / cloud-key
+  plugin_name: unifi
+  unifi_user: ubnt        # User Name
+  unifi_password: ubnt    # Password
+  unifi_controller_url: https://192.168.1.12:8443 # URL of YOUR controller / cloud-key
+  poll_cycle_time: 60     # Cycle time for data retrieval in seconds 
 
 ```
 

@@ -46,6 +46,7 @@ class UniFiConst(object):
     PARAMETER_USER = 'unifi_user'
     PARAMETER_PWD = 'unifi_password'
     PARAMETER_SITE_ID = 'unifi_site_id'
+    PARAMETER_CYCLE_TIME = 'poll_cycle_time'
 
     ATTR_TYPE = 'unifi_type'
     TYPE_CL_PRESENT = 'client_present'
@@ -312,7 +313,7 @@ class UniFiControllerClient(SmartPlugin):
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
         # (maybe you want to make it a plugin parameter?)
-        self._cycle = 60
+        self._cycle = self.get_parameter_value(UniFiConst.PARAMETER_CYCLE_TIME)
         self._logging = True
 
         self.init_webinterface()
@@ -380,7 +381,7 @@ class UniFiControllerClient(SmartPlugin):
 
     def _get_attribute_recursive(self, item, item_type: str, check=None, enable_logging=True, leaf_item=None):
         if item is None:
-            self._log_item_warning(leaf_item, "No {} attribute provided parent or".format(item_type), enable_logging)
+            self._log_item_warning(leaf_item, "No {} attribute provided".format(item_type), enable_logging)
             return None
         if leaf_item is None:
             leaf_item = item
@@ -473,10 +474,12 @@ class UniFiControllerClient(SmartPlugin):
                 return
             prof_on = self._get_attribute_recursive(item, UniFiConst.ATTR_SW_PORT_PROF_ON)
             if prof_on is None:
-                self._log_item_info(item, "Will use 'All' as Port Profile for on", defaulting=True)
+                self._log_item_info(
+                    item, "Will use 'All' as port profile for on (https://help.ubnt.com/hc/en-us/articles/219654087-UniFi-Using-VLANs-with-UniFi-Wireless-Routing-Switching-Hardware#USW)", defaulting=True)
             prof_off = self._get_attribute_recursive(item, UniFiConst.ATTR_SW_PORT_PROF_OFF)
             if prof_off is None:
-                self._log_item_info(item, "Will use 'Disabled' as Port Profile for off", defaulting=True)
+                self._log_item_info(
+                    item, "Will use 'Disabled' as port profile for off (https://help.ubnt.com/hc/en-us/articles/219654087-UniFi-Using-VLANs-with-UniFi-Wireless-Routing-Switching-Hardware#USW)", defaulting=True)
             self._model.append_item(item)
             return self.update_item
 
@@ -588,16 +591,16 @@ class UniFiControllerClient(SmartPlugin):
             return None
         except UniFiDataException as e:
             self._log_item_warning(
-                i, "Unable to determine current switch-profile for switch {}, error: {}".format(sw_mac, e))
+                i, "Unable to determine current switch-profile for switch {}, error: {}".format(sw_mac, e),  enable_logging=self._logging)
             return None
 
     def _check_sw_port_enabled(self, item):
+        rslt = self._get_sw_port_profile(item)
+
         pp_on = self._get_attribute_recursive(
             item, UniFiConst.ATTR_SW_PORT_PROF_ON, enable_logging=self._logging)
         pp_off = self._get_attribute_recursive(
             item, UniFiConst.ATTR_SW_PORT_PROF_OFF, enable_logging=self._logging)
-
-        rslt = self._get_sw_port_profile(item)
 
         if rslt == pp_off:
             return False
@@ -606,7 +609,7 @@ class UniFiControllerClient(SmartPlugin):
         elif rslt is None:
             return None
         else:
-            self._log_item_warning(item, "Current port-profile \"{}\" doesn't match \"{}\" (on) or \"{}\" (off)".format(
+            self._log_item_warning(item, "Current port profile \"{}\" doesn't match \"{}\" (on) or \"{}\" (off) (https://help.ubnt.com/hc/en-us/articles/219654087-UniFi-Using-VLANs-with-UniFi-Wireless-Routing-Switching-Hardware#USW)".format(
                 rslt, pp_on, pp_off), enable_logging=self._logging)
             return None
 
@@ -630,7 +633,7 @@ class UniFiControllerClient(SmartPlugin):
                 # kills further processing in this round.
                 raise
             except Exception as e:
-                # log the error for this specific poll type and proceed with next
+                # log the error for this specific poll type and proceed with next item
                 self._log_item_error(item, repr(e), self._logging)
 
     def poll_device(self):
@@ -638,13 +641,13 @@ class UniFiControllerClient(SmartPlugin):
         Polls for updates of the devices connected to the controller
         """
         try:
+            self._poll_with_unifi_type(UniFiConst.TYPE_SW_PORT_ENABLED, lambda i: self._check_sw_port_enabled(i))
+            self._poll_with_unifi_type(UniFiConst.TYPE_SW_PORT_PROFILE, lambda i: self._get_sw_port_profile(i))
             self._poll_with_unifi_type(UniFiConst.TYPE_CL_PRESENT, lambda i: self._get_client_presence(i))
             self._poll_with_unifi_type(UniFiConst.TYPE_CL_IP, lambda i: self._get_client_info(i, 'ip'))
             self._poll_with_unifi_type(UniFiConst.TYPE_CL_HOSTNAME, lambda i: self._get_client_info(i, 'hostname'))
             self._poll_with_unifi_type(UniFiConst.TYPE_CL_AT_AP, lambda i: self._check_client_at_ap(i))
             self._poll_with_unifi_type(UniFiConst.TYPE_AP_ENABLED, lambda i: self._check_ap_enabled(i))
-            self._poll_with_unifi_type(UniFiConst.TYPE_SW_PORT_ENABLED, lambda i: self._check_sw_port_enabled(i))
-            self._poll_with_unifi_type(UniFiConst.TYPE_SW_PORT_PROFILE, lambda i: self._get_sw_port_profile(i))
             self._poll_with_unifi_type(UniFiConst.TYPE_DV_IP, lambda i: self._get_device_info(i, 'ip'))
             self._poll_with_unifi_type(UniFiConst.TYPE_DV_NAME, lambda i: self._get_device_info(i, 'name'))
         except ConnectionError as ex:
