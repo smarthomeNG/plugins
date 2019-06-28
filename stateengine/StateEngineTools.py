@@ -21,6 +21,8 @@
 import datetime
 from ast import literal_eval
 # import logging
+from lib.item import Items
+itemsApi = Items.get_instance()
 
 #
 # Some general tool functions
@@ -178,7 +180,7 @@ def find_attribute(smarthome, base_item, attribute, recursion_depth=0):
     if "se_use" in base_item.conf:
         if recursion_depth > 5:
             return None
-        use_item = smarthome.return_item(base_item.conf["se_use"])
+        use_item = itemsApi.return_item(base_item.conf["se_use"])
         if use_item is not None:
             result = find_attribute(smarthome, use_item, attribute, recursion_depth + 1)
             if result is not None:
@@ -234,7 +236,7 @@ def get_original_caller(smarthome, caller, source, item=None):
     original_source = source
     original_item = item
     while original_caller == "Eval":
-        original_item = smarthome.return_item(original_source)
+        original_item = itemsApi.return_item(original_source)
         if original_item is None:
             break
         original_changed_by = original_item.changed_by()
