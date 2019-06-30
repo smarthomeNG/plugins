@@ -27,7 +27,6 @@ parameters:
         description:
             de: 'Bluetooth-Adresse des MiFlora Pflanzensensors (mit "hcitool lescan" herauszufinden).'
             en: 'Bluetooth address of MiFlora plant sensor (find out with "hcitool lescan").'
-
     cycle:
         type: int
         default: 300
@@ -35,14 +34,6 @@ parameters:
         description:
             de: '(optional) Dieser Parameter muss normalerweise nicht angegeben werden. Er erlaubt es die Update-Frquenz anzupassen (Standard: alle 300 Sekunden).'
             en: "(optional) This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 300 seconds)."
-
-    instance:
-        type: str
-        default: ''
-        description:
-            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
-            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
-
 
 item_attributes:
     # Definition of item attributes defined by this plugin
