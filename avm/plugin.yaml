@@ -211,8 +211,8 @@ plugin_functions:
                 type: int
                 default: 0
                 description:
-                    de: "ID des Telefonbuchs."
-                    en: "ID of the phone book."
+                    de: "ID des Telefonbuchs, in dem nachgeschlagen werden soll."
+                    en: "ID of the phone book, in which numbers should be looked up."
 
     get_contact_name_by_phone_number:
         type: str
@@ -225,6 +225,12 @@ plugin_functions:
                 description:
                     de: "Vollständige Telefonnummer"
                     en: "Complete phone number"
+            phonebook_id:
+                type: int
+                default: 0
+                description:
+                    de: "ID des Telefonbuchs, in dem nachgeschlagen werden soll."
+                    en: "ID of the phone book, in which numbers should be looked up."
 
     get_host_details:
         type: dict(str)
