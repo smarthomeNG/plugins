@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2019 Jens Höppner                                    <EMAIL>
+#  Copyright 2019 Jens Höppner                      mail@jens-hoeppner.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
@@ -23,7 +23,6 @@
 #
 #########################################################################
 
-from requests import Session
 from typing import Pattern, Dict, Union
 import re
 from jinja2 import Environment, FileSystemLoader
@@ -34,8 +33,6 @@ from lib.network import Network
 from plugins.unifi.ubiquiti.unifi import API as UniFiAPI
 from plugins.unifi.ubiquiti.unifi import DataException as UniFiDataException
 import ruamel.yaml as yaml
-from ruamel.yaml.comments import CommentedMap
-from ruamel.yaml.compat import ordereddict
 from requests.exceptions import ConnectionError
 import json
 import traceback
@@ -140,7 +137,7 @@ class UniFiControllerClientModel():
 
     def _get_device_node_item(self, node_data, parent_type=""):
         n = node_data['node']
-        node_key = re.sub('[^0-9a-zA-Z_]+', '_', node_data['node']['key'].lower()).replace("__", "_")
+        node_key = re.sub('[^0-9a-z_]+', '_', node_data['node']['key'].lower().replace(' ', '_')).replace("__", "_")
         node_body = {}
 
         if n['type'] == "wired_client":
@@ -484,7 +481,7 @@ class UniFiControllerClient(SmartPlugin):
             return self.update_item
 
         else:
-            self._log_item_error(item, "unifi_type %s unknown" % (i_attr))
+            self._log_item_error(item, "{} {} unknown".format(UniFiConst.ATTR_TYPE, i_attr))
             self._model.append_item(item)
 
     def parse_logic(self, logic):
