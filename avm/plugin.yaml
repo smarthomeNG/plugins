@@ -203,9 +203,16 @@ plugin_functions:
         parameters:
             filter_incoming:
                 type: str
+                default: ''
                 description:
                     de: "Filter, um nur die Anrufe zu erhalten, die zu einer bestimmten angerufenen Nummer gehören."
                     en: "Filter to filter calls to a specific destination phone number."
+            phonebook_id:
+                type: int
+                default: 0
+                description:
+                    de: "ID des Telefonbuchs."
+                    en: "ID of the phone book."
 
     get_contact_name_by_phone_number:
         type: str

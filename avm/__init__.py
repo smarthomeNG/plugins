@@ -1046,7 +1046,7 @@ class AVM(SmartPlugin):
 
         return result_numbers
 
-    def get_calllist(self, filter_incoming=''):
+    def get_calllist(self, filter_incoming='', phonebook_id=0):
         """
         Returns an array of all calllist entries
 
@@ -1054,6 +1054,7 @@ class AVM(SmartPlugin):
         Curl for testing if the calllist url is returned:
         curl  --anyauth -u user:'password' 'https://192.168.178.1:49443/upnp/control/x_contact' -H 'Content-Type: text/xml; charset="utf-8"' -H 'SoapAction: urn:dslforum-org:service:X_AVM-DE_OnTel:1#GetCallList' -d '<?xml version="1.0" encoding="utf-8"?> <s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"> <s:Body> <u:GetCallList xmlns:u="urn:dslforum-org:service:X_AVM-DE_OnTel:1"> <s:NewPhonebookID>0</s:NewPhonebookID> </u:GetCallList> </s:Body> </s:Envelope>' -s -k
         :param: Filter to filter incoming calls to a specific destination phone number
+        :param: ID of the Phonebook (default: 0)
         :return: Array of calllist entries with the attributes 'Id','Type','Caller','Called','CalledNumber','Name','Numbertype','Device','Port','Date','Duration' (some optional)
         """
 
@@ -1061,7 +1062,7 @@ class AVM(SmartPlugin):
         headers = self._header.copy()
         action = "GetCallList"
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['OnTel'], action)
-        soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'], {'NewPhonebookID': 0})
+        soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'], {'NewPhonebookID': phonebook_id})
         try:
             response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                           auth=HTTPDigestAuth(self._fritz_device.get_user(),
