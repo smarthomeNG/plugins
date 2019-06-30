@@ -1,12 +1,12 @@
 # Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Plugin um einige Features von UniFi Controllern auszulesen und fernzusteuern'
         en: 'Plugin to read and control some features of UniFi Controllers'
     maintainer: jentz1986
-    tester: Onkelandy                        # Who tests this plugin?
+    tester: Onkelandy, psilo909     # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: wifi unifi ubiquiti network
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
@@ -14,7 +14,7 @@ plugin:
 
     version: 1.6.1                  # Plugin version
     sh_minversion: 1.6              # minimum shNG version to use this plugin
-#    sh_maxversion:                  # maximum shNG version to use this plugin (leave empty if latest)
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
     restartable: True
     classname: UniFiControllerClient         # class containing the plugin
