@@ -562,6 +562,8 @@ class AVM(SmartPlugin):
                                                          self.get_contact_name_by_phone_number,
                                                          self.get_parameter_value('call_monitor_incoming_filter'), self)
             self._monitoring_service.connect()
+        else:
+            self._monitoring_service = None
 
         self._call_monitor_incoming_filter = self.get_parameter_value('call_monitor_incoming_filter')
 
@@ -801,8 +803,9 @@ class AVM(SmartPlugin):
                         if element['Type'] in ['3', '4']:
                             item('outgoing')
                             break
-            if self._monitoring_service is not None:
-                self._monitoring_service.register_item(item)
+            if self._call_monitor:
+                if self._monitoring_service is not None:
+                    self._monitoring_service.register_item(item)
         elif self.get_iattr_value(item.conf, 'avm_data_type') in ['call_duration_incoming', 'call_duration_outgoing']:
             # items specific to call monitor duration calculation
             # initally get data from calllist
