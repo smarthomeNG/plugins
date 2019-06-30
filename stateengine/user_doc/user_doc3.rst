@@ -33,7 +33,12 @@ die Höhe einer Jalousie oder die Außenhelligkeit.
 Diese Items müssen auf Ebene des Regelwerk-Items über das Attribut
 ``se_item_<Bedingungsname/Aktionsname>`` bekannt gemacht werden.
 
-.. rubric:: Beispiel
+Anstatt direkt das Item in Form des absoluten oder relativen Pfades mittels ``se_item_`` zu
+setzen, kann auch die Angabe ``se_eval_`` genutzt werden. In diesem Fall wird eine beliebige
+Funktion anstelle des Itemnamen angegeben. Dies ist sowohl für Bedingungsabfragen,
+als auch für das Setzen von "dynamischen" Items möglich.
+
+.. rubric:: Beispiel se_item
    :name: beispielregelwerk
 
 Im Beispiel wird durch ``se_item_height`` das Item ``beispiel.raffstore1.hoehe``
@@ -63,3 +68,37 @@ und Aktionen folgen auf den nächsten Seiten.
                             - 'to: 100'
                     enter_toodark:
                         se_max_brightness: 25
+
+.. rubric:: Beispiel se_eval
+   :name: beispielregelwerkeval
+
+Im Beispiel wird durch ``se_eval_brightness`` das Item für den Check von
+Bedingungen bekannt gemacht. Aufgrund der angegebenen Funktion wird das Item
+abhängig vom aktuellen Zustandsnamen eruiert. Da Zustand_Eins den Namen "sueden"
+hat, wird somit auch der Wert von wetterstation.helligkeit_sueden abgefragt.
+Würde der Zustand "osten" heißen, würde der Helligkeitswert vom Osten getestet werden.
+
+.. code-block:: yaml
+
+    #items/item.yaml
+    wetterstation:
+        helligkeit_sueden:
+            type: num
+            knx_cache: 1/1/1
+            knx_dpt: 5
+
+        helligkeit_osten:
+            type: num
+            knx_cache: 1/1/2
+            knx_dpt: 5
+
+    raffstore1:
+        automatik:
+            struct: stateengine.general
+            rules:
+                se_eval_brightness: se_eval.get_relative_itemvalue('wetterstation.helligkeit_{}'.format(se_eval.get_variable('current.state_name')))
+
+                Zustand_Eins:
+                    name: sueden
+                    enter:
+                        se_max_brightness: 5000

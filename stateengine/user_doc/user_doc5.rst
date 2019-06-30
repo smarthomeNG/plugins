@@ -61,6 +61,8 @@ Der zu vergleichende Wert einer Bedingung kann auf folgende Arten definiert werd
 - statischer Wert (also z.B. 500 Lux)
 - Item (beispielsweise ein Item namens settings.helligkeitsschwellwert)
 - Eval-Funktion (siehe auch `eval Ausdrücke <https://www.smarthomeng.de/user/konfiguration/items_attributes_eval_ausdruecke.html>`_)
+- Template: eine Vorlage, z.B. eine eval Funktion, die immer wieder innerhalb
+des StateEngine Items eingesetzt werden kann.
 
 
 .. rubric:: Name der Bedingung
@@ -72,6 +74,72 @@ die jeweils mit einem Unterstrich "_" getrennt werden:
 - ``se``: eindeutiger Prefix, um dem Plugin zugeordnet zu werden
 - ``<Vergleichsfunktion>``: siehe unten. Beispiel: min = der Wert des <Bedingungsitems> muss mindestens dem beim Attribut angegebenen Wert entsprechen.
 - ``<Vergleichsitem/Bedingungsname>``: Hier wird entweder das im Regelwerk-Item mittels ``se_item_<Name>`` deklarierte Item oder eine besondere Bedingung (siehe unten) referenziert.
+
+
+.. rubric:: Templates für Bedingungsabfragen
+   :name: bedingungstemplates
+
+Setzt man für mehrere Bedingungsabfragen (z.B. Helligkeit, Temperatur, etc.) immer die
+gleichen Ausdrücke ein (z.B. eine eval-Funktion), so kann Letzteres als Template
+definiert und referenziert werden. Dadurch wird die die Handhabung
+komplexerer Abfragen deutlich vereinfacht. Diese Templates müssen wie se_item/se_eval
+auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
+
+.. code-block:: yaml
+    rules:
+      se_template_test: eval:se_eval.get_relative_itemvalue('..settings.max_bright') - 20
+      se_item_specialitem: meinitem.specialitem # declare an existing item here
+
+      state_one:
+          enter_testlast: #has to start with enter, can be called whatever
+              se_value_laststate: 'template:test' #laststate is a special conditionname
+          enter_testother:
+              se_value_specialitem: 'template:test' #specialitem must be declared with se_item/se_eval
+
+Bei sämtlichen Bedingungen ist es möglich, Werte als Liste anzugeben. Es ist allerdings
+nicht möglich, Templates als Listen zu definieren.
+
+
+.. rubric:: Bedingungslisten
+   :name: bedingungslisten
+
+Sämtliche nun gelisteten Bedingungen können entweder eine einzelne Angabe haben
+oder aus einer Liste mit mehreren Bedingungen bestehen.
+In letzterem Fall fungiert die Liste als ODER Abfrage. Sobald eine der gelisteten
+Werte eingetroffen ist, wird die Bedingung als wahr angenommen
+und der Zustand aktiviert.
+
+.. code-block:: yaml
+
+      se_value_laststate:
+          - 'kochen'
+          - 'eval:1+2'
+          - 'item:..laststate_id'
+
+Im oben gezeigten Beispiel kann der letzte Status einen von drei Werten beinhalten,
+damit die Bedingung wahr ist. In welcher Form diese Werte
+angegeben werden, ist offen - es müssen also nicht nur reine Strings in die
+Liste eingefügt werden.
+
+Werden sowohl min(age) als auch max(age) als Liste definiert, spielt die
+Reihenfolge der Liste eine Rolle, da die beiden Werte als Paar herangezogen werden.
+
+.. code-block:: yaml
+
+      se_minage_<Bedingungsname>:
+          - '5'
+          - 'eval:1+2'
+          - 'novalue'
+
+      se_maxage_<Bedingungsname>:
+         - '10'
+         - 'eval:5*sh.meinwert()'
+         - 'item:EinzweitesItem'
+
+Obige Bedingung wird beispielsweise wahr bei:
+- einem Wert zwischen 5 und 10
+- einem Wert zwischen 3 und 5 * der Wert des Items meinwert
+- einem Wert maximal so hoch wie der in EinzweitesIem hinterlegte
 
 
 .. rubric:: Vergleichsfunktion
@@ -153,6 +221,7 @@ Die Altersbedingung (Mindestalter, Höchstalter) wird negiert
 zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
 "no", "off"
 
+
 .. rubric:: "Besondere" Bedingungen
    :name: besonderebedingungen
 
@@ -211,6 +280,11 @@ Sonnenaufgang/Sonnenuntergang, 90 → Sonne exakt im Zenith
 Das Alter wird über die letzte Änderung des Items, das als
 ``se_laststate_item_id`` angegeben ist, ermittelt.
 
+**condition_age**
+*Zeit seit der letzten Änderung des Bedingungssets (Sekunden)*
+Das Alter wird über die letzte Änderung des Items, das als
+``se_lastconditionset_item_id`` angegeben ist, ermittelt.
+
 **random**
 *Zufallszahl zwischen 0 und 100*
 Wenn etwas zufällig mit einer Wahrscheinlichkeit von 60% passieren
@@ -219,7 +293,19 @@ verwendet werden.
 
 **laststate**
 *Id des Zustandsitems des aktuellen Status*
+Die Abfrage se_value_laststate ist besonders wichtig für
+Bedingungsabfragen, die über das Verbleiben im aktuellen Zustand
+bestimmen (z.b. enter_stay). So können aber auch Stati übersprungen
+werden, wenn sie nicht nach einem bestimmten anderen Zustand aktiviert
+werden sollen.
 Wichtig: Hier muss die vollständige Item-Id angegeben werden
+
+**lastconditionset_id/name**
+*Id des Bedingungssets des aktuellen Status*
+Wie bei laststate sind auch die lastconditionset Bedingungsabfragen
+primär relevant für Abfragen zum Verbleiben in einem Zustand. Gerade bei
+komplexeren Bedingungssets macht es oftmals Sinn, nach dem Set zu fragen,
+das denn nun wirklich für die letzte Zustandsbestimmung relevant war.
 
 **trigger_item, trigger_caller, trigger_source, trigger_dest**
 *item, caller, source und dest-Werte, durch die die

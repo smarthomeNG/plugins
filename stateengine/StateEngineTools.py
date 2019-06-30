@@ -19,10 +19,15 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 import datetime
+from ast import literal_eval
+# import logging
+from lib.item import Items
+itemsApi = Items.get_instance()
 
 #
 # Some general tool functions
 #
+# logger = logging.getLogger(__name__)
 
 
 # Find a certain item below a given item.
@@ -30,9 +35,9 @@ import datetime
 # child_id: Id of child item to search (without prefixed id of "item")
 # returns: child item if found, otherwise None
 def get_child_item(item, child_id):
-    search_id = item.id() + "." + child_id
+    search_id = item.property.path + "." + child_id
     for child in item.return_children():
-        if child.id() == search_id:
+        if child.property.path == search_id:
             return child
     return None
 
@@ -41,7 +46,23 @@ def get_child_item(item, child_id):
 # item: Item for which the last part of the id should be returned
 # returns: last part of item id
 def get_last_part_of_item_id(item):
-    return item.id().rsplit(".", 1)[1]
+    return item.property.path.rsplit(".", 1)[1]
+
+
+# Flatten list of values
+# changelist: list to make flat
+def flatten_list(changelist):
+    if isinstance(changelist, list):
+        flat_list = []
+        for sublist in changelist:
+            if isinstance(sublist, list):
+                for item in sublist:
+                    flat_list.append(item)
+            else:
+                flat_list.append(sublist)
+    else:
+        flat_list = changelist
+    return flat_list
 
 
 # cast a value as numeric. Throws ValueError if cast not possible
@@ -54,13 +75,17 @@ def cast_num(value):
         return value
     try:
         return int(value)
-    except:
+    except Exception:
         pass
     try:
         return float(value)
-    except:
+    except Exception:
         pass
-    raise ValueError("Can't cast {0} to int!".format(str(value)))
+    try:
+        return literal_eval(value)
+    except Exception:
+        pass
+    raise ValueError("Can't cast {0} to int!".format(value))
 
 
 # cast a value as boolean. Throws ValueError or TypeError if cast is not possible
@@ -74,16 +99,16 @@ def cast_bool(value):
         elif value in [True, 1]:
             return True
         else:
-            raise ValueError("Can't cast {0} to bool!".format(str(value)))
+            raise ValueError("Can't cast {0} to bool!".format(value))
     elif type(value) in [str, str]:
         if value.lower() in ['0', 'false', 'no', 'off']:
             return False
         elif value.lower() in ['1', 'true', 'yes', 'on']:
             return True
         else:
-            raise ValueError("Can't cast {0} to bool!".format(str(value)))
+            raise ValueError("Can't cast {0} to bool!".format(value))
     else:
-        raise ValueError("Can't cast {0} to bool!".format(str(value)))
+        raise ValueError("Can't cast {0} to bool!".format(value))
 
 
 # cast a value as string. Throws ValueError if cast is not possible
@@ -94,7 +119,24 @@ def cast_str(value):
     if isinstance(value, str):
         return value
     else:
-        raise ValueError("Can't cast {0} to str!".format(str(value)))
+        raise ValueError("Can't cast {0} to str!".format(value))
+
+
+# cast a value as list. Throws ValueError if cast is not possible
+# Taken from smarthome.py/lib/item.py
+# value: value to cast
+# returns: value as string
+def cast_list(value):
+    if isinstance(value, str):
+        try:
+            value = literal_eval(value)
+        except Exception:
+            pass
+    if isinstance(value, list):
+        return value
+    else:
+        value = [value]
+        return value
 
 
 # cast value as datetime.time. Throws ValueError if cast is not possible
@@ -115,7 +157,9 @@ def cast_time(value):
             minute = int(value_parts[1])
         except ValueError:
             raise ValueError("Can not cast '{0}' to data type 'time' due to non-numeric parts!".format(orig_value))
-        if hour == 24 and minute == 0:
+        if hour > 24 or minute > 59:
+            raise ValueError("Can not cast '{0}' to data type 'time'. Hour or minute values too high!".format(orig_value))
+        elif hour == 24 and minute >= 0:
             return datetime.time(23, 59, 59)
         else:
             return datetime.time(hour, minute)
@@ -136,7 +180,7 @@ def find_attribute(smarthome, base_item, attribute, recursion_depth=0):
     if "se_use" in base_item.conf:
         if recursion_depth > 5:
             return None
-        use_item = smarthome.return_item(base_item.conf["se_use"])
+        use_item = itemsApi.return_item(base_item.conf["se_use"])
         if use_item is not None:
             result = find_attribute(smarthome, use_item, attribute, recursion_depth + 1)
             if result is not None:
@@ -151,7 +195,9 @@ def find_attribute(smarthome, base_item, attribute, recursion_depth=0):
 # splitchar: where to split
 # returns: Parts before and after split, whitespaces stripped
 def partition_strip(value, splitchar):
-    if value.startswith("se_") and splitchar == "_":
+    if isinstance(value, list):
+        raise ValueError("You can not use list entries!")
+    elif value.startswith("se_") and splitchar == "_":
         part1, __, part2 = value[3:].partition(splitchar)
         return "se_" + part1.strip(), part2.strip()
     else:
@@ -166,10 +212,19 @@ def get_eval_name(eval_func):
     if eval_func is None:
         return None
     if eval_func is not None:
-        if isinstance(eval_func, str):
-            return eval_func
+        if isinstance(eval_func, list):
+            functionnames = []
+            for func in eval_func:
+                if isinstance(func, str):
+                    functionnames.append(func)
+                else:
+                    functionnames.append(func.__module__ + "." + func.__name__)
+            return functionnames
         else:
-            return eval_func.__module__ + "." + eval_func.__name__
+            if isinstance(eval_func, str):
+                return eval_func
+            else:
+                return eval_func.__module__ + "." + eval_func.__name__
 
 
 # determine original caller/source
@@ -181,7 +236,7 @@ def get_original_caller(smarthome, caller, source, item=None):
     original_source = source
     original_item = item
     while original_caller == "Eval":
-        original_item = smarthome.return_item(original_source)
+        original_item = itemsApi.return_item(original_source)
         if original_item is None:
             break
         original_changed_by = original_item.changed_by()

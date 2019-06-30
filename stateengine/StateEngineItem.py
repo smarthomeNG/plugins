@@ -37,6 +37,14 @@ class SeItem:
     def id(self):
         return self.__id
 
+    @property
+    def variables(self):
+        return self.__variables
+
+    @property
+    def templates(self):
+        return self.__templates
+
     # return instance of smarthome.py class
     @property
     def sh(self):
@@ -55,7 +63,11 @@ class SeItem:
         self.shtime = Shtime.get_instance()
         self.__sh = smarthome
         self.__item = item
-        self.__id = self.__item.id()
+        try:
+            self.__id = self.__item.property.path
+        except Exception as err:
+            self._log_info("Problem initializing ID of item {}. {}", self.__item, err)
+            self.__id = item
         self.__name = str(self.__item)
         # initialize logging
         self.__logger = SeLogger.create(self.__item)
@@ -72,11 +84,18 @@ class SeItem:
 
         # Init laststate items/values
         self.__laststate_item_id = self.return_item_by_attribute("se_laststate_item_id")
-        self.__laststate_internal_id = "" if self.__laststate_item_id is None else self.__laststate_item_id()
+        self.__laststate_internal_id = "" if self.__laststate_item_id is None else self.__laststate_item_id.property.value
         self.__laststate_item_name = self.return_item_by_attribute("se_laststate_item_name")
-        self.__laststate_internal_name = "" if self.__laststate_item_name is None else self.__laststate_item_name()
+        self.__laststate_internal_name = "" if self.__laststate_item_name is None else self.__laststate_item_name.property.value
+
+        # Init lastconditionset items/values
+        self.__lastconditionset_item_id = self.return_item_by_attribute("se_lastconditionset_item_id")
+        self.__lastconditionset_internal_id = "" if self.__lastconditionset_item_id is None else self.__lastconditionset_item_id.property.value
+        self.__lastconditionset_item_name = self.return_item_by_attribute("se_lastconditionset_item_name")
+        self.__lastconditionset_internal_name = "" if self.__lastconditionset_item_name is None else self.__lastconditionset_item_name.property.value
 
         self.__states = []
+        self.__templates = {}
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
 
@@ -97,7 +116,9 @@ class SeItem:
             "item.suspend_time": self.__suspend_time.get(),
             "item.suspend_remaining": 0,
             "current.state_id": "",
-            "current.state_name": ""
+            "current.state_name": "",
+            "current.conditionset_id": "",
+            "current.conditionset_name": ""
         }
 
         # initialize states
@@ -105,7 +126,7 @@ class SeItem:
             try:
                 self.__states.append(StateEngineState.SeState(self, item_state))
             except ValueError as ex:
-                self.__logger.error("Ignoring state {0} because:  {1}".format(item_state.id(), str(ex)))
+                self.__logger.error("Ignoring state {0} because:  {1}".format(item_state.property.path, ex))
 
         if len(self.__states) == 0:
             raise ValueError("{0}: No states defined!".format(self.id))
@@ -126,6 +147,15 @@ class SeItem:
         else:
             self.__startup_delay_callback(self.__item, "Init", None, None)
 
+    def __repr__(self):
+        return self.__id
+
+    def updatetemplates(self, template, value):
+        if value is None:
+            self.__templates.pop(template)
+        else:
+            self.__templates[template] = value
+
     # Find the state, matching the current conditions and perform the actions of this state
     # caller: Caller that triggered the update
     # noinspection PyCallingNonCallable,PyUnusedLocal
@@ -138,25 +168,26 @@ class SeItem:
         self.__logger.update_logfile()
         self.__logger.header("Update state of item {0}".format(self.__name))
         if caller:
-            item_id = item.id() if item is not None else "(no item)"
+            item_id = item.property.path if item is not None else "(no item)"
             self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id, source, dest)
 
         # Find out what initially caused the update to trigger if the caller is "Eval"
         orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.sh, caller, source, item)
         if orig_caller != caller:
             text = "Eval initially triggered by {0} (item={1} source={2})"
-            self.__logger.debug(text, orig_caller, orig_item.id(), orig_source)
-
-        if orig_caller == StateEngineDefaults.plugin_identification or caller == StateEngineDefaults.plugin_identification:
+            self.__logger.debug(text, orig_caller, orig_item.property.path, orig_source)
+        cond1 = orig_caller == '{} {}'.format(StateEngineDefaults.plugin_identification, item_id)
+        cond2 = caller == '{} {}'.format(StateEngineDefaults.plugin_identification, item_id)
+        if cond1 or cond2:
             self.__logger.debug("Ignoring changes from {0}", StateEngineDefaults.plugin_identification)
             self.__update_in_progress = False
             return
 
-        self.__update_trigger_item = item.id()
+        self.__update_trigger_item = item.property.path
         self.__update_trigger_caller = caller
         self.__update_trigger_source = source
         self.__update_trigger_dest = dest
-        self.__update_original_item = orig_item.id()
+        self.__update_original_item = orig_item.property.path
         self.__update_original_caller = orig_caller
         self.__update_original_source = orig_source
 
@@ -169,6 +200,11 @@ class SeItem:
         last_state = self.__laststate_get()
         if last_state is not None:
             self.__logger.info("Last state: {0} ('{1}')", last_state.id, last_state.name)
+
+        _last_conditionset_id = self.__lastconditionset_get_id()
+        _last_conditionset_name = self.__lastconditionset_get_name()
+        if _last_conditionset_id not in ['', None]:
+            self.__logger.info("Last Conditionset: {0} ('{1}')", _last_conditionset_id, _last_conditionset_name)
 
         # find new state
         new_state = None
@@ -191,11 +227,10 @@ class SeItem:
         # get data for new state
         if last_state is not None and new_state.id == last_state.id:
             self.__logger.info("Staying at {0} ('{1}')", new_state.id, new_state.name)
-            new_state.run_stay(self.__repeat_actions.get())
-
             # New state is last state
             if self.__laststate_internal_name != new_state.name:
                 self.__laststate_set(new_state)
+            new_state.run_stay(self.__repeat_actions.get())
 
         else:
             # New state is different from last state
@@ -204,9 +239,8 @@ class SeItem:
                 last_state.run_leave(self.__repeat_actions.get())
 
             self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
-            new_state.run_enter(self.__repeat_actions.get())
-
             self.__laststate_set(new_state)
+            new_state.run_enter(self.__repeat_actions.get())
 
         self.__update_in_progress = False
 
@@ -217,9 +251,13 @@ class SeItem:
             self.__variables["current.state_id"] = state.id
             self.__variables["current.state_name"] = state.name
             return state.can_enter()
+        except Exception as ex:
+            self.__logger.warning("Problem with currentstate {0}. Error: {1}", state, ex)
         finally:
             self.__variables["current.state_id"] = ""
             self.__variables["current.state_name"] = ""
+            self.__variables["current.conditionset_id"] = ""
+            self.__variables["current.conditionset_name"] = ""
 
     # region Laststate *************************************************************************************************
     # Set laststate
@@ -243,6 +281,29 @@ class SeItem:
                 return state
         return None
 
+    # return id of last conditionset
+    def __lastconditionset_get_id(self):
+        _lastconditionset_item_id = self.return_item_by_attribute("se_lastconditionset_item_id")
+        _lastconditionset_item_id = "" if _lastconditionset_item_id is None else _lastconditionset_item_id.property.value
+        return _lastconditionset_item_id
+
+    # return name of last conditionset
+    def __lastconditionset_get_name(self):
+        _lastconditionset_item_name = self.return_item_by_attribute("se_lastconditionset_item_name")
+        _lastconditionset_item_name = "" if _lastconditionset_item_name is None else _lastconditionset_item_name.property.value
+        return _lastconditionset_item_name
+
+    def lastconditionset_set(self, new_id, new_name):
+        self.__lastconditionset_internal_id = new_id
+        if self.__lastconditionset_item_id is not None:
+            # noinspection PyCallingNonCallable
+            self.__lastconditionset_item_id(self.__lastconditionset_internal_id)
+
+        self.__lastconditionset_internal_name = new_name
+        if self.__lastconditionset_item_name is not None:
+            # noinspection PyCallingNonCallable
+            self.__lastconditionset_item_name(self.__lastconditionset_internal_name)
+
     # endregion
 
     # region Helper methods ********************************************************************************************
@@ -251,11 +312,23 @@ class SeItem:
         # add item trigger
         self.__item.add_method_trigger(self.update_state)
 
+
     # Check item settings and update if required
     # noinspection PyProtectedMember
     def __check_item_config(self):
         # set "enforce updates" for item
         self.__item._enforce_updates = True
+
+        # Update item from grandparent_item
+        for attribute in self.__item.conf:
+            func, name = StateEngineTools.partition_strip(attribute, "_")
+            if name == "":
+                continue
+
+            # update item/eval in this condition
+            if func == "se_template":
+                if name not in self.__templates:
+                    self.__templates[name] = self.__item.conf[attribute]
 
         # set "eval" for item if initial
         if self.__item._trigger and self.__item._eval is None:
@@ -344,6 +417,8 @@ class SeItem:
         # log general config
         self.__logger.header("Configuration of item {0}".format(self.__name))
         self.__startup_delay.write_to_logger()
+        for t in self.__templates:
+            self.__logger.info("Template {0}: {1}", t, self.__templates.get(t))
         self.__logger.info("Cycle: {0}", cycles)
         self.__logger.info("Cron: {0}", crons)
         self.__logger.info("Trigger: {0}".format(triggers))
@@ -351,9 +426,17 @@ class SeItem:
 
         # log laststate settings
         if self.__laststate_item_id is not None:
-            self.__logger.info("Item 'Laststate Id': {0}", self.__laststate_item_id.id())
+            self.__logger.info("Item 'Laststate Id': {0}", self.__laststate_item_id.property.path)
         if self.__laststate_item_name is not None:
-            self.__logger.info("Item 'Laststate Name': {0}", self.__laststate_item_name.id())
+            self.__logger.info("Item 'Laststate Name': {0}", self.__laststate_item_name.property.path)
+
+        # log lastcondition settings
+        _conditionset_id = self.return_item_by_attribute("se_lastconditionset_item_id")
+        _conditionset_name = self.return_item_by_attribute("se_lastconditionset_item_name")
+        if _conditionset_id is not None:
+            self.__logger.info("Item 'Lastcondition Id': {0}", _conditionset_id.property.path)
+        if _conditionset_name is not None:
+            self.__logger.info("Item 'Lastcondition Name': {0}", _conditionset_name.property.path)
 
         # log states
         for state in self.__states:
@@ -370,7 +453,8 @@ class SeItem:
         crons, cycles = self.__verbose_crons_and_cycles()
         triggers = self.__verbose_triggers()
         handler.push("AutoState Item {0}:\n".format(self.id))
-        handler.push("\tCurrent state: {0}\n".format(self.__laststate_internal_name))
+        handler.push("\tCurrent state: {0}\n".format(self.get_laststate_name()))
+        handler.push("\tCurrent conditionset: {0}\n".format(self.get_lastconditionset_name()))
         handler.push(self.__startup_delay.get_text("\t", "\n"))
         handler.push("\tCycle: {0}\n".format(cycles))
         handler.push("\tCron: {0}\n".format(crons))
@@ -383,14 +467,33 @@ class SeItem:
     # return age of item
     def get_age(self):
         if self.__laststate_item_id is not None:
-            return self.__laststate_item_id.age()
+            return self.__laststate_item_id.property.last_change_age
         else:
             self.__logger.warning('No item for last state id given. Can not determine age!')
+            return 0
+
+    def get_condition_age(self):
+        if self.__lastconditionset_item_id is not None:
+            return self.__lastconditionset_item_id.property.last_change_age
+        else:
+            self.__logger.warning('No item for last condition id given. Can not determine age!')
             return 0
 
     # return id of last state
     def get_laststate_id(self):
         return self.__laststate_internal_id
+
+    # return name of last state
+    def get_laststate_name(self):
+        return self.__laststate_internal_name
+
+    # return id of last conditionset
+    def get_lastconditionset_id(self):
+        return self.__lastconditionset_internal_id
+
+    # return name of last conditionset
+    def get_lastconditionset_name(self):
+        return self.__lastconditionset_internal_name
 
     # return update trigger item
     def get_update_trigger_item(self):
@@ -458,7 +561,7 @@ class SeItem:
             if item is None:
                 self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
-
+        self.__logger.debug("Testing for relative item declaration {}".format(item_id))
         parent_level = 0
         for c in item_id:
             if c != '.':
@@ -485,5 +588,6 @@ class SeItem:
     # attribute: Name of the attribute of the StateEngine object item, which contains the item_id to read
     def return_item_by_attribute(self, attribute):
         if attribute not in self.__item.conf:
+            self.__logger.warning("Problem with attribute '{0}'.".format(attribute))
             return None
         return self.return_item(self.__item.conf[attribute])

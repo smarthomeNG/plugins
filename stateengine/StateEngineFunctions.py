@@ -20,6 +20,7 @@
 #########################################################################
 import logging
 import threading
+import re
 from . import StateEngineLogger
 from lib.item import Items
 
@@ -59,7 +60,7 @@ class SeFunctions:
     def manual_item_update_eval(self, item_id, caller=None, source=None):
         item = self.items.return_item(item_id)
         if item is None:
-            self.logger.error("manual_item_update_eval: item {0} not found!".format(item_id))
+            self.logger.error("manual_item_update_eval: item {0} not found!", item_id)
 
         # Leave immediately in case StateEngine Plugin is not yet fully running
         if not self.__ab_alive:
@@ -73,7 +74,7 @@ class SeFunctions:
                 elog_item_id = item.conf["se_manual_logitem"]
                 elog_item = self.items.return_item(elog_item_id)
                 if elog_item is None:
-                    self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!".format(elog_item_id))
+                    self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!", elog_item_id)
                     elog = StateEngineLogger.SeLoggerDummy()
                 else:
                     elog = StateEngineLogger.SeLogger.create(elog_item)
@@ -86,8 +87,8 @@ class SeFunctions:
             retval_trigger = not item()
             elog.debug("Current value of item {0} is {1}", item_id, retval_no_trigger)
 
-            original_caller, original_source = self.get_original_caller(elog, caller, source)
-            elog.debug("original trigger by caller '{0}' source '{1}'", original_caller, original_source)
+            original = self.get_original_caller(elog, caller, source)
+            elog.debug("original trigger by '{0}'", original)
 
             if "se_manual_on" in item.conf:
                 # get list of include entries
@@ -102,9 +103,10 @@ class SeFunctions:
 
                 # If current value is in list -> Return "Trigger"
                 for entry in include:
-                    entry_caller, __, entry_source = entry.partition(":")
-                    if (entry_caller == original_caller or entry_caller == "*") and (
-                            entry_source == original_source or entry_source == "*"):
+                    entry = re.compile(entry, re.IGNORECASE)
+                    result = entry.match(original)
+                    elog.debug("Checking regex result {}", result)
+                    if result is not None:
                         elog.debug("{0}: matching. Writing value {1}", entry, retval_no_trigger)
                         return retval_no_trigger
                     elog.debug("{0}: not matching", entry)
@@ -124,9 +126,10 @@ class SeFunctions:
 
                 # If current value is in list -> Return "NoTrigger"
                 for entry in exclude:
-                    entry_caller, __, entry_source = entry.partition(":")
-                    if (entry_caller == original_caller or entry_caller == "*") and (
-                            entry_source == original_source or entry_source == "*"):
+                    entry = re.compile(entry, re.IGNORECASE)
+                    result = entry.match(original)
+                    elog.debug("Checking regex result {}", result)
+                    if result is not None:
                         elog.debug("{0}: matching. Writing value {1}", entry, retval_no_trigger)
                         return retval_no_trigger
                     elog.debug("{0}: not matching", entry)
@@ -145,9 +148,10 @@ class SeFunctions:
 
                 # If current value is in list -> Return "Trigger"
                 for entry in include:
-                    entry_caller, __, entry_source = entry.partition(":")
-                    if (entry_caller == original_caller or entry_caller == "*") and (
-                            entry_source == original_source or entry_source == "*"):
+                    entry = re.compile(entry, re.IGNORECASE)
+                    result = entry.match(original)
+                    elog.debug("Checking regex result {}", result)
+                    if result is not None:
                         elog.debug("{0}: matching. Writing value {1}", entry, retval_trigger)
                         return retval_trigger
                     elog.debug("{0}: not matching", entry)
@@ -168,22 +172,16 @@ class SeFunctions:
     # caller: caller
     # source: source
     def get_original_caller(self, elog, caller, source):
-        original_caller = caller
-        original_source = source
-        while original_caller == "Eval":
-            original_item = self.items.return_item(original_source)
+        while caller == "Eval":
+            original_item = self.items.return_item(source)
             if original_item is None:
-                elog.debug("get_original_caller({0}, {1}): original item not found", original_caller, original_source)
+                elog.debug("get_caller({0}, {1}): original item not found", caller, source)
                 break
             original_changed_by = original_item.changed_by()
-            if ":" not in original_changed_by:
-                text = "get_original_caller({0}, {1}): changed by {2} -> separator missing"
-                elog.debug(text, original_caller, original_source, original_changed_by)
-                break
-            oc = original_caller
-            os = original_source
-            original_caller, __, original_source = original_changed_by.partition(":")
-            elog.debug("get_original_caller({0}, {1}): changed by {2}, {3} at {4}", oc, os, original_caller, original_source, original_item.last_change())
+            oc = caller
+            os = source
+            caller, __, source = original_changed_by.partition(":")
+            elog.debug("get_caller({0}, {1}): changed by {2} at {3}", oc, os,
+                        original_changed_by, original_item.last_change())
 
-        elog.debug("get_original_caller: returning {0}, {1}", original_caller, original_source)
-        return original_caller, original_source
+        return original_changed_by

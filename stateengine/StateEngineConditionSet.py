@@ -21,13 +21,16 @@
 from . import StateEngineCondition
 from . import StateEngineTools
 
-
 # Class representing a set of conditions
 class SeConditionSet(StateEngineTools.SeItemChild):
     # Name of condition set
     @property
     def name(self):
         return self.__name
+
+    @property
+    def id(self):
+        return self.__id
 
     # List of conditions that are part of this condition set
     @property
@@ -37,10 +40,14 @@ class SeConditionSet(StateEngineTools.SeItemChild):
     # Initialize the condition set
     # abitem: parent SeItem instance
     # name: Name of condition set
-    def __init__(self, abitem, name):
+    def __init__(self, abitem, name, id):
         super().__init__(abitem)
         self.__name = name
+        self.__id = id
         self.__conditions = {}
+
+    def __repr__(self):
+        return "SeConditionSet for condition name {}: {}.".format(self.__name, self.__conditions)
 
     # Update condition set
     # item: item containing settings for condition set
@@ -52,7 +59,6 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                 func, name = StateEngineTools.partition_strip(attribute, "_")
                 if name == "":
                     continue
-
                 try:
                     # update this condition
                     if name not in self.__conditions:
@@ -60,7 +66,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     self.__conditions[name].set(func, item.conf[attribute])
 
                 except ValueError as ex:
-                    raise ValueError("Condition {0}: {1}".format(name, str(ex)))
+                    raise ValueError("Condition {0} error: {1}".format(name, ex))
 
         # Update item from grandparent_item
         for attribute in grandparent_item.conf:
@@ -75,8 +81,8 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                 try:
                     self.__conditions[name].set(func, grandparent_item.conf[attribute])
                 except ValueError as ex:
-                    text = "Item '{0}', Attribute '{1}': {2}"
-                    raise ValueError(text.format(grandparent_item.id(), attribute, str(ex)))
+                    text = "Item '{0}', Attribute '{1}' Error: {2}"
+                    raise ValueError(text.format(grandparent_item.property.path, attribute, ex))
 
     # Check the condition set, optimize and complete it
     # item_state: item to read from
@@ -89,8 +95,8 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     conditions_to_remove.append(name)
                     continue
             except ValueError as ex:
-                text = "State '{0}', Condition Set '{1}', Condition '{2}': {3}"
-                raise ValueError(text.format(item_state.id(), self.name, name, str(ex)))
+                text = "State '{0}', Condition Set '{1}', Condition '{2}' Error: {3}"
+                raise ValueError(text.format(item_state.property.path, self.name, name, ex))
 
         # Remove incomplete conditions
         for name in conditions_to_remove:
@@ -104,15 +110,22 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             self.__conditions[name].write_to_logger()
             self._log_decrease_indent()
 
+    def __currentconditionset_set(self, id, name):
+        self._abitem.set_variable('current.conditionset_id', id)
+        self._abitem.set_variable('current.conditionset_name', name)
+
     # Check all conditions in the condition set. Return
     # returns: True = all conditions in set are matching, False = at least one condition is not matching
     def all_conditions_matching(self):
         try:
-            self._log_info("Check condition set '{0}':", self.__name)
+            self._log_info("Check condition set '{0}'", self.__name)
             self._log_increase_indent()
+            self.__currentconditionset_set(self.__id.property.path, self.__name)
             for name in self.__conditions:
                 if not self.__conditions[name].check():
+                    self.__currentconditionset_set('', '')
                     return False
+            self._abitem.lastconditionset_set(self.__id.property.path, self.__name)
             return True
         finally:
             self._log_decrease_indent()

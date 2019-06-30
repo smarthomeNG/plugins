@@ -48,7 +48,7 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
                         - 'to: value:100'
                     se_action_lamella:
                         - 'function: set'
-                        - 'to: eval:stateengine_eval.sun_tracking()'
+                        - 'to: eval:se_eval.sun_tracking()'
                     <...>
                 Sonder:
                     <...>
@@ -74,6 +74,7 @@ Hochkommas gesetzt werden:
        - 'delay: <delay>'
        - 'order: <order>'
        - 'repeat: <repeat>'
+       - 'conditionset: <conditionset regex>'
 
 .. rubric:: Auszuführende Aktionsart
    :name: function
@@ -94,7 +95,7 @@ Folgende Werte sind möglich:
 
 Das Item, das verändert werden soll, muss auf Ebene des
 Regelwerk-Items über das Attribut ``se_item_<Aktionsname>``
-angegeben werden.
+oder ``se_eval_<Aktionsname>`` angegeben werden.
 
 Der Parameter ``to: <val>`` legt fest, auf welchen Wert das Item
 gesetzt werden soll. Der Wert,
@@ -110,13 +111,54 @@ Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
 stehenden Änderungen (evals, Aktualisierung der Änderungszeiten,
 etc).
 
+**Funktion add: Wert zu einem Listenitem hinzufügen**
+
+.. code-block:: yaml
+
+   se_action_<Aktionsname>:
+       - 'function: add'
+       - 'value: <val>/<eval>/<var>'
+       - 'force: [True/False]'
+
+Das Item, das verändert werden soll, muss auf Ebene des
+Regelwerk-Items über das Attribut ``se_item_<Aktionsname>`` oder
+``se_eval_<Aktionsname>`` angegeben werden.
+
+Der Parameter ``value: <val>`` legt fest, welcher Wert zum Item
+mit dem Typ ``list`` hinzugefügt werden soll. Wird hier direkt ein
+Wert angegeben, ist darauf zu achten, dass ein String unter Anführungszeichen
+stehen muss, während eine Zahl das nicht sollte.
+
+**Funktion remove: Wert von einem Listenitem entfernen**
+
+.. code-block:: yaml
+
+   se_action_<Aktionsname>:
+       - 'function: remove'
+       - 'value: <val>/<eval>/<var>'
+       - 'mode: [first/last/all]'
+
+Das Item, das verändert werden soll, muss auf Ebene des
+Regelwerk-Items über das Attribut ``se_item_<Aktionsname>`` oder
+``se_eval_<Aktionsname>`` angegeben werden.
+
+Der Parameter ``value: <val>`` legt fest, welcher Wert vom Item
+mit dem Typ ``list`` entfernt werden soll. Dabei ist zu beachten,
+dass zwischen String (Anführungszeichen) und Zahlen unterschieden wird.
+Ist der angegegeben Wert nicht in der Liste, wird der originale
+Itemwert erneut geschrieben, ohne etwas zu entfernen. Über den Parameter
+``mode`` lässt sich einstellen, ob jeweils alle mit dem Wert übereinstimmenden
+Einträge in der Liste (mode: all) oder nur der erste (first) bzw. der letzte (last)
+Eintrag gelöscht werden sollen. Wird der Parameter nicht angegeben, werden immer
+alle Einträge gelöscht.
+
 **Funktion run: Ausführen einer Funktion**
 
 .. code-block:: yaml
 
    se_action_<Aktionsname>:
        - 'function: run'
-       - 'eval:(Funktion)'
+       - 'eval: (Funktion)'
 
 Die Angabe ist vergleichbar mit dem Ausführen einer Funktion zur
 Ermittlung des Werts für ein Item, hier wird jedoch kein Item
@@ -176,8 +218,10 @@ wird gleichzeitig auf ``Rums`` gesetzt.
        - value: <Sondervorgang>
 
 Für bestimmte Sondervorgänge sind besondere Aktionen im Plugin
-definiert (z. B. für das Suspend). Diese werden jedoch nicht hier
-erläutert, sondern an den Stellen, an denen sie verwendet werden.
+definiert. Aktuell gibt es zwei besondere Vorgänge:
+
+- suspend:<suspend_item>,<manuell_item> (z.B. suspend:..suspend,..manuell)
+- retrigger:<trigger_item> (z.B. retrigger:..retrigger)
 
 .. rubric:: Zusätzliche Parameter
    :name: parameter
@@ -224,3 +268,40 @@ der zugewiesenen Zahlen ausgeführt.
 .. code-block:: yaml
 
        'order: [1|2|...]'
+
+**conditionset: <conditionset regex>**
+
+.. code-block:: yaml
+
+      'conditionset: ["enter_(.*)_test", "eval:sh.itemX.property.name"]'
+
+Über das Attribut wird festgelegt, dass die Aktion nur dann ausgeführt werden
+soll, wenn der Zustand durch die angegebene Bedingungsgruppe eingenommen wurde.
+Zum Vergleich wird immer der volle Pfad der Bedingungsgruppe herangezogen.
+Conditionset erlaubt sowohl eine Liste als auch reguläre Ausdrücke, wodurch
+nicht zwingend der komplette Pfad der Bedingungsgruppe bekannt sein muss.
+Der gesamte Pfad könnte wie folgt evaluiert werden:
+
+.. code-block:: yaml
+
+      "eval:se_eval.get_relative_itemid('{}.<bedingungsset>'.format(se_eval.get_relative_itemvalue('..state_id')))"
+
+.. rubric:: Templates für Aktionen
+   :name: aktionstemplates
+
+Setzt man für mehrere Aktionen (z.B. Setzen auf einen Wert abhängig vom aktuellen
+Zustand) immer die gleichen Ausdrücke ein, so kann Letzteres als Template
+definiert und referenziert werden. Dadurch wird die die Handhabung
+komplexerer Wertdeklarationen deutlich vereinfacht. Diese Templates müssen wie se_item/se_eval
+auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
+
+.. code-block:: yaml
+    rules:
+      se_template_test: se_eval.get_relative_itemid('wetterstation.helligkeit_{}'.format(se_eval.get_relative_itemvalue('..state_name')))
+      se_item_specialitem: meinitem.specialitem # declare an existing item here
+
+      state_one:
+          on_enter:
+              se_action_specialitem:
+                  - 'function: set'
+                  - 'to: template:test'

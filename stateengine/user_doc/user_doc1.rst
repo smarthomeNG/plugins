@@ -51,3 +51,13 @@ Die folgenden Bedingungen können Teil der Bedingungsgruppen sein:
 
 Zusätzlich können beliebige Items (z.B. Temperatur) als Bedingungen geprüft werden
 (Minimum, Maximum oder Wert)
+
+.. rubric:: Umstieg von Autblind
+   :name: umstieg
+
+Das `Autoblind Plugin <https://github.com/i-am-offline/smarthome.plugin.autoblind>`_
+von i-am-offline wurde für SmarthomeNG 1.6 ins offizielle Repo übernommen und
+dabei erweitert und optimiert. Für einen Umstieg ist es wichtig, die Attribute
+``as`` durch ``se`` zu ersetzen. Im Pluginverzeichnis befindet sich ein Bash-
+Script, das diesen Prozess deutlich vereinfacht und nicht nur die Attrinbute in
+den items/*.yaml Dateien ersetzt, sondern auch die Cachefiles umbenennt.

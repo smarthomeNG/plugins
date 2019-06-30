@@ -47,7 +47,11 @@ class SeState(StateEngineTools.SeItemChild):
     def __init__(self, abitem, item_state):
         super().__init__(abitem)
         self.__item = item_state
-        self.__id = self.__item.id()
+        try:
+            self.__id = self.__item.property.path
+            self._log_info("Init state {}", self.__id)
+        except Exception as err:
+            self._log_info("Problem init state ID of Item {}. {}", self.__item, err)
         self.__name = ""
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__conditions = StateEngineConditionSets.SeConditionSets(self._abitem)
@@ -55,12 +59,14 @@ class SeState(StateEngineTools.SeItemChild):
         self.__actions_enter = StateEngineActions.SeActions(self._abitem)
         self.__actions_stay = StateEngineActions.SeActions(self._abitem)
         self.__actions_leave = StateEngineActions.SeActions(self._abitem)
-        self._log_info("Init state {}", item_state.id())
         self._log_increase_indent()
         try:
             self.__fill(self.__item, 0)
         finally:
             self._log_decrease_indent()
+
+    def __repr__(self):
+        return "SeState item: {}, id {}.".format(self.__item, self.__id)
 
     # Check conditions if state can be entered
     # returns: True = At least one enter condition set is fulfulled, False = No enter condition set is fulfilled
@@ -136,7 +142,7 @@ class SeState(StateEngineTools.SeItemChild):
     # abitem_object: Related SeItem instance for later determination of current age and current delay
     def __fill(self, item_state, recursion_depth):
         if recursion_depth > 5:
-            self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.id())
+            self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.property.path)
             return
 
         # Import data from other item if attribute "use" is found
@@ -146,7 +152,9 @@ class SeState(StateEngineTools.SeItemChild):
             if use_item is not None:
                 self.__fill(use_item, recursion_depth + 1)
             else:
-                self._log_error("{0}: Referenced item '{1}' not found!", item_state.id(), item_state.conf["se_use"])
+                self._log_error("{0}: Referenced item '{1}' not found!", item_state.property.path, item_state.conf["se_use"])
+            self._log_info("{0}: Reading se_use {1}. Nevertheless, it is recommended to use struct items instead.",
+                           item_state.property.path, item_state.conf["se_use"])
 
         # Get action sets and condition sets
         parent_item = item_state.return_parent()
@@ -169,7 +177,7 @@ class SeState(StateEngineTools.SeItemChild):
                 elif child_name == "enter" or child_name.startswith("enter_"):
                     self.__conditions.update(child_name, child_item, parent_item)
             except ValueError as ex:
-                raise ValueError("Condition {0}: {1}".format(child_name, str(ex)))
+                raise ValueError("Condition {0} error: {1}".format(child_name, ex))
 
         # Actions defined directly in the item go to "enter_or_stay"
         for attribute in item_state.conf:
@@ -177,8 +185,9 @@ class SeState(StateEngineTools.SeItemChild):
 
         # if an item name is given, or if we do not have a name after returning from all recursions,
         # use item name as state name
-        if str(item_state) != item_state.id() or (self.__name == "" and recursion_depth == 0):
-            self.__name = str(item_state)
+        if str(item_state) != item_state.property.path or (self.__name == "" and recursion_depth == 0):
+            self.__name = str(item_state).split('.')[-1]
+            self.__text.set(self.__name)
         if "se_name" in item_state.conf:
             self.__text.set_from_attr(item_state, "se_name", self.__text.get(None))
         elif self.__text.is_empty() and recursion_depth == 0:
