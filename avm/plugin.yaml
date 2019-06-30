@@ -279,6 +279,12 @@ plugin_functions:
                 description:
                     de: "Anteiliger oder vollständiger Name des Kontakts."
                     en: "Partial or full name of the contact."
+        phonebook_id:
+            type: int
+            default: 0
+            description:
+                de: "ID des Telefonbuchs, in dem nachgeschlagen werden soll."
+                en: "ID of the phone book, in which numbers should be looked up."
 
     is_host_active:
         type: bool

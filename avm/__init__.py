@@ -914,7 +914,7 @@ class AVM(SmartPlugin):
                                                  None)  # reset response cache
                         self._update_wlan_config(citem)  # immediately update remaining guest time
 
-    def get_contact_name_by_phone_number(self, phone_number=''):
+    def get_contact_name_by_phone_number(self, phone_number='', phonebook_id=0):
         """
         Searches the phonebook for a contact by a given (complete) phone number
 
@@ -922,13 +922,14 @@ class AVM(SmartPlugin):
         | Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
 
         :param phone_number: full phone number of contact
+        :param: ID of the phone book (default: 0)
         :return: string of the contact's real name
         """
         url = self._build_url("/upnp/control/x_contact")
         headers = self._header.copy()
         action = "GetPhonebook"
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['OnTel'], action)
-        soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'], {'NewPhonebookID': 0})
+        soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'], {'NewPhonebookID': phonebook_id})
 
         try:
             response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
