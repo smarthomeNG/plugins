@@ -135,9 +135,14 @@ class UniFiControllerClientModel():
                 to_ret.append(i)
         return to_ret
 
+    def _generate_item_key(self, source:str):
+        step1 = source.lower().replace(' ', '_')
+        step2 = re.sub('[^0-9a-z_]+', '_', step1)
+        return step2.replace("___", "_").replace("__", "_")
+
     def _get_device_node_item(self, node_data, parent_type=""):
         n = node_data['node']
-        node_key = re.sub('[^0-9a-z_]+', '_', node_data['node']['key'].lower().replace(' ', '_')).replace("__", "_")
+        node_key = self._generate_item_key(n['key'])
         node_body = {}
 
         if n['type'] == "wired_client":
@@ -240,7 +245,7 @@ class UniFiControllerClientModel():
             model['unifi_network'] = {}
             model['unifi_network']['wifi_clients'] = {}
             for wlc_data in hr['wireless_clients']:
-                wlc_key = ("client_" + wlc_data['name']).lower().replace('.', '_').replace('-', '_')
+                wlc_key = "client_" + self._generate_item_key(wlc_data['name'])
                 wlc_body = {}
                 wlc_body['hostname'] = {}
                 wlc_body['hostname']['type'] = 'str'
