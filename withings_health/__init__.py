@@ -147,7 +147,7 @@ class WithingsHealth(SmartPlugin):
         last_measure = measures[0]
 
         if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
-            self._items['heart_pulse'](last_measure.get_measure(11))
+            self._items['heart_pulse'](last_measure.get_measure(11), self.get_shortname())
             self.logger.debug("Plugin '{}': heart_pulse - {}".format(self.get_fullname(), last_measure.get_measure(11)))
 
         # Bugfix for strange behavior of returning heart_pulse as seperate dataset..
@@ -155,73 +155,73 @@ class WithingsHealth(SmartPlugin):
             last_measure = measures[1]
 
         if last_measure.get_measure(1) is not None and 'weight' in self._items:
-            self._items['weight'](last_measure.get_measure(1))
+            self._items['weight'](last_measure.get_measure(1), self.get_shortname())
             self.logger.debug("Plugin '{}': weight - {}".format(self.get_fullname(), last_measure.get_measure(1)))
 
         if last_measure.get_measure(4) is not None and 'height' in self._items:
-            self._items['height'](last_measure.get_measure(4))
+            self._items['height'](last_measure.get_measure(4), self.get_shortname())
             self.logger.debug("Plugin '{}': height - {}".format(self.get_fullname(), last_measure.get_measure(4)))
 
         if last_measure.get_measure(5) is not None and 'fat_free_mass' in self._items:
-            self._items['fat_free_mass'](last_measure.get_measure(5))
+            self._items['fat_free_mass'](last_measure.get_measure(5), self.get_shortname())
             self.logger.debug(
                 "Plugin '{}': fat_free_mass - {}".format(self.get_fullname(), last_measure.get_measure(5)))
 
         if last_measure.get_measure(6) is not None and 'fat_ratio' in self._items:
-            self._items['fat_ratio'](last_measure.get_measure(6))
+            self._items['fat_ratio'](last_measure.get_measure(6), self.get_shortname())
             self.logger.debug("Plugin '{}': fat_ratio - {}".format(self.get_fullname(), last_measure.get_measure(6)))
 
         if last_measure.get_measure(8) is not None and 'fat_mass_weight' in self._items:
-            self._items['fat_mass_weight'](last_measure.get_measure(8))
+            self._items['fat_mass_weight'](last_measure.get_measure(8), self.get_shortname())
             self.logger.debug(
                 "Plugin '{}': fat_mass_weight - {}".format(self.get_fullname(), last_measure.get_measure(8)))
 
         if last_measure.get_measure(9) is not None and 'diastolic_blood_pressure' in self._items:
-            self._items['diastolic_blood_pressure'](last_measure.get_measure(9))
+            self._items['diastolic_blood_pressure'](last_measure.get_measure(9), self.get_shortname())
             self.logger.debug(
                 "Plugin '{}': diastolic_blood_pressure - {}".format(self.get_fullname(), last_measure.get_measure(9)))
 
         if last_measure.get_measure(10) is not None and 'systolic_blood_pressure' in self._items:
-            self._items['systolic_blood_pressure'](last_measure.get_measure(10))
+            self._items['systolic_blood_pressure'](last_measure.get_measure(10), self.get_shortname())
             self.logger.debug(
                 "Plugin '{}': systolic_blood_pressure - {}".format(self.get_fullname(), last_measure.get_measure(10)))
 
         if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
-            self._items['heart_pulse'](last_measure.get_measure(11))
+            self._items['heart_pulse'](last_measure.get_measure(11), self.get_shortname())
             self.logger.debug("Plugin '{}': heart_pulse - {}".format(self.get_fullname(), last_measure.get_measure(11)))
 
         if last_measure.get_measure(12) is not None and 'temperature' in self._items:
-            self._items['temperature'](last_measure.get_measure(12))
+            self._items['temperature'](last_measure.get_measure(12), self.get_shortname())
             self.logger.debug("Plugin '{}': temperature - {}".format(self.get_fullname(), last_measure.get_measure(12)))
 
         if last_measure.get_measure(54) is not None and 'spo2' in self._items:
-            self._items['spo2'](last_measure.get_measure(54))
+            self._items['spo2'](last_measure.get_measure(54), self.get_shortname())
             self.logger.debug("Plugin '{}': spo2 - {}".format(self.get_fullname(), last_measure.get_measure(54)))
 
         if last_measure.get_measure(71) is not None and 'body_temperature' in self._items:
-            self._items['body_temperature'](last_measure.get_measure(71))
+            self._items['body_temperature'](last_measure.get_measure(71), self.get_shortname())
             self.logger.debug(
                 "Plugin '{}': body_temperature - {}".format(self.get_fullname(), last_measure.get_measure(71)))
 
         if last_measure.get_measure(72) is not None and 'skin_temperature' in self._items:
-            self._items['skin_temperature'](last_measure.get_measure(72))
+            self._items['skin_temperature'](last_measure.get_measure(72), self.get_shortname())
             self.logger.debug(
                 "Plugin '{}': skin_temperature - {}".format(self.get_fullname(), last_measure.get_measure(72)))
 
         if last_measure.get_measure(76) is not None and 'muscle_mass' in self._items:
-            self._items['muscle_mass'](last_measure.get_measure(76))
+            self._items['muscle_mass'](last_measure.get_measure(76), self.get_shortname())
             self.logger.debug("Plugin '{}': muscle_mass - {}".format(self.get_fullname(), last_measure.get_measure(76)))
 
         if last_measure.get_measure(77) is not None and 'hydration' in self._items:
-            self._items['hydration'](last_measure.get_measure(77))
+            self._items['hydration'](last_measure.get_measure(77), self.get_shortname())
             self.logger.debug("Plugin '{}': hydration - {}".format(self.get_fullname(), last_measure.get_measure(77)))
 
         if last_measure.get_measure(88) is not None and 'bone_mass' in self._items:
-            self._items['bone_mass'](last_measure.get_measure(88))
+            self._items['bone_mass'](last_measure.get_measure(88), self.get_shortname())
             self.logger.debug("Plugin '{}': bone_mass - {}".format(self.get_fullname(), last_measure.get_measure(88)))
 
         if last_measure.get_measure(91) is not None and 'pulse_wave_velocity' in self._items:
-            self._items['pulse_wave_velocity'](last_measure.get_measure(91))
+            self._items['pulse_wave_velocity'](last_measure.get_measure(91), self.get_shortname())
             self.logger.debug(
                 "Plugin '{}': pulse_wave_velocity - {}".format(self.get_fullname(), last_measure.get_measure(91)))
 
@@ -231,24 +231,24 @@ class WithingsHealth(SmartPlugin):
                 bmi = round(
                     last_measure.get_measure(1) / ((self._items['height']()) * (self._items['height']())), 2)
                 if 'bmi' in self._items:
-                    self._items['bmi'](bmi)
+                    self._items['bmi'](bmi, self.get_shortname())
                 if 'bmi_text' in self._items:
                     if bmi < 16:
-                        self._items['bmi_text']('starkes Untergewicht')
+                        self._items['bmi_text']('starkes Untergewicht', self.get_shortname())
                     elif 16 <= bmi < 17:
-                        self._items['bmi_text']('mäßiges Untergewicht ')
+                        self._items['bmi_text']('mäßiges Untergewicht', self.get_shortname())
                     elif 17 <= bmi < 18.5:
-                        self._items['bmi_text']('leichtes Untergewicht ')
+                        self._items['bmi_text']('leichtes Untergewicht', self.get_shortname())
                     elif 18.5 <= bmi < 25:
-                        self._items['bmi_text']('Normalgewicht')
+                        self._items['bmi_text']('Normalgewicht', self.get_shortname())
                     elif 25 <= bmi < 30:
-                        self._items['bmi_text']('Präadipositas (Übergewicht)')
+                        self._items['bmi_text']('Präadipositas (Übergewicht)', self.get_shortname())
                     elif 30 <= bmi < 35:
-                        self._items['bmi_text']('Adipositas Grad I')
+                        self._items['bmi_text']('Adipositas Grad I', self.get_shortname())
                     elif 35 <= bmi < 40:
-                        self._items['bmi_text']('Adipositas Grad II')
+                        self._items['bmi_text']('Adipositas Grad II', self.get_shortname())
                     elif 40 <= bmi:
-                        self._items['bmi_text']('Adipositas Grad III')
+                        self._items['bmi_text']('Adipositas Grad III', self.get_shortname())
             else:
                 self.logger.error(
                     "Plugin '{}': Cannot calculate BMI: height is 0, please set height (in m) for height item manually.".format(

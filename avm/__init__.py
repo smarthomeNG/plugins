@@ -263,19 +263,19 @@ class MonitoringService:
         # in each case set current call event and direction
         for item in self._items:
             if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event':
-                item(event.lower())
+                item(event.lower(), self._plugin_instance.get_shortname())
             if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_direction':
                 if event == 'RING':
-                    item("incoming")
+                    item("incoming", self._plugin_instance.get_shortname())
                 else:
-                    item("outgoing")
+                    item("outgoing", self._plugin_instance.get_shortname())
 
         # call is incoming
         if event == 'RING':
             # process "trigger items"
             for trigger_item in self._trigger_items:
                 if self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') == 'monitor_trigger':
-                    trigger_item(0)
+                    trigger_item(0, self._plugin_instance.get_shortname())
                     self._plugin_instance.logger.debug(self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +
                                       trigger_item.conf['avm_incoming_allowed'] + " " + trigger_item.conf[
                                           'avm_target_number'])
@@ -284,43 +284,43 @@ class MonitoringService:
                             "both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes in a trigger item.")
                     elif trigger_item.conf['avm_incoming_allowed'] == call_from and trigger_item.conf[
                         'avm_target_number'] == call_to:
-                        trigger_item(1)
+                        trigger_item(1, self._plugin_instance.get_shortname())
 
             if self._call_monitor_incoming_filter in call_to:
                 # set call id for incoming call
                 self._call_incoming_cid = callid
 
                 # reset duration for incoming calls
-                self._duration_item['call_duration_incoming'](0)
+                self._duration_item['call_duration_incoming'](0, self._plugin_instance.get_shortname())
 
                 # process items specific to incoming calls
                 for item in self._items_incoming:  # update items for incoming calls
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_incoming']:
                         self._plugin_instance.logger.debug("Setting is_call_incoming: %s" % True)
-                        item(True)
+                        item(True, self._plugin_instance.get_shortname())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_caller_incoming']:
                         if call_from != '' and call_from is not None:
                             name = self._callback(call_from)
                             if name != '' and not name is None:
-                                item(name)
+                                item(name, self._plugin_instance.get_shortname())
                             else:
-                                item(call_from)
+                                item(call_from, self._plugin_instance.get_shortname())
                         else:
-                            item("Unbekannt")
+                            item("Unbekannt", self._plugin_instance.get_shortname())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in [
                         'last_call_date_incoming']:
                         self._plugin_instance.logger.debug("Setting last_call_date_incoming: %s" % time)
-                        item(time)
+                        item(time, self._plugin_instance.get_shortname())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
                         self._plugin_instance.logger.debug("Setting call_event_incoming: %s" % event.lower())
-                        item(event.lower())
+                        item(event.lower(), self._plugin_instance.get_shortname())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_number_incoming']:
                         self._plugin_instance.logger.debug("Setting last_number_incoming: %s" % call_from)
-                        item(call_from)
+                        item(call_from, self._plugin_instance.get_shortname())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in [
                         'last_called_number_incoming']:
                         self._plugin_instance.logger.debug("Setting last_called_number_incoming: %s" % call_to)
-                        item(call_to)
+                        item(call_to, self._plugin_instance.get_shortname())
 
         # call is outgoing
         elif event == 'CALL':
@@ -333,22 +333,22 @@ class MonitoringService:
             # process items specific to outgoing calls
             for item in self._items_outgoing:
                 if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_outgoing']:
-                    item(True)
+                    item(True, self._plugin_instance.get_shortname())
                 elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_caller_outgoing']:
                     name = self._callback(call_to)
                     if name != '' and not name is None:
-                        item(name)
+                        item(name, self._plugin_instance.get_shortname())
                     else:
-                        item(call_to)
+                        item(call_to, self._plugin_instance.get_shortname())
                 elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_call_date_outgoing']:
-                    item(time)
+                    item(time, self._plugin_instance.get_shortname())
                 elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_outgoing']:
-                    item(event.lower())
+                    item(event.lower(), self._plugin_instance.get_shortname())
                 elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['last_number_outgoing']:
-                    item(call_from)
+                    item(call_from, self._plugin_instance.get_shortname())
                 elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in [
                     'last_called_number_outgoing']:
-                    item(call_to)
+                    item(call_to, self._plugin_instance.get_shortname())
 
         # connection established
         elif event == 'CONNECT':
@@ -360,7 +360,7 @@ class MonitoringService:
                     self._start_counter(time, 'outgoing')
                 for item in self._items_outgoing:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_outgoing']:
-                        item(event.lower())
+                        item(event.lower(), self._plugin_instance.get_shortname())
 
             # handle INCOMING calls
             elif callid == self._call_incoming_cid:
@@ -372,7 +372,7 @@ class MonitoringService:
                 for item in self._items_incoming:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') in ['call_event_incoming']:
                         self._plugin_instance.logger.debug("Setting call_event_incoming: %s" % event.lower())
-                        item(event.lower())
+                        item(event.lower(), self._plugin_instance.get_shortname())
 
         # connection ended
         elif event == 'DISCONNECT':
@@ -380,9 +380,9 @@ class MonitoringService:
             if callid == self._call_outgoing_cid:
                 for item in self._items_outgoing:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_outgoing':
-                        item(event.lower())
+                        item(event.lower(), self._plugin_instance.get_shortname())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_outgoing':
-                        item(False)
+                        item(False, self._plugin_instance.get_shortname())
                 if not self._duration_item['call_duration_outgoing'] is None:  # stop counter threads
                     self._stop_counter('outgoing')
                 self._call_outgoing_cid = None
@@ -392,10 +392,10 @@ class MonitoringService:
                 for item in self._items_incoming:
                     if self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_incoming':
                         self._plugin_instance.logger.debug("Setting call_event_incoming: %s" % event.lower())
-                        item(event.lower())
+                        item(event.lower(), self._plugin_instance.get_shortname())
                     elif self._plugin_instance.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_incoming':
                         self._plugin_instance.logger.debug("Setting is_call_incoming: %s" % False)
-                        item(False)
+                        item(False, self._plugin_instance.get_shortname())
                 if not self._duration_item['call_duration_incoming'] is None:  # stop counter threads
                     self._plugin_instance.logger.debug("Stopping Counter for Call Time")
                     self._stop_counter('incoming')
@@ -504,7 +504,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.5.6"
+    PLUGIN_VERSION = "1.5.7"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -725,24 +725,24 @@ class AVM(SmartPlugin):
                     for element in self.get_calllist_from_cache():
                         if element['Type'] in ['1', '2']:
                             if 'Name' in element:
-                                item(element['Name'])
+                                item(element['Name'], self.get_shortname())
                             else:
-                                item(element['Caller'])
+                                item(element['Caller'], self.get_shortname())
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_number_incoming' and item() == '':
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
                         if element['Type'] in ['1', '2']:
                             if 'Caller' in element:
-                                item(element['Caller'])
+                                item(element['Caller'], self.get_shortname())
                             else:
-                                item("")
+                                item("", self.get_shortname())
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_called_number_incoming' and item() == '':
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
                         if element['Type'] in ['1', '2']:
-                            item(element['CalledNumber'])
+                            item(element['CalledNumber'], self.get_shortname())
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_call_date_incoming' and item() == '':
                 if not self.get_calllist_from_cache() is None:
@@ -750,35 +750,35 @@ class AVM(SmartPlugin):
                         if element['Type'] in ['1', '2']:
                             date = str(element['Date'])
                             date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                            item(date)
+                            item(date, self.get_shortname())
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_incoming' and item() == '':
-                item('disconnect')
+                item('disconnect', self.get_shortname())
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_incoming' and item() == '':
-                item(0)
+                item(0, self.get_shortname())
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_caller_outgoing' and item() == '':
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
                         if element['Type'] in ['3', '4']:
                             if 'Name' in element:
-                                item(element['Name'])
+                                item(element['Name'], self.get_shortname())
                             else:
-                                item(element['Called'])
+                                item(element['Called'], self.get_shortname())
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_number_outgoing' and item() == '':
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
                         if element['Type'] in ['3', '4']:
                             if 'Caller' in element:
-                                item(''.join(filter(lambda x: x.isdigit(), element['Caller'])))
+                                item(''.join(filter(lambda x: x.isdigit(), element['Caller'])), self.get_shortname())
                             else:
-                                item("")
+                                item("", self.get_shortname())
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_called_number_outgoing' and item() == '':
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
                         if element['Type'] in ['3', '4']:
-                            item(element['Called'])
+                            item(element['Called'], self.get_shortname())
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'last_call_date_outgoing' and item() == '':
                 if not self.get_calllist_from_cache() is None:
@@ -786,22 +786,22 @@ class AVM(SmartPlugin):
                         if element['Type'] in ['3', '4']:
                             date = str(element['Date'])
                             date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                            item(date)
+                            item(date, self.get_shortname())
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_event_outgoing' and item() == '':
-                item('disconnect')
+                item('disconnect', self.get_shortname())
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'is_call_outgoing' and item() == '':
-                item(0)
+                item(0, self.get_shortname())
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_event' and item() == '':
-                item('disconnect')
+                item('disconnect', self.get_shortname())
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_direction' and item() == '':
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
                         if element['Type'] in ['1', '2']:
-                            item('incoming')
+                            item('incoming', self.get_shortname())
                             break
                         if element['Type'] in ['3', '4']:
-                            item('outgoing')
+                            item('outgoing', self.get_shortname())
                             break
             if self._call_monitor:
                 if self._monitoring_service is not None:
@@ -815,7 +815,7 @@ class AVM(SmartPlugin):
                         if element['Type'] in ['1', '2']:
                             duration = element['Duration']
                             duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
-                            item(duration)
+                            item(duration, self.get_shortname())
                             break
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'call_duration_outgoing' and item() == 0:
                 if not self.get_calllist_from_cache() is None:
@@ -823,7 +823,7 @@ class AVM(SmartPlugin):
                         if element['Type'] in ['3', '4']:
                             duration = element['Duration']
                             duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
-                            item(duration)
+                            item(duration, self.get_shortname())
                             break
             if not self._monitoring_service is None:
                 self._monitoring_service.set_duration_item(item)
@@ -1498,7 +1498,7 @@ class AVM(SmartPlugin):
 
         tag_content = xml.getElementsByTagName('NewEnabled')
         if len(tag_content) > 0:
-            item(tag_content[0].firstChild.data)
+            item(tag_content[0].firstChild.data, self.get_shortname())
 
     def _update_host(self, item):
         """
@@ -1540,16 +1540,16 @@ class AVM(SmartPlugin):
 
         tag_content = xml.getElementsByTagName('NewActive')
         if len(tag_content) > 0:
-            item(tag_content[0].firstChild.data)
+            item(tag_content[0].firstChild.data, self.get_shortname())
             for child in item.return_children():
                 if 'avm_data_type' in child.conf:
                     if child.conf['avm_data_type'] == 'device_ip':
                         device_ip = xml.getElementsByTagName('NewIPAddress')
                         if len(device_ip) > 0:
                             if not device_ip[0].firstChild is None:
-                                child(device_ip[0].firstChild.data)
+                                child(device_ip[0].firstChild.data, self.get_shortname())
                             else:
-                                child('')
+                                child('', self.get_shortname())
                         else:
                             self.logger.error(
                                 "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1558,9 +1558,9 @@ class AVM(SmartPlugin):
                         device_connection_type = xml.getElementsByTagName('NewInterfaceType')
                         if len(device_connection_type) > 0:
                             if not device_connection_type[0].firstChild is None:
-                                child(device_connection_type[0].firstChild.data)
+                                child(device_connection_type[0].firstChild.data, self.get_shortname())
                             else:
-                                child('')
+                                child('', self.get_shortname())
                         else:
                             self.logger.error(
                                 "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1568,7 +1568,7 @@ class AVM(SmartPlugin):
                     elif child.conf['avm_data_type'] == 'device_hostname':
                         data = self._get_value_from_xml_node(xml, 'NewHostName')
                         if not data is None:
-                            child(data)
+                            child(data, self.get_shortname())
                         else:
                             self.logger.error(
                                 "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1619,10 +1619,10 @@ class AVM(SmartPlugin):
             element_xml = xml.getElementsByTagName('NewSwitchState')
             if len(element_xml) > 0:
                 if element_xml[0].firstChild.data not in ['UNDEFINED', 'TOGGLE']:
-                    item(element_xml[0].firstChild.data)
+                    item(element_xml[0].firstChild.data, self.get_shortname())
                 elif element_xml[0].firstChild.data in 'TOGGLE':
                     value = item()
-                    item(not value)
+                    item(not value, self.get_shortname())
                 else:
                     self.logger.error(
                         'NewSwitchState für AHA Device has a non-supported value of %s' % element_xml[0].firstChild.data)
@@ -1631,7 +1631,7 @@ class AVM(SmartPlugin):
                         if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
                             temp = xml.getElementsByTagName('NewTemperatureCelsius')
                             if len(temp) > 0:
-                                child(int(temp[0].firstChild.data))
+                                child(int(temp[0].firstChild.data), self.get_shortname())
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1639,7 +1639,7 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'power':
                             power = xml.getElementsByTagName('NewMultimeterPower')
                             if len(power) > 0:
-                                child(int(power[0].firstChild.data))
+                                child(int(power[0].firstChild.data), self.get_shortname())
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1647,7 +1647,7 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'energy':
                             energy = xml.getElementsByTagName('NewMultimeterEnergy')
                             if len(energy) > 0:
-                                child(int(energy[0].firstChild.data))
+                                child(int(energy[0].firstChild.data), self.get_shortname())
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1686,7 +1686,7 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature':
                             set_temperature = xml.getElementsByTagName('NewHkrSetTemperature')
                             if len(set_temperature) > 0:
-                                child(int(set_temperature[0].firstChild.data)/10)
+                                child(int(set_temperature[0].firstChild.data)/10, self.get_shortname())
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1694,7 +1694,7 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_reduced':
                             set_temperature_reduced= xml.getElementsByTagName('NewHkrReduceTemperature')
                             if len(set_temperature_reduced) > 0:
-                                child(int(set_temperature_reduced[0].firstChild.data)/10)
+                                child(int(set_temperature_reduced[0].firstChild.data)/10, self.get_shortname())
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1702,7 +1702,7 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_comfort':
                             set_temperature_comfort= xml.getElementsByTagName('NewHkrComfortTemperature')
                             if len(set_temperature_comfort) > 0:
-                                child(int(set_temperature_comfort[0].firstChild.data)/10)
+                                child(int(set_temperature_comfort[0].firstChild.data)/10, self.get_shortname())
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1762,28 +1762,28 @@ class AVM(SmartPlugin):
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'uptime':
             element_xml = xml.getElementsByTagName('NewUpTime')
             if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+                item(int(element_xml[0].firstChild.data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'software_version':
             element_xml = xml.getElementsByTagName('NewSoftwareVersion')
             if len(element_xml) > 0:
-                item(element_xml[0].firstChild.data)
+                item(element_xml[0].firstChild.data, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'hardware_version':
             element_xml = xml.getElementsByTagName('NewHardwareVersion')
             if len(element_xml) > 0:
-                item(element_xml[0].firstChild.data)
+                item(element_xml[0].firstChild.data, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'serial_number':
             element_xml = xml.getElementsByTagName('NewSerialNumber')
             if len(element_xml) > 0:
-                item(element_xml[0].firstChild.data)
+                item(element_xml[0].firstChild.data, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -1836,14 +1836,14 @@ class AVM(SmartPlugin):
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
             element_xml = xml.getElementsByTagName('NewEnable')
             if len(element_xml) > 0:
-                item(element_xml[0].firstChild.data)
+                item(element_xml[0].firstChild.data, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam_name':
             element_xml = xml.getElementsByTagName('NewName')
             if len(element_xml) > 0:
-                item(element_xml[0].firstChild.data)
+                item(element_xml[0].firstChild.data, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -1882,7 +1882,7 @@ class AVM(SmartPlugin):
                             is_new = message.getElementsByTagName('New')
                             if int(is_new[0].firstChild.data) == 1:
                                 message_count = message_count + 1
-                item(message_count)
+                item(message_count, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -1945,21 +1945,21 @@ class AVM(SmartPlugin):
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
             newEnable = self._get_value_from_xml_node(xml, 'NewEnable')
             if newEnable is not None:
-                item(newEnable)
+                item(newEnable, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig_ssid':
             newSSID = self._get_value_from_xml_node(xml, 'NewSSID')
             if newSSID is not None:
-                item(newSSID)
+                item(newSSID, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wlan_guest_time_remaining':
             element_xml = xml.getElementsByTagName('NewX_AVM-DE_TimeRemain')
             if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+                item(int(element_xml[0].firstChild.data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -2011,14 +2011,14 @@ class AVM(SmartPlugin):
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_upstream':
             element_xml = xml.getElementsByTagName('NewUpstreamCurrRate')
             if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+                item(int(element_xml[0].firstChild.data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_downstream':
             element_xml = xml.getElementsByTagName('NewDownstreamCurrRate')
             if len(element_xml) > 0:
-                item(int(element_xml[0].firstChild.data))
+                item(int(element_xml[0].firstChild.data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -2087,56 +2087,56 @@ class AVM(SmartPlugin):
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_sent':
             data = self._get_value_from_xml_node(xml, 'NewTotalPacketsSent')
             if data is not None:
-                item(int(data))
+                item(int(data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_packets_received':
             data = self._get_value_from_xml_node(xml, 'NewTotalPacketsReceived')
             if data is not None:
-                item(int(data))
+                item(int(data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_packets_sent':
             data = self._get_value_from_xml_node(xml, 'NewPacketSendRate')
             if data is not None:
-                item(int(data))
+                item(int(data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_packets_received':
             data = self._get_value_from_xml_node(xml, 'NewPacketReceiveRate')
             if data is not None:
-                item(int(data))
+                item(int(data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_sent':
             data = self._get_value_from_xml_node(xml, 'NewTotalBytesSent')
             if data is not None:
-                item(int(data))
+                item(int(data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_total_bytes_received':
             data = self._get_value_from_xml_node(xml, 'NewTotalBytesReceived')
             if data is not None:
-                item(int(data))
+                item(int(data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_bytes_sent':
             data = self._get_value_from_xml_node(xml, 'NewByteSendRate')
             if data is not None:
-                item(int(data))
+                item(int(data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_current_bytes_received':
             data = self._get_value_from_xml_node(xml, 'NewByteReceiveRate')
             if data is not None:
-                item(int(data))
+                item(int(data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -2144,9 +2144,9 @@ class AVM(SmartPlugin):
             data = self._get_value_from_xml_node(xml, 'NewPhysicalLinkStatus')
             if data is not None:
                 if data == 'Up':
-                    item(True)
+                    item(True, self.get_shortname())
                 else:
-                    item(False)
+                    item(False, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -2202,33 +2202,33 @@ class AVM(SmartPlugin):
             data = self._get_value_from_xml_node(xml, 'NewConnectionStatus')
             if data is not None:
                 if self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_connection_status':
-                    item(data)
+                    item(data, self.get_shortname())
                 elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_is_connected':
                     if data == 'Connected':
-                        item(True)
+                        item(True, self.get_shortname())
                     else:
-                        item(False)
+                        item(False, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_uptime':
             data = self._get_value_from_xml_node(xml, 'NewUptime')
             if data is not None:
-                item(int(data))
+                item(int(data), self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_connection_error':
             data = self._get_value_from_xml_node(xml, 'NewLastConnectionError')
             if data is not None:
-                item(data)
+                item(data, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'wan_ip':
             data = self._get_value_from_xml_node(xml, 'NewExternalIPAddress')
             if data is not None:
-                item(data)
+                item(data, self.get_shortname())
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
