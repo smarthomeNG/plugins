@@ -67,7 +67,7 @@ item_attributes:
         description:
             en: 'connects the item to the defined node'
 
-    zwave_valu:
+    zwave_value:
         type: str
         description:
             en: 'connects the item to the defined value'
@@ -77,5 +77,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
-
-
