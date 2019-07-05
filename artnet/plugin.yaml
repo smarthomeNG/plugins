@@ -8,7 +8,7 @@ plugin:
     maintainer: mode2k, jentz1986
     tester: ohinckel
     state: ready
-    keywords: dmx,artnet
+    keywords: dmx
 #   documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
     version: 1.6.0                 # Plugin version
