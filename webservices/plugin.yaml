@@ -10,10 +10,11 @@ plugin:
     state: qa-passed
     keywords: REST, API, Webservice
     documentation: https://www.smarthomeng.de/?category_name=plugins&s=webservices
+#    documentation: http://smarthomeng.de/user/plugins/webservices/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1163886-support-thread-f%C3%BCr-das-webservices-plugin
 
     version: 1.5.0.5               # Plugin version
-    sh_minversion: 1.5             # minimum shNG version to use this plugin
+    sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
@@ -27,7 +28,7 @@ parameters:
         description:
             de: '(optional) Mode des Plugins: "all", wenn die Webservice-Schnittstelle alle Items der SmartHomeNG Instanz verfügbar machen soll (default). Ansonsten werden nur Items ausgeliefert, die einem Set via webservices_set zugeordnet sind.'
             en: '(optional) Mode of the plugin: "all", if standard interface with all items shall be enabled (default if left empty). Otherwise only items are delivered via the interface that are added to a set via webservices_set attribute.'
-    
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     webservices_set:
@@ -41,6 +42,12 @@ item_attributes:
         description:
             de: '(optional) webservices_data dient dazu, die Rückgabedaten von Items zu limitieren. Wird als Wert "val" eingegeben, so wird nur der Pfadname und der Wert zurückgegeben, sonst zusätzlich alle Metainformationen.'
             en: '(optional) webservices_data is used, to limit the returned values for an item. If the attribute value "val" is set, only the path name and the item value is returned. Otherwise, also all meta information is returned.'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 plugin_functions: NONE
     # Definition of function interface of the plugin

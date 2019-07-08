@@ -3,7 +3,7 @@ plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Dieses Plugin liefert die Gamme-Ortsdosisleistung (ODL) in µSv/h  von mehreren Stationen in Deutschland (zur Verfügung gestellt durch das Bundesamt für Strahlenschutz). Mehr Informationen unter httsp://odlinfo.bfs.de.'
+        de: 'Dieses Plugin liefert die Gamme-Ortsdosisleistung (ODL) in µSv/h  von mehreren Stationen in Deutschland (zur Verfügung gestellt durch das Bundesamt für Strahlenschutz). Mehr Informationen unter https://odlinfo.bfs.de.'
         en: 'This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in from several measuring stations (by "Bundesamt für Strahlenschutz") in Germany. For more information see https://odlinfo.bfs.de.'
     maintainer: psilo909
     tester: Sandman60
@@ -37,7 +37,13 @@ parameters:
 
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
-    
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
 plugin_functions:
 
     get_radiation_data_for_id:

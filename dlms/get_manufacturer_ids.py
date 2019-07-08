@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2016 - 2017 Bernd Meiners              Bernd.Meiners@mail.de
+#  Copyright 2016 - 2018 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #
 #  DLMS plugin for SmartHomeNG.py.
@@ -25,79 +25,96 @@
 #  along with SmartHomeNG.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
+"""
+On standalone mode this Python program will visit
+https://www.dlms.com/srv/lib/Export_Flagids.php
+to download the list of manufacturer ids for smartmeter as xlsx
+The columns therein are labeled as "FLAG ID","Manufacturer", "Country", and "World Region"
+``FLAG ID`` is exactly 3 characters long
 
-# This Python will visit
-# http://dlms.com/organization/flagmanufacturesids/index.html
-# to download the list of manufacturer ids for smartmeter as html
-# and parse out the ids together with the manufacturer.
-#
-# The result will be stored locally as a manufacturer.yaml
-# to serve as information database for the identification of smartmeters
-# 
-# BeautifulSoup is needed to perform the task.
+The result will be stored locally as ``manufacturer.yaml``
+to serve as information database for the identification of smartmeters
+
+"""
 
 import logging
 import requests
-from bs4 import BeautifulSoup
+
 from ruamel.yaml import YAML
+from io import BytesIO
+import openpyxl
 
-verbose = False
-exportfile = 'manufacturer.yaml'
-
-logging.getLogger().setLevel( logging.DEBUG )
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-# create formatter and add it to the handlers
-if verbose:
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s  @ %(lineno)d')
+if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
+    logger.debug("init standalone {}".format(__name__))
 else:
-    formatter = logging.Formatter('%(message)s')
-ch.setFormatter(formatter)
-# add the handlers to the logger
-logging.getLogger().addHandler(ch)
-logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
+    logger.debug("init plugin component {}".format(__name__))
 
 
-url = 'http://dlms.com/organization/flagmanufacturesids/index.html'
-headers = {'User-agent': 'Mozilla/5.0'}
+def get_manufacturer( from_url, to_yaml, verbose = False ):
+    """
+    Read XLSX from given url and write a yaml containing id and manufacturer
+    """
+    # result
+    r = {}
+    y = YAML()
 
+    logger.debug("Read manufacturer IDs from URL: '{}'".format(url))
+    headers = {'User-agent': 'Mozilla/5.0'}
 
-# result
-r = {}
-y = YAML()
-
-try:
-    logger.debug("Manufacturer IDs URL: {}".format(url))
     try:
         reque = requests.get(url, headers=headers)
     except ConnectionError as e:
-        logger.debug('An error occurred fetching %s \n %s' % (url, e.reason) )
+        logger.debug('An error occurred fetching {} \n {}'.format(url, e.reason))
         raise
-    
-    soup = BeautifulSoup(reque.content.decode(reque.encoding), 'html.parser')
 
-    tables = soup.find_all("table")
-    
-    for table in tables:
-        try:
-            rows = table.find_all('tr')
-        except AttributeError as e:
-            r += 'No table rows found, exiting'
-            raise
+    try:
+        wb = openpyxl.load_workbook(filename=BytesIO(reque.content), data_only=True)
+        #wb = openpyxl.load_workbook(xlfilename, data_only=True)
 
-        # Get data from rows """
-        for row in rows:
-            table_data = row.find_all('td')
-            if table_data:
-                id = table_data[0].get_text().strip()
-                man = table_data[1].get_text().strip()
+        logger.debug('sheetnames {}'.format(wb.get_sheet_names()))
+        
+        sheet = wb.active
+        logger.debug('sheet {}'.format(sheet))
+        logger.debug('rows [{} ..{}]'.format(sheet.min_row, sheet.max_row))
+        logger.debug('columns [{} ..{}]'.format(sheet.min_column, sheet.max_column))
+        
+        if sheet.min_row+1 <= sheet.max_row and sheet.min_column == 1 and sheet.max_column == 4:
+            # Get data from rows """
+            for row in range(sheet.min_row+1,sheet.max_row):
+                id = sheet.cell(row, 1).value
+                man = sheet.cell(row, 2).value
                 r[id] = man
+                if verbose:
+                    logger.debug("{}->{}".format(id,man))
+            with open(exportfile, 'w') as f:
+                y.dump( r, f )
 
-    with open(exportfile, 'w') as f:
-        y.dump( r, f )
+        logger.debug("{} distinct manufacturers were found and written to {}".format(len(r),exportfile))
+        
+    except Exception as e:
+        logger.debug("Error {} occurred".format(e))
 
-    logger.debug("{} distinct manufacturers were found and written to {}".format(len(r),exportfile))
-    
-except Exception as e:
-    logger.debug("Error {} occurred".format(e))
+    return r
+
+if __name__ == '__main__':
+    verbose = False
+
+    logging.getLogger().setLevel( logging.DEBUG )
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    # create formatter and add it to the handlers
+    if verbose:
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s  @ %(lineno)d')
+    else:
+        formatter = logging.Formatter('%(message)s')
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logging.getLogger().addHandler(ch)
+    logger = logging.getLogger(__name__)
+
+    exportfile = 'manufacturer.yaml'
+    url = 'https://www.dlms.com/srv/lib/Export_Flagids.php'
+    get_manufacturer( url, exportfile, verbose)
 

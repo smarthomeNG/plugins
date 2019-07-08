@@ -386,3 +386,52 @@ class Prepare_Packet_Data():
         self.logger.info('enocean-PrepareData: {} Packet Data Prepared for {} (VLD)'.format(tx_eep, tx_eep))
         optional = [SubTel, rx_id, db, Secu]
         return rorg, payload, optional
+
+    def _prepare_data_for_tx_eep_D2_01_12(self, item, tx_eep):
+        """
+        ### --- Data for D2_01_12 (VLD) --- ###
+        Prepare data for Devices with Varable Length Telegram.
+        There is currently no device information available.
+        Optional 'pulsewidth' - Attribute was removed, it can be realized with the smarthomeNG
+        build in function autotimer!
+        """
+        self.logger.debug('enocean-PrepareData: prepare data for tx_eep {}'.format(tx_eep))
+        rorg = 0xD2
+        SubTel = 0x03
+        db = 0xFF
+        Secu = 0x0
+        if self._plugin_instance.has_iattr(item.conf, 'enocean_rx_id'):
+            rx_id = int(self._plugin_instance.get_iattr_value(item.conf, 'enocean_rx_id'), 16)
+            if (rx_id < 0) or (rx_id > 0xFFFFFFFF):
+                self.logger.error('enocean-PrepareData: {} rx-ID-Offset out of range (0-127). Aborting.'.format(tx_eep))
+                return None
+            self.logger.debug('enocean-PrepareData: {} enocean_rx_id found.'.format(tx_eep))
+        else:
+            rx_id = 0
+            self.logger.debug('enocean-PrepareData: {} no enocean_rx_id found!'.format(tx_eep))
+        if self._plugin_instance.has_iattr(item.conf, 'enocean_channel'):
+            schannel = self._plugin_instance.get_iattr_value(item.conf, 'enocean_channel')
+            if (schannel == "A"):
+                channel = 0x00
+            elif (schannel == "B"):
+                channel = 0x01
+            else:
+                channel = 0x1E
+            self.logger.debug('enocean-PrepareData: {} enocean_channel found: %s '.format(tx_eep), schannel)
+        else:
+            channel = 0x1E
+            self.logger.debug('enocean-PrepareData: {} no enocean_channel found!'.format(tx_eep))
+        # Prepare Data Packet
+        if (item() == 0):
+            payload = [0x01, channel, 0x00]
+            optional = [SubTel, rx_id, db, Secu]
+        elif (item() == 1):
+            payload = [0x01, channel, 0x01]
+            optional = [SubTel, rx_id, db, Secu]
+        else:
+            self.logger.error('enocean-PrepareData: {} undefined Value. Error!'.format(tx_eep))
+            return None
+        # packet_data_prepared = (id_offset, 0xD2, payload, [0x03, 0xFF, 0xBA, 0xD0, 0x00, 0xFF, 0x0])
+        self.logger.info('enocean-PrepareData: {} Packet Data Prepared for {} (VLD)'.format(tx_eep, tx_eep))
+        optional = [SubTel, rx_id, db, Secu]
+        return rorg, payload, optional

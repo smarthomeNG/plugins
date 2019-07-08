@@ -1,3 +1,0 @@
-cherrypy>=8.1.2
-jinja2>=2.9
-python-dateutil>=2.5.3

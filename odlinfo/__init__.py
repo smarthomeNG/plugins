@@ -48,7 +48,6 @@ class ODLInfo(SmartPlugin):
         @param user: For accessing the ODLINFO API you need a personal username
         @param password: For accessing the ODLINFO API you need a personal password
         """
-        self.logger = logging.getLogger(__name__)
         self._user = self.get_parameter_value('user')
         self._password = self.get_parameter_value('password')
         self._keys = ['ort', 'kenn', 'plz', 'status', 'kid', 'hoehe', 'lon', 'lat', 'mw']

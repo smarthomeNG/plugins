@@ -11,7 +11,7 @@ plugin:
     keywords: z-wave, zwave
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
-    version: 1.4.1                 # Plugin version
+    version: 1.4.2                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -19,13 +19,61 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+
     device:
         type: str
-        default: ''
+        default: '/dev/ttyUSB0'
         description:
             de: 'Gerätedatei des Z-Wave Garätes'
             en: 'Devicefile of the Z-Wave Device'
 
+    sec_strategy:
+        type: str
+        default: 'SUPPORTED'
+        description:
+            de: 'Definiert die Sicherheitsstrategie : SUPPORTED|ESSENTIAL|CUSTOM'
+            en: 'The security strategy : SUPPORTED|ESSENTIAL|CUSTOM'
+
+    config_path:
+        type: str
+        default: '/etc/openzwave/'
+        description:
+            de: 'Der Ordner in dem die Konfiuration liegt'
+            en: 'The folder with the configuration'
+
+    zlogging:
+        type: bool
+        default: False
+        description:
+            en: 'True to activate logs, False to disable'
+
+    logfile:
+        type: str
+        default: 'OZW.log'
+        description:
+            en: 'set the name of the logfile'
+
+    loglevel:
+        type: str
+        default: 'Info'
+        description:
+            en: 'set the loglevel'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
+    zwave_node:
+        type: str
+        description:
+            en: 'connects the item to the defined node'
+
+    zwave_value:
+        type: str
+        description:
+            en: 'connects the item to the defined value'
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin

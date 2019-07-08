@@ -9,12 +9,14 @@ plugin:
     tester: psilo909, onkelandy, brandst
     state: ready
     keywords: database
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.4.1                 # Plugin version
-    sh_minversion: 1.4c            # minimum shNG version to use this plugin
+    version: 1.5.7                 # Plugin version
+    sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Database            # class containing the plugin
 
 parameters:
@@ -50,7 +52,19 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    database:
+        type: str
+        valid_list: ['', 'yes', 'init']
+        description:
+            de: "Wenn auf 'yes' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert in die Datenbank geschrieben."
+            en: "This attribute enables the database logging when set (just use value 'yes'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
+
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
 plugin_functions:
     # Definition of function interface of the plugin
@@ -58,7 +72,7 @@ plugin_functions:
         description:
             de: 'Liefert für das angegebene Item die Datenbank-ID zurück'
             en: 'Return the database ID for the given item'
-        parameter:
+        parameters:
             item:
                 type: foo
                 description:
@@ -73,7 +87,7 @@ plugin_functions:
         description:
             de: 'Erzeugt einen Datenbank-Dump für angegebene Kriterien'
             en: 'Creates a database dump for given criterias'
-        parameter:
+        parameters:
             dumpfile:
                 type: str
                 description:
@@ -123,7 +137,7 @@ plugin_functions:
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID anlegen'
             en: 'Create database log record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -153,17 +167,17 @@ plugin_functions:
                 type: int
                 description:
                     de: "Zeitstempel der Änderung"
+                    en: "Time of change"
             cur:
                 type: foo
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
-                    en: "Timestamp of change"
     updateLog:
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
             en: 'Update database log record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -193,17 +207,17 @@ plugin_functions:
                 type: int
                 description:
                     de: "Zeitstempel der Änderung"
+                    en: "Time of change"
             cur:
                 type: foo
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
-                    en: "Timestamp of change"    deleteLog:
     readLog:
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID auslesen'
             en: 'Read database log record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -218,7 +232,7 @@ plugin_functions:
         description:
             de: 'Log-Datenbankeinträge für angegebene Datenbank-ID löschen'
             en: 'Delete database log records for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -259,12 +273,11 @@ plugin_functions:
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
-                    en: "Timestamp of change"    deleteLog:
     readLogs:
         description:
             de: 'Log-Datenbankeinträge für angegebene Datenbank-ID auslesen'
             en: 'Read database log records for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -309,7 +322,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeintrag für angegebene Datenbank-ID anlegen'
             en: 'Create database item record for given database ID'
-        parameter:
+        parameters:
             name:
                 type: str
                 description:
@@ -324,7 +337,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
             en: 'Update database item record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -354,6 +367,7 @@ plugin_functions:
                 type: int
                 description:
                     de: "Zeitstempel der Änderung"
+                    en: "Time of change"
             cur:
                 type: foo
                 description:
@@ -364,7 +378,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeintrag für angegebene Datenbank-ID auslesen'
             en: 'Read database item record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -379,7 +393,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeinträge auslesen'
             en: 'Read database item records'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:
@@ -394,7 +408,7 @@ plugin_functions:
         description:
             de: 'Item-Datenbankeintrag für angegebene Datenbank-ID löschen'
             en: 'Delete database item record for given database ID'
-        parameter:
+        parameters:
             id:
                 type: int
                 description:

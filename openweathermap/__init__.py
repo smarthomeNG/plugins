@@ -26,12 +26,15 @@ import logging
 import requests
 import datetime
 import json
+import functools
+from datetime import datetime, timedelta, timezone
 from lib.module import Modules
 from lib.model.smartplugin import *
+from bin.smarthome import VERSION
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.1"
+    PLUGIN_VERSION = "1.5.0.4"
 
     _base_url = 'https://api.openweathermap.org/%s'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
@@ -40,7 +43,8 @@ class OpenWeatherMap(SmartPlugin):
         """
         Initializes the plugin
         """
-        self.logger = logging.getLogger(__name__)
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
         self._key = self.get_parameter_value('key')
         if self.get_parameter_value('latitude') != '' and self.get_parameter_value('longitude') != '':
             self._lat = self.get_parameter_value('latitude')
@@ -56,8 +60,7 @@ class OpenWeatherMap(SmartPlugin):
         self._cycle = int(self.get_parameter_value('cycle'))
         self._items = {}
 
-        if not self.init_webinterface():
-            self._init_complete = False
+        self.init_webinterface()
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
@@ -81,61 +84,138 @@ class OpenWeatherMap(SmartPlugin):
         Updates information on diverse items
         """
         weather = self.get_weather()
+        forecast = self.get_forecast()
         uv = self.get_uv()
 
         self._jsonData['weather'] = weather
+        self._jsonData['forecast'] = forecast
         self._jsonData['uvi'] = uv
         for s, item in self._items.items():
 
             if s in ['clouds_new', 'precipitation_new', 'pressure_new', 'wind_new', 'temp_new']:
                 wrk = self.get_owm_layer(item)
+            elif s.startswith('forecast/daily/'):
+                wrk = self.get_daily_forecast(s)
             else:
-                if 'uvi' not in s:
-                    wrk = weather
-                else:
+                if s.startswith('forecast/'):
+                    wrk = forecast
+                    s = s.replace("forecast/", "list/")
+                elif 'uvi' in s:
                     wrk = uv
                     s = s.replace("uvi_", "")
-                sp = s.split('/')
+                else:
+                    wrk = weather
 
-                while True:
-                    if (len(sp) == 0) or (wrk is None):
-                        break
-                    if type(wrk) is list:
-                        if self.is_int(sp[0]):
-                            if int(sp[0]) < len(wrk):
-                                wrk = wrk[int(sp[0])]
-                            else:
-                                self.logger.error(
-                                    "_update: invalid owm_matchstring '{}'; integer too large in matchstring".format(
-                                        s))
-                                break
-                        else:
-                            self.logger.error(
-                                "_update: invalid owm_matchstring '{}'; integer expected in matchstring".format(
-                                    s))
-                            break
-                    else:
-                        wrk = wrk.get(sp[0])
-                    if len(sp) == 1:
-                        spl = s.split('/')
-                        self.logger.debug(
-                            "_update: owm_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
-                                                                                               str(spl),
-                                                                                               str(wrk)))
-                    sp.pop(0)
+                wrk = self.get_val_from_dict(s, wrk)
 
             # if a value was found, store it to item
             if wrk is not None:
-                item(wrk, 'DarkSky')
+                item(wrk, 'OpenWeatherMap')
                 self.logger.debug('_update: Value "{0}" written to item'.format(wrk))
 
         return
+
+    def get_val_from_dict(self, s, wrk):
+        """
+        Uses string s as a path to navigate to the requested value in dict wrk.
+        """
+        sp = s.split('/')
+        while True:
+            if (len(sp) == 0) or (wrk is None):
+                break
+            if type(wrk) is list:
+                if self.is_int(sp[0]):
+                    if int(sp[0]) < len(wrk):
+                        wrk = wrk[int(sp[0])]
+                    else:
+                        self.logger.error(
+                            "_update: invalid owm_matchstring '{}'; integer too large in matchstring".format(
+                                s))
+                        break
+                else:
+                    self.logger.error(
+                        "_update: invalid owm_matchstring '{}'; integer expected in matchstring".format(
+                            s))
+                    break
+            else:
+                wrk = wrk.get(sp[0])
+            if len(sp) == 1:
+                spl = s.split('/')
+                self.logger.debug(
+                    "_update: owm_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
+                                                                                       str(spl),
+                                                                                       str(wrk)))
+            sp.pop(0)
+        return wrk
 
     def get_owm_layer(self, item):
         """
         Requests the layer information (image links) at openweathermap.com
         """
         return self._build_url('owm_layer', item)
+
+    def get_daily_forecast(self, s):
+        """
+        Calculates daily forecast from (free) 3-hours data.
+        This builds the average/min/max of all available 3-hour entries that match the
+        requested period (1, 2, ..., 5 days in the future).
+        Uses local time to determine which entries to include/exclude.
+        """
+        s = s.replace("forecast/daily/", "")
+        forecast = self._jsonData['forecast']
+        if forecast is None:
+            self.logger.error(
+                "get_daily_forecast: forecast is None")
+            return None
+        datetime_now = datetime.now()
+        date_requested = datetime(datetime_now.year, datetime_now.month, datetime_now.day)
+        sp = s.split('/')
+        if self.is_int(sp[0]):
+            days_in_future = int(sp[0]) + 1
+            date_requested = date_requested + timedelta(days=days_in_future)
+            sp.pop(0)
+        else:
+            self.logger.error(
+                "get_daily_forecast: invalid owm_matchstring '{}'; integer expected after forecast/daily/ matchstring".format(
+                    s))
+            return None
+
+        too_far = date_requested + timedelta(days=1)
+        wrk = []
+        if forecast is not None:
+            forecast_list = forecast.get('list')
+            if forecast_list is not None:
+                for entry in forecast_list:
+                    dt = int(entry.get('dt'))
+                    if dt >= int(too_far.timestamp()):
+                        break
+                    if dt >= int(date_requested.timestamp()):
+                        val = self.get_val_from_dict("/".join(sp), entry)
+                        if isinstance(val, float) or isinstance(val, int):
+                            wrk.append(val)
+                        elif val is None:
+                            self.logger.error(
+                                "get_daily_forecast: found None value while calculating daily forecast for matchstring '{}'.".format(s))
+                            return 0
+                        else:
+                            self.logger.error(
+                                "get_daily_forecast: found unknown value while calculating daily forecast for matchstring '{}'; daily forecast only supported for int and float.".format(
+                                    s))
+                            return 0
+            else:
+                self.logger.error("get_daily_forecast: forecast.get('list') is None.")
+        else:
+            self.logger.error("get_daily_forecast: forecast data is None.")
+            return 0
+
+        result = 0
+        if "max" in sp[len(sp) - 1]:
+            result = max(wrk)
+        elif "min" in sp[len(sp) - 1]:
+            result = min(wrk)
+        else:  # average
+            result = round(functools.reduce(lambda x, y: x + y, wrk) / len(wrk), 2)
+        return result
 
     def get_weather(self):
         """
@@ -150,6 +230,19 @@ class OpenWeatherMap(SmartPlugin):
         json_obj = response.json()
         return json_obj
 
+    def get_forecast(self):
+        """
+        Requests the 5-days forecast information at openweathermap.com
+        """
+        try:
+            response = self._session.get(self._build_url('forecast'))
+        except Exception as e:
+            self.logger.error(
+                "get_weather: Exception when sending GET request for get_forecast: %s" % str(e))
+            return
+        json_obj = response.json()
+        return json_obj
+
     def get_uv(self):
         """
         Requests the uv index information at openweathermap.com
@@ -160,7 +253,12 @@ class OpenWeatherMap(SmartPlugin):
             self.logger.error(
                 "get_uv: Exception when sending GET request for get_uv: %s" % str(e))
             return
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "get_uv: Exception when decoding json data: %s" % str(e))
+            return
         return json_obj
 
     def parse_item(self, item):
@@ -191,6 +289,11 @@ class OpenWeatherMap(SmartPlugin):
         url = ''
         if url_type == 'weather':
             url = self._base_url % 'data/2.5/weather'
+            parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
+                                                                       self._units)
+            url = '%s%s' % (url, parameters)
+        elif url_type == 'forecast':
+            url = self._base_url % 'data/2.5/forecast'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
@@ -286,9 +389,9 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
-        self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self.logger = self.plugin.logger
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose

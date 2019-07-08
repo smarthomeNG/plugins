@@ -5,24 +5,46 @@ plugin:
         en: 'Plugin for Helios EC x00 Pro / Vallox xx SE control'
     maintainer: 'Tom Bombadil'
     tester: '-'
+    state: ready
     keywords: 'helios vallox ventilation'
     documentation: https://github.com/Tom-Bom-badil/helios/wiki
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/40092-erweiterung-helios-vallox-plugin
     version: 1.4.2                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
     multi_instance:  False         # plugin supports multi instance
+    restartable: unknown
     classname: 'Helios'            # class containing the plugin
-# parameters:                        # Definition of parameters to be configured in etc/plugin.yaml
-#    tty:
-#        type: str
-#        default: '/dev/ttyUSB0'
-#        description:
-#            de: 'Port für die Kommunikation'
-#            en: 'Port for communication'
-#    cycle: 'Polling interval in seconds'
-#        type: num
-#        default: 300
-#        description:
-#            de: 'Abfrage-Intervall'
-#            en: 'Polling interval'
-# item_attributes:
+
+parameters:                        # Definition of parameters to be configured in etc/plugin.yaml
+    tty:
+        type: str
+        default: '/dev/ttyUSB0'
+        description:
+            de: 'Port für die Kommunikation'
+            en: 'Port for communication'
+
+    cycle:
+        type: int                   # used to be num until 1.6, then caused error
+        default: 60
+        description:
+            de: 'Abfrage-Intervall in Sekunden'
+            en: 'Polling interval in seconds'
+
+
+item_attributes:
+# Definition of item attributes defined by this plugin
+    helios_var:
+        type: str
+        description:
+            de: 'Keine Beschreibung angegeben. (Bitte in den Support Thread im SmatHomeNG Forum schauen)'
+            en: 'No description given (Please visit the support thread in the SmartHomeNG Forum)'
+
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin

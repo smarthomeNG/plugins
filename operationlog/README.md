@@ -22,6 +22,7 @@ mylogname1:
     # cache = yes
     # logtofile = yes
     # filepattern = {year:04}-{month:02}-{day:02}-{name}.log
+    # logger =
 
 mylogname2:
     class_name: OperationLog
@@ -42,6 +43,9 @@ The entries of the second log will not be kept in memory, only logged to a yearl
 
 The logging file can be named as desired. The keys `{name}`, `{year}`, `{month}` and `{day}` are replaced by the log name and current time respectively.
 Every time a log entry is written, the file name is checked and a new file is created upon change.
+
+If you also want to log to a configured logger of the environment
+you can specify the logger name in the `logger` setting.
 
 
 ### items.yaml

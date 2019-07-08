@@ -27,7 +27,12 @@ import platform
 #import collections
 import datetime
 import time
-import pwd
+# identifying the user needs one of these:
+import os
+if os.name != 'nt':
+    import pwd          # linux approach
+else:
+    import getpass      # windows approach
 #import html
 #import subprocess
 import socket
@@ -39,6 +44,7 @@ import psutil
 import bin.shngversion as shngversion
 import lib.config
 from lib.shtime import Shtime
+from lib.shpypi import Shpypi
 #from lib.logic import Logics
 #from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
@@ -52,6 +58,8 @@ class BackendSysteminfo:
     def __init__(self):
 
         self.logger.info("BackendSysteminfo __init__ {}".format(''))        
+
+        self.shpypi = Shpypi.get_instance()
 
 
     # -----------------------------------------------------------------------------------
@@ -67,13 +75,19 @@ class BackendSysteminfo:
         # node = platform.node()
         node = socket.getfqdn()
         arch = platform.machine()
-        user = pwd.getpwuid(os.geteuid()).pw_name  # os.getlogin()
+        if os.name != 'nt':
+            user = pwd.getpwuid(os.geteuid()).pw_name  # os.getlogin()
+        else:
+            user = getpass.getuser()
 
         ip = Utils.get_local_ipv4_address()
         ipv6 = Utils.get_local_ipv6_address()
 
-        space = os.statvfs(self._sh_dir)
-        freespace = space.f_frsize * space.f_bavail / 1024 / 1024
+        if os.name == 'posix':
+            space = os.statvfs(self._sh_dir)
+            freespace = space.f_frsize * space.f_bavail / 1024 / 1024
+        else:
+            freespace = psutil.disk_usage(".").free
 
         # return host uptime
         uptime = time.mktime(datetime.datetime.now().timetuple()) - psutil.boot_time()
@@ -86,16 +100,21 @@ class BackendSysteminfo:
         seconds = uptime
         uptime = self.age_to_string(days, hours, minutes, seconds)
 
+        # # return SmarthomeNG runtime
+        # rt = str(Shtime.get_instance().runtime())
+        # daytest = rt.split(' ')
+        # if len(daytest) == 3:
+        #     days = int(daytest[0])
+        #     hours, minutes, seconds = [float(val) for val in str(daytest[2]).split(':')]
+        # else:
+        #     days = 0
+        #     hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
+        # sh_uptime = self.age_to_string(days, hours, minutes, seconds)
+
         # return SmarthomeNG runtime
-        rt = str(Shtime.get_instance().runtime())
-        daytest = rt.split(' ')
-        if len(daytest) == 3:
-            days = int(daytest[0])
-            hours, minutes, seconds = [float(val) for val in str(daytest[2]).split(':')]
-        else:
-            days = 0
-            hours, minutes, seconds = [float(val) for val in str(daytest[0]).split(':')]
-        sh_uptime = self.age_to_string(days, hours, minutes, seconds)
+        rt = Shtime.get_instance().runtime_as_dict()
+        sh_uptime = self.age_to_string(rt['days'], rt['hours'], rt['minutes'], rt['seconds'])
+
 
         pyversion = "{0}.{1}.{2} {3}".format(sys.version_info[0], sys.version_info[1], sys.version_info[2],
                                              sys.version_info[3])
@@ -380,7 +399,46 @@ class BackendSysteminfo:
 
             package_list.append(package)
 
-    
+        # self.logger.warning('installed_packages: {}'.format(installed_packages))
+        self.logger.warning('req_dict: {}'.format(req_dict))
+        inst_pkgname_list = []
+        for pkg in package_list:
+            inst_pkgname_list.append(pkg['name'])
+        self.logger.warning('pkgname_list: {}'.format(inst_pkgname_list))
+        for req in req_dict:
+            if not (req in inst_pkgname_list):
+                pkg = {}
+                pkg['name'] = req
+                pkg['vers_installed'] = '-'
+                pkg['is_required'] = True
+                pkg['is_required_for_testsuite'] = True
+                pkg['is_required_for_docbuild'] = True
+                # tests for min, max versions
+                rmin, rmax, rtxt = self.check_requirement(pkg['name'], req_dict.get(pkg['name'], ''))
+                pkg['vers_req_min'] = rmin
+                pkg['vers_req_max'] = rmax
+                pkg['vers_req_msg'] = rtxt
+                pkg['sort'] = '1' + pkg['name']
+                package_list.append(pkg)
+###
+                if pypi_available:
+                    try:
+                        available = pypi.package_releases(pkg['name'])   #(dist.project_name)
+                        self.logger.debug("pypi_json: pypi package: project_name {}, availabe = {}".format(pkg['name'], available))
+                        try:
+                            pkg['pypi_version'] = available[0]
+                        except:
+                            pkg['pypi_version_not_available_msg'] = '?'
+                    except:
+                        pkg['pypi_version'] = '--'
+                        pkg['pypi_version_not_available_msg'] = [translate('Keine Antwort von PyPI')]
+                else:
+                    pkg['pypi_version_not_available_msg'] = pypi_unavailable_message
+###
+
+        self.logger.warning('package_list: {}'.format(package_list))
+
+
 #        sorted_package_list = sorted([(i['name'], i['version_installed'], i['version_available']) for i in package_list])
         sorted_package_list = sorted(package_list, key=lambda k: k['sort'], reverse=False)
         self.logger.info("pypi_json: sorted_package_list = {}".format(sorted_package_list))
@@ -394,14 +452,23 @@ class BackendSysteminfo:
         """
         req_dict = {}
         if req_group == 'base':
-#            req_dict_base = parse_requirements("%s/requirements/base.txt" % self._sh_dir)
             req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'requirements', 'base.txt'))
+#            req_dict_base = self.shpypi.parse_requirementsfile(os.path.join(self._sh_dir, 'requirements', 'base.txt'))
+            dummy = self.shpypi.parse_requirementsfile(os.path.join(self._sh_dir, 'requirements', 'conf-all.txt'))
+            dummy = self.shpypi.test_base_requirements()
+            dummy = self.shpypi.test_requirements(os.path.join(self._sh_dir, 'requirements', 'conf-all.txt'))
+            dummy = self.shpypi.get_packagelist()
+            self.logger.warning("get_requirements_info: get_packagelist = {}".format(dummy))
+
+
         elif req_group == 'test':
             req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'tests', 'requirements.txt'))
             self.logger.info("get_requirements_info: filepath = {}".format(os.path.join(self._sh_dir, 'tests', 'requirements.txt')))
+            pass
         elif req_group == 'doc':
             req_dict_base = parse_requirements(os.path.join(self._sh_dir, 'doc', 'requirements.txt'))
             self.logger.info("get_requirements_info: filepath = {}".format(os.path.join(self._sh_dir, 'doc', 'requirements.txt')))
+            pass
         else:
             self.logger.error("get_requirements_info: Unknown requirements group '{}' requested".format(req_group))
 
@@ -430,7 +497,10 @@ class BackendSysteminfo:
                                 'plugins.', '') + ')'
 
         if req_group in ['doc','test']:
-            req_dict = req_dict_base.copy()
+            try:
+                req_dict = req_dict_base.copy()
+            except:
+                pass
 
         self.logger.info("get_requirements_info: req_dict for group {} = {}".format(req_group, req_dict))
         return req_dict
@@ -733,6 +803,7 @@ class BackendSysteminfo:
             else:
                 package['version_available'] = pypi_unavailable_message
             packages.append(package)
+
 
         sorted_packages = sorted([(i['key'], i['version_installed'], i['version_available']) for i in packages])
         return sorted_packages

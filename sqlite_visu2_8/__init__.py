@@ -54,7 +54,7 @@ class SQL(SmartPlugin):
         GROUP by CAST((_start / {}) AS INTEGER), _item
         ORDER BY _start DESC;"""
 
-    def __init__(self, smarthome, cycle=300, path=None, dumpfile=False):
+    def __init__(self, smarthome, cycle=300, path=None, dumpfile=''):
         self.logger = logging.getLogger(__name__)
 #       sqlite3.register_adapter(datetime.datetime, self._timestamp)
         self._sh = smarthome
@@ -299,7 +299,7 @@ class SQL(SmartPlugin):
             if self._buffer[item] != []:
                 self._insert(item)
         self._pack()
-        if self._dumpfile:
+        if self._dumpfile and (self._dumpfile != ''):
             self.dump(self._dumpfile)
 
     def _pack(self):

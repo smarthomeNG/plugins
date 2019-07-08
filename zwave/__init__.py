@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2017 Thomas Creutz                    <thomas.creutz@gmx.de>
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
 #  upwards.
@@ -25,19 +25,24 @@
 
 from lib.model.smartplugin import SmartPlugin
 
-import os
 import logging
 import time
 
-import openzwave
-from openzwave.network import ZWaveNetwork
-from openzwave.option import ZWaveOption
-from pydispatch import dispatcher
+try:
+    from openzwave.network import ZWaveNetwork
+    from openzwave.option import ZWaveOption
+    from pydispatch import dispatcher
+    REQUIRED_PACKAGE_IMPORTED = True
+except Exception:
+    REQUIRED_PACKAGE_IMPORTED = False
+
+from bin.smarthome import VERSION
 
 ITEMS = 'items'
 ITEM = 'item'
 LOGICS = 'logics'
 NID = 'node_id'
+
 
 class ZWave(SmartPlugin):
     """
@@ -45,19 +50,19 @@ class ZWave(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.4.1'
+    PLUGIN_VERSION = '1.4.2'
 
-    def __init__(self, sh, device='/dev/ttyUSB0', sec_strategy='SUPPORTED', config_path='/etc/openzwave/', zlogging='false', logfile='OZW.log', loglevel='Info'):
+    def __init__(self, sh):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-        
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**! 
+
+        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
         :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
         :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
-        
+
         If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
         a reference to the sh object any more.
-        
+
         The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are implemented
         to support older plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
         use the SmartPlugin method `get_parameter_value(parameter_name)` instead. Anywhere within the Plugin you can get
@@ -65,36 +70,45 @@ class ZWave(SmartPlugin):
         returns the value in the datatype that is defined in the metadata.
         """
 
-        self.logger = logging.getLogger(__name__)
-        self.logger.debug('zwave: Initialization started')
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
 
-        if not self.init_webinterface():
+        try:
+            self._sh = sh
+            self.listenOn = {}
+            self._device = self.get_parameter_value('device')
+            self._config_path = self.get_parameter_value('config_path')
+            self._logging = self.get_parameter_value('zlogging')
+            logfile = self.get_parameter_value('loglevel')
+            try:
+                self._logfile = '{}/log/{}'.format(self.get_vardir(), logfile)
+            except Exception:
+                self._logfile = '{}/var/log/{}'.format(self.sh.get_basedir(), logfile)
+            self._loglevel = self.get_parameter_value('loglevel')
+            self._sec_strategy = self.get_parameter_value('sec_strategy')
+            self._ready = False
+            self.logger.debug('Initialized: logpath={}, loglevel={}, configpath={}, device={}, sec_strategy={}'.format(
+                              self._logfile, self._loglevel, self._config_path, self._device, self._sec_strategy))
+        except Exception as err:
+            self.logger.error(err)
             self._init_complete = False
+            return
 
-        self._sh = sh
-
-        self.listenOn = {}
-        self._device = device
-        self._config_path = config_path
-        self._logging = logging
-        self._logfile = os.path.join(sh._base_dir, 'var')
-        self._logfile = os.path.join(self._logfile, 'log')
-        self._logfile = os.path.join(self._logfile, logfile)
-        self.logger.debug('zwave: logath={0}', self._logfile)
-        self._loglevel = loglevel
-        self._sec_strategy = sec_strategy
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.warning("Unable to import Python package 'openzwave'")
+            self._init_complete = False
 
     def run(self):
         """
         Run method for the plugin
         """
-        self.logger.debug('zwave: run method called')
+        self.logger.debug('run method called')
         self.alive = True
 
         try:
-            options = ZWaveOption(self._device, config_path=self._config_path, user_path='.', cmd_line='')
+            options = ZWaveOption(self._device, config_path=self._config_path, user_path='./var/ozw', cmd_line='')
         except Exception as e:
-            self.logger.error('zwave: error on create ZWaveOption - {}'.format(e))
+            self.logger.error('error on create ZWaveOption - {}'.format(e))
             self.alive = False
             return
 
@@ -107,42 +121,58 @@ class ZWave(SmartPlugin):
             options.set_security_strategy(self._sec_strategy)
             options.lock()
         except Exception as e:
-            self.logger.error('zwave: error on option.set_* - {}'.format(e))
+            self.logger.error('error on option.set_* - {}'.format(e))
 
-        self.logger.debug('zwave: run -> create network')
+        self.logger.debug('run -> create network')
         try:
             self._network = ZWaveNetwork(options, autostart=False)
         except Exception as e:
-            self.logger.error('zwave: error on create Network Object - {}'.format(e))
+            self.logger.error('error on create Network Object - {}'.format(e))
 
-        self.logger.debug('zwave: run -> connect event handler')
+        self.logger.debug('run -> connect event handler')
         try:
             dispatcher.connect(self.zwave_value_update, ZWaveNetwork.SIGNAL_VALUE_CHANGED)
         except Exception as e:
-            self.logger.error('zwave: error on connect event handler - {}'.format(e))
+            self.logger.error('error on connect event handler - {}'.format(e))
 
-        self.logger.debug('zwave: run -> start network')
+        self.logger.debug('run -> start network')
         try:
             self._network.start()
         except Exception as e:
-            self.logger.error('zwave: error on start network - {}'.format(e))
+            self.alive = False
+            self.logger.error('error on start network - {}'.format(e))
 
-        self.logger.info('zwave: use openzwave library: {}'.format(self._network.controller.ozw_library_version))
-        self.logger.info('zwave: use python library: {}'.format(self._network.controller.python_library_version))
-        self.logger.info('zwave: use ZWave library: {}'.format(self._network.controller.library_description))
-        while 1:
-            if self.alive and self._network.state < self._network.STATE_READY:
-                self.logger.debug('zwave: wait until network is ready... current state is: {}'.format(self._network.state_str))
-                time.sleep(3.0)
+        self.logger.info('use openzwave library: {}'.format(self._network.controller.ozw_library_version))
+        self.logger.info('use python library: {}'.format(self._network.controller.python_library_version))
+        self.logger.info('use ZWave library: {}'.format(self._network.controller.library_description))
+
+        while self.alive:
+
+            if self._network.state != self._network.STATE_READY:
+
+                self.logger.debug('wait until network is ready... current state is: {}'.format(self._network.state_str))
                 if self._network.state == self._network.STATE_FAILED:
-                    self.alive = false
+                    self.alive = False
                     return
 
-        self.logger.info('zwave: controller ready : {} nodes were found.'.format(self._network.nodes_count))
-        self.logger.info('zwave: controller node id : {}'.format(self._network.controller.node.node_id))
-        self.logger.info('zwave: controller node version : {}'.format(self._network.controller.node.version))
-        self.logger.info('zwave: Network home id : {}'.format(self._network.home_id_str))
-        self.logger.info('zwave: Nodes in network : {}'.format(self._network.nodes_count))
+            # Dump network information on STATE_READY
+            if self._network.state == self._network.STATE_READY and self._ready is False:
+                self.logger.info('controller ready : {} nodes were found.'.format(self._network.nodes_count))
+                self.logger.info('controller node id : {}'.format(self._network.controller.node.node_id))
+                self.logger.info('controller node version : {}'.format(self._network.controller.node.version))
+                self.logger.info('Network home id : {}'.format(self._network.home_id_str))
+                self.logger.info('Nodes in network : {}'.format(self._network.nodes_count))
+
+                self.logger.info("zwave: Start refresh values")
+                for __id in self.listenOn:
+                    __val = self._network.get_value(__id)
+                    self.logger.info("zwave: id : '{}', val: '{}'".format(__id, __val))
+                    for __item in self.listenOn[__id][ITEMS]:
+                        __item(__val.data, 'ZWave')
+
+                self._ready = True
+
+            time.sleep(3.0)
 
     def stop(self):
         """
@@ -166,11 +196,11 @@ class ZWave(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'zwave_node') and self.has_iattr(item.conf, 'zwave_value'):
-            node_id = int(item.conf['zwave_node'])
-            value_id = int(item.conf['zwave_value'])
-            self.logger.debug('zwave: connecting item {} to node {} value {}'.format(item, node_id, value_id))
+            node_id = int(self.get_iattr_value(item.conf, 'zwave_node').strip())
+            value_id = int(self.get_iattr_value(item.conf, 'zwave_value').strip())
+            self.logger.debug('connecting item {} to node {} value {}'.format(item, node_id, value_id))
             if value_id not in self.listenOn:
-                self.listenOn[value_id] = {NID: node_id,ITEMS: [item],LOGICS: []}
+                self.listenOn[value_id] = {NID: node_id, ITEMS: [item], LOGICS: []}
             elif item not in self.listenOn[value_id][ITEMS]:
                 self.listenOn[value_id][ITEMS].append(item)
             return self.update_item
@@ -192,12 +222,13 @@ class ZWave(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.has_iattr(item.conf, 'zwave_node') and self.has_iattr(item.conf, 'zwave_value'):
-            self.logger.debug("zwave: update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
+            self.logger.debug("zwave: update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
+                              item, caller, source, dest))
             self.logger.debug("zwave: item value is '{}' from type '{}'".format(item(), type(item())))
         try:
             self._network._manager.setValue(int(item.conf['zwave_value']), item())
         except Exception as e:
-            self.logger.error('zwave: update_item error - {}'.format(e))
+            self.logger.error('update_item error - {}'.format(e))
 
     def zwave_value_update(self, network, node, value):
         """
@@ -207,17 +238,16 @@ class ZWave(SmartPlugin):
         :param value: the value object which is updated
         """
         value_id = value.value_id
-        self.logger.debug('zwave: zwave_value_update called for value_id={} and value={}'.format(value_id, value.data))
-        self.logger.debug('zwave: self.listenOn={}'.format(self.listenOn))
+        self.logger.debug('zwave_value_update called for value_id={} and value={}'.format(value_id, value.data))
+        self.logger.debug('self.listenOn={}'.format(self.listenOn))
         if value_id in self.listenOn:
             if self.listenOn[value_id][ITEMS] is not None:
                 for item in self.listenOn[value_id][ITEMS]:
                     try:
                         item(value.data, 'ZWave')
                     except Exception as e:
-                        self.logger.error('zwave: zwave_value_update error - {}'.format(e))
+                        self.logger.error('zwave_value_update error - {}'.format(e))
             else:
-                self.logger.debug('zwave: listener found, but no items bound')
+                self.logger.debug('listener found, but no items bound')
         else:
-            self.logger.debug('zwave: no listener defined')
-
+            self.logger.debug('no listener defined')
