@@ -93,8 +93,8 @@ item_structs:
 
         uzsu:
             type: dict
-            uzsu_item: '..'
-            cache: 'True'
+            uzsu_item: ..
+            cache: True
             visu_acl: rw
 
             active:
@@ -102,6 +102,15 @@ item_structs:
                 type: bool
                 eval: sh...activate(value)
                 visu_acl: rw
+
+                status:
+                    type: bool
+                    eval: sh....activate()
+                    eval_trigger:
+                      - ..
+                      - ...
+                    on_change: .. = value
+                    crontab: init = 0
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
@@ -189,4 +198,3 @@ plugin_functions:
                 description:
                     de: 'Maximales Alter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen.'
                     en: 'maximum age of an uzsu entry in minutes to be catched up at the plugin start'
-
