@@ -83,7 +83,7 @@ class ZWave(SmartPlugin):
             try:
                 self._logfile = '{}/log/{}'.format(self.get_vardir(), logfile)
             except Exception:
-                self._logfile = '{}/var/log/{}'.format(self.sh.get_basedir(), logfile)
+                self._logfile = '{}/var/log/{}'.format(self._sh.get_basedir(), logfile)
             self._loglevel = self.get_parameter_value('loglevel')
             self._sec_strategy = self.get_parameter_value('sec_strategy')
             self._ready = False
