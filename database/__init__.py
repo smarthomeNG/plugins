@@ -167,6 +167,7 @@ class Database(SmartPlugin):
         item_ids = self.readItems(cur=cur) if id is None else [self.readItem(id, cur=cur)]
         if item_ids is None:
             item_ids = {}
+            self.logger.error("Dump: Item IDs are None what means something is wrong (most likely with your database connection)")
 
         s = ';'
         h = ['item_id', 'item_name', 'time', 'duration', 'val_str', 'val_num', 'val_bool', 'changed', 'time_date',
@@ -180,6 +181,7 @@ class Database(SmartPlugin):
                                  changed_start=changed_start, changed_end=changed_end, cur=cur)
             if rows is None:
                 rows = {}
+                self.logger.error("Dump: Rows are None what means something is wrong (most likely with your database connection)")
 
             for row in rows:
                 cols = []
@@ -785,6 +787,7 @@ class WebInterface(SmartPluginWebIf):
                 rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
                 if rows is None:
                     rows = {}
+                    self.logger.error("Build Cherrypy index: Rows are None what means something is wrong (most likely with your database connection)")
                 log_array = []
                 for row in rows:
                     value_dict = {}
@@ -826,6 +829,7 @@ class WebInterface(SmartPluginWebIf):
             rows = self.plugin.readLogs(item_id)
             if rows is None:
                 rows = {}
+                self.logger.error("Item CSV: Rows are None what means something is wrong (most likely with your database connection)")
             log_array = []
             for row in rows:
                 value_dict = {}
