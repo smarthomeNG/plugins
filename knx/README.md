@@ -153,7 +153,9 @@ living_room:
     window:
         type: bool
         knx_dpt: 1
-        knx_poll: 1/1/9 | 60
+        knx_poll: 
+		    - 1/1/9
+			- 60
 ```
 
 ### logic.yaml
