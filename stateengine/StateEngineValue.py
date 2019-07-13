@@ -91,6 +91,8 @@ class SeValue(StateEngineTools.SeItemChild):
                 else:
                     value[i] = field_value[i]
                     field_value[i] = value[i]
+                if source[i] == "value":
+                    self.__listorder[i] = value[i]
                 if source[i] == "template":
                     if self.__template is None:
                         self.__template = []
@@ -149,6 +151,8 @@ class SeValue(StateEngineTools.SeItemChild):
             elif field_value == "":
                 field_value = source
                 source = "value"
+            if source == "value":
+                self.__listorder = [field_value]
         else:
             source = "value"
             field_value = value
