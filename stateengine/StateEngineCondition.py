@@ -156,18 +156,14 @@ class SeCondition(StateEngineTools.SeItemChild):
         except Exception as ex:
             raise ValueError("Condition {0}: Error when casting: {1}".format(self.__name, ex))
 
-        # 'agemin' and 'agemax' can only be used for items, not for eval
+        # 'agemin' and 'agemax' can only be used for items
         cond_min_max = self.__agemin.is_empty() and self.__agemax.is_empty()
         try:
             cond_evalitem = self.__eval and ("get_relative_item(" in self.__eval or "return_item(" in self.__eval)
         except Exception:
             cond_evalitem = False
-        if self.__item is None and not cond_min_max:
-            if cond_evalitem:
-                self._log_info("Make sure your se_eval '{}' really contains an item and not an ID. If the agemin/max "
-                               "condition does not work though, please check your eval!", self.__eval)
-            else:
-                raise ValueError("Condition {}: 'agemin'/'agemax' can not be used for eval!".format(self.__name))
+        if self.__item is None and not cond_min_max and not cond_evalitem:
+            raise ValueError("Condition {}: 'agemin'/'agemax' can not be used for eval!".format(self.__name))
 
         return True
 
@@ -348,12 +344,25 @@ class SeCondition(StateEngineTools.SeItemChild):
             self._log_info("Age of '{0}': No limits given", self.__name)
             return True
 
-        # Ignore if no current value can be determined (should not happen as we check this earlier, but to be sure ...)
-        if self.__item is None:
+        # Ignore if no current value can be determined
+        if self.__item is None and self.__eval is None:
             self._log_info("Age of '{0}': No item found! Considering condition as matching!", self.__name)
             return True
 
-        current = self.__item.age()
+        try:
+            cond_evalitem = self.__eval and ("get_relative_item(" in self.__eval or "return_item(" in self.__eval)
+        except Exception:
+            cond_evalitem = False
+        if self.__item is None and cond_evalitem is False:
+            self._log_info("Make sure your se_eval '{}' really contains an item and not an ID. If the age "
+                           "condition does not work though, please check your eval!", self.__eval)
+
+        try:
+            current = self.__get_current(type='age')
+        except Exception as ex:
+            self._log_info("Age of '{0}': Not possible to get age from eval {1}! "
+                           "Considering condition as matching: {2}", self.__name, self.__eval, ex)
+            return True
         agemin = None if self.__agemin.is_empty() else self.__agemin.get()
         agemax = None if self.__agemax.is_empty() else self.__agemax.get()
         try:
@@ -409,12 +418,12 @@ class SeCondition(StateEngineTools.SeItemChild):
             self._log_decrease_indent()
 
     # Current value of condition (based on item or eval)
-    def __get_current(self):
+    def __get_current(self, type='value'):
         if self.__item is not None:
-            # noinspection PyCallingNonCallable
-            return self.__item()
+            return self.__item.property.value if type == 'value' else self.__item.property.last_change_age
         if self.__eval is not None:
             # noinspection PyUnusedLocal
+            self._log_debug("Trying to get {} of eval {}", type, self.__eval)
             sh = self._sh
             if isinstance(self.__eval, str):
                 # noinspection PyUnusedLocal
@@ -422,13 +431,12 @@ class SeCondition(StateEngineTools.SeItemChild):
                     # noinspection PyUnusedLocal
                     stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
                 try:
-                    value = eval(self.__eval).property.value
+                    value = eval(self.__eval).property.value if type == 'value' else eval(self.__eval).property.last_change_age
                 except Exception as ex:
                     text = "Condition {}: problem evaluating {}: {}"
-                    raise ValueError(text.format(self.__name, str(self.__eval), ex))
+                    raise ValueError(text.format(self.__name, self.__eval, ex))
                 else:
                     return value
             else:
-                # noinspection PyCallingNonCallable
                 return self.__eval()
         raise ValueError("Condition {}: Neither 'item' nor eval given!".format(self.__name))

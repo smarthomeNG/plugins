@@ -118,7 +118,8 @@ class SeItem:
             "current.state_id": "",
             "current.state_name": "",
             "current.conditionset_id": "",
-            "current.conditionset_name": ""
+            "current.conditionset_name": "",
+            "current.action_name": ""
         }
 
         # initialize states
