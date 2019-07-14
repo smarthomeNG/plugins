@@ -190,9 +190,9 @@ class SeCondition(StateEngineTools.SeItemChild):
         if self.__item is not None:
             if isinstance(self.__item, list):
                 for i in self.__item:
-                    self._log_debug("item {0}", self.__name, i.property.path)
+                    self._log_debug("item: {0} ({1})", self.__name, i.property.path)
             else:
-                self._log_debug("item {0}", self.__name, self.__item.property.path)
+                self._log_debug("item: {0} ({1})", self.__name, self.__item.property.path)
         if self.__eval is not None:
             if isinstance(self.__item, list):
                 for e in self.__item:
@@ -422,7 +422,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                     # noinspection PyUnusedLocal
                     stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
                 try:
-                    value = eval(self.__eval)
+                    value = eval(self.__eval).property.value
                 except Exception as ex:
                     text = "Condition {}: problem evaluating {}: {}"
                     raise ValueError(text.format(self.__name, str(self.__eval), ex))

@@ -541,13 +541,13 @@ item_structs:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 2'
-                    se_action_release:
-                      - 'function: set'
-                      - 'to: False'
-                      - 'order: 3'
                     se_action_suspend_end:
                       - 'function: set'
                       - 'to: '
+                      - 'order: 3'
+                    se_action_release:
+                      - 'function: set'
+                      - 'to: False'
                       - 'order: 4'
                     se_action_retrigger:
                       - 'function: special'
