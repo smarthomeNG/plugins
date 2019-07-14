@@ -53,6 +53,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def __init__(self, abitem, name: str):
         super().__init__(abitem)
         self._parent = abitem
+        self._caller = StateEngineDefaults.plugin_identification
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
         self._name = name
@@ -195,7 +196,6 @@ class SeActionSetItem(SeActionBase):
         self.__item = None
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
-        self.__caller = StateEngineDefaults.plugin_identification
         self.__function = "set"
 
     def _getitem_fromeval(self):
@@ -213,7 +213,7 @@ class SeActionSetItem(SeActionBase):
                     self.__mindelta.set_cast(self.__item.cast)
                     self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
                     if self._abitem.id == self.__item.property.path:
-                        self.__caller += '_self'
+                        self._caller += '_self'
             except Exception as ex:
                 raise Exception("Problem evaluating item '{}' from eval: {}".format(self.__item, ex))
             if item is None:
@@ -248,7 +248,7 @@ class SeActionSetItem(SeActionBase):
             self.__mindelta.set_cast(self.__item.cast)
             self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
             if self._abitem.id == self.__item.property.path:
-                self.__caller += '_self'
+                self._caller += '_self'
 
     # Write action to logger
     def write_to_logger(self):
@@ -293,7 +293,7 @@ class SeActionSetItem(SeActionBase):
     def _execute_set_add_remove(self, actionname, repeat_text, item, value):
         self._log_debug("{0}: Set '{1}' to '{2}'. {3}", actionname, item.property.path, value, repeat_text)
         # noinspection PyCallingNonCallable
-        item(value, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
+        item(value, caller=self._caller, source=self._parent)
 
 
 # Class representing a single "se_setbyattr" action
@@ -328,7 +328,7 @@ class SeActionSetByattr(SeActionBase):
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
         for item in self.items.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
-            item(item.conf[self.__byattr], caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
+            item(item.conf[self.__byattr], caller=self._caller, source=self._parent)
 
 
 # Class representing a single "se_trigger" action
@@ -367,9 +367,8 @@ class SeActionTrigger(SeActionBase):
     def _execute(self, actionname: str, repeat_text: str = ""):
         # Trigger logic
         self._log_info("{0}: Triggering logic '{1}' using value '{2}'.{3}", actionname, self.__logic, self.__value, repeat_text)
-        by = StateEngineDefaults.plugin_identification
         add_logics = 'logics.{}'.format(self.__logic) if not self.__logic.startswith('logics.') else self.__logic
-        self._sh.trigger(add_logics, by=by, source=self._name, value=self.__value)
+        self._sh.trigger(add_logics, by=self._caller, source=self._name, value=self.__value)
 
 
 # Class representing a single "se_run" action
@@ -507,7 +506,7 @@ class SeActionForceItem(SeActionBase):
                     self.__mindelta.set_cast(self.__item.cast)
                     self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
                     if self._abitem.id == self.__item.property.path:
-                        self.__caller += '_self'
+                        self._caller += '_self'
                 else:
                     self._log_error("Problem evaluating item '{}' from eval. It is None.", item)
                     return
@@ -532,25 +531,24 @@ class SeActionForceItem(SeActionBase):
                 return
 
         # Set to different value first ("force")
-        _caller = '{} {}'.format(StateEngineDefaults.plugin_identification, self._parent)
         if self.__item() == value:
             if self.__item._type == 'bool':
                 self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, not value)
-                self.__item(not value, caller=_caller)
+                self.__item(not value, caller=self._caller, source=self._parent)
             elif self.__item._type == 'str':
                 if value != '':
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, '')
-                    self.__item('', caller=_caller)
+                    self.__item('', caller=self._caller, source=self._parent)
                 else:
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, '-')
-                    self.__item('-', caller=_caller)
+                    self.__item('-', caller=self._caller, source=self._parent)
             elif self.__item._type == 'num':
                 if value != 0:
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 0)
-                    self.__item(0, caller=_caller)
+                    self.__item(0, caller=self._caller, source=self._parent)
                 else:
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 1)
-                    self.__item(1, caller=_caller)
+                    self.__item(1, caller=self._caller, source=self._parent)
             else:
                 self._log_warning("{0}: Force not implemented for item type '{1}'", actionname, self.__item._type)
         else:
@@ -558,7 +556,7 @@ class SeActionForceItem(SeActionBase):
 
         self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.path, value, repeat_text)
         # noinspection PyCallingNonCallable
-        self.__item(value, caller=_caller)
+        self.__item(value, caller=self._caller, source=self._parent)
 
 
 # Class representing a single "se_special" action
@@ -612,8 +610,8 @@ class SeActionSpecial(SeActionBase):
             self.suspend_execute()
         elif self.__special == "retrigger":
             # noinspection PyCallingNonCallable
-            self.__value(False, caller='{} Retrigger'.format(StateEngineDefaults.plugin_identification))
-            self.__value(True, caller='{} Retrigger'.format(StateEngineDefaults.plugin_identification))
+            self.__value(False, caller=self._caller)
+            self.__value(True, caller='{} Retrigger'.format(self._caller))
         else:
             self._log_decrease_indent()
             raise ValueError("{0}: Unknown special value '{1}'!".format(actionname, self.__special))
@@ -688,7 +686,7 @@ class SeActionAddItem(SeActionSetItem):
         self._log_debug("{0}: Add '{1}' to '{2}'. {3}", actionname, value, item.property.path, repeat_text)
         value = item.property.value + value
         # noinspection PyCallingNonCallable
-        item(value, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
+        item(value, caller=self._caller, source=self._parent)
 
 
 # Class representing a single "se_remove" action
@@ -714,7 +712,7 @@ class SeActionRemoveFirstItem(SeActionSetItem):
                 self._log_debug("{0}: Remove first entry '{1}' from '{2}'. {3}", actionname, v, item.property.path, repeat_text)
             except Exception as ex:
                 self._log_warning("{0}: Remove first entry '{1}' from '{2}' failed: {3}", actionname, value, item.property.path, ex)
-        item(currentvalue, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
+        item(currentvalue, caller=self._caller, source=self._parent)
 
 
 # Class representing a single "se_remove" action
@@ -742,7 +740,7 @@ class SeActionRemoveLastItem(SeActionSetItem):
                 self._log_debug("{0}: Remove last entry '{1}' from '{2}'. {3}", actionname, v, item.property.path, repeat_text)
             except Exception as ex:
                 self._log_warning("{0}: Remove last entry '{1}' from '{2}' failed: {3}", actionname, value, item.property.path, ex)
-        item(currentvalue, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
+        item(currentvalue, caller=self._caller, source=self._parent)
 
 
 # Class representing a single "se_removeall" action
@@ -769,4 +767,4 @@ class SeActionRemoveAllItem(SeActionSetItem):
             except Exception as ex:
                 self._log_warning("{0}: Remove all '{1}' from '{2}' failed: {3}", actionname, value, item.property.path, ex)
 
-        item(currentvalue, caller='{} {}'.format(StateEngineDefaults.plugin_identification, self._parent))
+        item(currentvalue, caller=self._caller, source=self._parent)

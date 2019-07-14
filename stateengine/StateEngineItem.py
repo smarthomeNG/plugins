@@ -176,9 +176,11 @@ class SeItem:
         if orig_caller != caller:
             text = "Eval initially triggered by {0} (item={1} source={2})"
             self.__logger.debug(text, orig_caller, orig_item.property.path, orig_source)
-        cond1 = orig_caller == '{} {}'.format(StateEngineDefaults.plugin_identification, item_id)
-        cond2 = caller == '{} {}'.format(StateEngineDefaults.plugin_identification, item_id)
-        if cond1 or cond2:
+        cond1 = orig_caller == StateEngineDefaults.plugin_identification
+        cond2 = caller == StateEngineDefaults.plugin_identification
+        cond1_2 = orig_source == item_id
+        cond2_2 = source == item_id
+        if (cond1 and cond1_2) or (cond2 and cond2_2):
             self.__logger.debug("Ignoring changes from {0}", StateEngineDefaults.plugin_identification)
             self.__update_in_progress = False
             return
