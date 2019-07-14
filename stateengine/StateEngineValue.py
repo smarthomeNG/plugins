@@ -338,14 +338,32 @@ class SeValue(StateEngineTools.SeItemChild):
                 return None
         return value
 
+    def __parse_relative(self, evalstr, begintag, endtag):
+        if evalstr.find(begintag+'.') == -1:
+            return evalstr
+
+        pref = ''
+        rest = evalstr
+        while (rest.find(begintag+'.') != -1):
+            pref += rest[:rest.find(begintag+'.')]
+            rest = rest[rest.find(begintag+'.')+len(begintag):]
+            rel = rest[:rest.find(endtag)]
+            rest = rest[rest.find(endtag)+len(endtag):]
+            pref += "se_eval.get_relative_itemvalue('{}')".format(rel)
+
+        pref += rest
+        return pref
+
     # Determine value by executing eval-function
     def __get_eval(self):
         # noinspection PyUnusedLocal
         sh = self._sh
         if isinstance(self.__eval, str):
+            self.__eval = self.__parse_relative(self.__eval, 'sh.', '()')
             if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
+            self._log_debug("Checking eval: {0}.", self.__eval)
             try:
                 _newvalue = eval(self.__eval)
                 if 'eval:{}'.format(self.__eval) in self.__listorder:
@@ -362,7 +380,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         val = val.replace("\n", "")
                     except Exception:
                         pass
-                    self._log_info("Checking eval: {0}.", val)
+                    self._log_debug("Checking eval from list: {0}.", val)
                     self._log_increase_indent()
                     if isinstance(val, str):
                         if "stateengine_eval" in val or "se_eval" in val:
