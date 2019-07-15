@@ -30,11 +30,10 @@ from nokia import NokiaAuth, NokiaApi, NokiaCredentials
 
 class WithingsHealth(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.3"
+    PLUGIN_VERSION = "1.6.4"
     ALLOWED_MEASURE_TYPES = [1, 4, 5, 6, 8, 11]
 
     def __init__(self, sh, *args, **kwargs):
-        self.logger = logging.getLogger(__name__)
         self.shtime = Shtime.get_instance()
         self._user_id = self.get_parameter_value('user_id')
         self._client_id = self.get_parameter_value('client_id')
@@ -56,8 +55,8 @@ class WithingsHealth(SmartPlugin):
 
     def _store_tokens(self, token):
         self.logger.debug(
-            "Plugin '{}': Updating tokens to items: access_token - {} token_expiry - {} token_type - {} refresh_token - {}".
-                format(self.get_fullname(), token['access_token'], token['expires_in'], token['token_type'],
+            "Updating tokens to items: access_token - {} token_expiry - {} token_type - {} refresh_token - {}".
+                format(token['access_token'], token['expires_in'], token['token_type'],
                        token['refresh_token']))
         self.get_item('access_token')(token['access_token'])
         self.get_item('token_expiry')(
@@ -70,8 +69,7 @@ class WithingsHealth(SmartPlugin):
         """
         Starts the update loop for all known items.
         """
-        self.logger.debug(
-            "Plugin '{}': Starting update loop".format(self.get_fullname()))
+        self.logger.debug("Starting update loop")
         if not self.alive:
             return
 
@@ -101,8 +99,7 @@ class WithingsHealth(SmartPlugin):
 
         if 'access_token' not in self.get_items() or 'token_expiry' not in self.get_items() or 'token_type' not in self.get_items() or 'refresh_token' not in self.get_items():
             self.logger.error(
-                "Plugin '{}': Mandatory Items for OAuth2 Data do not exist. Verify that you have items with withings_type: token_expiry, token_type, refresh_token and access_token in your item tree.".format(
-                    self.get_fullname()))
+                "Mandatory Items for OAuth2 Data do not exist. Verify that you have items with withings_type: token_expiry, token_type, refresh_token and access_token in your item tree.")
             return
 
         if self._client is None:
@@ -113,12 +110,12 @@ class WithingsHealth(SmartPlugin):
                 if (self.shtime.now() < datetime.datetime.fromtimestamp(self.get_item(
                         'token_expiry')(), tz=self.shtime.tzinfo())):
                     self.logger.debug(
-                        "Plugin '{}': Token is valid, will expire on {}.".format(
-                            self.get_fullname(), datetime.datetime.fromtimestamp(self.get_item(
+                        "Token is valid, will expire on {}.".format(
+                            datetime.datetime.fromtimestamp(self.get_item(
                                 'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
                     self.logger.debug(
-                        "Plugin '{}': Initializing NokiaCredentials: access_token - {} token_expiry - {} token_type - {} refresh_token - {} user_id - {} client_id - {} consumer_secret - {}".
-                            format(self.get_fullname(), self.get_item('access_token')(),
+                        "Initializing NokiaCredentials: access_token - {} token_expiry - {} token_type - {} refresh_token - {} user_id - {} client_id - {} consumer_secret - {}".
+                            format(self.get_item('access_token')(),
                                    self.get_item('token_expiry')(),
                                    self.get_item('token_type')(),
                                    self.get_item('refresh_token')(),
@@ -134,21 +131,26 @@ class WithingsHealth(SmartPlugin):
                     self._client = NokiaApi(self._creds, refresh_cb=self._store_tokens)
                 else:
                     self.logger.error(
-                        "Plugin '{}': Token is expired, run OAuth2 again from Web Interface (Expiry Date: {}).".format(
-                            self.get_fullname(), datetime.datetime.fromtimestamp(self.get_item(
+                        "Token is expired, run OAuth2 again from Web Interface (Expiry Date: {}).".format(
+                            datetime.datetime.fromtimestamp(self.get_item(
                                 'token_expiry')(), tz=self.shtime.tzinfo()).strftime('%d.%m.%Y %H:%M:%S')))
                     return
             else:
                 self.logger.error(
-                    "Plugin '{}': Items for OAuth2 Data are not set with required values. Please run process via WebGUI of the plugin.".format(
-                        self.get_fullname()))
+                    "Items for OAuth2 Data are not set with required values. Please run process via WebGUI of the plugin.")
                 return
-        measures = self._client.get_measures()
+        try:
+            measures = self._client.get_measures()
+        except Exception as e:
+            self.logger.error(
+                "An exception occured when running get_measures(): {}.".format(
+                    str(e)))
+
         last_measure = measures[0]
 
         if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
             self._items['heart_pulse'](last_measure.get_measure(11), self.get_shortname())
-            self.logger.debug("Plugin '{}': heart_pulse - {}".format(self.get_fullname(), last_measure.get_measure(11)))
+            self.logger.debug("heart_pulse - {}".format(last_measure.get_measure(11)))
 
         # Bugfix for strange behavior of returning heart_pulse as seperate dataset..
         if last_measure.get_measure(1) is None:
@@ -156,74 +158,74 @@ class WithingsHealth(SmartPlugin):
 
         if last_measure.get_measure(1) is not None and 'weight' in self._items:
             self._items['weight'](last_measure.get_measure(1), self.get_shortname())
-            self.logger.debug("Plugin '{}': weight - {}".format(self.get_fullname(), last_measure.get_measure(1)))
+            self.logger.debug("weight - {}".format(last_measure.get_measure(1)))
 
         if last_measure.get_measure(4) is not None and 'height' in self._items:
             self._items['height'](last_measure.get_measure(4), self.get_shortname())
-            self.logger.debug("Plugin '{}': height - {}".format(self.get_fullname(), last_measure.get_measure(4)))
+            self.logger.debug("height - {}".format(last_measure.get_measure(4)))
 
         if last_measure.get_measure(5) is not None and 'fat_free_mass' in self._items:
             self._items['fat_free_mass'](last_measure.get_measure(5), self.get_shortname())
             self.logger.debug(
-                "Plugin '{}': fat_free_mass - {}".format(self.get_fullname(), last_measure.get_measure(5)))
+                "fat_free_mass - {}".format(last_measure.get_measure(5)))
 
         if last_measure.get_measure(6) is not None and 'fat_ratio' in self._items:
             self._items['fat_ratio'](last_measure.get_measure(6), self.get_shortname())
-            self.logger.debug("Plugin '{}': fat_ratio - {}".format(self.get_fullname(), last_measure.get_measure(6)))
+            self.logger.debug("fat_ratio - {}".format(last_measure.get_measure(6)))
 
         if last_measure.get_measure(8) is not None and 'fat_mass_weight' in self._items:
             self._items['fat_mass_weight'](last_measure.get_measure(8), self.get_shortname())
             self.logger.debug(
-                "Plugin '{}': fat_mass_weight - {}".format(self.get_fullname(), last_measure.get_measure(8)))
+                "fat_mass_weight - {}".format(last_measure.get_measure(8)))
 
         if last_measure.get_measure(9) is not None and 'diastolic_blood_pressure' in self._items:
             self._items['diastolic_blood_pressure'](last_measure.get_measure(9), self.get_shortname())
             self.logger.debug(
-                "Plugin '{}': diastolic_blood_pressure - {}".format(self.get_fullname(), last_measure.get_measure(9)))
+                "diastolic_blood_pressure - {}".format(last_measure.get_measure(9)))
 
         if last_measure.get_measure(10) is not None and 'systolic_blood_pressure' in self._items:
             self._items['systolic_blood_pressure'](last_measure.get_measure(10), self.get_shortname())
             self.logger.debug(
-                "Plugin '{}': systolic_blood_pressure - {}".format(self.get_fullname(), last_measure.get_measure(10)))
+                "systolic_blood_pressure - {}".format(last_measure.get_measure(10)))
 
         if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
             self._items['heart_pulse'](last_measure.get_measure(11), self.get_shortname())
-            self.logger.debug("Plugin '{}': heart_pulse - {}".format(self.get_fullname(), last_measure.get_measure(11)))
+            self.logger.debug("heart_pulse - {}".format(last_measure.get_measure(11)))
 
         if last_measure.get_measure(12) is not None and 'temperature' in self._items:
             self._items['temperature'](last_measure.get_measure(12), self.get_shortname())
-            self.logger.debug("Plugin '{}': temperature - {}".format(self.get_fullname(), last_measure.get_measure(12)))
+            self.logger.debug("temperature - {}".format(last_measure.get_measure(12)))
 
         if last_measure.get_measure(54) is not None and 'spo2' in self._items:
             self._items['spo2'](last_measure.get_measure(54), self.get_shortname())
-            self.logger.debug("Plugin '{}': spo2 - {}".format(self.get_fullname(), last_measure.get_measure(54)))
+            self.logger.debug("spo2 - {}".format(last_measure.get_measure(54)))
 
         if last_measure.get_measure(71) is not None and 'body_temperature' in self._items:
             self._items['body_temperature'](last_measure.get_measure(71), self.get_shortname())
             self.logger.debug(
-                "Plugin '{}': body_temperature - {}".format(self.get_fullname(), last_measure.get_measure(71)))
+                "body_temperature - {}".format(last_measure.get_measure(71)))
 
         if last_measure.get_measure(72) is not None and 'skin_temperature' in self._items:
             self._items['skin_temperature'](last_measure.get_measure(72), self.get_shortname())
             self.logger.debug(
-                "Plugin '{}': skin_temperature - {}".format(self.get_fullname(), last_measure.get_measure(72)))
+                "skin_temperature - {}".format(last_measure.get_measure(72)))
 
         if last_measure.get_measure(76) is not None and 'muscle_mass' in self._items:
             self._items['muscle_mass'](last_measure.get_measure(76), self.get_shortname())
-            self.logger.debug("Plugin '{}': muscle_mass - {}".format(self.get_fullname(), last_measure.get_measure(76)))
+            self.logger.debug("muscle_mass - {}".format(last_measure.get_measure(76)))
 
         if last_measure.get_measure(77) is not None and 'hydration' in self._items:
             self._items['hydration'](last_measure.get_measure(77), self.get_shortname())
-            self.logger.debug("Plugin '{}': hydration - {}".format(self.get_fullname(), last_measure.get_measure(77)))
+            self.logger.debug("hydration - {}".format(last_measure.get_measure(77)))
 
         if last_measure.get_measure(88) is not None and 'bone_mass' in self._items:
             self._items['bone_mass'](last_measure.get_measure(88), self.get_shortname())
-            self.logger.debug("Plugin '{}': bone_mass - {}".format(self.get_fullname(), last_measure.get_measure(88)))
+            self.logger.debug("bone_mass - {}".format(last_measure.get_measure(88)))
 
         if last_measure.get_measure(91) is not None and 'pulse_wave_velocity' in self._items:
             self._items['pulse_wave_velocity'](last_measure.get_measure(91), self.get_shortname())
             self.logger.debug(
-                "Plugin '{}': pulse_wave_velocity - {}".format(self.get_fullname(), last_measure.get_measure(91)))
+                "pulse_wave_velocity - {}".format(last_measure.get_measure(91)))
 
         if 'height' in self._items and ('bmi' in self._items or 'bmi_text' in self._items) and last_measure.get_measure(
                 1) is not None:
@@ -251,11 +253,9 @@ class WithingsHealth(SmartPlugin):
                         self._items['bmi_text']('Adipositas Grad III', self.get_shortname())
             else:
                 self.logger.error(
-                    "Plugin '{}': Cannot calculate BMI: height is 0, please set height (in m) for height item manually.".format(
-                        self.get_fullname()))
+                    "Cannot calculate BMI: height is 0, please set height (in m) for height item manually.")
         else:
-            self.logger.error(
-                "Plugin '{}': Cannot calculate BMI: height and / or bmi item missing.".format(self.get_fullname()))
+            self.logger.error("Cannot calculate BMI: height and / or bmi item missing.")
 
     def parse_item(self, item):
         """
@@ -295,7 +295,7 @@ class WithingsHealth(SmartPlugin):
         except:
             self.mod_http = None
         if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_fullname()))
+            self.logger.error("Not initializing the web interface")
             return False
 
         # set application configuration for cherrypy
@@ -350,10 +350,10 @@ class WebInterface(SmartPluginWebIf):
         for web_if in web_ifs:
             if web_if['Instance'] == self.plugin.get_instance_name():
                 callback_url = "http://{}:{}{}".format(ip, port, web_if['Mount'])
-                self.logger.debug("Plugin '{}': WebIf found, callback is {}".format(self.plugin.get_fullname(),
-                                                                                    callback_url))
+                self.logger.debug("WebIf found, callback is {}".format(self.plugin.get_fullname(),
+                                                                       callback_url))
             return callback_url
-        self.logger.error("Plugin '{}': Callback URL cannot be established.".format(self.plugin.get_fullname()))
+        self.logger.error("Callback URL cannot be established.".format(self.plugin.get_fullname()))
 
     @cherrypy.expose
     def index(self, reload=None, state=None, code=None, error=None):
@@ -373,18 +373,18 @@ class WebInterface(SmartPluginWebIf):
             )
 
         if not reload and code:
-            self.logger.debug("Plugin '{}': Got code as callback: {}".format(self.plugin.get_fullname(), code))
+            self.logger.debug("Got code as callback: {}".format(self.plugin.get_fullname(), code))
             credentials = None
             try:
                 credentials = self._auth.get_credentials(code)
             except Exception as e:
                 self.logger.error(
-                    "Plugin '{}': An error occurred, perhaps code parameter is invalid or too old? Message: {}".format(
+                    "An error occurred, perhaps code parameter is invalid or too old? Message: {}".format(
                         self.plugin.get_fullname(), str(e)))
             if credentials is not None:
                 self._creds = credentials
                 self.logger.debug(
-                    "Plugin '{}': New credentials are: access_token {}, token_expiry {}, token_type {}, refresh_token {}".
+                    "New credentials are: access_token {}, token_expiry {}, token_type {}, refresh_token {}".
                         format(self.plugin.get_fullname(), self._creds.access_token, self._creds.token_expiry,
                                self._creds.token_type, self._creds.refresh_token))
                 self.plugin.get_item('access_token')(self._creds.access_token)
