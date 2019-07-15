@@ -104,7 +104,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
             item = self._abitem.return_item(subitem_id)
-            self._log_info("Return '{0}' for item {1}", item.property.value, subitem_id)
+            self._log_info("Return '{0}' for item {1}", item.property.value, item.property.path)
             return item.property.value
         except Exception as ex:
             self._log_warning("Problem evaluating value of '{0}': {1}", subitem_id, ex)
