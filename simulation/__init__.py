@@ -48,7 +48,7 @@ from lib.scheduler import Scheduler
 
 class Simulation(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.0.7"
+    PLUGIN_VERSION = "1.5.0.8"
 
     def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
@@ -225,7 +225,7 @@ class Simulation(SmartPlugin):
             except:
                 self.logger.error('Skipped unknown item: {}'.format(target))
         entry = self.file.readline()
-        if entry == 'NextDay\n':
+        if entry in ['NextDay', 'NextDay\n']:
             entry = self.file.readline()
         if entry != '':
             day = entry.split(';')[0]
@@ -310,7 +310,7 @@ class Simulation(SmartPlugin):
         tank = 0;
         while entry != '':
             entry = self.file.readline()
-            if entry == 'NextDay\n':
+            if entry in ['NextDay', 'NextDay\n']:
                 tank = tank + 1
             else:
                 if entry != '':
@@ -334,7 +334,7 @@ class Simulation(SmartPlugin):
         #        except IOError as error:
         #        self.logger.error('Canot open tempfile: {}'.format(error))
         entry = 'bla'
-        while (entry != 'NextDay\n') and (entry != ''):
+        while (entry not in ['NextDay','NextDay\n']) and (entry != ''):
             entry = self.file.readline()
         while (entry != ''):
             entry = self.file.readline()
