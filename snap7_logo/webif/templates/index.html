@@ -1,0 +1,129 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = false %}
+{% set tabcount = 2 %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+
+		<tr>
+            <td class="py-1">
+                {% if p.connected %}
+                <img src="static/img/lamp_green.png" alt="{{ _('mit LOGO verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
+                {% else %}
+                <img src="static/img/lamp_red.png" alt="{{ _('mit LOGO nicht verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
+                {% endif %}
+                <strong>{{ _('Verbunden') }}</strong>
+            </td>
+			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
+			<td class="py-1">{{ p.host }}</td>
+			
+		</tr>
+        <tr>
+            <td class="py-1"><strong>{{ _('') }}</strong></td>
+			<td class="py-1"><strong>{{ _('Read - cycleTime') }}</strong></td>
+			<td class="py-1">{{ p._cycle }}</td>
+		</tr>
+		<tr>
+            <td class="py-1"><strong>{{ _('') }}</strong></td>
+			<td class="py-1"><strong>{{ _('tsap_server') }}</strong></td>
+			<td class="py-1">{{ p.tsap_server }}</td>
+			<td class="py-1"><strong>{{ _('tsap_client') }}</strong></td>
+			<td class="py-1">{{ p.tsap_client }}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock %}
+
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " reads</strong> (" ~ reads|length ~ ")" %}
+{% block bodytab1 %}
+    <table class="table table-striped table-hover pluginList">
+        <thead>
+            <tr>
+                <th>{{ _('LOGO') }}</th>
+                <th> {{ _('Value') }}</th>
+                <th> {{ _('Item') }}</th>
+                <th> {{ _('DataType') }}</th>
+                <th>{{ _('VMaddr') }}</th>
+                <th> {{ _('VMbit') }}</th>
+				<th> {{ _('last_read') }}</th>
+				<th> {{ _('prev_read') }}</th>
+				<th> {{ _('prev_value') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+        
+        {% for item in reads %}
+            <tr>
+                <td class="py-1">{{ item }}</td>
+                <td class="py-1">{{ p.reads[item].old }}</td>
+                <td class="py-1">{{ p.reads[item].item }}</td>
+                <td class="py-1">{{ p.reads[item].DataType }}</td>
+                <td class="py-1">{{ p.reads[item].VMaddr }}</td>
+                <td class="py-1">{{ p.reads[item].VMbit }}</td>
+				{% if p.reads[item].read_dt %}
+				<td class="py-1">{{ p.reads[item].read_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+				{% else %}
+				<td class="py-1"></td>
+				{% endif %}
+				{% if p.reads[item].last_read_dt %}
+				<td class="py-1">{{ p.reads[item].last_read_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+				{% else %}
+				<td class="py-1"></td>
+				{% endif %}
+				<td class="py-1">{{ p.reads[item].last_value }}</td>
+
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>  
+{% endblock bodytab1 %}
+
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " writes</strong> (" ~ writes|length ~ ")" %}
+{% block bodytab2 %}
+    <table class="table table-striped table-hover pluginList">
+        <thead>
+            <tr>
+                <th>{{ _('LOGO') }}</th>
+                <th> {{ _('Value') }}</th>
+                <th> {{ _('Item') }}</th>
+                <th> {{ _('DataType') }}</th>
+                <th>{{ _('VMaddr') }}</th>
+                <th> {{ _('VMbit') }}</th>
+				<th> {{ _('last_write') }}</th>
+				<th> {{ _('prev_write') }}</th>
+				<th> {{ _('prev_value') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+        
+        {% for item in writes %}
+            <tr>
+                <td class="py-1">{{ item }}</td>
+                <td class="py-1">{{ p.stat_writes[item].value }}</td>
+                <td class="py-1">{{ p.stat_writes[item].item }}</td>
+                <td class="py-1">{{ p.stat_writes[item].DataType }}</td>
+                <td class="py-1">{{ p.stat_writes[item].VMaddr }}</td>
+                <td class="py-1">{{ p.stat_writes[item].VMbit }}</td>
+				{% if p.stat_writes[item].write_dt %}
+				<td class="py-1">{{ p.stat_writes[item].write_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+				{% else %}
+				<td class="py-1"></td>
+				{% endif %}
+				{% if p.stat_writes[item].last_write_dt %}
+				<td class="py-1">{{ p.stat_writes[item].last_write_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+				{% else %}
+				<td class="py-1"></td>
+				{% endif %}
+				<td class="py-1">{{ p.stat_writes[item].last_value }}</td>
+
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>  
+{% endblock bodytab2 %}
+
+
+
