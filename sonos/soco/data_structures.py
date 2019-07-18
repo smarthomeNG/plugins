@@ -479,7 +479,7 @@ class DidlObject(with_metaclass(DidlMetaClass, object)):
         # Spotify Direct violates this. To make it work, a missing restricted
         # tag is interpreted as `restricted = True`.
         restricted = element.get('restricted', None)
-        restricted = False if restricted in [0, 'false', 'False'] else True
+        restricted = (restricted not in [0, 'false', 'False'])
 
         # Similarily, all elements should have a title tag, but Spotify Direct
         # does not comply
@@ -492,6 +492,10 @@ class DidlObject(with_metaclass(DidlMetaClass, object)):
         # Deal with any resource elements
         resources = []
         for res_elt in element.findall(ns_tag('', 'res')):
+            # Not all Favorits have resources, so in case the "res"
+            # tage has no attributes, just skip it
+            if cls is DidlFavorite and not res_elt.attrib:
+                continue
             resources.append(
                 DidlResource.from_element(res_elt))
 
@@ -1049,6 +1053,12 @@ class DidlPlaylistContainerFavorite(DidlPlaylistContainer):
 
     """Class that represents a Sonos favorite play list."""
     item_class = 'object.container.playlistContainer.sonos-favorite'
+
+
+class DidlPlaylistContainerTracklist(DidlPlaylistContainer):
+
+    """Class that represents a Sonos tracklist."""
+    item_class = 'object.container.playlistContainer.tracklist'
 
 
 class DidlGenre(DidlContainer):

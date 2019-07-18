@@ -18,10 +18,11 @@
 
 ## <a name="req"></a>Requirements
 
-* SmarthomeNG v1.3 or newer
+* SmarthomeNG v1.5 or newer
 * Python3 libraries ```requests```, ```tinytag``` and ```xmltodict```
 * available ```ping``` executable on the host system
-* tested on Sonos software 8.1
+* tested on Sonos software 10.3
+* SoCo 0.17 (it will be necessary to update the Sonos software to ≥10.1)
 
 To install all necessary libraries for SmarthomeNG, you can run following bash command:
 
