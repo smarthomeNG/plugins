@@ -76,7 +76,8 @@ class Traffic(SmartPlugin):
             for leg in route['legs']:
                 route_information['distance'] = leg['distance']['value']
                 route_information['duration'] = leg['duration']['value']
-                route_information['duration_in_traffic'] = leg['duration_in_traffic']['value']
+                if 'duration_in_traffic' in leg:
+                    route_information['duration_in_traffic'] = leg['duration_in_traffic']['value']
                 route_information['start_address'] = leg['start_address']
                 route_information['start_location_lat'] = leg['start_location']['lat']
                 route_information['start_location_lon'] = leg['start_location']['lng']
