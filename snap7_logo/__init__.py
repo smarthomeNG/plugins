@@ -135,11 +135,16 @@ class snap7logo(SmartPlugin):
         self.close()
 
     def _update_loop(self):
+        #self.logger.debug('_update_loop')
+        if not self.connected:
+            #self.logger.error('_update_loop: logo not connected!!')
+            return
+        
         if self._rw_lock.locked():
-            self.logger.warning('_update_loop locked!!')
+            self.logger.warning('_rw_lock locked!! (_update_loop)')
             return
                         
-        #self.logger.debug('_update_loop acquire')
+        self.logger.debug('_rw_lock acquire (_update_loop)')
         self._rw_lock.acquire(timeout=60)
         try:
         
@@ -148,18 +153,14 @@ class snap7logo(SmartPlugin):
             
             self._read_cycle()
             
-            
         finally:
+            self.logger.debug('_rw_lock release (_update_loop)')
             self._rw_lock.release()
-        
-        #self.logger.debug('_update_loop release')
-        
 
     def _write_cycle(self):
-        
         if not self.connected:
             return
-        #self.logger.debug("{0}: _write_cycle() connected:{1}".format(self.get_instance_name(), self.connected))
+
         try:
             remove = []    # Liste der bereits geschriebenen Items
             for k, v in self.writes.items():    # zu schreibend Items I1,Q1,M1, AI1, AQ1, AM1, VM850, VM850.2, VMW0
@@ -217,13 +218,15 @@ class snap7logo(SmartPlugin):
             del self.writes[k]
          
     def _read_cycle(self):
+        #self.logger.debug("_read_cycle() get_connected:{0} int:{1}".format(self.plc.get_connected() ,self.plc.get_connected_int()))
         if not self.connected:
             return
-        
         
         try:
             # lesen der VM
             #self.logger.debug("{0}: _read_cycle() try to read addr:{1} len:{2}".format(self.get_instance_name(), self._vm, self._vm_len))
+            k = self._vm    # für except - Fehlermeldung
+            
             resVM = self.plc.db_read(1, self._vm, self._vm_len)
             if not len(resVM) == self._vm_len:
                 self.logger.error('{0}: read_cycle() failed ro read VM-Buffer (db_read) len:{1}'.format(self.get_instance_name(), len(resVM)))
@@ -237,7 +240,7 @@ class snap7logo(SmartPlugin):
                 self.logger.error('{0}: read_cycle() failed ro read VM_IO-Buffer (db_read) len:{1}'.format(self.get_instance_name(), len(resVMIO)))
                 self.close()
                 return
-
+                
             # prüfe Buffer auf Änderung
             for k, v in self.reads.items():
                 #self.logger.debug('{0}: read_cycle() k:{1} v:{2} '.format(self.get_instance_name(), k, v))
@@ -289,6 +292,14 @@ class snap7logo(SmartPlugin):
 
         except Exception as e:
             self.logger.error('{0}: read_cycle(){1} read error {2} '.format(self.get_instance_name(), k, e))
+            if 'Connection timed out' in str(e):
+                self.logger.error(': read_cycle() Connection timed out!! ')
+                self.connected = False
+                self._sh.connections.monitor(self)  # damit connect ausgeführt wird
+            if 'Other Socket error' in str(e): 
+                self.logger.error(': read_cycle() Connection error: Other Socket error!! ')
+                self.connected = False
+                self._sh.connections.monitor(self)  # damit connect ausgeführt wird
             return
         
         return
@@ -355,27 +366,24 @@ class snap7logo(SmartPlugin):
                 self.logger.debug('{0}: update_item() item:{1} addr:{2}'.format(self.get_instance_name(), item, addr))
                 addressInfo = self.getAddressInfo(addr)
                 if addressInfo is not False:
-                    
-                    
-            
                     addressInfo.update({'value': item()})  # Wert des Items hinzufügen
                     addressInfo.update({'item': item})
                     self.writes.update({addr: addressInfo})   # zu schreibende Items
+                    
                     if self._rw_lock.locked():
-                        self.logger.warning('update_item locked!!')
+                        self.logger.warning('_rw_lock locked!! (update_item)')
                         return
                     
-                    #self.logger.debug('update_item acquire')
+                    self.logger.debug('_rw_lock acquire (update_item)')
                     self._rw_lock.acquire(timeout=60)
-                    
-                    #self.logger.debug('update_item _write_cycle()')
-                    self._write_cycle()
-                    self._read_cycle()
-            
-                    #self.logger.debug('update_item release')
-                    self._rw_lock.release()
-                    
-                    
+                    try:
+        
+                        self._write_cycle()
+                        self._read_cycle()
+                        
+                    finally:
+                        self.logger.debug('_rw_lock release (update_item)')
+                        self._rw_lock.release()
                 
     def getAddressInfo(self, value):    # I1,Q1,M1, AI1, AQ1, AM1, VM850, VM850.2, VMW0
         try:
