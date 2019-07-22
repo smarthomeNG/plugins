@@ -13,7 +13,13 @@ Copy stateengine.example.html from the sv_widgets folder to your smartvisu/dropi
 http://URL/index.php?page=widgets/stateengine.example
 
 ## Changelog
-### v1.6
+### v1.6.1
+* Some problem fixes
+* Log improvements
+* Docu improvements
+* Leave actions can now immediately triggered as soon as current state gets left (parameter: instant_leaveactions)
+
+### v1.6.0
 * Get relative items at startup for all se_item_* attributes
 * Check for source_details in manual_exclude/include functions
 * Improve logging and some code parts, better problem handling

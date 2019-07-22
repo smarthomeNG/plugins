@@ -25,9 +25,12 @@ startup_delay = 10
 
 suspend_time = 3600
 
+instant_leaveaction = False
+
 plugin_identification = "StateEngine Plugin"
 
 
 def write_to_log(logger):
     logger.info("StateEngine default startup delay = {0}".format(startup_delay))
     logger.info("StateEngine default suspension time = {0}".format(suspend_time))
+    logger.info("StateEngine default instant_leaveaction = {0}".format(instant_leaveaction))

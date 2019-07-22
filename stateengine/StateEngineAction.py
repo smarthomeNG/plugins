@@ -632,7 +632,7 @@ class SeActionSpecial(SeActionBase):
         elif self.__special == "retrigger":
             # noinspection PyCallingNonCallable
             self.__value(False, caller=self._caller)
-            self.__value(True, caller='{} Retrigger'.format(self._caller))
+            self.__value(True, caller=self._caller, source="retrigger")
         else:
             self._log_decrease_indent()
             raise ValueError("{0}: Unknown special value '{1}'!".format(actionname, self.__special))
