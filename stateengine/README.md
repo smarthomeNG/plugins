@@ -17,7 +17,7 @@ http://URL/index.php?page=widgets/stateengine.example
 * Some problem fixes
 * Log improvements
 * Docu improvements
-* Leave actions are now immediately triggered as soon as current state gets left
+* Leave actions can now immediately triggered as soon as current state gets left (parameter: instant_leaveactions)
 
 ### v1.6.0
 * Get relative items at startup for all se_item_* attributes

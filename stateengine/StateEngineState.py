@@ -46,6 +46,11 @@ class SeState(StateEngineTools.SeItemChild):
     def text(self):
         return self.__text.get(self.__name)
 
+    # Return conditions
+    @property
+    def conditions(self):
+        return self.__conditions
+
     # Constructor
     # abitem: parent SeItem instance
     # item_state: item containing configuration of state

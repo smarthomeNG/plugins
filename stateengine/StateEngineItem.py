@@ -207,6 +207,8 @@ class SeItem:
         _last_conditionset_name = self.__lastconditionset_get_name()
         if _last_conditionset_id not in ['', None]:
             self.__logger.info("Last Conditionset: {0} ('{1}')", _last_conditionset_id, _last_conditionset_name)
+        _original_conditionset_id = _last_conditionset_id
+        _original_conditionset_name = _last_conditionset_name
 
         # find new state
         new_state = None
@@ -214,7 +216,7 @@ class SeItem:
         for state in self.__states:
             result = self.__update_check_can_enter(state)
             # New state is different from last state
-            if result is False and last_state == state:
+            if result is False and last_state == state and StateEngineDefaults.instant_leaveaction is True:
                 self.__logger.info("Leaving {0} ('{1}')", last_state.id, last_state.name)
                 last_state.run_leave(self.__repeat_actions.get())
                 _leaveactions_run = True
@@ -222,8 +224,6 @@ class SeItem:
                 new_state = state
                 break
 
-        _last_conditionset_id = self.__lastconditionset_get_id()
-        _last_conditionset_name = self.__lastconditionset_get_name()
         # no new state -> stay
         if new_state is None:
             if last_state is None:
@@ -238,7 +238,8 @@ class SeItem:
                 last_state.run_stay(self.__repeat_actions.get())
             self.__update_in_progress = False
             return
-
+        _last_conditionset_id = self.__lastconditionset_get_id()
+        _last_conditionset_name = self.__lastconditionset_get_name()
         # get data for new state
         if last_state is not None and new_state.id == last_state.id:
             if _last_conditionset_id in ['', None]:
@@ -257,9 +258,14 @@ class SeItem:
                 if last_state.leaveactions.count() > 0:
                     self.__logger.info("Maybe some actions were performed directly after leave - see log above.")
             elif last_state is not None:
-                self.__logger.info("Leaving {0} ('{1}')", last_state.id, last_state.name)
+                self.lastconditionset_set(_original_conditionset_id, _original_conditionset_name)
+                self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}", last_state.id, last_state.name, _original_conditionset_id)
                 last_state.run_leave(self.__repeat_actions.get())
                 _leaveactions_run = True
+            if new_state.conditions.count() == 0:
+                self.lastconditionset_set('', '')
+            else:
+                self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
             if _last_conditionset_id in ['', None]:
                 self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
             else:

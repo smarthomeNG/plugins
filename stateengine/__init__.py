@@ -53,6 +53,7 @@ class StateEngine(SmartPlugin):
 
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
+            StateEngineDefaults.instant_leaveaction = self.get_parameter_value("instant_leaveaction")
             StateEngineDefaults.write_to_log(self.logger)
 
             StateEngineCurrent.init(self.get_sh())
