@@ -65,8 +65,7 @@ class SeItem:
         self.__item = item
         try:
             self.__id = self.__item.property.path
-        except Exception as err:
-            self._log_info("Problem initializing ID of item {}. {}", self.__item, err)
+        except Exception:
             self.__id = item
         self.__name = str(self.__item)
         # initialize logging
@@ -211,37 +210,61 @@ class SeItem:
 
         # find new state
         new_state = None
+        _leaveactions_run = False
         for state in self.__states:
-            if self.__update_check_can_enter(state):
+            result = self.__update_check_can_enter(state)
+            # New state is different from last state
+            if result is False and last_state == state:
+                self.__logger.info("Leaving {0} ('{1}')", last_state.id, last_state.name)
+                last_state.run_leave(self.__repeat_actions.get())
+                _leaveactions_run = True
+            if result is True:
                 new_state = state
                 break
 
+        _last_conditionset_id = self.__lastconditionset_get_id()
+        _last_conditionset_name = self.__lastconditionset_get_name()
         # no new state -> stay
         if new_state is None:
             if last_state is None:
                 self.__logger.info("No matching state found, no previous state available. Doing nothing.")
             else:
-                text = "No matching state found, staying at {0} ('{1}')"
-                self.__logger.info(text, last_state.id, last_state.name)
+                if _last_conditionset_id in ['', None]:
+                    text = "No matching state found, staying at {0} ('{1}')"
+                    self.__logger.info(text, last_state.id, last_state.name)
+                else:
+                    text = "No matching state found, staying at {0} ('{1}') based on conditionset {2} ('{3}')"
+                    self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id, _last_conditionset_name)
                 last_state.run_stay(self.__repeat_actions.get())
             self.__update_in_progress = False
             return
 
         # get data for new state
         if last_state is not None and new_state.id == last_state.id:
-            self.__logger.info("Staying at {0} ('{1}')", new_state.id, new_state.name)
+            if _last_conditionset_id in ['', None]:
+                self.__logger.info("Staying at {0} ('{1}')", new_state.id, new_state.name)
+            else:
+                self.__logger.info("Staying at {0} ('{1}') based on conditionset {2} ('{3}')",
+                                   new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
             # New state is last state
             if self.__laststate_internal_name != new_state.name:
                 self.__laststate_set(new_state)
             new_state.run_stay(self.__repeat_actions.get())
 
         else:
-            # New state is different from last state
-            if last_state is not None:
+            if last_state is not None and _leaveactions_run is True:
+                self.__logger.info("Left {0} ('{1}')", last_state.id, last_state.name)
+                if last_state.leaveactions.count() > 0:
+                    self.__logger.info("Maybe some actions were performed directly after leave - see log above.")
+            elif last_state is not None:
                 self.__logger.info("Leaving {0} ('{1}')", last_state.id, last_state.name)
                 last_state.run_leave(self.__repeat_actions.get())
-
-            self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
+                _leaveactions_run = True
+            if _last_conditionset_id in ['', None]:
+                self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
+            else:
+                self.__logger.info("Entering {0} ('{1}') based on conditionset {2} ('{3}')",
+                                   new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
             self.__laststate_set(new_state)
             new_state.run_enter(self.__repeat_actions.get())
 

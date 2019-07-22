@@ -36,6 +36,11 @@ class SeState(StateEngineTools.SeItemChild):
     def name(self):
         return self.__name
 
+    # Return leave actions
+    @property
+    def leaveactions(self):
+        return self.__actions_leave
+
     # Return text of state
     @property
     def text(self):
