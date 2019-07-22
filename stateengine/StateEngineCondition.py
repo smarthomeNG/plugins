@@ -171,12 +171,17 @@ class SeCondition(StateEngineTools.SeItemChild):
     def check(self):
         # Ignore if no current value can be determined (should not happen as we check this earlier, but to be sure ...)
         if self.__item is None and self.__eval is None:
-            self._log_info("condition '{0}': No item or eval found! Considering condition as matching!", self.__name)
+            self._log_info("Condition '{0}': No item or eval found! Considering condition as matching!", self.__name)
             return True
+        self._log_debug("Condition '{0}': Checking all relevant stuff", self.__name)
+        self._log_increase_indent()
         if not self.__check_value():
+            self._log_decrease_indent()
             return False
         if not self.__check_age():
+            self._log_decrease_indent()
             return False
+        self._log_decrease_indent()
         return True
 
     # Write condition to logger
@@ -231,8 +236,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             else:
                 value = str(value)
                 current = str(current)
-            self._log_warning("Value {} was not same type as item value {} and got converted to {}.",
-                              _oldvalue, current, type(value))
+            self._log_info("Value {} was type {} and therefore not the same type as item value {}. It got converted to {}.",
+                           _oldvalue, type(_oldvalue), current, type(value))
             return value, current
 
         current = self.__get_current()
@@ -249,7 +254,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self._log_increase_indent()
 
                     for element in value:
-                        if type(element) != type(current):
+                        if type(element) != type(current) and current is not None:
                             element, current = __convert(element, current)
                         if self.__negate:
                             if current == element:
@@ -269,7 +274,7 @@ class SeCondition(StateEngineTools.SeItemChild):
 
                 else:
                     # If current and value have different types, convert both to string
-                    if type(value) != type(current):
+                    if type(value) != type(current) and current is not None:
                         value, current = __convert(value, current)
                     text = "Condition '{0}': value={1} negate={2} current={3}"
                     self._log_debug(text, self.__name, value, self.__negate, current)

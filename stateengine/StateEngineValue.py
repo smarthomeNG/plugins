@@ -364,13 +364,16 @@ class SeValue(StateEngineTools.SeItemChild):
                 # noinspection PyUnusedLocal
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
             self._log_debug("Checking eval: {0}.", self.__eval)
+            self._log_increase_indent()
             try:
                 _newvalue = eval(self.__eval)
                 if 'eval:{}'.format(self.__eval) in self.__listorder:
                     self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
                 values = _newvalue
+                self._log_decrease_indent()
             except Exception as ex:
                 self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
+                self._log_decrease_indent()
                 return None
         else:
             if isinstance(self.__eval, list):
@@ -407,6 +410,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         values.append(self.__do_cast(value))
                     self._log_decrease_indent()
             else:
+                self._log_debug("Checking eval: {0}.", val)
                 try:
                     self._log_increase_indent()
                     _newvalue = self.__eval()
