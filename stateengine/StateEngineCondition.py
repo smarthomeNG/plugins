@@ -237,6 +237,7 @@ class SeCondition(StateEngineTools.SeItemChild):
 
         current = self.__get_current()
         try:
+            cond_min_max = self.__min.is_empty() and self.__max.is_empty()
             if not self.__value.is_empty():
                 # 'value' is given. We ignore 'min' and 'max' and check only for the given value
                 value = self.__value.get()
@@ -286,7 +287,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self._log_debug("not OK -> not matching")
                     return False
 
-            elif not self.__min.is_empty() and not self.__max.is_empty():
+            elif not cond_min_max:
                 min_get_value = self.__min.get()
                 max_get_value = self.__max.get()
                 min_value = [min_get_value] if not isinstance(min_get_value, list) else min_get_value
@@ -345,7 +346,8 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self._log_debug("given limits ok -> matching")
                     return True
             else:
-                self._log_warning("Neither value nor min/max given. This might result in unexpected evalutions.")
+                self._log_warning("Neither value nor min/max given. This might result in unexpected evalutions. Min {}, max {}, value {}",
+                                  self.__min.get(), self.__max.get(), self.__value.get())
                 self._log_increase_indent()
                 return True
 
