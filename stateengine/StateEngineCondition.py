@@ -220,6 +220,21 @@ class SeCondition(StateEngineTools.SeItemChild):
 
     # Check if value conditions match
     def __check_value(self):
+        def __convert(value, current):
+            _oldvalue = value
+            if isinstance(current, bool):
+                value = StateEngineTools.cast_bool(value)
+            elif isinstance(current, (int, float)):
+                value = StateEngineTools.cast_num(value)
+            elif isinstance(current, list):
+                value = StateEngineTools.cast_list(value)
+            else:
+                value = str(value)
+                current = str(current)
+            self._log_warning("Value {} was not same type as item value {} and got converted to {}.",
+                              _oldvalue, current, type(value))
+            return value, current
+
         current = self.__get_current()
         try:
             if not self.__value.is_empty():
@@ -234,8 +249,7 @@ class SeCondition(StateEngineTools.SeItemChild):
 
                     for element in value:
                         if type(element) != type(current):
-                            element = str(element)
-                            current = str(current)
+                            element, current = __convert(element, current)
                         if self.__negate:
                             if current == element:
                                 self._log_debug("{0} found but negated -> not matching", element)
@@ -255,8 +269,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                 else:
                     # If current and value have different types, convert both to string
                     if type(value) != type(current):
-                        value = str(value)
-                        current = str(current)
+                        value, current = __convert(value, current)
                     text = "Condition '{0}': value={1} negate={2} current={3}"
                     self._log_debug(text, self.__name, value, self.__negate, current)
                     self._log_increase_indent()
