@@ -1,12 +1,12 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    type: interface                # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Auslesen von Stromzählern via SML-Protokoll'
         en: 'Read data from powermeter device using SML protocol'
     maintainer: ohinckel
-#    tester:                        # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
     state: ready
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins_doc/config/sml.html
@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Sml                 # class containing the plugin
 
 parameters:
@@ -76,6 +77,9 @@ item_attributes:
         description:
             de: 'Gibt den Eigenschaftstyp an, der in das Item geschrieben werden soll'
             en: 'Defines the property type to put into the item'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin

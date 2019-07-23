@@ -152,10 +152,10 @@ class UZSU(SmartPlugin):
         self.logger.debug("stop method called")
         for item in self._items:
             try:
-                self.scheduler_remove('uzsu_{}'.format(item))
-                self.logger.debug('Removing scheduler for item {}'.format(item))
+                self.scheduler_remove('uzsu_{}'.format(item.property.path))
+                self.logger.debug('Removing scheduler for item {}'.format(item.property.path))
             except Exception as err:
-                self.logger.debug('Scheduler for item {} not removed. Problem: {}'.format(item, err))
+                self.logger.debug('Scheduler for item {} not removed. Problem: {}'.format(item.property.path, err))
         self.alive = False
 
     def _update_all_suns(self, caller=None):
@@ -226,18 +226,23 @@ class UZSU(SmartPlugin):
         :type item:     item
         :return:        The item type of the item that is changed
         """
+        _itemforuzsu = self.get_iattr_value(item.conf, ITEM_TAG[0])
         try:
-            _uzsuitem = self.itemsApi.return_item(self.get_iattr_value(item.conf, ITEM_TAG[0]))
+            _uzsuitem = self.itemsApi.return_item(_itemforuzsu)
         except Exception as err:
             _uzsuitem = None
-            self.logger.warning("Item to be set by uzsu '{}' does not exist. Error: {}".format(
-                self.get_iattr_value(item.conf, ITEM_TAG[0]), err))
+            self.logger.warning("Item to be set by uzsu '{}' does not exist. Error: {}".format(_itemforuzsu, err))
         try:
-            _itemtype = _uzsuitem.type()
+            _itemtype = _uzsuitem.property.type
         except Exception as err:
-            _itemtype = 'foo' if _uzsuitem else None
-            self.logger.warning("Item to be set by uzsu '{}' does not have a type attribute. Error: {}".format(
-                self.get_iattr_value(item.conf, ITEM_TAG[0]), err))
+            try:
+                _itemtype = _uzsuitem.type()
+            except Exception:
+                _itemtype = 'foo' if _uzsuitem is not None else None
+            if _itemtype is None:
+                self.logger.warning("Item to be set by uzsu '{}' does not exist. Error: {}".format(_itemforuzsu, err))
+            else:
+                self.logger.warning("Item to be set by uzsu '{}' does not have a type attribute. Error: {}".format(_itemforuzsu, err))
         return _itemtype
 
     def _logics_activate(self, activevalue=None, item=None):
@@ -445,12 +450,12 @@ class UZSU(SmartPlugin):
         """
         This function schedules an item: First the item is removed from the scheduler.
         If the item is active then the list is searched for the nearest next execution time.
-        No matter it active or not the calculation for the execution time is triggered.
+        No matter if active or not the calculation for the execution time is triggered.
 
         :param item:    item to be updated towards the plugin
         :param caller:  if given it represents the callers name
         """
-        self.scheduler_remove('uzsu_{}'.format(item))
+        self.scheduler_remove('uzsu_{}'.format(item.property.path))
         self.logger.debug('Schedule Item {}, Trigger: {}, Changed by: {}'.format(
             item, caller, item.changed_by()))
         _next = None
@@ -575,10 +580,10 @@ class UZSU(SmartPlugin):
                 item(self._items[item], 'UZSU Plugin', 'reset_interpolation')
 
             self.logger.debug("will add scheduler named uzsu_{} with datetime {} and tzinfo {}"
-                              " and value {}".format(item, _next, _next.tzinfo, _value))
+                              " and value {}".format(item.property.path, _next, _next.tzinfo, _value))
             self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M')}})
             self._update_count['done'] = self._update_count.get('done') + 1
-            self.scheduler_add('uzsu_{}'.format(item), self._set, value={'item': item, 'value': _value}, next=_next)
+            self.scheduler_add('uzsu_{}'.format(item.property.path), self._set, value={'item': item, 'value': _value}, next=_next)
             if self._update_count.get('done') == self._update_count.get('todo'):
                 self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                 self._update_count = {'done': 0, 'todo': 0}
@@ -784,8 +789,8 @@ class UZSU(SmartPlugin):
             cron = tabs[1].strip()
             smax = tabs[2].strip()
         else:
-            self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
-                tstr))
+            self.logger.error('Wrong syntax: {} - wrong amount of tabs. Should be'
+                              ' [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(tstr))
             return
         # calculate the time offset
         doff = 0  # degree offset
@@ -826,16 +831,16 @@ class UZSU(SmartPlugin):
                 self.logger.warning("next_time.tzinfo was not given as utc!")
             self.logger.debug("Sunset is included and calculated as {}".format(next_time))
         else:
-            self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
-                tstr))
+            self.logger.error('Wrong syntax: {} not starting with sunrise/set. Should be '
+                              '[H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(tstr))
             return
         if smin is not None:
             h, sep, m = smin.partition(':')
             try:
                 dmin = next_time.replace(day=dt.day, hour=int(h), minute=int(m), second=0, tzinfo=self._timezone)
-            except Exception:
-                self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
-                    tstr))
+            except Exception as err:
+                self.logger.error('Problems assigning dmin: {}. Wrong syntax: {}. Should be '
+                                  '[H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(err, tstr))
                 return
         elif smax is None:
             dmin = next_time
@@ -843,9 +848,9 @@ class UZSU(SmartPlugin):
             h, sep, m = smax.partition(':')
             try:
                 dmax = next_time.replace(day=dt.day, hour=int(h), minute=int(m), second=0, tzinfo=self._timezone)
-            except Exception:
-                self.logger.error('Wrong syntax: {}. Should be [H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(
-                    tstr))
+            except Exception as err:
+                self.logger.error('Problems assigning dmax: {}. Wrong syntax: {}. Should be '
+                                  '[H:M<](sunrise|sunset)[+|-][offset][<H:M]'.format(err, tstr))
                 return
         elif smin is None:
             dmax = next_time

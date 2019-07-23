@@ -1,0 +1,12 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Letzte Auslesung':     {'de': '=', 'en': 'Last Readout', 'fr': '='}
+    'OBIS Items':           {'de': '=', 'en': 'OBIS Items', 'fr': '='}
+    'Schnittstelle':        {'de': '=', 'en': 'Interface', 'fr': 'Interface'}
+    'Gerätesubadresse':     {'de': '=', 'en': 'Device address', 'fr': 'Adresse du device'}
+    'Timeout':              {'de': '=', 'en': 'Timeout', 'fr': 'Timeout '}
+    'Prüfsumme nutzen':     {'de': '=', 'en': 'Use checksum', 'fr': 'checksum'}
+    'Abfragecode':          {'de': '=', 'en': 'Query Code', 'fr': 'code query'}
+    'Geschwindigkeit':      {'de': '=', 'en': 'Baudrate', 'fr': 'Vitesse'}
+    'Instanz':              {'de': '=', 'en': 'Instance', 'fr': 'Instance'}
+    'Aktualisierung':       {'de': '=', 'en': 'Update Cycle', 'fr': 'cycle'}

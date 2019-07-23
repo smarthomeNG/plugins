@@ -62,12 +62,7 @@ parameters:
         description:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 300 seconds.'
-    instance:
-        type: str
-        default: ''
-        description:
-            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
-            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 
 
 item_attributes:
@@ -85,165 +80,165 @@ item_structs:
 
         latitude:
             type: num
-            ds_matchstring: latitude
+            ds_matchstring@instance: latitude
 
         longitude:
             type: num
-            ds_matchstring: longitude
+            ds_matchstring@instance: longitude
 
         timezone:
             type: str
-            ds_matchstring: timezone
+            ds_matchstring@instance: timezone
 
         currently:
 
             time:
                 type: num
-                ds_matchstring: currently/time
+                ds_matchstring@instance: currently/time
 
             summary:
                 type: str
-                ds_matchstring: currently/summary
+                ds_matchstring@instance: currently/summary
 
             icon:
                 type: str
-                ds_matchstring: currently/icon
+                ds_matchstring@instance: currently/icon
 
             nearestStormDistance:
                 type: num
-                ds_matchstring: currently/nearestStormDistance
+                ds_matchstring@instance: currently/nearestStormDistance
 
             precipIntensity:
                 type: num
-                ds_matchstring: currently/precipIntensity
+                ds_matchstring@instance: currently/precipIntensity
                 database: init
 
             precipIntensityError:
                 type: num
-                ds_matchstring: currently/precipIntensityError
+                ds_matchstring@instance: currently/precipIntensityError
 
             precipProbability:
                 type: num
-                ds_matchstring: currently/precipProbability
+                ds_matchstring@instance: currently/precipProbability
                 database: init
 
             precipType:
                 type: str
-                ds_matchstring: currently/precipType
+                ds_matchstring@instance: currently/precipType
 
             temperature:
                 type: num
-                ds_matchstring: currently/temperature
+                ds_matchstring@instance: currently/temperature
                 database: init
 
             apparenttemperature:
                 type: num
-                ds_matchstring: currently/apparentTemperature
+                ds_matchstring@instance: currently/apparentTemperature
                 database: init
 
             dewpoint:
                 type: num
-                ds_matchstring: currently/dewPoint
+                ds_matchstring@instance: currently/dewPoint
                 database: init
 
             humidity:
                 type: num
-                ds_matchstring: currently/humidity
+                ds_matchstring@instance: currently/humidity
                 database: init
 
             pressure:
                 type: num
-                ds_matchstring: currently/pressure
+                ds_matchstring@instance: currently/pressure
                 database: init
 
             windSpeed:
                 type: num
-                ds_matchstring: currently/windSpeed
+                ds_matchstring@instance: currently/windSpeed
                 database: init
 
             windGust:
                 type: num
-                ds_matchstring: currently/windGust
+                ds_matchstring@instance: currently/windGust
                 database: init
 
             windBearing:
                 type: num
-                ds_matchstring: currently/windBearing
+                ds_matchstring@instance: currently/windBearing
                 database: init
 
             cloudCover:
                 type: num
-                ds_matchstring: currently/cloudCover
+                ds_matchstring@instance: currently/cloudCover
                 database: init
 
             uvIndex:
                 type: num
-                ds_matchstring: currently/uvIndex
+                ds_matchstring@instance: currently/uvIndex
                 database: init
 
             visibility:
                 type: num
-                ds_matchstring: currently/visibility
+                ds_matchstring@instance: currently/visibility
                 database: init
 
             ozone:
                 type: num
-                ds_matchstring: currently/ozone
+                ds_matchstring@instance: currently/ozone
                 database: init
 
         minutely:
 
             summary:
                 type: str
-                ds_matchstring: minutely/summary
+                ds_matchstring@instance: minutely/summary
 
             icon:
                 type: str
-                ds_matchstring: minutely/icon
+                ds_matchstring@instance: minutely/icon
 
         hourly:
 
             summary:
                 type: str
-                ds_matchstring: hourly/summary
+                ds_matchstring@instance: hourly/summary
 
             icon:
                 type: str
-                ds_matchstring: hourly/icon
+                ds_matchstring@instance: hourly/icon
 
         daily:
 
             summary:
                 type: str
-                ds_matchstring: daily/summary
+                ds_matchstring@instance: daily/summary
 
             icon:
                 type: str
-                ds_matchstring: daily/icon
+                ds_matchstring@instance: daily/icon
 
         alerts:
 
             list:
                 type: list
-                ds_matchstring: alerts
+                ds_matchstring@instance: alerts
 
             string_detail:
                 type: str
-                ds_matchstring@home: alerts_string
+                ds_matchstring@instance: alerts_string
 
         flags:
 
             sources:
                 type: str
-                ds_matchstring: flags/sources
+                ds_matchstring@instance: flags/sources
 
             units:
                 type: str
-                ds_matchstring: flags/units
+                ds_matchstring@instance: flags/units
 
             nearest_station:
                 type: num
-                ds_matchstring: flags/nearest-station
+                ds_matchstring@instance: flags/nearest-station
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

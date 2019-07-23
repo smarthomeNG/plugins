@@ -1,0 +1,4 @@
+loggers:
+    requests.packages.urllib3.connectionpool:
+        # e.g. hide Resetting dropped connection
+        level: WARNING 

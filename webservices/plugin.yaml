@@ -46,6 +46,9 @@ item_attributes:
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 plugin_functions: NONE
     # Definition of function interface of the plugin
 

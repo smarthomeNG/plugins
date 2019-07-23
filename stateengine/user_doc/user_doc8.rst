@@ -149,7 +149,7 @@ definiert und jederzeit abgeändert werden.
                # - Lamellen zur Sonne ausrichten
                se_action_lamelle:
                  - 'function: set'
-                 - 'to: eval:stateengine_eval.sun_tracking()'
+                 - 'to: eval:se_eval.sun_tracking()'
 
                # Einstieg in "Sonnenschutz": Wenn
                enter:
@@ -311,7 +311,7 @@ Regelwerk-Items "rules" sollen ebenfalls je nach Bedarf ergänzt werden.
                        - beispiel.raffstore1.hoehe
                        - beispiel.raffstore1.lamelle
                    se_manual_exclude:
-                       - 'KNX:0.0.0' # Hier die Gruppenadresse des Schalt/Jalousieaktors angeben!
+                       - 'KNX:0.0.0:*' # Hier die physikalische Adresse des Schalt/Jalousieaktors angeben!
                        - 'Init:*'
                        - 'database:*'
 
@@ -475,7 +475,7 @@ abgeändert. Es wird explizit auf Template-Imports via struct verzichtet.
                        - beispiel.raffstore2.lamelle
                    # Änderungen, die ursprünglich von diesen Triggern (<caller>:<source>) ausgelöst wurden, sollen nicht als manuelle Bedienung gewertet werden
                    se_manual_exclude:
-                       - KNX:y.y.y
+                       - KNX:*:ga=1/2/3 # Hier die Gruppenadresse angeben
                        - Init:*
 
                anwesenheit:
@@ -608,3 +608,144 @@ abgeändert. Es wird explizit auf Template-Imports via struct verzichtet.
                    Tag:
                        # Zustand "Tag": Vorgabeeinstellungen übernehmen
                        se_use: stateengine_default_raffstore.rules.Tag
+
+.. rubric:: Settings für Itemwerte
+  :name: settingsfueritemwerte
+
+Das Setup ist besonders flexibel, wenn zu setzende Werte nicht fix in den Zustandsvorgaben
+definiert werden, sondern in eigenen Items, die dann jederzeit zur Laufzeit abänderbar
+sind. Das folgende Beispiel zeigt eine Leuchte, die abhängig vom aktuell definierten
+Lichtmodus (z.B. über die Visu) verschiedene Stati einnimmt und immer wieder dieselben
+Änderungen vornimmt. Sollte eine Änderung nicht möglich sein, weil das entsprechende
+Item nicht existiert, wird das Plugin die Aktion einfach ignorieren.
+
+Die Struct-Vorlagen sehen dabei folgendermaßen aus. Besonders ist der Eval Ausdruck des "to" Eintrags der Aktionsvorlage.
+Dieser führt dazu, dass der zu setzende Wert aus dem Item ``automatik.settings.<STATUSNAME>.sollwert``
+im aktuellen Item gelesen wird. Somit kann diese Vorlage für sämtliche Zustände 1:1 eingesetzt werden,
+wobei natürlich zu beachten ist, dass sowohl "Settings" als auch Zustand richtig benannt sind.
+Das Item state_name wird bis zur Pluginversion 1.5.0 erst nach Ausführen der Aktionen aktualisiert,
+weshalb diese Vorgehensweise erst ab 1.5.1 empfohlen wird.
+
+.. code-block:: yaml
+
+    #etc/struct.yaml
+    licht_rules_actions:
+       on_enter_or_stay:
+          se_action_sollwert:
+             - 'function: set'
+             - "to: eval:sh.return_item(se_eval.get_relative_itemid('..settings.{}.sollwert'.format(se_eval.get_relative_itemvalue('..state_name').lower())))()"
+          se_action_prio:
+             - 'function: set'
+             - "to: eval:sh.return_item(se_eval.get_relative_itemid('..settings.{}.prio'.format(se_eval.get_relative_itemvalue('..state_name').lower())))()"
+
+Außerdem werden pro Aktortyp entsprechende Setting Items angelegt. Je nach Bedarf
+kann dann auf diese zurückgegriffen werden.
+
+.. code-block:: yaml
+    #etc/struct.yaml
+    licht_settings_dimmbar:
+       prio:
+           type: num
+           cache: True
+           visu_acl: rw
+
+       sollwert:
+           type: num
+           visu_acl: rw
+           cache: True
+
+    licht_settings_schaltbar:
+       sperren:
+           type: bool
+           visu_acl: rw
+           cache: True
+
+    licht_settings_active:
+       active:
+           type: bool
+           visu_acl: rw
+           cache: True
+
+
+Folgende Vorlage dient der Angabe, unter welchen Bedingungen der entsprechende Zustand
+eingenommen werden soll. In diesem Fall werden die zwei Zustände Lichtkurve und Heimkino definiert.
+Ähnliche Beispiele sind bereits weiter oben zu finden, weshalb sie hier sehr einfach gehalten werden.
+
+.. code-block:: yaml
+
+    #etc/struct.yaml
+    licht_condition_lichtkurve:
+       se_item_lichtkurve_active: ..settings.lichtkurve.active
+       lichtkurve:
+           name: Lichtkurve # muss mit den entsprechenden Settings übereinstimmen
+           enter:
+               se_value_lichtmodus: 12
+               se_value_lichtkurve_active: 'True'
+
+    licht_condition_heimkino:
+       se_item_heimkino_active: ..settings.heimkino.active
+       heimkino:
+           name: Heimkino # muss mit den entsprechenden Settings übereinstimmen
+           enter:
+               type: foo
+               se_value_lichtmodus:
+                 - value:3
+                 - '3.0'
+               se_value_heimkino_active: 'True'
+
+Letzten Endes wird alles in einem item.yaml auf folgende Art und Weise implementiert:
+
+.. code-block:: yaml
+
+    #items/item.yaml
+    licht:
+        automatik:
+            struct:
+              - stateengine.general
+              - stateengine.state_release
+              - stateengine.state_lock
+              - stateengine.state_suspend
+
+            manuell:
+                eval_trigger:
+                  - ...sa
+                  - ...dimmen.taster
+                se_manual_exclude:
+                  - Database:*
+                  - KNX:1.1.2:*
+
+            settings_edited:
+                type: bool
+                name: settings editiert
+                eval_trigger: ..settings.*
+                eval: not sh...settings_edited()
+
+            settings:
+                heimkino: # muss mit dem entsprechenden Statusnamen übereinstimmen
+                    struct:
+                      - licht_settings_bwm
+                      - licht_settings_dimmbar_dual
+                      - licht_settings_active
+
+                lichtkurve: # muss mit dem entsprechenden Statusnamen übereinstimmen
+                    struct:
+                      - licht_settings_bwm
+                      - licht_settings_dimmbar_dual
+                      - licht_settings_active
+
+            rules:
+                struct:
+                  - licht_rules_heimkino
+                  - licht_rules_lichtkurve
+
+                remark: Aktuell muss das eval_trigger noch manuell mit der kompletten Liste überschrieben werden, auch wenn die Structs bereits Einträge enthalten.
+                eval_trigger:
+                  - ..settings_edited
+                  - ..lock
+                  - ..manuell
+                  - licht.modus*
+
+                heimkino:
+                    struct: licht_rules_actions
+                lichtkurve:
+                    struct: licht_rules_actions

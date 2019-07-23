@@ -7,6 +7,8 @@ from datetime import datetime
 
 import sys
 
+
+
 action_func_registry = []
 
 # action-func decorator
@@ -207,23 +209,22 @@ class AlexaAction(object):
             self.replace(myReponse,'name',self.response_type,)
         
         elif self.namespace == 'Alexa.CameraStreamController':
-            self.replace(myReponse,'context',{})
-            self.replace(myReponse,'payload',{
-                                              "cameraStreams" :[ {
-                                                "uri": "rtsp://username:password@link.to.video:443/feed1.mp4",
-                                                #"expirationTime": "2017-02-03T16:20:50.52Z", !! Not needed
-                                                "idleTimeoutSeconds": 300,
-                                                "protocol": "RTSP",
-                                                "resolution": {
-                                                  "width": 1920,
-                                                  "height": 1080
-                                                              },
-                                                "authorizationType": "BASIC",
-                                                "videoCodec": "H264",
-                                                "audioCodec": "AAC"
-                                              }],
-                                            "imageUri": "https://username:password@link.to.image/image.jpg"
-                                            })
+            myContext = {
+                            "properties": [
+                                {
+                                    "namespace": "Alexa.EndpointHealth",
+                                    "name": "connectivity",
+                                    "value": {
+                                        "value": "OK"
+                                    },
+                                    "timeOfSample": myTimeStamp,
+                                    "uncertaintyInMilliseconds": 200
+                                }
+                            ]
+                    }
+            self.replace(myReponse,'namespace',self.namespace)
+            self.replace(myReponse,'context',myContext)
+            self.replace(myReponse,'payload',self.response_Value)
         
         # Check for special needs of dependencies
         if len(self.properties) != 0:

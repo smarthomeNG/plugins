@@ -7,7 +7,7 @@ plugin:
         en: 'Get weather data from wunderground.com'
     maintainer: msinn
     tester: msinn                       # Who tests this plugin?
-    state: 'qa-passed'
+    state: deprecated
     keywords: weather
     documentation: http://smarthomeng.de/user/plugins/wunderground/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1059124-neues-wunderground-plugin
@@ -103,7 +103,8 @@ item_attributes:
             de: 'Veraltet. Bitte stattdessen wug_matchstring verwenden.'
             en: 'Deprecated. Use wug_matchstring instead.'
 
-structs:
+item_structs:
+  # Definition of item-structure templates for this plugin
     wug_wetter:
         ort:
             type: str

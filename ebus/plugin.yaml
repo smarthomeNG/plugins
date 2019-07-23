@@ -68,6 +68,9 @@ item_attributes:
             en: 'ebus_type determins, if data should only be read from the ebusd deamon or if data should be written to ebusd too.'
 
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 

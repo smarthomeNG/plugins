@@ -33,6 +33,7 @@ plugin:
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Raspi_GPIO          # class containing the plugin
 
 parameters:
@@ -94,6 +95,9 @@ item_attributes:
             en: '**Pin number of the GPIO output.**\n
                 Define the pin number of your Raspberry Pi that should be written, i.e. where a LED is attached. Beware that the number has to follow the rules of the "mode" you have defined in the plugin.yaml (Board or BCM). The Output-Pin will also automatically be read by the plugin as Input.
                         '
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 plugin_functions: NONE
 # Definition of plugin functions defined by this plugin

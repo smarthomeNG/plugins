@@ -11,9 +11,9 @@ plugin:
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/developer/plugins/simulation/README.html        # url of documentation (wiki) page
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/841097-anwesenheitssimulation-0-1'
-    version: 1.5.0.7               # Plugin version
-    sh_minversion: 1.4c             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.5.0.8               # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
     classname: Simulation          # class containing the plugin
@@ -48,6 +48,9 @@ item_attributes:
             en: 'May be either the value "track", "state", "control", "message" or "tank". Besides "track" the values
             may only be assigned one time over all items. They are used for plugin internal information storage.
             "track" may be assigned to multiple items and is used to record the value changes of that item.'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

@@ -6,7 +6,7 @@ plugin:
         de: 'Abfrage der Abfahrten in Stationen der Münchner Verkehrsbetriebe (MVG)'
         en: 'Retrieval of departure times of stations within the Münchner Verkehrsbetriebe (MVG)'
     maintainer: psilo909
-#    tester:                        # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
     state: ready
     keywords: public transport, departure times, Munich, München
     documentation: http://smarthomeng.de/user/plugins_doc/config/mvg_live.html
@@ -24,6 +24,9 @@ parameters: NONE
 
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

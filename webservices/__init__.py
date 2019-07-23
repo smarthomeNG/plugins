@@ -38,7 +38,6 @@ class WebServices(SmartPlugin):
     ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
     def __init__(self, smarthome, mode="all"):
-        self.logger = logging.getLogger(__name__)
         self.logger.debug("Plugin '{}': '__init__'".format(self.get_fullname()))
         self._mode = mode
         self.items = Items.get_instance()
@@ -330,7 +329,7 @@ class SimpleWebServiceInterface(WebServiceInterface):
                             items[item_data['path']] = item_data
                 return items
         else:
-            item = self.plugin.get_sh().return_item(item_path)
+            item = self.plugin.items.return_item(item_path)
             if item is None:
                 return {"Error": "No item with item path %s found." % item_path}
 
@@ -424,7 +423,7 @@ class RESTWebServicesInterface(WebServiceInterface):
                             items[item_data['path']] = item_data
                 return items
         else:
-            item = self.plugin.get_sh().return_item(item_path)
+            item = self.plugin.items.return_item(item_path)
 
             if item is None:
                 return {"Error": "No item with item path %s found." % item_path}

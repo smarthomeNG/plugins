@@ -36,8 +36,18 @@ class XMPP(SmartPlugin):
 
     def __init__(self, smarthome, jid, password, logic='XMPP'):
         self.logger = logging.getLogger(__name__)
+        server = self.get_parameter_value('server')
         plugins = self.get_parameter_value('plugins')
         joins = self.get_parameter_value('join')
+
+        # Check server parameter and default to port 5222
+        if server is None:
+            self._server = None
+        elif ':' in server:
+            parts = server.split(':')
+            self._server = (parts[0].strip(), parts[1].strip())
+        else:
+            self._server = (server, 5222)
 
         # Enable MUC in case account should join channels
         if len(joins) and 'xep_0045' not in plugins:
@@ -55,7 +65,10 @@ class XMPP(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self.xmpp.connect()
+        if self._server is not None:
+            self.xmpp.connect(address=self._server)
+        else:
+            self.xmpp.connect()
         self.xmpp.process(threaded=True)
 
     def stop(self):

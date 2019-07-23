@@ -27,7 +27,7 @@ import cherrypy
 import platform
 import collections
 import datetime
-import pwd
+#import pwd
 import html
 import subprocess
 import socket
@@ -106,9 +106,12 @@ class BackendServices:
             os_service_restart('smarthome')
             result = "<strong>" + translate('Restart des Service sollte erfolgen - Bitte warten') + "</strong>"
         else:
-            pid = lib.daemon.read_pidfile(self.plugin.get_sh()._pidfile)
-            os_restart_shng(pid)
-            result = "<strong>" + translate('Restart des Prozesses sollte erfolgen - Bitte warten') + "</strong>"
+            if os.name != 'nt':
+                pid = lib.daemon.read_pidfile(self.plugin.get_sh()._pidfile)
+                os_restart_shng(pid)
+                result = "<strong>" + translate('Restart des Prozesses sollte erfolgen - Bitte warten') + "</strong>"
+            else:
+                result = "<strong>" + translate('Unter Windows kann derzeit nicht neu gestartet werden') + "</strong>"
 
         result = result.replace('\n', '<br>')
         return self.render_template('services_shng_restart.html',

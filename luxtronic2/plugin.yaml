@@ -32,7 +32,7 @@ parameters:
         description:
             de: 'Gibt den Port des Gerätes an'
             en: 'Specifies the port of the devices'
-    
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     lux2:
@@ -65,6 +65,9 @@ item_attributes:
         description:
             de: 'Gibt einen Attributwert für einen Parameter an (Zugriff lesend und schreibend)'
             en: 'Specifies the attribute value for parameter (read and write access)'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

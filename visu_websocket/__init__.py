@@ -3,8 +3,9 @@
 #########################################################################
 #  Copyright 2016- Martin Sinn                              m.sinn@gmx.de
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
+#  Copyright 2019 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.  
+#  This file is part of SmartHomeNG.
 #  Visit:  https://github.com/smarthomeNG/
 #          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
@@ -50,23 +51,28 @@ class WebSocket(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = "1.4.5"
+    PLUGIN_VERSION = "1.5.0"
 
 
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
-        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
+        If sh object is needed at all, ``self.get_sh()`` can be used to get it. There should be almost no need for
         a reference to the sh object any more.
-        
+
         The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are implemented
-        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
+        to support older plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
         use the SmartPlugin method `get_parameter_value(parameter_name)` instead. Anywhere within the Plugin you can get
         the configured (and checked) value for a parameter by calling `self.get_parameter_value(parameter_name)`. It
         returns the value in the datatype that is defined in the metadata.
         """
-        self.logger = logging.getLogger(__name__)
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        self.logger.debug("init {}".format(__name__))
+        self._init_complete = False
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         #   self.param1 = self.get_parameter_value('param1')
@@ -83,34 +89,37 @@ class WebSocket(SmartPlugin):
         self.websocket = _websocket(self.get_sh(), self, self.ip, self.port, self.tls, self.wsproto, self.querydef)
 
         self.init_webinterface()
-        return
-        
+
+        self.logger.debug("init done")
+        self._init_complete = True
 
     def run(self):
         """
         Run method for the plugin - called once to start the plugins processing
-        """        
+        """
+        self.logger.debug("run {}".format(__name__))
         self.alive = True
         self.scheduler_add('series', self.websocket._update_series, cycle=10, prio=5)
-        return
+        self.logger.debug("running {}".format(__name__))
 
 
     def stop(self):
         """
         Stop method for the plugin
         """
+        self.logger.debug("stop {}".format(__name__))
         self.alive = False
         self.websocket.stop()
-        return
+        self.logger.debug("stopped {}".format(__name__))
 
 
     def parse_item(self, item):
         """
         Plugin's parse_item method. Is called for every item when the plugin is initialized.
-        
+
         :param item:    The item to process.
         :return:        If the plugin needs to be informed of an items change you should return a call back function
-                        like the function update_item down below. 
+                        like the function update_item down below.
                         This means that when the items value is about to be updated, the call back function is called
                         with the item, caller, source and dest as arguments.
         """
@@ -125,29 +134,27 @@ class WebSocket(SmartPlugin):
         self.websocket.visu_items[item.id()] = {'acl': acl, 'item': item}
         return self.update_item
 
-
     def parse_logic(self, logic):
         """
         Plugin's parse_logic method
         """
-#        if hasattr(logic, 'visu_acl'):
-#            if logic.conf['visu_acl'].lower() in ('true', 'yes', 'rw'):
-#                self.websocket.visu_logics[logic.name] = logic
+        if hasattr(logic, 'visu_acl'):
+            if logic.conf['visu_acl'].lower() in ('true', 'yes', 'rw'):
+                self.websocket.visu_logics[logic.name] = logic
         return
-
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         Write items values
-        
+
         :param item: item to be updated towards the plugin
         :param caller: if given it represents the callers name
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
+        self.logger.debug("Plugin '{}' update_item called for item {}, Source {}, Caller {}, Dest {}".format(self.get_shortname(), item.id(),source, caller, dest))
         self.websocket.update_item(item.id(), item(), source)
         return
-        
 
     def init_webinterface(self):
         """"
@@ -162,7 +169,7 @@ class WebSocket(SmartPlugin):
         if self.mod_http == None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
-        
+
         # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
@@ -174,15 +181,15 @@ class WebSocket(SmartPlugin):
                 'tools.staticdir.dir': 'static'
             }
         }
-        
+
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self), 
-                                     self.get_shortname(), 
-                                     config, 
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
                                      self.get_classname(), self.get_instance_name(),
                                      description='',
                                      webifname='')
-                                   
+
         return True
 
 
@@ -193,12 +200,12 @@ class WebSocket(SmartPlugin):
         self.websocket.url(url, clientip)
         return
 
-		
+
     def return_clients(self):
         """
         Returns connected clients
-        
-        :return: list of dicts with client information 
+
+        :return: list of dicts with client information
         """
         for client in self.websocket.clients:
             infos = {}
@@ -211,7 +218,7 @@ class WebSocket(SmartPlugin):
 
             yield infos
         return
-        
+
 
 # ------------------------------------------
 #    Webinterface of the plugin
@@ -225,7 +232,7 @@ class WebInterface(SmartPluginWebIf):
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str
@@ -246,12 +253,12 @@ class WebInterface(SmartPluginWebIf):
     def index(self, reload=None):
         """
         Build index.html for cherrypy
-        
+
         Display a list of all connected visu clients
-            
-        :return: contents of the template after beeing rendered 
+
+        :return: contents of the template after beeing rendered
         """
-        
+
         # get API handles that were unavailable during __init__
         if self.items is None:
             self.items = Items.get_instance()
@@ -285,7 +292,7 @@ class WebInterface(SmartPluginWebIf):
         plglogics = []
         for logic in self.logics.return_logics():
             plglogics.append(self.logics.get_logic_info(logic))
-        
+
         clients_sorted = sorted(clients, key=lambda k: k['name'])
 
         tmpl = self.tplenv.get_template('index.html')
@@ -296,6 +303,8 @@ class WebInterface(SmartPluginWebIf):
 
 
 #########################################################################
+
+## Todo: migrate to lib.network
 
 class _websocket(lib.connection.Server):
     """
@@ -355,11 +364,12 @@ class _websocket(lib.connection.Server):
         self.close()
 
     def update_item(self, item_name, item_value, source):
-        data = {'cmd': 'item', 'items': [[item_name, item_value]]}
-#        self.logger.warning("_websocket: update_item: data {0}".format(data))
+        """
+        Dispatch the new value of an item to all connected clients
+        """
         for client in list(self.clients):
             try:
-                client.update(item_name, data, source)
+                client.update_item(item_name, item_value, source)
             except:
                 pass
 
@@ -434,12 +444,12 @@ class websockethandler(lib.connection.Stream):
         self.hostname = ''
         self.browser = ''
         self.browserversion = ''
-        
+
         # get access to the logics api
         from lib.logic import Logics
         self.logics = Logics.get_instance()
         return
-        
+
 
     def send_event(self, event, data):
         data = data.copy()  # don't filter the orignal data dict
@@ -461,11 +471,40 @@ class websockethandler(lib.connection.Stream):
         except:
             pass
 
-    def update(self, path, data, source):
-        if path in self.monitor['item']:
-            if self.addr != source:
-#                self.logger.warning("VISU: update send to {0}: {1}, path={2}, source={3}".format(self.addr, data, path, source))
-                self.json_send(data)
+    def update_item(self, item_name, item_value, source):
+        """
+        send JSON data with new value of an item
+        """
+        items = []
+        for candidate in self.monitor['item']:
+            try:
+                #self.logger.debug("Send update to Client {0} for candidate {1} and item_name {2}?".format(self.addr, candidate, item_name))
+                path_parts = candidate.split('.property.')
+                if path_parts[0] != item_name:
+                    continue
+
+                if len(path_parts) == 1 and self.addr != source:
+                    self.logger.debug("Send update to Client {0} for item {1}".format(self.addr, path_parts[0]))
+                    items.append([path_parts[0], item_value])
+                    continue
+
+                if len(path_parts) == 2:
+                    self.logger.debug("Send update to Client {0} for item {1} with property {2}".format(self.addr, path_parts[0], path_parts[1]))
+                    prop = self.items[path_parts[0]]['item'].property
+                    prop_attr = getattr(prop,path_parts[1])
+                    items.append([candidate, prop_attr])
+                    continue
+
+                if self.addr == source:
+                    continue
+
+                self.logger.warning("Could not send update to Client {0}: something is wrong with item path {1}, value={2}, source={3}".format(self.addr, item_name, item_value, source))
+            except:
+                pass
+
+        if len(items): # only send an update if item/value pairs found to be send
+            data = {'cmd': 'item', 'items': items}
+            self.json_send(data)
 
     def update_series(self):
 #        now = self._sh.now()
@@ -497,10 +536,10 @@ class websockethandler(lib.connection.Stream):
     def json_parse(self, data):
         """
         Parse the received request
-        
+
         :param data: json data structure with the request
         :type data: json structure
-        
+
         """
         self.logger.debug("{0} sent {1}".format(self.addr, repr(data)))
         try:
@@ -509,7 +548,7 @@ class websockethandler(lib.connection.Stream):
             self.logger.debug("Problem decoding {0} from {1}: {2}".format(repr(data), self.addr, e))
             return
         command = data['cmd']
-        
+
         if command == 'item':
             path = data['id']
             value = data['val']
@@ -520,20 +559,37 @@ class websockethandler(lib.connection.Stream):
                     self.logger.warning("Client {0} want to update read only item: {1}".format(self.addr, path))
             else:
                 self.logger.warning("Client {0} want to update invalid item: {1}".format(self.addr, path))
-                
+
         elif command == 'monitor':
             if data['items'] == [None]:
                 return
             items = []
+            newmonitor_items = []
             for path in list(data['items']):
-                if path in self.items:
-                    items.append([path, self.items[path]['item']()])
+                path_parts = path.split('.property.')
+                if len(path_parts) == 1:
+                    self.logger.debug("Client {0} requested to monitor item {1}".format(self.addr, path_parts[0]))
+                    try:
+                        items.append([path, self.items[path]['item']()])
+                    except KeyError as e:
+                        self.logger.warning("Client {0} requested to monitor item {1} which can not be found".format(self.addr, path_parts[0]))
+                    else:
+                        newmonitor_items.append(path)
+                elif len(path_parts) == 2:
+                    self.logger.debug("Client {0} requested to monitor item {2} with property {1}".format(self.addr, path_parts[1], path_parts[0]))
+                    prop = self.items[path_parts[0]]['item'].property
+                    prop_attr = getattr(prop,path_parts[1])
+                    items.append([path, prop_attr])
+                    newmonitor_items.append(path)
                 else:
                     self.logger.warning("Client {0} requested invalid item: {1}".format(self.addr, path))
             self.logger.debug("json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'item', 'items': items})))	# MSinn
             self.json_send({'cmd': 'item', 'items': items})
-            self.monitor['item'] = data['items']
-            
+            # monitored items will also contain those with .property. which is not right, we need to strip .property
+            ### old: self.monitor['item'] = data['items']
+            self.monitor['item'] = newmonitor_items
+            self.logger.debug("Client {0} new monitored items are {1}".format(self.addr, newmonitor_items))
+
         elif command == 'logic':
             self.request_logic(data)
 
@@ -568,7 +624,7 @@ class websockethandler(lib.connection.Stream):
                             self.logger.info("WebSocket: no entries for series {} {}".format(path, series))
                 else:
                     self.logger.warning("Client {0} requested invalid series: {1}.".format(self.addr, path))
-                    
+
         elif command == 'log':
             self.log = True
             name = data['name']
@@ -581,11 +637,11 @@ class websockethandler(lib.connection.Stream):
                 self.logger.warning("Client {0} requested invalid log: {1}".format(self.addr, name))
             if name not in self.monitor['log']:
                 self.monitor['log'].append(name)
-                
+
         elif command == 'ping':
             self.logger.debug("json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'pong'})))
             self.json_send({'cmd': 'pong'})
-            
+
         elif command == 'proto':  # protocol version
             proto = data['ver']
             if proto > self.proto:
@@ -619,7 +675,7 @@ class websockethandler(lib.connection.Stream):
         else:
             self.json_send({'cmd': command, 'error': 'Unknown Command'})
         return
-        
+
 
     def request_list_items(self, path):
         """
@@ -629,7 +685,7 @@ class websockethandler(lib.connection.Stream):
         myitems = []
         for i in self._sh.return_items():
             include = False
-#            if i.get('visu_acl', '').lower() != 'no': 
+#            if i.get('visu_acl', '').lower() != 'no':
             if (path == '') and (not '.' in i._path):
                 include = True
             else:
@@ -699,11 +755,11 @@ class websockethandler(lib.connection.Stream):
                         logic_def['enabled'] = 0
                     if (not enabled) or (logic_def['enabled'] == 1):
                         logiclist.append(logic_def)
-        
+
         response = collections.OrderedDict([('cmd','list_logics'), ('logics',logiclist)])
         self.logger.info("Requested a list of defined logics: {}".format(response))
         return response
-        
+
 
     def parse_header(self, data):
         data = bytes(data)

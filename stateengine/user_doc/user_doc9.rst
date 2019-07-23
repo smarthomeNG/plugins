@@ -15,32 +15,45 @@ können wie folgt eingebunden werden:
 
 .. code-block:: yaml
 
-   #items/item.yaml
-   beispiel:
-       raffstore1:
-           automatik:
-               struct:
-                 - stateengine.general
-                 - stateengine.state_lock
-                 - stateengine.state_suspend
-                 - stateengine_default_raffstore #beispielsweise eine in etc/struct.yaml angelegte Vorlage
+    #items/item.yaml
+    beispiel:
+        trigger:
+            type: bool
+            enforce_updates: True
 
-               manuell:
+        raffstore1:
+            automatik:
+                struct:
+                  - stateengine.general
+                  - stateengine.state_lock
+                  - stateengine.state_suspend
+                  - stateengine_default_raffstore #beispielsweise eine in etc/struct.yaml angelegte Vorlage
+
+                manuell:
                    # Weitere Attribute werden bereits über das Template stateengine.state_suspend geladen
-                   eval_trigger:
+                    eval_trigger:
                        - beispiel.raffstore1.aufab
                        - beispiel.raffstore1.step
                        - beispiel.raffstore1.hoehe
                        - beispiel.raffstore1.lamelle
-                   se_manual_exclude:
-                       - KNX:y.y.y
+                    se_manual_exclude:
+                       - KNX:y.y.y:*
                        - Init:*
 
-               rules:
-                   additional_state1:
+                rules:
+                  eval_trigger:
+                      - ..lock
+                      - ..supsend
+                      - .. release
+                      - beispiel.trigger
+
+                  additional_state1:
                       type: foo
 
-Die Vorlagen beinhalten dabei folgende Strukturen.
+Zumindest in der SmarthomeNG Version 1.6.0 werden die eval_trigger Angaben aus den einzelnen Struct-Vorgaben nicht
+kumuliert. Es ist daher wichtig, die eval_trigger Liste nochmals manuell im endgültigen Item anzulegen.
+
+Die Vorlagen beinhalten folgende Strukturen:
 
 Die ``general`` Vorlage enthält die Items, die generell für einen Zustandsautomaten
 angelegt werden sollten. Das "rules" Item ist das Regelwerk-Item mit aktiviertem
@@ -61,6 +74,18 @@ se_plugin. Dieser Codeblock wird zwingend von jedem Zustandsautomaten benötigt.
        visu_acl: r
        cache: True
 
+   conditionset_id:
+       remark: The id/path of the actual condition set is assigned to this item by the stateengine
+       type: str
+       visu_acl: r
+       cache: True
+
+   conditionset_name:
+       remark: The name of the actual condition set is assigned to this item by the stateengine
+       type: str
+       visu_acl: r
+       cache: True
+
    rules:
        name: Regeln und Item Verweise für den Zustandsautomaten
        type: bool
@@ -73,6 +98,8 @@ se_plugin. Dieser Codeblock wird zwingend von jedem Zustandsautomaten benötigt.
 
        se_laststate_item_id: ..state_id
        se_laststate_item_name: ..state_name
+       se_lastconditionset_item_id: ..conditionset_id
+       se_lastconditionset_item_name: ..conditionset_name
 
 Die ``state_lock`` Vorlage beinhaltet zum einen den Lock Zustand mit dem Namen "gesperrt",
 zum anderen ein Item mit dem Namen ``lock``. Wird dieses auf "1/True" gesetzt, wird der
@@ -89,7 +116,8 @@ Zustand eingenommen. Der Zustand sollte immer als erster Zustand eingebunden wer
 
   rules:
       se_item_lock: ..lock
-      eval_trigger: ..lock
+      eval_trigger:
+          - ..lock
 
       lock:
           name: gesperrt
@@ -103,12 +131,14 @@ Zustand eingenommen. Der Zustand sollte immer als erster Zustand eingebunden wer
               se_value_lock: True
 
 Die ``state_suspend`` Vorlage dient dem Abfragen von manuellen Tätigkeiten, wie
-z.B. das Schalten eines Lichts oder Fahren einer Jalousie mittels Taster oder Visu.
+z.B. Schalten eines Lichts oder Fahren einer Jalousie mittels Taster oder Visu.
 In diesem Fall soll die automatiche Evaluierung für eine gewisse Zeit pausieren.
 
 Beim ``manuell`` Item muss unter Umständen der Eintrag ``se_manual_exclude`` in der eigenen
-Baumstruktur überschrieben und durch einen Eintrag ``- KNX:GA des Aktors``
-ergänzt werden.
+Baumstruktur überschrieben und durch einen Eintrag (z.B. beim Einsatz von KNX Aktoren) ``- KNX:physikalische Adresse:Gruppenadresse``
+ergänzt werden. Außerdem muss ein eval_trigger manuell deklariert werden. Hier sollten alle
+Items gelistet sein, die für ein vroübergehendes Aussetzen der Automatisierung sorgen sollen
+(z.B. Schalt- und Dimm-Items)
 
 Das Item ``settings.suspendduration`` ermöglicht es, die Dauer der Pausierung bequem
 über eine Visu oder das Backend zu ändern. Setzt man das Item ``settings.suspend_active``
@@ -152,8 +182,9 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
       se_item_retrigger: ..rules
       se_item_suspend_end: ..suspend_end
       se_item_suspend_active: ..settings.suspend_active
-      se_suspend_time: eval:stateengine_eval.get_relative_itemvalue('..settings.suspendduration') * 60
-      eval_trigger: ..manuell
+      se_suspend_time: eval:se_eval.get_relative_itemvalue('..settings.suspendduration') * 60
+      eval_trigger:
+          - ..manuell
 
       suspend:
           name: ausgesetzt
@@ -166,7 +197,7 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
                 - 'order: 1'
               se_action_suspend_end:
                 - 'function: set'
-                - "to: eval:stateengine_eval.insert_suspend_time('..suspend', suspend_text='%X')"
+                - "to: eval:se_eval.insert_suspend_time('..suspend', suspend_text='%X')"
                 - 'repeat: True'
                 - 'order: 2'
               se_action_retrigger:
@@ -185,7 +216,7 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
                 - 'to:  '
 
           enter_manuell:
-              se_value_trigger_source: eval:stateengine_eval.get_relative_itemid('..manuell')
+              se_value_trigger_source: eval:se_eval.get_relative_itemid('..manuell')
               se_value_suspend_active: True
 
           enter_stay:
@@ -213,7 +244,8 @@ der Zustände anzuleiern.
       se_item_retrigger: ..rules
       se_item_release: ..release
       se_item_suspend_end: ..suspend_end
-      eval_trigger: ..release
+      eval_trigger:
+          - ..release
 
       release:
           name: release
@@ -249,9 +281,10 @@ der Zustände anzuleiern.
 .. rubric:: Pluginspezifische Templates
    :name: pluginspezifisch
 
-Es ist möglich, Vorgabezustände in der Item-Konfiguration zu definieren
-und diese später für konkrete Regelwerke anzuwenden. Dabei können im
-konkreten Zustand auch Einstellungen des Vorgabezustands
+Es ist neben der oben beschriebene Variante möglich, Vorgabezustände in
+der Item-Konfiguration zu definieren
+und diese später für konkrete Regelwerke durch Plugin-interne Attribute zu nutzen.
+Dabei können im konkreten Zustand auch Einstellungen des Vorgabezustands
 überschrieben werden.
 
 Vorgabezustände werden als Item an beliebiger Stelle innerhalb der

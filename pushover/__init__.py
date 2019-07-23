@@ -74,7 +74,7 @@ class Pushover(SmartPlugin):
                     data['priority'] = 1
 
                 if expire and priority == 2:
-                    if isinstance(expire, int) and expire > 10800:
+                    if isinstance(expire, int) and expire <= 10800:
                         data['expire'] = expire
                     else:
                         data['expire'] = 10800

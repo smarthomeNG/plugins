@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: wettercom           # class containing the plugin
 
 parameters:
@@ -42,8 +43,6 @@ item_attributes: NONE
 item_structs:
     # definition of item structure for this plugin
 
-plugin_functions:
-# Definition of plugin functions defined by this plugin
     wetter:
         vorhersage:
             heute:
@@ -281,3 +280,5 @@ plugin_functions:
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
 
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin

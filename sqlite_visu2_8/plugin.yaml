@@ -6,8 +6,8 @@ plugin:
         de: 'Integration einer SQLite Datenbank - zu verwenden für smartVISU v2.8 und höher'
         en: 'Integration of a SQLite database - use this version of the plugin for smartVISU v2.8 and above'
     maintainer: '?'
-#    tester:                        # Who tests this plugin?
-    state: ready
+    tester: '?'                    # Who tests this plugin?
+    state: deprecated
     keywords: database
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
@@ -50,6 +50,9 @@ item_attributes:
             de: "Falls auf 'yes' gesetzt, wird der Wert des Items in die sqlite Datenbank geschrieben."
             en: "If set to 'yes', the value of the item will be written to the sqlite database"
         valid_list: ['', 'yes', 'init', 'True', 'no', 'False']
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

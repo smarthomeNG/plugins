@@ -6,7 +6,7 @@ plugin:
         de: 'Anbindung von iRobot Roomba Staubsaugern der Serie 900'
         en: 'integration of the iRobot Roomba vacuum cleaner series 900'
     maintainer: 'Zapfen83'
-    tester:
+    tester: '?'
     state: ready
     keywords: irobot roomba             # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
@@ -17,6 +17,7 @@ plugin:
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False
+    restartable: unknown
     classname: ROOMBA_980              # class containing the plugin
 
 parameters:
@@ -95,12 +96,12 @@ item_attributes:
       de: "Roomba fährt zur Homebase"
       en: "Roomba goes back to the homebase"
 
-item_structs:
-# Definition of item-structure templates for this plugin
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
 
 plugin_functions: NONE
-# Definition of plugin functions defined by this plugin
+  # Definition of plugin functions defined by this plugin
 
 logic_parameters: NONE
-# Definition of logic parameters defined by this plugin
+  # Definition of logic parameters defined by this plugin
 

@@ -15,9 +15,9 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; volume; set; ***VL; ?V; VOL***; RW; no; 10; 160
 1; mute; on; MO; ?M; MUT*; RW; yes
 1; mute; off; MF; ?M; MUT*; RW; yes
-1; input; set; **FN; ?F; FN**; RW; ; ; ; ; pioneer_input
-1; mode; set; ****SR; ?S; SR****; RW; ; ; ; num; pioneer_SR
-1; playingmode; ; ?L; ?L; LM****; R; ; ; ; str,int; pioneer_LM
+1; source; set; **FN; ?F; FN**; RW; ; ; ; ; pioneer_source
+1; set_listeningmode; set; ****SR; ?S; SR****; RW; ; ; ; num; pioneer_SR
+1; query_listeningmode; ; ?L; ?L; LM****; R; ; ; ; str,int; pioneer_LM
 1; speakers; set; *SPK; ?SPK; SPK*; RW
 1; tone; on; 1TO; ?TO; TO*; RW
 1; tone; off; 0TO; ?TO; TO*; RW
@@ -29,8 +29,8 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; trebble-; decrease; TD; ; TR; W
 1; dialog; set; *ATH; ?ATH; ATH*; RW
 1; HDMI; set; *HO; ?HO; HO*; RW
-1; input+; increase; FU; ?F; FN; W
-1; input-; decrease; FD; ?F; FN; W
+1; source+; increase; FU; ?F; FN; W
+1; source-; decrease; FD; ?F; FN; W
 1; radiof+; ; TPI; ; PR; W; ; ; ; str
 1; radiof-; ; TPD; ; PR; W; ; ; ; str
 
@@ -44,4 +44,4 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 2; volume; set; **ZV; ?ZV; ZV**; RW; no; 0; 81
 2; mute; on; Z2MO; ?Z2M; Z2MUT*; RW; yes
 2; mute; off; Z2MF; ?Z2M; Z2MUT*; RW; yes
-2; input; set; **ZS; ?ZS; Z2F**; RW; ; ; ; ; pioneer_input
+2; source; set; **ZS; ?ZS; Z2F**; RW; ; ; ; ; pioneer_source

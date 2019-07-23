@@ -21,14 +21,16 @@ plugin:
              with hierarchical states.
             '
     maintainer: i-am-offline, onkelandy
+    tester: '?'
     state: ready
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.4.2
-    sh_minversion: 1.5d
+    version: 1.6.1
+    sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
+    restartable: unknown
     attribute_prefix: se
 
 parameters:
@@ -177,6 +179,14 @@ parameters:
                 Everything gets deleted from the given directory, not just log files!
                 '
 
+    instant_leaveaction:
+        type: bool
+        default: False
+        description:
+            de: 'Ist dieser Parameter auf True gesetzt, werden "on leave" Aktionen sofort ausgeführt, wenn der aktuelle Zustand nicht mehr eingenommen wird. Standardmäßig werden die Aktionen erst direkt vor dem Eintreten in einen neuen Zustand getriggert.'
+            en: 'If this parameter is set to True the "on leave" actions are run immediately after not entering the current state
+            again. By default the actions are triggered directly before entering a new state.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     type:
@@ -236,14 +246,11 @@ item_attributes:
         description_long:
             de: '**Id des Items, in dem der Name des aktuellen Zustands abgelegt wird:**\n
                 In das hier verknüpfte Item wird der Name des aktuellen Zustands
-                abgelegt. Das Item kann für Displayzwecke verwendet werden. Wenn
-                das Item ``se_laststate_item_name`` nicht angegeben ist, steht
-                der Name des aktuellen Zustands nicht zur Verfügung.
+                abgelegt. Das Item kann für Displayzwecke und Bedingungen verwendet werden.
                 '
             en: '**Id of the item that saves the name of the current state:**\n
                  The item defined here saves the name of the current state for
-                 visualization purposes. If ``se_laststate_item_name`` is not defined
-                 you cannot access the name of the current state.
+                 visualization purposes and conditions.
                  '
 
     se_laststate_item_id:
@@ -256,14 +263,40 @@ item_attributes:
                 In das hier verknüpfte Item wird die Id des aktuellen Zustands
                 abgelegt. Das Item kann mit dem Attribut ``cache: yes``
                 versehen werden, dann bleibt der vorherige Zustand bei einem
-                Neustart von smarthomeNG erhalten. Wenn das Item nicht angegeben ist,
-                wird der aktuelle Zustand nur im Plugin gespeichert und geht mit
-                einem Neustart von smarthomeNG verloren.
+                Neustart von smarthomeNG erhalten.
                 '
             en: '**Id of the item that saves the id of the current state:**\n
                  In combination with the attribute ``cache: yes`` the defined item
-                 can be used to load the last state after the plugin start. Otherwise
-                 it does not know the last valid state before a system restart.
+                 can be used to load the last state after the plugin start.
+                 '
+    se_lastconditionset_item_name:
+        type: str
+        description:
+            de: 'Name des Items, in dem der Name des zuletzt genutzten Zustandsets abgelegt wird'
+            en: 'Name of the item that saves the name of the last used condition set'
+        description_long:
+            de: '**Name des Items, in dem der Name des aktuellen Zustandsets abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des zuletzt aktiven Zustandsets
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**Name of the item that saves the name of the last condition set:**\n
+                 The item defined here saves the name of the last active condition set.
+                 It can be used for visualization, actions and conditions.
+                 '
+
+    se_lastconditionset_item_id:
+        type: str
+        description:
+            de: 'ID des Items, in dem der Name des zuletzt genutzten Zustandsets abgelegt wird'
+            en: 'ID of the item that saves the name of the last used condition set'
+        description_long:
+            de: '**ID des Items, in dem der Name des aktuellen Zustandsets abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des zuletzt aktiven Zustandsets
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**ID of the item that saves the name of the last condition set:**\n
+                 The item defined here saves the name of the last active condition set.
+                 It can be used for visualization, actions and conditions.
                  '
 
     se_repeat_actions:
@@ -331,21 +364,49 @@ item_structs:
         state_id:
             remark: The id/path of the actual state is assigned to this item by the stateengine
             type: str
-            visu_acl: r
+            visu_acl: ro
             cache: True
 
         state_name:
             remark: The name of the actual state is assigned to this item by the stateengine
             type: str
-            visu_acl: r
+            visu_acl: ro
             cache: True
 
+        conditionset_id:
+            remark: The id/path of the actual condition set is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        conditionset_name:
+            remark: The name of the actual condition set is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        retrigger:
+            remark: Item to retrigger the rule set evaluation
+            type: bool
+            visu_acl: rw
+            enforce_updates: True
+
+        settings:
+            settings_edited:
+                type: bool
+                name: settings editiert
+                eval_trigger: ...settings.*
+                eval: not sh..self()
+                on_update: ...retrigger = True
+
         rules:
-            name: Regeln und Item Verweise für den Zustandsautomaten
+            name: Zustandsautomat
             remark: configure your se_item_* and eval_triggers here
             type: bool
             se_plugin: active
             eval: True
+            eval_trigger:
+                - ..retrigger
 
             # se_startup_delay: 30
             # se_repeat_actions: true
@@ -353,6 +414,8 @@ item_structs:
 
             se_laststate_item_id: ..state_id
             se_laststate_item_name: ..state_name
+            se_lastconditionset_item_id: ..conditionset_id
+            se_lastconditionset_item_name: ..conditionset_name
 
     state_lock:
         name: Zustandsvorlage zum Sperren der Evaluierung
@@ -365,7 +428,8 @@ item_structs:
 
         rules:
             se_item_lock: ..lock
-            eval_trigger: ..lock
+            eval_trigger:
+                - ..lock
 
             lock:
                 name: gesperrt
@@ -401,6 +465,12 @@ item_structs:
             se_manual_exclude:
               - database:*
 
+        retrigger:
+            remark: Item to retrigger the rule set evaluation
+            type: bool
+            visu_acl: rw
+            enforce_updates: True
+
         settings:
             remark: Use these settings for your condition values
 
@@ -418,14 +488,21 @@ item_structs:
                 cache: True
                 initial_value: True
 
+            settings_edited:
+                type: bool
+                name: settings editiert
+                eval_trigger: ...settings.*
+                eval: not sh..self()
+                on_update: ...retrigger = True
 
         rules:
             se_item_suspend: ..suspend
-            se_item_retrigger: ..rules
             se_item_suspend_end: ..suspend_end
             se_item_suspend_active: ..settings.suspend_active
-            se_suspend_time: eval:stateengine_eval.get_relative_itemvalue('..settings.suspendduration') * 60
-            eval_trigger: ..manuell
+            se_suspend_time: eval:se_eval.get_relative_itemproperty('..settings.suspendduration', 'value') * 60
+            eval_trigger:
+                - ..manuell
+                - ..retrigger
 
             suspend:
                 name: ausgesetzt
@@ -438,12 +515,12 @@ item_structs:
                       - 'order: 1'
                     se_action_suspend_end:
                       - 'function: set'
-                      - "to: eval:stateengine_eval.insert_suspend_time('..suspend', suspend_text='%X')"
+                      - "to: eval:se_eval.insert_suspend_time('..suspend', suspend_text='%X')"
                       - 'repeat: True'
                       - 'order: 2'
                     se_action_retrigger:
-                      - 'function: set'
-                      - 'to: True'
+                      - 'function: special'
+                      - 'value: retrigger:..retrigger'
                       - 'delay: var:item.suspend_remaining'
                       - 'repeat: True'
                       - 'order: 3'
@@ -457,7 +534,7 @@ item_structs:
                       - 'to:  '
 
                 enter_manuell:
-                    se_value_trigger_source: eval:stateengine_eval.get_relative_itemid('..manuell')
+                    se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
                     se_value_suspend_active: True
 
                 enter_stay:
@@ -478,10 +555,10 @@ item_structs:
         rules:
             se_item_lock: ..lock
             se_item_suspend: ..suspend
-            se_item_retrigger: ..rules
             se_item_release: ..release
             se_item_suspend_end: ..suspend_end
-            eval_trigger: ..release
+            eval_trigger:
+                - ..release
 
             release:
                 name: release
@@ -495,20 +572,19 @@ item_structs:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 2'
-                    se_action_release:
-                      - 'function: set'
-                      - 'to: False'
-                      - 'order: 3'
                     se_action_suspend_end:
                       - 'function: set'
                       - 'to: '
+                      - 'order: 3'
+                    se_action_release:
+                      - 'function: set'
+                      - 'to: False'
                       - 'order: 4'
                     se_action_retrigger:
-                      - 'function: set'
-                      - 'to: True'
-                      - 'order: 5'
+                      - 'function: special'
+                      - 'value: retrigger:..retrigger'
                       - 'repeat: True'
-                      - 'delay: 1'
+                      - 'order: 5'
 
                 enter:
                     se_value_release: True
@@ -518,4 +594,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
-

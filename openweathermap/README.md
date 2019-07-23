@@ -138,6 +138,149 @@ owm:
         uvi_date:
             type: num
             owm_matchstring@home: uvi_date
+
+        forecast_3hours: # next 3 hours, use 0-39 for further forecasts
+            time:
+                type: num
+                owm_matchstring@home: forecast/1/dt
+
+            conditions:
+                type: list
+                owm_matchstring@home: weather
+
+            temp:
+                type: num
+                owm_matchstring@home: forecast/1/main/temp
+
+            temp_min:
+                type: num
+                owm_matchstring@home: forecast/1/main/temp_min
+
+            temp_max:
+                type: num
+                owm_matchstring@home: forecast/1/main/temp_max
+
+            pressure:
+                type: num
+                owm_matchstring@home: forecast/1/main/pressure
+
+            grnd_level:
+                type: num
+                owm_matchstring@home: forecast/1/main/grnd_level
+
+            sea_level:
+                type: num
+                owm_matchstring@home: forecast/1/main/sea_level
+
+            humidity:
+                type: num
+                owm_matchstring@home: forecast/1/main/humidity
+
+            wind:
+                wind_speed:
+                    type: num
+                    owm_matchstring@home: forecast/1/wind/speed
+
+                wind_deg:
+                    type: num
+                    owm_matchstring@home: forecast/1/wind/deg
+
+            clouds:
+                type: num
+                owm_matchstring@home: forecast/1/clouds/all
+
+        forecast_daily0: # tomorrow's forecast
+            time:
+                type: num
+                owm_matchstring@home: forecast/daily/0/dt
+
+            temp:
+                type: num
+                owm_matchstring@home: forecast/daily/0/main/temp
+
+            temp_min:
+                type: num
+                owm_matchstring@home: forecast/daily/0/main/temp_min
+
+            temp_max:
+                type: num
+                owm_matchstring@home: forecast/daily/0/main/temp_max
+
+            pressure:
+                type: num
+                owm_matchstring@home: forecast/daily/0/main/pressure
+
+                grnd_level:
+                    type: num
+                    owm_matchstring@home: forecast/daily/0/main/grnd_level
+
+                sea_level:
+                    type: num
+                    owm_matchstring@home: forecast/daily/0/main/sea_level
+
+            humidity:
+                type: num
+                owm_matchstring@home: forecast/daily/0/main/humidity
+
+            wind:
+                wind_speed:
+                    type: num
+                    owm_matchstring@home: forecast/daily/0/wind/speed
+
+                wind_deg:
+                    type: num
+                    owm_matchstring@home: forecast/daily/0/wind/deg
+
+            clouds:
+                type: num
+                owm_matchstring@home: forecast/daily/0/clouds/all
+
+        forecast_daily1: # day after tomorrow (max index 4 = 5 days ahead)
+            time:
+                type: num
+                owm_matchstring@home: forecast/daily/1/dt
+
+            temp:
+                type: num
+                owm_matchstring@home: forecast/daily/1/main/temp
+
+            temp_min:
+                type: num
+                owm_matchstring@home: forecast/daily/1/main/temp_min
+
+            temp_max:
+                type: num
+                owm_matchstring@home: forecast/daily/1/main/temp_max
+
+            pressure:
+                type: num
+                owm_matchstring@home: forecast/daily/1/main/pressure
+
+            grnd_level:
+                type: num
+                owm_matchstring@home: forecast/daily/1/main/grnd_level
+
+            sea_level:
+                type: num
+                owm_matchstring@home: forecast/daily/1/main/sea_level
+
+            humidity:
+                type: num
+                owm_matchstring@home: forecast/daily/1/main/humidity
+
+            wind:
+                wind_speed:
+                    type: num
+                    owm_matchstring@home: forecast/daily/1/wind/speed
+
+                wind_deg:
+                    type: num
+                    owm_matchstring@home: forecast/daily/1/wind/deg
+
+            clouds:
+                type: num
+                owm_matchstring@home: forecast/daily/1/clouds/all
+
 ```
 
 ### logic.yaml

@@ -12,7 +12,11 @@ import ssl
 import json
 import uuid
 from datetime import datetime
+import colorsys
 
+from . import p3_tools as p3tools
+
+ 
 
 
 DEFAULT_RANGE = (0, 100)
@@ -56,7 +60,12 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
         self.devices = devices
         self.actions = actions
         BaseHTTPRequestHandler.__init__(self, *args)
+    
+    
 
+        
+        
+    
     # find Value for Key in Json-structure
     # needed for Alexa Payload V3
     
@@ -302,12 +311,27 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
                                  "supportsDeactivation" : False
                                 }                              
                     if NameSpace == 'Alexa.CameraStreamController':
+                        AlexaItem = self.devices.get(device.id)
+
+                        myStreams = p3tools.CreateStreamSettings(AlexaItem)
                         newcapa={"type": "AlexaInterface",
                                  "interface": NameSpace,
                                  "version": "3",
-                                 "cameraStreamConfigurations" : device.camera_setting
+                                 "cameraStreamConfigurations" : myStreams
                                 }                                                         
-                        
+                    if NameSpace == 'Alexa.PlaybackController':
+                        AlexaItem = self.devices.get(device.id)
+                        myModeList= AlexaItem.supported_actions()
+                        myModes = []
+                        for mode in myModeList:
+                            if mode in "Play Stop FastForward Next Pause Previous Rewind StartOver":
+                                myModes.append(mode)
+                        newcapa={"type": "AlexaInterface",
+                                  "interface": "Alexa.PlaybackController",
+                                  "version": "3",
+                                  "supportedOperations" : myModes
+                                }
+                            
                     # End Check special Namespace
                     mycapabilities.append(newcapa)
                 if device.icon == None:
@@ -383,7 +407,9 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
         AlexaItem = self.devices.get(device_id)
         myItems = AlexaItem.backed_items()
         Properties = []
+        differentNameSpace = ''
         myValue = None  
+        alreadyReportedControllers = []
         # walk over all Items examp..: Item: OG.Flur.Spots.dimmen / Item: OG.Flur.Spots
         for Item in myItems:
             # Get all  Actions for this item
@@ -391,10 +417,13 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
             # über alle Actions für dieses item
             for myActionName in action_names:
                 myAction = self.actions.by_name(myActionName)
+                differentNameSpace = ''
                 # all informations colletec (Namespace, ResponseTyp, .....
                 # check if capabilitie is alredy in
                 self.logger.info("Alexa: ReportState", Item._name)
-                if myAction.response_type not in str(Properties):
+                if myAction.response_type not in str(alreadyReportedControllers):
+                #if myAction.namespace not in str(alreadyReportedControllers):
+                #if myAction.response_type not in str(Properties):
                     Propertyname = myAction.response_type
                     if myAction.namespace == "Alexa.PowerController":
                         myValue=Item()
@@ -402,13 +431,31 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
                             myValue = 'OFF'
                         elif myValue == 1:
                             myValue = 'ON'
+                    
                     elif myAction.namespace == "Alexa.BrightnessController":
                         item_range = Item.alexa_range
                         item_now = Item()
                         myValue = int(what_percentage(item_now, item_range))
-                
-                    elif myAction.namespace == "Alexa.LockController":
-                        myValue = 'LOCKED' 
+                    
+                    elif myAction.namespace == "Alexa.PowerLevelController":
+                        item_range = Item.alexa_range
+                        item_now = Item()
+                        myValue = int(what_percentage(item_now, item_range))
+                        
+                    elif myAction.namespace == "Alexa.LockController" and myAction.name != 'ReportLockState':
+                            continue
+
+                    elif myAction.namespace == "Alexa.LockController" and myAction.name == 'ReportLockState':
+                        item_new = Item()
+                        if item_new == 0:
+                            myValue = 'UNLOCKED'
+                        elif item_new == 1:
+                            myValue = 'LOCKED'
+                        elif item_new == 254:
+                            myValue = 'JAMMED'
+                        else:
+                            myValue = 'JAMMED'      # no known value -> blocked
+                             
                     
                     elif myAction.namespace == "Alexa.PercentageController":
                         item_range = Item.alexa_range
@@ -436,15 +483,68 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
                                     "value": item_now,
                                     "scale": "CELSIUS"
                                   }
+                    
+                    elif myAction.namespace == 'Alexa.ContactSensor':
+                        myValue=Item()
+                        if myValue == 0:
+                            myValue = 'DETECTED'            # means Contact is open
+                        elif myValue == 1:
+                            myValue = 'NOT_DETECTED'        # means Contact is closed
+                    
+                    elif myAction.namespace == 'Alexa.ColorController':
+                        myValue=Item()
+                        if len(myValue) == 0:
+                            myValue.append(0)
+                            myValue.append(0)
+                            myValue.append(0)
+                        try:
+                            myColorTyp = Item.conf['alexa_color_value_type']
+                        except Exception as err:
+                            # default = RGB
+                            myColorTyp = 'RGB'
+                        if myColorTyp == 'HSB':
+                            myHSB = myValue
+                        else:
+                            try:
+                                myHSB = p3tools.rgb_to_hsv(myValue[0], myValue[1], myValue[2])
+                            except Exception as err:
+                                print(err)
+
+                        myValue ={
+                                    "hue": myHSB[0],
+                                    "saturation": myHSB[1],
+                                    "brightness": myHSB[2]
+                                 }
+                    elif myAction.namespace == 'Alexa.PlaybackController':
+                        print('Playback arrived')
+                        differentNameSpace = 'Alexa.PlaybackStateReporter'
+                        myValue ={
+                                 "state": "PLAYING"
+                                 }                        
+                    if differentNameSpace == '':
+                        differentNameSpace = myAction.namespace        
+                    
+                    #====================================================
+                    # Add default values if nothing is reported
+                    #====================================================
+                    if myAction.namespace not in alreadyReportedControllers:
+                        if myAction.namespace == 'Alexa.LockController' and myValue == None:
+                            myValue = 'LOCKED'
+                    
                     MyNewProperty = {
-                                    "namespace":myAction.namespace,
+                                    "namespace":differentNameSpace,
                                     "name":Propertyname,
                                     "value":myValue,
                                     
                                     "timeOfSample":myTimeStamp,
-                                    "uncertaintyInMilliseconds":1000
+                                    "uncertaintyInMilliseconds":5000
                                     }
+                    
+                        
                     Properties.append(MyNewProperty)
+                    alreadyReportedControllers.append(myAction.response_type)
+                    
+                    #alreadyReportedControllers.append(myAction.namespace)
 
         # Add the EndpointHealth Property
         MyNewProperty ={
@@ -456,6 +556,8 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
                           "timeOfSample": myTimeStamp,
                           "uncertaintyInMilliseconds": 5000
                        }
+        
+        
         Properties.append(MyNewProperty)
             
         myEndpoint = self.search(directive,'endpoint')
@@ -468,6 +570,9 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
         self.replace(myHeader,'name','StateReport')
         self.replace(myHeader,'namespace','Alexa')
         
+        # Special things for special Controller
+        #if myAction.namespace == 'Alexa.PlaybackController':
+        #    Properties = []
         
         myResponse = {
           "context": {

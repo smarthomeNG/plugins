@@ -56,7 +56,7 @@ from . import conversion
 
 
 class DLMS(SmartPlugin, conversion.Conversion):
-    PLUGIN_VERSION = "1.5.2"
+    PLUGIN_VERSION = "1.5.3"
 
     """
     This class provides a Plugin for SmarthomeNG which reads out a smartmeter.

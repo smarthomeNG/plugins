@@ -80,7 +80,10 @@ class Traffic(SmartPlugin):
                 route_information['start_address'] = leg['start_address']
                 route_information['start_location_lat'] = leg['start_location']['lat']
                 route_information['start_location_lon'] = leg['start_location']['lng']
-                route_information['end_address'] = leg['end_address']
+                if 'end_address' in leg:
+                    route_information['end_address'] = leg['end_address']
+                else:
+                    route_information['end_address'] = 'n/a'
                 route_information['end_location_lat'] = leg['end_location']['lat']
                 route_information['end_location_lon'] = leg['end_location']['lng']
                 route_information['html_instructions'] = ''

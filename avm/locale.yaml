@@ -24,7 +24,7 @@ plugin_translations:
         'en': 'Do you really want to reboot the device?'
         'fr': ''
     'Reconnect WAN': {'de': '=', 'en': '=', 'fr': ''}
-    'Wollen Sie die Internetverbindung wirklich neu aufbauen?n?':
+    'Wollen Sie die Internetverbindung wirklich neu aufbauen?':
         'de': '='
         'en': 'Do you really want to reconnect the internet connection?'
         'fr': ''

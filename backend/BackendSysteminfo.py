@@ -27,7 +27,12 @@ import platform
 #import collections
 import datetime
 import time
-import pwd
+# identifying the user needs one of these:
+import os
+if os.name != 'nt':
+    import pwd          # linux approach
+else:
+    import getpass      # windows approach
 #import html
 #import subprocess
 import socket
@@ -70,13 +75,19 @@ class BackendSysteminfo:
         # node = platform.node()
         node = socket.getfqdn()
         arch = platform.machine()
-        user = pwd.getpwuid(os.geteuid()).pw_name  # os.getlogin()
+        if os.name != 'nt':
+            user = pwd.getpwuid(os.geteuid()).pw_name  # os.getlogin()
+        else:
+            user = getpass.getuser()
 
         ip = Utils.get_local_ipv4_address()
         ipv6 = Utils.get_local_ipv6_address()
 
-        space = os.statvfs(self._sh_dir)
-        freespace = space.f_frsize * space.f_bavail / 1024 / 1024
+        if os.name == 'posix':
+            space = os.statvfs(self._sh_dir)
+            freespace = space.f_frsize * space.f_bavail / 1024 / 1024
+        else:
+            freespace = psutil.disk_usage(".").free
 
         # return host uptime
         uptime = time.mktime(datetime.datetime.now().timetuple()) - psutil.boot_time()

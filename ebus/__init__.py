@@ -36,7 +36,7 @@ class eBus(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.0'
+    PLUGIN_VERSION = '1.5.1'
 
     _items = []
 
@@ -109,9 +109,9 @@ class eBus(SmartPlugin):
             ebus_type = item.conf['ebus_type']
             ebus_cmd = item.conf['ebus_cmd']
             if ebus_cmd == "cycle":
-                request = ebus_type + " " + ebus_cmd  # build command
+                request = ebus_type + " " + ebus_cmd + "\n" # build command
             else:
-                request = "get" + " " + ebus_cmd  # build command
+                request = "read" + " -c " + ebus_cmd + "\n"  # build command
             value = self.request(request)
             #if reading fails (i.e. at broadcast-commands) the value will not be updated
             if 'command not found' not in str(value) and value is not None:
@@ -214,11 +214,11 @@ class eBus(SmartPlugin):
         if caller != 'eBus':
             value = str(int(item()))
             cmd = item.conf['ebus_cmd']
-            request = "set " + cmd + " " + value
+            request = "write -c " + cmd + " " + value + "\n"
             set_answer = self.request(request)
             #just check if set was no broadcast-message
             if 'broadcast done' not in set_answer:
-                request = "get " + cmd
+                request = "read -c " + cmd + "\n"
                 answer = self.request(request)
                 #transfer value and answer to float for better comparsion
                 if float(answer) != float(value) or answer is None:

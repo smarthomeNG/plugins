@@ -29,7 +29,7 @@ from lib.model.smartplugin import SmartPlugin
 class DataLog(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.3.3'
+    PLUGIN_VERSION = '1.5.0'
 
     filepatterns = {}
     logpatterns = {}
@@ -38,10 +38,14 @@ class DataLog(SmartPlugin):
     _buffer = {}
     _buffer_lock = None
 
-    def __init__(self, smarthome, path="var/log/data", filepatterns={ "default" : "{log}-{year}-{month}-{day}.csv" }, logpatterns={ "csv" : "{time};{item};{value}\n" }, cycle=10):
+    def __init__(self, smarthome, *args, **kwargs):
         self._sh = smarthome
-        self.path = path
+        self.path = self.get_parameter_value('path')
         self.logger = logging.getLogger(__name__)
+
+        filepatterns = self.get_parameter_value('filepatterns')
+        logpatterns = self.get_parameter_value('logpatterns')
+        cycle = self.get_parameter_value('cycle')
 
         newfilepatterns = {}
         if isinstance(filepatterns, str):
