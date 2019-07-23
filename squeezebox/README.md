@@ -1,5 +1,11 @@
 # Squeezebox
 
+## New in version 1.3.2
+
+* Remove the automatic '?' addition to init commands
+* Update struct templates
+* Allow commands without playerid (for server queries, etc.)
+
 ## New in version 1.3.1
 
 * Parse the plugin parameters in Smart Plugin style

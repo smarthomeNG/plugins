@@ -30,7 +30,7 @@ from bin.smarthome import VERSION
 
 class Squeezebox(SmartPlugin,lib.connection.Client):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.3.2"
 
     def __init__(self, smarthome):
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -67,7 +67,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                     if (grandgrandparent_item is not None) and self.has_iattr(grandgrandparent_item.conf, 'squeezebox_playerid') and self._check_mac(self.get_iattr_value(grandgrandparent_item.conf, 'squeezebox_playerid')):
                         item.conf[attr] = item.conf[attr].replace('<playerid>', self.get_iattr_value(grandgrandparent_item.conf, 'squeezebox_playerid'))
                     else:
-                        self.logger.warning("squeezebox: could not resolve playerid for {0} from parent item {1}, neither from grandparent {2} or grandgrandparent {3}".format(item, parent_item, grandparent_item, grandgrandparent_item))
+                        self.logger.warning("could not resolve playerid for {0} from parent item {1}, neither from grandparent {2} or grandgrandparent {3}".format(item, parent_item, grandparent_item, grandgrandparent_item))
                         return None
 
         return item.conf[attr]
@@ -78,7 +78,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             if (cmd is None):
                 return None
 
-            self.logger.debug("squeezebox: {0} receives updates by \"{1}\"".format(item, cmd))
+            self.logger.debug("{0} receives updates by \"{1}\"".format(item, cmd))
             if not cmd in self._val:
                 self._val[cmd] = {'items': [item], 'logics': []}
             else:
@@ -91,14 +91,14 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 return None
             url = 'http://{}:{}/music/current/cover.jpg?player={}'.format(self._host, self._web_port, playerid)
             item(url, 'LMS', 'parse')
-            self.logger.debug("squeezebox: album art item {0} is set to \"{1}\"".format(item, url))
+            self.logger.debug("album art item {0} is set to \"{1}\"".format(item, url))
 
         if self.has_iattr(item.conf, 'squeezebox_init'):
             cmd = self._resolv_full_cmd(item, 'squeezebox_init')
             if (cmd is None):
                 return None
 
-            self.logger.debug("squeezebox: {0} is initialized by \"{1}\"".format(item, cmd))
+            self.logger.debug("{0} is initialized by \"{1}\"".format(item, cmd))
             if not cmd in self._val:
                 self._val[cmd] = {'items': [item], 'logics': []}
             else:
@@ -112,7 +112,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             cmd = self._resolv_full_cmd(item, 'squeezebox_send')
             if (cmd is None):
                 return None
-            self.logger.debug("squeezebox: {0} is sent to \"{1}\"".format(item, cmd))
+            self.logger.debug("{0} is sent to \"{1}\"".format(item, cmd))
             return self.update_item
         else:
             return None
@@ -121,7 +121,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
         if self.has_iattr(logic.conf, 'squeezebox_playerid'):
             playerid = self.get_iattr_value(logic.conf, 'squeezebox_playerid')
             if not self._check_mac(playerid):
-                self.logger.warning("squeezebox: invalid playerid for {0}".format(logic.name))
+                self.logger.warning("invalid playerid for {0}".format(logic.name))
                 return None
         else:
             playerid = 'playerid_not_set'
@@ -132,9 +132,9 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             for cmd in cmds:
                 cmd = cmd.replace('<playerid>', playerid)
                 if not self._check_mac(cmd.split(maxsplit=1)[0]):
-                    self.logger.warning("squeezebox: no valid playerid in \"{}\"".format(cmd))
+                    self.logger.warning("no valid playerid in \"{}\"".format(cmd))
                     continue
-                self.logger.debug("squeezebox: {} will be triggered by \"{}\"".format(logic.name, cmd))
+                self.logger.debug("{} will be triggered by \"{}\"".format(logic.name, cmd))
                 if not cmd in self._val:
                     self._val[cmd] = {'items': [], 'logics': [logic]}
                 else:
@@ -149,7 +149,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
         if caller != 'LMS':
             cmd = self._resolv_full_cmd(item, 'squeezebox_send').split()
             if not self._check_mac(cmd[0]):
-                return
+                self.logger.debug("Command {0} does not include player_id. Is that on purpose?".format(cmd))
             value = item()
             if isinstance(value, bool):
                 # convert to get '0'/'1' instead of 'True'/'False'
@@ -176,21 +176,21 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
         repl = (('%FC', '%C3%BC'), ('%F6', '%C3%B6'), ('%E4', '%C3%A4'), ('%DC', '%C3%9C'), ('%D6', '%C3%96'), ('%C4', '%C3%84'))
         for r in repl:
             cmd = cmd.replace(*r)
-        self.logger.debug("squeezebox: Sending request: {0}".format(cmd))
+        self.logger.debug("Sending request: {0}".format(cmd))
         self.send(bytes(cmd + '\r\n', 'utf-8'))
 
     def found_terminator(self, response):
         data = [urllib.parse.unquote(data_str)
                 for data_str in response.decode().split()]
-        self.logger.debug("squeezebox: Got: {0}".format(data))
+        self.logger.debug("Got: {0}".format(data))
 
         try:
             if (data[0].lower() == 'listen'):
                 value = int(data[1])
                 if (value == 1):
-                    self.logger.info("squeezebox: Listen-mode enabled")
+                    self.logger.info("Listen-mode enabled")
                 else:
-                    self.logger.info("squeezebox: Listen-mode disabled")
+                    self.logger.info("Listen-mode disabled")
 
             if self._check_mac(data[0]):
                 if (data[1] == 'time' and (data[2].startswith('+') or data[2].startswith('-'))):
@@ -289,9 +289,8 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 return
             self._update_items_with_data(data)
         except Exception as e:
-            self.logger.error(
-                "squeezebox: exception while parsing \'{0}\'".format(data))
-            self.logger.error("squeezebox: exception: {}".format(e))
+            self.logger.error("exception while parsing \'{0}\'".format(data))
+            self.logger.error("exception: {}".format(e))
 
     def _update_items_with_data(self, data):
         cmd = ' '.join(data_str for data_str in data[:-1])
@@ -311,7 +310,6 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             if self.connected:
                 self.logger.debug('squeezebox: init read')
                 for cmd in self._init_cmds:
-                    cmd = '{} ?'.format(cmd) if '?' not in cmd else cmd
                     self._send(cmd)
 
     def run(self):
