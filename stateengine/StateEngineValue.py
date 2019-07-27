@@ -20,7 +20,7 @@
 #########################################################################
 from . import StateEngineTools
 from . import StateEngineEval
-import datetime
+import re
 
 # Class representing a value for a condition (either value or via item/eval)
 class SeValue(StateEngineTools.SeItemChild):
@@ -338,19 +338,31 @@ class SeValue(StateEngineTools.SeItemChild):
                 return None
         return value
 
-    def __parse_relative(self, evalstr, begintag, endtag):
+    def __parse_relative(self, evalstr, begintag, endtags):
         if evalstr.find(begintag+'.') == -1:
             return evalstr
-
         pref = ''
         rest = evalstr
+        endtags = [endtags] if isinstance(endtags, str) else endtags
+
         while (rest.find(begintag+'.') != -1):
             pref += rest[:rest.find(begintag+'.')]
             rest = rest[rest.find(begintag+'.')+len(begintag):]
+            endtag = ''
+            previousposition = 1000
+            for end in endtags:
+                position = rest.find(end)
+                if position < previousposition and not position == -1:
+                    endtag = end
+                    previousposition = position
             rel = rest[:rest.find(endtag)]
             rest = rest[rest.find(endtag)+len(endtag):]
-            pref += "se_eval.get_relative_itemvalue('{}')".format(rel)
-
+            if 'property' in endtag:
+                rest1 = re.split('( |\+|\-|\*|\/)', rest, 1)
+                rest = ''.join(rest1[1:])
+                pref += "se_eval.get_relative_itemproperty('{}', '{}')".format(rel, rest1[0])
+            elif '()' in endtag:
+                pref += "se_eval.get_relative_itemvalue('{}')".format(rel)
         pref += rest
         return pref
 
@@ -359,7 +371,7 @@ class SeValue(StateEngineTools.SeItemChild):
         # noinspection PyUnusedLocal
         sh = self._sh
         if isinstance(self.__eval, str):
-            self.__eval = self.__parse_relative(self.__eval, 'sh.', '()')
+            self.__eval = self.__parse_relative(self.__eval, 'sh.', ['()', '.property.'])
             if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)

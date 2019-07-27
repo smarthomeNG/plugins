@@ -75,6 +75,10 @@ und Aktionen folgen auf den nächsten Seiten.
 .. rubric:: Beispiel se_eval
    :name: beispielregelwerkeval
 
+se_eval ist für Sonderfälle und etwas komplexere Konfiurationen sinnvoll, kann aber
+im ersten Durchlauf ignoriert werden. Es wird daher empfohlen, als Beginner
+dieses Beispiel einfach zu überspringen ;)
+
 Im Beispiel wird durch ``se_eval_brightness`` das Item für den Check von
 Bedingungen bekannt gemacht. Aufgrund der angegebenen Funktion wird das Item
 abhängig vom aktuellen Zustandsnamen eruiert. Da Zustand_Eins den Namen "sueden"

@@ -6,7 +6,7 @@ Beispiel
 
 Die wichtigsten Elemente und Funktionen des Plugins sind soweit
 vorgestellt. Zusätzliche Features werden abschließend unter
-:ref:`Advanced` zusammengefasst.
+:ref:`Advanced` und den folgenden Kapiteln zusammengefasst.
 
 Zusammenfassend soll in diesem Beispiel die Automatisierung eines Raffstores
 gezeigt werden. Es werden Funktionen genutzt, die erst im Advanced-Teil
@@ -633,10 +633,10 @@ weshalb diese Vorgehensweise erst ab 1.5.1 empfohlen wird.
        on_enter_or_stay:
           se_action_sollwert:
              - 'function: set'
-             - "to: eval:sh.return_item(se_eval.get_relative_itemid('..settings.{}.sollwert'.format(se_eval.get_relative_itemvalue('..state_name').lower())))()"
+             - "to: eval:se_eval.get_relative_itemvalue('..settings.{}.sollwert'.format(se_eval.get_relative_itemvalue('..state_name').lower()))"
           se_action_prio:
              - 'function: set'
-             - "to: eval:sh.return_item(se_eval.get_relative_itemid('..settings.{}.prio'.format(se_eval.get_relative_itemvalue('..state_name').lower())))()"
+             - "to: eval:se_eval.get_relative_itemvalue('..settings.{}.prio'.format(se_eval.get_relative_itemvalue('..state_name').lower()))"
 
 Außerdem werden pro Aktortyp entsprechende Setting Items angelegt. Je nach Bedarf
 kann dann auf diese zurückgegriffen werden.
