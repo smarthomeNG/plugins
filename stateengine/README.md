@@ -17,7 +17,8 @@ http://URL/index.php?page=widgets/stateengine.example
 * Some problem fixes
 * Log improvements
 * Docu improvements
-* Leave actions can now immediately triggered as soon as current state gets left (parameter: instant_leaveactions)
+* Leave actions can now be immediately triggered as soon as current state gets left (parameter: instant_leaveactions)
+* Standard shng evals with relative items can now be used (e.g. sh...() + sh...test.property.last_change_age)
 
 ### v1.6.0
 * Get relative items at startup for all se_item_* attributes

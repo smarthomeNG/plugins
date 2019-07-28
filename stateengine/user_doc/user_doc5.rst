@@ -71,7 +71,7 @@ des StateEngine Items eingesetzt werden kann.
 Der Name einer Bedingung setzt sich aus folgenden drei Teilen zusammen,
 die jeweils mit einem Unterstrich "_" getrennt werden:
 
-- ``se``: eindeutiger Prefix, um dem Plugin zugeordnet zu werden
+- ``se_``: eindeutiger Prefix, um dem Plugin zugeordnet zu werden
 - ``<Vergleichsfunktion>``: siehe unten. Beispiel: min = der Wert des <Bedingungsitems> muss mindestens dem beim Attribut angegebenen Wert entsprechen.
 - ``<Vergleichsitem/Bedingungsname>``: Hier wird entweder das im Regelwerk-Item mittels ``se_item_<Name>`` deklarierte Item oder eine besondere Bedingung (siehe unten) referenziert.
 
@@ -87,7 +87,7 @@ auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
 
 .. code-block:: yaml
     rules:
-      se_template_test: eval:se_eval.get_relative_itemvalue('..settings.max_bright') - 20
+      se_template_test: eval:sh...settings.max_bright' - 20
       se_item_specialitem: meinitem.specialitem # declare an existing item here
 
       state_one:

@@ -195,11 +195,11 @@ class SeState(StateEngineTools.SeItemChild):
 
         # if an item name is given, or if we do not have a name after returning from all recursions,
         # use item name as state name
-        if str(item_state) != item_state.property.path or (self.__name == "" and recursion_depth == 0):
-            self.__name = str(item_state).split('.')[-1]
-            self.__text.set(self.__name)
         if "se_name" in item_state.conf:
             self.__text.set_from_attr(item_state, "se_name", self.__text.get(None))
+        elif str(item_state) != item_state.property.path or (self.__name == "" and recursion_depth == 0):
+            self.__name = str(item_state).split('.')[-1]
+            self.__text.set(self.__name)
         elif self.__text.is_empty() and recursion_depth == 0:
             self.__text.set("value:" + self.__name)
 

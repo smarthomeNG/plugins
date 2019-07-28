@@ -264,6 +264,8 @@ class SeItem:
                 _leaveactions_run = True
             if new_state.conditions.count() == 0:
                 self.lastconditionset_set('', '')
+                _last_conditionset_id = ''
+                _last_conditionset_name = ''
             else:
                 self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
             if _last_conditionset_id in ['', None]:
