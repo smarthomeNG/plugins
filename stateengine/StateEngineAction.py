@@ -669,10 +669,10 @@ class SeActionSpecial(SeActionBase):
         return se_item
 
     def suspend_execute(self):
-        suspend_item = self.__value[0]
+        suspend_item = self._abitem.return_item(self.__value[0])
         if self._abitem.get_update_trigger_source() == self.__value[1]:
             # triggered by manual-item: Update suspend item
-            if suspend_item():
+            if suspend_item.property.value:
                 self._log_debug("Set '{0}' to '{1}' (Force)", suspend_item.property.path, False)
                 suspend_item(False)
             self._log_debug("Set '{0}' to '{1}'.", suspend_item.property.path, True)
@@ -682,7 +682,7 @@ class SeActionSpecial(SeActionBase):
 
         # determine remaining suspend time and write to variable item.suspend_remaining
         suspend_time = self._abitem.get_variable("item.suspend_time")
-        suspend_over = suspend_item.age()
+        suspend_over = suspend_item.property.last_change_age
         suspend_remaining = int(suspend_time - suspend_over + 0.5)   # adding 0.5 causes round up ...
         self._abitem.set_variable("item.suspend_remaining", suspend_remaining)
         self._log_debug("Updated variable 'item.suspend_remaining' to {0}", suspend_remaining)
