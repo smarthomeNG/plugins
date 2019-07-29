@@ -669,7 +669,7 @@ class SeActionSpecial(SeActionBase):
         return se_item
 
     def suspend_execute(self):
-        suspend_item = self._abitem.return_item(self.__value[0])
+        suspend_item = self.__value[0]
         if self._abitem.get_update_trigger_source() == self.__value[1]:
             # triggered by manual-item: Update suspend item
             if suspend_item():
