@@ -590,6 +590,9 @@ class SeItem:
     # - item_id = "..threedots" will return item "my.threedots"
     # - item_id = "..threedots.further.down" will return item "my.threedots.further.down"
     def return_item(self, item_id: str):
+        if not isinstance(item_id, str):
+            self.__logger.info("'{0}' should be defined as string. Check your item config! Everything might run smoothely, nevertheless.".format(item_id))
+            return item_id
         if not item_id.startswith("."):
             item = self.items.return_item(item_id)
             if item is None:
