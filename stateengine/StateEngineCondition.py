@@ -56,8 +56,14 @@ class SeCondition(StateEngineTools.SeItemChild):
     # value: Value for function
     def set(self, func, value):
         if func == "se_item":
+            if ":" in value:
+                self._log_warning("Your item configuration '{0}' is wrong! Define a plain (relative) item!", value)
+                _, _, value = value.partition(":")
             self.__item = self._abitem.return_item(value)
         elif func == "se_eval":
+            if ":" in value:
+                self._log_warning("Your eval configuration '{0}' is wrong! Define a plain eval term!", value)
+                _, _, value = value.partition(":")
             self.__eval = value
         if func == "se_value":
             self.__value.set(value, self.__name)
