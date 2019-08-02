@@ -58,11 +58,11 @@ Die folgenden Regeln kommen zur Anwendung:
 
 Der zu vergleichende Wert einer Bedingung kann auf folgende Arten definiert werden:
 
-- statischer Wert (also z.B. 500 Lux)
-- Item (beispielsweise ein Item namens settings.helligkeitsschwellwert)
-- Eval-Funktion (siehe auch `eval Ausdrücke <https://www.smarthomeng.de/user/konfiguration/items_attributes_eval_ausdruecke.html>`_)
+- statischer Wert (also z.B. 500 Lux). Wird angegegeben mit ``value:500``, wobei das value: auch weggelassen werden kann.
+- Item (beispielsweise ein Item namens settings.helligkeitsschwellwert). Wird angegeben mit ``item:settings.helligkeitsschwellwert``
+- Eval-Funktion (siehe auch `eval Ausdrücke <https://www.smarthomeng.de/user/konfiguration/items_attributes_eval_ausdruecke.html>`_). Wird angegeben mit ``eval:1*2*se_eval.get_relative_itemvalue('..bla')``
 - Template: eine Vorlage, z.B. eine eval Funktion, die immer wieder innerhalb
-des StateEngine Items eingesetzt werden kann.
+des StateEngine Items eingesetzt werden kann. Angegeben durch ``template:<Name des Templates>``
 
 
 .. rubric:: Name der Bedingung

@@ -113,6 +113,12 @@ Wert eines Items oder als Ergebnis der Ausführung einer Funktion
 festgelegt werden. Wichtig ist, dass bei z.B. ``to: item:<item>``
 nach dem item: kein Leerzeichen eingesetzt werden darf!
 
+Wie bei den Bedingungen sind die entsprechenden Prefixe value, item, eval zu nutzen:
+- statischer Wert, beispielsweise ``value:500``, wobei das value: auch weggelassen werden kann.
+- Item, z.B. ``item:settings.helligkeitsschwellwert``
+- Eval-Funktion wie ``eval:1*2*se_eval.get_relative_itemvalue('..bla')``
+- Template: eine Vorlage, z.B. ``template:<Name des Templates>``
+
 Über den optionalen Parameter
 ``force: True`` kann eine Item-Aktualisierung erzwungen werden,
 auch wenn sich der Wert nicht ändert. Damit erfolgt auf jeden Fall eine
