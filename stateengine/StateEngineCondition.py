@@ -56,8 +56,14 @@ class SeCondition(StateEngineTools.SeItemChild):
     # value: Value for function
     def set(self, func, value):
         if func == "se_item":
+            if ":" in value:
+                self._log_warning("Your item configuration '{0}' is wrong! Define a plain (relative) item!", value)
+                _, _, value = value.partition(":")
             self.__item = self._abitem.return_item(value)
         elif func == "se_eval":
+            if ":" in value:
+                self._log_warning("Your eval configuration '{0}' is wrong! Define a plain eval term!", value)
+                _, _, value = value.partition(":")
             self.__eval = value
         if func == "se_value":
             self.__value.set(value, self.__name)
@@ -171,12 +177,17 @@ class SeCondition(StateEngineTools.SeItemChild):
     def check(self):
         # Ignore if no current value can be determined (should not happen as we check this earlier, but to be sure ...)
         if self.__item is None and self.__eval is None:
-            self._log_info("condition '{0}': No item or eval found! Considering condition as matching!", self.__name)
+            self._log_info("Condition '{0}': No item or eval found! Considering condition as matching!", self.__name)
             return True
+        self._log_debug("Condition '{0}': Checking all relevant stuff", self.__name)
+        self._log_increase_indent()
         if not self.__check_value():
+            self._log_decrease_indent()
             return False
         if not self.__check_age():
+            self._log_decrease_indent()
             return False
+        self._log_decrease_indent()
         return True
 
     # Write condition to logger
@@ -220,8 +231,24 @@ class SeCondition(StateEngineTools.SeItemChild):
 
     # Check if value conditions match
     def __check_value(self):
+        def __convert(value, current):
+            _oldvalue = value
+            if isinstance(current, bool):
+                value = StateEngineTools.cast_bool(value)
+            elif isinstance(current, (int, float)):
+                value = StateEngineTools.cast_num(value)
+            elif isinstance(current, list):
+                value = StateEngineTools.cast_list(value)
+            else:
+                value = str(value)
+                current = str(current)
+            self._log_info("Value {} was type {} and therefore not the same type as item value {}. It got converted to {}.",
+                           _oldvalue, type(_oldvalue), current, type(value))
+            return value, current
+
         current = self.__get_current()
         try:
+            cond_min_max = self.__min.is_empty() and self.__max.is_empty()
             if not self.__value.is_empty():
                 # 'value' is given. We ignore 'min' and 'max' and check only for the given value
                 value = self.__value.get()
@@ -233,9 +260,8 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self._log_increase_indent()
 
                     for element in value:
-                        if type(element) != type(current):
-                            element = str(element)
-                            current = str(current)
+                        if type(element) != type(current) and current is not None:
+                            element, current = __convert(element, current)
                         if self.__negate:
                             if current == element:
                                 self._log_debug("{0} found but negated -> not matching", element)
@@ -254,9 +280,8 @@ class SeCondition(StateEngineTools.SeItemChild):
 
                 else:
                     # If current and value have different types, convert both to string
-                    if type(value) != type(current):
-                        value = str(value)
-                        current = str(current)
+                    if type(value) != type(current) and current is not None:
+                        value, current = __convert(value, current)
                     text = "Condition '{0}': value={1} negate={2} current={3}"
                     self._log_debug(text, self.__name, value, self.__negate, current)
                     self._log_increase_indent()
@@ -273,7 +298,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self._log_debug("not OK -> not matching")
                     return False
 
-            else:
+            elif not cond_min_max:
                 min_get_value = self.__min.get()
                 max_get_value = self.__max.get()
                 min_value = [min_get_value] if not isinstance(min_get_value, list) else min_get_value
@@ -331,6 +356,11 @@ class SeCondition(StateEngineTools.SeItemChild):
                 else:
                     self._log_debug("given limits ok -> matching")
                     return True
+            else:
+                self._log_warning("Neither value nor min/max given. This might result in unexpected evalutions. Min {}, max {}, value {}",
+                                  self.__min.get(), self.__max.get(), self.__value.get())
+                self._log_increase_indent()
+                return True
 
         except Exception as ex:
             self._log_warning("Problem checking value {}", ex)

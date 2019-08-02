@@ -182,7 +182,7 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
       se_item_retrigger: ..rules
       se_item_suspend_end: ..suspend_end
       se_item_suspend_active: ..settings.suspend_active
-      se_suspend_time: eval:se_eval.get_relative_itemvalue('..settings.suspendduration') * 60
+      se_suspend_time: eval:sh...settings.suspendduration * 60
       eval_trigger:
           - ..manuell
 
@@ -216,7 +216,7 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
                 - 'to:  '
 
           enter_manuell:
-              se_value_trigger_source: eval:se_eval.get_relative_itemid('..manuell')
+              se_value_trigger_source: eval:sh...manuell.property.path
               se_value_suspend_active: True
 
           enter_stay:

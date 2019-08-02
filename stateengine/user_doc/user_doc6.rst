@@ -14,13 +14,21 @@ alle Parameter einer Aktion in einem Attribut definiert. Der Aktionsname ``se_ac
 bezieht sich dabei auf das Item, das über ``se_item_<Bedingungsname/Aktionsname>`` unter dem Regelwerk-Item
 definiert und benannt wurde. Die Herangehensweise ähnelt also stark der Deklaration von Bedingungen.
 
+Zusätzlich zu ``se_item_<Bedingungsname/Aktionsname>`` lässt sich über den Eintrag
+``se_mindelta_<Bedingungsname/Aktionsname>`` definieren, um welchen Wert
+sich ein Item mindestens geändert haben muss, um neu gesetzt zu werden. Im unten
+stehenden Beispiel wird der Lamellenwert abhängig vom Sonnenstand berechnet. Ohne mindelta
+würden sich die Lamellen ständig um wenige Grad(bruchteile) ändern. Wird jedoch mindelta
+beispielsweise auf den Wert 10 gesetzt, findet eine Änderung erst statt, wenn sich der
+errechnete Wert um mindestens 10 Grad vom aktuellen Lamellenwert unterscheidet.
+
 .. rubric:: Beispiel zu Aktionen
   :name: beispielzuaktionenkombiniert
 
 Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
 
 - Daemmerung: Höhe des Raffstores: 100(%), Lamellendrehung: 25(%)
-- Nachfuehren: Höhe des Raffstores: 100(%), Lamellendrehung: je nach Sonnenausrichtung
+- Nachfuehren: Höhe des Raffstores: 100(%), Lamellendrehung: je nach Sonnenausrichtung, aber erst, wenn eine Mindeständerung von 10 Grad vorhanden ist.
 - Sonder: Ausführen der Logic myLogic mit dem Wert 42 und einer Verzögerung von 10 Sekunden.
 
 .. code-block:: yaml
@@ -32,6 +40,7 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
             rules:
                 se_item_height: raffstore1.hoehe # Definition des zu ändernden Höhe-Items
                 se_item_lamella: raffstore1.lamelle # Definition des zu ändernden Lamellen-Items
+                se_mindelta_lamella: 10 # Mindeständerung von 10 Grad, sonst werden die Lamellen nicht aktualisiert.
                 Daemmerung:
                     <...>
                     se_action_height:

@@ -38,6 +38,9 @@ setzen, kann auch die Angabe ``se_eval_`` genutzt werden. In diesem Fall wird ei
 Funktion anstelle des Itemnamen angegeben. Dies ist sowohl für Bedingungsabfragen,
 als auch für das Setzen von "dynamischen" Items möglich.
 
+An dieser Stelle ist es auch möglich, über ``se_mindelta_`` zu definieren, um welchen Wert
+sich ein Item mindestens geändert haben muss, um neu gesetzt zu werden. Siehe auch :ref:`Aktionen`.
+
 .. rubric:: Beispiel se_item
    :name: beispielregelwerk
 
@@ -71,6 +74,10 @@ und Aktionen folgen auf den nächsten Seiten.
 
 .. rubric:: Beispiel se_eval
    :name: beispielregelwerkeval
+
+se_eval ist für Sonderfälle und etwas komplexere Konfiurationen sinnvoll, kann aber
+im ersten Durchlauf ignoriert werden. Es wird daher empfohlen, als Beginner
+dieses Beispiel einfach zu überspringen ;)
 
 Im Beispiel wird durch ``se_eval_brightness`` das Item für den Check von
 Bedingungen bekannt gemacht. Aufgrund der angegebenen Funktion wird das Item
