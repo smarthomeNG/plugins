@@ -103,28 +103,33 @@ class Telegram(SmartPlugin):
 
 
         # the Updater class continuously fetches new updates from telegram and passes them on to the Dispatcher class.
-        self._updater = Updater(token=self._token) 
-        self._bot = self._updater.bot
+        try:
+            self._updater = Updater(token=self._token) 
+            self._bot = self._updater.bot
 
-        self.logger.info("Telegram bot is listening: {0}".format(self._bot.getMe()))
-        
-        # Dispatcher that handles the updates and dispatches them to the handlers.
-        dispatcher = self._updater.dispatcher
-        dispatcher.add_error_handler(self.eHandler)
-        dispatcher.add_handler(CommandHandler('time', self.cHandler_time))
-        dispatcher.add_handler(CommandHandler('help', self.cHandler_help))
-        dispatcher.add_handler(CommandHandler('hide', self.cHandler_hide))
-        dispatcher.add_handler(CommandHandler('list', self.cHandler_list))
-        dispatcher.add_handler(CommandHandler('info', self.cHandler_info))
-        dispatcher.add_handler(CommandHandler('start', self.cHandler_start))
-        dispatcher.add_handler(CommandHandler('lo', self.cHandler_lo))
-        dispatcher.add_handler(CommandHandler('tr', self.cHandler_tr, pass_args=True))
+            self.logger.info("Telegram bot is listening: {0}".format(self._bot.getMe()))
+        except TelegramError as e:
+            # catch Unauthorized errors due to an invalid token
+            self.logger.error("Unable to start up Telegram conversation. Maybe an invalid token? {}".format(e))
+        else:
+            
+            # Dispatcher that handles the updates and dispatches them to the handlers.
+            dispatcher = self._updater.dispatcher
+            dispatcher.add_error_handler(self.eHandler)
+            dispatcher.add_handler(CommandHandler('time', self.cHandler_time))
+            dispatcher.add_handler(CommandHandler('help', self.cHandler_help))
+            dispatcher.add_handler(CommandHandler('hide', self.cHandler_hide))
+            dispatcher.add_handler(CommandHandler('list', self.cHandler_list))
+            dispatcher.add_handler(CommandHandler('info', self.cHandler_info))
+            dispatcher.add_handler(CommandHandler('start', self.cHandler_start))
+            dispatcher.add_handler(CommandHandler('lo', self.cHandler_lo))
+            dispatcher.add_handler(CommandHandler('tr', self.cHandler_tr, pass_args=True))
 
-        dispatcher.add_handler( MessageHandler(Filters.text, self.mHandler))
-        self.init_webinterface()
+            dispatcher.add_handler( MessageHandler(Filters.text, self.mHandler))
+            self.init_webinterface()
 
-        self.logger.debug("init done")
-        self._init_complete = True
+            self.logger.debug("init done")
+            self._init_complete = True
 
     def __call__(self, msg, chat_id=None):
         """
