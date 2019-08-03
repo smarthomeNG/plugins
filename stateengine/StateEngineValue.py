@@ -314,11 +314,11 @@ class SeValue(StateEngineTools.SeItemChild):
                 else:
                     try:
                         _newvalue = self.__cast_func(value)
-                    except Exception:
+                    except Exception as ex:
                         if any(x in value for x in ['sh.', '_eval', '(']):
                             raise ValueError("You most likely forgot to prefix your expression with 'eval:'")
                         else:
-                            raise ValueError("Not possible to cast")
+                            raise ValueError("Not possible to cast: {}".format(ex))
                     if value in self.__listorder:
                         self.__listorder[self.__listorder.index(value)] = _newvalue
                     value = _newvalue
