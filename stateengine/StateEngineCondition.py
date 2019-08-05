@@ -22,6 +22,7 @@ from . import StateEngineTools
 from . import StateEngineCurrent
 from . import StateEngineValue
 from . import StateEngineEval
+from collections import OrderedDict
 
 
 # Class representing a single condition
@@ -49,7 +50,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__error = None
 
     def __repr__(self):
-        return "SeCondition item: {}, name {}, eval {}, value {}.".format(self.__item, self.__name, self.__eval, self.__value)
+        return "'item': {}, 'eval': {}, 'value': {}".format(self.__item, self.__eval, self.__value)
 
     # set a certain function to a given value
     # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'agemin', 'agemax' or 'agenegate')
@@ -81,6 +82,18 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__agenegate = value
         elif func != "se_item" and func != "se_eval":
             self._log_warning("Function '{0}' is no valid function! Please check item attribute.", func)
+
+    def get(self):
+        eval_result = str(self.__eval)
+        if 'SeItem' in eval_result:
+            eval_result = eval_result.split('SeItem.')[1].split(' ')[0]
+        if 'SeCurrent' in eval_result:
+            eval_result = eval_result.split('SeCurrent.')[1].split(' ')[0]
+        value_result = str(self.__value.get_for_webif())
+        result = {'item': str(self.__item), 'eval': eval_result, 'value': value_result, 'min': str(self.__min),
+                  'max': str(self.__max), 'agemin': str(self.__agemin), 'agemax': str(self.__agemax),
+                  'negate': str(self.__negate), 'agenegate': str(self.__agenegate)}
+        return result
 
     # Complete condition (do some checks, cast value, min and max based on item or eval data types)
     # item_state: item to read from

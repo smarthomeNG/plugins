@@ -13,6 +13,10 @@ Copy stateengine.example.html from the sv_widgets folder to your smartvisu/dropi
 http://URL/index.php?page=widgets/stateengine.example
 
 ## Changelog
+### v1.6.2
+* Further fixes and improvements
+* Webinterface including StateEngine visualization
+
 ### v1.6.1
 * Some problem fixes
 * Log improvements

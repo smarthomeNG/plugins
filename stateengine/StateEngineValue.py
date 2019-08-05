@@ -53,7 +53,7 @@ class SeValue(StateEngineTools.SeItemChild):
             self.__cast_func = None
 
     def __repr__(self):
-        return "SeValue item {}, function {}, value {}.".format(self._abitem, self.__name, self.get())
+        return "{}".format(self.get())
 
     # Indicate of object is empty (neither value nor item nor eval set)
     def is_empty(self):
@@ -156,7 +156,6 @@ class SeValue(StateEngineTools.SeItemChild):
         else:
             source = "value"
             field_value = value
-
         if isinstance(source, list):
             for i, s in enumerate(source):
                 if isinstance(field_value[i], list) and not self.__allow_value_list:
@@ -239,6 +238,11 @@ class SeValue(StateEngineTools.SeItemChild):
             return returnvalues[0]
         else:
             return returnvalues
+
+    def get_for_webif(self):
+        returnvalues = self.get()
+        returnvalues = self.__varname if returnvalues == '' else returnvalues
+        return returnvalues
 
     def get_type(self):
         if self.__value is not None:
@@ -374,7 +378,8 @@ class SeValue(StateEngineTools.SeItemChild):
             self.__eval = self.__parse_relative(self.__eval, 'sh.', ['()', '.property.'])
             if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
-                stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
+                stateengine_eval = StateEngineEval.SeEval(self._abitem)
+                se_eval = StateEngineEval.SeEval(self._abitem)
             self._log_debug("Checking eval: {0}.", self.__eval)
             self._log_increase_indent()
             try:
@@ -400,7 +405,8 @@ class SeValue(StateEngineTools.SeItemChild):
                     if isinstance(val, str):
                         if "stateengine_eval" in val or "se_eval" in val:
                             # noinspection PyUnusedLocal
-                            stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
+                            stateengine_eval = StateEngineEval.SeEval(self._abitem)
+                            se_eval = StateEngineEval.SeEval(self._abitem)
                         try:
                             _newvalue = eval(val)
                             if 'eval:{}'.format(val) in self.__listorder:

@@ -25,6 +25,7 @@ from . import StateEngineDefaults
 from . import StateEngineTools
 from . import StateEngineCliCommands
 from . import StateEngineFunctions
+from . import StateEngineWebif
 import logging
 import os
 from lib.model.smartplugin import *
@@ -33,7 +34,7 @@ from lib.item import Items
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
@@ -42,7 +43,8 @@ class StateEngine(SmartPlugin):
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         self.items = Items.get_instance()
-        self.__items = {}
+        self.__items = self.abitems = {}
+        self.__sh = sh
         self.alive = False
         self.__cli = None
         self.init_webinterface()
@@ -113,7 +115,7 @@ class StateEngine(SmartPlugin):
             self.logger.info("StateEngine deactivated because no items have been found.")
 
         self.__cli = StateEngineCliCommands.SeCliCommands(self.get_sh(), self.__items, self.logger)
-
+        #self.logger.info("Items: {}".format(self.__items))
         self.alive = True
         self.get_sh().stateengine_plugin_functions.ab_alive = True
 
@@ -146,6 +148,40 @@ class StateEngine(SmartPlugin):
                             entry_source == original_source or entry_source == "*"):
                 return False
         return True
+
+    def get_items(self):
+        """
+        Getting a sorted item list with active SE
+
+        :return:        sorted itemlist
+        """
+        sortedlist = sorted([k for k in self.__items.keys()])
+
+        finallist = []
+        for i in sortedlist:
+            finallist.append(self.__items[i])
+        return finallist
+
+    def get_graph(self, abitem, type='link'):
+        if isinstance(abitem, str):
+            abitem = self.__items[abitem]
+        webif = StateEngineWebif.WebInterface(self.__sh, abitem)
+        vis_file = self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/{}.svg'.format(abitem))
+        #self.logger.debug("Getting graph: {}, {}".format(abitem, webif))
+        try:
+            if type == 'link':
+                return '<a href="static/img/visualisations/{}.svg"><img src="static/img/vis.png" width="30"></a>'.format(abitem)
+            else:
+                webif.drawgraph(vis_file)
+                return '<object type="image/svg+xml" data="static/img/visualisations/{0}.svg"\
+                        style="max-width: 100%; height: auto; width: auto\9; ">\
+                        <iframe src="static/img/visualisations/{0}.svg">\
+                        <img src="static/img/visualisations/{0}.svg"\
+                        style="max-width: 100%; height: auto; width: auto\9; ">\
+                        </iframe></object>'.format(abitem)
+        except Exception as ex:
+            self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
+            return ''
 
     def init_webinterface(self):
         """"
@@ -214,7 +250,7 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def index(self, action=None, item_id=None, item_path=None, reload=None, page='index'):
+    def index(self, action=None, item_id=None, item_path=None, reload=None, abitem=None, page='index'):
         """
         Build index.html for cherrypy
 
@@ -225,6 +261,14 @@ class WebInterface(SmartPluginWebIf):
         item = self.plugin.items.return_item(item_path)
 
         tmpl = self.tplenv.get_template('{}.html'.format(page))
+
+        if action == "get_graph" and abitem is not None:
+            if isinstance(abitem, str):
+                abitem = self.plugin.abitems[abitem]
+            self.plugin.get_graph(abitem, 'graph')
+            tmpl = self.tplenv.get_template('visu.html')
+            return tmpl.render(p=self.plugin, item=abitem,
+                               language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
                            language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())

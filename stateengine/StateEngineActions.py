@@ -25,6 +25,13 @@ import ast
 
 # Class representing a list of actions
 class SeActions(StateEngineTools.SeItemChild):
+    @property
+    def dict_actions(self):
+        result = {}
+        for name in self.__actions:
+            result.update({name: self.__actions[name].get()})
+        return result
+
     # Initialize the set of actions
     # abitem: parent SeItem instance
     def __init__(self, abitem):
@@ -311,8 +318,9 @@ class SeActions(StateEngineTools.SeItemChild):
     # Execute all actions
     # is_repeat: Inidicate if this is a repeated action without changing the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
+    # state: state item triggering the action
     # additional_actions: SeActions-Instance containing actions which should be executed, too
-    def execute(self, is_repeat: bool, allow_item_repeat: bool, additional_actions=None):
+    def execute(self, is_repeat: bool, allow_item_repeat: bool, state: str, additional_actions=None):
         actions = []
         for name in self.__actions:
             actions.append((self.__actions[name].get_order(), self.__actions[name]))
@@ -320,7 +328,16 @@ class SeActions(StateEngineTools.SeItemChild):
             for name in additional_actions.__actions:
                 actions.append((additional_actions.__actions[name].get_order(), additional_actions.__actions[name]))
         for order, action in sorted(actions, key=lambda x: x[0]):
-            action.execute(is_repeat, allow_item_repeat)
+            action.execute(is_repeat, allow_item_repeat, state)
+
+    def get(self):
+        actions = []
+        for name in self.__actions:
+            actions.append((self.__actions[name].get_order(), {name: self.__actions[name].func}))
+        finalactions = []
+        for order, action in sorted(actions, key=lambda x: x[0]):
+            finalactions.append(action)
+        return finalactions
 
     # log all actions
     def write_to_logger(self):
