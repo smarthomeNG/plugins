@@ -165,12 +165,10 @@ class SeState(StateEngineTools.SeItemChild):
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     def run_leave(self, allow_item_repeat: bool):
         self._log_increase_indent()
-        _key_leave = ['{}'.format(self.id), 'leave']
-        _key_stay = ['{}'.format(self.id), 'stay']
-        _key_enter = ['{}'.format(self.id), 'enter']
-        self._abitem.update_webif(_key_leave, True)
-        self._abitem.update_webif(_key_stay, False)
-        self._abitem.update_webif(_key_enter, False)
+        for elem in self._abitem.webif_infos:
+            _key_leave = ['{}'.format(elem), 'leave']
+            self._abitem.update_webif(_key_leave, False)
+            #self._log_debug('set leave for {} to false', elem)
         self.__actions_leave.execute(False, allow_item_repeat, self)
         self._log_decrease_indent()
 

@@ -168,15 +168,15 @@ class SeActionBase(StateEngineTools.SeItemChild):
             delay = 0 if self.__delay.is_empty() else self.__delay.get()
             actionname = "Action '{0}'".format(self._name) if delay == 0 else "Delay Timer '{0}'".format(
                 self._scheduler_name)
-            _delay_info = '0'
+            _delay_info = 0
             if delay == 0:
                 self._execute(actionname, self._name, repeat_text)
             elif delay is None:
                 self._log_warning("Action'{0}: Ignored because of errors while determining the delay!", self._name)
-                _delay_info = 'Error'
+                _delay_info = -1
             elif delay < 0:
                 self._log_warning("Action'{0}: Ignored because of delay is negative!", self._name)
-                _delay_info = 'Error'
+                _delay_info = -1
             else:
                 self._log_info("Action '{0}: Add {1} second timer '{2}' for delayed execution. {3}", self._name, delay,
                                self._scheduler_name, repeat_text)
@@ -185,22 +185,22 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 self._sh.scheduler.add(self._scheduler_name, self._execute, value={'actionname': actionname, 'namevar': self._name}, next=next_run)
             try:
                 _key = ['{}'.format(state.id), 'actions_stay', '{}'.format(self._name), 'delay']
-                self._abitem.update_webif(_key, str(_delay_info))
+                self._abitem.update_webif(_key, _delay_info)
             except Exception:
                 pass
             try:
                 _key = ['{}'.format(state.id), 'actions_enter', '{}'.format(self._name), 'delay']
-                self._abitem.update_webif(_key, str(_delay_info))
+                self._abitem.update_webif(_key, _delay_info)
             except Exception:
                 pass
             try:
                 _key = ['{}'.format(state.id), 'actions_enter_or_stay', '{}'.format(self._name), 'delay']
-                self._abitem.update_webif(_key, str(_delay_info))
+                self._abitem.update_webif(_key, _delay_info)
             except Exception:
                 pass
             try:
                 _key = ['{}'.format(state.id), 'actions_leave', '{}'.format(self._name), 'delay']
-                self._abitem.update_webif(_key, str(_delay_info))
+                self._abitem.update_webif(_key, _delay_info)
             except Exception:
                 pass
 

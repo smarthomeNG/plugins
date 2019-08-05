@@ -61,3 +61,19 @@ dabei erweitert und optimiert. Für einen Umstieg ist es wichtig, die Attribute
 ``as`` durch ``se`` zu ersetzen. Im Pluginverzeichnis befindet sich ein Bash-
 Script, das diesen Prozess deutlich vereinfacht und nicht nur die Attrinbute in
 den items/*.yaml Dateien ersetzt, sondern auch die Cachefiles umbenennt.
+
+.. rubric:: Webinterface
+   :name: webif
+
+Über das Webinterface lässt sich auf einen Blick erkennen, welche State Engine sich
+in welchem Zustand befindet. Zusätzlich ist es möglich, durch Klick auf einen Eintrag
+die komplette State Engine visuell zu betrachten. Dabei ist folgende Farbkodierung zu beachten:
+- grau: wurde nicht evaluiert (weil bereits ein höher rangiger Zustand eingenommen wurde)
+- grün: aktueller Zustand / ausgeführte Aktion
+- rot: Bedingungen nicht erfüllt
+
+Bei den Aktionen sind die einzelnen Zeilen unter Umständen ebenfalls farbkodiert:
+- schwarz: Aktion normal ausgeführt
+- weiß: Aktion nicht ausgeführt, da Bedingungen nicht erfüllt
+- grau: Aktion wird erst mit Verzögerung ausgeführt
+- rot: Fehler in der Konfiguration
