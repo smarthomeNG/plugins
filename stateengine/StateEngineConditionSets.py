@@ -32,9 +32,18 @@ class SeConditionSets(StateEngineTools.SeItemChild):
         super().__init__(abitem)
         self.__condition_sets = OrderedDict()
 
+    def __repr__(self):
+        return "{}".format(self.get())
+
     # Return number of condition sets in list
     def count(self):
         return len(self.__condition_sets)
+
+    def get(self):
+        result = OrderedDict()
+        for name in self.__condition_sets:
+            result.update({name: self.__condition_sets[name].dict_conditions})
+        return result
 
     # Add/update a condition set
     # name: Name of condition set
