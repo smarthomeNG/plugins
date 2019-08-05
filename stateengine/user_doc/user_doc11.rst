@@ -5,6 +5,11 @@
 Besondere Zustände
 ==================
 
+In der Folge werden die speziellen Zustände Sperren und Aussetzen nochmals
+im Detail erläutert. Prinzipiell ist es ausreichend, die gelieferten Struct
+Vorlagen zu nutzen - dieser Teil kann getrost übersprungen werden.
+
+
 Sperren
 -------
 
