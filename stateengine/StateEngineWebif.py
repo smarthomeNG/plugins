@@ -193,7 +193,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                 color = "chartreuse3" if state == self.__active_state else "gray" if i > list(self.__states.keys()).index(self.__active_state) else "indianred2"
 
                 new_y -= 1 * self.__scalefactor
-                position = '{},{}!'.format(0.2, new_y)
+                position = '{},{}!'.format(0, new_y)
                 if not i == 0:
                     condition_node = 'leave' if self.__nodes.get('{}_leave'.format(previous_state)) else list(self.__states[previous_state]['conditionsets'].keys())[-1]
                     lastnode = self.__nodes['{}_{}'.format(previous_state, condition_node)]
@@ -206,7 +206,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_above_right'.format(state)], lastnode, style='bold', color='blue', label="False   ", dir="none"))
                     self.__graph.add_edge(pydotplus.Edge(state, self.__nodes['{}_above'.format(state)], style='bold', color='blue', label="", dir="back"))
                 new_y -= 1 * self.__scalefactor
-                position = '{},{}!'.format(0.2, new_y)
+                position = '{},{}!'.format(0, new_y)
                 #self._log_debug('state: {} {}',state, position)
                 self.__nodes[state] = pydotplus.Node(state, pos=position, pin=True, notranslate=True, style="filled", fillcolor=color, shape="ellipse",
                                                      label='<<table border="0"><tr><td>{}</td></tr><hr/><tr><td>{}</td></tr></table>>'.format(state, self.__states[state]['name']))
