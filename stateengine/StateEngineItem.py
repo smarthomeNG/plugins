@@ -317,6 +317,14 @@ class SeItem:
                                    new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
             self.__laststate_set(new_state)
             new_state.run_enter(self.__repeat_actions.get())
+        if _leaveactions_run is True:
+            _key_leave = ['{}'.format(last_state.id), 'leave']
+            _key_stay = ['{}'.format(last_state.id), 'stay']
+            _key_enter = ['{}'.format(last_state.id), 'enter']
+            self.update_webif(_key_leave, True)
+            self.update_webif(_key_stay, False)
+            self.update_webif(_key_enter, False)
+            #self.__logger.debug('set leave for {} to true', last_state.id)
 
         self.__update_in_progress = False
 
