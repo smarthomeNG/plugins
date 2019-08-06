@@ -96,6 +96,9 @@ class WebInterface(StateEngineTools.SeItemChild):
 
     def _conditionlabel(self, state, conditionset):
         condition_tooltip = ''
+        _empty_set = self.__states[state]['conditionsets'].get(conditionset) == ''
+        if _empty_set:
+            return '', ''
         conditionlist = '<<table border="0" width="520" cellpadding="5">'
 
         for k, condition in enumerate(self.__states[state]['conditionsets'].get(conditionset)):
@@ -144,41 +147,38 @@ class WebInterface(StateEngineTools.SeItemChild):
         return conditionlist, condition_tooltip
 
     def _add_actioncondition(self, state, conditionset, type, new_y, cond1, cond2):
-        if self.__conditionset_count > 0:
-            #cond1 = i > list(self.__states.keys()).index(self.__active_state)
-            #cond2 = j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset) or cond1
+        #cond1 = i >= list(self.__states.keys()).index(self.__active_state)
+        #cond2 = j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset) or i > list(self.__states.keys()).index(self.__active_state)
+        cond3 = conditionset == ''
+        cond4 = conditionset == self.__active_conditionset and state == self.__active_state
+        color_enter = "gray" if (cond1 and cond2) or (type == 'actions_enter' and self.__states[state].get('enter') is False and cond4)\
+                      else "chartreuse3" if cond4 else "indianred2"
+        color_stay = "gray" if (cond1 and cond2) or (type == 'actions_stay' and self.__states[state].get('stay') is False and cond4)\
+                     else "chartreuse3" if cond4 else "indianred2"
 
-            cond4 = conditionset == self.__active_conditionset and state == self.__active_state
-            color_enter = "gray" if (cond1 and cond2) or (type == 'actions_enter' and self.__states[state].get('enter') is False and cond4)\
-                          else "chartreuse3" if cond4 else "indianred2"
-            color_stay = "gray" if (cond1 and cond2) or (type == 'actions_stay' and self.__states[state].get('stay') is False and cond4)\
-                         else "chartreuse3" if cond4 else "indianred2"
+        label = 'first enter' if type == 'actions_enter' else 'staying at state'
 
-            label = 'first enter' if type == 'actions_enter' else 'staying at state'
-
-            position = '{},{}!'.format(0.85, new_y)
-            color = color_enter if label == 'first enter' else color_stay
-            #self._log_debug('adding enterstate for state {}/set {}: {}. Enter = {}. Cond 1 {}, 2 {}. Color: {}', state, conditionset, type, self.__states[state].get('enter'), cond1, cond2, color)
-            self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)] = pydotplus.Node('{}_{}_state_{}'.format(state, conditionset, type), style="filled", fillcolor=color, shape="diamond", label=label, pos=position)
-            self.__graph.add_node(self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)])
-            if self.__nodes.get('{}_{}_state_actions_enter_edge'.format(state, conditionset)) is None:
-                self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, type)] = pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)], self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)], style='bold', color='blue', taillabel="    True")
-                self.__graph.add_edge(self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, type)])
-            else:
-                self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_actions_enter'.format(state, conditionset)], self.__nodes['{}_{}_state_actions_stay'.format(state, conditionset)], style='bold', color='blue', label="False    "))
-            self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)], self.__nodes['{}_{}_{}'.format(state, conditionset, type)], style='bold', color='blue', taillabel="    True"))
-            try:
-                if type == 'actions_enter':
-                    self.__nodes['{}_{}_actions_enter'.format(state, conditionset)].obj_dict['attributes']['fillcolor'] = color
-            except Exception:
-                pass
-            try:
-                if type == 'actions_stay':
-                    self.__nodes['{}_{}_actions_stay'.format(state, conditionset)].obj_dict['attributes']['fillcolor'] = color
-            except Exception:
-                pass
+        position = '{},{}!'.format(0.85, new_y)
+        color = color_enter if label == 'first enter' else color_stay
+        #self._log_debug('adding enterstate for state {}/set {}: {}. Enter = {}, Stay = {}. Cond 1 {}, 2 {}, 3 {}, 4 {}. Color: {}', state, conditionset, type, self.__states[state].get('enter'), self.__states[state].get('stay'), cond1, cond2, cond3, cond4, color)
+        self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)] = pydotplus.Node('{}_{}_state_{}'.format(state, conditionset, type), style="filled", fillcolor=color, shape="diamond", label=label, pos=position)
+        self.__graph.add_node(self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)])
+        if self.__nodes.get('{}_{}_state_actions_enter_edge'.format(state, conditionset)) is None:
+            self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, type)] = pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)], self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)], style='bold', color='blue', taillabel="    True")
+            self.__graph.add_edge(self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, type)])
         else:
-            self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)], self.__nodes['{}_{}_{}'.format(state, conditionset, type)], style='bold', color='blue', taillabel="    True"))
+            self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_actions_enter'.format(state, conditionset)], self.__nodes['{}_{}_state_actions_stay'.format(state, conditionset)], style='bold', color='blue', label="False    "))
+        self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)], self.__nodes['{}_{}_{}'.format(state, conditionset, type)], style='bold', color='blue', taillabel="    True"))
+        try:
+            if type == 'actions_enter':
+                self.__nodes['{}_{}_actions_enter'.format(state, conditionset)].obj_dict['attributes']['fillcolor'] = color
+        except Exception:
+            pass
+        try:
+            if type == 'actions_stay':
+                self.__nodes['{}_{}_actions_stay'.format(state, conditionset)].obj_dict['attributes']['fillcolor'] = color
+        except Exception:
+            pass
 
     def drawgraph(self, filename):
         new_y = 2
@@ -190,6 +190,8 @@ class WebInterface(StateEngineTools.SeItemChild):
             if isinstance(self.__states[state], (OrderedDict, dict)):
                 conditionsets = self.__states[state].get('conditionsets')
                 self.__conditionset_count = len(self.__states[state].get('conditionsets'))
+                if self.__conditionset_count == 0:
+                    self.__states[state]['conditionsets'][''] = ''
                 color = "chartreuse3" if state == self.__active_state else "gray" if i > list(self.__states.keys()).index(self.__active_state) else "indianred2"
 
                 new_y -= 1 * self.__scalefactor
@@ -235,6 +237,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     #self._log_debug('conditionset: {} {}, previous {}', conditionset, position, previous_conditionset)
 
                     conditionlist, condition_tooltip = self._conditionlabel(state, conditionset)
+                    cond3 = conditionset == ''
                     try:
                         cond1 = i >= list(self.__states.keys()).index(self.__active_state)
                         #self._log_debug('Condition 1 i {}, index {}, active state {}'.format(i, list(self.__states.keys()).index(self.__active_state), self.__active_state))
@@ -243,24 +246,27 @@ class WebInterface(StateEngineTools.SeItemChild):
                         cond1 = True
                     #self._log_debug('i {}, index of active state {}', i, list(self.__states.keys()).index(self.__active_state))
                     try:
-                        cond2 = j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset) or\
-                                i > list(self.__states.keys()).index(self.__active_state)
+                        cond2 = (j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset) or
+                                 i > list(self.__states.keys()).index(self.__active_state))
                     except Exception as ex:
                         #self._log_debug('Condition 2 problem {}'.format(ex))
                         cond2 = True
-                    color = "gray" if cond1 and cond2 else "chartreuse3" if conditionset == self.__active_conditionset and\
-                            state == self.__active_state else "indianred2"
 
+                    color = "gray" if cond1 and cond2 else "chartreuse3" if (conditionset == self.__active_conditionset or cond3) and\
+                            state == self.__active_state else "indianred2"
+                    label = 'no condition' if conditionset == '' else conditionset
                     self.__nodes['{}_{}'.format(state, conditionset)] = pydotplus.Node(
-                        '{}_{}'.format(state, conditionset), style="filled", fillcolor=color, shape="diamond", label=conditionset, pos=position)
-                    #self._log_debug('Node {} drawn'.format(self.__nodes['{}_{}', state, conditionset)])
+                        '{}_{}'.format(state, conditionset), style="filled", fillcolor=color, shape="diamond", label=label, pos=position)
+                    #self._log_debug('Node {} {} drawn', state, conditionset)
                     position = '{},{}!'.format(0.4, new_y)
-                    self.__nodes['{}_{}_conditions'.format(state, conditionset)] = pydotplus.Node(
-                        '{}_{}_conditions'.format(state, conditionset), style="filled", fillcolor=color, shape="rect",
-                        label=conditionlist, pos=position, tooltip=condition_tooltip)
+                    if not conditionlist == '':
+                        self.__nodes['{}_{}_conditions'.format(state, conditionset)] = pydotplus.Node(
+                            '{}_{}_conditions'.format(state, conditionset), style="filled", fillcolor=color, shape="rect",
+                            label=conditionlist, pos=position, tooltip=condition_tooltip)
+                        self.__graph.add_node(self.__nodes['{}_{}_conditions'.format(state, conditionset)])
 
                     self.__graph.add_node(self.__nodes['{}_{}'.format(state, conditionset)])
-                    self.__graph.add_node(self.__nodes['{}_{}_conditions'.format(state, conditionset)])
+
                     new_x = 1.1
                     if not actionlist_enter == '':
                         position = '{},{}!'.format(new_x, new_y)
