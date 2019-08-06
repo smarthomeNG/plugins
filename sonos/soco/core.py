@@ -91,7 +91,6 @@ class _SocoSingletonBase(  # pylint: disable=too-few-public-methods,no-init
     here: http://www.artima.com/weblogs/viewpost.jsp?thread=236234 and
     here: http://mikewatkins.ca/2008/11/29/python-2-and-3-metaclasses/
     """
-    pass
 
 
 def only_on_master(function):
@@ -169,6 +168,7 @@ class SoCo(_SocoSingletonBase):
         is_visible
         is_bridge
         is_coordinator
+        is_soundbar
         bass
         treble
         loudness
@@ -260,6 +260,7 @@ class SoCo(_SocoSingletonBase):
         self._groups = set()
         self._is_bridge = None
         self._is_coordinator = False
+        self._is_soundbar = None
         self._player_name = None
         self._uid = None
         self._household_id = None
@@ -372,6 +373,18 @@ class SoCo(_SocoSingletonBase):
         return self._is_coordinator
 
     @property
+    def is_soundbar(self):
+        """bool: Is this zone a soundbar (i.e. has night mode etc.)?"""
+        if self._is_soundbar is None:
+            if not self.speaker_info:
+                self.get_speaker_info()
+
+            model_name = self.speaker_info['model_name'].lower()
+            self._is_soundbar = any(model_name.endswith(s) for s in SOUNDBARS)
+
+        return self._is_soundbar
+
+    @property
     def play_mode(self):
         """str: The queue's play mode.
 
@@ -414,7 +427,7 @@ class SoCo(_SocoSingletonBase):
             ('InstanceID', 0),
         ])
         cross_fade_state = response['CrossfadeMode']
-        return True if int(cross_fade_state) else False
+        return bool(int(cross_fade_state))
 
     @cross_fade.setter
     @only_on_master
@@ -669,7 +682,7 @@ class SoCo(_SocoSingletonBase):
             ('Channel', 'Master')
         ])
         mute_state = response['CurrentMute']
-        return True if int(mute_state) else False
+        return bool(int(mute_state))
 
     @mute.setter
     def mute(self, mute):
@@ -768,7 +781,7 @@ class SoCo(_SocoSingletonBase):
             ('Channel', 'Master'),
         ])
         loudness = response["CurrentLoudness"]
-        return True if int(loudness) else False
+        return bool(int(loudness))
 
     @loudness.setter
     def loudness(self, loudness):
@@ -786,9 +799,7 @@ class SoCo(_SocoSingletonBase):
 
         True if on, False if off, None if not supported.
         """
-        if not self.speaker_info:
-            self.get_speaker_info()
-        if 'PLAYBAR' not in self.speaker_info['model_name']:
+        if not self.is_soundbar:
             return None
 
         response = self.renderingControl.GetEQ([
@@ -806,9 +817,7 @@ class SoCo(_SocoSingletonBase):
         :raises NotSupportedException: If the device does not support
         night mode.
         """
-        if not self.speaker_info:
-            self.get_speaker_info()
-        if 'PLAYBAR' not in self.speaker_info['model_name']:
+        if not self.is_soundbar:
             message = 'This device does not support night mode'
             raise NotSupportedException(message)
 
@@ -824,9 +833,7 @@ class SoCo(_SocoSingletonBase):
 
         True if on, False if off, None if not supported.
         """
-        if not self.speaker_info:
-            self.get_speaker_info()
-        if 'PLAYBAR' not in self.speaker_info['model_name']:
+        if not self.is_soundbar:
             return None
 
         response = self.renderingControl.GetEQ([
@@ -844,9 +851,7 @@ class SoCo(_SocoSingletonBase):
         :raises NotSupportedException: If the device does not support
         dialog mode.
         """
-        if not self.speaker_info:
-            self.get_speaker_info()
-        if 'PLAYBAR' not in self.speaker_info['model_name']:
+        if not self.is_soundbar:
             message = 'This device does not support dialog mode'
             raise NotSupportedException(message)
 
@@ -920,8 +925,7 @@ class SoCo(_SocoSingletonBase):
             zone._player_name = member_attribs['ZoneName']
             # add the zone to the set of all members, and to the set
             # of visible members if appropriate
-            is_visible = False if member_attribs.get(
-                'Invisible') == '1' else True
+            is_visible = (member_attribs.get('Invisible') != '1')
             if is_visible:
                 self._visible_zones.add(zone)
             self._all_zones.add(zone)
@@ -943,7 +947,6 @@ class SoCo(_SocoSingletonBase):
         self._all_zones.clear()
         self._visible_zones.clear()
         # Loop over each ZoneGroup Element
-        #for group_element in tree.findall('ZoneGroup'):
         for group_element in tree.find('ZoneGroups').findall('ZoneGroup'):
             coordinator_uid = group_element.attrib['Coordinator']
             group_uid = group_element.attrib['ID']
@@ -964,8 +967,8 @@ class SoCo(_SocoSingletonBase):
                 # is_bridge doesn't change, but it does no real harm to
                 # set/reset it here, just in case the zone has not been seen
                 # before
-                zone._is_bridge = True if member_element.attrib.get(
-                    'IsZoneBridge') == '1' else False
+                zone._is_bridge = (
+                    member_element.attrib.get('IsZoneBridge') == '1')
                 # add the zone to the members for this group
                 members.add(zone)
                 # Loop over Satellite elements if present, and process as for
@@ -1128,7 +1131,7 @@ class SoCo(_SocoSingletonBase):
         """
         result = self.deviceProperties.GetLEDState()
         LEDState = result["CurrentLEDState"]  # pylint: disable=invalid-name
-        return True if LEDState == "On" else False
+        return LEDState == "On"
 
     @status_light.setter
     def status_light(self, led_on):
@@ -1705,8 +1708,7 @@ class SoCo(_SocoSingletonBase):
             if 'Error 402 received' in str(err):
                 raise ValueError('invalid sleep_time_seconds, must be integer \
                     value between 0 and 86399 inclusive or None')
-            else:
-                raise
+            raise
         except ValueError:
             raise ValueError('invalid sleep_time_seconds, must be integer \
                 value between 0 and 86399 inclusive or None')
@@ -1984,6 +1986,8 @@ NS = {'dc': '{http://purl.org/dc/elements/1.1/}',
 # Valid play modes
 PLAY_MODES = ('NORMAL', 'SHUFFLE_NOREPEAT', 'SHUFFLE', 'REPEAT_ALL',
               'SHUFFLE_REPEAT_ONE', 'REPEAT_ONE')
+# soundbar product names
+SOUNDBARS = ('playbase', 'playbar', 'beam')
 
 if config.SOCO_CLASS is None:
     config.SOCO_CLASS = SoCo
