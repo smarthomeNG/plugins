@@ -35,7 +35,7 @@ class snap7logo(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.5.3"
-    #def __init__(self, smarthome, host, tsap_server=0x0200, tsap_client=0x0100, version='0BA7', cycle=5 ):
+ 
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
@@ -43,13 +43,7 @@ class snap7logo(SmartPlugin):
         """
         self.logger = logging.getLogger(__name__)
         
-        # self.host = host
-        # self.tsap_server = int(tsap_server)
-        # self.tsap_client = int(tsap_client)
-        # self._version = version
-        # self._cycle = int(cycle)
-        
-        self.host = self.get_parameter_value('host')
+         self.host = self.get_parameter_value('host')
         self.tsap_server = self.get_parameter_value('tsap_server')
         self.tsap_client = self.get_parameter_value('tsap_client')
         self._version = self.get_parameter_value('version')
