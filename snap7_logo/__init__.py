@@ -34,18 +34,31 @@ import snap7
 class snap7logo(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.5.2"
-    def __init__(self, smarthome, host, tsap_server=0x0200, tsap_client=0x0100, version='0BA7', cycle=5 ):
+    PLUGIN_VERSION = "1.5.3"
+    #def __init__(self, smarthome, host, tsap_server=0x0200, tsap_client=0x0100, version='0BA7', cycle=5 ):
+    def __init__(self, sh, *args, **kwargs):
+        """
+        Initializes the plugin
+        The params are documented in ``plugin.yaml`` and values will be obtained through get_parameter_value(parameter_name)
+        """
         self.logger = logging.getLogger(__name__)
-        self.host = host
-        self.tsap_server = int(tsap_server)
-        self.tsap_client = int(tsap_client)
-        self._version = version
-        self._cycle = int(cycle)
+        
+        # self.host = host
+        # self.tsap_server = int(tsap_server)
+        # self.tsap_client = int(tsap_client)
+        # self._version = version
+        # self._cycle = int(cycle)
+        
+        self.host = self.get_parameter_value('host')
+        self.tsap_server = self.get_parameter_value('tsap_server')
+        self.tsap_client = self.get_parameter_value('tsap_client')
+        self._version = self.get_parameter_value('version')
+        self._cycle = self.get_parameter_value('cycle')
+        
         self._lock = threading.Lock()
         self._rw_lock = threading.Lock()
         self.connected = False
-        self._sh = smarthome
+        self._sh = sh
         self._connection_attempts = 0
         self._connection_errorlog = 2
 
@@ -93,7 +106,7 @@ class snap7logo(SmartPlugin):
         #self.Dateipfad = '/lib'  # Dateipfad zur Bibliothek
         self.threadLastRead = 0  # verstrichene Zeit zwischen zwei LeseBefehlen
 
-        smarthome.connections.monitor(self)  # damit connect ausgeführt wird
+        self._sh.connections.monitor(self)  # damit connect ausgeführt wird
         
         self.init_webinterface()
 
@@ -103,7 +116,7 @@ class snap7logo(SmartPlugin):
         try:
             self.logger.debug('{0}: try to connected to {1}'.format(self.get_instance_name(), self.host))
             self.plc = snap7.logo.Logo()
-            self.plc.connect(self.host, self.tsap_client, self.tsap_server)
+            self.plc.connect(self.host, int(self.tsap_client), int(self.tsap_server))
             #if not self.plc.get_connected():
                 #raise LOGO('{0}:connection error'.format(self.get_instance_name()))
 
@@ -125,7 +138,7 @@ class snap7logo(SmartPlugin):
     
     # called once at startup after all items are loaded
     def run(self):
-        self.scheduler_add('update', self._update_loop, prio=5, cycle=self._cycle, offset=2)
+        self.scheduler_add('update', self._update_loop, prio=5, cycle=int(self._cycle), offset=2)
         self.alive = True
         
 
