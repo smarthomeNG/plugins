@@ -143,8 +143,9 @@ class WithingsHealth(SmartPlugin):
             measures = self._client.get_measures()
         except Exception as e:
             self.logger.error(
-                "An exception occured when running get_measures(): {}.".format(
+                "An exception occured when running get_measures(): {}. Aborting update.".format(
                     str(e)))
+            return
 
         last_measure = measures[0]
 
