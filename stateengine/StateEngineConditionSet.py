@@ -37,6 +37,13 @@ class SeConditionSet(StateEngineTools.SeItemChild):
     def conditions(self):
         return self.__conditions
 
+    @property
+    def dict_conditions(self):
+        result = {}
+        for name in self.__conditions:
+            result.update({name: self.__conditions[name].get()})
+        return result
+
     # Initialize the condition set
     # abitem: parent SeItem instance
     # name: Name of condition set
@@ -47,7 +54,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         self.__conditions = {}
 
     def __repr__(self):
-        return "SeConditionSet for condition name {}: {}.".format(self.__name, self.__conditions)
+        return "{}".format(self.__conditions)
 
     # Update condition set
     # item: item containing settings for condition set

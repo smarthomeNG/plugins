@@ -19,6 +19,7 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 import datetime
+from collections import OrderedDict
 from . import StateEngineTools
 from .StateEngineLogger import SeLogger
 from . import StateEngineState
@@ -45,6 +46,10 @@ class SeItem:
     def templates(self):
         return self.__templates
 
+    @property
+    def webif_infos(self):
+        return self.__webif_infos
+
     # return instance of smarthome.py class
     @property
     def sh(self):
@@ -54,6 +59,22 @@ class SeItem:
     @property
     def logger(self):
         return self.__logger
+
+    @property
+    def laststate(self):
+        return self.__laststate_item_id.property.value
+
+    @property
+    def lastconditionset(self):
+        return self.__lastconditionset_item_id.property.value
+
+    @property
+    def laststate_name(self):
+        return self.__laststate_item_name.property.value
+
+    @property
+    def lastconditionset_name(self):
+        return self.__lastconditionset_item_name.property.value
 
     # Constructor
     # smarthome: instance of smarthome.py
@@ -95,6 +116,7 @@ class SeItem:
 
         self.__states = []
         self.__templates = {}
+        self.__webif_infos = OrderedDict()
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
 
@@ -155,6 +177,26 @@ class SeItem:
             self.__templates.pop(template)
         else:
             self.__templates[template] = value
+
+    def update_webif(self, key, value):
+        def _nested_set(dic, keys, val):
+            for nestedkey in keys[:-1]:
+                dic = dic.setdefault(nestedkey, {})
+            dic[keys[-1]] = val
+        def _nested_test(dic, keys):
+            for nestedkey in keys[:-2]:
+                dic = dic.setdefault(nestedkey, {})
+            return dic[keys[-2]]
+        if isinstance(key, list):
+            try:
+                _nested_test(self.__webif_infos, key)
+                _nested_set(self.__webif_infos, key, value)
+                return True
+            except Exception:
+                return False
+        else:
+            self.__webif_infos[key] = value
+            return True
 
     # Find the state, matching the current conditions and perform the actions of this state
     # caller: Caller that triggered the update
@@ -275,6 +317,14 @@ class SeItem:
                                    new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
             self.__laststate_set(new_state)
             new_state.run_enter(self.__repeat_actions.get())
+        if _leaveactions_run is True:
+            _key_leave = ['{}'.format(last_state.id), 'leave']
+            _key_stay = ['{}'.format(last_state.id), 'stay']
+            _key_enter = ['{}'.format(last_state.id), 'enter']
+            self.update_webif(_key_leave, True)
+            self.update_webif(_key_stay, False)
+            self.update_webif(_key_enter, False)
+            #self.__logger.debug('set leave for {} to true', last_state.id)
 
         self.__update_in_progress = False
 
@@ -475,7 +525,7 @@ class SeItem:
         # log states
         for state in self.__states:
             state.write_to_log()
-
+            state.write_webif()
     # endregion
 
     # region Methods for CLI commands **********************************************************************************

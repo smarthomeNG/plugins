@@ -1,8 +1,8 @@
 .. index:: Plugins; Stateengine
-.. index:: Stateengine; Zustands-Templates
-.. _Zustands-Templates:
+.. index:: Stateengine; Zustand-Templates
+.. _Zustand-Templates:
 
-Zustands-Templates
+Zustand-Templates
 ##################
 
 .. rubric:: Struktur Templates
@@ -137,7 +137,7 @@ In diesem Fall soll die automatiche Evaluierung für eine gewisse Zeit pausieren
 Beim ``manuell`` Item muss unter Umständen der Eintrag ``se_manual_exclude`` in der eigenen
 Baumstruktur überschrieben und durch einen Eintrag (z.B. beim Einsatz von KNX Aktoren) ``- KNX:physikalische Adresse:Gruppenadresse``
 ergänzt werden. Außerdem muss ein eval_trigger manuell deklariert werden. Hier sollten alle
-Items gelistet sein, die für ein vroübergehendes Aussetzen der Automatisierung sorgen sollen
+Items gelistet sein, die für ein vorübergehendes Aussetzen der Automatisierung sorgen sollen
 (z.B. Schalt- und Dimm-Items)
 
 Das Item ``settings.suspendduration`` ermöglicht es, die Dauer der Pausierung bequem
@@ -166,25 +166,44 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
       se_manual_exclude:
         - database:*
 
+  retrigger:
+      remark: Item to retrigger the rule set evaluation
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+
   settings:
+      remark: Use these settings for your condition values
+
       suspendduration:
+          remark: duration of suspend mode
           type: num
           visu_acl: rw
           cache: True
+          initial_value: 60
 
       suspend_active:
+          remark: Use this to (de)activate suspend mode in general
           type: bool
           visu_acl: rw
           cache: True
+          initial_value: True
+
+      settings_edited:
+          type: bool
+          name: settings editiert
+          eval_trigger: ...settings.*
+          eval: not sh..self()
+          on_update: ...retrigger = True
 
   rules:
       se_item_suspend: ..suspend
-      se_item_retrigger: ..rules
       se_item_suspend_end: ..suspend_end
       se_item_suspend_active: ..settings.suspend_active
-      se_suspend_time: eval:sh...settings.suspendduration * 60
+      se_suspend_time: eval:se_eval.get_relative_itemproperty('..settings.suspendduration', 'value') * 60
       eval_trigger:
           - ..manuell
+          - ..retrigger
 
       suspend:
           name: ausgesetzt
@@ -201,8 +220,8 @@ beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
                 - 'repeat: True'
                 - 'order: 2'
               se_action_retrigger:
-                - 'function: set'
-                - 'to: True'
+                - 'function: special'
+                - 'value: retrigger:..retrigger'
                 - 'delay: var:item.suspend_remaining'
                 - 'repeat: True'
                 - 'order: 3'
@@ -282,10 +301,12 @@ der Zustände anzuleiern.
    :name: pluginspezifisch
 
 Es ist neben der oben beschriebene Variante möglich, Vorgabezustände in
-der Item-Konfiguration zu definieren
+der Item-Konfiguration über ``se_use`` zu definieren
 und diese später für konkrete Regelwerke durch Plugin-interne Attribute zu nutzen.
 Dabei können im konkreten Zustand auch Einstellungen des Vorgabezustands
-überschrieben werden.
+überschrieben werden. Es wird jedoch empfohlen, die struct Vorlagen aus
+SmarthomeNG >= 1.6 zu nutzen bzw. selbst welche zu erstellen, da dieses Feature
+flexibler ist und aktiv weiterentwickelt wird.
 
 Vorgabezustände werden als Item an beliebiger Stelle innerhalb der
 Item-Struktur definiert. Es ist sinnvoll, die Vorgabezustände

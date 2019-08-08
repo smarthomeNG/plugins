@@ -20,8 +20,10 @@
 #########################################################################
 from . import StateEngineTools
 from . import StateEngineConditionSets
+from . import StateEngineCondition
 from . import StateEngineActions
 from . import StateEngineValue
+from collections import OrderedDict
 
 
 # Class representing an object state, consisting of name, conditions to be met and configured actions for state
@@ -124,25 +126,50 @@ class SeState(StateEngineTools.SeItemChild):
             self._log_decrease_indent()
         self._log_decrease_indent()
 
+    def write_webif(self):
+        self._abitem.update_webif(self.id, {'name': self.name, 'conditionsets': self.__conditions.get(),
+                                            'actions_enter': self.__actions_enter.dict_actions,
+                                            'actions_enter_or_stay': self.__actions_enter_or_stay.dict_actions,
+                                            'actions_stay': self.__actions_stay.dict_actions,
+                                            'actions_leave': self.__actions_leave.dict_actions,
+                                            'leave': False, 'enter': False, 'stay': False})
+        #self._log_debug('WebIF Info: {}', self._abitem.webif_infos)
+
     # run actions when entering the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     def run_enter(self, allow_item_repeat: bool):
         self._log_increase_indent()
-        self.__actions_enter.execute(False, allow_item_repeat, self.__actions_enter_or_stay)
+        _key_leave = ['{}'.format(self.id), 'leave']
+        _key_stay = ['{}'.format(self.id), 'stay']
+        _key_enter = ['{}'.format(self.id), 'enter']
+        self._abitem.update_webif(_key_leave, False)
+        self._abitem.update_webif(_key_stay, False)
+        self._abitem.update_webif(_key_enter, True)
+        self.__actions_enter.execute(False, allow_item_repeat, self, self.__actions_enter_or_stay)
         self._log_decrease_indent()
 
     # run actions when staying at the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     def run_stay(self, allow_item_repeat: bool):
         self._log_increase_indent()
-        self.__actions_stay.execute(True, allow_item_repeat, self.__actions_enter_or_stay)
+        _key_leave = ['{}'.format(self.id), 'leave']
+        _key_stay = ['{}'.format(self.id), 'stay']
+        _key_enter = ['{}'.format(self.id), 'enter']
+        self._abitem.update_webif(_key_leave, False)
+        self._abitem.update_webif(_key_stay, True)
+        self._abitem.update_webif(_key_enter, False)
+        self.__actions_stay.execute(True, allow_item_repeat, self, self.__actions_enter_or_stay)
         self._log_decrease_indent()
 
     # run actions when leaving the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     def run_leave(self, allow_item_repeat: bool):
         self._log_increase_indent()
-        self.__actions_leave.execute(False, allow_item_repeat)
+        for elem in self._abitem.webif_infos:
+            _key_leave = ['{}'.format(elem), 'leave']
+            self._abitem.update_webif(_key_leave, False)
+            #self._log_debug('set leave for {} to false', elem)
+        self.__actions_leave.execute(False, allow_item_repeat, self)
         self._log_decrease_indent()
 
     # Read configuration from item and populate data in class
