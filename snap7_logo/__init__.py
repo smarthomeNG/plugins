@@ -41,9 +41,8 @@ class snap7logo(SmartPlugin):
         Initializes the plugin
         The params are documented in ``plugin.yaml`` and values will be obtained through get_parameter_value(parameter_name)
         """
-        self.logger = logging.getLogger(__name__)
-        
-         self.host = self.get_parameter_value('host')
+                
+        self.host = self.get_parameter_value('host')
         self.tsap_server = self.get_parameter_value('tsap_server')
         self.tsap_client = self.get_parameter_value('tsap_client')
         self._version = self.get_parameter_value('version')
