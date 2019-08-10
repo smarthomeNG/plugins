@@ -14,13 +14,21 @@ alle Parameter einer Aktion in einem Attribut definiert. Der Aktionsname ``se_ac
 bezieht sich dabei auf das Item, das über ``se_item_<Bedingungsname/Aktionsname>`` unter dem Regelwerk-Item
 definiert und benannt wurde. Die Herangehensweise ähnelt also stark der Deklaration von Bedingungen.
 
+Zusätzlich zu ``se_item_<Bedingungsname/Aktionsname>`` lässt sich über den Eintrag
+``se_mindelta_<Bedingungsname/Aktionsname>`` definieren, um welchen Wert
+sich ein Item mindestens geändert haben muss, um neu gesetzt zu werden. Im unten
+stehenden Beispiel wird der Lamellenwert abhängig vom Sonnenstand berechnet. Ohne mindelta
+würden sich die Lamellen ständig um wenige Grad(bruchteile) ändern. Wird jedoch mindelta
+beispielsweise auf den Wert 10 gesetzt, findet eine Änderung erst statt, wenn sich der
+errechnete Wert um mindestens 10 Grad vom aktuellen Lamellenwert unterscheidet.
+
 .. rubric:: Beispiel zu Aktionen
   :name: beispielzuaktionenkombiniert
 
 Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
 
 - Daemmerung: Höhe des Raffstores: 100(%), Lamellendrehung: 25(%)
-- Nachfuehren: Höhe des Raffstores: 100(%), Lamellendrehung: je nach Sonnenausrichtung
+- Nachfuehren: Höhe des Raffstores: 100(%), Lamellendrehung: je nach Sonnenausrichtung, aber erst, wenn eine Mindeständerung von 10 Grad vorhanden ist.
 - Sonder: Ausführen der Logic myLogic mit dem Wert 42 und einer Verzögerung von 10 Sekunden.
 
 .. code-block:: yaml
@@ -32,6 +40,7 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
             rules:
                 se_item_height: raffstore1.hoehe # Definition des zu ändernden Höhe-Items
                 se_item_lamella: raffstore1.lamelle # Definition des zu ändernden Lamellen-Items
+                se_mindelta_lamella: 10 # Mindeständerung von 10 Grad, sonst werden die Lamellen nicht aktualisiert.
                 Daemmerung:
                     <...>
                     se_action_height:
@@ -48,7 +57,7 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
                         - 'to: value:100'
                     se_action_lamella:
                         - 'function: set'
-                        - 'to: eval:stateengine_eval.sun_tracking()'
+                        - 'to: eval:se_eval.sun_tracking()'
                     <...>
                 Sonder:
                     <...>
@@ -74,6 +83,7 @@ Hochkommas gesetzt werden:
        - 'delay: <delay>'
        - 'order: <order>'
        - 'repeat: <repeat>'
+       - 'conditionset: <conditionset regex>'
 
 .. rubric:: Auszuführende Aktionsart
    :name: function
@@ -94,7 +104,7 @@ Folgende Werte sind möglich:
 
 Das Item, das verändert werden soll, muss auf Ebene des
 Regelwerk-Items über das Attribut ``se_item_<Aktionsname>``
-angegeben werden.
+oder ``se_eval_<Aktionsname>`` angegeben werden.
 
 Der Parameter ``to: <val>`` legt fest, auf welchen Wert das Item
 gesetzt werden soll. Der Wert,
@@ -103,6 +113,12 @@ Wert eines Items oder als Ergebnis der Ausführung einer Funktion
 festgelegt werden. Wichtig ist, dass bei z.B. ``to: item:<item>``
 nach dem item: kein Leerzeichen eingesetzt werden darf!
 
+Wie bei den Bedingungen sind die entsprechenden Prefixe value, item, eval zu nutzen:
+- statischer Wert, beispielsweise ``value:500``, wobei das value: auch weggelassen werden kann.
+- Item, z.B. ``item:settings.helligkeitsschwellwert``
+- Eval-Funktion wie ``eval:1*2*se_eval.get_relative_itemvalue('..bla')``
+- Template: eine Vorlage, z.B. ``template:<Name des Templates>``
+
 Über den optionalen Parameter
 ``force: True`` kann eine Item-Aktualisierung erzwungen werden,
 auch wenn sich der Wert nicht ändert. Damit erfolgt auf jeden Fall eine
@@ -110,13 +126,54 @@ Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
 stehenden Änderungen (evals, Aktualisierung der Änderungszeiten,
 etc).
 
+**Funktion add: Wert zu einem Listenitem hinzufügen**
+
+.. code-block:: yaml
+
+   se_action_<Aktionsname>:
+       - 'function: add'
+       - 'value: <val>/<eval>/<var>'
+       - 'force: [True/False]'
+
+Das Item, das verändert werden soll, muss auf Ebene des
+Regelwerk-Items über das Attribut ``se_item_<Aktionsname>`` oder
+``se_eval_<Aktionsname>`` angegeben werden.
+
+Der Parameter ``value: <val>`` legt fest, welcher Wert zum Item
+mit dem Typ ``list`` hinzugefügt werden soll. Wird hier direkt ein
+Wert angegeben, ist darauf zu achten, dass ein String unter Anführungszeichen
+stehen muss, während eine Zahl das nicht sollte.
+
+**Funktion remove: Wert von einem Listenitem entfernen**
+
+.. code-block:: yaml
+
+   se_action_<Aktionsname>:
+       - 'function: remove'
+       - 'value: <val>/<eval>/<var>'
+       - 'mode: [first/last/all]'
+
+Das Item, das verändert werden soll, muss auf Ebene des
+Regelwerk-Items über das Attribut ``se_item_<Aktionsname>`` oder
+``se_eval_<Aktionsname>`` angegeben werden.
+
+Der Parameter ``value: <val>`` legt fest, welcher Wert vom Item
+mit dem Typ ``list`` entfernt werden soll. Dabei ist zu beachten,
+dass zwischen String (Anführungszeichen) und Zahlen unterschieden wird.
+Ist der angegegeben Wert nicht in der Liste, wird der originale
+Itemwert erneut geschrieben, ohne etwas zu entfernen. Über den Parameter
+``mode`` lässt sich einstellen, ob jeweils alle mit dem Wert übereinstimmenden
+Einträge in der Liste (mode: all) oder nur der erste (first) bzw. der letzte (last)
+Eintrag gelöscht werden sollen. Wird der Parameter nicht angegeben, werden immer
+alle Einträge gelöscht.
+
 **Funktion run: Ausführen einer Funktion**
 
 .. code-block:: yaml
 
    se_action_<Aktionsname>:
        - 'function: run'
-       - 'eval:(Funktion)'
+       - 'eval: (Funktion)'
 
 Die Angabe ist vergleichbar mit dem Ausführen einer Funktion zur
 Ermittlung des Werts für ein Item, hier wird jedoch kein Item
@@ -176,8 +233,10 @@ wird gleichzeitig auf ``Rums`` gesetzt.
        - value: <Sondervorgang>
 
 Für bestimmte Sondervorgänge sind besondere Aktionen im Plugin
-definiert (z. B. für das Suspend). Diese werden jedoch nicht hier
-erläutert, sondern an den Stellen, an denen sie verwendet werden.
+definiert. Aktuell gibt es zwei besondere Vorgänge:
+
+- suspend:<suspend_item>,<manuell_item> (z.B. suspend:..suspend,..manuell)
+- retrigger:<trigger_item> (z.B. retrigger:..retrigger)
 
 .. rubric:: Zusätzliche Parameter
    :name: parameter
@@ -224,3 +283,40 @@ der zugewiesenen Zahlen ausgeführt.
 .. code-block:: yaml
 
        'order: [1|2|...]'
+
+**conditionset: <conditionset regex>**
+
+.. code-block:: yaml
+
+      'conditionset: ["enter_(.*)_test", "eval:sh.itemX.property.name"]'
+
+Über das Attribut wird festgelegt, dass die Aktion nur dann ausgeführt werden
+soll, wenn der Zustand durch die angegebene Bedingungsgruppe eingenommen wurde.
+Zum Vergleich wird immer der volle Pfad der Bedingungsgruppe herangezogen.
+Conditionset erlaubt sowohl eine Liste als auch reguläre Ausdrücke, wodurch
+nicht zwingend der komplette Pfad der Bedingungsgruppe bekannt sein muss.
+Der gesamte Pfad könnte wie folgt evaluiert werden:
+
+.. code-block:: yaml
+
+      "eval:se_eval.get_relative_itemid('{}.<bedingungsset>'.format(se_eval.get_relative_itemvalue('..state_id')))"
+
+.. rubric:: Templates für Aktionen
+   :name: aktionstemplates
+
+Setzt man für mehrere Aktionen (z.B. Setzen auf einen Wert abhängig vom aktuellen
+Zustand) immer die gleichen Ausdrücke ein, so kann Letzteres als Template
+definiert und referenziert werden. Dadurch wird die die Handhabung
+komplexerer Wertdeklarationen deutlich vereinfacht. Diese Templates müssen wie se_item/se_eval
+auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
+
+.. code-block:: yaml
+    rules:
+      se_template_test: se_eval.get_relative_itemid('wetterstation.helligkeit_{}'.format(se_eval.get_relative_itemvalue('..state_name')))
+      se_item_specialitem: meinitem.specialitem # declare an existing item here
+
+      state_one:
+          on_enter:
+              se_action_specialitem:
+                  - 'function: set'
+                  - 'to: template:test'

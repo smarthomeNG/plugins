@@ -65,7 +65,7 @@ class Init(object):
             itemlist.append(_result)
             if not item == 'dependson':
                 try:
-                    sortedlist.append(_result.id())
+                    sortedlist.append(_result.property.path)
                 except Exception:
                     sortedlist.append(_result)
         sortedlist.sort()
@@ -280,7 +280,7 @@ class Init(object):
                                    'Group': depend_group,
                                    'Function': depend_function}]})
                         try:
-                            finaldepend['Slave_item'][zone][self._items[zone][entry].get('Item').id()].append(
+                            finaldepend['Slave_item'][zone][self._items[zone][entry].get('Item').property.path].append(
                                 {'Item': item,
                                  'Dependvalue': depend_value,
                                  'Compare': depend_compare,
@@ -289,7 +289,7 @@ class Init(object):
                                  'Function': depend_function})
                         except Exception:
                             finaldepend['Slave_item'][zone].update(
-                                {self._items[zone][entry].get('Item').id():
+                                {self._items[zone][entry].get('Item').property.path:
                                  [{'Item': item,
                                    'Dependvalue': depend_value,
                                    'Compare': depend_compare,
@@ -299,7 +299,7 @@ class Init(object):
                         try:
                             finaldepend['Master_item'][depend_zone][
                                 self._items[depend_zone][dependson_list[zone][entry][count]['Function']].get(
-                                    'Item').id()].append(
+                                    'Item').property.path].append(
                                 {'Item': self._items[zone][entry].get('Item'),
                                  'Function': entry,
                                  'Compare': depend_compare,
@@ -309,7 +309,7 @@ class Init(object):
                         except Exception:
                             finaldepend['Master_item'][depend_zone].update(
                                 {self._items[depend_zone][dependson_list[zone][entry][count]['Function']].get(
-                                    'Item').id():
+                                    'Item').property.path:
                                     [{'Item': self._items[zone][entry].get('Item'),
                                       'Function': entry,
                                       'Compare': depend_compare,

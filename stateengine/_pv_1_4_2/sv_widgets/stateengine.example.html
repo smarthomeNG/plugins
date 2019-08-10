@@ -1,0 +1,52 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Martin Gleiß
+* @copyright   2012 - 2015
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+{% extends "base.html" %}
+
+
+{% import "widgets/stateengine.html" as stateengine %}
+{% import "basic.html" as basic %}
+
+{% block content %}
+<div id="popupstuff" display="hidden" style="height:200px;">Here you could define any basic widget you want</div>
+<div>
+  <p>Changing the state via menu changes the icon of the stateengine widget. This demo is limited but in a real world scenario the widget would work like followed. Of course you can set either the locked item or the release item to empty to change the behaviour of the widget.</p><p>
+    <b>Short click/tap:</b><br>
+    If the item is in any state but locked, the stateengine item would change to locked mode<br>
+    If the item is in locked state, the stateengine would leave locked mode and retrigger evaluation (not working in this demo)<br>
+    If the item is in suspended mode the release state would be triggered instead of the locked (not working in this demo)<br>
+    </p><p>
+    <b>Long click/tap:</b><br>
+    Open a popup window with further widgets (limited function in this demo)<br>
+    For this demo this is achieved by using javascript, but in a real world example you can use the approach mentioned in the README.
+
+  </p>
+
+
+  <div class="twig">Example:<br>
+		<code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
+      {{ stateengine.state('updatestuff', 'stateengine_item', 'lockitem', 'releaseitem', 'icons/ws/secur_locked.svg, icons/ws/time_manual_mode.svg, icons/ws/time_automatic.svg', 'locked,suspended,standard', 'popupstuff') }}
+		{% endverbatim %}{% endfilter %}</code>
+	</div>
+	<div class="html">
+    {{ basic.select('', 'stateengine_item', '', ['locked', 'suspended', 'standard'], '', ['locked', 'suspended', 'standard']) }}
+    {{ stateengine.state('updatestuff', 'stateengine_item', 'lockitem', 'releaseitem', 'icons/ws/secur_locked.svg, icons/ws/time_manual_mode.svg, icons/ws/time_automatic.svg', 'locked,suspended,standard', 'popupstuff') }}
+	</div>
+
+</div>
+<script>
+
+$( document ).ready(function() {
+  $("#popupstuff").popup();
+   io.write('stateengine_item', 'standard' );
+});
+$( "#example_stateengine-updatestuff" ).tap(function() {
+  io.write('stateengine_item', 'locked' );
+});
+</script>
+{% endblock %}

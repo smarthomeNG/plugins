@@ -44,7 +44,7 @@ festlegen, wann eine Aktion ausgeführt wird.
 Details zu den Aktionen werden im Abschnitt
 :ref:`Aktionen` erläutert.
 
-.. rubric:: Zustand-Templates
+.. rubric:: Templates für Zustände
    :name: zustandtemplates
 
 Da viele Items immer wieder die gleichen Zustände inklusive Aktionen und Bedingungen

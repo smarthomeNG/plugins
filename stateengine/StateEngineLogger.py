@@ -24,14 +24,6 @@ import os
 
 
 class SeLogger:
-    # Log-Level: (0=off 1=Info, 2=Debug)
-    __loglevel = 2
-
-    # Target directory for log files
-    __logdirectory = "/usr/local/smarthome/var/log/StateEngine/"
-
-    # Max age for log files (days)
-    __logmaxage = 0
 
     # Set log level
     # loglevel: current loglevel
@@ -41,7 +33,7 @@ class SeLogger:
             SeLogger.__loglevel = int(loglevel)
         except ValueError:
             SeLogger.__loglevel = 2
-            logger = logging.getLogger('plugins.stateengine.StateEngineLogger')
+            logger = logging.getLogger('plugins.stateengine')
             logger.error("Das Log-Level muss numerisch angegeben werden.")
 
     # Set log directory
@@ -58,14 +50,14 @@ class SeLogger:
             SeLogger.__logmaxage = int(logmaxage)
         except ValueError:
             SeLogger.__logmaxage = 0
-            logger = logging.getLogger('plugins.stateengine.StateEngineLogger')
+            logger = logging.getLogger('plugins.stateengine')
             logger.error("Das maximale Alter der Logdateien muss numerisch angegeben werden.")
 
     @staticmethod
     def remove_old_logfiles():
         if SeLogger.__logmaxage == 0:
             return
-        logger = logging.getLogger('plugins.stateengine.StateEngineLogger')
+        logger = logging.getLogger('plugins.stateengine')
         logger.info("Removing logfiles older than {0} days".format(SeLogger.__logmaxage))
         count_success = 0
         count_error = 0
@@ -81,7 +73,8 @@ class SeLogger:
                         os.unlink(abs_file)
                         count_success += 1
                 except Exception as ex:
-                    logger.error(str(ex))
+                    logger.error("Problem removing old logfiles: {}".format(ex))
+                    logger.error(ex)
                     count_error += 1
         logger.info("{0} files removed, {1} errors occured".format(count_success, count_error))
 
@@ -94,8 +87,8 @@ class SeLogger:
     # Constructor
     # item: item for which the detailed log is (used as part of file name)
     def __init__(self, item):
-        self.logger = logging.getLogger(__name__)
-        self.__section = item.id().replace(".", "_").replace("/", "")
+        self.logger = logging.getLogger('{}.{}'.format(__name__.replace(".StateEngineLogger", ""), item.property.path))
+        self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
         self.__date = None
         self.__filename = ""
@@ -139,18 +132,25 @@ class SeLogger:
         self.__indentlevel = 0
         text += " "
         self.log(1, text.ljust(80, "="))
+        self.logger.info(text.ljust(80, "="))
 
     # log with level=info
     # @param text text to log
     # @param *args parameters for text
     def info(self, text, *args):
         self.log(1, text, *args)
+        indent = "\t" * self.__indentlevel
+        text = '{}{}'.format(indent, text)
+        self.logger.info(text.format(*args))
 
     # log with lebel=debug
     # text: text to log
     # *args: parameters for text
     def debug(self, text, *args):
         self.log(2, text, *args)
+        indent = "\t" * self.__indentlevel
+        text = '{}{}'.format(indent, text)
+        self.logger.debug(text.format(*args))
 
     # log warning (always to main smarthome.py log)
     # text: text to log
@@ -158,6 +158,8 @@ class SeLogger:
     # noinspection PyMethodMayBeStatic
     def warning(self, text, *args):
         self.log(1, "WARNING: " + text, *args)
+        indent = "\t" * self.__indentlevel
+        text = '{}{}'.format(indent, text)
         self.logger.warning(text.format(*args))
 
     # log error (always to main smarthome.py log)
@@ -166,6 +168,8 @@ class SeLogger:
     # noinspection PyMethodMayBeStatic
     def error(self, text, *args):
         self.log(1, "ERROR: " + text, *args)
+        indent = "\t" * self.__indentlevel
+        text = '{}{}'.format(indent, text)
         self.logger.error(text.format(*args))
 
     # log exception (always to main smarthome.py log'

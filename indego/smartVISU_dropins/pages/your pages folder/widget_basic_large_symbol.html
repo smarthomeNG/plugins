@@ -1,0 +1,26 @@
+/**
+* A symbol, with no writing to knx, only displayed when the value of item is equal to val. Symbols may be used in menus.
+* If more than one item is given, they will be combined with mode ('or' / 'and').
+*
+* @param unique id for this widget
+* @param one or more item(s). More items in array form: [ item1 , item2 ]
+* @param the text, printed when item has value val (optional)
+* @param the pic, shown when item has value val
+* @param value (default 1)
+* @param the mode, 'or', 'and' (default 'or')
+* @param the color 'icon1' or e. g. '#f00' for red (default 'icon0' of the design)
+*/
+{% macro large_symbol(id, items, txt, pic, val, mode, color) %}
+
+	<span id="{{ uid(page, id) }}" data-widget="basic.symbol" data-item="{{ implode(items) }}" data-val="{{ val|default('1') }}"
+		data-mode="{{ mode|default('or') }}" class="symbol hide">
+		{% if color is empty  %}
+        	<img class="icon2" src="{{ pic|deficon('control_on_off.svg') }}" />
+		{% elseif color == 'icon1' %}
+			<img class="icon2 icon1" src="{{ pic|deficon('control_on_off.svg') }}" />
+		{% else %}
+			<img class="icon2 icon1" style="stroke:{{ color }}; fill:{{ color }};" src="{{ pic|deficon('control_on_off.svg') }}" />
+		{% endif %}
+		{{ txt }}
+	</span>
+{% endmacro %}

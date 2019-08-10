@@ -25,6 +25,7 @@ from . import StateEngineDefaults
 from . import StateEngineTools
 from . import StateEngineCliCommands
 from . import StateEngineFunctions
+from . import StateEngineWebif
 import logging
 import os
 from lib.model.smartplugin import *
@@ -33,7 +34,7 @@ from lib.item import Items
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.4.2'
+    PLUGIN_VERSION = '1.6.2'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
@@ -42,7 +43,8 @@ class StateEngine(SmartPlugin):
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         self.items = Items.get_instance()
-        self.__items = {}
+        self.__items = self.abitems = {}
+        self.__sh = sh
         self.alive = False
         self.__cli = None
         self.init_webinterface()
@@ -53,6 +55,7 @@ class StateEngine(SmartPlugin):
 
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
+            StateEngineDefaults.instant_leaveaction = self.get_parameter_value("instant_leaveaction")
             StateEngineDefaults.write_to_log(self.logger)
 
             StateEngineCurrent.init(self.get_sh())
@@ -65,8 +68,6 @@ class StateEngine(SmartPlugin):
                     log_directory = base + log_directory
                 if not os.path.exists(log_directory):
                     os.makedirs(log_directory)
-                SeLogger.set_loglevel(log_level)
-                SeLogger.set_logdirectory(log_directory)
                 text = "StateEngine extended logging is active. Logging to '{0}' with loglevel {1}."
                 self.logger.info(text.format(log_directory, log_level))
             log_maxage = self.get_parameter_value("log_maxage")
@@ -75,7 +76,8 @@ class StateEngine(SmartPlugin):
                 SeLogger.set_logmaxage(log_maxage)
                 cron = ['init', '30 0 * *']
                 self.scheduler_add('StateEngine: Remove old logfiles', SeLogger.remove_old_logfiles, cron=cron, offset=0)
-
+            SeLogger.set_loglevel(log_level)
+            SeLogger.set_logdirectory(log_directory)
             self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
         except Exception:
             self._init_complete = False
@@ -84,9 +86,13 @@ class StateEngine(SmartPlugin):
     # Parse an item
     # noinspection PyMethodMayBeStatic
     def parse_item(self, item):
-        if "se_manual_include" in item.conf or "se_manual_exclude" in item.conf:
+        try:
+            item.expand_relativepathes('se_item_*', '', '')
+        except Exception:
+            pass
+        if self.has_iattr(item.conf, "se_manual_include") or self.has_iattr(item.conf, "se_manual_exclude"):
             item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.id() + "', caller, source)"
-        elif "se_manual_invert" in item.conf:
+        elif self.has_iattr(item.conf, "se_manual_invert"):
             item._eval = "not sh." + item.id() + "()"
 
         return None
@@ -101,7 +107,7 @@ class StateEngine(SmartPlugin):
                     ab_item = StateEngineItem.SeItem(self.get_sh(), item)
                     self.__items[ab_item.id] = ab_item
                 except ValueError as ex:
-                    self.logger.error("Item: {0}: {1}".format(item.id(), str(ex)))
+                    self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, ex))
 
         if len(self.__items) > 0:
             self.logger.info("Using StateEngine for {} items".format(len(self.__items)))
@@ -109,7 +115,7 @@ class StateEngine(SmartPlugin):
             self.logger.info("StateEngine deactivated because no items have been found.")
 
         self.__cli = StateEngineCliCommands.SeCliCommands(self.get_sh(), self.__items, self.logger)
-
+        #self.logger.info("Items: {}".format(self.__items))
         self.alive = True
         self.get_sh().stateengine_plugin_functions.ab_alive = True
 
@@ -142,6 +148,40 @@ class StateEngine(SmartPlugin):
                             entry_source == original_source or entry_source == "*"):
                 return False
         return True
+
+    def get_items(self):
+        """
+        Getting a sorted item list with active SE
+
+        :return:        sorted itemlist
+        """
+        sortedlist = sorted([k for k in self.__items.keys()])
+
+        finallist = []
+        for i in sortedlist:
+            finallist.append(self.__items[i])
+        return finallist
+
+    def get_graph(self, abitem, type='link'):
+        if isinstance(abitem, str):
+            abitem = self.__items[abitem]
+        webif = StateEngineWebif.WebInterface(self.__sh, abitem)
+        vis_file = self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/{}.svg'.format(abitem))
+        #self.logger.debug("Getting graph: {}, {}".format(abitem, webif))
+        try:
+            if type == 'link':
+                return '<a href="static/img/visualisations/{}.svg"><img src="static/img/vis.png" width="30"></a>'.format(abitem)
+            else:
+                webif.drawgraph(vis_file)
+                return '<object type="image/svg+xml" data="static/img/visualisations/{0}.svg"\
+                        style="max-width: 100%; height: auto; width: auto\9; ">\
+                        <iframe src="static/img/visualisations/{0}.svg">\
+                        <img src="static/img/visualisations/{0}.svg"\
+                        style="max-width: 100%; height: auto; width: auto\9; ">\
+                        </iframe></object>'.format(abitem)
+        except Exception as ex:
+            self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
+            return ''
 
     def init_webinterface(self):
         """"
@@ -210,7 +250,7 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def index(self, action=None, item_id=None, item_path=None, reload=None, page='index'):
+    def index(self, action=None, item_id=None, item_path=None, reload=None, abitem=None, page='index'):
         """
         Build index.html for cherrypy
 
@@ -221,6 +261,14 @@ class WebInterface(SmartPluginWebIf):
         item = self.plugin.items.return_item(item_path)
 
         tmpl = self.tplenv.get_template('{}.html'.format(page))
+
+        if action == "get_graph" and abitem is not None:
+            if isinstance(abitem, str):
+                abitem = self.plugin.abitems[abitem]
+            self.plugin.get_graph(abitem, 'graph')
+            tmpl = self.tplenv.get_template('visu.html')
+            return tmpl.render(p=self.plugin, item=abitem,
+                               language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
                            language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())

@@ -11,9 +11,9 @@ plugin:
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/developer/plugins/simulation/README.html        # url of documentation (wiki) page
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/841097-anwesenheitssimulation-0-1'
-    version: 1.5.0.7               # Plugin version
-    sh_minversion: 1.4c             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.5.0.8               # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
     classname: Simulation          # class containing the plugin

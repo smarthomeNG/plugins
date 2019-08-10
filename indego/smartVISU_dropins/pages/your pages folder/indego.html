@@ -1,0 +1,932 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Martin Gleiß
+* @copyright   2012
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+
+{% extends "rooms.html" %}
+{% import "large_symbol.html" as large %}
+{% import "multimedia.html" as multimedia %}
+{% import "widget_basic_input.html" as input %}
+{% block content %}
+ <div class="block" style="width:100%">
+   <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+     <div data-role="collapsible" data-collapsed="false">
+			<h3>Bild</h3>
+
+                  <div class="image">
+                         {{ multimedia.image('image3', 'tmp/garden.svg', 'corner','20s') }} </br>
+                         
+		   </div>
+		   <div align="right"  style= margin-right:8px> Update: {{ basic.formula('MapDate', 'indego.mapSvgCacheDate', 'short') }} </div>
+           <div align="right"  style= margin-right:8px> xpos: {{ basic.value('xPos_indego', 'indego.xPos') }} | ypos: {{ basic.value('yPos_indego', 'indego.yPos') }}</div>
+           <div align="right"  style= margin-right:8px> svg_xpos: {{ basic.value('svg_xPos_indego', 'indego.svg_xPos') }} | svg_ypos: {{ basic.value('svg_yPos_indego', 'indego.svg_yPos') }}  </div>
+     </div>    
+</div>
+</div>
+ 
+ 
+
+
+	   <div class="block"style="width:100%">
+   <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+          <div data-role="collapsible" data-collapsed="false">
+                  <h3>Indego</h3>
+                     {{ large.symbol('state_offline', 'indego.online','','scene_robo_lawnmower_offline.svg',0) }}
+                     {{ large.symbol('state_docked', ['indego.docked','indego.online'],'','scene_robo_lawnmower_docked.svg','','and') }}  
+                     {{ large.symbol('state_moving', ['indego.moving','indego.online'],'','scene_robo_lawnmower_moving.svg','','and') }} 
+                     {{ large.symbol('state_pause', ['indego.pause','indego.online'],'','scene_robo_lawnmower_stopp.svg','','and') }} 
+
+                     {{ large.symbol('state_help', 'indego.help','','scene_robo_lawnmower_help.svg') }} 
+                     
+                       <br />
+                       <center>
+                <font size="104">
+                {{ basic.value('prozentwert_indego', 'indego.mowedPercent', '%') }}</br>
+                {{ basic.value('status_indego', 'indego.state_str') }}
+                
+                </font>
+            </center>
+                     <br />
+                                     
+                    {{ basic.switch('Indego_start', 'indego.MOW', 'scene_robo_lawnmower_start.svg', 'scene_robo_lawnmower_start.svg') }}
+                    
+                    {{ basic.switch('Indego_pause', 'indego.PAUSE', 'scene_robo_lawnmower_stop.svg', 'scene_robo_lawnmower_stop.svg') }}
+                     
+                    {{ basic.switch('Indego_return', 'indego.RETURN', 'scene_robo_lawnmower_dock.svg', 'scene_robo_lawnmower_dock.svg') }} 
+            		<br />
+ <table height="90%" width="95%" align="center">
+
+        <tr>
+
+             <td width="50%" align="right">
+            smartmodus: 
+            </td>
+            <td width="50%" align="left">
+			{{ basic.flip('indego_smarsdt', 'indego.SMART', 'an', 'aus')}}
+            </td>
+        </tr>
+        <tr>
+            <td width="50%" align="right">
+            Frequenz
+            </td>
+            <td width="50%" align="left">
+            {{ input.numberinput('frequenz', 'indego.SMART.frequenz') }}
+            </td>
+        </tr>
+</table>
+
+
+          
+          </div>
+    </div>
+    </div>
+    
+    	   <div class="block" >
+   <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+          <div data-role="collapsible" data-collapsed="false">
+<h3>Historie</h3>
+
+<table width="100%">
+    <tbody>
+     <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Gesamte Fahrzeit:
+            </td>
+
+            <td align="right">
+                {{ basic.float('Fahrzeit_gesamt', 'indego.runtimeTotalOperationMins.hours', 'h') }} 
+            </td>
+        
+        </tr>
+        
+        <td align="left" style="padding-left: 10px;">
+                Gesamte Ladezeit:
+            </td>
+
+            <td align="right">
+                {{ basic.float('Ladezeit_gesamt', 'indego.runtimeTotalChargeMins.hours', 'h') }} 
+            </td>
+        
+        </tr>
+        
+         <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Fahrzeit heute:
+            </td>
+            <td align="right">
+                {{ basic.float('Fahrzeit_heute', 'indego.runtimeSessionOperationMins', 'm') }} 
+            </td>
+       
+     
+            
+           <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Ladezeit heute:
+            </td>
+            <td align="right">
+                {{ basic.float('Ladezeit_heute', 'indego.runtimeSessionChargeMins', 'm') }} 
+            </td>
+       </tr>
+       <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Letzte Bewegung:
+            </td>
+            <td align="right">
+                {{ basic.formula('mowedDate', 'indego.mowedDate', 'time') }} 
+            </td>
+       </tr>
+                
+       <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Mähmodus:
+            </td>
+            <td align="right">
+                {{ basic.value('mowmode', 'indego.mowmode') }} 
+            </td>
+       </tr>
+       <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Nächste Fahrzeit (Smart):
+            </td>
+            <td align="right">
+                 {{ basic.formula('next_time_smartmow', 'indego.next_time', 'short') }} 
+            </td>
+       </tr>
+                      
+
+                   
+    </tbody>
+</table>
+            
+ 
+        </div></div>
+        </div>
+    
+<div class="block" >
+   <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+          <div data-role="collapsible" data-collapsed="false">
+<h3>Daten</h3>
+
+<table width="100%">
+    <tbody>
+    
+         <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Benutzer:
+            </td>
+            <td align="right">
+                {{ basic.value('user', 'indego.alm_name', '') }} 
+            </td>
+       <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Modus:
+            </td>
+            <td align="right">
+                {{ basic.value('mode', 'indego.alm_mode') }} 
+            </td>
+       </tr>     
+     <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Firmware Version:
+            </td>
+
+            <td align="right">
+                {{ basic.value('Firmware', 'indego.alm_firmware_version', '') }} 
+            </td>
+        
+        </tr>
+
+     <tr>        
+        <td align="left" style="padding-left: 10px;">
+                letztes Update:
+            </td>
+
+            <td align="right">
+                {{ basic.formula('Firmware_changed', 'indego.alm_firmware_version.changed', 'short') }} 
+            </td>
+        
+        </tr>
+        
+     <tr>        
+        <td align="left" style="padding-left: 10px;">
+                vorherige Firmware Version:
+            </td>
+
+            <td align="right">
+                {{ basic.value('Firmware_before', 'indego.alm_firmware_version.before', '') }} 
+            </td>
+        
+        </tr>
+       
+        <td align="left" style="padding-left: 10px;">
+                Seriennummer:
+            </td>
+
+            <td align="right">
+                {{ basic.value('Serial', 'indego.alm_sn', '') }} 
+            </td>
+        
+        </tr>    
+     
+            
+           <tr>             
+            <td align="left" style="padding-left: 10px;">
+                Service Counter:
+            </td>
+            <td align="right">
+                {{ basic.value('Service_Counter', 'indego.service_counter', '') }} 
+            </td>
+       </tr>
+       <tr>             
+       <td align="left" style="padding-left: 10px;">
+                Baretoolnumber:
+            </td>
+            <td align="right">
+                {{ basic.value('baretool', 'indego.bareToolnumber') }} 
+            </td>
+       </tr>               
+                      
+ 
+                   
+    </tbody>
+</table>
+            
+ 
+        </div></div>
+        </div>
+        
+<div class="block" >
+   <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+          <div data-role="collapsible" data-collapsed="false">
+
+<h3>
+                {{ basic.value('Fehlermeldung_headline', 'indego.alert_headline', '') }} 
+</h3>
+
+<div align="left" style = "padding-left:10px; padding-right:10px; font-size:16px">
+                {{ basic.value('Fehlermeldung', 'indego.alert_message', '') }} 
+</div>
+ 
+     <table width="100%">
+    <tbody>
+    
+         <tr>             
+            <td align="left" style="padding-left: 9px;">
+                Datum:
+            </td>
+            <td align="right">
+                {{ basic.formula('alert-datum', 'indego.alert_date', 'short') }} 
+            </td>
+</tr>
+</tbody>
+</table>            
+  
+ 
+        </div>
+    </div>
+</div>
+
+<div class="block">
+        <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+            <div data-role="collapsible" data-collapsed="false">
+                <h3>Vorhersage {{ basic.value('indego_weather_day_0_wochentag','indego.weather.day_0.wochentag') }} Temperaturen / Regenwahrscheinlichkeit</h3>        
+   
+   
+     <table height="90%" width="98%" align="center">
+        <tr>
+          <td width="50%" align="left">
+          <font size="+1">
+                  Sonnenstunden: {{ basic.value('indego_weather_day_0_sun', 'indego.weather.day_0.sun', '') }}
+          </font>
+          </td> 
+                 <td width="50%" align="right">
+                 <font size="+1">
+                 {{ basic.float('indego_weather_day_0_tn', 'indego.weather.day_0.tn', '°') }} - {{ basic.float('indego_weather_day_0_tx', 'indego.weather.day_0.tx', '°') }}
+                 </font>
+                 </td>
+                 </tr>
+                 </table>
+             
+                 
+  <table height="90%" width="98%" align="center">
+        
+                       <tr>
+          <td width="15%" align="left">
+            Nachts:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_0', 'indego.weather.int_0.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_0', 'indego.weather.int_0.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_0', 'indego.weather.int_0.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_0', 'indego.weather.int_0.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_0', 'indego.weather.int_0.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_0_td', 'indego.weather.int_0.td', '°') }} - {{ basic.float('indego_wetter_int_0_tt', 'indego.weather.int_0.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_0_rrr', 'indego.weather.int_0.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_0_prrr', 'indego.weather.int_0.prrr', '%') }}
+            </td>
+          </td>
+        </tr>   
+        
+        
+                     
+        </tr>
+        
+        <tr>
+          <td width="15%" align="left">
+            Morgens:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_1', 'indego.weather.int_1.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_1', 'indego.weather.int_1.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_1', 'indego.weather.int_1.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_1', 'indego.weather.int_1.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_1', 'indego.weather.int_1.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_1_td', 'indego.weather.int_1.td', '°') }} - {{ basic.float('indego_wetter_int_1_tt', 'indego.weather.int_1.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_1_rrr', 'indego.weather.int_1.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+           {{ basic.float('indego_wetter_int_1_prrr', 'indego.weather.int_1.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Mittags:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_2', 'indego.weather.int_2.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_2', 'indego.weather.int_2.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_2', 'indego.weather.int_2.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_2', 'indego.weather.int_2.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_2', 'indego.weather.int_2.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_2_td', 'indego.weather.int_2.td', '°') }} - {{ basic.float('indego_wetter_int_2_tt', 'indego.weather.int_2.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_2_rrr', 'indego.weather.int_2.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+  			{{ basic.float('indego_wetter_int_2_prrr', 'indego.weather.int_2.prrr', '%') }}
+            </td>
+                     </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Abends:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_3', 'indego.weather.int_3.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_3', 'indego.weather.int_3.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_3', 'indego.weather.int_3.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_3', 'indego.weather.int_3.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_3', 'indego.weather.int_3.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_3_td', 'indego.weather.int_3.td', '°') }} - {{ basic.float('indego_wetter_int_3_tt', 'indego.weather.int_3.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_3_rrr', 'indego.weather.int_3.rrr', 'l/m²') }}
+            </td>
+            
+         <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_3_prrr', 'indego.weather.int_3.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+
+        
+        
+        </table>
+
+    </div>
+    </div>
+    </div>
+
+
+<div class="block">
+        <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+            <div data-role="collapsible" data-collapsed="false">
+                <h3>Vorhersage {{ basic.value('indego_weather_day_1_wochentag','indego.weather.day_1.wochentag') }} Temperaturen / Regenwahrscheinlichkeit</h3>        
+   
+   
+     <table height="90%" width="98%" align="center">
+        <tr>
+          <td width="50%" align="left">
+          <font size="+1">
+                  Sonnenstunden: {{ basic.value('indego_weather_day_1_sun', 'indego.weather.day_1.sun', '') }}
+          </font>
+          </td> 
+                 <td width="50%" align="right">
+                 <font size="+1">
+                 {{ basic.float('indego_weather_day_1_tn', 'indego.weather.day_1.tn', '°') }} - {{ basic.float('indego_weather_day_1_tx', 'indego.weather.day_1.tx', '°') }}
+                 </font>
+                 </td>
+                 </tr>
+                 </table>
+             
+                 
+  <table height="90%" width="98%" align="center">
+        
+                       <tr>
+          <td width="15%" align="left">
+            Nachts:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_4', 'indego.weather.int_4.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_4', 'indego.weather.int_4.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_4', 'indego.weather.int_4.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_4', 'indego.weather.int_4.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_4', 'indego.weather.int_4.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_4_td', 'indego.weather.int_4.td', '°') }} - {{ basic.float('indego_wetter_int_4_tt', 'indego.weather.int_4.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_4_rrr', 'indego.weather.int_4.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_4_prrr', 'indego.weather.int_4.prrr', '%') }}
+            </td>
+          </td>
+        </tr>   
+        
+        
+                     
+        </tr>
+        
+        <tr>
+          <td width="15%" align="left">
+            Morgens:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_5', 'indego.weather.int_5.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_5', 'indego.weather.int_5.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_5', 'indego.weather.int_5.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_5', 'indego.weather.int_5.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_5', 'indego.weather.int_5.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_5_td', 'indego.weather.int_5.td', '°') }} - {{ basic.float('indego_wetter_int_5_tt', 'indego.weather.int_5.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_5_rrr', 'indego.weather.int_5.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+           {{ basic.float('indego_wetter_int_5_prrr', 'indego.weather.int_5.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Mittags:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_6', 'indego.weather.int_6.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_6', 'indego.weather.int_6.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_6', 'indego.weather.int_6.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_6', 'indego.weather.int_6.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_6', 'indego.weather.int_6.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_6_td', 'indego.weather.int_6.td', '°') }} - {{ basic.float('indego_wetter_int_6_tt', 'indego.weather.int_6.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_6_rrr', 'indego.weather.int_6.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+  			{{ basic.float('indego_wetter_int_6_prrr', 'indego.weather.int_6.prrr', '%') }}
+            </td>
+                     </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Abends:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_7', 'indego.weather.int_7.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_7', 'indego.weather.int_7.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_7', 'indego.weather.int_7.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_7', 'indego.weather.int_7.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_7', 'indego.weather.int_7.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_7_td', 'indego.weather.int_7.td', '°') }} - {{ basic.float('indego_wetter_int_7_tt', 'indego.weather.int_7.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_7_rrr', 'indego.weather.int_7.rrr', 'l/m²') }}
+            </td>
+            
+         <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_7_prrr', 'indego.weather.int_7.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+
+        
+        
+        </table>
+
+    </div>
+    </div>
+    </div>
+    
+
+<div class="block">
+        <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+            <div data-role="collapsible" data-collapsed="false">
+                <h3>Vorhersage {{ basic.value('indego_weather_day_2_wochentag','indego.weather.day_2.wochentag') }} Temperaturen / Regenwahrscheinlichkeit</h3>        
+   
+   
+     <table height="90%" width="98%" align="center">
+        <tr>
+          <td width="50%" align="left">
+          <font size="+1">
+                  Sonnenstunden: {{ basic.value('indego_weather_day_2_sun', 'indego.weather.day_2.sun', '') }}
+          </font>
+          </td> 
+                 <td width="50%" align="right">
+                 <font size="+1">
+                 {{ basic.float('indego_weather_day_2_tn', 'indego.weather.day_2.tn', '°') }} - {{ basic.float('indego_weather_day_2_tx', 'indego.weather.day_2.tx', '°') }}
+                 </font>
+                 </td>
+                 </tr>
+                 </table>
+             
+                 
+  <table height="90%" width="98%" align="center">
+        
+                       <tr>
+          <td width="15%" align="left">
+            Nachts:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_8', 'indego.weather.int_8.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_8', 'indego.weather.int_8.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_8', 'indego.weather.int_8.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_8', 'indego.weather.int_8.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_8', 'indego.weather.int_8.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_8_td', 'indego.weather.int_8.td', '°') }} - {{ basic.float('indego_wetter_int_8_tt', 'indego.weather.int_8.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_8_rrr', 'indego.weather.int_8.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_8_prrr', 'indego.weather.int_8.prrr', '%') }}
+            </td>
+          </td>
+        </tr>   
+        
+        
+                     
+        </tr>
+        
+        <tr>
+          <td width="15%" align="left">
+            Morgens:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_9', 'indego.weather.int_9.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_9', 'indego.weather.int_9.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_9', 'indego.weather.int_9.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_9', 'indego.weather.int_9.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_9', 'indego.weather.int_9.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_9_td', 'indego.weather.int_9.td', '°') }} - {{ basic.float('indego_wetter_int_9_tt', 'indego.weather.int_9.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_9_rrr', 'indego.weather.int_9.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+           {{ basic.float('indego_wetter_int_9_prrr', 'indego.weather.int_9.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Mittags:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_10', 'indego.weather.int_10.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_10', 'indego.weather.int_10.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_10', 'indego.weather.int_10.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_10', 'indego.weather.int_10.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_10', 'indego.weather.int_10.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_10_td', 'indego.weather.int_10.td', '°') }} - {{ basic.float('indego_wetter_int_10_tt', 'indego.weather.int_10.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_10_rrr', 'indego.weather.int_10.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+  			{{ basic.float('indego_wetter_int_10_prrr', 'indego.weather.int_10.prrr', '%') }}
+            </td>
+                     </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Abends:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_11', 'indego.weather.int_11.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_11', 'indego.weather.int_11.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_11', 'indego.weather.int_11.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_11', 'indego.weather.int_11.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_11', 'indego.weather.int_11.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_11_td', 'indego.weather.int_11.td', '°') }} - {{ basic.float('indego_wetter_int_11_tt', 'indego.weather.int_11.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_11_rrr', 'indego.weather.int_11.rrr', 'l/m²') }}
+            </td>
+            
+         <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_11_prrr', 'indego.weather.int_11.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+
+        
+        
+        </table>
+
+    </div>
+    </div>
+    </div>
+    
+    <div class="block">
+        <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+            <div data-role="collapsible" data-collapsed="false">
+                <h3>Vorhersage {{ basic.value('indego_weather_day_3_wochentag','indego.weather.day_3.wochentag') }} Temperaturen / Regenwahrscheinlichkeit</h3>        
+   
+   
+     <table height="90%" width="98%" align="center">
+        <tr>
+          <td width="50%" align="left">
+          <font size="+1">
+                  Sonnenstunden: {{ basic.value('indego_weather_day_3_sun', 'indego.weather.day_3.sun', '') }}
+          </font>
+          </td> 
+                 <td width="50%" align="right">
+                 <font size="+1">
+                 {{ basic.float('indego_weather_day_3_tn', 'indego.weather.day_3.tn', '°') }} - {{ basic.float('indego_weather_day_3_tx', 'indego.weather.day_3.tx', '°') }}
+                 </font>
+                 </td>
+                 </tr>
+                 </table>
+             
+                 
+  <table height="90%" width="98%" align="center">
+        
+                       <tr>
+          <td width="15%" align="left">
+            Nachts:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_12', 'indego.weather.int_12.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_12', 'indego.weather.int_12.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_12', 'indego.weather.int_12.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_12', 'indego.weather.int_12.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_12', 'indego.weather.int_12.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_12_td', 'indego.weather.int_12.td', '°') }} - {{ basic.float('indego_wetter_int_12_tt', 'indego.weather.int_12.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_12_rrr', 'indego.weather.int_12.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_12_prrr', 'indego.weather.int_12.prrr', '%') }}
+            </td>
+          </td>
+        </tr>   
+        
+        
+                     
+        </tr>
+        
+        <tr>
+          <td width="15%" align="left">
+            Morgens:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_13', 'indego.weather.int_13.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_13', 'indego.weather.int_13.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_13', 'indego.weather.int_13.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_13', 'indego.weather.int_13.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_13', 'indego.weather.int_13.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_13_td', 'indego.weather.int_13.td', '°') }} - {{ basic.float('indego_wetter_int_13_tt', 'indego.weather.int_13.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_13_rrr', 'indego.weather.int_13.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+           {{ basic.float('indego_wetter_int_13_prrr', 'indego.weather.int_13.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Mittags:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_14', 'indego.weather.int_14.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_14', 'indego.weather.int_14.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_14', 'indego.weather.int_14.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_14', 'indego.weather.int_14.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_14', 'indego.weather.int_14.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_14_td', 'indego.weather.int_14.td', '°') }} - {{ basic.float('indego_wetter_int_14_tt', 'indego.weather.int_14.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_14_rrr', 'indego.weather.int_14.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+  			{{ basic.float('indego_wetter_int_14_prrr', 'indego.weather.int_14.prrr', '%') }}
+            </td>
+                     </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Abends:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_15', 'indego.weather.int_15.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_15', 'indego.weather.int_15.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_15', 'indego.weather.int_15.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_15', 'indego.weather.int_15.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_15', 'indego.weather.int_15.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_15_td', 'indego.weather.int_15.td', '°') }} - {{ basic.float('indego_wetter_int_15_tt', 'indego.weather.int_15.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_15_rrr', 'indego.weather.int_15.rrr', 'l/m²') }}
+            </td>
+            
+         <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_15_prrr', 'indego.weather.int_15.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+
+        
+        
+        </table>
+
+    </div>
+    </div>
+    </div>
+    
+    
+    <div class="block">
+        <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+            <div data-role="collapsible" data-collapsed="false">
+                <h3>Vorhersage {{ basic.value('indego_weather_day_4_wochentag','indego.weather.day_4.wochentag') }} Temperaturen / Regenwahrscheinlichkeit</h3>        
+   
+   
+     <table height="90%" width="98%" align="center">
+        <tr>
+          <td width="50%" align="left">
+          <font size="+1">
+                  Sonnenstunden: {{ basic.value('indego_weather_day_4_sun', 'indego.weather.day_4.sun', '') }}
+          </font>
+          </td> 
+                 <td width="50%" align="right">
+                 <font size="+1">
+                 {{ basic.float('indego_weather_day_4_tn', 'indego.weather.day_4.tn', '°') }} - {{ basic.float('indego_weather_day_4_tx', 'indego.weather.day_4.tx', '°') }}
+                 </font>
+                 </td>
+                 </tr>
+                 </table>
+             
+                 
+  <table height="90%" width="98%" align="center">
+        
+                       <tr>
+          <td width="15%" align="left">
+            Nachts:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_16', 'indego.weather.int_16.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_16', 'indego.weather.int_16.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_16', 'indego.weather.int_16.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_16', 'indego.weather.int_16.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_16', 'indego.weather.int_16.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_16_td', 'indego.weather.int_16.td', '°') }} - {{ basic.float('indego_wetter_int_16_tt', 'indego.weather.int_16.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_16_rrr', 'indego.weather.int_16.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_16_prrr', 'indego.weather.int_16.prrr', '%') }}
+            </td>
+          </td>
+        </tr>   
+        
+        
+                     
+        </tr>
+        
+        <tr>
+          <td width="15%" align="left">
+            Morgens:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_17', 'indego.weather.int_17.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_17', 'indego.weather.int_17.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_17', 'indego.weather.int_17.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_17', 'indego.weather.int_17.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_17', 'indego.weather.int_17.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_17_td', 'indego.weather.int_17.td', '°') }} - {{ basic.float('indego_wetter_int_17_tt', 'indego.weather.int_17.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_17_rrr', 'indego.weather.int_17.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+           {{ basic.float('indego_wetter_int_17_prrr', 'indego.weather.int_17.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Mittags:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_18', 'indego.weather.int_18.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_18', 'indego.weather.int_18.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_18', 'indego.weather.int_18.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_18', 'indego.weather.int_18.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_18', 'indego.weather.int_18.Gewitter','','cloud_10.png') }} 
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_18_td', 'indego.weather.int_18.td', '°') }} - {{ basic.float('indego_wetter_int_18_tt', 'indego.weather.int_18.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_18_rrr', 'indego.weather.int_18.rrr', 'l/m²') }}
+            </td>
+          <td width="20%" align="right"> 
+  			{{ basic.float('indego_wetter_int_18_prrr', 'indego.weather.int_18.prrr', '%') }}
+            </td>
+                     </td>
+        </tr>
+                <tr>
+          <td width="15%" align="left">
+            Abends:
+          </td>
+          <td width="15%" align="center">
+          {{ basic.symbol('spells_int_19', 'indego.weather.int_19.spells','','sun_5.png') }} 
+          {{ basic.symbol('sonne_int_19', 'indego.weather.int_19.Sonne','','sun_1.png') }} 
+          {{ basic.symbol('wolken_int_19', 'indego.weather.int_19.Wolken','','cloud_5.png') }}            
+          {{ basic.symbol('regen_int_19', 'indego.weather.int_19.Regen','','cloud_8.png') }}           
+          {{ basic.symbol('gewitter_int_19', 'indego.weather.int_19.Gewitter','','cloud_10.png') }}  
+          </td>
+          <td width="30%" align="center">
+            {{ basic.float('indego_wetter_int_19_td', 'indego.weather.int_19.td', '°') }} - {{ basic.float('indego_wetter_int_19_tt', 'indego.weather.int_19.tt', '°') }} 
+          </td>
+          <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_19_rrr', 'indego.weather.int_19.rrr', 'l/m²') }}
+            </td>
+            
+         <td width="20%" align="right"> 
+            {{ basic.float('indego_wetter_int_19_prrr', 'indego.weather.int_19.prrr', '%') }}
+            </td>
+          </td>
+        </tr>
+
+        
+        
+        </table>
+
+    </div>
+    </div>
+    </div>
+ {% endblock %}
+

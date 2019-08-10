@@ -68,7 +68,7 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
     webroot = None
 
     def __init__(self, request, client_address, server):
-        self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
+        self.logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
         super().__init__(request, client_address, server)
 
     def _get_mime_type_by_filetype(self, file_path):
@@ -90,7 +90,7 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             raise Exception("Could not found mime-type for extension '{ext}'.".format(ext=extension))
 
         except Exception as err:
-            self._logger.warning(err)
+            self.logger.warning(err)
             return None
 
     def do_GET(self):
@@ -119,7 +119,7 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
                 return
 
             client = "{ip}:{port}".format(ip=self.client_address[0], port=self.client_address[1])
-            self._logger.debug("Webservice: delivering file '{path}' to client ip {client}.".format(path=file_path,
+            self.logger.debug("Webservice: delivering file '{path}' to client ip {client}.".format(path=file_path,
                                                                                                     client=client))
             file = open(file_path, 'rb').read()
             self.send_response(200)
@@ -128,8 +128,8 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(file)
         except Exception as ex:
-            self._logger.error("Error delivering file {file}".format(file=file_path))
-            self._logger.error(ex)
+            self.logger.error("Error delivering file {file}".format(file=file_path))
+            self.logger.error(ex)
         finally:
             self.connection.close()
 
@@ -162,14 +162,15 @@ class SimpleHttpServer:
 
 
 class SubscriptionHandler(object):
-    def __init__(self, endpoint, service, logger):
+    def __init__(self, endpoint, service, logger, threadName):
         self._lock = threading.Lock()
         self._thread = None
         self._service = service
         self._endpoint = endpoint
         self._event = None
         self._signal = None
-        self._logger = logger
+        self.logger = logger
+        self._threadName = threadName
 
     def subscribe(self):
         with self._lock:
@@ -177,9 +178,9 @@ class SubscriptionHandler(object):
             try:
                 self._event = self._service.subscribe(auto_renew=True)
             except Exception as err:
-                self._logger.warning("Sonos: {err}".format(err=err))
+                self.logger.warning("Sonos: {err}".format(err=err))
             if self._event:
-                self._thread = threading.Thread(target=self._endpoint, args=(self,))
+                self._thread = threading.Thread(target=self._endpoint, name=self._threadName, args=(self,))
                 self._thread.setDaemon(True)
                 self._thread.start()
 
@@ -190,11 +191,11 @@ class SubscriptionHandler(object):
                 try:
                     self._event.unsubscribe()
                 except Exception as err:
-                    self._logger.warning("Sonos: {err}".format(err=err))
+                    self.logger.warning("Sonos: {err}".format(err=err))
                 self._signal.set()
                 if self._thread:
-                    self._thread.join()
-                self._logger.debug("Sonos: event {event} unsubscribed and thread terminated".format(
+                    self._thread.join(2)
+                self.logger.debug("Sonos: event {event} unsubscribed and thread terminated".format(
                     event=self._endpoint))
 
     @property
@@ -218,7 +219,7 @@ class SubscriptionHandler(object):
 
 class Speaker(object):
     def __init__(self, uid, logger):
-        self._logger = logger
+        self.logger = logger
         self.uid_items = []
         self._uid = ""
         self._soco = None
@@ -319,26 +320,26 @@ class Speaker(object):
     def soco(self, value):
         if self._soco != value:
             self._soco = value
-            self._logger.debug("Sonos: {uid}: soco set to {value}".format(uid=self.uid, value=value))
+            self.logger.debug("Sonos: {uid}: soco set to {value}".format(uid=self.uid, value=value))
             if self._soco:
                 self.render_subscription = \
                     SubscriptionHandler(endpoint=self._rendering_control_event, service=self._soco.renderingControl,
-                                        logger=self._logger)
+                                        logger=self.logger, threadName="sonos_{uid}_eventRenderingControl".format(uid=self.uid))
                 self.av_subscription = \
                     SubscriptionHandler(endpoint=self._av_transport_event, service=self._soco.avTransport,
-                                        logger=self._logger)
+                                        logger=self.logger, threadName="sonos_{uid}_eventAvTransport".format(uid=self.uid))
                 self.system_subscription = \
                     SubscriptionHandler(endpoint=self._system_properties_event, service=self._soco.systemProperties,
-                                        logger=self._logger)
+                                        logger=self.logger, threadName="sonos_{uid}_eventSystemProperties".format(uid=self.uid))
                 self.zone_subscription = \
                     SubscriptionHandler(endpoint=self._zone_topology_event, service=self._soco.zoneGroupTopology,
-                                        logger=self._logger)
+                                        logger=self.logger, threadName="sonos_{uid}_eventZoneTopology".format(uid=self.uid))
                 self.alarm_subscription = \
                     SubscriptionHandler(endpoint=self._alarm_event, service=self._soco.alarmClock,
-                                        logger=self._logger)
+                                        logger=self.logger, threadName="sonos_{uid}_eventAlarmEvent".format(uid=self.uid))
                 self.device_subscription = \
                     SubscriptionHandler(endpoint=self._device_properties_event, service=self._soco.deviceProperties,
-                                        logger=self._logger)
+                                        logger=self.logger, threadName="sonos_{uid}_eventDeviceProperties".format(uid=self.uid))
 
                 # just to have a list for disposing all events
                 self._events = [
@@ -358,7 +359,7 @@ class Speaker(object):
         """
         clean-up all things here
         """
-        self._logger.debug("Sonos: {uid}: disposing".format(uid=self.uid))
+        self.logger.debug("Sonos: {uid}: disposing".format(uid=self.uid))
 
         if not self._soco:
             return
@@ -367,7 +368,7 @@ class Speaker(object):
             try:
                 subscription.unsubscribe()
             except Exception as error:
-                self._logger.warning("Sonos: {error}".format(error=error))
+                self.logger.warning("Sonos: {error}".format(error=error))
                 continue
 
         self._soco = None
@@ -426,7 +427,7 @@ class Speaker(object):
         self.zone_subscription.unsubscribe()
         self.zone_subscription.subscribe()
 
-        self._logger.debug("Sonos: {uid}: Event subscriptions done".format(uid=self.uid))
+        self.logger.debug("Sonos: {uid}: Event subscriptions done".format(uid=self.uid))
 
     # Event Handler routines ###########################################################################################
 
@@ -436,7 +437,7 @@ class Speaker(object):
         :param sub_handler: SubscriptionHandler for the rendering control event
         """
         try:
-            self._logger.debug("Sonos: {uid}: rendering control event handler active".format(uid=self.uid))
+            self.logger.debug("Sonos: {uid}: rendering control event handler active".format(uid=self.uid))
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
@@ -454,10 +455,11 @@ class Speaker(object):
                     if 'dialog_mode' in event.variables:
                         self.dialog_mode = event.variables['dialog_mode']
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
 
     def _alarm_event(self, sub_handler: SubscriptionHandler) -> None:
         """
@@ -465,15 +467,16 @@ class Speaker(object):
         :param sub_handler: SubscriptionHandler for the alarm event
         """
         try:
-            self._logger.debug("Sonos: {uid}: alarm clock event handler active".format(uid=self.uid))
+            self.logger.debug("Sonos: {uid}: alarm clock event handler active".format(uid=self.uid))
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
 
     def _system_properties_event(self, sub_handler: SubscriptionHandler) -> None:
         """
@@ -481,15 +484,16 @@ class Speaker(object):
         :param sub_handler: SubscriptionHandler for the system properties event
         """
         try:
-            self._logger.debug("Sonos: {uid}: system properties event handler active".format(uid=self.uid))
+            self.logger.debug("Sonos: {uid}: system properties event handler active".format(uid=self.uid))
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
 
     def _device_properties_event(self, sub_handler: SubscriptionHandler) -> None:
         """
@@ -497,17 +501,18 @@ class Speaker(object):
         :param sub_handler: SubscriptionHandler for the device properties event
         """
         try:
-            self._logger.debug("Sonos: {uid}: device properties event handler active".format(uid=self.uid))
+            self.logger.debug("Sonos: {uid}: device properties event handler active".format(uid=self.uid))
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
                     if 'zone_name' in event.variables:
                         self.player_name = event.variables['zone_name']
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
 
     def _zone_topology_event(self, sub_handler: SubscriptionHandler) -> None:
         """
@@ -515,20 +520,20 @@ class Speaker(object):
         :param sub_handler: SubscriptionHandler for the zone topology event
         """
         try:
-            self._logger.debug("Sonos: {uid}: topology event handler active".format(uid=self.uid))
+            self.logger.debug("Sonos: {uid}: topology event handler active".format(uid=self.uid))
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
                     if 'zone_group_state' in event.variables:
                         tree = XML.fromstring(event.variables['zone_group_state'].encode('utf-8'))
-                        # find group where our uid is located
-                        for group_element in tree.findall('ZoneGroup'):
+                        #find group where our uid is located
+                        for group_element in tree.find('ZoneGroups').findall('ZoneGroup'):
                             coordinator_uid = group_element.attrib['Coordinator'].lower()
                             zone_group_member = []
                             uid_found = False
                             for member_element in group_element.findall('ZoneGroupMember'):
                                 member_uid = member_element.attrib['UUID'].lower()
-                                _initialize_speaker(member_uid, self._logger)
+                                _initialize_speaker(member_uid, self.logger)
                                 zone_group_member.append(sonos_speaker[member_uid])
                                 if member_uid == self._uid:
                                     uid_found = True
@@ -547,10 +552,11 @@ class Speaker(object):
                                 self.sonos_playlists()
 
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
 
     def _av_transport_event(self, sub_handler: SubscriptionHandler) -> None:
         """
@@ -558,7 +564,7 @@ class Speaker(object):
         :param sub_handler: SubscriptionHandler for the av transport event
         """
         try:
-            self._logger.debug("Sonos: {uid}: av transport event handler active".format(uid=self.uid))
+            self.logger.debug("Sonos: {uid}: av transport event handler active".format(uid=self.uid))
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
@@ -687,20 +693,21 @@ class Speaker(object):
                         self.radio_station = ''
 
                     sub_handler.event.events.task_done()
+                    del event
                 except Empty:
                     pass
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
 
     def _check_property(self):
         if not self.is_initialized:
-            self._logger.warning("Sonos: {uid}: speaker is not initialized.".format(uid=self.uid))
+            self.logger.warning("Sonos: {uid}: speaker is not initialized.".format(uid=self.uid))
             return False
         if not self.coordinator:
-            self._logger.warning("Sonos: {uid}: coordinator is empty".format(uid=self.uid))
+            self.logger.warning("Sonos: {uid}: coordinator is empty".format(uid=self.uid))
             return False
         if self.coordinator not in sonos_speaker:
-            self._logger.warning("Sonos: {uid}: coordinator '{coordinator}' is not a valid speaker.".format
+            self.logger.warning("Sonos: {uid}: coordinator '{coordinator}' is not a valid speaker.".format
                                  (uid=self.uid, coordinator=self.coordinator))
             return False
         return True
@@ -730,7 +737,7 @@ class Speaker(object):
     @_zone_group_members.setter
     def _zone_group_members(self, value):
         if not isinstance(value, list):
-            self._logger.warning("Sonos: {uid}: value [{value]] for setter _zone_group_members must be type of list."
+            self.logger.warning("Sonos: {uid}: value [{value]] for setter _zone_group_members must be type of list."
                                  .format(uid=self.uid, value=value))
             return
         self._zone_group = value
@@ -842,7 +849,7 @@ class Speaker(object):
             self.night_mode = night_mode
             return True
         except Exception as ex:
-            self._logger.warning("Sonos: {uid}: can't set night mode. Not supported.".format(uid=self.uid))
+            self.logger.warning("Sonos: {uid}: can't set night mode. Not supported.".format(uid=self.uid))
             return False
 
     @property
@@ -880,7 +887,7 @@ class Speaker(object):
             self.dialog_mode = dialog_mode
             return True
         except Exception as ex:
-            self._logger.warning("Sonos: {uid}: can't set dialog mode. Not supported.".format(uid=self.uid))
+            self.logger.warning("Sonos: {uid}: can't set dialog mode. Not supported.".format(uid=self.uid))
             return False
 
     @property
@@ -923,7 +930,7 @@ class Speaker(object):
                 self.loudness = loudness
             return True
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return False
 
     @property
@@ -969,7 +976,7 @@ class Speaker(object):
                 self.treble = treble
             return True
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return False
 
     @property
@@ -1015,7 +1022,7 @@ class Speaker(object):
                 self.bass = bass
             return True
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return False
 
     @property
@@ -1074,7 +1081,7 @@ class Speaker(object):
                 # raise Exception('Sonos: Volume has to be an integer between 0 and 100.')
 
             if self._check_max_volume_exceeded(volume, max_volume):
-                self._logger.debug("Sonos: Volume to set [{volume}] exceeds max volume [{max_volume}].".format(
+                self.logger.debug("Sonos: Volume to set [{volume}] exceeds max volume [{max_volume}].".format(
                     volume=volume, max_volume=max_volume
                 ))
                 volume = max_volume
@@ -1088,7 +1095,7 @@ class Speaker(object):
                 self.volume = volume
             return True
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return False
 
     def switch_to_tv(self) -> bool:
@@ -1099,7 +1106,7 @@ class Speaker(object):
         try:
             return self.soco.switch_to_tv()
         except Exception as ex:
-            self._logger.warning("Sonos: {uid}: can't switch to TV. Not supported.".format(uid=self.uid))
+            self.logger.warning("Sonos: {uid}: can't switch to TV. Not supported.".format(uid=self.uid))
             return False
 
     def switch_to_line_in(self) -> bool:
@@ -1110,7 +1117,7 @@ class Speaker(object):
         try:
             return self.soco.switch_to_line_in()
         except Exception as ex:
-            self._logger.warning("Sonos: {uid}: can't switch to line-in. Not supported.".format(uid=self.uid))
+            self.logger.warning("Sonos: {uid}: can't switch to line-in. Not supported.".format(uid=self.uid))
             return False
 
     @property
@@ -1144,7 +1151,7 @@ class Speaker(object):
             self.soco.status_light = value
             return True
         except Exception as ex:
-            self._logger.debug(ex)
+            self.logger.debug(ex)
             return False
 
     def get_status_light(self) -> bool:
@@ -1156,7 +1163,7 @@ class Speaker(object):
         try:
             return self.soco.status_light
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return False
 
     @property
@@ -1193,7 +1200,7 @@ class Speaker(object):
         :param value: list with uids to set as group members
         """
         if not isinstance(value, list):
-            self._logger.warning("Sonos: {uid}: value [{value]] for setter zone_group_members must be type of list."
+            self.logger.warning("Sonos: {uid}: value [{value]] for setter zone_group_members must be type of list."
                                  .format(uid=self.uid, value=value))
             return
         self._members = value
@@ -1419,7 +1426,7 @@ class Speaker(object):
             try:
                 sonos_speaker[self.coordinator].soco.next()
             except:
-                self._logger.debug("Sonos: {uid}: can't go to next track. Maybe the end of the playlist "
+                self.logger.debug("Sonos: {uid}: can't go to next track. Maybe the end of the playlist "
                                    "reached?".format(uid=self.uid))
 
     def set_previous(self, previous: bool) -> None:
@@ -1434,7 +1441,7 @@ class Speaker(object):
             try:
                 sonos_speaker[self.coordinator].soco.previous()
             except:
-                self._logger.debug("Sonos: {uid}: can't go back to the previously played track. Already the first "
+                self.logger.debug("Sonos: {uid}: can't go back to the previously played track. Already the first "
                                    "track in the playlist?".format(uid=self.uid))
 
     @property
@@ -1479,7 +1486,7 @@ class Speaker(object):
             sonos_speaker[self.coordinator].soco.mute = value
             return True
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return False
 
     @property
@@ -1524,7 +1531,7 @@ class Speaker(object):
             sonos_speaker[self.coordinator].soco.cross_fade = cross_fade
             return True
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return False
 
     @property
@@ -1571,7 +1578,7 @@ class Speaker(object):
             sonos_speaker[self.coordinator].soco.set_sleep_timer(snooze)
             return True
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return False
 
     def get_snooze(self) -> int:
@@ -1586,7 +1593,7 @@ class Speaker(object):
                 return 0
             return sonos_speaker[self.coordinator].soco.get_sleep_timer()
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return 0
 
     @property
@@ -1632,7 +1639,7 @@ class Speaker(object):
             sonos_speaker[self.coordinator].soco.play_mode = play_mode
             return True
         except Exception as ex:
-            self._logger.error(ex)
+            self.logger.error(ex)
             return False
 
     @property
@@ -2112,10 +2119,10 @@ class Speaker(object):
             return
         uid = uid.lower()
         if uid not in sonos_speaker:
-            self._logger.warning("Sonos: Cannot join ... no speaker found with uid {uid}.".format(uid=uid))
+            self.logger.warning("Sonos: Cannot join ... no speaker found with uid {uid}.".format(uid=uid))
             return
         speaker_to_join = sonos_speaker[uid]
-        self._logger.debug(
+        self.logger.debug(
             'Sonos: Joining [{uid}] to [uid: {to_join}, master: {master}]'.format(
                 uid=uid, to_join=speaker_to_join.uid, master=speaker_to_join.coordinator))
         self.soco.join(sonos_speaker[speaker_to_join.coordinator].soco)
@@ -2161,8 +2168,8 @@ class Speaker(object):
 
                 tag = TinyTag.get(file_path)
                 duration = round(tag.duration) + duration_offset
-                self._logger.debug("Sonos: TTS track duration offset is: {offset}s".format(offset=duration_offset))
-                self._logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
+                self.logger.debug("Sonos: TTS track duration offset is: {offset}s".format(offset=duration_offset))
+                self.logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
                 file_name = quote(os.path.split(file_path)[1])
                 snippet_url = "{url}/{file}".format(url=webservice_url, file=file_name)
 
@@ -2210,13 +2217,13 @@ class Speaker(object):
                                                      fade_in)
         else:
             if "tinytag" not in sys.modules:
-                self._logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
+                self.logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
                                    "install tinytag'.")
                 return
             file_path = os.path.join(local_webservice_path_snippet, audio_file)
 
             if not os.path.exists(file_path):
-                self._logger.error("Sonos: Snippet file '{file_path}' does not exists.".format(file_path=file_path))
+                self.logger.error("Sonos: Snippet file '{file_path}' does not exists.".format(file_path=file_path))
                 return
             self._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
 
@@ -2229,21 +2236,21 @@ class Speaker(object):
                                                      volume, duration_offset, fade_in)
         else:
             if "tinytag" not in sys.modules:
-                self._logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
+                self.logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
                                    "install tinytag'.")
                 return
             file_path = get_tts_local_file_path(local_webservice_path, tts, tts_language)
 
             # only do a tts call if file not exists
             if not os.path.exists(file_path):
-                tts = gTTS(tts, self._logger, tts_language)
+                tts = gTTS(tts, self.logger, tts_language)
                 try:
                     tts.save(file_path)
                 except Exception as err:
-                    self._logger.error("Sonos: Could not obtain TTS file from Google. Error: {ex}".format(ex=err))
+                    self.logger.error("Sonos: Could not obtain TTS file from Google. Error: {ex}".format(ex=err))
                     return
             else:
-                self._logger.debug("Sonos: File {file} already exists. No TTS request necessary.".format(
+                self.logger.debug("Sonos: File {file} already exists. No TTS request necessary.".format(
                     file=file_path))
             self._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
 
@@ -2264,7 +2271,7 @@ class Speaker(object):
         else:
             try:
                 if not name:
-                    self._logger.warning("Sonos: A valid playlist name must be provided.")
+                    self.logger.warning("Sonos: A valid playlist name must be provided.")
                     return
                 playlist = self.soco.get_sonos_playlist_by_attr('title', name)
                 if playlist:
@@ -2274,39 +2281,47 @@ class Speaker(object):
                     try:
                         track = int(track)
                     except TypeError:
-                        self._logger.warning("Sonos: Could not cast track [{track}] to 'int'.")
+                        self.logger.warning("Sonos: Could not cast track [{track}] to 'int'.")
                         return
                     try:
                         self.soco.play_from_queue(track, start)
                     except SoCoUPnPException as ex:
-                        self._logger.warning("Sonos: {ex}".format(ex=ex))
+                        self.logger.warning("Sonos: {ex}".format(ex=ex))
                         return
                     # bug here? no event, we have to trigger it manually
                     if start:
                         self.play = True
             except Exception as ex:
-                self._logger.warning("Sonos: No Sonos playlist found with title '{title}'.".format(title=name))
+                self.logger.warning("Sonos: No Sonos playlist found with title '{title}'.".format(title=name))
 
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.8"
+    PLUGIN_VERSION = "1.4.9"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
                  discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, snippet_duration_offset=0.0, **kwargs):
         super().__init__(**kwargs)
         self._sh = sh
-        self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
+        #self.logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
         self.zero_zone = False  # sometime a discovery scan fails, so try it two times; we need to save the state
         self._sonos_dpt3_step = 2  # default value for dpt3 volume step (step(s) per time period)
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
         self._tts = self.to_bool(tts, default=False)
         self._local_webservice_path = local_webservice_path
         self._snippet_duration_offset = float(snippet_duration_offset)
+		
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+        #else:
+        #    self.logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
+
+        self.logger.debug("init {} version: {ver}".format(__name__, ver='.'.join(VERSION.split('.', 2)[:2])))
 
         # Exit if the required package(s) could not be imported
         if not REQUIRED_PACKAGE_IMPORTED:
-            self._logger.error("{}: Unable to import required external python packages. Please install.".format(self.get_fullname()))
+            self.logger.error("{}: Unable to import required external python packages. Please install.".format(self.get_fullname()))
             return
 
         # see documentation: if no exclusive snippet path is set, we use the global one
@@ -2323,14 +2338,14 @@ class Sonos(SmartPlugin):
 
         self._speaker_ips = []
         if speaker_ips:
-            self._logger.debug("Sonos: User-defined speaker IPs set. Auto-discover disabled.")
+            self.logger.debug("Sonos: User-defined speaker IPs set. Auto-discover disabled.")
         # check user specified sonos speaker ips
         if speaker_ips:
             for ip in speaker_ips:
                 if self.is_ip(ip):
                     self._speaker_ips.append(ip)
                 else:
-                    self._logger.warning("Sonos: Invalid Sonos speaker ip '{ip}'. Ignoring.".format(ip=ip))
+                    self.logger.warning("Sonos: Invalid Sonos speaker ip '{ip}'. Ignoring.".format(ip=ip))
 
         # unique items in list
         self._speaker_ips = utils.unique_list(self._speaker_ips)
@@ -2340,7 +2355,7 @@ class Sonos(SmartPlugin):
             if self.is_ip(webservice_ip):
                 self._webservice_ip = webservice_ip
             else:
-                self._logger.error("Sonos: Your webservice_ip parameter is invalid. '{ip}' is not a vaild ip address. "
+                self.logger.error("Sonos: Your webservice_ip parameter is invalid. '{ip}' is not a vaild ip address. "
                                    "Disabling TTS.".format(ip=webservice_ip))
                 self._tts = False
         else:
@@ -2349,11 +2364,11 @@ class Sonos(SmartPlugin):
         if utils.is_valid_port(str(webservice_port)):
             self._webservice_port = int(webservice_port)
             if not utils.is_open_port(self._webservice_port):
-                self._logger.error("Sonos: Your chosen webservice port {port} is already in use. "
+                self.logger.error("Sonos: Your chosen webservice port {port} is already in use. "
                                    "TTS disabled!".format(port=self._webservice_port))
                 self._tts = False
         else:
-            self._logger.error("Sonos: Your webservice_port parameter is invalid. '{port}' is not within port range "
+            self.logger.error("Sonos: Your webservice_port parameter is invalid. '{port}' is not within port range "
                                "1024-65535. TTS disabled!".format(port=webservice_port))
             self._tts = False
 
@@ -2364,10 +2379,10 @@ class Sonos(SmartPlugin):
                 # we just need an existing path with read rights, this can be done by the user while shNG is running
                 # just throw some warnings
                 if not os.path.exists(self._local_webservice_path_snippet):
-                    self._logger.warning("Sonos: Local webservice snippet path was set to '{path}' but doesn't "
+                    self.logger.warning("Sonos: Local webservice snippet path was set to '{path}' but doesn't "
                                          "exists".format(path=self._local_webservice_path_snippet))
                 if not os.access(self._local_webservice_path_snippet, os.R_OK):
-                    self._logger.warning("Sonos: Local webservice snippet path '{path}' is not readable.".format(
+                    self.logger.warning("Sonos: Local webservice snippet path '{path}' is not readable.".format(
                         path=self._local_webservice_path_snippet))
 
             if self._local_webservice_path:
@@ -2375,19 +2390,19 @@ class Sonos(SmartPlugin):
                 try:
                     os.makedirs(self._local_webservice_path, exist_ok=True)
                     if os.path.exists(self._local_webservice_path):
-                        self._logger.debug("Sonos: Local webservice path set to '{path}'".format(
+                        self.logger.debug("Sonos: Local webservice path set to '{path}'".format(
                             path=self._local_webservice_path))
                         if os.access(self._local_webservice_path, os.W_OK):
-                            self._logger.debug("Sonos: Write permissions ok for tts on path {path}".format(
+                            self.logger.debug("Sonos: Write permissions ok for tts on path {path}".format(
                                 path=self._local_webservice_path))
 
                             free_diskspace = get_free_diskspace(self._local_webservice_path)
                             human_readable_diskspace = file_size(free_diskspace)
-                            self._logger.debug("Sonos: Free diskspace: {disk}".format(disk=human_readable_diskspace))
+                            self.logger.debug("Sonos: Free diskspace: {disk}".format(disk=human_readable_diskspace))
 
                             self._webservice_url = "http://{ip}:{port}".format(ip=self._webservice_ip,
                                                                                port=self._webservice_port)
-                            self._logger.debug("Sonos: Starting webservice for TTS on {url}".format(
+                            self.logger.debug("Sonos: Starting webservice for TTS on {url}".format(
                                 url=self._webservice_url))
                             self.webservice = SimpleHttpServer(self._webservice_ip,
                                                                self._webservice_port,
@@ -2395,37 +2410,37 @@ class Sonos(SmartPlugin):
                                                                self._local_webservice_path_snippet)
                             self.webservice.start()
                         else:
-                            self._logger.warning(
+                            self.logger.warning(
                                 "Sonos: Local webservice path '{path}' is not writeable for current user. "
                                 "TTS disabled!".format(path=self._local_webservice_path))
                     else:
-                        self._logger.warning("Sonos: Local webservice path '{path}' for TTS not exists. "
+                        self.logger.warning("Sonos: Local webservice path '{path}' for TTS not exists. "
                                              "TTS disabled!".format(path=self._local_webservice_path))
                 except OSError:
-                    self._logger.warning("Sonos: Could not create local webserver path '{path}'. Wrong permissions? "
+                    self.logger.warning("Sonos: Could not create local webserver path '{path}'. Wrong permissions? "
                                          "TTS disabled!".format(path=self._local_webservice_path))
             else:
-                self._logger.debug("Sonos: Local webservice path for TTS has to be set. TTS disabled!")
+                self.logger.debug("Sonos: Local webservice path for TTS has to be set. TTS disabled!")
         else:
-            self._logger.debug("Sonos: TTS disabled")
+            self.logger.debug("Sonos: TTS disabled")
         try:
             self._discover_cycle = int(discover_cycle)
         except:
-            self._logger.error("Sonos: Parameter 'discover_cycle' [{val}] invalid, must be int.".format(
+            self.logger.error("Sonos: Parameter 'discover_cycle' [{val}] invalid, must be int.".format(
                 val=discover_cycle
             ))
             self._discover_cycle = discover_cycle_default
 
-        self._logger.info("Sonos: Setting discover cycle to {val} seconds.".format(val=self._discover_cycle))
+        self.logger.info("Sonos: Setting discover cycle to {val} seconds.".format(val=self._discover_cycle))
 
     def run(self):
-        self._logger.debug("Sonos: run method called")
+        self.logger.debug("Sonos: run method called")
         self._sh.scheduler.add("sonos_discover_scheduler", self._discover, prio=3, cron=None,
                                cycle=self._discover_cycle, value=None, offset=None, next=None)
         self.alive = True
 
     def stop(self):
-        self._logger.debug("Sonos: stop method called")
+        self.logger.debug("Sonos: stop method called")
         for uid, speaker in sonos_speaker.items():
             speaker.dispose()
         event_listener.stop()
@@ -2440,23 +2455,23 @@ class Sonos(SmartPlugin):
         uid = None
 
         if self.has_iattr(item.conf, 'sonos_recv') or self.has_iattr(item.conf, 'sonos_send'):
-            self._logger.debug("parse item: {0}".format(item))
+            self.logger.debug("parse item: {0}".format(item))
             # get uid from parent item
             uid = self._resolve_uid(item)
             if not uid:
-                self._logger.error("Sonos: No uid found for {item}.".format(item=item))
+                self.logger.error("Sonos: No uid found for {item}.".format(item=item))
                 return
 
         if self.has_iattr(item.conf, 'sonos_recv'):
             # create Speaker instance if not exists
-            _initialize_speaker(uid, self._logger)
+            _initialize_speaker(uid, self.logger)
 
             # to make code smaller, map sonos_cmd value to the Speaker property by name
             item_name = self.get_iattr_value(item.conf, 'sonos_recv')
             try:
                 list_name = '{item_name}_items'.format(item_name=item_name)
                 attr = getattr(sonos_speaker[uid], list_name)
-                self._logger.debug(
+                self.logger.debug(
                     "Sonos: Adding item {item} to {uid}: list {list}".format(item=item, uid=uid, list=list_name))
                 attr.append(item)
             except:
@@ -2464,7 +2479,7 @@ class Sonos(SmartPlugin):
                                     .format(item_name=item_name))
 
         if self.has_iattr(item.conf, 'sonos_send'):
-            self._logger.debug("Sonos: {item} registered to send Sonos commands.".format(item=item))
+            self.logger.debug("Sonos: {item} registered to send Sonos commands.".format(item=item))
             return self.update_item
 
         # some special handling for dpt3 volume
@@ -2479,9 +2494,9 @@ class Sonos(SmartPlugin):
             if parent_item is not None:
                 if self.has_iattr(parent_item.conf, 'sonos_recv'):
                     if self.get_iattr_value(parent_item.conf, 'sonos_recv').lower() != 'volume':
-                        self._logger.warning("Sonos: volume_dpt3 item has no volume parent item. Ignoring!")
+                        self.logger.warning("Sonos: volume_dpt3 item has no volume parent item. Ignoring!")
                 else:
-                    self._logger.warning("Sonos: volume_dpt3 item has no volume parent item. Ignoring!")
+                    self.logger.warning("Sonos: volume_dpt3 item has no volume parent item. Ignoring!")
                     return
 
             item.conf['volume_parent'] = parent_item
@@ -2495,19 +2510,19 @@ class Sonos(SmartPlugin):
                         break
 
             if child_helper is None:
-                self._logger.warning("Sonos: volume_dpt3 item has no helper item. Ignoring!")
+                self.logger.warning("Sonos: volume_dpt3 item has no helper item. Ignoring!")
                 return
 
             item.conf['helper'] = child_helper
 
             if not self.has_iattr(item.conf, 'sonos_dpt3_step'):
                 item.conf['sonos_dpt3_step'] = self._sonos_dpt3_step
-                self._logger.debug("Sonos: No sonos_dpt3_step defined, using default value {step}.".
+                self.logger.debug("Sonos: No sonos_dpt3_step defined, using default value {step}.".
                                    format(step=self._sonos_dpt3_step))
 
             if not self.has_iattr(item.conf, 'sonos_dpt3_time'):
                 item.conf['sonos_dpt3_time'] = self._sonos_dpt3_time
-                self._logger.debug("Sonos: no sonos_dpt3_time defined, using default value {time}.".
+                self.logger.debug("Sonos: no sonos_dpt3_time defined, using default value {time}.".
                                    format(time=self._sonos_dpt3_time))
 
             return self._handle_dpt3
@@ -2558,7 +2573,7 @@ class Sonos(SmartPlugin):
                 # get uid from parent item
                 uid = self._resolve_uid(item)
                 if not uid:
-                    self._logger.error("Sonos: No uid found for {item}.".format(item=item))
+                    self.logger.error("Sonos: No uid found for {item}.".format(item=item))
                     return
 
                 command = self.get_iattr_value(item.conf, "sonos_send").lower()
@@ -2694,7 +2709,7 @@ class Sonos(SmartPlugin):
                         return int(child())
             return default_value
         except:
-            self._logger.warning("Sonos: Could not cast value [{val}] to 'int', using default value '0'")
+            self.logger.warning("Sonos: Could not cast value [{val}] to 'int', using default value '0'")
             return default_value
 
     def _resolve_group_command(self, item: Item) -> bool:
@@ -2729,7 +2744,7 @@ class Sonos(SmartPlugin):
                     try:
                         return int(child())
                     except Exception as ex:
-                        self._logger.error(ex)
+                        self.logger.error(ex)
                         return -1
         return -1
 
@@ -2752,7 +2767,7 @@ class Sonos(SmartPlugin):
             if self.has_iattr(parent_item.conf, 'sonos_uid'):
                 return self.get_iattr_value(parent_item.conf, 'sonos_uid').lower()
 
-        self._logger.warning("Sonos: could not resolve sonos_uid for item {item}".format(item=item))
+        self.logger.warning("Sonos: could not resolve sonos_uid for item {item}".format(item=item))
         return ''
 
     def _discover(self) -> None:
@@ -2774,10 +2789,10 @@ class Sonos(SmartPlugin):
         # 2. attempt: ok, no speaker found, go on
         if not zones:
             if not self.zero_zone:
-                self._logger.debug("Sonos: No speaker found (1. attempt), ignoring speaker handling.")
+                self.logger.debug("Sonos: No speaker found (1. attempt), ignoring speaker handling.")
                 self.zero_zone = True
                 return
-            self._logger.debug("Sonos: No speaker found.")
+            self.logger.debug("Sonos: No speaker found.")
         self.zero_zone = False
 
         for zone in zones:
@@ -2798,18 +2813,18 @@ class Sonos(SmartPlugin):
                         is_up = False
 
             if is_up:
-                self._logger.debug("Sonos: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
+                self.logger.debug("Sonos: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 if uid in sonos_speaker:
                     if zone is not sonos_speaker[uid].soco:
                         sonos_speaker[uid].soco = zone
                         sonos_speaker[uid].subscribe_base_events()
                     else:
-                        self._logger.debug("Sonos: SoCo instance already initiated, skipping.")
-                        self._logger.debug("Sonos: checking subscriptions")
+                        self.logger.debug("Sonos: SoCo instance already initiated, skipping.")
+                        self.logger.debug("Sonos: checking subscriptions")
                         sonos_speaker[uid].check_subscriptions()
 
                 else:
-                    _initialize_speaker(uid, self._logger)
+                    _initialize_speaker(uid, self.logger)
                     sonos_speaker[uid].soco = zone
 
                 sonos_speaker[uid].is_initialized = True
@@ -2817,11 +2832,11 @@ class Sonos(SmartPlugin):
 
             else:
                 if sonos_speaker[uid].soco is not None:
-                    self._logger.debug(
+                    self.logger.debug(
                         "Sonos: Disposing offline speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                     sonos_speaker[uid].dispose()
                 else:
-                    self._logger.debug(
+                    self.logger.debug(
                         "Sonos: Ignoring offline speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
 
                 sonos_speaker[uid].is_initialized = False
@@ -2832,7 +2847,7 @@ class Sonos(SmartPlugin):
         # dispose every speaker that was not found
         for uid in set(sonos_speaker.keys()) - set(handled_speaker.keys()):
             if sonos_speaker[uid].soco is not None:
-                self._logger.debug(
+                self.logger.debug(
                     "Sonos: Removing undiscovered speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 sonos_speaker[uid].dispose()
 

@@ -1,0 +1,138 @@
+# Metadata for the Smart-Plugin
+
+
+plugin:
+
+    type: interface
+    description:
+        de: 'Plugin zum Auslesen von SAMSON TROVIS 557x Heizungsreglern'
+        en: 'Plugin to read out SAMSON TROVIS 557x heating controllers'
+    maintainer: Tom-Bom-badil
+#    tester:                        # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: samson trovis 5576 iot
+    documentation: https://github.com/Tom-Bom-badil/samson_trovis_557x/wiki
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1390281-trovis-557x-heizungsregler-plugin
+    version: 0.1.a
+    sh_minversion: 1.5
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False
+    restartable: unknown
+    classname: trovis557x
+
+
+item_attributes:
+
+    type:
+        type: str
+        mandatory: True
+        description:
+            de: 'Den Typ aller verwendeten Items vorerst auf list setzen (wird noch geändert)'
+            en: 'Set all items in use to type list (will be changed lateron)'
+
+    desc:
+        type: str
+        mandatory: False
+        description:
+            de: 'Beschreibung des Items'
+            en: 'Description of the item'
+
+    trovis557x_var:
+        type: str
+        mandatory: True
+        description:
+            de: 'Kennzeichnet das Item zur Benutzung durch das Plugin (Kurznamen des gewünschten Wertes/Bits hier zuweisen)'
+            en: 'Marks the item for use by the plugin (the short name of the requested register/coil must be assigned here)'
+
+    liste:
+        type: list
+        mandatory: False
+        description:
+            de: 'Enthält alle Item-Informationen (Buswert, umgerechneter Wert, Einheit oder Listentext)'
+            en: 'Contains the full item information (bus value, real value, unit or list text)'
+            
+    visu_acl:
+        type: str
+        mandatory: False
+        description:
+            de: 'Alle Items sollten für die Visu auf nur lesen gesetzt werden'
+            en: 'You shopuld set all items for the visu to read only'
+
+
+parameters:
+
+    cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Ausleseintervall'
+            en: 'Reading interval'
+
+    model:
+        type: int
+        default: 5576
+        description:
+            de: 'Modell des Heizungsreglers (5573, 5576, 5578, 5579)'
+            en: 'Model of the heting controller (5573, 5576, 5578, 5579)'
+            
+    revision:
+        type: int
+        default: 003
+        description:
+            # Steht auf dem Aufkleber auf der Seite des Reglers
+            de: 'Baureihe des Heizungsreglers (001, 002, 003 usw)'
+            en: 'Revision of the heating controller (001, 002, 003 usw)'
+
+    modbus_speed:
+        type: int
+        default: 19200
+        description:
+            de: 'Modbus-Geschwindigkeit (Trovis: PA6 - Modbus, Baudrate)'
+            en: 'Modbus speed (Trovis: PA6 - Modbus, Baudrate)'
+
+    modbus_port:
+        type: str
+        default: '/dev/ttytrovis'
+        # USB: z.B./eg. /dev/ttyUSB0, /dev/ttyUSB1, /dev/ttyAMA0
+        # chmod 777 /dev/<yourport> wird empfohlen / is recommended
+        description:
+            de: 'Modbus-Port, über den die Trovis verbunden ist'
+            en: 'Modbus Port the Trovis is connected through'
+
+    modbus_trovis_address:
+        type: int
+        # Unbedingt richtige Adresse in der Trovis einstellen!
+        # You MUST set the right address in the Trovis!
+        default: 247  # !!! Standard: 255; Modbus-Spec: <=247 !!!
+        description:
+            de: 'Modbus-Adresse der Trovis (Trovis: PA6 - Modbus, ST.-NR)'
+            en: 'Modbus address of the Trovis (Trovis: PA6 - Modbus, ST.-NR)'
+
+    # Diese Parameter sollten so belassen werden:
+    # You should leave these parameters as they are:
+    
+    modbus_mode:
+        type: str
+        default: 'rtu'
+        description:
+            de: 'Wie die Modbus-Kommunikation duchgeführt wird (zur Zeit auf rtu belassen)'
+            en: 'How modbus communication is done (leave to rtu, tcp not yet supported)'
+
+    modbus_timeout:
+        type: num
+        default: 0.5
+        description:
+            de: 'Modbus Timeout'
+            en: 'Modbus timeout'
+            
+    modbus_debug:
+        type: bool
+        default: False  # ToDo / Einschalten des Debug-Modus noch herausfinden
+        description:
+            de: 'Debug-Meldungen von pymodbus'
+            en: 'Debug messages from pymodbus'
+
+
+plugin_functions: NONE
+item_structs: NONE
+logic_parameters: NONE
