@@ -1,0 +1,4 @@
+trovis557x:
+    class_name: trovis557x
+    class_path: plugins.trovis557x
+    cycle: '60'
