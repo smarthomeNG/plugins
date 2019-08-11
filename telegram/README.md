@@ -165,6 +165,52 @@ telegram_message:
     type: str
     telegram_text: true
 ```
+
+#### telegram_control
+
+change the content from a item with specific item-values provided with the attribute.
+The attribute parameter is a list whit 'name' and 'type' 
+e.g. telegram_control: [name: garagentor, type: toggle]
+All attribute list-parameters 'name: xx' are listed with the /control-command in a keyboard menu
+
+Simple Example
+
+```yaml
+Garagentor_oeffnen:
+    name: True oeffnet das Garagentor
+    type: bool
+    autotimer: 2 = 0
+    visu_acl: rw
+    value: 0
+    telegram_control: 
+      - name:garagentor
+      - type:toggle
+
+Gartentor_oeffnen:
+    name: True oeffnet das Gartentor
+    type: bool
+    autotimer: 2 = 0
+    visu_acl: rw
+    value: 0
+    telegram_control: 
+      - name:gartentor
+      - type:toggle
+
+```
+
+/control broadcast all info-commands in a bot-keyboard-menu e.g.
+
+[/garagentor] [/gartentor]
+
+/garagentor toggle the item with the attribute 'telegram_control: [name: garagentor, type: toggle]'
+
+	answer: 'garagentor(Garagentor_oeffnen) change from:False to:True'
+
+/gartentor toggle the item with the attribute 'telegram_control: [name: gartentor, type: toggle]'
+
+	answer: 'gartentor(Gartentor_oeffnen) change from:False to:True'
+
+
 ## Example
 
 At first you need to put your token you got from **botfather** into the ``plugin.yaml`` 

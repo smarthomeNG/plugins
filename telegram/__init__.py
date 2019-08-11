@@ -38,6 +38,7 @@ from io import BytesIO
 
 from lib.model.smartplugin import *
 from lib.logic import Logics
+from lib.item import Items
 
 try:
     import telegram
@@ -55,6 +56,7 @@ ITEM_ATTR_INFO            = 'telegram_info'               # read items with spec
 ITEM_ATTR_TEXT            = 'telegram_text'               # write message-text into the item
 ITEM_ATTR_MATCHREGEX      = 'telegram_value_match_regex'  # check a value against a condition before sending a message
 ITEM_ATTR_CHAT_IDS        = 'telegram_chat_ids'
+ITEM_ATTR_CONTROL         = 'telegram_control'            # control/change item-values
 
 MESSAGE_TAG_ID            = '[ID]'
 MESSAGE_TAG_NAME          = '[NAME]'
@@ -65,12 +67,13 @@ MESSAGE_TAG_DEST          = '[DEST]'
 
 
 class Telegram(SmartPlugin):
-    PLUGIN_VERSION = "1.6.1"
+    PLUGIN_VERSION = "1.6.2"
 
     _items = []              # Storage Array for all items using telegram attributes ITEM_ATTR_MESSAGE
     _items_info = {}         # dict used whith the info-command: key = attribute_value, val= item_list ITEM_ATTR_INFO
     _items_text_message = [] # items in which the text message is written ITEM_ATTR_TEXT
     _chat_ids_item = {}           # an item with a dict of chat_id and write access
+    _items_control = {}         # dict used whith the control-command key = , val= 
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -124,6 +127,7 @@ class Telegram(SmartPlugin):
             dispatcher.add_handler(CommandHandler('start', self.cHandler_start))
             dispatcher.add_handler(CommandHandler('lo', self.cHandler_lo))
             dispatcher.add_handler(CommandHandler('tr', self.cHandler_tr, pass_args=True))
+            dispatcher.add_handler(CommandHandler('control', self.cHandler_control))
 
             dispatcher.add_handler( MessageHandler(Filters.text, self.mHandler))
             self.init_webinterface()
@@ -215,6 +219,28 @@ class Telegram(SmartPlugin):
             if value in ['true', 'True', '1']:
                 self._items_text_message.append(item)
             return self.update_item
+        
+        if self.has_iattr(item.conf, ITEM_ATTR_CONTROL):
+            attr = self.get_iattr_value(item.conf, ITEM_ATTR_CONTROL)
+            #self.logger.debug("parse item: {0} {1}".format(item, key))
+            name = item.id()    # default
+            type = 'toggle'     # default
+            par_list = attr.split(',')  # Parameter from attr example: 'name:test, type:toggle'
+            for par in par_list:
+                k,v = par.split(':')
+                if 'name' in k:
+                    name = v.replace(" ", "")
+                if 'type' in k:
+                    type = v.replace(" ", "")
+            self.logger.debug("parse item-control: name:{0} type:{1}".format(name, type))
+            
+            dicCtl =  {'type':type,'item':item}
+            
+            if name not in self._items_control:
+                self._items_control[name] = dicCtl  #add to dict
+                # add a handler for each info-attribute
+                self._updater.dispatcher.add_handler(CommandHandler(name, self.cHandler_control_attr))
+            return self.update_item
 
         return None
 
@@ -291,7 +317,10 @@ class Telegram(SmartPlugin):
             except Exception as e:
                     self.logger.debug("Exception '{0}' occurred, please inform plugin author!".format(e))
 
-
+    def _photo_broadcast(self, photofile, msg, chat_id=None):
+        self.logger.warning("deprecated, please use photo_broadcast instead")
+        self.photo_broadcast(photofile, msg, chat_id)
+        
     def photo_broadcast(self, photofile_or_url, caption=None, chat_id=None, local_prepare=True):
         """
         Send an image to the given chat
@@ -384,7 +413,7 @@ class Telegram(SmartPlugin):
         /help: show available commands as keyboard
         """
         if self.has_access_right( update.message.chat_id ):
-            bot.send_message(chat_id=update.message.chat_id, text=self.translate("choose"), reply_markup={"keyboard":[["/hide","/start"], ["/time","/list"], ["/lo","/info"]]})
+            bot.send_message(chat_id=update.message.chat_id, text=self.translate("choose"), reply_markup={"keyboard":[["/hide","/start"], ["/time","/list"], ["/lo","/info"], ["/control"]]})
 
     def cHandler_hide(self, bot, update):
         """
@@ -478,6 +507,26 @@ class Telegram(SmartPlugin):
                 tmp_msg = ("could not trigger logic %s error %s" % (logicname, e))
                 self.logger.warning(tmp_msg)
                 self._bot.sendMessage(chat_id=self._chat_id, text=tmp_msg)
+                
+    def cHandler_control(self, bot, update):
+        """
+        /control: Change values of items with specific attribute
+        """
+        if self.has_write_access_right( update.message.chat_id ):
+            bot.send_message(chat_id=update.message.chat_id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
+        
+    def cHandler_control_attr(self, bot, update):
+        """
+        /xx change value from registered items
+        """
+        if self.has_write_access_right( update.message.chat_id ):
+            c_key = update.message.text.replace("/", "", 1)
+            if c_key in self._items_control:
+                dicCtl = self._items_control[c_key]   #{'type':type,'item':item}
+                self.logger.debug("control-command: name:{0} dictCtl:{1}".format(c_key,dicCtl))
+                self.change_item(update.message.chat_id, c_key, dicCtl['item'], dicCtl['type'])
+            else:    
+                self._bot.sendMessage(chat_id=update.message.chat_id, text=self.translate("unknown control-command %s") % (c_key))   
 
     # helper functions
     def list_items(self, chat_id):
@@ -517,7 +566,8 @@ class Telegram(SmartPlugin):
         """
         # reply_markup={"keyboard":[["/roll","/hide"], ["/time","/list"], ["/lo","/info"]]})
         button_list = []
-        for key, value in self._items_info.items():
+        
+        for key, value in sorted(self._items_info.items()):
             button_list.append("/"+key)
         #self.logger.debug("button_list: {0}".format(button_list))
         header = ["/help"]
@@ -525,16 +575,53 @@ class Telegram(SmartPlugin):
         keyboard = self.build_menu(button_list, n_cols=3, header_buttons=header)
         #self.logger.debug("keyboard: {0}".format(keyboard))
         return keyboard
+        
+    def create_control_reply_markup(self):
+        """
+        Creates a keyboard with all items having a ``telegram_control`` attribute
+        """
+        # reply_markup={"keyboard":[["/roll","/hide"], ["/time","/list"], ["/lo","/info"]]})
+        button_list = []
+        text = ""
+        for key, value in sorted(self._items_control.items()):
+            button_list.append("/"+key)
+            
+        #self.logger.debug("button_list: {0}".format(button_list))
+        header = ["/help"]
+        #self.logger.debug("header: {0}".format(header))
+        keyboard = self.build_menu(button_list, n_cols=3, header_buttons=header)
+        #self.logger.debug("keyboard: {0}".format(keyboard))
+        return keyboard     
 
-    # util to create a bot-menu    
     def build_menu(self, buttons, n_cols, header_buttons=None, footer_buttons=None):
+        """
+        util to create a bot-menu    
+        """
         menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
         if header_buttons:
             menu.insert(0, header_buttons)
         if footer_buttons:
             menu.append(footer_buttons)
         return menu
-
+        
+    def change_item(self, chat_id, name, item, type):
+        """
+        util to change a item-value
+        """
+        text = ""
+        if 'toggle' in type:
+            if item.type():
+                value = item()
+                newValue = not value
+                text += "{0}({1}) \n change from:{2} to:{3}\n".format(name, item.id(), value, newValue)
+            else:
+                text += "{0}:{1}\n".format(item.id())
+        if not text:
+            text = self.translate("no items found with the attribute %s") % ITEM_ATTR_CONTROL
+        self._bot.sendMessage(chat_id=chat_id, text=text)
+        item(newValue)
+        text = "{0}({1}): {2}\n".format(name, item.id(), item())
+        self._bot.sendMessage(chat_id=chat_id, text=text)
 
     def init_webinterface(self):
         """
@@ -598,6 +685,8 @@ class WebInterface(SmartPluginWebIf):
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.tplenv = self.init_template_environment()
+        
+        self.items = Items.get_instance()
 
 
     @cherrypy.expose
@@ -609,7 +698,17 @@ class WebInterface(SmartPluginWebIf):
             
         :return: contents of the template after beeing rendered 
         """
+        plgitems = []
+        for item in self.items.return_items():
+            if (self.plugin.has_iattr(item.conf, ITEM_ATTR_MESSAGE) or self.plugin.has_iattr(item.conf, ITEM_ATTR_INFO) or self.plugin.has_iattr(item.conf, ITEM_ATTR_TEXT) or
+                self.plugin.has_iattr(item.conf, ITEM_ATTR_CONTROL)):
+                plgitems.append(item)
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, )
-
+        return tmpl.render(p=self.plugin, 
+            items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
+            items_msg=self.plugin._items, 
+            items_info=self.plugin._items_info, 
+            items_txt=self.plugin._items_text_message,
+            items_ctl=self.plugin._items_control,
+            )
