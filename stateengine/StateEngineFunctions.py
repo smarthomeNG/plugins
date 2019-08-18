@@ -172,16 +172,17 @@ class SeFunctions:
     # caller: caller
     # source: source
     def get_original_caller(self, elog, caller, source):
+        if isinstance(source, str):
+            original_changed_by = source
+        else:
+            original_changed_by = "None"
         while caller == "Eval":
             original_item = self.items.return_item(source)
             if original_item is None:
                 elog.debug("get_caller({0}, {1}): original item not found", caller, source)
                 break
             original_changed_by = original_item.changed_by()
-            oc = caller
-            os = source
-            caller, __, source = original_changed_by.partition(":")
-            elog.debug("get_caller({0}, {1}): changed by {2} at {3}", oc, os,
-                        original_changed_by, original_item.last_change())
+            elog.debug("get_caller({0}, {1}): changed by {2} at {3}", caller, source,
+                       original_changed_by, original_item.last_change())
 
         return original_changed_by
