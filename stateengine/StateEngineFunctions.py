@@ -182,7 +182,10 @@ class SeFunctions:
                 elog.debug("get_caller({0}, {1}): original item not found", caller, source)
                 break
             original_changed_by = original_item.changed_by()
-            elog.debug("get_caller({0}, {1}): changed by {2} at {3}", caller, source,
-                       original_changed_by, original_item.last_change())
+            oc = caller
+            os = source
+            caller, __, source = original_changed_by.partition(":")
+            elog.debug("get_caller({0}, {1}): changed by {2} at {3}", oc, os,
+                        original_changed_by, original_item.last_change())
 
         return original_changed_by
