@@ -546,16 +546,19 @@ item_structs:
             song:
                 type: bool
                 visu_acl: rw
+                enforce_updates: True
                 squeezebox_send: <playerid> playlist repeat 1
 
             playlist:
                 type: bool
                 visu_acl: rw
+                enforce_updates: True
                 squeezebox_send: <playerid> playlist repeat 2
 
             none:
                 type: bool
                 visu_acl: rw
+                enforce_updates: True
                 squeezebox_send: <playerid> playlist repeat 0
 
         shuffle:
@@ -573,16 +576,19 @@ item_structs:
             song:
                 type: bool
                 visu_acl: rw
+                enforce_updates: True
                 squeezebox_send: <playerid> playlist shuffle 1
 
             album:
                 type: bool
                 visu_acl: rw
+                enforce_updates: True
                 squeezebox_send: <playerid> playlist shuffle 2
 
             none:
                 type: bool
                 visu_acl: rw
+                enforce_updates: True
                 squeezebox_send: <playerid> playlist shuffle 0
 
         play:
