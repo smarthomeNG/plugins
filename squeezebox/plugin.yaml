@@ -278,7 +278,7 @@ item_structs:
                 on_update: .. = value.split(":")[1]
 
             query:
-                type: bool
+                type: foo
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: favorites items
@@ -546,19 +546,16 @@ item_structs:
             song:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist repeat 1
 
             playlist:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist repeat 2
 
             none:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist repeat 0
 
         shuffle:
@@ -576,19 +573,16 @@ item_structs:
             song:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist shuffle 1
 
             album:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist shuffle 2
 
             none:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist shuffle 0
 
         play:
