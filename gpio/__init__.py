@@ -23,6 +23,7 @@ import logging
 from lib.model.smartplugin import *
 import threading
 import datetime
+import time
 from bin.smarthome import VERSION
 
 try:
@@ -83,9 +84,18 @@ class Raspi_GPIO(SmartPlugin):
                 except Exception:
                     self._initdict[sensor] = False
                 item(value, 'GPIO Plugin', 'run')
-                GPIO.add_event_detect(sensor, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
-                self.logger.info("{}: Adding Event Detection for Pin {}. Initial value is {}".format(
-                    self._name, sensor, value))
+                for attempt in range(10):
+                    try:
+                        GPIO.add_event_detect(sensor, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
+                        self.logger.info("{}: Adding Event Detection for Output Pin {}. Initial value is {}".format(
+                            self._name, sensor, value))
+                    except Exception as err:
+                        self.logger.debug("{}: Adding Event Detection for Output Pin {} problem: {}. Retry {}/10".format(self._name, sensor, err, attempt))
+                        time.sleep(3)
+                    else:
+                        break
+                else:
+                    self.logger.error("{}: Adding Event Detection for Output Pin {} given up: {}".format(self._name, sensor, err))
 
     def stop(self):
         self.alive = False
@@ -107,9 +117,18 @@ class Raspi_GPIO(SmartPlugin):
             self._itemsdict[out_pin] = item
             value = GPIO.input(out_pin)
             item(value, 'GPIO Plugin', 'parse')
-            GPIO.add_event_detect(out_pin, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
-            self.logger.info("{}: Adding Event Detection for Output Pin {}. Initial value is {}".format(
-                self._name, out_pin, value))
+            for attempt in range(10):
+                try:
+                    GPIO.add_event_detect(out_pin, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
+                    self.logger.info("{}: Adding Event Detection for Output Pin {}. Initial value is {}".format(
+                        self._name, out_pin, value))
+                except Exception as err:
+                    self.logger.debug("{}: Adding Event Detection for Output Pin {} problem: {}. Retry {}/10".format(self._name, out_pin, err, attempt))
+                    time.sleep(3)
+                else:
+                    break
+            else:
+                self.logger.error("{}: Adding Event Detection for Output Pin {} given up: {}".format(self._name, out_pin, err))
             GPIO.setup(out_pin, GPIO.OUT)
             self.logger.debug("{}: OUTPUT {} assigned to \'{}\'".format(self._name, item, out_pin))
             if (out_pin is None):
