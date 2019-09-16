@@ -253,7 +253,7 @@ class SeActionSetItem(SeActionBase):
                     self.__item = self._abitem.return_item(item)
                     self.__value.set_cast(self.__item.cast)
                     self.__mindelta.set_cast(self.__item.cast)
-                    self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
+                    self._scheduler_name =  "{}-SeItemDelayTimer".format(self.__item.property.path)
                     if self._abitem.id == self.__item.property.path:
                         self._caller += '_self'
             except Exception as ex:
@@ -288,7 +288,7 @@ class SeActionSetItem(SeActionBase):
         elif self.__item is not None:
             self.__value.set_cast(self.__item.cast)
             self.__mindelta.set_cast(self.__item.cast)
-            self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
+            self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
             if self._abitem.id == self.__item.property.path:
                 self._caller += '_self'
 
@@ -367,7 +367,7 @@ class SeActionSetByattr(SeActionBase):
     # Complete action
     # item_state: state item to read from
     def complete(self, item_state):
-        self._scheduler_name = self.__byattr + "-SeByAttrDelayTimer"
+        self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
 
     # Write action to logger
     def write_to_logger(self):
@@ -410,7 +410,7 @@ class SeActionTrigger(SeActionBase):
     # Complete action
     # item_state: state item to read from
     def complete(self, item_state):
-        self._scheduler_name = self.__logic + "-SeLogicDelayTimer"
+        self._scheduler_name = "{}-SeLogicDelayTimer".format(self.__logic)
 
     # Write action to logger
     def write_to_logger(self):
@@ -458,7 +458,7 @@ class SeActionRun(SeActionBase):
     # Complete action
     # item_state: state item to read from
     def complete(self, item_state):
-        self._scheduler_name = StateEngineTools.get_eval_name(self.__eval) + "-SeRunDelayTimer"
+        self._scheduler_name = "{}-SeRunDelayTimer".format(StateEngineTools.get_eval_name(self.__eval))
 
     # Write action to logger
     def write_to_logger(self):
@@ -538,7 +538,7 @@ class SeActionForceItem(SeActionBase):
         elif self.__item is not None:
             self.__value.set_cast(self.__item.cast)
             self.__mindelta.set_cast(self.__item.cast)
-            self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
+            self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
 
     # Write action to logger
     def write_to_logger(self):
@@ -577,7 +577,7 @@ class SeActionForceItem(SeActionBase):
                     self.__item = self._abitem.return_item(item)
                     self.__value.set_cast(self.__item.cast)
                     self.__mindelta.set_cast(self.__item.cast)
-                    self._scheduler_name = self.__item.property.path + "-SeItemDelayTimer"
+                    self._scheduler_name = "{}-SeItemDelayTimer".format(self.__item.property.path)
                     if self._abitem.id == self.__item.property.path:
                         self._caller += '_self'
                 else:
@@ -668,7 +668,11 @@ class SeActionSpecial(SeActionBase):
     # Complete action
     # item_state: state item to read from
     def complete(self, item_state):
-        self._scheduler_name = self.__special + "-SeSpecialDelayTimer"
+        if isinstance(self.__value, list):
+            item = self.__value[0].property.path
+        else:
+            item = self.__value.property.path
+        self._scheduler_name = "{}_{}-SeSpecialDelayTimer".format(self.__special, item)
 
     # Write action to logger
     def write_to_logger(self):
