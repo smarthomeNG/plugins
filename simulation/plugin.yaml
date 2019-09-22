@@ -5,15 +5,17 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Aufnahme und Abspielen von Aktionsreihenfolgen.'
         en: 'Recording And Replay of Actions on Items.'
-    maintainer: ggf. cmalo (?)
+    maintainer:  MichaelBu (?)
     tester: psilo909, Sandman60, cmalo
+    state: ready
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-
-    version: 1.5.0.6               # Plugin version
+    documentation: https://www.smarthomeng.de/developer/plugins/simulation/README.html        # url of documentation (wiki) page
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/841097-anwesenheitssimulation-0-1'
+    version: 1.5.0.7               # Plugin version
     sh_minversion: 1.4c             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Simulation          # class containing the plugin
 
 parameters:
@@ -25,7 +27,7 @@ parameters:
             de: 'Voller Pfad zum Datenfile (Textdatei).'
             en: 'Full path to data file (text file).'
     callers:
-        type: str
+        type: list(str)
         mandatory: False
         description:
             de: '(optional) Liste von Event-Sourcen, um Events aufzuzeichnen. Wenn ein Item geändert wird, werden nur
@@ -46,3 +48,13 @@ item_attributes:
             en: 'May be either the value "track", "state", "control", "message" or "tank". Besides "track" the values
             may only be assigned one time over all items. They are used for plugin internal information storage.
             "track" may be assigned to multiple items and is used to record the value changes of that item.'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

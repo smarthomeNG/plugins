@@ -92,7 +92,7 @@ function getDetailInfo(result) {
         }
 
         temp = '<div class="table-responsive" style="min-width: 500px;"><table class="table table-striped table-hover">';
-        temp = temp + '<thead><tr class="shng_heading"><th class="py-1">{{ _('Attribut') }}</th><th class="py-1">{{ _('Wert') }}</th></tr></thead><tbody>';
+        temp = temp + '<thead><tr class="shng_heading"><th class="py-1" style="min-width: 190px;">{{ _('Attribut') }}</th><th class="py-1">{{ _('Wert') }}</th></tr></thead><tbody>';
         temp = temp + '<tr><td class="py-1">{{ _('path', 'items') }}</td><td class="py-1">'+element.path+'</td></tr>';
         temp = temp + '<tr><td class="py-1">{{ _('name', 'items') }}</td><td class="py-1">'+element.name+'</td></tr>';
         temp = temp + '<tr><td class="py-1">{{ _('type', 'items') }}</td><td class="py-1">'+element.type+'</td></tr>';

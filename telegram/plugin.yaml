@@ -1,36 +1,81 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    type: web                       # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Anbindung des Telegram Service (verwendet python-telegram-bot Package statt telepot Package)'
-        en: ''
+        de: 'Anbindung des Telegram Messenger Service'
+        en: 'Connects to the telegram messenger service'
     maintainer: gamade, ivan73, bmxp
-#    tester:                        # Who tests this plugin?
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/...        # url of documentation (wiki) page
+    state: ready
+    tester: NONE
+    keywords: telegram chat messenger photo
+    documentation: http://smarthomeng.de/user/plugins/telegram/user_doc.html
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.4.4                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.6.0                  # Plugin version
+    sh_minversion: 1.3              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
-    classname: Telegram            # class containing the plugin
+    multi_instance: True            # plugin supports multi instance
+    restartable: True
+    classname: Telegram             # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     token:
         type: str
-        type: str
         description:
-            de: 'geteilter geheimer Schlüssel zur Authentifizierung bei Telegram'
-            en: 'shared secret key to authenticate to telegram network'
+            de: 'Geheimer Schlüssel zur Authentifizierung bei Telegram'
+            en: 'Secret key to authenticate to telegram network'
 
-    trusted_chat_ids:
+    name:
         type: str
+        default: 'SmartHomeNG Telegram Gateway'
         description:
-            de: 'Liste von Chat IDs denen vertraut wird'
-            en: 'list of trusted chat ids'
+            de: 'Name um diese Instanz zu identifizieren'
+            en: 'used to identify this Telegram Instance'
+
+    long_polling_timeout:
+        type: num
+        # 2 minutes should be long enough to avoid problems with too many connections to telegram server
+        default: 120
+        description:
+            de: 'Zeit nachdem eine neue Verbindung zum Telegram Server aufgebaut um Updates zu holen'
+            en: 'Time after a new link to telegram server will be established to get updates'
+
+    welcome_msg:
+        type: str
+        default: 'SmarthomeNG Telegram Plugin is up and running'
+        description:
+            de: 'Willkommensnachricht, wird an alle vertrauenswürdigen Clients beim Start des Plugins gesendet'
+            en: 'Welcome message, will be sent to all trusted chat clients at plugin start'
+
+    bye_msg:
+        type: str
+        default: 'SmartHomeNG Telegram Plugin stops'
+        description:
+            de: 'Endenachricht, wird an alle vertrauenswürdigen Clients beim Stop des Plugins gesendet'
+            en: 'Bye message, will be sent to all trusted chat clients at plugin stop'
+
+    no_access_msg:
+        type: str
+        default: 'This bot does not know your chat id and thus does not trust it, you are not allowed to use this bot'
+        description:
+            de: 'Mitteilung die der Telegram Benutzer erhält, weil der chat id nicht vertraut wird'
+            en: 'Message the telegram user get when chat id can not be trusted'
+
+    no_write_access_msg:
+        type: str
+        default: 'This bot knows your chat id but you are not allowed to use this bot to write to items'
+        description:
+            de: 'Mitteilung die der Telegram Benutzer erhält, weil der chat id keine Schreibrechte auf Items hat'
+            en: 'Message the telegram user get when chat id has no write access to items'
+
+    pretty_thread_names:
+        type: bool
+        default: true
+        description:
+            de: 'Telegram Threads zur leichteren Unterscheidung in der Thread Liste umbenennen'
+            en: 'Rename Telegram threads for easier distinction in thread list'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -43,8 +88,8 @@ item_attributes:
     telegram_info:
         type: str
         description:
-            de: 'Item lesen mit bestimmten Itemwerten'
-            en: 'read items with specific item-values'
+            de: 'Item lesen per Telegram Keyboard. Der Wert des Attributes bestimmt das Telegram Keyboard Kommando'
+            en: 'Read items with telegram keyboard. The value of the attribute defines the telegram keyboard command'
 
     telegram_text:
         type: str
@@ -55,5 +100,59 @@ item_attributes:
     telegram_value_match_regex:
         type: str
         description:
-            de: 'Itemwert gegen einen regulän Ausdruck prüfen vor versenden einer Mitteilung'
+            de: 'Itemwert gegen einen regulären Ausdruck prüfen vor dem Versenden einer Mitteilung'
             en: 'check a value against a condition before sending a message'
+
+    telegram_chat_ids:
+        type: foo
+        description:
+            de: 'Ein Item dessen Datentyp dict ist und Paare von ``Chat_id`` der vertraut wird und Schreibzugriff ``True`` oder ``1``'
+            en: 'An item of type dict with trusted ``chat_id`` and write access ``True`` or ``1``'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    msg_broadcast:
+        type: str
+        description:
+            de: 'Sendet eine Nachricht an einen Empfänger'
+            en: 'Sends a message to a recipient'
+        parameters:
+            msg:
+                type: str
+                description:
+                    de: 'Nachricht die verschickt werden soll'
+                    en: 'Message to be sent'
+
+            chat_id:
+                type: int
+                description:
+                    de: 'ID des Chats oder Liste mit Chats denen die Nachricht gesendet werden soll'
+                    en: 'Chat id or list of chat ids to receive the message'
+
+    photo_broadcast:
+        type: str
+        description:
+            de: 'Sendet ein Bild an einen Empfänger'
+            en: 'Sends an image to a recipient'
+        parameters:
+            photofile_or_url:
+                type: str
+                description:
+                    de: 'Dateiname oder URL eines Bildes'
+                    en: 'Filename or URL of an image'
+
+            caption:
+                type: str
+                description:
+                    de: 'Titel des Bildes'
+                    en: 'Title of image'
+
+            chat_id:
+                type: int
+                description:
+                    de: 'ID des Chats oder Liste mit Chats denen das Bild gesendet werden soll'
+                    en: 'Chat id or list of chat ids to receive the image'
+
+item_structs: NONE

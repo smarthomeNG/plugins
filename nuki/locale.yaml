@@ -1,0 +1,37 @@
+plugin_translations:
+    'Token':  {'de': '=', 'en': '='}
+    'Callback URL (SHNG)':     {'de': '=', 'en': '='}
+    'NoWait':  {'de': '=', 'en': '='}
+    'Base URL (Nuki Bridge)':  {'de': '=', 'en': '='}
+    'Pfad':  {'de': '=', 'en': 'Path'}
+    'Typ':  {'de': '=', 'en': 'Type'}
+    'Nuki ID':  {'de': '=', 'en': '='}
+    'Wert':  {'de': '=', 'en': 'Value'}
+    'Letztes Update':  {'de': '=', 'en': 'Last Update'}
+    'Letzter Change':  {'de': '=', 'en': 'Last Change'}
+    'Nuki Action Items':  {'de': '=', 'en': '='}
+    'Nuki Battery Items':  {'de': '=', 'en': '='}
+    'Nuki Event Items':  {'de': '=', 'en': '='}
+    'Possible Lock Actions':  {'de': 'Mögliche Aktionen des Schlosses', 'en': '='}
+    'unlock':  {'de': 'Aufsperren', 'en': '='}
+    'lock':  {'de': 'Abschließen', 'en': '='}
+    'unlatch':  {'de': 'Entriegeln', 'en': '='}
+    'lockAndGo':  {'de': 'Lock And Go', 'en': 'Lock And Go'}
+    'lockAndGoWithUnlatch':  {'de': 'Lock And Go mit Entriegeln', 'en': 'Lock And Go with unlatch'}
+    'Possible Lock States':  {'de': 'Mögliche Zustände des Schlosses', 'en': '='}
+    'uncalibrated':  {'de': 'unkalibriert', 'en': '='}
+    'locked':  {'de': 'verschlossen', 'en': '='}
+    'unlocking':  {'de': 'aufschließend', 'en': '='}
+    'unlocked':  {'de': 'unverschlossen', 'en': '='}
+    'locking':  {'de': 'schließend', 'en': '='}
+    'unlatched':  {'de': 'aufgeklinkt', 'en': '='}
+    'unlatched (lock and go)':  {'de': 'aufgeklinkt (Lock And Go)', 'en': 'unlatched (Lock And Go)'}
+    'unlatching':  {'de': 'aufklinkend', 'en': '='}
+    'motor blocked':  {'de': 'Motor blockiert', 'en': '='}
+    'undefined':  {'de': 'undefiniert', 'en': '='}
+    'Enforce Updates':  {'de': '=', 'en': '='}
+    'Possible Battery Values':  {'de': 'Mögliche Werte für die Batterie', 'en': '='}
+    'Batteries are good. No need to replace it.':  {'de': 'Die Batterien sind gut, sie müssen nicht getauscht werden.', 'en': '='}
+    'Batteries are low. Please replace as soon as possible!':  {'de': 'Die Batterieladung ist niedrig. Bitte so bald als möglich austauschen!', 'en': '='}
+    'Send': {'de': 'Abschicken', 'en': '='}
+    'none': {'de': 'keine Aktion', 'en': 'no action'}

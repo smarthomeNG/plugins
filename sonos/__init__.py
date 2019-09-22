@@ -35,10 +35,16 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from queue import Empty
 import sys
 from urllib.parse import unquote
-import requests
-import xmltodict
-from requests.utils import quote
-from tinytag import TinyTag
+
+try:
+    import requests
+    import xmltodict
+    from requests.utils import quote
+    from tinytag import TinyTag
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
+
 from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
 from lib.item import Item
@@ -344,6 +350,7 @@ class Speaker(object):
                     self.device_subscription
                 ]
                 self._is_coordinator = self._soco.is_coordinator
+                self.coordinator = self.soco.group.coordinator.uid.lower()
                 self.uid = self.soco.uid.lower()
                 self.household_id = self.soco.household_id
 
@@ -555,6 +562,16 @@ class Speaker(object):
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
+
+                    # set streaming type
+                    if self.soco.is_playing_line_in:
+                        self.streamtype = "line_in"
+                    elif self.soco.is_playing_tv:
+                        self.streamtype = "tv"
+                    elif self.soco.is_playing_radio:
+                        self.streamtype = "radio"
+                    else:
+                        self.streamtype = "music"
 
                     if 'transport_state' in event.variables:
                         transport_state = event.variables['transport_state']
@@ -1215,8 +1232,10 @@ class Speaker(object):
             return
         self._streamtype = streamtype
 
-        for item in self.streamtype_items:
-            item(streamtype, 'Sonos')
+        if self.is_coordinator:
+            for member in self.zone_group_members:
+                for item in sonos_speaker[member].streamtype_items:
+                    item(self.streamtype, 'Sonos')
 
     @property
     def track_uri(self) -> str:
@@ -1244,27 +1263,13 @@ class Speaker(object):
             return
         self._track_uri = track_uri
 
-        if re.match(r"^x-sonos-htastream:", self.track_uri) is not None:
-            streamtype = 'tv'
-        elif re.match(r"^x-rincon-stream:", self.track_uri) is not None:
-            streamtype = 'line-in'
-        elif re.match(r"^x-rincon-mp3radio:", self.track_uri) is not None:
-            streamtype = 'radio'
-        else:
-            # aac, wma etc possible for audio; everything except x- should be radio
-            if re.match(r'^x-', self.track_uri) is not None:
-                streamtype = 'music'
-            else:
-                streamtype = 'radio'
         # coordinator call / update all items
         if self.is_coordinator:
             for member in self.zone_group_members:
-                sonos_speaker[member].streamtype = streamtype
                 for item in sonos_speaker[member].track_uri_items:
                     item(self.track_uri, 'Sonos')
         # slave call, update just the slave
         else:
-            self.streamtype = streamtype
             for item in self.track_uri_items:
                 item(self.track_uri, 'Sonos')
 
@@ -2141,11 +2146,11 @@ class Speaker(object):
         for item in self.sonos_playlists_items:
             item(p_l, 'Sonos')
 
-    def _play_snippet(self, file_path: str, webservice_url: str, volume: int = -1, fade_in=False) -> None:
+    def _play_snippet(self, file_path: str, webservice_url: str, volume: int = -1, duration_offset: float = 0, fade_in=False) -> None:
         if not self._check_property():
             return
         if not self.is_coordinator:
-            sonos_speaker[self.coordinator]._play_snippet(file_path, webservice_url, volume, fade_in)
+            sonos_speaker[self.coordinator]._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
         else:
             with self._snippet_queue_lock:
                 snap = None
@@ -2155,7 +2160,8 @@ class Speaker(object):
                     volumes[member] = sonos_speaker[member].volume
 
                 tag = TinyTag.get(file_path)
-                duration = int(round(tag.duration)) + 0.4
+                duration = round(tag.duration) + duration_offset
+                self._logger.debug("Sonos: TTS track duration offset is: {offset}s".format(offset=duration_offset))
                 self._logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
                 file_name = quote(os.path.split(file_path)[1])
                 snippet_url = "{url}/{file}".format(url=webservice_url, file=file_name)
@@ -2195,12 +2201,12 @@ class Speaker(object):
                         else:
                             sonos_speaker[member].set_volume(volumes[member], group_command=False)
 
-    def play_snippet(self, audio_file, local_webservice_path_snippet: str, webservice_url: str, volume: int = -1,
+    def play_snippet(self, audio_file, local_webservice_path_snippet: str, webservice_url: str, volume: int = -1, duration_offset: float = 0,
                      fade_in=False) -> None:
         if not self._check_property():
             return
         if not self.is_coordinator:
-            sonos_speaker[self.coordinator].play_snippet(audio_file, local_webservice_path_snippet, webservice_url, volume,
+            sonos_speaker[self.coordinator].play_snippet(audio_file, local_webservice_path_snippet, webservice_url, volume, duration_offset,
                                                      fade_in)
         else:
             if "tinytag" not in sys.modules:
@@ -2212,15 +2218,15 @@ class Speaker(object):
             if not os.path.exists(file_path):
                 self._logger.error("Sonos: Snippet file '{file_path}' does not exists.".format(file_path=file_path))
                 return
-            self._play_snippet(file_path, webservice_url, volume, fade_in)
+            self._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
 
-    def play_tts(self, tts: str, tts_language: str, local_webservice_path: str, webservice_url: str, volume: int = -1,
+    def play_tts(self, tts: str, tts_language: str, local_webservice_path: str, webservice_url: str, volume: int = -1, duration_offset: float = 0,
                  fade_in=False) -> None:
         if not self._check_property():
             return
         if not self.is_coordinator:
             sonos_speaker[self.coordinator].play_tts(tts, tts_language, local_webservice_path, webservice_url,
-                                                     volume, fade_in)
+                                                     volume, duration_offset, fade_in)
         else:
             if "tinytag" not in sys.modules:
                 self._logger.error("Sonos: TinyTag module not installed. Please install the module with 'sudo pip3 "
@@ -2239,7 +2245,7 @@ class Speaker(object):
             else:
                 self._logger.debug("Sonos: File {file} already exists. No TTS request necessary.".format(
                     file=file_path))
-            self._play_snippet(file_path, webservice_url, volume, fade_in)
+            self._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
 
     def load_sonos_playlist(self, name: str, start: bool = False, clear_queue: bool = False, track: int = 0) -> None:
         """
@@ -2284,10 +2290,10 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.6"
+    PLUGIN_VERSION = "1.4.8"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
-                 discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, **kwargs):
+                 discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, snippet_duration_offset=0.0, **kwargs):
         super().__init__(**kwargs)
         self._sh = sh
         self._logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
@@ -2296,6 +2302,12 @@ class Sonos(SmartPlugin):
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
         self._tts = self.to_bool(tts, default=False)
         self._local_webservice_path = local_webservice_path
+        self._snippet_duration_offset = float(snippet_duration_offset)
+
+        # Exit if the required package(s) could not be imported
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self._logger.error("{}: Unable to import required external python packages. Please install.".format(self.get_fullname()))
+            return
 
         # see documentation: if no exclusive snippet path is set, we use the global one
         if local_webservice_path_snippet is None:
@@ -2626,13 +2638,13 @@ class Sonos(SmartPlugin):
                     volume = self._resolve_child_command_int(item, 'tts_volume', -1)
                     fade_in = self._resolve_child_command_bool(item, 'tts_fade_in')
                     sonos_speaker[uid].play_tts(item(), language, self._local_webservice_path, self._webservice_url,
-                                                volume, fade_in)
+                                                volume, self._snippet_duration_offset, fade_in)
                 if command == 'play_snippet':
                     if item() == "":
                         return
                     volume = self._resolve_child_command_int(item, 'snippet_volume', -1)
                     fade_in = self._resolve_child_command_bool(item, 'snippet_fade_in')
-                    sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume,
+                    sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume, self._snippet_duration_offset,
                                                     fade_in)
 
     def _resolve_child_command_str(self, item: Item, child_command, default_value="") -> str:
@@ -2798,6 +2810,7 @@ class Sonos(SmartPlugin):
 
                 else:
                     _initialize_speaker(uid, self._logger)
+                    sonos_speaker[uid].soco = zone
 
                 sonos_speaker[uid].is_initialized = True
                 sonos_speaker[uid].refresh_static_properties()

@@ -56,7 +56,7 @@ client = Tools()
 
 class HUE(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.2"
+    PLUGIN_VERSION = "1.4.4"
 
     def __init__(self, smarthome, hue_ip = '', hue_user = '', hue_port = '80', cycle_lamps = '10', cycle_bridges = '60', default_transitionTime = '0.4'):
 
@@ -560,7 +560,10 @@ class HUE(SmartPlugin):
             errorItem = None
             self.logger.info('_get_web_content '+hueBridgeId)
         # dann der aufruf kompatibel, aber inhaltlich nicht identisch fetch_url aus lib.tools, daher erst eimal das fehlerobjekt nicht mehr da
-        response = client.fetch_url(url, None, None, 2, 0, method, body, errorItem)
+        try:
+            response = client.fetch_url(url, None, None, 2, 0, method, body, errorItem)
+        except:
+            response = False
         if response:
             # und jetzt der anteil der decodierung, der nicht in der fetch_url drin ist
             # lesen, decodieren nach utf-8 (ist pflicht nach der api definition philips) und in ein python objekt umwandeln
@@ -768,6 +771,7 @@ class HUE(SmartPlugin):
             self._hueLock.release()
             numberBridgeId = numberBridgeId + 1
 
+
     def get_config(self, hueBridgeId='0'):
         # hier eine interaktive routing für di ecli, um den user herauszubekommen, 
         # mit dem die szenen gesetzt worden sind, um ihn dann als user für das plugin einzusetzen
@@ -778,9 +782,10 @@ class HUE(SmartPlugin):
         self.logger.warning('get_config: Groups {0}'.format(returnValues))
         return returnValues
 
+
     def authorizeuser(self, hueBridgeId='0'):
         data = json.dumps(
-            {"devicetype": "smarthome", "username": self._hue_user[int(hueBridgeId)]})
+            {"devicetype": "smarthome#" + self._hue_user[int(hueBridgeId)]})
         con = http.client.HTTPConnection(self._hue_ip[int(hueBridgeId)])
         con.request("POST", "/api", data)
         resp = con.getresponse()
@@ -788,7 +793,7 @@ class HUE(SmartPlugin):
         if resp.status != 200:
             self.logger.error('authorize: Authenticate request failed')
             return "Authenticate request failed"
-        resp = resp.read()
+        resp = resp.read().decode('utf-8')
         self.logger.debug(resp)
         resp = json.loads(resp)
         self.logger.debug(resp)

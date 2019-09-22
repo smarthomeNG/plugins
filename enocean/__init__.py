@@ -27,9 +27,10 @@ import logging
 import struct
 import time
 import threading
+from lib.item import Items         #what for?
 from . import eep_parser
 from . import prepare_packet_data
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 
 FCSTAB = [
     0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
@@ -164,7 +165,7 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.3"
+    PLUGIN_VERSION = "1.3.4"
 
     
     def __init__(self, smarthome, serialport, tx_id=''):
@@ -181,11 +182,16 @@ class EnOcean(SmartPlugin):
         self._cmd_lock = threading.Lock()
         self._response_lock = threading.Condition()
         self._rx_items = {}
+        self.UTE_listen = False
+        self.unknown_sender_id = 'None'
         self._block_ext_out_msg = False
         # call init of eep_parser
         self.eep_parser = eep_parser.EEP_Parser()
         # call init of prepare_packet_data
         self.prepare_packet_data = prepare_packet_data.Prepare_Packet_Data(self)
+
+        if not self.init_webinterface():
+            self._init_complete = False
 
     def eval_telegram(self, sender_id, data, opt):
         self.logger.debug("enocean: call function << eval_telegram >>")
@@ -304,6 +310,7 @@ class EnOcean(SmartPlugin):
         elif (sender_id <= self.tx_id + 127) and (sender_id >= self.tx_id):
             self.logger.debug("enocean: Received repeated enocean stick message")
         else:
+            self.unknown_sender_id = "{:08X}".format(sender_id)
             self.logger.info("unknown ID = {:08X}".format(sender_id))
 
 
@@ -448,7 +455,11 @@ class EnOcean(SmartPlugin):
         self.alive = False
         self.logger.info("enocean: Thread stopped")
 
-        
+    def get_tx_id_as_hex(self):
+        hexstring = "{:08X}".format(self.tx_id)
+        return hexstring
+
+    
     def _send_UTE_response(self, data, optional):
         self.logger.debug("enocean: call function << _send_UTE_response >>")
         choice = data[0]
@@ -509,7 +520,7 @@ class EnOcean(SmartPlugin):
         if caller != 'EnOcean':
             self.logger.debug('enocean: item << {} >> updated externally.'.format(item))
             if self._block_ext_out_msg:
-                self.logger.debug('enocean: sending manually blocked by user. Aborting')
+                self.logger.warning('enocean: sending manually blocked by user. Aborting')
                 return None
             if 'enocean_tx_eep' in item.conf:
                 if isinstance(item.conf['enocean_tx_eep'], str):
@@ -555,6 +566,24 @@ class EnOcean(SmartPlugin):
             self._block_ext_out_msg = False
         else:
             self.logger.info("enocean: invalid argument. Must be True/False")
+
+    def toggle_block_external_out_messages(self):
+        self.logger.debug("enocean: call function << toggle block_external_out_messages >>")
+        if self._block_ext_out_msg == False:
+            self.logger.info("enocean: Blocking of external out messages activated")
+            self._block_ext_out_msg = True
+        else:
+            self.logger.info("enocean: Blocking of external out messages deactivated")
+            self._block_ext_out_msg = False
+
+    def toggle_UTE_mode(self,id_offset=0):
+        self.logger.debug("enocean: toggle UTE mode")
+        if self.UTE_listen == True:
+            self.logger.info("enocean: UTE mode deactivated")
+            self.UTE_listen = False
+        elif (id_offset is not None) and not (id_offset == 0):
+            self.start_UTE_learnmode(id_offset)
+            self.logger.info("enocean: UTE mode activated for ID offset")
 
     def send_bit(self):
         self.logger.debug("enocean: call function << send_bit >>")
@@ -637,7 +666,7 @@ class EnOcean(SmartPlugin):
         # check offset range between 0 and 127
         if (id_offset < 0) or (id_offset > 127):
             self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
-            return None
+            return False
         # device range 10 - 19 --> Learn protocol for switch actuators
         elif (device == 10):
             # Prepare Data for Eltako switch FSR61, Eltako FSVA-230V
@@ -668,17 +697,17 @@ class EnOcean(SmartPlugin):
             self.logger.info('enocean: sending learn telegram for actuator with [Device], [ID-Offset], [RORG], [payload] / [{}], [{:#04x}], [{:#04x}], [{}]'.format(device, id_offset, rorg, ', '.join('{:#04x}'.format(x) for x in payload)))
         else:
             self.logger.error('enocean: sending learn telegram with invalid device! Device {} actually not defined!'.format(device))
-            return None
+            return False
         # Send radio package
         self._send_radio_packet(id_offset, rorg, payload)
-        return None
+        return True
 
 
     def start_UTE_learnmode(self, id_offset=0):
         self.logger.debug("enocean: call function << start_UTE_learnmode >>")
         self.UTE_listen = True
         self.learn_id = id_offset
-        self.logger.info("enocean: Listeining for UTE package ('D4')")
+        self.logger.info("enocean: Listening for UTE package ('D4')")
         
         
     def enter_learn_mode(self, onoff=1):
@@ -722,3 +751,100 @@ class EnOcean(SmartPlugin):
 ###############################
 ### --- END - Calc CRC8 --- ###
 ###############################
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+import csv
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+        
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.items = Items.get_instance()
+
+        self.tplenv = self.init_template_environment()
+
+
+    @cherrypy.expose
+    def index(self, reload=None, action=None, item_id=None, item_path=None, device_id=None, device_offset=None,
+              time_orig=None, changed_orig=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        learn_triggered = False
+
+        if action is not None:
+            if action == "toggle_tx_blocking":
+                self.plugin.toggle_block_external_out_messages()
+            elif action == "toggle_UTE":
+                self.plugin.toggle_UTE_mode(device_offset)
+                self.logger.warning("UTE mode triggered via webinterface (Offset:{0})".format(device_offset))
+            elif action == "send_learn" and (device_id is not None) and not (device_id=="") and (device_offset is not None) and not(device_offset==""):
+                self.logger.warning("Learn telegram triggered via webinterface (ID:{0} Offset:{1})".format(device_id,device_offset))
+                ret = self.plugin.send_learn_protocol(int(device_offset), int(device_id))
+                if ret == True:
+                    learn_triggered = True
+            else:
+                self.logger.error("Unknown comman received via webinterface")
+
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(p=self.plugin,
+                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
+                           tabcount=1, item_id=item_id, learn_triggered=learn_triggered, action='')
+
+

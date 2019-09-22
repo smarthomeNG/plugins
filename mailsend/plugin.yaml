@@ -1,0 +1,104 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Versenden von eMails via smtp. Dieses Plugin ermöglicht das Versenden von eMails aus Logiken heraus, durch Aufruf einer Funktion'
+        en: 'Send emails via smtp. This plugin allows to send emails from logics by calling a function.'
+    maintainer: msinn
+    tester: psilo909, onkelandy, Sandman60
+    state: develop
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.4.0                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    restartable: unknown
+    classname: SMTP                # class containing the plugin
+
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    host:
+        type: str
+        default: ''
+        description:
+            de: 'Adresse des SMTP Hosts'
+            en: 'Address of SMTP host'
+
+    port:
+        type: int
+        default: 587
+        valid_min: 0
+        valid_max: 65535
+        description:
+            de: 'Port des SMTP service (bitte 25 nutzen, fals tls deaktiviert wird)'
+            en: 'Port used by SMTP service (use 25 if tls is set to False)'
+
+    tls:
+        type: bool
+        default: True
+        description:
+            de: 'tls zur Verschlüsselung nutzen'
+            en: 'Use tls for encyption'
+
+    mail_from:
+        type: str
+        default: ''
+        description:
+            de: 'Absender-Adresse der eMails (mail@example.com)'
+            en: 'Sender address of the emails (mail@example.com)'
+
+    username:
+        type: str
+        default: ''
+        description:
+            de: 'Username für die Anmeldung am SMTP host (optional)'
+            en: 'Username for login to the SMTP host (optional)'
+
+    password:
+        type: str
+        default: ''
+        hide: True
+        description:
+            de: 'Passwort für die Anmeldung am SMTP host (optional)'
+            en: 'Password for login to the SMTP host (optional)'
+
+item_attributes: NONE
+    # Definition of item attributes defined by this plugin
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin
+
+    send:
+        type: foo
+        description:
+            de: "Diese Funktion versendet eine eMail - Beispiel: sh.mail('admin@smart.home', 'Testmail', 'Mailtext und Betreff können UTF-8 kodierten Text enthalten')"
+            en: "This function sends an email - Example: sh.mail('admin@smart.home', 'Testmail', 'Subject and mail body can contain UTF-8 encoded text')"
+        parameters:
+            to:
+                type: str
+                description:
+                    de: "Empfänger der eMail (admin@smart.home)"
+                    en: "Receipient of email (admin@smart.home)"
+            subject:
+                type: foo
+                description:
+                    de: "Betreff der eMail"
+                    en: "Subject of email"
+            message:
+                type: foo
+                description:
+                    de: "Nachrichtentext der eMail"
+                    en: "Message body of email"
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+

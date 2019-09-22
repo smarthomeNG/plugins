@@ -1,0 +1,101 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Anbindung der Nokia Health API mit Oauth2'
+        en: 'Usage of the nokia health api with oauth2'
+    maintainer: 'psilo909'
+    tester: 'psilo909'
+    state: ready
+    keywords: health
+    documentation: 'http://smarthomeng.de/user/plugins_doc/config/withings_health.html'
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1141179-nokia-health-plugin'
+
+    version: 1.5.3                 # Plugin version
+    sh_minversion: 1.4c            # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    restartable: unknown
+    classname: NokiaHealth         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+
+    user_id:
+        type: str
+        mandatory: True
+        description:
+            de: 'Nokia Health User ID (steht in der URL, wenn man als nomraler User einloggt)'
+            en: 'Nokia Health User ID (can be found in the URL when you log in)'
+
+    client_id:
+        type: str
+        mandatory: True
+        description:
+            de: 'Client ID von https://account.health.nokia.com/partner/dashboard_oauth2'
+            en: 'Client ID from https://account.health.nokia.com/partner/dashboard_oauth2'
+
+    consumer_secret:
+        type: str
+        default: 300
+        mandatory: True
+        description:
+            de: 'Consumer-Geheimnis von https://account.health.nokia.com/partner/dashboard_oauth2'
+            en: 'Consumer secret from https://account.health.nokia.com/partner/dashboard_oauth2'
+
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: 'Dieser Parameter muss normalerweise nicht angegeben werden. Er erlaubt es die Update-Frquenz anzupassen (Standard: alle 600 Sekunden). Mit dem Standardwert werden die Daten von Nokia Health alle 5 Minuten aktualisiert.'
+            en: "This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 300 seconds). As a standard, the plugin updates the Nokia Health data every 5 minutes."
+
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+
+    nh_type:
+        type: str
+        description:
+            de: 'nh_type kann folgende Werte annehmen: Zwingend für OAuth2: access_token, token_expiry, token_type, refresh_token | Optional: weight, height (wird von Nokia Health nur beim allerersten Messwert geliefert), bmi, bmi_text, fat_ratio, fat_free_mass, fat_mass_weight, diastolic_blood_pressure, systolic_blood_pressure, temperature, body_temperature, skin_temperature, spo2, heart_pulse, hydration, bone_mass, pulse_wave_velocity.'
+            en: 'nh_type can be out of the following values: Mandatory for OAuth2: access_token, token_expiry, token_type, refresh_token | Optional: weight, height (only supplied on the very first measurement value, set manually if you dont get it), bmi, bmi_text, fat_ratio, fat_free_mass, fat_mass_weight, diastolic_blood_pressure, systolic_blood_pressure, temperature, body_temperature, skin_temperature, spo2, heart_pulse, hydration, bone_mass, pulse_wave_velocity.'
+        valid_list:
+        - 'weight'
+        - 'height'
+        - 'bmi'
+        - 'bmi_text'
+        - 'fat_ratio'
+        - 'fat_free_mass'
+        - 'fat_mass_weight'
+        - 'diastolic_blood_pressure'
+        - 'systolic_blood_pressure'
+        - 'temperature'
+        - 'body_temperature'
+        - 'skin_temperature'
+        - 'spo2'
+        - 'heart_pulse'
+        - 'hydration'
+        - 'bone_mass'
+        - 'pulse_wave_velocity'
+        - 'access_token'
+        - 'token_expiry'
+        - 'token_type'
+        - 'refresh_token'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

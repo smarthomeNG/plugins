@@ -26,18 +26,27 @@ import urllib.parse
 import lib.connection
 import re
 from lib.model.smartplugin import SmartPlugin
+from bin.smarthome import VERSION
 
 class Squeezebox(SmartPlugin,lib.connection.Client):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0"
+    PLUGIN_VERSION = "1.3.1"
 
-    def __init__(self, smarthome, host='127.0.0.1', port=9090):
-        lib.connection.Client.__init__(self, host, port, monitor=True)
-        self._sh = smarthome
-        self._val = {}
-        self._obj = {}
-        self._init_cmds = []
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, smarthome):
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+        try:
+            self._host = self.get_parameter_value('host')
+            self._port = self.get_parameter_value('port')
+            self._web_port = self.get_parameter_value('web_port')
+            lib.connection.Client.__init__(self, self._host, self._port, monitor=True)
+            self._val = {}
+            self._obj = {}
+            self._init_cmds = []
+        except Exception:
+            self._init_complete = False
+            return
+
 
     def _check_mac(self, mac):
         return re.match("[0-9a-fA-F]{2}([:][0-9a-fA-F]{2}){5}", mac)
@@ -76,17 +85,25 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 if not item in self._val[cmd]['items']:
                     self._val[cmd]['items'].append(item)
 
-            if self.has_iattr(item.conf, 'squeezebox_init'):
-                cmd = self._resolv_full_cmd(item, 'squeezebox_init')
-                if (cmd is None):
-                    return None
+        if self.has_iattr(item.conf, 'squeezebox_albumart'):
+            playerid = self._resolv_full_cmd(item, 'squeezebox_albumart')
+            if (playerid is None):
+                return None
+            url = 'http://{}:{}/music/current/cover.jpg?player={}'.format(self._host, self._web_port, playerid)
+            item(url, 'LMS', 'parse')
+            self.logger.debug("squeezebox: album art item {0} is set to \"{1}\"".format(item, url))
 
-                self.logger.debug("squeezebox: {0} is initialized by \"{1}\"".format(item, cmd))
-                if not cmd in self._val:
-                    self._val[cmd] = {'items': [item], 'logics': []}
-                else:
-                    if not item in self._val[cmd]['items']:
-                        self._val[cmd]['items'].append(item)
+        if self.has_iattr(item.conf, 'squeezebox_init'):
+            cmd = self._resolv_full_cmd(item, 'squeezebox_init')
+            if (cmd is None):
+                return None
+
+            self.logger.debug("squeezebox: {0} is initialized by \"{1}\"".format(item, cmd))
+            if not cmd in self._val:
+                self._val[cmd] = {'items': [item], 'logics': []}
+            else:
+                if not item in self._val[cmd]['items']:
+                    self._val[cmd]['items'].append(item)
 
             if not cmd in self._init_cmds:
                 self._init_cmds.append(cmd)
@@ -155,6 +172,10 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                        for cmd_str in cmd))
 
     def _send(self, cmd):
+        # replace german umlauts
+        repl = (('%FC', '%C3%BC'), ('%F6', '%C3%B6'), ('%E4', '%C3%A4'), ('%DC', '%C3%9C'), ('%D6', '%C3%96'), ('%C4', '%C3%84'))
+        for r in repl:
+            cmd = cmd.replace(*r)
         self.logger.debug("squeezebox: Sending request: {0}".format(cmd))
         self.send(bytes(cmd + '\r\n', 'utf-8'))
 
@@ -172,22 +193,28 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                     self.logger.info("squeezebox: Listen-mode disabled")
 
             if self._check_mac(data[0]):
-                if (data[1] == 'play'):
+                if (data[1] == 'time' and (data[2].startswith('+') or data[2].startswith('-'))):
+                    self._send(data[0] + ' time ?')
+                    return
+                elif (data[1] == 'play'):
                     self._update_items_with_data([data[0], 'play', '1'])
                     self._update_items_with_data([data[0], 'stop', '0'])
                     self._update_items_with_data([data[0], 'pause', '0'])
+                    self._update_items_with_data([data[0], 'mode', 'play'])
+                    self._send(data[0] + ' time ?')
                     # play also overrules mute
-                    self._update_items_with_data(
-                        [data[0], 'prefset server mute', '0'])
+                    self._update_items_with_data([data[0], 'mute', '0'])
                     return
                 elif (data[1] == 'stop'):
                     self._update_items_with_data([data[0], 'play', '0'])
                     self._update_items_with_data([data[0], 'stop', '1'])
-                    self._update_items_with_data([data[0], 'pause', '0'])
+                    self._update_items_with_data([data[0], 'mode', 'stop'])
+                    self._send(data[0] + ' time ?')
                     return
                 elif (data[1] == 'pause'):
-                    self._send(data[0] + ' mode ?')
+                    self._update_items_with_data([data[0], 'mode', 'pause'])
                     self._send(data[0] + ' mixer muting ?')
+                    self._send(data[0] + ' time ?')
                     return
                 elif (data[1] == 'mode'):
                     self._update_items_with_data(
@@ -196,34 +223,37 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                         [data[0], 'stop', str(data[2] == 'stop')])
                     self._update_items_with_data(
                         [data[0], 'pause', str(data[2] == 'pause')])
+                    self._update_items_with_data([data[0], 'mode', data[2]])
                     # play also overrules mute
                     if (data[2] == 'play'):
-                        self._update_items_with_data(
-                            [data[0], 'prefset server mute', '0'])
+                        self._update_items_with_data([data[0], 'mute', '0'])
                     return
                 elif ((((data[1] == 'prefset') and (data[2] == 'server')) or (data[1] == 'mixer'))
                       and (data[-2] == 'volume') and data[-1].startswith('-')):
                     # make sure value is always positive - also if muted!
-                    self._update_items_with_data(
-                        [data[0], 'prefset server mute', '1'])
+                    self._update_items_with_data([data[0], 'mute', '1'])
                     data[-1] = data[-1][1:]
                 elif (data[1] == 'playlist'):
                     if (data[2] == 'play'):
                         self._update_items_with_data([data[0], 'play', '1'])
                         self._update_items_with_data([data[0], 'stop', '0'])
                         self._update_items_with_data([data[0], 'pause', '0'])
+                        self._update_items_with_data([data[0], 'mode', 'play'])
+                        self._send(data[0] + ' time ?')
                         # play also overrules mute
-                        self._update_items_with_data(
-                            [data[0], 'prefset server mute', '0'])
+                        self._update_items_with_data([data[0], 'mute', '0'])
                         return
                     elif (data[2] == 'stop'):
                         self._update_items_with_data([data[0], 'play', '0'])
                         self._update_items_with_data([data[0], 'stop', '1'])
                         self._update_items_with_data([data[0], 'pause', '0'])
+                        self._update_items_with_data([data[0], 'mode', 'stop'])
+                        self._send(data[0] + ' time ?')
                         return
                     elif (data[2] == 'pause'):
-                        self._send(data[0] + ' mode ?')
+                        self._update_items_with_data([data[0], 'mode', 'pause'])
                         self._send(data[0] + ' mixer muting ?')
+                        self._send(data[0] + ' time ?')
                         return
                     elif (data[2] == 'jump') and (len(data) == 4):
                         self._update_items_with_data(
@@ -231,7 +261,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                     elif (data[2] == 'name') and (len(data) <= 3):
                         self._update_items_with_data(
                                 [data[0], 'playlist name', ''])
-                    elif (data[2] == 'loadtracks' or data[2] == 'save'):
+                    elif (data[2] == 'loadtracks'):
                         self._send(data[0] + ' playlist name ?')
                     elif (data[2] == 'newsong'):
                         self._send(data[0] + ' mode ?')
@@ -281,7 +311,8 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             if self.connected:
                 self.logger.debug('squeezebox: init read')
                 for cmd in self._init_cmds:
-                    self._send(cmd + ' ?')
+                    cmd = '{} ?'.format(cmd) if '?' not in cmd else cmd
+                    self._send(cmd)
 
     def run(self):
         self.alive = True

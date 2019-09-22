@@ -1,0 +1,107 @@
+# Metadata for the classic-plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Anbindung von iRobot Roomba Staubsaugern der Serie 900'
+        en: 'integration of the iRobot Roomba vacuum cleaner series 900'
+    maintainer: 'Zapfen83'
+    tester: '?'
+    state: ready
+    keywords: irobot roomba             # keywords, where applicable
+#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+# Following entries are for Smart-Plugins:
+    version: 1.0.1                 # Plugin version
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False
+    restartable: unknown
+    classname: ROOMBA_980              # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+
+  adress:
+    type: str
+    default: True
+    description:
+      de: "Die IP Adresse des roomba Staubsaugers"
+      en: "The IP address of the roomba vacuum cleaner"
+
+  blid:
+    type: str
+    default: True
+    description:
+      de: "Die blid des roomba Staubsaugers -> kann mit der getpassword.py ausgelesen werden"
+      en: "The blid of the roomba vacuum cleaner -> use getpassword.py to get it"
+
+  roombaPassword:
+    type: str
+    default: True
+    description:
+      de: "Das Passwort des roomba Staubsaugers -> kann mit der getpassword.py ausgelesen werden"
+      en: "The password of the roomba vacuum cleaner -> use getpassword.py to get it"
+
+  cycle:
+    type: num
+    default: False
+    description:
+      de: "update des items alle x Sekunden, default wert 900"
+      en: "update the state item every x secounds, default is 900"
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+
+  status_batterie:
+    type: num
+    description:
+      de: "Batterie ladewert in Prozent"
+      en: "Battery charge in percent"
+
+  status_bin_full:
+    type: bool
+    description:
+      de: "Wahr wenn der Auffangbehälter voll ist"
+      en: "True if bin is full"
+
+  status_cleanMissionStatus_phase:
+    type: str
+    description:
+      de: "Status was der Roomba gerade macht -> run / charge / stock / ..."
+      en: "State of the roomba -> run / charge / stock / ..."
+
+  status_cleanMissionStatus_error:
+    type: num
+    description:
+      de: "Fehlernummer, 0 ist OK"
+      en: "Error Number, 0 is ok"
+
+  start:
+    type: bool
+    description:
+      de: "Startet die Reinigung"
+      en: "Start cleaning misson"
+
+  stop:
+    type: bool
+    description:
+      de: "Stoppt die Reinigung"
+      en: "Stop cleaning mission"
+
+  dock:
+    type: bool
+    description:
+      de: "Roomba fährt zur Homebase"
+      en: "Roomba goes back to the homebase"
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+  # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+  # Definition of logic parameters defined by this plugin
+

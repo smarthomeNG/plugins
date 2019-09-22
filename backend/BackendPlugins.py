@@ -27,21 +27,20 @@ import cherrypy
 import lib.config
 from lib.plugin import Plugins
 from lib.model.smartplugin import SmartPlugin
+import inspect
 
 from .utils import *
 
-#import lib.item_conversion
+
+# import lib.item_conversion
 
 class BackendPlugins:
-
     plugins = None
 
     def __init__(self):
 
         self.plugins = Plugins.get_instance()
         self.logger.info("BackendPlugins __init__ self.plugins = {}".format(str(self.plugins)))
-        
-        
 
     # -----------------------------------------------------------------------------------
     #    PLUGINS
@@ -57,12 +56,16 @@ class BackendPlugins:
             myplg = self.plugins.return_plugin(configname)
             myplg2 = self.plugins.get_pluginthread(configname)
             myplg.run()
-            self.logger.warning("disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg, myplg.alive, myplg2))
+            self.logger.warning(
+                "disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg,
+                                                                                             myplg.alive, myplg2))
         elif disable is not None:
             myplg = self.plugins.return_plugin(configname)
             myplg2 = self.plugins.get_pluginthread(configname)
             myplg.stop()
-            self.logger.warning("disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg, myplg.alive, myplg2))
+            self.logger.warning(
+                "disable: configname = {}, myplg = {}, myplg.alive = {}, myplg2 = {}".format(configname, myplg,
+                                                                                             myplg.alive, myplg2))
         elif unload is not None:
             result = self.plugins.unload_plugin(configname)
 
@@ -102,7 +105,7 @@ class BackendPlugins:
                 plugin['classpath'] = x._classpath
                 plugin['classname'] = x._classname
                 plugin['stopped'] = False
-                
+
             try:
                 plugin['stopped'] = not x.alive
                 plugin['stoppable'] = True
@@ -111,11 +114,28 @@ class BackendPlugins:
                 plugin['stoppable'] = False
             if plugin['shortname'] == 'backend':
                 plugin['stoppable'] = False
-            
-            
+
             plugin_list.append(plugin)
         plugins_sorted = sorted(plugin_list, key=lambda k: k['classpath'])
 
-        return self.render_template('plugins.html', plugins=plugins_sorted, lang=get_translation_lang(), mod_http=self._bs.mod_http)
+        return self.render_template('plugins.html', plugins=plugins_sorted, lang=get_translation_lang(),
+                                    mod_http=self._bs.mod_http)
 
+    @cherrypy.expose
+    def plugins_json(self):
+        """
+        returns a list of plugin names (from config) as json structure
+        """
+        not_allowed_functions = ['__init__', 'parse_item', 'parse_logic', 'update_item', 'init_webinterface',
+                                 'init_webinterfaces']
+        plugin_list = []
+        for x in self.plugins.return_plugins():
+            if isinstance(x, SmartPlugin):
+                plugin_config_name = x.get_configname()
+                if x.metadata is not None:
+                    api = x.metadata.get_plugin_function_defstrings(with_type=True, with_default=True)
+                    if api is not None:
+                        for function in api:
+                            plugin_list.append(plugin_config_name + "." +function)
 
+        return json.dumps(plugin_list)

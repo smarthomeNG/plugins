@@ -4,6 +4,13 @@ This plugin uses the D&W USB service interface for connection, so you don't need
 
 ## Changelog
 
+1.5.2:
+* Added aerosilent exos
+* Updated README
+
+1.5.1:
+* Adapted plugin to use newer functions and logging parameters
+
 1.3.0:
 * Ignore wrong device info and use backup device id (set correct number for your DuW device from list below)
 * Retry reading lines to prevent wrong data (set value in conf file)
@@ -21,6 +28,7 @@ The plugin detects the connected device type automatically:
    * aerosilent bianco: 13
    * aerosilent business: 15
    * aerosilent centro: 8
+   * aerosilent exos: 25
    * aerosilent micro: 3
    * aerosilent primus: 1
    * aerosilent stratos: 17

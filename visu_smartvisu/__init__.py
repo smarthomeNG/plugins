@@ -131,6 +131,8 @@ class SmartVisu(SmartPlugin):
             content = ''
             with open(os.path.join(self.smartvisu_dir, 'version-info.php'), 'r') as content_file:
                 content = content_file.read()
+            if content.find('2.9') > -1:
+                return '2.9'
             if content.find('2.8') > -1:
                 return '2.8'
         if os.path.isdir(os.path.join(self.smartvisu_dir, 'pages')):
@@ -301,10 +303,10 @@ class SmartVisuGenerator:
                 
 #        for item in self._sh.find_items('sv_page'):
         for item in self.items.find_items('sv_page'):
-            if item.conf['sv_page'] == 'seperator':
+            if item.conf['sv_page'] in ['separator', 'seperator']:
                 nav_lis += self.parse_tpl('navi_sep.html', [('{{ name }}', str(item))])
                 continue
-            elif item.conf['sv_page'] == 'cat_seperator':
+            elif item.conf['sv_page'] in ['cat_separator', 'cat_seperator']:
                 cat_lis += self.parse_tpl('navi_sep.html', [('{{ name }}', str(item))])
                 continue
             elif ((item.conf['sv_page'] == 'overview') or (item.conf['sv_page'] == 'cat_overview')) and (not 'sv_overview' in item.conf):

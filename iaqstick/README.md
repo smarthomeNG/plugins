@@ -8,7 +8,7 @@
 install by
 ```bash
 apt-get install python3-setuptools
-easy_install3 pyusb
+pip3 install "pyusb>=1.0.2"
 ```
 
 ```

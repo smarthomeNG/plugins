@@ -8,13 +8,15 @@ plugin:
     maintainer: psilo909
     tester: Sandman60, cmalo
 #    keywords: iot xyz
-    documentation: http://smarthomeng.de/user/plugins_doc/config/avm.html
+    state: 'qa-passed'
+    documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 1.5.4                 # Plugin version
-    sh_minversion: 1.4c            # minimum shNG version to use this plugin
+    version: 1.5.6                 # Plugin version
+    sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: True
     classname: AVM                 # class containing the plugin
 
 parameters:
@@ -23,8 +25,8 @@ parameters:
         type: str
         default: ''
         description:
-            de: '(optional) Nutzername für den Login. Kann für manche Features benötigt werden!'
-            en: '(optional) Login information (user). Can be needed to use some features of the AVM device.'
+            de: '(optional) Nutzername für den Login. Kann für manche Features benötigt werden! (Speziell für Fritz!OS 7 ist die Konfiguration der Fritz!Box auf `Anmeldung mit FRITZ!Box-Benutzernamen und Kennwort` notwendig'
+            en: '(optional) Login information (user). Can be needed to use some features of the AVM device. (Specially for Firtz!OS 7 the Fritz!Box should be configured for login with username and password'
     password:
         type: str
         default: ''
@@ -78,9 +80,9 @@ parameters:
         type: str
         default: ''
         description:
-            de: '(optional) Eindeutiger Identifier für die Instanz des Plugins, also für jedes FritzDevice. Kann bei nur einem Gerät / Single Instance Betrieb des Plugins entfallen.'
-            en: '(optional) Unique identifier for each FritzDevice / each instance of the plugin. Can be skipped if only one device is used / the plugin is operated single instance.'
-    
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     avm_data_type:
@@ -89,26 +91,244 @@ item_attributes:
         description:
             de: 'AVM Datentyp des jeweiligen Items.'
             en: 'AVM Data Type of the respective item.'
+        valid_list:
+        - 'uptime'
+        - 'serial_number'
+        - 'software_version'
+        - 'hardware_version'
+        - 'myfritz_status'
+        - 'monitor_trigger'
+        - 'is_call_incoming'
+        - 'call_duration_incoming'
+        - 'last_caller_incoming'
+        - 'last_number_incoming'
+        - 'last_called_number_incoming'
+        - 'last_call_date_incoming'
+        - 'call_event_incoming'
+        - 'is_call_outgoing'
+        - 'call_duration_outgoing'
+        - 'last_caller_outgoing'
+        - 'last_number_outgoing'
+        - 'last_called_number_outgoing'
+        - 'last_call_date_outgoing'
+        - 'call_event_outgoing'
+        - 'call_direction'
+        - 'call_event'
+        - 'tam'
+        - 'tam_name'
+        - 'tam_old_message_number'
+        - 'tam_new_message_number'
+        - 'tam_total_message_number'
+        - 'wan_connection_status'
+        - 'wan_connection_error'
+        - 'wan_is_connected'
+        - 'wan_uptime'
+        - 'wan_ip'
+        - 'wan_upstream'
+        - 'wan_downstream'
+        - 'wan_total_packets_sent'
+        - 'wan_total_packets_received'
+        - 'wan_current_packets_sent'
+        - 'wan_current_packets_received'
+        - 'wan_total_bytes_sent'
+        - 'wan_total_bytes_received'
+        - 'wan_current_bytes_sent'
+        - 'wan_current_bytes_received'
+        - 'wan_link'
+        - 'wlanconfig'
+        - 'wlanconfig_ssid'
+        - 'wlan_guest_time_remaining'
+        - 'network_device'
+        - 'device_ip'
+        - 'device_connection_type'
+        - 'device_hostname'
+        - 'aha_device'
+        - 'energy'
+        - 'power'
+        - 'temperature'
+
     avm_incoming_allowed:
         type: str
+        mandatory: False
         description:
             de: '(optional) Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed incoming number. Only in items of avm_data_type `monitor_trigger`.'
     avm_target_number:
         type: str
+        mandatory: False
         description:
             de: '(optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.'
     mac:
-        type: str
-        mandatory: True
+        type: mac
+        mandatory: False
         description:
             de: 'Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
             en: 'Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!'
     ain:
         type: str
-        mandatory: True
+        mandatory: False
         description:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
 
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    cancel_call:
+        type: void
+        description:
+            de: "Beendet einen aktiven Anruf."
+            en: "Cancels an active call."
+        parameters:
+        # This function has no parameters
+
+    get_call_origin:
+        type: str
+        description:
+            de: "Gib den Namen des Telefons zurück, das aktuell als 'call origin' gesetzt ist."
+            en: "Gets the phone name, currently set as 'call origin'."
+        parameters:
+        # This function has no parameters
+
+    get_calllist:
+        type: list(dict(str))
+        description:
+            de: "Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige optional))."
+            en: "Returns an array of dicts with all calllist entries (attributes 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date', 'Duration' (some optional))."
+        parameters:
+            filter_incoming:
+                type: str
+                description:
+                    de: "Filter, um nur die Anrufe zu erhalten, die zu einer bestimmten angerufenen Nummer gehören."
+                    en: "Filter to filter calls to a specific destination phone number."
+
+    get_contact_name_by_phone_number:
+        type: str
+        description:
+            de: "Durchsucht das Telefonbuch mit einer (vollständigen) Telefonnummer nach Kontakten. Falls kein Name gefunden wird, wird die Telefonnummer zurückgeliefert."
+            en: "Searches the phonebook for a contact by a given (complete) phone number. In case no name is found, the phone number is returned."
+        parameters:
+            phone_number:
+                type: str
+                description:
+                    de: "Vollständige Telefonnummer"
+                    en: "Complete phone number"
+
+    get_host_details:
+        type: dict(str)
+        description:
+            de: "Ermittelt die Informationen zu einem Host an einem angegebenen Index."
+            en: "Gets the information of a hosts at a specific index."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Index"
+                    en: "Index"
+
+    get_hosts:
+        type: list(dict(str))
+        description:
+            de: "Ermittelt ein Array mit den Namen aller verbundener Hosts."
+            en: "Gets the name of all connected hosts as an array."
+        parameters:
+            only_active:
+                type: bool
+                description:
+                    de: "True, wenn nur aktuell aktive Hosts zurückgegeben werden sollen."
+                    en: "True, if only active hosts shall be returned."
+
+    get_phone_name:
+        type: str
+        description:
+            de: "Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden."
+            en: "Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Index"
+                    en: "Index"
+
+    get_phone_numbers_by_name:
+        type: dict(dict(str))
+        description:
+            de: "Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehörigen Telefonnummern."
+            en: "Searches the phonebook for a contact by a given name and returns the corresponding phone numbers."
+        parameters:
+            name:
+                type: str
+                description:
+                    de: "Anteiliger oder vollständiger Name des Kontakts."
+                    en: "Partial or full name of the contact."
+
+    is_host_active:
+        type: bool
+        description:
+            de: "Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt werden."
+            en: "Checks if a MAC address is active on the FritzDevice, e.g. the status can be used for simple presence detection."
+        parameters:
+            mac_address:
+                type: mac
+                description:
+                    de: "MAC Adresse"
+                    en: "MAC address"
+
+    reboot:
+        type: void
+        description:
+            de: "Startet das Gerät neu."
+            en: "Reboots the device."
+        parameters:
+        # This function has no parameters
+
+    reconnect:
+        type: void
+        description:
+            de: "Verbindet das Gerät neu mit dem WAN (Wide Area Network)."
+            en: "Reconnects the device to the WAN (Wide Area Network)."
+        parameters:
+        # This function has no parameters
+
+    set_call_origin:
+        type: void
+        description:
+            de: "Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'."
+            en: "Sets the 'call origin', e.g. before running 'start_call'."
+        parameters:
+            phone_name:
+                type: mac
+                description:
+                    de: "Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. Bspw. zwei Sterne gefolgt von '610' für ein internes Gerät."
+                    en: "Full phone identifier, could be e.g. two asterix followed by '610' for an internal device."
+
+    start_call:
+        type: void
+        description:
+            de: "Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern)."
+            en: "Starts a call for a given phone number (internal or external)."
+        parameters:
+            phone_number:
+                type: str
+                description:
+                    de: "Vollständige Telefonnummer, die angerufen werden soll."
+                    en: "Full phone number to call"
+
+    wol:
+        type: void
+        description:
+            de: "Sendet einen WOL (WakeOnLAN) Befehl an eine MAC Adresse."
+            en: "Sends a WOL (WakeOnLAN) command to a MAC address."
+        parameters:
+            mac_address:
+                type: mac
+                description:
+                    de: "MAC Adresse"
+                    en: "MAC address"

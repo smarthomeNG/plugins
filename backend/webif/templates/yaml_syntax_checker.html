@@ -13,18 +13,18 @@
 <div class="container-fluid navBorder"></div>
 <form name="input" action="yaml_syntax_checker.html" method="POST" enctype="multipart/form-data">
     <div class="container-fluid" style="width: 100%;">
-		<div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px; margin-right: 5px;">
+		<div style="width: 48%; float: left; margin-bottom: 10px; margin-right: 5px;">
 			<div title="{{ _('Hier den YAML Code eingeben, der geprüft werden soll.') }}">
-    		    <div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Eingabe im .YAML Format') }}</div>
+    		    <div style="font-weight: bold; padding-left: 5px;">{{ _('Eingabe im .YAML Format') }}</div>
 				<textarea id="yaml_code" name="yaml_code">{{ yaml_code }}</textarea>
 			</div>
 		</div>
-    	<div style="width: 48%; float: left; border: 1px solid #ccc; margin-bottom: 10px;">
+    	<div style="width: 48%; float: left; margin-bottom: 10px;">
 			<div title="{{ _('Hier wird das Ergebnis Ausdruck angezeigt.') }}">
 				{% if output_format == 'python' %}
-	        		<div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ergebnis: Aufbereitet als Python Source Code') }}</div>
+	        		<div style="font-weight: bold; padding-left: 5px;">{{ _('Ergebnis: Aufbereitet als Python Source Code') }}</div>
 				{% else %}
-	        		<div style="font-weight: bold; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('Ergebnis: Aufbereitetes .YAML Format') }}</div>
+	        		<div style="font-weight: bold; padding-left: 5px;">{{ _('Ergebnis: Aufbereitetes .YAML Format') }}</div>
 				{% endif %}
     		    <textarea id="check_result" autocomplete="off" name="check_result">{{ check_result }}</textarea>
 		    </div>

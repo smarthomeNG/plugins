@@ -3,23 +3,111 @@ plugin:
     # Global plugin attributes
     type: system                    # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Speicher Logeinträge im Speicher zur Anzeige in der VISU'
-        en: ''
+        de: 'Speichern der Logeinträge im Speicher (zur Anzeige in der VISU)'
+        en: 'Store log entries in memory (for display in VISU)'
     maintainer: ohinckel
     tester: cmalo
+    state: ready
 #    keywords: kwd1 kwd2            # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
-# Following entries are for Smart-Plugins:
-#    version: 1.3.3                 # Plugin version
+    version: 1.3.0                 # Plugin version
 #    sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    multi_instance: False
+    multi_instance: False
+    restartable: unknown
     classname: MemLog               # class containing the plugin
 
-#parameters:
+parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
-#item_attributes:
+#     def __init__(self, smarthome, name, mapping = ['time', 'thread', 'level', 'message'], items = [], maxlen = 50):
+
+    name:
+        type: str
+        description:
+            de: ""
+            en: "This will give the in-memory log a name which can be used when accessing them."
+
+    mappings:
+        type: str
+        valid_list:
+          - time
+          - thread
+          - level
+          - message
+        description:
+            de: ""
+            en: "This configures the list of values which are logged for each log message. The following internal \
+                mappings can be used and will be automatically set - if not given explicitely when logging data:
+
+                 time - the timestamp of log
+                 thread - the thread logging data
+                 level - the log level (defaults to INFO)"
+
+    maxlen:
+        type: int
+        default: 50
+        description:
+            de: ""
+            en: "Defines the maximum amount of log entries in the in-memory log."
+
+    items:
+        type: list(str)
+        description:
+            de: ""
+            en: "Each time an item is updated using the memlog configuration setting, a log entry will be written \
+                using the list of items configured in this attribute as log values.
+
+                When this is not configured, the default mapping values will be used the associated item's value will \
+                be logged. e.g.:
+                  - first.item.now
+                  - second.item.thread.info
+                  - third.item.level
+                  - fourth.item.msg
+                "
+
+
+item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    memlog:
+        type: str
+        description:
+            de: ""
+            en: "Defines the name of in-memory log which should be used to log the item's content to the log. \
+                Everything is logged with 'INFO' level."
+
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters:
+    # Definition of logic parameters defined by this plugin
+    memlog:
+        type: str
+        description:
+            de: ""
+            en: "Configures that a message should be logged whenever the logic was triggered. It logs a default \
+                message which can be overwritten by the memlog_message attribute."
+
+    memlog_message:
+        type: str
+        description:
+            de: ""
+            en: "Defines the message to be logged. It configures a string which may contain placeholders which got \
+                 replaced by using the format() function.
+
+                 The following placeholders or object can be used in the message string:
+
+                 logic - the logic object, e.g. logic.name for the logic's name
+                 plugin - the memlog plugin instance object
+                 by - the string containing the origin of logic trigger
+                 source - the source
+                 dest - the destination
+                 The logic and plugin placeholders are always available, the rest depends on the logic \
+                 invocation/trigger.
+
+                 Example: memlog_message: The logic {logic.name} was triggered!"
+

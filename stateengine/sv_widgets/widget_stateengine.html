@@ -1,0 +1,19 @@
+/**
+* Extended Autostate widget: showing an icon depending on the state an item is in (using autoblind plugin). Popup on longpress.
+*
+* @param {id=} unique id for this widget (optional)
+* @param {item} an item the state should be shown for
+* @param {item=} lock state item for your item (optional)
+* @param {release=} release state item for your item. If available this state is activated when you click on the icon (optional)
+* @param {image[]} array of icons to be shown corresponding to the values stated in the next attribute
+* @param {text[]} array of values corresponding to the icons stated in the previous attribute
+* @param {text} id of the popup widget to open on longpress
+*/
+{% macro state(id, item, lock, release, pic, val, popup) %}
+  {% import "basic.html" as basic %}
+    <span id="{{ uid(page, id) }}" data-widget="stateengine.state" data-item="{{ item }}" lock-item="{{ lock }}" release-item="{{ release }}"
+        data-vals="{{ implode(val) }}"  data-img="{{ implode(pic|deficon) }}" data-val-on="1" data-val-off="0"
+        class="symbol {{ lock == '' ? '' : 'ui-link' }}" data-role="symbol" data-inline="true" data-iconpos="center" data-mode="{{ mode|default('or') }}" rel="{{ popup }}">
+    {{ basic.icon(pic[0]|deficon('time_automatic'), 'icon0') }}
+    </span>
+{% endmacro %}

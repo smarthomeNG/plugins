@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2017 Thomas Creutz                    <thomas.creutz@gmx.de>
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
 #  upwards.
@@ -50,14 +50,14 @@ class ZWave(SmartPlugin):
     def __init__(self, sh, device='/dev/ttyUSB0', sec_strategy='SUPPORTED', config_path='/etc/openzwave/', zlogging='false', logfile='OZW.log', loglevel='Info'):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-        
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**! 
+
+        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
         :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
         :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
-        
+
         If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
         a reference to the sh object any more.
-        
+
         The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are implemented
         to support older plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
         use the SmartPlugin method `get_parameter_value(parameter_name)` instead. Anywhere within the Plugin you can get
@@ -76,13 +76,14 @@ class ZWave(SmartPlugin):
         self.listenOn = {}
         self._device = device
         self._config_path = config_path
-        self._logging = logging
+        self._logging = zlogging
         self._logfile = os.path.join(sh._base_dir, 'var')
         self._logfile = os.path.join(self._logfile, 'log')
         self._logfile = os.path.join(self._logfile, logfile)
         self.logger.debug('zwave: logath={0}', self._logfile)
         self._loglevel = loglevel
         self._sec_strategy = sec_strategy
+        self._ready = False
 
     def run(self):
         """
@@ -92,7 +93,7 @@ class ZWave(SmartPlugin):
         self.alive = True
 
         try:
-            options = ZWaveOption(self._device, config_path=self._config_path, user_path='.', cmd_line='')
+            options = ZWaveOption(self._device, config_path=self._config_path, user_path='./var/ozw', cmd_line='')
         except Exception as e:
             self.logger.error('zwave: error on create ZWaveOption - {}'.format(e))
             self.alive = False
@@ -125,24 +126,40 @@ class ZWave(SmartPlugin):
         try:
             self._network.start()
         except Exception as e:
+            self.alive = False
             self.logger.error('zwave: error on start network - {}'.format(e))
 
         self.logger.info('zwave: use openzwave library: {}'.format(self._network.controller.ozw_library_version))
         self.logger.info('zwave: use python library: {}'.format(self._network.controller.python_library_version))
         self.logger.info('zwave: use ZWave library: {}'.format(self._network.controller.library_description))
-        while 1:
-            if self.alive and self._network.state < self._network.STATE_READY:
+
+        while self.alive:
+
+            if self._network.state != self._network.STATE_READY:
+
                 self.logger.debug('zwave: wait until network is ready... current state is: {}'.format(self._network.state_str))
-                time.sleep(3.0)
                 if self._network.state == self._network.STATE_FAILED:
-                    self.alive = false
+                    self.alive = False
                     return
 
-        self.logger.info('zwave: controller ready : {} nodes were found.'.format(self._network.nodes_count))
-        self.logger.info('zwave: controller node id : {}'.format(self._network.controller.node.node_id))
-        self.logger.info('zwave: controller node version : {}'.format(self._network.controller.node.version))
-        self.logger.info('zwave: Network home id : {}'.format(self._network.home_id_str))
-        self.logger.info('zwave: Nodes in network : {}'.format(self._network.nodes_count))
+            # Dump network information on STATE_READY
+            if self._network.state == self._network.STATE_READY and self._ready == False:
+                self.logger.info('zwave: controller ready : {} nodes were found.'.format(self._network.nodes_count))
+                self.logger.info('zwave: controller node id : {}'.format(self._network.controller.node.node_id))
+                self.logger.info('zwave: controller node version : {}'.format(self._network.controller.node.version))
+                self.logger.info('zwave: Network home id : {}'.format(self._network.home_id_str))
+                self.logger.info('zwave: Nodes in network : {}'.format(self._network.nodes_count))
+
+                self.logger.info("zwave: Start refresh values")
+                for __id in self.listenOn:
+                    __val = self._network.get_value(__id)
+                    self.logger.info("zwave: id : '{}', val: '{}'".format(__id,__val))
+                    for __item in self.listenOn[__id][ITEMS]:
+                        __item(__val.data, 'ZWave')
+
+                self._ready = True
+
+            time.sleep(3.0)
 
     def stop(self):
         """

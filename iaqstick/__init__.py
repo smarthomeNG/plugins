@@ -41,7 +41,7 @@ class iAQ_Stick():
         in_data = bytes()
         try:
             while True:
-                ret = bytes(dev.read(0x81, 0x10, self._intf, 1000))
+                ret = bytes(dev.read(0x81, 0x10, 1000))
                 if len(ret) == 0:
                     break
                 in_data += ret
@@ -53,13 +53,13 @@ class iAQ_Stick():
     def xfer_type1(self, dev, msg):
         out_data = bytes('@{:04X}{}\n@@@@@@@@@@'.format(self._devs[dev]['type1_seq'], msg), 'utf-8')
         self._devs[dev]['type1_seq'] = (self._devs[dev]['type1_seq'] + 1) & 0xFFFF
-        ret = dev.write(0x02, out_data[:16], self._intf, 1000)
+        ret = dev.write(0x02, out_data[:16], 1000)
         return self.read(dev).decode('iso-8859-1')
 
     def xfer_type2(self, dev, msg):
         out_data = bytes('@', 'utf-8') + self._devs[dev]['type2_seq'].to_bytes(1, byteorder='big') + bytes('{}\n@@@@@@@@@@@@@'.format(msg), 'utf-8')
         self._devs[dev]['type2_seq'] = (self._devs[dev]['type2_seq'] + 1) if (self._devs[dev]['type2_seq'] < 0xFF) else 0x67
-        ret = dev.write(0x02, out_data[:16], self._intf, 1000)
+        ret = dev.write(0x02, out_data[:16], 1000)
         in_data = bytes()
         return self.read(dev)
 
@@ -70,8 +70,8 @@ class iAQ_Stick():
             dev.set_configuration(0x01)
             usb.util.claim_interface(dev, self._intf)
             dev.set_interface_altsetting(self._intf, 0x00)
-            vendor = usb.util.get_string(dev, 0x101, 0x01, 0x409)
-            product = usb.util.get_string(dev, 0x101, 0x02, 0x409)
+            vendor = usb.util.get_string(dev, dev.iManufacturer)
+            product = usb.util.get_string(dev,dev.iProduct )
             self._devs[dev] = {'type1_seq':0x0001, 'type2_seq':0x67}
             ret = self.xfer_type1(dev, '*IDN?')
             pos1 = ret.find('S/N:') + 4
@@ -88,7 +88,7 @@ class iAQ_Stick():
             return None
 
     def run(self):
-        devs = usb.core.find(idVendor=0x03eb, idProduct=0x2013, find_all=True)
+        devs = list(usb.core.find(idVendor=0x03eb, idProduct=0x2013, find_all=True))
         if devs is None:
             logger.error('iaqstick: iAQ Stick not found')
             return
@@ -145,7 +145,7 @@ class iAQ_Stick():
                 logger.error("iaqstick: Trying to recover ...")
                 broken_id = self._devs[dev]['id']
                 del self._devs[dev]
-                __devs = usb.core.find(idVendor=0x03eb, idProduct=0x2013, find_all=True)
+                __devs = list(usb.core.find(idVendor=0x03eb, idProduct=0x2013, find_all=True))
                 for __dev in __devs:
                     if (__dev not in self._devs):
                         id = self._init_dev(__dev)

@@ -1,12 +1,13 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    type: interface                # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Unterstützung für Systemair residential air units über Modbus.'
-        en: ''
+        de: 'Unterstützung für Systemair residential air Geräte über Modbus.'
+        en: 'Support for Systemair residential air units through Modbus'
     maintainer: pfischi
-#    tester:                        # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
+    state: ready
     keywords: modbus
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/939623-systemair-modbus-plugin-zentrale-lüftungsanlage
@@ -15,11 +16,57 @@ plugin:
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Systemair           # class containing the plugin
 
 parameters:
-    # Definition of parameters to be configured in etc/plugin.yaml
-    
+# Definition of parameters to be configured in etc/plugin.yaml
+
+    serialport:
+        type: str
+        description:
+            de: 'Serielle Schnittstelle (z.B. /dev/ttyUSB0)'
+            en: 'Serial port (e.g. /dev/ttyUSB0)'
+
+    slave_address:
+        type: int
+        default: 1
+        valid_min: 1
+        description:
+            de: 'Slave Adresse'
+            en: 'Slave address'
+
+    update_cycle:
+        type: int
+        default: 30
+        valid_min: 1
+        valid_max: 600
+        description:
+            de: 'Update Zyklus in Sekunden'
+            en: 'Update cycle in seconds'
+
+
 item_attributes:
-    # Definition of item attributes defined by this plugin
-    
+# Definition of item attributes defined by this plugin
+
+    systemair_regaddr:
+        type: num
+        description:
+            de: "--> Details bitte der README.md enthehmen"
+            en: "--> Lookup details in README.md"
+    coil_regaddr:
+        type: num
+        description:
+            de: "--> Details bitte der README.md enthehmen"
+            en: "--> Lookup details in README.md"
+
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+

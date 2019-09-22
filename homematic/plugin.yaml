@@ -6,9 +6,11 @@ plugin:
         de: 'Ansteuerung von HomeMatic Komponenten über eine HomeMatic CCU2 Zentrale. Es werden HomeMatic und HomeMaticIP Geräte unterstützt.'
         en: 'Control HomeMatic devices through a HomeMatic CCU2 (used as gateway). HomeMatic and HomeMaticIP devices are supported.'
     maintainer: msinn             # Who maintains this plugin?
+    tester: msinn
+    state: qa-passed
 #    tester: efgh                   # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins/homematic/user_doc.html
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
 # Following entries are for Smart-Plugins:
@@ -16,6 +18,7 @@ plugin:
     sh_minversion: 1.4d            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
+    restartable: unknown
     classname: Homematic            # class containing the plugin
 
 parameters:
@@ -26,7 +29,7 @@ parameters:
         description:
             de: 'IP Adresse bzw. Hostname der HomeMatic CCU2 Zentrale'
             en: 'ip address or hostname of the HomeMatic CCU2 gateway'
-        
+
 #    port:
 #        type: int
 #        default: 2001
@@ -34,7 +37,7 @@ parameters:
 #        description:
 #            de: 'Port Nummer der HomeMatic CCU2 Zentrale'
 #            en: 'port number of the HomeMatic CCU2 gateway'
-#        
+#
 #    port_hmip:
 #        type: int
 #        default: 2010
@@ -42,14 +45,14 @@ parameters:
 #        description:
 #            de: 'Port Nummer der HomeMatic CCU2 Zentrale für HomeMaticIP Geräte'
 #            en: 'port number of the HomeMatic CCU2 gateway for HomeMaticIP Devices'
-        
+
     username:
         type: str
         default: 'Admin'
         description:
             de: 'Username für das Login'
             en: 'Username for the login'
-        
+
     password:
         type: str
         default: ''
@@ -57,34 +60,46 @@ parameters:
         description:
             de: 'Passwort für das Login'
             en: 'Password for the login'
-        
+
     learnmode_length:
         type: int
         default: 60
+        valid_min: 0
+        valid_max: 300
         description:
             de: 'Dauer des Anlernmodus der HomeMatic CCU2 Zentrale nach Aktivierung durch das Web Interface'
             en: 'Duration of learnmode of the HomeMatic CCU2 gateway after activation through the web interface'
 
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
     hm_address:
         type: str
         description:
             de: 'Adresse des HomeMatic Devices, welches über die HomeMatic CCU2 Zentrale angesteuert werden soll'
             en: 'Adress of the HomeMatic device that shall be controlled (through the HomeMatic CCU2 central unit)'
-        
+
     hm_function:
         type: str
         description:
             de: 'Name der Funktion des HomeMatic Devices, welche genutzt werden soll'
             en: 'Name of the function of the HomeMatic Device that shall be used'
-        
-    hm_channel: 
+
+    hm_channel:
         type: int
         description:
-            de: 'Optional: Kanal des Devices auf dem die Funktion angesteuert werden soll. 
+            de: 'Optional: Kanal des Devices auf dem die Funktion angesteuert werden soll.
                  Muss nur angegeben werden, wenn die gewünschte Funktion von dem Device mehrfach zur Verfügung gestellt wird'
             en: 'Optional: Channel of the devicemon which the function shall be used.
                  Has only to be specified, if the requested function is implemented more than once on the device.'
-        
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

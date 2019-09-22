@@ -1,0 +1,89 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Wetterdaten über OpenWeatherMap.'
+        en: 'Weather data via OpenWeatherMap.'
+    maintainer: psilo909
+    tester: psilo909
+    state: qa-passed
+#    keywords: iot xyz
+    documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
+    keywords: weather
+    version: 1.5.0.3              # Plugin version
+    sh_minversion: 1.5b           # minimum shNG version to use this plugin
+#    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True          # plugin supports multi instance
+    restartable: unknown
+    classname: OpenWeatherMap     # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    key:
+        type: str
+        mandatory: True
+        description:
+            de: 'Persönlicher API Key für OpenWeatherMap. Registrierung unter https://openweathermap.org/.'
+            en: 'Your own personal API key for OpenWeatherMap. For your own key register to https://openweathermap.org/.'
+    latitude:
+        type: str
+        mandatory: False
+        default: ''
+        description:
+            de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings'
+            en: 'Latitude for the location, of which weather data is requested. Default: SmartHomeNG Settings'
+    longitude:
+        type: str
+        mandatory: False
+        default: ''
+        description:
+            de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings.'
+            en: 'Longitude for the location, of which weather data is requested. Default: SmartHomeNG Settings.'
+    lang:
+        type: str
+        mandatory: False
+        default: 'de'
+        description:
+            de: 'Sprache der zurückgelieferten Daten. Mögliche Werte siehe https://openweathermap.org/api.'
+            en: 'Language of the data to be returned. Possible values see https://openweathermap.org/api.'
+    units:
+        type: str
+        mandatory: False
+        default: 'metric'
+        description:
+            de: 'Einheit der zurückgelieferten Daten. Mögliche Werte sind imperial und metric.'
+            en: 'Unit of the returned data. Possible values are imperial and metric.'
+    cycle:
+        type: int
+        mandatory: False
+        default: 300
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    owm_matchstring:
+        type: str
+        mandatory: True
+        description:
+            de: 'Matchstring für die OpenWeatherMap Daten, siehe Beispiele in der README.'
+            en: 'Matchstring for the OpenWeatherMap data, see examples in README.'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

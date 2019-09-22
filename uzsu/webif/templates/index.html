@@ -1,0 +1,128 @@
+{% extends "base_plugin.html" %}
+{% block scripts %}
+{{ super() }}
+<script>
+function mainpage() {
+  var url = window.location.href;
+  var page = url.substring(url.lastIndexOf('/') + 1);
+  var final = url.replace(page, '');
+  if ( url.includes("?action=") ) {
+    window.location.href = final;
+  };
+}
+  function togglevis(id) {
+    var div = document.getElementById(id);
+    div.style.display = div.style.display == "none" ? "block" : "none";
+  }
+  function hide(id) {
+    document.getElementById(id).style.display = "none";
+  }
+
+</script>
+{% endblock scripts %}
+{% set logo_frame = false %}
+
+
+{% set item_count = p._items|length %}
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% set tabcount = 1 %}
+
+{% block headtable %}
+  {% set sun = {'sunrise': '-', 'sunset': '-'} %}
+  {% for item in p._items %}
+    {% if p._items[item]['sunrise'] and sun.sunrise == '-' %}
+      {% if sun.update({'sunrise': p._items[item]['sunrise']|string}) %} {% endif %}
+      {% if sun.update({'sunset': p._items[item]['sunset']|string}) %} {% endif %}
+    {% endif %}
+  {% endfor %}
+
+<table class="table table-striped table-hover">
+  <tbody>
+    <tr>
+      <td class="py-1"><strong>{{ _('Sonnenaufgang') }}</strong></td>
+      <td class="py-1">{{ sun.sunrise }}</td>
+      <td class="py-1" width="50px"></td>
+      <td class="py-1"><strong>{{ _('Sonnenuntergang') }}</strong></td>
+      <td class="py-1">{{ sun.sunset }}</td>
+      <td class="py-1" width="50px"></td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>Items</strong></td>
+      <td class="py-1" colspan=5>{{ item_count }}</td>
+    </tr>
+
+  </tbody>
+</table>
+{% endblock headtable %}
+
+
+{% block bodytab1 %}
+
+<div class="container-fluid m-2">
+  <div class="mb-2">
+    {{ _('Die folgenden Items sind dem UZSU Plugin zugewiesen') }}.
+    <strong>{{ _('Klick auf ein Item um dessen Konfiguration anzuzeigen') }}</strong>
+  </div>
+  <table class="table table-striped table-hover pluginList">
+    <thead>
+    <tr>
+      <th>{{ _('UZSU Item') }}</th>
+      <th>{{ _('Abhängige Items (mit Typ)') }}</th>
+      <th>{{ _('Wert des abhängigen Items') }}</th>
+      <th>{{ _('Interpolation (Intervall)') }}</th>
+      <th>{{ _('Back in Time') }}</th>
+    </tr>
+    </thead>
+    {% for item in p.get_items() %}
+      {% if p.has_iattr(item.conf, 'uzsu_item') %}
+        {% set planned = p._logics_planned(item) %}
+        {% if (p._items[item]['active'] == True and planned == none) or p._items[item]['interpolation'] is not defined or p._items[item]['interpolation']['itemtype'] == none %}
+          {% set color = 'red' %}
+        {% elif p._items[item]['active'] == True %}
+            {% set color = 'green' %}
+        {% else %}
+          {% set color = 'gray' %}
+        {% endif %}
+        <div id="detail_{{item._path}}" style="position:fixed;bottom:10px;right: 5%;max-width:50%;display:none" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">{{ p._items[item] }}</div>
+          <tr style="color:{{ color }};" onClick="togglevis('detail_{{item._path}}')" onMouseOut="hide('detail_{{item._path}}')">
+            <td class="py-1">{{ item._path }}</td>
+            <td class="py-1">{{ p.get_iattr_value(item.conf, 'uzsu_item') }}
+              {% if p._items[item]['interpolation'] is not defined %}
+
+              {% elif p._items[item]['interpolation']['itemtype'] == none %} -
+                {{ _('Item existiert nicht!') }}
+              {% else %}
+                ({{ p._items[item]['interpolation']['itemtype'] }})
+              {% endif %}
+            </td>
+              <td class="py-1" >{{ p._get_dependant(item) }}<br>
+                {% if planned != none %}{{ planned }}{% endif %}
+                {% if planned == none and p._items[item]['active'] == True %}
+                  {{ _('Aktives Item, keine (aktiven) Einträge!') }}
+                {% endif %}
+              </td>
+              <td class="py-1">
+                {% if p._items[item]['interpolation'] is not defined %}
+                  {{ _('Interpolationsinformation fehlt!') }}
+                {% elif p._items[item]['interpolation']['type'] %}
+                  {{ p._items[item]['interpolation']['type'] }}
+                  ({% if p._items[item]['interpolation']['interval'] %}
+                    {{ p._items[item]['interpolation']['interval'] }}
+                  {% else %}
+                    <span style="color: gray;">5</span>
+                  {% endif %})
+                {% else %}-
+                {% endif %}</td>
+              <td class="py-1">
+                {% if p._items[item]['interpolation'] is not defined %}
+                  {{ _('Init Information fehlt!') }}
+                {% elif p._items[item]['interpolation']['initage'] %}
+                  {{ p._items[item]['interpolation']['initage'] }}
+                {% else %}-
+                {% endif %}</td>
+          </tr>
+        {% endif %}
+    {% endfor %}
+  </table>
+</div>
+{% endblock bodytab1 %}

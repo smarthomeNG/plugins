@@ -4,22 +4,104 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'GPIO Unterstützung für Rasberry Pi, **seit SmartHomeNG v1.3**'
-        en: ''
+        en: 'GPIO support for Raspberry Pi, **since SmarthomeNG v1.3**'
+    description_long:
+        de: 'GPIO Unterstützung für den Rasberry Pi.\n
+            Dieses Plugin unterstützt über das RPi.GPIO Modul das Einbinden von externen Sensoren und Aktoren,
+            die direkt am Raspberry Pi angeschlossen werden. Damit ist es beispielsweise möglich,
+            den Zustand von Reedkontakten einzulesen oder LEDs zu aktivieren und beispielsweise eine
+            `Posteinwurferkennung <https://redaktion.knx-user-forum.de/posteinwurferkennung/>`_ zu basteln.
+            Leider sind die GPIOs für die Raspberry Pi <=3+ rein digital, sodass anaolge Signale z.B.
+            eines Distanzsensors nur über Umwege abgegriffen werden können.
+            '
+        en: 'GPIO support for the Raspberry Pi.\n
+            This plugin supports the implementation of external sensors and actors directly connected to the
+            Raspberry Pi using the RPi.GPIO module. This makes it possible to get values of reed sensors or
+            activate LED lights like it is used for `smart mailboxes <https://redaktion.knx-user-forum.de/posteinwurferkennung/>`_.
+            The GPIOs of the Raspberry Pi <=3+ are limited to digital signals. If you want to attach a distance
+            sensor or other hardware providing analog signals you have to use additional hardware.
+            '
     maintainer: onkelandy
     tester: cmalo, ohinckel
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    state: ready
+    requirements:
+        de: 'RPi.GPIO Python Modul'
+        en: 'RPi.GPIO python module'
+    keywords: iot gpio raspberrypi
 
-    version: 1.0.1                 # Plugin version
-    sh_minversion: 1.1             # minimum shNG version to use this plugin
+    version: 1.4.1                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: Raspi_GPIO          # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    mode:
+        type: str
+        default: 'BOARD'
+        mandatory: True
+        valid_list:
+          - 'board'
+          - 'bcm'
+          - 'BOARD'
+          - 'BCM'
+        description:
+            de: 'Zuweisungsmethode der Pinbelegung.'
+            en: 'Method of pin assignment'
+        description_long:
+            de: '**Zuweisungsmethode der Pinbelegung.**\n
+                Hier wird der GPIO PIN Modus deklariert, der die Nummerierung der Pins definiert.
+                `Mehr Infos über GPIO Header <https://www.raspberrypi-spy.co.uk/2012/06/simple-guide-to-the-rpi-gpio-header-and-pins/>`_
+                '
+            en: '**Method of pin assignment**\n
+                Define the GPIO PIN Mode that you use to declare the pin numbers.
+                `More info on GPIO headers <https://www.raspberrypi-spy.co.uk/2012/06/simple-guide-to-the-rpi-gpio-header-and-pins/>`_
+                '
+
+    bouncetime:
+        type: int
+        default: 300
+        mandatory: False
+        description:
+            de: 'Prellzeit in ms, um Änderungen innerhalb kurzer Zeit zu verhindern.'
+            en: 'bouncetime in ms to avoid multiple events in a short time period.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    gpio_in:
+        type: int
+        description:
+            de: 'Pin Nummer für den GPIO Eingang.'
+            en: 'Pin number of the GPIO input.'
+        description_long:
+            de: '**Pin Nummer für den GPIO Eingang.**\n
+                Angabe der Pin Nummer, an der beispielsweise ein Sensor o.ä. angeschlossen ist. Die Nummer hängt vom Modus in den Plugin-Paramtern ab!
+                '
+            en: '**Pin number of the GPIO input.**\n
+                Define the pin number of your Raspberry Pi that should be read, i.e. where a sensor is attached. Beware that the number has to follow the rules of the "mode" you have defined in the plugin.yaml (Board or BCM).
+                '
+
+    gpio_out:
+        type: int
+        description:
+            de: 'Pin Nummer für den GPIO Ausgang.'
+            en: 'Pin number of the GPIO output.'
+        description_long:
+            de: '**Pin Nummer für den GPIO Ausgang.**\n
+                Die Nummer hängt vom Modus in den Plugin-Paramtern ab! Der Ausgang wird zum Pluginstart automatisch aktualisiert, sollte also nicht im Item als gpio_in und gpio_out definiert werden.
+                '
+            en: '**Pin number of the GPIO output.**\n
+                Define the pin number of your Raspberry Pi that should be written, i.e. where a LED is attached. Beware that the number has to follow the rules of the "mode" you have defined in the plugin.yaml (Board or BCM). The Output-Pin will also automatically be read by the plugin as Input.
+                        '
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+

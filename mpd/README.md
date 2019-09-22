@@ -10,7 +10,7 @@ For more information about MPD and it's commands see http://www.musicpd.org/doc/
 ### plugin.yaml
 
 ```yaml
-mpd:
+mpd_bath:
     class_name: MPD
     class_path: plugins.mpd
     instance: bathroom
@@ -18,7 +18,7 @@ mpd:
     port: 6601
 #    cycle: 2
 
-mpd:
+mpd_kitchen:
     class_name: MPD
     class_path: plugins.mpd
     instance: kitchen
@@ -122,7 +122,7 @@ mpd_command
                      #       If prefixed by '+' or '-', then the time is relative to the current playing position
     stop             # bool, Stops playing
     crossfade        # num,  Sets crossfading between songs
-    mixrampdb        # num,  Sets the threshold at which songs will be overlapped. Like crossfading but doesn't 
+    mixrampdb        # num,  Sets the threshold at which songs will be overlapped. Like crossfading but doesn't
                      #       fade the track volume, just overlaps
     mixrampdelay     # num,  Additional time subtracted from the overlap calculated by mixrampdb
     setvol           # num,  Sets volume to VOL, the range of volume is 0-100
@@ -140,7 +140,7 @@ mpd_rawcommand
 mpd_database
     Implements commands that are used to control the database.
 
-    update           # str,  Updates the music database: find new files, remove deleted files, 
+    update           # str,  Updates the music database: find new files, remove deleted files,
                      #       update modified files. <value> is a particular directory or song/file to update
                      #       If you do not specify it, everything is updated
     rescan           # str,  Same as update, but also rescans unmodified files

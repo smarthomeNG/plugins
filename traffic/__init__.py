@@ -28,10 +28,10 @@ from lib.model.smartplugin import SmartPlugin
 
 class Traffic(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0.1"
+    PLUGIN_VERSION = "1.5.0.2"
     _base_url = 'https://maps.googleapis.com/maps/api/directions/json'
 
-    def __init__(self, smarthome, apikey, language='de'):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
         @param apikey: For accessing the free "Google Directions API" you need a personal
@@ -39,9 +39,8 @@ class Traffic(SmartPlugin):
         @param language: two char language code. default: de
         """
         self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
-        self._apikey = apikey
-        self._language = language
+        self._apikey = self.get_parameter_value('apikey')
+        self._language = self.get_parameter_value('language')
         self._session = requests.Session()
 
     def run(self):
@@ -68,7 +67,7 @@ class Traffic(SmartPlugin):
                 self._language, alternatives, origin, destination, mode, departure_time, self._apikey))
         except Exception as e:
             self.logger.error(
-                "Exception when sending GET request for get_route_info: %s" % str(e))
+                "Plugin '{}': Exception when sending GET request for get_route_info: {}".format(self.get_fullname(), str(e)))
             return
         json_obj = response.json()
         route_information = {}

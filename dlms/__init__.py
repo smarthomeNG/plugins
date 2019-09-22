@@ -31,24 +31,32 @@ __version__ = "2.0"
 __revision__ = "0.1"
 __docformat__ = 'reStructuredText'
 
+import sys
 import logging
 import datetime
 
 from lib.module import Modules
 from lib.model.smartplugin import *
 from lib.utils import Utils
+from lib.shtime import Shtime
+shtime = Shtime.get_instance()
 
 import time
-import serial
 import re
 from threading import Semaphore
+
+try:
+    import serial
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
 
 from . import dlms
 from . import conversion
 
 
 class DLMS(SmartPlugin, conversion.Conversion):
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.5.3"
 
     """
     This class provides a Plugin for SmarthomeNG which reads out a smartmeter.
@@ -80,9 +88,17 @@ class DLMS(SmartPlugin, conversion.Conversion):
         reset_baudrate = True
         no_waiting = False
         """
-        self.logger = logging.getLogger(__name__)
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
         self.logger.debug("init {}".format(__name__))
         self._init_complete = False
+
+        # Exit if the required package(s) could not be imported
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'pyserial'".format(self.get_fullname()))
+            return
 
         self._instance = self.get_parameter_value('instance')    # the instance of the plugin for questioning multiple smartmeter
         self._update_cycle  = self.get_parameter_value('update_cycle')       # the frequency in seconds how often the device should be accessed
@@ -125,7 +141,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         """
        	self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
-        self.scheduler_add('DLMS', self._update_values_callback, prio=5, cycle=self._update_cycle)
+        self.scheduler_add('DLMS', self._update_values_callback, prio=5, cycle=self._update_cycle, next=shtime.now())
         self.logger.debug("run dlms")
 
     def stop(self):
@@ -272,6 +288,9 @@ class DLMS(SmartPlugin, conversion.Conversion):
                     except KeyError as e:
                         self.logger.warning("Key error '{}' while setting item {} for Obis Code {} to "
                                             "Key '{}' in '{}'".format(str(e), item, Code, Key, Values[Index]))
+                    except NameError as e:
+                        self.logger.warning("Name error '{}' while setting item {} for Obis Code {} to "
+                                            "Key '{}' in '{}'".format(str(e), item, Code, Key, Values[Index]))
 
     def _update_values(self, readout):
         """
@@ -335,7 +354,10 @@ class DLMS(SmartPlugin, conversion.Conversion):
                                 values.append( { 'Value': v } )
                     # uncomment the following line to check the generation of the values dictionary
                     # self.logger.debug("{:40} ---> {}".format(line, Values))
-                    self._update_items(obis_code, values)
+                    try:
+                        self._update_items(obis_code, values)
+                    except:
+                        self.logger.error("tried to update items for Obis Code {} to Values {} failed with {}".format(obis_code, values, sys.exc_info()[0]))
 
 # ------------------------------------------
 #    Webinterface of the plugin

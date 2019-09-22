@@ -1,0 +1,115 @@
+ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; MINVALUE; MAXVALUE; RESPONSETYPE
+
+# General Commands
+0; power; on; PWON|PWON; PW?; PW**; RW
+0; power; off; PWSTANDBY; PW?; PW*******; RW
+0; eco; set; ECO*; ECO?; ECO*; RW; ; ; ; str|bool
+0; up; ; MNCUP; ; ; W
+0; down; ; MNCDN; ; ; W
+0; left; ; MNCLT; ; ; W
+0; right; ; MNCRT; ; ; W
+0; enter; ; MNENT; ; ; W
+0; info; ; MNINF; ; ; W
+0; menu; on; MNMEN ON; MNMEN?; MNMEN **; RW
+0; menu; off; MNMEN OFF; MNMEN?; MNMEN ***; RW
+# Firmware response often hast problems. Not recommended to implement this command.
+#0; firmware; ; ; UGIDN; UGIDN ************|UGIDN **; R
+# The display command is only working with receivers without HEOS
+#0; display; ; NSE; NSE; NSA*|NSE*; RW; ; ; ; str
+
+
+# Zone 1
+1; power; on; ZMON; ZM?; ZM**; RW
+1; power; off; ZMOFF; ZM?; ZM***; RW
+1; mute; on; MUON; MU?; MU**; RW
+1; mute; off; MUOFF; MU?; MU***; RW
+1; sleep; set; SLP***; SLP?; SLP***; RW; ; 0; 120; num|bool
+1; standby; set; STBY***; STBY?; STBY***; RW; ; ; ; ; denon_standby
+1; volume; set; MV**; MV?; MV**|MV***; RW; ; 30; 90; num; denon_volume
+1; volume+; increase; MVUP; ; MV; W
+1; volume-; decrease; MVDOWN; ; MV; W
+1; volumelow; ; MV50; MV?; MV50; W; ; ; ; num
+1; volumehigh; ; MV75; MV?; MV75; W; ; ; ; num
+1; volumemax; set; MVMAX **; MV?; MVMAX **|MVMAX ***; RW; ; ; ; ; denon_volume
+1; input; set; SI*; SI?; SI*; RW; ; ; ; str
+1; mode; set; MS*; MS?; MS*; RW; ; ; ; str
+1; audioinput; set; SD*; SD?; SD*; RW; ; ; ; str
+1; videoinput; set; SV*; SV?; SV*; RW; ; ; ; str|bool
+
+# Finetuning
+1; tone; on; PSTONE CTRL ON; PSTONE CTRL ?; PSTONE CTRL **; RW
+1; tone; off; PSTONE CTRL OFF; PSTONE CTRL ?; PSTONE CTRL ***; RW
+1; bass; set; PSBAS **; PSBAS ?; PSBAS **; RW; ; 40; 60
+1; trebble; set; PSTRE **; PSTRE ?; PSTRE **; RW; ; 40; 60
+1; bass+; increase; PSBAS UP; ; PSBAS; W
+1; bass-; decrease; PSBAS DOWN; ; PSBAS; W
+1; trebble+; increase; PSTRE UP; ; PSTRE; W
+1; trebble-; decrease; PSTRE DOWN; ; PSTRE; W
+1; dialogtoggle; on; PSDIL ON; PSDIL ?; PSDIL **; RW
+1; dialogtoggle; off; PSDIL OFF; PSDIL ?; PSDIL ***; RW
+1; dialog; set; PSDIL **; PSDIL ?; PSDIL **; RW; ; 0; 62
+1; subwoofertoggle; on; PSSWL ON; PSSWL ?; PSSWL **; RW
+1; subwoofertoggle; off; PSSWL OFF; PSSWL ?; PSSWL ***; RW
+1; subwoofer; set; PSSWL **; PSSWL ?; PSSWL **; RW; ; 0; 62
+1; cinemaeq; on; PSCINEMA EQ.ON; PSCINEMA EQ. ?; PSCINEMA EQ.**; RW
+1; cinemaeq; off; PSCINEMA EQ.OFF; PSCINEMA EQ. ?; PSCINEMA EQ.***; RW
+1; mainspeakers; set; PSSP:*; PSSP: ?; PSSP:*; RW; ; ; ; str
+1; dynamicrange+; increase; PVENH UP; PVENH ?; PVENH; W
+1; dynamicrange-; decrease; PVENH DOWN; PVENH ?; PVENH; W
+1; dynamicrange; set; PVENH **; PVENH ?; PVENH **; RW; ; 0; 12
+
+# Seperate Volume Control
+1; volumefl; set; CVFL **; CV?; CVFL **|CVFL ***; RW; ; 0; 62; num; denon_volume
+1; volumefl+; increase; CVFL UP; CV?; CVFL; W
+1; volumefl-; decrease; CVFL DOWN; CV?; CVFL; W
+1; volumefr; set; CVFR **; CV?; CVFR **|CVFR ***; RW; ; 0; 62; num; denon_volume
+1; volumefr+; increase; CVFL UP; CV?; CVFR; W
+1; volumefr-; decrease; CVFR DOWN; CV?; CVFR; W
+1; volumec; set; CVC **; CV?; CVC **|CVC ***; RW; ; 0; 62; num; denon_volume
+1; volumec+; increase; CVC UP; CV?; CVC; W
+1; volumec-; decrease; CVC DOWN; CV?; CVC; W
+1; volumec; set; CVC **; CV?; CVC **|CVC ***; RW; ; 0; 62; num; denon_volume
+1; volumec+; increase; CVC UP; CV?; CVC; W
+1; volumec-; decrease; CVC DOWN; CV?; CVC; W
+1; volumesl; set; CVSL **; CV?; CVSL **|CVSL ***; RW; ; 0; 62; num; denon_volume
+1; volumesl+; increase; CVSL UP; CV?; CVSL; W
+1; volumesl-; decrease; CVSL DOWN; CV?; CVSL; W
+1; volumesr; set; CVSR **; CV?; CVSR **|CVSR ***; RW; ; 0; 62; num; denon_volume
+1; volumesr+; increase; CVSR UP; CV?; CVSR; W
+1; volumesr-; decrease; CVSR DOWN; CV?; CVSR; W
+
+# Videoparams
+1; aspectratio; set; VSASP*; VSASP ?; VSASP*; RW; ; ; ; str
+1; monitorout; set; VSMONI*; VSMONI ?; VSMONI*; RW; ; ; ; int|str
+1; resolution; set; VSSC*; VSSC ?; VSSC*; RW; ; ; ; str
+1; audioout; set; VSAUDIO *; VSAUDIO ?; VSAUDIO *; RW; ; ; ; str
+1; videoprocessing; set; VSVPM*; VSVPM ?; VSVPM*; RW; ; ; ; str
+1; stretch; set; VSVST*; VSVST ?; VSVST*; RW; ; ; ; bool
+
+# Zone 2
+2; power; on; Z2ON; Z2?; Z2**; RW
+2; power; off; Z2OFF; Z2?; Z2***; RW
+2; input; set; Z2*; Z2?; Z2*; RW; ; ; ; str
+2; mute; on; Z2MUON; Z2MU?; Z2MU**; RW
+2; mute; off; Z2MUOFF; Z2MU?; Z2MU***; RW
+2; volume+; increase; Z2UP; ; Z2; W
+2; volume-; decrease; Z2DOWN; ; Z2; W
+2; volumelow; ; Z250; MV?; Z250; W; ; ; ; num
+2; volumehigh; ; Z275; MV?; Z275; W; ; ; ; num
+2; volume; set; Z2**; Z2?; Z2**; RW; num; 0; 90
+2; standby; set; Z2STBY*; Z2STBY?; Z2STBY*; RW; ; ; ; str|bool
+2; sleep; set; Z2SLP***; Z2SLP?; Z2SLP***; RW; ; 0; 120; num|bool
+
+# Zone 3
+3; power; on; Z3ON; Z3?; Z3**; RW
+3; power; off; Z3OFF; Z3?; Z3***; RW
+3; input; set; Z3*; Z3?; Z3*; RW; ; ; ; str
+3; mute; on; Z3MUON; Z3MU?; Z3MU**; RW
+3; mute; off; Z3MUOFF; Z3MU?; Z3MU***; RW
+3; volume+; increase; Z3UP; ; Z3; W
+3; volume-; decrease; Z3DOWN; ; Z3; W
+3; volumelow; ; Z350; MV?; Z350; W; ; ; ; num
+3; volumehigh; ; Z375; MV?; Z375; W; ; ; ; num
+3; volume; set; Z3**; Z3?; Z3**; RW; num; 0; 90
+3; standby; set; Z3STBY*; Z3STBY?; Z3STBY*; RW; ; ; ; str|bool
+3; sleep; set; Z3SLP***; Z3SLP?; Z3SLP***; RW; ; 0; 120; num|bool

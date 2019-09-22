@@ -41,7 +41,6 @@ class TankerKoenig(SmartPlugin):
         @param apikey: For accessing the free "Tankerkönig-Spritpreis-API" you need a personal
         api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
-        self.logger = logging.getLogger(__name__)
         self._apikey = self.get_parameter_value('apikey')
         self._session = requests.Session()
 
@@ -51,7 +50,7 @@ class TankerKoenig(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    def get_petrol_stations(self, lat, lon, type='diesel', sort='price', rad='4'):
+    def get_petrol_stations(self, lat, lon, type='diesel', sort='price', rad=4):
         """
         Returns a list of information for petrol stations around a specific location and radius
         Should not be used extensively, due to performance issues on tankerkoenig side.
@@ -65,18 +64,19 @@ class TankerKoenig(SmartPlugin):
         result_stations = []
         try:
             response = self._session.get(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (
-            self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
+                self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
         except Exception as e:
             self.logger.error(
                 "Exception when sending GET request for get_petrol_stations: %s" % str(e))
             return
-        self.logger.debug(self._build_url("%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (
-        self._list_url_suffix, lat, lon, rad, sort, type, self._apikey)))
+        self.logger.debug("Plugin '{}': {}".format(self.get_fullname(), self._build_url(
+            "%s?lat=%s&lng=%s&rad=%s&sort=%s&type=%s&apikey=%s" % (
+                self._list_url_suffix, lat, lon, rad, sort, type, self._apikey))))
         json_obj = response.json()
         keys = ['place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen',
                 'postCode']
         if json_obj.get('stations', None) is None:
-            self.logger.warning("Tankerkönig didn't return any station")
+            self.logger.warning("Plugin '{}': Tankerkönig didn't return any station".format(self.get_fullname()))
         else:
             for i in json_obj['stations']:
                 result_station = {}
@@ -97,7 +97,8 @@ class TankerKoenig(SmartPlugin):
                 self._build_url("%s?id=%s&apikey=%s" % (self._detail_url_suffix, id, self._apikey)))
         except Exception as e:
             self.logger.error(
-                "Exception when sending GET request for get_petrol_station_detail: %s" % str(e))
+                "Plugin '{}': Exception when sending GET request for get_petrol_station_detail: {}".format(
+                    self.get_fullname(), str(e)))
             return
         json_obj = response.json()
         keys = ['e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name',
@@ -126,22 +127,31 @@ class TankerKoenig(SmartPlugin):
                 self._build_url("%s?ids=%s&apikey=%s" % (self._prices_url_suffix, station_ids_string, self._apikey)))
         except Exception as e:
             self.logger.error(
-                "Exception when sending GET request for get_petrol_station_detail: %s" % str(e))
+                "Plugin '{}': Exception when sending GET request for get_petrol_station_detail: {}".format(
+                    self.get_fullname(), str(e)))
             return
         json_obj = response.json()
         keys = ['e5', 'e10', 'diesel', 'status']
+
         for id in ids:
-            if id in json_obj['prices']:
-                result_station = dict()
-                result_station['id'] = id
-                for key in keys:
-                    if key in json_obj['prices'][id]:
-                        result_station[key] = json_obj['prices'][id][key]
-                    else:
-                        result_station[key] = ""
-                result_station_prices.append(result_station)
+            if 'prices' in json_obj:
+                if id in json_obj['prices']:
+                    result_station = dict()
+                    result_station['id'] = id
+                    for key in keys:
+                        if key in json_obj['prices'][id]:
+                            result_station[key] = json_obj['prices'][id][key]
+                        else:
+                            result_station[key] = ""
+                    result_station_prices.append(result_station)
+                else:
+                    self.logger.error(
+                        "Plugin '{}': No result for station with id {}. Check manually!".format(
+                            self.get_fullname(), id))
             else:
-                self.logger.error("No result for station with id %s. Check manually!" % id)
+                self.logger.error(
+                    "Plugin '{}': 'prices' key missing in json response for station with id {}. Check manually!".format(
+                        self.get_fullname(), id))
         return result_station_prices
 
     def _build_url(self, suffix):

@@ -1,0 +1,40 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                     # plugin type (gateway, interface, protocol, system, web)
+    description:                  # Alternative: description in multiple languages
+        de: 'Anbindung des Pushover Dienstes'
+        en: 'Connect to the Pushover Service'
+    maintainer: 'Thomas Creutz'
+
+    version: 1.3.1.0               # Plugin version
+    sh_minversion: 1.2             # minimum shNG version to use this plugin
+    multi_instance: False          # plugin supports multi instance
+    classname: Pushover            # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    apiKey:
+        type: str
+        mandatory: True
+        description:
+            de: 'Der API Schlüssel'
+            en: 'The API key'
+
+    userKey:
+        type: str
+        mandatory: True
+        description:
+            de: 'Der Benutzer Schlüssel, an den die Meldungen versendet werden'
+            en: 'The user key, which receive the messages'
+
+    device:
+        type: str
+        mandatory: False
+        description:
+            de: 'Das Gerät des Benutzer'
+            en: 'The device of the user'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    

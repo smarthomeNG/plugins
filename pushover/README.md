@@ -4,14 +4,14 @@ Pushover is one out of many push services, which is compatible with Android, IOS
 
 ## Requirements
 
-### Python libraries  
-* requests - [install instructions](http://docs.python-requests.org/en/latest/user/install/#install "http://docs.python-requests.org/en/latest/user/install/#install")
-
-### Other  
 * Pushover API-KEY - get it from [__here__](https://pushover.net/apps/ "https://pushover.net/apps/") for free, after registration.
 
 ---
 ## Changelog
+__2018-10-04__:
+
+* Use new lib.network
+* Added possibility to attach images
 
 __2017-08-13__:
 
@@ -55,6 +55,7 @@ Send a message to your device.
 * __device__: defines and/or override the globally defined name of the receiving device
 * __userKey__: defines and/or override the globally defined user-key of the receiving user
 * __apiKey__: defines and/or override the globally defined api-key of the sending application
+* __attachment__: adds a path/filename of a file (mostly images) to attach to the push message
 
 All params can set to None (only message not), so they will not be set or in case of device, userKey and apiKey the global vars will be used.
 
@@ -72,5 +73,9 @@ sh.po("Warning", "Your door is not locked!", 1)
 
 # send simple message to device with id: e6653
 sh.po("Simple Test", "This is my test message", None, None, None, None, None, None, "e6653")
+
+# send a message with an attached image (camera snapshot for example)
+sh.po(title="Simple Test", message="This is my test message", attachment="/tmp/snapshot.jpg")
+
 
 ```

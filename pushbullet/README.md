@@ -12,6 +12,9 @@
 ---
 ## Changelog
 
+__2018-09-07__:
+* migrated to new parameter handling and logging convention
+
 __2015-11-17__:
 
 * Added "delete" function

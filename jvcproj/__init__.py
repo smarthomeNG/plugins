@@ -109,7 +109,7 @@ class JVC_DILA_Control(SmartPlugin):
         """
         self.logger = logging.getLogger(__name__)
         self._sh=smarthome
-        self.host_port = (host, 20554))
+        self.host_port = (host, 20554)
         self.gammaconf_dir = gammaconf_dir
         self.logger.debug("Plugin '{}': configured for host: '{}'".format(self.get_fullname(), self.host_port))
 

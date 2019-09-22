@@ -62,7 +62,10 @@ class Wunderground(SmartPlugin):
         :param item_subtree:       subtree of items in which the plugin looks for items to update
         :param log_start:          x
         """
-        self.logger = logging.getLogger(__name__)
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.',2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
         self.__sh = sh
 
         self.items = Items.get_instance()

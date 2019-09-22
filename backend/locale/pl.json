@@ -51,6 +51,7 @@
 	"Plugin Metadaten": "Metadane pluginu",
 	"Verbundene Logiken": "Powiązana Logika",
 	"Verbundene Trigger": "Powiązane wyzwalacze",
+	"vom Plugin definierte Methoden": "",
 	"Willkommen im Backend von": "Witaj w backendzie",
 	"Eigenschaft": "Atrybut",
 	"IP": "Adres IP",
@@ -108,6 +109,8 @@
 	"Ergebnis: Aufbereitetes .YAML Format": "",
 	"Ergebnis: Aufbereitet als Python Source Code": "",
 	"Python Code Ausgabe": "",
+	"Pakete für den Bau der Dokumentation": "Packages for Building the Documentation",
+	"Pakete für die Testsuite": "Packages for the Test Suite",
 
 	"Nr.": "Nr",
 	"Type": "Typ",
@@ -233,7 +236,7 @@
 		"Lizenz": "Licencja",
 		"Link": "Link",
 		"Name": "Nazwa",
-		"disclosure_title": "Deklaracja oprogramowania Open Source wykorzystanego w SmartHomeNG przez plugin 'backend'",
+		"disclosure_title": "Deklaracja oprogramowania Open Source wykorzystanego w SmartHomeNG",
 		"Verwendete Open Source Software Komponenten": "Wykaz użytego oprogramowania Open Source",
 		"Icons/Bilder": "Ikony/Obrazy",
 		"Alle Icons und Bilder kommen von": "Wszystkie ikony i obrazy pochodzą z"

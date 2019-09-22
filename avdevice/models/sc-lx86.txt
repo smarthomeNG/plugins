@@ -16,10 +16,10 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; volume; set; ***VL; ?V; VOL***; RW; ; 0; 161
 1; mute; on; MO; ?M; MUT*; RW; yes
 1; mute; off; MF; ?M; MUT*; RW; yes
-1; mode; set; ****SR; ?S; SR****; RW
-1; playingmode; ; ?L; ?L; LM****; R; ; ; ; str
+1; set_listeningmode; set; ****SR; ?S; SR****; RW
+1; query_listeningmode; ; ?L; ?L; LM****; R; ; ; ; str
 1; speakers; set; *SPK; ?SPK; SPK*; RW
-1; input; set; **FN; ?F; FN**; RW
+1; source; set; **FN; ?F; FN**; RW
 1; tone; on; 1TO; ?TO; TO*; RW
 1; tone; off; 0TO; ?TO; TO*; RW
 1; bass; set; **BA; ?BA; BA**; RW; ; 0; 12
@@ -30,8 +30,8 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 1; trebble-; decrease; TD; ; TR; W
 1; dialog; set; *ATH; ?ATH; ATH*; RW
 1; HDMI; set; *HO; ?HO; HO*; RW
-1; input+; increase; FU; ?F; FN; W
-1; input-; decrease; FD; ?F; FN; W
+1; source+; increase; FU; ?F; FN; W
+1; source-; decrease; FD; ?F; FN; W
 1; radiof+; ; TPI; ; PR; W; ; ; ; str
 1; radiof-; ; TPD; ; PR; W; ; ; ; str
 
@@ -45,7 +45,7 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 2; volume; set; **ZV; ?ZV; ZV**; RW; ; 0; 81
 2; mute; on; Z2MO; ?Z2M; Z2MUT*; RW; yes
 2; mute; off; Z2MF; ?Z2M; Z2MUT*; RW; yes
-2; input; set; **ZS; ?ZS; Z2F**; RW
+2; source; set; **ZS; ?ZS; Z2F**; RW
 
 # Zone 3
 3; power; on; BPO|BPO; ?BP; BPR*; RW; yes
@@ -57,9 +57,9 @@ ZONE; FUNCTION; FUNCTIONTYPE; SEND; QUERY; RESPONSE; READWRITE; INVERTRESPONSE; 
 3; volume; set; **YV; ?YV; YV**; RW; ; 0; 81
 3; mute; on; Z3MO; ?Z3M; Z3MUT*; RW; yes
 3; mute; off; Z3MF; ?Z3M; Z3MUT*; RW; yes
-3; input; set; **ZT; ?ZT; Z3F**; RW
+3; source; set; **ZT; ?ZT; Z3F**; RW
 
 # Zone 4
 4; power; on; ZEO; ?ZEP; ZEP*; RW; yes
 4; power; off; ZEF; ?ZEP; ZEP*; RW; yes
-4; input; set; **ZEA; ?ZEA; ZEA**; RW
+4; source; set; **ZEA; ?ZEA; ZEA**; RW

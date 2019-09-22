@@ -28,6 +28,7 @@ import threading
 import struct
 import socket
 import errno
+import builtins
 
 from lib.model.smartplugin import SmartPlugin
 
@@ -36,6 +37,8 @@ class Sml(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = '1.0.0'
 
+    _v1_start = b'\x1b\x1b\x1b\x1b\x01\x01\x01\x01'
+    _v1_end = b'\x1b\x1b\x1b\x1b\x1a'
     _units = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
        1 : 'a',    2 : 'mo',    3 : 'wk',  4 : 'd',    5 : 'h',     6 : 'min.',  7 : 's',     8 : '°',     9 : '°C',    10 : 'currency',
       11 : 'm',   12 : 'm/s',  13 : 'm³', 14 : 'm³',  15 : 'm³/h', 16 : 'm³/h', 17 : 'm³/d', 18 : 'm³/d', 19 : 'l',     20 : 'kg',
@@ -168,22 +171,32 @@ class Sml(SmartPlugin):
         if self.connected:
             start = time.time()
             retry = 5
+            data = None
             while retry > 0:
                 try:
                     data = self._read(512)
-                    if len(data) == 0:
+                    if builtins.len(data) == 0:
                         self.logger.error('Reading data from device returned 0 bytes!')
+                    else:
+                        end_pos = len(data)
+                        while end_pos > 0:
+                            end_pos = data.rfind(self._v1_end)
+                            start_pos = data.rfind(self._v1_start, 0, end_pos)
+                            if start_pos != -1 and end_pos == -1:
+                                data = data[:start_pos]
+                            elif start_pos != -1 and end_pos != -1:
+                                chunk = data[start_pos:end_pos+len(self._v1_end)+3]
+                                self.logger.debug('Found chunk at {} - {} ({} bytes):{}'.format(start_pos, end_pos, end_pos-start_pos, ''.join(' {:02x}'.format(x) for x in chunk)))
+                                chunk_crc_str = '{:02X}{:02X}'.format(chunk[-2], chunk[-1])
+                                chunk_crc_calc = self._crc16(chunk[:-2])
+                                chunk_crc_calc_str = '{:02X}{:02X}'.format((chunk_crc_calc >> 8) & 0xff, chunk_crc_calc & 0xff)
+                                if chunk_crc_str != chunk_crc_calc_str:
+                                    self.logger.warn('CRC checksum mismatch: Expected {}, but was {}'.format(chunk_crc_str, chunk_crc_calc_str))
+                                    data = data[:start_pos]
+                                else:
+                                    end_pos = 0
 
                     retry = 0
-                    values = self._parse(self._prepare(data))
-
-                    for obis in values:
-                        self.logger.debug('Entry {}'.format(values[obis]))
-
-                        if obis in self._items:
-                            for prop in self._items[obis]:
-                                for item in self._items[obis][prop]:
-                                    item(values[obis][prop], 'Sml')
 
                 except Exception as e:
                     self.logger.error('Reading data from {0} failed: {1} - reconnecting!'.format(self._target, e))
@@ -196,9 +209,24 @@ class Sml(SmartPlugin):
                     if retry == 0:
                         self.logger.warn('Trying to read data in next cycle due to connection errors!')
 
+            if data is not None:
+                retry = 0
+                values = self._parse(self._prepare(data))
+
+                for obis in values:
+                    self.logger.debug('Entry {}'.format(values[obis]))
+
+                    if obis in self._items:
+                        for prop in self._items[obis]:
+                            for item in self._items[obis][prop]:
+                                item(values[obis][prop], 'Sml')
+            else:
+                values = {}
 
             cycletime = time.time() - start
             self.logger.debug("cycle takes {0} seconds".format(cycletime))
+
+            return values
 
     def _parse(self, data):
         # Search SML List Entry sequences like:
@@ -208,9 +236,9 @@ class Sml(SmartPlugin):
         # Details see http://wiki.volkszaehler.org/software/sml
         values = {}
         packetsize = 7
-        self.logger.debug('Data:{}'.format(''.join(' {:02x}'.format(x) for x in data)))
+        self.logger.debug('Data ({} bytes):{}'.format(len(data), ''.join(' {:02x}'.format(x) for x in data)))
         self._dataoffset = 0
-        while self._dataoffset < len(data)-packetsize:
+        while self._dataoffset < builtins.len(data)-packetsize:
 
             # Find SML_ListEntry starting with 0x77 0x07 and OBIS code end with 0xFF
             if data[self._dataoffset] == 0x77 and data[self._dataoffset+1] == 0x07 and data[self._dataoffset+packetsize] == 0xff:
@@ -234,22 +262,21 @@ class Sml(SmartPlugin):
 
                     values[entry['obis']] = entry
                 except Exception as e:
-                    if self._dataoffset < len(data) - 1:
-                        self.logger.warning('Can not parse entity at position {}, byte {}: {}:{}...'.format(self._dataoffset, self._dataoffset - packetstart, e, ''.join(' {:02x}'.format(x) for x in data[packetstart:packetstart+64])))
-                        self._dataoffset = packetstart + packetsize - 1
+                    self._parse_error('Can not parse entity: {}', [e], data, self._dataoffset, packetstart)
+                    self._dataoffset = packetstart + packetsize - 1
             else:
                 self._dataoffset += 1
 
         return values
 
     def _read_entity(self, data):
-        import builtins
         upack = {
           5 : { 1 : '>b', 2 : '>h', 4 : '>i', 8 : '>q' },  # int
           6 : { 1 : '>B', 2 : '>H', 4 : '>I', 8 : '>Q' }   # uint
         }
 
         result = None
+        packetstart = self._dataoffset
 
         tlf = data[self._dataoffset]
         type = (tlf & 112) >> 4
@@ -268,9 +295,9 @@ class Sml(SmartPlugin):
             return result
 
         if self._dataoffset + len >= builtins.len(data):
-            raise Exception("Try to read {} bytes, but only have {}".format(len, builtins.len(data) - self._dataoffset))
+            self._parse_error('Tried to read {} bytes, but only have {}', [len, builtins.len(data) - self._dataoffset], data, self._dataoffset, packetstart)
 
-        if type == 0:    # octet string
+        elif type == 0:    # octet string
             result = data[self._dataoffset:self._dataoffset+len]
 
         elif type == 5 or type == 6:  # int or uint
@@ -292,11 +319,28 @@ class Sml(SmartPlugin):
             return result
 
         else:
-            self.logger.warning('Skipping unkown field {}'.format(hex(tlf)))
+            self._parse_error('Skipping unkown field {}', [hex(tlf)], data, self._dataoffset, packetstart)
 
         self._dataoffset += len
 
         return result
+
+    def _parse_error(self, msg, msgargs, data, dataoffset, packetstart):
+        position = dataoffset - packetstart
+        databytes = ''
+        for i, b in enumerate(data[packetstart:packetstart+64]):
+            databytes = databytes + ' {}{:02x}{}'.format(
+                '' if i != position - 1 else '<',
+                b,
+                '' if i != position - 1 else '>'
+            )
+        params = []
+        params.extend(msgargs)
+        params.append(packetstart)
+        params.append(position)
+        params.append(databytes)
+        log = msg + " at position {}, byte {}:{}"
+        self.logger.warning(log.format(*params))
 
     def _prepareRaw(self, data):
         return data
@@ -307,4 +351,23 @@ class Sml(SmartPlugin):
         data = re.sub("( +[a-f0-9]|[a-f0-9] +)", "", data)
         data = data.encode()
         return bytes(''.join(chr(int(data[i:i+2], 16)) for i in range(0, len(data), 2)), "iso8859-1")
+
+    def _crc16(self, data):
+      crc = 0xffff
+
+      p = 0;
+      while p < len(data):
+        c = 0xff & data[p]
+        p = p + 1
+
+        for i in range(0, 8):
+          if ((crc & 0x0001) ^ (c & 0x0001)):
+            crc = (crc >> 1) ^ 0x8408
+          else:
+            crc = crc >> 1
+          c = c >> 1
+
+      crc = ~crc & 0xffff
+
+      return ((crc << 8) | ((crc >> 8) & 0xff)) & 0xffff
 

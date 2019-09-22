@@ -6,15 +6,17 @@ plugin:
         de: 'Wetterdaten über darksky.net.'
         en: 'Weather data via darksky.net.'
     maintainer: psilo909
-    tester:
+    tester: psilo909
+    state: 'qa-passed'
 #    keywords: iot xyz
-    documentation: ''
+    documentation: 'https://www.smarthomeng.de/user/plugins/darksky/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1244744-neues-plugin-wetterdaten-via-darksky-net-forecast-io'
     keywords: weather
-    version: 1.5.0.1              # Plugin version
+    version: 1.5.0.2              # Plugin version
     sh_minversion: 1.4c           # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
+    restartable: True
     classname: DarkSky            # class containing the plugin
 
 parameters:
@@ -60,7 +62,9 @@ parameters:
         description:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 300 seconds.'
-    
+
+
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     ds_matchstring:
@@ -69,3 +73,188 @@ item_attributes:
         description:
             de: 'Matchstring basierend auf der Response des "Forecast Request" aus https://darksky.net/dev/docs (Example Request), bspw. "currently/temperature". Ausnahmen: Im Fall von "alerts" wird ein Item vom Typ "list" benötigt, der Wert "alerts_string" schreibt die Alerts-Liste in einen HTML String. Das Array in "flags/sources" wird in ein "str" Item gemerged.'
             en: 'Matchstring according to the response of the "forecast request" described in https://darksky.net/dev/docs (Example Request), e.g. "currently/temperature". Exceptions: In case of "alerts" an item of type "list" will be filled with raw data, the value "alerts_string" creates a html string with alerts data. The array "flags/sources" will be merged to a string.'
+
+item_structs:
+    weather:
+        name: Weather report from darksky.net
+
+        latitude:
+            type: num
+            ds_matchstring@instance: latitude
+
+        longitude:
+            type: num
+            ds_matchstring@instance: longitude
+
+        timezone:
+            type: str
+            ds_matchstring@instance: timezone
+
+        currently:
+
+            time:
+                type: num
+                ds_matchstring@instance: currently/time
+
+            summary:
+                type: str
+                ds_matchstring@instance: currently/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: currently/icon
+
+            nearestStormDistance:
+                type: num
+                ds_matchstring@instance: currently/nearestStormDistance
+
+            precipIntensity:
+                type: num
+                ds_matchstring@instance: currently/precipIntensity
+                database: init
+
+            precipIntensityError:
+                type: num
+                ds_matchstring@instance: currently/precipIntensityError
+
+            precipProbability:
+                type: num
+                ds_matchstring@instance: currently/precipProbability
+                database: init
+
+            precipType:
+                type: str
+                ds_matchstring@instance: currently/precipType
+
+            temperature:
+                type: num
+                ds_matchstring@instance: currently/temperature
+                database: init
+
+            apparenttemperature:
+                type: num
+                ds_matchstring@instance: currently/apparentTemperature
+                database: init
+
+            dewpoint:
+                type: num
+                ds_matchstring@instance: currently/dewPoint
+                database: init
+
+            humidity:
+                type: num
+                ds_matchstring@instance: currently/humidity
+                database: init
+
+            pressure:
+                type: num
+                ds_matchstring@instance: currently/pressure
+                database: init
+
+            windSpeed:
+                type: num
+                ds_matchstring@instance: currently/windSpeed
+                database: init
+
+            windGust:
+                type: num
+                ds_matchstring@instance: currently/windGust
+                database: init
+
+            windBearing:
+                type: num
+                ds_matchstring@instance: currently/windBearing
+                database: init
+
+            cloudCover:
+                type: num
+                ds_matchstring@instance: currently/cloudCover
+                database: init
+
+            uvIndex:
+                type: num
+                ds_matchstring@instance: currently/uvIndex
+                database: init
+
+            visibility:
+                type: num
+                ds_matchstring@instance: currently/visibility
+                database: init
+
+            ozone:
+                type: num
+                ds_matchstring@instance: currently/ozone
+                database: init
+
+        minutely:
+
+            summary:
+                type: str
+                ds_matchstring@instance: minutely/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: minutely/icon
+
+        hourly:
+
+            summary:
+                type: str
+                ds_matchstring@instance: hourly/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: hourly/icon
+
+        daily:
+
+            summary:
+                type: str
+                ds_matchstring@instance: daily/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: daily/icon
+
+        alerts:
+
+            list:
+                type: list
+                ds_matchstring@instance: alerts
+
+            string_detail:
+                type: str
+                ds_matchstring@instance: alerts_string
+
+        flags:
+
+            sources:
+                type: str
+                ds_matchstring@instance: flags/sources
+
+            units:
+                type: str
+                ds_matchstring@instance: flags/units
+
+            nearest_station:
+                type: num
+                ds_matchstring@instance: flags/nearest-station
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    map_icon:
+        type: str
+        description:
+            de: "Gibt das SmartVisu Icon zum übergebenen DarkSky Icon zurück."
+            en: "Returns the SmartVisu icon to the provided DarkSky icon."
+        parameters:
+            icon:
+                type: str
+                description:
+                    de: "Icon als String."
+                    en: "Icon as string."
+

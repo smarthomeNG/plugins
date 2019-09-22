@@ -1,66 +1,32 @@
 # UZSU
 
-Provides universal time switches for items (German: *U*niverselle *Z*eit*s*chalt *U*hr)
+## Description
+Provides universal time switches for items
 
-## Requirements
+## Documentation
 
-Calculating of sunset/sunrise in triggers, requires installation of ephem (which should already be part of core)
+For info on the features and detailed setup see the [User Documentation](https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html "Manual")
+For info on how to configure the plugin see the [Configuration Documentation](https://www.smarthomeng.de/plugins_doc/config/uzsu "Configuration")
 
-## Configuration
+## Changelog
 
-### plugin.yaml
+### v1.5.3
+* Remove useless dictionary parts from uzsu items (to make double entry check work better)
+* Added SciPy as a requirements
+* Added User Documentation
 
-```yaml
-uzsu:
-    class_name: UZSU
-    class_path: plugins.uzsu
-```
+### v1.5.2
+* Make the plugin compatible with the master 1.5.1 version
+* Correctly write cache file when changing the uzsu item
+* Automatically activate all days of the week if no day is set via Visu
+* Variety of bug fixes and optimizations
+* Corrected information on web interface concerning (in)active entries
 
-### items.yaml
-
-#### uzsu
-You have to specify a item with `type = dict` and with the `uzsu_item` attribute set to the path of the item which will be set by this item. The dict has to have two keys. `active` which says if the whole list of entries should be active or not and `list` which contains a list of all entries (see the Item Data Format section for more details).
-
-```yaml
-# items/my.yaml
-someroom:
-
-    someitem:
-        type: int
-
-        anotheritem:
-            type: dict
-            uzsu_item: someroom.someitem
-            cache: 'True'
-```
-
-If you specify the ``cache: True`` as well, then you're switching entries will be there even if you restart smarthome.py.
-
-## Item Data Format
-
-Each UZSU item is of type list. Each list entry has to be a dict with specific key and value pairs. Here are the possible keys and what their for:
-
-* __dtstart__: a datetime object. Exact datetime as start value for the rrule algorithm. Important e.g. for FREQ=MINUTELY rrules (optional).
-
-* __value__: the value which will be set to the item.
-
-* __active__: `True` if the entry is activated, `False` if not. A deactivated entry is stored to the database but doesn't trigger the setting of the value. It can be enabled later with the `update` method.
-
-* __time__: time as string to use sunrise/sunset arithmetics like in the crontab eg. `17:00<sunset`, `sunrise>8:00`, `17:00<sunset`. You also can set the time with `17:00`.
-
-* __rrule__: You can use the recurrence rules documented in the [iCalendar RFC](http://www.ietf.org/rfc/rfc2445.txt) for recurrence use of a switching entry.
-
-## Example
-
-Activates the light every other day at 16:30 and deactivates it at 17:30 for five times:
-
-```python
-sh.eg.wohnen.kugellampe.uzsu({'active':True, 'list':[
-{'value':1, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '16:30'},
-{'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2;COUNT=5', 'time': '17:30'}
-]})
-```
-
-## SmartVISU
-
-There is a widget available which gives an interface to the UZSU. The structure has changed from SmartVISU 2.8 to 2.9 slightly, please consult the corresponding forum.
+### v1.4.1 - 1.5.1
+* Added a web interface for easier debugging
+* Added "back in time"/initage feature to re-trigger missed uzsu evaluations on smarthomeng startup
+* Added interpolation feature: the UZSU can now be used for smooth transitions of values (e.g. for light dimming, etc.)
+* Added item functions to (de)activate, change interpolation and query some settings from the uzsu item via logic
+* Fixed uzsu evaluation for entries without an rrule setting (day of week)
+* Automatic deactivating older entries when new entry for exactly the same time (and day) is created (only works with specific VISU widgets)
+* Improved error handling (detecting wrong items to be set by UZSU, empty entries, etc.)

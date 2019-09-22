@@ -158,7 +158,7 @@ class Enigma2(SmartPlugin):
         :param verify:             True or False => verification of SSL certificate
         :param cycle:              Update cycle in seconds
         """
-        self.logger = logging.getLogger(__name__)
+        # self.logger = logging.getLogger(__name__)
         # self.logger.info('Init Enigma2 Plugin with device_id %s' % )
 
         self._session = requests.Session()

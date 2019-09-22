@@ -8,6 +8,7 @@ plugin:
     maintainer: 'E3EAT'
 #    tester:                        # Who tests this plugin?
     keywords: MPD Music             # keywords, where applicable
+    state: ready
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mpd/...md # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:
@@ -42,3 +43,18 @@ parameters:
         description:
             de: 'Gibt an nach wie vielen Sekunden die Statusitems aktualisiert werden'
             en: 'The time interval that will be used for update the status items'
+
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+

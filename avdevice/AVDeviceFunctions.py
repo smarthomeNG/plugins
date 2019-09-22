@@ -33,12 +33,12 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 
 class CreateExpectedResponse(object):
-    def __init__(self, buffer, name, sendcommands):
+    def __init__(self, buffer, name, sendcommands, logger):
         self._buffer = buffer
         self._name = name
         self._send_commands = sendcommands
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
         self.logger.debug(
             "Processing Response {}: Creating expected response. Buffer: {}. Name: {}. Sendcommands: {}".format(
                 self._name, re.sub('[\r\n]', ' --- ', self._buffer), self._name, self._send_commands))
@@ -55,7 +55,7 @@ class CreateExpectedResponse(object):
                 for i in range(0, len(splitresponse)):
                     splitresponse[i] = splitresponse[i].split(',')[0]
                     if not self._buffer == '':
-                        splitresponse[i] = Translate(self._buffer.split("\r\n")[0], splitresponse[i], self._name, '', '').wildcard()
+                        splitresponse[i] = Translate(self._buffer.split("\r\n")[0], splitresponse[i], self._name, '', '', self.logger).wildcard()
                         self.logger.log(VERBOSE2, "Processing Response {}: Splitresponse after wildcard {}: {}.".format(
                             self._name, i, splitresponse[i]))
                 wildcardresponse = []
@@ -72,7 +72,7 @@ class CreateExpectedResponse(object):
 
 
 class Translate(object):
-    def __init__(self, code, dictentry, name, caller, specialparse):
+    def __init__(self, code, dictentry, name, caller, specialparse, logger):
         self._code = code
         self._dictentry = dictentry
         self._caller = caller
@@ -81,7 +81,7 @@ class Translate(object):
         self._data = code
         self._command = dictentry
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
 
     def wildcard(self):
         if self._command.find('?') >= 1:
@@ -215,7 +215,7 @@ class Translate(object):
 
 
 class ConvertValue(object):
-    def __init__(self, receivedvalue, expectedtype, invert, valuelength, command, name, specialcommands):
+    def __init__(self, receivedvalue, expectedtype, invert, valuelength, command, name, specialcommands, logger):
         self._receivedvalue = receivedvalue
         self._expectedtype = expectedtype
         self._invert = invert
@@ -223,7 +223,7 @@ class ConvertValue(object):
         self._command = command[0] if isinstance(command, list) else command
         self._special_commands = specialcommands
         self._name = name
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
         self.logger.debug(
             "Converting Values {}: Received Value is: {} with expected type {}. Invert: {}. Length: {}. Command: {}".format(
                 self._name, receivedvalue, expectedtype, invert, valuelength, command))
@@ -326,7 +326,7 @@ class ConvertValue(object):
 
 
 class CreateResponse(object):
-    def __init__(self, commandinfo, reverseinfo, value, name, specialparse):
+    def __init__(self, commandinfo, reverseinfo, value, name, specialparse, logger):
         self._commandinfo = commandinfo
         self._reverseinfo = reverseinfo
         self._value = value
@@ -342,10 +342,10 @@ class CreateResponse(object):
         except Exception:
             self._splitreverse = self._reverseinfo.split('|')
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
         self.logger.log(VERBOSE1,
-                        "Creating Response {}: Create response command {}, reverse {}, value {}".format(
-                            self._name, commandinfo, reverseinfo, value))
+                        "Creating Response {}: Create response command {} with expected response {}, reverse {} with expected response {}, value {}".format(
+                            self._name, commandinfo, self._splitresponse, reverseinfo, self._splitreverse, value))
 
     def _finalize(self, responselist, reverselist, func_type):
         replacedresponse = "|".join(responselist)
@@ -406,7 +406,6 @@ class CreateResponse(object):
         for splitre in self._splitresponse:
             valuelength = splitre.count('*')
             if valuelength > 0 or 'R' in self._commandinfo[5]:
-                responselist = []
                 if self._commandinfo[6].lower() in ['1', 'true', 'yes', 'on']:
                     replacedvalue = '0'
                 else:
@@ -424,7 +423,6 @@ class CreateResponse(object):
         for splitre in self._splitresponse:
             valuelength = splitre.count('*')
             if valuelength > 0 or 'R' in self._commandinfo[5]:
-                responselist = []
                 replacedresponse = splitre.split('*')[0].strip()
                 if splitre.count('?') == 1:
                     replacedresponse = re.sub('[?]', '', replacedresponse)
@@ -441,8 +439,6 @@ class CreateResponse(object):
         for counting, splitre in enumerate(self._splitresponse):
             valuelength = reverselength = splitre.count('*')
             if valuelength > 0 or 'R' in self._commandinfo[5]:
-                responselist = []
-                reverselist = []
                 replacedresponse = re.sub('[*]', '', splitre.strip())
                 if splitre.count('?') == 1:
                     replacedresponse = re.sub('[?]', '', replacedresponse)
@@ -472,9 +468,10 @@ class CreateResponse(object):
         reverselist = []
         for counting, splitre in enumerate(self._splitresponse):
             valuelength = reverselength = splitre.count('*')
+            self.logger.log(VERBOSE2,
+                            "Response Off {}: valuelength: {}, splitre: {}".format(
+                                self._name, valuelength, splitre))
             if valuelength > 0 or 'R' in self._commandinfo[5]:
-                responselist = []
-                reverselist = []
                 replacedreverse = ''
                 replacedresponse = splitre.replace('*******', 'STANDBY')
                 replacedresponse = replacedresponse.replace('*****', 'CLOSE')
@@ -520,7 +517,7 @@ class CreateResponse(object):
                 replacedresponse = ''
                 try:
                     value = Translate(self._value, self._commandinfo[10], self._name,
-                                      'update', self._specialparse).translate() or self._value
+                                      'update', self._specialparse, self.logger).translate() or self._value
                 except Exception:
                     value = self._value
                 try:

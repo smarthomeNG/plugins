@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=R0201,E0711
 
+# Disable while we have Python 2.x compatability
+# pylint: disable=useless-object-inheritance
+
 """This is the __init__ module for the plugins.
 
 It contains the base class for all plugins
@@ -38,8 +41,8 @@ class SoCoPlugin(object):
         clsname = parts[-1]
 
         mod = importlib.import_module(modname)
-        cls = getattr(mod, clsname)
+        class_ = getattr(mod, clsname)
 
-        _LOG.info('Loaded class %s', cls)
+        _LOG.info('Loaded class %s', class_)
 
-        return cls(soco, *args, **kwargs)
+        return class_(soco, *args, **kwargs)

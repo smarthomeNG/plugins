@@ -1,0 +1,66 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Item':            {'de': 'Item', 'en': 'Item', 'fr': 'Objet'}    
+    'Blockiert':       {'de': 'Blockiert', 'en': 'Blocked', 'fr': 'Blocké'}    
+    'Ja':              {'de': 'Ja', 'en': 'Yes', 'fr': 'Oui'}
+    'Nein':            {'de': 'Nein', 'en': 'No', 'fr': 'Non'}
+    'Senden':
+        de: 'Senden'
+        en: 'Sending'
+        fr: 'Emettre'
+    'Lerntelegramm erfolgreich gesendet.':
+        de: 'Lerntelegramm erfolgreich gesendet.'
+        en: 'Teach-in telegram sent successfully.'
+        fr: 'Message envoyé avec succes.'
+    'Lerntelegramm':
+        de: 'Lerntelegramm'
+        en: 'Teach-in telegram'
+        fr: 'Message Ã programmer'
+    'UTE Listen':
+        de: 'UTE Listen'
+        en: 'UTE Listen'
+        fr: 'UTE Listen'
+    'Aktiv':           {'de': 'Aktiv', 'en': 'Active', 'fr': Active}
+    'Aus':             {'de': 'Aus', 'en': 'Off', 'fr': 'éteint'}
+    'Ein':             {'de': 'Ein', en: 'On', 'fr': 'Active'}
+    'Senden An/Aus':
+        de: 'Senden An/Aus'
+        en: 'Tx On/Off'
+        fr: 'Tx On/Off'
+    'Wollen Sie das Senden wirklich umschalten?':
+        de: 'Wollen Sie das Senden wirklich umschalten?'
+        en: 'Do you really want to change the sending state?'
+        fr: "Changer le stade de l'emitteur?"
+    'Ãœbersicht':       {'de': 'Ãœbersicht', 'en': 'Overview', 'fr': "vue d'ensemble"}
+    'Wollen Sie ein Lerntelegramm schicken?':
+        de: 'Wollen Sie ein Lerntelegramm schicken?'
+        en: 'Do you really want to send a lern telegram?'
+        fr: "Volez-vous emettre un message Ã programmer?"
+    'Wollen Sie den UTE Modus umschalten?':
+        de: 'Wollen Sie den UTE Modus umschalten?'
+        en: 'Do you really want to toggle the UTE mode?'
+        fr: "Confirmez de changer le mode UTE"
+    'Neu hinzufÃ¼gen':
+        de: 'GerÃ¤t hinzufÃ¼gen' 
+        en: 'Add devie'
+        fr: 'Ajouter'
+    'Unbekannte Sensor ID':
+        de: 'Unbekannte Sensor ID'
+        en: 'Unknown Sensor ID'
+        fr: 'Capteur ID inconnu'
+    'Enocean GerÃ¤te anlernen':
+        de: 'Enocean GerÃ¤te anlernen'
+        en: 'Teach-in new Enocean devices'
+        fr: 'Ajouter nouveau acteur'
+    'GerÃ¤tetyp':       {'de': 'GerÃ¤tetyp', 'en': 'Device Type', 'fr': 'Type'}
+    'ID Offset':        {'de': 'ID Offset', 'en': 'ID Offset'}
+    'Anlernen':         {'de': 'Anlernen', 'en': 'Teach-in', 'fr': 'Programmer'}
+    'UTE An/Aus':       {'de': 'UTE An/Aus', 'en': 'UTE On/Off', 'fr': 'UTE On/Off'}
+    'Die folgenden Items sind dieser Instanz des Enocean Plugins zugewiesen':
+        de: 'Die folgenden Items sind dieser Instanz des Enocean Plugins zugewiesen'
+        en: 'The following items are assigned to this instance of the Enocean plugin'
+        fr: "Les object suivants sont liÃ©s Ã cette instance de l'extension Enocean"
+    
+    
+
+    

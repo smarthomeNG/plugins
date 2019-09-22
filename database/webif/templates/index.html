@@ -1,5 +1,5 @@
 {% extends "base_database.html" %}
-
+{% set tab1title = _('Database Items') %}
 {% block bodytab1 %}
 <script type="text/javascript" language="javascript">
 	function confirmDelete(url, text) {
@@ -14,11 +14,50 @@
 	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
 		<strong>{{ _('Löschauftrag für die Einträge von Item ID') }} {{ item_id }} {{ _('in der Tabelle "log" wurde erfolgreich initiiert!') }}</strong><br/>
 		{{ _('Das Löschen kann noch kurze Zeit dauern, da die Ausführung des Delete Queries erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
-		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+		<button type="button" class="close" data-hide="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
 	</div>
 {% endif %}
+
+<div id="cleanup" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+    <strong>{{ _('Datenbank-Cleanup wurde erfolgreich initiiert!') }}</strong><br/>
+    {{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann noch kurze Zeit dauern, da die Ausführung erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
+    <button type="button" class="close" data-hide="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+
+<div id="countall" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+    {{ _('Anzahl Einträge in LOG Tabelle für Item') }} <span id="countall_item"></span>:&nbsp;
+    <span id="countall_value"></span>
+    <span id="countall_value_loading"><i id="spinner" class="fas fa-circle-notch fa-spin fa-fw"></i> {{  _('Loading...') }}</span>
+    <button type="button" class="close" data-hide="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+
+<script>
+    $('#countall').hide();
+    $('#cleanup').hide();
+    $(function(){
+        $("[data-hide]").on("click", function(){
+            $("." + $(this).attr("data-hide")).hide();
+        });
+    });
+
+    function countAll(item_path) {
+        $('#countall_item').html(item_path);
+        $('#countall_value').hide();
+        $('#countall_value_loading').show();
+        $('#countall').show();
+        $.get('countall/'+item_path, function(data) {
+            $('#countall_value').html(data);
+            $('#countall_value_loading').hide();
+            $('#countall_value').show();
+        });
+    }
+</script>
 
 <div class="mb-2">
 	{{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
@@ -35,16 +74,22 @@
 	{% for item in items %}
 		{% if p.has_iattr(item.conf, 'database') %}
 			<tr>
-				<td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ item.property.path }}</td>
 				<td class="py-1">{{ item() }}</td>
 				<td class="py-1">{{ p.id(item, create=False) }}</td>
 				<td class="py-1">
 					<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
-					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item._path }}';"><i class="fas fa-search"></i></button>
-					<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item._path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
+					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}';"><i class="fas fa-search"></i></button>
+					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anzahl Datensätze in LOG Tabelle') }}" onclick="countAll('{{ item.property.path }}')" data-container="body" data-toggle="popover" data-placement="right"><i class="fas fa-calculator"></i></button>
+					<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
 				</td>
 			</tr>
 		{% endif %}
 	{% endfor %}
 </table>
 {% endblock bodytab1 %}
+
+{% block buttons %}
+<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.dump')">{{ _('Datenbank-Dump') }}</button>
+<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); }">{{ _('Datenbank-Cleanup') }}</button>
+{% endblock buttons %}

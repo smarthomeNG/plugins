@@ -3,18 +3,39 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle, **seit SmartHomeNG v1.3**'
+        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle'
         en: 'Controlling AV devices via TCP/IP and RS232'
+    description_long:
+        de: 'Steuerung von diversen AV Geräten über TCP/IP und RS232 Schnittstelle.
+            Das Plugin unterstützt eine Vielzahl von AV-Geräten und wurde mit folgenden Geräten getestet:
+            - Pioneer AV Receiver < 2016
+            - Denon AV Receiver > 2016
+            - Epson Projektor < 2010
+            - Oppo UHD Player
+            '
+        en: 'Controlling AV devices via TCP/IP and RS232
+            The plugin supports a variety of AV devices and was tested with the following models:
+            - Pioneer AV Receiver < 2016
+            - Denon AV Receiver > 2016
+            - Epson Projektor < 2010
+            - Oppo UHD Player
+            '
+    requirements:
+        de: 'pyserial Python Modul'
+        en: 'pyserial python module'
     maintainer: onkelandy
     tester: Foxi352                     # Who tests this plugin?
-    keywords: av denon pioneer epson oppo player amp receiver projector rs232 telnet tcpip
+    state: develop
+
+    keywords: av denon pioneer epson oppo player amp receiver projector rs232 telnet tcpip remote control
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc
 
-    version: 1.3.6                # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.6.0                # Plugin version
+    sh_minversion: 1.6            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
+    restartable: unknown
     classname: AVDevice            # class containing the plugin
 
 parameters:
@@ -24,15 +45,20 @@ parameters:
         default: ''
         mandatory: True
         description:
-            de: 'Name des Geräts. Muss mit dem Namen der Textdatei unter plugins/avdevice korrelieren, die sämtliche Befehle beinhaltet.'
-            en: 'Name of AV device. Has to correspond to a text file with the same name in the folder plugins/avdevice including all commands.'
+            de: 'Name des Geräts. Es ist notwendig, eine Text-Datei mit dem hier angegebenen Dateinamen (Endung txt)
+                im Pluginunterordner ``models`` anzulegen. Der Aufbau dieser Datei wird im user_doc detailliert beschrieben.'
+            en: 'Name of AV device. A text file with the same name (suffix txt) has to be created in the plugins subfolder
+                ``models``. The setup of that command file is explained in more detail in the user_doc.'
 
     update_exclude:
         type: str
         default: ''
         description:
-            de: "Caller, bei denen kein Itemupdate vollzogen werden soll. Dies ist hilfreich, um beispielsweise mittels on_change Items abhängig von einem anderen Item zu aktualisieren, ohne dass die Updatefunktion des Plugins getriggert wird (z.B. für play/stop/pause). Es können mehrere durch Komma getrennte Einträge definiert werden."
-            en: "Define calles that shouldn't trigger an item update. This is helpful if you want to change values of items based on other items by using on_change or on_update functions. In that case the plugin wouldn't update the dependent item additionally (e.g. play/pause/stop). You can define a list of callers delimited by ,"
+            de: 'Caller, bei denen kein Itemupdate vollzogen werden soll.'
+            en: 'Define callers that should not trigger an item update.'
+        description_long:
+            de: 'Caller, bei denen kein Itemupdate vollzogen werden soll. Dies ist hilfreich, um beispielsweise mittels on_change Items abhängig von einem anderen Item zu aktualisieren, ohne dass die Updatefunktion des Plugins getriggert wird (z.B. für play/stop/pause). Es können mehrere durch Komma getrennte Einträge definiert werden.'
+            en: 'Define callers that should not trigger an item update. This is helpful if you want to change values of items based on other items by using on_change or on_update functions. In that case the plugin would not update the dependent item additionally (e.g. play/pause/stop). You can define a list of callers delimited by ,'
 
     tcp_ip:
         type: ip
@@ -80,6 +106,9 @@ parameters:
         type: str
         default: 'RGB,RGC,RGD,GBH,GHH,VTA,AUA,AUB'
         description:
+            de: "Das Plugin ignoriert Antworten die mit den hier angegebenen Werten starten."
+            en: "The plugin doesn't care about responses from the device starting with the given values."
+        description_long:
             de: "Das Plugin ignoriert Antworten die mit den hier angegebenen Werten starten, beispielsweise Rückmeldungen für die Menünavigation, etc. Der Defaultwert ist für Pioneer Receiver empfohlen."
             en: "The plugin doesn't care about responses from the device starting with the given values. List responses for menu navigation, etc. The default value is recommended for Pioneer receivers."
 
@@ -87,6 +116,9 @@ parameters:
         type: str
         default: 'GEH01020,GEH04022,GEH05024,R'
         description:
+            de: "Auf alle Fälle zu puffernde Antworten."
+            en: "Answers to be buffered in any case."
+        description_long:
             de: "Wenn aus irgendeinem Grund die Antworten nicht gepuffert werden sollen, können hier dennoch Antworten definiert werden, die sehr wohl gepuffert werden. Dies ist besonders wichtig bei Informationen, die schnell hintereinander gesendet werden bzw. wechseln wie Künstler, Musiktitel, Radiostation, etc. Der Defaultwert ist für Pioneer Receiver empfohlen."
             en: "If for whatever reason you don't want to buffer the response from your device you can still define specific responses that should get buffered. This is important for responses that change or get sent very quickly. Artist, title, radio station, etc. are examples that should be put here. The default value is recommended for Pioneer receivers."
 
@@ -94,6 +126,9 @@ parameters:
         type: str
         default: ''
         description:
+            de: "Quellen, bei denen Displayupdated ignoriert werden."
+            en: "Sources where display updates should be ignored."
+        description_long:
             de: "Die LCD Anzeige auf dem Gerät wird mitunter sehr häufig aktualisiert, zB bei einem scrollenden Text bei Songtiteln. Um ein ständiges Update und dadurch Konflikte mit tatsächlich relevanten Rückmeldungen zu vermeiden, können hier Source Typen hinterlegt werden. Internet Radio, LAN Streaming, etc. werden empfohlen. Für Pioneer-Receiver werden empfohlen: 26,38,40,41,44,17,02,48,0"
             en: "The value of the LCD display on your receiver might get updated very often, e.g. when it shows song titles as a scrolling text. To avoid constant display updates and therefore possible confusion with relevant answers of your device listing source inputs like internet radio, LAN streaming, etc. here is highly recommended. For Pioneer receivers use: 26,38,40,41,44,17,02,48,0"
 
@@ -101,6 +136,9 @@ parameters:
         type: str
         default: ''
         description:
+            de: "Master-Item, das für Senden von Befehlen einen bestimmten Wert haben muss."
+            en: "Master item that has to be set to a specific value before commands are sent."
+        description_long:
             de: "Wenn das angegebene Item den angegebenen Wert erhält, werden die Befehle gesendet, ansonsten nicht. Das ist insbesondere dann sinnvoll, wenn das Gerät an einer schaltbaren Steckdose hängt."
             en: " If given item has given value the commands are sent to the device, otherwise they are not. Relevant if you have your device connected to a power socket that can be turned off."
 
@@ -108,6 +146,9 @@ parameters:
         type: bool
         default: True
         description:
+            de: "Wert für das Master-Item."
+            en: "Value for the master item."
+        description_long:
             de: "Wenn das angegebene Item den angegebenen Wert erhält, werden die Befehle gesendet, ansonsten nicht. Das ist insbesondere dann sinnvoll, wenn das Gerät an einer schaltbaren Steckdose hängt."
             en: " If given item has given value the commands are sent to the device, otherwise they are not. Relevant if you have your device connected to a power socket that can be turned off."
 
@@ -115,6 +156,9 @@ parameters:
         type: str
         default: 'E02,E04,E06'
         description:
+            de: "Standard Fehlermeldungen des Geräts."
+            en: "The standard error responses from your device."
+        description_long:
             de: "Standard Fehlermeldungen des Geräts, bei Pioneer beispielsweise ein 'E' gefolgt von einer Nummer. Werden diese Antworten hier nicht angegeben, werden Rückmeldungen unter Umständen deutlich langsamer verarbeitet, aber voraussichtlich trotzdem erkannt."
             en: "The standard error responses from your device. For Pioneer receivers they are 'E' followed by a number. If no values are provided error answers from your device might get recognized much slower but actually should still get recognized."
 
@@ -122,6 +166,9 @@ parameters:
         type: bool
         default: False
         description:
+            de: "Zurücksetzen des Items auf den vorigen Wert, wenn kein Update durchgeführt werden konnte."
+            en: "Reset the value of the item that could not be updated."
+        description_long:
             de: "Zurücksetzen des Items auf den vorigen Wert, wenn kein Update durchgeführt werden konnte, zB das Setzen der Lautstärke in einer abgeschalteten Zone. Sobald das dependson Item ausgeschaltet wird oder mehrere Verbindungs- und Sendeversuche fehlgeschlagen sind, wird das Item zurückgesetzt, damit keine falschen Werte in der Visu angezeigt werden."
             en: "Reset the value of the item that could not be updated. E.g. you set the volume of zone 2 when it is not powered on. If either the dependson item is off or the device sends an error response or after several connection and send retries the expected response is not received, the item gets set to the value it had before you sent the command. That way you avoid having a wrong value displayed in your Visu."
 
@@ -129,6 +176,9 @@ parameters:
         type: bool
         default: False
         description:
+            de: "Wenn das dependson Item abgeschaltet ist, werden alle Poweritems ebenfalls auf 0 gesetzt."
+            en: "If the dependson item is off the power off all zones are set to off."
+        description_long:
             de: "Wenn das dependson Item abgeschaltet ist, werden alle Poweritems ebenfalls auf 0 gesetzt. Das ist dann relevant, wenn beispielsweise das Gerät eingeschaltet ist, die Steckdose aber ausgeschaltet wird. Durch Aktivieren dieser Funktion werden automatisch die Poweritems auf 0 gesetzt."
             en: "If the dependson item is off the power off all zones are set to off. This is especially relevant for a correct representation in your Visu when you have a powered on device but turn off the power socket."
 
@@ -136,8 +186,11 @@ parameters:
         type: bool
         default: False
         description:
-            de: "Wie beim obigen Attribut dient auch diese Funktion zum korrekten Update der Visu auf den Lautstärkewert 0, sobald das dependson Item deaktiviert wird (zB Ausschalten der Steckdose)."
-            en: "Same as above but in this case the volume is set to 0 for all zones. This is for Visu purposes only."
+            de: "Wenn das dependson Item abgeschaltet ist, werden Volume Items ebenfalls auf 0 gesetzt."
+            en: "If the dependson item is off the volumes are set to 0."
+        description_long:
+            de: "Wenn das dependson Item abgeschaltet ist, werden alle Volume Items ebenfalls auf 0 gesetzt. Das ist dann relevant, wenn beispielsweise das Gerät eingeschaltet ist, die Steckdose aber ausgeschaltet wird. Durch Aktivieren dieser Funktion werden automatisch die Poweritems auf 0 gesetzt."
+            en: "If the dependson item is off the power off all zones are set to off. This is especially relevant for a correct representation in your Visu when you have a powered on device but turn off the power socket."
 
     sendretries:
         type: int
@@ -157,6 +210,9 @@ parameters:
         type: int
         default: 13
         description:
+            de: "Anzahl der Verbindungsversuche bei Verbindungsproblemen."
+            en: "If the plugin can not connect to the device it retries this often."
+        description_long:
             de: "Anzahl der Verbindungsversuche bei Verbindungsproblemen. Das ist insbesondere bei TCP Verbindungen von Geräten relevant, die an schaltbaren Steckdosen hängen, da diese oftmals 30-40 Sekunden zum Hochfahren benötigen."
             en: "If the plugin can not connect to the device it retries this often. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device."
 
@@ -164,6 +220,9 @@ parameters:
         type: int
         default: 50
         description:
+            de: "Dauer in Sekunden, wie lange ein Kommando, das nicht erfolgreich war in einem Zwischenspeicher aufbewahrt werden soll."
+            en: "Seconds the plugin should temporarily save a command to retry later on after establishing a connection."
+        description_long:
             de: "Dauer in Sekunden, wie lange ein Kommando, das nicht erfolgreich war in einem Zwischenspeicher aufbewahrt werden soll. Dies ist besonders bei TCP Verbindungen mit Geräten an schaltbaren Steckdosen relevant, da diese ofmals 30-40 Sekunden zum Hochfahren benötigen."
             en: "Seconds the plugin should temporarily save a command to retry later on after establishing a connection. This is especially useful for TCP connections on devices that are plugged into a switchable socket as most receivers need about 40-50 seconds to boot their network device."
 
@@ -171,6 +230,9 @@ parameters:
         type: int
         default: 5
         description:
+            de: "Der Puffer sorgt dafür, dass schnell hintereinander eintreffende Rückmeldungen evaluiert werden."
+            en: "The buffer ensures the correct evaluation of multiple quick responses."
+        description_long:
             de: "Schnell hintereinander empfangene Werte werden bei einer negativen Attributangabe im Puffer gespeichert und gemeinsam verarbeitet. Der Standardwert sollte dafür sorgen, dass keine Antworten verloren gehen. Einige Receiver antworten unter Umständen immer zuerst mit der Angabe zum auf dem Display gezeigten Wert. Der Puffer sorgt dafür, dass auch eine nachfolgende Rückmeldung evaluiert wird."
             en: "Set this to a number to collect quickly received responses in a buffer and evaluate them collectively. The standard value should be fine and prevent responses getting lost. Some receivers might first respond to a command with an update of the display and then with the actual value. The buffer ensures the correct evaluation of the response."
 
@@ -178,6 +240,9 @@ parameters:
         type: bool
         default: False
         description:
+            de: "Automatischer Versuch, sich mit dem Gerät zu verbinden, wenn keine Rückmeldung kommt oder die Verbindung verloren wurde."
+            en: "Automatically tries to reconnect if no response is received or connection is lost."
+        description_long:
             de: "Automatischer Versuch, sich mit dem Gerät zu verbinden, wenn keine Rückmeldung kommt oder die Verbindung verloren wurde. Dies sollte nicht notwendig sein, da das Plugin ohnehin bei jedem neuen Senden eines Befehls einen Verbindungsaufbauversuch startet."
             en: "Automatically tries to reconnect if no response is received or connection is lost. This should not be necessary as the plugin always tries to reconnect before sending a command."
 
@@ -185,111 +250,164 @@ parameters:
         type: bool
         default: True
         description:
+            de: "Statusabfrage bei Verbindungsherstellung"
+            en: "Status query on connection"
+        description_long:
             de: "Verbindet sich das Plugin, werden die Werte automatisch abgefragt, auch wenn kein Depend=Init im Item angegeben ist. Sollen nur Items abgefragt werden, bei denen das depend-Attribut auf init gesetzt ist, sollte dieser Wert auf False gestellt werden."
             en: "As soon as the plugin connects to the device the values get queried automatically even if the Depend=Init is not set in the items. If you want to query only those items that are set explicitly change this value to False."
 
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 item_attributes:
-    avdevice_zone0_depend:
-        type: list(str)
-        description:
-            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
-            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
-
-    avdevice_zone1_depend:
-        type: list(str)
-        description:
-            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
-            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
-
-    avdevice_zone2_depend:
-        type: list(str)
-        description:
-            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
-            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
-
-    avdevice_zone3_depend:
-        type: list(str)
-        description:
-            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
-            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
-
-    avdevice_zone4_depend:
-        type: list(str)
-        description:
-            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
-            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
 
     avdevice_depend:
         type: list(str)
         description:
-            de: 'Hier wird der Funktionsname eingefügt, von dem ein Item abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. "tone = True" führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als "oder" interpretiert.'
-            en: 'Insert a function name your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. "tone = True" makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as "or".'
+            de: 'Hier wird der Funktionsname ohne Zonenbezug eingefügt, von dem das Aktualisieren des Items abhängig sein soll.'
+            en: 'Insert a function name without a zone your item should be depending on.'
+        description_long:
+            de: 'Hier wird der Funktionsname ohne Zonenbezug eingefügt, von dem das Aktualisieren des Items abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. ``tone = True`` führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als ``oder`` interpretiert. Eine genauere Beschreibung ist in den user_doc zu finden.'
+            en: 'Insert a function name without a zone your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. ``tone = True`` makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as ``or``. You find detailled information in the user_doc.'
 
-    avdevice_zone0:
-        type: str
+    avdevice_zone0_depend:
+        type: list(str)
         description:
-            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
-            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+            de: 'Hier wird der Funktionsname für Zone 0 eingefügt, von dem das Aktualisieren des Items abhängig sein soll.'
+            en: 'Insert a function name for zone 0 your item should be depending on.'
+        description_long:
+            de: 'Hier wird der Funktionsname für Zone 0 eingefügt, von dem das Aktualisieren des Items abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. ``tone = True`` führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als ``oder`` interpretiert.'
+            en: 'Insert a function name for zone 0 your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. ``tone = True`` makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as ``or``.'
 
-    avdevice_zone1:
-        type: str
+    avdevice_zone1_depend:
+        type: list(str)
         description:
-            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
-            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+            de: 'Hier wird der Funktionsname für Zone 1 eingefügt, von dem das Aktualisieren des Items abhängig sein soll.'
+            en: 'Insert a function name for zone 1 your item should be depending on.'
+        description_long:
+            de: 'Hier wird der Funktionsname für Zone 1 eingefügt, von dem das Aktualisieren des Items abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. ``tone = True`` führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als ``oder`` interpretiert.'
+            en: 'Insert a function name for zone 1 your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. ``tone = True`` makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as ``or``.'
 
-    avdevice_zone2:
-        type: str
+    avdevice_zone2_depend:
+        type: list(str)
         description:
-            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
-            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+            de: 'Hier wird der Funktionsname für Zone 2 eingefügt, von dem das Aktualisieren des Items abhängig sein soll.'
+            en: 'Insert a function name for zone 2 your item should be depending on.'
+        description_long:
+            de: 'Hier wird der Funktionsname für Zone 2 eingefügt, von dem das Aktualisieren des Items abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. ``tone = True`` führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als ``oder`` interpretiert.'
+            en: 'Insert a function name for zone 2 your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. ``tone = True`` makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as ``or``.'
 
-    avdevice_zone3:
-        type: str
+    avdevice_zone3_depend:
+        type: list(str)
         description:
-            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
-            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+            de: 'Hier wird der Funktionsname für Zone 3 eingefügt, von dem das Aktualisieren des Items abhängig sein soll.'
+            en: 'Insert a function name for zone 3 your item should be depending on.'
+        description_long:
+            de: 'Hier wird der Funktionsname für Zone 3 eingefügt, von dem das Aktualisieren des Items abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. ``tone = True`` führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als ``oder`` interpretiert.'
+            en: 'Insert a function name for zone 3 your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. ``tone = True`` makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as ``or``.'
 
-    avdevice_zone4:
-        type: str
+    avdevice_zone4_depend:
+        type: list(str)
         description:
-            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
-            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+            de: 'Hier wird der Funktionsname für Zone 4 eingefügt, von dem das Aktualisieren des Items abhängig sein soll.'
+            en: 'Insert a function name for zone 4 your item should be depending on.'
+        description_long:
+            de: 'Hier wird der Funktionsname für Zone 4 eingefügt, von dem das Aktualisieren des Items abhängig sein soll. Der Bass des Verstärkers lässt sich beispielsweise nur ändern, wenn Tone aktiviert ist. ``tone = True`` führt dazu, dass das Item nur geändert wird, wenn die Bedingung erfüllt ist. Mehrere Bedingungen werden als ``oder`` interpretiert.'
+            en: 'Insert a function name for zone 4 your item should be depending on. For exmaple changing the Bass value of your amp is only useful/possible, if tone is activated. ``tone = True`` makes sure, that the item only gets updated if the dependency is fullfilled. Multiple entries are interepreted as ``or``.'
 
     avdevice:
         type: str
         description:
-            de: 'Obiges Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei hinterlegt ist, zB power oder volume'
-            en: 'This attribute has to be followed by one of the commands declared in the device text file like power or volume'
+            de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei im Ordner models hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file in the models folders like power or volume'
+        description_long:
+            de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei im Ordner models hinterlegt ist, zB power oder volume
+                Außerdem gibt es zwei spezielle Parameter, die bei Bedarf eingesetzt werden können:
+                - **avdevice: statusupdate**: Dieses Item wird genutzt, um eine komplette Statusabfrage durchzuführen.
+                Es werden alle Query-Kommandos an das Gerät geschickt, was vor allem nach dem
+                Einschalten einer geschaltenen Steckdose relevant ist.
+                - **avdevice: reload**: Dieses Item wird genutzt, um die Textkonfiguration neu zu laden.
+                Dadurch werden das Kommando-File im models Ordner sowie die Dateien im translations Ordner
+                neu gelesen. So ist ein Ausbessern von Befehlen ohne Plugin-Neustart möglich.
+                '
+            en: 'This attribute has to be followed by one of the commands declared in the
+                device text file in the models folders like power or volume
+                You can use two special avdevice attribute values if you want:
+                
+                - **avdevice: statusupdate**: Use this item to trigger a full
+                statusupdate. All query commands regarding the currently powered on
+                zones are sent. This is especially useful if you have a power socket you
+                can switch on or off and want to update all items on connection.
+                - **avdevice: reload**: Use this item to reload your text configurations.
+                This re-reads the config as well as translation files and recreates all
+                functions and commands. This is useful if you find an error in your
+                configuration file or if you want to add new commands while smarthomeNG
+                is running. You don’t need to restart the plugin to reload the config!
+                '
+
+    avdevice_zone0:
+        type: str
+        description:
+            de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei für Zone 0 hinterlegt ist, zB power oder volume.'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file for zone 0 like power or volume'
+
+    avdevice_zone1:
+        type: str
+        description:
+            de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei für Zone 1 hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file for zone 1 like power or volume'
+
+    avdevice_zone2:
+        type: str
+        description:
+            de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei für Zone 2 hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file for zone 2 like power or volume'
+
+    avdevice_zone3:
+        type: str
+        description:
+            de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei für Zone 3 hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file for zone 3 like power or volume'
+
+    avdevice_zone:
+        type: str
+        description:
+            de: 'Das Attribut muss mit dem Kommando ergänzt werden, das in der Text Datei für Zone 4 hinterlegt ist, zB power oder volume'
+            en: 'This attribute has to be followed by one of the commands declared in the device text file for zone 4 like power or volume'
 
     avdevice_zone0_speakers:
         type: str
         description:
-            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
-            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+            de: 'Soll in Zone 0 zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups in zone 0 you can use this attribue. The value has to be identical to the value the device expects.'
 
     avdevice_zone1_speakers:
         type: str
         description:
-            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
-            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+            de: 'Soll in Zone 1 zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups in zone 1 you can use this attribue. The value has to be identical to the value the device expects.'
 
     avdevice_zone2_speakers:
         type: str
         description:
-            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
-            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+            de: 'Soll in Zone 2 zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups in zone 2 you can use this attribue. The value has to be identical to the value the device expects.'
 
     avdevice_zone3_speakers:
         type: str
         description:
-            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
-            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+            de: 'Soll in Zone 3 zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups in zone 3 you can use this attribue. The value has to be identical to the value the device expects.'
 
     avdevice_zone4_speakers:
         type: str
         description:
-            de: 'Soll zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
-            en: 'If you want to switch between A, B or AB speaker setups you can use this attribue. The value has to be identical to the value the device expects.'
+            de: 'Soll in Zone 4 zwischen Lautsprecher A, B und AB umgeschaltet werden, bietet es sich an, dies über dieses Attribut zu definieren. Als Wert muss hier der zu sendende Wert angegeben werden.'
+            en: 'If you want to switch between A, B or AB speaker setups in zone 4 you can use this attribue. The value has to be identical to the value the device expects.'
 
     avdevice_speakers:
         type: str
@@ -300,35 +418,768 @@ item_attributes:
     avdevice_zone0_init:
         type: str
         description:
-            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
-            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+            de: 'Über dieses Attribut lässt sich ein anderes Item in Zone 0 auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item in zone 0 to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
 
     avdevice_zone1_init:
         type: str
         description:
-            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
-            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+            de: 'Über dieses Attribut lässt sich ein anderes Item in Zone 1 auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item in zone 1 to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
 
     avdevice_zone2_init:
         type: str
         description:
-            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
-            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+            de: 'Über dieses Attribut lässt sich ein anderes Item in Zone 2 auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item in zone 2 to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
 
     avdevice_zone3_init:
         type: str
         description:
-            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
-            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+            de: 'Über dieses Attribut lässt sich ein anderes Item in Zone 3 auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item in zone 3 to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
 
     avdevice_zone4_init:
         type: str
         description:
-            de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
-            en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+            de: 'Über dieses Attribut lässt sich ein anderes Item in Zone 4 auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
+            en: 'This attribute changes the value of another item in zone 4 to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
 
     avdevice_init:
         type: str
         description:
             de: 'Über dieses Attribut lässt sich ein anderes Item auf einen bestimmten Wert setzen, sobald das Plugin sich mit dem Gerät verbindet. Der Wert muss bereits als avdevice-Attribut bei einem anderen Item hinterlegt sein.'
             en: 'This attribute changes the value of another item to a specific value as soon as the plugin connects to the device. The value has to exist as an avdevice-attribute on another item.'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+
+item_structs:
+    general:
+        name: Generelle AVR Items
+
+        cursorup:
+            type: bool
+            visu_acl: rw
+            avdevice@instance: up
+            enforce_updates: 'yes'
+
+        cursordown:
+            type: bool
+            visu_acl: rw
+            avdevice@instance: down
+            enforce_updates: 'yes'
+
+        cursorleft:
+            type: bool
+            visu_acl: rw
+            avdevice@instance: left
+            enforce_updates: 'yes'
+
+        cursorright:
+            type: bool
+            visu_acl: rw
+            avdevice@instance: right
+            enforce_updates: 'yes'
+
+        cursorenter:
+            type: bool
+            visu_acl: rw
+            avdevice@instance: enter
+            enforce_updates: 'yes'
+
+        firmware:
+            type: foo
+            visu_acl: rw
+            avdevice@instance: firmware
+            avdevice_zone1_depend@instance: power
+
+        info:
+            type: bool
+            visu_acl: rw
+            avdevice@instance: info
+            avdevice_zone1_depend@instance: power
+
+        menu:
+            type: bool
+            visu_acl: rw
+            avdevice@instance: menu
+            avdevice_zone1_depend@instance: power
+
+        powerall:
+            type: bool
+            visu_acl: rw
+            avdevice_zone0@instance: power
+            avdevice_zone1_depend@instance: init
+
+        reload:
+            remark: Reload your config text file
+            visu_acl: rw
+            type: bool
+            cache: 'false'
+            enforce_updates: True
+            avdevice@instance: reload
+
+        update:
+            remark: Send all queries
+            type: bool
+            visu_acl: rw
+            avdevice_zone0@instance: statusupdate
+            enforce_updates: True
+
+        display:
+            type: str
+            visu_acl: ro
+            avdevice_zone0@instance: display
+            avdevice_zone1_depend@instance: power
+            avdevice_zone2_depend@instance: power
+
+        title:
+            type: str
+            visu_acl: ro
+            avdevice_zone0@instance: title
+            avdevice_zone1_depend@instance:
+              - power, a
+              - source = 'net', b
+              - source = 'iradio', b
+              - source = 'tuner', b
+
+        station:
+            type: str
+            visu_acl: ro
+            avdevice_zone0@instance: station
+            avdevice_zone1_depend@instance:
+              - power, a
+              - source = 'net', b
+              - source = 'iradio', b
+              - source = 'tuner', b
+
+        genre:
+            type: str
+            visu_acl: ro
+            avdevice_zone0@instance: genre
+            avdevice_zone1_depend@instance:
+              - power, a
+              - source = 'net', b
+              - source = 'iradio', b
+              - source = 'tuner', b
+
+        eco:
+            type: str
+            visu_acl: rw
+            avdevice_zone0@instance: eco
+
+    speaker_selection:
+        name: Lautsprecherwahl A/B
+
+        mainspeakers:
+            remark: select main speakers, mainly for Denon devices
+            type: str
+            visu_acl: rw
+            avdevice_zone1@instance: mainspeakers
+            avdevice_zone1_depend@instance: power
+
+        speakers:
+            remark: Set speaker to A or B, mainly Pioneer devices
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: speakers
+            avdevice_zone1_depend@instance: power
+
+        speakera:
+            remark: set the speakers attribute to the value your device is expecting
+            type: bool
+            visu_acl: rw
+            avdevice_zone1_speakers@instance: 1
+            avdevice_zone1_depend@instance: power
+
+        speakerb:
+            remark: set the speakers attribute to the value your device is expecting
+            type: bool
+            visu_acl: rw
+            avdevice_zone1_speakers@instance: 2
+            avdevice_zone1_depend@instance: power
+
+    individual_volume:
+        name: Lautstärkeeinstellung pro Kanal (wird nur von manchen Verstärkern unterstützt)
+
+        volumefl:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: volumefl
+            avdevice_zone1_depend@instance: power
+            cache: 'true'
+
+        volumeflup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumefl+
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+        volumefldown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumefl-
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+        volumefr:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: volumefr
+            avdevice_zone1_depend@instance: power
+            cache: 'true'
+
+        volumefrup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumefr+
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+        volumefrdown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumefr-
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+        volumesr:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: volumesr
+            avdevice_zone1_depend@instance: power
+            cache: 'true'
+
+        volumesrup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumesr+
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+        volumesrdown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumesr-
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+        volumesl:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: volumesl
+            avdevice_zone1_depend@instance: power
+            cache: 'true'
+
+        volumeslup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumesl+
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+        volumesldown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumesl-
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+        volumec:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: volumec
+            avdevice_zone1_depend@instance: power
+            cache: 'true'
+
+        volumecup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumec+
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+        volumecdown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volumec-
+            avdevice_zone1_depend@instance: power
+            enforce_updates: 'yes'
+
+    sound_settings:
+        name: Soundeinstellungen (Bass, Treble, etc.)
+
+        set_listeningmode:
+            type: foo
+            visu_acl: rw
+            avdevice_zone1@instance: set_listeningmode
+            avdevice_zone1_depend@instance: power
+
+        query_listeningmode:
+            type: foo
+            visu_acl: ro
+            avdevice_zone1@instance: query_listeningmode
+            avdevice_zone1_depend@instance: power
+
+        bass:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: bass
+            avdevice_zone1_depend@instance: tone
+
+        bassup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: bass+
+            enforce_updates: True
+            avdevice_zone1_depend@instance: tone
+
+        bassdown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: bass-
+            enforce_updates: True
+            avdevice_zone1_depend@instance: tone
+
+        dialog:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: dialog
+            avdevice_zone1_depend@instance: power
+
+        trebble:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: trebble
+            avdevice_zone1_depend@instance: tone
+
+        trebbleup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: trebble+
+            enforce_updates: True
+            avdevice_zone1_depend@instance: tone
+
+        trebbledown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: trebble-
+            enforce_updates: True
+            avdevice_zone1_depend@instance: tone
+
+        tone:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: tone
+            avdevice_zone1_depend@instance: power
+
+        dynamicrange:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: dynamicrange
+            avdevice_zone1_depend@instance: power
+
+        dynamicrangeup:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: dynamicrange+
+            avdevice_zone1_depend@instance: power
+
+        dynamicrangedown:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: dynamicrange-
+            avdevice_zone1_depend@instance: power
+
+        dialog:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: dialog
+            avdevice_zone1_depend@instance: power
+
+        dialogtoggle:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: dialogtoggle
+            avdevice_zone1_depend@instance: power
+
+        subwoofer:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: subwoofer
+            avdevice_zone1_depend@instance: power
+
+        subwoofertoggle:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: subwoofertoggle
+            avdevice_zone1_depend@instance: power
+
+        cinemaeq:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: cinemaeq
+            avdevice_zone1_depend@instance: power
+
+    video_settings:
+        name: Videoeinstellungen (Auflösung, Processing, etc.)
+
+        aspectratio:
+            type: str
+            visu_acl: rw
+            avdevice_zone1@instance: aspectratio
+            avdevice_zone1_depend@instance: power
+
+        monitorout:
+            type: foo
+            visu_acl: rw
+            avdevice_zone1@instance: monitorout
+            avdevice_zone1_depend@instance: power
+
+        resolution:
+            type: str
+            visu_acl: rw
+            avdevice_zone1@instance: resolution
+            avdevice_zone1_depend@instance: power
+
+        audioout:
+            type: str
+            visu_acl: rw
+            avdevice_zone1@instance: audioout
+            avdevice_zone1_depend@instance: power
+
+        videoprocessing:
+            type: str
+            visu_acl: rw
+            avdevice_zone1@instance: videoprocessing
+            avdevice_zone1_depend@instance: power
+
+        stretch:
+            type: str
+            visu_acl: rw
+            avdevice_zone1@instance: stretch
+            avdevice_zone1_depend@instance:
+                - power, a
+                - aspectratio = nrm, b
+
+    zone1:
+        name: Steuern der Zone 1
+
+        sleep:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: sleep
+            avdevice_zone1_depend@instance: power
+
+        standby:
+            type: foo
+            visu_acl: rw
+            avdevice_zone1@instance: standby
+            avdevice_zone1_depend@instance: power
+
+        power:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: power
+            avdevice_zone1_depend@instance: init
+
+        mute:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: mute
+            avdevice_zone1_depend@instance: power
+
+        volume:
+            type: num
+            visu_acl: rw
+            avdevice_zone1@instance: volume
+            avdevice_zone1_depend@instance: power
+            cache: True
+
+            max:
+                type: num
+                visu_acl: ro
+                avdevice_zone1@instance: volumemax
+                avdevice_zone1_depend@instance: power
+
+            fading:
+                type: num
+                remark: you might want to use this item for the fade() function
+                on_change: .. = value
+
+        volumeup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volume+
+            enforce_updates: True
+            avdevice_zone1_depend@instance:
+              - power, a
+              - volume < 160, b
+
+        volumedown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone1@instance: volume-
+            enforce_updates: True
+            avdevice_zone1_depend@instance:
+              - volume > 10, b
+              - power, a
+
+        volumelow:
+            remark: sets volume to a specific low value
+            type: bool
+            enforce_updates: True
+            visu: rw
+            avdevice_zone1@instance: volumelow
+            avdevice_zone1_depend@instance: power
+
+        volumehigh:
+            remark: sets volume to a specific high value
+            type: bool
+            enforce_updates: True
+            visu: rw
+            avdevice_zone1@instance: volumehigh
+            avdevice_zone1_depend@instance: power
+
+        source:
+            type: foo
+            visu_acl: rw
+            avdevice_zone1@instance: source
+            avdevice_zone1_depend@instance: power
+
+            music:
+                remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
+                type: bool
+                visu_acl: ro
+                eval: True if (sh....source() == '13' and sh....power()) else False
+                eval_trigger:
+                  - '..'
+                  - '...power'
+                enforce_updates: True
+
+        hdmi:
+            type: num
+            visu_acl: ro
+            avdevice_zone1@instance: hdmi
+            avdevice_zone1_depend@instance: power
+            avdevice_zone1_depend@instance: power
+
+        videoinput:
+            type: str
+            visu_acl: rw
+            avdevice_zone1@instance: videoinput
+            avdevice_zone1_depend@instance: power
+
+        audioinput:
+            type: str
+            visu_acl: rw
+            avdevice_zone1@instance: audioinput
+            avdevice_zone1_depend@instance: power
+
+    zone2:
+        name: Steuern der Zone 2
+
+        sleep:
+            type: num
+            visu_acl: rw
+            avdevice_zone2@instance: sleep
+            avdevice_zone2_depend@instance: power
+
+        standby:
+            type: foo
+            visu_acl: rw
+            avdevice_zone2@instance: standby
+            avdevice_zone2_depend@instance: power
+
+        power:
+            type: bool
+            visu_acl: rw
+            avdevice_zone2@instance: power
+            avdevice_zone2_depend@instance: init
+
+        source:
+            type: foo
+            visu_acl: rw
+            avdevice_zone2@instance: source
+            avdevice_zone2_depend@instance: power
+
+            music:
+                remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
+                type: bool
+                visu_acl: ro
+                eval: True if (sh....source() == 'usb-dac' and sh....power()) else False
+                eval_trigger:
+                  - '..'
+                  - '...power'
+                enforce_updates: True
+
+        mute:
+            type: bool
+            visu_acl: rw
+            avdevice_zone2@instance: mute
+            avdevice_zone2_depend@instance: power
+
+        volume:
+            type: num
+            visu_acl: rw
+            avdevice_zone2@instance: volume
+            cache: True
+            avdevice_zone2_depend@instance: power
+
+            fading:
+                type: num
+                remark: you might want to use this item for the fade() function
+                on_change: .. = value
+
+        volumeup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone2@instance: volume+
+            enforce_updates: True
+            avdevice_zone2_depend@instance: power
+
+        volumedown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone2@instance: volume-
+            enforce_updates: True
+            avdevice_zone2_depend@instance: power
+
+        volumehigh:
+            type: num
+            visu_acl: rw
+            avdevice_zone2@instance: volumehigh
+            enforce_updates: True
+            avdevice_zone2_depend@instance: power
+
+        volumelow:
+            type: num
+            visu_acl: rw
+            avdevice_zone2@instance: volumelow
+            enforce_updates: True
+            avdevice_zone2_depend@instance: power
+
+    zone3:
+        name: Steuern der Zone 3
+
+        sleep:
+            type: num
+            visu_acl: rw
+            avdevice_zone3@instance: sleep
+            avdevice_zone3_depend@instance: power
+
+        standby:
+            type: foo
+            visu_acl: rw
+            avdevice_zone3@instance: standby
+            avdevice_zone3_depend@instance: power
+
+        power:
+            type: bool
+            visu_acl: rw
+            avdevice_zone3@instance: power
+            avdevice_zone3_depend@instance: init
+
+        source:
+            type: foo
+            visu_acl: rw
+            avdevice_zone3@instance: source
+            avdevice_zone3_depend@instance: power
+
+            music:
+                remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
+                type: bool
+                visu_acl: ro
+                eval: True if (sh....source() == 'usb-dac' and sh....power()) else False
+                eval_trigger:
+                  - '..'
+                  - '...power'
+                enforce_updates: True
+
+        mute:
+            type: bool
+            visu_acl: rw
+            avdevice_zone3@instance: mute
+            avdevice_zone3_depend@instance: power
+
+        volume:
+            type: num
+            visu_acl: rw
+            avdevice_zone3@instance: volume
+            cache: True
+            avdevice_zone3_depend@instance: power
+
+            fading:
+                type: num
+                remark: you might want to use this item for the fade() function
+                on_change: .. = value
+
+        volumeup:
+            type: bool
+            visu_acl: rw
+            avdevice_zone3@instance: volume+
+            enforce_updates: True
+            avdevice_zone3_depend@instance: power
+
+        volumedown:
+            type: bool
+            visu_acl: rw
+            avdevice_zone3@instance: volume-
+            enforce_updates: True
+            avdevice_zone3_depend@instance: power
+
+        volumehigh:
+            type: num
+            visu_acl: rw
+            avdevice_zone3@instance: volumehigh
+            enforce_updates: True
+            avdevice_zone3_depend@instance: power
+
+        volumelow:
+            type: num
+            visu_acl: rw
+            avdevice_zone3@instance: volumelow
+            enforce_updates: True
+            avdevice_zone3_depend@instance: power
+
+    zone4:
+        name: Steuern der Zone 4 (limitierte Steuerfunktionalität)
+
+        sleep:
+            type: num
+            visu_acl: rw
+            avdevice_zone4@instance: sleep
+            avdevice_zone4_depend@instance: power
+
+        standby:
+            type: foo
+            visu_acl: rw
+            avdevice_zone4@instance: standby
+            avdevice_zone4_depend@instance: power
+
+        power:
+            type: bool
+            visu_acl: rw
+            avdevice_zone4@instance: power
+            avdevice_zone4_depend@instance: init
+
+        source:
+            type: foo
+            visu_acl: rw
+            avdevice_zone4@instance: source
+            avdevice_zone4_depend@instance: power
+
+            music:
+                remark: Music item gets true if source is set to 13 and power is on. Adapt to your needs
+                type: bool
+                visu_acl: ro
+                eval: True if (sh....source() == 'usb-dac' and sh....power()) else False
+                eval_trigger:
+                  - '..'
+                  - '...power'
+                enforce_updates: True

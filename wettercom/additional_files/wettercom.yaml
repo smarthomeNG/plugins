@@ -1,0 +1,235 @@
+%yaml 1.1
+---
+wetter:
+    vorhersage:
+        heute:
+            frueh:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+            mittag:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+            spaet:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+            nacht:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+        morgen:
+            frueh:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+            mittag:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+            spaet:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+            nacht:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+        uebermorgen:
+            frueh:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+            mittag:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+            spaet:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num
+            nacht:
+                temperatur:
+                    max:
+                        type: num
+                    min:
+                        type: num
+                text:
+                    type: str
+                code:
+                    type: num
+                wind:
+                    geschwindigkeit:
+                        type: num
+                    richtung:
+                        type: num
+                        text:
+                            type: str
+                niederschlag:
+                    type: num

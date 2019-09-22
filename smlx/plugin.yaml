@@ -1,0 +1,77 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                  # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Auslesen von Stromzählern via SML-Protokoll'
+        en: 'Readout of smartmeter with SML protocol'
+    maintainer: ohinckel, bmxp
+#    tester:                       # Who tests this plugin?
+    keywords: sml smartmeter
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.1.0                 # Plugin version
+    sh_minversion: 1.4.2           # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    classname: Sml                 # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    serialport:
+        type: str
+        default: ''
+        description:
+            de: 'Serieller Port an dem der Smartmeter angeschlossen ist'
+            en: 'serial port at which the smartmeter is attached'
+    timeout:
+        type: int
+        default: 8
+        description:
+            de: 'maximale Wartezeit bis serielles lesen abgebrochen wird'
+            en: 'maximum delay time until serial read will end'
+    buffersize:
+        type: int
+        default: 1024
+        description:
+            de: 'maximale Größe des Lesepuffers'
+            en: 'maximal size of read buffer'
+    host:
+        type: str
+        description:
+            de: 'Host der eine IP Schnittstelle bereitstellt'
+            en: 'host that provides an IP interface'
+    port:
+        type: int
+        description:
+            de: 'Port für die Kommunikation'
+            en: 'port for communication'
+
+    cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Zeitlicher Abstand in Sekunden zwischen zwei Abfragen des Smartmeters'
+            en: 'Time in seconds between two queries of smartmeter'
+
+    device:
+        type: str
+        default: 'raw'
+        description:
+            de: 'Name des Gerätes'
+            en: 'name of smartmeter'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    sml_obis: 
+        type: str
+        description:
+            de: 'Wert des angegebenen OBIS codes einem Item zuweisen'
+            en: 'Assigns the value for the given OBIS code to the item'
+
+    sml_prop: 
+        type: str
+        description:
+            de: 'andere Eigenschaft des Obis Codes nutzen wie z.B. unitName'
+            en: 'Used to assign other information for an OBIS code to the item'

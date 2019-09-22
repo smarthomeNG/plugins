@@ -6,12 +6,25 @@ homematic
 
 Das Plugin unterstützt HomeMatic und HomeMatic IP Geräte, die an einer HomeMatic CCU2 angelernt sind.
 Es wird eine große Zahl von HomeMatic Geräten unterstützt. Wenn ein Gerät nicht unterstützt wird,
-hilft evtl. ein einfaches Update des Python Modules **pyhomematic** mit dem folgenden Kommando:
+hilft evtl. ein einfaches Update des Python Packages **pyhomematic** mit dem folgenden Kommando:
 
     sudo pip3 install -U pyhomematic
     
     
-Die Unterstützung der einzelnen HomeMatic und HomeMatic IP Geräte ist in dem Python Modul implementiert.
+Die Unterstützung der einzelnen HomeMatic und HomeMatic IP Geräte ist in dem Python Package implementiert.
+
+.. important::
+
+   Für HomeMatic IP Devices ist eine Besonderheit zu beachten: Wenn die CCU2 neu gestartet wurde, stehen für HomeMatic IP
+   Devices nicht alle Attribute zur Verfügung. Hierin unterscheiden sich HomeMatic IP Devices von HomeMatic Devices.
+   Wenn diese Attribute durch SmartHomeNG abgefragt werden bevor sie in der CCU2 initialisier wurden, loggt das Python
+   Package **pyhomematic** einen Fehler in das Log von SmartHomeNG. Diese Fehlemedungen sehen etwa so aus:
+
+   2018-10-20  19:18:12 ERROR    pyhomematic.devicetypes.generic HMGeneric.getValue: DUTY_CYCLE on 0007D7099D0552:0 Exception: <Fault -5: 'Unknown Parameter value for value key: DUTY_CYCLE'>
+
+   Diese Fehler verschwinden nach einer gewissen Laufzeit der CCU2, wenn nach und nach entsprechende Messages von den
+   Devices bei der CCU2 eingehen. Die Dauer ist dabei z.B. abhängig von den in den HomeMatic IP eingestellten Sende-Zyklen.
+   Eventuell senden die Devices auch erst nach einem Statuswechsel eine Message an die CCU2.
 
 
 Konfiguration

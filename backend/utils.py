@@ -113,8 +113,8 @@ def _get_translation_for_block(lang, txt, block):
         blockdict = translation_dict.get('_' + block, {})
 
     return blockdict.get(txt, '')
-        
-        
+
+
 def _get_translation(txt, block):
     """
     Get translation with fallback to english and further fallback to german
@@ -137,12 +137,12 @@ def _get_translation(txt, block):
                 logger.info("Language '{0}': Translation for '{1}' is missing".format('en', txt))
                 tr = translation_dict_de.get(txt, '')
     return tr
-    
+
 
 def translate(txt, block=''):
     """
     returns translated text
-    
+
     This function extends the jinja2 template engine
     """
     logger = logging.getLogger(__name__)
@@ -180,7 +180,7 @@ def parse_requirements(file_path):
                 line = rline.lower().strip()
             else:
                 line = line[0:line.find("#")].lower().strip()
-            
+
         if len(line) > 0:
             if ">" in line:
                 if line[0:line.find(">")].lower().strip() in req_dict:

@@ -1,25 +1,90 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    type: interface                # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Auslesen von Stromzählern via SML-Protokoll'
-        en: ''
+        en: 'Read data from powermeter device using SML protocol'
     maintainer: ohinckel
-#    tester:                        # Who tests this plugin?
+    tester: '?'                    # Who tests this plugin?
+    state: ready
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    documentation: http://smarthomeng.de/user/plugins_doc/config/sml.html
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
     version: 1.0.0                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Sml                 # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+    serialport:
+        type: str
+        description:
+            de: 'Gibt die serielle Schnittstelle an von der die Daten gelesen werden (z.B. /dev/ttyUSB0)'
+            en: 'Specifies the serial device to read data from (e.g. /dev/ttyUSB0)'
+    host:
+        type: str
+        description:
+            de: '(optional) Alternativ zu "serialport" kann hier ein Netzwerk-Host hinterlegt werden'
+            en: '(optional) Alternatively you can specify a host instead of a serial device'
+    port:
+        type: int
+        description:
+            de: '(optional) Wenn ein "host" angegeben wurde kann hier der Port festgelegt werden'
+            en: '(optional) In case a "host" was specify this can be use to specify the port'
+    device:
+        type: str
+        default: 'raw'
+        valid_list:
+          - raw
+          - hex
+          - smart-meter-gateway-com-1
+        description:
+            de: '(optional) Legt ein Gerät fest von dem die Daten ausgelesen werden'
+            en: '(optional) Specifies a device from which the data is read'
+    instance:
+        type: str
+        default: ''
+        description:
+            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
+            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+    sml_obis:
+        type: str
+        description:
+            de: 'Gibt den OBIS-Code des Wertes an, das in das Item geschrieben werden soll'
+            en: 'Defines the OBIS code of the value to store in the item'
+    sml_prop:
+        type: str
+        default: valueReal
+        valid_list:
+          - objName
+          - status
+          - valTime
+          - unit
+          - scalar
+          - value
+          - signature
+          - obis
+          - valueReal
+          - unitName
+        description:
+            de: 'Gibt den Eigenschaftstyp an, der in das Item geschrieben werden soll'
+            en: 'Defines the property type to put into the item'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+
