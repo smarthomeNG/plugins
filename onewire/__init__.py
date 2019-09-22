@@ -390,7 +390,7 @@ class OneWire(OwBase):
                     value = self.read('/uncached' + path).decode()
                     value = float(value)
                     if key.startswith('T') and value == 85:
-                        self.logger.warning("1-Wire: problem reading {0}. Wiring problem?".format(addr))
+                        self.logger.info("1-Wire: problem reading {0}. Wiring problem?".format(addr))
                         continue
                 except Exception as e:
                     self.logger.warning("1-Wire: problem reading {} {}: {}. Trying to continue with next sensor".format(addr, path, e))
