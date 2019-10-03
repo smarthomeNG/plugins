@@ -76,6 +76,11 @@ class SeItem:
     def lastconditionset_name(self):
         return self.__lastconditionset_item_name.property.value
 
+    @property
+    def action_in_progress(self):
+        return self.__action_in_progress
+
+
     # Constructor
     # smarthome: instance of smarthome.py
     # item: item to use
@@ -125,6 +130,7 @@ class SeItem:
         self.__update_trigger_source = None
         self.__update_trigger_dest = None
         self.__update_in_progress = False
+        self.__action_in_progress = False
         self.__update_original_item = None
         self.__update_original_caller = None
         self.__update_original_source = None
@@ -172,6 +178,9 @@ class SeItem:
     def __repr__(self):
         return self.__id
 
+    def set_action_state(self, value):
+        self.__action_in_progress = value
+
     def updatetemplates(self, template, value):
         if value is None:
             self.__templates.pop(template)
@@ -183,10 +192,12 @@ class SeItem:
             for nestedkey in keys[:-1]:
                 dic = dic.setdefault(nestedkey, {})
             dic[keys[-1]] = val
+
         def _nested_test(dic, keys):
             for nestedkey in keys[:-2]:
                 dic = dic.setdefault(nestedkey, {})
             return dic[keys[-2]]
+
         if isinstance(key, list):
             try:
                 _nested_test(self.__webif_infos, key)
