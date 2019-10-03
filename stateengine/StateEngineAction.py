@@ -233,16 +233,15 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def _waitforexecute(self, actionname: str, namevar: str = "", repeat_text: str = ""):
         i = 0
         while self._abitem.action_in_progress is True:
-            self.log_text.append(["info", "Some action is already running. Postponing current action {}\
-                                  for one second".format(self._name)])
+            self._log_info("Some action is already running. Postponing current action {} for one second", self._name)
             i += 1
             time.sleep(1)
             if i >= 10:
-                self.log_text.append(["warning", "10 seconds wait time for action {} is over. Running it now.".format(self._name)])
+                self._log_warning("10 seconds wait time for action {} is over. Running it now.", self._name)
                 break
         self._abitem.set_variable('current.action_name', namevar)
         self._abitem.set_action_state(True)
-        self.log_text.append(["debug", "Running action '{}'.".format(namevar)])
+        self._log_debug("Running action '{}'.", namevar)
 
         #self._log_increase_indent()
         self._execute(actionname, namevar, repeat_text)
@@ -408,7 +407,6 @@ class SeActionSetByattr(SeActionBase):
     def _execute(self, actionname: str, namevar: str = "", repeat_text: str = ""):
         self._log_debug("Running action '{}'", namevar)
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
-        self.log_text.append(["info", "Action '{}': Setting values by attribute '{}'.{}".format(actionname, self.__byattr, repeat_text)])
         for item in self.items.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=self._caller, source=self._parent)
