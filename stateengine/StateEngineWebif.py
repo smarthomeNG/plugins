@@ -71,11 +71,11 @@ class WebInterface(StateEngineTools.SeItemChild):
                     matching = cond.match(conditionset)
                     condition_met = True if matching else condition_met
                 fontcolor = "white" if not condition_met or (_repeat is False and originaltype == 'actions_stay')\
-                            else "lightgray" if _delay > 0 else "darkred" if _delay > 0 else "black"
+                            else "#5c5646" if _delay > 0 else "darkred" if _delay < 0 else "black"
                 additionaltext = " ({} not met)".format(condition_to_meet) if not condition_met\
                                  else " (no repeat)" if _repeat is False and originaltype == 'actions_stay'\
                                  else " (delay: {})".format(_delay) if _delay > 0\
-                                 else " (wrong delay!)" if _delay > 0 else ""
+                                 else " (wrong delay!)" if _delay < 0 else ""
                 action1 = self.__states[state][type][action].get('function')
                 if action1 == 'set':
                     action2 = self.__states[state][type][action].get('item')
@@ -84,13 +84,14 @@ class WebInterface(StateEngineTools.SeItemChild):
                     action2 = self.__states[state][type][action].get('special')
                     action3 = self.__states[state][type][action].get('value')
                 else:
-                    action2 = ''
+                    action2 = 'None'
                     action3 = ''
-                if format == 'table':
+                if format == 'table' and not action2 == 'None':
                     actionlabel += '<tr><td align="left"><font color={}>{}</font></td><td align="left">{}</td><td align="left">{}</td></tr>'.format(fontcolor, action1, action2, action3)
-                else:
+                elif not action2 == 'None':
                     actionlabel += '<font color="{}">{} {} {}{}</font><br />'.format(fontcolor, action1, action2, action3, additionaltext)
         actionlabel += '</table>>' if format == 'table' else '>'
+        actionlabel = '' if actionlabel == '<<table border="0"></table>>' or actionlabel == '<>' else actionlabel
         #self._log_debug('actionlabel: {}', actionlabel)
         return actionlabel
 
