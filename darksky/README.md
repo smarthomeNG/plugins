@@ -177,6 +177,11 @@ darksky:
             type: str
             eval_trigger: ..icon
             eval: sh.weather_darksky.map_icon(sh...icon())
+        
+        data:
+            type: list
+            ds_matchstring: hourly/data
+            cache: 'yes'
 
     daily:
 

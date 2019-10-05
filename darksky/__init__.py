@@ -32,7 +32,7 @@ from lib.model.smartplugin import *
 
 class DarkSky(SmartPlugin):
 
-    PLUGIN_VERSION = "1.5.0.2"
+    PLUGIN_VERSION = "1.5.0.3"
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
@@ -86,8 +86,8 @@ class DarkSky(SmartPlugin):
             return
         self._jsonData = forecast
         for s, item in self._items.items():
-            sp = s.split('/')
             wrk = forecast
+            sp = s.split('/')
             if s == "flags/sources":
                 wrk = ', '.join(wrk['flags']['sources'])
             elif s == "alerts" or s == "alerts_string":
