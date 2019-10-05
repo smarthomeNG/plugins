@@ -208,7 +208,7 @@ item_structs:
 
             data:
                 type: list
-                ds_matchstring: hourly/data
+                ds_matchstring@instance: hourly/data
                 cache: 'yes'
 
         daily:
@@ -223,7 +223,7 @@ item_structs:
 
             data:
                 type: list
-                ds_matchstring: daily/data
+                ds_matchstring@instance: daily/data
                 cache: 'yes'
 
         alerts:
