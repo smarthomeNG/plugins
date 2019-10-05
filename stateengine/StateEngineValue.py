@@ -387,11 +387,11 @@ class SeValue(StateEngineTools.SeItemChild):
                 if 'eval:{}'.format(self.__eval) in self.__listorder:
                     self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
                 values = _newvalue
-                self._log_decrease_indent()
             except Exception as ex:
                 self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
+                values = None
+            finally:
                 self._log_decrease_indent()
-                return None
         else:
             if isinstance(self.__eval, list):
                 values = []
@@ -422,13 +422,13 @@ class SeValue(StateEngineTools.SeItemChild):
                                 self.__listorder[self.__listorder.index('eval:{}'.format(val))] = _newvalue
                             value = _newvalue
                         except Exception as ex:
-                            self._log_info("Problem calling '{0}': {1}.", StateEngineTools.get_eval_name(val), ex)
+                            self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(val), ex)
                             value = None
                     if value is not None:
                         values.append(self.__do_cast(value))
                     self._log_decrease_indent()
             else:
-                self._log_debug("Checking eval: {0}.", val)
+                self._log_debug("Checking eval (no str, no list): {0}.", val)
                 try:
                     self._log_increase_indent()
                     _newvalue = self.__eval()
@@ -437,7 +437,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     values = _newvalue
                     self._log_decrease_indent()
                 except Exception as ex:
-                    self._log_info("Problem calling '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
+                    self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
                     return None
 
         return values
