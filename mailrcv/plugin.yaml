@@ -66,13 +66,6 @@ parameters:
         description:
             de: 'Passwort fÃ¼r die Anmeldung am IMAP host'
             en: 'Password for login to the IMAP host'
-            
-    trashfolder:
-        type: str
-        default: 'Trash'
-        description:
-            de: 'Name des Müll-Ordners auf dem IMAP-Server'
-            en: 'Name of the trashfolder on the IMAP-Server'
 
 item_attributes: NONE
     # Definition of item attributes defined by this plugin
