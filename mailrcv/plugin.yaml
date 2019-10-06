@@ -71,7 +71,7 @@ parameters:
         type: str
         default: 'Trash'
         description:
-            de: 'Name des MÃ¼ll-Ordners auf dem IMAP-Server'
+            de: 'Name des Müll-Ordners auf dem IMAP-Server'
             en: 'Name of the trashfolder on the IMAP-Server'
 
 item_attributes: NONE
