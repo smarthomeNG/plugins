@@ -26,13 +26,14 @@ import logging
 import requests
 import datetime
 import json
+from collections import OrderedDict
 from lib.module import Modules
 from lib.model.smartplugin import *
 
 
 class DarkSky(SmartPlugin):
 
-    PLUGIN_VERSION = "1.5.0.2"
+    PLUGIN_VERSION = "1.6.0"
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
@@ -70,7 +71,7 @@ class DarkSky(SmartPlugin):
         """
         Starts the update loop for all known items.
         """
-        self.logger.debug('Starting update loop for instance %s' % self.get_instance_name())
+        self.logger.debug('Starting update loop for instance {}'.format(self.get_instance_name()))
         if not self.alive:
             return
 
@@ -137,14 +138,14 @@ class DarkSky(SmartPlugin):
                         spl = s.split('/')
                         self.logger.debug(
                             "_update: ds_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
-                                                                                                             str(spl),
-                                                                                                             str(wrk)))
+                                                                                              str(spl),
+                                                                                              str(wrk)))
                     sp.pop(0)
 
             # if a value was found, store it to item
             if wrk is not None:
                 item(wrk, 'DarkSky')
-                self.logger.debug('_update: Value "{0}" written to item'.format(wrk))
+                self.logger.debug('_update: Value "{0}" written to item {1}'.format(wrk, item))
 
         return
 
@@ -156,9 +157,68 @@ class DarkSky(SmartPlugin):
             response = self._session.get(self._build_url())
         except Exception as e:
             self.logger.error(
-                "get_forecast: Exception when sending GET request for get_forecast: %s" % str(e))
+                "get_forecast: Exception when sending GET request for get_forecast: {}".format(e))
             return
         json_obj = response.json()
+        daily_data = OrderedDict()
+
+        # add icon_visu, date and day to daily and currently
+        json_obj['daily'].update({'icon_visu': self.map_icon(json_obj['daily']['icon'])})
+        date_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%d.%m.%Y')
+        day_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%A')
+        hour_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).hour
+        json_obj['currently'].update({'date': date_entry, 'weekday': day_entry, 'hour': hour_entry,
+                                      'icon_visu': self.map_icon(json_obj['currently']['icon'])})
+        json_obj['hourly'].update({'icon_visu': self.map_icon(json_obj['hourly']['icon'])})
+
+        # add icon_visu, date and day to each day
+        for day in json_obj['daily'].get('data'):
+            date_entry = datetime.datetime.fromtimestamp(day['time']).strftime('%d.%m.%Y')
+            day_entry = datetime.datetime.fromtimestamp(day['time']).strftime('%A')
+            day.update({'date': date_entry, 'weekday': day_entry, 'icon_visu': self.map_icon(day['icon'])})
+            daily_data.update({datetime.datetime.fromtimestamp(day['time']).date(): day})
+        json_obj['daily'].update(daily_data)
+        json_obj['daily'].pop('data')
+
+        # add icon_visu, date and day to each hour. Add the hours to the corresponding day as well as map to hour0, hour1, etc.
+        for number, hour in enumerate(json_obj['hourly'].get('data')):
+            date_entry = datetime.datetime.fromtimestamp(hour['time']).strftime('%d.%m.%Y')
+            day_entry = datetime.datetime.fromtimestamp(hour['time']).strftime('%A')
+            hour_entry = datetime.datetime.fromtimestamp(hour['time']).hour
+            date_key = datetime.datetime.fromtimestamp(hour['time']).date()
+            hour.update({'date': date_entry, 'weekday': day_entry, 'hour': hour_entry, 'icon_visu': self.map_icon(hour['icon'])})
+            if json_obj['daily'].get(date_key) is None:
+                json_obj['daily'].update({date_key: {}})
+            elif json_obj['daily'][date_key].get('hours') is None:
+                json_obj['daily'][date_key].update({'hours': {}})
+            json_obj['daily'][date_key]['hours'].update(OrderedDict({hour_entry: hour}))
+            json_obj['hourly'].update(OrderedDict({'hour{}'.format(number): hour}))
+            if json_obj['daily'][date_key].get('precipProbability_mean') is None:
+                json_obj['daily'][date_key].update({'precipProbability_mean': []})
+            if json_obj['daily'][date_key].get('precipIntensity_mean') is None:
+                json_obj['daily'][date_key].update({'precipIntensity_mean': []})
+            if json_obj['daily'][date_key].get('temperature_mean') is None:
+                json_obj['daily'][date_key].update({'temperature_mean': []})
+            json_obj['daily'][date_key]['precipProbability_mean'].append(hour.get('precipProbability'))
+            json_obj['daily'][date_key]['precipIntensity_mean'].append(hour.get('precipIntensity'))
+            json_obj['daily'][date_key]['temperature_mean'].append(hour.get('temperature'))
+        json_obj['hourly'].pop('data')
+
+        # add mean values to each day and replace datetime object by day0, day1, day2, etc.
+        i = 0
+        for entry in json_obj['daily']:
+            if isinstance(entry, datetime.date):
+                try:
+                    precip_probability = json_obj['daily'][entry]['precipProbability_mean']
+                    json_obj['daily'][entry]['precipProbability_mean'] = round(sum(precip_probability)/len(precip_probability), 2)
+                    precip_intensity = json_obj['daily'][entry]['precipIntensity_mean']
+                    json_obj['daily'][entry]['precipIntensity_mean'] = round(sum(precip_intensity)/len(precip_intensity), 2)
+                    temperature = json_obj['daily'][entry]['temperature_mean']
+                    json_obj['daily'][entry]['temperature_mean'] = round(sum(temperature)/len(temperature), 2)
+                except Exception:
+                    pass
+                json_obj['daily']['day{}'.format(i)] = json_obj['daily'].pop(entry)
+                i += 1
         return json_obj
 
     def map_icon(self, icon):
@@ -232,9 +292,9 @@ class DarkSky(SmartPlugin):
         """
         try:
             self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-             self.mod_http = None
-        if self.mod_http == None:
+        except Exception:
+            self.mod_http = None
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
@@ -259,11 +319,12 @@ class DarkSky(SmartPlugin):
 
         return True
 
+
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
-class WebInterface(SmartPluginWebIf):
 
+class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
         """
@@ -279,7 +340,6 @@ class WebInterface(SmartPluginWebIf):
         self.plugin = plugin
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -289,9 +349,38 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        from pprint import pformat
+
+        def printdict(OD, mode='dict', s="", indent=' '*4, level=0):
+            def is_number(s):
+                try:
+                    float(s)
+                    return True
+                except Exception:
+                    return False
+
+            def fstr(s):
+                return s if is_number(s) else '"{}"'.format(s)
+            if mode != 'dict':
+                kv_tpl = '("{}")'.format(s)
+                ST = 'OrderedDict([\n'
+                END = '])'
+            else:
+                kv_tpl = '"%s": %s'
+                ST = '{\n'
+                END = '}'
+            for i, k in enumerate(OD.keys()):
+                if type(OD[k]) in [dict, OrderedDict]:
+                    level += 1
+                    s += (level-1)*indent+kv_tpl%(k,ST+printdict(OD[k], mode=mode, indent=indent, level=level)+(level-1)*indent+END)
+                    level -= 1
+                else:
+                    s += level*indent+kv_tpl%(k,fstr(OD[k]))
+                if i != len(OD) - 1:
+                    s += ","
+                s += "\n"
+            return s
 
         tmpl = self.tplenv.get_template('index.html')
-        pf = pformat(self.plugin.get_json_data())
+        pf = printdict(self.plugin.get_json_data())
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(), p=self.plugin, json_data=pf.replace('\n','<br>').replace(' ','&nbsp;'),)
+                           plugin_info=self.plugin.get_info(), p=self.plugin, json_data=pf.replace('\n', '<br>').replace(' ', '&nbsp;'),)
