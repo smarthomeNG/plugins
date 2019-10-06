@@ -164,7 +164,6 @@ darksky:
             type: str
             ds_matchstring: hourly/icon
 
-
     daily:
 
         summary:
