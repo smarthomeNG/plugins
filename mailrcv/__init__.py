@@ -93,10 +93,6 @@ class IMAP(SmartPlugin):
                         self.logger.warning("IMAP: problem getting message {} from data: data-list has length {} and data[0] = '{}'".format(uid, len(data), data[0]))
                     if len(data) > 1:
                         self.logger.warning("data[1] = '{}'".format(data[1]))
-                # If a (non standard-conforming) mail without content-transfer-encoding is received, decoding the mail content fails.
-                # In this case we set the encoding to the official standard, which should be a good guess.
-                if not 'content-transfer-encoding' in mail:
-                    mail['content-transfer-encoding'] = '7BIT'
                 to = email.utils.parseaddr(mail['To'])[1]
                 fo = email.utils.parseaddr(mail['From'])[1]
                 if mail['Subject'] is None:
