@@ -31,7 +31,7 @@ class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.4.0"
 
-    def __init__(self, smarthome, host, username, password, cycle=300, port=993, tls=True, trashfolder="Trash"):
+    def __init__(self, smarthome, host, username, password, cycle=300, port=993, tls=True):
         self._sh = smarthome
         self._host = host
         self._port = port
@@ -42,7 +42,6 @@ class IMAP(SmartPlugin):
         self._mail_to = {}
         self._mail = False
         self._tls = self.to_bool(tls)
-        self._trashfolder = trashfolder
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
@@ -129,15 +128,12 @@ class IMAP(SmartPlugin):
                     else:
                         logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                 else:
-                    rsp, data = imap.uid('copy', uid, self._trashfolder)
+                    rsp, data = imap.uid('copy', uid, 'Trash')
                     if rsp == 'OK':
                         typ, data = imap.uid('store', uid, '+FLAGS', '(\Deleted)')
                         self.logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                     else:
                         self.logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
-                        self.logger.info("Consider setting the trashfolder option to the name of your trash mailbox. Available mailboxes are:")
-                        for mb in imap.list()[1]:
-                            self.logger.info(mb.decode("utf-8"))
             else:
                 self.logger.info("Ignoring mail. {0} => {1}: {2}".format(fo, to, subject))
         imap.close()
