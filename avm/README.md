@@ -648,7 +648,7 @@ avm:
             ain: 09995 0191234 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl: ro
 
-            # these items need to be child items from hkr_device
+            # these items need to be child items from hkr_device. They are read only items.
             is_temperature:
                 value: -1
                 avm_data_type@fritzbox_7490: temperature
@@ -672,6 +672,14 @@ avm:
                 avm_data_type@fritzbox_7490: set_temperature_comfort
                 type: num
                 visu_acl: ro
+
+            # these items are optional child items for a hkr_device. They are send only items and control the hkr.
+            cmd_set_temperature:
+                value: -1
+                avm_data_type@fritzbox_7490: cmd_set_temperature
+                type: num
+                visu_acl: rw
+
 
 ```
 
