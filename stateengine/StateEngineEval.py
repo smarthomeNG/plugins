@@ -68,7 +68,13 @@ class SeEval(StateEngineTools.SeItemChild):
     def get_variable(self, varname):
         self._log_debug("Executing method 'get_variable({0})'", varname)
         try:
-            return self._abitem.get_variable(varname)
+            if self._abitem._initactionname and varname == 'current.action_name':
+                returnvalue = self._abitem._initactionname
+                self._log_debug("Return '{}' for variable {} during init", returnvalue, varname)
+            else:
+                returnvalue = self._abitem.get_variable(varname)
+                self._log_debug("Return '{}' for variable {}", returnvalue, varname)
+            return returnvalue
         except Exception as ex:
             self._log_exception(ex)
 
@@ -79,8 +85,13 @@ class SeEval(StateEngineTools.SeItemChild):
     def get_relative_itemid(self, subitem_id):
         self._log_debug("Executing method 'get_relative_itemid({0})'", subitem_id)
         try:
-            item = self._abitem.return_item(subitem_id)
-            return item.property.path
+            if self._abitem._initstate and subitem_id == '..state_name':
+                returnvalue = self._abitem.return_item(self._abitem._initstate).property.path
+                self._log_info("Return item path '{0}' during init", returnvalue)
+            else:
+                returnvalue = self._abitem.return_item(subitem_id).property.path
+                self._log_info("Return item path '{0}'", returnvalue)
+            return returnvalue
         except Exception as ex:
             self._log_warning("Problem evaluating name of {0}: {1}", subitem_id, ex)
 
@@ -91,8 +102,13 @@ class SeEval(StateEngineTools.SeItemChild):
     def get_relative_item(self, subitem_id):
         self._log_debug("Executing method 'get_relative_item({0})'", subitem_id)
         try:
-            item = self._abitem.return_item(subitem_id)
-            return item
+            if self._abitem._initstate and subitem_id == '..state_name':
+                returnvalue = self._abitem.return_item(self._abitem._initstate)
+                self._log_info("Return item '{0}' during init", returnvalue)
+            else:
+                returnvalue = self._abitem.return_item(subitem_id)
+                self._log_info("Return item '{0}'", returnvalue)
+            return returnvalue
         except Exception as ex:
             self._log_warning("Problem evaluating item {0}: {1}", subitem_id, ex)
 
@@ -103,9 +119,14 @@ class SeEval(StateEngineTools.SeItemChild):
     def get_relative_itemvalue(self, subitem_id):
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
-            item = self._abitem.return_item(subitem_id)
-            self._log_info("Return '{0}' for item {1}", item.property.value, item.property.path)
-            return item.property.value
+            if self._abitem._initstate and subitem_id == '..state_name':
+                returnvalue = self._abitem.return_item(self._abitem._initstate).property.name
+                self._log_info("Return item value '{0}' during init", returnvalue)
+            else:
+                item = self._abitem.return_item(subitem_id)
+                returnvalue = item.property.value
+                self._log_info("Return item value '{0}' for item {1}", returnvalue, item.property.path)
+            return returnvalue
         except Exception as ex:
             self._log_warning("Problem evaluating value of '{0}': {1}", subitem_id, ex)
 
@@ -122,8 +143,13 @@ class SeEval(StateEngineTools.SeItemChild):
             self._log_warning("Problem evaluating property of {0} - relative item might not exist. Error: {1}", subitem_id, ex)
             return
         try:
-            propvalue = getattr(item.property, prop)
-            self._log_debug("Item property {0} from {1} is: {2}", prop, item.property.path, propvalue)
+            if self._abitem._initstate and subitem_id == '..state_name':
+                propvalue = getattr(self._abitem.return_item(self._abitem._initstate).property, prop)
+                self._log_info("Return item property '{0}' from {1}: {2} during init", prop,
+                               self._abitem.return_item(self._abitem._initstate).property.path, propvalue)
+            else:
+                propvalue = getattr(item.property, prop)
+                self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, propvalue)
             return propvalue
         except Exception as ex:
             self._log_warning("Problem evaluating property {0} of {1} - property might not exist. Error: {2}", prop, subitem_id, ex)
@@ -137,14 +163,18 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
         if ":" in item:
             type, item = StateEngineTools.partition_strip(item, ":")
-            item = self._abitem.return_item(self._abitem.get_variable(item)) if type =="var" else item
-            #item = self._abitem.return_item(item) if type == "item" else item
+            item = self._abitem.return_item(self._abitem.get_variable(item)) if type == "var" else item
         else:
             item = self._abitem.return_item(item)
         try:
-            attribvalue = item.conf[attrib]
-            #attribvalue = getattr(item.property.attributes, attrib)
-            self._log_debug("Item attribute {0} from {1} is: {2}", attrib, item.property.path, attribvalue)
+            if self._abitem._initstate and item == '..state_name':
+                attribvalue = self._abitem.return_item(self._abitem._initstate).conf[attrib]
+                self._log_info("Return item attribute '{0}' from {1}: {2} during init",
+                               attrib, self._abitem.return_item(self._abitem._initstate).property.path, attribvalue)
+            else:
+                attribvalue = item.conf[attrib]
+                #attribvalue = getattr(item.property.attributes, attrib)
+                self._log_debug("Return item attribute {0} from {1}: {2}", attrib, item.property.path, attribvalue)
             return attribvalue
         except Exception as ex:
             self._log_warning("Problem evaluating attribute {0} of {1} - attribute might not exist. "
