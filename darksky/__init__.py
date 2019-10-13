@@ -87,7 +87,7 @@ class DarkSky(SmartPlugin):
             self.logger.error("Forecast is None! Perhaps server did not reply?")
             return
         self._jsonData = forecast
-        for s, item in self._items.items():
+        for s, matchStringItems in self._items.items():
             wrk = forecast
             sp = s.split('/')
             if s == "flags/sources":
@@ -145,8 +145,9 @@ class DarkSky(SmartPlugin):
 
             # if a value was found, store it to item
             if wrk is not None:
-                item(wrk, 'DarkSky')
-                self.logger.debug('_update: Value "{0}" written to item {1}'.format(wrk, item))
+                for sameMatchStringItem in matchStringItems:
+                    sameMatchStringItem(wrk, 'DarkSky')
+                    self.logger.debug('_update: Value "{0}" written to item {1}'.format(wrk, sameMatchStringItem))
 
         return
 
@@ -260,7 +261,9 @@ class DarkSky(SmartPlugin):
         :param item: The item to process.
         """
         if self.get_iattr_value(item.conf, 'ds_matchstring'):
-            self._items[self.get_iattr_value(item.conf, 'ds_matchstring')] = item
+            if not self.get_iattr_value(item.conf, 'ds_matchstring') in self._items:
+                self._items[self.get_iattr_value(item.conf, 'ds_matchstring')] = []
+            self._items[self.get_iattr_value(item.conf, 'ds_matchstring')].append(item)
 
     def get_items(self):
         return self._items
