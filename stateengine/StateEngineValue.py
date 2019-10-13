@@ -271,6 +271,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 self._log_debug("{0} from item: {1}", self.__name, self.__item.property.path)
         if self.__eval is not None:
             self._log_debug("{0} from eval: {1}", self.__name, self.__eval)
+            self._log_debug("Currently eval results in {}", self.__get_eval())
         if self.__varname is not None:
             self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
 
@@ -439,7 +440,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 except Exception as ex:
                     self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
                     return None
-
+        
         return values
 
     # Determine value from item

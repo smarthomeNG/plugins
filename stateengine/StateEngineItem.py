@@ -125,6 +125,8 @@ class SeItem:
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
 
+        self._initstate = None
+        self._initactionname = None
         self.__update_trigger_item = None
         self.__update_trigger_caller = None
         self.__update_trigger_source = None
@@ -536,7 +538,7 @@ class SeItem:
         # log states
         for state in self.__states:
             state.write_to_log()
-            state.write_webif()
+            self._initstate = None
     # endregion
 
     # region Methods for CLI commands **********************************************************************************

@@ -29,7 +29,9 @@ class SeActions(StateEngineTools.SeItemChild):
     def dict_actions(self):
         result = {}
         for name in self.__actions:
+            self._abitem._initactionname = name
             result.update({name: self.__actions[name].get()})
+            self._abitem._initactionname = None
         return result
 
     # Initialize the set of actions
@@ -348,5 +350,7 @@ class SeActions(StateEngineTools.SeItemChild):
             # noinspection PyProtectedMember
             self._log_info("Action '{0}':", action._name)
             self._log_increase_indent()
+            self._abitem._initactionname = action._name
             action.write_to_logger()
+            self._abitem._initactionname = None
             self._log_decrease_indent()

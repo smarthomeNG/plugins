@@ -66,6 +66,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._scheduler_name = None
         self.__function = None
         self.__template = None
+        self._state = None
 
     def update_delay(self, value):
         self.__delay.set(value)
@@ -105,6 +106,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     # state: state item that triggered the action
     def execute(self, is_repeat: bool, allow_item_repeat: bool, state: str):
+        self._state = state
         if not self._can_execute():
             self._abitem.set_action_state(False)
             return
@@ -242,8 +244,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._abitem.set_variable('current.action_name', namevar)
         self._abitem.set_action_state(True)
         self._log_debug("Running action '{}'.", namevar)
-
-        #self._log_increase_indent()
         self._execute(actionname, namevar, repeat_text)
 
     # Really execute the action (needs to be implemented in derived classes)
@@ -373,7 +373,8 @@ class SeActionSetItem(SeActionBase):
             item = str(self.__item.property.path)
         except Exception:
             item = str(self.__item)
-        return {'function': str(self.__function), 'item': item, 'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
+        return {'function': str(self.__function), 'item': item,
+                'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
 
 
 # Class representing a single "se_setbyattr" action
@@ -459,7 +460,8 @@ class SeActionTrigger(SeActionBase):
         #self._log_decrease_indent()
 
     def get(self):
-        return {'function': str(self.__function), 'logic': str(self.__logic), 'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
+        return {'function': str(self.__function), 'logic': str(self.__logic),
+                'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
 
 
 # Class representing a single "se_run" action
@@ -524,7 +526,8 @@ class SeActionRun(SeActionBase):
         self._abitem.set_action_state(False)
 
     def get(self):
-        return {'function': str(self.__function), 'eval': str(self.__eval), 'conditionset': str(self.conditionset.get())}
+        return {'function': str(self.__function), 'eval': str(self.__eval),
+                'conditionset': str(self.conditionset.get())}
 
 
 # Class representing a single "se_force" action
@@ -795,7 +798,8 @@ class SeActionSpecial(SeActionBase):
                     value_result[i] = val.property.path
                 except Exception:
                     pass
-        return {'function': str(self.__function), 'special': str(self.__special), 'value': str(value_result), 'conditionset': str(self.conditionset.get())}
+        return {'function': str(self.__function), 'special': str(self.__special),
+                'value': str(value_result), 'conditionset': str(self.conditionset.get())}
 
 
 # Class representing a single "se_add" action
@@ -825,7 +829,8 @@ class SeActionAddItem(SeActionSetItem):
             item = str(self.__item.property.path)
         except Exception:
             item = str(self.__item)
-        return {'function': str(self.__function), 'item': item, 'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
+        return {'function': str(self.__function), 'item': item,
+                'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
 
 
 # Class representing a single "se_remove" action
@@ -859,7 +864,8 @@ class SeActionRemoveFirstItem(SeActionSetItem):
             item = str(self.__item.property.path)
         except Exception:
             item = str(self.__item)
-        return {'function': str(self.__function), 'item': item, 'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
+        return {'function': str(self.__function), 'item': item,
+                'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
 
 
 # Class representing a single "se_remove" action
@@ -895,7 +901,8 @@ class SeActionRemoveLastItem(SeActionSetItem):
             item = str(self.__item.property.path)
         except Exception:
             item = str(self.__item)
-        return {'function': str(self.__function), 'item': item, 'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
+        return {'function': str(self.__function), 'item': item,
+                'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
 
 
 # Class representing a single "se_removeall" action
@@ -930,4 +937,5 @@ class SeActionRemoveAllItem(SeActionSetItem):
             item = str(self.__item.property.path)
         except Exception:
             item = str(self.__item)
-        return {'function': str(self.__function), 'item': item, 'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
+        return {'function': str(self.__function), 'item': item,
+                'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
