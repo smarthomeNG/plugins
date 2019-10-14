@@ -834,7 +834,7 @@ class AVM(SmartPlugin):
         elif self.has_iattr(item.conf, 'avm_data_type'):
             # normal items
             self._fritz_device._items.append(item)
-        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'cmd_set_temperature']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'set_temperature']:
             # special items which can be changed outside the plugin context and need to be submitted to the FritzDevice
             return self.update_item
 
@@ -917,12 +917,12 @@ class AVM(SmartPlugin):
 
         :param item: item to be updated towards the FritzDevice (Supported item avm_data_types: wlanconfig, tam, aha_device)
         """
-        if caller != 'AVM':
+        if caller.lower() != 'avm':
             if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam']:
                 action = 'SetEnable'
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 action = 'SetSwitch'
-            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'cmd_set_temperature':
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
                 action = 'sethkrtsoll'
             else:
                 self.logger.error("%s is not defined to be updated." % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -962,7 +962,7 @@ class AVM(SmartPlugin):
                 url = self._build_url("/upnp/control/x_tam")
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 url = self._build_url("/upnp/control/x_homeauto")
-            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'cmd_set_temperature':
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
                 self.logger.info("Debug caller is: {0}".format(caller))
                 #Check commanded temperature range:
                 cmd_temperature = float(item())
@@ -1007,7 +1007,7 @@ class AVM(SmartPlugin):
                 self.logger.info("Debug url: {0}".format(url))                
 
             try:
-                if self.get_iattr_value(item.conf, 'avm_data_type') == 'cmd_set_temperature':
+                if self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
                     r = self._session.get(url, timeout=self._timeout, verify=self._verify)
                     self.logger.info("Debug return: {0}".format(r))
                 else:

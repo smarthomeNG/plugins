@@ -655,12 +655,6 @@ avm:
                 type: num
                 visu_acl: ro
             
-            set_temperature:
-                value: -1
-                avm_data_type@fritzbox_7490: set_temperature
-                type: num
-                visu_acl: ro
-
             set_temperature_reduced:
                 value: -1
                 avm_data_type@fritzbox_7490: set_temperature_reduced
@@ -673,13 +667,12 @@ avm:
                 type: num
                 visu_acl: ro
 
-            # these items are optional child items for a hkr_device. They are send only items and control the hkr.
-            cmd_set_temperature:
+            # these items are also mandatory and used to read and write the setpoint temperature
+            set_temperature:
                 value: -1
-                avm_data_type@fritzbox_7490: cmd_set_temperature
+                avm_data_type@fritzbox_7490: set_temperature
                 type: num
                 visu_acl: rw
-
 
 ```
 
