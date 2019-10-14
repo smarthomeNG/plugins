@@ -10,7 +10,7 @@ This plugin connects your Neato (https://www.neatorobotics.com/) Robot to Smarth
 
 ### Changes Since version 1.x.x
 
-- Fixed this
+- No Changes so far
 
 
 ## Requirements
