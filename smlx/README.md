@@ -23,7 +23,7 @@ communication with the hardware in given cycles.
 
 - 2012 Plugin created by O.Hinckel
 - 2018-12-29 Implemented Data extraction and CRC check for read data. Before malfunctions could happe due to incomplete data sets
-
+- 2019-10-13 Added way to change crc parameters with plugin.yaml
 ## Hardware
 
 The plugin was tested with the following hardware:
@@ -38,13 +38,19 @@ The plugin was tested with the following hardware:
 ### plugin.yaml
 
 ```
-sml:
-  class_name: Sml
-  class_path: plugins.sml
+smlx:
+  class_name: Smlx
+  class_path: plugins.smlx
   serialport: /dev/ttyUSB0
   # host: 192.168.2.1
   # port: 1234
   # device: raw | hex | <known-device>
+  # for crc generation
+  # poly: 0x1021
+  # reflect_in: True
+  # xor_in: 0xffff
+  # reflect_out: True
+  # xor_in: 0xffff
 ```
 
 The plugin reads data from smart power meter hardware by using a serial
@@ -127,8 +133,6 @@ Additionally the following attributes will be calculated and also be provided:
    * `valueReal` - the real value when including the scaler calculation
    * `unitName` - the name of the unit
 
-
-
 #### sml_obis
 
 This assigns the value for the given OBIS code to the item.
@@ -148,7 +152,7 @@ sml_prop: unitName
 
 #### Example
 
-Here you can find a sample configuration:
+Here is a short sample configuration:
 
 ```yaml
 power:
@@ -173,5 +177,5 @@ power:
 Currently there is no logic configuration for this plugin.
 
 
-## Methodes
+## Methods
 Currently there are no functions offered from this plugin.

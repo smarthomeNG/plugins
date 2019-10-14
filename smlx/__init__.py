@@ -104,6 +104,13 @@ class Sml(SmartPlugin):
         self.timeout = self.get_parameter_value('timeout')    # 5
         self.buffersize = self.get_parameter_value('buffersize')    # 1024
 
+        # get base values for crc calculation
+        self.poly = self.get_parameter_value('poly')                # 0x1021
+        self.reflect_in = self.get_parameter_value('reflect_in')    # True
+        self.xor_in = self.get_parameter_value('xor_in')            # 0xffff
+        self.reflect_out = self.get_parameter_value('reflect_out')  # True
+        self.xor_out = self.get_parameter_value('xor_out')            # 0xffff
+
         self.connected = False
         self._serial = None
         self._sock = None
@@ -123,7 +130,7 @@ class Sml(SmartPlugin):
         else:
             self.logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(device))
             self._prepare = self._prepareRaw
-
+        self.logger.debug("Using CRC params poly={}, reflect_in={}, xor_in={}, reflect_out={}, xor_out={}".format(self.poly, self.reflect_in, self.xor_in, self.reflect_out, self.xor_out))
         # Todo: change to lib.network if network is again implemented
         # smarthome.connections.monitor(self)
 
@@ -296,9 +303,9 @@ class Sml(SmartPlugin):
                         buffer += start_sequence + data + end_sequence + rest[0:1]
                         self.logger.debug('buffer length is {}'.format(len(buffer)))
                         self.logger.debug('buffer is {}'.format(buffer))
-                        crc16 = algorithms.Crc(width = 16, poly = 0x1021,
-                            reflect_in = True, xor_in = 0xffff,
-                            reflect_out = True, xor_out = 0xffff)
+                        crc16 = algorithms.Crc(width = 16, poly = self.poly,
+                            reflect_in = self.reflect_in, xor_in = self.xor_in,
+                            reflect_out = self.reflect_out, xor_out = self.xor_out)
                         crc_calculated = crc16.table_driven(buffer)
                         self.logger.debug('calculated checksum is {}, given crc is {}'.format(to_Hex(crc_calculated), to_Hex(checksum)))
                         data_is_valid = crc_calculated == checksum

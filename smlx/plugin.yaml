@@ -11,7 +11,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.1.0                 # Plugin version
+    version: 1.1.1                 # Plugin version
     sh_minversion: 1.4.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -61,6 +61,42 @@ parameters:
         description:
             de: 'Name des Gerätes'
             en: 'name of smartmeter'
+
+    # for crc generation
+    poly:
+        type: int
+        default: 0x1021
+        description:
+            de: 'Polynom für die crc Berechnung'
+            en: 'Polynomial for crc calculation'
+            
+    reflect_in:
+        type: bool
+        default: True
+        description:
+            de: 'umkehren der Bitreihenfolge für die Eingabe'
+            en: 'reflect the octets in the input'
+
+    xor_in:
+        type: int
+        default: 0xffff
+        description:
+            de: 'Initaler Wert für XOR Berechnung'
+            en: 'Initial value for XOR calculation'
+
+    reflect_out:
+        type: bool
+        default: True
+        description:
+            de: 'Umkehren der Bitreihenfolge der Checksumme vor der Anwendung des XOR Wertes'
+            en: 'Reflect the octet of checksum before application of XOR value'
+
+    xor_out:
+        type: int
+        default: 0xffff
+        description:
+            de: 'XOR Berechnung der CRC mit diesem Wert'
+            en: 'XOR final CRC value with this value'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
