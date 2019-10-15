@@ -51,6 +51,7 @@ smlx:
   # xor_in: 0xffff
   # reflect_out: True
   # xor_in: 0xffff
+  # swap_crc_bytes: False
 ```
 
 The plugin reads data from smart power meter hardware by using a serial
@@ -74,6 +75,16 @@ Description of the attributes:
    * `host` - instead of serial port you can use a network connection
    * `port` - additionally to the host configuration you can specify a port
    * `device` - specifies connected device to indicate pre-processing
+
+Additionally the following attributes influence the crc check of the data read from smartmeter:
+
+   * `poly` - the polynomial for the crc generation, default for SML is ``0x1021``
+   * `reflect_in` - reflect the octets in the input, default is ``True``
+   * `xor_in` - Initial value for XOR calculation, default is ``0xffff``
+   * `reflect_out` - Reflect the octet of checksum before application of XOR value, default is ``True``
+   * `xor_in` - XOR final CRC value with this value, default is ``0xffff``
+   * `swap_crc_bytes` - Swap bytes of calculated checksum prior to comparison with given checksum, Default is ``False``
+
 
 The `device` attribute can be used to specify the connected device and the
 kind of data delivery. Since different devices (e.g. when connecting the
