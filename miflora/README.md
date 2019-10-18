@@ -1,6 +1,6 @@
 # Miflora
 
-Version 0.4
+Version 1.6.1
 
 ## Requirements
 This plugin requires lib miflora in version 0.4 or above. You can install this lib with:
