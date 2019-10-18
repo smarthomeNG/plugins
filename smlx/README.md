@@ -23,7 +23,7 @@ communication with the hardware in given cycles.
 
 - 2012 Plugin created by O.Hinckel
 - 2018-12-29 Implemented Data extraction and CRC check for read data. Before malfunctions could happe due to incomplete data sets
-
+- 2019-10-13 Added way to change crc parameters with plugin.yaml
 ## Hardware
 
 The plugin was tested with the following hardware:
@@ -38,13 +38,20 @@ The plugin was tested with the following hardware:
 ### plugin.yaml
 
 ```
-sml:
-  class_name: Sml
-  class_path: plugins.sml
+smlx:
+  class_name: Smlx
+  class_path: plugins.smlx
   serialport: /dev/ttyUSB0
   # host: 192.168.2.1
   # port: 1234
   # device: raw | hex | <known-device>
+  # for crc generation
+  # poly: 0x1021
+  # reflect_in: True
+  # xor_in: 0xffff
+  # reflect_out: True
+  # xor_in: 0xffff
+  # swap_crc_bytes: False
 ```
 
 The plugin reads data from smart power meter hardware by using a serial
@@ -68,6 +75,16 @@ Description of the attributes:
    * `host` - instead of serial port you can use a network connection
    * `port` - additionally to the host configuration you can specify a port
    * `device` - specifies connected device to indicate pre-processing
+
+Additionally the following attributes influence the crc check of the data read from smartmeter:
+
+   * `poly` - the polynomial for the crc generation, default for SML is ``0x1021``
+   * `reflect_in` - reflect the octets in the input, default is ``True``
+   * `xor_in` - Initial value for XOR calculation, default is ``0xffff``
+   * `reflect_out` - Reflect the octet of checksum before application of XOR value, default is ``True``
+   * `xor_in` - XOR final CRC value with this value, default is ``0xffff``
+   * `swap_crc_bytes` - Swap bytes of calculated checksum prior to comparison with given checksum, Default is ``False``
+
 
 The `device` attribute can be used to specify the connected device and the
 kind of data delivery. Since different devices (e.g. when connecting the
@@ -127,8 +144,6 @@ Additionally the following attributes will be calculated and also be provided:
    * `valueReal` - the real value when including the scaler calculation
    * `unitName` - the name of the unit
 
-
-
 #### sml_obis
 
 This assigns the value for the given OBIS code to the item.
@@ -148,7 +163,7 @@ sml_prop: unitName
 
 #### Example
 
-Here you can find a sample configuration:
+Here is a short sample configuration:
 
 ```yaml
 power:
@@ -173,5 +188,5 @@ power:
 Currently there is no logic configuration for this plugin.
 
 
-## Methodes
+## Methods
 Currently there are no functions offered from this plugin.

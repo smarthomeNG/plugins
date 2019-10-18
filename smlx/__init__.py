@@ -65,6 +65,15 @@ def to_Hex(data):
         
     return "".join("%02x " % b for b in data).rstrip()
 
+def swap16(x):
+    return (((x << 8) & 0xFF00) |
+            ((x >> 8) & 0x00FF))
+
+def swap32(x):
+    return (((x << 24) & 0xFF000000) |
+            ((x <<  8) & 0x00FF0000) |
+            ((x >>  8) & 0x0000FF00) |
+            ((x >> 24) & 0x000000FF))
    
 start_sequence = bytearray.fromhex('1B 1B 1B 1B 01 01 01 01')
 end_sequence = bytearray.fromhex('1B 1B 1B 1B 1A')
@@ -76,7 +85,7 @@ class Sml(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.0'
+    PLUGIN_VERSION = '1.1.2'
 
     _units = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
        1 : 'a',    2 : 'mo',    3 : 'wk',  4 : 'd',    5 : 'h',     6 : 'min.',  7 : 's',     8 : '°',     9 : '°C',    10 : 'currency',
@@ -104,6 +113,14 @@ class Sml(SmartPlugin):
         self.timeout = self.get_parameter_value('timeout')    # 5
         self.buffersize = self.get_parameter_value('buffersize')    # 1024
 
+        # get base values for crc calculation
+        self.poly = self.get_parameter_value('poly')                        # 0x1021
+        self.reflect_in = self.get_parameter_value('reflect_in')            # True
+        self.xor_in = self.get_parameter_value('xor_in')                    # 0xffff
+        self.reflect_out = self.get_parameter_value('reflect_out')          # True
+        self.xor_out = self.get_parameter_value('xor_out')                  # 0xffff
+        self.swap_crc_bytes = self.get_parameter_value('swap_crc_bytes')    # False
+
         self.connected = False
         self._serial = None
         self._sock = None
@@ -123,7 +140,7 @@ class Sml(SmartPlugin):
         else:
             self.logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(device))
             self._prepare = self._prepareRaw
-
+        self.logger.debug("Using CRC params poly={}, reflect_in={}, xor_in={}, reflect_out={}, xor_out={}, swap_crc_bytes={}".format(self.poly, self.reflect_in, self.xor_in, self.reflect_out, self.xor_out, self.swap_crc_bytes))
         # Todo: change to lib.network if network is again implemented
         # smarthome.connections.monitor(self)
 
@@ -296,12 +313,16 @@ class Sml(SmartPlugin):
                         buffer += start_sequence + data + end_sequence + rest[0:1]
                         self.logger.debug('buffer length is {}'.format(len(buffer)))
                         self.logger.debug('buffer is {}'.format(buffer))
-                        crc16 = algorithms.Crc(width = 16, poly = 0x1021,
-                            reflect_in = True, xor_in = 0xffff,
-                            reflect_out = True, xor_out = 0xffff)
+                        crc16 = algorithms.Crc(width = 16, poly = self.poly,
+                            reflect_in = self.reflect_in, xor_in = self.xor_in,
+                            reflect_out = self.reflect_out, xor_out = self.xor_out)
                         crc_calculated = crc16.table_driven(buffer)
-                        self.logger.debug('calculated checksum is {}, given crc is {}'.format(to_Hex(crc_calculated), to_Hex(checksum)))
-                        data_is_valid = crc_calculated == checksum
+                        if not self.swap_crc_bytes:
+                            self.logger.debug('calculated checksum is {}, given crc is {}'.format(to_Hex(crc_calculated), to_Hex(checksum)))
+                            data_is_valid = crc_calculated == checksum
+                        else:
+                            self.logger.debug('calculated and swapped checksum is {}, given crc is {}'.format(to_Hex(swap16(crc_calculated)), to_Hex(checksum)))
+                            data_is_valid = swap16(crc_calculated) == checksum
                     else:
                         self.logger.debug('not enough bytes read at end to satisfy checksum calculation')
                         return
