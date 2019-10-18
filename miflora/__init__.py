@@ -27,30 +27,22 @@ from btlewrap import available_backends, BluepyBackend, GatttoolBackend, PygattB
 from lib.model.smartplugin import SmartPlugin
 
 class Miflora(SmartPlugin):
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.0.4"
+    PLUGIN_VERSION = "1.6.1"
 
-    def __init__(self, smarthome, bt_addr, cycle=300):
+    def __init__(self, sh, *args, **kwargs):
         """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param smarthome:  The instance of the smarthome object, save it for later references
-        :param bt_addr: The Bluetooth address of the device bound to the plugin instance
-        :param cycle: Cycle interval in seconds
-        """         
-        self._sh = smarthome
-        self.logger = logging.getLogger(__name__) 	# get a unique logger for the plugin and provide it internally
-        self._bt_addr = bt_addr
-        self._cycle = int(cycle)
+        Initalizes the plugin.
+        """
+        self._bt_addr = self.get_parameter_value('bt_addr')
+        self._cycle = self.get_parameter_value('cycle')
         self._items = []
-                
 
     def run(self):
         """
         Run method for the plugin
         """        
         self.logger.debug("Plugin '{}': 'run' method called.".format(self.get_fullname()))
-        self._sh.scheduler.add(__name__, self._update_loop, prio=7, cycle=self._cycle)
+        self.scheduler_add(__name__, self._update_loop, prio=7, cycle=self._cycle)
         self.alive = True
 
     def stop(self):
@@ -59,7 +51,7 @@ class Miflora(SmartPlugin):
         """
         self.logger.debug("Plugin '{}': 'stop' method called.".format(self.get_fullname()))
         try:
-            self._sh.scheduler.remove(__name__)
+            self.scheduler_remove(__name__)
         except:
             self.logger.error("Plugin '{}': Removing of scheduler failed: {}.".format(self.get_fullname(), sys.exc_info()))
 
@@ -72,28 +64,27 @@ class Miflora(SmartPlugin):
 
         :param item: The item to process.
         """
-        if self.has_iattr(item.conf, 'xiaomi_data_type'):
+        if self.has_iattr(item.conf, 'miflora_data_type'):
             self.logger.debug("Plugin '{}': Parse item: {}.".format(self.get_fullname(), item))
             self._items.append(item)
 
     def _update_loop(self):
         try:
             poller = MiFloraPoller(self._bt_addr, GatttoolBackend)
-
             for item in self._items:
-                if self.get_iattr_value(item.conf, 'xiaomi_data_type') == 'temperature':
+                if self.get_iattr_value(item.conf, 'miflora_data_type') == 'temperature':
                     item(poller.parameter_value('temperature'))
-                elif self.get_iattr_value(item.conf, 'xiaomi_data_type') == 'light':
+                elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'light':
                     item(poller.parameter_value(MI_LIGHT))
-                elif self.get_iattr_value(item.conf, 'xiaomi_data_type') == 'moisture':
+                elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'moisture':
                     item(poller.parameter_value(MI_MOISTURE))
-                elif self.get_iattr_value(item.conf, 'xiaomi_data_type') == 'conductivity':
+                elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'conductivity':
                     item(poller.parameter_value(MI_CONDUCTIVITY))
-                elif self.get_iattr_value(item.conf, 'xiaomi_data_type') == 'battery':
+                elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'battery':
                     item(poller.parameter_value(MI_BATTERY))
-                elif self.get_iattr_value(item.conf, 'xiaomi_data_type') == 'name':
+                elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'name':
                     item(poller.name())
-                elif self.get_iattr_value(item.conf, 'xiaomi_data_type') == 'firmware':
+                elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'firmware':
                     item(poller.firmware_version())
         except Exception as e:
             self.logger.error(str(e))
