@@ -35,12 +35,10 @@ class Neato(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"))
         self.robot.update_robot()
-        self._cycle = 20
+        self._cycle = 40
         return
 
     def run(self):
