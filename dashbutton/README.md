@@ -12,7 +12,7 @@
 ### 1. Install scapy
 
  ```shell
- sudo pip3 install scapy-python3
+ sudo pip3 install scapy
  ```
 
 ### 2. Install tcpdump

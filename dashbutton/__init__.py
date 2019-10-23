@@ -1,7 +1,7 @@
 __author__ = 'pfischi'
 
 import threading
-from kamene.all import *
+from scapy.all import *
 import logging
 from lib.model.smartplugin import SmartPlugin
 import time
