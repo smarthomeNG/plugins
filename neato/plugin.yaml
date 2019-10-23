@@ -1,0 +1,114 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Anbindung von einem Neato Staubsauger Robotor an SmartHomeNG'
+        en: 'Plugin to connect your Neato Vacuum Robot to SmartHomeNG'
+    maintainer: thengsty
+#    tester:                         # Thomas Hengsberg
+    state: develop                  # change to ready when done with development
+#    keywords: iot xyz
+    documentation: https://github.com/thengsty/plugins/blob/develop/neato/README.md       
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-neato
+
+    version: 1.6.0                  # Plugin version
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: unknown
+    classname: Neato         # class containing the plugin
+
+parameters:
+    account_email:
+        type: str
+        default: ''
+        description:
+            de: 'E-Mail Adresse des Neato Accounts'
+            en: 'E-Mail Adresse of your Neato account'
+    account_pass:
+        type: str
+        default: ''
+        description:
+            de: 'Kennwort des Neato Accounts'
+            en: 'Password of your Neato account'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    neato_name:
+        type: str
+        description:
+            de: 'Name des Roboters'
+            en: 'Name of the robot'
+    neato_command:
+        type: num
+        description:
+            en: 'Available Commands:
+                61   start
+                62   stop
+                63   pause
+                64   resume
+                65   find me'
+            de: ''
+    neato_state:
+        type: str
+        description:
+            en: 'Specifies the state of the Robot.
+                0   Invalid
+                1   Idle
+                2   Busy
+                3   Paused
+                4   Error'
+            de: ''
+    neato_state_action:
+        type: str
+        description:
+            en: 'If the state is busy, this element specifies what the robot is or has been busy doing.
+            In the state is pause or error, it specifies the activity that the Robot was doing.
+            If state is other, this element is null
+                ========
+                0	Invalid
+                1	House Cleaning
+                2	Spot Cleaning
+                3	Manual Cleaning
+                4	Docking
+                5	User Menu Active
+                6	Suspended Cleaning
+                7	Updating
+                8	Copying Logs
+                9	Recovering Location
+                10	IEC Test
+                11	Map cleaning
+                12	Exploring map (creating a persistent map)
+                13	Acquiring Persistent Map IDs
+                14	Creating & Uploading Map
+                15	Suspended Exploration'
+            de: ''
+    neato_isdocked:
+        type: bool
+        description:
+            de: 'Roboter Docking Status'
+            en: 'Robot docking status'
+    neato_chargepercentage:
+        type: str
+        description:
+            de: 'Roboter Ladestatus'
+            en: 'Robot charge status'
+    neato_message:
+        type: str
+        description:
+            de: 'Roboter Nachricht'
+            en: 'Robot message'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    #item_structs: NONE
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    #plugin_functions: NONE
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+    #logic_parameters: NONE
+
