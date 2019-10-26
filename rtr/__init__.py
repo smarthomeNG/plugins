@@ -301,7 +301,7 @@ class RTR(SmartPlugin):
                 # store stopItems into controller
                 if self._controller[c]['stopItems'] is None:
                     self._controller[c]['stopItems'] = []
-                self._controller[c]['stopItems'].append(item)
+                self._controller[c]['stopItems'].append(item.id())
 
                 # listen to item events
                 item.add_method_trigger(self.stop_Controller)
@@ -321,12 +321,12 @@ class RTR(SmartPlugin):
         """
         for c in self._controller.keys():
             if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
-                for item in self._controller[c]['stopItems']:
-                    if self._items.return_item(item)():
+                for i in self._controller[c]['stopItems']:
+                    item = self._items.return_item(i)
+                    if item():
                        if self._items.return_item(self._controller[c]['actuatorItem'])() > 0:
                            self.logger.info("rtr: controller {0} stopped, because of item {1}".format(c, item.id()))
                        self._items.return_item(self._controller[c]['actuatorItem'])(0)
-
 
     def update_HVACMode(self, item, caller=None, source=None, dest=None):
         """
@@ -423,7 +423,8 @@ class RTR(SmartPlugin):
 
         # check if controller is currently deactivated
         if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
-            for item in self._controller[c]['stopItems']:
+            for i in self._controller[c]['stopItems']:
+                item = self._items.return_item(i)
                 if item():
                    if self._items.return_item(self._controller[c]['actuatorItem'])() > 0:
                        self.logger.info("rtr: controller {0} currently deactivated, because of item {1}".format(c, item.id()))
