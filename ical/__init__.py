@@ -180,6 +180,8 @@ class iCal(SmartPlugin):
                             revents[date] = [revent]
                         else:
                             revents[date].append(revent)
+                    else:
+                        self.logger.info("Removed {0} because it is in the excluded dates list".format(e_rstart))
             else:
                 if (e_start > start and e_start < end) or (e_start < start and e_end > start):
                     date = e_start.date()
@@ -285,14 +287,24 @@ class iCal(SmartPlugin):
                     try:
                         date = self._parse_date(val, tzinfo, par)
                     except Exception as e:
-                        self.logger.warning("Problem parsing: {0}: {1}".format(ics, e))
-                        continue
+                        if key == 'EXDATE':
+                            date = []
+                            values = val.split(",")
+                            for value in values:
+                                date.append(self._parse_date(value, tzinfo, par))
+                        else:
+                            self.logger.warning("Problem parsing: {0}: {1}".format(ics, e))
+                            continue
                     if key == 'EXDATE':
                         event['EXDATES'].append(date)  # noqa
                     else:
                         event[key] = date  # noqa
                 else:
                     event[key] = val  # noqa
+            try:
+                event['EXDATES'] = [y for x in event['EXDATES'] for y in x]        
+            except Exception:
+                pass
         return events
 
     def _parse_rrule(self, event, tzinfo):
