@@ -429,6 +429,7 @@ class RTR(SmartPlugin):
                    if self._items.return_item(self._controller[c]['actuatorItem'])() > 0:
                        self.logger.info("rtr: controller {0} currently deactivated, because of item {1}".format(c, item.id()))
                    self._items.return_item(self._controller[c]['actuatorItem'])(0)
+                   self.logger.debug("{0} | skipped because of item {1}".format(c, item.id()))
                    return
 
         # calculate scanning time
