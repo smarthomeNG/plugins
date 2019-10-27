@@ -36,7 +36,7 @@ from lib.model.smartplugin import *
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
-    logger.debug("init standalone {}".format(__name__))
+    logger.debug("Init standalone {}".format(__name__))
     logging.getLogger().setLevel( logging.DEBUG )
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     logging.getLogger().addHandler(ch)
 else:
     logger = logging.getLogger()
-    logger.debug("init plugin component {}".format(__name__))
+    logger.debug("Init plugin component {}".format(__name__))
 
 from . import algorithms
 
@@ -85,7 +85,7 @@ class Sml(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.2'
+    PLUGIN_VERSION = '1.1.3'
 
     _units = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
        1 : 'a',    2 : 'mo',    3 : 'wk',  4 : 'd',    5 : 'h',     6 : 'min.',  7 : 's',     8 : '°',     9 : '°C',    10 : 'currency',
@@ -102,7 +102,7 @@ class Sml(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+        Initalizes the plugin. The parameters described for this method are pulled from the entry in plugin.conf.
         """
         self.cycle = self.get_parameter_value('cycle')
 
@@ -112,8 +112,9 @@ class Sml(SmartPlugin):
         device = self.get_parameter_value('device')    # raw
         self.timeout = self.get_parameter_value('timeout')    # 5
         self.buffersize = self.get_parameter_value('buffersize')    # 1024
+        self.date_offset = self.get_parameter_value('date_offset')    # 0
 
-        # get base values for crc calculation
+        # get base values for CRC calculation
         self.poly = self.get_parameter_value('poly')                        # 0x1021
         self.reflect_in = self.get_parameter_value('reflect_in')            # True
         self.xor_in = self.get_parameter_value('xor_in')                    # 0xffff
@@ -141,7 +142,7 @@ class Sml(SmartPlugin):
             self.logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(device))
             self._prepare = self._prepareRaw
         self.logger.debug("Using CRC params poly={}, reflect_in={}, xor_in={}, reflect_out={}, xor_out={}, swap_crc_bytes={}".format(self.poly, self.reflect_in, self.xor_in, self.reflect_out, self.xor_out, self.swap_crc_bytes))
-        # Todo: change to lib.network if network is again implemented
+        # Todo: change to lib.network if network is implemented again
         # smarthome.connections.monitor(self)
 
     def run(self):
@@ -181,7 +182,7 @@ class Sml(SmartPlugin):
             if prop not in self._items[obis]:
                 self._items[obis][prop] = []
             self._items[obis][prop].append(item)
-            self.logger.debug('attach {} {} {}'.format(item.id(), obis, prop))
+            self.logger.debug('Attach {} {} {}'.format(item.id(), obis, prop))
             return self.update_item
         return None
 
@@ -202,7 +203,7 @@ class Sml(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if caller != self.get_shortname():
-            # code to execute, only if the item has not been changed by this this plugin:
+            # code to execute, only if the item has not been changed by this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
             pass
 
@@ -221,11 +222,11 @@ class Sml(SmartPlugin):
                 self._sock.connect((self.host, self.port))
                 self._sock.setblocking(False)
         except Exception as e:
-            self.logger.error('Sml: Could not connect to {}: {}'.format(self._target, e))
+            self.logger.error('SML: Could not connect to {}: {}'.format(self._target, e))
             self._lock.release()
             return
         else:
-            self.logger.info('Sml: Connected to {}'.format(self._target))
+            self.logger.info('SML: Connected to {}'.format(self._target))
             self.connected = True
             self._lock.release()
 
@@ -240,21 +241,23 @@ class Sml(SmartPlugin):
                     self._sock = None
             except:
                 pass
-            self.logger.info('Sml: Disconnected!')
+            self.logger.info('SML: Disconnected!')
             self.connected = False
             self._target = None
 
     def _read(self, length):
         total = bytes()
-        self.logger.debug('start read')
+        self.logger.debug('Start read')
         if self._serial is not None:
             while True:
                 ch = self._serial.read()
                 #self.logger.debug("Read {}".format(ch))
                 if len(ch) == 0:
+                    self.logger.debug('End read')
                     return total
                 total += ch
                 if len(total) >= length:
+                    self.logger.debug('End read')
                     return total
         elif self._sock is not None:
             while True:
@@ -268,7 +271,7 @@ class Sml(SmartPlugin):
                     else:
                         raise e
 
-            self.logger.debug('end read')
+            self.logger.debug('End read')
             return b''.join(total)
         
     def poll_device(self):
@@ -285,7 +288,7 @@ class Sml(SmartPlugin):
             self.logger.error('Not connected, no query possible')
             return
         else:
-            self.logger.debug('connected, try to query')
+            self.logger.debug('Connected, try to query')
             
         start = time.time()
         data_is_valid = False
@@ -299,32 +302,32 @@ class Sml(SmartPlugin):
 
             if start_sequence in data:
                 prev, _, data = data.partition(start_sequence)
-                self.logger.debug('Start sequence marker {} found'.format(start_sequence))
+                self.logger.debug('Start sequence marker {} found'.format(''.join(' {:02x}'.format(x) for x in start_sequence)))
                 if end_sequence in data:
                     data, _, rest = data.partition(end_sequence)
-                    self.logger.debug('End sequence marker found')
-                    self.logger.debug('packet size is {}'.format(len(data)))
+                    self.logger.debug('End sequence marker {} found'.format(''.join(' {:02x}'.format(x) for x in end_sequence)))
+                    self.logger.debug('Packet size is {}'.format(len(data)))
                     if len(rest) > 3:
                         filler = rest[0]
-                        self.logger.debug('{} fill bytes '.format(filler))
+                        self.logger.debug('{} fill byte(s) '.format(filler))
                         checksum = int.from_bytes(rest[1:3], byteorder='little')
-                        self.logger.debug('checksum is {}'.format(checksum))
+                        self.logger.debug('Checksum is {}'.format(to_Hex(checksum)))
                         buffer = bytearray()
                         buffer += start_sequence + data + end_sequence + rest[0:1]
-                        self.logger.debug('buffer length is {}'.format(len(buffer)))
-                        self.logger.debug('buffer is {}'.format(buffer))
+                        self.logger.debug('Buffer length is {}'.format(len(buffer)))
+                        self.logger.debug('Buffer: {}'.format(''.join(' {:02x}'.format(x) for x in buffer)))
                         crc16 = algorithms.Crc(width = 16, poly = self.poly,
                             reflect_in = self.reflect_in, xor_in = self.xor_in,
                             reflect_out = self.reflect_out, xor_out = self.xor_out)
                         crc_calculated = crc16.table_driven(buffer)
                         if not self.swap_crc_bytes:
-                            self.logger.debug('calculated checksum is {}, given crc is {}'.format(to_Hex(crc_calculated), to_Hex(checksum)))
+                            self.logger.debug('Calculated checksum is {}, given CRC is {}'.format(to_Hex(crc_calculated), to_Hex(checksum)))
                             data_is_valid = crc_calculated == checksum
                         else:
-                            self.logger.debug('calculated and swapped checksum is {}, given crc is {}'.format(to_Hex(swap16(crc_calculated)), to_Hex(checksum)))
+                            self.logger.debug('Calculated and swapped checksum is {}, given CRC is {}'.format(to_Hex(swap16(crc_calculated)), to_Hex(checksum)))
                             data_is_valid = swap16(crc_calculated) == checksum
                     else:
-                        self.logger.debug('not enough bytes read at end to satisfy checksum calculation')
+                        self.logger.debug('Not enough bytes read at end to satisfy checksum calculation')
                         return
                 else:
                     self.logger.debug('No End sequence marker found in data')
@@ -355,14 +358,14 @@ class Sml(SmartPlugin):
         
         self.disconnect()
 
-        self.logger.debug("cycle takes {0} seconds".format(cycletime))
+        self.logger.debug("Cycle took {0} seconds".format(cycletime))
         self.logger.debug('Polling Smartmeter done')
 
     def _parse(self, data):
         # Search SML List Entry sequences like:
         # "77 07 81 81 c7 82 03 ff 01 01 01 01 04 xx xx xx xx" - manufacturer
         # "77 07 01 00 00 00 09 ff 01 01 01 01 0b xx xx xx xx xx xx xx xx xx xx 01" - server id
-        # "77 07 01 00 01 08 00 ff 63 01 80 01 62 1e 52 ff 56 00 00 00 29 85 01"
+        # "77 07 01 00 01 08 00 ff 63 01 80 01 62 1e 52 ff 56 00 00 00 29 85 01" - active energy consumed
         # Details see http://wiki.volkszaehler.org/software/sml
         values = {}
         packetsize = 7
@@ -370,8 +373,11 @@ class Sml(SmartPlugin):
         self._dataoffset = 0
         while self._dataoffset < len(data)-packetsize:
 
-            # Find SML_ListEntry starting with 0x77 0x07 and OBIS code end with 0xFF
-            if data[self._dataoffset] == 0x77 and data[self._dataoffset+1] == 0x07 and data[self._dataoffset+packetsize] == 0xff:
+            # Find SML_ListEntry starting with 0x77 0x07 (and optional OBIS code end with 0xff)
+			# Attention! The check for 0xff at the end of the OBIS code was deactivated, because there are OBIS codes with other ends as well.
+			# This is a quick-and-dirty solution. What happens, if the byte sequence 77 07 appears WITHIN a SML_ListEntry and not just at the start?
+			# Better solution might be to implement something like a list of valid ends.
+            if data[self._dataoffset] == 0x77 and data[self._dataoffset+1] == 0x07 and data[self._dataoffset+2] != 0xff:
                 packetstart = self._dataoffset
                 self._dataoffset += 1
                 try:
@@ -385,15 +391,24 @@ class Sml(SmartPlugin):
                       'signature' : self._read_entity(data)
                     }
 
-                    # add additional calculated fields
+                    # add additional calculated fields.
                     entry['obis'] = '{}-{}:{}.{}.{}*{}'.format(entry['objName'][0], entry['objName'][1], entry['objName'][2], entry['objName'][3], entry['objName'][4], entry['objName'][5])
                     entry['valueReal'] = entry['value'] * 10 ** entry['scaler'] if entry['scaler'] is not None else entry['value']
                     entry['unitName'] = self._units[entry['unit']] if entry['unit'] != None and entry['unit'] in self._units else None
-
+                    entry['actualTime'] = time.ctime(self.date_offset + entry['valTime'][1]) if entry['valTime'] is not None else None # NEW. 
+                    if entry['obis'] == '1-0:0.2.0*0':
+                        entry['valueReal'] = entry['value'].decode()     # Firmware
+                    if entry['obis'] == '1-0:96.50.1*1':
+                        entry['valueReal'] = entry['value'].decode()     # Manufacturer
+                    if entry['obis'] == '1-0:96.1.0*255':
+                        entry['valueReal'] = entry['value'].hex()        # ServerID (Seriel Number)
+                    if entry['obis'] == '1-0:96.5.0*255':
+                        entry['valueReal'] = bin(entry['value'])         # Status
+                    entry['objName'] = entry['obis']                     # Changes objName for DEBUG output to nicer format
                     values[entry['obis']] = entry
                 except Exception as e:
                     if self._dataoffset < len(data) - 1:
-                        self.logger.warning('Can not parse entity at position {}, byte {}: {}:{}...'.format(self._dataoffset, self._dataoffset - packetstart, e, ''.join(' {:02x}'.format(x) for x in data[packetstart:packetstart+64])))
+                        self.logger.warning('Cannot parse entity at position {}, byte {}: {}:{}...'.format(self._dataoffset, self._dataoffset - packetstart, e, ''.join(' {:02x}'.format(x) for x in data[packetstart:packetstart+64])))
                         self._dataoffset = packetstart + packetsize - 1
             else:
                 self._dataoffset += 1
@@ -426,7 +441,7 @@ class Sml(SmartPlugin):
             return result
 
         if self._dataoffset + len >= builtins.len(data):
-            raise Exception("Try to read {} bytes, but only have {}".format(len, builtins.len(data) - self._dataoffset))
+            raise Exception("Try to read {} bytes, but only got {}".format(len, builtins.len(data) - self._dataoffset))
 
         if type == 0:    # octet string
             result = data[self._dataoffset:self._dataoffset+len]
