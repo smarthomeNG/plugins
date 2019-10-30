@@ -240,6 +240,7 @@ class iCal(SmartPlugin):
         ical = ical.replace("\r\n\\n", ", ")
         ical = ical.replace("\n\\n", ", ").replace("\\n", ", ")
         ical = ical.replace("\\n", ", ")
+        ical = ical.replace("\r ", "").replace("\n ", "") # in case long lines continue in the next line
         for line in ical.splitlines():
             if line == 'BEGIN:VEVENT':
                 prio_count = {'UID': 1, 'SUMMARY': 1, 'SEQUENCE': 1, 'RRULE': 1, 'CLASS': 1, 'DESCRIPTION': 1}
