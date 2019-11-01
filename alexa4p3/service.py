@@ -339,7 +339,7 @@ class AlexaRequestHandler(BaseHTTPRequestHandler):
                 appliance = {
                     "endpointId": device.id,
                     "friendlyName": device.name,
-                    "description": "SmartHomeNG",
+                    "friendlyDescription": device.description,
                     "manufacturerName": "SmarthomeNG",
                     "displayCategories": 
                         device.icon,
