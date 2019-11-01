@@ -172,7 +172,7 @@ class Blockly(SmartPlugin):
         self.mod_http.register_webif(WebInterface(webif_dir, self), 
                                      self.get_shortname(), 
                                      config, 
-                                     self.get_classname(), self.get_instance_name(),
+                                     self.get_class_name(), self.get_instance_name(),
                                      description='Blockly graphical logics editor for SmartHomeNG',
                                      webifname='')
                                    

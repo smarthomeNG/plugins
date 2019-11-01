@@ -78,12 +78,12 @@ class BackendPlugins:
                 plugin['version'] = x.get_version()
                 plugin['shortname'] = x.get_shortname()
                 plugin['classpath'] = x._classpath
-                plugin['classname'] = x.get_classname()
+                plugin['class_name'] = x.get_class_name()
             else:
                 plugin['smartplugin'] = False
                 plugin['shortname'] = x._shortname
                 plugin['classpath'] = x._classpath
-                plugin['classname'] = x._classname
+                plugin['class_name'] = x._class_name
             
             if  plugin['shortname'] in ['cli','blockly']:
                 plugin['stopped'] = True

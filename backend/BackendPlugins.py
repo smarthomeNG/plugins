@@ -95,7 +95,7 @@ class BackendPlugins:
                 plugin['configname'] = x.get_configname()
                 plugin['shortname'] = x.get_shortname()
                 plugin['classpath'] = x._classpath
-                plugin['classname'] = x.get_classname()
+                plugin['class_name'] = x.get_class_name()
             else:
                 plugin['attributes'] = {}
                 plugin['smartplugin'] = False
@@ -103,7 +103,7 @@ class BackendPlugins:
                 plugin['configname'] = x._configname
                 plugin['shortname'] = x._shortname
                 plugin['classpath'] = x._classpath
-                plugin['classname'] = x._classname
+                plugin['class_name'] = x._class_name
                 plugin['stopped'] = False
 
             try:

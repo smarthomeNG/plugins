@@ -17,7 +17,7 @@ plugin:
     sh_minversion: 1.4              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance
-    classname: AppleTV              # class containing the plugin
+    class_name: AppleTV              # class containing the plugin
 
 parameters:
     ip:

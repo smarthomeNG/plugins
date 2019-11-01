@@ -13,7 +13,7 @@ plugin:
     sh_minversion: 1.1             # minimum shNG version to use this plugin
     multi_instance:  False         # plugin supports multi instance
     restartable: unknown
-    classname: 'Helios'            # class containing the plugin
+    class_name: 'Helios'            # class containing the plugin
 
 parameters:                        # Definition of parameters to be configured in etc/plugin.yaml
     tty:

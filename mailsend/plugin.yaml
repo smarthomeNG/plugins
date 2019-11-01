@@ -17,7 +17,7 @@ plugin:
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
-    classname: SMTP                # class containing the plugin
+    class_name: SMTP                # class containing the plugin
 
 
 parameters:

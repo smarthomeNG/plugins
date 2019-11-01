@@ -596,35 +596,35 @@ class SmartVisuInstallWidgets:
         return
         
 
-    def create_htmlinclude(self, filename, classname, root_contents, iln_html):
+    def create_htmlinclude(self, filename, class_name, root_contents, iln_html):
         insertln = root_contents.index(iln_html) +1
         # Insert widget statements to root_contents
         if insertln != 0:
             self.logger.debug( "create_htmlinclude: Inserting in root.html at line {0} after '{1}'".format(insertln, iln_html) )
-            twig_statement = '\t{% import "' + self.shwdgdir + '/' + filename + '" as ' + classname + ' %}'
+            twig_statement = '\t{% import "' + self.shwdgdir + '/' + filename + '" as ' + class_name + ' %}'
             root_contents.insert(insertln, twig_statement+'\n')
 
 
-    def create_jsinclude(self, filename, classname, root_contents, iln_js):
+    def create_jsinclude(self, filename, class_name, root_contents, iln_js):
         insertln = root_contents.index(iln_js)
         # Insert widget statements to root_contents
         if insertln > -1:
             self.logger.debug( "create_jsinclude: Inserting in root.html at line {0} before '{1}'".format(insertln, iln_js) )
             twig_statement1 = "\t{% if isfile('widgets/sh_widgets/" + filename + "') %}"
-            twig_statement2 = '\t\t<script type="text/javascript" src="widgets/sh_widgets/widget_' + classname + '.js"></script>{% endif %}'
+            twig_statement2 = '\t\t<script type="text/javascript" src="widgets/sh_widgets/widget_' + class_name + '.js"></script>{% endif %}'
             self.logger.debug('create_jsinclude: {0}'.format(twig_statement1))
             self.logger.debug('create_jsinclude: {0}'.format(twig_statement2))
             root_contents.insert(insertln, twig_statement2+'\n')
             root_contents.insert(insertln, twig_statement1+'\n')
 
 
-    def create_cssinclude(self, filename, classname, root_contents, iln_css):
+    def create_cssinclude(self, filename, class_name, root_contents, iln_css):
         insertln = root_contents.index(iln_css)
         # Insert widget statements to root_contents
         if insertln > -1:
             self.logger.debug( "create_jsinclude: Inserting in root.html at line {0} before '{1}'".format(insertln, iln_css) )
             twig_statement1 = "\t{% if isfile('widgets/sh_widgets/" + filename + "') %}"
-            twig_statement2 = '\t\t<link rel="stylesheet" type="text/css" href="widgets/sh_widgets/widget_' + classname + '.css" />{% endif %}'
+            twig_statement2 = '\t\t<link rel="stylesheet" type="text/css" href="widgets/sh_widgets/widget_' + class_name + '.css" />{% endif %}'
             self.logger.debug('create_cssinclude: {0}'.format(twig_statement1))
             self.logger.debug('create_cssinclude: {0}'.format(twig_statement2))
             root_contents.insert(insertln, twig_statement2+'\n')

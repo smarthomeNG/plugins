@@ -17,7 +17,7 @@ plugin:
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
-    classname: KNX                 # class containing the plugin
+    class_name: KNX                 # class containing the plugin
     attribute_prefix: knx          # prefix of the item-attributes, so attributes have to start with 'knx_'
 
 parameters:

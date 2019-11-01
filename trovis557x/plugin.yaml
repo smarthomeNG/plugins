@@ -18,7 +18,7 @@ plugin:
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False
     restartable: unknown
-    classname: trovis557x
+    class_name: trovis557x
 
 
 item_attributes:

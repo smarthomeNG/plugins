@@ -13,7 +13,7 @@ plugin:
     sh_minversion: 1.4
     multi_instance: False
     restartable: unknown
-    classname: THZ
+    class_name: THZ
 
 parameters:
     serial_port:

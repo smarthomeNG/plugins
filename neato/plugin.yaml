@@ -17,7 +17,7 @@ plugin:
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
     restartable: unknown
-    classname: Neato         # class containing the plugin
+    class_name: Neato         # class containing the plugin
 
 parameters:
     account_email:

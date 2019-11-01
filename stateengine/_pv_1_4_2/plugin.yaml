@@ -29,7 +29,7 @@ plugin:
     version: 1.4.2
     sh_minversion: 1.5d
     multi_instance: False
-    classname: StateEngine
+    class_name: StateEngine
     restartable: unknown
     attribute_prefix: se
 

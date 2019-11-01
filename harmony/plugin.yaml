@@ -15,7 +15,7 @@ plugin:
     version: 1.4.1                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     multi_instance: False          # plugin supports multi instance
-    classname: Harmony             # class containing the plugin
+    class_name: Harmony             # class containing the plugin
 
 parameters:
   harmony_ip:

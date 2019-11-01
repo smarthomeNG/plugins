@@ -18,7 +18,7 @@ plugin:
     sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False
     restartable: unknown
-    classname: eBus                 # class containing the plugin
+    class_name: eBus                 # class containing the plugin
 
 
 parameters:
