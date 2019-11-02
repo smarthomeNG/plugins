@@ -30,3 +30,6 @@ Thumbs.db
 # Pycharm settings
 /.idea
 /.vs
+
+# VSCode settings
+.vscode/settings.json
