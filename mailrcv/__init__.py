@@ -29,7 +29,7 @@ from bin.smarthome import VERSION
 
 class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.0"
+    PLUGIN_VERSION = "1.4.1"
 
     def __init__(self, smarthome, *args, **kwargs): #host, username, password, cycle=300, port=993, tls=True, trashfolder="Trash"):
         self._sh = smarthome
