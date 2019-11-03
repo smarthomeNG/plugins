@@ -37,8 +37,10 @@ class BoseSoundtouch(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
-
-    PLUGIN_VERSION = '1.6.0'
+    # Plugin parameters
+    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_PARAMETER_IP = None
+    PLUGIN_PARAMETER_PORT = None
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -70,15 +72,21 @@ class BoseSoundtouch(SmartPlugin):
         #     return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.ip = self.get_parameter_value('ip')
-        self.port = self.get_parameter_value('port')
+        self.PLUGIN_PARAMETER_IP = self.get_parameter_value('ip')
+        self.PLUGIN_PARAMETER_PORT = self.get_parameter_value('port')
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
         # (maybe you want to make it a plugin parameter?)
-        self._cycle = 5
+        self._cycle = self.get_parameter_value('cycle_time')
 
-        # Initialization code goes here
+        #######################################################################
+        # BOSE SOUNDTOUCH INITIALIZATION
+        #######################################################################
+        # Connect to device
+        self.device = soundtouch_device(self.PLUGIN_PARAMETER_IP, self.PLUGIN_PARAMETER_PORT)
+        self.logger.info("Initialized connection to Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "' at " + self.getSoundtouchDevice().config.device_ip)
+        #######################################################################
 
         # On initialization error use:
         #   self._init_complete = False
@@ -127,20 +135,14 @@ class BoseSoundtouch(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-        if self.has_iattr(item.conf, 'foo_itemtag'):
-            self.logger.debug("parse item: {}".format(item))
-
-        # todo
-        # if interesting item for sending values:
-        #   return self.update_item
+        if self.has_iattr(item.conf, 'bose_soundtouch_action'):
+            self.logger.debug("Parse item: {}".format(item))
+            # Update item
+            return self.update_item
 
     def parse_logic(self, logic):
-        """
-        Default plugin parse_logic method
-        """
-        if 'xxx' in logic.conf:
-            # self.function(logic['name'])
-            pass
+        # NOT USED AT THE MOMENT
+        pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -159,12 +161,23 @@ class BoseSoundtouch(SmartPlugin):
             # code to execute, only if the item has not been changed by this this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
 
-            if self.has_iattr(item.conf, 'foo_itemtag'):
+            if self.has_iattr(item.conf, 'bose_soundtouch_action'):
                 self.logger.debug(
                     "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item,
                                                                                                                caller,
                                                                                                                source,
                                                                                                                dest))
+                self.logger.debug("Execute the following action: " + item.conf['bose_soundtouch_action'])
+
+                # get presets
+                presets = self.getSoundtouchDevice().presets()
+                self.logger.info("Preset 1: " + presets[0].name + " @ " + presets[0].source)
+                self.logger.info("Preset 2: " + presets[1].name + " @ " + presets[1].source)
+                self.logger.info("Preset 3: " + presets[2].name + " @ " + presets[2].source)
+                self.logger.info("Preset 4: " + presets[3].name + " @ " + presets[3].source)
+                self.logger.info("Preset 5: " + presets[4].name + " @ " + presets[4].source)
+                self.logger.info("Preset 6: " + presets[5].name + " @ " + presets[5].source)
+
             pass
 
     def poll_device(self):
@@ -175,29 +188,14 @@ class BoseSoundtouch(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler.
         """
-        # connect to device
-        device = soundtouch_device(self.ip)
-        self.logger.info("Connected to: " + device.config.name + " at " + device.config.device_ip)
-
-        # get status
-        status = device.status()
-        self.logger.info("Source: " + status.source)
-        self.logger.info("Currently playing: " + status.artist + " - " + status.track)
-
-        # get presets
-        presets = device.presets()
-        self.logger.info("Preset 1: " + presets[0].name + " @ " + presets[0].source)
-        self.logger.info("Preset 2: " + presets[1].name + " @ " + presets[1].source)
-        self.logger.info("Preset 3: " + presets[2].name + " @ " + presets[2].source)
-        self.logger.info("Preset 4: " + presets[3].name + " @ " + presets[3].source)
-        self.logger.info("Preset 5: " + presets[4].name + " @ " + presets[4].source)
-        self.logger.info("Preset 6: " + presets[5].name + " @ " + presets[5].source)
+        # Update status
+        self.updateSoundtouchStatus()
 
         # # get the value from the device
         # device_value = ...
         #
         # # find the item(s) to update:
-        # for item in self.sh.find_items('...'):
+        # for item in self.get_sh().find_items('...'):
         #
         #     # update the item by calling item(value, caller, source=None, dest=None)
         #     # - value and caller must be specified, source and dest are optional
@@ -208,3 +206,26 @@ class BoseSoundtouch(SmartPlugin):
         #     # the source should be included when updating the the value:
         #     item(device_value, self.get_shortname(), source=device_source_id)
         pass
+
+    def getSoundtouchDevice(self):
+        return self.device
+
+    def updateSoundtouchStatus(self):
+        status = None
+        for item in self.get_sh().find_items('bose_soundtouch_action'):
+            self.logger.debug("Updating Soundtouch Status for 'bose_soundtouch_action' = " + self.get_iattr_value(item.conf, 'bose_soundtouch_action'))
+            if status is None:
+                status = self.getSoundtouchDevice().status()
+            if self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.album':
+                item(status.album, self.get_shortname())
+            elif self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.artist':
+                item(status.artist, self.get_shortname())
+            elif self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.description':
+                item(status.description, self.get_shortname())
+            elif self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.image':
+                item(status.image, self.get_shortname())
+            elif self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.source':
+                item(status.source, self.get_shortname())
+            elif self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.track':
+                item(status.track, self.get_shortname())
+                
