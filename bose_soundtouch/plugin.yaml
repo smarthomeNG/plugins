@@ -32,6 +32,13 @@ parameters:
       de: "Port des Bose Soundtouch Systems"
       en: "IP address of Bose Soundtouch system"
 
+  cycle_time:
+    type: int
+    default: 5
+    description:
+      de: "Alle X Sekunden wird das Bose Soundtouch System abgefragt."
+      en: "Bose Soundtouch system will we queried every X seconds."
+
 item_attributes:
     
     bose_soundtouch_action:
@@ -41,6 +48,37 @@ item_attributes:
             de: 'Aktion die auf dem Bose Soundtouch System ausgeführt werden soll.'
             en: 'Action to be executed on Bose Soundtouch System.'
 
-item_structs: NONE
+item_structs:
+
+  status:
+    album:
+      type: str
+      bose_soundtouch_action: status.album
+    artist:
+      type: str
+      bose_soundtouch_action: status.artist
+    description:
+      type: str
+      bose_soundtouch_action: status.description
+    image:
+      type: str
+      bose_soundtouch_action: status.image
+    source:
+      type: str
+      bose_soundtouch_action: status.source
+    track:
+      type: str
+      bose_soundtouch_action: status.track
+
+  presets:
+    p0:
+      name:
+        type: str
+        bose_soundtouch_action: preset.0.name
+    p1:
+      name:
+        type: str
+        bose_soundtouch_action: preset.1.name
+
 plugin_functions: NONE
 logic_parameters: NONE
