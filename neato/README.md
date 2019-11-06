@@ -57,15 +57,15 @@ Neato:
     Name:
       type: str
       neato_name: ''
-      visu_acl: rw
+      visu_acl: ro
     State:
       type: str
       neato_state: ''
-      visu_acl: rw
+      visu_acl: ro
     StateAction:
       type: str
       neato_state_action: ''
-      visu_acl: rw
+      visu_acl: ro
     Command:
       type: num
       neato_command: 0
@@ -73,11 +73,11 @@ Neato:
     IsDocked:
       type: bool
       neato_isdocked: ''
-      visu_acl: rw
+      visu_acl: ro
     ChargePercentage:
       type: str
       neato_chargepercentage: ''
-      visu_acl: rw
+      visu_acl: ro
 ```
 
 ## Examples

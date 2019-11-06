@@ -97,7 +97,11 @@ class Neato(SmartPlugin):
             pass
 
     def poll_device(self):
-        self.robot.update_robot()
+        returnValue = self.robot.update_robot()
+
+        if returnValue == 'error':
+            return
+
         for item in self._items:
             if self.has_iattr(item.conf, 'neato_name'):
                 value = self.robot.name

@@ -4,6 +4,7 @@ import hmac
 import locale
 import time
 import requests
+import logging
 
 from lib.model.smartplugin import *
 
@@ -33,14 +34,14 @@ class Robot:
 
         # Neato Details
         self.isCharging = None
-        self.isDocked = None
+        self.isDocked = False
         self.isScheduleEnabled = None
         self.dockHasBeenSeen = None
         self.chargePercentage = ''
         self.isCleaning = None
 
-        self.state = ''
-        self.state_action = ''
+        self.state = '0'
+        self.state_action = '0'
 
         # Neato Available Services
         self.findMe = ''
@@ -83,8 +84,11 @@ class Robot:
 
     def update_robot(self):
 
-        m = '{"reqId":"77","cmd":"getRobotState"}'
         self.__secretKey = self.__get_secret_key()
+        if not self.__secretKey:
+            return 'error'
+
+        m = '{"reqId":"77","cmd":"getRobotState"}'
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + m
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
         try:
@@ -139,11 +143,24 @@ class Robot:
                      'token': binascii.hexlify(os.urandom(64)).decode('utf8')}
         access_token_response = requests.post(self.__urlBeehive + "/sessions", json=json_data,
                                               headers={'Accept': 'application/vnd.neato.nucleo.v1+json'})
-        access_token = access_token_response.json()['access_token']
+        responseJson = access_token_response.json()
+        if 'access_token' in responseJson:
+            access_token = responseJson['access_token']
+        else:
+            access_token = ''
+            if 'message' in responseJson:
+                messageText = responseJson['message']
+                self.logger.error("Failed to receive access token. Message: {0}".format(messageText))
+
+
         return access_token
 
     def __get_secret_key(self):
+        secret_key = ''
         access_token = self.__get_access_token()
+        if not access_token:
+            return secret_key
+
         auth_data = {'Authorization': 'Token token=' + access_token}
         secret_key_response = requests.get(self.__urlBeehive + "/users/me/robots", data=auth_data,
                                            headers={'Authorization': 'Bearer ' + access_token})
