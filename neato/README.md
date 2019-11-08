@@ -3,7 +3,7 @@
 #### Version 1.0.0
 
 This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robot with SmarthomeNG.
-- Command start, stop, pause, resume cleaning and trigger goToBase and FinMe mode.
+- Command start, stop, pause, resume cleaning and trigger sendToBase and FindMe mode.
 - Read status of your robot
 
 ## Change history
@@ -39,13 +39,14 @@ This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robo
 
 ### 1) /smarthome/etc/plugin.yaml
 
-Enable the plugin in plugin.yaml and type in your Neato/Vorwerk credentials:
+Enable the plugin in plugin.yaml, type in your Neato or Vorwerk credentials and define whether you are using a Neato or Vorwerk robot.
 
 ```yaml
 Neato:
     plugin_name: neato
     account_email: 'your_neato_account_email'
     account_pass: 'your_neato_account_password!'
+    robot_vendor: 'neato or vorwerk'
 ```
 
 ### 2) /smarthome/items/robot.yaml
@@ -136,7 +137,7 @@ Following commands are currently available:
 | 63            | Pause cleaning   |
 | 64            | Resume cleaning  |
 | 65            | Find the robot   |
-| 66            | Go to base       |
+| 66            | Send to base     |
 
 
 
