@@ -66,6 +66,10 @@ class Neato(SmartPlugin):
             item.property.value = self.robot.isDocked
             self._items.append(item)
 
+        if self.has_iattr(item.conf, 'neato_ischarging'):
+            item.property.value = self.robot.isCharging
+            self._items.append(item)
+
         if self.has_iattr(item.conf, 'neato_state'):
             item.property.value = self.__get_state_string(self.robot.state)
             self._items.append(item)
@@ -86,7 +90,8 @@ class Neato(SmartPlugin):
                 62: 'stop',
                 63: 'pause',
                 64: 'resume',
-                65: 'findme'}
+                65: 'findme'
+                66: 'goToBase'}
 
             if self.has_iattr(item.conf, 'neato_command'):
                 if item._value in val_to_command:
