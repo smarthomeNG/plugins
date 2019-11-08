@@ -3,10 +3,10 @@ plugin:
     # Global plugin attributes
     type: interface                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Plugin zur Anbindung von einem Neato Staubsauger Robotor an SmartHomeNG'
-        en: 'Plugin to connect your Neato Vacuum Robot to SmartHomeNG'
-    maintainer: thengsty
-#    tester:                         # Thomas Hengsberg
+        de: 'Plugin zur Anbindung von einem Neato/Vorwerk Staubsauger Robotor an SmartHomeNG'
+        en: 'Plugin to connect your Neato/Vorwerk Vacuum Robot with SmartHomeNG'
+    maintainer: Thomas Hengsberg (thengsty)
+    tester: aschwith
     state: develop                  # change to ready when done with development
 #    keywords: iot xyz
     documentation: https://github.com/thengsty/plugins/blob/develop/neato/README.md
@@ -24,14 +24,14 @@ parameters:
         type: str
         default: ''
         description:
-            de: 'E-Mail Adresse des Neato Accounts'
-            en: 'E-Mail Adresse of your Neato account'
+            de: 'E-Mail Adresse des Neato/Vorwerk Accounts'
+            en: 'E-Mail Adresse of your Neato/Vorwerk account'
     account_pass:
         type: str
         default: ''
         description:
-            de: 'Kennwort des Neato Accounts'
-            en: 'Password of your Neato account'
+            de: 'Kennwort des Neato/Vorwerk Accounts'
+            en: 'Password of your Neato/Vorwerk account'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -49,6 +49,7 @@ item_attributes:
                 63   pause
                 64   resume
                 65   find me'
+                66   goToBase
             de: ''
     neato_state:
         type: str
@@ -89,11 +90,16 @@ item_attributes:
         description:
             de: 'Roboter Docking Status'
             en: 'Robot docking status'
+    neato_ischarging:
+        type: bool
+        description:
+            de: 'Roboter Ladestatus'
+            en: 'Robot charging status'
     neato_chargepercentage:
         type: str
         description:
-            de: 'Roboter Ladestatus'
-            en: 'Robot charge status'
+            de: 'Roboter Batteriestatus'
+            en: 'Robot battery status'
     neato_message:
         type: str
         description:

@@ -4,6 +4,7 @@ import hmac
 import locale
 import time
 import requests
+import logging
 
 from lib.model.smartplugin import *
 
@@ -13,7 +14,10 @@ class Robot:
         self.logger = logging.getLogger(__name__)
         self.__email = email
         self.__password = password
-        self.__urlBeehive = "https://beehive.neatocloud.com"
+        #URL for neator robot
+        #self.__urlBeehive = "https://beehive.neatocloud.com"
+        #URL for vorwerk robot
+        self.__urlBeehive = "https://beehive.ksecosys.com/"
         self.__urlNucleo = ""
         self.__secretKey = ""
 
@@ -32,15 +36,15 @@ class Robot:
         self.firmware = ""
 
         # Neato Details
-        self.isCharging = None
-        self.isDocked = None
+        self.isCharging = False
+        self.isDocked = False
         self.isScheduleEnabled = None
         self.dockHasBeenSeen = None
         self.chargePercentage = ''
         self.isCleaning = None
 
-        self.state = ''
-        self.state_action = ''
+        self.state = '0'
+        self.state_action = '0'
 
         # Neato Available Services
         self.findMe = ''
@@ -67,70 +71,115 @@ class Robot:
             n = '{"reqId": "77","cmd": "stopCleaning"}'
         elif command == 'findme':
             n = '{"reqId": "77","cmd": "findMe"}'
+        elif command == 'goToBase':
+            n = '{"reqId": "77","cmd": "goToBase"}'
         else:
             self.logger.warning("Neato Plugin: Command unknown '{}'".format(command))
             return None
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + n
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
+# Request for Neato robot:
+#        start_cleaning_response = requests.post(
+#            self.__urlNucleo + "/vendors/neato/robots/" + self.serial + "/messages", data=n,
+#            headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
+#                     'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
+#                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
+
+# Request for Vorwerk robot:
         start_cleaning_response = requests.post(
-            self.__urlNucleo + "/vendors/neato/robots/" + self.serial + "/messages", data=n,
+            self.__urlNucleo + "/vendors/vorwerk/robots/" + self.serial + "/messages", data=n,
             headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                      'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
                      'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
-        # todo error handling_
+
+        #error handling
+        responseJson = start_cleaning_response.json()
+        self.logger.debug("Debug: send command response: {0}".format(start_cleaning_response.text))
+
+        if 'result' in responseJson:
+            if str(responseJson['result']) == 'ok':
+                self.logger.debug("Sending command successful")
+        else:
+            if 'message' in responseJson:
+                self.logger.error("Sending command failed. Message: {0}".format(str(responseJson['message'])))
+            if 'error' in responseJson:
+                self.logger.error("Sending command failed. Error: {0}".format(str(responseJson['error'])))
+
         # - NOT on Charge BASE
         return start_cleaning_response
 
     def update_robot(self):
 
-        m = '{"reqId":"77","cmd":"getRobotState"}'
         self.__secretKey = self.__get_secret_key()
+        if not self.__secretKey:
+            return 'error'
+
+        m = '{"reqId":"77","cmd":"getRobotState"}'
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + m
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
         try:
-            robot_cloud_state_response = requests.post(self.__urlNucleo + "/vendors/neato/robots/" + self.serial + "/messages",
+#Request for neator robot:
+#            robot_cloud_state_response = requests.post(self.__urlNucleo + "/vendors/neato/robots/" + self.serial + "/messages",
+#                                                    data=m, headers={'X-Date': self.__get_current_date(),
+#                                                                     'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
+#                                                                     'Date': self.__get_current_date(),
+#                                                                     'Accept': 'application/vnd.neato.nucleo.v1',
+#                                                                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
+
+#Request for vorwerk robot:
+            robot_cloud_state_response = requests.post(self.__urlNucleo + "/vendors/vorwerk/robots/" + self.serial + "/messages",
                                                     data=m, headers={'X-Date': self.__get_current_date(),
                                                                      'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                                                                      'Date': self.__get_current_date(),
                                                                      'Accept': 'application/vnd.neato.nucleo.v1',
                                                                      'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
+ 
         except:
             self.logger.warning("Neato Plugin: Error during API request unknown '{}'")
             # todo error handling_
 
         response = robot_cloud_state_response.json()
 
+        #Error message:
+        if 'message' in response:
+            #self.logger.warning("Message: {0}".format(robot_cloud_state_response.text))
+            self.logger.warning("Message: {0}".format(str(response['message'])))
         # Status
-        self.state = str(response['state'])
-        self.state_action = str(response['action'])
+        if 'state' in response:
+            self.state = str(response['state'])
+        if 'action' in response:
+            self.state_action = str(response['action'])
 
         # get the Details first
-        self.isCharging = response['details']['isCharging']
-        self.isDocked = response['details']['isDocked']
-        self.isScheduleEnabled = response['details']['isScheduleEnabled']
-        self.dockHasBeenSeen = response['details']['dockHasBeenSeen']
-        self.chargePercentage = response['details']['charge']
+        if 'details' in response:
+            self.isCharging = response['details']['isCharging']
+            self.isDocked = response['details']['isDocked']
+            self.isScheduleEnabled = response['details']['isScheduleEnabled']
+            self.dockHasBeenSeen = response['details']['dockHasBeenSeen']
+            self.chargePercentage = response['details']['charge']
 
         # get available services for robot second
-        self.findMe = response['availableServices']['findMe']
-        self.generalInfo = response['availableServices']['generalInfo']
-        self.houseCleaning = response['availableServices']['houseCleaning']
-        self.IECTest = response['availableServices']['IECTest']
-        self.logCopy = response['availableServices']['logCopy']
-        self.maps = response['availableServices']['maps']
-        self.preferences = response['availableServices']['preferences']
-        self.schedule = response['availableServices']['schedule']
-        self.softwareUpdate = response['availableServices']['softwareUpdate']
-        self.spotCleaning = response['availableServices']['spotCleaning']
-        self.wifi = response['availableServices']['wifi']
+        if 'availableServices' in response:
+            self.findMe = response['availableServices']['findMe']
+            self.generalInfo = response['availableServices']['generalInfo']
+            self.houseCleaning = response['availableServices']['houseCleaning']
+            self.IECTest = response['availableServices']['IECTest']
+            self.logCopy = response['availableServices']['logCopy']
+            self.maps = response['availableServices']['maps']
+            self.preferences = response['availableServices']['preferences']
+            self.schedule = response['availableServices']['schedule']
+            self.softwareUpdate = response['availableServices']['softwareUpdate']
+            self.spotCleaning = response['availableServices']['spotCleaning']
+            self.wifi = response['availableServices']['wifi']
 
         # Cleaning Config
-        self.category = response['cleaning']['category']
-        self.mode = response['cleaning']['mode']
-        self.modifier = response['cleaning']['modifier']
-        self.navigationMode = response['cleaning']['navigationMode']
-        self.spotWidth = response['cleaning']['spotWidth']
-        self.spotHeight = response['cleaning']['spotHeight']
+        if 'cleaning' in response:
+            self.category = response['cleaning']['category']
+            self.mode = response['cleaning']['mode']
+            self.modifier = response['cleaning']['modifier']
+            self.navigationMode = response['cleaning']['navigationMode']
+            self.spotWidth = response['cleaning']['spotWidth']
+            self.spotHeight = response['cleaning']['spotHeight']
 
         return response
 
@@ -139,11 +188,24 @@ class Robot:
                      'token': binascii.hexlify(os.urandom(64)).decode('utf8')}
         access_token_response = requests.post(self.__urlBeehive + "/sessions", json=json_data,
                                               headers={'Accept': 'application/vnd.neato.nucleo.v1+json'})
-        access_token = access_token_response.json()['access_token']
+        responseJson = access_token_response.json()
+        if 'access_token' in responseJson:
+            access_token = responseJson['access_token']
+        else:
+            access_token = ''
+            if 'message' in responseJson:
+                messageText = responseJson['message']
+                self.logger.error("Failed to receive access token. Message: {0}".format(messageText))
+
+
         return access_token
 
     def __get_secret_key(self):
+        secret_key = ''
         access_token = self.__get_access_token()
+        if not access_token:
+            return secret_key
+
         auth_data = {'Authorization': 'Token token=' + access_token}
         secret_key_response = requests.get(self.__urlBeehive + "/users/me/robots", data=auth_data,
                                            headers={'Authorization': 'Bearer ' + access_token})
