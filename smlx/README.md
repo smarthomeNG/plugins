@@ -30,6 +30,8 @@ communication with the hardware in given cycles.
 - 2019-10-18 Modified parsing. Not only OBIS codes ending with 255 (FF) are parsed now.
              Added conversion of 'valTime' into actual time string. Introduced new attribute `date_offset` for plugin.yaml for actual time calculation.
              Modified debug messages for better readability.
+- 2019-10-24 Fixed issue with calculation of actualTime. Fixed misinterpretation of Client-ID as OBIS code.               
+- 2019-10-29 Added properties for Smartmeter status 
 
 ## Hardware
 
@@ -40,6 +42,7 @@ The plugin was tested with the following hardware:
    * EHM eHZ-GW8 E2A 500 AL1
    * EHM eHZ-ED300L
    * Holley DTZ541 (2018 model with faulty CRC implementation)
+   * Landis&Gyr E220
 
 ## Configuration
 
@@ -144,7 +147,7 @@ note the date and time of the logging output as well. Use a Unix time converter
 like [this] https://www.unixtime.de/ and convert this date and time into a Unix timestamp.
 Finally calculate: `date_offset` = 'Unix timestamp' - 'valTime'.
 Example Logging entry:
-"2019-10-18  09:34:35 DEBUG    plugins.smlx        Entry {'objName': b'\x01\x00\x01\x08\x00\xff', 'status': 1839364, 'valTime': [None, 8210754], 'unit': 30, 'scaler': -1, 'value': 560445, 'signature': None, 'obis': '1-0:1.8.0*255', 'valueReal': 56044.5, 'unitName': 'Wh', 'realTime': 'Fri Oct 18 09:34:21 2019'}"
+"2019-10-18  09:34:35 DEBUG    plugins.smlx        Entry {'objName': '1-0:1.8.0*255', 'status': 1839364, 'valTime': [None, 8210754], 'unit': 30, 'scaler': -1, 'value': 560445, 'signature': None, 'obis': '1-0:1.8.0*255', 'valueReal': 56044.5, 'unitName': 'Wh', 'realTime': 'Fri Oct 18 09:34:21 2019'}"
 Convert '2019-10-18  09:34:35' into Unix Timestamp. Result: 1571384075. 'valTime' = 8210754. `date_offset` = 1571384075 - 8210754 = 1563173321‬.
 If your Smartmeter does not provide a valid 'valTime' (always 'valTime': None), `date_offset` is useless and can be omitted.
 
@@ -182,6 +185,23 @@ The following properties are available:
    * `value` - the value
    * `signature` - the signature to protect the payload
 
+The status of the Smartmeter is a binary string. The first 8 bits are always 0000 0100,
+so not interesting. Each other bit has a special meaning and will be decoded into the
+following attributes:
+   * `statRun` - True: meter is counting, False: standstill
+   * `statFraudMagnet` - True: magnetic manipulation detected, False: ok
+   * `statFraudCover` - True: cover manipulation detected, False: ok
+   * `statEnergyTotal` - Current flow total. True: -A, False: +A
+   * `statEnergyL1` - Current flow L1. True: -A, False: +A
+   * `statEnergyL2` - Current flow L2. True: -A, False: +A
+   * `statEnergyL3` - Current flow L3. True: -A, False: +A
+   * `statRotaryField` - True rotary field not L1->L2->L3, False: ok
+   * `statBackstop` - True backstop active, False: backstop not active
+   * `statCalFault` - True calibration relevant fatal fault, False: ok
+   * `statVoltageL1` - True Voltage L1 present, False: not present
+   * `statVoltageL2` - True Voltage L2 present, False: not present
+   * `statVoltageL3` - True Voltage L3 present, False: not present
+   
 Additionally, the following attributes will be calculated and also be provided:
    * `obis` - the OBIS code as string
    * `valueReal` - the real value when including the scaler calculation
