@@ -85,6 +85,7 @@ class RTR(SmartPlugin):
 
         self.logger.debug("rtr: init method called")
 
+        self.alive = None
         sh = self.get_sh()
         self.path = sh.base_dir + '/var/rtr/timer/'
         self._items = Items.get_instance()
@@ -370,13 +371,13 @@ class RTR(SmartPlugin):
         if item() and caller != 'plugin':
             if self.has_iattr(item.conf, 'rtr_setpoint'):
                 c = 'c' + item.conf['rtr_setpoint']
-                if self._controller[c]['validated']:
+                if self._controller[c]['validated'] and self.alive:
                     self.pi_controller(c)
 
     def update_items(self):
         """ this is the callback function for the scheduler """
         for c in self._controller.keys():
-            if self._controller[c]['validated'] and not self._controller[c]['valveProtectActive']:
+            if self._controller[c]['validated'] and self.alive and not self._controller[c]['valveProtectActive']:
                 self.pi_controller(c)
 
     def validate_controller(self, c):
