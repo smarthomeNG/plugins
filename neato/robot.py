@@ -10,14 +10,21 @@ from lib.model.smartplugin import *
 
 
 class Robot:
-    def __init__(self, email, password):
+    def __init__(self, email, password, vendor):
         self.logger = logging.getLogger(__name__)
         self.__email = email
         self.__password = password
-        #URL for neator robot
-        #self.__urlBeehive = "https://beehive.neatocloud.com"
-        #URL for vorwerk robot
-        self.__urlBeehive = "https://beehive.ksecosys.com/"
+        self.__vendor = ''
+
+        if (vendor == 'neato') or (vendor == 'Neato'):
+            self.__urlBeehive = "https://beehive.neatocloud.com"
+            self.__vendor = 'neato'
+        elif (vendor == 'vorwerk') or (vendor == 'Vorwerk'):
+            self.__urlBeehive = "https://beehive.ksecosys.com/"
+            self.__vendor = 'vorwerk'
+        else:
+            self.logger.error("Neato Plugin: None or wrong vendor defined!")
+
         self.__urlNucleo = ""
         self.__secretKey = ""
 
@@ -71,23 +78,16 @@ class Robot:
             n = '{"reqId": "77","cmd": "stopCleaning"}'
         elif command == 'findme':
             n = '{"reqId": "77","cmd": "findMe"}'
-        elif command == 'goToBase':
-            n = '{"reqId": "77","cmd": "goToBase"}'
+        elif command == 'sendToBase':
+            n = '{"reqId": "77","cmd": "sendToBase"}'
         else:
             self.logger.warning("Neato Plugin: Command unknown '{}'".format(command))
             return None
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + n
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
-# Request for Neato robot:
-#        start_cleaning_response = requests.post(
-#            self.__urlNucleo + "/vendors/neato/robots/" + self.serial + "/messages", data=n,
-#            headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
-#                     'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
-#                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
 
-# Request for Vorwerk robot:
         start_cleaning_response = requests.post(
-            self.__urlNucleo + "/vendors/vorwerk/robots/" + self.serial + "/messages", data=n,
+            self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages", data=n,
             headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                      'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
                      'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
@@ -118,16 +118,7 @@ class Robot:
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + m
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
         try:
-#Request for neator robot:
-#            robot_cloud_state_response = requests.post(self.__urlNucleo + "/vendors/neato/robots/" + self.serial + "/messages",
-#                                                    data=m, headers={'X-Date': self.__get_current_date(),
-#                                                                     'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
-#                                                                     'Date': self.__get_current_date(),
-#                                                                     'Accept': 'application/vnd.neato.nucleo.v1',
-#                                                                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
-
-#Request for vorwerk robot:
-            robot_cloud_state_response = requests.post(self.__urlNucleo + "/vendors/vorwerk/robots/" + self.serial + "/messages",
+            robot_cloud_state_response = requests.post(self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages",
                                                     data=m, headers={'X-Date': self.__get_current_date(),
                                                                      'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                                                                      'Date': self.__get_current_date(),

@@ -36,7 +36,7 @@ class Neato(SmartPlugin):
     def __init__(self, sh, *args, **kwargs):
         from bin.smarthome import VERSION
 
-        self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"))
+        self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"))
         self.robot.update_robot()
         self._cycle = 40
         return
@@ -90,8 +90,8 @@ class Neato(SmartPlugin):
                 62: 'stop',
                 63: 'pause',
                 64: 'resume',
-                65: 'findme'
-                66: 'goToBase'}
+                65: 'findme',
+                66: 'sendToBase'}
 
             if self.has_iattr(item.conf, 'neato_command'):
                 if item._value in val_to_command:
