@@ -42,6 +42,9 @@ class BoseSoundtouch(SmartPlugin):
     PLUGIN_PARAMETER_IP = None
     PLUGIN_PARAMETER_PORT = None
 
+    # Misc constants
+    BOSE_STATE_STANDBY = 'STANDBY'
+
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
@@ -226,6 +229,10 @@ class BoseSoundtouch(SmartPlugin):
                 item(status.image, self.get_shortname())
             elif self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.source':
                 item(status.source, self.get_shortname())
+            elif self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.standby':
+                if status.source == self.BOSE_STATE_STANDBY:
+                    item(True, self.get_shortname())
+                else:
+                    item(False, self.get_shortname())
             elif self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.track':
                 item(status.track, self.get_shortname())
-                

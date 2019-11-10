@@ -66,6 +66,9 @@ item_structs:
     source:
       type: str
       bose_soundtouch_action: status.source
+    standby:
+      type: bool
+      bose_soundtouch_action: status.standby
     track:
       type: str
       bose_soundtouch_action: status.track
