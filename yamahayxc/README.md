@@ -6,7 +6,7 @@ The base material for the plugin and the documentation was shamelessly copied fr
 
 
 ## Notes
-This plugin is still under development, but in daily use by myself: displaying current device and playback status as well as controlling power, playback and volume.
+This plugin is still under development, but in daily use by myself: displaying current device and playback status as well as controlling power, playback and volume. Currently tested devices are WX-010, ISX-18D, RX-V483.
 The plugin makes use of the Yamaha Extended Control (YXC) API, which is based on JSON formatted data.
 The plugin subscribes to active devices to get notifications of changed. These are received over UDP. The plugin should handle multiple network interfaces to connect to different devices (no errors so far, but not enough devices to actually test, yet) 
 
@@ -23,19 +23,18 @@ At the moment only the main zone and the netusb player are supported. Support fo
 The following python packages need to be installed on your system:
 
 - requests
-- lxml
 
 Those packages can be installed using:
 
 ```bash
 # Debian based
-sudo apt-get install python3-lxml python3-requests
+sudo apt-get install python3-requests
 
 # Arch Linux
-sudo pacman -S python-lxml python-requests
+sudo pacman -S python-requests
 
 # Fedora
-sudo dnf install python3-lxml python3-requests
+sudo dnf install python3-requests
 ```
 
 ## Installation
