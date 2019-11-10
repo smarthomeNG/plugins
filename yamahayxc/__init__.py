@@ -27,6 +27,8 @@
 #   - parse zone().input_list().id -> read possible input values
 #   - parse zone().func_list -> read allowed cmds
 #   - parse zone().range_step -> read range/step for vol / eq
+#
+# - add alarm clock controls
 
 import logging
 import requests
@@ -62,14 +64,21 @@ class YamahaYXC(SmartPlugin):
         self.logger = logging.getLogger(__name__)
         self.logger.info("Init YamahaYXC")
         self._sh = smarthome
+
         # valid commands for use in item configuration 'yamahayxc_cmd = ...'
         self._yamaha_cmds = ['state', 'power', 'input', 'playback', 'preset',
                              'volume', 'mute', 'track', 'artist', 'sleep',
                              'total_time', 'play_time', 'pos', 'albumart', 'passthru']
+
         # commands to ignore when checking for return values
         # these commands don't get / can't process (simple) return values
         self._yamaha_ignore_cmds_upd = ['state', 'preset']
+
+        # store items in 2D-array:
+        # _yamaha_dev [host] [cmd] = item
+        # also see parse_item()...
         self._yamaha_dev = {}
+        # store host addresses of devices
         self._yamaha_hosts = {}
         self.srv_port = 41100
         self.srv_buffer = 1024
@@ -99,11 +108,11 @@ class YamahaYXC(SmartPlugin):
                 self.logger.warn(
                     "Yamaha received notify from unknown host {}".format(host))
             else:
-                # this seemed good to log unter "info"
-                # but running device sends updates every second...
-                # self.logger.debug(
-                #   "Yamaha unicast received {} bytes from {}: {}".format(
-                #   len(data), host, data))
+                # careful - connected device sends updates every second for
+                #           about 10 minutes without interaction
+                self.logger.debug(
+                   "Yamaha unicast received {} bytes from {}: {}".format(
+                   len(data), host, data))
                 data = json.loads(data.decode('utf-8'))
                 # need to find lowest-level cmds in nested dicts
                 # nesting is done by current zone and player
@@ -118,16 +127,23 @@ class YamahaYXC(SmartPlugin):
                     data_flat.update(data['netusb'])
                 except:
                     pass
+
+                # try all known command words...
                 for cmd in self._yamaha_cmds:
+                    # found it in data package?
                     if cmd in data_flat:
                         try:
+                            # try to get command value and set item
                             notify_val = self._process_value(data_flat[cmd], cmd, host)
                             item = self._yamaha_dev[host][cmd]
                             item(notify_val, "YamahaYXC")
                         except:
                             pass
+                # device told us new info is available?
                 if 'status_updated' in data_flat or 'play_info_updated' in data_flat:
+                    # pull (full) status update from device
                     self._update_state(host)
+                # log possible play errors
                 if 'play_error' in data_flat:
                     if data_flat['play_error'] > 0:
                         self.logger.info(
