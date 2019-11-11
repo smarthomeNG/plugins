@@ -26,16 +26,18 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for key, item in p.get_items().items() %}
+				{% for key, items in p.get_items().items() %}
+                    {% for item in items %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item[0].property.path }}</td>
-						<td class="py-1">{{ item[0].property.type }}</td>
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ item[0]() }}</td>
-						<td class="py-1">{{ item[0].property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item[0].property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
+            {% endfor %}
 			</tbody>
 		</table>
 	</div>
