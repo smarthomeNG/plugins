@@ -76,6 +76,10 @@ Neato:
       type: bool
       neato_isdocked: ''
       visu_acl: ro
+    IsScheduleEnabled:
+      type: bool
+      neato_isscheduleenabled: ''
+      visu_acl: ro
     ChargePercentage:
       type: str
       neato_chargepercentage: ''
@@ -138,8 +142,8 @@ Following commands are currently available:
 | 64            | Resume cleaning  |
 | 65            | Find the robot   |
 | 66            | Send to base     |
-
-
+| 67            | Enable schedule  |
+| 68            | Disable schedule |
 
 
 

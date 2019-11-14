@@ -1,15 +1,15 @@
 # Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Plugin zur Anbindung von einem Neato/Vorwerk Staubsauger Robotor an SmartHomeNG'
         en: 'Plugin to connect your Neato/Vorwerk Vacuum Robot with SmartHomeNG'
     maintainer: Thomas Hengsberg (thengsty)
     tester: aschwith
-    state: ready                    # change to ready when done with development
+    state: develop                  # change to ready when done with development
 #    keywords: iot xyz
-    documentation: https://github.com/smarthomeNG/plugins/tree/develop/neato/README.md
+    documentation: https://github.com/thengsty/plugins/blob/develop/neato/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-neato
 
     version: 1.6.0                  # Plugin version
@@ -36,8 +36,8 @@ parameters:
         type: str
         default: 'neato'
         description:
-            de: 'Hersteller des Neato/Vorwerk Roboters (neato or vorwerk)'
-            en: 'Vendor of your Neato/Vorwerk robot (neato or vorwerk)'
+            de: 'Hersteller des Neato/Vorwerk Roboters'
+            en: 'Vendor of your Neato/Vorwerk robot'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -55,7 +55,9 @@ item_attributes:
                 63   pause
                 64   resume
                 65   find me
-                66   goToBase'
+                66   goToBase
+                67   enableSchedule
+                68   disableSchedule'
             de: ''
     neato_state:
         type: str
@@ -96,6 +98,12 @@ item_attributes:
         description:
             de: 'Roboter Docking Status'
             en: 'Robot docking status'
+    neato_isscheduleenabled:
+        type: bool
+        description:
+            de: 'Roboter Status Reinigunsplan'
+            en: 'Robot cleaning schedule status'
+
     neato_ischarging:
         type: bool
         description:
@@ -116,9 +124,21 @@ item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
     #item_structs: NONE
 
-plugin_functions: NONE
-    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
-    #plugin_functions: NONE
+plugin_functions:
+    enable_schedule:
+        type: void
+        description:
+            de: "Aktiviert den Reinigunsplan."
+            en: "Activates cleaning schedule."
+        parameters:
+        # This function has no parameters
+    disable_schedule:
+        type: void
+        description:
+            de: "Deaktiviert den Reinigunsplan."
+            en: "Disables cleaning schedule."
+        parameters:
+        # This function has no parameters
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

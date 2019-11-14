@@ -16,17 +16,21 @@ class Robot:
         self.__password = password
         self.__vendor = ''
 
-        if (vendor == 'neato') or (vendor == 'Neato'):
+        if (vendor.lower() == 'neato'):
             self.__urlBeehive = "https://beehive.neatocloud.com"
             self.__vendor = 'neato'
-        elif (vendor == 'vorwerk') or (vendor == 'Vorwerk'):
+        elif (vendor.lower() == 'vorwerk'):
             self.__urlBeehive = "https://beehive.ksecosys.com/"
             self.__vendor = 'vorwerk'
         else:
-            self.logger.error("Neato Plugin: None or wrong vendor defined!")
+            self.logger.error("Robot: No or wrong vendor defined!")
 
         self.__urlNucleo = ""
         self.__secretKey = ""
+
+        self._session = requests.Session()
+        self._timeout = 10
+
 
         # Cleaning
         self.category = ''
@@ -45,7 +49,7 @@ class Robot:
         # Neato Details
         self.isCharging = False
         self.isDocked = False
-        self.isScheduleEnabled = None
+        self.isScheduleEnabled = False
         self.dockHasBeenSeen = None
         self.chargePercentage = ''
         self.isCleaning = None
@@ -80,17 +84,28 @@ class Robot:
             n = '{"reqId": "77","cmd": "findMe"}'
         elif command == 'sendToBase':
             n = '{"reqId": "77","cmd": "sendToBase"}'
+        elif command == 'enableSchedule':
+            n = '{"reqId": "77","cmd": "enableSchedule"}'
+        elif command == 'disableSchedule':
+            n = '{"reqId": "77","cmd": "disableSchedule"}'
         else:
-            self.logger.warning("Neato Plugin: Command unknown '{}'".format(command))
+            self.logger.warning("Robot: Command unknown '{}'".format(command))
             return None
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + n
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
 
-        start_cleaning_response = requests.post(
+#        start_cleaning_response = requests.post(
+#            self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages", data=n,
+#            headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
+#                     'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
+#                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
+
+        start_cleaning_response = self._session.post(
             self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages", data=n,
             headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                      'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
-                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
+                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout )
+        
 
         #error handling
         responseJson = start_cleaning_response.json()
@@ -109,25 +124,28 @@ class Robot:
         return start_cleaning_response
 
     def update_robot(self):
+        #self.logger.debug("Robot: Starting update_robot")
 
         self.__secretKey = self.__get_secret_key()
         if not self.__secretKey:
+            self.logger.error("Robot: Could not obtain valid secret key")
             return 'error'
 
         m = '{"reqId":"77","cmd":"getRobotState"}'
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + m
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
         try:
-            robot_cloud_state_response = requests.post(self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages",
+            robot_cloud_state_response = self._session.post(self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages",
                                                     data=m, headers={'X-Date': self.__get_current_date(),
                                                                      'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                                                                      'Date': self.__get_current_date(),
                                                                      'Accept': 'application/vnd.neato.nucleo.v1',
-                                                                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
+                                                                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout )
  
         except:
-            self.logger.warning("Neato Plugin: Error during API request unknown '{}'")
+            self.logger.warning("Robot: Error during API request unknown '{}'")
             # todo error handling_
+            return 'error'
 
         response = robot_cloud_state_response.json()
 
@@ -175,37 +193,55 @@ class Robot:
         return response
 
     def __get_access_token(self):
+        #self.logger.debug("Robot: Getting access token")
+
         json_data = {'email': self.__email, 'password': self.__password, 'platform': 'ios',
                      'token': binascii.hexlify(os.urandom(64)).decode('utf8')}
-        access_token_response = requests.post(self.__urlBeehive + "/sessions", json=json_data,
-                                              headers={'Accept': 'application/vnd.neato.nucleo.v1+json'})
+        try:
+            access_token_response = self._session.post(self.__urlBeehive + "/sessions", json=json_data,
+                                              headers={'Accept': 'application/vnd.neato.nucleo.v1+json'}, timeout=self._timeout)
+        except Exception as e:
+            self.logger.error("Robot: Exception during access token request: %s" % str(e))
+            return ''
+                
         responseJson = access_token_response.json()
         if 'access_token' in responseJson:
             access_token = responseJson['access_token']
+            #self.logger.debug("Robot: Access token received")
         else:
             access_token = ''
             if 'message' in responseJson:
                 messageText = responseJson['message']
                 self.logger.error("Failed to receive access token. Message: {0}".format(messageText))
-
+            else:
+                self.logger.error("Failed to receive access token.")
 
         return access_token
 
     def __get_secret_key(self):
+        #self.logger.debug("Robot: Retrieving secret key")
         secret_key = ''
         access_token = self.__get_access_token()
         if not access_token:
             return secret_key
 
         auth_data = {'Authorization': 'Token token=' + access_token}
-        secret_key_response = requests.get(self.__urlBeehive + "/users/me/robots", data=auth_data,
-                                           headers={'Authorization': 'Bearer ' + access_token})
+        
+        try:
+            secret_key_response = self._session.get(self.__urlBeehive + "/users/me/robots", data=auth_data,
+                                           headers={'Authorization': 'Bearer ' + access_token}, timeout=self._timeout)
+        except Exception as e:
+            self.logger.error("Robot: Exception during secret key request: %s" % str(e))
+            return ''
+
         secret_key = secret_key_response.json()[0]['secret_key']
         self.serial = secret_key_response.json()[0]['serial']
         self.name = secret_key_response.json()[0]['name']
         self.__urlNucleo = secret_key_response.json()[0]['nucleo_url']
         self.modelname = secret_key_response.json()[0]['model']
         self.firmware = secret_key_response.json()[0]['firmware']
+        #self.logger.debug("Robot: secret key retrieved")
+
         return secret_key
 
     def __get_current_date(self):
@@ -213,7 +249,7 @@ class Robot:
         try:
             locale.setlocale(locale.LC_TIME, 'en_US.utf8')
         except locale.Error as e:
-            self.logger.error("Neato Plugin: Locale setting Error. Please install locale en_US.utf8: "+e)
+            self.logger.error("Robot: Locale setting Error. Please install locale en_US.utf8: "+e)
             return None
         date = time.strftime('%a, %d %b %Y %H:%M:%S', time.gmtime()) + ' GMT'
         locale.setlocale(locale.LC_TIME, saved_locale)
