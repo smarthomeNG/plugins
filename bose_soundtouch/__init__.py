@@ -175,6 +175,8 @@ class BoseSoundtouch(SmartPlugin):
                     self.powerOnSoundtouch()
                 elif action == 'status.standby' and item() is True:
                     self.powerOffSoundtouch()
+                elif action == 'presets.selected_preset':
+                    self.selectSoundtouchPreset(item())
 
                 self.logger.debug("Update item: finished with Action = " + action)
             pass
@@ -269,3 +271,8 @@ class BoseSoundtouch(SmartPlugin):
     def powerOffSoundtouch(self):
         self.logger.info("Powering off Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
         self.getSoundtouchDevice().power_off()
+
+    def selectSoundtouchPreset(self, preset_id):
+        self.logger.info("Selecting preset '" + str(preset_id) + "' for Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
+        presets = self.getSoundtouchDevice().presets()
+        self.getSoundtouchDevice().select_preset(presets[preset_id])

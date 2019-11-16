@@ -74,12 +74,15 @@ item_structs:
       bose_soundtouch_action: status.track
 
   presets:
+    selected_preset:
+      type: num
+      bose_soundtouch_action: presets.selected_preset
     "0":
       name:
         type: str
         bose_soundtouch_action: presets.0.name
       preset_id:
-        type: str
+        type: num
         bose_soundtouch_action: presets.0.preset_id
       source:
         type: str
@@ -89,7 +92,7 @@ item_structs:
         type: str
         bose_soundtouch_action: presets.1.name
       preset_id:
-        type: str
+        type: num
         bose_soundtouch_action: presets.1.preset_id
       source:
         type: str
@@ -99,7 +102,7 @@ item_structs:
         type: str
         bose_soundtouch_action: presets.2.name
       preset_id:
-        type: str
+        type: num
         bose_soundtouch_action: presets.2.preset_id
       source:
         type: str
@@ -109,7 +112,7 @@ item_structs:
         type: str
         bose_soundtouch_action: presets.3.name
       preset_id:
-        type: str
+        type: num
         bose_soundtouch_action: presets.3.preset_id
       source:
         type: str
@@ -119,7 +122,7 @@ item_structs:
         type: str
         bose_soundtouch_action: presets.4.name
       preset_id:
-        type: str
+        type: num
         bose_soundtouch_action: presets.4.preset_id
       source:
         type: str
@@ -129,7 +132,7 @@ item_structs:
         type: str
         bose_soundtouch_action: presets.5.name
       preset_id:
-        type: str
+        type: num
         bose_soundtouch_action: presets.5.preset_id
       source:
         type: str
