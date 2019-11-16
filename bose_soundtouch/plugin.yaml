@@ -74,14 +74,66 @@ item_structs:
       bose_soundtouch_action: status.track
 
   presets:
-    p0:
+    "0":
       name:
         type: str
-        bose_soundtouch_action: preset.0.name
-    p1:
+        bose_soundtouch_action: presets.0.name
+      preset_id:
+        type: str
+        bose_soundtouch_action: presets.0.preset_id
+      source:
+        type: str
+        bose_soundtouch_action: presets.0.source
+    "1":
       name:
         type: str
-        bose_soundtouch_action: preset.1.name
+        bose_soundtouch_action: presets.1.name
+      preset_id:
+        type: str
+        bose_soundtouch_action: presets.1.preset_id
+      source:
+        type: str
+        bose_soundtouch_action: presets.1.source
+    "2":
+      name:
+        type: str
+        bose_soundtouch_action: presets.2.name
+      preset_id:
+        type: str
+        bose_soundtouch_action: presets.2.preset_id
+      source:
+        type: str
+        bose_soundtouch_action: presets.2.source
+    "3":
+      name:
+        type: str
+        bose_soundtouch_action: presets.3.name
+      preset_id:
+        type: str
+        bose_soundtouch_action: presets.3.preset_id
+      source:
+        type: str
+        bose_soundtouch_action: presets.3.source
+    "4":
+      name:
+        type: str
+        bose_soundtouch_action: presets.4.name
+      preset_id:
+        type: str
+        bose_soundtouch_action: presets.4.preset_id
+      source:
+        type: str
+        bose_soundtouch_action: presets.4.source
+    "5":
+      name:
+        type: str
+        bose_soundtouch_action: presets.5.name
+      preset_id:
+        type: str
+        bose_soundtouch_action: presets.5.preset_id
+      source:
+        type: str
+        bose_soundtouch_action: presets.5.source
 
 plugin_functions: NONE
 logic_parameters: NONE
