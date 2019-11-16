@@ -162,25 +162,20 @@ class BoseSoundtouch(SmartPlugin):
         """
         if caller != self.get_shortname():
             # code to execute, only if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
 
             if self.has_iattr(item.conf, 'bose_soundtouch_action'):
-                self.logger.debug(
-                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item,
-                                                                                                               caller,
-                                                                                                               source,
-                                                                                                               dest))
-                self.logger.debug("Execute the following action: " + item.conf['bose_soundtouch_action'])
+                action = self.get_iattr_value(item.conf, 'bose_soundtouch_action')
+                self.logger.debug("Update item: was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller, source, dest))
+                self.logger.debug("Update item: Action = " + action + ", Item type = " + str(type(item())) + ", Item value = " + str(item()))
 
-                # get presets
-                presets = self.getSoundtouchDevice().presets()
-                self.logger.info("Preset 1: " + presets[0].name + " @ " + presets[0].source)
-                self.logger.info("Preset 2: " + presets[1].name + " @ " + presets[1].source)
-                self.logger.info("Preset 3: " + presets[2].name + " @ " + presets[2].source)
-                self.logger.info("Preset 4: " + presets[3].name + " @ " + presets[3].source)
-                self.logger.info("Preset 5: " + presets[4].name + " @ " + presets[4].source)
-                self.logger.info("Preset 6: " + presets[5].name + " @ " + presets[5].source)
+                # Execute logic according to requested action
+                if action == 'status.standby' and item() is False:
+                    self.powerOnSoundtouch()
+                elif action == 'status.standby' and item() is True:
+                    self.powerOffSoundtouch()
 
+                self.logger.debug("Update item: finished with Action = " + action)
             pass
 
     def poll_device(self):
@@ -236,3 +231,21 @@ class BoseSoundtouch(SmartPlugin):
                     item(False, self.get_shortname())
             elif self.get_iattr_value(item.conf, 'bose_soundtouch_action') == 'status.track':
                 item(status.track, self.get_shortname())
+
+    def updateSoundtouchPresets(self):
+        # get presets
+        presets = self.getSoundtouchDevice().presets()
+        self.logger.info("Preset 1: " + presets[0].name + " @ " + presets[0].source)
+        self.logger.info("Preset 2: " + presets[1].name + " @ " + presets[1].source)
+        self.logger.info("Preset 3: " + presets[2].name + " @ " + presets[2].source)
+        self.logger.info("Preset 4: " + presets[3].name + " @ " + presets[3].source)
+        self.logger.info("Preset 5: " + presets[4].name + " @ " + presets[4].source)
+        self.logger.info("Preset 6: " + presets[5].name + " @ " + presets[5].source)
+
+    def powerOnSoundtouch(self):
+        self.logger.info("Powering on Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
+        self.getSoundtouchDevice().power_on()
+
+    def powerOffSoundtouch(self):
+        self.logger.info("Powering off Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
+        self.getSoundtouchDevice().power_off()
