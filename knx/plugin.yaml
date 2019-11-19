@@ -59,18 +59,11 @@ parameters:
             en: "If set to 'on'/'true' every KNX packet will be logged to the default plugin logger. If set to 'logger', all knx messages will be logged to a separate logger 'knx_busmonitor'"
 
     host:
-        type: str
-        default: ''
-        description:
-            de: 'Hostname des Computers auf dem der EIB Daemon bzw. KNX Daemon läuft. Überschreibt den Parameter "ip", wenn beide angegeben sind.'
-            en: 'hostname of the computer the eib daemon or knx daemon is running on. Overrides the "ip" parameter, if both are given.'
-
-    ip:
-        type: ipv4
+        type: ip
         default: '127.0.0.1'
         description:
-            de: 'IP Adresse des Computers auf dem der EIB Daemon bzw. KNX Daemon läuft. Standard: Auf dem Computer auf dem SmartHomeMG läuft.'
-            en: 'IP address of the computer the eib daemon or knx daemon is running on. Default: The Daemon is running on the computer SmartHomeNG is running on.'
+            de: 'IP Adresse oder Hostname des Computers auf dem der EIB Daemon bzw. KNX Daemon läuft. Standard: Auf dem Computer auf dem SmartHomeMG läuft.'
+            en: 'IP address or hostname of the computer the eib daemon or knx daemon is running on. Default: The Daemon is running on the computer SmartHomeNG is running on.'
 
     port:
         type: int

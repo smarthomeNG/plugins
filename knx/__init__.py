@@ -84,8 +84,6 @@ class KNX(lib.connection.Client,SmartPlugin):
 
     def __init__(self, smarthome):
         self.host = self.get_parameter_value('host')
-        if self.host == 'None':
-            self.host = self.get_parameter_value('ip')
         self.port = self.get_parameter_value('port')
 
         from bin.smarthome import VERSION

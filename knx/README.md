@@ -15,7 +15,7 @@ This plugin needs a running eibd or knxd.
 knx:
     class_name: KNX
     class_path: plugins.knx
-    # ip: 127.0.0.1
+    # host: 127.0.0.1
     # port: 6720
     # send_time: 600    # update date/time every 600 seconds, default none
     # time_ga: 1/1/1    # default none
@@ -27,8 +27,7 @@ knx:
 
 #### Attributes
 
-* `host` : eibd or knxd hostname. Overrides parameter `ip`, if both are given
-* `ip`   : eibd or knxd ip address (default: 127.0.0.1)
+* `host` : eibd or knxd hostname or ip address (default: 127.0.0.1)
 * `port` : eibd or knxd port (default: 6720)
 * `send_time` : interval to send time and date to the knx bus
 * `time_ga` : groupadress to send a timestamp to the knx bus
