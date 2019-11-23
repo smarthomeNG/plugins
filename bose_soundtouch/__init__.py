@@ -175,8 +175,10 @@ class BoseSoundtouch(SmartPlugin):
                     self.powerOnSoundtouch()
                 elif action == 'status.standby' and item() is True:
                     self.powerOffSoundtouch()
-                elif action == 'presets.selected_preset':
+                elif action == 'status.selected_preset':
                     self.selectSoundtouchPreset(item())
+                elif action == 'volume.actual':
+                    self.setSoundtouchVolume(item())
 
                 self.logger.debug("Update item: finished with Action = " + action)
             pass
@@ -192,6 +194,7 @@ class BoseSoundtouch(SmartPlugin):
         # Update status
         self.updateSoundtouchStatus()
         self.updateSoundtouchPresets()
+        self.updateSoundtouchVolume()
         pass
 
     def getSoundtouchDevice(self):
@@ -199,8 +202,8 @@ class BoseSoundtouch(SmartPlugin):
 
     def updateSoundtouchStatus(self):
         status = None
+        self.logger.debug("Updating Soundtouch Status...")
         for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
-            self.logger.debug("Updating Soundtouch Status for Action = " + self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR))
             if status is None:
                 status = self.getSoundtouchDevice().status()
             if self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'status.album':
@@ -221,10 +224,23 @@ class BoseSoundtouch(SmartPlugin):
             elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'status.track':
                 item(status.track, self.get_shortname())
 
+    def updateSoundtouchVolume(self):
+        volume = None
+        self.logger.debug("Updating Soundtouch Volume...")
+        for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
+            if volume is None:
+                volume = self.getSoundtouchDevice().volume()
+            if self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'volume.actual':
+                item(volume.actual, self.get_shortname())
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'volume.muted':
+                item(volume.muted, self.get_shortname())
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'volume.target':
+                item(volume.target, self.get_shortname())
+
     def updateSoundtouchPresets(self):
         presets = None
+        self.logger.debug("Updating Soundtouch Presets...")
         for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
-            self.logger.debug("Updating Soundtouch Presets for Action = " + self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR))
             if presets is None:
                 presets = self.getSoundtouchDevice().presets()
             if self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.0.name':
@@ -271,6 +287,10 @@ class BoseSoundtouch(SmartPlugin):
     def powerOffSoundtouch(self):
         self.logger.info("Powering off Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
         self.getSoundtouchDevice().power_off()
+    
+    def setSoundtouchVolume(self, volume):
+        self.logger.info("Setting volume to '" + str(volume) + "' for Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
+        self.getSoundtouchDevice().set_volume(volume)
 
     def selectSoundtouchPreset(self, preset_id):
         self.logger.info("Selecting preset '" + str(preset_id) + "' for Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")

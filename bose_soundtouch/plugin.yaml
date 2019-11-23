@@ -53,90 +53,126 @@ item_structs:
   status:
     album:
       type: str
+      visu_acl: ro
       bose_soundtouch_action: status.album
     artist:
       type: str
+      visu_acl: ro
       bose_soundtouch_action: status.artist
     description:
       type: str
+      visu_acl: ro
       bose_soundtouch_action: status.description
     image:
       type: str
+      visu_acl: ro
       bose_soundtouch_action: status.image
+    selected_preset:
+      type: num
+      visu_acl: rw
+      bose_soundtouch_action: status.selected_preset
     source:
       type: str
+      visu_acl: ro
       bose_soundtouch_action: status.source
     standby:
       type: bool
+      visu_acl: rw
       bose_soundtouch_action: status.standby
     track:
       type: str
+      visu_acl: ro
       bose_soundtouch_action: status.track
 
   presets:
-    selected_preset:
-      type: num
-      bose_soundtouch_action: presets.selected_preset
     "0":
       name:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.0.name
       preset_id:
         type: num
+        visu_acl: ro
         bose_soundtouch_action: presets.0.preset_id
       source:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.0.source
     "1":
       name:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.1.name
       preset_id:
         type: num
+        visu_acl: ro
         bose_soundtouch_action: presets.1.preset_id
       source:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.1.source
     "2":
       name:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.2.name
       preset_id:
         type: num
+        visu_acl: ro
         bose_soundtouch_action: presets.2.preset_id
       source:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.2.source
     "3":
       name:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.3.name
       preset_id:
         type: num
+        visu_acl: ro
         bose_soundtouch_action: presets.3.preset_id
       source:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.3.source
     "4":
       name:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.4.name
       preset_id:
         type: num
+        visu_acl: ro
         bose_soundtouch_action: presets.4.preset_id
       source:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.4.source
     "5":
       name:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.5.name
       preset_id:
         type: num
+        visu_acl: ro
         bose_soundtouch_action: presets.5.preset_id
       source:
         type: str
+        visu_acl: ro
         bose_soundtouch_action: presets.5.source
+
+  volume:
+    actual:
+      type: num
+      visu_acl: rw
+      bose_soundtouch_action: volume.actual
+    muted:
+      type: bool
+      visu_acl: rw
+      bose_soundtouch_action: volume.muted
 
 plugin_functions: NONE
 logic_parameters: NONE
