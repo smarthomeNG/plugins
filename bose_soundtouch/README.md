@@ -12,11 +12,6 @@ If you want, you can add a change history here:
 
 - Fixed this
 
-### Changes Since version 1.x.w
-
-- Added that feature
-
-
 ## Requirements
 
 List the requirements of your plugin. Does it need special software or hardware?
@@ -47,7 +42,17 @@ Please refer to the documentation generated from plugin.yaml metadata.
 ### items.yaml
 
 Please refer to the documentation generated from plugin.yaml metadata.
-
+```
+%YAML 1.2
+---
+BoseSoundtouch:
+  status:
+    struct: bose_soundtouch.status
+  presets:
+    struct: bose_soundtouch.presets
+  volume:
+    struct: bose_soundtouch.volume
+```
 
 ### logic.yaml
 Please refer to the documentation generated from plugin.yaml metadata.
