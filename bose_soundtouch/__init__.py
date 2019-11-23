@@ -45,6 +45,15 @@ class BoseSoundtouch(SmartPlugin):
     # Misc constants
     ITEM_ACTION_ATTR = 'bose_soundtouch_action'
     BOSE_STATE_STANDBY = 'STANDBY'
+    BOSE_CMD_PLAY = 'PLAY'
+    BOSE_CMD_PAUSE = 'PAUSE'
+    BOSE_CMD_MUTE = 'MUTE'
+    BOSE_CMD_NEXT_TRACK = 'NEXT_TRACK'
+    BOSE_CMD_PREVIOUS_TRACK = 'PREVIOUS_TRACK'
+    BOSE_CMD_SHUFFLE_ON = 'SHUFFLE_ON'
+    BOSE_CMD_SHUFFLE_OFF = 'SHUFFLE_OFF'
+    BOSE_CMD_REPEAT_ALL = 'REPEAT_ALL'
+    BOSE_CMD_REPEAT_OFF = 'REPEAT_OFF'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -171,12 +180,31 @@ class BoseSoundtouch(SmartPlugin):
                 self.logger.debug("Update item: Action = " + action + ", Item type = " + str(type(item())) + ", Item value = " + str(item()))
 
                 # Execute logic according to requested action
-                if action == 'status.standby' and item() is False:
+                if (action == 'status.standby' and item() is False) or (action == 'actions.power_on'):
                     self.powerOnSoundtouch()
-                elif action == 'status.standby' and item() is True:
+                elif (action == 'status.standby' and item() is True) or (action == 'actions.power_off'):
                     self.powerOffSoundtouch()
-                elif action == 'status.selected_preset':
+                elif action == 'actions.select_preset':
                     self.selectSoundtouchPreset(item())
+                elif action == 'actions.play':
+                    self.sendSoundtouchCommand(self.BOSE_CMD_PLAY)
+                elif action == 'actions.pause':
+                    self.sendSoundtouchCommand(self.BOSE_CMD_PAUSE)
+                elif action == 'actions.mute':
+                    self.sendSoundtouchCommand(self.BOSE_CMD_MUTE)
+                elif action == 'actions.next_track':
+                    self.sendSoundtouchCommand(self.BOSE_CMD_NEXT_TRACK)
+                elif action == 'actions.previous_track':
+                    self.sendSoundtouchCommand(self.BOSE_CMD_PREVIOUS_TRACK)
+                elif action == 'actions.shuffle':
+                    if item() is True:
+                        self.sendSoundtouchCommand(self.BOSE_CMD_SHUFFLE_ON)
+                    else:
+                        self.sendSoundtouchCommand(self.BOSE_CMD_SHUFFLE_OFF)
+                elif action == 'actions.repeat_all':
+                    self.sendSoundtouchCommand(self.BOSE_CMD_REPEAT_ALL)
+                elif action == 'actions.repeat_off':
+                    self.sendSoundtouchCommand(self.BOSE_CMD_REPEAT_OFF)
                 elif action == 'volume.actual':
                     self.setSoundtouchVolume(item())
 
@@ -287,10 +315,31 @@ class BoseSoundtouch(SmartPlugin):
     def powerOffSoundtouch(self):
         self.logger.info("Powering off Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
         self.getSoundtouchDevice().power_off()
-    
+
     def setSoundtouchVolume(self, volume):
         self.logger.info("Setting volume to '" + str(volume) + "' for Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
         self.getSoundtouchDevice().set_volume(volume)
+
+    def sendSoundtouchCommand(self, command):
+        self.logger.info("Sending command '" + command + "' to Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
+        if command == self.BOSE_CMD_PLAY:
+            self.getSoundtouchDevice().play()
+        elif command == self.BOSE_CMD_PAUSE:
+            self.getSoundtouchDevice().pause()
+        elif command == self.BOSE_CMD_MUTE:
+            self.getSoundtouchDevice().mute()
+        elif command == self.BOSE_CMD_NEXT_TRACK:
+            self.getSoundtouchDevice().next_track()
+        elif command == self.BOSE_CMD_PREVIOUS_TRACK:
+            self.getSoundtouchDevice().previous_track()
+        elif command == self.BOSE_CMD_SHUFFLE_ON:
+            self.getSoundtouchDevice().shuffle(True)
+        elif command == self.BOSE_CMD_SHUFFLE_OFF:
+            self.getSoundtouchDevice().shuffle(False)
+        elif command == self.BOSE_CMD_REPEAT_ALL:
+            self.getSoundtouchDevice().repeat_all()
+        elif command == self.BOSE_CMD_REPEAT_OFF:
+            self.getSoundtouchDevice().repeat_off()
 
     def selectSoundtouchPreset(self, preset_id):
         self.logger.info("Selecting preset '" + str(preset_id) + "' for Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "'.")
