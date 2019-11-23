@@ -46,10 +46,12 @@ Please refer to the documentation generated from plugin.yaml metadata.
 %YAML 1.2
 ---
 BoseSoundtouch:
-  status:
-    struct: bose_soundtouch.status
+  actions:
+    struct: bose_soundtouch.actions
   presets:
     struct: bose_soundtouch.presets
+  status:
+    struct: bose_soundtouch.status
   volume:
     struct: bose_soundtouch.volume
 ```
