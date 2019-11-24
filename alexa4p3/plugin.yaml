@@ -13,7 +13,7 @@ plugin:
     version: 1.0.1                   # Plugin version
     sh_minversion: 1.3               # minimum shNG version to use this plugin
     multi_instance: False            # plugin supports multi instance
-    classname: alexa4p3              # class containing the plugin
+    classname: Alexa4P3              # class containing the plugin
     state: develop                   # State of the Plugin
     restartable: True                # Plugin is restartable 
 
