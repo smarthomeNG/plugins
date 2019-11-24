@@ -6,13 +6,13 @@ plugin:
         de: 'Plugin zur Integration von Bose Soundtouch Systemen.'
         en: 'Plugin for integration of Bose Soundtouch systems.'
     maintainer: sebastianfaulhaber
-    state: develop                  # change to ready when done with development
+    state: ready                  # change to ready when done with development
     keywords: bose soundtouch multimedia
     documentation: https://github.com/smarthomeNG/plugins/tree/master/bose_soundtouch # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 0.0.1                  # Plugin version
-    sh_minversion: 1.4              # minimum shNG version to use this plugin
+    version: 1.0.0                  # Plugin version
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
     multi_instance: False           # plugin supports multi instance
     restartable: True
     classname: BoseSoundtouch         # class containing the plugin
@@ -30,7 +30,7 @@ parameters:
     default: 8090
     description:
       de: "Port des Bose Soundtouch Systems"
-      en: "IP address of Bose Soundtouch system"
+      en: "Port of Bose Soundtouch system"
 
   cycle_time:
     type: int

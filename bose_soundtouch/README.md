@@ -1,50 +1,73 @@
 # Bose Soundtouch Plugin
 
-#### Version 1.x.y
+#### Version 1.0.0
 
-Describe the purpose of the plugin right here. (What is the plugin good for?)
+This plugin integrates [Bose Soundtouch](https://www.bose.de/de_de/products/speakers/smart_home/soundtouch_family.html) devices into the [SmartHomeNG](https://www.smarthomeng.de/) infrastructure. Currently the following use cases are implemented:
+
+- Control basic functions (Power On / Off, Play, Pause, Mute, Next / Previous Track, ...)
+- Control volume
+- Get status information (Current Song, Artwork, Source,...)
+- Get preset information and select preset
+
+
+Limitations
+
+- Only one Bose Soundtouch device is supported at the moment
+- Zone / multi-room support is missing
 
 ## Change history
 
-If you want, you can add a change history here:
+### Changes Since version 1.0.0
 
-### Changes Since version 1.x.x
-
-- Fixed this
+- n/a
 
 ## Requirements
 
-List the requirements of your plugin. Does it need special software or hardware?
-
 ### Needed software
 
-* list
-* the
-* needed
-* software
-
-Including Python modules and SmartHomeNG modules
+* SmartHomeNG V1.6 or later
+* Python modules: see [requirements.txt](./requirements.txt)
 
 ### Supported Hardware
 
-* list
-* the
-* supported
-* hardware
+* Bose Soundtouch (see official homepage for a [list of available devices](https://www.bose.de/de_de/products/speakers/smart_home/soundtouch_family.html))
 
 ## Configuration
 
 ### plugin.yaml
+The plugin can be configured with the following parameters:
 
-Please refer to the documentation generated from plugin.yaml metadata.
+| Parameter  | Description | Required
+| ------------- | ------------- | ------------- |
+| class_name  | Must be set to `BoseSoundtouch`  | Yes  |
+| class_path  | Must be set to `plugins.bose_soundtouch`  | Yes  |
+| ip  | IP address of Bose Soundtouch system. e.g. `192.168.2.28`  | Yes  |
+| port  | Port of Bose Soundtouch system. e.g. `8090`  | -  |
+| cycle_time  | Bose Soundtouch system will we queried every X seconds. e.g. `10`  | - |
 
+The following example can be used to setup a device:
+
+```yaml
+bose_soundtouch:
+    class_name: BoseSoundtouch
+    class_path: plugins.bose_soundtouch
+    ip: 192.168.2.28
+```
 
 ### items.yaml
 
-Please refer to the documentation generated from plugin.yaml metadata.
-```
-%YAML 1.2
----
+The plugin provides ready to use structs for easy integration into your item configuration.
+
+| Item  | Description |
+| ------------- | ------------- |
+| actions  | These items trigger basic control functions (Power On / Off, Play, Pause, Mute, Next / Previous Track, ...).  |
+| presets  | (read only) Get information about the presets  |
+| status  | (read only) Get information about the status (Current Song, Artwork, Source,...)   |
+| volume  | Control volume of the device.   |
+
+Please see the following example:
+
+```yaml
 BoseSoundtouch:
   actions:
     struct: bose_soundtouch.actions
@@ -56,46 +79,11 @@ BoseSoundtouch:
     struct: bose_soundtouch.volume
 ```
 
-### logic.yaml
-Please refer to the documentation generated from plugin.yaml metadata.
-
-
 ## Methods
-Please refer to the documentation generated from plugin.yaml metadata.
+n/a
+
+# Appendix
+- [Bose SoundTouch API Reference](https://developer.bose.com/guides/bose-soundtouch-api/bose-soundtouch-api-reference)
+- [Libsoundtouch’s documentation](https://libsoundtouch.readthedocs.io/en/latest/)
 
 
-## Examples
-
-If you have extensive examples, you could describe them here.
-
-
-## Web Interfaces
-
-For building a web interface for a plugin, we deliver the following 3rd party components with the HTTP module:
-
-   * JQuery 3.4.1: 
-     * JS: &lt;script src="/gstatic/js/jquery-3.4.1.min.js"&gt;&lt;/script&gt;
-   * Bootstrap : 
-     * CSS: &lt;link rel="stylesheet" href="/gstatic/bootstrap/css/bootstrap.min.css" type="text/css"/&gt; 
-     * JS: &lt;script src="/gstatic/bootstrap/js/bootstrap.min.js"&gt;&lt;/script&gt;     
-   * Bootstrap Tree View: 
-      * CSS: &lt;link rel="stylesheet" href="/gstatic/bootstrap-treeview/bootstrap-treeview.css" type="text/css"/&gt; 
-      * JS: &lt;script src="/gstatic/bootstrap-treeview/bootstrap-treeview.min.js"&gt;&lt;/script&gt;
-   * Bootstrap Datepicker v1.8.0:
-      * CSS: &lt;link rel="stylesheet" href="/gstatic/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" type="text/css"/&gt;
-      * JS:
-         * &lt;script src="/gstatic/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"&gt;&lt;/script&gt;
-         * &lt;script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.de.min.js"&gt;&lt;/script&gt;
-   * popper.js: 
-      * JS: &lt;script src="/gstatic/popper.js/popper.min.js"&gt;&lt;/script&gt;
-   * CodeMirror 5.46.0: 
-      * CSS: &lt;link rel="stylesheet" href="/gstatic/codemirror/lib/codemirror.css"/&gt;
-      * JS: &lt;script src="/gstatic/codemirror/lib/codemirror.js"&gt;&lt;/script&gt;
-   * Font Awesome 5.8.1:
-      * CSS: &lt;link rel="stylesheet" href="/gstatic/fontawesome/css/all.css" type="text/css"/&gt;
-
- For addons, etc. that are delivered with the components, see /modules/http/webif/gstatic folder!
- 
- If you are interested in new "global" components, contact us. Otherwise feel free to use them in your plugin, as long as
- the Open Source license is ok.
- 
