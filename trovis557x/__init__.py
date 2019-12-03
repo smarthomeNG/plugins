@@ -162,7 +162,7 @@ class trovis557x(SmartPlugin):
         return found
 
 
-    # Variablen etc initialisieren (wird wird von __init__ gerufen)
+    # Variablen etc initialisieren (wird von __init__ gerufen)
     def init_vars(self):
         
         self._model = self.get_parameter_value('model')
@@ -186,7 +186,7 @@ class trovis557x(SmartPlugin):
         self._trovis_itemlist = {}
 
 
-    # Schnittstelle initialisieren (wird wird von __init__ gerufen)
+    # Schnittstelle initialisieren (wird von __init__ gerufen)
     def init_trovis(self):
         try:
             # self._modbus_debug = False  #ToDo
@@ -268,10 +268,16 @@ class trovis557x(SmartPlugin):
                 wert = str('{0:.'+str(digits)+'f}').format((buswert*faktor)/10**digits)
 
             elif typ == 'Zahl':
-                if digits == 0:
-                    wert = int(str('{0:.'+str(digits)+'f}').format((buswert*faktor)))
+                busmin = int(alle_details['Busmin'])
+                # 16bit-Register auf negativen Wert prüfen (z.B. Temperaturen)
+                if busmin < 0 and buswert > 32767:
+                    signed_int = buswert - 65536
                 else:
-                    wert = float(str('{0:.'+str(digits)+'f}').format((buswert*faktor)))
+                    signed_int = buswert
+                if digits == 0:
+                    wert = int(str('{0:.'+str(digits)+'f}').format((signed_int*faktor)))
+                else:
+                    wert = float(str('{0:.'+str(digits)+'f}').format((signed_int*faktor)))
 
             elif typ == 'Datum':
                 if len(str(buswert)) == 3:
