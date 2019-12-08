@@ -164,6 +164,7 @@ item_structs:
     actual:
       type: num
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: volume.actual
     muted:
       type: bool
@@ -174,46 +175,57 @@ item_structs:
     power_on:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.power_on
     power_off:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.power_off
     select_preset:
       type: num
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.select_preset
     play:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.play
     pause:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.pause
     mute:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.mute
     next_track:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.next_track
     previous_track:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.previous_track
     shuffle:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.shuffle
     repeat_all:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.repeat_all
     repeat_off:
       type: bool
       visu_acl: rw
+      enforce_updates: True
       bose_soundtouch_action: actions.repeat_off
 
 plugin_functions: NONE
