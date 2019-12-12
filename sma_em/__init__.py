@@ -39,7 +39,7 @@ class SMA_EM(SmartPlugin):
     MCAST_GRP = '239.12.255.254'
     MCAST_PORT = 9522
 
-    def __init__(self, smarthome, serial, time_sleep=5):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
@@ -47,11 +47,10 @@ class SMA_EM(SmartPlugin):
         :param serial: Serial of the SMA Energy Meter
         :param time_sleep: The time in seconds to sleep after a multicast was received
         """
-        self._sh = smarthome
         self.logger = logging.getLogger(__name__)
         self._items = {}
-        self._time_sleep = int(time_sleep)
-        self._serial = serial
+        self._time_sleep = self.get_parameter_value('time_sleep')
+        self._serial = self.get_parameter_value('serial')
 
         # prepare listen to socket-Multicast
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
