@@ -389,6 +389,7 @@ class SMA_EM(SmartPlugin):
 # ------------------------------------------
 
 import cherrypy
+import json
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -423,3 +424,26 @@ class WebInterface(SmartPluginWebIf):
                            interface=None, item_count=len(self.plugin.get_items()),
                            plugin_info=self.plugin.get_info(), tabcount=1, tab1title="SMA EM Items (%s)" % len(self.plugin.get_items()),
                            p=self.plugin)
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+        # get the new data
+            data = {}
+            for key, item in self.plugin.get_items().items():
+                data[item.id()+"_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            # return it as json the the web page
+            return json.dumps(data)
+        else:
+            return

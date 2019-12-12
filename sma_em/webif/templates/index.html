@@ -1,5 +1,5 @@
 {% extends "base_plugin.html" %}
-
+{% set update_interval = 3000 %}
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
 
@@ -26,6 +26,21 @@
 </table>
 {% endblock %}
 
+{% block pluginscripts %}
+<script>
+    function handleUpdatedData(response, dataSet=null) {
+        if (dataSet === 'devices_info' || dataSet === null) {
+            var objResponse = JSON.parse(response);
+            {% for key, item in p.get_items().items() %}
+            shngInsertText ('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+            shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+            shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
+        }
+    }
+</script>
+{% endblock pluginscripts %}
+
 {% block bodytab1 %}
 
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
@@ -49,9 +64,9 @@
 						<td class="py-1">{{ item.property.path }}</td>
 						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
+						<td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
