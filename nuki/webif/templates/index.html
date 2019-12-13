@@ -70,6 +70,46 @@
             shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update']);
             shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change']);
             {% endfor %}
+
+            {% for item, value in p.get_action_items().items() %}
+            switch (objResponse['{{ item.id() }}_value']) {
+                case 0:
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('none') }})';
+                    break;
+                case 1:
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('unlock') }})';
+                    break;
+                case 2:
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('lock') }})';
+                    break;
+                case 3:
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('unlatch') }})';
+                    break;
+                case 4:
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('lockAndGo') }})';
+                    break;
+                case 5:
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('lockAndGoWithUnlatch') }})';
+                    break;
+            }
+            shngInsertText ('{{ item.id() }}_value', newValue);
+            shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update']);
+            shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change']);
+            {% endfor %}
+
+            {% for item, value in p.get_battery_items().items() %}
+            switch (objResponse['{{ item.id() }}_value']) {
+                case 0:
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('Batteries are good. No need to replace it.') }})';
+                    break;
+                case 1:
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('Batteries are low. Please replace as soon as possible!') }})';
+                    break;
+            }
+            shngInsertText ('{{ item.id() }}_value', newValue);
+            shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update']);
+            shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change']);
+            {% endfor %}
         }
     }
 </script>
@@ -155,7 +195,7 @@
 						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ item.property.enforce_updates }}</td>
 						<td class="py-1">{{ value }}</td>
-						<td class="py-1" >
+						<td id="{{ item.id() }}_value" class="py-1" >
 							{{ item() }}
 							{% if item() == 0 %}({{ _('none') }}){% endif %}
 							{% if item() == 1 %}({{ _('unlock') }}){% endif %}
@@ -164,8 +204,8 @@
 							{% if item() == 4 %}({{ _('lockAndGo') }}){% endif %}
 							{% if item() == 5 %}({{ _('lockAndGoWithUnlatch') }}){% endif %}
 						</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1 pr-5" style="width: 400px;">
 							<form>
 								<div class="input-group-sm input-group">
@@ -217,13 +257,13 @@
 						<td class="py-1">{{ item.property.path }}</td>
 						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ value }}</td>
-						<td class="py-1">
+						<td id="{{ item.id() }}_value" class="py-1">
 							{{ item() }}
 							{% if item() == 0 %}({{ _('Batteries are good. No need to replace it.') }}){% endif %}
 							{% if item() == 1 %}({{ _('Batteries are low. Please replace as soon as possible!') }}){% endif %}
 						</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
