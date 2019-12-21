@@ -500,16 +500,16 @@ item_structs:
                 enforce_updates: True
 
             up:
-                type: bool
+                type: num
                 enforce_updates: True
                 visu_acl: rw
-                squeezebox_send: <playerid> button volup
+                squeezebox_send: <playerid> mixer volume +{}
 
             down:
-                type: bool
+                type: num
                 enforce_updates: True
                 visu_acl: rw
-                squeezebox_send: <playerid> button voldown
+                squeezebox_send: <playerid> mixer volume -{}
 
             low:
                 type: num
@@ -541,7 +541,7 @@ item_structs:
             on_change:
                 - .song = False if not value == 1 else True
                 - .playlist = False if not value == 2 else True
-                - .none = False if not value == 0 else True
+                - .none = True if value == 0 else False
 
             song:
                 type: bool
@@ -561,6 +561,9 @@ item_structs:
                 enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist repeat 0
 
+            dummy:
+                type: bool
+
         shuffle:
             type: num
             visu_acl: rw
@@ -571,7 +574,7 @@ item_structs:
             on_change:
                 - .song = False if not value == 1 else True
                 - .album = False if not value == 2 else True
-                - .none = False if not value == 0 else True
+                - .none = True if value == 0 else False
 
             song:
                 type: bool
