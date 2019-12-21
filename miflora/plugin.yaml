@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins_doc/config/miflora.html        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1027133-plugin-miflora-mi-plant-flowers-tester-light-monitor
 
-    version: 1.6.1                 # Plugin version
+    version: 1.6.2                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -27,6 +27,17 @@ parameters:
         description:
             de: 'Bluetooth-Adresse des MiFlora Pflanzensensors (mit "hcitool lescan" herauszufinden).'
             en: 'Bluetooth address of MiFlora plant sensor (find out with "hcitool lescan").'
+    bt_library:
+        type: str
+        mandatory: False
+        default: 'bluepy'
+        description:
+            de: 'Bluetooth Bibliothek, die verwendet werden soll: gatttool (deprecated), bluepy (empfohlen), pygatt.'
+            en: 'Bluetooth library, which shall be used: gatttool (deprecated), bluepy (recommended), pygatt.'
+        valid_list:
+            - 'gatttool'
+            - 'bluepy'
+            - 'pygatt'
     cycle:
         type: int
         default: 300
