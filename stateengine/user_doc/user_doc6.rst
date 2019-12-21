@@ -311,6 +311,7 @@ komplexerer Wertdeklarationen deutlich vereinfacht. Diese Templates müssen wie 
 auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
 
 .. code-block:: yaml
+
     rules:
       se_template_test: se_eval.get_relative_itemid('wetterstation.helligkeit_{}'.format(se_eval.get_relative_itemvalue('..state_name')))
       se_item_specialitem: meinitem.specialitem # declare an existing item here
