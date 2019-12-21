@@ -86,6 +86,7 @@ komplexerer Abfragen deutlich vereinfacht. Diese Templates müssen wie se_item/s
 auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
 
 .. code-block:: yaml
+
     rules:
       se_template_test: eval:sh...settings.max_bright' - 20
       se_item_specialitem: meinitem.specialitem # declare an existing item here
