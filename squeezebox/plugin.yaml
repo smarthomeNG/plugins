@@ -278,7 +278,7 @@ item_structs:
                 on_update: .. = value.split(":")[1]
 
             query:
-                type: foo
+                type: bool
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: favorites items
@@ -500,16 +500,16 @@ item_structs:
                 enforce_updates: True
 
             up:
-                type: bool
+                type: num
                 enforce_updates: True
                 visu_acl: rw
-                squeezebox_send: <playerid> button volup
+                squeezebox_send: <playerid> mixer volume +{}
 
             down:
-                type: bool
+                type: num
                 enforce_updates: True
                 visu_acl: rw
-                squeezebox_send: <playerid> button voldown
+                squeezebox_send: <playerid> mixer volume -{}
 
             low:
                 type: num
@@ -541,25 +541,28 @@ item_structs:
             on_change:
                 - .song = False if not value == 1 else True
                 - .playlist = False if not value == 2 else True
-                - .none = False if not value == 0 else True
+                - .none = True if value == 0 else False
 
             song:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist repeat 1
 
             playlist:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist repeat 2
 
             none:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist repeat 0
+
+            dummy:
+                type: bool
 
         shuffle:
             type: num
@@ -571,24 +574,24 @@ item_structs:
             on_change:
                 - .song = False if not value == 1 else True
                 - .album = False if not value == 2 else True
-                - .none = False if not value == 0 else True
+                - .none = True if value == 0 else False
 
             song:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist shuffle 1
 
             album:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist shuffle 2
 
             none:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: 'yes'
                 squeezebox_send: <playerid> playlist shuffle 0
 
         play:

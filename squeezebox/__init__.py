@@ -147,7 +147,6 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
         # be careful: as the server echoes ALL comands not using this will
         # result in a loop
         if caller != 'LMS':
-            sendcommand = True
             cmd = self._resolv_full_cmd(item, 'squeezebox_send').split()
             if not self._check_mac(cmd[0]):
                 self.logger.debug("Command {0} does not include player_id. Is that on purpose?".format(cmd))
@@ -158,24 +157,28 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
 
             # special handling for bool-types who need other comands or values
             # to behave intuitively
+            callersource = '{}:{}'.format(caller, source.split(".")[-1:][0])
+            condition1 = cmd[1] == 'playlist' and cmd[2] in ['shuffle', 'repeat']
+            condition2 = cmd[1] == 'playlist' and cmd[2] == 'shuffle' and callersource == 'on_change:shuffle'
+            condition3 = cmd[1] == 'playlist' and cmd[2] == 'repeat' and callersource == 'on_change:repeat'
+
+            if (len(cmd) >= 2) and not item() and (condition2 or condition3):
+                # If shuffle or playlist item got updates by on_change nothing should happen to prevent endless loops
+                self.logger.debug("Command {0} ignored to prevent repeat/shuffle command loops".format(cmd))
+                return
             if (len(cmd) >= 2) and not item():
                 if (cmd[1] == 'play'):
                     # if 'play' was set to false, send 'stop' to allow
                     # single-item-operation
                     cmd[1] = 'stop'
                     value = 1
-                if (cmd[1] == 'playlist') and (cmd[2] in ['shuffle', 'repeat']):
+                if condition1:
                     # if a boolean item of [...] was set to false, send '0' to disable the option whatsoever
                     # replace cmd[3], as there are fixed values given and
                     # filling in 'value' is pointless
-                    #cmd[3] = '0'
-                    sendcommand = False
-            if sendcommand is True:
-                self._send(' '.join(urllib.parse.quote(cmd_str.format(value), encoding='iso-8859-1')
-                           for cmd_str in cmd))
-            else:
-                self.logger.debug("Command {0} not sent because item value is set to 0".format(cmd))
-
+                    cmd[3] = '0'
+            self._send(' '.join(urllib.parse.quote(cmd_str.format(value), encoding='iso-8859-1')
+                       for cmd_str in cmd))
 
     def _send(self, cmd):
         # replace german umlauts
