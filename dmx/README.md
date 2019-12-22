@@ -7,11 +7,8 @@ This plugin needs one of the supported DMX interfaces:
    * [NanoDMX](http://www.dmx4all.de/)
    * [DMXking](http://www.dmxking.com) it should work with other Enttec Pro compatible as well.
 
-and pyserial.
-
-```bash
-apt-get install python-serial
-```
+The communication with the interface is handled via serial interface. Thus Python serial driver is need as well.
+A requirements file is provided to easy the installation.
 
 ## Configuration
 
@@ -21,24 +18,27 @@ apt-get install python-serial
 dmx:
     class_name: DMX
     class_path: plugins.dmx
-    tty: /dev/usbtty...
+    serialport: /dev/usbtty...
     # interface = nanodmx
 ```
 
-With ``interface``  you could choose between ``nanodmx`` and ``enttec``. By default nanodmx is used.
+With ``interface``  it can be chosen between ``nanodmx`` and ``enttec``. By default nanodmx is used.
 
-You have to adapt the tty to your local enviroment. In my case it's ``/dev/usbtty-1-2.4`` because I have the following udev rule:
+The serialport must match the real interface. On Linux it might be necessary to create a udev rule.
+For a NanoDMX device provided via ``/dev/usbtty-1-2.4`` the following udev rule could match:
 
 ```bash
 # /etc/udev/rules.d/80-smarthome.rules
 SUBSYSTEMS=="usb",KERNEL=="ttyACM*",ATTRS{product}=="NanoDMX Interface",SYMLINK+="usbtty-%b"
 ```
 
+Please consult the online help for Linux on how to properly create udev rules.
+
 ### items.yaml
 
 #### dmx_ch
 
-With this attribute you could specify one or more DMX channels.
+With this attribute one or more DMX channels given as integer can be specified
 
 ### Example
 
@@ -48,17 +48,23 @@ living_room:
     dimlight:
         type: num
         dmx_ch:
-          - '10'
-          - '11'
+          - 10
+          - 11
+
+    dimlight_reading:
+        type: num
+        dmx_ch: 23
 ```
 
-Now you could simply use:
-``sh.living_room.dimlight(80)`` to dim the living room light.
+In a logic an expression like  ``sh.living_room.dimlight(80)`` will send ``80`` to channels ``10`` and ``11`` to dim the living room light
+as ``sh.living_room.dimlightreading(50)`` will send ``50`` to channel ``23`` to dim the living room reading light.
 
-## Functions
+
+## Methods
 
 ### send(channel, value)
 
-Sends the value to the given dmx channel. The value could be ``0`` to ``255``.
+Sends the value to the given dmx channel. The value may be in range from ``0`` to ``255``.
 
-Example: ``sh.dmx.send(12, 255)``
+Example: ``sh.dmx.send(12, 255)`` will send the value ``255`` to channel ``12``
+
