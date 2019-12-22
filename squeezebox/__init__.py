@@ -157,10 +157,13 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
 
             # special handling for bool-types who need other comands or values
             # to behave intuitively
-            callersource = '{}:{}'.format(caller, source.split(".")[-1:][0])
+            if isinstance(source, str):
+                newsource = source.split(".")[-1:][0]
+            else:
+                newsource = 'None'
             condition1 = cmd[1] == 'playlist' and cmd[2] in ['shuffle', 'repeat']
-            condition2 = cmd[1] == 'playlist' and cmd[2] == 'shuffle' and callersource == 'on_change:shuffle'
-            condition3 = cmd[1] == 'playlist' and cmd[2] == 'repeat' and callersource == 'on_change:repeat'
+            condition2 = cmd[1] == 'playlist' and cmd[2] == 'shuffle' and caller == 'on_change' and newsource == 'shuffle'
+            condition3 = cmd[1] == 'playlist' and cmd[2] == 'repeat' and caller == 'on_change' and newsource == 'repeat'
 
             if (len(cmd) >= 2) and not item() and (condition2 or condition3):
                 # If shuffle or playlist item got updates by on_change nothing should happen to prevent endless loops
