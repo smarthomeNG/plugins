@@ -3,19 +3,19 @@ plugin:
     # Global plugin attributes
     type: gateway                  # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Unterstützung für Smartmeter, die DLMS (Device Language Message Specification, IEC 62056-21) nutzen und OBIS codes liefern'
+        de: 'Unterstützung für Smartmeter, die DLMS (Device Language Message Specification, IEC 62056-21) nutzen und OBIS Codes liefern'
         en: 'Support for smartmeter using DLMS (Device Language Message Specification, IEC 62056-21) and delivering OBIS codes'
     maintainer: bmxp (JuMi2006)
     tester: NONE                   # Who tests this plugin?
     state: ready
     keywords: dlms obis smartmeter
     documentation: http://smarthomeng.de/user/plugins/dlms/user_doc.html
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
 
     version: 1.5.3                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
-#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True          # plugin supports multi instance
+    #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
     restartable: unknown
     classname: DLMS                # class containing the plugin
 
