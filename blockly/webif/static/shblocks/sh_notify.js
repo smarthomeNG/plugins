@@ -6,8 +6,8 @@
             <block type="shnotify_pushbullit"></block>
  */
 'use strict';
-goog.provide('Blockly.Blocks.sh_logic');
-goog.require('Blockly.Blocks');
+//goog.provide('Blockly.Blocks.sh_logic');
+//goog.require('Blockly.Blocks');
 
 /**
  * https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#c2zkf2
