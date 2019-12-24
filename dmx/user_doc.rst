@@ -51,7 +51,7 @@ Mit diesem Attribut können ein oder mehrere DMX-Kanäle als Integer angegeben w
 angegeben
 
 Beispiel
-~~~~~~~
+~~~~~~~~
 
 .. code:: yaml
 
@@ -67,20 +67,20 @@ Beispiel
            type: num
            dmx_ch: 23
 
-In einer Logik führt ein Ausdruck wie ``sh.living_room.dimlight(80)`` dazu das 
-``80`` zu den Kanälen ``10`` und ``11`` gesendet wird, um das Wohnzimmerlicht zu dimmen. 
+In einer Logik führt ein Ausdruck wie ``sh.living_room.dimlight(80)`` dazu das
+``80`` zu den Kanälen ``10`` und ``11`` gesendet wird, um das Wohnzimmerlicht zu dimmen.
 Entsprechend sendet der Ausdruck ``sh.living_room.dimlightreading(50)`` eine `50`` an den Kanal
 ``23``, um das Leselicht im Wohnzimmer zu dimmen.
 
 Methoden
--------
+--------
 
 send(Kanal, Wert)
 ~~~~~~~~~~~~~~~~~
 
 Sendet den Wert an den angegebenen DMX-Kanal. Der Wert kann im Bereich von ``0`` bis ``255`` liegen.
 
-Beispiel: 
+Beispiel:
 ``sh.dmx.send(12, 255)`` sendet den Wert ``255`` an den Kanal ``12``
 
 .. _NanoDMX: http://www.dmx4all.de/
