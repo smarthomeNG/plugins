@@ -1,34 +1,16 @@
-# Milight
-
-#### Version 1.6.0
-
-This Plugin sends changes in items value to a miLight gateway to control light settings.
-
-Some parameters have changed and are improved a little:
-
-* bri --> bricontrol, changed from Bool to String
-* off --> cutoff
-
-The best way to configure it is by using the Admin Interface
-
-#### Todo:
-
-* The webinterface needs to be populated
-* A better check for Broadcast IP should be implemented
-* A user_doc.rst needs to be written
+# miLight
 
 ## Requirements
 
-### Supported Hardware
+none
+
+## Supported Hardware
 
 miLight 2,4 GHz controlled Light Bulbs or LED RGB-W Strip Controller with WLAN Interface / WiFi Bridge receiver V3.0
 (V2.0 interfaces should be backward compatible but using different default UDP port)
-
-Lamps are sold under different brands MiLight, Easybulb, LimitlessLED
-The plugin was tested with recently released RGB-W Lamps
-API description was posted at http://www.limitlessled.com/dev/ formerly but it was taken 
-offline and excluded from internet archvie as well. So at https://github.com/BKrajancic/LimitlessLED-DevAPI something is saved
-for reference but last entries are from 2017.
+Lamps are sold under different brands MiLight, Easybulb,LimitlessLED
+plugin tested with recently released RGB-W Lamps
+API decription could be found here:  http://www.limitlessled.com/dev/
 
 ## Configuration
 
@@ -49,26 +31,26 @@ milight:
 
 #### udp_ip
 
-Specifies IP adress of miLight gateway - if not specified broadcast to 255.255.255.255 (all miLight gateways)
+specifies IP adress of miLight gateway - if not specified broadcast to 255.255.255.255 ( all miLight gateways)
 
 #### udp_port
 
-Specifies communication port - V3 is using 8899 by default
+specifies Communication port - V3 is using 8899 by default
 
-#### bricontrol
+#### bri
 
-Specifies if RGB settings should only impact HUE or HUE and LUM (brightness)
+specifies if RGB settings should only impact HUE or HUE and LUM (brightness)
 on will change color and brightness  - off only color
 values: on/off
 
-#### cutoff
+#### off
 
-If bricontrol is enabled, this value specifies threshold level for turn off the light (e.g. below brightness 10 turn off)
-Needed to give a numeric value here.
+if bri is enabled, this value specifies threshold level for turn off the light ( e.g. below brightness 10 turn off)
+values: num
 
 #### hue_calibrate
 
-Fine calibrating of color (HUE) to match with different color wheels / tables as input
+fine calibrating of color (HUE) to match with different color wheels / tables as input
 value: 0 to 1   eg. 0.005 to adjust 0,5% clockwise or  -0.005 to adjust 0,05% counter-clockwise
 
 
@@ -76,49 +58,49 @@ value: 0 to 1   eg. 0.005 to adjust 0,5% clockwise or  -0.005 to adjust 0,05% co
 
 #### milight_sw
 
-Specifies channel that should be SWITCHED(on/off)
+specifies channel that should be SWITCHED(on/off )
  0 = all   1-4 like on remote      1 | 2   controls group 1 and 2
-Item type must be bool
+type must be bool
 
 
 #### milight_dim
 
-Specifies channel that should be DIMMED  (0...255)
+specifies channel that should be DIMMED  ( 0...255)
 remark: miLight supports only 32 values - will be recalculated for KNX DPT5 compliance
-Item type must be num  (integer 0 .. 255)
+type must be num  (integer 0 .. 255)
    1-4 like on remote   multiple input :   1 | 3   controls group 1 and 3
 
 #### milight_col
 
-Specifies channel to change HUE COLOR ring (0...255)
+specifies channel to change HUE COLOR ring (0...255)
 change will switch from white to RGB color
-Item type must be num  (integer 0 .. 255)
+type must be num  (integer 0 .. 255)
 
 #### milight_rgb
 
-Specifies channel that should be switched to defined RGB value. Calculated Luminanz (Brightness)
+specifies channel that should be switched to defined RGB value. Calculated Luminanz (Brightness)
 0 = all   1-4 like on remote      1 | 2   controls group 1 and 2
-Item type must be list with 3 objects (integer 0 .. 255) like  [255;128;0]
+type must be list with 3 objects (integer 0 .. 255) like  [255;128;0]  
 
 
 #### milight_white
 
-Specifies channel that should be switched to WHITE (on/off )
+specifies channel that should be switched to WHITE (on/off )
  0 = all   1-4 like on remote      1 | 2   controls group 1 and 2
 type must be bool
 
 #### milight_disco
 
-Activates and toggles DISCO modes (toggle )
+activates and toggles DISCO modes (toggle )
   1-4 like on remote      1 | 2   controls group 1 and 2
 type must be bool
 enforce_updates = yes     recommended
 
 #### milight_disco_up / milight_disco_down
 
-Controls SPEEDof DISCO mode (increase/ decrease)
+controls SPEEDof DISCO mode (increase/ decrease)
   1-4 like on remote      1 | 2   controls group 1 and 2
-Item type must be bool
+type must be bool
 enforce_updates: yes     recommended
 
 #### Example
@@ -229,12 +211,11 @@ mylight:
               - '2'
 ```
 
-Hint: On and bricontrol are coupled, like a typical KNX dimmer.
+Hint: on and bri are coupled, like a typical KNX dimmer.
 
 ### logic.yaml
 
-Since SmartVISU does not support table input for RGB selection, following logic 
-could be useful to calculate RGB table out of 3 seperate input for R; G and B values
+Since SmartVISU does not support table input for RGB selection, following logic could be useful to calculate RGB table out of 3 seperate input for R; G and B values
 
 #### Example
 
@@ -257,3 +238,9 @@ g=sh.g()
 b=sh.b()
 sh.rgb ([r,g,b])
 ```
+
+## Methods
+
+### authorizeuser()
+
+No methods attributes.
