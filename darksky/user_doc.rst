@@ -3,8 +3,9 @@
 .. index:: Wetter; darksky
 .. index:: struct; darksky
 
+=======
 darksky
-#######
+=======
 
 Konfiguration
 =============
@@ -50,6 +51,7 @@ Besonderheiten
 Zeiten werden bei darky als Epoch Time angegeben, diese Zeit ist in den struct als ``time_epoch`` hinterlegt. In den ``time`` Items wird sie durch folgende Konvertierung umformatiert. Wer möchte, kann dieses Muster für die anderen Zeitangaben (Sonnenauf/untergang, etc.) nutzen. Das unten definierte ``eval`` Attribut kann überschrieben bzw. bei den relevanten Items hinzugefügt werden. Unabhängig davon haben alle Items auch einen ``weekday`` und ``date`` Eintrag, die direkt abgefragt werden können.
 
 .. code-block:: yaml
+
     time:
         type: str
         eval: datetime.datetime.fromtimestamp(value).strftime('%HH:%MM')
