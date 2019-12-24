@@ -35,7 +35,7 @@ Außerdem können Kalender Items zugewiesen werden, indem das entsprechende Attr
     # items/item.yaml
     calendaritem:
         type: bool
-		    ical_calendar: test_downloaded.ics
+            ical_calendar: test_downloaded.ics
 
 
 Funktionen
@@ -50,38 +50,39 @@ Beispiel
 ========
 
 .. code-block:: python
-	today = sh.now().date()
 
-	# To check a calendar file use one of the following three options:
+    today = sh.now().date()
+
+    # To check a calendar file use one of the following three options:
 	# a) Local file
 	dir = sh.get_basedir()
-	calendarfile = '{}/var/ical/holidays.ics'.format(dir)
-	holidays = sh.ical(calendarfile)
+    calendarfile = '{}/var/ical/holidays.ics'.format(dir)
+    holidays = sh.ical(calendarfile)
 
-	# b) Reference a calendar defined in the etc/plugin.yaml. Query tomorrow
+    # b) Reference a calendar defined in the etc/plugin.yaml. Query tomorrow
 	# The second found entry for an event should be considered.
 	holidays = sh.ical('holidays', delta=0, offset=1, prio=2)
 
-	# c) http(s) file, disabled https verification.
+    # c) http(s) file, disabled https verification.
 	holidays = sh.ical('https://cal.server/holidays.ics', verify=false)
 
-	# Test if there is an entry for today or not.
+    # Test if there is an entry for today or not.
 	if today in holidays:
-		logger.info('There is a calendar entry for today.')
-	else:
-		logger.info('No entry for today.')
+        logger.info('There is a calendar entry for today.')
+    else:
+        logger.info('No entry for today.')
 
-	# list all events of online calendar using given or default delta and offset
+    # list all events of online calendar using given or default delta and offset
 	for day in holidays:
-		logger.info("Date: {0}".format(day))
-		for event in holidays[day]:
-			start = event['Start']
-			summary = event['Summary']
-			cal_class = event['Class']
-			logger.info("Time: {0} {1}".format(start, summary))
-			if 'testword' in str(summary).lower():
-				logger.info('calendar entry with testword found')
-				if start.date() == tomorrow:
-					logger.info('Testword calendar entry starts tommorrow')
-			if 'private' in str(cal_class).lower():
-				logger.info('Private calendar entry found.')
+        logger.info("Date: {0}".format(day))
+        for event in holidays[day]:
+            start = event['Start']
+            summary = event['Summary']
+            cal_class = event['Class']
+            logger.info("Time: {0} {1}".format(start, summary))
+            if 'testword' in str(summary).lower():
+                logger.info('calendar entry with testword found')
+                if start.date() == tomorrow:
+                    logger.info('Testword calendar entry starts tommorrow')
+            if 'private' in str(cal_class).lower():
+                logger.info('Private calendar entry found.')
