@@ -43,12 +43,8 @@ item_attributes:
             de: 'Variablendefinition für die Abfrage'
             en: 'variable name for query'
 
-item_structs:
-    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+item_structs: NONE
 
-plugin_functions:
-    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+plugin_functions: NONE
 
-logic_parameters:
-    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
-
+logic_parameters: NONE

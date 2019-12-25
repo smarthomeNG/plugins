@@ -44,30 +44,19 @@ class SolarLog(SmartPlugin):
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-
-        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
-        a reference to the sh object any more.
-
-        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
-        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
-        use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
-        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
-        returns the value in the datatype that is defined in the metadata.
         """
+
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
+
+        self._sh = sh
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.host = self.get_parameter_value('host')
         self.cycle = self.get_parameter_value('cycle')
 
         # Initialization code goes here
-
         self._count_inverter = 0
         self._count_strings = []
         self._items = {}
@@ -360,7 +349,7 @@ class SolarLog(SmartPlugin):
         return groups if read_all else None
 
     def _read(self, filename):
-        url = self._host + filename
+        url = self.host + filename
         return self._sh.tools.fetch_url(url).decode(encoding='latin_1')
 
 
