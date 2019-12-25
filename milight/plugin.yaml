@@ -71,32 +71,56 @@ item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     milight_sw:
         type: list(int)
-        
+        description:
+            de: 'Spezifiziert den Kanal der geschaltet werden soll'
+            en: 'Specifies channel that should be SWITCHED(on/off)'
+            
     milight_dim:
         type: list(int)
+        description:
+            de: 'Spezifiziert den Kanal der gedimmt werden soll'
+            en: 'Specifies channel that should be dimmed'
         
     milight_col:
         type: list(int)
-        
+        description:
+            de: 'Spezifiziert den Kanal dessen Farbton geändert werden soll'
+            en: 'Specifies channel to change hue color ring'
+
     milight_rgb:
         type: list(int)
-        
+        description:
+            de: 'Spezifiziert den Kanal der auf definierten RGB Wert gesetzt werden soll'
+            en: 'Specifies channel that should be switched to defined RGB value'
+
     milight_white:
         type: list(int)
+        description:
+            de: 'Spezifiziert den Kanal der auf weiß gesetzt werden soll'
+            en: 'Specifies channel that should be switched to white'
         
     milight_disco:
         type: list(int)
+        description:
+            de: 'Aktiviert und invertiert Disco Modus'
+            en: 'Activates and toggles DISCO modes'
         
     milight_disco_up:
         type: list(int)
-        
+        description:
+            de: 'Erhöht die Geschwindigkeit des Disco Modus'
+            en: 'Increases Speed of DISCO mode'
+
     milight_disco_down:
         type: list(int)
+        description:
+            de: 'Vermindert die Geschwindigkeit des Disco Modus'
+            en: 'Decreases Speed of DISCO mode'
     
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
-plugin_functions:
+plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 
 logic_parameters: NONE

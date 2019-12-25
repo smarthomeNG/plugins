@@ -116,7 +116,7 @@ enforce_updates = yes     recommended
 
 #### milight_disco_up / milight_disco_down
 
-Controls SPEEDof DISCO mode (increase/ decrease)
+Controls SPEED of DISCO mode (increase/ decrease)
   1-4 like on remote      1 | 2   controls group 1 and 2
 Item type must be bool
 enforce_updates: yes     recommended
