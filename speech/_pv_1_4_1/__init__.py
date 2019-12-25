@@ -1,31 +1,23 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-# Copyright 2013-2016 Axel Otterstätter        panzaeron @ knx-user-forum
-# Copyright 2019 Bernd Meiners                      Bernd.Meiners@mail.de
+# Copyright 2016 KNX-User-Forum e.V.            http://knx-user-forum.de/
 #########################################################################
-#  This file is part of SmartHomeNG.
+#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
-#  upwards.
-#
-#  SmartHomeNG is free software: you can redistribute it and/or modify
+#  SmartHome.py is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHomeNG is distributed in the hope that it will be useful,
+#  SmartHome.py is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
-#
+#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
-
-from lib.module import Modules
-from lib.model.smartplugin import *
 
 import logging, sys, re, os
 import socket
@@ -34,8 +26,8 @@ import urllib.parse
 import urllib.error
 import lib.connection
 
-logger = logging.getLogger(__name__)
-
+logger = logging.getLogger('')
+                
 class HTTPHandler(lib.connection.Stream):
 
     def __init__(self, smarthome, parser, dest, sock, source):
@@ -74,7 +66,7 @@ class HTTPDispatcher(lib.connection.Server):
         lib.connection.Server.__init__(self, ip, port)
         self._sh = smarthome
         self.parser = parser
-        self.dest = "http:{}:{}".format(ip,port)
+        self.dest = 'http:' + ip + ':' + port
         self.connect()
 
     def handle_connection(self):
@@ -83,71 +75,35 @@ class HTTPDispatcher(lib.connection.Server):
             return
         HTTPHandler(self._sh, self.parser, self.dest, sock, address)
 
-
-class Speech_Parser(SmartPlugin):
-    """
-    Main class of the Plugin. Does all plugin specific stuff and provides
-    the update functions for the items
-    """
-
-    PLUGIN_VERSION = '1.6.0'
+class Speech_Parser():
     listeners = {}
     socket_warning = 10
     socket_warning = 2
     errorMessage = False
 
+    def __init__(self, smarthome, ip='0.0.0.0', port='2788', acl='*', config_file="", default_access=""):
+        self._sh = smarthome
+        self.config = config_file
+        self.acl = self.parse_acl(acl)
+        self.default_access = default_access
+        self.add_listener(ip, port, acl)
+        logger.info("SP: Server Starts - %s:%s" % (ip, port))
 
-    def __init__(self, sh, *args, **kwargs):
-        """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-        """
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-
-        # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.ip = self.get_parameter_value('listen_ip')
-        self.port = self.get_parameter_value('listen_port')
-        self.acl = self.parse_acl(self.get_parameter_value('acl'))
-        self.default_access = self.get_parameter_value('default_access')
-        try:
-            self.config = os.path.expanduser(self.get_parameter_value('config_file'))
-        except:
-            pass
-
-        # Initialization code goes here
-        self.add_listener(self.ip, self.port, self.acl)
-        self.logger.info("SP: Server Starts - %s:%s" % (self.ip, self.port))
-
-        speech_plugin_path = os.path.dirname(os.path.realpath(__file__))
-
-        if not os.path.exists(self.config):
-            try_other_path = os.path.join( speech_plugin_path, self.config)
-            if os.path.exists(try_other_path):
-                self.config = try_other_path
+        if os.path.exists(self.config):
+            config_base = os.path.basename(self.config)
+            if config_base == "speech.py":
+                sys.path.append(os.path.dirname(os.path.expanduser(self.config)))
+                global varParse, dictError
+                from speech import varParse, dictError
             else:
-                self.logger.error("Configuration file with base path of plugin '{}' not found".format(try_other_path))
-                self._init_complete = False
-                return
-
-        config_base = os.path.basename(self.config)
-        
-        if config_base == "speech.py":
-            sys.path.append(os.path.dirname(self.config))
-            global varParse, dictError
-            from speech import varParse, dictError
-            self.logger.warning("Configuration file '{}' successfully imported".format(self.config))
+                logger.error("Configuration file (%s) error, the filename should be speech.py" % config_base)
+                return [self.errorMessage, False]
         else:
-            self.logger.error("Configuration file '{}' error, the filename should be speech.py".format(config_base))
-            self._init_complete = False
-            return
-
-        # if plugin should start even without web interface
-        self.init_webinterface()
-
+            logger.error("Configuration file not found")
+            return [self.errorMessage, False]
 
     def add_listener(self, ip, port, acl='*'):
-        dest = "http:{}:{}".format(ip,port)
+        dest = 'http:' + ip + ':' + port
         logger.info("SP: Adding listener on: {}".format(dest))
         dispatcher = HTTPDispatcher(self._sh, self.parse_input, ip, port)
         if not dispatcher.connected:
@@ -163,25 +119,77 @@ class Speech_Parser(SmartPlugin):
             return [acl]
         return acl
 
+    def parse_input(self, source, dest, data):
+        if dest in self.listeners:
+            parse_text = ParseText(self._sh, data)
+            result = parse_text.parse_message()
+            if not result[0]:
+                result = result[1]
+            else:
+                errorMessage = result[0]
+                return [False, errorMessage]
+            name, value, answer, typ, varText = result
+            logger.info('Speech Parse data: '+str(data)+' Result: '+str(result))
+            #logger.debug("SP: Result: "+str(result))
+            #logger.debug("SP: Item: "+name)
+            #logger.debug("SP: Value: "+value)
+            #logger.debug("SP: Answer: "+answer)
+            #logger.debug("SP: Typ: "+typ)
+            source, __, port = source.partition(':')
+            gacl = self.listeners[dest]['acl']
+            if typ == 'item':
+                if name not in self.listeners[dest]['items']:
+                    logger.error("SP: Item '{}' not available in the listener.".format(name))
+                    return False
+                iacl = self.listeners[dest]['items'][name]['acl']
+                if iacl:
+                    if source not in iacl:
+                        logger.error("SP: Item '{}' acl doesn't permit updates from {}.".format(name, source))
+                        return False
+                elif gacl:
+                    if source not in gacl:
+                        logger.error("SP: Network acl doesn't permit updates from {}.".format(source))
+                        return False
+
+                item = self.listeners[dest]['items'][name]['item']
+                # Parameter default_access added 141207 (KNXfriend)
+                if item.conf['sp'] == 'rw' or self.default_access == 'rw':
+                    item(value, source)
+
+            elif typ == 'logic':
+                if name not in self.listeners[dest]['logics']:
+                    logger.error("SP: Logic '{}' not available in the listener.".format(name))
+                    return False
+                lacl = self.listeners[dest]['logics'][name]['acl']
+                if lacl:
+                    if source not in lacl:
+                        logger.error("SP: Logic '{}' acl doesn't permit triggering from {}.".format(name, source))
+                        return False
+                elif gacl:
+                    if source not in gacl:
+                        logger.error("SP: Network acl doesn't permit triggering from {}.".format(source))
+                        return False
+                logic = self.listeners[dest]['logics'][name]['logic']
+                logic.trigger(varText, source, value)
+            else:
+                logger.error("SP: Unsupporter key element {}. Data: {}".format(typ, data))
+                return False
+        else:
+            logger.error("SP: Destination {}, not in listeners!".format(dest))
+            return False
+        return True
+
     def run(self):
-        """
-        Run method for the plugin
-        """
-        self.logger.debug("Run method called")
         self.alive = True
 
     def stop(self):
-        """
-        Stop method for the plugin
-        """
-        self.logger.debug("Stop method called")
         self.alive = False
+
+    def parse_logic(self, logic):
+        self.parse_obj(logic, 'logic')
 
     def parse_item(self, item):
         self.parse_obj(item, 'item')
-        
-    def parse_logic(self, logic):
-        self.parse_obj(logic, 'logic')
 
     def parse_obj(self, obj, obj_type):
         # sp
@@ -202,109 +210,6 @@ class Speech_Parser(SmartPlugin):
                     self.listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
             else:
                 errorMessage = dictError['rights_error']
-
-    def parse_input(self, source, dest, data):
-        if dest in self.listeners:
-            parse_text = ParseText(self._sh, data)
-            result = parse_text.parse_message()
-            if not result[0]:
-                result = result[1]
-            else:
-                errorMessage = result[0]
-                return [False, errorMessage]
-            name, value, answer, typ, varText = result
-            self.logger.info('Speech Parse data: '+str(data)+' Result: '+str(result))
-            #logger.debug("SP: Result: "+str(result))
-            #logger.debug("SP: Item: "+name)
-            #logger.debug("SP: Value: "+value)
-            #logger.debug("SP: Answer: "+answer)
-            #logger.debug("SP: Typ: "+typ)
-            source, __, port = source.partition(':')
-            gacl = self.listeners[dest]['acl']
-            if typ == 'item':
-                if name not in self.listeners[dest]['items']:
-                    self.logger.error("SP: Item '{}' not available in the listener.".format(name))
-                    return False
-                iacl = self.listeners[dest]['items'][name]['acl']
-                if iacl:
-                    if source not in iacl:
-                        self.logger.error("SP: Item '{}' acl doesn't permit updates from {}.".format(name, source))
-                        return False
-                elif gacl:
-                    if source not in gacl:
-                        self.logger.error("SP: Network acl doesn't permit updates from {}.".format(source))
-                        return False
-
-                item = self.listeners[dest]['items'][name]['item']
-                # Parameter default_access added 141207 (KNXfriend)
-                if item.conf['sp'] == 'rw' or self.default_access == 'rw':
-                    item(value, source)
-
-            elif typ == 'logic':
-                if name not in self.listeners[dest]['logics']:
-                    self.logger.error("SP: Logic '{}' not available in the listener.".format(name))
-                    return False
-                lacl = self.listeners[dest]['logics'][name]['acl']
-                if lacl:
-                    if source not in lacl:
-                        self.logger.error("SP: Logic '{}' acl doesn't permit triggering from {}.".format(name, source))
-                        return False
-                elif gacl:
-                    if source not in gacl:
-                        self.logger.error("SP: Network acl doesn't permit triggering from {}.".format(source))
-                        return False
-                logic = self.listeners[dest]['logics'][name]['logic']
-                logic.trigger(varText, source, value)
-            else:
-                self.logger.error("SP: Unsupporter key element {}. Data: {}".format(typ, data))
-                return False
-        else:
-            self.logger.error("SP: Destination {}, not in listeners!".format(dest))
-            return False
-        return True
-
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
 
 class ParseText():
     parseText = False
@@ -369,7 +274,7 @@ class ParseText():
             if len(varVars)-1 != x:
                 reg_ex += ' '
         logger.debug("Regular Expression:\n>"+reg_ex+"<")
-        # test regular Expression on transmitted Text
+        # Test regulare Expressioin on transmited Text
         mo = re.match(reg_ex, self.parseText, re.IGNORECASE)
 
         if mo:
@@ -399,62 +304,3 @@ class ParseText():
         if not item():
             self.errorMessage = dictError['status_error']
         return item()
-
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin)
-
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            # get the new data
-            #self.plugin.beodevices.update_devices_info()
-
-            # return it as json the the web page
-            #return json.dumps(self.plugin.beodevices.beodeviceinfo)
-            pass
-        return

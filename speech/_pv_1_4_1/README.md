@@ -1,17 +1,8 @@
-# Speech
-
-#### Version 1.6.0
-
-This Plugin gets text from a smartphone running with Tasker and AutoVoice Plugin and analyses it for actions or queries with SmartHomeNG.
+# Speech Parser
 
 ## Requirements
-### Supported Hardware
 
-* An Android Smartphone with
-
-### Needed software
-
-* Tasker and AutoVoice Plugin on Android
+This plugin has no requirements or dependencies.
 
 ## Configuration
 
@@ -125,4 +116,4 @@ KNXfriend at "knx-user-forum.de" wrote that it also works with Automagic.
 * AutoVoice Pro: https://play.google.com/store/apps/details?id=com.joaomgcd.autovoice.unlock
 * Automagic (alternative for Tasker with AutoVoice, thanks for the tip from KNXfriend): https://play.google.com/store/apps/details?id=ch.gridvision.ppam.androidautomagic
 
-
+* Support Thread: http://knx-user-forum.de/forum/supportforen/smarthome-py/39857-plugin-speech-parser
