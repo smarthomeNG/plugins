@@ -1,14 +1,14 @@
 Solarlog
 ========
 
-Dieses Plugin kann eine Webseite vom SolarLog-Protokolliergerät lesen und Werte zurückgeben. 
+Dieses Plugin kann eine Webseite vom SolarLog-Protokolliergerät lesen und Werte zurückgeben.
 Es wurde 2013 von Niko Will erstellt und 2019 von Bernd Meiners zu einem SmartPlugin umgebaut.
 
 Requirements
 ------------
 
-Dieses Plugin hat keine Anforderungen oder Abhängigkeiten, arbeitet jedoch mit SolarLog und 
-Firmware <= 2.x zusammen. 
+Dieses Plugin hat keine Anforderungen oder Abhängigkeiten, arbeitet jedoch mit SolarLog und
+Firmware <= 2.x zusammen.
 Neuere SolarLog-Geräte mit Firmware> = 3.x sollten nur nach JSON-Daten abgefragt werden,
 die innerhalb einer Logik analysiert werden können.
 
@@ -23,7 +23,7 @@ Konfiguration
 plugin.yaml
 ~~~~~~~~~~~
 
-.. code :: yaml
+.. code:: yaml
 
     Solarlog:
         class_name: SolarLog
@@ -39,16 +39,16 @@ Attribute
 items.yaml
 ~~~~~~~~~~
 
-Die Format Details des SolarLog müssen bekannt sein, um die gültigen Werte für dieses Plugin zu definieren. 
-Das Plugin fordert lediglich die JavaScript-Dateien vom Gerät an und analysiert sie. 
-Ähnlich verhält es sich mit der Webseite, wenn die URL eines SolarLog im Browser aufgerufen wird. 
-Eine Beschreibung des Formats und der entsprechenden Variablen findet sich hier: 
+Die Format Details des SolarLog müssen bekannt sein, um die gültigen Werte für dieses Plugin zu definieren.
+Das Plugin fordert lediglich die JavaScript-Dateien vom Gerät an und analysiert sie.
+Ähnlich verhält es sich mit der Webseite, wenn die URL eines SolarLog im Browser aufgerufen wird.
+Eine Beschreibung des Formats und der entsprechenden Variablen findet sich hier:
 https://www.photonensammler.de/wiki/doku.php?id=solarlog_datenformat
 
 solarlog
 ^^^^^^^^
 
-Dies ist das einzige Attribut für Items. Um Werte aus dem SolarLog-Datenformat abzurufen, 
+Dies ist das einzige Attribut für Items. Um Werte aus dem SolarLog-Datenformat abzurufen,
 müssen lediglich die Variablennamen wie auf der oben beschriebenen Site verwendet werden.
 
 Wenn Sie Werte aus einer Array-Struktur wie den PDC-Wert aus dem Sekundenstring des ersten Inverters verwenden möchten, müssen Sie den Variablennamen underscore inverter-1 underscore string-1 verwenden:
@@ -115,7 +115,7 @@ In diesem Beispiel sollten Details zur Verwendung erläutert werden:
                     database: yes
 
 
-Das `` database: yes`` impliziert, dass auch ein Datenbank-Plugin konfiguriert ist. 
+Das `` database: yes`` impliziert, dass auch ein Datenbank-Plugin konfiguriert ist.
 Dienst zur Anzeige von Messwerten innerhalb einer Visu.
 
 logic.yaml
@@ -124,6 +124,6 @@ logic.yaml
 Derzeit gibt es keine Logik Konfiguration für dieses Plugin.
 
 Funktionen
----------
+----------
 
 Momentan werden von diesem Plugin keine Funktionen bereitgestellt.
