@@ -116,7 +116,7 @@ class SolarLog(SmartPlugin):
         now = self._sh.now()
 
         try:
-            if not first_poll:
+            if not self.first_poll:
                 time_start = int(vars(self)['time_start'][now.month - 1])
                 time_end = int(vars(self)['time_end'][now.month - 1])
 
@@ -136,7 +136,7 @@ class SolarLog(SmartPlugin):
 
             self._read_base_vars()
 
-            if first_poll:
+            if self.first_poll:
                 self._count_inverter = int(vars(self)['AnzahlWR'])
                 for x in range(0, self._count_inverter):
                     self._count_strings.append(int(vars(self)['WRInfo'][x][5]))
