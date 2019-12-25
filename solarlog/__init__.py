@@ -29,6 +29,9 @@ from lib.model.smartplugin import *
 import re
 import logging
 
+from lib.shtime import Shtime
+shtime = Shtime.get_instance()
+
 
 class SolarLog(SmartPlugin):
     """
@@ -70,6 +73,7 @@ class SolarLog(SmartPlugin):
         self._items = {}
         self._last_datetime = None
         self._is_online = True
+        self.first_poll = True
 
         # if plugin should start even without web interface
         self.init_webinterface()
@@ -79,12 +83,9 @@ class SolarLog(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
-        # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well
+        # setup scheduler for device poll loop
         self.scheduler_add(self.get_shortname(), self.poll_device, cycle=self.cycle, next=shtime.now())
-
         self.alive = True
-        # if you need to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
 
     def stop(self):
         """
@@ -114,74 +115,79 @@ class SolarLog(SmartPlugin):
         """
         now = self._sh.now()
 
-        if not init:
-            time_start = int(vars(self)['time_start'][now.month - 1])
-            time_end = int(vars(self)['time_end'][now.month - 1])
+        try:
+            if not first_poll:
+                time_start = int(vars(self)['time_start'][now.month - 1])
+                time_end = int(vars(self)['time_end'][now.month - 1])
 
-            # reset all out values at midnight
-            if now.hour is 0:
-                for name in list(self._items.keys()):
-                    if 'out_' in name:
-                        self._items[name](0)
+                # reset all out values at midnight
+                if now.hour is 0:
+                    for name in list(self._items.keys()):
+                        if 'out_' in name:
+                            self._items[name](0)
 
-            # we start refreshing one hour earlier as set by the device
-            if now.hour < (time_start - 1):
-                return
+                # we start refreshing one hour earlier as set by the device
+                if now.hour < (time_start - 1):
+                    return
 
-            # in the evening we stop refreshing when the device is offline
-            if now.hour >= time_end and not self._is_online:
-                return
+                # in the evening we stop refreshing when the device is offline
+                if now.hour >= time_end and not self._is_online:
+                    return
 
-        self._read_base_vars()
+            self._read_base_vars()
 
-        if init:
-            self._count_inverter = int(vars(self)['AnzahlWR'])
+            if first_poll:
+                self._count_inverter = int(vars(self)['AnzahlWR'])
+                for x in range(0, self._count_inverter):
+                    self._count_strings.append(int(vars(self)['WRInfo'][x][5]))
+
+            self._read_min_cur()
+
+            # set state and error messages
             for x in range(0, self._count_inverter):
-                self._count_strings.append(int(vars(self)['WRInfo'][x][5]))
-
-        self._read_min_cur()
-
-        # set state and error messages
-        for x in range(0, self._count_inverter):
-            if 'curStatusCode_{0}'.format(x) in self._items:
-                item = self._items['curStatusCode_{0}'.format(x)]
-                status = int(vars(self)['curStatusCode'][x])
-                if isinstance(item(), str):
-                    if status is 255:
-                        item('Offline')
-                    elif status >= len(vars(self)['StatusCodes'][x]):
-                        item('unbekannt')
+                if 'curStatusCode_{0}'.format(x) in self._items:
+                    item = self._items['curStatusCode_{0}'.format(x)]
+                    status = int(vars(self)['curStatusCode'][x])
+                    if isinstance(item(), str):
+                        if status is 255:
+                            item('Offline')
+                        elif status >= len(vars(self)['StatusCodes'][x]):
+                            item('unbekannt')
+                        else:
+                            item(vars(self)['StatusCodes'][x][status])
                     else:
-                        item(vars(self)['StatusCodes'][x][status])
-                else:
-                    item(status)
-            if 'curFehlerCode_{0}'.format(x) in self._items:
-                item = self._items['curFehlerCode_{0}'.format(x)]
-                error = int(vars(self)['curFehlerCode'][x])
-                if isinstance(item(), str):
-                    if error >= len(vars(self)['FehlerCodes'][x]):
-                        item('unbekannt')
+                        item(status)
+                if 'curFehlerCode_{0}'.format(x) in self._items:
+                    item = self._items['curFehlerCode_{0}'.format(x)]
+                    error = int(vars(self)['curFehlerCode'][x])
+                    if isinstance(item(), str):
+                        if error >= len(vars(self)['FehlerCodes'][x]):
+                            item('unbekannt')
+                        else:
+                            item(vars(self)['FehlerCodes'][x][error])
                     else:
-                        item(vars(self)['FehlerCodes'][x][error])
-                else:
-                    item(error)
+                        item(error)
 
-        self._is_online = vars(self)['isOnline'] == 'true'
+            self._is_online = vars(self)['isOnline'] == 'true'
 
-        groups = self._read_min_day()
-        if groups:
-            for name in list(groups.keys()):
+            groups = self._read_min_day()
+            if groups:
+                for name in list(groups.keys()):
+                    if name in self._items:
+                        if not self._is_online and ('pdc_' in name or 'udc_' in name or 'pac_' in name):
+                            self._items[name](0)
+                        elif now.hour is 0 and 'out_' in name:
+                            self._items[name](0)
+                        else:
+                            self._items[name](groups[name])
+
+            for name in list(vars(self).keys()):
                 if name in self._items:
-                    if not self._is_online and ('pdc_' in name or 'udc_' in name or 'pac_' in name):
-                        self._items[name](0)
-                    elif now.hour is 0 and 'out_' in name:
-                        self._items[name](0)
-                    else:
-                        self._items[name](groups[name])
-
-        for name in list(vars(self).keys()):
-            if name in self._items:
-                self._items[name](vars(self)[name])
+                    self._items[name](vars(self)[name])
+        except Exception as e:
+            self.logger.error("An error '{}' occurred while polling data from host '{}'".format(e, self.host))
+        finally:
+            self.first_poll = False
 
     def _read_base_vars(self):
         self._read_javascript('base_vars.js')
