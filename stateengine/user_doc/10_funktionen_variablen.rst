@@ -255,14 +255,14 @@ sondern dient lediglich der Visualisierung (Sicherheitsrelevante Features
 sollten unbedingt z.B. über den KNX Bus erfolgen!).
 
 - enter_normal wird angenommen, sobald das Wind-Item aktiv ist, zuvor aber
-nicht der Lock-Zustand aktiv war.
+  nicht der Lock-Zustand aktiv war.
 
 - enter_afterlock wird angenommen, sobald das Wind-Item aktiv ist und zuvor
-der Sperr-Zustand aktiv war.
+  der Sperr-Zustand aktiv war.
 
 - enter_stayafterlock wird Dank des se_value_conditionset_name dann angenommen,
-solange das Wind-Item noch aktiv ist und der Zustand aufgrund des enter_afterlock
-aktiviert wurde.
+  solange das Wind-Item noch aktiv ist und der Zustand aufgrund des enter_afterlock
+  aktiviert wurde.
 
 Da bei der on_leave Aktion der Lock-Zustand nur dann aktiviert wird, wenn der
 Zustand auf Grund eines "lock" Bedingungssets eingenommen wurde, kann nun der
