@@ -5,8 +5,8 @@ Beispiel
 ########
 
 Die wichtigsten Elemente und Funktionen des Plugins sind soweit
-vorgestellt. Zusätzliche Features werden abschließend unter
-:ref:`Advanced` und den folgenden Kapiteln zusammengefasst.
+vorgestellt. Zusätzliche Features werden abschließend in den folgenden Kapiteln
+zusammengefasst.
 
 Zusammenfassend soll in diesem Beispiel die Automatisierung eines Raffstores
 gezeigt werden. Es werden Funktionen genutzt, die erst im Advanced-Teil
@@ -286,7 +286,7 @@ gesteuert wird.
 
 Jetzt kommen noch die Items zur Automatisierung und schließlich
 das stateengine Regelwerk-Item hinzu. Das Erledigen wir über das Einbinden
-der :ref:`Zustands-Templates`, die das Plugin mitbringt sowie der eigenen vorhin angelegten
+der :ref:`Zustand-Templates`, die das Plugin mitbringt sowie der eigenen vorhin angelegten
 Vorlage. Beim ``manuell`` Item müssen Eval-Trigger und manual_exclude den
 eigenen Umständen entsprechen angepasst werden. Die ``eval_trigger`` des
 Regelwerk-Items "rules" sollen ebenfalls je nach Bedarf ergänzt werden.
