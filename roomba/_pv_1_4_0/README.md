@@ -2,38 +2,13 @@
 
 Plugin to connect to a Roomba. Read Sensors, Start/Stop.
 
+## Requirements
+
+Needs either Bluetooth or TCP connection
+
 ## Supported Hardware
 
 Selected Roomba robo cleaners
-
-## Requirements
-
-Communication either needs Bluetooth or Ethernet.
-
-### Bluetooth
-For Bluetooth ``bluez`` is needed
-
-To install operating system bluetooth support run
-
-```bash
-sudo apt-get install bluez
-```
-
-Choose socket_type = 'bt' and add the Roomba Bluetooth-Mac in socket_addr = XX:XX:XX:XX:XX:XX
-
-### Ethernet
-!!! Not tested yet !!!
-Choose ``socket_type = 'tcp'`` and add the IP and Port of your Roomba-Remote in 
-``socket_addr = 192.168.2.123`` and ``socket_port = 1234``
-
-Good doocumentation to Roombas SCI: http://www.robotiklubi.ee/_media/kursused/roomba_sumo/failid/hacking_roomba.pdf
-
-## Connection:
-
-There are several possibilities to connect to Roomba Serial Port.
-This was tested with a DIY-bluetooth-modul.
-This can be done in do-it-yourself or you can buy it i.e. "FT41 BlueRoom" from Fussel-Tronic.
-Not tested is a connection trough a wifi-rs232 adapter.
 
 ## Configuration
 
@@ -74,7 +49,7 @@ To send integers to Roomba following the documentation of Roomba SCI as List!
 ```yaml
 roomba:
 
-    commands:
+    command:
 
         clean:
             enforce_updates: 'true'
@@ -135,7 +110,7 @@ roomba:
               - '0'
               - '0'
 
-    sensors:
+    sensor:
 
         current:
             # current in mA
@@ -296,3 +271,25 @@ roomba:
             roomba_cmd: bumps_wheeldrops_wheeldrop_caster
 ```
 
+## Connection:
+
+There are several availabilitys to connect to Roomba Serial Port.
+This was tested with a DIY-bluetooth-modul.
+This can be done in do-it-yourself or you can buy it i.e. "FT41 BlueRoom" from Fussel-Tronic.
+Not tested is a connection trough a wifi-rs232 adapter.
+
+### Bluetooth:
+
+install Bluetooth
+
+```bash
+apt-get install bluez
+```
+
+Choose socket_type = 'bt' and add the Roomba Bluetooth-Mac in socket_addr = XX:XX:XX:XX:XX:XX
+
+### TCP:
+ !!! Not tested yet !!!
+Choose ``socket_type = 'tcp'`` and add the IP and Port of your Roomba-Remote in ``socket_addr = 192.168.2.123`` and ``socket_port = 1234``
+
+Good documentation to Roombas SCI: http://www.robotiklubi.ee/_media/kursused/roomba_sumo/failid/hacking_roomba.pdf

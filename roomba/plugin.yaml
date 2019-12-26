@@ -1,27 +1,304 @@
-# Metadata for the classic-plugin
+# Metadata for the plugin
 plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Anbindung von iRobot Roomba Staubsaugern'
-        en: ''
-    maintainer: '? (Mirko Hirsch)'
-    tester: Sandman60
-#    keywords: kwd1 kwd2            # keywords, where applicable
-    state: ready
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+        en: 'Communication with iRobot Roomba vacuum cleaner'
+    maintainer: bmxp
+    tester: Sandman60               # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: robot vacuum cleaner irobot roomba
+    documentation: https://github.com/smarthomeNG/smarthome/roomba/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-# Following entries are for Smart-Plugins:
-#    version: 1.3.3                 # Plugin version
-#    sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    multi_instance: False
-    classname: Roomba              # class containing the plugin
+    version: 1.6.0                  # Plugin version
+    sh_minversion: 1.4              # minimum shNG version to use this plugin
+    # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: False
+    classname: Roomba               # class containing the plugin
 
-#parameters:
-    # Definition of parameters to be configured in etc/plugin.yaml
+parameters:
+    #cycle,socket_type,socket_addr,socket_port = 0):
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    cycle:
+        type: int
+        valid_min: 0
+        default: 240
+        description:
+            de: 'Zeitlicher Abstand zwischen zwei Abfragen des Roomba. Wird 0 angegeben, wird das Gerät nicht abgefragt'
+            en: 'Time between two queries of Roomba. I given a value of 0, the device will not be queried'
+    socket_type:
+        type: str
+        valid_list:
+            - 'bt'
+            - 'tcp'
+        default: 'bt'
+        description:
+            de: 'Wählt die Schnittstelle für die Kommunikation aus'
+            en: 'Select Interface for communication'
 
-#item_attributes:
-    # Definition of item attributes defined by this plugin
+    socket_addr:
+        type: str
+        default: ''
+        description:
+            de: 'Spezifiziert die IP Adresse oder die Bluetooth MAC Adresse der Schnittstelle'
+            en: 'Specifies IP adress or Bluetooth MAC of interface'
+
+    socket_port:
+        type: int
+        default: 0
+        description:
+            de: 'Gibt den Port der Schnittstelle an für den Fall einer tcp Verbindung'
+            en: 'Specifies communication port in case of tcp connection'
+
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    roomba_get:
+        type: str
+        valid_list:
+            - 'current'
+            - 'temperature'
+            - 'voltage'
+            - 'buttons_clean'
+            - 'capacity'
+            - 'charge'
+            - 'angle'
+            - 'distance'
+            - 'buttons_max'
+            - 'buttons_clean'
+            - 'buttons_spot'
+            - 'buttons_power'
+            - 'remote_opcode'
+            - 'dirt_detect_right'
+            - 'dirt_detect_left'
+            - 'motor_overcurrent_side_brush'
+            - 'motor_overcurrent_vacuum'
+            - 'motor_overcurrent_main_brush'
+            - 'motor_overcurrent_drive_left'
+            - 'virtual_wall'
+            - 'cliff_right'
+            - 'cliff_front_right'
+            - 'cliff_front_left'
+            - 'cliff_left'
+            - 'wall'
+            - 'bumps_wheeldrops_bump_right'
+            - 'bumps_wheeldrops_bump_left'
+            - 'bumps_wheeldrops_wheeldrop_right'
+            - 'bumps_wheeldrops_wheeldrop_left'
+        description:
+            de: 'Weist einem Item einen Sensor Wert zu'
+            en: 'Assigns a sensor value to an item'
+    roomba_raw:
+        type: list(str)
+        description:
+            de: 'Sendet die angegebene Folge an den Roomba'
+            en: 'Sendds the given series to Roomba'
+    roomba_cmd:
+        type: list(str)
+        description:
+            de: 'Sendet die angegebenen Folgen oder Kommandos an den Roomba'
+            en: 'Sendds the given series or commands to Roomba'
+    
+item_structs: 
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    sensors:
+
+        current:
+            # current in mA
+            enforce_updates: 'true'
+            type: num
+            roomba_get: current
+
+        temperature:
+            # temperature in degrees celsius
+            enforce_updates: 'true'
+            type: num
+            roomba_get: temperature
+
+        voltage:
+            # voltage in mV
+            enforce_updates: 'true'
+            type: num
+            roomba_get: voltage
+
+        button_clean:
+            # clean button pressed
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: buttons_clean
+
+        capacity:
+            # capacity in mA
+            enforce_updates: 'true'
+            type: num
+            roomba_get: capacity
+
+        charge:
+            # charge in mA
+            enforce_updates: 'true'
+            type: num
+            roomba_get: charge
+
+        angle:
+            # angle since last request
+            enforce_updates: 'true'
+            type: num
+            roomba_get: angle
+
+        distance:
+            # distance since last request
+            enforce_updates: 'true'
+            type: num
+            roomba_get: distance
+
+        buttons_max:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: buttons_max
+
+        buttons_clean:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: buttons_clean
+
+        buttons_spot:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: buttons_spot
+
+        buttons_power:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: buttons_power
+
+        remote_opcode:
+            enforce_updates: 'true'
+            type: num
+            roomba_get: remote_opcode
+
+        dirt_detect_right:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: dirt_detect_right
+
+        dirt_detect_left:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: dirt_detect_left
+
+        motor_overcurrent_side_brush:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: motor_overcurrent_side_brush
+
+        motor_overcurrent_vacuum:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: motor_overcurrent_vacuum
+
+        motor_overcurrent_main_brush:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: motor_overcurrent_main_brush
+
+        motor_overcurrent_drive_left:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: motor_overcurrent_drive_left
+
+        virtual_wall:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: virtual_wall
+
+        cliff_right:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: cliff_right
+
+        cliff_front_right:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: cliff_front_right
+
+        cliff_front_left:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: cliff_front_left
+
+        cliff_left:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: cliff_left
+
+        wall:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: wall
+
+        bumps_wheeldrops_bump_right:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: bumps_wheeldrops_bump_right
+
+        bumps_wheeldrops_bump_left:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: bumps_wheeldrops_bump_left
+
+        bumps_wheeldrops_wheeldrop_right:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: bumps_wheeldrops_wheeldrop_right
+
+        bumps_wheeldrops_wheeldrop_left:
+            enforce_updates: 'true'
+            type: bool
+            roomba_get: bumps_wheeldrops_wheeldrop_left
+
+        bumps_wheeldrops_wheeldrop_caster:
+            enforce_updates: 'true'
+            type: bool
+            roomba_cmd: bumps_wheeldrops_wheeldrop_caster
+
+    commands:
+
+        clean:
+            enforce_updates: 'true'
+            name: clean
+            type: bool
+            roomba_cmd: clean
+
+        dock:
+            enforce_updates: 'true'
+            name: dock
+            type: bool
+            roomba_cmd: dock
+
+        power_off:
+            enforce_updates: 'true'
+            name: power_off
+            type: bool
+            roomba_cmd: power_off
+
+        spot:
+            enforce_updates: 'true'
+            name: spot
+            type: bool
+            roomba_cmd: spot
+
+        max:
+            enforce_updates: 'true'
+            name: max
+            type: bool
+            roomba_cmd: max
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 
