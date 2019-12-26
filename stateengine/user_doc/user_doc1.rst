@@ -55,7 +55,7 @@ Zusätzlich können beliebige Items (z.B. Temperatur) als Bedingungen geprüft w
 .. rubric:: Umstieg von Autblind
    :name: umstieg
 
-Das `Autoblind Plugin <https://github.com/i-am-offline/smarthome.plugin.autoblind>`_
+Das `Autoblind Plugin <https://github.com/i-am-offline/smarthome.plugin.autoblind>`__
 von i-am-offline wurde für SmarthomeNG 1.6 ins offizielle Repo übernommen und
 dabei erweitert und optimiert. Für einen Umstieg ist es wichtig, die Attribute
 ``as`` durch ``se`` zu ersetzen. Im Pluginverzeichnis befindet sich ein Bash-
