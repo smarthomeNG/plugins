@@ -55,7 +55,7 @@ Beispielsweise wird man alle Items mit den identen Sperr- und Aussetz/Suspendfun
 ausstatten wollen. Außerdem werden vermutlich mehrere Jalousien auf die selbe Weise
 auf den aktuellen Sonnenstand reagieren oder mehrere Lichter in der Nacht gemeinsam abgedunkelt.
 
-Neben der vom Plugin bereitgestellten Möglichkeit, :ref:`Zustands-Templates` zu definieren,
+Neben der vom Plugin bereitgestellten Möglichkeit, :ref:`Zustand-Templates` zu definieren,
 bietet sich ab **smarthomeNG 1.6** das ``struct`` Attribut an. Zum einen können in der Datei ``etc/struct.yaml``
 eigene Vorlagen definiert werden, zum anderen stellt das Plugin folgende Vorlagen fix fertig bereit:
 
@@ -65,7 +65,7 @@ eigene Vorlagen definiert werden, zum anderen stellt das Plugin folgende Vorlage
 
 Gemeinsam mit der Vorlage stateengine.general, die allgemein relevante Items automatisch erstellt, könnte
 ein Item wie unten zu sehen bestückt werden. Das Einbinden der Zustandsvorlagen findet dabei auf gleicher
-Hierarchieebene wie das Regelwerk-Item statt. Genauere Angaben hierzu sind unter :ref:`Zustands-Templates` zu finden.
+Hierarchieebene wie das Regelwerk-Item statt. Genauere Angaben hierzu sind unter :ref:`Zustand-Templates` zu finden.
 
 Zusätzlich können eigene Zustände (beispielsweise day) definiert werden.
 
