@@ -9,7 +9,7 @@ Configuration
 
 .. important::
 
-      Please find detailed information on the configuration at :doc:`/plugins_doc/config/uzsu`.
+      Please find detailed information on the configuration in the user documentation.
 
 
 .. code-block:: yaml
@@ -83,7 +83,7 @@ Functions
 
 .. important::
 
-      Detaillierte Informationen zu den Funktionen des Plugins sind unter :doc:`/plugins_doc/config/uzsu` zu finden.
+      Detaild information about the functions of the plugin can be found in the user documentaion.
 
 
 Webinterface
