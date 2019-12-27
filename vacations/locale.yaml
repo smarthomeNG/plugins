@@ -6,6 +6,7 @@ plugin_translations:
     'Jahr':          {'de': '=', 'en': 'Year', 'fr': ''}
     'Start':         {'de': '=', 'en': 'Start', 'fr': ''}
     'Ende':          {'de': '=', 'en': 'End', 'fr': ''}
+    'Parameter':     {'de': '=', 'en': '=', 'fr': ''}
     'Parameter Name':  {'de': '=', 'en': '=', 'fr': ''}
     'BW':            {'de': 'Baden-Württemberg', 'en': 'End', 'fr': ''}
     'BY':            {'de': 'Bayern', 'en': 'Bavaria', 'fr': ''}
@@ -23,3 +24,5 @@ plugin_translations:
     'ST':            {'de': 'Sachsen', 'en': '=', 'fr': ''}
     'SH':            {'de': 'Sachsen-Anhalt', 'en': '=', 'fr': ''}
     'TH':            {'de': 'Thüringen', 'en': '=', 'fr': ''}
+    'Ferienüberblick': {'de': '=', 'en': 'Vacation Overview', 'fr': ''}
+    'Plugin-API': {'de': '=', 'en': '=', 'fr': ''}

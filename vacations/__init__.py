@@ -198,5 +198,5 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           interface=None, plugin_info=self.plugin.get_info(), tabcount=1,
+                           interface=None, plugin_info=self.plugin.get_info(), tabcount=2,
                            p=self.plugin)

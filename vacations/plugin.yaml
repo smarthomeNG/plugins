@@ -4,7 +4,7 @@ plugin:
     type: web                     # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
         de: 'Ermöglicht den Abruf deutscher Schulferien für die Bundesländer BW, BY, BE, BB, HB, HH, HE, MV, NI, NW, RP, SL, SN, ST, SH, TH.'
-        en: 'Enables the retrieval of German school vacations for the states BW, BY, BE, BB, HB, HH, HE, MV, NI, NW, RP, SL, SN, ST, SH, TH.'
+        en: 'Enables the retrieval of German school vacations for the provinces BW, BY, BE, BB, HB, HH, HE, MV, NI, NW, RP, SL, SN, ST, SH, TH.'
     maintainer: Marc René Frieß
 #    tester:                        # Who tests this plugin?
     keywords: vacations

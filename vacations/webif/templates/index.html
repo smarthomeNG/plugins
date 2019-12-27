@@ -1,6 +1,9 @@
 {% extends "base_plugin.html" %}
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
+{% set language = p.get_sh().get_defaultlanguage() %}
+{% set tab1title = _('Ferienüberblick') %}
+{% set tab2title = _('Plugin-API') %}
 
 {% block headtable %}
 <table class="table table-striped table-hover">
@@ -22,13 +25,9 @@
 </table>
 {% endblock %}
 
-
 {% block bodytab1 %}
-
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
-	<div class="col-sm-12">
-		<h5>{{ _('Ferien') }}</h5>
-
+	<div class="col-sm-12 pt-3">
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             {% for province in p.get_province_codes() %}
             <li class="nav-item">
@@ -86,4 +85,35 @@
     </div>
 </div>
 
+{% endblock %}
+{% block bodytab2 %}
+    <div class="container ml-1 pl-1 mr-1 pr-1 pt-3">
+    {%  for function, dict in p.metadata.plugin_functions.items() %}
+        <div class="card mb-2">
+          <div class="card-header p-2">
+              <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{% if loop.index > 1 %}, {% endif %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
+          </div>
+          <div class="card-body p-2">
+              {{ dict['description'][language] }}<br/>
+              {% if dict['parameters'] is not none %}
+                  <div class="card mt-2">
+                      <div class="card-header p-2">
+                        <strong>{{ _('Parameter') }}:</strong>
+                      </div>
+                      <div class="card-body p-2">
+                          <ul class="list-group">
+                          {%  for name, paramdict in dict['parameters'].items() %}
+                            <li class="list-group-item p-2">
+                                <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
+                            {{ paramdict['description'][language] }}
+                            </li>
+                          {% endfor %}
+                          </ul>
+                      </div>
+                  </div>
+              {% endif %}
+          </div>
+        </div>
+    {% endfor %}
+    </div>
 {% endblock %}
