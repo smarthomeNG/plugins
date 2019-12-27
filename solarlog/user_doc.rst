@@ -23,12 +23,12 @@ Konfiguration
 plugin.yaml
 ~~~~~~~~~~~
 
-.. code:: yaml
+.. code-block:: yaml
+   :caption: logic.yaml
 
-    Solarlog:
-        class_name: SolarLog
-        class_path: plugins.solarlog
-        host: http://solarlog.fritz.box/
+   Solarlog:
+       plugin_name: solarlog
+       host: http://solarlog.fritz.box/
 
 Attribute
 ^^^^^^^^^

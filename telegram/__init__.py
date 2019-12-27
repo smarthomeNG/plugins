@@ -169,10 +169,10 @@ class Telegram(SmartPlugin):
         self.logger.debug("sent welcome message {}")
 
     def stop(self):
-        self.alive = False
         """
         This is called when the plugins thread is about to stop
         """
+        self.alive = False
         try:
             self.logger.debug("stop telegram plugin")
             self.msg_broadcast(self._bye_msg)

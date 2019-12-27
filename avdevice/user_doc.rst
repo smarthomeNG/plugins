@@ -15,8 +15,7 @@ Konfiguration
 
     # etc/plugin.yaml
     avdevice:
-        class_name: AVDevice
-        class_path: plugins.avdevice
+        plugin_name: avdevice
         model: sc-lx86
         #instance: pioneer_one
         tcp_ip: 10.0.0.130
