@@ -1,0 +1,25 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Ferien':        {'de': '=', 'en': 'Holidays', 'fr': ''}
+    'Konfiguriertes Land':    {'de': '=', 'en': 'Configured Country', 'fr': ''}
+    'Bundesland':    {'de': '=', 'en': 'Province', 'fr': ''}
+    'Jahr':          {'de': '=', 'en': 'Year', 'fr': ''}
+    'Start':         {'de': '=', 'en': 'Start', 'fr': ''}
+    'Ende':          {'de': '=', 'en': 'End', 'fr': ''}
+    'Parameter Name':  {'de': '=', 'en': '=', 'fr': ''}
+    'BW':            {'de': 'Baden-Württemberg', 'en': 'End', 'fr': ''}
+    'BY':            {'de': 'Bayern', 'en': 'Bavaria', 'fr': ''}
+    'BE':            {'de': 'Berlin', 'en': 'Berlin', 'fr': ''}
+    'BB':            {'de': 'Brandenburg', 'en': '=', 'fr': ''}
+    'HB':            {'de': 'Bremen', 'en': '=', 'fr': ''}
+    'HE':            {'de': 'Hessen', 'en': '=', 'fr': ''}
+    'HH':            {'de': 'Hamburg', 'en': 'Hamburg', 'fr': ''}
+    'MV':            {'de': 'Mecklenburg-Vorpommern', 'en': 'End', 'fr': ''}
+    'NI':            {'de': 'Niedersachsen', 'en': 'End', 'fr': ''}
+    'NW':            {'de': 'Nordrhein-Westfalen', 'en': 'End', 'fr': ''}
+    'RP':            {'de': 'Rheinland-Pfalz', 'en': '=', 'fr': ''}
+    'SL':            {'de': 'Schleswig-Holstein', 'en': '=', 'fr': ''}
+    'SN':            {'de': 'Saarland', 'en': '=', 'fr': ''}
+    'ST':            {'de': 'Sachsen', 'en': '=', 'fr': ''}
+    'SH':            {'de': 'Sachsen-Anhalt', 'en': '=', 'fr': ''}
+    'TH':            {'de': 'Thüringen', 'en': '=', 'fr': ''}
