@@ -80,7 +80,7 @@ class MonitoringService:
         try:
             self.conn.connect((self._host, self._port))
             self._listen_thread = threading.Thread(target=self._listen,
-                                                   name="MonitoringService_{}".format(
+                                                   name="AVM Monitoring Service {}".format(
                                                        self._plugin_instance.get_fullname())).start()
             self._plugin_instance.logger.debug("MonitoringService: connection established")
         except Exception as e:
