@@ -14,7 +14,7 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
 Web Interface
 =============
 
-Das vacationbs Plugin verfügt über ein Webinterface, mit dessen Hilfe die Daten des Plugins
+Das vacations Plugin verfügt über ein Webinterface, mit dessen Hilfe die Daten des Plugins
 übersichtlich dargestellt werden.
 
 .. important::
