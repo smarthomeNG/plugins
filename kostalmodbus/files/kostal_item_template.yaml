@@ -1,0 +1,342 @@
+Kostal:
+  Inverter:
+    kostal_30:
+      type: num
+      kostal_30: ''
+      visu_acl: ro
+    kostal_32:
+      kostal_32: ''
+      visu_acl: ro
+      type: num
+    kostal_34:
+      kostal_34: ''
+      visu_acl: ro
+      type: num
+    kostal_36:
+      type: num
+      kostal_36: ''
+      visu_acl: ro
+    kostal_54:
+      kostal_54: ''
+      visu_acl: ro
+      type: num
+    kostal_56:
+      kostal_56: ''
+      visu_acl: ro
+      type: num
+    kostal_100:
+      kostal_100: ''
+      visu_acl: ro
+      type: num
+    kostal_104:
+      kostal_104: ''
+      visu_acl: ro
+      type: num
+    kostal_106:
+      kostal_106: ''
+      visu_acl: ro
+      type: num
+    kostal_108:
+      kostal_108: ''
+      visu_acl: ro
+      type: num
+    kostal_110:
+      kostal_110: ''
+      visu_acl: ro
+      type: num
+    kostal_112:
+      kostal_112: ''
+      visu_acl: ro
+      type: num
+    kostal_114:
+      kostal_114: ''
+      visu_acl: ro
+      type: num
+    kostal_116:
+      kostal_116: ''
+      visu_acl: ro
+      type: num
+    kostal_118:
+      kostal_118: ''
+      visu_acl: ro
+      type: num
+    kostal_120:
+      kostal_120: ''
+      visu_acl: ro
+      type: num
+    kostal_122:
+      kostal_122: ''
+      visu_acl: ro
+      type: num
+    kostal_124:
+      kostal_124: ''
+      visu_acl: ro
+      type: num
+    kostal_144:
+      kostal_144: ''
+      visu_acl: ro
+      type: num
+    kostal_150:
+      kostal_150: ''
+      visu_acl: ro
+      type: num
+    kostal_152:
+      kostal_152: ''
+      visu_acl: ro
+      type: num
+    kostal_154:
+      kostal_154: ''
+      visu_acl: ro
+      type: num
+    kostal_156:
+      kostal_156: ''
+      visu_acl: ro
+      type: num
+    kostal_158:
+      kostal_158: ''
+      visu_acl: ro
+      type: num
+    kostal_160:
+      kostal_160: ''
+      visu_acl: ro
+      type: num
+    kostal_162:
+      kostal_162: ''
+      visu_acl: ro
+      type: num
+    kostal_164:
+      kostal_164: ''
+      visu_acl: ro
+      type: num
+    kostal_166:
+      kostal_166: ''
+      visu_acl: ro
+      type: num
+    kostal_168:
+      kostal_168: ''
+      visu_acl: ro
+      type: num
+    kostal_170:
+      kostal_170: ''
+      visu_acl: ro
+      type: num
+    kostal_172:
+      kostal_172: ''
+      visu_acl: ro
+      type: num
+    kostal_174:
+      kostal_174: ''
+      visu_acl: ro
+      type: num
+    kostal_178:
+      kostal_178: ''
+      visu_acl: ro
+      type: num
+    kostal_190:
+      kostal_190: ''
+      visu_acl: ro
+      type: num
+    kostal_194:
+      kostal_194: ''
+      visu_acl: ro
+      type: num
+    kostal_200:
+      kostal_200: ''
+      visu_acl: ro
+      type: num
+    kostal_202:
+      kostal_202: ''
+      visu_acl: ro
+      type: num
+    kostal_208:
+      kostal_208: ''
+      visu_acl: ro
+      type: num
+    kostal_210:
+      kostal_210: ''
+      visu_acl: ro
+      type: num
+    kostal_214:
+      kostal_214: ''
+      visu_acl: ro
+      type: num
+    kostal_216:
+      kostal_216: ''
+      visu_acl: ro
+      type: num
+    kostal_218:
+      kostal_218: ''
+      visu_acl: ro
+      type: num
+    kostal_220:
+      kostal_220: ''
+      visu_acl: ro
+      type: num
+    kostal_222:
+      kostal_222: ''
+      visu_acl: ro
+      type: num
+    kostal_224:
+      kostal_224: ''
+      visu_acl: ro
+      type: num
+    kostal_226:
+      kostal_226: ''
+      visu_acl: ro
+      type: num
+    kostal_228:
+      kostal_228: ''
+      visu_acl: ro
+      type: num
+    kostal_230:
+      kostal_230: ''
+      visu_acl: ro
+      type: num
+    kostal_232:
+      kostal_232: ''
+      visu_acl: ro
+      type: num
+    kostal_234:
+      kostal_234: ''
+      visu_acl: ro
+      type: num
+    kostal_236:
+      kostal_236: ''
+      visu_acl: ro
+      type: num
+    kostal_238:
+      kostal_238: ''
+      visu_acl: ro
+      type: num
+    kostal_240:
+      kostal_240: ''
+      visu_acl: ro
+      type: num
+    kostal_242:
+      kostal_242: ''
+      visu_acl: ro
+      type: num
+    kostal_244:
+      kostal_244: ''
+      visu_acl: ro
+      type: num
+    kostal_246:
+      kostal_246: ''
+      visu_acl: ro
+      type: num
+    kostal_248:
+      kostal_248: ''
+      visu_acl: ro
+      type: num
+    kostal_250:
+      kostal_250: ''
+      visu_acl: ro
+      type: num
+    kostal_252:
+      kostal_252: ''
+      visu_acl: ro
+      type: num
+    kostal_254:
+      kostal_254: ''
+      visu_acl: ro
+      type: num
+    kostal_256:
+      kostal_256: ''
+      visu_acl: ro
+      type: num
+    kostal_258:
+      kostal_258: ''
+      visu_acl: ro
+      type: num
+    kostal_260:
+      kostal_260: ''
+      visu_acl: ro
+      type: num
+    kostal_266:
+      kostal_266: ''
+      visu_acl: ro
+      type: num
+    kostal_268:
+      kostal_268: ''
+      visu_acl: ro
+      type: num
+    kostal_270:
+      kostal_270: ''
+      visu_acl: ro
+      type: num
+    kostal_276:
+      kostal_276: ''
+      visu_acl: ro
+      type: num
+    kostal_278:
+      kostal_278: ''
+      visu_acl: ro
+      type: num
+    kostal_280:
+      kostal_280: ''
+      visu_acl: ro
+      type: num
+    kostal_286:
+      kostal_286: ''
+      visu_acl: ro
+      type: num
+    kostal_320:
+      kostal_320: ''
+      visu_acl: ro
+      type: num
+    kostal_322:
+      kostal_322: ''
+      visu_acl: ro
+      type: num
+    kostal_324:
+      kostal_324: ''
+      visu_acl: ro
+      type: num
+    kostal_326:
+      kostal_326: ''
+      visu_acl: ro
+      type: num
+    kostal_512:
+      kostal_512: ''
+      visu_acl: ro
+      type: num
+    kostal_514:
+      kostal_514: ''
+      visu_acl: ro
+      type: num
+    kostal_515:
+      kostal_515: ''
+      visu_acl: ro
+      type: num
+    kostal_525:
+      kostal_525: ''
+      visu_acl: ro
+      type: num
+    kostal_529:
+      kostal_529: ''
+      visu_acl: ro
+      type: num
+    kostal_531:
+      kostal_531: ''
+      visu_acl: ro
+      type: num
+    kostal_575:
+      kostal_575: ''
+      visu_acl: ro
+      type: num
+    kostal_577:
+      kostal_577: ''
+      visu_acl: ro
+      type: num
+    kostal_582:
+      kostal_582: ''
+      visu_acl: ro
+      type: num
+    kostal_586:
+      kostal_586: ''
+      visu_acl: ro
+      type: num
+    kostal_588:
+      kostal_588: ''
+      visu_acl: ro
+      type: num
