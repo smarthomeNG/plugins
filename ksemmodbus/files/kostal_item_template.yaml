@@ -1,0 +1,18 @@
+Kostal:
+  ksem:
+    ksem_0:
+      ksem_0: ''
+      visu_acl: ro
+      type: num
+    ksem_2:
+      ksem_2: ''
+      visu_acl: ro
+      type: num
+    ksem_512:
+      ksem_512: ''
+      visu_acl: ro
+      type: num
+    ksem_516:
+      ksem_516: ''
+      visu_acl: ro
+      type: num
