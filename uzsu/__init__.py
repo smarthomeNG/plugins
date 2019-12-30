@@ -102,6 +102,9 @@ class UZSU(SmartPlugin):
         self.itemsApi = Items.get_instance()
         self._timezone = Shtime.get_instance().tzinfo()
         self._remove_duplicates = self.get_parameter_value('remove_duplicates')
+        self._interpolation_interval = self.get_parameter_value('interpolation_interval')
+        self._interpolation_type = self.get_parameter_value('interpolation_type')
+        self._backintime = self.get_parameter_value('backintime')
         self._sh = smarthome
         self._uzsu_sun = None
         self._items = {}
@@ -131,7 +134,7 @@ class UZSU(SmartPlugin):
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
                 self._update_count['todo'] = self._update_count.get('todo') + 1
-        self.logger.debug("Going to update {} items: {}".format(self._update_count['todo'], list(self._items.keys())))
+        self.logger.debug("Going to update {} items from {}".format(self._update_count['todo'], list(self._items.keys())))
 
         for item in self._items:
             cond1 = self._items[item].get('active') is True
@@ -245,6 +248,11 @@ class UZSU(SmartPlugin):
                 self.logger.warning("Item to be set by uzsu '{}' does not have a type attribute. Error: {}".format(_itemforuzsu, err))
         return _itemtype
 
+    def _logics_lastvalue(self, item=None):
+        lastvalue = self._items[item].get('lastvalue')
+        self.logger.info("Last value of item {} is: {}".format(item, lastvalue))
+        return lastvalue
+
     def _logics_activate(self, activevalue=None, item=None):
         if isinstance(activevalue, str):
             if activevalue.lower() in ['1', 'yes', 'true', 'on']:
@@ -265,7 +273,9 @@ class UZSU(SmartPlugin):
         if activevalue is None:
             return self._items[item].get('active')
 
-    def _logics_interpolation(self, type=None, interval=5, backintime=0, item=None):
+    def _logics_interpolation(self, type=None, interval=None, backintime=None, item=None):
+        interval = self._interpolation_interval if interval is None else interval
+        backintime = self._backintime if backintime is None else backintime
         if type is None:
             return self._items[item].get('interpolation')
         else:
@@ -344,6 +354,7 @@ class UZSU(SmartPlugin):
 
             # add functions for use in logics and webif
             item.activate = functools.partial(self._logics_activate, item=item)
+            item.lastvalue = functools.partial(self._logics_lastvalue, item=item)
             item.interpolation = functools.partial(self._logics_interpolation, item=item)
             item.clear = functools.partial(self._logics_clear, item=item)
             item.planned = functools.partial(self._logics_planned, item=item)
@@ -497,13 +508,13 @@ class UZSU(SmartPlugin):
         if _next and _value is not None and self._items[item].get('active') is True:
             _reset_interpolation = False
             _interval = self._items[item]['interpolation'].get('interval')
-            _interval = 5 if not _interval else int(_interval)
+            _interval = self._interpolation_interval if not _interval else int(_interval)
             if _interval < 0:
                 _interval = abs(int(_interval))
                 self._items[item]['interpolation']['interval'] = _interval
                 item(self._items[item], 'UZSU Plugin', 'intervalchange')
             _interpolation = self._items[item]['interpolation'].get('type')
-            _interpolation = 'none' if not _interpolation else _interpolation
+            _interpolation = self._interpolation_type if not _interpolation else _interpolation
             _initage = self._items[item]['interpolation'].get('initage')
             _initage = 0 if not _initage else int(_initage)
             _initialized = self._items[item]['interpolation'].get('initialized')
@@ -516,6 +527,7 @@ class UZSU(SmartPlugin):
             _initvalue = itpl_list[entry_index - min(1, entry_index)][1]
             itpl_list = itpl_list[entry_index - min(2, entry_index):entry_index + min(3, len(itpl_list))]
             itpl_list.remove((entry_now, 'NOW'))
+            self._items[item]['lastvalue'] = _initvalue
             _timediff = datetime.now(self._timezone) - timedelta(minutes=_initage)
             try:
                 _value = float(_value)
