@@ -25,15 +25,15 @@
 
 from lib.model.smartplugin import *
 
-from .inverter import Inverter
+from .ksem import Ksem
 
 class Kostalmodbus(SmartPlugin):
     PLUGIN_VERSION = '1.6.0'
-    inverter = 'None'
+    ksem = 'None'
     _items = []
 
     def __init__(self, sh, *args, **kwargs):
-        self.inverter = Inverter(self.get_parameter_value("ksem_ip"),self.get_parameter_value("modbus_port"))
+        self.ksem = Ksem(self.get_parameter_value("ksem_ip"),self.get_parameter_value("modbus_port"))
         self._cycle = int(self.get_parameter_value("update_cycle"))
         return
 
@@ -47,15 +47,15 @@ class Kostalmodbus(SmartPlugin):
         self.alive = False
 
     def parse_item(self, item):
-        for i in self.inverter.decRow:
+        for i in self.ksem.decRow:
             s = 'ksem_' + str(i)
             if self.has_iattr(item.conf, s):
                 self._items.append(item)
 
     def poll_device(self):
-        inverter_data = self.inverter.get_data()
+        ksem_data = self.ksem.get_data()
         for item in self._items:
-            for i in range (0,len(inverter_data)):
-                s = 'ksem_' + str(inverter_data[i].adrDec)
+            for i in range (0,len(ksem_data)):
+                s = 'ksem_' + str(ksem_data[i].adrDec)
                 if self.has_iattr(item.conf, s):
-                    item(self.inverter.registers[i].value)
+                    item(self.ksem.registers[i].value)

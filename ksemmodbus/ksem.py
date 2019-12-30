@@ -11,7 +11,7 @@ from pymodbus.client.sync import ModbusTcpClient
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
 
-class Inverter:
+class Ksem:
     def __init__(self, ip, port):
         self.__init_registers()
         self.client = ModbusTcpClient(ip, port=port)

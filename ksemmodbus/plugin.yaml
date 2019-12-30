@@ -3,12 +3,11 @@ plugin:
     # Global plugin attributes
     type: interface                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Plugin zur Anbindung von einem Kostal Wechselrichter über Modbus an SmartHomeNG'
-        en: 'Plugin to connect your Kostal inverter via modbus with SmartHomeNG'
+        de: 'Plugin zur Anbindung von einem Kostal Smart Energy Meter über Modbus an SmartHomeNG'
+        en: 'Plugin to connect your Kostal Smart Energy Meter via modbus with SmartHomeNG'
     maintainer: Thomas Hengsberg (thengsty)
     tester:
     state: develop                  # change to ready when done with development
-#    keywords: iot xyz
     documentation:
     support:
 
@@ -17,7 +16,7 @@ plugin:
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
     restartable: unknown
-    classname: Kostalmodbus         # class containing the plugin
+    classname: Ksemmodbus         # class containing the plugin
 
 parameters:
     ksem_ip:

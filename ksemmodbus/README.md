@@ -3,7 +3,7 @@
 #### Version 1.0.0
 
 This plugin connects your Kostal Smart Energy Meter (https://www.kostal-solar-electric.com/) via ModBus with SmarthomeNG.
-- read out all inverter data
+- read out all Smart Meter data
 
 ## Change history
 
@@ -22,7 +22,7 @@ This plugin connects your Kostal Smart Energy Meter (https://www.kostal-solar-el
 
 ### 1) /smarthome/etc/plugin.yaml
 
-Enable the plugin in plugin.yaml, type in the inverters IP address and configure the ModBus Port and update cycle(seconds).
+Enable the plugin in plugin.yaml, type in the Smart Meters IP address and configure the ModBus Port and update cycle(seconds).
 
 ```yaml
 Ksemmodbus:
@@ -44,11 +44,7 @@ For example:
 
 #### Get data from Energy Meter:
 ```html
-<p>Daily yield: {{ basic.value('DailyYield', 'Kostal.ksem.kostal_0') }} W</p>
-/** Get the daily yield (num)*/
-
-<p>Total DC power: {{ basic.value('TotalDCPower', 'Kostal.Inverter.kostal_100') }} W</p>
-/** Get the current total DC power (num)*/
+<p>/** Beispiele einfügen */</p>
 
 ```
 
