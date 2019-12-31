@@ -104,6 +104,7 @@ class UZSU(SmartPlugin):
         self._remove_duplicates = self.get_parameter_value('remove_duplicates')
         self._interpolation_interval = self.get_parameter_value('interpolation_interval')
         self._interpolation_type = self.get_parameter_value('interpolation_type')
+        self._interpolation_precision = self.get_parameter_value('interpolation_precision')
         self._backintime = self.get_parameter_value('backintime')
         self._sh = smarthome
         self._uzsu_sun = None
@@ -129,7 +130,8 @@ class UZSU(SmartPlugin):
 
         for item in self._items:
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
-            item(self._items[item], 'UZSU Plugin', 'itemtype')
+            self._items[item]['lastvalue'] = None
+            item(self._items[item], 'UZSU Plugin', 'run')
             cond1 = self._items[item].get('active') and self._items[item]['active'] is True
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
@@ -250,7 +252,7 @@ class UZSU(SmartPlugin):
 
     def _logics_lastvalue(self, item=None):
         lastvalue = self._items[item].get('lastvalue')
-        self.logger.info("Last value of item {} is: {}".format(item, lastvalue))
+        self.logger.debug("Last value of item {} is: {}.".format(item, lastvalue))
         return lastvalue
 
     def _logics_activate(self, activevalue=None, item=None):
@@ -454,6 +456,10 @@ class UZSU(SmartPlugin):
         # Removing Duplicates
         if self._remove_duplicates is True and self._items[item].get('list') and cond:
             self._remove_dupes(item)
+        if cond and self._items[item].get('active') is False and not source == 'update_sun':
+            self._items[item]['lastvalue'] = None
+            self.logger.debug('lastvalue for item {} set to None because UZSU is deactivated'.format(item))
+            item(self._items[item], 'UZSU Plugin', 'item_deactivated')
         if cond:
             self._schedule(item, caller='update')
 
@@ -528,6 +534,7 @@ class UZSU(SmartPlugin):
             itpl_list = itpl_list[entry_index - min(2, entry_index):entry_index + min(3, len(itpl_list))]
             itpl_list.remove((entry_now, 'NOW'))
             self._items[item]['lastvalue'] = _initvalue
+            item(self._items[item], 'UZSU Plugin', 'lastvalue')
             _timediff = datetime.now(self._timezone) - timedelta(minutes=_initage)
             try:
                 _value = float(_value)
@@ -565,8 +572,8 @@ class UZSU(SmartPlugin):
                     tck = interpolate.PchipInterpolator(list(self._itpl[item].keys()), list(self._itpl[item].values()))
                     _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
                     _next = _nextinterpolation if _next > _nextinterpolation else _next
-                    _value = round(float(tck(_next.timestamp() * 1000.0)), 2)
-                    _value_now = round(float(tck(entry_now)), 2)
+                    _value = round(float(tck(_next.timestamp() * 1000.0)), self._interpolation_precision)
+                    _value_now = round(float(tck(entry_now)), self._interpolation_precision)
                     self._set(item=item, value=_value_now, caller='scheduler')
                     self.logger.info("Updated: {}, cubic interpolation value: {}, based on dict: {}."
                                      " Next: {}, value: {}".format(item, _value_now, self._itpl[item], _next, _value))
@@ -578,8 +585,8 @@ class UZSU(SmartPlugin):
                     tck = interpolate.interp1d(list(self._itpl[item].keys()), list(self._itpl[item].values()))
                     _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
                     _next = _nextinterpolation if _next > _nextinterpolation else _next
-                    _value = round(float(tck(_next.timestamp() * 1000.0)), 2)
-                    _value_now = round(float(tck(entry_now)), 2)
+                    _value = round(float(tck(_next.timestamp() * 1000.0)), self._interpolation_precision)
+                    _value_now = round(float(tck(entry_now)), self._interpolation_precision)
                     self._set(item=item, value=_value_now, caller='scheduler')
                     self.logger.info("Updated: {}, linear interpolation value: {}, based on dict: {}."
                                      " Next: {}, value: {}".format(item, _value_now, self._itpl[item], _next, _value))

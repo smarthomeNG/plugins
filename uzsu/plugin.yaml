@@ -74,7 +74,10 @@ parameters:
     interpolation_type:
         type: str
         default: 'none'
-        valid_list: 'none', 'cubic', 'linear'
+        valid_list:
+          - 'none'
+          - 'cubic'
+          - 'linear'
         description:
             de: 'Standardintervall in Minuten, in dem ein interpolierter Wert erneut errechnet werden soll. Kann pro UZSU individuell konfiguriert werden.'
             en: 'Standard interval in minutes that is used to re-calculate an interpolated value. Can be configured for each UZSU individually.'
@@ -86,6 +89,15 @@ parameters:
         description:
             de: 'Standardmaximalalter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen. Kann pro UZSU individuell konfiguriert werden.'
             en: 'Standard maximum age of an uzsu entry in minutes to be catched up at the plugin start. Can be configured for each UZSU individually'
+
+    interpolation_precision:
+        type: int
+        default: 2
+        valid_min: 0
+        valid_max: 4
+        description:
+            de: 'Anzahl an Dezimalstellen bei der Berechnung der Interpolation'
+            en: 'Amount of decimal places when calculating interpolation values'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -120,6 +132,14 @@ item_structs:
             uzsu_item: ..
             cache: True
             visu_acl: rw
+
+            last:
+                remark: The last set value if UZSU is active
+                type: foo
+                visu_acl: ro
+                eval: "'None' if sh...lastvalue() is None else sh...lastvalue()"
+                crontab: init = 'None'
+                eval_trigger: ..
 
             active:
                 remark: Use this item to easily turn on or off your UZSU
