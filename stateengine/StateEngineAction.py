@@ -233,7 +233,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     def _waitforexecute(self, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0):
         i = 0
-        while len(self._abitem.action_in_progress) > 0 or self._abitem.update_in_progress is True:
+        while len(self._abitem.action_in_progress) > 0 or self._abitem.stateeval_in_progress is True:
             if len(self._abitem.action_in_progress) > 0:
                 self._log_info("{} (with delay {}) is already running. Postponing current action {} for one second", self._abitem.action_in_progress, delay, self._name)
             else:

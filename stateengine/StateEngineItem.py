@@ -85,6 +85,10 @@ class SeItem:
     def update_in_progress(self):
         return self.__update_in_progress
 
+    @property
+    def stateeval_in_progress(self):
+        return self.__stateeval_in_progress
+
     # Constructor
     # smarthome: instance of smarthome.py
     # item: item to use
@@ -136,6 +140,7 @@ class SeItem:
         self.__update_trigger_source = None
         self.__update_trigger_dest = None
         self.__update_in_progress = False
+        self.__stateeval_in_progress = False
         self.__action_in_progress = []
         self.__update_original_item = None
         self.__update_original_caller = None
@@ -242,6 +247,7 @@ class SeItem:
                 break
 
         self.__update_in_progress = True
+        self.__stateeval_in_progress = True
 
         self.__logger.update_logfile()
         postponed = " (postponed {}s)".format(i) if i > 0 else ""
@@ -262,6 +268,7 @@ class SeItem:
         if (cond1 and cond1_2) or (cond2 and cond2_2):
             self.__logger.debug("Ignoring changes from {0}", StateEngineDefaults.plugin_identification)
             self.__update_in_progress = False
+            self.__stateeval_in_progress = False
             return
 
         self.__update_trigger_item = item.property.path
@@ -316,6 +323,7 @@ class SeItem:
                     self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id, _last_conditionset_name)
                 last_state.run_stay(self.__repeat_actions.get())
             self.__update_in_progress = False
+            self.__stateeval_in_progress = False
             return
         _last_conditionset_id = self.__lastconditionset_get_id()
         _last_conditionset_name = self.__lastconditionset_get_name()
@@ -326,6 +334,7 @@ class SeItem:
             else:
                 self.__logger.info("Staying at {0} ('{1}') based on conditionset {2} ('{3}')",
                                    new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
+            self.__stateeval_in_progress = False
             # New state is last state
             if self.__laststate_internal_name != new_state.name:
                 self.__laststate_set(new_state)
@@ -353,6 +362,7 @@ class SeItem:
                 self.__logger.info("Entering {0} ('{1}') based on conditionset {2} ('{3}')",
                                    new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
             self.__laststate_set(new_state)
+            self.__stateeval_in_progress = False
             new_state.run_enter(self.__repeat_actions.get())
         if _leaveactions_run is True:
             _key_leave = ['{}'.format(last_state.id), 'leave']
@@ -364,6 +374,7 @@ class SeItem:
             #self.__logger.debug('set leave for {} to true', last_state.id)
 
         self.__update_in_progress = False
+        self.__stateeval_in_progress = False
 
     # check if state can be entered after setting state-specific variables
     # state: state to check
