@@ -31,18 +31,19 @@ class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.4.1"
 
-    def __init__(self, smarthome, host, username, password, cycle=300, port=993, tls=True, trashfolder="Trash"):
+    def __init__(self, smarthome, *args, **kwargs):
         self._sh = smarthome
-        self._host = host
-        self._port = port
-        self._username = username
-        self._password = password
-        self.cycle = int(cycle)
+        self._host = self.get_parameter_value('host')
+        self._port = self.get_parameter_value('port')
+        self._username = self.get_parameter_value('username')
+        self._password = self.get_parameter_value('password')
+        self.cycle = self.get_parameter_value('cycle')
+        self._tls = self.get_parameter_value('tls')
+        self._trashfolder = self.get_parameter_value('trashfolder')
         self._mail_sub = {}
         self._mail_to = {}
         self._mail = False
-        self._tls = self.to_bool(tls)
-        self._trashfolder = trashfolder
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
