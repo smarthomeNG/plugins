@@ -31,8 +31,7 @@ class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.4.1"
 
-    def __init__(self, smarthome, *args, **kwargs):
-        self._sh = smarthome
+    def __init__(self, sh, *args, **kwargs):
         self._host = self.get_parameter_value('host')
         self._port = self.get_parameter_value('port')
         self._username = self.get_parameter_value('username')
@@ -146,7 +145,7 @@ class IMAP(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('IMAP', self._cycle, cycle=self.cycle)
+        self.scheduler_add('IMAP', self._cycle, cycle=self.cycle)
 
     def stop(self):
         self.alive = False
