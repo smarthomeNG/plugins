@@ -175,6 +175,12 @@ plugin_functions:
                 is not active, the result is None, otherwise a dictionary containing entries for time and value.
                 '
 
+    resume:
+        type: foo
+        description:
+            de: 'Fortsetzen der UZSU Evaluierung: Aktivieren des Items und Setzen des zuletzt festgelegten Wertes.'
+            en: 'Resuming the UZSU evaluation: activating the item and setting the last defined value.'
+
     lastvalue:
         type: foo
         description:

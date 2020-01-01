@@ -251,8 +251,18 @@ class UZSU(SmartPlugin):
         return _itemtype
 
     def _logics_lastvalue(self, item=None):
-        lastvalue = self._items[item].get('lastvalue')
+        if self._items.get(item):
+            lastvalue = self._items[item].get('lastvalue')
+        else:
+            lastvalue = None
         self.logger.debug("Last value of item {} is: {}.".format(item, lastvalue))
+        return lastvalue
+
+    def _logics_resume(self, activevalue=True, item=None):
+        self._logics_activate(True, item)
+        lastvalue = self._logics_lastvalue(item)
+        self._set(item=item, value=lastvalue, caller='logic')
+        self.logger.info("Resuming item {}: Acitivated and value set to {}".format(item, lastvalue))
         return lastvalue
 
     def _logics_activate(self, activevalue=None, item=None):
@@ -357,6 +367,7 @@ class UZSU(SmartPlugin):
             # add functions for use in logics and webif
             item.activate = functools.partial(self._logics_activate, item=item)
             item.lastvalue = functools.partial(self._logics_lastvalue, item=item)
+            item.resume = functools.partial(self._logics_resume, item=item)
             item.interpolation = functools.partial(self._logics_interpolation, item=item)
             item.clear = functools.partial(self._logics_clear, item=item)
             item.planned = functools.partial(self._logics_planned, item=item)
