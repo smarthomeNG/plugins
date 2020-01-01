@@ -31,33 +31,40 @@ class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.4.1"
 
-    def __init__(self, smarthome, *args, **kwargs): #host, username, password, cycle=300, port=993, tls=True, trashfolder="Trash"):
+    def __init__(self, smarthome, host, username, password, cycle=300, port=993, tls=True, trashfolder="Trash"):
         self._sh = smarthome
+        self._host = host
+        self._port = port
+        self._username = username
+        self._password = password
+        self.cycle = int(cycle)
         self._mail_sub = {}
         self._mail_to = {}
         self._mail = False
+        self._tls = self.to_bool(tls)
+        self._trashfolder = trashfolder
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
     def _connect(self):
-        if self.get_parameter_value('tls'):
-            if self.get_parameter_value('port') is not None:
-                imap = imaplib.IMAP4_SSL(self.get_parameter_value('host'), self.get_parameter_value('port'))
+        if self._tls:
+            if self._port is not None:
+                imap = imaplib.IMAP4_SSL(self._host, self._port)
             else:
-                imap = imaplib.IMAP4_SSL(self.get_parameter_value('host'))
+                imap = imaplib.IMAP4_SSL(self._host)
         else:
-            if self.get_parameter_value('port') is not None:
-                imap = imaplib.IMAP4(self.get_parameter_value('host'), self.get_parameter_value('port'))
+            if self._port is not None:
+                imap = imaplib.IMAP4(self._host, self._port)
             else:
-                imap = imaplib.IMAP4(self.get_parameter_value('host'))
-        imap.login(self.get_parameter_value('username'), self.get_parameter_value('password'))
+                imap = imaplib.IMAP4(self._host)
+        imap.login(self._username, self._password)
         return imap
 
     def _cycle(self):
         try:
             imap = self._connect()
         except Exception as e:
-            self.logger.warning("Could not connect to {0}: {1}".format(self.get_parameter_value('host'), e))
+            self.logger.warning("Could not connect to {0}: {1}".format(self._host, e))
             return
         rsp, data = imap.select()
         if rsp != 'OK':
@@ -115,14 +122,14 @@ class IMAP(SmartPlugin):
                 logic = False
             if logic:
                 logic.trigger('IMAP', fo, mail, dest=to)
-                if self.get_parameter_value('host').lower() == 'imap.gmail.com':
+                if self._host.lower() == 'imap.gmail.com':
                     typ, data = imap.uid('store', uid, '+X-GM-LABELS', '\\Trash')
                     if typ == 'OK':
-                        self.logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                        logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                     else:
-                        self.logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                        logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                 else:
-                    rsp, data = imap.uid('copy', uid, self.get_parameter_value('trashfolder'))
+                    rsp, data = imap.uid('copy', uid, self._trashfolder)
                     if rsp == 'OK':
                         typ, data = imap.uid('store', uid, '+FLAGS', '(\Deleted)')
                         self.logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
@@ -138,7 +145,7 @@ class IMAP(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('IMAP', self._cycle, cycle=self.get_parameter_value('cycle'))
+        self._sh.scheduler.add('IMAP', self._cycle, cycle=self.cycle)
 
     def stop(self):
         self.alive = False
