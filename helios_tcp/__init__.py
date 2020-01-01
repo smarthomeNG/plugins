@@ -1,10 +1,32 @@
+#!/usr/bin/env python3
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+#########################################################################
+#  Copyright 2020 Thilo Schneider                   freget@googlemail.com
+#########################################################################
+#  This file is part of SmartHomeNG.   
+#
+#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
+#  upwards.
+#
+#  SmartHomeNG is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  SmartHomeNG is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
+#########################################################################
 
 import logging
-
-from pymodbus3.client.sync import ModbusTcpClient
-
 from lib.model.smartplugin import SmartPlugin
 
+from pymodbus3.client.sync import ModbusTcpClient
 
 VARLIST = {
     "outside_temp"              : {"var": "v00104", "length": 8, "type": float, "read": True, "write": False},
@@ -97,24 +119,23 @@ class HeliosTCP(SmartPlugin):
 
     _items = {}
 
-    def __init__(self, sh, helios_ip=None, update_cycle=60):
+    def __init__(self, sh, *args, **kwargs): 
         if helios_ip is None:
             self.logger.error("Helios TCP: Configuration parameter helios_ip is required.")
 
-        self._sh = sh
         self.logger = logging.getLogger(__name__)
-        self._helios_ip = helios_ip
+        self._helios_ip = get_parameter_value('helios_ip')
         self._client = ModbusTcpClient(self._helios_ip)
         self.alive = False
         self._is_connected = False
-        self._update_cycle = update_cycle
+        self._update_cycle = get_parameter_value('update_cycle')
 
 
     def run(self):
         self._is_connected = self._client.connect()
         if not self._is_connected:
             self.logger.error("Helios TCP: Failed to connect to Modbus Server at {0}".format(self._helios_ip))
-        self._sh.scheduler.add('Helios TCP', self._update_values, prio=5, cycle=self._update_cycle)
+        self.scheduler_add('Helios TCP', self._update_values, cycle=self._update_cycle)
         self.alive = True
 
 
