@@ -28,6 +28,7 @@ from . import StateEngineCurrent
 from . import StateEngineValue
 from lib.item import Items
 from lib.shtime import Shtime
+import time
 
 
 # Class representing a blind item
@@ -80,6 +81,9 @@ class SeItem:
     def action_in_progress(self):
         return self.__action_in_progress
 
+    @property
+    def update_in_progress(self):
+        return self.__update_in_progress
 
     # Constructor
     # smarthome: instance of smarthome.py
@@ -132,7 +136,7 @@ class SeItem:
         self.__update_trigger_source = None
         self.__update_trigger_dest = None
         self.__update_in_progress = False
-        self.__action_in_progress = False
+        self.__action_in_progress = []
         self.__update_original_item = None
         self.__update_original_caller = None
         self.__update_original_source = None
@@ -180,8 +184,17 @@ class SeItem:
     def __repr__(self):
         return self.__id
 
-    def set_action_state(self, value):
-        self.__action_in_progress = value
+    def set_action_state(self, value, listaction):
+        if listaction == 'add':
+            # self.__logger.debug("Adding {} to action list", value)
+            self.__action_in_progress.append(value)
+        elif value in self.__action_in_progress:
+            # self.__logger.debug("Removing {} from action list", value)
+            self.__action_in_progress.reverse()
+            self.__action_in_progress.remove(value)
+            self.__action_in_progress.reverse()
+        else:
+            self.__logger.debug("Nothing to do with {} (listaction: {}).", value, listaction)
 
     def updatetemplates(self, template, value):
         if value is None:
@@ -218,12 +231,23 @@ class SeItem:
         if self.__update_in_progress or not self.__startup_delay_over:
             return
 
+        i = 0
+        item_id = item.property.path if item is not None else "(no item)"
+        while len(self.__action_in_progress) > 0:
+            self.__logger.info("Action {} is still running. Postponing current state evaluation for {} for one second", self.__action_in_progress, item_id)
+            i += 1
+            time.sleep(1)
+            if i >= 10:
+                self.__logger.warning("10 seconds wait time for item {} is over. Running state evaluation now.", item_id)
+                break
+
         self.__update_in_progress = True
 
         self.__logger.update_logfile()
-        self.__logger.header("Update state of item {0}".format(self.__name))
+        postponed = " (postponed {}s)".format(i) if i > 0 else ""
+        i = 0
+        self.__logger.header("Update state of item {0}{1}".format(self.__name, postponed))
         if caller:
-            item_id = item.property.path if item is not None else "(no item)"
             self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id, source, dest)
 
         # Find out what initially caused the update to trigger if the caller is "Eval"
