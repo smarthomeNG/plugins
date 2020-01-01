@@ -333,7 +333,7 @@ class SeActions(StateEngineTools.SeItemChild):
         for order, action in sorted(actions, key=lambda x: x[0]):
             i = 0
             while len(self._abitem.action_in_progress) > 0:
-                self._log_info("{} is already running. Postponing current action {} with order {} for one second", self._abitem.action_in_progress, action._name, delay)
+                self._log_info("{} is already running. Postponing current action {} with order {} for one second", self._abitem.action_in_progress, action._name, order)
                 i += 1
                 time.sleep(1)
                 if i >= 10:
