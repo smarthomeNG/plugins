@@ -496,27 +496,31 @@ class OneWire(SmartPlugin):
         
         # now decide wether iButton Master is present and if there are iButtons associated with items
         if self._discovered and not self._iButton_Strategy_set:
-            if self._ibuttons != {} and self._ibutton_masters == {}:
-                if self.logger.isEnabledFor(logging.INFO):
-                    self.logger.info("1-Wire: iButtons specified but no dedicated iButton master. Using I/O cycle for the iButtons.")
-                for addr in self._ibuttons:
-                    for key in self._ibuttons[addr]:
-                        if key == 'B':
-                            if addr in self._ios:
-                                self._ios[addr][key] = {'item': self._ibuttons[addr][key]['item'], 'path': '/' + addr}
-                            else:
-                                self._ios[addr] = {key: {'item': self._ibuttons[addr][key]['item'], 'path': '/' + addr}}
-                self._ibuttons = {}
-            if self._ibutton_masters == {} and self._ios == {}:
-                return
-            elif self._ibutton_masters != {} and self._ios != {}:
-                self.scheduler_trigger('sensor-io', self._io_loop, '1w', prio=5)
-                self._ibutton_loop()
-            elif self._ios != {}:
-                self._io_loop()
-            elif self._ibutton_masters != {}:
-                self._ibutton_loop()
-            self._iButton_Strategy_set = True
+            try:
+                if self._ibuttons != {} and self._ibutton_masters == {}:
+                    if self.logger.isEnabledFor(logging.INFO):
+                        self.logger.info("1-Wire: iButtons specified but no dedicated iButton master. Using I/O cycle for the iButtons.")
+                    for addr in self._ibuttons:
+                        for key in self._ibuttons[addr]:
+                            if key == 'B':
+                                if addr in self._ios:
+                                    self._ios[addr][key] = {'item': self._ibuttons[addr][key]['item'], 'path': '/' + addr}
+                                else:
+                                    self._ios[addr] = {key: {'item': self._ibuttons[addr][key]['item'], 'path': '/' + addr}}
+                    self._ibuttons = {}
+                if self._ibutton_masters == {} and self._ios == {}:
+                    return
+                elif self._ibutton_masters != {} and self._ios != {}:
+                    self.scheduler_trigger('sensor-io', self._io_loop, '1w', prio=5)
+                    self._ibutton_loop()
+                elif self._ios != {}:
+                    self._io_loop()
+                elif self._ibutton_masters != {}:
+                    self._ibutton_loop()
+            except:
+                pass
+            finally:
+                self._iButton_Strategy_set = True
 
     def parse_item(self, item):
         """

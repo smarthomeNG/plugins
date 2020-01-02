@@ -64,21 +64,6 @@ parameters:
             en: 'Time period between two requests of ibutton busmaster.'
             en: 'Délai entre deux demandes de ibutton busmaster.'
 
-    # /etc/owfs.conf may contain this line:
-    # server: alias = /usr/smarthome/items/ow_aliases
-    # 
-    # and the file ow_aliases the might contain something like this:
-    # 28.XXXXXXXXXXXX = kitchen
-    # 28.XXXXXXXXXXXX = bathroom
-    # in case that use_ow_aliases is set to True, the ow_addr won't be signaled as error if the format xx.yyyyyyyyyyyy won't be matched
-    # use_ow_aliases:
-    #     type: bool
-    #     default: False
-    #     description:
-    #         de: 'Ermöglicht die Nutzung von Alias Definitionen für Sensoren'
-    #         en: 'Enables the usage of alias definition for sensors within ow_addr'
-    #         en: "Permet l'utilisation de la définition d'alias pour les capteurs dans ow_addr"
-
 item_attributes:
     ow_addr:
         type: str
