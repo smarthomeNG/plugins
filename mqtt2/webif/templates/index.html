@@ -113,13 +113,13 @@
 	</tr>
 	</thead>
 	{% for item in items %}
-		{% if p.has_iattr(item.conf, 'mqtt2_topic_in') or p.has_iattr(item.conf, 'mqtt2_topic_out') %}
+		{% if p.has_iattr(item.conf, 'mqtt_topic_in') or p.has_iattr(item.conf, 'mqtt_topic_out') %}
 			<tr>
 				<td class="py-1">{{ item._path }}</td>
 				<td class="py-1">{{ item._type }}</td>
 				<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
-				<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt2_topic_in') %}<strong>in &nbsp; : </strong>{{ p.get_iattr_value(item.conf, 'mqtt2_topic_in') }}<br>{% endif %}
-					{% if p.has_iattr(item.conf, 'mqtt2_topic_out') %}<strong>out: </strong>{{ p.get_iattr_value(item.conf, 'mqtt2_topic_out') }}{% endif %}</td>
+				<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt_topic_in') %}<strong>in &nbsp; : </strong>{{ p.get_iattr_value(item.conf, 'mqtt_topic_in') }}<br>{% endif %}
+					{% if p.has_iattr(item.conf, 'mqtt_topic_out') %}<strong>out: </strong>{{ p.get_iattr_value(item.conf, 'mqtt_topic_out') }}{% endif %}</td>
 				<td id="{{ item.id() }}_last_update" class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 				<td id="{{ item.id() }}_last_change" class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 			</tr>
@@ -228,12 +228,12 @@ msg_rcv_1min
 	</tr>
 	</thead>
 	{% for item in items %}
-		{% if p.has_iattr(item.conf, 'mqtt2_topic_in') or p.has_iattr(item.conf, 'mqtt2_topic_out') %}
+		{% if p.has_iattr(item.conf, 'mqtt_topic_in') or p.has_iattr(item.conf, 'mqtt_topic_out') %}
 			<tr>
 				<td class="py-1">{{ item._path }}</td>
 				<td class="py-1">{{ item._type }}</td>
 				<td class="py-1">{{ item() }}</td>
-				<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt2_topic_in') %}{{ p.get_iattr_value(item.conf, 'mqtt2_topic_in') }}{% endif %}</td>
+				<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt_topic_in') %}{{ p.get_iattr_value(item.conf, 'mqtt_topic_in') }}{% endif %}</td>
 				<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 				<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 			</tr>

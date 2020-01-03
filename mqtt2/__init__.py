@@ -34,10 +34,6 @@ from lib.item import Items
 from lib.utils import Utils
 
 
-# If a needed package is imported, which might be not installed in the Python environment,
-# add it to a requirements.txt file within the plugin's directory
-
-
 class Mqtt2(SmartPlugin, MqttPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
@@ -45,13 +41,6 @@ class Mqtt2(SmartPlugin, MqttPlugin):
     """
 
     PLUGIN_VERSION = '1.7.0'
-
-    # _broker_version = '?'
-    # _broker = {}
-    # broker_config = {}
-    # broker_monitoring = False
-    #
-    # _item_values = {}                    # dict of dicts
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -71,17 +60,6 @@ class Mqtt2(SmartPlugin, MqttPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-#        from bin.smarthome import VERSION
-#        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-#            self.logger = logging.getLogger(__name__)
-
-        # If an package import with try/except is done, handle an import error like this:
-
-        # Exit if the required package(s) could not be imported
-        # if not REQUIRED_PACKAGE_IMPORTED:
-        #     self.logger.error("Unable to import Python package '<exotic package>'")
-        #     self._init_complete = False
-        #     return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         try:
@@ -147,11 +125,6 @@ class Mqtt2(SmartPlugin, MqttPlugin):
         # start subscription to all topics
         self._start_subscriptions()
 
-        # log structure with subscribed topic information
-        from pprint import pformat
-        sub = pformat(self._subscribed_topics, indent=4, width=80)
-        self.logger.debug("self._subscribed_topics:\n{}\n".format(sub))
-
         return
 
 
@@ -182,15 +155,15 @@ class Mqtt2(SmartPlugin, MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         # first checking for mqtt-topic attributes 'mqtt_topic', 'mqtt_topic_in' and 'mqtt_topic_out'
-        if self.has_iattr(item.conf, 'mqtt2_topic'):
-            item.conf['mqtt2_topic_in' + self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt2_topic')
-            item.conf['mqtt2_topic_out' + self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt2_topic')
+        if self.has_iattr(item.conf, 'mqtt_topic'):
+            item.conf['mqtt_topic_in' + self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt_topic')
+            item.conf['mqtt_topic_out' + self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt_topic')
 
-        if self.has_iattr(item.conf, 'mqtt2_topic_init'):
-            item.conf['mqtt2_topic_out' + self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt2_topic_init')
+        if self.has_iattr(item.conf, 'mqtt_topic_init'):
+            item.conf['mqtt_topic_out' + self.at_instance_name] = self.get_iattr_value(item.conf, 'mqtt_topic_init')
 
         # check other mqtt attributes, if a topic attribute has been specified
-        if self.has_iattr(item.conf, 'mqtt2_topic_in') or self.has_iattr(item.conf, 'mqtt2_topic_out'):
+        if self.has_iattr(item.conf, 'mqtt_topic_in') or self.has_iattr(item.conf, 'mqtt_topic_out'):
             self.logger.debug("parsing item: {0}".format(item.id()))
 
             # check if mqtt module has been initialized successfully
@@ -199,40 +172,40 @@ class Mqtt2(SmartPlugin, MqttPlugin):
                 return
 
             # checking attribute 'mqtt_qos'
-            if self.has_iattr(item.conf, 'mqtt2_qos'):
+            if self.has_iattr(item.conf, 'mqtt_qos'):
                 self.logger.debug(self.get_loginstance() + "Setting QoS '{}' for item '{}'".format(
-                    str(self.get_iattr_value(item.conf, 'mqtt2_qos')), str(item)))
+                    str(self.get_iattr_value(item.conf, 'mqtt_qos')), str(item)))
                 qos = -1
-                if Utils.is_int(self.get_iattr_value(item.conf, 'mqtt2_qos')):
-                    qos = int(self.get_iattr_value(item.conf, 'mqtt2_qos'))
+                if Utils.is_int(self.get_iattr_value(item.conf, 'mqtt_qos')):
+                    qos = int(self.get_iattr_value(item.conf, 'mqtt_qos'))
                 if not (qos in [0, 1, 2]):
                     self.logger.warning(
-                        self.get_loginstance() + "Item '{}' invalid value specified for mqtt2_qos, using plugin's default".format(
+                        self.get_loginstance() + "Item '{}' invalid value specified for mqtt_qos, using plugin's default".format(
                             item.id()))
                     qos = self.qos
-                self.set_attr_value(item.conf, 'mqtt2_qos', str(qos))
+                self.set_attr_value(item.conf, 'mqtt_qos', str(qos))
 
             # checking attribute 'mqtt_retain'
-            if Utils.to_bool(self.get_iattr_value(item.conf, 'mqtt2_retain'), default=False):
-                self.set_attr_value(item.conf, 'mqtt2_retain', 'True')
+            if Utils.to_bool(self.get_iattr_value(item.conf, 'mqtt_retain'), default=False):
+                self.set_attr_value(item.conf, 'mqtt_retain', 'True')
             else:
-                self.set_attr_value(item.conf, 'mqtt2_retain', 'False')
+                self.set_attr_value(item.conf, 'mqtt_retain', 'False')
 
             self.logger.debug(self.get_loginstance() + "(parsing result): item.conf '{}'".format(str(item.conf)))
 
         # subscribe to configured topics
-        if self.has_iattr(item.conf, 'mqtt2_topic_in'):
+        if self.has_iattr(item.conf, 'mqtt_topic_in'):
             # add subscription
-            topic = self.get_iattr_value(item.conf, 'mqtt2_topic_in')
+            topic = self.get_iattr_value(item.conf, 'mqtt_topic_in')
             payload_type = item.property.type
-            bool_values = self.get_iattr_value(item.conf, 'mqtt2_bool_values')
+            bool_values = self.get_iattr_value(item.conf, 'mqtt_bool_values')
             self._add_subscription(topic, payload_type, bool_values, item)
 
-        if self.has_iattr(item.conf, 'mqtt2_topic_out'):
+        if self.has_iattr(item.conf, 'mqtt_topic_out'):
             # initialize topics if configured
-            topic = self.get_iattr_value(item.conf, 'mqtt2_topic_out')
-            if self.has_iattr(item.conf, 'mqtt2_topic_init'):
-                self.inittopics[self.get_iattr_value(item.conf, 'mqtt2_topic_init')] = item
+            topic = self.get_iattr_value(item.conf, 'mqtt_topic_out')
+            if self.has_iattr(item.conf, 'mqtt_topic_init'):
+                self.inittopics[self.get_iattr_value(item.conf, 'mqtt_topic_init')] = item
             else:
                 self.logger.info("Publishing topic '{}' (when needed) for item '{}'".format(topic, item.id()))
 
@@ -267,17 +240,17 @@ class Mqtt2(SmartPlugin, MqttPlugin):
             # and only, if the item has not been changed by this this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
 
-            if (self.has_iattr(item.conf, 'mqtt2_topic_out')):
-                topic = self.get_iattr_value(item.conf, 'mqtt2_topic_out')
-                retain = self.get_iattr_value(item.conf, 'mqtt2_retain')
+            if (self.has_iattr(item.conf, 'mqtt_topic_out')):
+                topic = self.get_iattr_value(item.conf, 'mqtt_topic_out')
+                retain = self.get_iattr_value(item.conf, 'mqtt_retain')
                 if retain == None:
                     retain = False
 
-                bool_values = self.get_iattr_value(item.conf, 'mqtt2_bool_values')
+                bool_values = self.get_iattr_value(item.conf, 'mqtt_bool_values')
                 if bool_values is None or bool_values == []:
                     bool_values = None
 
-                qos = self.get_iattr_value(item.conf, 'mqtt2_qos')
+                qos = self.get_iattr_value(item.conf, 'mqtt_qos')
                 if qos:
                     qos = int(qos)
                 self._publish_topic(item, topic, item(), qos, retain, bool_values)
@@ -348,164 +321,6 @@ class Mqtt2(SmartPlugin, MqttPlugin):
                                      description='')
 
         return True
-
-    # -----------------------------------------------------------------------
-
-    # def get_broker_info(self):
-    #     if self.mod_mqtt:
-    #         (self._broker, self.broker_monitoring) = self.mod_mqtt.get_broker_info()
-    #
-    #
-    # def seconds_to_displaysting(self, sec):
-    #     """
-    #     Convert number of seconds to time display sting
-    #     """
-    #     min = sec // 60
-    #     sec = sec - min * 60
-    #     std = min // 60
-    #     min = min - std * 60
-    #     days = std // 24
-    #     std = std - days * 24
-    #
-    #     result = ''
-    #     if days == 1:
-    #         result += str(days) + ' ' + self.translate('Tag') + ', '
-    #     elif days > 0:
-    #         result += str(days) + ' ' + self.translate('Tage') + ', '
-    #     if std == 1:
-    #         result += str(std) + ' ' + self.translate('Stunde') + ', '
-    #     elif std > 0:
-    #         result += str(std) + ' ' + self.translate('Stunden') + ', '
-    #     if min == 1:
-    #         result += str(min) + ' ' + self.translate('Minute') + ', '
-    #     elif min > 0:
-    #         result += str(min) + ' ' + self.translate('Minuten') + ', '
-    #     if sec == 1:
-    #         result += str(sec) + ' ' + self.translate('Sekunde')
-    #     elif sec > 0:
-    #         result += str(sec) + ' ' + self.translate('Sekunden')
-    #     return result
-    #
-    #
-    # def broker_uptime(self):
-    #     """
-    #     Return formatted uptime of broker
-    #     """
-    #     try:
-    #         return self.seconds_to_displaysting(int(self._broker['uptime']))
-    #     except:
-    #         return '-'
-    #
-    #
-    # def _start_subscriptions(self):
-    #     """
-    #     Start subscription to all topics
-    #     """
-    #     if self.mod_mqtt:
-    #         for topic in self._subscribed_topics:
-    #             # start subscription to all items for this topic
-    #             for item_path in self._subscribed_topics[topic]:
-    #                 current = str(self._subscribed_topics[topic][item_path]['current'])
-    #                 qos = self._subscribed_topics[topic][item_path].get('qos', None)
-    #                 payload_type = self._subscribed_topics[topic][item_path].get('payload_type', None)
-    #                 # callback = self._subscribed_topics[topic][item_path].get('callback', None)
-    #                 bool_values = self._subscribed_topics[topic][item_path].get('bool_values', None)
-    #                 self.logger.info("run(): Subscribing to topic {} for item {}".format(topic, item_path))
-    #                 self.mod_mqtt.subscribe_topic(self.get_shortname() + '-' + current, topic, qos=qos,
-    #                                               payload_type=payload_type,
-    #                                               callback=self.on_mqtt_message, bool_values=bool_values)
-    #     return
-    #
-    # def _stop_subscriptions(self):
-    #     """
-    #     Stop subscription to all topics
-    #     """
-    #     if self.mod_mqtt:
-    #         for topic in self._subscribed_topics:
-    #             # stop subscription to all items for this topic
-    #             for item_path in self._subscribed_topics[topic]:
-    #                 current = str(self._subscribed_topics[topic][item_path]['current'])
-    #                 self.logger.info("stop(): Unsubscribing from topic {} for item {}".format(topic, item_path))
-    #                 self.mod_mqtt.unsubscribe_topic(self.get_shortname() + '-' + current, topic)
-    #     return
-    #
-    # def _add_subscription(self, topic, payload_type, bool_values, item):
-    #     """
-    #
-    #     :param topic:        topic to subscribe to
-    #     :param payload_type: payload type of the topic (for this subscription to the topic)
-    #     :param bool_values:  bool values (for this subscription to the topic)
-    #     :param item:         item that should receive the payload as value
-    #     :return:
-    #     """
-    #
-    #     # test if topic is new
-    #     if not self._subscribed_topics.get(topic, None):
-    #         self._subscribed_topics[topic] = {}
-    #     # add this item to topic
-    #     self._subscribed_topics[topic][item.path()] = {}
-    #     self._subscribe_current_number += 1
-    #     self._subscribed_topics[topic][item.path()]['current'] = self._subscribe_current_number
-    #     self._subscribed_topics[topic][item.path()]['item'] = item
-    #     self._subscribed_topics[topic][item.path()]['qos'] = None
-    #     self._subscribed_topics[topic][item.path()]['payload_type'] = payload_type
-    #     # self._subscribed_topics[topic][item.path()]['callback'] = self.on_mqtt_message
-    #     self._subscribed_topics[topic][item.path()]['bool_values'] = bool_values
-    #
-    #     return
-    #
-    #
-    # def on_mqtt_message(self, topic, payload, qos=None, retain=None):
-    #     """
-    #     Callback function to handle received messages
-    #
-    #     :param topic:
-    #     :param payload:
-    #     :return:
-    #     """
-    #     self.logger.info(self.get_loginstance() + "MQTT2 on_mqtt_message: Received topic '{}', payload '{} (type {})', QoS '{}', retain '{}' ".format(topic, payload, type(payload), qos, retain))
-    #
-    #     # get item for topic
-    #     if self._subscribed_topics.get(topic, None):
-    #         # at least 1 item has subscribed to this topic
-    #         for item_path in self._subscribed_topics[topic]:
-    #             item = self._subscribed_topics[topic][item_path].get('item', None)
-    #             if item != None:
-    #                 self.logger.info(self.get_loginstance()+"Received topic '{}', payload '{}' (type {}), QoS '{}', retain '{}' for item '{}'".format( topic, payload, item.type(), qos, retain, item.id() ))
-    #                 item(payload, 'mqtt2')
-    #                 # Update dict for periodic updates of the web interface
-    #                 self._update_item_values(item, payload)
-    #     else:
-    #         self.logger.error("on_mqtt_message: No definition found for subscribed topic '{}'".format(topic))
-    #     return
-    #
-    #
-    # def _publish_topic(self, item, topic, payload, qos, retain, bool_values):
-    #     self.logger.info("_publish_topic: Item '{}' -> topic '{}', payload '{}', QoS '{}', retain '{}'".format(item.id(), topic, payload, qos, retain))
-    #     self.mod_mqtt.publish_topic(self.get_shortname(), topic, payload, qos, retain, bool_values)
-    #
-    #     # Update dict for periodic updates of the web interface
-    #     self._update_item_values(item, payload)
-    #     return
-    #
-    #
-    # def _update_item_values(self, item, payload):
-    #     """
-    #     Update dict for periodic updates of the web interface
-    #
-    #     :param item:
-    #     :param payload:
-    #     """
-    #     if not self._item_values.get(item.id()):
-    #         self._item_values[item.id()] = {}
-    #     if isinstance(payload, bool):
-    #         self._item_values[item.id()]['value'] = str(payload)
-    #     else:
-    #         self._item_values[item.id()]['value'] = payload
-    #     self._item_values[item.id()]['last_update'] = item.last_update().strftime('%d.%m.%Y %H:%M:%S')
-    #     self._item_values[item.id()]['last_change'] = item.last_change().strftime('%d.%m.%Y %H:%M:%S')
-    #     self.logger.info("_update_item_values: self._item_values = {}".format(self._item_values))
-    #     return
 
 
 # -----------------------------------------------------------------------
