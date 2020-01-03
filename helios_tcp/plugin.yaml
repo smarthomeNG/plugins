@@ -33,7 +33,7 @@ parameters:
 
 item_attributes:
     helios_tcp:
-      type: string
+      type: str
       description:
         de: "Name des Attributs der Lüftungsanlage, welches auf das Item geschrieben wird"
         en: "Name of the atribute of the ventilation system that is mapped to that item"

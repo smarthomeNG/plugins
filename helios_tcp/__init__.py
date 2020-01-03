@@ -113,22 +113,20 @@ VARLIST = {
 
 
 class HeliosTCP(SmartPlugin):
+    PLUGIN_VERSION = "1.0.0"
     MODBUS_SLAVE = 180
     PORT = 502
     START_REGISTER = 1
 
     _items = {}
 
-    def __init__(self, sh, *args, **kwargs): 
-        if helios_ip is None:
-            self.logger.error("Helios TCP: Configuration parameter helios_ip is required.")
-
+    def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
-        self._helios_ip = get_parameter_value('helios_ip')
+        self._helios_ip = self.get_parameter_value('helios_ip')
         self._client = ModbusTcpClient(self._helios_ip)
         self.alive = False
         self._is_connected = False
-        self._update_cycle = get_parameter_value('update_cycle')
+        self._update_cycle = self.get_parameter_value('update_cycle')
 
 
     def run(self):
