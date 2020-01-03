@@ -24,7 +24,7 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
-    mqtt2_topic:
+    mqtt_topic:
         type: str
         description:
             de: 'Topic für Senden und Empfangen'
@@ -39,7 +39,7 @@ item_attributes:
                  or mqtt_topic_in.
                 '
 
-    mqtt2_topic_in:
+    mqtt_topic_in:
         type: str
         description:
             de: 'Topic für Empfangen'
@@ -53,7 +53,7 @@ item_attributes:
                  with this topic, the payload is used to set the item's value.
                 "
 
-    mqtt2_topic_out:
+    mqtt_topic_out:
         type: str
         description:
             de: 'Topic für Senden'
@@ -66,7 +66,7 @@ item_attributes:
                  published as payload.
                 '
 
-    mqtt2_topic_init:
+    mqtt_topic_init:
         type: str
         description:
             de: 'Topic für Senden (Initial beim Start von SmartHomeNG senden)'
@@ -79,7 +79,7 @@ item_attributes:
                  topic when SmartHomeNG ist started.
                 '
 
-    mqtt2_qos:
+    mqtt_qos:
         type: int
         valid_list:
           - 0
@@ -97,7 +97,7 @@ item_attributes:
                  with the broker. If not specified, the plugin's default is used.
                 "
 
-    mqtt2_retain:
+    mqtt_retain:
         type: bool
         default: ''
         description:
@@ -110,7 +110,7 @@ item_attributes:
             en: 'When set to True, the MQTT message is sent with the retain flag set.\n
                 '
 
-    mqtt2_bool_values:
+    mqtt_bool_values:
         type: list
         default: None*
         description:
