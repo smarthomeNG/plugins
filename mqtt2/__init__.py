@@ -82,30 +82,12 @@ class Mqtt2(SmartPlugin, MqttPlugin):
         if self.at_instance_name != '':
             self.at_instance_name = '@'+self.at_instance_name
 
-        # get instance of MQTT module
-        try:
-            self.mod_mqtt = Modules.get_instance().get_module('mqtt')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_mqtt = None
-        if self.mod_mqtt == None:
-            self.logger.error("Module MQTT could not be initialized. The plugin is not starting")
-            return False
-
-        self.inittopics = {}               # topics for items publishing initial value ('mqtt_topic_init')
-        self._subscribed_topics = {}       # subscribed topics (a dict of dicts)
-        self._subscribe_current_number = 0 # current number of the subscription entry
-
-        # get broker configuration (for display in web interface)
-        self.broker_config = self.mod_mqtt.get_broker_config()
-
-        # The following part of the __init__ method is only needed, if a webinterface is being implemented:
+        # Initialize mqtt part of the plugin
+        if not self.mqtt_init():
+            return
 
         # if plugin should start even without web interface
         self.init_webinterface()
-
-        # if plugin should not start without web interface
-        # if not self.init_webinterface():
-        #     self._init_complete = False
 
         return
 
@@ -364,8 +346,6 @@ class WebInterface(SmartPluginWebIf):
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
 
-
-    _get_counter = 0
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
