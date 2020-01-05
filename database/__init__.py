@@ -87,6 +87,12 @@ class Database(SmartPlugin):
         connect = self.get_parameter_value('connect')
         prefix = self.get_parameter_value('prefix')
 
+        if len(connect) > 0:
+           self.logger.warn("The 'connect' parameter is deprecated, please update to use 'database' parameter")
+           connect = Utils.string_to_list(connect)
+        else:
+           connect = self.get_parameter_value('database')
+
         self._dump_cycle = self.get_parameter_value('cycle')
         self._precision = self.get_parameter_value('precision')
         self._name = self.get_instance_name()

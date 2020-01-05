@@ -60,7 +60,7 @@ database:
     class_name: Database
     class_path: plugins.database
     driver: sqlite3
-    connect:
+    database:
       database: /path/to/log.db
       check_same_thread: 0
     # prefix: log
@@ -72,7 +72,7 @@ The following attributes can be used in the plugin configuration:
    * `driver` - specifies the DB-API2 driver module (e.g. Python includes
      the SQLite driver by importing the module `sqlite3`, to use it here
      just set the driver parameter to the module name `sqlite3`)
-   * `connect` - specifies the connection parameters which is directly
+   * `database` - specifies the connection parameters which is directly
      used to invoke the `connect()` function of the DB API 2 implementation
    * `prefix` - if you want to log into an existing database with other tables
      you can specify a prefix for the plugins' tables
