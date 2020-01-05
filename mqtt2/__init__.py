@@ -27,14 +27,14 @@ import logging
 import json
 
 from lib.module import Modules
-from lib.model.smartplugin import *
+#from lib.model.smartplugin import *
 from lib.model.mqttplugin import *
 from lib.item import Items
 
 from lib.utils import Utils
 
 
-class Mqtt2(SmartPlugin, MqttPlugin):
+class Mqtt2(MqttPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
@@ -61,6 +61,9 @@ class Mqtt2(SmartPlugin, MqttPlugin):
         returns the value in the datatype that is defined in the metadata.
         """
 
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
+
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         try:
         #     self.param1 = self.get_parameter_value('param1')
@@ -70,11 +73,6 @@ class Mqtt2(SmartPlugin, MqttPlugin):
             self._init_complete = False
             return
 
-        # cycle time in seconds, only needed, if hardware/interface needs to be
-        # polled for value changes by adding a scheduler entry in the run method of this plugin
-        # (maybe you want to make it a plugin parameter?)
-        self._cycle = 60
-
         # Initialization code goes here
 
         # needed because self.set_attr_value() can only set but not add attributes
@@ -82,9 +80,7 @@ class Mqtt2(SmartPlugin, MqttPlugin):
         if self.at_instance_name != '':
             self.at_instance_name = '@'+self.at_instance_name
 
-        # Initialize mqtt part of the plugin
-        if not self.mqtt_init():
-            return
+        self.inittopics = {}
 
         # if plugin should start even without web interface
         self.init_webinterface()
@@ -97,8 +93,6 @@ class Mqtt2(SmartPlugin, MqttPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
-        # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
-        #self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
 
         self.alive = True
         # if you need to create child threads, do not make them daemon = True!
