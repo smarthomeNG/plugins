@@ -27,18 +27,19 @@ import logging
 import json
 
 from lib.module import Modules
-from lib.model.smartplugin import *
+#from lib.model.smartplugin import *
 from lib.model.mqttplugin import *
 from lib.item import Items
 
 
-class Shelly(SmartPlugin, MqttPlugin):
+#class Shelly(SmartPlugin, MqttPlugin):
+class Shelly(MqttPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.0.0'
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -59,23 +60,15 @@ class Shelly(SmartPlugin, MqttPlugin):
         returns the value in the datatype that is defined in the metadata.
         """
 
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
+
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        try:
-        #     self.param1 = self.get_parameter_value('param1')
-            pass
-        except KeyError as e:
-            self.logger.critical("Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(self.get_shortname(), e))
-            self._init_complete = False
-            return
+        # self.param1 = self.get_parameter_value('param1')
 
         # Initialization code goes here
-
         self.shelly_item_defs = {}
         self.shelly_items = []
-
-        # Initialize mqtt part of the plugin
-        if not self.mqtt_init():
-            return
 
          # if plugin should start even without web interface
         self.init_webinterface()
@@ -129,11 +122,14 @@ class Shelly(SmartPlugin, MqttPlugin):
 
             shelly_id = self.get_iattr_value(item.conf, 'shelly_id')
             shelly_type = self.get_iattr_value(item.conf, 'shelly_type')
+            shelly_relay = self.get_iattr_value(item.conf, 'shelly_relay')
+            if not shelly_relay:
+                shelly_relay = '0'
             self.shelly_item_defs[shelly_id] = [item, shelly_type]
             self.shelly_items.append(item)
 
             # subscribe to configured topics
-            topic = 'shellies/' + shelly_type + '-' + shelly_id + '/relay/0'
+            topic = 'shellies/' + shelly_type + '-' + shelly_id + '/relay/' + shelly_relay
 
             payload_type = item.property.type
             bool_values = ['off','on']
