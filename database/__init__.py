@@ -78,23 +78,13 @@ class Database(SmartPlugin):
         '6': ["CREATE INDEX {item}_name ON {item} (name);", "DROP INDEX {item}_name;"]
     }
 
-    def __init__(self, smarthome, *args, **kwargs):
+    def __init__(self, smarthome, driver, connect, prefix="", cycle=60, precision=2):
         self._sh = smarthome
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
 
-        driver = self.get_parameter_value('driver')
-        connect = self.get_parameter_value('connect')
-        prefix = self.get_parameter_value('prefix')
-
-        if len(connect) > 0:
-           self.logger.warn("The 'connect' parameter is deprecated, please update to use 'database' parameter")
-           connect = Utils.string_to_list(connect)
-        else:
-           connect = self.get_parameter_value('database')
-
-        self._dump_cycle = self.get_parameter_value('cycle')
-        self._precision = self.get_parameter_value('precision')
+        self._dump_cycle = int(cycle)
+        self._precision = int(precision)
         self._name = self.get_instance_name()
         self._replace = {table: table if prefix == "" else prefix + "_" + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
@@ -104,7 +94,7 @@ class Database(SmartPlugin):
         self._dump_lock = threading.Lock()
 
         self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver,
-                                   connect)
+                                   Utils.string_to_list(connect))
         self._initialized = False
         self._initialize()
 

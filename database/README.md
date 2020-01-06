@@ -46,10 +46,8 @@ Tested drivers (other may work too):
 
    * SQLite (`driver = sqlite3`)
       * Standard [driver](https://docs.python.org/3/library/sqlite3.html#module-sqlite3) from Python
-        (connect [parameters](https://docs.python.org/3/library/sqlite3.html#sqlite3.connect))
    * MySQL (`driver = pymysql`)
       * [PyMySQL](http://pymysql.readthedocs.io/)
-        (connect [parameters](https://pymysql.readthedocs.io/en/latest/modules/connections.html))
 
 ## Configuration
 
@@ -60,9 +58,9 @@ database:
     class_name: Database
     class_path: plugins.database
     driver: sqlite3
-    database:
-      database: /path/to/log.db
-      check_same_thread: 0
+    connect:
+      - database:/path/to/log.db
+      - check_same_thread:0
     # prefix: log
     # precision: 2
 ```
@@ -72,8 +70,11 @@ The following attributes can be used in the plugin configuration:
    * `driver` - specifies the DB-API2 driver module (e.g. Python includes
      the SQLite driver by importing the module `sqlite3`, to use it here
      just set the driver parameter to the module name `sqlite3`)
-   * `database` - specifies the connection parameters which is directly
+   * `connect` - specifies the connection parameters which is directly
      used to invoke the `connect()` function of the DB API 2 implementation
+     (for SQLite lookup [here](http://docs.python.org/3.2/library/sqlite3.html#sqlite3.connect),
+     other databases depends on implementation). An example connect string for pymysql could be
+     `connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome`
    * `prefix` - if you want to log into an existing database with other tables
      you can specify a prefix for the plugins' tables
    * `precision` - specifies the amount of digits after comma for values
