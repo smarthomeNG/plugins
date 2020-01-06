@@ -35,6 +35,9 @@ class Vacations(SmartPlugin):
     ALLOWED_PROVINCES = ['BW', 'BY', 'BE', 'BB', 'HB', 'HH', 'HE', 'MV', 'NI', 'NW', 'RP', 'SL', 'SN', 'ST', 'SH', 'TH']
 
     def __init__(self, sh, *args, **kwargs):
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
+
         self._cycle = 300
         self.shtime = Shtime.get_instance()
         self._province_codes = self.ALLOWED_PROVINCES
