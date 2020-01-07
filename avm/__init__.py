@@ -979,7 +979,7 @@ class AVM(SmartPlugin):
 
                 # Set hkrt to state off (253) if command is out of range
                 temp_scaled = 253
-                if cmd_temperature >= 8 and cmd_temperature <= 28:
+                if 28 >= cmd_temperature >= 8:
                     # convert commanded temperature in degree into AVM scaled command value:
                     temp_scaled = 2 * cmd_temperature
                 elif cmd_temperature > 28:
