@@ -34,7 +34,7 @@ from lib.model.smartplugin import *
 from lib.module import Modules
 import cherrypy
 
-#for session id generation:
+# for session id generation:
 import hashlib
 
 
@@ -85,8 +85,9 @@ class MonitoringService:
             self._plugin_instance.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
-            self._plugin_instance.logger.error("MonitoringService: Cannot connect to " + self._host + " on port: " + str(
-                self._port) + ", CallMonitor activated by #96*5*? - Error: " + str(e))
+            self._plugin_instance.logger.error(
+                "MonitoringService: Cannot connect to " + self._host + " on port: " + str(
+                    self._port) + ", CallMonitor activated by #96*5*? - Error: " + str(e))
             return
 
     def disconnect(self):
@@ -255,7 +256,8 @@ class MonitoringService:
             elif line[1] == "DISCONNECT":
                 self._trigger('', '', '', line[2], line[1], '')
         except Exception as e:
-            self._plugin_instance.logger.error("MonitoringService: " + type(e) + " while handling Callmonitor response: " + str(e))
+            self._plugin_instance.logger.error(
+                "MonitoringService: " + type(e) + " while handling Callmonitor response: " + str(e))
             return
 
     def _trigger(self, call_from, call_to, time, callid, event, branch):
@@ -280,9 +282,10 @@ class MonitoringService:
             for trigger_item in self._trigger_items:
                 if self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') == 'monitor_trigger':
                     trigger_item(0, self._plugin_instance.get_shortname())
-                    self._plugin_instance.logger.debug(self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +
-                                      trigger_item.conf['avm_incoming_allowed'] + " " + trigger_item.conf[
-                                          'avm_target_number'])
+                    self._plugin_instance.logger.debug(
+                        self._plugin_instance.get_iattr_value(trigger_item.conf, 'avm_data_type') + " " +
+                        trigger_item.conf['avm_incoming_allowed'] + " " + trigger_item.conf[
+                            'avm_target_number'])
                     if 'avm_incoming_allowed' not in trigger_item.conf or 'avm_target_number' not in trigger_item.conf:
                         self._plugin_instance.logger.error(
                             "both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes in a trigger item.")
@@ -838,19 +841,18 @@ class AVM(SmartPlugin):
             # special items which can be changed outside the plugin context and need to be submitted to the FritzDevice
             return self.update_item
 
-
     def getHashResponse(self, challenge, pwd):
-        myMd5HashString = (challenge+'-'+pwd).encode('utf-16LE')
-        m=hashlib.md5()
+        myMd5HashString = (challenge + '-' + pwd).encode('utf-16LE')
+        m = hashlib.md5()
         m.update(myMd5HashString)
-#        self.logger.info("Debug hexdigest: {0}".format(m.hexdigest()))
-#        print ('MD5-Hash starting with challenge :' + challenge + "-" + m.hexdigest())
+        #        self.logger.info("Debug hexdigest: {0}".format(m.hexdigest()))
+        #        print ('MD5-Hash starting with challenge :' + challenge + "-" + m.hexdigest())
         return challenge + "-" + m.hexdigest()
 
     def _request_session_id(self):
         user = self._fritz_device.get_user()
         pwd = self._fritz_device.get_password()
-        #Doublecheck: Shall we send this request via self._session.get instead?
+        # Doublecheck: Shall we send this request via self._session.get instead?
         response = requests.get("http://fritz.box/login_sid.lua")
         myXML = response.text
         self.logger.info("Debug response text: {0}".format(myXML))
@@ -862,11 +864,11 @@ class AVM(SmartPlugin):
         if len(challenge_xml) > 0:
             myChallenge = challenge_xml[0].firstChild.data
 
-        self.logger.info("Debug apriori SID: {0}, Challenge: {1}".format(mySID,myChallenge))
-        hashResponse=self.getHashResponse(myChallenge, pwd)
+        self.logger.info("Debug apriori SID: {0}, Challenge: {1}".format(mySID, myChallenge))
+        hashResponse = self.getHashResponse(myChallenge, pwd)
 
-        #Doublecheck: Shall we send this request via self._session.get instead?
-        response= requests.get("http://fritz.box/login_sid.lua?username=" + user + "&response=" + hashResponse)
+        # Doublecheck: Shall we send this request via self._session.get instead?
+        response = requests.get("http://fritz.box/login_sid.lua?username=" + user + "&response=" + hashResponse)
         myXML = response.text
         xml = minidom.parseString(myXML)
         challenge_xml = xml.getElementsByTagName('Challenge')
@@ -876,17 +878,16 @@ class AVM(SmartPlugin):
         if len(challenge_xml) > 0:
             myChallenge = challenge_xml[0].firstChild.data
 
-        self.logger.info("Debug posterior SID: {0}, Challenge: {1}".format(mySID,myChallenge))
+        self.logger.info("Debug posterior SID: {0}, Challenge: {1}".format(mySID, myChallenge))
         return mySID
 
-        #self.logger.debug("Debug param: {0}".format(aha_string))
-        #self.logger.info("Debug url: {0}".format(url))
+        # self.logger.debug("Debug param: {0}".format(aha_string))
+        # self.logger.info("Debug url: {0}".format(url))
 
-        #r = self._session.get(url, timeout=self._timeout, verify=self._verify)
-        #self.logger.info("Debug return: {0}".format(r))
+        # r = self._session.get(url, timeout=self._timeout, verify=self._verify)
+        # self.logger.info("Debug return: {0}".format(r))
 
- 
-    def _assemble_aha_interface(self, ain = '', aha_action='', aha_param='', sid = ''):
+    def _assemble_aha_interface(self, ain='', aha_action='', aha_param='', sid=''):
         """
         Builds the AVM home automation (AHA) http interface command string
         https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AHA-HTTP-Interface.pdf
@@ -901,9 +902,9 @@ class AVM(SmartPlugin):
         # https://fritz.box/webservices/homeautoswitch.lua?ain=099950196524&switchcmd=sethkrtsoll&param=254&sid=9c977765016899f8
         #
         # Command string with session id parameter:
-        aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(ain.replace(" ", ""), aha_action, aha_param, sid)
+        aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(
+            ain.replace(" ", ""), aha_action, aha_param, sid)
         return aha_string
-
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -964,7 +965,7 @@ class AVM(SmartPlugin):
                 url = self._build_url("/upnp/control/x_homeauto")
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
                 self.logger.info("Debug caller is: {0}".format(caller))
-                #Check commanded temperature range:
+                # Check commanded temperature range:
                 cmd_temperature = float(item())
                 self.logger.info("Debug cmd_temp is: {0}".format(cmd_temperature))
                 parentItem = item.return_parent()
@@ -974,26 +975,28 @@ class AVM(SmartPlugin):
                 else:
                     self.logger.error('hkrt ain is not a string value')
 
-                self.logger.info("Debug ain is {0}".format(ainDevice ))
- 
-                #Set hkrt to state off (253) if command is out of range
+                self.logger.info("Debug ain is {0}".format(ainDevice))
+
+                # Set hkrt to state off (253) if command is out of range
                 temp_scaled = 253
                 if cmd_temperature >= 8 and cmd_temperature <= 28:
-                    #convert commanded temperature in degree into AVM scaled command value:
-                    temp_scaled = 2*cmd_temperature
+                    # convert commanded temperature in degree into AVM scaled command value:
+                    temp_scaled = 2 * cmd_temperature
                 elif cmd_temperature > 28:
                     temp_scaled = 254
                 elif cmd_temperature < 8:
                     temp_scaled = 253
                 else:
-                    self.logger.error("Commanded hkrt temperature {0} is out of range. Aborting.".format(cmd_temperature))
+                    self.logger.error(
+                        "Commanded hkrt temperature {0} is out of range. Aborting.".format(cmd_temperature))
 
-                #request new session ID:
+                # request new session ID:
                 mySID = self._request_session_id()
-                    
-                aha_string = self._assemble_aha_interface(ain = ainDevice , aha_action = action, aha_param = temp_scaled, sid = mySID)
-                #build_url method cannot be used because it uses another IP port. 
-                #url = self._build_url(aha_string)
+
+                aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, aha_param=temp_scaled,
+                                                          sid=mySID)
+                # build_url method cannot be used because it uses another IP port.
+                # url = self._build_url(aha_string)
 
                 if self._fritz_device.is_ssl():
                     url_prefix = "https"
@@ -1001,10 +1004,10 @@ class AVM(SmartPlugin):
                 else:
                     url_prefix = "http"
                     port = 80
-                    
+
                 url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), 443, aha_string)
                 self.logger.debug("Debug param: {0}".format(aha_string))
-                self.logger.info("Debug url: {0}".format(url))                
+                self.logger.info("Debug url: {0}".format(url))
 
             try:
                 if self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
@@ -1012,8 +1015,8 @@ class AVM(SmartPlugin):
                     self.logger.info("Debug return: {0}".format(r))
                 else:
                     self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
-                                  auth=HTTPDigestAuth(self._fritz_device.get_user(),
-                                                      self._fritz_device.get_password()), verify=self._verify)
+                                       auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                           self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
                     self.logger.error(
@@ -1600,7 +1603,8 @@ class AVM(SmartPlugin):
             soap_data = self._assemble_soap_data(action, self._urn_map['MyFritz'])
         else:
             self.logger.error(
-                "Attribute %s not supported by plugin method (updatemyfritz)" % self.get_iattr_value(item.conf, 'avm_data_type'))
+                "Attribute %s not supported by plugin method (updatemyfritz)" % self.get_iattr_value(item.conf,
+                                                                                                     'avm_data_type'))
             return
 
         try:
@@ -1633,22 +1637,24 @@ class AVM(SmartPlugin):
         headers = self._header.copy()
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'network_device':
-            if 'mac' not in item.conf:
+            if not self.has_iattr(item.conf, 'mac'):
                 self.logger.error("No mac attribute provided in network_device item")
                 return
             action = 'GetSpecificHostEntry'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
-            soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'], {'NewMACAddress': item.conf['mac']})
+            soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],
+                                                 {'NewMACAddress': self.get_iattr_value(item.conf, 'mac')})
         else:
             self.logger.error(
-                "Attribute %s not supported by plugin (update hosts)" % self.get_iattr_value(item.conf, 'avm_data_type'))
+                "Attribute %s not supported by plugin (update hosts)" % self.get_iattr_value(item.conf,
+                                                                                             'avm_data_type'))
             return
 
         try:
             response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                           auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                               self._fritz_device.get_password()), verify=self._verify)
-            #self.logger.debug(response.content)
+            # self.logger.debug(response.content)
             xml = minidom.parseString(response.content)
         except Exception as e:
             if self._fritz_device.is_available():
@@ -1662,8 +1668,8 @@ class AVM(SmartPlugin):
         if len(tag_content) > 0:
             item(tag_content[0].firstChild.data, self.get_shortname())
             for child in item.return_children():
-                if 'avm_data_type' in child.conf:
-                    if child.conf['avm_data_type'] == 'device_ip':
+                if self.has_iattr(child.conf, 'avm_data_type'):
+                    if self.get_iattr_value(child.conf, 'avm_data_type') == 'device_ip':
                         device_ip = xml.getElementsByTagName('NewIPAddress')
                         if len(device_ip) > 0:
                             if not device_ip[0].firstChild is None:
@@ -1672,9 +1678,9 @@ class AVM(SmartPlugin):
                                 child('', self.get_shortname())
                         else:
                             self.logger.error(
-                                "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                "Attribute %s not available on the FritzDevice" % self.get_iattr_value(child.conf,
                                                                                                        'avm_data_type'))
-                    elif child.conf['avm_data_type'] == 'device_connection_type':
+                    elif self.get_iattr_value(child.conf, 'avm_data_type') == 'device_connection_type':
                         device_connection_type = xml.getElementsByTagName('NewInterfaceType')
                         if len(device_connection_type) > 0:
                             if not device_connection_type[0].firstChild is None:
@@ -1683,15 +1689,15 @@ class AVM(SmartPlugin):
                                 child('', self.get_shortname())
                         else:
                             self.logger.error(
-                                "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                "Attribute %s not available on the FritzDevice" % self.get_iattr_value(child.conf,
                                                                                                        'avm_data_type'))
-                    elif child.conf['avm_data_type'] == 'device_hostname':
+                    elif self.get_iattr_value(child.conf, 'avm_data_type') == 'device_hostname':
                         data = self._get_value_from_xml_node(xml, 'NewHostName')
-                        if not data is None:
+                        if data is not None:
                             child(data, self.get_shortname())
                         else:
                             self.logger.error(
-                                "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
+                                "Attribute %s not available on the FritzDevice" % self.get_iattr_value(child.conf,
                                                                                                        'avm_data_type'))
         else:
             item(0)
@@ -1711,14 +1717,16 @@ class AVM(SmartPlugin):
         url = self._build_url("/upnp/control/x_homeauto")
         headers = self._header.copy()
 
-        if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device' or self.get_iattr_value(item.conf, 'avm_data_type') == 'hkr_device':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device' or self.get_iattr_value(item.conf,
+                                                                                                    'avm_data_type') == 'hkr_device':
             action = 'GetSpecificDeviceInfos'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Homeauto'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],
                                                  {'NewAIN': item.conf['ain'].strip()})
         else:
             self.logger.error(
-                "Attribute %s not supported by plugin method (home automation)" % self.get_iattr_value(item.conf, 'avm_data_type'))
+                "Attribute %s not supported by plugin method (home automation)" % self.get_iattr_value(item.conf,
+                                                                                                       'avm_data_type'))
             return
 
         try:
@@ -1745,7 +1753,8 @@ class AVM(SmartPlugin):
                     item(not value, self.get_shortname())
                 else:
                     self.logger.error(
-                        'NewSwitchState für AHA Device has a non-supported value of %s' % element_xml[0].firstChild.data)
+                        'NewSwitchState für AHA Device has a non-supported value of %s' % element_xml[
+                            0].firstChild.data)
                 for child in item.return_children():
                     if self.has_iattr(child.conf, 'avm_data_type'):
                         if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
@@ -1776,13 +1785,13 @@ class AVM(SmartPlugin):
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
 
-        #handling hkr devices (AVM dect 301)
+        # handling hkr devices (AVM dect 301)
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'hkr_device':
             self.logger.debug('handling hkr device')
             element_xml = xml.getElementsByTagName('NewHkrSetVentilStatus')
             if len(element_xml) > 0:
                 # Decoding hrk valve state: open, closed or temp (temperature controlled)
-                tempstring  = element_xml[0].firstChild.data
+                tempstring = element_xml[0].firstChild.data
                 tempstate = 3
                 if tempstring == 'OPEN':
                     tempstate = 1
@@ -1790,7 +1799,7 @@ class AVM(SmartPlugin):
                     tempstate = 0
                 elif tempstring == 'TEMP':
                     tempstate = 2
-                else: 
+                else:
                     tempstate = 3
                 item(int(tempstate))
                 for child in item.return_children():
@@ -1798,7 +1807,7 @@ class AVM(SmartPlugin):
                         if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
                             is_temperature = xml.getElementsByTagName('NewTemperatureCelsius')
                             if len(is_temperature) > 0:
-                                child(int(is_temperature[0].firstChild.data)/10)
+                                child(int(is_temperature[0].firstChild.data) / 10)
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1806,23 +1815,23 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature':
                             set_temperature = xml.getElementsByTagName('NewHkrSetTemperature')
                             if len(set_temperature) > 0:
-                                child(int(set_temperature[0].firstChild.data)/10, self.get_shortname())
+                                child(int(set_temperature[0].firstChild.data) / 10, self.get_shortname())
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
                                                                                                            'avm_data_type'))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_reduced':
-                            set_temperature_reduced= xml.getElementsByTagName('NewHkrReduceTemperature')
+                            set_temperature_reduced = xml.getElementsByTagName('NewHkrReduceTemperature')
                             if len(set_temperature_reduced) > 0:
-                                child(int(set_temperature_reduced[0].firstChild.data)/10, self.get_shortname())
+                                child(int(set_temperature_reduced[0].firstChild.data) / 10, self.get_shortname())
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
                                                                                                            'avm_data_type'))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_comfort':
-                            set_temperature_comfort= xml.getElementsByTagName('NewHkrComfortTemperature')
+                            set_temperature_comfort = xml.getElementsByTagName('NewHkrComfortTemperature')
                             if len(set_temperature_comfort) > 0:
-                                child(int(set_temperature_comfort[0].firstChild.data)/10, self.get_shortname())
+                                child(int(set_temperature_comfort[0].firstChild.data) / 10, self.get_shortname())
                             else:
                                 self.logger.error(
                                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
@@ -1831,7 +1840,6 @@ class AVM(SmartPlugin):
             else:
                 self.logger.error(
                     "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
-
 
     def _update_fritz_device_info(self, item):
         """
