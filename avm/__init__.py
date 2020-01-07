@@ -1030,10 +1030,9 @@ class AVM(SmartPlugin):
                                     'avm_data_type') == 'wlanconfig':  # check if item was guest wifi item and remaining time is set as item..
                 for citem in self._fritz_device.get_items():  # search for guest time remaining item.
                     if self.get_iattr_value(citem.conf,
-                                            'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(
-                        citem.conf, 'avm_wlan_index') == item.conf['avm_wlan_index']:
+                                            'avm_data_type') == 'wlan_guest_time_remaining' and citem.conf['avm_wlan_index'] == item.conf['avm_wlan_index']:
                         self._response_cache.pop("wlanconfig_%s_%s" % (
-                            self.get_iattr_value(citem.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
+                            citem.conf['avm_wlan_index'], "X_AVM-DE_GetWLANExtInfo"),
                                                  None)  # reset response cache
                         self._update_wlan_config(citem)  # immediately update remaining guest time
 
