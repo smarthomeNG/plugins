@@ -1637,13 +1637,13 @@ class AVM(SmartPlugin):
         headers = self._header.copy()
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'network_device':
-            if not self.has_iattr(item.conf, 'mac'):
-                self.logger.error("No mac attribute provided in network_device item")
+            if 'mac' not in item.conf:
+                self.logger.error("No mac attribute provided in network_device item %s"%item.property.path)
                 return
             action = 'GetSpecificHostEntry'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],
-                                                 {'NewMACAddress': self.get_iattr_value(item.conf, 'mac')})
+                                                 {'NewMACAddress': item.conf['mac']})
         else:
             self.logger.error(
                 "Attribute %s not supported by plugin (update hosts)" % self.get_iattr_value(item.conf,
