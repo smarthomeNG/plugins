@@ -79,13 +79,13 @@ start_sequence = bytearray.fromhex('1B 1B 1B 1B 01 01 01 01')
 end_sequence = bytearray.fromhex('1B 1B 1B 1B 1A')
 SML_SCHEDULER_NAME = 'Smlx'
 
-class Sml(SmartPlugin):
+class Smlx(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.3'
+    PLUGIN_VERSION = '1.1.4'
 
     _units = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
        1 : 'a',    2 : 'mo',    3 : 'wk',  4 : 'd',    5 : 'h',     6 : 'min.',  7 : 's',     8 : '°',     9 : '°C',    10 : 'currency',
@@ -95,7 +95,7 @@ class Sml(SmartPlugin):
       41 : 'T',   42 : 'A/m',  43 : 'H',  44 : 'Hz',  45 : 'Rac',  46 : 'Rre',  47 : 'Rap',  48 : 'V²h',  49 : 'A²h',   50 : 'kg/s',
       51 : 'Smho'
     }
-    # lookup table for smartmeter names to data format
+    # Lookup table for smartmeter names to data format
     _devices = {
       'smart-meter-gateway-com-1' : 'hex'
     }
@@ -114,7 +114,7 @@ class Sml(SmartPlugin):
         self.buffersize = self.get_parameter_value('buffersize')    # 1024
         self.date_offset = self.get_parameter_value('date_offset')    # 0
 
-        # get base values for CRC calculation
+        # Get base values for CRC calculation
         self.poly = self.get_parameter_value('poly')                        # 0x1021
         self.reflect_in = self.get_parameter_value('reflect_in')            # True
         self.xor_in = self.get_parameter_value('xor_in')                    # 0xffff
@@ -150,11 +150,11 @@ class Sml(SmartPlugin):
         Run method for the plugin
         """        
         self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
-        # setup scheduler for device poll loop
+        # Setup scheduler for device poll loop
         self.scheduler_add(SML_SCHEDULER_NAME, self.poll_device, cycle=self.cycle)
   
         self.alive = True
-        # if you need to create child threads, do not make them daemon = True!
+        # If you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
     def stop(self):
@@ -203,7 +203,7 @@ class Sml(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if caller != self.get_shortname():
-            # code to execute, only if the item has not been changed by this plugin:
+            # Code to execute, only if the item has not been changed by this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
             pass
 
@@ -373,11 +373,10 @@ class Sml(SmartPlugin):
         self._dataoffset = 0
         while self._dataoffset < len(data)-packetsize:
 
-            # Find SML_ListEntry starting with 0x77 0x07 (and optional OBIS code end with 0xff)
-			# Attention! The check for 0xff at the end of the OBIS code was deactivated, because there are OBIS codes with other ends as well.
-			# This is a quick-and-dirty solution. What happens, if the byte sequence 77 07 appears WITHIN a SML_ListEntry and not just at the start?
-			# Better solution might be to implement something like a list of valid ends.
-            if data[self._dataoffset] == 0x77 and data[self._dataoffset+1] == 0x07 and data[self._dataoffset+2] != 0xff:
+            # Find SML_ListEntry starting with 0x77 0x07
+			# Attention! The check for != 0xff was necessary because of a possible Client-ID set to 77 07 ff ff ff ff ff ff
+            # which would be accidently interpreted as an OBIS value
+            if data[self._dataoffset] == 0x77 and data[self._dataoffset+1] == 0x07 and data[self._dataoffset+2] != 0xff: 
                 packetstart = self._dataoffset
                 self._dataoffset += 1
                 try:
@@ -390,22 +389,44 @@ class Sml(SmartPlugin):
                       'value'     : self._read_entity(data),
                       'signature' : self._read_entity(data)
                     }
-
-                    # add additional calculated fields.
+                    
+                    # Decoding status information if present
+                    if entry['status'] is not None:
+                        entry['statRun'] = True if ((entry['status'] >> 8) & 1) == 1 else False                 # True: meter is counting, False: standstill 
+                        entry['statFraudMagnet'] = True if ((entry['status'] >> 8) & 2) == 2 else False         # True: magnetic manipulation detected, False: ok
+                        entry['statFraudCover'] = True if ((entry['status'] >> 8) & 4) == 4 else False          # True: cover manipulation detected, False: ok
+                        entry['statEnergyTotal'] = True if ((entry['status'] >> 8) & 8) == 8 else False         # Current flow total. True: -A, False: +A 
+                        entry['statEnergyL1'] = True if ((entry['status'] >> 8) & 16) == 16 else False          # Current flow L1. True: -A, False: +A
+                        entry['statEnergyL2'] = True if ((entry['status'] >> 8) & 32) == 32 else False          # Current flow L2. True: -A, False: +A
+                        entry['statEnergyL3'] = True if ((entry['status'] >> 8) & 64) == 64 else False          # Current flow L3. True: -A, False: +A
+                        entry['statRotaryField'] = True if ((entry['status'] >> 8) & 128) == 128 else False     # True: rotary field not L1->L2->L3, False: ok
+                        entry['statBackstop'] = True if ((entry['status'] >> 8) & 256) == 256 else False        # True: backstop active, False: backstop not active
+                        entry['statCalFault'] = True if ((entry['status'] >> 8) & 512) == 512 else False        # True: calibration relevant fatal fault, False: ok
+                        entry['statVoltageL1'] = True if ((entry['status'] >> 8) & 1024) == 1024 else False     # True: Voltage L1 present, False: not present
+                        entry['statVoltageL2'] = True if ((entry['status'] >> 8) & 2048) == 2048 else False     # True: Voltage L2 present, False: not present
+                        entry['statVoltageL3'] = True if ((entry['status'] >> 8) & 4096) == 4096 else False     # True: Voltage L3 present, False: not present
+                        
+                    # Add additional calculated fields
                     entry['obis'] = '{}-{}:{}.{}.{}*{}'.format(entry['objName'][0], entry['objName'][1], entry['objName'][2], entry['objName'][3], entry['objName'][4], entry['objName'][5])
                     entry['valueReal'] = entry['value'] * 10 ** entry['scaler'] if entry['scaler'] is not None else entry['value']
                     entry['unitName'] = self._units[entry['unit']] if entry['unit'] != None and entry['unit'] in self._units else None
-                    entry['actualTime'] = time.ctime(self.date_offset + entry['valTime'][1]) if entry['valTime'] is not None else None # NEW. 
+                    entry['actualTime'] = time.ctime(self.date_offset + entry['valTime'][1]) if entry['valTime'] is not None else None # Decodes valTime into date/time string
+                    # For a Holley DTZ541 with faulty Firmware remove the                ^[1] from this line ^.
+                    
+                    # Convert some special OBIS values into nicer format
                     if entry['obis'] == '1-0:0.2.0*0':
-                        entry['valueReal'] = entry['value'].decode()     # Firmware
+                        entry['valueReal'] = entry['value'].decode()     # Firmware as UTF-8 string
                     if entry['obis'] == '1-0:96.50.1*1':
-                        entry['valueReal'] = entry['value'].decode()     # Manufacturer
+                        entry['valueReal'] = entry['value'].decode()     # Manufacturer code as UTF-8 string
                     if entry['obis'] == '1-0:96.1.0*255':
-                        entry['valueReal'] = entry['value'].hex()        # ServerID (Seriel Number)
+                        entry['valueReal'] = entry['value'].hex()        # ServerID (Seriel Number) as hex string as found on frontpanel
                     if entry['obis'] == '1-0:96.5.0*255':
-                        entry['valueReal'] = bin(entry['value'])         # Status
+                        entry['valueReal'] = bin(entry['value'] >> 8)    # Status as binary string, so not decoded into status bits as above
+                    
                     entry['objName'] = entry['obis']                     # Changes objName for DEBUG output to nicer format
+                    
                     values[entry['obis']] = entry
+                    
                 except Exception as e:
                     if self._dataoffset < len(data) - 1:
                         self.logger.warning('Cannot parse entity at position {}, byte {}: {}:{}...'.format(self._dataoffset, self._dataoffset - packetstart, e, ''.join(' {:02x}'.format(x) for x in data[packetstart:packetstart+64])))
@@ -437,20 +458,20 @@ class Sml(SmartPlugin):
 
         len -= 1
 
-        if len == 0:     # skip empty optional value
+        if len == 0:     # Skip empty optional value
             return result
 
         if self._dataoffset + len >= builtins.len(data):
             raise Exception("Try to read {} bytes, but only got {}".format(len, builtins.len(data) - self._dataoffset))
 
-        if type == 0:    # octet string
+        if type == 0:    # Octet string
             result = data[self._dataoffset:self._dataoffset+len]
 
         elif type == 5 or type == 6:  # int or uint
             d = data[self._dataoffset:self._dataoffset+len]
 
             ulen = len
-            if ulen not in upack[type]:  # extend to next greather unpack unit
+            if ulen not in upack[type]:  # Extend to next greather unpack unit
               while ulen not in upack[type]:
                 d = b'\x00' + d
                 ulen += 1

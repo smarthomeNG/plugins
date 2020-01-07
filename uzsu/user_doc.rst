@@ -60,7 +60,7 @@ Ab *smarthomeNG 1.6* ist das Anlegen der nötigen Items via ``struct`` besonders
 SmartVISU
 =========
 
-Das UZSU Plugin wird durch die smartVISU2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung unterstützt. Bei Problemen bitte das entsprechende Supportforum konsultieren. Es wird empfohlen, die Visualisierung für das Einstellen der UZSU zu verwenden. Die folgenden Informationen zum Datenformat können übersprungen werden.
+Das UZSU Plugin wird durch die smartVISU2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung mittels *device.uzsu Widget* unterstützt. Bei Problemen bitte das entsprechende Supportforum konsultieren. Es wird empfohlen, die Visualisierung für das Einstellen der UZSU zu verwenden. Die folgenden Informationen zum Datenformat können übersprungen werden.
 
 Datenformat
 ===========

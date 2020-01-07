@@ -1,0 +1,119 @@
+{% extends "base_plugin.html" %}
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+{% set language = p.get_sh().get_defaultlanguage() %}
+{% set tab1title = _('Ferienüberblick') %}
+{% set tab2title = _('Plugin-API') %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1" style="width: 50%"><strong>Cycle</strong></td>
+			<td class="py-1">
+				{{ p._cycle }}
+			</td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <strong>etc/holidays.yaml:</strong><br/>
+                {{ _('Konfiguriertes Land') }}, {{ _('Bundesland') }}:
+                {{ p.shtime.config.get('location', None).get('country') }}, {{ p.shtime.config.get('location', None).get('province') }}
+            </td>
+		</tr>
+	</tbody>
+</table>
+{% endblock %}
+
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12 pt-3">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            {% for province in p.get_province_codes() %}
+            <li class="nav-item">
+                <a class="nav-link
+                {% if p.shtime.config.get('location', None).get('province') in p.get_province_codes()
+                and p.shtime.config.get('location', None).get('province') == province %}
+                active
+                {% elif p.shtime.config.get('location', None).get('province') not in p.get_province_codes() and loop.index == 1 %}
+                active
+                {% endif %}"
+                id="{{ province }}-tab" data-toggle="tab" href="#{{ province }}" role="tab"
+                aria-controls="{{ province }}" aria-selected="true">{{ _(province) }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            {% for province in p.get_province_codes() %}
+                <div class="tab-pane fade
+                    {% if p.shtime.config.get('location', None).get('province') in p.get_province_codes()
+                    and p.shtime.config.get('location', None).get('province') == province %}
+                    show active
+                    {% elif p.shtime.config.get('location', None).get('province') not in p.get_province_codes() and loop.index == 1 %}
+                    show active
+                    {% endif %}"
+                    id="{{ province }}" role="tabpanel" aria-labelledby="{{ province }}-tab">
+                    <br/>
+                    {{ _('Parameter Name') }}:  {{ province }}
+                    <table class="table table-striped table-hover pluginList">
+                        <thead>
+                            <tr class="shng_heading">
+                                <th>{{ _('Ferien') }}</th>
+                                <th>{{ _('Bundesland') }}</th>
+                                <th>{{ _('Jahr') }}</th>
+                                <th>{{ _('Start') }}</th>
+                                <th>{{ _('Ende') }}</th>
+                                <th>{{ _('Slug') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in p.get_vacation_list()[province]|sort(attribute='start', reverse = True) %}
+                                <tr>
+                                    <td class="py-1">{{ v.name.capitalize() }}</td>
+                                    <td class="py-1">{{ _(v.state_code) }} ({{ v.state_code }})</td>
+                                    <td class="py-1">{{ v.year }}</td>
+                                    <td class="py-1">{{ v.start.strftime('%d.%m.%Y') }}</td>
+                                    <td class="py-1">{{ v.end.strftime('%d.%m.%Y') }}</td>
+                                    <td class="py-1">{{ v.slug }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {%  endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block bodytab2 %}
+    <div class="container ml-1 pl-1 mr-1 pr-1 pt-3">
+    {%  for function, dict in p.metadata.plugin_functions.items() %}
+        <div class="card mb-2">
+          <div class="card-header p-2">
+              <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{% if loop.index > 1 %}, {% endif %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
+          </div>
+          <div class="card-body p-2">
+              {{ dict['description'][language] }}<br/>
+              {% if dict['parameters'] is not none %}
+                  <div class="card mt-2">
+                      <div class="card-header p-2">
+                        <strong>{{ _('Parameter') }}:</strong>
+                      </div>
+                      <div class="card-body p-2">
+                          <ul class="list-group">
+                          {%  for name, paramdict in dict['parameters'].items() %}
+                            <li class="list-group-item p-2">
+                                <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
+                            {{ paramdict['description'][language] }}
+                            </li>
+                          {% endfor %}
+                          </ul>
+                      </div>
+                  </div>
+              {% endif %}
+          </div>
+        </div>
+    {% endfor %}
+    </div>
+{% endblock %}

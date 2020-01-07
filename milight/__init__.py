@@ -1,7 +1,8 @@
- #!/usr/bin/env python3
+#!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-# Copyright 2014 Stephan Schaade          http://knx-user-forum.de/
+# Copyright 2014 Stephan Schaade           http://knx-user-forum.de/ shs2
+# Copyright 2019 Bernd Meiners                      Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
@@ -17,30 +18,71 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
 
-
 import logging
-import threading
+#import threading
 import socket
 import time
 import colorsys
 
+from lib.module import Modules
+from lib.model.smartplugin import *
 
-logger = logging.getLogger('')
+MILIGHT_SW          = 'milight_sw'
+MILIGHT_DIM         = 'milight_dim'
+MILIGHT_COL         = 'milight_col'
+MILIGHT_WHITE       = 'milight_white'
+MILIGHT_DISCO       = 'milight_disco'
+MILIGHT_DISCO_UP    = 'milight_disco_up'
+MILIGHT_DISCO_DOWN  = 'milight_disco_down'
+MILIGHT_RGB         = 'milight_rgb'
 
 
-class milight():
+class Milight(SmartPlugin):
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
 
-    # UDP Broadcast if IP not specified
-    def __init__(self, smarthome, udp_ip='255.255.255.255', udp_port='8899', hue_calibrate ='0', white_calibrate='0', bri = 'true' , off = '10'):
-        self._sh = smarthome
-        self.udp_ip = udp_ip
-        self.hue_calibrate = hue_calibrate
-        self.white_calibrate = white_calibrate
-        self.udp_port = udp_port
-        self.bricontrol = bri
-        self.cutoff = off
+    PLUGIN_VERSION = '1.6.0'
+    
+    # tags this plugin handles
+    ITEM_TAGS = [MILIGHT_SW,MILIGHT_DIM,MILIGHT_COL, MILIGHT_WHITE, MILIGHT_DISCO, MILIGHT_DISCO_UP, MILIGHT_DISCO_DOWN, MILIGHT_RGB]
+
+    def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+
+        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions 1.4 and up: **Don't use it**!
+        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
+        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
+
+        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
+        a reference to the sh object any more.
+
+        """
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        # get the parameters for the plugin (as defined in metadata plugin.yaml):
+        #   self.param1 = self.get_parameter_value('param1')
+        self.udp_ip = self.get_parameter_value('udp_ip')
+        self.udp_port = self.get_parameter_value('udp_port')
+
+        self.hue_calibrate = self.get_parameter_value('hue_calibrate')
+        self.white_calibrate = self.get_parameter_value('white_calibrate')
+        
+        # old:  True will change color and brightness --> 'HUE_AND_LUM' (default)
+        #       False will change only color --> 'HUE'
+        self.bricontrol = False if self.get_parameter_value('bricontrol') == 'HUE' else True
+        
+        self.cutoff = self.get_parameter_value('cutoff')
+
+        # Initialization code goes here
+
         self.color_map = {             # for reference and future use
             'violet': 0x00,
             'royal_blue': 0x10,
@@ -85,26 +127,35 @@ class milight():
         self.discoup = bytearray([0x44, 0x00, 0x55])
         self.discodown = bytearray([0x43, 0x00, 0x55])
 
+        # if plugin should start even without web interface
+        self.init_webinterface()
+
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         self.alive = True
-        # if you want to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
 
     def send(self, data_s):
-        # UDP sent without further encoding
+        """
+        Sends data given via UDP without further encoding
+        """
         try:
             family, type, proto, canonname, sockaddr = socket.getaddrinfo(
                 self.udp_ip, self.udp_port)[0]
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            if self.udp_ip == '255.255.255.255':
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             sock.sendto(data_s, (sockaddr[0], sockaddr[1]))
             sock.close()
             del(sock)
         except Exception as e:
-            logger.warning(
+            self.logger.warning(
                 "miLight UDP: Problem sending data to {}:{}: ".format(self.udp_ip, self.udp_port, e))
             pass
         else:
-            logger.debug("miLight UDP: Sending data to {}:{}:{} ".format(
+            self.logger.debug("miLight UDP: Sending data to {}:{}:{} ".format(
                 self.udp_ip, self.udp_port, data_s))
 
     # on/off switch function  - to switch on off anused before update  brightness / color / disco
@@ -146,9 +197,9 @@ class milight():
     def dim(self, group, value):
 
         time.sleep(0.1)             # wait 100 ms
-        logger.info(value)
-        value = int(value / 8.0)      # for compliance with KNX DPT5
-        logger.info(value)
+        self.logger.info(value)
+        value = int(value / 8.0)    # for compliance with KNX DPT5
+        self.logger.info(value)
         data_s = self.brightness
         data_s[1] = value           # set Brightness
         self.send(data_s)           # call UDP to send WHITE if switched on
@@ -198,46 +249,44 @@ class milight():
     # disco function  - 2nd command after switch (on)
     def disco(self, group, value):
         value = 1                     # Avoid switch off
-        logger.info("disco")
+        self.logger.info("disco")
         time.sleep(0.1)               # wait 100 ms
 
         data_s = self.discoon
-        logger.info(data_s)
+        self.logger.info(data_s)
         self.send(data_s)
         
     # disco speed up  - 2nd command after switch (on)
     def disco_up(self, group, value):
         value = 1                      # Avoid switch off
-        logger.info("disco up")
+        self.logger.info("disco up")
         time.sleep(0.1)               # wait 100 ms
 
         data_s = self.discoup
-        logger.info(data_s)
+        self.logger.info(data_s)
         self.send(data_s) 
         
     # disco speed down - 2nd command after switch (on)
     def disco_down(self, group, value):
         value = 1
-        logger.info("disco down")      # Avoid switch off
+        self.logger.info("disco down")      # Avoid switch off
 
         time.sleep(0.1)               # wait 100 ms
 
         data_s = self.discodown
-        logger.info(data_s)
+        self.logger.info(data_s)
         self.send(data_s)
-        
-        
-        
+
     # rgb calculation
     def huecalc(self, value):
         offset = 0.3 + float(self.hue_calibrate)
-  
+
         re= value[0] / (255.0)
         gn= value[1] / (255.0)
         bl= value[2] / (255.0)
 
 
-    # trying HLS model for brightnes optimization
+        # trying HLS model for brightnes optimization
         hls =  colorsys.rgb_to_hls(re, gn, bl)
         self.hue =  hls[0]+offset
         if self.hue > 1:
@@ -248,117 +297,144 @@ class milight():
             self.hue =self.hue+0.001
         self.lum = hls[1] *255
         self.sat =  hls[1]
-         
-       
-
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
         self.alive = False
-        
-    # check function to change
+
     def parse_item(self, item):
-        if 'milight_sw' in item.conf:
-            logger.debug("parse item: {0}".format(item))
-            return self.update_item
-        if 'milight_dim' in item.conf:
-            logger.debug("parse item: {0}".format(item))
-            return self.update_item
-        if 'milight_col' in item.conf:
-            logger.debug("parse item: {0}".format(item))
-            return self.update_item
-        if 'milight_white' in item.conf:
-            logger.debug("parse item: {0}".format(item))
-            return self.update_item
-        if 'milight_disco' in item.conf:
-            logger.debug("parse item: {0}".format(item))
-            return self.update_item
-        if 'milight_disco_up' in item.conf:
-            logger.debug("parse item: {0}".format(item))
-            return self.update_item
-        if 'milight_disco_down' in item.conf:
-            logger.debug("parse item: {0}".format(item))
-            return self.update_item
-        if 'milight_rgb' in item.conf:
-            logger.debug("parse item: {0}".format(item))
-            return self.update_item    
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change you should return a call back function
+                        like the function update_item down below. An example when this is needed is the knx plugin
+                        where parse_item returns the update_item function when the attribute knx_send is found.
+                        This means that when the items value is about to be updated, the call back function is called
+                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                        can be sent to the knx with a knx write function within the knx plugin.
+        """
+        # if self.has_iattr(item.conf, MILIGHT_SW):
+        #     self.logger.debug("parse item: {}".format(item))
+        #     return self.update_item
+        # if self.has_iattr(item.conf, MILIGHT_DIM):
+        #     self.logger.debug("parse item: {}".format(item))
+        #     return self.update_item
+        # if self.has_iattr(item.conf, MILIGHT_COL):
+        #     self.logger.debug("parse item: {}".format(item))
+        #     return self.update_item
+        # if self.has_iattr(item.conf, MILIGHT_WHITE):
+        #     self.logger.debug("parse item: {}".format(item))
+        #     return self.update_item
+        # if self.has_iattr(item.conf, MILIGHT_DISCO):
+        #     self.logger.debug("parse item: {}".format(item))
+        #     return self.update_item
+        # if self.has_iattr(item.conf, MILIGHT_DISCO_UP):
+        #     self.logger.debug("parse item: {}".format(item))
+        #     return self.update_item
+        # if self.has_iattr(item.conf, MILIGHT_DISCO_DOWN):
+        #     self.logger.debug("parse item: {}".format(item))
+        #     return self.update_item
+        # if self.has_iattr(item.conf, MILIGHT_RGB):
+        #     self.logger.debug("parse item: {}".format(item))
+        #     return self.update_item
 
-        else:
-            return None
+        if any(elem in item.property.attributes  for elem in [MILIGHT_SW, MILIGHT_DIM, MILIGHT_COL, MILIGHT_WHITE, MILIGHT_DISCO, MILIGHT_DISCO_UP, MILIGHT_DISCO_DOWN, MILIGHT_RGB]):
+            return self.update_item
 
-    def parse_logic(self, logic):
-        if 'milight' in logic.conf:
-            # self.function(logic['name'])
-            pass
-            
-    # update
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'milight':
-            logger.info("miLight update item: {0}".format(item.id()))
+        """
+        Item has been updated
 
-            if 'milight_sw' in item.conf:
-                for channel in item.conf['milight_sw']:
-                    logger.info("miLight switching channel: {0}".format(channel))
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that
+        is managed by this plugin.
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if caller != self.get_shortname():
+            # code to execute, only if the item has not been changed by this this plugin:
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+
+            if self.has_iattr(item.conf, MILIGHT_SW):
+                channels=self.get_iattr_value(item.conf, MILIGHT_SW)
+                for channel in channels:
+                    self.logger.info("miLight switching channel: {0}".format(channel))
                     group = int(channel)
                     #logger.info(item())
                     self.switch(group, item())
 
-            if 'milight_dim' in item.conf:
-                for channel in item.conf['milight_dim']:
-                    logger.info("miLight dimming channel: {0}".format(channel))
+            if self.has_iattr(item.conf, MILIGHT_DIM):
+                channels=self.get_iattr_value(item.conf, MILIGHT_DIM)
+                for channel in channels:
+                    self.logger.info("miLight dimming channel: {0}".format(channel))
                     group = int(channel)
                     #logger.info(item())
                     self.switch(group, item())
                     self.dim(group, item())
 
-            if 'milight_col' in item.conf:
-                for channel in item.conf['milight_col']:
-                    logger.info("miLight HUE channel: {0}".format(channel))
+            if self.has_iattr(item.conf, MILIGHT_COL):
+                channels=self.get_iattr_value(item.conf, MILIGHT_COL)
+                for channel in channels:
+                    self.logger.info("miLight HUE channel: {0}".format(channel))
                     group = int(channel)
                     #logger.info(item())
                     self.col(group, item())
 
-            if 'milight_white' in item.conf:
-                for channel in item.conf['milight_white']:
-                    logger.info("miLight set white channel: {0}".format(channel))
+            if self.has_iattr(item.conf, MILIGHT_WHITE):
+                channels=self.get_iattr_value(item.conf, MILIGHT_WHITE)
+                for channel in channels:
+                    self.logger.info("miLight set white channel: {0}".format(channel))
                     group = int(channel)
                     #logger.info(item())
                     self.switch(group, item())
                     self.white(group, item())
 
-            if 'milight_disco' in item.conf:
-                for channel in item.conf['milight_disco']:
-                    logger.info("miLight disco channel: {0}".format(channel))
+            if self.has_iattr(item.conf, MILIGHT_DISCO):
+                channels=self.get_iattr_value(item.conf, MILIGHT_DISCO)
+                for channel in channels:
+                    self.logger.info("miLight disco channel: {0}".format(channel))
                     group = int(channel)
                     #logger.info(item())
                     self.switch(group, item())
                     self.disco(group, item())
 
-            if 'milight_disco_up' in item.conf:
-                for channel in item.conf['milight_disco_up']:
-                    logger.info("miLight increase disco speed channel: {0}".format(channel))
+            if self.has_iattr(item.conf, MILIGHT_DISCO_UP):
+                channels=self.get_iattr_value(item.conf, MILIGHT_DISCO_UP)
+                for channel in channels:
+                    self.logger.info("miLight increase disco speed channel: {0}".format(channel))
                     group = int(channel)
                     #logger.info(item())
                     self.switch(group, item())
                     self.disco_up(group, item())
 
-            if 'milight_disco_down' in item.conf:
-                for channel in item.conf['milight_disco_down']:
-                    logger.info("miLight decrease disco speed channel: {0}".format(channel))
+            if self.has_iattr(item.conf, MILIGHT_DISCO_DOWN):
+                channels=self.get_iattr_value(item.conf, MILIGHT_DISCO_DOWN)
+                for channel in channels:
+                    self.logger.info("miLight decrease disco speed channel: {0}".format(channel))
                     group = int(channel)
                     #logger.info(item())
                     self.switch(group, item())
                     self.disco_down(group, item())
-                    
-            if 'milight_rgb' in item.conf:
-                for channel in item.conf['milight_rgb']:
-                    logger.info("miLight RGB input for  channel: {0}".format(channel))
+
+            if self.has_iattr(item.conf, MILIGHT_RGB):
+                channels=self.get_iattr_value(item.conf, MILIGHT_RGB)
+                for channel in channels:
+                    self.logger.info("miLight RGB input for  channel: {0}".format(channel))
                     group = int(channel)
                     #logger.info(item())
-                    
+
                     self.switch(group, 1)
                     self.huecalc (item())
-                    logger.info("miLight HUE: {0}".format(self.hue))
-                    logger.info("miLight LUM: {0}".format(self.lum))
+                    self.logger.info("miLight HUE: {0}".format(self.hue))
+                    self.logger.info("miLight LUM: {0}".format(self.lum))
                     calibrate = 178.5 + int(self.white_calibrate)
                     if self.hue == calibrate:
                             self.white (group,1)
@@ -372,7 +448,102 @@ class milight():
                             self.switch(group, 1)
                             self.dim(group, self.lum)
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    myplugin = milight('smarthome-dummy')
-    myplugin.run()
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Not initializing the web interface")
+            return False
+
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin)
+
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            #self.plugin.beodevices.update_devices_info()
+
+            # return it as json the the web page
+            #return json.dumps(self.plugin.beodevices.beodeviceinfo)
+            pass
+        return

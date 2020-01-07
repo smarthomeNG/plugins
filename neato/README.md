@@ -1,10 +1,10 @@
-# Neato Vacuum Robot
+# Neato/Vorwerk Vacuum Robot
 
 #### Version 1.0.0
 
-This plugin connects your Neato (https://www.neatorobotics.com/) Robot to SmarthomeNG.
-- Start, stop, pause and resume cleaning
-- Status of your robot
+This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robot with SmarthomeNG.
+- Command start, stop, pause, resume cleaning and trigger sendToBase and FindMe mode.
+- Read status of your robot
 
 ## Change history
 
@@ -26,25 +26,27 @@ This plugin connects your Neato (https://www.neatorobotics.com/) Robot to Smarth
 
 ### Supported Hardware
 
-| Robot         | Supported    | Tested |
-| ------------- |:------------:| ------:|
-| Botvac D3     | yes          | no     |
-| Botvac D4     | yes          | no     |
-| Botvac D5     | yes          | yes    |
-| Botvac D6     | yes          | no     |
-| Botvac D7     | yes          | no     |
+| Robot             | Supported    | Tested |
+| ----------------- |:------------:| ------:|
+| Neato Botvac D3   | yes          | no     |
+| Neato Botvac D4   | yes          | no     |
+| Neato Botvac D5   | yes          | yes    |
+| Neato Botvac D6   | yes          | no     |
+| Neato Botvac D7   | yes          | no     |
+| Vorwerk VR300     | yes          | yes    |
 
 ## Configuration
 
 ### 1) /smarthome/etc/plugin.yaml
 
-Enable the plugin in plugin.yaml and type in your Neato credentials:
+Enable the plugin in plugin.yaml, type in your Neato or Vorwerk credentials and define whether you are using a Neato or Vorwerk robot.
 
 ```yaml
 Neato:
     plugin_name: neato
     account_email: 'your_neato_account_email'
     account_pass: 'your_neato_account_password!'
+    robot_vendor: 'neato or vorwerk'
 ```
 
 ### 2) /smarthome/items/robot.yaml
@@ -57,15 +59,15 @@ Neato:
     Name:
       type: str
       neato_name: ''
-      visu_acl: rw
+      visu_acl: ro
     State:
       type: str
       neato_state: ''
-      visu_acl: rw
+      visu_acl: ro
     StateAction:
       type: str
       neato_state_action: ''
-      visu_acl: rw
+      visu_acl: ro
     Command:
       type: num
       neato_command: 0
@@ -73,11 +75,15 @@ Neato:
     IsDocked:
       type: bool
       neato_isdocked: ''
-      visu_acl: rw
+      visu_acl: ro
+    IsScheduleEnabled:
+      type: bool
+      neato_isscheduleenabled: ''
+      visu_acl: ro
     ChargePercentage:
       type: str
       neato_chargepercentage: ''
-      visu_acl: rw
+      visu_acl: ro
 ```
 
 ## Examples
@@ -135,8 +141,9 @@ Following commands are currently available:
 | 63            | Pause cleaning   |
 | 64            | Resume cleaning  |
 | 65            | Find the robot   |
-
-
+| 66            | Send to base     |
+| 67            | Enable schedule  |
+| 68            | Disable schedule |
 
 
 

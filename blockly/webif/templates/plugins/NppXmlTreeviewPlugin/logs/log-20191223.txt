@@ -1,0 +1,178 @@
+2019-12-23 21:28:42.930 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:28:42.996 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:29:01.550 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:29:19.680 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:29:25.731 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:18.010 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:24.677 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:27.566 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:29.250 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:29.316 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:33.386 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:33.484 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:43.861 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:43.940 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:59.506 +01:00 [Warning] Unerwartetes Token '{'. Erwartet wurde das Token '-'. Zeile 25, Position 6.
+System.Xml.XmlException: Unerwartetes Token '{'. Erwartet wurde das Token '-'. Zeile 25, Position 6.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String[] args)
+   bei System.Xml.XmlTextReaderImpl.ThrowUnexpectedToken(String expectedToken1, String expectedToken2)
+   bei System.Xml.XmlTextReaderImpl.ParseElementContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.ReadChildOrSibling(XmlTextReader xmlTextReader, Int32 currentDepth, NppXmlNode node, String nodeNameAttribute)
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.ReadChildOrSibling(XmlTextReader xmlTextReader, Int32 currentDepth, NppXmlNode node, String nodeNameAttribute)
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:59.697 +01:00 [Warning] Unerwartetes Token '{'. Das erwartete Token ist '<!--' oder '<[CDATA['. Zeile 25, Position 5.
+System.Xml.XmlException: Unerwartetes Token '{'. Das erwartete Token ist '<!--' oder '<[CDATA['. Zeile 25, Position 5.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String[] args)
+   bei System.Xml.XmlTextReaderImpl.ThrowUnexpectedToken(String expectedToken1, String expectedToken2)
+   bei System.Xml.XmlTextReaderImpl.ParseElementContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.ReadChildOrSibling(XmlTextReader xmlTextReader, Int32 currentDepth, NppXmlNode node, String nodeNameAttribute)
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.ReadChildOrSibling(XmlTextReader xmlTextReader, Int32 currentDepth, NppXmlNode node, String nodeNameAttribute)
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:31:59.886 +01:00 [Warning] Ein Name darf nicht mit dem Zeichen '{', hexadezimaler Wert 0x7B, beginnen. Zeile 25, Position 4.
+System.Xml.XmlException: Ein Name darf nicht mit dem Zeichen '{', hexadezimaler Wert 0x7B, beginnen. Zeile 25, Position 4.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String[] args)
+   bei System.Xml.XmlTextReaderImpl.ParseQName(Boolean isQName, Int32 startOffset, Int32& colonPos)
+   bei System.Xml.XmlTextReaderImpl.ParseElement()
+   bei System.Xml.XmlTextReaderImpl.ParseElementContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.ReadChildOrSibling(XmlTextReader xmlTextReader, Int32 currentDepth, NppXmlNode node, String nodeNameAttribute)
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.ReadChildOrSibling(XmlTextReader xmlTextReader, Int32 currentDepth, NppXmlNode node, String nodeNameAttribute)
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:32:32.283 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)
+2019-12-23 21:32:56.272 +01:00 [Warning] Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+System.Xml.XmlException: Ungültige Daten auf Stammebene. Zeile 1, Position 1.
+   bei System.Xml.XmlTextReaderImpl.Throw(Exception e)
+   bei System.Xml.XmlTextReaderImpl.Throw(String res, String arg)
+   bei System.Xml.XmlTextReaderImpl.ParseRootLevelWhitespace()
+   bei System.Xml.XmlTextReaderImpl.ParseDocumentContent()
+   bei System.Xml.XmlTextReaderImpl.Read()
+   bei System.Xml.XmlTextReader.Read()
+   bei NppXmlTreeviewPlugin.Parsers.NppXmlNode.TryParse(String xml, String nodeNameAttribute, ILogger logger, NppXmlNode& nppXmlNode)

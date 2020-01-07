@@ -1,0 +1,97 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set item_count = items|length %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (var device in objResponse) {
+				<!--
+				shngInsertText (device+'_source', objResponse[device]['source']);
+				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
+				-->
+			}
+		}
+	}
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Instanz') }}</strong></td>
+			<td class="py-1">{{ p.get_configname() }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Serielle Schnittstelle') }}</strong></td>
+			<td class="py-1">{{ serialport }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('DMX Gateway') }}</strong></td>
+			<td class="py-1">{{ interface }}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<div>
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+	</div>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 1 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+
+{% if item_count==0 %}
+	<p>{{ _('Keine Items definiert') }}</p>
+{% else %}
+	<table class="table table-striped table-hover">
+	<tr><th>{{ _('Item') }}</th><th>{{ _('Kanäle') }}</th></tr>
+    {% for item in items %}
+        <tr><td>{{ item }}</td><td>{{ p.get_iattr_value(item.conf, 'dmx_ch') }}</td></tr>
+    {% endfor %}
+	</table>
+{% endif %}
+</div>
+{% endblock bodytab1 %}
+

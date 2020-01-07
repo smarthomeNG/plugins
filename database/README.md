@@ -59,8 +59,8 @@ database:
     class_path: plugins.database
     driver: sqlite3
     connect:
-      - database:/path/to/log.db
-      - check_same_thread:0
+      - "database:/path/to/log.db"
+      - "check_same_thread:0"
     # prefix: log
     # precision: 2
 ```

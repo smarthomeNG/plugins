@@ -100,7 +100,7 @@
     {%  for function, dict in p.metadata.plugin_functions.items() %}
         <div class="card mb-2">
           <div class="card-header p-2">
-              <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
+              <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{% if loop.index > 1 %}, {% endif %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
           </div>
           <div class="card-body p-2">
               {{ dict['description'][language] }}<br/>

@@ -1,12 +1,15 @@
 # Miflora
 
-Version 1.6.1
-
 ## Requirements
 This plugin requires lib miflora in version 0.4 or above. You can install this lib with:
 
 ```
 sudo pip3 install miflora --upgrade
+```
+Depending on the used library, you will also need the following packages (requirements.txt sets all of them):
+```
+pip3 install bluepy
+pip3 install pygatt
 ```
 
 Due to the miflora package, currently all firmwares up to 2.6.6 are supported.
@@ -25,6 +28,7 @@ Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smartho
 miflora:
     class_name: Miflora
     class_path: miflora
+    bt_library: bluepy
     bt_addr: C4:7C:7E:21:F3:2B
     cycle: 300
     instance: miflora
@@ -32,6 +36,7 @@ miflora:
 
 #### Attributes
   * `bt_addr`: The Bluetooth address of your xiaomi miflora plant sensor. Find e.g. with hcitool lescan
+  * `bt_library`: The bluetooth library to use: gatttool (deprecated), bluepy (recommended), pygatt.
   * `cycle`: Cycle interval for data retrieval
   * `instance`: Instance name in case multi-instance use is needed (one instance can handle one sensor)
 

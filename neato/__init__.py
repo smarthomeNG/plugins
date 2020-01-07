@@ -36,17 +36,19 @@ class Neato(SmartPlugin):
     def __init__(self, sh, *args, **kwargs):
         from bin.smarthome import VERSION
 
-        self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"))
-        self.robot.update_robot()
+        self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"))
+#        self.robot.update_robot()
+        self.logger.debug("Init completed.")
         self._cycle = 40
         return
 
     def run(self):
         self.logger.debug("Run method called")
-        self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
+        self.scheduler_add('poll_device', self.poll_device, prio=5, cycle=self._cycle)
         self.alive = True
 
     def stop(self):
+        self.scheduler_remove('poll_device')
         self.logger.debug("Stop method called")
         self.alive = False
 
@@ -64,6 +66,14 @@ class Neato(SmartPlugin):
 
         if self.has_iattr(item.conf, 'neato_isdocked'):
             item.property.value = self.robot.isDocked
+            self._items.append(item)
+
+        if self.has_iattr(item.conf, 'neato_isscheduleenabled'):
+            item.property.value = self.robot.isScheduleEnabled
+            self._items.append(item)
+
+        if self.has_iattr(item.conf, 'neato_ischarging'):
+            item.property.value = self.robot.isCharging
             self._items.append(item)
 
         if self.has_iattr(item.conf, 'neato_state'):
@@ -86,7 +96,10 @@ class Neato(SmartPlugin):
                 62: 'stop',
                 63: 'pause',
                 64: 'resume',
-                65: 'findme'}
+                65: 'findme',
+                66: 'sendToBase',
+                67: 'enableSchedule',
+                68: 'disableSchedule'}
 
             if self.has_iattr(item.conf, 'neato_command'):
                 if item._value in val_to_command:
@@ -96,8 +109,18 @@ class Neato(SmartPlugin):
 
             pass
 
+    def enable_schedule(self):
+        self.robot.robot_command("enableSchedule")
+
+    def disable_schedule(self):
+        self.robot.robot_command("disableSchedule")
+
     def poll_device(self):
-        self.robot.update_robot()
+        returnValue = self.robot.update_robot()
+
+        if returnValue == 'error':
+            return
+
         for item in self._items:
             if self.has_iattr(item.conf, 'neato_name'):
                 value = self.robot.name
@@ -119,6 +142,9 @@ class Neato(SmartPlugin):
                 value = str(self.__get_state_action_string(self.robot.state_action))
                 item(value)
 
+            if self.has_iattr(item.conf, 'neato_isscheduleenabled'):
+                value = self.robot.isScheduleEnabled 
+                item(value)
         pass
 
     def __get_state_string(self,state):

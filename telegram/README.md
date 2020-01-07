@@ -47,7 +47,9 @@ Shared secret key to authenticate to telegram network.
 
 Telegram communication is handled over chat(-channels) with unique ids.
 So a communication is bound to a chat id (=connected user) which can be adressed with broadcast messages.
-To get your current chat id, send a /subscribe command to the bot, which will reply with your chatid.
+To get your current chat id, send a /start command to the bot, which will reply with your chatid.
+
+By design negative chat ids are those belonging to a group.
 
 ### items.yaml
 
@@ -69,11 +71,28 @@ Available tags:
 
 ```yaml
 doorbell:
-    name: Türklingel (entprellt)
     type: bool
     knx_dpt: 1
-    telegram_message: Es klingelt an der Tür
+    telegram_message: Doorbell rings!
 ```
+
+The same example but extended to send a camera snapshot via telegram:
+
+```yaml
+doorbell:
+    type: bool
+    visu_acl: r
+    knx_dpt: 1
+    knx_listen: x/x/x
+    telegram_message: Doorbell rings!
+    telegram_value_match_regex: (true|True|1)  # Only send when 1 (True)
+    info:
+        type: bool
+        eval_trigger: doorbell
+        eval: sh.telegram.photo_broadcast("http://<IP-address>/cgi-bin/xxx&user=username&password=passwd","Türkamera") if sh.doorbell() == 1 else None
+```
+
+``http://<IP-address>/cgi-bin/xxx&user=username&password=passwd`` needs to be set according to the camera URL of course.
 
 ##### Example with tags
 
@@ -100,12 +119,12 @@ TestNum:
     type: num
     cache: True
     telegram_message: TestNum: [VALUE]
-    telegram_value_match_regex: [0-1][0-9]    # nur Nachrichten senden wenn Zahlen von 0 - 19
+    telegram_value_match_regex: [0-1][0-9]     # only send when numbers between 0 - 19 are set to item 
 TestBool:
     type: bool
     cache: True
     telegram_message: TestBool: [VALUE]
-    telegram_value_match_regex: 1              # nur Nachricht senden wenn 1 (True)
+    telegram_value_match_regex: (true|True|1)   # only senden wenn 1 (True)
 ```
 
 #### telegram_info
@@ -177,10 +196,10 @@ MyTelegramTest:
         type: dict
         telegram_chat_ids: True
         cache: 'True'
-        # e.g. value: '{ 3234123342: 1, 9234123341: 0 }'
+        # e.g. value: "{ '3234123342': 1, '9234123341': 0 }"
         # a dict with chat id and 1 for read and write access or 0 for readonly access
         # the following grants r/w access to 3234123342
-        value: '{ 3234123342: 1 }'
+        value: "{ '3234123342': 1 }"
 ```
 
 After a restart create a logic within backend, admin interface or manually:

@@ -42,9 +42,9 @@ import socket    # for gethostbyname
 import paho.mqtt.client as mqtt
 
 from lib.model.smartplugin import *
+from lib.item import Items
 
 from lib.utils import Utils
-from lib.item import Items
 
 import threading
 connect_lock = threading.Lock()
@@ -65,7 +65,6 @@ class Mqtt(SmartPlugin):
 
     _broker_version = '?'
     _broker = {}
-
 
     def __init__(self, sh, *args, **kwargs):
 
