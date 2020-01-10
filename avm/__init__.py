@@ -1702,7 +1702,8 @@ class AVM(SmartPlugin):
         else:
             item(0)
             self.logger.debug(
-                "MAC Address not available on the FritzDevice - ID: %s" % self._fritz_device.get_identifier())
+                "MAC Address %s for item %s not available on the FritzDevice - ID: %s" % (
+                item.conf['mac'], item.property.path, self._fritz_device.get_identifier()))
 
     def _update_home_automation(self, item):
         """
@@ -1879,7 +1880,8 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["dev_info_" + action] = response.content
         else:
-            self.logger.debug("Accessing DeviceInfo response cache for action %s!" % action)
+            self.logger.debug(
+                "Accessing dev_info response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
             xml = minidom.parseString(self._response_cache["dev_info_" + action])
@@ -1953,7 +1955,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["tam_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM response cache for action %s!" % action)
+            self.logger.debug("Accessing TAM response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
             xml = minidom.parseString(self._response_cache["tam_" + action])
@@ -1980,7 +1982,7 @@ class AVM(SmartPlugin):
             if len(message_url_xml) > 0:
                 message_url = message_url_xml[0].firstChild.data
 
-                if not "tam_messages" in self._response_cache:
+                if "tam_messages" not in self._response_cache:
                     try:
                         message_result = self._session.get(message_url, timeout=self._timeout, verify=self._verify)
                     except Exception as e:
@@ -1992,7 +1994,7 @@ class AVM(SmartPlugin):
                         self.set_device_availability(True)
                     self._response_cache["tam_messages"] = message_result.content
                 else:
-                    self.logger.debug("Accessing TAM response cache for action %s!" % action)
+                    self.logger.debug("Accessing tam_messages response cache for action %s and item %s!" % (action, item.property.path))
 
                 try:
                     message_xml = minidom.parseString(self._response_cache["tam_messages"])
@@ -2062,7 +2064,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)] = response.content
         else:
-            self.logger.debug("Accessing TAM response cache for action %s!" % action)
+            self.logger.debug("Accessing wlanconfig response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
             xml = minidom.parseString(self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)])
@@ -2128,7 +2130,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["wan_dsl_interface_config_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM response cache for action %s!" % action)
+            self.logger.debug("Accessing wan_dsl_interface_config response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
             xml = minidom.parseString(self._response_cache["wan_dsl_interface_config_" + action])
@@ -2204,7 +2206,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["wan_common_interface_configuration_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM response cache for action %s!" % action)
+            self.logger.debug("Accessing wan_common_interface_configuration response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
             xml = minidom.parseString(self._response_cache["wan_common_interface_configuration_" + action])
@@ -2318,7 +2320,7 @@ class AVM(SmartPlugin):
                 self.set_device_availability(True)
             self._response_cache["wan_ip_connection_" + action] = response.content
         else:
-            self.logger.debug("Accessing TAM response cache for action %s!" % action)
+            self.logger.debug("Accessing wan_ip_connection response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
             xml = minidom.parseString(self._response_cache["wan_ip_connection_" + action])
