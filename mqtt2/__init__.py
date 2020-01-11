@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2018 <AUTHOR>                                        <EMAIL>
+#  Copyright 2017-2018  Martin Sinn                         m.sinn@gmx.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
@@ -99,7 +99,7 @@ class Mqtt2(MqttPlugin):
         # They will not shutdown properly. (It's a python bug)
 
         # start subscription to all topics
-        self._start_subscriptions()
+        self.start_subscriptions()
 
         return
 
@@ -112,7 +112,7 @@ class Mqtt2(MqttPlugin):
         self.alive = False
 
         # stop subscription to all topics
-        self._stop_subscriptions()
+        self.stop_subscriptions()
 
         return
 
@@ -175,7 +175,7 @@ class Mqtt2(MqttPlugin):
             topic = self.get_iattr_value(item.conf, 'mqtt_topic_in')
             payload_type = item.property.type
             bool_values = self.get_iattr_value(item.conf, 'mqtt_bool_values')
-            self._add_subscription(topic, payload_type, bool_values, item)
+            self.add_subscription(topic, payload_type, bool_values, item)
 
         if self.has_iattr(item.conf, 'mqtt_topic_out'):
             # initialize topics if configured
@@ -229,7 +229,7 @@ class Mqtt2(MqttPlugin):
                 qos = self.get_iattr_value(item.conf, 'mqtt_qos')
                 if qos:
                     qos = int(qos)
-                self._publish_topic(item, topic, item(), qos, retain, bool_values)
+                self.publish_topic(topic, item(), item, qos, retain, bool_values)
 
 
     def poll_device(self):
