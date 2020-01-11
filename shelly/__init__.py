@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2018 <AUTHOR>                                        <EMAIL>
+#  Copyright 2019-      Martin Sinn                         m.sinn@gmx.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
@@ -27,50 +27,48 @@ import logging
 import json
 
 from lib.module import Modules
-#from lib.model.smartplugin import *
 from lib.model.mqttplugin import *
 from lib.item import Items
 
 
-#class Shelly(SmartPlugin, MqttPlugin):
 class Shelly(MqttPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.1.0'
 
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+        Initalizes the plugin.
 
         :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
 
         If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
         a reference to the sh object any more.
 
-        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
-        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
-        use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
+        Plugins have to use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
 
-        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        # Call init code of parent class (MqttPlugin)
         super().__init__()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         # self.param1 = self.get_parameter_value('param1')
 
         # Initialization code goes here
-        self.shelly_item_defs = {}
-        self.shelly_items = []
+        self.shelly_devices = {}
+        self.shelly_items = []              # to hold item information for web interface
 
-         # if plugin should start even without web interface
+        # add subscription to get device announces
+        self.add_subscription('shellies/announce', 'dict', callback=self.on_mqtt_announce)
+
+        # if plugin should start even without web interface
         self.init_webinterface()
 
         return
@@ -82,12 +80,17 @@ class Shelly(MqttPlugin):
         """
         self.logger.debug("Run method called")
         self.alive = True
-        # if you need to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
 
         # start subscription to all topics
-        self._start_subscriptions()
+        for shelly_id in self.shelly_devices:
+            self.add_subscription('shellies/' + shelly_id + '/online', 'bool', bool_values=['false', 'true'], callback=self.on_mqtt_online)
 
+        self.start_subscriptions()
+
+        for shelly_id in self.shelly_devices:
+            topic = 'shellies/' + shelly_id + '/command'
+            self.publish_topic(topic, 'update')
+            self.publish_topic(topic, 'announce')
         return
 
 
@@ -99,7 +102,7 @@ class Shelly(MqttPlugin):
         self.alive = False
 
         # stop subscription to all topics
-        self._stop_subscriptions()
+        self.stop_subscriptions()
 
         return
 
@@ -120,20 +123,49 @@ class Shelly(MqttPlugin):
         if self.has_iattr(item.conf, 'shelly_id'):
             self.logger.debug("parsing item: {0}".format(item.id()))
 
-            shelly_id = self.get_iattr_value(item.conf, 'shelly_id')
-            shelly_type = self.get_iattr_value(item.conf, 'shelly_type')
+            shelly_macid = self.get_iattr_value(item.conf, 'shelly_id').upper()
+            shelly_type = self.get_iattr_value(item.conf, 'shelly_type').lower()
+            shelly_id = shelly_type + '-' + shelly_macid
+
+            shelly_attr = self.get_iattr_value(item.conf, 'shelly_attr')
             shelly_relay = self.get_iattr_value(item.conf, 'shelly_relay')
             if not shelly_relay:
                 shelly_relay = '0'
-            self.shelly_item_defs[shelly_id] = [item, shelly_type]
-            self.shelly_items.append(item)
 
-            # subscribe to configured topics
-            topic = 'shellies/' + shelly_type + '-' + shelly_id + '/relay/' + shelly_relay
+            if not self.shelly_devices.get(shelly_id, None):
+                self.shelly_devices[shelly_id] = {}
+            self.shelly_devices[shelly_id]['connected_to_item'] = True
 
-            payload_type = item.property.type
-            bool_values = ['off','on']
-            self._add_subscription(topic, payload_type, bool_values, item)
+            # handle the different topics from Shelly device
+            topic = None
+            bool_values = None
+            if shelly_attr:
+                shelly_attr = shelly_attr.lower()
+            if shelly_attr in ['relay', None]:
+                topic = 'shellies/' + shelly_id + '/relay/' + shelly_relay
+                bool_values = ['off', 'on']
+            elif shelly_attr == 'power':
+                topic = 'shellies/' + shelly_id + '/relay/' + shelly_relay + '/power'
+            elif shelly_attr == 'energy':
+                topic = 'shellies/' + shelly_id + '/relay/' + shelly_relay + '/energy'
+            elif shelly_attr == 'online':
+                topic = 'shellies/' + shelly_id + '/online'
+                bool_values = ['false', 'true']
+            elif shelly_attr == 'temp':
+                topic = 'shellies/' + shelly_id + '/temperature'
+            elif shelly_attr == 'temp_f':
+                topic = 'shellies/' + shelly_id + '/temperature_f'
+            else:
+                self.logger.warning("parse_item: unknown attribute shelly_attr = {}".format(shelly_attr))
+
+            if topic:
+                # append to list used for web interface
+                if not item in self.shelly_items:
+                    self.shelly_items.append(item)
+
+                # subscribe to topic for relay state
+                payload_type = item.property.type       # should be bool
+                self.add_subscription(topic, payload_type, bool_values, item=item)
 
             return self.update_item
 
@@ -160,26 +192,65 @@ class Shelly(MqttPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        self.logger.info("update_item: {}".format(item.id()))
+        self.logger.debug("update_item: {}".format(item.id()))
 
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("update_item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("update_item: {}, item has been changed in SmartHomeNG outside of this plugin in {}".format(item.id(), caller))
 
+            # publish topic with new relay state
             shelly_id = self.get_iattr_value(item.conf, 'shelly_id').upper()
             shelly_type = self.get_iattr_value(item.conf, 'shelly_type').lower()
             shelly_relay = self.get_iattr_value(item.conf, 'shelly_relay')
             if not shelly_relay:
                 shelly_relay = '0'
-
             topic = 'shellies/' + shelly_type + '-' + shelly_id + '/relay/' + shelly_relay + '/command'
+            self.publish_topic(topic, item(), item, bool_values=['off','on'])
 
-            if item():
-                shelly_value = 'on'
-            else:
-                shelly_value = 'off'
-            self._publish_topic(item, topic, item(), bool_values=['off','on'])
+
+    def on_mqtt_announce(self, topic, payload, qos=None, retain=None):
+        """
+        Callback function to handle received messages
+
+        :param topic:
+        :param payload:
+        :param qos:
+        :param retain:
+        """
+        self.logger.info("on_mqtt_announce: announce = {}".format(payload))
+        shelly_id = payload['id']
+
+        if not self.shelly_devices.get(shelly_id, None):
+            self.shelly_devices[shelly_id] = {}
+            self.shelly_devices[shelly_id]['connected_to_item'] = False
+
+        self.shelly_devices[shelly_id]['mac'] = payload['mac']
+        self.shelly_devices[shelly_id]['ip'] = payload['ip']
+        self.shelly_devices[shelly_id]['new_fw'] = payload['new_fw']
+        self.shelly_devices[shelly_id]['fw_ver'] = payload['fw_ver']
+
+        return
+
+
+    def on_mqtt_online(self, topic, payload, qos=None, retain=None):
+        """
+        Callback function to handle received messages
+
+        :param topic:
+        :param payload:
+        :param qos:
+        :param retain:
+        """
+        self.logger.info("on_mqtt_online: topic {} = {}".format(topic, payload))
+        shelly_id = topic.split('/')[1]
+
+        if not self.shelly_devices.get(shelly_id, None):
+            self.shelly_devices[shelly_id] = {}
+
+        self.shelly_devices[shelly_id]['online'] = payload
+
+        return
 
     # -----------------------------------------------------------------------
 
