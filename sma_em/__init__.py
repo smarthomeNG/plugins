@@ -139,269 +139,15 @@ class SMA_EM(SmartPlugin):
         Run method for the plugin
         """
         self.alive = True
-        self.scheduler_add(__name__, self._update_sma_em, prio=3, cron=None, cycle=self._cycle, value=None,
+        self.scheduler_add("update_sma_em", self._update_sma_em, prio=3, cron=None, cycle=self._cycle, value=None,
                            offset=None, next=None)
 
     def stop(self):
         """
         Stop method for the plugin
         """
-        self.scheduler_remove(__name__)
+        self.scheduler_remove("update_sma_em")
         self.alive = False
-
-    def _update_sma_em(self):
-        emparts = self.readem()
-        if self._serial == format(emparts['serial']):
-            if 'pconsume' in self._items:
-                self._items['pconsume'](emparts['pconsume'])
-            if 'pconsumeunit' in self._items:
-                self._items['pconsumeunit'](emparts['pconsumeunit'])
-            if 'pconsumecounter' in self._items:
-                self._items['pconsumecounter'](emparts['pconsumecounter'])
-            if 'pconsumecounterunit' in self._items:
-                self._items['pconsumecounterunit'](emparts['pconsumecounterunit'])
-            if 'psupply' in self._items:
-                self._items['psupply'](emparts['psupply'])
-            if 'psupplyunit' in self._items:
-                self._items['psupplyunit'](emparts['psupplyunit'])
-            if 'psupplycounter' in self._items:
-                self._items['psupplycounter'](emparts['psupplycounter'])
-            if 'psupplycounterunit' in self._items:
-                self._items['psupplycounterunit'](emparts['psupplycounterunit'])
-
-            if 'sconsume' in self._items:
-                self._items['sconsume'](emparts['sconsume'])
-            if 'sconsumeunit' in self._items:
-                self._items['sconsumeunit'](emparts['sconsumeunit'])
-            if 'sconsumecounter' in self._items:
-                self._items['sconsumecounter'](emparts['sconsumecounter'])
-            if 'sconsumecounterunit' in self._items:
-                self._items['sconsumecounterunit'](emparts['sconsumecounterunit'])
-            if 'ssupply' in self._items:
-                self._items['ssupply'](emparts['ssupply'])
-            if 'ssupplyunit' in self._items:
-                self._items['ssupplyunit'](emparts['ssupplyunit'])
-            if 'ssupplycounter' in self._items:
-                self._items['ssupplycounter'](emparts['ssupplycounter'])
-            if 'ssupplycounterunit' in self._items:
-                self._items['ssupplycounterunit'](emparts['ssupplycounterunit'])
-
-            if 'qconsume' in self._items:
-                self._items['qconsume'](emparts['qconsume'])
-            if 'qconsumeunit' in self._items:
-                self._items['qconsumeunit'](emparts['qconsumeunit'])
-            if 'qconsumecounter' in self._items:
-                self._items['qconsumecounter'](emparts['qconsumecounter'])
-            if 'qconsumecounterunit' in self._items:
-                self._items['qconsumecounterunit'](emparts['qconsumecounterunit'])
-            if 'qsupply' in self._items:
-                self._items['qsupply'](emparts['qsupply'])
-            if 'qsupplyunit' in self._items:
-                self._items['qsupplyunit'](emparts['qsupplyunit'])
-            if 'qsupplycounter' in self._items:
-                self._items['qsupplycounter'](emparts['qsupplycounter'])
-            if 'qsupplycounterunit' in self._items:
-                self._items['qsupplycounterunit'](emparts['qsupplycounterunit'])
-
-            if 'cosphi' in self._items:
-                self._items['cosphi'](emparts['cosphi'])
-            if 'cosphiunit' in self._items:
-                self._items['cosphiunit'](emparts['cosphiunit'])
-
-            if 'p1consume' in self._items:
-                self._items['p1consume'](emparts['p1consume'])
-            if 'p1consumeunit' in self._items:
-                self._items['p1consumeunit'](emparts['p1consumeunit'])
-            if 'p1consumecounter' in self._items:
-                self._items['p1consumecounter'](emparts['p1consumecounter'])
-            if 'p1consumecounterunit' in self._items:
-                self._items['p1consumecounterunit'](emparts['p1consumecounterunit'])
-            if 'p1supply' in self._items:
-                self._items['p1supply'](emparts['p1supply'])
-            if 'p1supplyunit' in self._items:
-                self._items['p1supplyunit'](emparts['p1supplyunit'])
-            if 'p1supplycounter' in self._items:
-                self._items['p1supplycounter'](emparts['p1supplycounter'])
-            if 'p1supplycounterunit' in self._items:
-                self._items['p1supplycounterunit'](emparts['p1supplycounterunit'])
-
-            if 's1consume' in self._items:
-                self._items['s1consume'](emparts['s1consume'])
-            if 's1consumeunit' in self._items:
-                self._items['s1consumeunit'](emparts['s1consumeunit'])
-            if 's1consumecounter' in self._items:
-                self._items['s1consumecounter'](emparts['s1consumecounter'])
-            if 's1consumecounterunit' in self._items:
-                self._items['s1consumecounterunit'](emparts['s1consumecounterunit'])
-            if 's1supply' in self._items:
-                self._items['s1supply'](emparts['s1supply'])
-            if 's1supplyunit' in self._items:
-                self._items['s1supplyunit'](emparts['s1supplyunit'])
-            if 's1supplycounter' in self._items:
-                self._items['s1supplycounter'](emparts['s1supplycounter'])
-            if 's1supplycounterunit' in self._items:
-                self._items['s1supplycounterunit'](emparts['s1supplycounterunit'])
-
-            if 'q1consume' in self._items:
-                self._items['q1consume'](emparts['q1consume'])
-            if 'q1consumeunit' in self._items:
-                self._items['q1consumeunit'](emparts['q1consumeunit'])
-            if 'q1consumecounter' in self._items:
-                self._items['q1consumecounter'](emparts['q1consumecounter'])
-            if 'q1consumecounterunit' in self._items:
-                self._items['q1consumecounterunit'](emparts['q1consumecounterunit'])
-            if 'q1supply' in self._items:
-                self._items['q1supply'](emparts['q1supply'])
-            if 'q1supplyunit' in self._items:
-                self._items['q1supplyunit'](emparts['q1supplyunit'])
-            if 'q1supplycounter' in self._items:
-                self._items['q1supplycounter'](emparts['q1supplycounter'])
-            if 'q1supplycounterunit' in self._items:
-                self._items['q1supplycounterunit'](emparts['q1supplycounterunit'])
-
-            if 'i1' in self._items:
-                self._items['i1'](emparts['i1'])
-            if 'i1unit' in self._items:
-                self._items['i1unit'](emparts['i1unit'])
-            if 'u1' in self._items:
-                self._items['u1'](emparts['u1'])
-            if 'u1unit' in self._items:
-                self._items['u1unit'](emparts['u1unit'])
-            if 'cosphi1' in self._items:
-                self._items['cosphi1'](emparts['cosphi1'])
-            if 'cosphi1unit' in self._items:
-                self._items['cosphi1unit'](emparts['cosphi1unit'])
-
-            if 'p2consume' in self._items:
-                self._items['p2consume'](emparts['p2consume'])
-            if 'p2consumeunit' in self._items:
-                self._items['p2consumeunit'](emparts['p2consumeunit'])
-            if 'p2consumecounter' in self._items:
-                self._items['p2consumecounter'](emparts['p2consumecounter'])
-            if 'p2consumecounterunit' in self._items:
-                self._items['p2consumecounterunit'](emparts['p2consumecounterunit'])
-            if 'p2supply' in self._items:
-                self._items['p2supply'](emparts['p2supply'])
-            if 'p2supplyunit' in self._items:
-                self._items['p2supplyunit'](emparts['p2supplyunit'])
-            if 'p2supplycounter' in self._items:
-                self._items['p2supplycounter'](emparts['p2supplycounter'])
-            if 'p2supplycounterunit' in self._items:
-                self._items['p2supplycounterunit'](emparts['p2supplycounterunit'])
-
-            if 's2consume' in self._items:
-                self._items['s2consume'](emparts['s2consume'])
-            if 's2consumeunit' in self._items:
-                self._items['s2consumeunit'](emparts['s2consumeunit'])
-            if 's2consumecounter' in self._items:
-                self._items['s2consumecounter'](emparts['s2consumecounter'])
-            if 's2consumecounterunit' in self._items:
-                self._items['s2consumecounterunit'](emparts['s2consumecounterunit'])
-            if 's2supply' in self._items:
-                self._items['s2supply'](emparts['s2supply'])
-            if 's2supplyunit' in self._items:
-                self._items['s2supplyunit'](emparts['s2supplyunit'])
-            if 's2supplycounter' in self._items:
-                self._items['s2supplycounter'](emparts['s2supplycounter'])
-            if 's2supplycounterunit' in self._items:
-                self._items['s2supplycounterunit'](emparts['s2supplycounterunit'])
-
-            if 'q2consume' in self._items:
-                self._items['q2consume'](emparts['q2consume'])
-            if 'q2consumeunit' in self._items:
-                self._items['q2consumeunit'](emparts['q2consumeunit'])
-            if 'q2consumecounter' in self._items:
-                self._items['q2consumecounter'](emparts['q2consumecounter'])
-            if 'q2consumecounterunit' in self._items:
-                self._items['q2consumecounterunit'](emparts['q2consumecounterunit'])
-            if 'q2supply' in self._items:
-                self._items['q2supply'](emparts['q2supply'])
-            if 'q2supplyunit' in self._items:
-                self._items['q2supplyunit'](emparts['q2supplyunit'])
-            if 'q2supplycounter' in self._items:
-                self._items['q2supplycounter'](emparts['q2supplycounter'])
-            if 'q2supplycounterunit' in self._items:
-                self._items['q2supplycounterunit'](emparts['q2supplycounterunit'])
-
-            if 'i2' in self._items:
-                self._items['i2'](emparts['i2'])
-            if 'i2unit' in self._items:
-                self._items['i2unit'](emparts['i2unit'])
-            if 'u2' in self._items:
-                self._items['u2'](emparts['u2'])
-            if 'u2unit' in self._items:
-                self._items['u2unit'](emparts['u2unit'])
-            if 'cosphi2' in self._items:
-                self._items['cosphi2'](emparts['cosphi2'])
-            if 'cosphi2unit' in self._items:
-                self._items['cosphi2unit'](emparts['cosphi2unit'])
-
-            if 'p3consume' in self._items:
-                self._items['p3consume'](emparts['p3consume'])
-            if 'p3consumeunit' in self._items:
-                self._items['p3consumeunit'](emparts['p3consumeunit'])
-            if 'p3consumecounter' in self._items:
-                self._items['p3consumecounter'](emparts['p3consumecounter'])
-            if 'p3consumecounterunit' in self._items:
-                self._items['p3consumecounterunit'](emparts['p3consumecounterunit'])
-            if 'p3supply' in self._items:
-                self._items['p3supply'](emparts['p3supply'])
-            if 'p3supplyunit' in self._items:
-                self._items['p3supplyunit'](emparts['p3supplyunit'])
-            if 'p3supplycounter' in self._items:
-                self._items['p3supplycounter'](emparts['p3supplycounter'])
-            if 'p3supplycounterunit' in self._items:
-                self._items['p3supplycounterunit'](emparts['p3supplycounterunit'])
-
-            if 's3consume' in self._items:
-                self._items['s3consume'](emparts['s3consume'])
-            if 's3consumeunit' in self._items:
-                self._items['s3consumeunit'](emparts['s3consumeunit'])
-            if 's3consumecounter' in self._items:
-                self._items['s3consumecounter'](emparts['s3consumecounter'])
-            if 's3consumecounterunit' in self._items:
-                self._items['s3consumecounterunit'](emparts['s3consumecounterunit'])
-            if 's3supply' in self._items:
-                self._items['s3supply'](emparts['s3supply'])
-            if 's3supplyunit' in self._items:
-                self._items['s3supplyunit'](emparts['s3supplyunit'])
-            if 's3supplycounter' in self._items:
-                self._items['s3supplycounter'](emparts['s3supplycounter'])
-            if 's3supplycounterunit' in self._items:
-                self._items['s3supplycounterunit'](emparts['s3supplycounterunit'])
-
-            if 'q3consume' in self._items:
-                self._items['q3consume'](emparts['q3consume'])
-            if 'q3consumeunit' in self._items:
-                self._items['q3consumeunit'](emparts['q3consumeunit'])
-            if 'q3consumecounter' in self._items:
-                self._items['q3consumecounter'](emparts['q3consumecounter'])
-            if 'q3consumecounterunit' in self._items:
-                self._items['q3consumecounterunit'](emparts['q3consumecounterunit'])
-            if 'q3supply' in self._items:
-                self._items['q3supply'](emparts['q3supply'])
-            if 'q3supplyunit' in self._items:
-                self._items['q3supplyunit'](emparts['q3supplyunit'])
-            if 'q3supplycounter' in self._items:
-                self._items['q3supplycounter'](emparts['q3supplycounter'])
-            if 'q3supplycounterunit' in self._items:
-                self._items['q3supplycounterunit'](emparts['q3supplycounterunit'])
-
-            if 'i3' in self._items:
-                self._items['i3'](emparts['i3'])
-            if 'i3unit' in self._items:
-                self._items['i3unit'](emparts['i3unit'])
-            if 'u3' in self._items:
-                self._items['u3'](emparts['u3'])
-            if 'u3unit' in self._items:
-                self._items['u3unit'](emparts['u3unit'])
-            if 'cosphi3' in self._items:
-                self._items['cosphi3'](emparts['cosphi3'])
-            if 'cosphi3unit' in self._items:
-                self._items['cosphi3unit'](emparts['cosphi3unit'])
-
-            if 'speedwire-version' in self._items:
-                self._items['speedwire-version'](emparts['speedwire-version'])
 
     def parse_item(self, item):
         """
@@ -412,6 +158,268 @@ class SMA_EM(SmartPlugin):
         """
         if self.has_iattr(item.conf, 'sma_em_data_type'):
             self._items[self.get_iattr_value(item.conf, 'sma_em_data_type')] = item
+            return self.update_item
+
+    def parse_logic(self, logic):
+        pass
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        if caller != 'plugin':
+            pass
+
+    def _update_sma_em(self):
+        emparts = self.readem()
+        if self._serial == format(emparts['serial']):
+            if 'pconsume' in self._items:
+                self._items['pconsume'](emparts['pconsume'], __name__)
+            if 'pconsumeunit' in self._items:
+                self._items['pconsumeunit'](emparts['pconsumeunit', __name__])
+            if 'pconsumecounter' in self._items:
+                self._items['pconsumecounter'](emparts['pconsumecounter', __name__])
+            if 'pconsumecounterunit' in self._items:
+                self._items['pconsumecounterunit'](emparts['pconsumecounterunit', __name__])
+            if 'psupply' in self._items:
+                self._items['psupply'](emparts['psupply', __name__])
+            if 'psupplyunit' in self._items:
+                self._items['psupplyunit'](emparts['psupplyunit', __name__])
+            if 'psupplycounter' in self._items:
+                self._items['psupplycounter'](emparts['psupplycounter', __name__])
+            if 'psupplycounterunit' in self._items:
+                self._items['psupplycounterunit'](emparts['psupplycounterunit', __name__])
+
+            if 'sconsume' in self._items:
+                self._items['sconsume'](emparts['sconsume', __name__])
+            if 'sconsumeunit' in self._items:
+                self._items['sconsumeunit'](emparts['sconsumeunit', __name__])
+            if 'sconsumecounter' in self._items:
+                self._items['sconsumecounter'](emparts['sconsumecounter', __name__])
+            if 'sconsumecounterunit' in self._items:
+                self._items['sconsumecounterunit'](emparts['sconsumecounterunit', __name__])
+            if 'ssupply' in self._items:
+                self._items['ssupply'](emparts['ssupply', __name__])
+            if 'ssupplyunit' in self._items:
+                self._items['ssupplyunit'](emparts['ssupplyunit', __name__])
+            if 'ssupplycounter' in self._items:
+                self._items['ssupplycounter'](emparts['ssupplycounter', __name__])
+            if 'ssupplycounterunit' in self._items:
+                self._items['ssupplycounterunit'](emparts['ssupplycounterunit', __name__])
+
+            if 'qconsume' in self._items:
+                self._items['qconsume'](emparts['qconsume', __name__])
+            if 'qconsumeunit' in self._items:
+                self._items['qconsumeunit'](emparts['qconsumeunit', __name__])
+            if 'qconsumecounter' in self._items:
+                self._items['qconsumecounter'](emparts['qconsumecounter', __name__])
+            if 'qconsumecounterunit' in self._items:
+                self._items['qconsumecounterunit'](emparts['qconsumecounterunit', __name__])
+            if 'qsupply' in self._items:
+                self._items['qsupply'](emparts['qsupply', __name__])
+            if 'qsupplyunit' in self._items:
+                self._items['qsupplyunit'](emparts['qsupplyunit', __name__])
+            if 'qsupplycounter' in self._items:
+                self._items['qsupplycounter'](emparts['qsupplycounter', __name__])
+            if 'qsupplycounterunit' in self._items:
+                self._items['qsupplycounterunit'](emparts['qsupplycounterunit', __name__])
+
+            if 'cosphi' in self._items:
+                self._items['cosphi'](emparts['cosphi', __name__])
+            if 'cosphiunit' in self._items:
+                self._items['cosphiunit'](emparts['cosphiunit', __name__])
+
+            if 'p1consume' in self._items:
+                self._items['p1consume'](emparts['p1consume', __name__])
+            if 'p1consumeunit' in self._items:
+                self._items['p1consumeunit'](emparts['p1consumeunit', __name__])
+            if 'p1consumecounter' in self._items:
+                self._items['p1consumecounter'](emparts['p1consumecounter', __name__])
+            if 'p1consumecounterunit' in self._items:
+                self._items['p1consumecounterunit'](emparts['p1consumecounterunit', __name__])
+            if 'p1supply' in self._items:
+                self._items['p1supply'](emparts['p1supply', __name__])
+            if 'p1supplyunit' in self._items:
+                self._items['p1supplyunit'](emparts['p1supplyunit', __name__])
+            if 'p1supplycounter' in self._items:
+                self._items['p1supplycounter'](emparts['p1supplycounter', __name__])
+            if 'p1supplycounterunit' in self._items:
+                self._items['p1supplycounterunit'](emparts['p1supplycounterunit', __name__])
+
+            if 's1consume' in self._items:
+                self._items['s1consume'](emparts['s1consume', __name__])
+            if 's1consumeunit' in self._items:
+                self._items['s1consumeunit'](emparts['s1consumeunit', __name__])
+            if 's1consumecounter' in self._items:
+                self._items['s1consumecounter'](emparts['s1consumecounter', __name__])
+            if 's1consumecounterunit' in self._items:
+                self._items['s1consumecounterunit'](emparts['s1consumecounterunit', __name__])
+            if 's1supply' in self._items:
+                self._items['s1supply'](emparts['s1supply', __name__])
+            if 's1supplyunit' in self._items:
+                self._items['s1supplyunit'](emparts['s1supplyunit', __name__])
+            if 's1supplycounter' in self._items:
+                self._items['s1supplycounter'](emparts['s1supplycounter', __name__])
+            if 's1supplycounterunit' in self._items:
+                self._items['s1supplycounterunit'](emparts['s1supplycounterunit', __name__])
+
+            if 'q1consume' in self._items:
+                self._items['q1consume'](emparts['q1consume', __name__])
+            if 'q1consumeunit' in self._items:
+                self._items['q1consumeunit'](emparts['q1consumeunit', __name__])
+            if 'q1consumecounter' in self._items:
+                self._items['q1consumecounter'](emparts['q1consumecounter', __name__])
+            if 'q1consumecounterunit' in self._items:
+                self._items['q1consumecounterunit'](emparts['q1consumecounterunit', __name__])
+            if 'q1supply' in self._items:
+                self._items['q1supply'](emparts['q1supply', __name__])
+            if 'q1supplyunit' in self._items:
+                self._items['q1supplyunit'](emparts['q1supplyunit', __name__])
+            if 'q1supplycounter' in self._items:
+                self._items['q1supplycounter'](emparts['q1supplycounter', __name__])
+            if 'q1supplycounterunit' in self._items:
+                self._items['q1supplycounterunit'](emparts['q1supplycounterunit', __name__])
+
+            if 'i1' in self._items:
+                self._items['i1'](emparts['i1', __name__])
+            if 'i1unit' in self._items:
+                self._items['i1unit'](emparts['i1unit', __name__])
+            if 'u1' in self._items:
+                self._items['u1'](emparts['u1', __name__])
+            if 'u1unit' in self._items:
+                self._items['u1unit'](emparts['u1unit', __name__])
+            if 'cosphi1' in self._items:
+                self._items['cosphi1'](emparts['cosphi1', __name__])
+            if 'cosphi1unit' in self._items:
+                self._items['cosphi1unit'](emparts['cosphi1unit', __name__])
+
+            if 'p2consume' in self._items:
+                self._items['p2consume'](emparts['p2consume', __name__])
+            if 'p2consumeunit' in self._items:
+                self._items['p2consumeunit'](emparts['p2consumeunit', __name__])
+            if 'p2consumecounter' in self._items:
+                self._items['p2consumecounter'](emparts['p2consumecounter', __name__])
+            if 'p2consumecounterunit' in self._items:
+                self._items['p2consumecounterunit'](emparts['p2consumecounterunit', __name__])
+            if 'p2supply' in self._items:
+                self._items['p2supply'](emparts['p2supply', __name__])
+            if 'p2supplyunit' in self._items:
+                self._items['p2supplyunit'](emparts['p2supplyunit', __name__])
+            if 'p2supplycounter' in self._items:
+                self._items['p2supplycounter'](emparts['p2supplycounter', __name__])
+            if 'p2supplycounterunit' in self._items:
+                self._items['p2supplycounterunit'](emparts['p2supplycounterunit', __name__])
+
+            if 's2consume' in self._items:
+                self._items['s2consume'](emparts['s2consume', __name__])
+            if 's2consumeunit' in self._items:
+                self._items['s2consumeunit'](emparts['s2consumeunit', __name__])
+            if 's2consumecounter' in self._items:
+                self._items['s2consumecounter'](emparts['s2consumecounter', __name__])
+            if 's2consumecounterunit' in self._items:
+                self._items['s2consumecounterunit'](emparts['s2consumecounterunit', __name__])
+            if 's2supply' in self._items:
+                self._items['s2supply'](emparts['s2supply', __name__])
+            if 's2supplyunit' in self._items:
+                self._items['s2supplyunit'](emparts['s2supplyunit', __name__])
+            if 's2supplycounter' in self._items:
+                self._items['s2supplycounter'](emparts['s2supplycounter', __name__])
+            if 's2supplycounterunit' in self._items:
+                self._items['s2supplycounterunit'](emparts['s2supplycounterunit', __name__])
+
+            if 'q2consume' in self._items:
+                self._items['q2consume'](emparts['q2consume', __name__])
+            if 'q2consumeunit' in self._items:
+                self._items['q2consumeunit'](emparts['q2consumeunit', __name__])
+            if 'q2consumecounter' in self._items:
+                self._items['q2consumecounter'](emparts['q2consumecounter', __name__])
+            if 'q2consumecounterunit' in self._items:
+                self._items['q2consumecounterunit'](emparts['q2consumecounterunit', __name__])
+            if 'q2supply' in self._items:
+                self._items['q2supply'](emparts['q2supply', __name__])
+            if 'q2supplyunit' in self._items:
+                self._items['q2supplyunit'](emparts['q2supplyunit', __name__])
+            if 'q2supplycounter' in self._items:
+                self._items['q2supplycounter'](emparts['q2supplycounter', __name__])
+            if 'q2supplycounterunit' in self._items:
+                self._items['q2supplycounterunit'](emparts['q2supplycounterunit', __name__])
+
+            if 'i2' in self._items:
+                self._items['i2'](emparts['i2', __name__])
+            if 'i2unit' in self._items:
+                self._items['i2unit'](emparts['i2unit', __name__])
+            if 'u2' in self._items:
+                self._items['u2'](emparts['u2', __name__])
+            if 'u2unit' in self._items:
+                self._items['u2unit'](emparts['u2unit', __name__])
+            if 'cosphi2' in self._items:
+                self._items['cosphi2'](emparts['cosphi2', __name__])
+            if 'cosphi2unit' in self._items:
+                self._items['cosphi2unit'](emparts['cosphi2unit', __name__])
+
+            if 'p3consume' in self._items:
+                self._items['p3consume'](emparts['p3consume', __name__])
+            if 'p3consumeunit' in self._items:
+                self._items['p3consumeunit'](emparts['p3consumeunit', __name__])
+            if 'p3consumecounter' in self._items:
+                self._items['p3consumecounter'](emparts['p3consumecounter', __name__])
+            if 'p3consumecounterunit' in self._items:
+                self._items['p3consumecounterunit'](emparts['p3consumecounterunit', __name__])
+            if 'p3supply' in self._items:
+                self._items['p3supply'](emparts['p3supply', __name__])
+            if 'p3supplyunit' in self._items:
+                self._items['p3supplyunit'](emparts['p3supplyunit', __name__])
+            if 'p3supplycounter' in self._items:
+                self._items['p3supplycounter'](emparts['p3supplycounter', __name__])
+            if 'p3supplycounterunit' in self._items:
+                self._items['p3supplycounterunit'](emparts['p3supplycounterunit', __name__])
+
+            if 's3consume' in self._items:
+                self._items['s3consume'](emparts['s3consume', __name__])
+            if 's3consumeunit' in self._items:
+                self._items['s3consumeunit'](emparts['s3consumeunit', __name__])
+            if 's3consumecounter' in self._items:
+                self._items['s3consumecounter'](emparts['s3consumecounter', __name__])
+            if 's3consumecounterunit' in self._items:
+                self._items['s3consumecounterunit'](emparts['s3consumecounterunit', __name__])
+            if 's3supply' in self._items:
+                self._items['s3supply'](emparts['s3supply', __name__])
+            if 's3supplyunit' in self._items:
+                self._items['s3supplyunit'](emparts['s3supplyunit', __name__])
+            if 's3supplycounter' in self._items:
+                self._items['s3supplycounter'](emparts['s3supplycounter', __name__])
+            if 's3supplycounterunit' in self._items:
+                self._items['s3supplycounterunit'](emparts['s3supplycounterunit', __name__])
+
+            if 'q3consume' in self._items:
+                self._items['q3consume'](emparts['q3consume', __name__])
+            if 'q3consumeunit' in self._items:
+                self._items['q3consumeunit'](emparts['q3consumeunit', __name__])
+            if 'q3consumecounter' in self._items:
+                self._items['q3consumecounter'](emparts['q3consumecounter', __name__])
+            if 'q3consumecounterunit' in self._items:
+                self._items['q3consumecounterunit'](emparts['q3consumecounterunit', __name__])
+            if 'q3supply' in self._items:
+                self._items['q3supply'](emparts['q3supply', __name__])
+            if 'q3supplyunit' in self._items:
+                self._items['q3supplyunit'](emparts['q3supplyunit', __name__])
+            if 'q3supplycounter' in self._items:
+                self._items['q3supplycounter'](emparts['q3supplycounter', __name__])
+            if 'q3supplycounterunit' in self._items:
+                self._items['q3supplycounterunit'](emparts['q3supplycounterunit', __name__])
+
+            if 'i3' in self._items:
+                self._items['i3'](emparts['i3', __name__])
+            if 'i3unit' in self._items:
+                self._items['i3unit'](emparts['i3unit', __name__])
+            if 'u3' in self._items:
+                self._items['u3'](emparts['u3', __name__])
+            if 'u3unit' in self._items:
+                self._items['u3unit'](emparts['u3unit', __name__])
+            if 'cosphi3' in self._items:
+                self._items['cosphi3'](emparts['cosphi3', __name__])
+            if 'cosphi3unit' in self._items:
+                self._items['cosphi3unit'](emparts['cosphi3unit', __name__])
+
+            if 'speedwire-version' in self._items:
+                self._items['speedwire-version'](emparts['speedwire-version', __name__])
 
     def hex2dec(self, s):
         """
@@ -524,10 +532,10 @@ class SMA_EM(SmartPlugin):
         # test-datagram sma-homemanager-2.3.4.R
         # smainfo=b'SMA\x00\x00\x04\x02\xa0\x00\x00\x00\x01\x02L\x00\x10`i\x01t\xb2\xfb\xdb\na3\xfe\xa4\x00\x01\x04\x00\x00\x00\x00\x00\x00\x01\x08\x00\x00\x00\x00\x01\xd6[.\xf8\x00\x02\x04\x00\x00\x00\xbe\x80\x00\x02\x08\x00\x00\x00\x00\x07\x81\x86E`\x00\x03\x04\x00\x00\x00\x17x\x00\x03\x08\x00\x00\x00\x00\x0144\xf6\x90\x00\x04\x04\x00\x00\x00\x00\x00\x00\x04\x08\x00\x00\x00\x00\x00\xd5#\xa7P\x00\t\x04\x00\x00\x00\x00\x00\x00\t\x08\x00\x00\x00\x00\x02\x0fv\xbb\xf8\x00\n\x04\x00\x00\x00\xbf\xf0\x00\n\x08\x00\x00\x00\x00\x07\xac\xcc\x0c\xa0\x00\r\x04\x00\x00\x00\x03\xe0\x00\x0e\x04\x00\x00\x00\xc3<\x00\x15\x04\x00\x00\x00\x00\x00\x00\x15\x08\x00\x00\x00\x00\x00jb\xee\x80\x00\x16\x04\x00\x00\x00B9\x00\x16\x08\x00\x00\x00\x00\x02\xb4\xc4\xfa \x00\x17\x04\x00\x00\x00\x07\x16\x00\x17\x08\x00\x00\x00\x00\x00d>U\x08\x00\x18\x04\x00\x00\x00\x00\x00\x00\x18\x08\x00\x00\x00\x00\x00EC\xec0\x00\x1d\x04\x00\x00\x00\x00\x00\x00\x1d\x08\x00\x00\x00\x00\x00\x87z=H\x00\x1e\x04\x00\x00\x00B\x99\x00\x1e\x08\x00\x00\x00\x00\x02\xc4G\xe0 \x00\x1f\x04\x00\x00\x00\x1d\x15\x00 \x04\x00\x00\x03\x80\xbb\x00!\x04\x00\x00\x00\x03\xe2\x00)\x04\x00\x00\x00\x00\x00\x00)\x08\x00\x00\x00\x00\x00\xcc\xc2b\xe0\x00*\x04\x00\x00\x00=j\x00*\x08\x00\x00\x00\x00\x02n\xbf)\x88\x00+\x04\x00\x00\x00\tt\x00+\x08\x00\x00\x00\x00\x00u\x08\xddh\x00,\x04\x00\x00\x00\x00\x00\x00,\x08\x00\x00\x00\x00\x00P\x11\xe9x\x001\x04\x00\x00\x00\x00\x00\x001\x08\x00\x00\x00\x00\x00\xe7\xdb\xc0\xa8\x002\x04\x00\x00\x00>#\x002\x08\x00\x00\x00\x00\x02~E=\xc0\x003\x04\x00\x00\x00\x1a\xc2\x004\x04\x00\x00\x03\x8e\xb2\x005\x04\x00\x00\x00\x03\xdc\x00=\x04\x00\x00\x00\x00\x00\x00=\x08\x00\x00\x00\x00\x00\xc6T\xc4 \x00>\x04\x00\x00\x00>\xdd\x00>\x08\x00\x00\x00\x00\x02\x85!\t\xa8\x00?\x04\x00\x00\x00\x06\xed\x00?\x08\x00\x00\x00\x00\x00x~\xa8\xd8\x00@\x04\x00\x00\x00\x00\x00\x00@\x08\x00\x00\x00\x00\x00]^\xb90\x00E\x04\x00\x00\x00\x00\x00\x00E\x08\x00\x00\x00\x00\x00\xe1K,\x88\x00F\x04\x00\x00\x00?>\x00F\x08\x00\x00\x00\x00\x02\x97>i(\x00G\x04\x00\x00\x00\x1bi\x00H\x04\x00\x00\x03\x88i\x00I\x04\x00\x00\x00\x03\xe2\x90\x00\x00\x00\x02\x03\x04R\x00\x00\x00\x00'
 
-        #smainfoasci = binascii.b2a_hex(smainfo)
-        #self.logger.debug(smainfoasci)
+        # smainfoasci = binascii.b2a_hex(smainfo)
+        # self.logger.debug(smainfoasci)
         emparts = self.decode_speedwire(smainfo)
-        #self.logger.error(emparts)
+        # self.logger.error(emparts)
 
         return emparts
 
