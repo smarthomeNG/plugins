@@ -32,11 +32,6 @@ parameters:
         description:
             de: 'Spezifiziert die Verbindungsparameter, welche genutzt werden, um die connect() Funktion des DB API 2 aufzurufen.'
             en: 'specifies the connection parameters which is directly used to invoke the connect() function of the DB API 2 implementation (for SQLite lookup here, other databases depends on implementation). An example connect string for pymysql could be connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome'
-    database:
-        type: dict
-        description:
-            de: 'Spezifiziert die Verbindungsparameter, welche genutzt werden, um die connect() Funktion des DB API 2 aufzurufen.'
-            en: 'specifies the connection parameters which is directly used to invoke the connect() function of the DB API 2 implementation (for SQLite lookup here, other databases depends on implementation).'
     prefix:
         type: str
         description:
