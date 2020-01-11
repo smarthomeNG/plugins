@@ -31,13 +31,72 @@ import binascii
 from lib.model.smartplugin import *
 from lib.module import Modules
 
+sma_units = {
+    "W": 10,
+    "VA": 10,
+    "VAr": 10,
+    "kWh": 3600000,
+    "kVAh": 3600000,
+    "kVArh": 3600000,
+    "A": 1000,
+    "V": 1000,
+    "°": 1000,
+    "Hz": 1000,
+}
+
+sma_channels = {
+    # totals
+    1: ('pconsume', 'W', 'kWh'),
+    2: ('psupply', 'W', 'kWh'),
+    3: ('sconsume', 'VA', 'kVAh'),
+    4: ('ssupply', 'VA', 'kVAh'),
+    9: ('qconsume', 'VAr', 'kVArh'),
+    10: ('qsupply', 'VAr', 'kVArh'),
+    13: ('cosphi', '°'),
+    14: ('frequency', 'Hz'),
+    # phase 1
+    21: ('p1consume', 'W', 'kWh'),
+    22: ('p1supply', 'W', 'kWh'),
+    23: ('s1consume', 'VA', 'kVAh'),
+    24: ('s1supply', 'VA', 'kVAh'),
+    29: ('q1consume', 'VAr', 'kVArh'),
+    30: ('q1supply', 'VAr', 'kVArh'),
+    31: ('i1', 'A'),
+    32: ('u1', 'V'),
+    33: ('cosphi1', '°'),
+    # phase 2
+    41: ('p2consume', 'W', 'kWh'),
+    42: ('p2supply', 'W', 'kWh'),
+    43: ('s2consume', 'VA', 'kVAh'),
+    44: ('s2supply', 'VA', 'kVAh'),
+    49: ('q2consume', 'VAr', 'kVArh'),
+    50: ('q2supply', 'VAr', 'kVArh'),
+    51: ('i2', 'A'),
+    52: ('u2', 'V'),
+    53: ('cosphi2', '°'),
+    # phase 3
+    61: ('p3consume', 'W', 'kWh'),
+    62: ('p3supply', 'W', 'kWh'),
+    63: ('s3consume', 'VA', 'kVAh'),
+    64: ('s3supply', 'VA', 'kVAh'),
+    69: ('q3consume', 'VAr', 'kVArh'),
+    70: ('q3supply', 'VAr', 'kVArh'),
+    71: ('i3', 'A'),
+    72: ('u3', 'V'),
+    73: ('cosphi3', '°'),
+    # common
+    36864: ('speedwire-version', ''),
+}
+
+
 class SMA_EM(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.0.5"
+    PLUGIN_VERSION = "1.6.0"
 
     # listen to the Multicast; SMA-Energymeter sends its measurements to 239.12.255.254:9522
     MCAST_GRP = '239.12.255.254'
     MCAST_PORT = 9522
+    ipbind = '0.0.0.0'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -47,17 +106,25 @@ class SMA_EM(SmartPlugin):
         :param serial: Serial of the SMA Energy Meter
         :param time_sleep: The time in seconds to sleep after a multicast was received
         """
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
+
         self.logger = logging.getLogger(__name__)
         self._items = {}
-        self._time_sleep = self.get_parameter_value('time_sleep')
+        self._cycle = self.get_parameter_value('cycle')
         self._serial = self.get_parameter_value('serial')
 
         # prepare listen to socket-Multicast
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind(('', self.MCAST_PORT))
-        mreq = struct.pack("4sl", socket.inet_aton(self.MCAST_GRP), socket.INADDR_ANY)
-        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+
+        try:
+            mreq = struct.pack("4s4s", socket.inet_aton(self.MCAST_GRP), socket.inet_aton(self.ipbind))
+            self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        except BaseException as e:
+            self.logger.error('Could not connect to multicast group or bind to given interface: %s' % e)
+            return
 
         self.init_webinterface()
 
@@ -72,149 +139,269 @@ class SMA_EM(SmartPlugin):
         Run method for the plugin
         """
         self.alive = True
-
-        while self.alive:
-            emparts = self.readem()
-            if self._serial == format(emparts['serial']):
-                if 'pregard' in self._items:
-                    self._items['pregard'](emparts['pregard'])
-                if 'pregardcounter' in self._items:
-                    self._items['pregardcounter'](emparts['pregardcounter'])
-                if 'psurplus' in self._items:
-                    self._items['psurplus'](emparts['psurplus'])
-                if 'psurpluscounter' in self._items:
-                    self._items['psurpluscounter'](emparts['psurpluscounter'])
-
-                if 'sregard' in self._items:
-                    self._items['sregard'](emparts['sregard'])
-                if 'sregardcounter' in self._items:
-                    self._items['sregardcounter'](emparts['sregardcounter'])
-                if 'ssurplus' in self._items:
-                    self._items['ssurplus'](emparts['ssurplus'])
-                if 'ssurpluscounter' in self._items:
-                    self._items['ssurpluscounter'](emparts['ssurpluscounter'])
-
-                if 'qregard' in self._items:
-                    self._items['qregard'](emparts['qregard'])
-                if 'qregardcounter' in self._items:
-                    self._items['qregardcounter'](emparts['qregardcounter'])
-                if 'qsurplus' in self._items:
-                    self._items['qsurplus'](emparts['qsurplus'])
-                if 'qsurpluscounter' in self._items:
-                    self._items['qsurpluscounter'](emparts['qsurpluscounter'])
-
-                if 'cosphi' in self._items:
-                    self._items['cosphi'](emparts['cosphi'])
-
-                if 'p1regard' in self._items:
-                    self._items['p1regard'](emparts['p1regard'])
-                if 'p1regardcounter' in self._items:
-                    self._items['p1regardcounter'](emparts['p1regardcounter'])
-                if 'p1surplus' in self._items:
-                    self._items['p1surplus'](emparts['p1surplus'])
-                if 'p1surpluscounter' in self._items:
-                    self._items['p1surpluscounter'](emparts['p1surpluscounter'])
-
-                if 's1regard' in self._items:
-                    self._items['s1regard'](emparts['s1regard'])
-                if 's1regardcounter' in self._items:
-                    self._items['s1regardcounter'](emparts['s1regardcounter'])
-                if 's1surplus' in self._items:
-                    self._items['s1surplus'](emparts['s1surplus'])
-                if 's1surpluscounter' in self._items:
-                    self._items['s1surpluscounter'](emparts['s1surpluscounter'])
-
-                if 'q1regard' in self._items:
-                    self._items['q1regard'](emparts['q1regard'])
-                if 'q1regardcounter' in self._items:
-                    self._items['q1regardcounter'](emparts['q1regardcounter'])
-                if 'q1surplus' in self._items:
-                    self._items['q1surplus'](emparts['q1surplus'])
-                if 'q1surpluscounter' in self._items:
-                    self._items['q1surpluscounter'](emparts['q1surpluscounter'])
-
-                if 'v1' in self._items:
-                    self._items['v1'](emparts['v1'])
-                if 'thd1' in self._items:
-                    self._items['thd1'](emparts['thd1'])
-                if 'cosphi1' in self._items:
-                    self._items['cosphi1'](emparts['cosphi1'])
-
-                if 'p2regard' in self._items:
-                    self._items['p2regard'](emparts['p2regard'])
-                if 'p2regardcounter' in self._items:
-                    self._items['p2regardcounter'](emparts['p2regardcounter'])
-                if 'p2surplus' in self._items:
-                    self._items['p2surplus'](emparts['p2surplus'])
-                if 'p2surpluscounter' in self._items:
-                    self._items['p2surpluscounter'](emparts['p2surpluscounter'])
-
-                if 's2regard' in self._items:
-                    self._items['s2regard'](emparts['s2regard'])
-                if 's2regardcounter' in self._items:
-                    self._items['s2regardcounter'](emparts['s2regardcounter'])
-                if 's2surplus' in self._items:
-                    self._items['s2surplus'](emparts['s2surplus'])
-                if 's2surpluscounter' in self._items:
-                    self._items['s2surpluscounter'](emparts['s2surpluscounter'])
-
-                if 'q2regard' in self._items:
-                    self._items['q2regard'](emparts['q2regard'])
-                if 'q2regardcounter' in self._items:
-                    self._items['q2regardcounter'](emparts['q2regardcounter'])
-                if 'q2surplus' in self._items:
-                    self._items['q2surplus'](emparts['q2surplus'])
-                if 'q2surpluscounter' in self._items:
-                    self._items['q2surpluscounter'](emparts['q2surpluscounter'])
-
-                if 'v2' in self._items:
-                    self._items['v2'](emparts['v2'])
-                if 'thd2' in self._items:
-                    self._items['thd2'](emparts['thd2'])
-                if 'cosphi2' in self._items:
-                    self._items['cosphi2'](emparts['cosphi2'])
-
-                if 'p3regard' in self._items:
-                    self._items['p3regard'](emparts['p3regard'])
-                if 'p3regardcounter' in self._items:
-                    self._items['p3regardcounter'](emparts['p3regardcounter'])
-                if 'p3surplus' in self._items:
-                    self._items['p3surplus'](emparts['p3surplus'])
-                if 'p3surpluscounter' in self._items:
-                    self._items['p3surpluscounter'](emparts['p3surpluscounter'])
-
-                if 's3regard' in self._items:
-                    self._items['s3regard'](emparts['s3regard'])
-                if 's3regardcounter' in self._items:
-                    self._items['s3regardcounter'](emparts['s3regardcounter'])
-                if 's3surplus' in self._items:
-                    self._items['s3surplus'](emparts['s3surplus'])
-                if 's3surpluscounter' in self._items:
-                    self._items['s3surpluscounter'](emparts['s3surpluscounter'])
-
-                if 'q3regard' in self._items:
-                    self._items['q3regard'](emparts['q3regard'])
-                if 'q3regardcounter' in self._items:
-                    self._items['q3regardcounter'](emparts['q3regardcounter'])
-                if 'q3surplus' in self._items:
-                    self._items['q3surplus'](emparts['q3surplus'])
-                if 'q3surpluscounter' in self._items:
-                    self._items['q3surpluscounter'](emparts['q3surpluscounter'])
-
-                if 'v3' in self._items:
-                    self._items['v3'](emparts['v3'])
-                if 'thd3' in self._items:
-                    self._items['thd3'](emparts['thd3'])
-                if 'cosphi3' in self._items:
-                    self._items['cosphi3'](emparts['cosphi3'])
-
-            time.sleep(self._time_sleep)
+        self.scheduler_add(__name__, self._update_sma_em, prio=3, cron=None, cycle=self._cycle, value=None,
+                           offset=None, next=None)
 
     def stop(self):
         """
         Stop method for the plugin
         """
+        self.scheduler_remove(__name__)
         self.alive = False
+
+    def _update_sma_em(self):
+        emparts = self.readem()
+        if self._serial == format(emparts['serial']):
+            if 'pconsume' in self._items:
+                self._items['pconsume'](emparts['pconsume'])
+            if 'pconsumeunit' in self._items:
+                self._items['pconsumeunit'](emparts['pconsumeunit'])
+            if 'pconsumecounter' in self._items:
+                self._items['pconsumecounter'](emparts['pconsumecounter'])
+            if 'pconsumecounterunit' in self._items:
+                self._items['pconsumecounterunit'](emparts['pconsumecounterunit'])
+            if 'psupply' in self._items:
+                self._items['psupply'](emparts['psupply'])
+            if 'psupplyunit' in self._items:
+                self._items['psupplyunit'](emparts['psupplyunit'])
+            if 'psupplycounter' in self._items:
+                self._items['psupplycounter'](emparts['psupplycounter'])
+            if 'psupplycounterunit' in self._items:
+                self._items['psupplycounterunit'](emparts['psupplycounterunit'])
+
+            if 'sconsume' in self._items:
+                self._items['sconsume'](emparts['sconsume'])
+            if 'sconsumeunit' in self._items:
+                self._items['sconsumeunit'](emparts['sconsumeunit'])
+            if 'sconsumecounter' in self._items:
+                self._items['sconsumecounter'](emparts['sconsumecounter'])
+            if 'sconsumecounterunit' in self._items:
+                self._items['sconsumecounterunit'](emparts['sconsumecounterunit'])
+            if 'ssupply' in self._items:
+                self._items['ssupply'](emparts['ssupply'])
+            if 'ssupplyunit' in self._items:
+                self._items['ssupplyunit'](emparts['ssupplyunit'])
+            if 'ssupplycounter' in self._items:
+                self._items['ssupplycounter'](emparts['ssupplycounter'])
+            if 'ssupplycounterunit' in self._items:
+                self._items['ssupplycounterunit'](emparts['ssupplycounterunit'])
+
+            if 'qconsume' in self._items:
+                self._items['qconsume'](emparts['qconsume'])
+            if 'qconsumeunit' in self._items:
+                self._items['qconsumeunit'](emparts['qconsumeunit'])
+            if 'qconsumecounter' in self._items:
+                self._items['qconsumecounter'](emparts['qconsumecounter'])
+            if 'qconsumecounterunit' in self._items:
+                self._items['qconsumecounterunit'](emparts['qconsumecounterunit'])
+            if 'qsupply' in self._items:
+                self._items['qsupply'](emparts['qsupply'])
+            if 'qsupplyunit' in self._items:
+                self._items['qsupplyunit'](emparts['qsupplyunit'])
+            if 'qsupplycounter' in self._items:
+                self._items['qsupplycounter'](emparts['qsupplycounter'])
+            if 'qsupplycounterunit' in self._items:
+                self._items['qsupplycounterunit'](emparts['qsupplycounterunit'])
+
+            if 'cosphi' in self._items:
+                self._items['cosphi'](emparts['cosphi'])
+            if 'cosphiunit' in self._items:
+                self._items['cosphiunit'](emparts['cosphiunit'])
+
+            if 'p1consume' in self._items:
+                self._items['p1consume'](emparts['p1consume'])
+            if 'p1consumeunit' in self._items:
+                self._items['p1consumeunit'](emparts['p1consumeunit'])
+            if 'p1consumecounter' in self._items:
+                self._items['p1consumecounter'](emparts['p1consumecounter'])
+            if 'p1consumecounterunit' in self._items:
+                self._items['p1consumecounterunit'](emparts['p1consumecounterunit'])
+            if 'p1supply' in self._items:
+                self._items['p1supply'](emparts['p1supply'])
+            if 'p1supplyunit' in self._items:
+                self._items['p1supplyunit'](emparts['p1supplyunit'])
+            if 'p1supplycounter' in self._items:
+                self._items['p1supplycounter'](emparts['p1supplycounter'])
+            if 'p1supplycounterunit' in self._items:
+                self._items['p1supplycounterunit'](emparts['p1supplycounterunit'])
+
+            if 's1consume' in self._items:
+                self._items['s1consume'](emparts['s1consume'])
+            if 's1consumeunit' in self._items:
+                self._items['s1consumeunit'](emparts['s1consumeunit'])
+            if 's1consumecounter' in self._items:
+                self._items['s1consumecounter'](emparts['s1consumecounter'])
+            if 's1consumecounterunit' in self._items:
+                self._items['s1consumecounterunit'](emparts['s1consumecounterunit'])
+            if 's1supply' in self._items:
+                self._items['s1supply'](emparts['s1supply'])
+            if 's1supplyunit' in self._items:
+                self._items['s1supplyunit'](emparts['s1supplyunit'])
+            if 's1supplycounter' in self._items:
+                self._items['s1supplycounter'](emparts['s1supplycounter'])
+            if 's1supplycounterunit' in self._items:
+                self._items['s1supplycounterunit'](emparts['s1supplycounterunit'])
+
+            if 'q1consume' in self._items:
+                self._items['q1consume'](emparts['q1consume'])
+            if 'q1consumeunit' in self._items:
+                self._items['q1consumeunit'](emparts['q1consumeunit'])
+            if 'q1consumecounter' in self._items:
+                self._items['q1consumecounter'](emparts['q1consumecounter'])
+            if 'q1consumecounterunit' in self._items:
+                self._items['q1consumecounterunit'](emparts['q1consumecounterunit'])
+            if 'q1supply' in self._items:
+                self._items['q1supply'](emparts['q1supply'])
+            if 'q1supplyunit' in self._items:
+                self._items['q1supplyunit'](emparts['q1supplyunit'])
+            if 'q1supplycounter' in self._items:
+                self._items['q1supplycounter'](emparts['q1supplycounter'])
+            if 'q1supplycounterunit' in self._items:
+                self._items['q1supplycounterunit'](emparts['q1supplycounterunit'])
+
+            if 'i1' in self._items:
+                self._items['i1'](emparts['i1'])
+            if 'i1unit' in self._items:
+                self._items['i1unit'](emparts['i1unit'])
+            if 'u1' in self._items:
+                self._items['u1'](emparts['u1'])
+            if 'u1unit' in self._items:
+                self._items['u1unit'](emparts['u1unit'])
+            if 'cosphi1' in self._items:
+                self._items['cosphi1'](emparts['cosphi1'])
+            if 'cosphi1unit' in self._items:
+                self._items['cosphi1unit'](emparts['cosphi1unit'])
+
+            if 'p2consume' in self._items:
+                self._items['p2consume'](emparts['p2consume'])
+            if 'p2consumeunit' in self._items:
+                self._items['p2consumeunit'](emparts['p2consumeunit'])
+            if 'p2consumecounter' in self._items:
+                self._items['p2consumecounter'](emparts['p2consumecounter'])
+            if 'p2consumecounterunit' in self._items:
+                self._items['p2consumecounterunit'](emparts['p2consumecounterunit'])
+            if 'p2supply' in self._items:
+                self._items['p2supply'](emparts['p2supply'])
+            if 'p2supplyunit' in self._items:
+                self._items['p2supplyunit'](emparts['p2supplyunit'])
+            if 'p2supplycounter' in self._items:
+                self._items['p2supplycounter'](emparts['p2supplycounter'])
+            if 'p2supplycounterunit' in self._items:
+                self._items['p2supplycounterunit'](emparts['p2supplycounterunit'])
+
+            if 's2consume' in self._items:
+                self._items['s2consume'](emparts['s2consume'])
+            if 's2consumeunit' in self._items:
+                self._items['s2consumeunit'](emparts['s2consumeunit'])
+            if 's2consumecounter' in self._items:
+                self._items['s2consumecounter'](emparts['s2consumecounter'])
+            if 's2consumecounterunit' in self._items:
+                self._items['s2consumecounterunit'](emparts['s2consumecounterunit'])
+            if 's2supply' in self._items:
+                self._items['s2supply'](emparts['s2supply'])
+            if 's2supplyunit' in self._items:
+                self._items['s2supplyunit'](emparts['s2supplyunit'])
+            if 's2supplycounter' in self._items:
+                self._items['s2supplycounter'](emparts['s2supplycounter'])
+            if 's2supplycounterunit' in self._items:
+                self._items['s2supplycounterunit'](emparts['s2supplycounterunit'])
+
+            if 'q2consume' in self._items:
+                self._items['q2consume'](emparts['q2consume'])
+            if 'q2consumeunit' in self._items:
+                self._items['q2consumeunit'](emparts['q2consumeunit'])
+            if 'q2consumecounter' in self._items:
+                self._items['q2consumecounter'](emparts['q2consumecounter'])
+            if 'q2consumecounterunit' in self._items:
+                self._items['q2consumecounterunit'](emparts['q2consumecounterunit'])
+            if 'q2supply' in self._items:
+                self._items['q2supply'](emparts['q2supply'])
+            if 'q2supplyunit' in self._items:
+                self._items['q2supplyunit'](emparts['q2supplyunit'])
+            if 'q2supplycounter' in self._items:
+                self._items['q2supplycounter'](emparts['q2supplycounter'])
+            if 'q2supplycounterunit' in self._items:
+                self._items['q2supplycounterunit'](emparts['q2supplycounterunit'])
+
+            if 'i2' in self._items:
+                self._items['i2'](emparts['i2'])
+            if 'i2unit' in self._items:
+                self._items['i2unit'](emparts['i2unit'])
+            if 'u2' in self._items:
+                self._items['u2'](emparts['u2'])
+            if 'u2unit' in self._items:
+                self._items['u2unit'](emparts['u2unit'])
+            if 'cosphi2' in self._items:
+                self._items['cosphi2'](emparts['cosphi2'])
+            if 'cosphi2unit' in self._items:
+                self._items['cosphi2unit'](emparts['cosphi2unit'])
+
+            if 'p3consume' in self._items:
+                self._items['p3consume'](emparts['p3consume'])
+            if 'p3consumeunit' in self._items:
+                self._items['p3consumeunit'](emparts['p3consumeunit'])
+            if 'p3consumecounter' in self._items:
+                self._items['p3consumecounter'](emparts['p3consumecounter'])
+            if 'p3consumecounterunit' in self._items:
+                self._items['p3consumecounterunit'](emparts['p3consumecounterunit'])
+            if 'p3supply' in self._items:
+                self._items['p3supply'](emparts['p3supply'])
+            if 'p3supplyunit' in self._items:
+                self._items['p3supplyunit'](emparts['p3supplyunit'])
+            if 'p3supplycounter' in self._items:
+                self._items['p3supplycounter'](emparts['p3supplycounter'])
+            if 'p3supplycounterunit' in self._items:
+                self._items['p3supplycounterunit'](emparts['p3supplycounterunit'])
+
+            if 's3consume' in self._items:
+                self._items['s3consume'](emparts['s3consume'])
+            if 's3consumeunit' in self._items:
+                self._items['s3consumeunit'](emparts['s3consumeunit'])
+            if 's3consumecounter' in self._items:
+                self._items['s3consumecounter'](emparts['s3consumecounter'])
+            if 's3consumecounterunit' in self._items:
+                self._items['s3consumecounterunit'](emparts['s3consumecounterunit'])
+            if 's3supply' in self._items:
+                self._items['s3supply'](emparts['s3supply'])
+            if 's3supplyunit' in self._items:
+                self._items['s3supplyunit'](emparts['s3supplyunit'])
+            if 's3supplycounter' in self._items:
+                self._items['s3supplycounter'](emparts['s3supplycounter'])
+            if 's3supplycounterunit' in self._items:
+                self._items['s3supplycounterunit'](emparts['s3supplycounterunit'])
+
+            if 'q3consume' in self._items:
+                self._items['q3consume'](emparts['q3consume'])
+            if 'q3consumeunit' in self._items:
+                self._items['q3consumeunit'](emparts['q3consumeunit'])
+            if 'q3consumecounter' in self._items:
+                self._items['q3consumecounter'](emparts['q3consumecounter'])
+            if 'q3consumecounterunit' in self._items:
+                self._items['q3consumecounterunit'](emparts['q3consumecounterunit'])
+            if 'q3supply' in self._items:
+                self._items['q3supply'](emparts['q3supply'])
+            if 'q3supplyunit' in self._items:
+                self._items['q3supplyunit'](emparts['q3supplyunit'])
+            if 'q3supplycounter' in self._items:
+                self._items['q3supplycounter'](emparts['q3supplycounter'])
+            if 'q3supplycounterunit' in self._items:
+                self._items['q3supplycounterunit'](emparts['q3supplycounterunit'])
+
+            if 'i3' in self._items:
+                self._items['i3'](emparts['i3'])
+            if 'i3unit' in self._items:
+                self._items['i3unit'](emparts['i3unit'])
+            if 'u3' in self._items:
+                self._items['u3'](emparts['u3'])
+            if 'u3unit' in self._items:
+                self._items['u3unit'](emparts['u3unit'])
+            if 'cosphi3' in self._items:
+                self._items['cosphi3'](emparts['cosphi3'])
+            if 'cosphi3unit' in self._items:
+                self._items['cosphi3unit'](emparts['cosphi3unit'])
+
+            if 'speedwire-version' in self._items:
+                self._items['speedwire-version'](emparts['speedwire-version'])
 
     def parse_item(self, item):
         """
@@ -235,113 +422,113 @@ class SMA_EM(SmartPlugin):
         """
         return int(s, 16)
 
+    def decode_OBIS(self, obis):
+        measurement = int.from_bytes(obis[0:2], byteorder='big')
+        raw_type = int.from_bytes(obis[2:3], byteorder='big')
+        if raw_type == 4:
+            datatype = 'actual'
+        elif raw_type == 8:
+            datatype = 'counter'
+        elif raw_type == 0 and measurement == 36864:
+            datatype = 'version'
+        else:
+            datatype = 'unknown'
+            print('unknown datatype: measurement {} datatype {} raw_type {}'.format(measurement, datatype, raw_type))
+        return (measurement, datatype)
+
+    def decode_speedwire(self, datagram):
+        emparts = {}
+        # process data only of SMA header is present
+        if datagram[0:3] == b'SMA':
+            # datagram length
+            datalength = int.from_bytes(datagram[12:14], byteorder='big') + 16
+            # self.logger.debug('data lenght: {}'.format(datalength))
+            # serial number
+            emID = int.from_bytes(datagram[20:24], byteorder='big')
+            # self.logger.debug('seral: {}'.format(emID))
+            emparts['serial'] = emID
+            # timestamp
+            timestamp = int.from_bytes(datagram[24:28], byteorder='big')
+            # self.logger.debug('timestamp: {}'.format(timestamp))
+            # decode OBIS data blocks
+            # start with header
+            position = 28
+            while position < datalength:
+                # decode header
+                # self.logger.debug('pos: {}'.format(position))
+                (measurement, datatype) = self.decode_OBIS(datagram[position:position + 4])
+                # self.logger.debug('measurement {} datatype: {}'.format(measurement,datatype))
+                # decode values
+                # actual values
+                if datatype == 'actual':
+                    value = int.from_bytes(datagram[position + 4:position + 8], byteorder='big')
+                    position += 8
+                    if measurement in sma_channels.keys():
+                        emparts[sma_channels[measurement][0]] = value / sma_units[sma_channels[measurement][1]]
+                        emparts[sma_channels[measurement][0] + 'unit'] = sma_channels[measurement][1]
+                # counter values
+                elif datatype == 'counter':
+                    value = int.from_bytes(datagram[position + 4:position + 12], byteorder='big')
+                    position += 12
+                    if measurement in sma_channels.keys():
+                        emparts[sma_channels[measurement][0] + 'counter'] = value / sma_units[
+                            sma_channels[measurement][2]]
+                        emparts[sma_channels[measurement][0] + 'counterunit'] = sma_channels[measurement][2]
+                elif datatype == 'version':
+                    value = datagram[position + 4:position + 8]
+                    if measurement in sma_channels.keys():
+                        bversion = (binascii.b2a_hex(value).decode("utf-8"))
+                        version = str(int(bversion[0:2])) + "." + str(int(bversion[2:4])) + "." + str(
+                            int(bversion[4:6]))
+                        revision = str(chr(int(bversion[6:8])))
+                        # revision definitions
+                        if revision == "1":
+                            # S – Spezial Version
+                            version = version + ".S"
+                        elif revision == "2":
+                            # A – Alpha (noch kein Feature Complete, Version für Verifizierung und Validierung)
+                            version = version + ".A"
+                        elif revision == "3":
+                            # B – Beta (Feature Complete, Version für Verifizierung und Validierung)
+                            version = version + ".B"
+                        elif revision == "4":
+                            # R – Release Candidate / Release (Version für Verifizierung, Validierung und Feldtest / öffentliche Version)
+                            version = version + ".R"
+                        elif revision == "5":
+                            # E – Experimental Version (dient zur lokalen Verifizierung)
+                            version = version + ".E"
+                        elif revision == "6":
+                            # N – Keine Revision
+                            version = version + ".N"
+                        # adding versionnumber to compare verions
+                        version = version + "|" + str(bversion[0:2]) + str(bversion[2:4]) + str(bversion[4:6])
+                        emparts[sma_channels[measurement][0]] = version
+                    position += 8
+                else:
+                    position += 8
+        return emparts
+
     def readem(self):
         """
         Splits the multicast message into the available data
 
         :return emparts: dict with all available data of a multicast
         """
-        smainfo = self.sock.recv(600)
-        smainfoasci = binascii.b2a_hex(smainfo)
 
-        # split the received message to separate vars
-        # summary
-        # regard/Bezug=getting energy from main grid
-        # surplus/surplus=putting energy to the main grid
+        # processing received messages
+        smainfo = self.sock.recv(1024)
 
-        smaserial = self.hex2dec(smainfoasci[40:48])
-        pregard = self.hex2dec(smainfoasci[64:72]) / 10
-        pregardcounter = self.hex2dec(smainfoasci[80:96]) / 3600000
-        psurplus = self.hex2dec(smainfoasci[104:112]) / 10
-        psurpluscounter = self.hex2dec(smainfoasci[120:136]) / 3600000
-        qregard = self.hex2dec(smainfoasci[144:152]) / 10
-        qregardcounter = self.hex2dec(smainfoasci[160:176]) / 3600000
-        qsurplus = self.hex2dec(smainfoasci[184:192]) / 10
-        qsurpluscounter = self.hex2dec(smainfoasci[200:216]) / 3600000
-        sregard = self.hex2dec(smainfoasci[224:232]) / 10
-        sregardcounter = self.hex2dec(smainfoasci[240:256]) / 3600000
-        ssurplus = self.hex2dec(smainfoasci[264:272]) / 10
-        ssurpluscounter = self.hex2dec(smainfoasci[280:296]) / 3600000
-        cosphi = self.hex2dec(smainfoasci[304:312]) / 1000
-        # L1
-        p1regard = self.hex2dec(smainfoasci[320:328]) / 10
-        p1regardcounter = self.hex2dec(smainfoasci[336:352]) / 3600000
-        p1surplus = self.hex2dec(smainfoasci[360:368]) / 10
-        p1surpluscounter = self.hex2dec(smainfoasci[376:392]) / 3600000
-        q1regard = self.hex2dec(smainfoasci[400:408]) / 10
-        q1regardcounter = self.hex2dec(smainfoasci[416:432]) / 3600000
-        q1surplus = self.hex2dec(smainfoasci[440:448]) / 10
-        q1surpluscounter = self.hex2dec(smainfoasci[456:472]) / 3600000
-        s1regard = self.hex2dec(smainfoasci[480:488]) / 10
-        s1regardcounter = self.hex2dec(smainfoasci[496:512]) / 3600000
-        s1surplus = self.hex2dec(smainfoasci[520:528]) / 10
-        s1surpluscounter = self.hex2dec(smainfoasci[536:552]) / 3600000
-        thd1 = self.hex2dec(smainfoasci[560:568]) / 1000
-        v1 = self.hex2dec(smainfoasci[576:584]) / 1000
-        cosphi1 = self.hex2dec(smainfoasci[592:600]) / 1000
-        # L2
-        p2regard = self.hex2dec(smainfoasci[608:616]) / 10
-        p2regardcounter = self.hex2dec(smainfoasci[624:640]) / 3600000
-        p2surplus = self.hex2dec(smainfoasci[648:656]) / 10
-        p2surpluscounter = self.hex2dec(smainfoasci[664:680]) / 3600000
-        q2regard = self.hex2dec(smainfoasci[688:696]) / 10
-        q2regardcounter = self.hex2dec(smainfoasci[704:720]) / 3600000
-        q2surplus = self.hex2dec(smainfoasci[728:736]) / 10
-        q2surpluscounter = self.hex2dec(smainfoasci[744:760]) / 3600000
-        s2regard = self.hex2dec(smainfoasci[768:776]) / 10
-        s2regardcounter = self.hex2dec(smainfoasci[784:800]) / 3600000
-        s2surplus = self.hex2dec(smainfoasci[808:816]) / 10
-        s2surpluscounter = self.hex2dec(smainfoasci[824:840]) / 3600000
-        thd2 = self.hex2dec(smainfoasci[848:856]) / 1000
-        v2 = self.hex2dec(smainfoasci[864:872]) / 1000
-        cosphi2 = self.hex2dec(smainfoasci[880:888]) / 1000
-        # L3
-        p3regard = self.hex2dec(smainfoasci[896:904]) / 10
+        # test-datagrem sma-em-1.2.4.R
+        # smainfo=b'SMA\x00\x00\x04\x02\xa0\x00\x00\x00\x01\x02D\x00\x10`i\x01\x0eqB\xd1\xeb_\xc9\r\xd0\x00\x01\x04\x00\x00\x00\x87\x13\x00\x01\x08\x00\x00\x00\x00\x16R/\x00h\x00\x02\x04\x00\x00\x00\x00\x00\x00\x02\x08\x00\x00\x00\x00\x08\x9d\x14\xb8`\x00\x03\x04\x00\x00\x00\x00\x00\x00\x03\x08\x00\x00\x00\x00\x00\xc1%\xc1H\x00\x04\x04\x00\x00\x00\x11Q\x00\x04\x08\x00\x00\x00\x00\no\xce|\xe0\x00\t\x04\x00\x00\x00\x88.\x00\t\x08\x00\x00\x00\x00\x19\xdfo\x07\x18\x00\n\x04\x00\x00\x00\x00\x00\x00\n\x08\x00\x00\x00\x00\tJ\xc5x\xc8\x00\r\x04\x00\x00\x00\x03\xe0\x00\x15\x04\x00\x00\x00}P\x00\x15\x08\x00\x00\x00\x00\n.\x07o`\x00\x16\x04\x00\x00\x00\x00\x00\x00\x16\x08\x00\x00\x00\x00\n\xcb\xab\xf4 \x00\x17\x04\x00\x00\x00\x00\x00\x00\x17\x08\x00\x00\x00\x00\x00bF\x05p\x00\x18\x04\x00\x00\x00\r\xe4\x00\x18\x08\x00\x00\x00\x00\x04\xf3E\'\xc8\x00\x1d\x04\x00\x00\x00~\x14\x00\x1d\x08\x00\x00\x00\x00\x0c\x0f\xb7\xbd`\x00\x1e\x04\x00\x00\x00\x00\x00\x00\x1e\x08\x00\x00\x00\x00\x0b"p\x95\x90\x00\x1f\x04\x00\x00\x008G\x00 \x04\x00\x00\x03l\xd4\x00!\x04\x00\x00\x00\x03\xe2\x00)\x04\x00\x00\x00\x07,\x00)\x08\x00\x00\x00\x00\t\xdfT;\xf0\x00*\x04\x00\x00\x00\x00\x00\x00*\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00+\x04\x00\x00\x00\x00\x00\x00+\x08\x00\x00\x00\x00\x00\x03\x12\xb1H\x00,\x04\x00\x00\x00\x03\x89\x00,\x08\x00\x00\x00\x00\x05)\x8a\x93h\x001\x04\x00\x00\x00\x07\xff\x001\x08\x00\x00\x00\x00\x0c4\xa7\x9b@\x002\x04\x00\x00\x00\x00\x00\x002\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x003\x04\x00\x00\x00\x03\xba\x004\x04\x00\x00\x03\x85\t\x005\x04\x00\x00\x00\x03\x81\x00=\x04\x00\x00\x00\x02\x97\x00=\x08\x00\x00\x00\x00\x04sj\xe2h\x00>\x04\x00\x00\x00\x00\x00\x00>\x08\x00\x00\x00\x00\x00\x00\x00o\x18\x00?\x04\x00\x00\x00\x00\x1c\x00?\x08\x00\x00\x00\x00\x00\xe2\xa0\xb1\xe8\x00@\x04\x00\x00\x00\x00\x00\x00@\x08\x00\x00\x00\x00\x00\xd9\xd2`\x98\x00E\x04\x00\x00\x00\x02\x97\x00E\x08\x00\x00\x00\x00\x05K\xf5vp\x00F\x04\x00\x00\x00\x00\x00\x00F\x08\x00\x00\x00\x00\x00\x00\x00o\x18\x00G\x04\x00\x00\x00\x01\xe6\x00H\x04\x00\x00\x03\x84.\x00I\x04\x00\x00\x00\x03\xe7\x90\x00\x00\x00\x01\x02\x04R\x00\x00\x00\x00'
 
-        p3regardcounter = self.hex2dec(smainfoasci[912:928]) / 3600000
-        p3surplus = self.hex2dec(smainfoasci[936:944]) / 10
-        p3surpluscounter = self.hex2dec(smainfoasci[952:968]) / 3600000
-        q3regard = self.hex2dec(smainfoasci[976:984]) / 10
-        q3regardcounter = self.hex2dec(smainfoasci[992:1008]) / 3600000
-        q3surplus = self.hex2dec(smainfoasci[1016:1024]) / 10
-        q3surpluscounter = self.hex2dec(smainfoasci[1032:1048]) / 3600000
-        s3regard = self.hex2dec(smainfoasci[1056:1064]) / 10
-        s3regardcounter = self.hex2dec(smainfoasci[1072:1088]) / 3600000
-        s3surplus = self.hex2dec(smainfoasci[1096:1104]) / 10
-        s3surpluscounter = self.hex2dec(smainfoasci[1112:1128]) / 3600000
-        thd3 = self.hex2dec(smainfoasci[1136:1144]) / 1000
-        v3 = self.hex2dec(smainfoasci[1152:1160]) / 1000
-        cosphi3 = self.hex2dec(smainfoasci[1168:1176]) / 1000
+        # test-datagram sma-homemanager-2.3.4.R
+        # smainfo=b'SMA\x00\x00\x04\x02\xa0\x00\x00\x00\x01\x02L\x00\x10`i\x01t\xb2\xfb\xdb\na3\xfe\xa4\x00\x01\x04\x00\x00\x00\x00\x00\x00\x01\x08\x00\x00\x00\x00\x01\xd6[.\xf8\x00\x02\x04\x00\x00\x00\xbe\x80\x00\x02\x08\x00\x00\x00\x00\x07\x81\x86E`\x00\x03\x04\x00\x00\x00\x17x\x00\x03\x08\x00\x00\x00\x00\x0144\xf6\x90\x00\x04\x04\x00\x00\x00\x00\x00\x00\x04\x08\x00\x00\x00\x00\x00\xd5#\xa7P\x00\t\x04\x00\x00\x00\x00\x00\x00\t\x08\x00\x00\x00\x00\x02\x0fv\xbb\xf8\x00\n\x04\x00\x00\x00\xbf\xf0\x00\n\x08\x00\x00\x00\x00\x07\xac\xcc\x0c\xa0\x00\r\x04\x00\x00\x00\x03\xe0\x00\x0e\x04\x00\x00\x00\xc3<\x00\x15\x04\x00\x00\x00\x00\x00\x00\x15\x08\x00\x00\x00\x00\x00jb\xee\x80\x00\x16\x04\x00\x00\x00B9\x00\x16\x08\x00\x00\x00\x00\x02\xb4\xc4\xfa \x00\x17\x04\x00\x00\x00\x07\x16\x00\x17\x08\x00\x00\x00\x00\x00d>U\x08\x00\x18\x04\x00\x00\x00\x00\x00\x00\x18\x08\x00\x00\x00\x00\x00EC\xec0\x00\x1d\x04\x00\x00\x00\x00\x00\x00\x1d\x08\x00\x00\x00\x00\x00\x87z=H\x00\x1e\x04\x00\x00\x00B\x99\x00\x1e\x08\x00\x00\x00\x00\x02\xc4G\xe0 \x00\x1f\x04\x00\x00\x00\x1d\x15\x00 \x04\x00\x00\x03\x80\xbb\x00!\x04\x00\x00\x00\x03\xe2\x00)\x04\x00\x00\x00\x00\x00\x00)\x08\x00\x00\x00\x00\x00\xcc\xc2b\xe0\x00*\x04\x00\x00\x00=j\x00*\x08\x00\x00\x00\x00\x02n\xbf)\x88\x00+\x04\x00\x00\x00\tt\x00+\x08\x00\x00\x00\x00\x00u\x08\xddh\x00,\x04\x00\x00\x00\x00\x00\x00,\x08\x00\x00\x00\x00\x00P\x11\xe9x\x001\x04\x00\x00\x00\x00\x00\x001\x08\x00\x00\x00\x00\x00\xe7\xdb\xc0\xa8\x002\x04\x00\x00\x00>#\x002\x08\x00\x00\x00\x00\x02~E=\xc0\x003\x04\x00\x00\x00\x1a\xc2\x004\x04\x00\x00\x03\x8e\xb2\x005\x04\x00\x00\x00\x03\xdc\x00=\x04\x00\x00\x00\x00\x00\x00=\x08\x00\x00\x00\x00\x00\xc6T\xc4 \x00>\x04\x00\x00\x00>\xdd\x00>\x08\x00\x00\x00\x00\x02\x85!\t\xa8\x00?\x04\x00\x00\x00\x06\xed\x00?\x08\x00\x00\x00\x00\x00x~\xa8\xd8\x00@\x04\x00\x00\x00\x00\x00\x00@\x08\x00\x00\x00\x00\x00]^\xb90\x00E\x04\x00\x00\x00\x00\x00\x00E\x08\x00\x00\x00\x00\x00\xe1K,\x88\x00F\x04\x00\x00\x00?>\x00F\x08\x00\x00\x00\x00\x02\x97>i(\x00G\x04\x00\x00\x00\x1bi\x00H\x04\x00\x00\x03\x88i\x00I\x04\x00\x00\x00\x03\xe2\x90\x00\x00\x00\x02\x03\x04R\x00\x00\x00\x00'
 
-        # Returning values
-        emparts = {'serial': smaserial, 'pregard': pregard, 'pregardcounter': pregardcounter, 'psurplus': psurplus,
-                   'psurpluscounter': psurpluscounter,
-                   'sregard': sregard, 'sregardcounter': sregardcounter, 'ssurplus': ssurplus,
-                   'ssurpluscounter': ssurpluscounter,
-                   'qregard': qregard, 'qregardcounter': qregardcounter, 'qsurplus': qsurplus,
-                   'qsurpluscounter': qsurpluscounter,
-                   'cosphi': cosphi,
-                   'p1regard': p1regard, 'p1regardcounter': p1regardcounter, 'p1surplus': p1surplus,
-                   'p1surpluscounter': p1surpluscounter,
-                   's1regard': s1regard, 's1regardcounter': s1regardcounter, 's1surplus': s1surplus,
-                   's1surpluscounter': s1surpluscounter,
-                   'q1regard': q1regard, 'q1regardcounter': q1regardcounter, 'q1surplus': q1surplus,
-                   'q1surpluscounter': q1surpluscounter,
-                   'v1': v1, 'thd1': thd1, 'cosphi1': cosphi1,
-                   'p2regard': p2regard, 'p2regardcounter': p2regardcounter, 'p2surplus': p2surplus,
-                   'p2surpluscounter': p2surpluscounter,
-                   's2regard': s2regard, 's2regardcounter': s2regardcounter, 's2surplus': s2surplus,
-                   's2surpluscounter': s2surpluscounter,
-                   'q2regard': q2regard, 'q2regardcounter': q2regardcounter, 'q2surplus': q2surplus,
-                   'q2surpluscounter': q2surpluscounter,
-                   'v2': v2, 'thd2': thd2, 'cosphi2': cosphi2,
-                   'p3regard': p3regard, 'p3regardcounter': p3regardcounter, 'p3surplus': p3surplus,
-                   'p3surpluscounter': p3surpluscounter,
-                   's3regard': s3regard, 's3regardcounter': s3regardcounter, 's3surplus': s3surplus,
-                   's3surpluscounter': s3surpluscounter,
-                   'q3regard': q3regard, 'q3regardcounter': q3regardcounter, 'q3surplus': q3surplus,
-                   'q3surpluscounter': q3surpluscounter,
-                   'v3': v3, 'thd3': thd3, 'cosphi3': cosphi3}
+        #smainfoasci = binascii.b2a_hex(smainfo)
+        #self.logger.debug(smainfoasci)
+        emparts = self.decode_speedwire(smainfo)
+        #self.logger.error(emparts)
+
         return emparts
 
     def get_items(self):
@@ -383,6 +570,7 @@ class SMA_EM(SmartPlugin):
 
         return True
 
+
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
@@ -410,7 +598,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
-    def index(self, reload = None):
+    def index(self, reload=None):
         """
         Build index.html for cherrypy
 
@@ -421,7 +609,8 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1, tab1title="SMA EM Items (%s)" % len(self.plugin.get_items()),
+                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           tab1title="SMA EM Items (%s)" % len(self.plugin.get_items()),
                            p=self.plugin)
 
     @cherrypy.expose
@@ -435,10 +624,10 @@ class WebInterface(SmartPluginWebIf):
         :return: dict with the data needed to update the web page.
         """
         if dataSet is None:
-        # get the new data
+            # get the new data
             data = {}
             for key, item in self.plugin.get_items().items():
-                data[item.id()+"_value"] = item()
+                data[item.id() + "_value"] = item()
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
