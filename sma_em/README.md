@@ -21,12 +21,12 @@ sma_em:
     class_name: SMA_EM
     class_path: plugins.sma_em
     serial: xxxxxxxxxx
-    time_sleep: 5
+    cycle: 5
 ```
 
 #### Attributes
   * `serial`: The serial number of your energy meter
-  * `time_sleep`: The time in seconds to sleep after a multicast was received. I introduced this to avoid too many values to be processed
+  * `cycle`: The time in seconds to wait after a multicast was received. I introduced this to avoid too many values to be processed.
 
 ### items.yaml
 
