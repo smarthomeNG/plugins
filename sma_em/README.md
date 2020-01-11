@@ -12,6 +12,8 @@ versions of this plugin on demand. The available values can be seen in the reade
 
 If demand exists, the plugin can also be extended to be used with more than one energy meter.
 
+The new version of the Plugin has been completely adapted to the changes in the datagram as documented in http://www.eb-systeme.de/?page_id=3005.
+
 ## Configuration
 
 ### plugin.yaml
