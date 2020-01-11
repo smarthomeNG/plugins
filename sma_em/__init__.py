@@ -100,11 +100,7 @@ class SMA_EM(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param smarthome:  The instance of the smarthome object, save it for later references
-        :param serial: Serial of the SMA Energy Meter
-        :param time_sleep: The time in seconds to sleep after a multicast was received
+        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.yaml.
         """
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
@@ -131,8 +127,8 @@ class SMA_EM(SmartPlugin):
     def get_serial(self):
         return self._serial
 
-    def get_time_sleep(self):
-        return self._time_sleep
+    def get_cycle(self):
+        return self._cycle
 
     def run(self):
         """
