@@ -36,6 +36,11 @@ sowie der online-Status.
     durchführt. Dieses Modul muß geladen und konfiguriert sein, damit das Plugin funktioniert.
 
 
+Konfiguration
+=============
+
+Informationen zur Konfiguration sind unter :doc:`/plugins_doc/config/shelly` zu finden.
+
 
 Web Interface des Plugins
 =========================
