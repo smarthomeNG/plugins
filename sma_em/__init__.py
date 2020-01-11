@@ -531,7 +531,7 @@ class SMA_EM(SmartPlugin):
         # smainfoasci = binascii.b2a_hex(smainfo)
         # self.logger.debug(smainfoasci)
         emparts = self.decode_speedwire(smainfo)
-        # self.logger.error(emparts)
+        # self.logger.debug(emparts)
 
         return emparts
 
