@@ -1,0 +1,239 @@
+#!/usr/bin/env python3
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+#########################################################################
+#  Copyright 2019                                   wenzel_michael@web.de
+#########################################################################
+#
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#
+#  SmartHomeNG is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  SmartHomeNG is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#########################################################################
+
+import logging
+import time
+import re
+import threading
+import struct
+import socket
+from pysnmp.entity.rfc3413.oneliner import cmdgen
+from pysnmp import hlapi
+
+from lib.module import Modules
+
+from lib.model.smartplugin import *
+
+if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
+    logger.debug("init standalone {}".format(__name__))
+    logging.getLogger().setLevel( logging.DEBUG )
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    # just like print
+    formatter = logging.Formatter('%(message)s')
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logging.getLogger().addHandler(ch)
+else:
+    logger = logging.getLogger()
+    logger.debug("init plugin component {}".format(__name__))
+
+SNMP_SCHEDULER_NAME = 'Snmp'
+
+class Snmp(SmartPlugin):
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
+
+    PLUGIN_VERSION = '1.6.0'
+
+    def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+        """
+        self.cycle = self.get_parameter_value('cycle')
+
+        self.host = self.get_parameter_value('snmp_host')  # None
+        self.port = self.get_parameter_value('snmp_port')  # 0
+        self.communitiy = self.get_parameter_value('snmp_communitiy')  # 0
+
+        self.connected = False
+        self._serial = None
+        self._sock = None
+        self._target = None
+        self._dataoffset = 0
+        self._items = {}
+        self._lock = threading.Lock()
+        self.logger = logging.getLogger(__name__)
+
+    def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
+        # setup scheduler for device poll loop
+        self.scheduler_add(SNMP_SCHEDULER_NAME, self.poll_data, cycle=self.cycle)
+  
+        self.alive = True
+        # if you need to create child threads, do not make them daemon = True!
+        # They will not shutdown properly. (It's a python bug)
+
+    def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
+        self.scheduler_remove(SNMP_SCHEDULER_NAME)
+        self.alive = False
+
+    def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+
+        :param item:    The item to process.
+        :return:        returns update_item function if changes are to be watched
+        """
+    
+        if self.has_iattr(item.conf, 'snmp_oid'):
+            oid = self.get_iattr_value(item.conf, 'snmp_oid')
+            prop = self.get_iattr_value(item.conf, 'snmp_prop') if self.has_iattr(item.conf, 'snmp_prop') else 'valueReal'
+            host = self.get_iattr_value(item.return_parent().conf, 'snmp_host')
+            port = self.get_iattr_value(item.return_parent().conf, 'snmp_port')
+            communitiy = self.get_iattr_value(item.return_parent().conf, 'snmp_community')
+                        
+            if oid not in self._items:
+                self._items[oid] = {}
+            if prop not in self._items[oid]:
+                self._items[oid][prop] = []
+            if host not in self._items[oid]:
+                self._items[oid][host] = [] 
+ 
+            self._items[oid][prop][host].append(item)
+            self.logger.debug('attach {} {} {}'.format(item.id(), oid, prop))
+            return self.update_item
+        return None
+
+    def parse_logic(self, logic):
+        pass
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        """
+        Item has been updated
+        
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that 
+        is managed by this plugin.
+        
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if caller != self.get_shortname():
+            # code to execute, only if the item has not been changed by this this plugin:
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            pass
+
+    def _parse(self, data):
+        return values
+    
+    def log_debug(self, text):    
+        self.logger.debug('SNMP: {}'.format(text))
+
+    def log_info(self, text):    
+        self.logger.info('SNMP: {}'.format(text))
+
+    def log_err(self, text):    
+        self.logger.error('SNMP: {}'.format(text))
+        
+    def get(self, target, oids, credentials, port=161, engine=hlapi.SnmpEngine(), context=hlapi.ContextData()):
+    #The SNMP Get operation allows you to retrieve the value of an individual object in the MIB. We can also use it to get a list of individual objects.
+        handler = hlapi.getCmd(
+            engine,
+            credentials,
+            hlapi.UdpTransportTarget((target, port)),
+            context,
+            *construct_object_types(oids)
+        )
+        return fetch(handler, 1)[0]
+
+    def construct_object_types(self, list_of_oids):
+    #The hlapi.getCmd() function wants some special hlapi.ObjectType objects, and not a simple list of string OIDs. Thus, our construct_object_type function creates what PySNMP wants to hear.
+        object_types = []
+        for oid in list_of_oids:
+            object_types.append(hlapi.ObjectType(hlapi.ObjectIdentity(oid)))
+        return object_types
+        
+    def fetch(self, handler, count):
+    #The fetch() function is a masterpiece of our Python SMP Tutorial. It simply loops on the handler for as many times as we tell it (the count variable). If it encounter any kind of error, it stops and raises a RuntimeError. In any other case, it stores the data in a list of dictionaries.
+        result = []
+        for i in range(count):
+            try:
+                error_indication, error_status, error_index, var_binds = next(handler)
+                if not error_indication and not error_status:
+                    items = {}
+                    for var_bind in var_binds:
+                        items[str(var_bind[0])] = cast(var_bind[1])
+                    result.append(items)
+                else:
+                    raise RuntimeError('Got SNMP error: {0}'.format(error_indication))
+            except StopIteration:
+                break
+        return result
+        
+    def cast(self, value):
+    #This simply converts the data as received from PySNMP to int, float, or string.
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                try:
+                    return str(value)
+                except (ValueError, TypeError):
+                    pass
+
+    def get_bulk(self, target, oids, credentials, count, start_from=0, port=161,
+                 engine=hlapi.SnmpEngine(), context=hlapi.ContextData()):
+        handler = hlapi.bulkCmd(
+            engine,
+            credentials,
+            hlapi.UdpTransportTarget((target, port)),
+            context,
+            start_from, count,
+            *construct_object_types(oids)
+        )
+        return fetch(handler, count)
+        
+    def get_bulk_auto(self, target, oids, credentials, count_oid, start_from=0, port=161,
+                      engine=hlapi.SnmpEngine(), context=hlapi.ContextData()):
+        count = get(target, [count_oid], credentials, port, engine, context)[count_oid]
+        return get_bulk(target, oids, credentials, count, start_from, port, engine, context)
+        
+    def set(self, target, value_pairs, credentials, port=161, engine=hlapi.SnmpEngine(), context=hlapi.ContextData()):
+        handler = hlapi.setCmd(
+            engine,
+            credentials,
+            hlapi.UdpTransportTarget((target, port)),
+            context,
+            *construct_value_pairs(value_pairs)
+        )
+        return fetch(handler, 1)[0]
+        
+    def construct_value_pairs(self, list_of_pairs):
+        pairs = []
+        for key, value in list_of_pairs.items():
+            pairs.append(hlapi.ObjectType(hlapi.ObjectIdentity(key), value))
+        return pairs

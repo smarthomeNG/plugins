@@ -1,0 +1,212 @@
+%YAML 1.1
+---
+
+netzwerk:
+
+    qnap_ts251:
+        name: NAS ist Online
+        type: str
+        snmp_host: '192.168.2.9'
+        snmp_port: '161'
+        snmp_community: 'meins'
+
+        cpu_temp:
+            name: CPU-Temperatur in °C
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.5.0"
+            #34 C/93 F
+            eval: float(value[:2])
+            database: init
+            
+        cpu_usage:
+            name: CPU-Auslastung [0-1]
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.1.0"
+            #4.40 %
+            eval: float(value[:-2]) / 100
+            database: init
+            
+            avg_5min:
+                type: num
+                visu_acl: ro
+                eval: round(sh...db('avg', '5i' ) ,2)
+                cycle: 300
+                enforce_updates: yes
+                database: init
+            
+            avg_15min:
+                type: num
+                visu_acl: ro
+                eval: round(sh...db('avg', '15i' ) ,2)
+                cycle: 900
+                enforce_updates: yes
+                database: init
+            
+        system_temp:
+            name: SystemTemperatur in °C
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.6.0"
+            #34 C/93 F
+            eval: float(value[:2])
+            database: init
+            
+        ram_size:
+            name: RAM in MB
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.2.0"
+            #3839.9 MB
+            eval: float(value[:-3])
+            cache: yes
+            
+        ram_free:
+            name: freier RAM in MB
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.3.0"
+            #2785.5 MB
+            eval: float(value[:-3])
+            cache: yes
+            
+        ram_usage:
+            name: RAM belegt [0-1]
+            type: num
+            eval: (sh...ram_size() - sh...ram_free()) / sh...ram_size()
+            eval_trigger:
+              - ..ram_size
+              - ..ram_free
+            database: init
+
+#        hdnum:
+#            name: Anzahl der HDDs
+#            type: num
+#            oid: "1.3.6.1.4.1.24681.1.4.1.1.1.1.5.1.0"
+#            #2
+#            eval: float(value)
+        
+        hdd1_temp:
+            name: HDD1 Temperatur in °C
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.11.1.3.1"
+            #33 C/91 F
+            eval: float(value[:2])
+            database: init
+            
+        hdd2_temp:
+            name: HDD2 Temperatur in °C
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.11.1.3.2"
+            #31 C/87 F
+            eval: float(value[:2])
+            database: init
+        
+        hdd1_status:
+            name: HDD1 Status
+            type: str
+            oid: "1.3.6.1.4.1.24681.1.2.11.1.7.1"
+            #GOOD
+            eval: str(value)
+            cache: yes
+            
+        hdd2_status:
+            name: HDD2 Status
+            type: str
+            oid: "1.3.6.1.4.1.24681.1.2.11.1.7.2"
+            #GOOD
+            eval: str(value)
+            cache: yes
+            
+        fan_rpm:
+            name: Lüfterdrehzahl in rpm
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.15.1.3.1"
+            #1163 RPM
+            eval: float(value[:-4])
+            cache: yes
+            
+#        fan_count:
+#            name: Anzahl der Lüfter
+#            type: num
+#            oid: "1.3.6.1.4.1.24681.1.2.14.0"
+#            #1
+#            eval: float(value)
+        
+        disk_size:
+            name: Speicher in MB
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.17.1.4.1"
+            #1.37 TB
+            eval: float(value[:-3]) * 1024
+            cache: yes
+        
+        disk_free:
+            name: Freier Speicher in MB
+            type: num
+            oid: "1.3.6.1.4.1.24681.1.2.17.1.5.1"
+            #1.37 TB
+            eval: float(value[:-3]) * 1024
+            cache: yes
+            
+        disk_usage:
+            name: HDD belegt [0-1]
+            type: num
+            eval: (sh...disk_size() - sh...disk_free()) / sh...disk_size()
+            eval_trigger:
+              - ..disk_free
+              - ..disk_size
+            database: init
+
+#        volume_count:
+#            type: num
+#            oid: "1.3.6.1.4.1.24681.1.2.16.0"
+#            #1
+#            eval: float(value)
+
+        volume1_status:
+            name: Status des Volume1
+            type: str
+            oid: "1.3.6.1.4.1.24681.1.2.17.1.6.1"
+            #Ready
+            eval: str(value)
+            cache: yes
+        
+        netuptime:
+            type: num
+            oid: "1.3.6.1.2.1.1.3.0"
+            #9311124
+            eval: float(value)
+            cache: yes
+        
+        sysuptime:
+            type: num
+            oid: "1.3.6.1.2.1.25.1.1.0"
+            #68919188
+            eval: float(value)
+            cache: yes
+        
+        model:
+            type: str
+            oid: "1.3.6.1.4.1.24681.1.2.12.0"
+            #TS-251
+            eval: str(value)
+            cache: yes
+        
+        name:
+            type: str
+            oid: "1.3.6.1.4.1.24681.1.2.13.0"
+            #0x4e41532d54533235310a | NAS-TS251
+            cache: yes
+        
+        firmware:
+            type: str
+            oid: "1.3.6.1.2.1.47.1.1.1.1.9.1"
+            #0x342e332e360a | 4.3.6
+            cache: yes
+            online:
+                type: bool
+                name: NAS ist Online
+                eval: (value != '$$!!%%')
+                eval_trigger: ..
+                autotimer: 600 = $$!!%%
+                on_update:
+                  - ... = "Online" if value == 1 else None
+                  - ... = "Offline" if value == 0 else None
+            
