@@ -11,8 +11,8 @@ plugin:
     tester: sisamiwe, ElektroRudi   # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: 1wire onewire raspberry pi dallas temperature sensor
-    documentation: https://github.com/smarthomeNG/plugins/rpionewire/Readme.md        # url of documentation (wiki) page
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    documentation: https://github.com/smarthomeNG/plugins/rpi1wire/Readme.md        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451916-support-thread-für-rpi1wire-plugin
 
     version: 1.6.0                  # Plugin version
     sh_minversion: 1.5              # minimum shNG version to use this plugin
