@@ -19,7 +19,7 @@ Allgemein
 .. rubric:: Einführung
    :name: einfuehrungstateengine
 
-Als Einstieg in das Plugin empfiehlt es sich, den `Blogeintrag <https://www.smarthomeng.de/tag/stateengine>`_
+Als Einstieg in das Plugin empfiehlt es sich, die `Blogeinträge <https://www.smarthomeng.de/tag/stateengine>`_
 auf der SmarthomeNG Seite zu lesen!
 
 .. rubric:: Funktionalität

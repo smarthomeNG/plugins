@@ -166,6 +166,10 @@ class StateEngine(SmartPlugin):
         if isinstance(abitem, str):
             abitem = self.__items[abitem]
         webif = StateEngineWebif.WebInterface(self.__sh, abitem)
+        try:
+            os.makedirs(self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/'))
+        except OSError as e:
+            pass
         vis_file = self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/{}.svg'.format(abitem))
         #self.logger.debug("Getting graph: {}, {}".format(abitem, webif))
         try:

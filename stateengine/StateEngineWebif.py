@@ -71,11 +71,11 @@ class WebInterface(StateEngineTools.SeItemChild):
                     matching = cond.match(conditionset)
                     condition_met = True if matching else condition_met
                 fontcolor = "white" if not condition_met or (_repeat is False and originaltype == 'actions_stay')\
-                            else "lightgray" if _delay > 0 else "darkred" if _delay > 0 else "black"
+                            else "#5c5646" if _delay > 0 else "darkred" if _delay < 0 else "black"
                 additionaltext = " ({} not met)".format(condition_to_meet) if not condition_met\
                                  else " (no repeat)" if _repeat is False and originaltype == 'actions_stay'\
                                  else " (delay: {})".format(_delay) if _delay > 0\
-                                 else " (wrong delay!)" if _delay > 0 else ""
+                                 else " (wrong delay!)" if _delay < 0 else ""
                 action1 = self.__states[state][type][action].get('function')
                 if action1 == 'set':
                     action2 = self.__states[state][type][action].get('item')
@@ -84,13 +84,14 @@ class WebInterface(StateEngineTools.SeItemChild):
                     action2 = self.__states[state][type][action].get('special')
                     action3 = self.__states[state][type][action].get('value')
                 else:
-                    action2 = ''
+                    action2 = 'None'
                     action3 = ''
-                if format == 'table':
+                if format == 'table' and not action2 == 'None':
                     actionlabel += '<tr><td align="left"><font color={}>{}</font></td><td align="left">{}</td><td align="left">{}</td></tr>'.format(fontcolor, action1, action2, action3)
-                else:
+                elif not action2 == 'None':
                     actionlabel += '<font color="{}">{} {} {}{}</font><br />'.format(fontcolor, action1, action2, action3, additionaltext)
         actionlabel += '</table>>' if format == 'table' else '>'
+        actionlabel = '' if actionlabel == '<<table border="0"></table>>' or actionlabel == '<>' else actionlabel
         #self._log_debug('actionlabel: {}', actionlabel)
         return actionlabel
 
@@ -149,7 +150,6 @@ class WebInterface(StateEngineTools.SeItemChild):
     def _add_actioncondition(self, state, conditionset, type, new_y, cond1, cond2):
         #cond1 = i >= list(self.__states.keys()).index(self.__active_state)
         #cond2 = j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset) or i > list(self.__states.keys()).index(self.__active_state)
-        cond3 = conditionset == ''
         cond4 = conditionset == self.__active_conditionset and state == self.__active_state
         color_enter = "gray" if (cond1 and cond2) or (type == 'actions_enter' and self.__states[state].get('enter') is False and cond4)\
                       else "chartreuse3" if cond4 else "indianred2"
@@ -158,9 +158,9 @@ class WebInterface(StateEngineTools.SeItemChild):
 
         label = 'first enter' if type == 'actions_enter' else 'staying at state'
 
-        position = '{},{}!'.format(0.85, new_y)
+        position = '{},{}!'.format(0.65, new_y)
         color = color_enter if label == 'first enter' else color_stay
-        #self._log_debug('adding enterstate for state {}/set {}: {}. Enter = {}, Stay = {}. Cond 1 {}, 2 {}, 3 {}, 4 {}. Color: {}', state, conditionset, type, self.__states[state].get('enter'), self.__states[state].get('stay'), cond1, cond2, cond3, cond4, color)
+        #self._log_debug('adding enterstate for state {}/set {}: {}. Enter = {}, Stay = {}. Cond 1 {}, 2 {}, 4 {}. Color: {}', state, conditionset, type, self.__states[state].get('enter'), self.__states[state].get('stay'), cond1, cond2, cond4, color)
         self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)] = pydotplus.Node('{}_{}_state_{}'.format(state, conditionset, type), style="filled", fillcolor=color, shape="diamond", label=label, pos=position)
         self.__graph.add_node(self.__nodes['{}_{}_state_{}'.format(state, conditionset, type)])
         if self.__nodes.get('{}_{}_state_actions_enter_edge'.format(state, conditionset)) is None:
@@ -188,7 +188,6 @@ class WebInterface(StateEngineTools.SeItemChild):
         for i, state in enumerate(self.__states):
             #self._log_debug('Adding state for webif {}', self.__states[state])
             if isinstance(self.__states[state], (OrderedDict, dict)):
-                conditionsets = self.__states[state].get('conditionsets')
                 self.__conditionset_count = len(self.__states[state].get('conditionsets'))
                 if self.__conditionset_count == 0:
                     self.__states[state]['conditionsets'][''] = ''
@@ -201,7 +200,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     lastnode = self.__nodes['{}_{}'.format(previous_state, condition_node)]
                     self.__nodes['{}_above'.format(state)] = pydotplus.Node('{}_above'.format(state), pos=position, shape="square", width="0", label="")
                     self.__graph.add_node(self.__nodes['{}_above'.format(state)])
-                    position = '{},{}!'.format(0.7, new_y)
+                    position = '{},{}!'.format(0.5, new_y)
                     self.__nodes['{}_above_right'.format(state)] = pydotplus.Node('{}_above_right'.format(state), pos=position, shape="square", width="0", label="")
                     self.__graph.add_node(self.__nodes['{}_above_right'.format(state)])
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_above'.format(state)], self.__nodes['{}_above_right'.format(state)], style='bold', color='blue', label="", dir="none"))
@@ -212,7 +211,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                 #self._log_debug('state: {} {}',state, position)
                 self.__nodes[state] = pydotplus.Node(state, pos=position, pin=True, notranslate=True, style="filled", fillcolor=color, shape="ellipse",
                                                      label='<<table border="0"><tr><td>{}</td></tr><hr/><tr><td>{}</td></tr></table>>'.format(state, self.__states[state]['name']))
-                position = '{},{}!'.format(0.7, new_y)
+                position = '{},{}!'.format(0.5, new_y)
                 self.__nodes['{}_right'.format(state)] = pydotplus.Node('{}_right'.format(state), pos=position, shape="square", width="0", label="")
                 self.__graph.add_node(self.__nodes[state])
                 self.__graph.add_node(self.__nodes['{}_right'.format(state)])
@@ -232,7 +231,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                         actionlist_leave = self._actionlabel(state, 'actions_leave', conditionset, 'list')
 
                     new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
-                    position = '{},{}!'.format(0.7, new_y)
+                    position = '{},{}!'.format(0.5, new_y)
                     conditionset_positions.append(new_y)
                     #self._log_debug('conditionset: {} {}, previous {}', conditionset, position, previous_conditionset)
 
@@ -246,8 +245,8 @@ class WebInterface(StateEngineTools.SeItemChild):
                         cond1 = True
                     #self._log_debug('i {}, index of active state {}', i, list(self.__states.keys()).index(self.__active_state))
                     try:
-                        cond2 = (j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset) or
-                                 i > list(self.__states.keys()).index(self.__active_state))
+                        cond2 = (j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset)
+                                 or i > list(self.__states.keys()).index(self.__active_state))
                     except Exception as ex:
                         #self._log_debug('Condition 2 problem {}'.format(ex))
                         cond2 = True
@@ -258,7 +257,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__nodes['{}_{}'.format(state, conditionset)] = pydotplus.Node(
                         '{}_{}'.format(state, conditionset), style="filled", fillcolor=color, shape="diamond", label=label, pos=position)
                     #self._log_debug('Node {} {} drawn', state, conditionset)
-                    position = '{},{}!'.format(0.4, new_y)
+                    position = '{},{}!'.format(0.2, new_y)
                     if not conditionlist == '':
                         self.__nodes['{}_{}_conditions'.format(state, conditionset)] = pydotplus.Node(
                             '{}_{}_conditions'.format(state, conditionset), style="filled", fillcolor=color, shape="rect",
@@ -267,7 +266,7 @@ class WebInterface(StateEngineTools.SeItemChild):
 
                     self.__graph.add_node(self.__nodes['{}_{}'.format(state, conditionset)])
 
-                    new_x = 1.1
+                    new_x = 0.9
                     if not actionlist_enter == '':
                         position = '{},{}!'.format(new_x, new_y)
                         #self._log_debug('action enter: {}', position)
@@ -283,7 +282,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                         self.__graph.add_node(self.__nodes['{}_{}_actions_stay'.format(state, conditionset)])
                         self._add_actioncondition(state, conditionset, 'actions_stay', new_y, cond1, cond2)
 
-                    position = '{},{}!'.format(1.1, new_y)
+                    position = '{},{}!'.format(0.9, new_y)
                     cond1 = self.__nodes.get('{}_{}_actions_enter'.format(state, conditionset)) is None
                     cond2 = self.__nodes.get('{}_{}_actions_stay'.format(state, conditionset)) is None
                     cond3 = self.__nodes.get('{}_{}_actions_leave'.format(state, conditionset)) is None
@@ -302,7 +301,7 @@ class WebInterface(StateEngineTools.SeItemChild):
 
                 if len(self.__states[state].get('actions_leave')) > 0:
                     new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
-                    position = '{},{}!'.format(0.7, new_y)
+                    position = '{},{}!'.format(0.5, new_y)
                     #self._log_debug('leaveconditions {}', position)
                     try:
                         cond1 = j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset)

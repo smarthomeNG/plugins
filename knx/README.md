@@ -27,7 +27,7 @@ knx:
 
 #### Attributes
 
-* `host` : eibd or knxd hostname (default: 127.0.0.1)
+* `host` : eibd or knxd hostname or ip address (default: 127.0.0.1)
 * `port` : eibd or knxd port (default: 6720)
 * `send_time` : interval to send time and date to the knx bus
 * `time_ga` : groupadress to send a timestamp to the knx bus

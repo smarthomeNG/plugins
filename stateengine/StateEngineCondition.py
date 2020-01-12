@@ -248,15 +248,18 @@ class SeCondition(StateEngineTools.SeItemChild):
             _oldvalue = value
             if isinstance(current, bool):
                 value = StateEngineTools.cast_bool(value)
-            elif isinstance(current, (int, float)):
-                value = StateEngineTools.cast_num(value)
+            elif isinstance(current, int):
+                value = int(StateEngineTools.cast_num(value))
+            elif isinstance(current, float):
+                value = StateEngineTools.cast_num(value) * 1.0
             elif isinstance(current, list):
                 value = StateEngineTools.cast_list(value)
             else:
                 value = str(value)
                 current = str(current)
-            self._log_info("Value {} was type {} and therefore not the same type as item value {}. It got converted to {}.",
-                           _oldvalue, type(_oldvalue), current, type(value))
+            if not type(_oldvalue) == type(value):
+                self._log_info("Value {} was type {} and therefore not the same type as item value {}. It got converted to {}.",
+                               _oldvalue, type(_oldvalue), current, type(value))
             return value, current
 
         current = self.__get_current()

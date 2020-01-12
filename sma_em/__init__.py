@@ -33,13 +33,13 @@ from lib.module import Modules
 
 class SMA_EM(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.0.4"
+    PLUGIN_VERSION = "1.5.0.5"
 
     # listen to the Multicast; SMA-Energymeter sends its measurements to 239.12.255.254:9522
     MCAST_GRP = '239.12.255.254'
     MCAST_PORT = 9522
 
-    def __init__(self, smarthome, serial, time_sleep=5):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
@@ -47,11 +47,10 @@ class SMA_EM(SmartPlugin):
         :param serial: Serial of the SMA Energy Meter
         :param time_sleep: The time in seconds to sleep after a multicast was received
         """
-        self._sh = smarthome
         self.logger = logging.getLogger(__name__)
         self._items = {}
-        self._time_sleep = int(time_sleep)
-        self._serial = serial
+        self._time_sleep = self.get_parameter_value('time_sleep')
+        self._serial = self.get_parameter_value('serial')
 
         # prepare listen to socket-Multicast
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -389,6 +388,7 @@ class SMA_EM(SmartPlugin):
 # ------------------------------------------
 
 import cherrypy
+import json
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -423,3 +423,26 @@ class WebInterface(SmartPluginWebIf):
                            interface=None, item_count=len(self.plugin.get_items()),
                            plugin_info=self.plugin.get_info(), tabcount=1, tab1title="SMA EM Items (%s)" % len(self.plugin.get_items()),
                            p=self.plugin)
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+        # get the new data
+            data = {}
+            for key, item in self.plugin.get_items().items():
+                data[item.id()+"_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            # return it as json the the web page
+            return json.dumps(data)
+        else:
+            return

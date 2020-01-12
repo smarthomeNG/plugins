@@ -5,8 +5,8 @@
             <block type="shtools_fetchurl"></block>
  */
 'use strict';
-goog.provide('Blockly.Blocks.sh_tools');
-goog.require('Blockly.Blocks');
+//goog.provide('Blockly.Blocks.sh_tools');
+//goog.require('Blockly.Blocks');
 
 /**
  * https://blockly-demo.appspot.com/static/demos/blockfactory/index.html#prgbjr
@@ -46,7 +46,7 @@ Blockly.Blocks['shtools_dewpoint'] = {
     this.appendDummyInput()
         .appendField("Taupunkt bei")
     this.appendValueInput("TEMP")
-        .appendField("°C Temeratur und ")
+        .appendField("Â°C Temperatur und ")
     this.appendValueInput("HUM")
         .appendField("% rel.Feuchtigkeit");
     this.setInputsInline(true);

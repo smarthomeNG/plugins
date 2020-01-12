@@ -10,6 +10,23 @@
 {% endblock %}
 
 {% block bodytab1 %}
+<style>
+td.py-1.date {
+	min-width: 11em;
+}
+.hidelargetext {
+	max-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: zoom-in;
+	font-weight: 600;
+}
+
+.haslargetext {
+}
+
+</style>
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 	<div class="col-sm-12">
 		<h5>Darksky Plugin Items ({{ p.get_items()|length }})</h5>
@@ -26,15 +43,26 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for key, item in p.get_items().items() %}
+				{% for key, items in p.get_items().items() %}
+					{% for item in items %}
+					{% set value = item()|string %}
+					{% set l = value | length %}
+					{% if l > 50 %}
+						{% set moreclasses = ' hidelargetext' %}
+						{% set togglelargetext = "onclick='$(this).toggleClass(\"hidelargetext\")'" %}
+					{% else %}
+						{% set moreclasses = '' %}
+						{% set togglelargetext = '' %}
+					{% endif %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.property.path }}</td>
-						<td class="py-1">{{ item.property.type }}</td>
-						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1 item">{{ item.property.path }}</td>
+						<td class="py-1 type">{{ item.property.type }}</td>
+						<td class="py-1 matchstring">{{ key }}</td>
+						<td class="py-1 value{{ moreclasses }}" {{ togglelargetext }}>{{ item() }}</td>
+						<td class="py-1 date">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1 date">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
+					{% endfor %}
 				{% endfor %}
 			</tbody>
 		</table>

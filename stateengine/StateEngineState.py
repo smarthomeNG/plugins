@@ -95,7 +95,14 @@ class SeState(StateEngineTools.SeItemChild):
 
     # log state data
     def write_to_log(self):
+        self._abitem._initstate = self.id
         self._log_info("State {0}:", self.id)
+        self._abitem.update_webif(self.id, {'name': self.name, 'conditionsets': self.__conditions.get(),
+                                            'actions_enter': {},
+                                            'actions_enter_or_stay': {},
+                                            'actions_stay': {},
+                                            'actions_leave': {},
+                                            'leave': False, 'enter': False, 'stay': False})
         self._log_increase_indent()
         self._log_info("Name: {0}", self.name)
         self.__text.write_to_logger()
@@ -104,36 +111,36 @@ class SeState(StateEngineTools.SeItemChild):
             self._log_increase_indent()
             self.__conditions.write_to_logger()
             self._log_decrease_indent()
+
         if self.__actions_enter.count() > 0:
             self._log_info("Actions to perform on enter:")
             self._log_increase_indent()
             self.__actions_enter.write_to_logger()
             self._log_decrease_indent()
+            self._abitem.update_webif([self.id, 'actions_enter'], self.__actions_enter.dict_actions)
+
         if self.__actions_stay.count() > 0:
             self._log_info("Actions to perform on stay:")
             self._log_increase_indent()
             self.__actions_stay.write_to_logger()
             self._log_decrease_indent()
+            self._abitem.update_webif([self.id, 'actions_stay'], self.__actions_stay.dict_actions)
+
         if self.__actions_enter_or_stay.count() > 0:
             self._log_info("Actions to perform on enter or stay:")
             self._log_increase_indent()
             self.__actions_enter_or_stay.write_to_logger()
             self._log_decrease_indent()
+            self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions)
+
         if self.__actions_leave.count() > 0:
             self._log_info("Actions to perform on leave:")
             self._log_increase_indent()
             self.__actions_leave.write_to_logger()
             self._log_decrease_indent()
-        self._log_decrease_indent()
+            self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions)
 
-    def write_webif(self):
-        self._abitem.update_webif(self.id, {'name': self.name, 'conditionsets': self.__conditions.get(),
-                                            'actions_enter': self.__actions_enter.dict_actions,
-                                            'actions_enter_or_stay': self.__actions_enter_or_stay.dict_actions,
-                                            'actions_stay': self.__actions_stay.dict_actions,
-                                            'actions_leave': self.__actions_leave.dict_actions,
-                                            'leave': False, 'enter': False, 'stay': False})
-        #self._log_debug('WebIF Info: {}', self._abitem.webif_infos)
+        self._log_decrease_indent()
 
     # run actions when entering the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
@@ -146,6 +153,8 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.update_webif(_key_stay, False)
         self._abitem.update_webif(_key_enter, True)
         self.__actions_enter.execute(False, allow_item_repeat, self, self.__actions_enter_or_stay)
+        self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions)
+        self._abitem.update_webif([self.id, 'actions_enter'], self.__actions_enter.dict_actions)
         self._log_decrease_indent()
 
     # run actions when staying at the state
@@ -159,6 +168,8 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.update_webif(_key_stay, True)
         self._abitem.update_webif(_key_enter, False)
         self.__actions_stay.execute(True, allow_item_repeat, self, self.__actions_enter_or_stay)
+        self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions)
+        self._abitem.update_webif([self.id, 'actions_stay'], self.__actions_stay.dict_actions)
         self._log_decrease_indent()
 
     # run actions when leaving the state
@@ -170,6 +181,7 @@ class SeState(StateEngineTools.SeItemChild):
             self._abitem.update_webif(_key_leave, False)
             #self._log_debug('set leave for {} to false', elem)
         self.__actions_leave.execute(False, allow_item_repeat, self)
+        self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions)
         self._log_decrease_indent()
 
     # Read configuration from item and populate data in class

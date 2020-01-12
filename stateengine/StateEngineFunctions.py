@@ -172,6 +172,10 @@ class SeFunctions:
     # caller: caller
     # source: source
     def get_original_caller(self, elog, caller, source):
+        if isinstance(source, str):
+            original_changed_by = source
+        else:
+            original_changed_by = "None"
         while caller == "Eval":
             original_item = self.items.return_item(source)
             if original_item is None:

@@ -41,7 +41,7 @@ Configuration
 SmartVISU
 =========
 
-There is a widget available which gives an interface to the UZSU. If you have problems please consult the corresponding forum. It is recommended to use the widget to create UZSU entries. The following information on data format can be skipped.
+In the latest SmartVISU 2.9 there is a widget called *device.uzsu* available which gives an interface to the UZSU. If you have problems please consult the corresponding forum. It is recommended to use the widget to create UZSU entries. The following information on data format can be skipped.
 
 Data format
 ===========

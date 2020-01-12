@@ -1,6 +1,6 @@
 # darksky.net / forecast.io
 
-#### Version 1.5.0.2
+#### Version 1.6
 
 This plugins can be used retrieve weather information from darksky.net / forecast.io.
 
@@ -38,7 +38,7 @@ weather_darksky:
 
 ### Example: items.yaml
 Example configuration of an item-tree for the darksky plugin in yaml-format. For the meaning of some of the matchstrings
-please directly consult https://darksky.net/dev/docs:
+please directly consult https://darksky.net/dev/docs and/or use the struct definition darksky.weather.
 
 ```yaml
 
@@ -71,12 +71,6 @@ darksky:
         icon:
             type: str
             ds_matchstring: currently/icon
-        
-        # create item with icon representation for SmartVisu, won't show up in Plugin's Web Interface 
-        icon_sv:
-            type: str
-            eval_trigger: ..icon
-            eval: sh.weather_darksky.map_icon(sh...icon())
 
         nearestStormDistance:
             type: num
@@ -155,12 +149,10 @@ darksky:
         icon:
             type: str
             ds_matchstring: minutely/icon
-        
-        # create item with icon representation for SmartVisu, won't show up in Plugin's Web Interface 
-        icon_sv:
+
+        icon_visu:
             type: str
-            eval_trigger: ..icon
-            eval: sh.weather_darksky.map_icon(sh...icon())
+            ds_matchstring: minutely/icon_visu
 
     hourly:
 
@@ -171,12 +163,6 @@ darksky:
         icon:
             type: str
             ds_matchstring: hourly/icon
-            
-        # create item with icon representation for SmartVisu, won't show up in Plugin's Web Interface 
-        icon_sv:
-            type: str
-            eval_trigger: ..icon
-            eval: sh.weather_darksky.map_icon(sh...icon())
 
     daily:
 
@@ -187,91 +173,18 @@ darksky:
         icon:
             type: str
             ds_matchstring: daily/icon    
-        
-        icon_sv:
-                type: str
-                eval_trigger: ..icon
-                eval: sh.weather_darksky.map_icon(sh...icon())  
-            
-        data:
-            type: list
-            ds_matchstring: daily/data
-            cache: 'yes'
 
-        # all day0, day1, day2 ... items won't show up in WebIf of plugin! Use item tree to check!
-        day0:
-            date:
-                type: str
-                eval_trigger: ...data
-                eval: datetime.datetime.fromtimestamp(sh....data()[0]['time']).strftime('%a %d.%m.%Y')
 
-            icon:
-                type: str
-                eval_trigger: ...data
-                eval: sh....data()[0]['icon']
-            
-            icon_sv:
-                type: str
-                eval_trigger: ..icon
-                eval: sh.weather_darksky.map_icon(sh...icon())
-
-            temperature_max:
-                type: num
-                eval_trigger: ...data
-                eval: sh....data()[0]['temperatureMax']
-      
-        day1:
-            date:
-                type: str
-                eval_trigger: ...data
-                eval: datetime.datetime.fromtimestamp(sh....data()[1]['time']).strftime('%a %d.%m.%Y')
-
-            icon:
-                type: str
-                eval_trigger: ...data
-                eval: sh....data()[1]['icon']
-            
-            icon_sv:
-                type: str
-                eval_trigger: ..icon
-                eval: sh.weather_darksky.map_icon(sh...icon())
-
-            temperature_max:
-                type: num
-                eval_trigger: ...data
-                eval: sh....data()[1]['temperatureMax']
-                
-        day2:
-            date:
-                type: str
-                eval_trigger: ...data
-                eval: datetime.datetime.fromtimestamp(sh....data()[2]['time']).strftime('%a %d.%m.%Y')
-
-            icon:
-                type: str
-                eval_trigger: ...data
-                eval: sh....data()[2]['icon']
-            
-            icon_sv:
-                type: str
-                eval_trigger: ..icon
-                eval: sh.weather_darksky.map_icon(sh...icon())
-
-            temperature_max:
-                type: num
-                eval_trigger: ...data
-                eval: sh....data()[2]['temperatureMax']
-                
     alerts:
 
         list:
             type: list
-            ds_matchstring: alerts 
-            
+            ds_matchstring: alerts
+
         string_detail:
             type: str
             ds_matchstring@home: alerts_string
-               
+
     flags:
 
         sources:

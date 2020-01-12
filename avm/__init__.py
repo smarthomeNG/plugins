@@ -34,6 +34,10 @@ from lib.model.smartplugin import *
 from lib.module import Modules
 import cherrypy
 
+#for session id generation:
+import hashlib
+
+
 class MonitoringService:
     """
     Class which connects to the FritzBox service of the Callmonitor: http://www.wehavemorefun.de/fritzbox/Callmonitor
@@ -808,7 +812,7 @@ class AVM(SmartPlugin):
                     self._monitoring_service.register_item(item)
         elif self.get_iattr_value(item.conf, 'avm_data_type') in ['call_duration_incoming', 'call_duration_outgoing']:
             # items specific to call monitor duration calculation
-            # initally get data from calllist
+            # initially get data from calllist
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'call_duration_incoming' and item() == 0:
                 if not self.get_calllist_from_cache() is None:
                     for element in self.get_calllist_from_cache():
@@ -830,9 +834,76 @@ class AVM(SmartPlugin):
         elif self.has_iattr(item.conf, 'avm_data_type'):
             # normal items
             self._fritz_device._items.append(item)
-        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'set_temperature']:
             # special items which can be changed outside the plugin context and need to be submitted to the FritzDevice
             return self.update_item
+
+
+    def getHashResponse(self, challenge, pwd):
+        myMd5HashString = (challenge+'-'+pwd).encode('utf-16LE')
+        m=hashlib.md5()
+        m.update(myMd5HashString)
+#        self.logger.info("Debug hexdigest: {0}".format(m.hexdigest()))
+#        print ('MD5-Hash starting with challenge :' + challenge + "-" + m.hexdigest())
+        return challenge + "-" + m.hexdigest()
+
+    def _request_session_id(self):
+        user = self._fritz_device.get_user()
+        pwd = self._fritz_device.get_password()
+        #Doublecheck: Shall we send this request via self._session.get instead?
+        response = requests.get("http://fritz.box/login_sid.lua")
+        myXML = response.text
+        self.logger.info("Debug response text: {0}".format(myXML))
+        xml = minidom.parseString(myXML)
+        challenge_xml = xml.getElementsByTagName('Challenge')
+        sid_xml = xml.getElementsByTagName('SID')
+        if len(challenge_xml) > 0:
+            mySID = sid_xml[0].firstChild.data
+        if len(challenge_xml) > 0:
+            myChallenge = challenge_xml[0].firstChild.data
+
+        self.logger.info("Debug apriori SID: {0}, Challenge: {1}".format(mySID,myChallenge))
+        hashResponse=self.getHashResponse(myChallenge, pwd)
+
+        #Doublecheck: Shall we send this request via self._session.get instead?
+        response= requests.get("http://fritz.box/login_sid.lua?username=" + user + "&response=" + hashResponse)
+        myXML = response.text
+        xml = minidom.parseString(myXML)
+        challenge_xml = xml.getElementsByTagName('Challenge')
+        sid_xml = xml.getElementsByTagName('SID')
+        if len(challenge_xml) > 0:
+            mySID = sid_xml[0].firstChild.data
+        if len(challenge_xml) > 0:
+            myChallenge = challenge_xml[0].firstChild.data
+
+        self.logger.info("Debug posterior SID: {0}, Challenge: {1}".format(mySID,myChallenge))
+        return mySID
+
+        #self.logger.debug("Debug param: {0}".format(aha_string))
+        #self.logger.info("Debug url: {0}".format(url))
+
+        #r = self._session.get(url, timeout=self._timeout, verify=self._verify)
+        #self.logger.info("Debug return: {0}".format(r))
+
+ 
+    def _assemble_aha_interface(self, ain = '', aha_action='', aha_param='', sid = ''):
+        """
+        Builds the AVM home automation (AHA) http interface command string
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AHA-HTTP-Interface.pdf
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AVM_Technical_Note_-_Session_ID.pdf
+
+        :param action: string of the action
+        :param param: optional parameter
+        :param sid: session ID
+        :return: string of aha data
+        """
+        # Example request:
+        # https://fritz.box/webservices/homeautoswitch.lua?ain=099950196524&switchcmd=sethkrtsoll&param=254&sid=9c977765016899f8
+        #
+        # Command string with session id parameter:
+        aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(ain.replace(" ", ""), aha_action, aha_param, sid)
+        return aha_string
+
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -846,11 +917,13 @@ class AVM(SmartPlugin):
 
         :param item: item to be updated towards the FritzDevice (Supported item avm_data_types: wlanconfig, tam, aha_device)
         """
-        if caller != 'AVM':
+        if caller.lower() != 'avm':
             if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam']:
                 action = 'SetEnable'
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 action = 'SetSwitch'
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
+                action = 'sethkrtsoll'
             else:
                 self.logger.error("%s is not defined to be updated." % self.get_iattr_value(item.conf, 'avm_data_type'))
                 return
@@ -889,11 +962,58 @@ class AVM(SmartPlugin):
                 url = self._build_url("/upnp/control/x_tam")
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 url = self._build_url("/upnp/control/x_homeauto")
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
+                self.logger.info("Debug caller is: {0}".format(caller))
+                #Check commanded temperature range:
+                cmd_temperature = float(item())
+                self.logger.info("Debug cmd_temp is: {0}".format(cmd_temperature))
+                parentItem = item.return_parent()
+                ainDevice = '0'
+                if isinstance(parentItem.conf['ain'], str):
+                    ainDevice = parentItem.conf['ain']
+                else:
+                    self.logger.error('hkrt ain is not a string value')
+
+                self.logger.info("Debug ain is {0}".format(ainDevice ))
+ 
+                #Set hkrt to state off (253) if command is out of range
+                temp_scaled = 253
+                if cmd_temperature >= 8 and cmd_temperature <= 28:
+                    #convert commanded temperature in degree into AVM scaled command value:
+                    temp_scaled = 2*cmd_temperature
+                elif cmd_temperature > 28:
+                    temp_scaled = 254
+                elif cmd_temperature < 8:
+                    temp_scaled = 253
+                else:
+                    self.logger.error("Commanded hkrt temperature {0} is out of range. Aborting.".format(cmd_temperature))
+
+                #request new session ID:
+                mySID = self._request_session_id()
+                    
+                aha_string = self._assemble_aha_interface(ain = ainDevice , aha_action = action, aha_param = temp_scaled, sid = mySID)
+                #build_url method cannot be used because it uses another IP port. 
+                #url = self._build_url(aha_string)
+
+                if self._fritz_device.is_ssl():
+                    url_prefix = "https"
+                    port = 443
+                else:
+                    url_prefix = "http"
+                    port = 80
+                    
+                url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), 443, aha_string)
+                self.logger.debug("Debug param: {0}".format(aha_string))
+                self.logger.info("Debug url: {0}".format(url))                
 
             try:
-                self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
-                                   auth=HTTPDigestAuth(self._fritz_device.get_user(),
-                                                       self._fritz_device.get_password()), verify=self._verify)
+                if self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
+                    r = self._session.get(url, timeout=self._timeout, verify=self._verify)
+                    self.logger.info("Debug return: {0}".format(r))
+                else:
+                    self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                  auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                      self._fritz_device.get_password()), verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
                     self.logger.error(

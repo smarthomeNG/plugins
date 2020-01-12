@@ -62,7 +62,7 @@ Der zu vergleichende Wert einer Bedingung kann auf folgende Arten definiert werd
 - Item (beispielsweise ein Item namens settings.helligkeitsschwellwert). Wird angegeben mit ``item:settings.helligkeitsschwellwert``
 - Eval-Funktion (siehe auch `eval Ausdrücke <https://www.smarthomeng.de/user/konfiguration/items_attributes_eval_ausdruecke.html>`_). Wird angegeben mit ``eval:1*2*se_eval.get_relative_itemvalue('..bla')``
 - Template: eine Vorlage, z.B. eine eval Funktion, die immer wieder innerhalb
-des StateEngine Items eingesetzt werden kann. Angegeben durch ``template:<Name des Templates>``
+  des StateEngine Items eingesetzt werden kann. Angegeben durch ``template:<Name des Templates>``
 
 
 .. rubric:: Name der Bedingung
@@ -86,6 +86,7 @@ komplexerer Abfragen deutlich vereinfacht. Diese Templates müssen wie se_item/s
 auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
 
 .. code-block:: yaml
+
     rules:
       se_template_test: eval:sh...settings.max_bright' - 20
       se_item_specialitem: meinitem.specialitem # declare an existing item here

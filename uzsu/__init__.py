@@ -461,7 +461,8 @@ class UZSU(SmartPlugin):
         _next = None
         _value = None
         self._update_sun(item, caller='schedule')
-
+        if self._items[item].get('interpolation') is None:
+            self.logger.error("Something is wrong with your UZSU item. You most likely use a wrong smartVISU widget version! Use the latest device.uzsu from SV 2.9")
         if not self._items[item]['interpolation'].get('itemtype'):
             self.logger.error("item '{}' to be set by uzsu does not exist.".format(
                 self.get_iattr_value(item.conf, ITEM_TAG[0])))

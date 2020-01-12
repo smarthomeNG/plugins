@@ -13,9 +13,9 @@ plugin:
     version: 1.0.1                   # Plugin version
     sh_minversion: 1.3               # minimum shNG version to use this plugin
     multi_instance: False            # plugin supports multi instance
-    classname: alexap3               # class containing the plugin
+    classname: Alexa4P3              # class containing the plugin
     state: develop                   # State of the Plugin
-    restartable: True                # Plugin is restartable 
+    restartable: True                # Plugin is restartable
 
 
 plugin_functions: NONE               # the Plugin provides no public functions
@@ -28,7 +28,7 @@ parameters:
         default: 9000
         description:
             de: 'Portnummer auf dem das Plugin die Anfragen von Amazon-Alexa erwartet'
-            en: 'Port-No. where the Plugin listens to request from Amazon/Alexa'  
+            en: 'Port-No. where the Plugin listens to request from Amazon/Alexa'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -37,23 +37,23 @@ item_attributes:
         mandatory: True
         description:
             de: 'Alexa Gerätename um das Gerät anzusprechen as default fall back to alexa_device'
-            en: 'Alexa device name to get acces to the device'  
+            en: 'Alexa device name to get acces to the device'
 
     alexa_description:
         type: str
         mandatory: False
         description:
             de: 'Alexa Gerätename um das Gerät anzusprechen als Standard-Wert wird alexa_name verwendet'
-            en: 'Alexa device name to get acces to the device as default fall back to alexa_device'  
+            en: 'Alexa device name to get acces to the device as default fall back to alexa_device'
 
     alexa_device:
         type: str
         mandatory: True
         description:
             de: 'interner Gerätename um das Gerät in smarthomeNG zu indentifizieren (endpoint)'
-            en: 'internal devicenam to identify the device in smarthomeNG (endpoint)'  
+            en: 'internal devicenam to identify the device in smarthomeNG (endpoint)'
 
-    alexa_icon: 
+    alexa_icon:
         type: str
         mandatory: False
         description:

@@ -642,6 +642,7 @@ Außerdem werden pro Aktortyp entsprechende Setting Items angelegt. Je nach Beda
 kann dann auf diese zurückgegriffen werden.
 
 .. code-block:: yaml
+
     #etc/struct.yaml
     licht_settings_dimmbar:
        prio:
