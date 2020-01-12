@@ -1,0 +1,93 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: protocol                  # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Auslesen einer Viessmann Heizung'
+        en: ''
+    maintainer: tbd
+    #keywords: viessmann optolink
+    state: develop                 # change to ready when done with development
+
+    version: 1.6.2                 # Plugin version
+    sh_minversion: 1.4.2           # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    restartable: unknown
+    classname: Viessmann           # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    serialport:
+        type: str
+        default: ''
+        description:
+            de: 'Serieller Port an dem der Lesekopf angeschlossen'
+            en: 'serial port at which the reading_device is attached'
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: 'Zeitlicher Abstand in Sekunden zwischen zwei Abfragen'
+            en: 'Time in seconds between two queries'
+
+    heating_type: 
+        type: str
+        default: ''
+        description:
+            de: 'Gerätetype der Heizung'
+            en: ''
+    protocol: 
+        type: str
+        default: ''
+        description:
+            de: 'Protokoll der Heizung'
+            en: ''
+
+item_attributes:
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    viess_send:
+        type: str
+        description:
+            de: 'Änderung des Items wird mit konfiguriertem Kommando an die Heizung geschickt.'
+            en: 'Changes to this item result in sending the configured command to the heating system.'
+    viess_read:
+        type: str
+        description:
+            de: 'Liest Wert mit konfiguriertem Kommand aus der Heizung aus.'
+            en: 'The item value should be read by using the configured command.'
+    viess_read_afterwrite:
+        type: num
+        description:
+            de: 'Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando an die Heizung geschickt wird.'
+            en: 'Configures delay in seconds to issue a read command after write command.'
+    viess_read_cycle:
+        type: num
+        description:
+            de: 'Konfiguriert ein Interval in Sekunden für das Lesekommando.'
+            en: 'Configures a interval in seconds for the read command.'
+    viess_init:
+        type: bool
+        description:
+            de: 'Konfiguriert ob der Wert aus der Heizung initialisiert werden soll.'
+            en: 'Configures to initialize the item value with the value from the KWL system.'
+    viess_trigger:
+        type: list(str)
+        description:
+            de: 'Konfiguriert Lesekommandos die nach einem Schreibvorgang auf das Item aufgerufen werden.'
+            en: 'Configures read commands after an update to the item.'
+    viess_trigger_afterwrite:
+        type: num
+        description:
+            de: 'Konfiguriert eine Verzögerung in Sekunden bis ein Trigger ausgeführt werden soll nachdem ein Wert gesetzt wurde.'
+            en: 'Configures delay in seconds to run trigger commands after item update.'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+# Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+# Definition of plugin functions defined by this plugin
