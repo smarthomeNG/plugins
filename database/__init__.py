@@ -60,7 +60,7 @@ COL_LOG_CHANGED = 6
 
 class Database(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.7'
+    PLUGIN_VERSION = '1.5.8'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -738,7 +738,7 @@ class WebInterface(SmartPluginWebIf):
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str

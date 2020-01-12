@@ -59,7 +59,8 @@ class Snmp(SmartPlugin):
         self._sh = self.get_sh()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.cycle = int(self.get_parameter_value('cycle'))
+        self.instance = self.get_parameter_value('instance')    # the instance of the plugin for questioning multiple smartmeter
+        self.cycle = int(self.get_parameter_value('cycle'))      # the frequency in seconds how often the device should be accessed
         self.host = self.get_parameter_value('snmp_host')
         self.port = int(self.get_parameter_value('snmp_port'))
         self.communitiy = self.get_parameter_value('snmp_communitiy')
@@ -71,11 +72,16 @@ class Snmp(SmartPlugin):
         self._items will contain something like 
         {'1.3.6.1.4.1.24681.1.2.5.0': {'temp': {'item': Item: netzwerk.qnap_ts251.cpu_temp}}, '1.3.6.1.4.1.24681.1.2.1.0': {'precent': {'item': Item: netzwerk.qnap_ts251.cpu_usage}}, '1.3.6.1.4.1.24681.1.2.6.0': {'temp': {'item': Item: netzwerk.qnap_ts251.system_temp}}}
         """
+        
+        # log
+        self.logger.debug("Instance {} of SNMP configured to use host '{}' with update cycle of {} seconds".format( self.instance if self.instance else 0,self.host, self.cycle))
+        #if self.logger.isEnabledFor(logging.DEBUG):
+        #    self.logger.debug("init {} done".format(__name__))
+        
         # give some info to the user via webinterface
         self.init_webinterface()
 
-        if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("init {} done".format(__name__))
+        # init_complete to True
         self._init_complete = True
 
     def run(self):
@@ -112,25 +118,25 @@ class Snmp(SmartPlugin):
                 self.logger.warning("SNMP: No snmp_prop for {0} defined, set to standard".format(item.id()))
                 prop = 'std'
         else:
-            prop = self.get_iattr_value(item.conf,'snmp_prop')
+            prop = self.get_iattr_value(item.conf,'snmp_prop').lower()
 
-        prop = prop.lower()
         table = self._items
         
-        if prop not in self._supported:  # unknown prop
+        if prop not in self._supported:
             if self.logger.isEnabledFor(logging.INFO):
-                self.logger.info("Snmp: unknown properties specified for {0}".format(item.id()))
+                self.logger.info("Unknown properties specified for {0}".format(item.id()))
         
         if oid in table:
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("set dict[{}][{}] as item:{}".format(oid, prop, item))
+                self.logger.debug("Set dict[{}][{}] as item:{}".format(oid, prop, item))
             table[oid][prop] = {'item': item}
         else:
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("set dict[{}] as prop:{} <item:{}>".format(oid, prop, item))
+                self.logger.debug("Set dict[{}] as prop:{} <item:{}>".format(oid, prop, item))
             table[oid] = {prop: {'item': item}}
             
-        self.logger.debug(self._items)
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug(self._items)
 
     # Query data
     def _poll_cycle(self):
@@ -138,12 +144,12 @@ class Snmp(SmartPlugin):
         This method gets called by scheduler and queries all oids defined in items
         """
         if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug("SNMP: query cycle called")
+            self.logger.debug("Query cycle called")
 
         for oid in self._items:
             if not self.alive:
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug("SNMP: Self not alive".format(oid))
+                    self.logger.debug("Self not alive".format(oid))
                 break
             for prop in self._items[oid]:
                 item = self._items[oid][prop]['item']
@@ -152,48 +158,63 @@ class Snmp(SmartPlugin):
                 community = self.communitiy
                 oid = oid
                 prop = prop
-                self.logger.debug('Poll for item: {} with property: {} using oid: {}, host: {}, community: {} '.format(item, prop, oid, host, community))
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug('Poll for item: {} with property: {} using oid: {}, host: {}, community: {} '.format(item, prop, oid, host, community))
                 
                 # Request data
                 response = get(host, community, oid)
-                self.logger.debug('Successfully received response: {}'.format(response))
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug('Successfully received response: {}'.format(response))
                 
                 # Transform response
                 result = 0
                 unit = 0
                 
-                if prop == 'value':
+                try:
                     response = response.decode('ascii')
-                    code_pos = response.index(" ")
-                    unit_short = (response[(code_pos+1):(code_pos +2)]).lower()
-                    value = float(response[:(code_pos)])
-                    if unit_short is 'c':
-                        result = int(value)
-                        unit = unit_short.upper()
-                    elif unit_short is '%':
-                        result = round(value /100, 3)
-                        unit = response[(code_pos+1):len(response)]
-                    elif unit_short == 'm' or unit_short == 'g' or unit_short == 't':
-                        result = round(value, 3)
-                        unit = response[(code_pos+1):len(response)]
-                    elif unit_short == 'r':
-                        result >= int(value)
-                        unit = response[(code_pos+1):len(response)]
-                    else:
-                        self.logger.debug('Responsevaluetype nicht erkannt')
-                elif prop == 'string':
+                except:
+                    response = response
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug('Response NOT decoded')
+                else:
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug('Response decoded')                
+                
+                if prop == 'value':
+                    #Prüfung, ob Leerzeichen vorhanden sind, um den Wert von Einheit zu trennen
                     try:
-                        result = response.decode('ascii')
+                        code_pos = response.index(" ")
                     except:
-                        result = str(response)
-                        self.logger.debug('Response war string')
+                        result = float(response)
                     else:
-                        self.logger.debug('Response war bytearray')
+                        unit_short = (response[(code_pos+1):(code_pos +2)]).lower()
+                        value = float(response[:(code_pos)])
+                      
+                        if unit_short == 'c':
+                            result = int(value)
+                            unit = unit_short.upper()
+                        elif unit_short == '%':
+                            result = round(value /100, 3)
+                            unit = response[(code_pos+1):len(response)]
+                        elif unit_short == 'm' or unit_short == 'g' or unit_short == 't':
+                            result = round(value, 3)
+                            unit = response[(code_pos+1):len(response)]
+                        elif unit_short == 'r':
+                            result = int(value)
+                            unit = response[(code_pos+1):len(response)]
+                        else:
+                            result = round(value, 3)
+                            if self.logger.isEnabledFor(logging.DEBUG):
+                                self.logger.debug('Response value typ not definier; using standard conversion to float')
+                elif prop == 'string':
+                    result = str(response)
                     unit = 'no'
                 else:
-                    self.logger.debug('Responsetype nicht definiert')
-
-                self.logger.debug('Response successfully transformed to: {} with unit: {} '.format(result, unit))
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug('Item property not defined in item.conf')
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug('Response successfully transformed to: {} with unit: {} '.format(result, unit))
+                
                 #Set item value
                 item(result, 'SNMP')
 
@@ -205,7 +226,7 @@ class Snmp(SmartPlugin):
                     self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
             except Exception as e:
                 if self.logger.isEnabledFor(logging.WARNING):
-                    self.logger.warning("SNMP: problem setting output {0}: {1}".format(item._ow_path['path'], e))
+                    self.logger.warning("Problem setting output {0}: {1}".format(item._ow_path['path'], e))
                     
     def get_items(self):
         return self._items

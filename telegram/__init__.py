@@ -162,17 +162,23 @@ class Telegram(SmartPlugin):
                   *_, num = t.name.split('_')
                   t.name = 'Telegram Worker {}'.format(num) if num.isnumeric() else num
 
-            except:
-                self.logger.warning("Could not assign pretty names to Telegrams threads, maybe object model of python-telegram-bot module has changed? Please inform the author of plugin!")
+                # from telegram.jobqueue.py @ line 301 thread is named
+                # name="Bot:{}:job_queue".format(self._dispatcher.bot.id)
+                t = self._updater.job_queue._JobQueue__thread
+                if t.name.startswith('Bot'):
+                    _, id, _ = t.name.split(':')
+                    self._updater.job_queue._JobQueue__thread.name = "Telegram JobQueue for id {}".format(id)
+            except Exception as e:
+                self.logger.warning("Error '{}' occurred. Could not assign pretty names to Telegrams threads, maybe object model of python-telegram-bot module has changed? Please inform the author of plugin!".format(e))
         self.logger.debug("started polling the updater, Queue is {}".format(q))
         self.msg_broadcast(self._welcome_msg)
         self.logger.debug("sent welcome message {}")
 
     def stop(self):
-        self.alive = False
         """
         This is called when the plugins thread is about to stop
         """
+        self.alive = False
         try:
             self.logger.debug("stop telegram plugin")
             self.msg_broadcast(self._bye_msg)

@@ -80,18 +80,18 @@ above could look like this:
 
 .. code-block:: JSON
 
-    {
-        "items": [
-          ["wohnung.hauswirtschaft.deckenlicht", False],
-          ["wohnung.hauswirtschaft.waschmaschine", True],
-          ["wohnung.hauswirtschaft.waschmaschine.status", 1],
-          ["wohnung.hauswirtschaft.waschmaschine.ma", 37],
-          ["wohnung.hauswirtschaft.trockner", True],
-          ["wohnung.hauswirtschaft.trockner.status", 1],
-          ["wohnung.hauswirtschaft.trockner.ma", 0]
-        ]
-        "cmd": "item"
-    }
+  {
+    "items": [
+      ["wohnung.hauswirtschaft.deckenlicht", false],
+      ["wohnung.hauswirtschaft.waschmaschine", true],
+      ["wohnung.hauswirtschaft.waschmaschine.status", 1],
+      ["wohnung.hauswirtschaft.waschmaschine.ma", 37],
+      ["wohnung.hauswirtschaft.trockner", true],
+      ["wohnung.hauswirtschaft.trockner.status", 1],
+      ["wohnung.hauswirtschaft.trockner.ma", 0]
+    ],
+    "cmd": "item"
+  }
 
 Additionally, the plugin initiates an update routine, which sends
 updates for item values, if the item in smarthome.py has changed. For
@@ -189,23 +189,23 @@ The answer to the request above could look like this:
 
   {
     "series": [
-        (1460636598495, 1831.97),
-        (1460637648422, 1458.14),
-        (1460639298307, 757.22),
-        (1460641098243, 577.38),
-        ... (102 values in total)
-        (1460802051217, 740.61),
-        (1460803884973, 637.61),
-        (1460805521319, 744.41),
-        (1460807229532, 718.03),
-        (1460808823757, 681.25),
-        (1460809294663, 681.25)
+        [1460636598495, 1831.97],
+        [1460637648422, 1458.14],
+        [1460639298307, 757.22],
+        [1460641098243, 577.38],
+        "... 102 values in total",
+        [1460802051217, 740.61],
+        [1460803884973, 637.61],
+        [1460805521319, 744.41],
+        [1460807229532, 718.03],
+        [1460808823757, 681.25],
+        [1460809294663, 681.25]
     ],
     "cmd": "series",
     "params": {
-      "end": 'now',
+      "end": "now",
       "start": 1460809294663,
-      "update": True,
+      "update": true,
       "item": "wohnung.verteilung.zaehler.wirkleistung",
       "step": 1728000.01,
       "func": "avg",
@@ -230,8 +230,8 @@ updates for series values after a defined period of time. For example:
 
     {
       "series": [
-        (1460810141323, 711.25),
-        (1460811024119, 711.25)
+        [1460810141323, 711.25],
+        [1460811024119, 711.25]
         ],
       "cmd": "series",
       "sid": "wohnung.verteilung.zaehler.wirkleistung|avg|48h|now"

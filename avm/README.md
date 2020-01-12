@@ -420,19 +420,19 @@ avm:
                 # these items need to be child items from network_device
                 ip:
                     type: str
-                    avm_data_type@fritzbox_7490: device_ip
+                    avm_data_type@wlan_repeater_1750: device_ip
                     visu_acl: ro
 
                 # these items need to be child items from network_device
                 connection_type:
                     type: str
-                    avm_data_type@fritzbox_7490: device_connection_type
+                    avm_data_type@wlan_repeater_1750: device_connection_type
                     visu_acl: ro
 
                 # these items need to be child items from network_device
                 hostname:
                     type: str
-                    avm_data_type@fritzbox_7490: device_hostname
+                    avm_data_type@wlan_repeater_1750: device_hostname
                     visu_acl: ro
 
             iPhone:
@@ -445,19 +445,19 @@ avm:
                 # these items need to be child items from network_device
                 ip:
                     type: str
-                    avm_data_type@fritzbox_7490: device_ip
+                    avm_data_type@wlan_repeater_1750: device_ip
                     visu_acl: ro
 
                 # these items need to be child items from network_device
                 connection_type:
                     type: str
-                    avm_data_type@fritzbox_7490: device_connection_type
+                    avm_data_type@wlan_repeater_1750: device_connection_type
                     visu_acl: ro
 
                 # these items need to be child items from network_device
                 hostname:
                     type: str
-                    avm_data_type@fritzbox_7490: device_hostname
+                    avm_data_type@wlan_repeater_1750: device_hostname
                     visu_acl: ro
 
         fritzbox_7490:

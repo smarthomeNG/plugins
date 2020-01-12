@@ -1,0 +1,80 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Steuerung von Shelly Devices, welches das MQTT Module von SmartHomeNG zur Kommunikation nutzt.'
+        en: 'Plugin to control Shelly devices which utilizes the MQTT module of SmartHomeNG for communication'
+    maintainer: msinn
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: iot
+#    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451853-support-thread-für-das-shelly-plugin
+
+    version: 1.1.0                 # Plugin version
+    sh_minversion: 1.6a            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    restartable: unknown
+    classname: Shelly              # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    shelly_id:
+        type: str
+        description:
+            de: 'ID des Shelly devices'
+            en: 'ID of the Shelly device'
+
+    shelly_type:
+        type: str
+        valid_list:
+            - shellyplug
+            - shellyplug-s
+            - shelly1pm
+            - shellyswitch
+            - shellyswitch25
+            - shelly4pro
+        description:
+            de: "Typ des Shelly Devices (z.B. Shellyplug, Shellyplug-s, Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
+            en: "Type of Shelly device (e.g. Shellyplug, Shellyplug-s. Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
+
+    shelly_attr:
+        type: str
+        default: relay
+        valid_list:
+            - relay
+            - power
+            - energy
+            - online
+            - temp
+            - temp_f
+        description:
+            de: "Zu lesendes/schreibendes Attribut des Shelly Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
+            en: "Attribute of Shelly devcie that shall be read/written. Note: Not every attribute is available on all device types"
+
+    shelly_relay:
+        type: str
+        default: '0'
+        valid_list:
+          - '0'
+          - '1'
+          - '2'
+          - '3'
+        description:
+            de: "Nummer des zu schaltenden Relais"
+            en: "Number of the relay to use for switching"
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters:
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

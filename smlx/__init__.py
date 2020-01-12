@@ -79,7 +79,7 @@ start_sequence = bytearray.fromhex('1B 1B 1B 1B 01 01 01 01')
 end_sequence = bytearray.fromhex('1B 1B 1B 1B 1A')
 SML_SCHEDULER_NAME = 'Smlx'
 
-class Sml(SmartPlugin):
+class Smlx(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items

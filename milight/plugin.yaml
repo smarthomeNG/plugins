@@ -7,7 +7,7 @@ plugin:
         en: 'Support of Milight Lights'
     maintainer: bmxp
     tester: sisamiwe                # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    state: ready                    # change to ready when done with development
     keywords: milight bulb 
     documentation: http://smarthomeng.de/user/plugins/milight/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
@@ -16,7 +16,7 @@ plugin:
     version: 1.6.0                  # Plugin version
     sh_minversion: 1.5              # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False           # plugin supports multi instance
+    multi_instance: True            # plugin supports multi instance
     restartable: unknown
     classname: Milight              # class containing the plugin
 
@@ -71,32 +71,56 @@ item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     milight_sw:
         type: list(int)
-        
+        description:
+            de: 'Spezifiziert den Kanal der geschaltet werden soll'
+            en: 'Specifies channel that should be SWITCHED(on/off)'
+            
     milight_dim:
         type: list(int)
+        description:
+            de: 'Spezifiziert den Kanal der gedimmt werden soll'
+            en: 'Specifies channel that should be dimmed'
         
     milight_col:
         type: list(int)
-        
+        description:
+            de: 'Spezifiziert den Kanal dessen Farbton geändert werden soll'
+            en: 'Specifies channel to change hue color ring'
+
     milight_rgb:
         type: list(int)
-        
+        description:
+            de: 'Spezifiziert den Kanal der auf definierten RGB Wert gesetzt werden soll'
+            en: 'Specifies channel that should be switched to defined RGB value'
+
     milight_white:
         type: list(int)
+        description:
+            de: 'Spezifiziert den Kanal der auf weiß gesetzt werden soll'
+            en: 'Specifies channel that should be switched to white'
         
     milight_disco:
         type: list(int)
+        description:
+            de: 'Aktiviert und invertiert Disco Modus'
+            en: 'Activates and toggles DISCO modes'
         
     milight_disco_up:
         type: list(int)
-        
+        description:
+            de: 'Erhöht die Geschwindigkeit des Disco Modus'
+            en: 'Increases Speed of DISCO mode'
+
     milight_disco_down:
         type: list(int)
+        description:
+            de: 'Vermindert die Geschwindigkeit des Disco Modus'
+            en: 'Decreases Speed of DISCO mode'
     
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
-plugin_functions:
+plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 
 logic_parameters: NONE
