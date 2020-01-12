@@ -38,11 +38,11 @@ parameters:
             de: 'Port für SNMP Abfrage'
             en: ''
             
-    snmp_communitiy:
+    snmp_community:
         type: str
         default: ''
         description:
-            de: 'Communitiy für SNMP Abfrage'
+            de: 'Community für SNMP Abfrage'
             en: ''
 
 item_attributes:
@@ -55,7 +55,7 @@ item_attributes:
     snmp_prop:
         type: str
         description:
-            de: 'OID des Elements'
+            de: 'Eigenschaft des Elements'
             en: ''
 
 item_structs: NONE

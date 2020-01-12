@@ -59,12 +59,13 @@ class Snmp(SmartPlugin):
         self._sh = self.get_sh()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.instance = self.get_parameter_value('instance')    # the instance of the plugin for questioning multiple smartmeter
-        self.cycle = int(self.get_parameter_value('cycle'))      # the frequency in seconds how often the device should be accessed
-        self.host = self.get_parameter_value('snmp_host')
-        self.port = int(self.get_parameter_value('snmp_port'))
-        self.communitiy = self.get_parameter_value('snmp_communitiy')
-
+        self.instance = self.get_parameter_value('instance')        # the instance of the plugin for questioning multiple smartmeter
+        self.cycle = self.get_parameter_value('cycle')              # the frequency in seconds how often the query shoud be done
+        self.host = self.get_parameter_value('snmp_host')           # IP Adress of the network device to be queried
+        self.port = self.get_parameter_value('snmp_port')           # Port for SNMP queries
+        self.community = self.get_parameter_value('snmp_community') # SNMP Community
+        self.logger.debug(self.community)
+        
         # Initialization code goes here
         self._items = {}                    # Temperature, etc. populated in parse_item
 
@@ -74,7 +75,7 @@ class Snmp(SmartPlugin):
         """
         
         # log
-        self.logger.debug("Instance {} of SNMP configured to use host '{}' with update cycle of {} seconds".format( self.instance if self.instance else 0,self.host, self.cycle))
+        self.logger.debug("Instance {} of SNMP configured to use host '{}' with update cycle of {} seconds and Community {}".format( self.instance if self.instance else 0,self.host, self.cycle, self.community))
         #if self.logger.isEnabledFor(logging.DEBUG):
         #    self.logger.debug("init {} done".format(__name__))
         
@@ -155,7 +156,7 @@ class Snmp(SmartPlugin):
                 item = self._items[oid][prop]['item']
                 
                 host = self.host
-                community = self.communitiy
+                community = self.community
                 oid = oid
                 prop = prop
                 if self.logger.isEnabledFor(logging.DEBUG):

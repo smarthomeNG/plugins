@@ -105,14 +105,14 @@
 				</tr>
 			</thead>
 			<tbody>
-			{% for oid in items %}
+				{% for oid in p.get_items() %}
 				<tr>
-					<td class="py-1">{{ item._path }}</td>
-					<td class="py-1">{{ item._type }}</td>
-					<td class="py-1">{{ item() }}</td>
-					<td class="py-1">{{ item.conf['oid'] }}</td>
-				</tr>
-			{% endfor %}
+					<td class="py-1">{{ oid._path }}</td>
+					<td class="py-1">{{ oid._type }}</td>
+					<td class="py-1">{{ oid() }}</td>
+					<td class="py-1">{{ p.get_iattr_valeu(oid.conf,'oid') }}</td>
+					</tr>
+				{% endfor %}
 			</tbody>
         </table>
     </div>
