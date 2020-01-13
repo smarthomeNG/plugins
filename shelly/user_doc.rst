@@ -65,6 +65,8 @@ in SmartHomeNG noch nicht konfiguriert (mit einem Item vebunden) sind.
 .. image:: user_doc/assets/shelly-webif-devices.jpg
    :class: screenshot
 
+Ein Klick auf die Shelly ID öffnet die Shelly Konfigurationsseite des Devices.
+
 
 Broker Information
 ------------------

@@ -150,7 +150,7 @@
 	</thead>
 	{% for device in p.shelly_devices %}
 		<tr>
-			<td class="py-1">{{ device }}</td>
+			<td class="py-1"><a class="text-shng" href="http://{{ p.shelly_devices[device].ip }}" target="_blank">{{ device }}</a></td>
 			<td class="py-1">{{ p.shelly_devices[device].online }}</td>
 			<td class="py-1">{{ p.shelly_devices[device].mac }}</td>
 			<td class="py-1">{{ p.shelly_devices[device].ip }}</td>
