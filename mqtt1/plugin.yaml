@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: protocol                 # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Implementierung eines MQTT Clients. Umfassendere Implementierung des MQTT Protokolls v3.1.1'
-        en: 'Implementation of a MQTT client. Feature enriched implementation of the MQTT protocol v3.1.1'
+        de: 'Alte Implementierung eines MQTT Clients mit Implementierung des MQTT Protokolls v3.1.1 - Starttdessen MQTT v2.x Plugin nutzen!'
+        en: 'Deprecated Implementation of a MQTT client with implementation of the MQTT protocol v3.1.1 - Use MQTT v2.x plugin instead'
     description_long:                  # Alternative: description in multiple languages
         de: 'Dieses Plugin implementiert die Funktionalität, damit SmartHomeNG als ein MQTT
              Client agieren kann.\n
@@ -49,7 +49,7 @@ plugin:
         en: ''
     maintainer: msinn
 #    tester:                        # Who tests this plugin?
-    state: ready
+    state: deprecated
     keywords: iot
     documentation: http://smarthomeng.de/user/plugins/mqtt/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin
