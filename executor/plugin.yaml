@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: system                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Executor Plugin für SmartHomeNG v1.5 und höher'
-        en: 'Executor plugin for SmartHomeNG v1.5 and up'
+        de: 'Ausführen von Python Statements im Kontext von SmartHomeNG v1.5 und höher'
+        en: 'Execute Python statements in the context of SmartHomeNG v1.5 and up'
     maintainer: bmxp
 #    tester:                         # Who tests this plugin?
     state: develop                  # change to ready when done with development

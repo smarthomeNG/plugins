@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: gateway                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Rpi1Wire Plugin für SmartHomeNG v1.5 und höher auf Respberry Pi'
-        en: 'Rpi1Wire plugin for SmartHomeNG v1.5 and up with Raspberry Pi'
+        de: 'Plugin für den Rapberry Pi. Erlaubt den einfachen Zugriff auf 1-Wire Sensoren. Getestet mit Raspberry Pi B und dem Temperatursensor DS18B20'
+        en: 'Plugin developed for the Raspberry Pi. It allows easy access to 1-Wire sensors. Tested with the Raspberry Pi B and the temperature sensor DS18B20'
         fr: 'Support de 1-Wire à travers Raspberry Pi sur SmartHomeNG v1.5 et plus'
 
     maintainer: bmxp

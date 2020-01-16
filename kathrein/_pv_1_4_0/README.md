@@ -3,10 +3,6 @@
 ## Requirements
 This plugin has no requirements or dependencies.
 
-## ToDo
-
-The webinterface needs to be implemented
-
 ## Configuration
 
 ### plugin.yaml
