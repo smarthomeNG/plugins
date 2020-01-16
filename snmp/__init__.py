@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2014 Marcus Popp                         marcus@popp.mx
-#  Copyright 2019-2020 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2019-2020 Michael Wenzel               wenzel_michael@web.de
 #########################################################################
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #

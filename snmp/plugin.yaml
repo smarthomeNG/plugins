@@ -1,11 +1,11 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: interface                  # plugin type (gateway, interface, protocol, system, web)
+    type: protocol                  # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'SNMP'
-        en: ''
-    maintainer: tbd
+        de: 'SNMP Queries'
+        en: 'SNMP Queries'
+    maintainer: Michael Wenzel
     state: develop                 # change to ready when done with development
 
     version: 1.6.0                 # Plugin version
@@ -29,21 +29,21 @@ parameters:
         default: ''
         description:
             de: 'IP-Adresse des abzufragenden Gerätes'
-            en: ''
+            en: 'ip adress pf device to be queried'
 
     snmp_port:
         type: num
         default: 161
         description:
             de: 'Port für SNMP Abfrage'
-            en: ''
+            en: 'port for snmp queries'
             
     snmp_community:
         type: str
         default: ''
         description:
             de: 'Community für SNMP Abfrage'
-            en: ''
+            en: 'commnity for snmp queries'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -51,12 +51,12 @@ item_attributes:
         type: str
         description:
             de: 'OID des Elements'
-            en: ''
+            en: 'oid of queried element'
     snmp_prop:
         type: str
         description:
-            de: 'Eigenschaft des Elements'
-            en: ''
+            de: 'Eigenschaft des Elements (value oder string'
+            en: 'proterty of queried element (value or string)'
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin
