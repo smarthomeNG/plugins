@@ -72,10 +72,10 @@ Here is a short sample configuration:
 nas:
     cpu_temp:
         name: CPU-Temperatur in °C
-   		type: num
+        type: num
         snmp_oid: '1.3.6.1.4.1.24681.1.2.5.0'
         snmp_prop: 'value'
-		
+
     cpu_usage:
         name: CPU-Auslastung [0-1]
         type: num
