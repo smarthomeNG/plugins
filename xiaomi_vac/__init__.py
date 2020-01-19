@@ -127,13 +127,13 @@ class Robvac(SmartPlugin):
             if self._data['clean_ids'] != None:
                 #self._data['clean_ids'] = self._data['clean_ids'].sort(reverse=True)
                 self._data['clean_details_last0'] = self.vakuum.clean_details(self._data['clean_ids'][0],return_list=True)
-                self._data['last0_area'] =          round(self._data['clean_details_last'][0].area,2)
-                self._data['last0_complete'] =      self._data['clean_details_last'][0].complete
-                self._data['last0_duration'] =      round(self._data['clean_details_last'][0].duration.total_seconds()/ 3600,2)
-                self._data['last0_start_date'] =    self._data['clean_details_last'][0].start.strftime("%d.%m.%Y")
-                self._data['last0_start_time'] =    self._data['clean_details_last'][0].start.strftime("%H:%M")                 
-                self._data['last0_end_date'] =      self._data['clean_details_last'][0].start.strftime("%d.%m.%Y")
-                self._data['last0_end_time'] =      (self._data['clean_details_last'][0].start+self._data['clean_details_last0'][0].duration).strftime("%H:%M")
+                self._data['last0_area'] =          round(self._data['clean_details_last0'][0].area,2)
+                self._data['last0_complete'] =      self._data['clean_details_last0'][0].complete
+                self._data['last0_duration'] =      round(self._data['clean_details_last0'][0].duration.total_seconds()/ 3600,2)
+                self._data['last0_start_date'] =    self._data['clean_details_last0'][0].start.strftime("%d.%m.%Y")
+                self._data['last0_start_time'] =    self._data['clean_details_last0'][0].start.strftime("%H:%M")                 
+                self._data['last0_end_date'] =      self._data['clean_details_last0'][0].start.strftime("%d.%m.%Y")
+                self._data['last0_end_time'] =      (self._data['clean_details_last0'][0].start+self._data['clean_details_last0'][0].duration).strftime("%H:%M")
                 
                 self._data['clean_details_last1'] = self.vakuum.clean_details(self._data['clean_ids'][1],return_list=True)
                 self._data['last1_area'] =          round(self._data['clean_details_last1'][0].area,2)
@@ -162,7 +162,7 @@ class Robvac(SmartPlugin):
                 self._data['last3_end_date'] =      self._data['clean_details_last3'][0].start.strftime("%d.%m.%Y")
                 self._data['last3_end_time'] =      (self._data['clean_details_last3'][0].start+self._data['clean_details_last3'][0].duration).strftime("%H:%M")
                 
-                self.logger.debug("Xiaomi_Robvac: Historische id1 {}, id2{}, id3 {}".format(self._data['clean_details_last'],
+                self.logger.debug("Xiaomi_Robvac: Historische id1 {}, id2{}, id3 {}".format(self._data['clean_details_last0'],
                                                                                             self._data['clean_details_last1'],
                                                                                             self._data['clean_details_last2']))
                                                                                             
@@ -254,7 +254,7 @@ class Robvac(SmartPlugin):
                 self.logger.debug("Xiaomi_Robvac: Update item {1} mit key {0} = Wert {2}".format(x, self.messages[x], self._data[x]))
                 item = self.messages[x]
                 item(self._data[x], 'Xiaomi Robovac')
-
+                
 
     # ----------------------------------------------------------------------------------------------
     # Befehl senden, wird aufgerufen wenn sich item  mit robvac ändert!
