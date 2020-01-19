@@ -579,7 +579,9 @@ class AVM(SmartPlugin):
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
         self._calllist_cache = []
-
+        self.logger.debug("Plugin initialized with host: %s, port: %s, ssl: %s, verify: %s, user: %s, call_monitor: %s"
+                          % (self._fritz_device.get_host(), self._fritz_device.get_port(), self._fritz_device.is_ssl(),
+                             self._verify, self._fritz_device.get_user(), self._call_monitor))
         if not self.init_webinterface():
             self._init_complete = False
 
