@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+#########################################################################
+#  Copyright 2019                                   wenzel_michael@web.de
+#########################################################################
+#
+#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#
+#  SmartHomeNG is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  SmartHomeNG is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#########################################################################
+
+import logging
+import time
+import re
+import threading
+import struct
+import socket
+from puresnmp import get
+
+from lib.module import Modules
+
+from lib.model.smartplugin import *
+
+if __name__ == '__main__':
+    logger = logging.getLogger(__name__)
+    logger.debug("init standalone {}".format(__name__))
+    logging.getLogger().setLevel( logging.DEBUG )
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    # just like print
+    formatter = logging.Formatter('%(message)s')
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logging.getLogger().addHandler(ch)
+else:
+    logger = logging.getLogger()
+    logger.debug("init plugin component {}".format(__name__))
+
+SNMP_SCHEDULER_NAME = 'Snmp'
+
+class Snmp(SmartPlugin):
+
+    PLUGIN_VERSION = '1.6.0'
+
+    def __init__(self, sh, *args, **kwargs):
+        self.cycle = int(self.get_parameter_value('cycle'))
+        self.host = self.get_parameter_value('snmp_host')
+        self.port = int(self.get_parameter_value('snmp_port'))
+        self.communitiy = self.get_parameter_value('snmp_communitiy')
+
+        self._items = {}
+        self.logger = logging.getLogger(__name__)
+
+    def run(self):
+        self.log_debug(" '{}': run method called".format(self.get_fullname()))
+        # setup scheduler for device poll loop
+        self.scheduler_add(SNMP_SCHEDULER_NAME, self.poll_data, cycle=self.cycle)
+  
+        self.alive = True
+        # if you need to create child threads, do not make them daemon = True!
+        # They will not shutdown properly. (It's a python bug)
+
+    def stop(self):
+        self.log_debug(" '{}': stop method called".format(self.get_fullname()))
+        self.scheduler_remove(SNMP_SCHEDULER_NAME)
+        self.alive = False
+
+    def parse_item(self, item):
+            
+        if self.has_iattr(item.conf, 'snmp_oid'):
+            #self.log_debug(item)
+            oid = self.get_iattr_value(item.conf, 'snmp_oid')
+            #self.log_debug('OID {} found!'.format(oid))
+            #self.log_debug(oid)
+            prop = self.get_iattr_value(item.conf, 'snmp_prop') if self.has_iattr(item.conf, 'snmp_prop') else 'valueReal'
+            #self.log_debug('Prop {} defined!'.format(prop))
+            #self.log_debug(prop)
+            host = self.host
+            
+            if not oid in self._items:
+                self._items[oid] = {'host': host, 'prop': prop, 'items': item}
+                self.log_debug(self._items)
+                self.log_debug("if")
+            elif not item in self._items[oid]:
+                self.log_debug("elif")
+                self._items[oid]['host'].append(host)
+                self._items[oid]['prop'].append(prop)
+                self._items[oid]['items'].append(item)
+
+            self.log_debug(self._items)
+            self.log_debug('Attach {} {} {} {}'.format(item.id(), oid, host, prop))
+            
+            return self.update_item
+        return None
+
+    def parse_logic(self, logic):
+        pass
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        if caller != self.get_shortname():
+            # code to execute, only if the item has not been changed by this this plugin:
+            self.log_info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            pass
+
+    def parse(self, data):
+        return values
+    
+    def log_debug(self, text):    
+        self.logger.debug('SNMP: {}'.format(text))
+
+    def log_info(self, text):    
+        self.logger.info('SNMP: {}'.format(text))
+
+    def log_err(self, text):    
+        self.logger.error('SNMP: {}'.format(text))
+
+    def poll_data(self):
+        self.log_debug('Polling Data now')
+        for oid in self._items:
+            host = self._items[oid]['host']
+            prop = self._items[oid]['prop']
+            community = self.communitiy
+            self.log_debug('Poll with {} {} {} '.format(oid, host, community))
+            # Request data
+            response = get(host, community, oid)
+            self.log_debug('Successfully received response: {}'.format(response))
+            # Transform response
+            if prop == 'temp':
+                response = response.decode('utf8')
+                len = response.index(" ")
+                response = int(response[:(len)])
+            elif prop == 'div10':
+                response = int(response) / 10
+            #Set item value
+            for item in self._items[oid]['items']:
+                self.log_debug(item)
+                item(response, 'SNMP')
