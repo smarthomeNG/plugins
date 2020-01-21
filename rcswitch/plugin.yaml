@@ -39,7 +39,7 @@ parameters:
             en: "Minimum time in s between sending commands"
 
     rcswitch_host:
-        type: str
+        type: ip
         default: ''
         description:
             de: "IP oder HOSTNAME des rcswitch hosts, falls das System nicht auf dieser SmartHomeNG-Maschine läuft. \
