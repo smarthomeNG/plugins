@@ -1873,7 +1873,6 @@ class AVM(SmartPlugin):
                                               auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                                   self._fritz_device.get_password()),
                                               verify=self._verify)
-                self.logger.debug("%s %s %s %s %s %s" % (url, soap_data, self._timeout, headers, self._fritz_device.get_user(), self._fritz_device.get_password(), self._verify))
             except Exception as e:
                 if self._fritz_device.is_available():
                     self.logger.error("Exception when sending POST request, method _update_fritz_device_info: %s" % str(e))
