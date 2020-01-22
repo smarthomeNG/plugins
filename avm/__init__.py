@@ -1281,7 +1281,7 @@ class AVM(SmartPlugin):
                 self._monitoring_service.disconnect()
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request, method reboot: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1326,7 +1326,7 @@ class AVM(SmartPlugin):
                                           verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request, method get_hosts: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1364,7 +1364,7 @@ class AVM(SmartPlugin):
                                           verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request, method get_host_details: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1400,7 +1400,7 @@ class AVM(SmartPlugin):
                                verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request, method reconnect: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1425,7 +1425,7 @@ class AVM(SmartPlugin):
                                           verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request, method get_call_origin: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1466,7 +1466,7 @@ class AVM(SmartPlugin):
                                           verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request, method get_phone_name: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1501,7 +1501,7 @@ class AVM(SmartPlugin):
                                verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request, method set_call_origin: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1527,7 +1527,7 @@ class AVM(SmartPlugin):
                                verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request, method start_call: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1550,7 +1550,7 @@ class AVM(SmartPlugin):
                                verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request, mathod cancel_call: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1660,7 +1660,7 @@ class AVM(SmartPlugin):
             xml = minidom.parseString(response.content)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request: %s" % str(e))
+                self.logger.error("Exception when sending POST request. method _update_host: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1873,9 +1873,10 @@ class AVM(SmartPlugin):
                                               auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                                   self._fritz_device.get_password()),
                                               verify=self._verify)
+                self.logger.debug("%s %s %s %s %s %s" % (url, soap_data, self._timeout, headers, self._fritz_device.get_user(), self._fritz_device.get_password(), self._verify))
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.logger.error("Exception when sending POST request, method _update_fritz_device_info: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
@@ -1950,7 +1951,7 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.logger.error("Exception when sending POST request, method _update_tam: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
@@ -2059,7 +2060,7 @@ class AVM(SmartPlugin):
 
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.logger.error("Exception when sending POST request, method _update_wlan_config: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
@@ -2125,7 +2126,7 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.logger.error("Exception when sending POST request, method _update_wan_dsl_interface_config: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
@@ -2201,7 +2202,7 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.logger.error("Exception when sending POST request, method _update_wan_common_interface_configuration: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
@@ -2315,7 +2316,7 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request: %s" % str(e))
+                    self.logger.error("Exception when sending POST request, method _update_wan_ip_connection: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
