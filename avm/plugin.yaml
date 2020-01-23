@@ -42,7 +42,7 @@ parameters:
             en: '(optional) Hostname or ip address of the FritzDevice.'
     port:
         type: int
-        default: 49433
+        default: 49443
         description:
             de: '(optional) Port des FritzDevice, normalerweise 49433 für https oder 49000 für http'
             en: '(optional) Port of the FritzDevice, typically 49433 for https or 49000 for http'

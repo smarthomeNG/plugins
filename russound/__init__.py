@@ -95,11 +95,11 @@ class Russound(SmartPlugin,lib.connection.Client):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-#        if 'rus_src' in item.conf:
-#            s = int(item.conf['rus_src'])
-#            self.sources[s] = {'s': s, 'item':item}
-#            logger.debug("Source {0} added".format(s))
-#            return None
+        # if self.has_iattr(item.conf,'rus_src'):
+        #     s = int(self.get_iattr_value(item.conf,'rus_src'))
+        #     self.sources[s] = {'s': s, 'item':item}
+        #     self.logger.debug("Source {0} added".format(s))
+        #     return None
 
         if self.has_iattr(item.conf, 'rus_path'):
             self.logger.debug("parse item: {}".format(item))
@@ -108,7 +108,7 @@ class Russound(SmartPlugin,lib.connection.Client):
             parts = path.split('.', 2)
 
             if len(parts) is not 3:
-                logger.warning(
+                self.logger.warning(
                     "Invalid Russound path with value {0}, format should be 'c.z.p' c = controller, z = zone, p = parameter name.".format(path))
                 return None
 
@@ -127,7 +127,7 @@ class Russound(SmartPlugin,lib.connection.Client):
                 z = self.get_iattr_value(item.conf,'rus_zone')
                 path += z + '.'
             else:
-                logger.warning(
+                self.logger.warning(
                     "No zone specified for controller {0} in config of item {1}".format(c, item))
                 return None
 
@@ -135,7 +135,7 @@ class Russound(SmartPlugin,lib.connection.Client):
                 param = self.get_iattr_value(item.conf,'rus_parameter')
                 path += param
             else:
-                logger.warning(
+                self.logger.warning(
                     "No parameter specified for zone {0} on controller {1} in config of item {2}".format(z, c, item))
                 return None
 
@@ -148,7 +148,7 @@ class Russound(SmartPlugin,lib.connection.Client):
         param = param.lower()
         self.params[path] = {'c':
                              int(c), 'z': int(z), 'param': param, 'item': item}
-        logger.debug("Parameter {0} with path {1} added".format(item, path))
+        self.logger.debug("Parameter {0} with path {1} added".format(item, path))
 
         return self.update_item
 
@@ -246,7 +246,7 @@ class Russound(SmartPlugin,lib.connection.Client):
         self._send_cmd('WATCH System ON\r')
 
     def _send_cmd(self, cmd):
-        logger.debug("Sending request: {0}".format(cmd))
+        self.logger.debug("Sending request: {0}".format(cmd))
 
         # if connection is closed we don't wait for sh.con to reopen it
         # instead we reconnect immediatly
@@ -256,13 +256,18 @@ class Russound(SmartPlugin,lib.connection.Client):
         self.send(cmd.encode())
 
     def found_terminator(self, resp):
-        resp = resp.decode()
         try:
-            logger.debug("Parse response: {0}".format(resp))
+            resp = resp.decode()
+        except Exception as e:
+            self.logger.error("found_terminator: exception in decode: {}".format(e))
+            return
+
+        try:
+            self.logger.debug("Parse response: {0}".format(resp))
             if resp[0] == 'S':
                 return
             if resp[0] == 'E':
-                logger.debug("Received response error: {0}".format(resp))
+                self.logger.debug("Received response error: {0}".format(resp))
             elif resp[0] == 'N':
                 resp = resp[2:]
 
@@ -293,7 +298,7 @@ class Russound(SmartPlugin,lib.connection.Client):
 #                                child(unicode(value, 'utf-8'), 'Russound')
                     return
         except Exception as e:
-            logger.error(e)
+            self.logger.error(e)
 
     def _decode(self, cmd, value):
         cmd = cmd.lower()

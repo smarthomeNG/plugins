@@ -18,7 +18,7 @@ memlog:
     class_name: MemLog
     class_path: plugins.memlog
     name: alert
-    mappings:
+    mappings: 
       - time
       - thread
       - level
@@ -43,9 +43,10 @@ This will give the in-memory log a name which can be used when accessing them.
 This configures the list of values which are logged for each log message. The following
 internal mappings can be used and will be automatically set - if not given explicitely
 when logging data:
-* `time` - the timestamp of log
-* `thread` - the thread logging data
-* `level` - the log level (defaults to INFO)
+
+* ``time`` - the timestamp of log
+* ``thread`` - the thread logging data
+* ``level`` - the log level (defaults to INFO)
 
 #### maxlen attribute
 
@@ -56,8 +57,18 @@ Defines the maximum amount of log entries in the in-memory log.
 Each time an item is updated using the `memlog` configuration setting, a log entry will
 be written using the list of items configured in this attribute as log values.
 
-When this is not configured, the default mapping values will be used the associated
-item's value will be logged.
+If items are defined, then four items should be named, 
+each with the following purpose:
+
+    * Item A - the value of this item is entered as the timestamp
+    * Item B - the value of this item is entered as the thread info
+    * Item C - the value of this item is entered as the level of log message
+    * Item D - the value of this item is entered as the message
+
+Using Items this way it is possible to set the values of those items first
+and then trigger the item which has the ``memlog`` attribute.
+
+When the items attribute is not configured, the default mapping values will be used and the value of the item will be logged which has the ``memlog`` attribute.
 
 ### items.yaml
 
@@ -79,6 +90,8 @@ some:
         memlog: alert
 ```
 
+An update to item ``some.item`` will cause a log entry to be generated with the value of item ``some.item``.
+
 ### logic.yaml
 
 #### memlog
@@ -92,7 +105,7 @@ Defines the message to be logged. It configures a string which may contain place
 which got replaced by using the `format()` function.
 
 The following placeholders or object can be used in the message string:
-* `logic` - the logic object, e.g. logic.name for the logic's name
+* `logic` - the logic object. A format of ``{logic.name}`` will include the logics name
 * `plugin` - the memlog plugin instance object
 * `by` - the string containing the origin of logic trigger
 * `source` - the source
@@ -109,8 +122,7 @@ memlog_message: The logic {logic.name} was triggered!
 
 ## Methods
 
-The `memlog()` method name is the plugin name which is used in the plugin configuration.
-If you use another name, you need to use this name as method name too.
+The plugin name defined it ``etc/plugin.yaml`` can be used as callable.
 
 ### memlog(entry)
 This log the given list of elements of `entry` parameter. The list should have the same amount
@@ -124,5 +136,35 @@ This log the given message in `msg` parameter with the default log level.
 
 ### memlog(lvl, msg)
 
-This logs the message in `msg` parameter with the given log level specified in `lvl`
+This logs the message in ``msg`` parameter with the given log level specified in ``lvl``
 parameter.
+
+### Examples
+
+Given the following base snippet of ``etc/plugin.yaml``:
+
+```yaml
+my_memlog:
+    plugin_name: memlog
+    name: my_personal_memlog
+```
+
+The following expressions (e.g. in a logic)
+
+```python
+sh.my_memlog("DEBUG","Debug Message")
+sh.my_memlog("Hello world!")  # info
+sh.my_memlog("WARNING","This is a warning!")
+sh.my_memlog("ERROR","This is already an error!!")
+sh.my_memlog("CRITICAL","This is critical, just shutdown everything!!!")
+```
+
+together with this definition in SmartVISU pages:
+
+```html
+{{ status.log('log_id', 'my_personal_memlog', 10) }}
+```
+
+will show a screen like this:
+
+![Screenshot of messages displayed with SmartVISU](callable.png "Result with SmartVISU")

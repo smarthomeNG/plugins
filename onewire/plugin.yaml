@@ -6,8 +6,8 @@ plugin:
         en: '1-Wire support via owserver'
         fr: 'Support de 1-Wire à travers owserver'
     maintainer: bmxp
-    tester: '?'
-    state: develop
+    tester: 'henfri, chester4444'
+    state: ready
     keywords: 1wire onewire dallas ibutton sensor temperature humidity
     version: 1.6.0                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
