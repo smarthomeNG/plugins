@@ -79,7 +79,7 @@ Neato:
     IsScheduleEnabled:
       type: bool
       neato_isscheduleenabled: ''
-      visu_acl: ro
+      visu_acl: rw
     ChargePercentage:
       type: str
       neato_chargepercentage: ''

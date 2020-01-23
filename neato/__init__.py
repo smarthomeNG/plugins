@@ -38,8 +38,9 @@ class Neato(SmartPlugin):
 
         self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"))
 #        self.robot.update_robot()
-        self.logger.debug("Init completed.")
+        self._sh = sh
         self._cycle = 40
+        self.logger.debug("Init completed.")
         return
 
     def run(self):
@@ -53,9 +54,8 @@ class Neato(SmartPlugin):
         self.alive = False
 
     def parse_item(self, item):
-        if self.has_iattr(item.conf, 'neato_command'):
-            return self.update_item
-
+        
+        # Status items:
         if self.has_iattr(item.conf, 'neato_name'):
             item.property.value = self.robot.name
             self._items.append(item)
@@ -84,12 +84,21 @@ class Neato(SmartPlugin):
             item.property.value = self.__get_state_action_string(self.robot.state_action)
             self._items.append(item)
 
+        # Command items that can be changed outside the plugin context:
+        if self.has_iattr(item.conf, 'neato_command'):
+            return self.update_item
+
+        elif self.has_iattr(item.conf, 'neato_isscheduleenabled'):
+            return self.update_item
+
+
     def parse_logic(self, logic):
         if 'xxx' in logic.conf:
             # self.function(logic['name'])
             pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
+        self.logger.debug("Update neato item: Caller: {0}, pluginname: {1}".format(caller,self.get_shortname() ))
         if caller != self.get_shortname():
             val_to_command = {
                 61: 'start',
@@ -107,6 +116,13 @@ class Neato(SmartPlugin):
                 else:
                     self.logger.warning("Update item: {}, item has no command equivalent for value '{}'".format(item.id(),item() ))
 
+            elif self.has_iattr(item.conf, 'neato_isscheduleenabled'):
+                if item._value == True:
+                    self.robot.robot_command("enableSchedule")
+                    self.logger.debug("enabling neato scheduler")
+                else:
+                    self.robot.robot_command("disableSchedule")
+                    self.logger.debug("disabling neato scheduler")
             pass
 
     def enable_schedule(self):
@@ -122,29 +138,33 @@ class Neato(SmartPlugin):
             return
 
         for item in self._items:
+
+            if not self.alive:
+                return
+
             if self.has_iattr(item.conf, 'neato_name'):
                 value = self.robot.name
-                item(value)
+                item(value, self.get_shortname())
 
             if self.has_iattr(item.conf, 'neato_chargepercentage'):
                 value = str(self.robot.chargePercentage)
-                item(value)
+                item(value, self.get_shortname())
 
             if self.has_iattr(item.conf, 'neato_isdocked'):
                 value = self.robot.isDocked
-                item(value)
+                item(value, self.get_shortname())
 
             if self.has_iattr(item.conf, 'neato_state'):
                 value = str(self.__get_state_string(self.robot.state))
-                item(value)
+                item(value, self.get_shortname())
 
             if self.has_iattr(item.conf, 'neato_state_action'):
                 value = str(self.__get_state_action_string(self.robot.state_action))
-                item(value)
+                item(value, self.get_shortname())
 
             if self.has_iattr(item.conf, 'neato_isscheduleenabled'):
                 value = self.robot.isScheduleEnabled 
-                item(value)
+                item(value, self.get_shortname())
         pass
 
     def __get_state_string(self,state):
