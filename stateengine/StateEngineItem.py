@@ -350,7 +350,9 @@ class SeItem:
             elif last_state is not None:
                 self.lastconditionset_set(_original_conditionset_id, _original_conditionset_name)
                 self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}", last_state.id, last_state.name, _original_conditionset_id)
+                self.__stateeval_in_progress = False
                 last_state.run_leave(self.__repeat_actions.get())
+                self.__stateeval_in_progress = True
                 _leaveactions_run = True
             if new_state.conditions.count() == 0:
                 self.lastconditionset_set('', '')
