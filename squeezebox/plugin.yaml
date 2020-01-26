@@ -232,19 +232,25 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: rescan ?
-                squeezebox_init: rescan ?
+                crontab: init = True
 
             progress:
-                type: str
+                type: num
                 visu_acl: ro
                 squeezebox_send: rescanprogress
                 squeezebox_recv: scanner notify
+
+                result:
+                    type: str
+                    squeezebox_recv: rescanprogress
+                    on_update: .. = value.split(":")[1]
 
                 query:
                     type: bool
                     visu_acl: rw
                     enforce_updates: True
                     squeezebox_send: rescanprogress
+                    crontab: init = True
 
     server:
         name: Vorlage-Struktur für Squeezebox Server
@@ -266,7 +272,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: player count ?
-                crontab: init
+                crontab: init = True
 
         favoritescount:
             type: num
@@ -282,7 +288,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: favorites items
-                crontab: init
+                crontab: init = True
 
     player:
         name: Vorlage-Struktur für Squeezebox Player
@@ -312,7 +318,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> syncgroups ?
-                crontab: init
+                crontab: init = True
 
         signalstrength:
             type: num
@@ -325,7 +331,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> signalstrength ?
-                crontab: init
+                crontab: init = True
 
         player_name:
             type: str
@@ -361,7 +367,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> sync ?
-                crontab: init
+                crontab: init = True
 
         unsync:
             type: bool
@@ -476,7 +482,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> mode ?
-                crontab: init
+                crontab: init = True
 
         mute:
             type: bool
@@ -626,7 +632,7 @@ item_structs:
                 type: bool
                 visu_acl: rw
                 squeezebox_send: <playerid> time ?
-                crontab: init
+                crontab: init = True
                 cycle: 100
                 enforce_updates: True
                 remark: Queries current song time every 10 seconds and updates time item
@@ -674,7 +680,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> playlist index ?
-                crontab: init
+                crontab: init = True
 
         playlist_name:
             type: str
@@ -688,7 +694,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> playlist name ?
-                crontab: init
+                crontab: init = True
 
         save:
             type: str
