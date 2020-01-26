@@ -303,8 +303,10 @@ class SeItem:
             result = self.__update_check_can_enter(state)
             # New state is different from last state
             if result is False and last_state == state and StateEngineDefaults.instant_leaveaction is True:
-                self.__logger.info("Leaving {0} ('{1}')", last_state.id, last_state.name)
+                self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id, last_state.name)
+                self.__stateeval_in_progress = False
                 last_state.run_leave(self.__repeat_actions.get())
+                self.__stateeval_in_progress = True
                 _leaveactions_run = True
             if result is True:
                 new_state = state
