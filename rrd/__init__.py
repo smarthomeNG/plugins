@@ -2,8 +2,14 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
+#  Copyright 2020 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#  This file is part of SmartHomeNG.
+#  https://www.smarthomeNG.de
+#  https://knx-user-forum.de/forum/supportforen/smarthome-py
+#
+#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
+#  upwards.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -16,30 +22,70 @@
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHomeNG.  If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
+
+from lib.module import Modules
+from lib.model.smartplugin import *
+from lib.item import Items
 
 import datetime
 import functools
-import logging
 import os
 
-import rrdtool
+try:
+    import rrdtool
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
 
-logger = logging.getLogger('')
 
 
-class RRD():
+class RRD(SmartPlugin):
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    The Module **rrdtool** from Pypi.org is used to access rrd. 
+    Documentation can be found at `<https://pythonhosted.org/rrdtool/>`_
+    """
 
-    def __init__(self, smarthome, step=300, rrd_dir=None):
-        self._sh = smarthome
+    PLUGIN_VERSION = '1.6.0'
+
+    def __init__(self, sh):
+        """
+        Initalizes the plugin.
+        """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        # get the parameters for the plugin (as defined in metadata plugin.yaml):
+        rrd_dir = self.get_parameter_value('rrd_dir')
         if rrd_dir is None:
-            rrd_dir = smarthome.base_dir + '/var/rrd/'
+            rrd_dir = self.get_sh().base_dir + '/var/rrd/'
         self._rrd_dir = rrd_dir
         self._rrds = {}
-        self.step = int(step)
+        self.step = self.get_parameter_value('step')
+
+        # Initialization code goes here
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self._init_complete = False
+            self.logger.error("{}: Unable to import Python package 'rrdtool'".format(self.get_fullname()))
+            return
+
+        self.init_webinterface()
+        return
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         self.alive = True
         # create rrds
         for itempath in self._rrds:
@@ -47,10 +93,65 @@ class RRD():
             if not os.path.isfile(rrd['rrdb']):
                 self._create(rrd)
         offset = 100  # wait 100 seconds for 1-Wire to update values
-        self._sh.scheduler.add('RRDtool', self._update_cycle, cycle=self.step, offset=offset, prio=5)
+        self.scheduler_add('RRDtool', self._update_cycle, cycle=self.step, offset=offset, prio=5)
+
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
         self.alive = False
+
+    def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin stores a list of items with ``rrd`` attribute
+        :param item:    The item to process.
+        """
+        if not self.has_iattr(item.conf, 'rrd'):
+            return
+
+        # set database filename
+        dbname = ''
+        self.logger.debug("parse item: {}".format(item))
+        if self.has_iattr(item.conf,'rrd_ds_name'):
+            dbname = self.get_iattr_value(item.conf, 'rrd_ds_name')
+        if not dbname:
+            dbname = item.id()
+        rrdb = self._rrd_dir + dbname + '.rrd'
+
+        rrd_min = False
+        rrd_max = False
+        rrd_type = 'GAUGE'
+        rrd_step = self.step
+        if self.has_iattr(item.conf,'rrd_min'):
+            rrd_min = self.get_iattr_value(item.conf,'rrd_min')
+        if self.has_iattr(item.conf,'rrd_max'):
+            rrd_max = self.get_iattr_value(item.conf,'rrd_max')
+        if self.has_iattr(item.conf,'rrd_type'):
+            if self.get_iattr_value(item.conf,'rrd_type').lower() == 'counter':
+                rrd_type = 'COUNTER'
+        if self.has_iattr(item.conf,'rrd_step'):
+            rrd_step = self.get_iattr_value(item.conf,'rrd_step')
+
+        
+        no_series = False
+        if self.has_iattr(item.conf,'rrd_no_series'):
+            no_series = self.get_iattr_value(item.conf,'rrd_no_series')
+
+        if no_series:
+            self.logger.warning("Attribute rrd_no_series is set to True, no data series will be provided for item {}".format(item.id()))
+        else:
+            item.series = functools.partial(self._series, item=item.id())
+            item.db = functools.partial(self._single, item=item.id())
+        
+        self._rrds[item.id()] = {'item': item, 'id': item.id(), 'rrdb': rrdb, 'max': rrd_max, 'min': rrd_min, 'step': rrd_step, 'type': rrd_type}
+
+        if self.get_iattr_value(item.conf, 'rrd') == 'init':
+            last = self._single('last', '5d', item=item.id())
+            if last is not None:
+                item.set(last, 'RRDtool')
 
     def _update_cycle(self):
         for itempath in self._rrds:
@@ -65,60 +166,48 @@ class RRD():
                     value
                 )
             except Exception as e:
-                logger.warning("RRD: error updating {}: {}".format(itempath, e))
+                self.logger.warning("RRD: error updating {}: {}".format(itempath, e))
                 continue
 
-    def parse_item(self, item):
-        if 'rrd' not in item.conf:
-            return
-        rrdb = self._rrd_dir + item.id() + '.rrd'
-        rrd_min = False
-        rrd_max = False
-        rrd_type = 'GAUGE'
-        rrd_step = self.step
-        if 'rrd_min' in item.conf:
-            rrd_min = self._sh.string2bool(item.conf['rrd_min'])
-        if 'rrd_max' in item.conf:
-            rrd_max = self._sh.string2bool(item.conf['rrd_max'])
-        if 'rrd_type' in item.conf:
-            if item.conf['rrd_type'].lower() == 'counter':
-                rrd_type = 'COUNTER'
-        if 'rrd_step' in item.conf:
-            rrd_step = int(item.conf['rrd_step'])
-        item.series = functools.partial(self._series, item=item.id())
-        item.db = functools.partial(self._single, item=item.id())
-        self._rrds[item.id()] = {'item': item, 'id': item.id(), 'rrdb': rrdb, 'max': rrd_max, 'min': rrd_min, 'step': rrd_step, 'type': rrd_type}
-
-        if item.conf['rrd'] == 'init':
-            last = self._single('last', '5d', item=item.id())
-            if last is not None:
-                item.set(last, 'RRDtool')
 
     def parse_logic(self, logic):
+        # no logics are supported
+        pass
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        # no updates of items are processed
         pass
 
     def _series(self, func, start='1d', end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
+        """
+        Prepare a series of data that can be passed to the websocket and thus to a visu
+        """
         if item in self._rrds:
             rrd = self._rrds[item]
         else:
-            logger.warning("RRDtool: not enabled for {}".format(item))
+            self.logger.warning("RRDtool: not enabled for {}".format(item))
             return
         query = ["{}".format(rrd['rrdb'])]
+        # prepare consolidation function
         if func == 'avg':
             query.append('AVERAGE')
         elif func == 'max':
             if not rrd['max']:
-                logger.warning("RRDtool: unsupported consolidation function {} for {}".format(func, item))
+                self.logger.warning("RRDtool: unsupported consolidation function {} for {}".format(func, item))
                 return
             query.append('MAX')
         elif func == 'min':
             if not rrd['min']:
-                logger.warning("RRDtool: unsupported consolidation function {} for {}".format(func, item))
+                self.logger.warning("RRDtool: unsupported consolidation function {} for {}".format(func, item))
                 return
             query.append('MIN')
+        elif func == 'raw':
+            query.append('AVERAGE')
+            self.logger.warning("RRDtool: unsupported consolidation function {} for {}. Using average instead".format(func, item))
         else:
-            logger.warning("RRDtool: unsupported consolidation function {} for {}".format(func, item))
+            self.logger.warning("RRDtool: unsupported consolidation function {} for {}".format(func, item))
             return
+        # set time frame for query
         if start.isdigit():
             query.extend(['--start', "{}".format(start)])
         else:
@@ -130,29 +219,47 @@ class RRD():
                 query.extend(['--end', "now-{}".format(end)])
         if step is not None:
             query.extend(['--resolution', step])
+        # run query
         try:
             meta, name, data = rrdtool.fetch(*query)
         except Exception as e:
-            logger.warning("error reading {0} data: {1}".format(item, e))
+            self.logger.warning("error reading {0} data: {1}".format(item, e))
             return None
+        
+        # postprocess values
         if sid is None:
-            sid = item + '|' + func + '|' + start + '|' + end
+            sid = "{}|{}|{}|{}|{}".format(item,func,start,end,count)
         reply = {'cmd': 'series', 'series': None, 'sid': sid}
         istart, iend, istep = meta
         mstart = istart * 1000
         mstep = istep * 1000
-        tuples = [(mstart + i * mstep, v[0]) for i, v in enumerate(data)]
+        # old way could have null values which need to be suppressed as visu could not handle null properly
+        # tuples = [(mstart + i * mstep, v) for i, v in enumerate(data)]
+        tuples = []
+        for i, v in enumerate(data):
+            if v[0] is not None:
+                tuples.append((mstart + i * mstep, v[0]))
         reply['series'] = sorted(tuples)
         reply['params'] = {'update': True, 'item': item, 'func': func, 'start': str(iend), 'end': str(iend + istep), 'step': str(istep), 'sid': sid}
-        reply['update'] = self._sh.now() + datetime.timedelta(seconds=istep)
+        reply['update'] = self.get_sh().now() + datetime.timedelta(seconds=istep)
+        self.logger.warning("Returning series for {} from {} to {} with {} values".format(sid, iend, iend+istep, len(tuples) ))
         return reply
 
     def _single(self, func, start='1d', end='now', item=None):
+        """
+        Reads a single value from rrd.
+        
+        :param func: String with consolidating function 'avg', 'min', 'max', 'last' to use
+        :param start: String containing a start time 
+        :param end: String containing a start time
+        """
         if item in self._rrds:
             rrd = self._rrds[item]
         else:
-            logger.warning("RRDtool: not enabled for {}".format(item))
+            self.logger.warning("RRDtool: not enabled for {}".format(item))
             return
+        
+        # prepare consolidation function
         query = ["{}".format(rrd['rrdb'])]
         if func == 'avg':
             query.append('AVERAGE')
@@ -168,9 +275,14 @@ class RRD():
                 query.append('AVERAGE')
         elif func == 'last':
             query.append('AVERAGE')
+        elif func == 'raw':
+            self.logger.warning("RRDtool: unsupported consolidation function {} for {}. Using average instead".format(func, item))
+            query.append('AVERAGE')
         else:
-            logger.warning("RRDtool: unsupported consolidation function {} for {}".format(func, item))
+            self.logger.warning("RRDtool: unsupported consolidation function {} for {}".format(func, item))
             return
+        
+        # set time frame for query
         if start.isdigit():
             query.extend(['--start', "{}".format(start)])
         else:
@@ -180,12 +292,18 @@ class RRD():
                 query.extend(['--end', "{}".format(end)])
             else:
                 query.extend(['--end', "now-{}".format(end)])
+        
+        # execute query
         try:
             meta, name, data = rrdtool.fetch(*query)
         except Exception as e:
-            logger.warning("error reading {0} data: {1}".format(item, e))
+            self.logger.warning("error reading {0} data: {1}".format(item, e))
             return None
+
+        # unpack returned values
         values = [v[0] for v in data if v[0] is not None]
+        
+        # postprocess for consolidation
         if func == 'avg':
             if len(values) > 0:
                 return sum(values) / len(values)
@@ -198,16 +316,26 @@ class RRD():
         elif func == 'last':
             if len(values) > 0:
                 return values[-1]
+        elif func == 'raw':
+            self.logger.warning("Unsupported consolidation function {0} for {1}. Using last instead".format(func, item))
+            if len(values) > 0:
+                return values[-1]
 
     def _create(self, rrd):
+        """
+        Creates a rrd according to the given rrd param
+        Called by run method to ensure that the database will be present to accept values
+        """
         args = [rrd['rrdb']]
         item_id = rrd['id'].rpartition('.')[2][:19]
+
         args.append("DS:{}:{}:{}:U:U".format(item_id, rrd['type'], str(2 * rrd['step'])))
         if rrd['min']:
             args.append('RRA:MIN:0.5:{}:1825'.format(int(86400 / rrd['step'])))  # 24h/5y
         if rrd['max']:
             args.append('RRA:MAX:0.5:{}:1825'.format(int(86400 / rrd['step'])))  # 24h/5y
         args.extend(['--step', str(rrd['step'])])
+        
         if rrd['type'] == 'GAUGE':
             args.append('RRA:AVERAGE:0.5:1:{}'.format(int(86400 / rrd['step']) * 7 + 8))  # 7 days
             args.append('RRA:AVERAGE:0.5:{}:1536'.format(int(1800 / rrd['step'])))  # 0.5h/32 days
@@ -219,6 +347,117 @@ class RRD():
             args.append('RRA:AVERAGE:0.5:{}:1300'.format(int(604800 / rrd['step'])))  # 7d/25y
         try:
             rrdtool.create(*args)
-            logger.debug("Creating rrd ({0}) for {1}.".format(rrd['rrdb'], rrd['item']))
+            self.logger.debug("Creating rrd ({0}) for {1}.".format(rrd['rrdb'], rrd['item']))
         except Exception as e:
-            logger.warning("Error creating rrd ({0}) for {1}: {2}".format(rrd['rrdb'], rrd['item'], e))
+            self.logger.warning("Error creating rrd ({0}) for {1}: {2}".format(rrd['rrdb'], rrd['item'], e))
+
+    # ToDo:
+    # create a meaningful webinterface
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Not initializing the web interface")
+            return False
+
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+        self.items = Items.get_instance()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            data = {}
+
+            # data['item'] = {}
+            # for i in self.plugin.items:
+            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
+            #
+            # return it as json the the web page
+            # try:
+            #     return json.dumps(data)
+            # except Exception as e:
+            #     self.logger.error("get_data_html exception: {}".format(e))
+        return {}
+
