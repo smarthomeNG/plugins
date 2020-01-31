@@ -240,3 +240,13 @@ class PortHandler(threading.Thread):
         except:
             self._fd = None
             return False
+    def closePort(self):
+        """attempts to close the serial port"""
+        try:
+            self._fd.close()
+            self._fd = None
+            self.logger.info('Closed serial port.')
+            return True
+        except:
+            self._fd = None
+            return False
