@@ -25,6 +25,7 @@ import urllib.error
 import urllib.parse
 import lib.connection
 import re
+import time
 from lib.model.smartplugin import SmartPlugin
 from bin.smarthome import VERSION
 
@@ -43,6 +44,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             self._val = {}
             self._obj = {}
             self._init_cmds = []
+            self._listen = False
         except Exception:
             self._init_complete = False
             return
@@ -161,9 +163,10 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 newsource = source.split(".")[-1:][0]
             else:
                 newsource = 'None'
-            condition1 = cmd[1] == 'playlist' and cmd[2] in ['shuffle', 'repeat']
-            condition2 = cmd[1] == 'playlist' and cmd[2] == 'shuffle' and caller == 'on_change' and newsource == 'shuffle'
-            condition3 = cmd[1] == 'playlist' and cmd[2] == 'repeat' and caller == 'on_change' and newsource == 'repeat'
+            condition0 = len(cmd) > 1
+            condition1 = condition0 and cmd[1] == 'playlist' and cmd[2] in ['shuffle', 'repeat']
+            condition2 = condition0 and cmd[1] == 'playlist' and cmd[2] == 'shuffle' and caller == 'on_change' and newsource == 'shuffle'
+            condition3 = condition0 and cmd[1] == 'playlist' and cmd[2] == 'repeat' and caller == 'on_change' and newsource == 'repeat'
 
             if (len(cmd) >= 2) and not item() and (condition2 or condition3):
                 # If shuffle or playlist item got updates by on_change nothing should happen to prevent endless loops
@@ -188,6 +191,14 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
         repl = (('%FC', '%C3%BC'), ('%F6', '%C3%B6'), ('%E4', '%C3%A4'), ('%DC', '%C3%9C'), ('%D6', '%C3%96'), ('%C4', '%C3%84'))
         for r in repl:
             cmd = cmd.replace(*r)
+        i = 0
+        while not self.connected or self._listen is False:
+            self.logger.debug("Waiting to send command {} as connection is not yet established. Count: {}", cmd, i)
+            i += 1
+            time.sleep(1)
+            if i >= 10:
+                self.logger.warning("10 seconds wait time for sending {} is over. Sending it now.", cmd)
+                break
         self.logger.debug("Sending request: {0}".format(cmd))
         self.send(bytes(cmd + '\r\n', 'utf-8'))
 
@@ -201,8 +212,10 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 value = int(data[1])
                 if (value == 1):
                     self.logger.info("Listen-mode enabled")
+                    self._listen = True
                 else:
-                    self.logger.info("Listen-mode disabled")
+                    self.logger.info("Listen-mode disabled. The plugin won't receive any info!")
+                    self._listen = False
 
             if self._check_mac(data[0]):
                 if (data[1] == 'time' and (data[2].startswith('+') or data[2].startswith('-'))):
