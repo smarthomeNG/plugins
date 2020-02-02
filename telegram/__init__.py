@@ -65,7 +65,7 @@ MESSAGE_TAG_DEST          = '[DEST]'
 
 
 class Telegram(SmartPlugin):
-    PLUGIN_VERSION = "1.6.1"
+    PLUGIN_VERSION = "1.6.2"
 
     _items = []              # Storage Array for all items using telegram attributes ITEM_ATTR_MESSAGE
     _items_info = {}         # dict used whith the info-command: key = attribute_value, val= item_list ITEM_ATTR_INFO
@@ -171,8 +171,9 @@ class Telegram(SmartPlugin):
             except Exception as e:
                 self.logger.warning("Error '{}' occurred. Could not assign pretty names to Telegrams threads, maybe object model of python-telegram-bot module has changed? Please inform the author of plugin!".format(e))
         self.logger.debug("started polling the updater, Queue is {}".format(q))
-        self.msg_broadcast(self._welcome_msg)
-        self.logger.debug("sent welcome message {}")
+        if self._welcome_msg:
+          self.msg_broadcast(self._welcome_msg)
+          self.logger.debug("sent welcome message {}")
 
     def stop(self):
         """
@@ -181,8 +182,9 @@ class Telegram(SmartPlugin):
         self.alive = False
         try:
             self.logger.debug("stop telegram plugin")
-            self.msg_broadcast(self._bye_msg)
-            self.logger.debug("sent bye message")
+            if self._bye_msg:
+              self.msg_broadcast(self._bye_msg)
+              self.logger.debug("sent bye message")
             self._updater.stop()
             self.logger.debug("telegram plugin stopped")
         except:
