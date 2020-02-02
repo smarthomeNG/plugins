@@ -745,12 +745,6 @@ item_structs:
             enforce_updates: True
             avdevice_zone1_depend@instance: tone
 
-        dialog:
-            type: num
-            visu_acl: rw
-            avdevice_zone1@instance: dialog
-            avdevice_zone1_depend@instance: power
-
         trebble:
             type: num
             visu_acl: rw
@@ -965,7 +959,6 @@ item_structs:
             type: num
             visu_acl: ro
             avdevice_zone1@instance: hdmi
-            avdevice_zone1_depend@instance: power
             avdevice_zone1_depend@instance: power
 
         videoinput:
