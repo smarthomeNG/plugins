@@ -62,7 +62,7 @@ Set this item attribute to `True` to log the maximum as well. Default is False.
 #### rrd_mode
 Set the type of data source. Default ist `gauge`.
   * `gauge` - should be used for things like temperatures.
-  * `counter` - should be used for continuous incrementing counters like the Powermeter (kWh), watercounter (m³), pellets (kg).
+  * `counter` - should be used for continuous incrementing counters like the Powermeter (kWh), watercounter (m^3), pellets (kg).
 
 ```yaml
 rrd_examples:
@@ -76,7 +76,7 @@ rrd_examples:
             rrd_max: 'yes'
 
     office:
-        name: Büro
+        name: BÃ¼ro
         temperature:
             name: Temperatur
             type: num

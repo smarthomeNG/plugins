@@ -5,7 +5,8 @@ Das Plugin basiert auf der [python-miio](https://github.com/rytilahti/python-mii
 - anschließend den Plugin Ordner nach smarthomeNG/plugins kopieren
 - Folgendes zur etc/plugin.yaml hinzufügen
 
-    ```Roboter:
+    ```
+    Roboter:
     class_name: Robvac
     class_path: plugins.xiaomi_vac
     ip: '192.XXX.XXX.XXX'
@@ -15,7 +16,8 @@ Das Plugin basiert auf der [python-miio](https://github.com/rytilahti/python-mii
     
 - Um die Verbindung zu überprüfen, kann in der Kommandozeile/Shell nach der Installation mit 
 
-```export MIROBO_IP=192.xxx.xxx.xxx
+```
+   export MIROBO_IP=192.xxx.xxx.xxx
    export MIROBO_TOKEN=euerToken
 ```
    
