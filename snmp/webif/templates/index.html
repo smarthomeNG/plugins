@@ -87,18 +87,26 @@
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> " %}
 {% block bodytab1 %}
 {% if p._items|length %}
 <div><strong>{{ p._items|length }} {{ _('Items in SmartHomeNG Items für diese Instanz definiert') }}</strong></div>
-<table class="table table-striped table-hover">
-<tr><th>{{ _('Item') }}</th><th>{{ _('OID') }}</th><th>{{ _('Typ') }}</th><th>{{ _('Wert') }}</th><th>{{ _('Letzte Änderung') }}</th></tr>
-{% for oid in p._items %}
-	{% for entry in p._items[oid] %}
-	<tr><td>{{ p._items[oid][entry]['item'].path() }}</td><td>{{ oid }}</td><td>{{ p._items[oid][entry]['item'].type() }}</td><td>{{ p._items[oid][entry]['item']() }}</td><td>{{ p._items[oid][entry]['item'].last_update() }}</td></tr>
-	{% endfor %}
-{% endfor %}
-</table>
+<div class="container-fluid m-2">
+    <table class="table table-striped table-hover">
+    <tr><th>{{ _('Item') }}</th><th>{{ _('OID') }}</th><th>{{ _('Typ') }}</th><th>{{ _('Wert') }}</th><th>{{ _('Letzte Änderung') }}</th></tr>
+    {% for oid in p._items %}
+        {% for entry in p._items[oid] %}
+        <tr>
+        <td>{{ p._items[oid][entry]['item'].path() }}</td>
+        <td>{{ oid }}</td>
+        <td>{{ p._items[oid][entry]['item'].type() }}</td>
+        <td>{{ p._items[oid][entry]['item']() }}</td>
+        <td>{{ p._items[oid][entry]['item'].last_update() }}</td>
+        </tr>
+        {% endfor %}
+    {% endfor %}
+    </table>
+</div>
 {% endif %}
 {% endblock bodytab1 %}
 
@@ -106,18 +114,26 @@
 <!--
 	Content block for the second tab of the Webinterface
 -->
-{% set tab2title = "<strong>" ~ p.get_shortname() ~ " OIDs</strong> (" ~ device_count ~ ")" %}
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " OIDs</strong> " %}
 {% block bodytab2 %}
 {% if p._items|length %}
 <div><strong>{{ p._items|length }} {{ _('OIDs in SmartHomeNG Items für diese Instanz definiert') }}</strong></div>
-<table class="table table-striped table-hover">
-<tr><th>{{ _('OID') }}</th><th>{{ _('Item') }}</th><th>{{ _('Typ') }}</th><th>{{ _('Wert') }}</th><th>{{ _('Letzte Änderung') }}</th></tr>
-{% for oid in p._items %}
-	{% for entry in p._items[oid] %}
-	<tr><td>{{ oid }}</td><td>{{ p._items[oid][entry]['item'].path() }}</td><td>{{ p._items[oid][entry]['item'].type() }}</td><td>{{ p._items[oid][entry]['item']() }}</td><td>{{ p._items[oid][entry]['item'].last_update() }}</td></tr>
-	{% endfor %}
-{% endfor %}
-</table>
+<div class="container-fluid m-2">
+    <table class="table table-striped table-hover">
+    <tr><th>{{ _('OID') }}</th><th>{{ _('Item') }}</th><th>{{ _('Typ') }}</th><th>{{ _('Wert') }}</th><th>{{ _('Letzte Änderung') }}</th></tr>
+    {% for oid in p._items %}
+        {% for entry in p._items[oid] %}
+        <tr>
+        <td>{{ oid }}</td>
+        <td>{{ p._items[oid][entry]['item'].path() }}</td>
+        <td>{{ p._items[oid][entry]['item'].type() }}</td>
+        <td>{{ p._items[oid][entry]['item']() }}</td>
+        <td>{{ p._items[oid][entry]['item'].last_update() }}</td>
+        </tr>
+        {% endfor %}
+    {% endfor %}
+    </table>
+</div>
 {% endif %}
 {% endblock bodytab2 %}
 
@@ -128,6 +144,7 @@
 		{% set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
 	It has to be defined before (and outside) the block bodytab3
 -->
+{% set tab1title = "<strong>" ~ test ~ " Items</strong>" %}
 {% block bodytab3 %}
 {% endblock bodytab3 %}
 

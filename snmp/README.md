@@ -50,18 +50,18 @@ using the OID identifier.
 
 #### snmp_oid
 
-This assigns the value for the given OID code to the item.
+This assigns the OID code to the item, which will be used to query the device.
 
 ```yaml
-snmp_oid: '1.3.6.1.4.1.24681.1.2.5.0'
+snmp_oid@instance: '1.3.6.1.4.1.24681.1.2.5.0'
 ```
 
 #### snmp_prop
 
-Use this to assign the response to be handled as string or value
+This tells the plugin, how the response from the device should be handled. Currently the response can be handled as string or value.
 
 ```yaml
-snmp_prop: value
+snmp_prop@instance: value
 ```
 
 #### Example
@@ -73,14 +73,14 @@ nas:
     cpu_temp:
         name: CPU-Temperatur in °C
         type: num
-        snmp_oid: '1.3.6.1.4.1.24681.1.2.5.0'
-        snmp_prop: 'value'
+        snmp_oid@nas1: '1.3.6.1.4.1.24681.1.2.5.0'
+        snmp_prop@nas1: 'value'
 
     cpu_usage:
         name: CPU-Auslastung [0-1]
         type: num
-        snmp_oid: '1.3.6.1.4.1.24681.1.2.1.0'
-        snmp_prop: 'value'
+        snmp_oid@nas1: '1.3.6.1.4.1.24681.1.2.1.0'
+        snmp_prop@nas1: 'value'
 ```
 
 ### logic.yaml

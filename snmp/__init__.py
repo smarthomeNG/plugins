@@ -112,17 +112,15 @@ class Snmp(SmartPlugin):
         else:
             prop = self.get_iattr_value(item.conf, 'snmp_prop').lower()
 
-        table = self._items
-
         if prop not in self._supported:
             self.logger.info("Unknown properties specified for {0}".format(item.id()))
 
-        if oid in table:
+        if oid in self._items:
             self.logger.debug("Set dict[{}][{}] as item:{}".format(oid, prop, item))
-            table[oid][prop] = {'item': item}
+            self._items[oid][prop] = {'item': item}
         else:
             self.logger.debug("Set dict[{}] as prop:{} <item:{}>".format(oid, prop, item))
-            table[oid] = {prop: {'item': item}}
+            self._items[oid] = {prop: {'item': item}}
 
         self.logger.debug(self._items)
 
@@ -147,8 +145,12 @@ class Snmp(SmartPlugin):
                 self.logger.debug('Poll for item: {} with property: {} using oid: {}, host: {}, community: {} '.format(item, prop, oid, host, community))
 
                 # Request data
-                response = get(host, community, oid)
-                self.logger.debug('Successfully received response: {}'.format(response))
+                try:
+                    response = get(host, community, oid)
+                    self.logger.debug('Successfully received response: {}'.format(response))
+                except Exception as e:
+                    self.logger.error('Exception occured when getting data of OID {}: {}'.format(oid, e))
+                    return
 
                 # Transform response
                 result = 0
@@ -156,9 +158,9 @@ class Snmp(SmartPlugin):
 
                 try:
                     response = response.decode('ascii')
-                except:
+                except Exception as e:
                     response = response
-                    self.logger.debug('Response NOT decoded')
+                    self.logger.debug('Response for OID {} not decoded, since it was no ASCII string. Error was: {}'.format(oid, e))
                 else:
                     self.logger.debug('Response decoded')
 

@@ -51,13 +51,13 @@ item_attributes:
     snmp_oid:
         type: str
         description:
-            de: 'OID des Elements'
-            en: 'oid of queried element'
+            de: 'Definiert den OID Code, mit dem das Geräte angefragt werden soll'
+            en: 'This assigns the OID code to the item, which will be used to query the device.'
     snmp_prop:
         type: str
         description:
-            de: 'Eigenschaft des Elements (value oder string'
-            en: 'proterty of queried element (value or string)'
+            de: 'Definiert, wie das Plugin die Geräteantwort verarbeiten soll (value oder string'
+            en: 'This tells the plugin, how the response from the device should be handled. (value or string)'
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin

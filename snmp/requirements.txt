@@ -1,1 +1,1 @@
-pysnmp>=4.4.12
+puresnmp >=1.7.2
