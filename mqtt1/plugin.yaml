@@ -130,6 +130,7 @@ parameters:
 
     last_will_topic:
         type: str
+        gui_type: wide_str
         default: ''
         description:
             de: 'Topic für Last-Will Telegramm'
@@ -160,6 +161,7 @@ parameters:
 
     last_will_payload:
         type: str
+        gui_type: wide_str
         default: ''
         description:
             de: 'Payload für die MQTT testament message. Wenn keine **last_will_payload** angegeben wird, wird kein Last-Will Telegramm gesendet.'
@@ -167,8 +169,7 @@ parameters:
 
     birth_topic:
         type: str
-        default: ''
-        type: str
+        gui_type: wide_str
         default: ''
         description:
             de: 'Topic für das Birth Telegramm'
@@ -179,6 +180,7 @@ parameters:
 
     birth_payload:
         type: str
+        gui_type: wide_str
         default: ''
         description:
             de: 'Payload für das Birth Telegramm. Wenn keine birth_payload konfiguriert ist, wird keine Birth Message gesendet. In diesem Fall wird auch keine last-will message gesendet, falls die Verbindung ordnungsgemäß geschlossen wird (beim Beenden von SmartHomeNG).'
