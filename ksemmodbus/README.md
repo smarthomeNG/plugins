@@ -44,8 +44,8 @@ For example:
 
 #### Get data from Energy Meter:
 ```html
-<p>Bezug: {{basic.value('KSEM_Beszug','Kostal.ksem.ksem_0','W')}} </p>
-<p>Einspeisen: {{basic.value('KSEM_Einspeisen','Kostal.ksem.ksem_2','W')}} </p>
+<p>Active Power - : {{basic.value('KSEM_Beszug','Kostal.ksem.ksem_0','W')}} </p>
+<p>Active Power + : {{basic.value('KSEM_Einspeisen','Kostal.ksem.ksem_2','W')}} </p>
 
 ```
 
@@ -54,7 +54,10 @@ For example:
 
 | Addr (dec)        | Description                                       | Format | Unit    |
 |-------------------|---------------------------------------------------|--------|---------|
-| ksem_0            | Text Text                                         | U16    | -       |
+| ksem_0            | Active Power -                                    | U32    | W       |
+| ksem_2            | Active Power +                                    | U32    | W       |
+| ksem_512          | Active Energy +                                   | U64    | Wh      |
+| ksem_516          | Active Energy -                                   | U64    | Wh      |
 
 
 
