@@ -569,14 +569,16 @@ class OneWire(SmartPlugin):
             return
         else:
             table = self._sensors
+
         if key not in self._supported:  # unknown key
-            path = '/' + addr if alias is None else alias + '/' + key
+            path = '/' + addr + '/' + key
             if self.logger.isEnabledFor(logging.INFO):
                 self.logger.info("1-Wire: unknown sensor specified for {0} using path: {1}".format(item.id(), path))
         else:
             path = None
             if key == 'VOC':
-                path = '/' + addr if alias is None else alias + '/VAD'
+                path = '/' + addr + '/VAD'
+
         if addr in table:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("set dict[{}][{}] as item:{} and path:{}".format(addr,key, item, path))
