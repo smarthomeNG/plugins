@@ -44,7 +44,8 @@ For example:
 
 #### Get data from Energy Meter:
 ```html
-<p>/** Beispiele einfügen */</p>
+<p>Bezug: {{basic.value('KSEM_Beszug','Kostal.ksem.ksem_0','W')}} </p>
+<p>Einspeisen: {{basic.value('KSEM_Einspeisen','Kostal.ksem.ksem_2','W')}} </p>
 
 ```
 
